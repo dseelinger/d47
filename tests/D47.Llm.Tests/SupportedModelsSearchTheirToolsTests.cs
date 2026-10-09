@@ -104,6 +104,7 @@ public class SupportedModelsSearchTheirToolsTests
         Assert.False(responses.CapabilitiesFor(responses.DefaultModel).SupportsToolSearch);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task DeferredToolsFollowTheSearchToolAndOnlyTheLoadedOneIsNotDeferred()
     {
@@ -126,6 +127,7 @@ public class SupportedModelsSearchTheirToolsTests
         Assert.All(tools.EnumerateArray(), tool => Assert.False(tool.TryGetProperty("cache_control", out _)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AModesListCarriesNoSearchTool()
     {
@@ -137,6 +139,7 @@ public class SupportedModelsSearchTheirToolsTests
         Assert.All(tools.EnumerateArray(), tool => Assert.False(tool.TryGetProperty("defer_loading", out _)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchGoesBackUnchangedAndAheadOfTheCallThatFollowedIt()
     {
@@ -188,6 +191,7 @@ public class SupportedModelsSearchTheirToolsTests
         Assert.True(JsonElement.DeepEquals(JsonDocument.Parse(SearchResult).RootElement, content[2]));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AfterASwitchToAModelWithoutSearchNoBlockIsSent()
     {
@@ -205,6 +209,7 @@ public class SupportedModelsSearchTheirToolsTests
         Assert.DoesNotContain("tool_search", body, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedSearchIsDemotedForThatModelAndTheFailureSaysWhatHappensNext()
     {

@@ -44,6 +44,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
                 () => null),
             () => null);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveSurvivesAReloadAndTheGaugeCountsTheSlotInItsMovedGroup()
     {
@@ -87,6 +88,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(FigureKind.Measured, power.Kind);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveIsNotASlotPlan()
     {
@@ -103,6 +105,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(before, ships.Store.Find(build.Id)!.Slots);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ClearingMovesTakesEveryMoveOnThatBuildAndNothingElse()
     {
@@ -126,6 +129,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(4, ships.Store.Find(python.Id)!.PriorityMoves["MainEngines"]);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileWrittenBeforeMovesExistedLoadsWithNoneAndNoProblem()
     {
@@ -145,6 +149,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Empty(store.Problems);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveOutsideOneToFiveIsDroppedAndReported()
     {

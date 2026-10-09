@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Cues, beds and ambience discovered from the convention folders and reloaded live.</summary>
+[Trait("Category", "Integration")]
 public class AudioRescanTests : IDisposable
 {
     private readonly string _root = Path.Combine(

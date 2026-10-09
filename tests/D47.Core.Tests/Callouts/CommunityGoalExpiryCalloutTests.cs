@@ -102,6 +102,7 @@ public class CommunityGoalExpiryCalloutTests
         Assert.Single(Say(callout, state, Now));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {

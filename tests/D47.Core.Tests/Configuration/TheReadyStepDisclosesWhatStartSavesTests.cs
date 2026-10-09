@@ -22,6 +22,7 @@ public class TheReadyStepDisclosesWhatStartSavesTests
         { LlmProviderCatalog.NoneId, TtsProviderCatalog.NoneId, SttProviderCatalog.LocalId, false },
     };
 
+    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(Choices))]
     public void AfterStartTheDisclosureMatchesTheReadyStep(string conversation, string voice, string listening, bool keys)

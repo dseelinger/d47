@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Ships;
 /// A slot whose plan the fitted module already carries out entirely has its plan deleted — the tick
 /// disappears because the plan does, and there is nothing left for a revision to supersede (#255).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AMetSlotLosesItsPlanTests
 {
     private const int ShipId = 33;

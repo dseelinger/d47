@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Narrator, ..." reaches no addressed speaker: the Narrator tells the story and takes no questions.</summary>
+[Trait("Category", "Integration")]
 public class TheNarratorCannotBeAddressedTests
 {
     [Fact]

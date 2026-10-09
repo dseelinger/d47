@@ -108,6 +108,7 @@ public class ACovasVoiceHasALightReverbTests
         Assert.Equal(ticked(Burst()).Pcm.ToArray(), unticked(Burst()).Pcm.ToArray());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASettingsFileWithoutTheKeyLoadsWithTheBoxTicked()
     {

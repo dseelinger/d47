@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Journal;
 /// Every ship the Commander has flown is still answerable after a restart, however long ago they last
 /// sat in it.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-loadouts").FullName;

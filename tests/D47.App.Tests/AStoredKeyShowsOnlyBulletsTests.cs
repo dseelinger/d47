@@ -25,6 +25,7 @@ namespace D47.App.Tests;
 /// A stored key is a masked block with REPLACE, VERIFY and FORGET KEY and no field; the field comes back on
 /// REPLACE, or at once when no key is stored (#442).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AStoredKeyShowsOnlyBulletsTests
 {
     private const string DeepgramKey = "dg-not-a-real-key-7Q2F";

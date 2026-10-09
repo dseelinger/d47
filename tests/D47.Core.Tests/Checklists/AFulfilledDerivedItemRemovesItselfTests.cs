@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Checklists;
 /// With the setting on, a derived item that reaches Done removes itself rather than staying ticked; an
 /// authored line is never touched, on or off (#255).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AFulfilledDerivedItemRemovesItselfTests
 {
     private const int ShipId = 21;

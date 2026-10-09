@@ -168,6 +168,7 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>And it is the router that answers, so no model is asked what a letter is called.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what is the word for K", "kilo")]
     [InlineData("what's the word for z", "zulu")]
@@ -188,6 +189,7 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>And asking for the whole of it gets every letter.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AskingForThePhoneticAlphabetGetsEveryLetter()
     {
@@ -208,6 +210,7 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>Asking how to spell at all teaches the shape rather than the whole table.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AskingHowToSpellTeachesTheShape()
     {

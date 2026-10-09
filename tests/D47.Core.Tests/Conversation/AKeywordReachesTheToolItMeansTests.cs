@@ -10,6 +10,7 @@ public class AKeywordReachesTheToolItMeansTests
         new(TestSurface.For(install).Registry);
 
     /// <summary>Four sentences that were broken the same way, three of which nobody had asked yet.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where is my fleet carrier", "get_fleet")]
     [InlineData("where is my carrier", "get_fleet")]
@@ -29,6 +30,7 @@ public class AKeywordReachesTheToolItMeansTests
     }
 
  /// <summary>And the keyword route now reaches it too.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ACapabilityKeywordNamesTheToolItMeans()
     {
@@ -41,6 +43,7 @@ public class AKeywordReachesTheToolItMeansTests
     }
 
  /// <summary>And it reaches it asking the question that was asked.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where is my carrier", false)]
     [InlineData("what system is my fleet carrier in", false)]
@@ -59,6 +62,7 @@ public class AKeywordReachesTheToolItMeansTests
 
     /// <summary>The same claim on the capability-keyword route, which is the one that catches a padded
     /// sentence.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("so where is my carrier parked at the moment", false)]
     [InlineData("where's my fleet carrier at the moment", false)]
@@ -126,6 +130,7 @@ public class AKeywordReachesTheToolItMeansTests
     /// And the one that was always right stays right: asking where you are is the question
     /// <c>get_location</c> is for.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where am i")]
     [InlineData("am i docked")]

@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>While a ship scene is heard, a kill is answered by the scene and not by the timed combat exchange.</summary>
+[Trait("Category", "Integration")]
 public class AShipSceneTakesTheKillFromTheCombatChatterTests
 {
     private static readonly DateTimeOffset T0 = new(2026, 9, 29, 14, 40, 0, TimeSpan.Zero);

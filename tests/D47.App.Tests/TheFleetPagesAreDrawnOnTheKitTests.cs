@@ -103,6 +103,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         return path;
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]

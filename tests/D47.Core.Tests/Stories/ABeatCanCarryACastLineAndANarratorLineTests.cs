@@ -10,6 +10,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A beat holds up to three lines, each with its own speaker, said and posted in order (#867).</summary>
+[Trait("Category", "Integration")]
 public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
 {
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-beat-lines", Guid.NewGuid().ToString("N"));

@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// A place's groups are drawn straight onto the page (#435): no card to open or shut, no bulk controls,
 /// and no HELP of its own — the top bar's HELP is the one route to its guide.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class APlaceIsDrawnWithoutACardTests
 {
     [AvaloniaTheory]

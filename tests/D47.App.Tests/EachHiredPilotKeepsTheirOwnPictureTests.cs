@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Crew gives each hired pilot a picture kept under their crew id.</summary>
+[Trait("Category", "Integration")]
 public sealed class EachHiredPilotKeepsTheirOwnPictureTests
 {
     private static (CrewPage Page, SpeakerPictures Pictures, GameStateStore Store, Window Window) Open(Action<SpeakerPictures>? before, params string[] hires)

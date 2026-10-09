@@ -19,6 +19,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Equal(GuardianCores.Beacons.Keys.Order(), GuardianCores.BeaconPositions.Keys.Order());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PickingWritesAndBeginsAChapterThatEndsAtTheBeacon()
     {
@@ -54,6 +55,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Contains("\"livery\"|\"wing\"|\"multicrew\"|\"squadron\"|\"beacon\"", beats);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AChapterOneThatEndsElsewhereIsRefused()
     {
@@ -73,6 +75,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Contains("The last objective must be", fixtures.Provider.Requests[2].Prompt.History[0].Text);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AChapterOneThatArrivesAtTheBeaconIsRefused()
     {
@@ -87,6 +90,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ABeaconBeatBeforeTheLastIsRefused()
     {
@@ -102,6 +106,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ALaterChapterMayNotEndOnABeacon()
     {

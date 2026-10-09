@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests;
 
+[Trait("Category", "Integration")]
 public class AtomicFileTests
 {
     [Fact]
@@ -48,6 +49,7 @@ public class AtomicFileTests
     }
 }
 
+[Trait("Category", "Integration")]
 public class SettingsStoreTests
 {
     private static SettingsStore StoreFor(TempInstall install) =>
@@ -129,6 +131,7 @@ public class SettingsStoreTests
     }
 }
 
+[Trait("Category", "Integration")]
 public class SecretStoreTests
 {
     [Fact]

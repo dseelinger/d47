@@ -318,6 +318,7 @@ public sealed class TheJournalPaneReadsTheEventTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingTheEngineerOpensTheirPageOnTheEngineersTab()
     {
@@ -335,6 +336,7 @@ public sealed class TheJournalPaneReadsTheEventTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AShipInTheFleetLinksToItsPageAndOneSoldIsPlainText()
     {

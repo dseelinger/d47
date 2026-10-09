@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
+[Trait("Category", "Integration")]
 public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);

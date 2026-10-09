@@ -19,6 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Ships › Compare: every ship as last seen, ordered by jump or cargo and filtered by cargo (#562).</summary>
+[Trait("Category", "Integration")]
 public class TheFleetComparesByJumpOrCargoTests
 {
     private sealed record Surface(Window Window, PanelView Panel, GameStateStore Store);

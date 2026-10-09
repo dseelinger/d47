@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The model's reach over settings, asserted from the outside.</summary>
+[Trait("Category", "Integration")]
 public class SettingsCapabilityTests
 {
     [Fact]
@@ -140,6 +141,7 @@ public class SettingsCapabilityTests
     }
 }
 
+[Trait("Category", "Integration")]
 public class SettingCommandRoutingTests
 {
     [Fact]

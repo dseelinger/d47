@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Faction reputation and engineer contributions recovered from older journals (#182).</summary>
+[Trait("Category", "Integration")]
 public class ReputationAndContributionsSurviveARestartTests
 {
     private const string Fid = "F1234567";

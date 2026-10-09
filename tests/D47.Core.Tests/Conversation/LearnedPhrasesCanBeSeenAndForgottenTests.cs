@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A learned phrase is listed and forgettable, so a mishearing accepted once does not stay (#171).</summary>
+[Trait("Category", "Integration")]
 public class LearnedPhrasesCanBeSeenAndForgottenTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-learned-phrases").FullName;

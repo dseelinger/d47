@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
+[Trait("Category", "Integration")]
 public class TheJournalFolderIsListedOnlyWhenItChangesTests
 {
     private const string Older = "Journal.2026-02-10T090000.01.log";

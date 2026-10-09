@@ -9,6 +9,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
+[Trait("Category", "Integration")]
 public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
 {
     /// <summary>Answers with the recorded Sol, Colonia, Sol plot for the used capacity it is sent.</summary>

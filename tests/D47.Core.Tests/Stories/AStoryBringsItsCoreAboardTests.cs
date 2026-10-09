@@ -12,6 +12,7 @@ public sealed class AStoryBringsItsCoreAboardTests
         RoundScriptedLlmProvider.Saying(Spine),
         RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheRunningStoryNamesItsCore()
     {
@@ -23,6 +24,7 @@ public sealed class AStoryBringsItsCoreAboardTests
         Assert.Same(PersonaCatalog.Archivist, fixtures.Director.CoreOf("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheChapterWriterIsToldTheCore()
     {
@@ -41,6 +43,7 @@ public sealed class AStoryBringsItsCoreAboardTests
         Assert.Contains("choose another core in Settings", line, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryStoryNamesAGuardianCoreOtherThanTheHeretic() =>
         Assert.All(

@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>One switch, Reminders, default on.</summary>
+[Trait("Category", "Integration")]
 public class TheRemindersSwitchSilencesThemTests
 {
     [Fact]

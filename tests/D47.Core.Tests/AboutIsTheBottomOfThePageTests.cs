@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>About is the last section in the panel, and it is last because it says so.</summary>
+[Trait("Category", "Integration")]
 public class AboutIsTheBottomOfThePageTests
 {
     private static IReadOnlyList<CapabilityDescriptor> OnThePanel() =>

@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Audio.Tests;
 
+[Trait("Category", "Integration")]
 public class AnImportedFileDecodesToMonoSamplesTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-file-decoder-tests", Guid.NewGuid().ToString("n"));

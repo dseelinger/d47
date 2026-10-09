@@ -34,6 +34,7 @@ public class ModelSelectionFollowsTheDiskTests
     /// Selecting one that is not installed downloads it, and the setting is written only once the file
     /// is there — so the row can never name a model D47 cannot load.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ChoosingAModelFetchesItAndThenSelectsIt()
     {
@@ -57,6 +58,7 @@ public class ModelSelectionFollowsTheDiskTests
     /// Stepping onto a model stages it: nothing is fetched and the setting stays put until the button
     /// that names the cost is pressed (#274).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SteppingOntoAModelFetchesNothingUntilItIsConfirmed()
     {
@@ -80,6 +82,7 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>A download that does not happen leaves the setting where it was.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AFailedDownloadDoesNotBecomeASelection()
     {
@@ -99,6 +102,7 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>The row narrates.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRowSaysWhatWentWrongWhereItWasChosen()
     {
@@ -122,6 +126,7 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>And it has somewhere to show progress, under the control that starts it.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheModelRowCarriesAProgressBar()
     {
@@ -134,6 +139,7 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>The choice is shut while the download runs.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheChoiceIsDisabledWhileItDownloadsAndEnabledAfter()
     {
@@ -158,6 +164,7 @@ public class ModelSelectionFollowsTheDiskTests
     }
 
     /// <summary>A finished download leaves nothing behind to read.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NothingIsLeftOnTheRowAfterASuccessfulDownload()
     {

@@ -86,6 +86,7 @@ public class SessionLengthCalloutTests
         Assert.Equal("You have been flying 2 hours, Commander.", said.Text);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowsExistAndTheReminderDefaultsOff()
     {

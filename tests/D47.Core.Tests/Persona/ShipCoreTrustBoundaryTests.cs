@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Persona;
 /// The boundary Phase 35 turned on — the model may read a binding and never write one — now kept by
 /// there being nothing to reach.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ShipCoreTrustBoundaryTests
 {
     private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;

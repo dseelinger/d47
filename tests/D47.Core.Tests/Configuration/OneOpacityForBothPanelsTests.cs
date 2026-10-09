@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Configuration;
 /// Opacity was one of the six settings each headset surface kept its own copy of, and is now one knob
 /// for both.
 /// </summary>
+[Trait("Category", "Integration")]
 public class OneOpacityForBothPanelsTests
 {
     /// <summary>

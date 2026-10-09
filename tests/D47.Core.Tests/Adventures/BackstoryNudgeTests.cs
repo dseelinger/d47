@@ -60,6 +60,7 @@ public abstract class BackstoryNudgeTestBase : IDisposable
         announcement.Key.StartsWith(AdventureCallout.BackstoryPrefix, StringComparison.Ordinal);
 }
 
+[Trait("Category", "Integration")]
 public class AMidpointBeatNudgesTheBackstoryOnceTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -90,6 +91,7 @@ public class AMidpointBeatNudgesTheBackstoryOnceTests : BackstoryNudgeTestBase
     }
 }
 
+[Trait("Category", "Integration")]
 public class AnAllIsLostBeatNudgesTheBackstoryTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -108,6 +110,7 @@ public class AnAllIsLostBeatNudgesTheBackstoryTests : BackstoryNudgeTestBase
     }
 }
 
+[Trait("Category", "Integration")]
 public class NoNudgeWithoutABackstoryTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -117,6 +120,7 @@ public class NoNudgeWithoutABackstoryTests : BackstoryNudgeTestBase
     }
 }
 
+[Trait("Category", "Integration")]
 public class NoNudgeWhenTheBeatWasDroppedTests : BackstoryNudgeTestBase
 {
     [Fact]
@@ -131,6 +135,7 @@ public class NoNudgeWhenTheBeatWasDroppedTests : BackstoryNudgeTestBase
     }
 }
 
+[Trait("Category", "Integration")]
 public class NoNudgeWhenItsSwitchIsOffTests : BackstoryNudgeTestBase
 {
     [Fact]

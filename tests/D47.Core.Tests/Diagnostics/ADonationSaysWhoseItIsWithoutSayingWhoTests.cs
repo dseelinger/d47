@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The per-installation donor token.</summary>
+[Trait("Category", "Integration")]
 public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-donor").FullName;

@@ -9,6 +9,7 @@ namespace D47.Donations.Tests;
 /// The stored SHA-256 is over the decompressed payload, so it is the one check that proves the object
 /// arrived whole and was unpacked exactly once.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AZipIsOnlyWrittenWhenTheHashMatchesTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

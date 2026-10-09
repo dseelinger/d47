@@ -29,6 +29,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
     private const string Elsewhere =
         """{ "timestamp":"2026-09-07T10:01:00Z", "event":"Location", "StarSystem":"Sol", "SystemAddress":10477373803, "Docked":false }""";
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASiteInAnEarlierJournalIsFoundWithItsSystemAndStation()
     {
@@ -44,6 +45,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal(0.25, site.Progress);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASiteSeenLiveMoreRecentlyKeepsTheLiveFigures()
     {
@@ -66,6 +68,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal(DateTimeOffset.Parse("2026-09-07T10:06:00Z", System.Globalization.CultureInfo.InvariantCulture), site.SeenAt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheCurrentJournalFoldedByBothTheWalkAndTheReaderChangesNothing()
     {
@@ -101,6 +104,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal("Apianus's Pride", location.StationName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheWalkIsTimedAsAStepOfStartup()
     {

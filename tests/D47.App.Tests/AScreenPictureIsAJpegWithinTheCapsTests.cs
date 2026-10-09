@@ -79,6 +79,7 @@ public class AScreenPictureIsAJpegWithinTheCapsTests
         Assert.Equal(0, red);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATraceStillIsStillA960PixelPng()
     {

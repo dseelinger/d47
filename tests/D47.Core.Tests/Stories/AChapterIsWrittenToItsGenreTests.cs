@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Stories;
 /// <summary>A story chapter's brief names the genre's three elements and the size of the chapter.</summary>
 public sealed class AChapterIsWrittenToItsGenreTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ABuddyLoveBriefNamesItsThreeElements()
     {
@@ -23,6 +24,7 @@ public sealed class AChapterIsWrittenToItsGenreTests
         Assert.Contains("A chapter may offer hiring a crew member (a \"crew\" objective) as part of it, but never requires it.", brief);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheBriefStatesTheChapterSizeAndCarriesOnAnUnfinishedUndertaking()
     {
@@ -37,6 +39,7 @@ public sealed class AChapterIsWrittenToItsGenreTests
         Assert.Contains("Whydunit, and every chapter keeps its three elements in play: a detective, a secret, a dark turn.", brief);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AStoryShorterThanThreeMonthsHasOneSessionChapters()
     {

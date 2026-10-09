@@ -19,6 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>What the headset is actually handed.</summary>
+[Trait("Category", "Integration")]
 public class VrPanelRasterTests
 {
     /// <summary>Not blank.</summary>

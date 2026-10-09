@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The calm settings page.</summary>
+[Trait("Category", "Integration")]
 public class SeventyFiveKnobsTests
 {
     private static IReadOnlyList<SettingRow> Rows(TestSurface surface) =>

@@ -326,6 +326,7 @@ public class ACoreRemarksOnItsOwnSubjectTests
         Assert.Empty(session.Tick(at, Sell(at, 9_000_000)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ChoosingACoreNeverSwitchesItOn()
     {
@@ -343,6 +344,7 @@ public class ACoreRemarksOnItsOwnSubjectTests
         Assert.False(chosen.Callouts.Domain);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {

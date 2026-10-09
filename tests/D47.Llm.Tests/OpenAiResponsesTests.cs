@@ -12,6 +12,7 @@ public class OpenAiResponsesTests
 
     public OpenAiResponsesTests() => EndpointDemotions.Clear();
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AOneWordTurnArrivesAsTextThenCompleted()
     {
@@ -30,6 +31,7 @@ public class OpenAiResponsesTests
         Assert.Equal(120, done.Usage.InputTokens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task CachedAndWrittenTokensBothComeOutOfTheInputCount()
     {
@@ -53,6 +55,7 @@ public class OpenAiResponsesTests
     /// against that same item id; and the answer has to quote the <c>call_id</c>, which is a different
     /// string.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AToolCallIsRejoinedFromTwoDifferentIdentifiers()
     {
@@ -80,6 +83,7 @@ public class OpenAiResponsesTests
     /// <summary>
     /// The done event carries the whole argument string as well, and it is the authoritative copy.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCompleteArgumentStringWinsOverTheFragments()
     {
@@ -98,6 +102,7 @@ public class OpenAiResponsesTests
         Assert.Equal("{\"tank\":\"main\"}", call.InputJson);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACallLeftOpenIsStillEmitted()
     {
@@ -114,6 +119,7 @@ public class OpenAiResponsesTests
         Assert.Equal(LlmStopReason.ToolUse, Assert.IsType<LlmStreamEvent.Completed>(events[^1]).StopReason);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ReasoningSummariesAreKeptApartFromTheAnswer()
     {
@@ -131,6 +137,7 @@ public class OpenAiResponsesTests
     }
 
     /// <summary>A server-side search is billed separately and costs more than an entire cheap turn.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ServerSideSearchesAreCounted()
     {
@@ -148,6 +155,7 @@ public class OpenAiResponsesTests
         Assert.Equal(2, done.Usage.WebSearchRequests);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("max_output_tokens", LlmStopReason.MaxTokens)]
     [InlineData("content_filter", LlmStopReason.Refusal)]
@@ -166,6 +174,7 @@ public class OpenAiResponsesTests
         Assert.Equal(expected, done.StopReason);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFailureInsideTheStreamEndsTheTurnAsAFailure()
     {

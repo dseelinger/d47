@@ -52,6 +52,7 @@ public class ThePanelGoesMiniTooTests
     /// — which is what <c>MiniPane</c> is, and is why "mini shows this tab" and "mini shows this tab
     /// the same way" are two different questions.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniStaysOnAdventuresWhereAHostFurnishedTheShortReading()
     {

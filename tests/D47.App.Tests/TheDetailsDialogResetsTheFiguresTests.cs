@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Resetting the cost figures from the Details dialog.</summary>
+[Trait("Category", "Integration")]
 public class TheDetailsDialogResetsTheFiguresTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The Voice row belongs to the core aboard.</summary>
+[Trait("Category", "Integration")]
 public class VoiceFollowsTheCoreTests
 {
     private static SettingApplyResult Choose(TestSurface surface, string key, string? value) =>

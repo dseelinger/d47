@@ -22,6 +22,7 @@ namespace D47.App.Tests;
 /// The Guardian Voice Effects group is one control: an inline preset picker and TEST on the preset row,
 /// and every effect as a strip under it, each writing through its own row (#479).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class GuardianVoiceEffectsAreOneGroupTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -7,6 +7,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>Every arrive, dock, land and scan beat carries a reason, said in the hand-off and given to the core before arrival.</summary>
+[Trait("Category", "Integration")]
 public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);

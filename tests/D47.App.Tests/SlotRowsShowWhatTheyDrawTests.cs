@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The megawatts a slot row carries beside what is fitted and what is planned (#252).</summary>
+[Trait("Category", "Integration")]
 public class SlotRowsShowWhatTheyDrawTests
 {
     private sealed record Surface(Window Window, PanelView Panel, ShipPlanService Ships);

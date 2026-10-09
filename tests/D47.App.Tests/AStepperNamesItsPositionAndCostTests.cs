@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// A stepper says where it stands inside its value box, and what it costs to step onto a value under
 /// itself (#336, #438).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AStepperNamesItsPositionAndCostTests
 {
     [AvaloniaFact]

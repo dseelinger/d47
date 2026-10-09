@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Knowledge;
 /// A misheard commodity gets the same nearest-name offer ships, engineers and modules already get,
 /// rather than the index's flat "no such commodity" (#117).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AMisheardCommodityIsOfferedItsNearestNameTests
 {
     private sealed class Recording : ITradePlanService

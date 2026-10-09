@@ -8,6 +8,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Persona;
 
+[Trait("Category", "Integration")]
 public sealed class ABeaconScanWakesTheCoresTests
 {
     [Fact]

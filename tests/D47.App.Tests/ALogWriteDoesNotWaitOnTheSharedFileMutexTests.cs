@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// The shared file sink takes a named mutex, keyed on the file's full path, before each write and waits
 /// up to ten seconds for it. The tick logs, so a call must return while another holder has it.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ALogWriteDoesNotWaitOnTheSharedFileMutexTests
 {
     [Fact]

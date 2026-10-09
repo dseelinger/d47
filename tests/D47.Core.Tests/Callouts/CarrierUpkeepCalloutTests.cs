@@ -187,6 +187,7 @@ public class CarrierUpkeepCalloutTests
         Assert.Empty(Say(new CarrierUpkeepCallout(), state, SameWeek, priming: true, events: dock));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {

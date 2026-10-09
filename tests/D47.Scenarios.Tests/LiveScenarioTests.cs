@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>Does this endpoint resist these attacks?</summary>
+[Trait("Category", "Integration")]
 public class LiveScenarioTests
 {
     private static bool Enabled => Environment.GetEnvironmentVariable("D47_SCENARIOS_LIVE") == "1";

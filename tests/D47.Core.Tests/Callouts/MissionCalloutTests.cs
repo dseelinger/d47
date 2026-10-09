@@ -94,6 +94,7 @@ public class MissionCalloutTests
         Assert.Empty(Run(new MissionCallout(), DockedWithHold(128), Start, false, accept));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ACollectMissionForWhatTheMarketStocksSaysTheyAreSoldHere()
     {
@@ -109,6 +110,7 @@ public class MissionCalloutTests
         Assert.Empty(Run(elsewhere, DockedWithHold(64), Start, false, accept));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADeliveryMissionForWhatTheMarketStocksSaysNothing()
     {
@@ -118,6 +120,7 @@ public class MissionCalloutTests
         Assert.Empty(Run(callout, DockedWithHold(64), Start, false, accept));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheMarketIsJoinedByDisplayNameNotBySymbol()
     {

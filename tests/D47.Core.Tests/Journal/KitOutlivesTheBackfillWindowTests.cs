@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Journal;
 /// A suit or weapon bought on foot is still answerable after a restart, however long ago it was last
 /// worn — there is no re-listing event to bound the search the way StoredShips does for a fleet.
 /// </summary>
+[Trait("Category", "Integration")]
 public class KitOutlivesTheBackfillWindowTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-kit-backfill").FullName;

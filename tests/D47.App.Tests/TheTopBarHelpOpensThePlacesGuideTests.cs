@@ -34,6 +34,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     /// Pressed on Voice Input, it draws the Listening band — that place's own subject, not the page about
     /// Settings.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OnVoiceInputItDrawsThatPlacesOwnPageInThePanel()
     {
@@ -56,6 +57,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     }
 
     /// <summary>On Its voice, the guide its place names.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OnItsVoiceItOpensTheGuideThatPlaceNames()
     {
@@ -71,6 +73,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     }
 
     /// <summary>And there is a way back to the page it was pressed from.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheBreadcrumbGoesBackToTheSettingsPage()
     {
@@ -95,6 +98,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     }
 
     /// <summary>What it draws ends with the way out to the site, named for where it goes.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WhatItDrawsOffersTheLongFormOnline()
     {
@@ -113,6 +117,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     }
 
     /// <summary>A place whose guide nobody has illustrated opens the Settings guide rather than nothing.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APlaceWithNoBandOpensTheSettingsGuide()
     {
@@ -145,6 +150,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     }
 
     /// <summary>A chooser no longer makes the mark inert.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void HelpOpensOverAChooserAndBackReturnsToIt()
     {

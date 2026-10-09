@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The audio recorder's one settings row, through the surface a Commander actually sees.</summary>
+[Trait("Category", "Integration")]
 public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
 {
     private const string WipeButton = "Press_privacy_audioFlight";

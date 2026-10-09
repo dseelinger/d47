@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Whether the native library loads at all, on whatever machine this is running on.</summary>
+[Trait("Category", "Integration")]
 public class OpenVrRuntimeReachTests
 {
     [Fact]

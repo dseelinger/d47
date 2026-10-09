@@ -10,6 +10,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Checklists;
 
+[Trait("Category", "Integration")]
 public class LeavingTheBubbleOffersAnExpeditionKitTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);

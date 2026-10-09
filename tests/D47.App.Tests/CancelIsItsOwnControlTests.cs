@@ -86,6 +86,7 @@ public class CancelIsItsOwnControlTests
     /// The row is on the page under its own name, for every Commander. #218 had hidden it behind an
     /// <c>AppliesWhen</c> while push-to-talk was bound, which was almost everybody.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CancelIsARowEveryCommanderCanSee()
     {
@@ -108,6 +109,7 @@ public class CancelIsItsOwnControlTests
     /// It takes a stick button, which is the ask, through the one bind control #217 built: the key row
     /// names the button row and the pair is drawn once.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OneRowHoldsTheKeyAndTheStickButton()
     {
@@ -127,6 +129,7 @@ public class CancelIsItsOwnControlTests
     }
 
     /// <summary>Both halves are <see cref="SettingRow.Protected"/>.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(ListeningCapability.CancelHotkeyKey)]
     [InlineData(ListeningCapability.CancelButtonKey)]
@@ -144,6 +147,7 @@ public class CancelIsItsOwnControlTests
     /// A key claimed from the whole system still cannot be a bare one, and Cancel is claimed from the
     /// whole system because the moment it is wanted is the moment Elite is in front.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheKeyHalfIsStillSystemWide()
     {
@@ -185,6 +189,7 @@ public class CancelIsItsOwnControlTests
     /// property behind it never moved — <c>settings.json</c> is append-only, and the older spelling is
     /// why it is still called <c>shutUpHotkey</c>.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AKeyAlreadyBoundSurvivesTheWidening()
     {
@@ -197,6 +202,7 @@ public class CancelIsItsOwnControlTests
     }
 
     /// <summary>Cancel is drawn directly under push-to-talk: they are the two controls a Commander binds together.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CancelSitsDirectlyBelowPushToTalk()
     {

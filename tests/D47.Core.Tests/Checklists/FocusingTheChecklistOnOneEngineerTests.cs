@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Checklists;
 /// Narrowing the checklist to one engineer's own unlock — their invitation, their tribute, and the
 /// referral required before either — and nothing else on the list (#265).
 /// </summary>
+[Trait("Category", "Integration")]
 public class FocusingTheChecklistOnOneEngineerTests
 {
     private const int ElviraMartuuk = 300160;

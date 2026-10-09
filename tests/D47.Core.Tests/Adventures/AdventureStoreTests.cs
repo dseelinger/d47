@@ -6,6 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>The adventures on disk.</summary>
+[Trait("Category", "Integration")]
 public class AdventureStoreTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

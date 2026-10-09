@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>Where the correction is applied, and where the asking happens.</summary>
+[Trait("Category", "Integration")]
 public class TheCorrectionReachesTheWholeSentenceTests
 {
     private static TurnLoop Loop(TempInstall install, ILlmProvider provider, Func<string, string> heard)

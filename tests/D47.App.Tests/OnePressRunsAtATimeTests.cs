@@ -15,6 +15,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A long press and the Guardian test share one running flag.</summary>
+[Trait("Category", "Integration")]
 public class OnePressRunsAtATimeTests
 {
     [AvaloniaFact]

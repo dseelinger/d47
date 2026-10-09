@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary> Pictures of the reworked chrome, for looking at rather than for asserting on. </summary>
+[Trait("Category", "Integration")]
 public class TheReworkedChromeRendersToACaptureTests
 {
     /// <summary>A short route with the two things a hop can carry: a hazard, and no scoop.</summary>

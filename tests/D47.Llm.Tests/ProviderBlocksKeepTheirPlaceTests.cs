@@ -71,6 +71,7 @@ public class ProviderBlocksKeepTheirPlaceTests
     private static string[] Types(JsonElement content) =>
         [.. content.EnumerateArray().Select(block => block.GetProperty("type").GetString()!)];
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnthropicBlockIsSentVerbatimInItsPlace()
     {
@@ -83,6 +84,7 @@ public class ProviderBlocksKeepTheirPlaceTests
         Assert.True(JsonElement.DeepEquals(JsonDocument.Parse(SearchResult).RootElement, content[2]));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnotherProvidersBlockIsNotSentToAnthropic()
     {

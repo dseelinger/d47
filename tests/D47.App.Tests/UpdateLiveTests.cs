@@ -9,6 +9,7 @@ namespace D47.App.Tests;
 /// The real GitHub release, end to end: the API shape, the asset names, the checksum sidecar format and
 /// the hash all have to agree or an update silently downgrades to "open the page".
 /// </summary>
+[Trait("Category", "Integration")]
 public class UpdateLiveTests
 {
     private static bool Enabled => Environment.GetEnvironmentVariable("D47_UPDATE_LIVE") == "1";

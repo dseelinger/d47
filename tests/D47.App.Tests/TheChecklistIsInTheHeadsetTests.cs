@@ -17,6 +17,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheChecklistIsInTheHeadsetTests
 {
     /// <summary>What a ray-sized target has to clear, in surface pixels.</summary>

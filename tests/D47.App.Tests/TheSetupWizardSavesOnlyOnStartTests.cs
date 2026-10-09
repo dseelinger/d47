@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The first-run setup wizard, on the surface.</summary>
+[Trait("Category", "Integration")]
 public class TheSetupWizardSavesOnlyOnStartTests
 {
     private static readonly string[] SavedKeys =

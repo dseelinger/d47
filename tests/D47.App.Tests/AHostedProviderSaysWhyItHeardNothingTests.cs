@@ -231,6 +231,7 @@ public class AHostedProviderSaysWhyItHeardNothingTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoTinyModelInTheFolderTheProbeIsSkipped()
     {

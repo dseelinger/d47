@@ -20,6 +20,7 @@ public class VrPointerTests
         Assert.False(Declared<VrCaptionSurface>());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void SomethingInTheRuntimeActuallyRegistersForTheTrigger()
     {
@@ -28,6 +29,7 @@ public class VrPointerTests
             $"nothing in {typeof(VrActionInput).Assembly.GetName().Name} calls {nameof(VrActionInput.Register)}");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void SomethingInTheAppActuallyReadsTheTrigger()
     {
@@ -36,6 +38,7 @@ public class VrPointerTests
             $"nothing in {typeof(VrHost).Assembly.GetName().Name} calls {nameof(VrActionInput.TriggerHeld)}");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void SomethingInTheAppGivesTheControllersBack()
     {
@@ -49,6 +52,7 @@ public class VrPointerTests
     }
 
     /// <summary>And what is given back is the set at priority zero, not nothing.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheReleaseIsTheSetAtPriorityZeroNotAnEmptyList()
     {

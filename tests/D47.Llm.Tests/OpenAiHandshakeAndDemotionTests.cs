@@ -11,6 +11,7 @@ public class OpenAiHandshakeAndDemotionTests
 
     public OpenAiHandshakeAndDemotionTests() => EndpointDemotions.Clear();
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheModelListBecomesTheEndpointsOwn()
     {
@@ -47,6 +48,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.NotNull(models.Detail);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NotStartedYetIsNotTheSameAsWrong()
     {
@@ -60,6 +62,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.Equal(EndpointReach.Refused, (await toRefusing.ListModelsAsync(Token)).Reach);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedFieldIsDroppedAndTheTurnRetriedOnce()
     {
@@ -87,6 +90,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.False(provider.CapabilitiesFor("any").SupportsThinkingEffort);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSameRefusalIsNotRetriedForever()
     {
@@ -106,6 +110,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.Equal(3, endpoint.Requests.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADemotionAtOneAddressDoesNotFollowToAnother()
     {
@@ -125,6 +130,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.True(other.CapabilitiesFor("any").SupportsThinkingEffort);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusalThatNamesNothingDemotesNothing()
     {
@@ -154,6 +160,7 @@ public class OpenAiHandshakeAndDemotionTests
     internal void OnlyANamedFieldCountsAsARefusal(string message, Demotable? expected) =>
         Assert.Equal(expected, ChatCompletionsLlmProvider.WhatWasRejected(message));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnEndpointThatRefusesUsageLeavesTheTurnUnpriced()
     {
@@ -173,6 +180,7 @@ public class OpenAiHandshakeAndDemotionTests
         Assert.DoesNotContain("stream_options", endpoint.Requests[1], StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheOlderTokenLimitIsUsedWhenTheNewOneIsRefused()
     {
@@ -192,6 +200,7 @@ public class OpenAiHandshakeAndDemotionTests
     }
 
     /// <summary>What each rung becomes in the body, on both OpenAI shapes.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(ThinkingEffort.Low, "low")]
     [InlineData(ThinkingEffort.Medium, "medium")]

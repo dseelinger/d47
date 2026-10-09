@@ -59,6 +59,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
             caller: ToolCaller.Model);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheWalkFoldsTheJulyRun()
     {
@@ -73,6 +74,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
         Assert.Equal(33, run.ProspectorsLaunched);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARunStillOpenAtTheLastJournalIsNotCounted()
     {
@@ -84,6 +86,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
         Assert.False(Walk(install).MiningRuns!.ContainsKey(Fid));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TenTonnesOverTheJulyRunIsTwoCollectorsAndFourProspectorsFromAllRuns()
     {
@@ -100,6 +103,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
             result.Content);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMaterialMostRefinedInThreeRunsUsesItsOwnRatio()
     {
@@ -121,6 +125,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
             result.Content);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMaterialWithFewerThanThreeRunsSaysItUsedAllRuns()
     {
@@ -143,6 +148,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
         Assert.DoesNotContain(result.Content, char.IsDigit);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(HistoryState.Pending)]
     [InlineData(HistoryState.Running)]

@@ -67,6 +67,7 @@ public class ASoundIsPickedFromItsFolderEachTimeTests
         Assert.Equal(CueLibrary.DefaultBed, Load(new Random(1)).Bed().Name);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASettingsFileThatStillPicksABedLoads()
     {

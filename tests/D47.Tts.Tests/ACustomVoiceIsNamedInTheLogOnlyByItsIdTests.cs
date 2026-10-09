@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
+[Trait("Category", "Integration")]
 public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests : IDisposable
 {
     private const string Name = "Secret Ally";

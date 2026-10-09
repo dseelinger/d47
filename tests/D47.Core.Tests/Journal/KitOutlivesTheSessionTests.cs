@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Every suit and weapon the Commander owns is still answerable after a restart.</summary>
+[Trait("Category", "Integration")]
 public class KitOutlivesTheSessionTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-kit").FullName;

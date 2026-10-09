@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Activities page off the Checklist: every activity, its date, and the Suggest box (#587).</summary>
+[Trait("Category", "Integration")]
 public sealed class TheActivitiesPageListsEveryActivityTests
 {
     private const string Fid = "F1";

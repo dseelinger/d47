@@ -277,6 +277,7 @@ public class TheStressMarkGoesBeforeTheVowelTests
     }
 
     /// <summary>And the Commander's own corrections go through the same guard.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARespelledOverrideMarksAVowel()
     {

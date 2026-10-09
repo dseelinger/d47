@@ -9,6 +9,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>Docking is denied with the docks offline at the current dock beat of an adventure outside a story; d47 writes that adventure's beat again.</summary>
+[Trait("Category", "Integration")]
 public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
 {
     private const string AdventureKey = "the-anchorage-run";

@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The voice commands act on the draft whose page is open, else on the only draft, and otherwise change nothing.</summary>
+[Trait("Category", "Integration")]
 public class ADraftIsActedOnByVoiceFromThePageTests
 {
     private static Adventure Draft(string key) =>

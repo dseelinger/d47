@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Knowledge;
 /// The model's view of galaxy search: what it can ask for, what it is told when it asks for something
 /// that does not exist, and what happens when the service is unreachable or off.
 /// </summary>
+[Trait("Category", "Integration")]
 public class GalaxyCapabilityTests
 {
     /// <summary>A service that answers from a script, and records what it was asked.</summary>

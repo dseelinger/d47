@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Llm.Tests;
 
+[Trait("Category", "Integration")]
 public class PromptOnTheWireTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

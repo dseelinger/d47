@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// <see cref="GuardianPresets.Update"/> and <see cref="GuardianPresets.Delete"/> straight away and
 /// restoring the settings from before the action.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -14,6 +14,7 @@ namespace D47.App.Tests;
 /// window attached the panel to a visual tree — a cold start, where the strip's own first draw runs
 /// later than the row was decided (#103).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheSearchBoxSurvivesAColdStartTests
 {
     private static bool BoxShown(PanelView panel) => panel.GetControl<DockPanel>("SearchRow").IsVisible;

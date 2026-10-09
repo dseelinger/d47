@@ -14,6 +14,7 @@ namespace D47.Tts.Tests;
 /// A one-off live measurement of what <c>eleven_v4_turbo</c> accepts, written to a report for the maintainer to
 /// read. Spends real characters, so it runs only with <c>D47_ELEVENLABS_PROBE=1</c> as well as the key.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ElevenLabsV4TurboProbeTests
 {
     private const string BaseUrl = "https://api.elevenlabs.io/v1";

@@ -124,6 +124,7 @@ public sealed class AReachedBeatIsALogFactTests
         Assert.All(beats, beat => Assert.EndsWith("in the adventure The Marker, three.", beat.Statement, StringComparison.Ordinal));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoSealedTextAppearsInADigestOfAStoryChapter()
     {

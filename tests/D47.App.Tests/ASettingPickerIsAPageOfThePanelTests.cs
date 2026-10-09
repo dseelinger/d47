@@ -23,6 +23,7 @@ namespace D47.App.Tests;
 /// A settings Choice row opens its picker as a page of the panel it is drawn on, with a crumb above it, on
 /// the desktop window and in the headset alike (#414).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ASettingPickerIsAPageOfThePanelTests
 {
     /// <summary>The smallest panel size a Commander can pick (<see cref="PanelResolution.Steps"/>).</summary>

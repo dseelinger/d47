@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// A hull the table has no figures for still names itself and says which figures are missing,
 /// rather than reading as though d47 knew nothing about the ship (#387).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AMissingHullNamesWhatIsMissingTests
 {
     [Fact]

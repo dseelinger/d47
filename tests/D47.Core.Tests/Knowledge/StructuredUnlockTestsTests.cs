@@ -140,6 +140,7 @@ public class StructuredUnlockTestsTests
         Assert.Null(UnlockTest.Parse(cell));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoNonEmptyShippedCellFailsToParse()
     {

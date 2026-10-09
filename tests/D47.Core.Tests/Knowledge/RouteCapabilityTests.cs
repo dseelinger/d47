@@ -194,6 +194,7 @@ public class RouteCapabilityTests
     private static ToolArguments Args(params (string Name, string Value)[] values) =>
         new(values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipsOwnJumpRangeAndPositionFillThemselvesIn()
     {
@@ -211,6 +212,7 @@ public class RouteCapabilityTests
         Assert.Equal(52.31, routes.LastRoute?.JumpRange);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnEfficiencyOfOneHundredIsNeverSentBecauseTheServiceCannotRouteWithIt()
     {
@@ -226,6 +228,7 @@ public class RouteCapabilityTests
         Assert.Equal(99, routes.LastRoute?.Efficiency);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AShipTooShortRangedToPlotForIsToldSoRatherThanRefusedByTheService()
     {
@@ -243,6 +246,7 @@ public class RouteCapabilityTests
     }
 
  /// <summary>The last waypoint does not announce zero light years left.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDestinationWaypointSaysNothingAboutDistanceLeft()
     {
@@ -283,6 +287,7 @@ public class RouteCapabilityTests
     public void ARemainderThatWouldPrintAsZeroIsNotWorthReporting(double left) =>
         Assert.Null(new RouteWaypoint("Meene", 1, left, false).DistanceLeftToReport);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ALongRouteSaysHowManyWaypointsThereAreRatherThanReadingThemAllOut()
     {
@@ -309,6 +314,7 @@ public class RouteCapabilityTests
         Assert.DoesNotContain("Waypoint 100", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NoRouteIsAnAnswerRatherThanAFailure()
     {
@@ -329,6 +335,7 @@ public class RouteCapabilityTests
         Assert.Contains("lower efficiency", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteWillNotInferTheCommandersBalance()
     {
@@ -356,6 +363,7 @@ public class RouteCapabilityTests
         Assert.Null(trade.LastTrade);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteDoesFillInTheHoldFromTheShip()
     {
@@ -373,6 +381,7 @@ public class RouteCapabilityTests
     }
 
     /// <summary>A trade route never sells limpets, so they come off the default hold with no switch (#310).</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDefaultHoldLeavesRoomForTheLimpetsAlreadyAboard()
     {
@@ -419,6 +428,7 @@ public class RouteCapabilityTests
     /// A stop behind a permit is one the Commander cannot fly to, so the switch is on unless they
     /// turn it off (#310).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PermitSystemsAreAvoidedUnlessTheCommanderSaysOtherwise()
     {
@@ -444,6 +454,7 @@ public class RouteCapabilityTests
     /// The Trade route page's own saved values (#311) fill in anything a call doesn't give — a voice
     /// plot that names only the credits runs with whatever the page last saved.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteUsesTheSavedSettingsForAnythingNotGiven()
     {
@@ -490,6 +501,7 @@ public class RouteCapabilityTests
         Assert.Equal(3, trade.LastTrade?.MaxHops);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteWithNoKnownJumpRangeAsksForOneRatherThanSendingAnything()
     {
@@ -511,6 +523,7 @@ public class RouteCapabilityTests
     /// <summary>The staleness bound is spelled `max_price_age_hours` here as well as on the commodity search,
     /// and the handler reads it under that name — a rename that reached the schema and not the handler would
     /// advertise a knob that silently does nothing.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheStalenessBoundIsSpelledWithItsUnit()
     {
@@ -525,6 +538,7 @@ public class RouteCapabilityTests
         Assert.Equal(48, trade.LastTrade?.MaxPriceAge);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteCannotBePlottedFromSupercruise()
     {
@@ -543,6 +557,7 @@ public class RouteCapabilityTests
     }
 
     /// <summary>Asking the same question Trading Mode answers on its own, about any system (#313).</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForSaysWhatToBuyHereForTheNamedSystem()
     {
@@ -567,6 +582,7 @@ public class RouteCapabilityTests
         Assert.Equal(384, trade.LastBestCargo?.Hold);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForNeedsTheMarketYouAreDockedAt()
     {
@@ -584,6 +600,7 @@ public class RouteCapabilityTests
     }
 
     /// <summary>The page draws what the tool found, so the tool posts every search it finishes (#849).</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForPostsTheSearchAndItsAnswerToTheBoard()
     {
@@ -623,6 +640,7 @@ public class RouteCapabilityTests
         Assert.Null(board.Last.Answer);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedBestCargoSearchPostsNothing()
     {
@@ -635,6 +653,7 @@ public class RouteCapabilityTests
         Assert.Null(board.Last);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForSaysWhenNothingPays()
     {
@@ -653,6 +672,7 @@ public class RouteCapabilityTests
         Assert.Null(trade.LastTrade);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARichesRouteReportsWhatItIsWorthAndHowFarItGoes()
     {
@@ -688,6 +708,7 @@ public class RouteCapabilityTests
             < result.Content.IndexOf("A 3", StringComparison.Ordinal));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
     {
@@ -704,6 +725,7 @@ public class RouteCapabilityTests
         Assert.Null(routes.LastRoute);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachablePlotterIsAnErrorResultNotAnException()
     {
@@ -722,6 +744,7 @@ public class RouteCapabilityTests
     }
 
  /// <summary>A route plotted by voice lands in the book the Routing tab reads.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task APlotMadeByVoiceIsThereForASurfaceToDraw()
     {
@@ -750,6 +773,7 @@ public class RouteCapabilityTests
         Assert.Equal(kept.Jump!.Waypoints.Count, kept.Jump.Waypoints.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task APlotThatFoundNothingLeavesTheBookAlone()
     {
@@ -818,6 +842,7 @@ public class RouteCapabilityTests
             new RouteWaypoint("Col 359 Sector NN-T e3-3", 11, 0, false),
         ]);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoStoredPlanOfThatKindNothingIsPlottedAndItSaysSo()
     {
@@ -839,6 +864,7 @@ public class RouteCapabilityTests
         Assert.Empty(((RecordingClipboard)navigation.Clipboard).Written);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNothingReachedItPlotsTheFirstStop()
     {
@@ -859,6 +885,7 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithAStopReachedItPlotsTheOneAfter()
     {
@@ -883,6 +910,7 @@ public class RouteCapabilityTests
         Assert.Equal(0, plans.Last(RoutePlanKind.Jump)?.Reached);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithTheLastStopReachedNothingIsPlottedAndItSaysSo()
     {
@@ -912,6 +940,7 @@ public class RouteCapabilityTests
     /// A trade plan's first stop is the station the Commander plotted from, so it is skipped rather than
     /// plotted back to — and its own kind's tool never reads another kind's book.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeStopInTheCurrentSystemIsSkippedAndTheStationIsNamed()
     {
@@ -950,6 +979,7 @@ public class RouteCapabilityTests
         Assert.Null(plans.Last(RoutePlanKind.Jump)?.Reached);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AKindArgumentInAnyCaseStillReachesTheRightPlan()
     {
@@ -970,6 +1000,7 @@ public class RouteCapabilityTests
         Assert.Equal("PSR J1752-2806", ((RecordingClipboard)navigation.Clipboard).Last);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AutomaticPlottingBothOnAndOffStillNamesTheStop()
     {
@@ -989,6 +1020,7 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnExobiologyPlanPlotsItsNextSystem()
     {
@@ -1013,6 +1045,7 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 2 of 2", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("plot next exobiology stop")]
     [InlineData("plot the next exobiology stop")]

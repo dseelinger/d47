@@ -84,6 +84,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         return path;
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -125,6 +126,7 @@ public class TheChecklistIsDrawnOnTheKitTests
     }
 
     /// <summary>A tab's own settings strip, closed and open, on Elite.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePageSettingsStripIsCaptured()
     {
@@ -147,6 +149,7 @@ public class TheChecklistIsDrawnOnTheKitTests
     }
 
     /// <summary>The selected line is a solid A fill, and the others the list row's Tile.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSelectedLineIsFilledNotOutlined()
     {
@@ -167,6 +170,7 @@ public class TheChecklistIsDrawnOnTheKitTests
     }
 
     /// <summary>Delete completed items is a destructive button at the kit's height.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void DeleteCompletedIsADestructiveButton()
     {

@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Mining;
 
 /// <summary>The mining target is set by phrase or tool and kept per Commander between sessions (#607).</summary>
+[Trait("Category", "Integration")]
 public class AMiningTargetIsSetByVoiceTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-mining").FullName;

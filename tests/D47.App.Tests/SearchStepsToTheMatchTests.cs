@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Stepping through matches takes you to them.</summary>
+[Trait("Category", "Integration")]
 public class SearchStepsToTheMatchTests
 {
     private static (PanelView Panel, TextBox Box) Searching(string query, int lines = 200)

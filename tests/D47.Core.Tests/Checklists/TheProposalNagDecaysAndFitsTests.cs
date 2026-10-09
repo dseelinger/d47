@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>What d47 says about a proposal nobody has answered yet.</summary>
+[Trait("Category", "Integration")]
 public class TheProposalNagDecaysAndFitsTests
 {
     private const string Hull = "type8";

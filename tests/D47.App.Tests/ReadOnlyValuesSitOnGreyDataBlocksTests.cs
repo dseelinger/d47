@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// Info rows draw their value on a Slab data block with no left bar, the spend rows as one tile per
 /// figure, the egress detail behind a SHOW tile, and the two forgetting presses red (#443).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ReadOnlyValuesSitOnGreyDataBlocksTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

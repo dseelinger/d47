@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The five slot rows, on the page a Commander actually opens.</summary>
+[Trait("Category", "Integration")]
 public class EverySlotHasItsOwnProviderRowTests
 {
     private static readonly VoiceGroupInfo[] OverTheAir =

@@ -12,6 +12,7 @@ public class OpenAiChatCompletionsTests
 
     public OpenAiChatCompletionsTests() => EndpointDemotions.Clear();
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AOneWordTurnArrivesAsTextThenCompleted()
     {
@@ -38,6 +39,7 @@ public class OpenAiChatCompletionsTests
     /// endpoint calls 2,600 prompt tokens with 2,000 cached must reach the seam as 600 uncached and
     /// 2,000 read, or every cached turn is billed for 4,600 input tokens it never used.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task CachedPromptTokensAreNotCountedTwice()
     {
@@ -58,6 +60,7 @@ public class OpenAiChatCompletionsTests
         Assert.Equal(2_600, done.Usage.TotalInputTokens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AServerThatSendsNoUsageLeavesTheTurnUnpricedRatherThanFree()
     {
@@ -78,6 +81,7 @@ public class OpenAiChatCompletionsTests
     /// Arguments arrive as fragments that are not parseable until the last one lands, and the later
     /// fragments name only the index — no id, which is how several servers stream them.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AToolCallIsAssembledWholeAcrossFragments()
     {
@@ -105,6 +109,7 @@ public class OpenAiChatCompletionsTests
     }
 
     /// <summary>A tool with no parameters produces no argument fragments at all.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AToolWithNoArgumentsArrivesAsAnEmptyObject()
     {
@@ -121,6 +126,7 @@ public class OpenAiChatCompletionsTests
     }
 
     /// <summary>Two tools at once, interleaved: the index keeps them apart where the id alone would merge them.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TwoInterleavedToolCallsStayApart()
     {
@@ -145,6 +151,7 @@ public class OpenAiChatCompletionsTests
         Assert.Equal(("call_b", "cargo", """{"hold":"aft"}"""), (calls[1].Id, calls[1].Name, calls[1].InputJson));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ReasoningContentIsKeptApartFromTheAnswer()
     {
@@ -162,6 +169,7 @@ public class OpenAiChatCompletionsTests
         Assert.Equal("Half full.", Assert.Single(events.OfType<LlmStreamEvent.TextDelta>()).Text);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("length", LlmStopReason.MaxTokens)]
     [InlineData("content_filter", LlmStopReason.Refusal)]
@@ -182,6 +190,7 @@ public class OpenAiChatCompletionsTests
         Assert.Equal(expected, done.StopReason);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AToolCallWithNoFinishReasonStillEndsTheTurnForTools()
     {
@@ -210,6 +219,7 @@ public class OpenAiChatCompletionsTests
         Assert.True(failure.Transient);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARejectedKeyIsPermanentAndAnOverloadIsNot()
     {
@@ -233,6 +243,7 @@ public class OpenAiChatCompletionsTests
     /// An error delivered inside the stream, after the endpoint has already sent 200 and started the
     /// body.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnErrorInsideTheStreamEndsTheTurnAsAFailure()
     {
@@ -249,6 +260,7 @@ public class OpenAiChatCompletionsTests
     }
 
     /// <summary>A keep-alive comment, a blank frame, a line that is not JSON.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFrameThatIsNotJsonIsSkippedRatherThanEndingTheTurn()
     {
@@ -341,6 +353,7 @@ public class OpenAiChatCompletionsTests
         Assert.True(reminder > result, "live game state belongs below everything cached");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TextArrivesBeforeTheTurnHasFinished()
     {

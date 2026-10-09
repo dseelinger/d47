@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// The Control Kit has a card for each component folder under <c>design/system/components/</c>, and no
 /// card states a size or a colour as text: what a card shows comes from the controls it draws.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed partial class TheControlKitDrawsEveryDesignComponentTests
 {
     [AvaloniaFact]

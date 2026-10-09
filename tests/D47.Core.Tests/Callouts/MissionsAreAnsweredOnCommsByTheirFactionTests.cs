@@ -96,6 +96,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ThreeTakenWithinAMinuteAreOneBeatNamingAllThree()
     {
@@ -109,6 +110,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         Assert.Equal(0, beat.MoreMissions);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void FiveTakenNameThreeAndCountTwoMore()
     {
@@ -118,6 +120,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         Assert.Equal(2, beat.MoreMissions);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ACompletedMissionIsDoneWithItsFactionAndName()
     {
@@ -132,6 +135,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         Assert.Equal("Screaming Bishops of The Kaha", done.TargetFaction);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnAbandonedMissionOnTheBoardIsLostWithItsFaction()
     {
@@ -149,16 +153,20 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         Assert.Equal("Assassinate Known Pirate: James Matthew", lost.LocalisedName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnAbandonedMissionNotOnTheBoardIsNotHeard() => Assert.Empty(Replay([Fixture(Burst)[^1]]));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoScenarioNothingIsEmitted() => Assert.Empty(Replay(Fixture(Strike), scenario: " "));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WithScenesOrPersonalityOffNothingIsEmitted() =>
         Assert.Empty(Replay(Fixture(Strike), enabled: () => false));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NothingIsEmittedForWhatWasPrimed()
     {
@@ -169,6 +177,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
         Assert.Empty(Replay([music], primed: events));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheBriefNamesTheMissionsAndAsksForNothingWhenTheyDoNotBearOnTheScenario()
     {
@@ -187,6 +196,7 @@ public class MissionsAreAnsweredOnCommsByTheirFactionTests
             "If these missions do not bear on the scenario, reply with nothing at all", brief, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMissionBeatIsStillHappeningWithNoSceneOpen()
     {

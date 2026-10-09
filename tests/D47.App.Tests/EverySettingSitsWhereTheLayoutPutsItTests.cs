@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The settings page drawn from <see cref="SettingsLayout"/>: areas in the nav, places as pages.</summary>
+[Trait("Category", "Integration")]
 public sealed class EverySettingSitsWhereTheLayoutPutsItTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

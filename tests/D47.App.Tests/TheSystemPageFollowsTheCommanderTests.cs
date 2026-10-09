@@ -192,6 +192,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SearchHasTheSystemRootInTheHeadset()
     {
@@ -495,6 +496,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheOverviewReadsTheRecord()
     {
@@ -519,6 +521,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EachStateIsCaptured()
     {
@@ -567,6 +570,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         Capture("system-no-journal.png", new World { Here = null }, _ => { }, "hasn't read a journal");
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetIsCaptured()
     {

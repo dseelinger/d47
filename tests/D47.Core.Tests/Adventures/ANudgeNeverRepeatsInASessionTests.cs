@@ -5,6 +5,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>An adventure is nudged at most once per session, even when the nudge was never recorded.</summary>
+[Trait("Category", "Integration")]
 public sealed class ANudgeNeverRepeatsInASessionTests : IDisposable
 {
     private readonly AStalledStoryGetsANudgeTests _stalled = new();

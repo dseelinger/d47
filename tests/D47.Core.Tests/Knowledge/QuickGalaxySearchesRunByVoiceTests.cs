@@ -55,6 +55,7 @@ public class QuickGalaxySearchesRunByVoiceTests
         return CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "Sol", settings)]);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("interstellar factors search", "search_stations", "services", "Interstellar Factors")]
     [InlineData("nearest black market", "search_stations", "services", "Black Market")]
@@ -89,6 +90,7 @@ public class QuickGalaxySearchesRunByVoiceTests
         Assert.All(QuickSearches.All, search => Assert.False(search.Arguments.ContainsKey("near")));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task EveryQuickSearchPassesItsToolsValidation()
     {
@@ -110,6 +112,7 @@ public class QuickGalaxySearchesRunByVoiceTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoQuickSearchPhraseIsAlreadyInThePhraseBook()
     {
@@ -123,6 +126,7 @@ public class QuickGalaxySearchesRunByVoiceTests
         Assert.DoesNotContain(QuickSearches.Phrases().Select(command => command.Phrase), taken.Contains);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchWithLookupsOffAnswersWithTheSwitchedOffSentence()
     {

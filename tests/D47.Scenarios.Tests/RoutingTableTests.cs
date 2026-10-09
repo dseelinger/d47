@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>The routing table, checked without a model.</summary>
+[Trait("Category", "Integration")]
 public class RoutingTableTests
 {
     /// <summary>

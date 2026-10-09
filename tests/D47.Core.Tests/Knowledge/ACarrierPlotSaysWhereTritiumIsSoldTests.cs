@@ -8,6 +8,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
+[Trait("Category", "Integration")]
 public class ACarrierPlotSaysWhereTritiumIsSoldTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);

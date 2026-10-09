@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// The provider rows name the provider alone, and say under it where it runs and whether its key is
 /// stored (#438).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
 {
     [AvaloniaFact]

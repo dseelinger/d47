@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The Test row in Provider and model probes the provider and records the result.</summary>
+[Trait("Category", "Integration")]
 public class TheTestButtonMarksTheModelTests
 {
     [Fact]

@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>What span a log covers.</summary>
+[Trait("Category", "Integration")]
 public class LogRangeTests : IDisposable
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);

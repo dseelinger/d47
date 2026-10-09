@@ -7,6 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Persona;
 
+[Trait("Category", "Integration")]
 public sealed class PausingAStoryGivesTheCoresBackTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(

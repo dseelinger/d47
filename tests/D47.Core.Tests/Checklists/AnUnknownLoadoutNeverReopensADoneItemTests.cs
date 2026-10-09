@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Checklists;
 /// Between <c>LoadGame</c> and <c>Loadout</c> the ship aboard has an id and no modules. A done item on it
 /// stays done and is not announced again when the loadout arrives; a real change still gets through (#452).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AnUnknownLoadoutNeverReopensADoneItemTests
 {
     private const int ShipId = 37;

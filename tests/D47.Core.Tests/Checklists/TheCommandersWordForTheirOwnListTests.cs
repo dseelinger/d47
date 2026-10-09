@@ -24,6 +24,7 @@ public class TheCommandersWordForTheirOwnListTests
     }
 
     /// <summary>The half that must not have moved.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void WhatIsWrittenDownIsUntouched()
     {
@@ -66,6 +67,7 @@ public class TheCommandersWordForTheirOwnListTests
     }
 
     /// <summary>And a Commander filtering the page asks for it by the word they can see.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFilterOffersTheWordTheCommanderReads()
     {

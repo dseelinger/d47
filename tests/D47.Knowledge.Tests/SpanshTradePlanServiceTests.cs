@@ -114,6 +114,7 @@ public class SpanshTradePlanServiceTests
         Assert.Single(recorder.Requests);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThePricesTheCommanderReadThemselvesWinWhenTheyAreNewer()
     {

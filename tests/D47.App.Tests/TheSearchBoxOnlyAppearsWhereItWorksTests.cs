@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The search box is drawn where a query would do something.</summary>
+[Trait("Category", "Integration")]
 public class TheSearchBoxOnlyAppearsWhereItWorksTests
 {
     private static PanelView Furnished()

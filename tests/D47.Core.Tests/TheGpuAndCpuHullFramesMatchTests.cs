@@ -9,6 +9,7 @@ namespace D47.Core.Tests;
 /// frame again with <c>d47.exe --capture-hull-gpu tests\fixtures\hulls\sample.mesh tests\fixtures\hulls\sample.gpu.bgra</c>
 /// from a Debug build when the shaders or shading constants change (#627).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheGpuAndCpuHullFramesMatchTests
 {
     private const int Width = 640;

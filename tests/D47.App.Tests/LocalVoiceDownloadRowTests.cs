@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>What the local voice's download button does while it is downloading.</summary>
+[Trait("Category", "Integration")]
 public class LocalVoiceDownloadRowTests
 {
     private const string ButtonName = "Press_speech_localVoice";

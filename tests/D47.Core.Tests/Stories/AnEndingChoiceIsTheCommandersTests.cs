@@ -8,6 +8,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>Only the Commander answers a story's ending; the model is refused, and the answer is kept on the story.</summary>
+[Trait("Category", "Integration")]
 public sealed class AnEndingChoiceIsTheCommandersTests
 {
     private static StoryFixtures Finished()

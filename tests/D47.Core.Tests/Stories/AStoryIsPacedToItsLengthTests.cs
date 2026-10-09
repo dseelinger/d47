@@ -65,6 +65,7 @@ public sealed class AStoryIsPacedToItsLengthTests
         Assert.True(StoryClues.AtTheEnd(second));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AWeekLongStoryFinishesAfterItsSecondFinaleChapter()
     {
@@ -146,6 +147,7 @@ public sealed class AStoryIsPacedToItsLengthTests
     public void TheFullSheetHasAllFifteenBeats() =>
         Assert.Equal(15, StoryPacing.ThreeMonths.BeatKeys.Count);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task APickedStoryKeepsItsCardsLength()
     {
@@ -161,6 +163,7 @@ public sealed class AStoryIsPacedToItsLengthTests
         Assert.Contains("Length: 1 year", story.PublicLayer, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AStorySavedWithoutALengthIsAYear()
     {

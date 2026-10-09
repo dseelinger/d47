@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The spoken side of the audio recorder, driven with no audio device.</summary>
+[Trait("Category", "Integration")]
 public class OneUtteranceIsOneRowTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);

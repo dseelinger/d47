@@ -73,6 +73,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Kit.Plan(suit.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePageOpensOnNeededByPlansWithOneGroupPerBuild()
     {
@@ -114,6 +115,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AMaterialHeldInFullReadsMet()
     {
@@ -139,6 +141,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoPlanThePageSaysSo()
     {

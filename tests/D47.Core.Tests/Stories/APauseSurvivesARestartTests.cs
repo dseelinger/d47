@@ -6,6 +6,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>The pause is written to the story file, so a restart finds the story still off and the off stretch still known.</summary>
+[Trait("Category", "Integration")]
 public sealed class APauseSurvivesARestartTests
 {
     [Fact]

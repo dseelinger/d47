@@ -14,6 +14,7 @@ namespace D47.App.Tests;
 /// A turn whose picture has no file is laid out exactly as a turn with no picture at all; mini mode draws none; and a
 /// full redraw never decodes a picture file twice (#770).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ATurnWithNoPictureDrawsNoSlotTests
 {
     private static void Converse(PanelViewModel model)

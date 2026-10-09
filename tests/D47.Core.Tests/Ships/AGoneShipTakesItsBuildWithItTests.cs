@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Ships;
 /// <summary>
 /// A build whose ship is gone is deleted with the checklist lines it put there, and nothing is said.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AGoneShipTakesItsBuildWithItTests
 {
     private const int Gone = 12;

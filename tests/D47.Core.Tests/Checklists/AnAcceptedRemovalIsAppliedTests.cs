@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>Accepting a removal removes it.</summary>
+[Trait("Category", "Integration")]
 public class AnAcceptedRemovalIsAppliedTests
 {
     private static ChecklistService One(TempInstall install, string line)

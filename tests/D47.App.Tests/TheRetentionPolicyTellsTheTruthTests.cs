@@ -97,6 +97,7 @@ public class TheRetentionPolicyTellsTheTruthTests
         Assert.Contains("data-retention.html", notice, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void BothSinksStillWriteUnderTheirRetention()
     {

@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Conversation;
 /// "the" is optional in every declared phrase, on every model-free route, and dropping or adding it
 /// is an exact match rather than a near miss (#525).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheIsOptionalInEveryPhraseTests
 {
     /// <summary>The same fold the router applies internally, reimplemented here so the test does not

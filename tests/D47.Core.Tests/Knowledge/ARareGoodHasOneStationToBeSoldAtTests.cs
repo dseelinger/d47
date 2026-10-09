@@ -49,6 +49,7 @@ public class ARareGoodHasOneStationToBeSoldAtTests
         });
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheShippedTableCarriesTheGeneratorsHeader()
     {

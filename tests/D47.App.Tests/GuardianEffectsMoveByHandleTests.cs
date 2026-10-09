@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// A Guardian effect moves by dragging its handle, written once on drop, or by Up and Down on the focused
 /// handle, which keeps focus (#480).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class GuardianEffectsMoveByHandleTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Stories;
 /// <summary>Every {name:} token is replaced with the version's name before the chapter writer or any speaker reads it.</summary>
 public sealed class NoNameTokenReachesTheCommanderTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheChapterWriterReadsTheResolvedName()
     {
@@ -24,6 +25,7 @@ public sealed class NoNameTokenReachesTheCommanderTests
         Assert.DoesNotContain("{name:", prompt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheHiddenBriefHoldsNoToken()
     {

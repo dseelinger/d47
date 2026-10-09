@@ -98,6 +98,7 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
         Assert.Equal("the-test-story.juno", Announcer.ConversationPicture(line, "warden", _ => VoiceGender.Unlabelled, null));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EarlierWardenRepliesStillShowWardenAfterSwitchingToCora()
     {

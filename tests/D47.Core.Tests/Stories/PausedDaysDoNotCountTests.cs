@@ -45,6 +45,7 @@ public sealed class PausedDaysDoNotCountTests
         Assert.Equal(TimeSpan.FromDays(6), resumed.SinceBeacon(Now.AddDays(7)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAbandonedChapterStopsTheClockUntilResume()
     {

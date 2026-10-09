@@ -30,6 +30,7 @@ public class ANoChosenVoiceIsRefusedTests
         Assert.Equal("No OpenAI voice has been chosen. Pick one in Settings.", failure.Message);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task KokoroRefusesWithNoVoice()
     {
@@ -41,6 +42,7 @@ public class ANoChosenVoiceIsRefusedTests
         Assert.Equal("No Kokoro voice has been chosen. Pick one in Settings.", failure.Message);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task KokoroRefusesAVoiceItDoesNotHave()
     {

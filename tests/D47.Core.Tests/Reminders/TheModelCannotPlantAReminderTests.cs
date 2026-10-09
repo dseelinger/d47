@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Setting and cancelling a journal reminder are the Commander's own acts (#643).</summary>
+[Trait("Category", "Integration")]
 public class TheModelCannotPlantAReminderTests
 {
     private const string Commander = "F100";

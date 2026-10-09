@@ -38,6 +38,7 @@ public class ADialogCannotBeMinimisedTests
         owner.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheMainWindowStillMinimises()
     {

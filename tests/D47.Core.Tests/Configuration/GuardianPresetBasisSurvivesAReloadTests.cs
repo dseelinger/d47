@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#237: a saved preset and the basis it sets both come back after a save and reload.</summary>
+[Trait("Category", "Integration")]
 public class GuardianPresetBasisSurvivesAReloadTests
 {
     [Fact]

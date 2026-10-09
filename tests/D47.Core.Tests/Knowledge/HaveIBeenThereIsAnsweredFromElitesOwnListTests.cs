@@ -12,6 +12,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <c>system_visits</c> and <c>describe_system</c> answer from the current Commander's
 /// <c>VisitedStarsCache.dat</c>, and a system the file does not list is no record, not never.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests : IDisposable
 {
     private const long Lave = VisitedStarsCacheIsReadFromItsBytesTests.Lave;

@@ -29,6 +29,7 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
         Assert.Equal(folded, KeywordRouter.Folded(said), StringComparer.OrdinalIgnoreCase);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("Throttle to 25.", "throttle to twenty-five")]
     [InlineData("50 percent", "fifty per cent")]
@@ -59,6 +60,7 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
     }
 
     /// <summary>A taught wording that folds to a built-in phrase would be shadowed by it, so it is refused.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ATaughtWordingThatFoldsToABuiltInPhraseClashes()
     {

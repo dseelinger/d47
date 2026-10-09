@@ -41,6 +41,7 @@ public class ATabsOwnSettingsShowOnItTests
         return (view, window);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFleetShipsStripDrawsWhatIsFittedAndHullPictures()
     {
@@ -62,6 +63,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>The captain and tower's names and voices are on Asset Mgmt › Carrier, not the settings window (#305).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFleetCarrierStripDrawsTheNamesAndVoices()
     {
@@ -81,6 +83,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>No nav, no page-top strip, no card header, no width floor — at any width.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(300)]
     [InlineData(1400)]
@@ -100,6 +103,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>An open strip at the narrowest a pane can be fits it, with no sideways scrolling.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AnOpenStripAtTheNarrowestPaneDoesNotScrollSideways()
     {
@@ -141,6 +145,7 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheStripIsClosedByDefaultAndOpensOnClick()
     {
@@ -163,6 +168,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>A strip left open is open after the panel is rebuilt.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AStripLeftOpenStaysOpenOnTheNextInstance()
     {
@@ -181,6 +187,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>The strip's rows sit at the top of the page, under its head (#954).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFleetShipsPageDrawsTheGivenStripAtTheTop()
     {
@@ -220,6 +227,7 @@ public class ATabsOwnSettingsShowOnItTests
     }
 
     /// <summary>The Log File page shows the tile on the title line and docks nothing at the bottom (#954).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheLogFilePageHasItsSettingsTileOnTheTitleLine()
     {
@@ -255,6 +263,7 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheAdventuresPageDrawsTheGivenStrip()
     {

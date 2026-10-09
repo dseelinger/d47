@@ -70,6 +70,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
     private static Button Named(Visual root, string name) =>
         root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCoverageRowOpensAPageNamedByItsBreadcrumbAndNoWindow()
     {
@@ -90,6 +91,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void BackLeavesThePageForWhereItWasOpened()
     {
@@ -109,6 +111,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePagesOwnCloseButtonGoesBackToo()
     {
@@ -126,6 +129,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OpenedAgainItIsANewPage()
     {
@@ -173,6 +177,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetRayOpensItOnTheHeadsetPanel()
     {
@@ -209,6 +214,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
     }
 
     /// <summary>What the page looks like inside the panel, saved for a person to check.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePageInThePanelIsCaptured()
     {

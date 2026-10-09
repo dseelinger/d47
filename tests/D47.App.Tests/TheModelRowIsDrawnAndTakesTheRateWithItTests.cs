@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The ElevenLabs model row, on the drawn page.</summary>
+[Trait("Category", "Integration")]
 public class TheModelRowIsDrawnAndTakesTheRateWithItTests
 {
     private const string ModelLabel = "ElevenLabs model";

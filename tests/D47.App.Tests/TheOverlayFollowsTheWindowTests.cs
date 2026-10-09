@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The window leads and the flat overlay follows.</summary>
+[Trait("Category", "Integration")]
 public class TheOverlayFollowsTheWindowTests
 {
     [AvaloniaFact]

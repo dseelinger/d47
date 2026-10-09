@@ -15,6 +15,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// The engineer filter, on the page, with a roll the Commander has not earned the grade for.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheEngineerFilterShowsWorkWaitingOnRankTests
 {
     private const int LeiCheung = 300120;

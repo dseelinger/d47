@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public sealed class DroppedInAudioIsRebuiltOffTheTickTests : IDisposable
 {
     private readonly string _root = Path.Combine(

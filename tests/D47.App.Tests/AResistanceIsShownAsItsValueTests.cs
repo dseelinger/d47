@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// A modifier whose value is already a percentage is drawn as that value, not as a proportion.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AResistanceIsShownAsItsValueTests
 {
     /// <summary>A 2D hull reinforcement rolled Heavy Duty G5, with the three resistances Elite actually wrote

@@ -132,6 +132,7 @@ public class TheVrScrollbarsTests
     /// The surface the headset actually drives, rather than the offscreen host underneath it: a grab
     /// near the bar takes hold, and scrolling moves the document.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetSurfaceTakesHoldAndScrolls()
     {
@@ -187,6 +188,7 @@ public class TheVrScrollbarsTests
     }
 
     /// <summary> Aiming does not dirty the surface unless the light actually moved. </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RestingAimDoesNotAskForARedraw()
     {

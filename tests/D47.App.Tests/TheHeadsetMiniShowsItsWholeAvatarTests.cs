@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The headset's mini draws its avatar as a square the panel's height in the rail, whatever came before (#862).</summary>
+[Trait("Category", "Integration")]
 public class TheHeadsetMiniShowsItsWholeAvatarTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-headset-avatar-" + Guid.NewGuid().ToString("N"));

@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Drop your own audio in and d47 uses it, kept distinct from the set it ships with.</summary>
+[Trait("Category", "Integration")]
 public class FolderAudioSourceTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -20,6 +20,7 @@ namespace D47.App.Tests;
 public class SecretRowTests
 {
     /// <summary>The one thing this row is asked.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WhetherAKeyIsStoredIsStatedInBothWordsAndColour()
     {
@@ -57,6 +58,7 @@ public class SecretRowTests
     private static Avalonia.Media.Color Ink(string key) =>
         ((Avalonia.Media.ISolidColorBrush)Application.Current!.FindResource(key)!).Color;
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void VerifyIsShutUntilAKeyHasBeenTyped()
     {
@@ -86,6 +88,7 @@ public class SecretRowTests
     }
 
     /// <summary>And it checks what was typed, which means storing it first.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public async Task PressingVerifyStoresWhatWasTypedAndThenChecksIt()
     {
@@ -170,6 +173,7 @@ public class SecretRowTests
         Assert.False(anthropic.AcceptsCustomEndpoint, "but retyping it is not a setting");
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheEndpointRowIsAbsentFromTheSurfaceForSuchAProvider()
     {

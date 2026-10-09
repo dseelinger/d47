@@ -133,6 +133,7 @@ public class TheCarrierCountsEveryCommodityTests
         Assert.Equal(12, hold.Holding("gold"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TransfersInTheCurrentJournalAreCountedOnce()
     {
@@ -162,6 +163,7 @@ public class TheCarrierCountsEveryCommodityTests
         Assert.Equal(200, hold.Holding("tritium"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnOwnedLiveCarrierTakesTheWalksCountWhenItHasNoFreshStart()
     {

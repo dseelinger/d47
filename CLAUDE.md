@@ -36,13 +36,13 @@ push, a GitHub write, the installed app's `data\` folder, or files outside the r
 dotnet build d47.slnx -c Debug      # clean: 0 warnings, 0 errors
 dotnet test  d47.slnx -c Debug      # the whole suite; a release gate, not a working loop
 
-dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Ticking   # the working loop
+dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~Ticking&Category!=Integration&Category!=Gate"   # the working loop
 dotnet test tests/D47.App.Tests --filter "Category=Gate"               # App gates that read source
 ```
 
 During issue work, run area-filtered unit tests (each under a second), the integration tests the
 change affects, and the gate filters. An unfiltered `D47.App.Tests` run is part of the release gate.
-A unit test does not cross a process boundary or touch the file system; an integration test does either.
+A unit test does not cross a process boundary or touch the file system; an integration test does either. Integration tests carry `[Trait("Category", "Integration")]`; `Category=Gate` tests count as integration.
 
 - SDK pinned by `global.json` to `10.0.400`, `rollForward: disable` — exact, because the suite
   now runs partly here and partly on the runner and the two must agree on a toolchain.

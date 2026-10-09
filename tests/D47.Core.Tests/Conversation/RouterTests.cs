@@ -66,6 +66,7 @@ public class EffortRouterTests
     }
 }
 
+[Trait("Category", "Integration")]
 public class KeywordRouterTests
 {
     private static CapabilityRegistry Registry(TempInstall install, GameStateStore? gameState = null) =>

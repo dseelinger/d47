@@ -3,6 +3,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>Proof that <see cref="PackageLicenceGateTests"/> can fail.</summary>
+[Trait("Category", "Integration")]
 public class LicenceGateTests
 {
     private const string MitText = """

@@ -19,6 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Stories page narrows its list by level and length, says how many it hides, and remembers the filter.</summary>
+[Trait("Category", "Integration")]
 public class TheStoriesPageFiltersItsListTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 2, 20, 0, 0, TimeSpan.Zero);

@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The privacy and egress section says scene chatter sends the scenario at every audience.</summary>
+[Trait("Category", "Integration")]
 public class SceneChatterIsNamedAmongWhatIsSentTests
 {
     private static D47Settings WithScenario(bool scenes = true, string? endpoint = null, string? scenario = "A secret raid.")

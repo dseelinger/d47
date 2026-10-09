@@ -176,6 +176,7 @@ public class ThePowerPageFollowsTheDesignTests
         return (frame, view);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheThreeReferenceStatesAreCapturedBesideTheDesign()
     {

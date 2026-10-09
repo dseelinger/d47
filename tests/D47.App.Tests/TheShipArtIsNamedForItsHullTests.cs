@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Every file in <c>assets\ships</c> is named for a hull Elite actually writes.</summary>
+[Trait("Category", "Integration")]
 public class TheShipArtIsNamedForItsHullTests
 {
     private static string Assets

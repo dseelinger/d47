@@ -24,6 +24,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Every tab draws the same header: tab row, title line, 1px rule, with the 104px avatar beside them (#777).</summary>
+[Trait("Category", "Integration")]
 public class EveryTabDrawsOneHeaderTests
 {
     private const double Width = 1280;

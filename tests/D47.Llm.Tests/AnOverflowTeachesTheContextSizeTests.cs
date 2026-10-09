@@ -16,6 +16,7 @@ public class AnOverflowTeachesTheContextSizeTests
 
     public AnOverflowTeachesTheContextSizeTests() => EndpointDemotions.Clear();
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCapturedFrameRecordsTheContextForThatModelOnly()
     {
@@ -30,6 +31,7 @@ public class AnOverflowTeachesTheContextSizeTests
         Assert.Null(provider.CapabilitiesFor("another-model").ContextTokens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnOverflowReturnedAsAStatusCodeIsRecordedToo()
     {
@@ -43,6 +45,7 @@ public class AnOverflowTeachesTheContextSizeTests
         Assert.Equal(8192, provider.CapabilitiesFor("test-model").ContextTokens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ALaterOverflowReplacesTheRecordedSize()
     {
@@ -57,6 +60,7 @@ public class AnOverflowTeachesTheContextSizeTests
         Assert.Equal(16384, provider.CapabilitiesFor("test-model").ContextTokens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheReplyIsCappedAtAQuarterOfTheContext()
     {
@@ -71,6 +75,7 @@ public class AnOverflowTeachesTheContextSizeTests
         Assert.Equal(8192, MaxOutput(provider, "another-model"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCapHoldsWhenTheOlderFieldNameIsSent()
     {

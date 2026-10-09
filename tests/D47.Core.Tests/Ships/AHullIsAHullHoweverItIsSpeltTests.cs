@@ -73,6 +73,7 @@ public class AHullIsAHullHoweverItIsSpeltTests
         Assert.Null(ChecklistEvaluator.Evaluate(PlannedFor("cutter"), InThePanther()));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AStoredBuildIsReadBackAsTheJournalsOwnSpelling()
     {
@@ -101,6 +102,7 @@ public class AHullIsAHullHoweverItIsSpeltTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AHullNothingKnowsStandsAsItWasWritten()
     {

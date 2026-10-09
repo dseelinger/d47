@@ -25,6 +25,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     }
 
     /// <summary>The road the issue asked for: a switch on the command line, and nothing else.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSwitchTurnsRecordingOn()
     {
@@ -33,6 +34,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
         Assert.True(AudioRecorder.Enabled);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnOrdinaryLaunchLeavesItOff()
     {
@@ -42,6 +44,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     }
 
     /// <summary>Matched whole and case-sensitively, so a near miss is off rather than on.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("--record-audioer")]
     [InlineData("--record")]
@@ -58,6 +61,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     }
 
  /// <summary>The name it had before still works.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRetiredSwitchStillTurnsItOnAndSaysSo()
     {
@@ -96,6 +100,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     /// And nothing is composed when nobody asked, which is where the surface silence comes from: no
     /// recorder means no settings row, no review pane and no folder written.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoRecorderIsComposedWhenNobodyAsked()
     {

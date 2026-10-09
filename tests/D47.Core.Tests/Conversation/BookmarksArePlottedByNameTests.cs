@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A bookmark is a named system, stored per Commander and reachable by voice (#488).</summary>
+[Trait("Category", "Integration")]
 public class BookmarksArePlottedByNameTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-bookmarks").FullName;

@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// A stock story's chapter shows no Premise, Turn or Ending on the Adventures page, and offers no Edit that would;
 /// an adventure of the Commander's own still shows its premise. Captures go to <see cref="TestSurface.CaptureDirectory"/>.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AStoryChapterShowsNoPremiseTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);

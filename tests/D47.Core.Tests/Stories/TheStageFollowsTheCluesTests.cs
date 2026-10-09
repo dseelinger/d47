@@ -48,6 +48,7 @@ public sealed class TheStageFollowsTheCluesTests
         Assert.Equal(["breakIntoThree", "finale", "finalImage"], Keys(StoryStage.Finale, finale: 4));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheWriterIsToldTheStageAndOnlyItsLines()
     {

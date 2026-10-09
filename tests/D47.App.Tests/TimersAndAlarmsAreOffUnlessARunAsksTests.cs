@@ -54,6 +54,7 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
     }
 
     /// <summary>Per run: nothing is written to settings, and the next launch without the switch is off again.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSwitchLastsOneRunAndIsNotSaved()
     {
@@ -69,6 +70,7 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
     }
 
     /// <summary>Off: no stores, and the game-state block still carries both dates with no reminder list.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void OffNothingIsComposedAndTheGameStateStillCarriesTheDate()
     {
@@ -85,6 +87,7 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
     }
 
     /// <summary>On: the game-state block carries both dates and what is running, as it always has.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnTheGameStateCarriesBothDatesAndWhatIsRunning()
     {

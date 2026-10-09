@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
+[Trait("Category", "Integration")]
 public sealed class ACommandersVoteIsKeptWithTheirStoriesTests : IDisposable
 {
     private readonly string _folder = Directory.CreateTempSubdirectory("d47-ratings").FullName;

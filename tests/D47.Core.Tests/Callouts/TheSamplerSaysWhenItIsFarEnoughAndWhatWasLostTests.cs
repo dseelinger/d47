@@ -155,6 +155,7 @@ public class TheSamplerSaysWhenItIsFarEnoughAndWhatWasLostTests
         Assert.Empty(Said(new AbandonedSamplesCallout(), Tick(store, GameStatus.Unknown, bacterium)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnOlderSaveWithOnlyTheLastPositionStillLoads()
     {
@@ -176,6 +177,7 @@ public class TheSamplerSaysWhenItIsFarEnoughAndWhatWasLostTests
         Assert.Equal([At(0, 0.005)], genus.Specimens);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EverySpecimenPositionSurvivesTheAppRestarting()
     {

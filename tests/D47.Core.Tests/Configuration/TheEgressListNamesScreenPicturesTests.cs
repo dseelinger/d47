@@ -73,6 +73,7 @@ public class TheEgressListNamesScreenPicturesTests
         Assert.Equal(ids.IndexOf(EgressDisclosure.WebSearch) + 1, ids.IndexOf(EgressDisclosure.Screen));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheToolAndThePrivacyRowAnswerFromTheModelInUse()
     {

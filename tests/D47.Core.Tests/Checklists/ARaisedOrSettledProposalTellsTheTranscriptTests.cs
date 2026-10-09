@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Checklists;
 /// The two events the conversation's proposal card is built from — a proposal recorded, and one
 /// answered — fire regardless of which tool or surface did it (#277).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ARaisedOrSettledProposalTellsTheTranscriptTests
 {
     [Fact]

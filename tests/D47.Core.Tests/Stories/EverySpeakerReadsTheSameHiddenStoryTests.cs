@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Stories;
 /// <summary>The chapter writer and every flavour line carry the one hidden layer the director gives out.</summary>
 public sealed class EverySpeakerReadsTheSameHiddenStoryTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheChapterWriterReadsTheDirectorsHiddenLayer()
     {
@@ -39,6 +40,7 @@ public sealed class EverySpeakerReadsTheSameHiddenStoryTests
         Assert.Contains(brief, provider.Requests[0].Prompt.RenderCachedSystemBlock());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoStoryThereIsNoHiddenLayer()
     {

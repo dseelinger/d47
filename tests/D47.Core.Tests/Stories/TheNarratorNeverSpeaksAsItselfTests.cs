@@ -8,6 +8,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A line the narrator reads in a story chapter is never in the first person and never offers, asks or waits.</summary>
+[Trait("Category", "Integration")]
 public sealed class TheNarratorNeverSpeaksAsItselfTests
 {
     private const string FirstPersonOpening = "Sidewinder, still in yard paint, and nobody aboard to talk to but me.";

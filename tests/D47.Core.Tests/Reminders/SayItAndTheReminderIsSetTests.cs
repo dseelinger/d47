@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>"Remind me to" is read by the grammar and reaches the store with no model call (#643).</summary>
+[Trait("Category", "Integration")]
 public class SayItAndTheReminderIsSetTests
 {
     private const string Commander = "F100";

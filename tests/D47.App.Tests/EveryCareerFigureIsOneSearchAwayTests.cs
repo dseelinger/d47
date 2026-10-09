@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Commander › Statistics: a sidebar of the sixteen sections, a grid of one, and a search across all (#553).</summary>
+[Trait("Category", "Integration")]
 public class EveryCareerFigureIsOneSearchAwayTests
 {
     private const string Statistics =

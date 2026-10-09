@@ -36,6 +36,7 @@ public class SettingsSurfaceTests
         return SettingsHost.Open(settings, viewState, paths);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSettingsPageOpensWithEveryRegisteredSection()
     {
@@ -51,6 +52,7 @@ public class SettingsSurfaceTests
         host.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AChangeMadeInCoreIsReflectedWithoutRebuildingTheView()
     {
@@ -69,6 +71,7 @@ public class SettingsSurfaceTests
     }
 
     /// <summary>Writes one PNG per theme for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryThemeRendersToACapture()
     {
@@ -107,6 +110,7 @@ public class SettingsSurfaceTests
     /// The main window, captured for the same reason: its header and its send glyph are things a person
     /// judges by looking, and looking should not require launching the app.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheMainWindowRenders()
     {
@@ -137,6 +141,7 @@ public class SettingsSurfaceTests
 }
 
 /// <summary> The egress disclosure is a thing to consult, not a paragraph to scroll past. </summary>
+[Trait("Category", "Integration")]
 public class DisclosureIsAHintTests
 {
     private const string Label = "What the voice provider receives";

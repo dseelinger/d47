@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary><c>describe_system</c> answers with a summary and names the system's page, or names close names and no page.</summary>
+[Trait("Category", "Integration")]
 public class DescribeSystemAnswersAndOpensItsPageTests
 {
     private const long Ltt7786 = 633608311522;

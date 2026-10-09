@@ -11,6 +11,7 @@ namespace D47.App.Tests;
 /// The Suits page's own question, put on foot the same way the fleet's is (#299): a plan Promote put
 /// on the checklist is asked about here rather than only on the Checklist tab.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ASuitsPageNoticeAnswersAPendingChecklistProposalTests
 {
     private static JournalEvent Event(string json)

@@ -547,6 +547,7 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
     /// Both "least time" rows say the two kinds are kept apart, because that is the row the floor
     /// clamps against.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientSecondsKey)]
     [InlineData(CalloutCapability.NpcChatterSecondsKey)]
@@ -562,6 +563,7 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
         Assert.DoesNotContain("invented exchange", help, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientMaxSecondsKey)]
     [InlineData(CalloutCapability.NpcChatterMaxSecondsKey)]

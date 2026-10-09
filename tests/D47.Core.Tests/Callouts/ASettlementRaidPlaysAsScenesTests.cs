@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>A raid on foot at a settlement, replayed from the journal, emits one scene beat per moment, spaced.</summary>
+[Trait("Category", "Integration")]
 public class ASettlementRaidPlaysAsScenesTests
 {
     private static IReadOnlyList<JournalEvent> Raid()

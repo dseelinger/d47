@@ -104,6 +104,7 @@ public class OpenVrBindingTests
     }
 
     /// <summary>Answering "is there a runtime here" must never throw, whatever this machine has.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void LookingForTheRuntimeIsSafeOnAMachineThatHasNone()
     {

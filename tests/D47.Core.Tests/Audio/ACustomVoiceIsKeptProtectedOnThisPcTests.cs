@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
+[Trait("Category", "Integration")]
 public class ACustomVoiceIsKeptProtectedOnThisPcTests : IDisposable
 {
     private readonly TempInstall _install = new();

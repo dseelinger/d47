@@ -103,6 +103,7 @@ public class UnlockPlannerTests
     /// A blueprint name shared by several module types is matched against the module actually sitting
     /// in the slot, not against every module that shares the name (#137).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineerWhoCannotGradeTheFittedModuleIsNotCounted()
     {
@@ -119,6 +120,7 @@ public class UnlockPlannerTests
     /// One slot with an outstanding blueprint and an outstanding experimental effect still contributes
     /// at most 1 to an engineer's count, even where they could do both (#137).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AModuleContributesAtMostOneToACount()
     {
@@ -133,6 +135,7 @@ public class UnlockPlannerTests
     /// An engineer who can only apply the experimental effect, and not roll the outstanding blueprint on
     /// the same slot, is not the answer to that module and is not counted for it (#137).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineerWhoCanOnlyHalfFinishAModuleIsNotCounted()
     {
@@ -149,6 +152,7 @@ public class UnlockPlannerTests
     /// Once the blueprint is applied there is no half left: an engineer who offers only the remaining
     /// experimental effect is counted even though they could never have rolled the blueprint (#137).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineerOfferingOnlyTheRemainingEffectIsCountedOnceTheBlueprintIsApplied()
     {
@@ -177,6 +181,7 @@ public class UnlockPlannerTests
     /// The top line counts the game's three states against the whole directory, and nothing about
     /// what the solver judges reachable remains in it (#133).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSummaryCountsTheGamesThreeStates()
     {
@@ -217,6 +222,7 @@ public class UnlockPlannerTests
     /// The directory sorts by what can be acted on today — within reach, then unlocked, then locked —
     /// rather than alphabetically or by speciality.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheDirectoryLeadsWithWhatIsReachable()
     {
@@ -388,6 +394,7 @@ public class UnlockPlannerTests
     /// their own directory entry — Marco Qwent opens Chloe Sedesi and Professor Palin, both of whom roll
     /// the planned grade 5 Dirty Drive Tuning (#138).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineerWhoGatesAWantedDependantSaysSo()
     {
@@ -406,6 +413,7 @@ public class UnlockPlannerTests
     /// An engineer's entry carries the planned things they can roll, not only the count of them — the
     /// detail page draws the list from this rather than from a second pass over the plans (#109).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineersEntryCarriesThePlannedWorkThatNamesThem()
     {

@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Teach a phrase" asks for the wording, then the phrase it runs, then a yes, and stores it (#539).</summary>
+[Trait("Category", "Integration")]
 public class APhraseCanBeTaughtByVoiceTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-teach-by-voice").FullName;

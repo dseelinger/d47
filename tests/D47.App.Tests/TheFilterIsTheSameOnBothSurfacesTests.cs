@@ -12,6 +12,7 @@ namespace D47.App.Tests;
 
 /// <summary>The Checklist filter was applied in the Windows app and the headset, a foot away, went on drawing
 /// the unfiltered list.</summary>
+[Trait("Category", "Integration")]
 public class TheFilterIsTheSameOnBothSurfacesTests
 {
     private static ChecklistService Checklists(string root, Action<ChecklistView>? remember = null)

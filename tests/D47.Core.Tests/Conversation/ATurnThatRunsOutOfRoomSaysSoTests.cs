@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A conversation turn that reaches the output ceiling says so rather than ending mid-sentence or silent.</summary>
+[Trait("Category", "Integration")]
 public sealed class ATurnThatRunsOutOfRoomSaysSoTests : IDisposable
 {
     private readonly TempInstall _install = new();

@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>A track that ends on its own is followed by two seconds of silence before the next (#522).</summary>
+[Trait("Category", "Integration")]
 public class SongsAreTwoSecondsApartTests : IDisposable
 {
     private readonly string _root = Path.Combine(

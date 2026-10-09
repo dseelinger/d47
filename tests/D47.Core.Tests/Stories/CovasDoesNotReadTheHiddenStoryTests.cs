@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A stock core's own voice never reads the hidden layer; the Narrator, the NPCs and any other core do.</summary>
+[Trait("Category", "Integration")]
 public sealed class CovasDoesNotReadTheHiddenStoryTests
 {
     [Fact]

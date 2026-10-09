@@ -16,6 +16,7 @@ namespace D47.App.Tests;
 /// The two desktop items in Phase 9: the window opens at a size that fits, and the panel zooms the way
 /// a browser does.
 /// </summary>
+[Trait("Category", "Integration")]
 public class DesktopWindowTests
 {
     [AvaloniaFact]

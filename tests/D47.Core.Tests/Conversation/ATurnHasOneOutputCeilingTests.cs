@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The output ceiling is set by effort and shared by every round of a turn.</summary>
+[Trait("Category", "Integration")]
 public sealed class ATurnHasOneOutputCeilingTests : IDisposable
 {
     private readonly TempInstall _install = new();

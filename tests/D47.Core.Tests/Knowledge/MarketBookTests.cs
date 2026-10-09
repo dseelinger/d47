@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Knowledge;
 /// The markets the Commander has stood in themselves — read from the file the game writes,
 /// kept in one beside the executable, and preferred over a report when they are newer.
 /// </summary>
+[Trait("Category", "Integration")]
 public class MarketBookTests
 {
     private const string Board =

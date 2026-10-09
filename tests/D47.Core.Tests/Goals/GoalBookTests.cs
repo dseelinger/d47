@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>The join that makes an arc and a checklist worth having together.</summary>
+[Trait("Category", "Integration")]
 public class GoalBookTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(3311, 6, 1, 0, 0, 0, TimeSpan.Zero);

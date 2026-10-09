@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>Named sequences the Commander authored.</summary>
+[Trait("Category", "Integration")]
 public class MacroTests : IDisposable
 {
     private readonly string _root = Path.Combine(

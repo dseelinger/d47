@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>"Vance, ..." is answered by the hired pilot on the intercom, who keeps the line until dismissed.</summary>
+[Trait("Category", "Integration")]
 public class TheCrewAnswersOnTheIntercomTests
 {
     private const string ShipAi = "Warden";

@@ -46,6 +46,7 @@ public class PlannedWorkIsOnlyWhatIsStillToDoTests
         Assert.Equal("Hi-cap", work.Wants);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEngineerWhoseWorkIsAllAppliedHasNoPlannedWorkAndNoCount()
     {

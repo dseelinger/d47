@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Listening;
 
+[Trait("Category", "Integration")]
 public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
 {
     private static readonly DateTimeOffset At = new(2026, 10, 9, 20, 0, 0, TimeSpan.Zero);

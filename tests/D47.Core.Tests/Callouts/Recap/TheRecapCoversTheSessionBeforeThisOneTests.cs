@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts.Recap;
 
 /// <summary>With two sessions on disk, the recap is drawn from the earlier one.</summary>
+[Trait("Category", "Integration")]
 public sealed class TheRecapCoversTheSessionBeforeThisOneTests : IDisposable
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);

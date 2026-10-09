@@ -82,6 +82,7 @@ public class ANameCanSuggestAnAccentTests
         Assert.Empty(asked);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSameNameAsksTheModelOnceAndTheAnswerSurvivesARestart()
     {

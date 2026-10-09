@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>Saying where the panel goes, end to end and with no model in the path.</summary>
+[Trait("Category", "Integration")]
 public class MovingThePanelByVoiceTests
 {
     /// <summary>What a nudge asked for, so the wire can be checked rather than the arithmetic.</summary>

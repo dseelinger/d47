@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>The live block outranks the transcript for the facts it states.</summary>
+[Trait("Category", "Integration")]
 public class StaleStateTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

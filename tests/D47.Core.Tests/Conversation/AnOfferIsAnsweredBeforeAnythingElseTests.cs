@@ -152,6 +152,7 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
         Assert.False(loop.Offers.IsStanding);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task YesAnswersTheOfferBeforeAPendingChecklistProposal()
     {

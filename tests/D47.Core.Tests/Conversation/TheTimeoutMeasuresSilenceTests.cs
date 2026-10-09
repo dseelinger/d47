@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>An attempt fails on time only when the model has sent nothing for the whole timeout.</summary>
+[Trait("Category", "Integration")]
 public class TheTimeoutMeasuresSilenceTests
 {
     private static readonly RetryPolicy OneTry = new()

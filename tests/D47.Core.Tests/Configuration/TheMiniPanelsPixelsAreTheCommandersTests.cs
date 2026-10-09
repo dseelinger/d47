@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>Both headset panels have a resolution of their own, and a dragged one is kept as dragged (#107).</summary>
+[Trait("Category", "Integration")]
 public class TheMiniPanelsPixelsAreTheCommandersTests
 {
     private static SettingsService Settings(string mode)

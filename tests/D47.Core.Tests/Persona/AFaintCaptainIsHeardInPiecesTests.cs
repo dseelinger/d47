@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>A distant carrier's captain loses words on the way, and only the Commander's side of it loses them.</summary>
+[Trait("Category", "Integration")]
 public class AFaintCaptainIsHeardInPiecesTests
 {
     private const string Answer =

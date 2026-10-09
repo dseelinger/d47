@@ -55,6 +55,7 @@ public class SettingsIsATabTests
     /// <summary>
     /// The headset's own instantiation has one when it is given a builder, and does not when it is not.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(true)]
     [InlineData(false)]
@@ -191,6 +192,7 @@ public class SettingsIsATabTests
     }
 
     /// <summary>Through the window's own key handling, which is where the gesture actually lands.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EscapeOnTheMainWindowLeavesTheSettingsPage()
     {
@@ -217,6 +219,7 @@ public class SettingsIsATabTests
     }
 
     /// <summary>The nav column collapses on a narrow page and comes back on a wide one.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(820, false)]
     [InlineData(1180, true)]
@@ -245,6 +248,7 @@ public class SettingsIsATabTests
     /// The rows still get their width on the narrow page — the reason for collapsing the nav is
     /// that the cards take what it was using.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCardsKeepTheirShapeWithTheNavCollapsed()
     {
@@ -279,6 +283,7 @@ public class SettingsIsATabTests
     }
 
     /// <summary>The page at the width the Commander actually opens it at, for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSettingsPageRendersToACaptureAtTheDefaultWindowWidth()
     {
@@ -295,6 +300,7 @@ public class SettingsIsATabTests
     }
 
     /// <summary>Hotkey capture sees a key the push-to-talk suppressor has already marked handled.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RebindingPushToTalkToTheKeyItAlreadyHoldsStillCaptures()
     {

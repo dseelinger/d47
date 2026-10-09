@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The input trace, driven through the real injector with the capture stubbed.</summary>
+[Trait("Category", "Integration")]
 public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);

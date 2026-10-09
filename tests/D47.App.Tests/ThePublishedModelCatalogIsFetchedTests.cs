@@ -8,6 +8,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public sealed class ThePublishedModelCatalogIsFetchedTests
 {
     private const string Published = """

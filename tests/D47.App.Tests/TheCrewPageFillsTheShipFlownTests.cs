@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Crew: the seats on the ship flown, filled from the page (#847).</summary>
+[Trait("Category", "Integration")]
 public class TheCrewPageFillsTheShipFlownTests
 {
     private sealed record Surface(Window Window, CrewPage Page, GameStateStore Store, CrewSeatStore Seats, string Path);

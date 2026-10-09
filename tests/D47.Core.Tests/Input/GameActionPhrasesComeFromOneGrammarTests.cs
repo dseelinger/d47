@@ -117,11 +117,13 @@ public class GameActionPhrasesComeFromOneGrammarTests
         { "back", "ui_back", "toggle" },
     };
 
+    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(PhrasesDeclaredBefore))]
     public void APhraseThatRoutedBeforeStillReachesTheSameActionAndState(string phrase, string action, string state) =>
         AssertRoutes(phrase, action, state);
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("raise the landing gear", "landing_gear", "off")]
     [InlineData("retract the landing gear", "landing_gear", "off")]

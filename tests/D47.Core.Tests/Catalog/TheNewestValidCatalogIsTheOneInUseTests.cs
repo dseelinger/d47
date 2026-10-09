@@ -6,6 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Catalog;
 
+[Trait("Category", "Integration")]
 [Collection(nameof(SharedModelCatalogCollection))]
 public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
 {

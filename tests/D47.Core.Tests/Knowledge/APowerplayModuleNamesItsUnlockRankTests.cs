@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>how_to_get adds the rank a Power unlocks a Powerplay module at, said against the pledge (#598).</summary>
+[Trait("Category", "Integration")]
 public class APowerplayModuleNamesItsUnlockRankTests
 {
     private const string Gate = "It needs a Powerplay pledge.";

@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>The checklist read as named lists rather than one stream of lines (#829).</summary>
+[Trait("Category", "Integration")]
 public class ChecklistsGroupIntoNamedListsTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

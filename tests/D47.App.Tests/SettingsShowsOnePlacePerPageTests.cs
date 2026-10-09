@@ -15,6 +15,7 @@ namespace D47.App.Tests;
 /// Each place in the nav is a page of its own (#435): choosing one replaces the page with that place
 /// alone, under its area's breadcrumb and its title.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class SettingsShowsOnePlacePerPageTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

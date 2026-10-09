@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>The guardrails hold with the persona switched off, and with each of the eleven cores in.</summary>
+[Trait("Category", "Integration")]
 public class PersonaMatrixTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

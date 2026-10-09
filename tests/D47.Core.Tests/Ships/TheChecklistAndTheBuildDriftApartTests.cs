@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Ships;
 
 /// <summary>Asking, once, when the ship the Commander has boarded carries a build their checklist does
 /// not.</summary>
+[Trait("Category", "Integration")]
 public class TheChecklistAndTheBuildDriftApartTests
 {
     private static ChecklistService Checklists(TempInstall install) =>

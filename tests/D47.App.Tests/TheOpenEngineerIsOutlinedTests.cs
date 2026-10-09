@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// The left list says which engineer the right pane is drawing, and the detail pane's prose can
 /// be selected and copied.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheOpenEngineerIsOutlinedTests
 {
     private static JournalEvent Event(string json)

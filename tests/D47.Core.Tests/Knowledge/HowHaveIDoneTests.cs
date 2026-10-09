@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>"How have I done today", and this week, answered from the ledger.</summary>
+[Trait("Category", "Integration")]
 public class HowHaveIDoneTests
 {
     private const string Fid = "F1234";

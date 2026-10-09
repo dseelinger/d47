@@ -56,6 +56,7 @@ public class OnFootPlanTests
     /// rather than a precondition sitting outside it — the on-foot reading of "a hull you do not own is
     /// not in the fleet".
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnIntendedSuitHasNoItemIdAndIsNotOwned()
     {
@@ -71,6 +72,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>The shipped table is what answers "is that a suit", so a typo is refused.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASuitNoTableKnowsIsRefusedRatherThanInvented()
     {
@@ -83,6 +85,7 @@ public class OnFootPlanTests
     /// On foot the buy event carries the id, which is the opposite of the ship side — so adoption needs
     /// one event where Phase 26 needed the second of two.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingTheSuitAdoptsThePlan()
     {
@@ -115,6 +118,7 @@ public class OnFootPlanTests
     /// A weapon is adopted on its own event and its own id field, and a suit plan is not bound to a
     /// weapon the Commander bought.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingAWeaponAdoptsOnlyAWeaponPlan()
     {
@@ -138,6 +142,7 @@ public class OnFootPlanTests
     /// Frontier's own localisation reports every suit above grade 1 as Class1, so the symbol is what
     /// the adoption matches on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AdoptionReadsTheSymbolRatherThanTheBrokenLocalisedName()
     {
@@ -159,6 +164,7 @@ public class OnFootPlanTests
  /// Selling is the buy backwards: the item goes and the plan stays, so the line answers "not
     /// bought yet" again rather than claiming the sold suit is still on the Commander.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void SellingTheSuitGivesUpTheItemAndKeepsThePlan()
     {
@@ -196,6 +202,7 @@ public class OnFootPlanTests
     /// A weapon sale disowns the weapon's build and nothing else, and a sale of something no build
  /// points at is not news.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void SellingAWeaponDisownsThatBuildAloneAndSaysNothingForAnUnplannedOne()
     {
@@ -232,6 +239,7 @@ public class OnFootPlanTests
     /// Buying the replacement adopts the plan back onto it, which is the point of keeping the build:
  /// the id is what the sale gave up, and the plan is what it did not.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingAgainAfterASaleAdoptsTheSamePlanOntoTheNewItem()
     {
@@ -262,6 +270,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>A slot holds one plan, because a slot holds one thing.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PlanningASlotTwiceReplacesRatherThanAdds()
     {
@@ -279,6 +288,7 @@ public class OnFootPlanTests
         Assert.Equal("Extra Ammo Capacity", slot.Modification);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASlotThatIsNotAModSlotIsRefusedAndReported()
     {
@@ -302,6 +312,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>One build per item, enforced where the file is read as well as where it is written.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void OneItemHasOneBuild()
     {
@@ -322,6 +333,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>Promotion is a proposal.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingProposesWithTheGradeFirst()
     {
@@ -355,6 +367,7 @@ public class OnFootPlanTests
     /// Something not owned has no list for its items to be in, so promotion says so rather than
     /// inventing a scope.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingSomethingYouDoNotOwnSaysSoRatherThanInventingAList()
     {
@@ -370,6 +383,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>The free slot count comes from the grade the plan is aiming at.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFreeSlotCountFollowsThePlannedGradeRatherThanTheCurrentOne()
     {
@@ -392,6 +406,7 @@ public class OnFootPlanTests
     }
 
     /// <summary>The suit being worn and the weapons carried are the index, and each keeps its own build.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheIndexIsWhatYouAreWearingAndCarrying()
     {
@@ -412,6 +427,7 @@ public class OnFootPlanTests
     /// Elite reports one loadout and a second suit in the locker is invisible to it, so the index has to
     /// come from the ledger rather than from what is currently worn (#295).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnOwnedSuitNotWornShowsItsLedgerGradeAndLastSeenDate()
     {
@@ -443,6 +459,7 @@ public class OnFootPlanTests
         Assert.Equal("grade 1, last seen 19 Aug 2026", stored.Where());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NothingNamedMeansTheOneThingThereIsOneOf()
     {
@@ -463,6 +480,7 @@ public class OnFootPlanTests
     /// Dropping a plan keeps what it already put on the checklist: the Commander ordered their list
     /// around those lines, and silently removing them makes the history wrong.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void DroppingAPlanKeepsWhatItAlreadyPromoted()
     {

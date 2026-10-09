@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A double-click on a suit's mod row opens the modification prompt for that slot (#682).</summary>
+[Trait("Category", "Integration")]
 public class DoubleClickingAKitModAsksForTheModificationTests
 {
     [AvaloniaFact]

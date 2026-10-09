@@ -25,6 +25,7 @@ namespace D47.App.Tests;
 /// every message with that picture reads it ahead of the story's own; Use the default deletes it. A file that does
 /// not decode is refused and writes nothing.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheCommandersPictureReplacesTheDefaultTests
 {
     private const string Picture = "ride-along.stowaway";

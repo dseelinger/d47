@@ -18,6 +18,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class EngineersTabTests
 {
     private sealed record Surface(

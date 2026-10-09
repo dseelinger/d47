@@ -7,6 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
+[Trait("Category", "Integration")]
 public class TurnLoopTests
 {
     private static CapabilityRegistry BuiltinRegistry(TempInstall install, GameStateStore? gameState = null) =>

@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// "Show every setting" is a checkbox tile in the page bar beside the filter field, not a row on any
 /// page (#60, #435).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheFoldToggleIsInThePageBarTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

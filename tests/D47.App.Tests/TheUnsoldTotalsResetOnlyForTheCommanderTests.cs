@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Navigation › Unsold data: both totals, and a reset the page makes as the Commander (#556).</summary>
+[Trait("Category", "Integration")]
 public class TheUnsoldTotalsResetOnlyForTheCommanderTests
 {
     private const long SystemAddress = 3274702866819;

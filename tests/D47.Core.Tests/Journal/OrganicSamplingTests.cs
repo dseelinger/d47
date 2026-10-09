@@ -278,6 +278,7 @@ public class OrganicSamplingTests
     // ----------------------------------------------------------- outliving a session
 
     /// <summary>The repository's first per-body state that has to survive d47 restarting.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARunSurvivesTheAppRestarting()
     {
@@ -315,6 +316,7 @@ public class OrganicSamplingTests
     /// A second Commander's history must not merge into the first's — the same rule the whole journal
     /// spine is built on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersHistoriesStayApart()
     {
@@ -336,6 +338,7 @@ public class OrganicSamplingTests
     }
 
     /// <summary>Derived state, so a bad file is discarded and rebuilt by playing rather than refused.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnreadableFileLeavesNoHistoryRatherThanThrowing()
     {
@@ -349,6 +352,7 @@ public class OrganicSamplingTests
         Assert.Null(store.For("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMissingFileIsTheNormalFirstRun()
     {

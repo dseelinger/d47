@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>Every phrase in the book is described by one sentence built from what it reaches (#538).</summary>
+[Trait("Category", "Integration")]
 public class EveryPhraseSaysWhatItDoesTests : IDisposable
 {
     private static readonly DateTimeOffset At = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);

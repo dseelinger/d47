@@ -68,6 +68,7 @@ public sealed class AClueWaitsForItsDayTests
         Assert.DoesNotContain(Secret.Clues[2].Text, after);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDirectorCountsSessionsAndMarksAClueGiven()
     {

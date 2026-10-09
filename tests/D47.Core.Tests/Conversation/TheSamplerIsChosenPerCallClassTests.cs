@@ -130,6 +130,7 @@ public class TheSamplerIsChosenPerCallClassTests
         Assert.Equal(0.0, LoreLookup.Sampling.Temperature);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATurnTheCommanderAskedForIsWarm()
     {

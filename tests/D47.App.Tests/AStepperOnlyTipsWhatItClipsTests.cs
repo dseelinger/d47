@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// actually clipped — never the whole control's, which used to float the selected item a second time
 /// 20px from where it is already shown (#382).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AStepperOnlyTipsWhatItClipsTests
 {
     [AvaloniaFact]

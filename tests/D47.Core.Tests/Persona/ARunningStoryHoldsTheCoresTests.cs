@@ -15,6 +15,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
 
     private static readonly PersonaSettings Kex = new() { Id = "kex" };
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PickingAStoryWhileKexIsChosenPutsTheStockCoreAboard()
     {
@@ -29,6 +30,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
         Assert.True(fixtures.Cores("F1").IsAwake(PersonaCatalog.Covas));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ABeaconScanWakesEveryCoreButTheHereticAndKexSpeaksAgain()
     {
@@ -45,6 +47,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
         Assert.True(fixtures.Cores("F1").IsAwake(PersonaCatalog.Warden));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASecondBeaconSystemWakesTheHereticAndTheSameSystemDoesNot()
     {
@@ -60,6 +63,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
         Assert.Equal([BeaconAddress, SecondBeaconAddress], fixtures.Stories.Current("F1")!.BeaconSystems);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AScanBeforeTheStoryWasPickedDoesNotCount()
     {
@@ -71,6 +75,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
         Assert.Equal(HeldCores.All, fixtures.Cores("F1").Hold.Cores);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplayedScanSaysNothingAgain()
     {
@@ -84,6 +89,7 @@ public sealed class ARunningStoryHoldsTheCoresTests
         Assert.Empty(again);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADataPointOutsideABeaconSystemWakesNothing()
     {

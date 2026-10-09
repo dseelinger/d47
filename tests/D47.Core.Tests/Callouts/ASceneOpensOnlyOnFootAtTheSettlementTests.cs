@@ -77,6 +77,7 @@ public class ASceneOpensOnlyOnFootAtTheSettlementTests
         Assert.True(After(Approach, Disembark(), Approach).Open);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEscapeWaitingOutTheSpacingStillPlaysAfterSupercruise()
     {

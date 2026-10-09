@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>The shortfall is a record per ship, and the spoken answer is written from it (#546).</summary>
+[Trait("Category", "Integration")]
 public class APlanShortfallIsDataPerShipTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

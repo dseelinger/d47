@@ -150,6 +150,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.Equal(0, population.Max);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSchemaOffersExactlyTheSystemFilters()
     {
@@ -172,6 +173,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             tool.Parameters.Single(parameter => parameter.Name == "power").AllowedValues);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedWithTheArgumentsAsGiven()
     {
@@ -199,6 +201,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.Equal(AskedAt, posting.AskedAt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task APowerSearchNamesThePowerAndItsState()
     {
@@ -218,6 +221,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.DoesNotContain("Jerome Archer", without.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachableServicePostsNothing()
     {

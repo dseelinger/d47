@@ -7,6 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A paused or switched-off story gives mission speech no aside, and a mission taken meanwhile keeps its aside for later.</summary>
+[Trait("Category", "Integration")]
 public sealed class APausedStoryLeavesMissionsAloneTests
 {
     [Fact]

@@ -25,6 +25,7 @@ public class AMaterialIsNotCargoTests
     private static Task<string> AskedForAsync(string commodity) =>
         AskedAsync("find_nearest_station", "commodity", commodity);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheReportedNameIsAnsweredAsAMaterial()
     {
@@ -35,6 +36,7 @@ public class AMaterialIsNotCargoTests
     }
 
     /// <summary>And it answers the question rather than only refusing it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AndSaysWhereItComesFrom()
     {
@@ -44,6 +46,7 @@ public class AMaterialIsNotCargoTests
         Assert.Contains("find_material", said, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("Yttrium")]
     [InlineData("Imperial Shielding")]
@@ -54,6 +57,7 @@ public class AMaterialIsNotCargoTests
     }
 
     /// <summary>The half that must not break: a real commodity still reaches the market search.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("Gold")]
     [InlineData("Tritium")]
@@ -77,6 +81,7 @@ public class AMaterialIsNotCargoTests
     }
 
  /// <summary>The other direction, and this assertion has inverted on purpose.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AndACommodityHandedToTheMaterialToolIsAnsweredRatherThanJustCorrected()
     {

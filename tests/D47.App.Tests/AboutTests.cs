@@ -47,6 +47,7 @@ public class AboutTests
     }
 
  /// <summary>About's rows are a section in the settings nav, Updates and install, rather than a button in the footer.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AboutsRowsAreASectionInTheSettingsNav()
     {
@@ -72,6 +73,7 @@ public class AboutTests
     }
 
     /// <summary>And not in two places.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFooterNoLongerOffersASecondWayIn()
     {
@@ -93,6 +95,7 @@ public class AboutTests
     /// The exact build is still a row, and still the reason the area exists: a build number you cannot
     /// copy is one that gets transcribed wrongly into a bug report.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheAreaStatesTheExactBuild()
     {

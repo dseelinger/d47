@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 
 /// <summary>A ray held at the edge of a scrollbar does not make it blink: "When getting near the scrollbar (or
 /// scrolling) I get the flickering effect."</summary>
+[Trait("Category", "Integration")]
 public class TheAimHighlightDoesNotBlinkAtTheEdgeTests
 {
     private static (VrPanelSurface Panel, PanelView View, ScrollBar Bar) Filled()

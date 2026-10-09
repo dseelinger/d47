@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Erasure on request, driven from the press a Commander actually makes.</summary>
+[Trait("Category", "Integration")]
 public class ADonationCanBeTakenBackTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-forget").FullName;

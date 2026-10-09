@@ -15,6 +15,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The button that puts every core back to its opening line.</summary>
+[Trait("Category", "Integration")]
 public class IntroductionsRowTests
 {
     [AvaloniaFact]

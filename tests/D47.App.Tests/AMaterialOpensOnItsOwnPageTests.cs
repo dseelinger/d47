@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Materials › one material: a page with a breadcrumb, not a dialog (#559).</summary>
+[Trait("Category", "Integration")]
 public class AMaterialOpensOnItsOwnPageTests
 {
     private sealed class Surface(Window window, PanelView panel, ShipPlanService ships, GameStateStore store, Galaxy galaxy)

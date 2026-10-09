@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#237: the <c>speech.guardianVoice.preset</c> row through the settings surface.</summary>
+[Trait("Category", "Integration")]
 public class TheGuardianPresetRowReadsAndWritesTests
 {
     [Fact]

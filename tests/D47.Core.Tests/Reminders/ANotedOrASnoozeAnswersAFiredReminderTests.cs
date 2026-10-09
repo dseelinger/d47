@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>"Noted" and "remind me next time" answer the reminder that has just gone off, and only then (#644).</summary>
+[Trait("Category", "Integration")]
 public class ANotedOrASnoozeAnswersAFiredReminderTests
 {
     private const string Commander = "F100";

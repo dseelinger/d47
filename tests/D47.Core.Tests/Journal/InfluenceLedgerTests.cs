@@ -7,6 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
+[Trait("Category", "Integration")]
 public sealed class InfluenceLedgerTests : IDisposable
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);

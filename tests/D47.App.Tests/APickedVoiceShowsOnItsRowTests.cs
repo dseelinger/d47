@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A voice chosen for the carrier shows up on the carrier's row.</summary>
+[Trait("Category", "Integration")]
 public class APickedVoiceShowsOnItsRowTests
 {
     /// <summary>Two voices with opaque ids, the shape an ElevenLabs account actually has.</summary>

@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>"Keep working when the main window is minimized".</summary>
+[Trait("Category", "Integration")]
 public class MinimiseSafetyTests
 {
     [AvaloniaFact]

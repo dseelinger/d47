@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The headset shows where the window is, from launch and on every move (#948).</summary>
+[Trait("Category", "Integration")]
 public sealed class TheHeadsetFollowsTheWindowTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

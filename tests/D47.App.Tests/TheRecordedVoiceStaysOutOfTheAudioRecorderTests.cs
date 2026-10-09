@@ -8,6 +8,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheRecordedVoiceStaysOutOfTheAudioRecorderTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

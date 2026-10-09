@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary> The headset's mini panel carries no buttons, the same as the flat overlay. </summary>
+[Trait("Category", "Integration")]
 public class MiniInTheHeadsetCarriesNoButtonsTests
 {
     private static (VrPanelSurface Panel, PanelView View) Headset(string mode)

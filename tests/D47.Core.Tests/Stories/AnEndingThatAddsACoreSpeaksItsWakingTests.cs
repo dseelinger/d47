@@ -7,6 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>An option that adds a core says that core's waking line once, and unlocks nothing.</summary>
+[Trait("Category", "Integration")]
 public sealed class AnEndingThatAddsACoreSpeaksItsWakingTests
 {
     [Fact]

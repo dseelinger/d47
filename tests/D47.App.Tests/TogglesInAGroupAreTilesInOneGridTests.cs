@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// A group's toggles are one grid of checkbox tiles where its first toggle falls, 2 across unless the
 /// group says otherwise, closing up around a tile the filter or the fold removes (#441).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TogglesInAGroupAreTilesInOneGridTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

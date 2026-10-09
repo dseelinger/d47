@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A voice command names the current destination, so it can be returned to by that name (#489).</summary>
+[Trait("Category", "Integration")]
 public class ADestinationIsBookmarkedByNameTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-bookmarks-capability").FullName;

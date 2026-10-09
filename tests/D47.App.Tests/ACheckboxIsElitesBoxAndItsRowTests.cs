@@ -168,6 +168,7 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
     }
 
     /// <summary>A settings toggle is the same box and row, drawn as a tile with its help on the label (#441).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASettingsToggleIsThisRowAsATile()
     {

@@ -77,6 +77,7 @@ public class ADisposedVoiceFinishesItsLineTests
         Assert.Equal(1, freed);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADisposedChatterboxOpensNoEngine()
     {

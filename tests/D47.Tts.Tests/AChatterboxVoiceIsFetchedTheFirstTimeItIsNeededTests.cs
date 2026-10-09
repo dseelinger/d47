@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
+[Trait("Category", "Integration")]
 public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisposable
 {
     /// <summary>Records the first sample of each reference clip it encodes, which tells the clips apart.</summary>

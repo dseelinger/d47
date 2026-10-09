@@ -476,6 +476,7 @@ public class GuardrailsSurvivePersonaTests
 }
 
 /// <summary>Who is allowed to change which core is aboard.</summary>
+[Trait("Category", "Integration")]
 public class PersonaIsNotTheModelsToChangeTests
 {
     [Fact]

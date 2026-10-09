@@ -69,6 +69,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
     private static JournalEvent Denied(long marketId, string reason, DateTimeOffset at) => Event(
         $$"""{ "timestamp":"{{Stamp(at)}}", "event":"DockingDenied", "Reason":"{{reason}}", "MarketID":{{marketId}}, "StationName":"Maren Anchorage", "StationType":"OnFootSettlement" }""");
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task DocksOfflineAtTheBeatsStationReplacesTheBeatAndSaysSo()
     {
@@ -89,6 +90,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(1001L, "DockOffline")]
     [InlineData(Anchorage, "TooLarge")]
@@ -104,6 +106,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.Equal(0, fixtures.Provider.CallCount);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASecondDenialWhileTheBeatIsWrittenSaysNothingMore()
     {
@@ -120,6 +123,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.Equal(2, said.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADenialFromBeforeTheStoryWasPickedWritesNothing()
     {
@@ -130,6 +134,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
         Assert.Empty(said);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheReplacementDoesNotNameTheClosedStation()
     {

@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Sounds and levels draws every channel's level, mute and duck as one table (#444).</summary>
+[Trait("Category", "Integration")]
 public class TheLevelsAreOneMixerTableTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

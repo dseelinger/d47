@@ -162,6 +162,7 @@ public class UnsoldMapsAreHeldUntilSoldTests
         Assert.Empty(ledger.Unsold("F1").Held);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AResetClearsTheTotalSurvivesARestartAndLeavesTheExobiologyResetAlone()
     {
@@ -196,6 +197,7 @@ public class UnsoldMapsAreHeldUntilSoldTests
 
     // ------------------------------------------------------------- the rebuild
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheTotalIsRebuiltFromOlderJournalsWithoutCountingTheLiveOneTwice()
     {

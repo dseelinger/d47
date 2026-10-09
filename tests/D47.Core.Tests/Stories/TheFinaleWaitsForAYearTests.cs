@@ -29,6 +29,7 @@ public sealed class TheFinaleWaitsForAYearTests
     public void TheFinaleWaitsForEveryClue() =>
         Assert.False(StoryClues.FinaleDue(AllGiven with { CluesGiven = 13 }, Now.AddDays(400)));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheFirstChapterAfterTheYearOpensTheFinale()
     {

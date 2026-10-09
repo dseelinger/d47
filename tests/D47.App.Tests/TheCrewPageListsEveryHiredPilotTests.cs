@@ -79,6 +79,7 @@ public class TheCrewPageListsEveryHiredPilotTests
     private static List<string> Text(Control page) =>
         [.. page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EachPilotShowsRankDutyAndPosting()
     {
@@ -96,6 +97,7 @@ public class TheCrewPageListsEveryHiredPilotTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void DutyIsYellowAndAnUnpostedPilotIsGrey()
     {
@@ -111,6 +113,7 @@ public class TheCrewPageListsEveryHiredPilotTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AHireRedrawsTheOpenPage()
     {
@@ -140,6 +143,7 @@ public class TheCrewPageListsEveryHiredPilotTests
         Assert.Equal("Crew", crew.Display.PanelTitle);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCrewPageIsCaptured()
     {

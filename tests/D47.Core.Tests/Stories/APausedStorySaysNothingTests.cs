@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Stories;
 /// <summary>While the story is switched off no beat is said, no clue or nudge is owed, and the hidden layer stays out of every prompt.</summary>
 public sealed class APausedStorySaysNothingTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void ABeatReachedWhilePausedIsNotSaidAndWaitsForTheNextVisit()
     {
@@ -29,6 +30,7 @@ public sealed class APausedStorySaysNothingTests
         Assert.Contains(said, announcement => announcement.Key == $"adventure.{chapter}.0");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ABeatReachedJustBeforeThePauseIsDroppedNotSaidLate()
     {
@@ -48,6 +50,7 @@ public sealed class APausedStorySaysNothingTests
         Assert.Empty(callout.Examine(PauseSupport.At(Now.AddMinutes(2))));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoHiddenLayerNoClueAndNoNudgeWhileOff()
     {
@@ -79,6 +82,7 @@ public sealed class APausedStorySaysNothingTests
         Assert.Equal(new StoryClueDue(Id, 0), StoryClues.Due(story, Now.AddDays(10)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoStoryThereIsNothingToSwitch()
     {

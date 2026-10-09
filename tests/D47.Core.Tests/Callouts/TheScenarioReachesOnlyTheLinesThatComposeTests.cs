@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>A brief opts in to the scenario and the audience decides who hears it (#589).</summary>
+[Trait("Category", "Integration")]
 public class TheScenarioReachesOnlyTheLinesThatComposeTests
 {
     private const string Scenario = "We are hauling relief supplies to a besieged outpost.";

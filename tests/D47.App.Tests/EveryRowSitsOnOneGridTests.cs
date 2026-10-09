@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// Every settings row has the same columns, so labels, controls and reset gutters each sit at one x
 /// down a page (#437).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class EveryRowSitsOnOneGridTests
 {
     private const double Rounding = 1.0;

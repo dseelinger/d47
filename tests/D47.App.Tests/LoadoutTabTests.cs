@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Loadout tab: Fleet, then a ship, then a slot.</summary>
+[Trait("Category", "Integration")]
 public class LoadoutTabTests
 {
     private sealed record Surface(

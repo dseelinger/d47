@@ -94,6 +94,7 @@ public class TurnCancellationTests
     /// <summary>
     /// The claim the whole component exists for: a cancelled turn stops asking the provider for more.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACancelledTurnStopsPullingFromTheProvider()
     {

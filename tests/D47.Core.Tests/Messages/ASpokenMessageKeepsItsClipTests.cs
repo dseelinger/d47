@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Messages;
 
+[Trait("Category", "Integration")]
 public class ASpokenMessageKeepsItsClipTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 10, 2, 12, 0, 0, TimeSpan.Zero);

@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
+[Trait("Category", "Integration")]
 public class TheCatalogueCannotUseACustomIdTests : IDisposable
 {
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-custom-id-" + Guid.NewGuid().ToString("N"));

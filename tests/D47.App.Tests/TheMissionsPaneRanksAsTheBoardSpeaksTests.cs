@@ -168,6 +168,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         frame.SaveCapture(path);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MissionsIsTheCommanderTabsSecondRoot()
     {
@@ -180,6 +181,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRowsTopToBottomAreTheSpokenBoardsRanking()
     {
@@ -201,6 +203,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSummaryCountsWhatHandsInHereAndTheRewardsAtLeast()
     {
@@ -211,6 +214,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AMissionWithNoCargoReportDrawsNoDeliverySection()
     {
@@ -226,6 +230,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PlotToHandInPlotsTheHandInSystemAsTheCommander()
     {
@@ -250,6 +255,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AHandInHereMissionHasNoPlotTile()
     {
@@ -264,6 +270,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSelectionFollowsTheMissionAndFallsBackToTheFirstRow()
     {
@@ -283,6 +290,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SearchKeepsOnlyMatchingRowsAndDropsEmptyGroups()
     {
@@ -313,6 +321,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         Assert.True(page.Tick());
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANoDetailMissionShowsOnlyTimeLeftAndTheExplanation()
     {
@@ -329,6 +338,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoMissionsThePaneSaysSo()
     {
@@ -346,6 +356,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
@@ -362,6 +373,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetMissionsPaneIsCaptured()
     {

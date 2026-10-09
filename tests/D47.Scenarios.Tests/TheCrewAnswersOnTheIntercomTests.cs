@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>A turn opened with a hired pilot's name is answered by them, not the ship's AI.</summary>
+[Trait("Category", "Integration")]
 public class TheCrewAnswersOnTheIntercomTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

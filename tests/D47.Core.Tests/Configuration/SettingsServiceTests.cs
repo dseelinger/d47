@@ -9,6 +9,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
+[Trait("Category", "Integration")]
 public class SettingsServiceTests
 {
     private static readonly string AnthropicKeyRow =
@@ -494,6 +495,7 @@ public class SettingsServiceTests
 
 public class SettingsSurfaceShapeTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRowIsDocumentedAndReachableFromItsPage()
     {
@@ -510,6 +512,7 @@ public class SettingsSurfaceShapeTests
         Assert.True(missing.Length == 0, $"Settings rows with no documentation anchor: {string.Join(", ", missing)}");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EverySettingsKeyIsUniqueAcrossCapabilities()
     {

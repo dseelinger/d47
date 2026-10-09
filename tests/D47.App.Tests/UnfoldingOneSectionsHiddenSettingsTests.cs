@@ -13,6 +13,7 @@ namespace D47.App.Tests;
 /// A place whose rows a fold is hiding gets its own "Show N more" rather than the whole page unfolding
 /// at once (#221).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class UnfoldingOneSectionsHiddenSettingsTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// "It should have the same tabs as the VR mini panel, including Checklist".
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheOverlayCarriesTheHeadsetsTabsTests
 {
     /// <summary>The claim itself.</summary>

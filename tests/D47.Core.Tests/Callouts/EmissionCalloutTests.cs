@@ -428,6 +428,7 @@ public class EmissionCalloutTests
     /// hears nothing — the same "costs attention, cannot be acted on" rule the full hold already gets,
     /// applied to the other end of the same act.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("int_cargorack_size6_class1")]
     [InlineData("int_dronecontrol_fueltransfer_size3_class5")]
@@ -452,6 +453,7 @@ public class EmissionCalloutTests
     }
 
     /// <summary>A Multi Limpet Controller is a limpet controller.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("int_multidronecontrol_universal_size7_class5")]
     [InlineData("int_multidronecontrol_mining_size3_class3")]
@@ -469,6 +471,7 @@ public class EmissionCalloutTests
     }
 
     /// <summary>An empty rack collects as much as no controller does, so it is the same silence.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AControllerWithNoLimpetsAboardHearsNothing()
     {
@@ -481,6 +484,7 @@ public class EmissionCalloutTests
     /// And a Commander who can act on it hears the ordinary line, with nothing said about the hold
     /// either way.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(200, "Ship")]
     [InlineData(null, "Ship")]

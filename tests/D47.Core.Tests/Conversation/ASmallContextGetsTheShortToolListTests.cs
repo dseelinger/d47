@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A model that refuses a prompt as larger than its context is asked again with the short tool list (#423).</summary>
+[Trait("Category", "Integration")]
 public class ASmallContextGetsTheShortToolListTests
 {
     /// <summary>A question no model-free route answers.</summary>

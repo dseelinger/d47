@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>
 /// The last plan each planner produced.
 /// </summary>
+[Trait("Category", "Integration")]
 public class RoutePlanBookTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

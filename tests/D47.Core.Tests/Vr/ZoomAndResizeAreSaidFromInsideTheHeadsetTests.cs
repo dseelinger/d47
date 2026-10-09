@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Vr;
 
 /// <summary>Zooming the panel and entering resize mode, with both hands on a stick and no model (#107).</summary>
+[Trait("Category", "Integration")]
 public class ZoomAndResizeAreSaidFromInsideTheHeadsetTests
 {
     private sealed record Fixture(

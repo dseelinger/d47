@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>An attempt that sent content is not resent, and d47's own timeout does not mark the model unavailable.</summary>
+[Trait("Category", "Integration")]
 public class AStreamThatSentContentIsNotRetriedTests
 {
     private static TurnLoop Build(

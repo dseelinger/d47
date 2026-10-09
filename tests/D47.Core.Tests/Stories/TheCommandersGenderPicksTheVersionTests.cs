@@ -22,6 +22,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
         return fixtures;
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CommanderGender.Man, "Ellie hums a song from home.")]
     [InlineData(CommanderGender.Woman, "Ellis hums a song from home.")]
@@ -33,6 +34,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
         Assert.Equal(clue, fixtures.Director.Clue("F1", new StoryClueDue(Id, 0))?.Clue);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheLookupGivesTheManTheForManVersion()
     {
@@ -43,6 +45,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
             fixtures.Director.Speaker("F1", "cray"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheLookupGivesTheWomanTheForWomanVersion()
     {
@@ -61,6 +64,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
             Versioned.Speaker("dock-hand", CommanderGender.Woman));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ChangingTheGenderTakesEffectFromTheNextLine()
     {
@@ -75,6 +79,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
         Assert.Equal("Ellis hums a song from home.", fixtures.Director.Clue("F1", new StoryClueDue(Id, 0))?.Clue);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void PickWaitsForTheGender()
     {
@@ -86,6 +91,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
         Assert.Empty(fixtures.Provider.Requests);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AStoryWithoutVersionsNeedsNoGender()
     {

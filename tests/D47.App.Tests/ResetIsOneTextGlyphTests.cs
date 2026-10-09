@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Reset is the <c>↺</c> text glyph at every level of the settings page, in a 44 × 44 cell (#360).</summary>
+[Trait("Category", "Integration")]
 public sealed class ResetIsOneTextGlyphTests
 {
     private static IReadOnlyList<Button> ResetButtons(SettingsHost host) =>

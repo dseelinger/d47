@@ -6,6 +6,7 @@ namespace D47.Core.Tests.Checklists;
 /// <summary>
 /// Rewording a line, and moving a whole list to another machine.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ALineCanBeChangedAndCarriedTests
 {
     private static (ChecklistService Checklists, ChecklistItem Item) One(TempInstall install, string line)

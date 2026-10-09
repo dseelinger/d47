@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Up and down walk what has already been sent from the conversation box.</summary>
+[Trait("Category", "Integration")]
 public class TheAskBoxWalksWhatWasSentTests
 {
     private static (Window Window, PanelView View, PanelViewModel Model) Open()

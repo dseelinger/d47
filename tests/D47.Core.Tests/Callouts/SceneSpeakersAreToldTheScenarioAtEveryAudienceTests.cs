@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Callouts;
 /// A scene's brief carries the scenario whoever it is told to, as who the speakers are, and says what they
 /// have seen.
 /// </summary>
+[Trait("Category", "Integration")]
 public class SceneSpeakersAreToldTheScenarioAtEveryAudienceTests
 {
     private const string Scenario = "A secret raid to recover the data the Silver Partnership stole.";

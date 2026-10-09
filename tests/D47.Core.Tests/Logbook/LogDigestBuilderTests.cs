@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>The facts the generator is handed, and the ones it is not.</summary>
+[Trait("Category", "Integration")]
 public class LogDigestBuilderTests : IDisposable
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);

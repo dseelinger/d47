@@ -25,6 +25,7 @@ namespace D47.App.Tests;
 public class TheOverlayWithoutAHeadsetTests
 {
     /// <summary>A third instantiation, not a second design.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItDrawsTheTranscriptsTailFromTheSharedModel()
     {
@@ -46,6 +47,7 @@ public class TheOverlayWithoutAHeadsetTests
     /// The transcript's tail readable with d47's own window minimised, which is the phase's stated
     /// acceptance.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItKeepsDrawingWithTheMainWindowMinimised()
     {
@@ -72,6 +74,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A tab nobody furnished is refused, with no special case anywhere.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AnUnfurnishedTabCostsNoSpecialCase()
     {
@@ -101,6 +104,7 @@ public class TheOverlayWithoutAHeadsetTests
     /// And with nothing furnished at all it is still a surface, on the transcript, refusing every tab
     /// including the one the other case accepts.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithoutAStoryItIsTheTranscriptAndNothingElse()
     {
@@ -127,6 +131,7 @@ public class TheOverlayWithoutAHeadsetTests
         Assert.Equal(shown, OverlayPanel.ShouldShow(enabled, elite, placing));
 
     /// <summary>The same rule through the real surface, driven by the tick that asks the question.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTickIsWhatPutsItOnScreenAndTakesItOff()
     {
@@ -147,6 +152,7 @@ public class TheOverlayWithoutAHeadsetTests
         overlay.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItIsOffOutOfTheBox()
     {
@@ -160,6 +166,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Scale is the lever, because there are no metres.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItsSizeComesOffTheZoomLadder()
     {
@@ -179,6 +186,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Dragging a corner in place mode grows both dimensions (#89).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void DraggingTheBottomRightCornerGrowsBothDimensions()
     {
@@ -209,6 +217,7 @@ public class TheOverlayWithoutAHeadsetTests
     /// Dragging one edge changes only that dimension, and dragging the top or left edge carries the
     /// corner it moved along with it (#89).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void DraggingTheTopEdgeGrowsHeightAloneAndMovesTheTopUp()
     {
@@ -236,6 +245,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Dragging the body rather than an edge still just moves the strip (#89).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void DraggingTheBodyStillJustMovesIt()
     {
@@ -265,6 +275,7 @@ public class TheOverlayWithoutAHeadsetTests
     /// A drag past the minimum stops there instead of going to nothing, and the same corner can still
     /// be found afterwards (#89).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ADragPastTheMinimumStopsThereAndStaysGrabbable()
     {
@@ -305,6 +316,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Outside place mode the strip has no handles, so the same drag does nothing at all (#89).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OutsidePlaceModeTheStripHasNoHandles()
     {
@@ -330,6 +342,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A dragged size survives the way a dragged position already does (#89).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANewSizeSurvivesARestart()
     {
@@ -366,6 +379,7 @@ public class TheOverlayWithoutAHeadsetTests
     /// Where it ends up is a view preference and not a setting: a monitor coordinate is not something a
     /// Commander typed, and <c>settings.json</c> is append-only for anything that ever is.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WhereItWasLeftIsRememberedAsViewStateAndNotAsASetting()
     {
@@ -405,6 +419,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Place mode ends itself.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PlaceModeHandsThePointerBack()
     {
@@ -431,6 +446,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
  /// <summary>Which monitor.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItAsksWhereTheGameIsEveryTimeItComesUp()
     {
@@ -454,6 +470,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A default may follow the game around, and a choice may not.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OnceTheCommanderHasPlacedItNothingMovesItAgain()
     {
@@ -477,6 +494,7 @@ public class TheOverlayWithoutAHeadsetTests
         overlay.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AStripClosedFromOutsideStaysDownInsteadOfTakingD47Down()
     {
@@ -512,6 +530,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A picture of the strip, for looking at rather than for asserting on: a line hanging low or a tail clipped by four pixels is something a test can be written to miss and an eye cannot.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItRendersToACapture()
     {
@@ -529,6 +548,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A square avatar the strip's height at its left edge, a 1px rule, then the text as wide as before (#778).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheAvatarStandsAtTheLeftAsTallAsTheStrip()
     {
@@ -555,6 +575,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>A size the Commander dragged keeps the avatar square at its height; the text takes the rest.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ADraggedStripKeepsItsAvatarSquare()
     {
@@ -579,6 +600,7 @@ public class TheOverlayWithoutAHeadsetTests
     }
 
     /// <summary>Back in the header when the same view goes full.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheAvatarGoesBackToTheHeaderWhenThePanelIsFull()
     {

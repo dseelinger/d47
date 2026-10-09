@@ -14,6 +14,7 @@ namespace D47.App.Tests;
 /// The recorder is only useful if its two hooks actually fire in the running app — invoking a tool, and
 /// changing a settings row.
 /// </summary>
+[Trait("Category", "Integration")]
 public class CoverageRecorderTests
 {
     private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);

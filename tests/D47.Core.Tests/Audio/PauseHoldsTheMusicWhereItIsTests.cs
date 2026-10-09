@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>The media keys and <c>manage_music</c>: pause, resume and next on the ambient music (#497).</summary>
+[Trait("Category", "Integration")]
 public class PauseHoldsTheMusicWhereItIsTests : IDisposable
 {
     private readonly string _root = Path.Combine(

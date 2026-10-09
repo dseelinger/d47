@@ -10,6 +10,7 @@ using Shape = Avalonia.Controls.Shapes.Path;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheAvatarPlaysTheCoresClipTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-clips-" + Guid.NewGuid().ToString("N"));

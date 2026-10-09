@@ -170,6 +170,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         Assert.Empty(ledger.Unsold("F1").Held);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AResetClearsTheTotalAndSurvivesARestart()
     {
@@ -195,6 +196,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
 
     // ------------------------------------------------------------- the rebuild
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheTotalIsRebuiltFromOlderJournalsWithoutCountingTheLiveOneTwice()
     {
@@ -297,6 +299,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
             .InvokeAsync(tool, ToolArguments.FromJson("{}"), TestContext.Current.CancellationToken, caller);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCommanderCanAskWhatTheyAreCarrying()
     {
@@ -313,6 +316,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         Assert.Contains("Tessera Nova", answer, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheResetIsRefusedToTheModelAndDoneForTheCommander()
     {

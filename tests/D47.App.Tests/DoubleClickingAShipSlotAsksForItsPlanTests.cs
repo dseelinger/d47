@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A double-click on a ship's slot row opens that slot's plan prompt (#682).</summary>
+[Trait("Category", "Integration")]
 public class DoubleClickingAShipSlotAsksForItsPlanTests
 {
     [AvaloniaFact]

@@ -11,6 +11,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     private const int LeiCheung = 300120;
 
     /// <summary>Not offered where nothing is pinned, which is the overwhelmingly common case.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowIsAbsentWhereNothingIsPinned()
     {
@@ -26,6 +27,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     /// Offered the moment anything is pinned, unlike "here", which needs the engineer's system —
     /// (#113).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowAppearsAsSoonAsAnythingIsPinned()
     {
@@ -40,6 +42,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Its own heading, not "Where you are" — this one is about what is reachable anywhere.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ItSitsUnderItsOwnHeading()
     {
@@ -54,6 +57,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Rank gates a pinned line exactly as it gates one done at the workshop.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void APinnedEngineerIsAskedRegardlessOfWhereTheCommanderStands()
     {
@@ -78,6 +82,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A line the pin only covers part of the way is not kept — this filter is about finishing.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALineOutOfRankWithThePinnedEngineerIsNotKept()
     {
@@ -98,6 +103,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A pin toggles both ways, idempotently.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void APinIsSetAndCleared()
     {
@@ -117,6 +123,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>Pinning raises the event a surface under the row redraws from.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PinningRaisesPinnedChanged()
     {
@@ -132,6 +139,7 @@ public class FilteringToWhatAPinnedBlueprintCanFinishTests
     }
 
     /// <summary>A pin outlives the session, the same as the chosen filter does.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void APinRoundTripsThroughRememberAndRestore()
     {

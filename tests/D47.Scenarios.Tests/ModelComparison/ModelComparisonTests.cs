@@ -19,6 +19,7 @@ namespace D47.Scenarios.Tests.ModelComparison;
 /// runs only with <c>D47_COMPARE=1</c>, stops at <c>D47_COMPARE_CAP</c> dollars across every run that shares
 /// the ledger, and writes one JSON line per run for the report and the judge.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ModelComparisonTests
 {
     private static string? Env(string name) =>

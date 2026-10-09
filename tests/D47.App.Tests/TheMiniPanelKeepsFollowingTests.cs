@@ -76,6 +76,7 @@ public class TheMiniPanelKeepsFollowingTests
         TurnsArriveInView(view, model, () => Settle(surface, view));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void LeavingATabInMiniAndComingBackKeepsFollowing()
     {
@@ -119,6 +120,7 @@ public class TheMiniPanelKeepsFollowingTests
         TurnsArriveInView(view, model, Settle);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData("full", "mini")]
     [InlineData("mini", "full")]

@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Checklists;
 
+[Trait("Category", "Integration")]
 public class AcceptingSaysEachThingOnceTests
 {
     private static ChecklistService Waiting(TempInstall install, params string[] lines)

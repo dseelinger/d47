@@ -7,6 +7,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>A walk reads up to the tail's mark on the pool, and live events after the mark are held until it is adopted.</summary>
+[Trait("Category", "Integration")]
 public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

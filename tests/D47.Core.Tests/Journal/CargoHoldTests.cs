@@ -28,6 +28,7 @@ public class CargoHoldTests
             { "Name":"computercomponents", "Name_Localised":"Computer Components", "Count":100, "Stolen":4 } ] }
         """;
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheManifestIsReadFromTheFile()
     {
@@ -47,6 +48,7 @@ public class CargoHoldTests
     }
 
     /// <summary>The join.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADepotSpellingFindsTheSameCommodityInTheHold()
     {
@@ -59,6 +61,7 @@ public class CargoHoldTests
     /// <summary>
     /// The case fold, which is the whole of why <see cref="JournalJson.Symbol(string?)"/> lowercases.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AContributionSpellingFindsItTooDespiteTheCase()
     {
@@ -70,6 +73,7 @@ public class CargoHoldTests
     }
 
     /// <summary>Elite rewrites this file for the SRV's own hold.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSrvManifestSaysItIsTheSrvs()
     {
@@ -86,6 +90,7 @@ public class CargoHoldTests
         Assert.False(reader.Current.IsShip);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyHoldIsKnownRatherThanUnknown()
     {
@@ -102,6 +107,7 @@ public class CargoHoldTests
     }
 
     /// <summary>A Commander who has not launched since installing has no file, and that is not an error.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnAbsentFileLeavesTheHoldUnknown()
     {
@@ -111,6 +117,7 @@ public class CargoHoldTests
         Assert.False(reader.Current.IsKnown);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileCaughtMidWriteIsRetriedRatherThanSkipped()
     {
@@ -132,6 +139,7 @@ public class CargoHoldTests
         Assert.Equal(300, reader.Current.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnchangedFileIsNotReRead()
     {

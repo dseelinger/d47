@@ -179,6 +179,7 @@ public class TheFleetTabIsInTheHeadsetTests
     /// The claim itself: the headset carries the tab, and it carries it where the window does — after
     /// the transcript and the checklist rather than at the end of the strip.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AssetsFollowsTheChecklistOnTheHeadsetAsItDoesInTheWindow()
     {
@@ -209,6 +210,7 @@ public class TheFleetTabIsInTheHeadsetTests
     }
 
     /// <summary>Every root the tab has, drawn — the headset's own copy, through the real rasterise.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(LoadoutPages.FleetRoot)]
     [InlineData(OnFootMode.Root)]
@@ -227,6 +229,7 @@ public class TheFleetTabIsInTheHeadsetTests
     }
 
     /// <summary>A ship's own card, pressed by a ray, drills into it the way a tap on the window's card does.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AShipCardTakesARayPress()
     {
@@ -253,6 +256,7 @@ public class TheFleetTabIsInTheHeadsetTests
     /// carries the panel off the tab rather than doing anything to that root, the same as a grip-back at
     /// the root of any other tab.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThreeGripBacksFromASlotRowReturnToTheRoot()
     {
@@ -329,6 +333,7 @@ public class TheFleetTabIsInTheHeadsetTests
     }
 
     /// <summary>A planned suit grade is stepped in place on the headset as in the window (#464).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APlannedSuitGradeStepsInPlaceOnTheHeadset()
     {

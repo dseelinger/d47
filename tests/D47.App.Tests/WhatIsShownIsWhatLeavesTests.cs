@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The review step, which is where the consent actually happens.</summary>
+[Trait("Category", "Integration")]
 public class WhatIsShownIsWhatLeavesTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 28, 12, 0, 0, TimeSpan.Zero);

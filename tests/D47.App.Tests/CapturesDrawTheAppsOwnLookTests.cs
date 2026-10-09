@@ -64,6 +64,7 @@ public class CapturesDrawTheAppsOwnLookTests
         Assert.Equal(variant, application.RequestedThemeVariant);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryPanelTabRendersToACapture()
     {

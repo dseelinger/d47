@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
+[Trait("Category", "Integration")]
 public class PublicScenariosColourChatterTests
 {
     private const string Scenario = "Hauling refugees out of the Pleiades.";

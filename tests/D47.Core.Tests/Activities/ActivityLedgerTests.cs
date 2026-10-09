@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Activities;
 
+[Trait("Category", "Integration")]
 public sealed class WhenEachActivityWasLastDoneTests : IDisposable
 {
     private const string Fid = "F123";

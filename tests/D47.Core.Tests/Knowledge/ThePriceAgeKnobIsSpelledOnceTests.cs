@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>One quantity, one spelling, across every tool that takes it.</summary>
+[Trait("Category", "Integration")]
 public class ThePriceAgeKnobIsSpelledOnceTests
 {
     private static IReadOnlyList<ToolDefinition> Tools(TempInstall install)

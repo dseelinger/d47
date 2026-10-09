@@ -103,6 +103,7 @@ public class APictureRidesOnItsToolResultTests
         Assert.False(provider.CapabilitiesFor("gpt-blind-9").SupportsImages);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ResponsesDoesNotTakeARefusedPictureForARefusalOfTools()
     {
@@ -140,6 +141,7 @@ public class APictureRidesOnItsToolResultTests
         Assert.Equal($"data:image/jpeg;base64,{Base64}", part.GetProperty("image_url").GetProperty("url").GetString());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedPictureIsDroppedTheRoundAskedOnceMoreAndTheModelToldWhy()
     {
@@ -173,6 +175,7 @@ public class APictureRidesOnItsToolResultTests
         Assert.True(provider.CapabilitiesFor("qwen3:30b").SupportsToolCalls);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusalThatEchoesThePictureDoesNotRepeatIt()
     {

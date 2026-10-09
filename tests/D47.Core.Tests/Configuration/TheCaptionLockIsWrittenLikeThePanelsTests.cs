@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>What <c>vr.captions.lock</c> puts in the file.</summary>
+[Trait("Category", "Integration")]
 public class TheCaptionLockIsWrittenLikeThePanelsTests
 {
     [Fact]

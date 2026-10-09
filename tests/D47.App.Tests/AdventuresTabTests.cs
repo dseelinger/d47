@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Adventures tab draws, and every level below it builds.</summary>
+[Trait("Category", "Integration")]
 public class AdventuresTabTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);

@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A second press that did not follow a press on the same row asks for no plan (#682).</summary>
+[Trait("Category", "Integration")]
 public class ADoubleClickThatStartedElsewherePlansNothingTests
 {
     [AvaloniaFact]

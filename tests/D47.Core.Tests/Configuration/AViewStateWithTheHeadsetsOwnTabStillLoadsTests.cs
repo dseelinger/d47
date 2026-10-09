@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>A view state written while the headset kept its own tab and roots still reads the window's (#948).</summary>
+[Trait("Category", "Integration")]
 public class AViewStateWithTheHeadsetsOwnTabStillLoadsTests
 {
     [Fact]

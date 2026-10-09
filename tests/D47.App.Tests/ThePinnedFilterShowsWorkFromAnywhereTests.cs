@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The pinned-blueprint filter, on the page, from nowhere near the engineer (#113).</summary>
+[Trait("Category", "Integration")]
 public class ThePinnedFilterShowsWorkFromAnywhereTests
 {
     private const int LeiCheung = 300120;

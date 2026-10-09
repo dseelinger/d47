@@ -19,6 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Checklist opens on the Commander's lists, and drilling into one is the normal way to use it (#830).</summary>
+[Trait("Category", "Integration")]
 public class TheChecklistOpensOnItsListsTests
 {
     private static CommanderGameState State()

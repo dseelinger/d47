@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>Every registered number row, held to rules it is easy to break one row at a time.</summary>
+[Trait("Category", "Integration")]
 public class NumberRowGateTests
 {
     public static TheoryData<string> NumberRows

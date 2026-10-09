@@ -43,6 +43,7 @@ public class TheCrewPageFillsTheShipFlownTests
         Assert.Equal("d47 does not know how many seats a Corsair has.", CrewSeatRules.UnknownSeats("Corsair"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void SeatsOfferedAreStoredAndSurviveARestart()
     {

@@ -166,6 +166,7 @@ public class TheRadioLinkIsTheSameHoweverItArrivesTests
         return Math.Sqrt(sum / samples);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(Clips))]
     public void EachClipArrivesWithinTwoDecibelsOfTheTarget(string name, double scale)

@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
+[Trait("Category", "Integration")]
 public class ShipCoreStoreTests
 {
     [Fact]
@@ -200,6 +201,7 @@ public class ShipCoreStoreTests
 }
 
 /// <summary>When a binding acts.</summary>
+[Trait("Category", "Integration")]
 public class ShipCoreWatchTests
 {
     private static readonly TimeSpan Settle = ShipCoreService.DefaultSettle;

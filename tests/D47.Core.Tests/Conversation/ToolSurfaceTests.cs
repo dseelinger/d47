@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Which tools ship on a turn.</summary>
+[Trait("Category", "Integration")]
 public class ToolSurfaceTests
 {
     private static CapabilityRegistry Registry(TempInstall install) =>

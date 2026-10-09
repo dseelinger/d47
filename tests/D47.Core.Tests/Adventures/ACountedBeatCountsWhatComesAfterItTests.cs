@@ -6,6 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Adventures;
 
+[Trait("Category", "Integration")]
 public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
 {
     private const string Labour = "LTT 7786 Labour";

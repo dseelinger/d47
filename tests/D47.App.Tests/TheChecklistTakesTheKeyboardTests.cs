@@ -11,6 +11,7 @@ namespace D47.App.Tests;
 
 /// <summary>The checklist page's own hands: rewording a line, taking one off, and typing into the box at
 /// all.</summary>
+[Trait("Category", "Integration")]
 public class TheChecklistTakesTheKeyboardTests
 {
     private static (PanelView Panel, ChecklistService Checklists) Page(params string[] lines)

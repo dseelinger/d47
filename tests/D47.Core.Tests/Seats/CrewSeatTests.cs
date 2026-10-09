@@ -113,6 +113,7 @@ public class DefaultsFollowWhatTheHullIsForTests
         [.. CrewDefaults.Offer(hull, shipId).Select(seat => seat.Role)];
 }
 
+[Trait("Category", "Integration")]
 public class ASeatFileCannotOverfillAHullTests
 {
     [Fact]

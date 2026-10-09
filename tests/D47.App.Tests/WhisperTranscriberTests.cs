@@ -8,6 +8,7 @@ namespace D47.App.Tests;
 /// <summary>The transcriber's failure path.</summary>
 public class WhisperTranscriberTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void AGarbageModelFileFailsAsAStateAndReplaysTheNativeStory()
     {

@@ -21,6 +21,7 @@ public class AnthropicDemotionTests
     private static async Task<List<LlmStreamEvent>> DrainAsync(RecordedEndpoint endpoint, string model) =>
         await Recordings.DrainAsync(endpoint, Recordings.Request(model), Token);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AModelThatRefusesTheEffortIsRetriedOnceWithoutIt()
     {
@@ -46,6 +47,7 @@ public class AnthropicDemotionTests
         Assert.False(provider.CapabilitiesFor("claude-neverheardof-9").SupportsThinkingEffort);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusalOnOneModelDoesNotDemoteAnother()
     {
@@ -64,6 +66,7 @@ public class AnthropicDemotionTests
         Assert.Contains("output_config", endpoint.Requests[2], StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSameRefusalIsNotRetriedForever()
     {
@@ -82,6 +85,7 @@ public class AnthropicDemotionTests
         Assert.DoesNotContain("output_config", endpoint.Requests[2], StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusalThatNamesNothingIsNotADemotion()
     {
@@ -96,6 +100,7 @@ public class AnthropicDemotionTests
             .CapabilitiesFor("claude-neverheardof-9").SupportsThinkingEffort);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheKnownCaseIsNeverProbed()
     {

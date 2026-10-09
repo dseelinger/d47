@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Knowledge;
 /// The four parameters #296 added to <c>find_nearest_station</c> reach the query, and a nearest-first
 /// answer is one sentence with the rest counted.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheFourInaraKnobsReachTheSearchTests
 {
     private sealed class Capturing(CommodityAnswer answer) : ITradePlanService

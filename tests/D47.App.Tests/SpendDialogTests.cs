@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// The turn line's figures, moved somewhere they can be read.
 /// </summary>
+[Trait("Category", "Integration")]
 public class SpendDialogTests
 {
     private sealed class StoppedClock(DateTimeOffset at) : IWallClock

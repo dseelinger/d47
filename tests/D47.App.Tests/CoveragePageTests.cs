@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The coverage list.</summary>
+[Trait("Category", "Integration")]
 public class CoveragePageTests
 {
     private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);

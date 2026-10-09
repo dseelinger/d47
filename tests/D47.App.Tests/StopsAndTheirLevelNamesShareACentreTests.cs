@@ -12,6 +12,7 @@ namespace D47.App.Tests;
 /// name's, because both are drawn in the same star column of one shared <see cref="Grid"/> rather
 /// than positioned with margins.
 /// </summary>
+[Trait("Category", "Integration")]
 public class StopsAndTheirLevelNamesShareACentreTests
 {
     [AvaloniaTheory]

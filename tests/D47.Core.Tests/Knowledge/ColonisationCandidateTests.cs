@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>Finding somewhere to colonise.</summary>
+[Trait("Category", "Integration")]
 public class ColonisationCandidateTests
 {
     private sealed class FakeGalaxy : IGalaxyService

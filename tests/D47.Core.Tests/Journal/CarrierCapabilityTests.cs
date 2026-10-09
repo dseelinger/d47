@@ -61,6 +61,7 @@ public class CarrierCapabilityTests
     }
 
     /// <summary>"carrier report" reaches the tool through the keyword router with no model.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void CarrierReportReachesTheToolThroughTheKeywordRouter()
     {

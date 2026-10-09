@@ -47,6 +47,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
     private static object? Resource(string key) =>
         Application.Current!.TryFindResource(key, out var value) ? value : null;
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void HelpIsInTheTitleBarAndNotOnTheTabRow()
     {
@@ -62,6 +63,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void HelpSitsJustBeforeTheWindowControls()
     {
@@ -80,6 +82,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingTitleBarHelpOpensHelpInThePanel()
     {
@@ -95,6 +98,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APreReleaseShowsTheBadgeInWarnRightAfterTheVersion()
     {
@@ -123,6 +127,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AReleaseShowsNoBadge()
     {
@@ -171,6 +176,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void At1280EveryTabFitsOnOneRowAndTheTabRowHoldsOnlyTabs()
     {

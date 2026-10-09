@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>The tick notices a rebind and the resolve, which walks the game folders, runs elsewhere (#913).</summary>
+[Trait("Category", "Integration")]
 public class ChangedBindingsAreResolvedOffTheTickTests : IDisposable
 {
     private readonly string _root = Path.Combine(

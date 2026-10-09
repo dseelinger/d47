@@ -219,6 +219,7 @@ public class CommodityLedgerTests
         Assert.Equal("2.1 billion up", new LedgerTotal(2_129_966_400, 1, 1, 0, 0).Said);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void HistoryIsFoldedFromTheJournalFilesThatCoverTheWindow()
     {
@@ -249,6 +250,7 @@ public class CommodityLedgerTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMissingJournalFolderLeavesTheLedgerEmpty()
     {
@@ -317,6 +319,7 @@ public class CommodityLedgerTests
         Assert.Equal(2_500_000, second.Net);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AContinuationFileWithNoLoadGameIsAttributedToTheCommanderItContinues()
     {

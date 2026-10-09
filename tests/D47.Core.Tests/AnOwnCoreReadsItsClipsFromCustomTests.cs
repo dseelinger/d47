@@ -18,6 +18,7 @@ public class AnOwnCoreReadsItsClipsFromCustomTests
         Assert.Equal("covas.speaking.mp4", CoreClips.FileName("covas", LoopState.Speaking));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyANonEmptyFileIsOffered()
     {

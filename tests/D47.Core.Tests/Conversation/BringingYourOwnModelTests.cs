@@ -40,6 +40,7 @@ public class BringingYourOwnModelTests
     /// The key row still exists — a gateway speaking the same protocol may want one — and it says which
     /// of the two states it is in rather than repeating the required row's wording.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheKeyRowIsStillDrawnAndSaysItIsOptional()
     {
@@ -74,6 +75,7 @@ public class BringingYourOwnModelTests
     }
 
     /// <summary>The endpoint's own list fills the picker only where the provider has none of its own.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheEndpointsOwnModelsFillThePickerOnlyWhereThereWasNothing()
     {

@@ -70,6 +70,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     private static string Text(ConversationMessage message) =>
         string.Join(' ', message.Content.OfType<ConversationContent.Text>().Select(part => part.Value));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task CaptainByNameIsAnsweredWithTheCaptainsBrief()
     {
@@ -89,6 +90,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.True(line.IsOpen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheNextTurnWithNoNameIsTheCaptainsToo()
     {
@@ -104,6 +106,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(3, provider.LastRequest.Prompt.History.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThatsAllCaptainEndsTheLine()
     {
@@ -121,6 +124,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Empty(after.OfType<TurnEvent.Addressed>());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAisNameEndsTheLine()
     {
@@ -138,6 +142,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Empty((await RunAsync(loop, "and how much cargo")).OfType<TurnEvent.Addressed>());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task BeyondRangeTheShipAiSaysSoWithoutAModel()
     {
@@ -156,6 +161,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.False(line.IsOpen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADistanceThatThrowsGivesACaptainsTurn()
     {
@@ -172,6 +178,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADistanceNobodyKnowsGivesACaptainsTurn()
     {
@@ -185,6 +192,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoCarrierOwnedTheShipAiAnswers()
     {
@@ -198,6 +206,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.False(line.IsOpen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AProtectedToolTheCaptainCallsIsRefused()
     {
@@ -219,6 +228,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Contains("not something I can do on my own", answered, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAiOverhearsTheCaptainWithoutTakingTheAnswerAsItsOwn()
     {
@@ -247,6 +257,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
                        && Text(message).Contains("Seven hundred", StringComparison.Ordinal));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACalloutSpokenDuringTheCaptainsLineStillReachesTheShipAi()
     {

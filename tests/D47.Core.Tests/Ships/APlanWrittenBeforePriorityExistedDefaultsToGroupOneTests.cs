@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Ships;
 /// A <c>ships.json</c> written before #253 named no priority group at all, and has to load as group 1
 /// rather than as none.
 /// </summary>
+[Trait("Category", "Integration")]
 public class APlanWrittenBeforePriorityExistedDefaultsToGroupOneTests
 {
     [Fact]

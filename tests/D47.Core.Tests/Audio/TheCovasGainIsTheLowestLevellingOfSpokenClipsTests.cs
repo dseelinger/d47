@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Audio;
 /// <see cref="CovasVoice.Gain"/> is measured, not chosen: the lowest whole-clip RMS levelling over the speech clips
 /// named here, rounded down, so none of them reaches the ceiling.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheCovasGainIsTheLowestLevellingOfSpokenClipsTests
 {
     private const int Rate = 48_000;

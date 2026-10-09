@@ -95,15 +95,17 @@ deliberate act and needs the maintainer's agreement, not a workaround you reach 
 
 During issue work, run only the unit tests for the area you changed, plus the integration tests
 that the change affects. A unit test does not cross a process boundary or touch the file system, and runs in under a second;
-an integration test does either. Filter by the area, in each project the diff touches:
+an integration test does either. Every integration test carries `[Trait("Category", "Integration")]`
+(a `Category=Gate` test is one by definition). Filter by the area, with both categories excluded, in
+each project the diff touches:
 
 ```bash
-dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~<Area>
-dotnet test tests/D47.App.Tests --filter FullyQualifiedName~<Area>
+dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate"
+dotnet test tests/D47.App.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate"
 ```
 
 An integration test is affected when the code it reaches across the boundary is code the diff
-changed. Run those by class name too. Do not run a whole test project unfiltered, and never
+changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do not run a whole test project unfiltered, and never
 `dotnet test d47.slnx`: the whole suite, `D47.App.Tests` included, is the release gate and runs
 in `/pre-release` and `tools/release.ps1`.
 

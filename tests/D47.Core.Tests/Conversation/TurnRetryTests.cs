@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Retry with backoff, and saying so out loud when it runs out.</summary>
+[Trait("Category", "Integration")]
 public class TurnRetryTests
 {
     private static TurnLoop Build(

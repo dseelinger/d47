@@ -14,6 +14,7 @@ namespace D47.Core.Tests.Stories;
 /// A story shorter than a month opens after a beacon scan narrated at the pick: the clock starts at the pick, the cores
 /// wake, chapter one is act one with no beacon, and one real scan wakes the Heretic. From a month up the scan is real.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AShortStoryOpensAfterANarratedScanTests
 {
     private static readonly StoryCard WeekCard = Card with { Length = StoryPacing.OneWeek.Key };

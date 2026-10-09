@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>A way back from a setting that has gone wrong.</summary>
+[Trait("Category", "Integration")]
 public class AWayBackTests
 {
     [Fact]

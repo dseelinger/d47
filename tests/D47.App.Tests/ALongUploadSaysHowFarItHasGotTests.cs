@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The upload reports itself while it happens.</summary>
+[Trait("Category", "Integration")]
 public class ALongUploadSaysHowFarItHasGotTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-upload-progress").FullName;

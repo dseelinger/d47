@@ -106,6 +106,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(entry.Active);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheModelAndGpuRowsApplyOnlyToTheLocalProvider()
     {
@@ -119,6 +120,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(gpu.AppliesWhen!(With(SttProviderCatalog.GroqId)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyTheSelectedProvidersKeyRowApplies()
     {
@@ -133,6 +135,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
         Assert.False(openAi.AppliesWhen!(With(SttProviderCatalog.LocalId)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ScribesKeyRowIsTheVoicesStoredKey()
     {
@@ -146,6 +149,7 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     }
 
     /// <summary>Sending the Commander's voice to a third party is not the model's decision.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheProviderRowIsRefusedToTheModel()
     {

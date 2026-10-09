@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>A mission on the board is not a checklist line, and a stored mission line is removed on load (#831).</summary>
+[Trait("Category", "Integration")]
 public sealed class AMissionIsNotOnTheChecklistTests : IDisposable
 {
     private const string Haul = "Deliver 99 Low Temperature Diamonds to Crown Barracks, Wadjuk";

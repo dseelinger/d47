@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Transcript's page bar lays out on first show, with no resize to set it right (#424).</summary>
+[Trait("Category", "Integration")]
 public class TheSearchRowFitsOnFirstShowTests
 {
     private static Rect InWindow(Window window, Control control) =>

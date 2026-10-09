@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Help;
 /// <summary>The spoken map of six categories (#166), checked against the live registry.</summary>
 public class HelpTaxonomyTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRegisteredCapabilityIsPlacedOrDeliberatelyUnspokenTests()
     {
@@ -28,6 +29,7 @@ public class HelpTaxonomyTests
         Assert.True(missing.Length == 0, $"Registered but neither a leaf nor unspoken: {string.Join(", ", missing)}");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryNamedCapabilityIsActuallyRegisteredTests()
     {
@@ -62,6 +64,7 @@ public class HelpTaxonomyTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRegisteredToolReachesATopLevelCategoryOrIsUnspokenTests()
     {

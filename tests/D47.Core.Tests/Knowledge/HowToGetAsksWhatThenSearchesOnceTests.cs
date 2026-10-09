@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>One tool for "how do I get X", answering the method first and searching at most once (#179).</summary>
+[Trait("Category", "Integration")]
 public class HowToGetAsksWhatThenSearchesOnceTests
 {
     /// <summary>A service that records what it was asked and answers from a script.</summary>

@@ -7,6 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
+[Trait("Category", "Integration")]
 public sealed class AReturningCoreKnowsHowLongItWasGoneTests : IDisposable
 {
     private static readonly DateTimeOffset Day = new(2026, 10, 8, 0, 0, 0, TimeSpan.Zero);

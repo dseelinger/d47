@@ -8,6 +8,7 @@ namespace D47.Donations.Tests;
 /// An unreachable store and an empty one arrive at the same call and must never reach the same
 /// decision: the local copies are deleted only against a listing that actually answered.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AFailedListingDeletesNothingTests : IDisposable
 {
     private const string Donor = "0123456789abcdef0123456789abcdef";

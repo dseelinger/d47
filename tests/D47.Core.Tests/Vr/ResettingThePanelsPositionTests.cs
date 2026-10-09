@@ -56,6 +56,7 @@ public class ResettingThePanelsPositionTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("reset the panel")]
     [InlineData("reset the VR panel")]
@@ -70,6 +71,7 @@ public class ResettingThePanelsPositionTests
         Assert.Equal([VrCapability.CurrentSlot], fixture.Reset);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoHeadsetSessionItStillSaysTheResetHappened()
     {
@@ -79,6 +81,7 @@ public class ResettingThePanelsPositionTests
         Assert.Contains("attaches", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithASessionItSaysThePanelIsBack()
     {

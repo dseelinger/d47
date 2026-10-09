@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary> A log-level row moves the code it names, driven through the real logging configuration. </summary>
+[Trait("Category", "Integration")]
 public class LogLevelRoutingTests : IDisposable
 {
     private readonly string _root = Path.Combine(

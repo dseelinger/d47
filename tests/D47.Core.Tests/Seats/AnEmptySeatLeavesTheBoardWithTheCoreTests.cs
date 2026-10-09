@@ -30,6 +30,7 @@ public class AnEmptySeatLeavesTheBoardWithTheCoreTests
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFirstOfficerOnlyOnAnotherShipDoesNotReadTheBoard()
     {

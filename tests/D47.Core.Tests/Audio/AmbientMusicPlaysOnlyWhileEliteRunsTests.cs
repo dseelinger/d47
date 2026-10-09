@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Ambient music starts nothing while Elite is not running, and stops when it exits (#536).</summary>
+[Trait("Category", "Integration")]
 public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
 {
     private readonly string _root = Path.Combine(

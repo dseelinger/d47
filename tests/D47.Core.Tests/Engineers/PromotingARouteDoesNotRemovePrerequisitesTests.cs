@@ -15,6 +15,7 @@ namespace D47.Core.Tests.Engineers;
 /// the Commander added carries <see cref="ChecklistSource.EngineerPrerequisite"/> instead, so a route
 /// re-promoted afterwards does not drop it (#257).
 /// </summary>
+[Trait("Category", "Integration")]
 public class PromotingARouteDoesNotRemovePrerequisitesTests
 {
     private static JournalEvent Event(string json)

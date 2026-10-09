@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The route half of "did the galaxy map macro work".</summary>
+[Trait("Category", "Integration")]
 public class RoutePlotWatchTests
 {
     private static readonly TimeSpan Quick = TimeSpan.FromMilliseconds(400);

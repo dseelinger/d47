@@ -87,6 +87,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>The whole claim, end to end.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheBytesOnTheWireAreTheTextThatWasOnScreen()
     {
@@ -108,6 +109,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     /// And the hash on the envelope covers those bytes, which is what a donor's receipt lets them check
     /// without taking anybody's word for it.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHashOnTheEnvelopeCoversWhatArrived()
     {
@@ -129,6 +131,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>The donation identifier is on the envelope and never in the body.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTokenTravelsOutsideThePayload()
     {
@@ -153,6 +156,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>The token is minted by the send and not before.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NoIdentifierExistsUntilSomethingIsSent()
     {
@@ -177,6 +181,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     /// The receipt lands beside the executable, and the copy it keeps is the payload byte for byte —
     /// read back off the disk rather than asserted about the string that was passed in.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ARecieptOfExactlyWhatLeftIsKept()
     {
@@ -198,6 +203,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>With nowhere to send, the window is the window that shipped before #175.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoAddressThereIsNoSendButton()
     {
@@ -214,6 +220,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>Nor is one offered for an address that could only send in the clear.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -224,6 +231,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         Assert.False(Dispatch(new Endpoint(), address).CanSend);
 
     /// <summary>Changing the span throws the send away.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ChangingWhatWouldLeaveMakesTheSendAFreshDecision()
     {
@@ -255,6 +263,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     /// The window no longer tells a donor to paste into an issue — not in the intro, and not on the
     /// button after a copy.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NothingTellsADonorToPasteIntoAnIssue()
     {
@@ -266,6 +275,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
         Assert.DoesNotContain("paste it", words, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRetiredDestinationIsNotNamedAnywhereInTheWindow()
     {
@@ -314,6 +324,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>A refusal says so on screen.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ARefusedDonationSaysSoRatherThanLookingLikeItWorked()
     {
@@ -340,6 +351,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>And its receipt says the same, rather than the send going unrecorded.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ARefusalIsWrittenDownToo()
     {
@@ -360,6 +372,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>The request goes to <c>/donate</c> on the configured address and nowhere else.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThePathIsFixedWhateverTheAddressSays()
     {
@@ -373,6 +386,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     }
 
     /// <summary>The endpoint's own key is what the receipt names, not d47's guess at it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheStoresOwnAnswerNamesTheObject()
     {
@@ -389,6 +403,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     /// And a reply d47 cannot parse does not turn a stored donation into a failed one — it falls back
     /// to the key the envelope predicts.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreadableReplyStillCountsAsStored()
     {
@@ -402,6 +417,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     /// <summary>
     /// Nothing is posted anywhere with no address set, and the sentence says what to do instead.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoAddressNothingIsPostedAnywhere()
     {

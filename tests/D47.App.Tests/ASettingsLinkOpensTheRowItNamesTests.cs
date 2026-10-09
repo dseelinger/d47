@@ -25,6 +25,7 @@ namespace D47.App.Tests;
 /// A "Settings" link in a message that carries a setting's row opens the settings page on the place holding
 /// that row, in the window and in the headset; one that carries none opens the Settings tab (#952).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ASettingsLinkOpensTheRowItNamesTests
 {
     private const string NoVoice = "No Chatterbox voice has been chosen. Pick one in Settings.";

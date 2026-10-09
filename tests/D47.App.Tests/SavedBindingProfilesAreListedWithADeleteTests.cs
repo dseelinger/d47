@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Settings lists every saved binding profile with a Delete button that removes it (#80).</summary>
+[Trait("Category", "Integration")]
 public sealed class SavedBindingProfilesAreListedWithADeleteTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

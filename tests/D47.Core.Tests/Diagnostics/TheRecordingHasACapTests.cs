@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The audio recorder's ring.</summary>
+[Trait("Category", "Integration")]
 public class TheRecordingHasACapTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);

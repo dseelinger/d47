@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// The Ships index draws each hull's own artwork on its card, the ship's own page draws it large, and
 /// the Hull pictures setting puts both away again (#247).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheFleetCardsCarryTheirHullTests
 {
     /// <summary>The repo's own hull art.</summary>

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
+[Trait("Category", "Integration")]
 public class AnUpgradeDeletesWhatItDoesNotKnowTests
 {
     private static readonly ReleaseVersion Running = new(0, 170, 0);

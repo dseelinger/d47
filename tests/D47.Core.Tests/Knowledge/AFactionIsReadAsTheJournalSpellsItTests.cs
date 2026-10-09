@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>A spoken faction name is corrected against the factions this Commander's journals name (#486).</summary>
+[Trait("Category", "Integration")]
 public class AFactionIsReadAsTheJournalSpellsItTests
 {
     private sealed class Recording : IGalaxyService

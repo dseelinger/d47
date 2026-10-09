@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The one-engineer checklist filter, drawn on the page (#265).</summary>
+[Trait("Category", "Integration")]
 public class TheEngineerFilterFocusesOnOneEngineersUnlockTests
 {
     private static ChecklistService Checklists()

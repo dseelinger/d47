@@ -63,6 +63,7 @@ public class EveryRowReachesItsSubsystemTests
         Assert.False(SettingsFanout.For(key).ChooseVoiceForCoreAboard);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRootReAppliesExactlyTheseSixPrefixes()
     {
@@ -90,6 +91,7 @@ public class EveryRowReachesItsSubsystemTests
     /// Every registered row that is the root's to re-apply reaches the subsystem named by its own
     /// prefix.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARowUnderARoutedPrefixReachesThatPrefixesSubsystem()
     {

@@ -135,6 +135,7 @@ public class TheLocalVoiceBuildCanBeChosenTests
     /// <summary>
     /// Every build lands as <c>model.onnx</c>, which is what makes the swap leave nothing behind.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryBuildLandsOnTheSameFile()
     {
@@ -172,6 +173,7 @@ public class TheLocalVoiceBuildCanBeChosenTests
     /// Read from the file rather than from settings, so a Commander who replaced <c>model.onnx</c> by
     /// hand is told what they have rather than what d47 last wrote down.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheInstalledBuildIsReadFromTheFilesOwnSize()
     {
@@ -205,6 +207,7 @@ public class TheLocalVoiceBuildCanBeChosenTests
     /// And a switch onto the build already installed is answered without a download — which is what
     /// stops re-selecting the current row costing 300 MB.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task SwitchingToTheBuildAlreadyThereFetchesNothing()
     {

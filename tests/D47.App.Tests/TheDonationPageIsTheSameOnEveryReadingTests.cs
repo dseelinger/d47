@@ -62,6 +62,7 @@ public class TheDonationPageIsTheSameOnEveryReadingTests
     }
 
     /// <summary>And the window it opens carries the toggle, off.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ItOpensOnTheExcerptWithTheHistoryOnePressAway()
     {

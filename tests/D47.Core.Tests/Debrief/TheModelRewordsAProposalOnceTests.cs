@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The launch's pass over drafted proposals, driven through a stub in place of the model (#677).</summary>
+[Trait("Category", "Integration")]
 public class TheModelRewordsAProposalOnceTests : IDisposable
 {
     private const string Commander = "F1234";

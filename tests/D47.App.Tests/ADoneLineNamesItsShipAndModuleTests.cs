@@ -15,6 +15,7 @@ namespace D47.App.Tests;
 
 /// <summary>Three finished rolls reading Grade 5 Reinforced Shields on Slot01_Size7 over a caption saying ship
 /// 51.</summary>
+[Trait("Category", "Integration")]
 public class ADoneLineNamesItsShipAndModuleTests
 {
     private const string Flamebrand =

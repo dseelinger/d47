@@ -46,6 +46,7 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
     public void ACarrierOwnerIsAlwaysInReach() =>
         Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false).Ship, carrier: true).InReach);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDirectorReadsTheCarrierFromTheGameState()
     {
@@ -61,6 +62,7 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         Assert.Equal(BeaconAddress, Assert.Single(fixtures.Asks).Story!.Beacon!.SystemAddress);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ActOneRunsUntilTheShipCanMakeTheTrip()
     {

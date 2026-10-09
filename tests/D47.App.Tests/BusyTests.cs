@@ -159,6 +159,7 @@ public class BusyTests
     /// The picker button's hand-rolled version collapsed into the helper, so the glyph it always had is
     /// still there and still starts hidden.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePickerRowStillCarriesItsGlyph()
     {
@@ -183,6 +184,7 @@ public class BusyTests
     /// A core takes a model round trip to work out its first line, and the row the Commander picked it
     /// on is where that is said.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCoreRowSaysItIsWorkingWhileTheNewCoreDecidesWhatToSay()
     {

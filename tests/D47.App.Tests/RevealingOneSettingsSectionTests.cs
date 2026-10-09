@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// Showing one section of Settings on request, which is where a help card lands.
 /// </summary>
+[Trait("Category", "Integration")]
 public class RevealingOneSettingsSectionTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

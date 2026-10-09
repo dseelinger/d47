@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Configuration;
 /// A key claimed from the whole system cannot be a bare one: it would stop working in every other
 /// application, Elite included, so the binder refuses it.
 /// </summary>
+[Trait("Category", "Integration")]
 public class SystemWideHotkeyTests
 {
     [Theory]

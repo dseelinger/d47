@@ -12,6 +12,7 @@ namespace D47.Core.Tests.Knowledge;
 /// Finding exobiology — two halves from two sources, and the tests
 /// that keep them from being mistaken for each other.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ExobiologyCapabilityTests
 {
     private sealed class FakeRoutes : IRouteService

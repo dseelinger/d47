@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Where the carrier is, recovered from journals d47 was not running for.</summary>
+[Trait("Category", "Integration")]
 public class CarrierBackfillTests
 {
     private const string Fid = "F1234567";

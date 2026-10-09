@@ -29,6 +29,7 @@ public class APreReleaseSaysSoTests
             .Binding!.Read(D47Settings.Defaults) ?? string.Empty;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AboutSaysSoOnAPreRelease()
     {
@@ -37,6 +38,7 @@ public class APreReleaseSaysSoTests
     }
 
     /// <summary>A final release is the unmarked case.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AndSaysNothingOnAFinalRelease()
     {
@@ -44,6 +46,7 @@ public class APreReleaseSaysSoTests
     }
 
     /// <summary>The state the whole enum exists for.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AndClaimsNothingWhenItCouldNotAsk()
     {
@@ -55,6 +58,7 @@ public class APreReleaseSaysSoTests
     /// A host that supplies no channel at all — the designer, and every test that is not about this —
     /// behaves as Unknown rather than throwing or claiming.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AndAHostThatNeverAnswersIsTreatedAsUnknown()
     {

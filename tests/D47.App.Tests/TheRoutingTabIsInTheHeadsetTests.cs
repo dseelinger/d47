@@ -22,6 +22,7 @@ namespace D47.App.Tests;
 /// Where the Commander is going, in the headset (#52): every root of the Routing tab, drawn and
 /// pressed on the surface the headset is actually handed.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheRoutingTabIsInTheHeadsetTests
 {
     /// <summary>No tools of its own — Plan and Market validate client-side before reaching one.</summary>

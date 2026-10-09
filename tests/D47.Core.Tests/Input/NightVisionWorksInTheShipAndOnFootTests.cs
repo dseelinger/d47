@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>Night vision resolves to the ship binding in the ship and SRV, and the suit binding on foot (#456).</summary>
+[Trait("Category", "Integration")]
 public sealed class NightVisionWorksInTheShipAndOnFootTests : IDisposable
 {
     private static readonly DateTimeOffset Start = new(2026, 8, 29, 20, 0, 0, TimeSpan.Zero);

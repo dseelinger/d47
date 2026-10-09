@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// Each test merges ControlKitTheme.axaml through <see cref="AppLook.ControlKit"/> for its own
 /// duration — the same resource the button's own production code resolves from.
 /// </summary>
+[Trait("Category", "Integration")]
 public class GlyphButtonsTakeTheirOwnThemeTests
 {
     [AvaloniaFact]

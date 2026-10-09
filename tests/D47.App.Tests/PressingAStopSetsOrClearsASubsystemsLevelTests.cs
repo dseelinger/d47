@@ -12,6 +12,7 @@ namespace D47.App.Tests;
 
 /// <summary>The per-subsystem level track's interaction (#283): one press sets a level, the same
 /// press again hands the row back, and the count chip and an inheriting row's readout follow.</summary>
+[Trait("Category", "Integration")]
 public class PressingAStopSetsOrClearsASubsystemsLevelTests
 {
     private static (SettingsView View, Window Window, D47.Core.Configuration.SettingsService Settings) Open()

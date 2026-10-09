@@ -125,6 +125,7 @@ public class PlacingThePanelWhereYouLookTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("place the panel here")]
     [InlineData("put the panel here")]
@@ -140,6 +141,7 @@ public class PlacingThePanelWhereYouLookTests
         Assert.Single(fixture.Placed);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoHeadPoseItAnswersAsANudgeDoes()
     {

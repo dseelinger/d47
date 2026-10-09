@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>A turn opened with "Captain" is answered by the carrier's captain, not the ship's AI.</summary>
+[Trait("Category", "Integration")]
 public class TheCaptainAnswersOverTheLineTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

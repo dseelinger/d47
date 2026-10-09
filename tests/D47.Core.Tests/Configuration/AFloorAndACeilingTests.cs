@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The three settings a floor and a ceiling arrive as, at the store seam.</summary>
+[Trait("Category", "Integration")]
 public class AFloorAndACeilingTests
 {
     private static SettingsStore StoreFor(TempInstall install) =>

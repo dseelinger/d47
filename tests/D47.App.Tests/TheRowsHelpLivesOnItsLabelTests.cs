@@ -14,6 +14,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// A row's help is reached by hovering or focusing its own label, with no separate glyph (#333).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheRowsHelpLivesOnItsLabelTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

@@ -19,6 +19,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
     /// Help improve D47 is the window this issue was reported against — five paragraphs of prose above
     /// the control that does the thing, and no mark anywhere on it.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void HelpImproveCarriesAMarkForItsOwnPage()
     {

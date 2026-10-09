@@ -353,6 +353,7 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         owner.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MainWindowAppliesTheStripInItsOwnConstructor()
     {

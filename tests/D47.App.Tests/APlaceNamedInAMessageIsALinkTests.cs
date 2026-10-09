@@ -195,6 +195,7 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetBannerOpensSettingsInTheHeadsetOnly()
     {

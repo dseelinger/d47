@@ -16,6 +16,7 @@ namespace D47.App.Tests;
 /// Ctrl+L scrolls the reading above the top of the view, on every one of the four readings, and deletes
 /// nothing.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ScrollingTheReadingAboveTheFoldTests : IDisposable
 {
     private readonly string _room =

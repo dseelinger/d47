@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts.Recap;
 
 /// <summary>The session that is starting is never recapped, and an empty one is not either.</summary>
+[Trait("Category", "Integration")]
 public sealed class ARecapNeverReadsTheSessionInProgressTests : IDisposable
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);

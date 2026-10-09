@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Materials › Backpack and Ship locker, and the on-foot resource detail they open (#560).</summary>
+[Trait("Category", "Integration")]
 public class WhatYouCarryOnFootIsCountedByKindTests
 {
     private sealed record Surface(Window Window, PanelView Panel, OnFootPlanService Kit, GameStateStore Store);

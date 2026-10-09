@@ -307,6 +307,7 @@ public class CapabilityRegistryTests
     }
 }
 
+[Trait("Category", "Integration")]
 public class DiagnosticsCapabilityTests
 {
     // The whole surface, not the one capability: the verbosity tool writes a settings row, so the row table

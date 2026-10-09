@@ -66,6 +66,7 @@ public class TurnThreadingTests
     /// The same hazard on the settings path, which Phase 10 made reachable: every setting is settable
     /// by voice, and a tool handler runs on whatever thread the turn is on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public async Task ChangingTheThemeFromOffTheUiThreadDoesNotThrow()
     {

@@ -15,6 +15,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Push-to-talk is one row that holds a key, a stick button, or both.</summary>
+[Trait("Category", "Integration")]
 public class OneRowForPushToTalkTests
 {
     private const string Stick = "NonRoamable+Id/One=";

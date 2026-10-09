@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Callouts;
 /// A narration goes to the model with the whole backstory and the scenario, is captioned "Narrator", and is
 /// never spoken in the ship's voice.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheNarratorTellsTheWholeStoryInItsOwnVoiceTests
 {
     private const string Backstory = "Raised on a mining platform in Diaguandri, she left owing money to the wrong people.";

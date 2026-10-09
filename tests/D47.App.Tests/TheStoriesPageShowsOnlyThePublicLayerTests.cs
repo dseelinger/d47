@@ -20,6 +20,7 @@ namespace D47.App.Tests;
 /// The Stories page lists every card by title, level and blurb, and the running story, a card reads in full with Pick or Switch,
 /// and no hidden sentence is drawn anywhere. Captures are saved to <see cref="TestSurface.CaptureDirectory"/>.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheStoriesPageShowsOnlyThePublicLayerTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);

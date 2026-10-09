@@ -17,6 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The two tabs the headset pokes on every tick do not ask to be redrawn when nothing on them moved.</summary>
+[Trait("Category", "Integration")]
 public class TheTickingTabsDoNotAskForARedrawTests
 {
     private static readonly DateTimeOffset Instant =

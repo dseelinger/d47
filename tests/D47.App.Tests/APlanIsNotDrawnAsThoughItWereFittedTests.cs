@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary> The Loadout row draws a plan as though it were fitted, and its marker never clears. </summary>
+[Trait("Category", "Integration")]
 public class APlanIsNotDrawnAsThoughItWereFittedTests
 {
     /// <summary>One ship, one Loadout, and whatever plan the test wants on top of it.</summary>

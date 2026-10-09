@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>The limpet reminder.</summary>
+[Trait("Category", "Integration")]
 public class LimpetCalloutTests
 {
     private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields)

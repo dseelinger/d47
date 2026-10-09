@@ -11,6 +11,7 @@ namespace D47.App.Tests;
 /// The Ships mode behind the D47 check's MOVE TO Pn and UNDO MOVES: a move is written to ships.json, read
 /// back after a restart, and undone.
 /// </summary>
+[Trait("Category", "Integration")]
 public class APriorityMoveFromTheCheckOutlivesARestartTests
 {
     private const string Item = "new:12";

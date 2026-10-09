@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Bookmarks page on the Routing tab: listing, renaming and deleting a bookmark (#490).</summary>
+[Trait("Category", "Integration")]
 public class TheBookmarksPageTests
 {
     private static readonly DateTimeOffset At = new(2026, 9, 25, 12, 0, 0, TimeSpan.Zero);

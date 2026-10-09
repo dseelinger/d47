@@ -22,6 +22,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
     private static RoundScriptedLlmProvider Picks(int picks) => new(
         [.. Enumerable.Range(0, picks).SelectMany(_ => new[] { RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsElsewhere) })]);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThePickLeavesTheOpeningForTheTickOnce()
     {
@@ -40,6 +41,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Null(fixtures.Director.TakeOpening("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AStoryWithoutAnOpeningLeavesNone()
     {
@@ -51,6 +53,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Null(fixtures.Director.TakeOpening("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AWeekLeavesItsOpeningAndItsScanLine()
     {
@@ -70,6 +73,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Equal(scan, fixtures.Director.TakeNarratedScan("F1")!.Line);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ResumingAPausedStoryDoesNotOpenAgain()
     {
@@ -85,6 +89,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Null(fixtures.Director.TakeOpening("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PickingTheStoryAgainOpensItAgain()
     {
@@ -100,6 +105,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Equal(Opening, fixtures.Director.TakeOpening("F1")!.Lines);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAbandonedPickSaysNoOpening()
     {
@@ -111,6 +117,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Null(fixtures.Director.TakeOpening("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheOpeningNamesAVersionedSpeakerForTheCommandersGender()
     {
@@ -137,6 +144,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Contains(WithOpening.Texts(), text => text == ("opening[1]", Opening[1].Text));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASealedFileCarriesTheOpening()
     {
@@ -147,6 +155,7 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Equal(Opening, StoryCatalog.Load(folder.Path).Secret(Id)!.Opening);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASealedFileWithoutAnOpeningHasNone()
     {

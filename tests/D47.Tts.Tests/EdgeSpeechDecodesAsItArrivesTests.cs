@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Tts.Tests;
 
 /// <summary><see cref="Mp3StreamDecoder"/> against <see cref="EdgeNeuralTtsProvider.Decode"/> on a recorded Edge MP3.</summary>
+[Trait("Category", "Integration")]
 public class EdgeSpeechDecodesAsItArrivesTests
 {
     private static readonly byte[] Recorded =

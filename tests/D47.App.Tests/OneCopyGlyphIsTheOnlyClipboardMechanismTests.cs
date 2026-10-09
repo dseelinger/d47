@@ -125,6 +125,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
                                  .Any(text => text.Text == label));
 
     /// <summary>A surface with no <c>EnableCopy</c> draws no glyph and no page throws.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASurfaceWithNoEnableCopyDrawsNoGlyphAndDoesNotThrow()
     {
@@ -156,6 +157,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     /// Clicking the copy glyph names it <c>Copy failed</c> when the clipboard refuses; two seconds later it
     /// is named <c>Copy</c> again, and its face is the two squares throughout.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ClickingItSaysWhatHappenedAndThenGoesBack()
     {

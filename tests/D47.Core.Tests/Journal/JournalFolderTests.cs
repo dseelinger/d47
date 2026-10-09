@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
+[Trait("Category", "Integration")]
 public class JournalFolderTests
 {
     [Fact]

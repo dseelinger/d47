@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Reminders survive a restart, filed under the Commander who set them.</summary>
+[Trait("Category", "Integration")]
 public class RemindersAreKeptPerCommanderTests
 {
     [Fact]

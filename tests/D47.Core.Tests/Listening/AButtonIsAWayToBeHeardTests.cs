@@ -106,6 +106,7 @@ public class AButtonIsAWayToBeHeardTests
     /// The pre-roll row applies to a button exactly as it does to a key — it covers the polling delay
     /// on whichever opened the gate, and both are polled on the same tick.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ThePreRollRowAppliesToAButton()
     {

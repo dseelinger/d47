@@ -49,6 +49,7 @@ public class AskedForMercCoinsTheBalanceIsReadOutTests
         Assert.Contains("Spent On Ships: 500,000 cr", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("how many merc coins do I have")]
     [InlineData("what's my merc coin balance")]

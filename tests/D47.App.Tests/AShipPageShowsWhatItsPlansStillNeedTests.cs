@@ -17,6 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A ship's page draws a PLAN section while its plans or deliveries still need something (#565).</summary>
+[Trait("Category", "Integration")]
 public class AShipPageShowsWhatItsPlansStillNeedTests
 {
     private static readonly ChecklistScope Reaper = ChecklistScope.Ship(12);

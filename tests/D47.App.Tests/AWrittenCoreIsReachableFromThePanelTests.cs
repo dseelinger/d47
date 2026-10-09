@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Writing a core of your own is reachable from the panel.</summary>
+[Trait("Category", "Integration")]
 public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

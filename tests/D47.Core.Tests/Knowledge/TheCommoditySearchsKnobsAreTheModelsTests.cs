@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>Every knob the commodity search has is one the model can turn.</summary>
+[Trait("Category", "Integration")]
 public class TheCommoditySearchsKnobsAreTheModelsTests
 {
     /// <summary>Records the search it was handed, and answers whatever it was given.</summary>

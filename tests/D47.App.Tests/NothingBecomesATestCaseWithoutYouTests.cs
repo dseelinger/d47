@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// The half of the audio recorder that earns it: turning a row into a regression test, from the
 /// window a Commander does it in.
 /// </summary>
+[Trait("Category", "Integration")]
 public class NothingBecomesATestCaseWithoutYouTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 8, 29, 12, 0, 0, TimeSpan.Zero);

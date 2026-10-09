@@ -96,6 +96,7 @@ public class ALevelIsABarOfTwentySegmentsTests
     public void APointFallsInTheSegmentUnderIt(double x, int expected) =>
         Assert.Equal(expected, Level.SegmentAt(x, 200, 20));
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AnAudioLevelIsTwentySegmentsAndClickingTheSeventeenthWritesPointEightFive()
     {
@@ -114,6 +115,7 @@ public class ALevelIsABarOfTwentySegmentsTests
         host.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetOpacityCannotBeSetBelowItsMinimumFromTheBar()
     {
@@ -134,6 +136,7 @@ public class ALevelIsABarOfTwentySegmentsTests
         host.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(1180)]
     [InlineData(924)]

@@ -58,6 +58,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
         Assert.Contains("The last objective must be \"land\" on Edge Moon 1 a in Edge Moon", refused.Refusal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDestinationIsKeptAndSurvivesARestart()
     {

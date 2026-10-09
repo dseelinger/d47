@@ -45,6 +45,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
     private static AdventureStanding Run(Adventure adventure, IEnumerable<JournalEvent> events) =>
         events.Aggregate(AdventureFold.Start(adventure), AdventureFold.Apply);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ArrivingIsNotEnoughAndTheScanFinishesTheChapter()
     {
@@ -60,6 +61,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.Equal(Accepted.AddMinutes(3), scanned.FinishedAt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AScanInAnotherBeaconSystemOrNoneDoesNotFireIt()
     {
@@ -75,6 +77,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.False(elsewhere.IsDone);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ACommanderAlreadyThereAtAcceptanceNeedsOnlyTheScan()
     {
@@ -88,6 +91,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.True(standing.IsDone);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void BeginningInTheBeaconSystemCountsTheSystemOnTheLivePath()
     {
@@ -108,6 +112,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.True(book.Standing("F1", "chapter-one")!.IsDone);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheCatchUpReachesTheSameStandingAsTheLiveFold()
     {
@@ -147,6 +152,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.Equal(fromLive.SystemAddress, fromWalk.SystemAddress);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ABeaconBeatIsResolvedOnlyInABeaconSystem()
     {
@@ -159,6 +165,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
             new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = Beacon }.Describe());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AWrittenBeaconBeatOutsideABeaconSystemIsRefused()
     {

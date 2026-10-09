@@ -122,6 +122,7 @@ public class AskedWhatTheCommanderOwesTheLedgerIsReadOutTests
         Assert.DoesNotContain("Alpha", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("crime status")]
     [InlineData("am I wanted")]

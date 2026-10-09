@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Music separate from cues and sound effects, situational from what the game reports.</summary>
+[Trait("Category", "Integration")]
 public class AmbienceTests : IDisposable
 {
     private readonly string _root = Path.Combine(

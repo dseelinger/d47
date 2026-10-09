@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>A binding profile saves Elite's set and loads it back unchanged, and never while Elite runs (#80).</summary>
+[Trait("Category", "Integration")]
 public sealed class SavedBindingsLoadBackByteForByteTests : IDisposable
 {
     private readonly DirectoryInfo _root = Directory.CreateTempSubdirectory("d47-binding-profiles-");

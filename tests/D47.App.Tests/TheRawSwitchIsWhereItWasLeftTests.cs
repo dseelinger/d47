@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The journal's Raw switch, kept where the Commander left it across launches.</summary>
+[Trait("Category", "Integration")]
 public sealed class TheRawSwitchIsWhereItWasLeftTests
 {
     [AvaloniaFact]

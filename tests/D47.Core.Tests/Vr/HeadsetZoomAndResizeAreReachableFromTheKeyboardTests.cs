@@ -23,6 +23,7 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal("Ctrl+Alt+S", hotkeys.ResizeHeadsetPanel);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFourRowsAreOnTheHeadsetPageAndSystemWide()
     {
@@ -43,6 +44,7 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomMovesTheLadderForAHotkeyCaller()
     {
@@ -55,6 +57,7 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal(110, settings.Current.Vr.Panel.Zoom);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomResetGoesBackToTheDefaultRung()
     {
@@ -68,6 +71,7 @@ public class HeadsetZoomAndResizeAreReachableFromTheKeyboardTests
         Assert.Equal(ZoomLadder.Default, settings.Current.Vr.Panel.Zoom);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void StepZoomAtTheTopRungIsUnchanged()
     {

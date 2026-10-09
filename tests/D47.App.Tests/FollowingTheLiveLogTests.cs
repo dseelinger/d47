@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Reading history does not mean fighting new lines as they arrive.</summary>
+[Trait("Category", "Integration")]
 public class FollowingTheLiveLogTests
 {
     private static PanelViewModel Talking()

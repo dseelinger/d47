@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>Elite holding a bindings file open does not cost the Commander their bindings.</summary>
+[Trait("Category", "Integration")]
 public class ALockedBindsFileKeepsItsBindingsTests : IDisposable
 {
     private readonly string _root = Path.Combine(

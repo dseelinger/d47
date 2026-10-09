@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Ticking;
 /// Pausing a subscriber loses whatever it does, so the diagnostics surface names it rather than leaving
 /// it to be inferred from the log (https://github.com/dseelinger/d47/issues/58).
 /// </summary>
+[Trait("Category", "Integration")]
 public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
 {
     private static TickLoop Broken(string name)

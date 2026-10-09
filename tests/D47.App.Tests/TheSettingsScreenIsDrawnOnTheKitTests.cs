@@ -41,6 +41,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
         return SettingsHost.Open(settings, viewState, paths, width: width, height: height);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -76,6 +77,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     /// The open place is the Screen title, in sentence case and White at Title size, under its area as an
     /// A breadcrumb.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePlaceIsTheScreenTitleUnderItsAreasBreadcrumb()
     {
@@ -98,6 +100,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     }
 
     /// <summary>A place's rows sit on the page ground over a Line2 rule.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RowsSitOnThePageGroundOverALine2Rule()
     {
@@ -123,6 +126,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     /// The three Voice and hearing pages at full width and at 924, for comparison with the brief: the page
     /// head, no card borders, and nothing wrapping into or clipped by another element.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(1280, 860)]
     [InlineData(924, 640)]

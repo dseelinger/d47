@@ -15,6 +15,7 @@ namespace D47.App.Tests;
 /// The header glyph a ray uses to enter resize mode, and the bar the handles carry to zoom and leave
 /// it (#190).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ARayFindsItsOwnWayIntoResizeModeTests
 {
     private static PanelView View(VrPanelSurface panel) =>

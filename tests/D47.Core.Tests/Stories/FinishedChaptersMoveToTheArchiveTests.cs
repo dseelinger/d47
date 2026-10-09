@@ -13,6 +13,7 @@ namespace D47.Core.Tests.Stories;
 /// A story keeps its current chapter and the one before it in the adventure file; the rest move to the archive with
 /// when their beats fired, and story chapters do not count toward the Commander's own adventures.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class FinishedChaptersMoveToTheArchiveTests
 {
     private static string NamedSpine(string name, string premise) =>

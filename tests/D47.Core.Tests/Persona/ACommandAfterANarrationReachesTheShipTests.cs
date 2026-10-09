@@ -65,6 +65,7 @@ public class ACommandAfterANarrationReachesTheShipTests
         Assert.Null(provider.LastRequest);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAiByNameGoesToTheShipAiAndClosesTheLine()
     {

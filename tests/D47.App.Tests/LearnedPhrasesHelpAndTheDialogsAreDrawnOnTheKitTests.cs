@@ -56,6 +56,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     private static Color Ink(string key) =>
         ((ISolidColorBrush)Avalonia.Application.Current!.Resources[key]!).Color;
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -294,6 +295,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
             []));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]
@@ -318,6 +320,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryDialogOpensWithTheModalHeader()
     {

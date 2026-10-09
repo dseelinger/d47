@@ -71,6 +71,7 @@ public sealed class TheSearchTabStaysHiddenUntilItHasARootTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASavedSearchTabReopensIt()
     {

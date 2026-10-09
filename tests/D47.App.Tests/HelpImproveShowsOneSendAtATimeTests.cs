@@ -44,6 +44,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
             .Where(button => button.IsEffectivelyVisible && button.Name is "SendExcerpt" or "SendCorpus")
             .Select(button => button.Name);
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OnlyTheExcerptSendIsShownOnTheExcerptPage()
     {
@@ -52,6 +53,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
         Assert.Equal(["SendExcerpt"], SendsShown(window));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OnlyTheHistorySendIsShownOnTheHistoryPage()
     {
@@ -63,6 +65,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
         Assert.Equal(["SendCorpus"], SendsShown(window));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ForgetIsDestructiveAndCancelIsNot()
     {
@@ -73,6 +76,7 @@ public sealed class HelpImproveShowsOneSendAtATimeTests
     }
 
     /// <summary>The exact text starts folded away, and a press on the toggle brings it up.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePayloadIsCollapsedUntilTheToggleIsPressed()
     {

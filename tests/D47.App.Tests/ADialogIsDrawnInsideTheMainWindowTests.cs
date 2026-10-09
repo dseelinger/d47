@@ -16,6 +16,7 @@ namespace D47.App.Tests;
 /// A dialog of 640 or less is drawn as a modal inside the main window, over a scrim that starts under the
 /// caption strip, rather than as a window of its own (#521).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ADialogIsDrawnInsideTheMainWindowTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

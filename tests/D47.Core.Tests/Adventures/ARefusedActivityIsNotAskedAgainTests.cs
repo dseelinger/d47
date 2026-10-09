@@ -77,6 +77,7 @@ public sealed class ARefusedActivityIsNotAskedAgainTests
         Assert.False(RefusedActivities.Refuses(["mission"], TriggerKind.Bounty, null));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheComfortZonePickSkipsARefusedActivity()
     {

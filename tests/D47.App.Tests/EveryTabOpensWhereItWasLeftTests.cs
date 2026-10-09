@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 
 /// <summary>Every tab back on the reading it was left on, and the settings page back where it was scrolled
 /// to.</summary>
+[Trait("Category", "Integration")]
 public sealed class EveryTabOpensWhereItWasLeftTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

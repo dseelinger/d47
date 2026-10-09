@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// The journal donation, step by step, captured for docs/donate-journals.md with the controls to press;
 /// tools/donate-walkthrough.py draws the boxes.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheDonationWalkthroughIsCapturedTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 9, 19, 30, 0, TimeSpan.Zero);

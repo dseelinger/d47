@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Configuration;
 
 /// <summary>Introductions survive a restart, and they do it through view state rather than through
 /// settings.</summary>
+[Trait("Category", "Integration")]
 public class IntroductionsAreRememberedTests : IDisposable
 {
     private readonly string _root = Path.Combine(

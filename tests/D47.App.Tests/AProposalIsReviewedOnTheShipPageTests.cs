@@ -19,6 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A ship's page carries TALK THROUGH THIS BUILD, where a proposal is accepted or rejected per slot (#570).</summary>
+[Trait("Category", "Integration")]
 public class AProposalIsReviewedOnTheShipPageTests
 {
     private const int ShipId = 12;

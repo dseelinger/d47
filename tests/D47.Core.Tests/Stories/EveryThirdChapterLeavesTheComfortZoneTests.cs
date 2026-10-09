@@ -50,6 +50,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
         Assert.Null(ChapterFit.LeastDone(CareerStatistics.Empty));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheThirdChapterAfterTheBeaconIsAskedForTheActivity()
     {

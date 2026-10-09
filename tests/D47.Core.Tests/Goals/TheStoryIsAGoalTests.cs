@@ -7,6 +7,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Goals;
 
+[Trait("Category", "Integration")]
 public sealed class TheStoryIsAGoalTests : IDisposable
 {
     private const string Labour = "LTT 7786 Labour";

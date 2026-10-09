@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// The card's reading page lists the story's primary cast, and no one else, each with its voice, Play sample and Change
 /// voice; a message from any cast member, primary or not, carries Change voice (#737).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
 {
     private static readonly StoryCatalog Catalog = new(

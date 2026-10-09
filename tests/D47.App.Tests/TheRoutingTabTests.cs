@@ -212,6 +212,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Progress is a level opened beside Plan, and the mode control does not offer it.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ProgressIsALevelBesidePlanRatherThanARoot()
     {
@@ -244,6 +245,7 @@ public class TheRoutingTabTests
         [.. panel.GetControl<StackPanel>("CrumbRow").Children.OfType<Button>().Select(crumb => crumb.Content as string ?? string.Empty)];
 
     /// <summary>At desktop width the tab opens with Plan and Progress side by side.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTabOpensOnPlanAndProgressSideBySide()
     {
@@ -276,6 +278,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>A plan result and Progress take turns in the one level beside Plan.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AResultAndProgressTakeTurnsBesidePlan()
     {
@@ -335,6 +338,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>With galaxy lookups off, Plan still offers Progress, and Progress draws the plotted route.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithLookupsOffPlanStillOpensProgress()
     {
@@ -386,6 +390,7 @@ public class TheRoutingTabTests
     /// Plotting off is a capability that is off rather than an error, and it says which setting turns
     /// it on — the same answer the tool gives.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PlanSaysPlottingIsOffRatherThanFailing()
     {
@@ -411,6 +416,7 @@ public class TheRoutingTabTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PlanOffersTheTwoPlannersWhenLookupsAreOn()
     {
@@ -439,6 +445,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Absent a surface with settings to save into, the root simply is not there (#311).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTradeRootIsAbsentWithNoSettingsToSaveInto()
     {
@@ -458,6 +465,7 @@ public class TheRoutingTabTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTradeRootCarriesTheCardTheTradeRunCardUsedToBeOnPlan()
     {
@@ -491,6 +499,7 @@ public class TheRoutingTabTests
     private static CheckBox SwitchNamed(PanelView panel, string label) => CheckBoxes.Single(panel, label);
 
     /// <summary>Everything but the credits box is saved, and it survives a restart (#311).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTradePagesSavedValuesSurviveARestart()
     {
@@ -528,6 +537,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>The one figure this page never writes to disk (#311).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCreditsFigureNeverReachesSettingsJson()
     {
@@ -561,6 +571,7 @@ public class TheRoutingTabTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AStoredPlanIsDrawnWholeRatherThanCutToWhatWasSpoken()
     {
@@ -600,6 +611,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Every waypoint on a stored plan carries a copy glyph, wired to the surface's clipboard (#157).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AStoredPlansWaypointsEachCarryACopyGlyph()
     {
@@ -643,6 +655,7 @@ public class TheRoutingTabTests
     /// A plan can go away between the button being drawn and being pressed: the file is hand-editable
     /// and another plot replaces what was there.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AResultLevelForAPlanThatIsGoneSaysSo()
     {
@@ -687,6 +700,7 @@ public class TheRoutingTabTests
     /// Mini's Plan root shows the stored plan as a list of waypoints, not the three planner forms
     /// (#197).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniOnThePlanRootShowsTheStoredPlanRatherThanTheForms()
     {
@@ -717,6 +731,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>With no stored plan, mini says so rather than drawing the forms (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniWithNoStoredPlanSaysSo()
     {
@@ -738,6 +753,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>NavRoute.json ending at a waypoint marks that one next, ahead of position (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniMarksTheWaypointNavRouteEndsAt()
     {
@@ -771,6 +787,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>With no route plotted, being at waypoint k marks waypoint k+1 next (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniMarksTheWaypointAfterWhereTheCommanderIs()
     {
@@ -799,6 +816,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Standing on the final waypoint says the destination is reached, with nothing marked next (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniSaysTheDestinationIsReachedAtTheFinalWaypoint()
     {
@@ -823,6 +841,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Neither the route file nor the current system matching a waypoint marks nothing (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniMarksNothingWhenNeitherTheRouteNorThePositionMatch()
     {
@@ -847,6 +866,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Galaxy search being off does not hide a plan already stored (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniShowsAStoredPlanEvenWithGalaxySearchOff()
     {
@@ -873,6 +893,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>The mark follows the Commander without leaving mini, on the same tick every other reading uses (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniMovesTheMarkOnATickAsThePositionChanges()
     {
@@ -916,6 +937,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Switching back to full shows RoutePlanPage as it does today, not mini's list (#197).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ReturningToFullShowsRoutePlanPage()
     {
@@ -982,6 +1004,7 @@ public class TheRoutingTabTests
     /// Each card's mark opens that card's page — the thing one mark for the whole tab could not do —
     /// and Back returns to the forms, so it is not a trip out of the tab.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData("Neutron Plotter", "general-neutron-plotter")]
     [InlineData("Road to Riches", "general-road-to-riches")]
@@ -1018,6 +1041,7 @@ public class TheRoutingTabTests
     }
 
  /// <summary>A bare glyph's hover names the same action its automation name does (#383).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData("Neutron Plotter")]
     [InlineData("Road to Riches")]
@@ -1046,6 +1070,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>Trade run's own page, off the Plan page since #311, carries the same mark.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTradePagesMarkOpensThatPlannersPage()
     {
@@ -1079,6 +1104,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>And its hover names its action, the same as the other two.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTradePagesMarkNamesItsActionOnHover()
     {
@@ -1107,6 +1133,7 @@ public class TheRoutingTabTests
     /// No planner card's mark echoes an invented click description — the sweep #341 asks for, done here
     /// rather than by a build-time grep so it runs where the marks are actually drawn.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NoPlannerMarkDescribesTheClickInsteadOfShowingTheHelp()
     {
@@ -1169,6 +1196,7 @@ public class TheRoutingTabTests
     /// Reached rows on the result page carry a tick and read muted; the row after the reached stop is
     /// not reached, and the one further on is untouched (#200).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ReachedRowsOnTheResultPageAreTickedAndTheNextRowIsNot()
     {
@@ -1203,6 +1231,7 @@ public class TheRoutingTabTests
     /// <summary>
     /// The row after the reached stop is marked NEXT; with nothing reached, that is the first row (#200).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRowAfterTheReachedStopIsMarkedNext()
     {
@@ -1231,6 +1260,7 @@ public class TheRoutingTabTests
     }
 
     /// <summary>The result page redraws when the reached stop moves, without being reopened (#200).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheResultPageRedrawsWhenTheReachedStopMovesWithoutReopening()
     {
@@ -1356,6 +1386,7 @@ public class TheRoutingTabTests
     /// new headline in the breadcrumb — the button used to just redraw the form and leave the Commander to
     /// find "Show most recent" themselves (#212).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingPlotOpensTheNewPlansResultPage()
     {
@@ -1381,6 +1412,7 @@ public class TheRoutingTabTests
     /// refused — <see cref="PanelNavigator"/> would not push a crumb whose key was already on top, so the
     /// breadcrumb kept the first plan's headline (#212).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingPlotAgainMovesTheBreadcrumbAndThePageToTheNewPlan()
     {
@@ -1412,6 +1444,7 @@ public class TheRoutingTabTests
     /// A plot that records no plan — no route found, refused, switched off — stays on the form rather
     /// than opening a result page for a plan that was never made (#212).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APlotThatRecordsNoPlanStaysOnTheForm()
     {

@@ -9,6 +9,7 @@ using static D47.App.Tests.SettingsPageReading;
 namespace D47.App.Tests;
 
 /// <summary>Leaving a page with the cursor in a text row's box saves what was typed.</summary>
+[Trait("Category", "Integration")]
 public sealed class ATypedValueSurvivesAPageChangeTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

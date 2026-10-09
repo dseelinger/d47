@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>Reordering by voice, and the selection that makes "it" mean something.</summary>
+[Trait("Category", "Integration")]
 public class OrderingIsReachableWithoutTheModelTests
 {
     /// <summary>A service over a throwaway install.</summary>

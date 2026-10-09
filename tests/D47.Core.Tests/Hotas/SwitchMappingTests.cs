@@ -169,6 +169,7 @@ public class SwitchMappingTests
 }
 
 /// <summary>The file, and the rule that a bad entry is reported rather than dropped.</summary>
+[Trait("Category", "Integration")]
 public class SwitchStoreTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

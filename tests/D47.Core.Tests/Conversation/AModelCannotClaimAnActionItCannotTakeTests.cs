@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The model said it had removed a checklist item, and it had not.</summary>
+[Trait("Category", "Integration")]
 public class AModelCannotClaimAnActionItCannotTakeTests
 {
     private static async Task<string> SaidAsync(TurnLoop loop, string input)

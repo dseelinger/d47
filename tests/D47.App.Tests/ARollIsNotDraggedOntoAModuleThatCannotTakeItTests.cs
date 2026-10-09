@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Two things a slot row was getting wrong about a plan.</summary>
+[Trait("Category", "Integration")]
 public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
 {
     /// <summary>

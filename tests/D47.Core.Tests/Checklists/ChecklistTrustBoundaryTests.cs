@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Checklists;
 /// The boundary the phase turns on: proposing is model-callable and committing is not, into
 /// two different files so the boundary is inspectable by looking at <c>data/</c>.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ChecklistTrustBoundaryTests
 {
     private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;

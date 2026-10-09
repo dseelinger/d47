@@ -22,6 +22,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         Assert.All(voices, voice => Assert.False(string.IsNullOrWhiteSpace(voice.Source)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AClipOfFourSecondsOrEightSecondsIsLeftOutAndTheLogNamesItsLength()
     {
@@ -44,6 +45,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         Assert.Contains(log.Messages, message => message.Contains("long") && message.Contains("8.0 s"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARowWithNoSourceAMissingClipOrAWrongRateIsLeftOutWithItsReason()
     {

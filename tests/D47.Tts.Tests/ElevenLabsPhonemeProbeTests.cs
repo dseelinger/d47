@@ -13,6 +13,7 @@ namespace D47.Tts.Tests;
 /// A live probe of whether ElevenLabs models obey a phoneme tag or a respelling on words forced to a
 /// pronunciation. Spends real characters, so it runs only with <c>D47_ELEVENLABS_PROBE=1</c> as well as the key.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ElevenLabsPhonemeProbeTests
 {
     private const string BaseUrl = "https://api.elevenlabs.io/v1";

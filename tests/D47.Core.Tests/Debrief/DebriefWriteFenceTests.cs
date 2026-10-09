@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The fence, driven by attempting the writes it exists to refuse.</summary>
+[Trait("Category", "Integration")]
 public class DebriefWriteFenceTests : IDisposable
 {
     private const string Untouched = "// the original bytes, which must survive every attempt\n";

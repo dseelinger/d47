@@ -35,6 +35,7 @@ public class SetACourseFromASearchTests
         Assert.Empty(CommunityGoalCourse.Phrases(new LastFoundSystem()));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesItAheadOfAnythingElse()
     {

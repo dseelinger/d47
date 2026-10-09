@@ -27,6 +27,7 @@ public sealed class AMissionCarriesTheStoryTests
         return asides;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMissionTakenWithNothingElseToSayGetsALineForTheModelToWrite()
     {
@@ -42,6 +43,7 @@ public sealed class AMissionCarriesTheStoryTests
         Assert.Contains(Card.InYourWords, line.StoryAside.Excerpt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheAcceptBriefKeepsTheFactsAndCarriesTheExcerpt()
     {
@@ -60,6 +62,7 @@ public sealed class AMissionCarriesTheStoryTests
         Assert.True(new RewordChance(new Random(1)).ShouldReword(line, rewordPercent: 0));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EachMissionHasAtMostOneAside()
     {
@@ -80,6 +83,7 @@ public sealed class AMissionCarriesTheStoryTests
         Assert.Null(asides.Take([first, second]));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void MissionSceneChatterIsToldTheStory()
     {
@@ -98,6 +102,7 @@ public sealed class AMissionCarriesTheStoryTests
         Assert.DoesNotContain("The Test Story", plain);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheNarratorTiesTheNewestUntoldMissionToTheStory()
     {

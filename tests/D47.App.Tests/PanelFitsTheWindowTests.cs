@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The panel lays out inside the window it is given.</summary>
+[Trait("Category", "Integration")]
 public class PanelFitsTheWindowTests
 {
     private const double Width = 900;

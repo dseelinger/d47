@@ -29,6 +29,7 @@ namespace D47.App.Tests;
 /// SEARCH › SYSTEM › STATIONS lists a system's stations nearest first, narrowed by one kind, every ticked service
 /// and the title line's name field; the Overview's kind tiles open it on their kind (#825).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheSystemPageListsItsStationsTests
 {
     private const long Ltt7786 = 633608311522;

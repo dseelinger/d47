@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>A conflict zone, replayed from the journal, emits one ship scene beat per moment, spaced.</summary>
+[Trait("Category", "Integration")]
 public class AConflictZonePlaysAsShipScenesTests
 {
     private static IReadOnlyList<JournalEvent> Fight()

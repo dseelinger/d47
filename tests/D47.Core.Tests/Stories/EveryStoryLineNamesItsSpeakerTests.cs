@@ -108,6 +108,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal(("Ellis", new PinnedVoice(StorySpeaker.Chatterbox, "ellis-sample")), (woman.From, woman.Pinned));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ChangingTheGenderMidStoryChangesTheVoiceFromTheNextLine()
     {
@@ -123,6 +124,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal("ellis-sample", fixtures.Director.LineVoice("F1", "cray")!.Pinned!.VoiceId);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDirectorVoicesEachClueByItsSpeaker()
     {
@@ -143,6 +145,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Null(fixtures.Director.ClueVoice("F1", new StoryClueDue(Id, 0)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AChapterLineCanBeACastMembersAndKeepsItsSpeaker()
     {
@@ -157,6 +160,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal(new PinnedVoice(StorySpeaker.Chatterbox, StorySpeaker.Own), fixtures.Director.LineVoice("F1", "caller")!.Pinned);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AChapterKeepsItsSpeakersWhenItIsReadBackFromDisk()
     {
@@ -173,6 +177,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal(["caller", StorySpeaker.Ship, null], chapter.Beats.Select(beat => beat.Speaker));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASpeakerWrittenInAnotherCaseIsTheStorysOwn()
     {
@@ -185,6 +190,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal("caller", chapter.Beats[0].Speaker);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AChapterLineNamingASpeakerTheStoryDoesNotHaveIsRefused()
     {
@@ -207,6 +213,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         ]}
         """;
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACastLineThatNamesItsOwnSpeakerIsRefusedThenPassesWhenRewritten()
     {
@@ -227,6 +234,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal("I keep a quiet office.", chapter.Beats[0].Line);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACastLineThatStillNamesItsSpeakerAfterTheRewriteGoesToTheNarrator()
     {
@@ -245,6 +253,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal("Harrow keeps a quiet office.", chapter.Beats[0].Line);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACastNameInsideAnotherWordIsNotSelfNaming()
     {
@@ -260,6 +269,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Equal(2, fixtures.Provider.Requests.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheChapterWriterIsToldToWriteCastLinesInTheirOwnWordsAndEveryLinePlainly()
     {
@@ -273,6 +283,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Contains("Write every line plainly", prompt, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheChapterWriterIsToldTheSpeakersAndThatAStockCoreDoesNotTellTheStory()
     {
@@ -288,6 +299,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.Contains("\"speaker\": string", prompt, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACastMembersBeatSaysItsLineAndTheShipSaysWhereToGoNext()
     {

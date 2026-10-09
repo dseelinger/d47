@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A voice list arriving for the ship's provider gives the core aboard a voice; one for any other provider gives nothing.</summary>
+[Trait("Category", "Integration")]
 public class AListArrivingPairsTheShipsProviderTests : IDisposable
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);

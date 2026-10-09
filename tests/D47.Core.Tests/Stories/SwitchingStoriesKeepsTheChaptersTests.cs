@@ -8,6 +8,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>Switch and Abandon stop a story, keep its chapters in the archive, and leave the cores to the story that is current.</summary>
+[Trait("Category", "Integration")]
 public sealed class SwitchingStoriesKeepsTheChaptersTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(

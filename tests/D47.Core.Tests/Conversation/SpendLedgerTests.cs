@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Charges kept between runs, so "what has this cost this month" has an answer.</summary>
+[Trait("Category", "Integration")]
 public class SpendLedgerTests : IDisposable
 {
     private readonly string _root = Path.Combine(

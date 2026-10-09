@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#478: a file saved with a bool per Guardian voice effect loads as the effect list.</summary>
+[Trait("Category", "Integration")]
 public class AnOldGuardianVoiceFileKeepsItsTicksTests
 {
     private const string WithTheBools = """

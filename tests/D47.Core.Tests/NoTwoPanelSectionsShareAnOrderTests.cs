@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>No two sections of the settings panel claim the same position.</summary>
+[Trait("Category", "Integration")]
 public class NoTwoPanelSectionsShareAnOrderTests
 {
     [Fact]

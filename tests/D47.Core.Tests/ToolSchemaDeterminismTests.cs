@@ -43,6 +43,7 @@ public class ToolSchemaDeterminismTests
         Assert.Equal(ToolSchemaWriter.Canonical(one), ToolSchemaWriter.Canonical(other));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoIndependentlyBuiltRegistriesProduceIdenticalSchemas()
     {

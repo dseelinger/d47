@@ -38,6 +38,7 @@ public class ModelChoiceTests
     /// through to no transcription at all, which is what an unknown id means everywhere else (see
     /// <c>NothingSelectedReleasesWhateverIsLoaded</c>).
     /// </summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("tiny", "tiny.en")]
     [InlineData("base", "base.en")]
@@ -186,6 +187,7 @@ public class ModelChoiceTests
 
     // ---- The settings row -------------------------------------------------------------------
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnknownModelNameFallsBackToNoneRatherThanBeingStored()
     {
@@ -197,6 +199,7 @@ public class ModelChoiceTests
         Assert.Equal(WhisperModels.NoneId, written.Listening.Model);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheGpuRowDisappearsWhenNoModelIsSelected()
     {
@@ -215,6 +218,7 @@ public class ModelChoiceTests
     }
 
  /// <summary>Both costs on the row, and the fallback said out loud.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheGpuRowStatesBothItsCostsAndItsFallback()
     {

@@ -62,6 +62,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         return provider.LastRequest!.Prompt.RenderCachedSystemBlock();
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(null)]
     [InlineData(VoiceRole.Crew)]
@@ -77,6 +78,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.Contains(Secret, block, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAboardScenarioDoesNotReachTheCarrierCaptain()
     {
@@ -90,6 +92,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.DoesNotContain(PromptAssembly.ScenarioLabel, block, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACarrierScenarioReachesTheCarrierCaptain()
     {
@@ -110,6 +113,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.True(ScenarioAudiences.Reaches(ScenarioAudience.Carrier, VoiceRole.TowerControl));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ClearingTheScenarioRemovesItFromTheNextTurn()
     {
@@ -124,6 +128,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.DoesNotContain(PromptAssembly.ScenarioLabel, await SystemBlockAsync(loop, provider), StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ThePrivacySectionNamesTheScenarioOnlyWhenOneIsSet()
     {
@@ -150,6 +155,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.Contains("your character sheet and your backstory", what, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OneCommandersScenarioIsTheirsAndSurvivesARestart()
     {

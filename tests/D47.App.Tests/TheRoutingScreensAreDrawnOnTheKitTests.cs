@@ -173,6 +173,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         return path;
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -212,6 +213,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
     }
 
     /// <summary>The Commander's current system is Cyan on Progress, decided from where the app says they are.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCurrentSystemIsCyanOnProgress()
     {
@@ -231,6 +233,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
     }
 
     /// <summary>A hop, waypoint or stop is a list row, and none of them carries a border.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void HopsAndWaypointsAreListRowsWithNoBorder()
     {

@@ -30,6 +30,7 @@ public class ShipPlanTests
     /// A hull the Commander does not own has no ship id, because the journal's id is what a ship list
     /// is keyed by and a Corsair nobody has bought has none.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnIntendedHullHasNoShipIdAndIsNotOwned()
     {
@@ -59,6 +60,7 @@ public class ShipPlanTests
     }
 
     /// <summary>The shipped table is what answers "is that a hull", so a typo is refused.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AHullNoTableKnowsIsRefusedRatherThanInvented()
     {
@@ -71,6 +73,7 @@ public class ShipPlanTests
     /// The identity is stable and independent of the ship id from the moment the build is made — which
     /// is what there is to rebind when the hull is bought.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingTheHullAdoptsThePlanRatherThanMakingTheCommanderRePointIt()
     {
@@ -100,6 +103,7 @@ public class ShipPlanTests
         Assert.Equal("Dirty Drive Tuning", adopted.For("MainEngines")?.Blueprint);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void BoardingAPlannedHullAdoptsItToo()
     {
@@ -119,6 +123,7 @@ public class ShipPlanTests
         Assert.Equal(12, store.Find(intended.Id)?.ShipId);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void BoardingDoesNotStealAShipAnotherBuildAlreadyHolds()
     {
@@ -147,6 +152,7 @@ public class ShipPlanTests
     /// Two Corsairs planned and one bought is a question rather than a guess: adopting the wrong one
     /// silently is worse than adopting neither.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoIntendedHullsOfOneTypeAreNotAdoptedAtAll()
     {
@@ -166,6 +172,7 @@ public class ShipPlanTests
     }
 
     /// <summary>A slot holds one plan, because a slot holds one module.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PlanningASlotTwiceReplacesRatherThanAdds()
     {
@@ -184,6 +191,7 @@ public class ShipPlanTests
         Assert.Equal(3, slot.Grade);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AShipHasOneBuild()
     {
@@ -199,6 +207,7 @@ public class ShipPlanTests
     }
 
     /// <summary>And a hand edit that puts two on one ship is reported rather than obeyed.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileWithTwoBuildsForOneShipIsRefusedAndSaidSo()
     {
@@ -222,6 +231,7 @@ public class ShipPlanTests
     }
 
     /// <summary>The Commander is half the key: Elite's ship ids are per Commander and start small, so two Commanders' ship 12s are two ships and neither build is a duplicate of the other.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersMayEachHaveABuildForTheSameShipId()
     {
@@ -247,6 +257,7 @@ public class ShipPlanTests
     }
 
     /// <summary>The same seen from the service: another Commander's ship 12 is a different ship, so their build must not answer for this Commander's.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnotherCommandersBuildDoesNotAnswerForThisCommandersShip()
     {
@@ -279,6 +290,7 @@ public class ShipPlanTests
     /// A file from before builds carried a Commander: claimed whole by the first one seen, the way the
     /// checklist adopts unowned notes — a release must not silently empty every fleet page.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALegacyBuildFileIsAdoptedByTheFirstCommanderSeen()
     {
@@ -311,6 +323,7 @@ public class ShipPlanTests
     }
 
     /// <summary>Promotion goes through the proposal path, so nothing lands on the checklist unasked.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingPutsTheBuildOnTheChecklistBecauseThatIsWhatTheButtonSays()
     {
@@ -341,6 +354,7 @@ public class ShipPlanTests
     /// A prospective hull has no list to be on, and that is said rather than invented: scoping a
     /// Corsair's hardpoints to the universal list would outlive the decision to buy one.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void APlanForAHullYouDoNotOwnCannotBePromoted()
     {
@@ -360,6 +374,7 @@ public class ShipPlanTests
     }
 
     /// <summary>Dropping a plan keeps what it already put on the checklist.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void DroppingABuildKeepsWhatItAlreadyPromoted()
     {
@@ -389,6 +404,7 @@ public class ShipPlanTests
     /// Changing a slot and promoting again is a revision rather than a rebuild — which is the slot key
     /// of item one, seen from the far end of the phase.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ChangingASlotAndPromotingAgainRevisesRatherThanRebuilds()
     {
@@ -423,6 +439,7 @@ public class ShipPlanTests
     /// The fleet lists the ship being flown, which the journal's stored-ships snapshot never does:
     /// StoredShips is what is in the racks, and the one under the Commander is by definition not.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheShipBeingFlownIsInTheFleet()
     {
@@ -448,6 +465,7 @@ public class ShipPlanTests
     }
 
     /// <summary>Change is detected by content, not by a stamp.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoWritesInsideOneTickAreBothSeen()
     {
@@ -469,6 +487,7 @@ public class ShipPlanTests
     /// Every row names the system the ship is in, asked for 2026-08-20: "print in the ship list what
     /// system the ship is in".
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRowNamesTheSystemTheShipIsIn()
     {
@@ -505,6 +524,7 @@ public class ShipPlanTests
     }
 
     /// <summary>With no location yet, the row says what it knows and no more.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AShipWithNoKnownSystemDoesNotInventOne()
     {

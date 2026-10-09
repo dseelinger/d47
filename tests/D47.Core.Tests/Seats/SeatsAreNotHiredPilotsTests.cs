@@ -9,6 +9,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Seats;
 
+[Trait("Category", "Integration")]
 public class SeatsAreNotHiredPilotsTests
 {
     private const string ShipAi = "Warden";

@@ -10,6 +10,7 @@ namespace D47.Core.Tests;
 /// The Version row's own way to check for an update, and the Install row that appears once one is
 /// found (#193).
 /// </summary>
+[Trait("Category", "Integration")]
 public class CheckForUpdatesFromAboutTests
 {
     private static IReadOnlyList<SettingRow> Rows(

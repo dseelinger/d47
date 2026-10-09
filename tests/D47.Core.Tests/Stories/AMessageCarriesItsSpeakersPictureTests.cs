@@ -14,6 +14,7 @@ namespace D47.Core.Tests.Stories;
 /// A line from a primary cast member carries its picture; another member's carries one when its picture is on disk;
 /// the ship, the narrator and a member without one carry none. The message keeps the picture name across a reload.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-cast-pictures-" + Guid.NewGuid().ToString("N"));

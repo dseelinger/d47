@@ -193,6 +193,7 @@ public class CommunityGoalSaleCalloutTests
         Assert.Single(engine.Drain());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {

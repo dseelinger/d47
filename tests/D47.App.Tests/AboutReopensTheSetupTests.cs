@@ -3,6 +3,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>About's way back into the setup wizard.</summary>
+[Trait("Category", "Integration")]
 public class AboutReopensTheSetupTests
 {
     /// <summary>

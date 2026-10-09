@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests;
 
+[Trait("Category", "Integration")]
 public class OpeningAMessageMarksItReadTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);

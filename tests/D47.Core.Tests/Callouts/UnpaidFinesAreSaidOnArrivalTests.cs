@@ -185,6 +185,7 @@ public class UnpaidFinesAreSaidOnArrivalTests
             Assert.Single(Arrive(crimes, Jump(Sirius, Turner))).Text);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADebtFromAnEarlierJournalIsSaidAfterARestart()
     {
@@ -207,6 +208,7 @@ public class UnpaidFinesAreSaidOnArrivalTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSameJournalFoldedTwiceCountsOnce()
     {

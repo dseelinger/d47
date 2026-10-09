@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Adventures;
 /// A story that has waited three play sessions and seven days at its next beat makes the next narration a
 /// nudge toward it.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AStalledStoryGetsANudgeTests : IDisposable
 {
     private static readonly TimeSpan Gap = TimeSpan.FromMinutes(30);

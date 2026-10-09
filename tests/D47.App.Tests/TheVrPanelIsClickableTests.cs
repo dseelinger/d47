@@ -121,6 +121,7 @@ public class TheVrPanelIsClickableTests
     }
 
     /// <summary> The jump-to-latest control, pressed from a headset. </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingJumpToLatestFollowsAgain()
     {

@@ -13,6 +13,7 @@ namespace D47.App.Tests;
 /// The row that resets every voice to its pairing is a hazard on a shared setting, so a first press
 /// only asks and the second one inside a short window is what actually does it (#85).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AVoiceResetAsksTwiceThenActsTests
 {
     private static Button Press(SettingsHost host) =>

@@ -46,6 +46,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         return result;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchingProviderIsSentTheSameToolsOnFootInTheSrvAndWithKeyPressesOff()
     {
@@ -83,6 +84,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.All(sent, tools => Assert.Equal(searchable, tools));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AProviderThatCannotSearchIsSentTheModesList()
     {
@@ -108,6 +110,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.DoesNotContain(tools, tool => tool.Deferred);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedSearchIsAskedAgainWithTheModesListAndSoIsEveryLaterTurn()
     {
@@ -175,6 +178,7 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.Empty(input.Steps);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

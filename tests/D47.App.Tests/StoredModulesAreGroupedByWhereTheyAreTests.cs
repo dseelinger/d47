@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Stored modules: every stored module, grouped by system, filtered by name (#563).</summary>
+[Trait("Category", "Integration")]
 public class StoredModulesAreGroupedByWhereTheyAreTests
 {
     private sealed record Surface(Window Window, PanelView Panel, GameStateStore Store);

@@ -78,6 +78,7 @@ public class TheNarratorAnswersInNarrationTests
         return events;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WhatHappenedNextIsNarratedWithNoTools()
     {
@@ -105,6 +106,7 @@ public class TheNarratorAnswersInNarrationTests
         Assert.Equal([reply], world.Posted);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplyThatSaysYouIsNotSaidAndClosesTheLine()
     {
@@ -119,6 +121,7 @@ public class TheNarratorAnswersInNarrationTests
         Assert.False(line.IsOpen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task FourRepliesAndTheNextGoesToTheShip()
     {
@@ -137,6 +140,7 @@ public class TheNarratorAnswersInNarrationTests
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NinetyOneSecondsAfterTheNarrationTheShipAnswers()
     {

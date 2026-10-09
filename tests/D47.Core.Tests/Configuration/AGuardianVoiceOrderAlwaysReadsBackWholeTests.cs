@@ -67,6 +67,7 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         Assert.Equal(20, effects.Single(e => e.Id == "chorus").Level);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WritingAnOrderWithAnIdMissingOrUnknownReadsBackWhole()
     {
@@ -88,6 +89,7 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         Assert.Equal("3", surface.Settings.Read(SpeechCapability.GuardianLevelKey("glitch")));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALevelIsHeldWithinOneToTwenty()
     {

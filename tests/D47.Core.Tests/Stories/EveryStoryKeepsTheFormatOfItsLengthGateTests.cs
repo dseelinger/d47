@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Stories;
 /// Every stock story keeps the format of its length: a Save the Cat genre, a length and a blurb on the card, and a
 /// hidden entry with the length's beats, clues and finale lines, one to four options and a cast of local voices.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
 {
     private static readonly StoryCard Card = StoryFixtures.Card;

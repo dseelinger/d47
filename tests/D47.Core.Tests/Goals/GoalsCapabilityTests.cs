@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>The goals capability's surface.</summary>
+[Trait("Category", "Integration")]
 public class GoalsCapabilityTests
 {
     private static readonly ControlContext[] Modes =

@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>"ask for an adventure" opens the Ask page and its brief entry, and committing the brief presses Go with the form as it stands.</summary>
+[Trait("Category", "Integration")]
 public class AnAdventureIsAskedForByVoiceTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);

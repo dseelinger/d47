@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// The ask box's worked example is onboarding, and it retires once the Commander has asked anything at
 /// all.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AskHintRetiresTests
 {
     private const string Example = "where am I";

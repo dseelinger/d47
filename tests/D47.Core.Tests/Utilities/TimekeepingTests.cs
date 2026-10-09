@@ -71,6 +71,7 @@ public class TimekeepingTests
         Assert.Contains("2026", said, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ATimerFiresOnceWhenItIsDue()
     {
@@ -94,6 +95,7 @@ public class TimekeepingTests
     }
 
     /// <summary>Timers live only here, so a new Timekeeper over the same file has none of them.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TimersDoNotSurviveARestartAndAlarmsDo()
     {
@@ -120,6 +122,7 @@ public class TimekeepingTests
     /// An alarm that came round while d47 was closed is reported afterwards rather than sounded late as
     /// though nothing had happened.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnAlarmThatCameRoundWhileD47WasClosedIsReportedAsMissed()
     {
@@ -140,6 +143,7 @@ public class TimekeepingTests
         Assert.Contains("not running", fired[0].Reminder.AnnounceMissed(TimeZoneInfo.Utc), StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnAlarmThatComesRoundWhileD47IsRunningIsNotMissed()
     {
@@ -157,6 +161,7 @@ public class TimekeepingTests
         Assert.False(fired[0].Missed);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void CancellingTakesItOffTheList()
     {
@@ -178,6 +183,7 @@ public class TimekeepingTests
     /// Nought and several answer the same way rather than the second guessing: cancelling the wrong
     /// alarm of two is worse than being asked which.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoughtAndSeveralAreBothAnsweredRatherThanGuessedAt()
     {
@@ -192,6 +198,7 @@ public class TimekeepingTests
     }
 
     /// <summary>A timer for no time at all, or for a moment already gone, is not a reminder.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void NonsenseIsRefused()
     {
@@ -236,6 +243,7 @@ public class TimekeepingTests
     /// The file is hand-editable, so a line it gets wrong is reported rather than silently dropped —
     /// and the rest still loads.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ABadLineIsReportedAndTheRestStillLoads()
     {
@@ -260,6 +268,7 @@ public class TimekeepingTests
     }
 
     /// <summary>Change is detected by content rather than by a last-write time.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoWritesInsideOneTickAreBothSeen()
     {

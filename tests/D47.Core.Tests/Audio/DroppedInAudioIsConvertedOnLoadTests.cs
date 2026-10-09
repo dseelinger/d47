@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>A drop-in in any rate, channel count or decodable format is converted, not refused.</summary>
+[Trait("Category", "Integration")]
 public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
 {
     private readonly string _root = Path.Combine(

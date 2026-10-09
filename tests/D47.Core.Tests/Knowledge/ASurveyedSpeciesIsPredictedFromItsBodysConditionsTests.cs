@@ -107,6 +107,7 @@ public class ASurveyedSpeciesIsPredictedFromItsBodysConditionsTests
         });
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheShippedTableCarriesTheGeneratorsHeader()
     {

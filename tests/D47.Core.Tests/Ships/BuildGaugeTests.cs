@@ -219,6 +219,7 @@ public class BuildGaugeTests
         Assert.True(mine.Describes(loadout));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheReaderTakesBothFiguresAndSurvivesAModuleWithNeither()
     {

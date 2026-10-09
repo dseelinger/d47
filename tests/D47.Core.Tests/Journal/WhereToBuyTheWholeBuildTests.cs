@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Everything one build still needs, and where to buy it.</summary>
+[Trait("Category", "Integration")]
 public class WhereToBuyTheWholeBuildTests
 {
     private sealed class FakeTrade : ITradePlanService

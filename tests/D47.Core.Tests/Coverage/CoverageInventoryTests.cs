@@ -12,6 +12,7 @@ namespace D47.Core.Tests.Coverage;
 /// </summary>
 public class CoverageInventoryTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryToolAndEverySettingsRowIsInTheInventory()
     {
@@ -31,6 +32,7 @@ public class CoverageInventoryTests
     }
 
     /// <summary>Every line links to its capability's help page, and the id is what builds that URL.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryItemNamesTheCapabilityItCameFrom()
     {
@@ -81,6 +83,7 @@ public class CoverageInventoryTests
     }
 
     /// <summary>Nothing is exercised on a machine that has never run d47.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFreshLedgerReportsTheWholeAppAsUntouched()
     {
@@ -97,6 +100,7 @@ public class CoverageInventoryTests
     /// Two builds of the same code fingerprint identically, or every item would read as changed on
     /// every launch and the report would be noise.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSameDefinitionFingerprintsTheSameAcrossBuilds()
     {
@@ -128,6 +132,7 @@ public class CoverageInventoryTests
     /// so schema alone would fingerprint them all the same and staleness would silently never fire for
     /// most of the tool surface.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ZeroArgumentToolsStillFingerprintDistinctly()
     {

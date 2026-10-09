@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
+[Trait("Category", "Integration")]
 public class ACoreYouWroteYourselfTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

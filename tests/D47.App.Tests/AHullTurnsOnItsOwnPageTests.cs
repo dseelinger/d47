@@ -23,6 +23,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A hull with a mesh is turned on its own page, in place of the 4K still (#625).</summary>
+[Trait("Category", "Integration")]
 public class AHullTurnsOnItsOwnPageTests
 {
     private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);

@@ -84,6 +84,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSidebarListsTheFiveShipLedgersWithTheirCounts()
     {
@@ -105,6 +106,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RawIsOneGroupPerGradeWithItsCapAndNoGuardianMaterial()
     {
@@ -132,6 +134,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AMaterialAtItsCapIsYellowAndOneBelowIsNot()
     {
@@ -152,6 +155,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void GuardianIsGroupedByJournalCategoryThenGrade()
     {
@@ -173,6 +177,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ATilePlansNeedCarriesTheTotalNeed()
     {
@@ -212,6 +217,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
             row => Assert.Null(row.Material.Line));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRawAndGuardianLedgersAreCaptured()
     {

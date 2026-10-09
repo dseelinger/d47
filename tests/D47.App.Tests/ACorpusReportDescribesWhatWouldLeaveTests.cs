@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The consent step for a corpus, driven through the drawn window.</summary>
+[Trait("Category", "Integration")]
 public class ACorpusReportDescribesWhatWouldLeaveTests
 {
     private static HelpImprovePage Shown(

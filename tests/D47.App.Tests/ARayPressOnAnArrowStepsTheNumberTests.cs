@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A ray press on a number row's arrow steps the setting by one and leaves the arrow released (#690).</summary>
+[Trait("Category", "Integration")]
 public class ARayPressOnAnArrowStepsTheNumberTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

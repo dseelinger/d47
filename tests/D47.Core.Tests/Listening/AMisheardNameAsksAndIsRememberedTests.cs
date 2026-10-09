@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>Hear it wrong, ask, retry, remember.</summary>
+[Trait("Category", "Integration")]
 public class AMisheardNameAsksAndIsRememberedTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-heard").FullName;

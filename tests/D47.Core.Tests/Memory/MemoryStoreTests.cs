@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The store that survives.</summary>
+[Trait("Category", "Integration")]
 public class MemoryStoreTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(3311, 4, 2, 9, 0, 0, TimeSpan.Zero);

@@ -16,6 +16,7 @@ namespace D47.App.Tests;
 /// The tritium block on the carrier page: the tank, the hold, the ship, a total and a rough range
 /// (#307).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheCarrierPageShowsTritiumAndRangeTests
 {
     private const long CarrierId = 3715429376;

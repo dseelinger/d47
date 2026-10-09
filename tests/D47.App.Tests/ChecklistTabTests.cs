@@ -16,6 +16,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The one surface, now a tab of the panel rather than a window over it.</summary>
+[Trait("Category", "Integration")]
 public class ChecklistTabTests
 {
     private static ChecklistService Checklists(string root) => Checklists(root, () => null);

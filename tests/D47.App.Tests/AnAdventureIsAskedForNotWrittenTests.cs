@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Adventures tab offers no way to write or edit an adventure: a Commander asks D47 for one.</summary>
+[Trait("Category", "Integration")]
 public class AnAdventureIsAskedForNotWrittenTests
 {
     private static IReadOnlyList<string> Buttons(PanelView panel) =>

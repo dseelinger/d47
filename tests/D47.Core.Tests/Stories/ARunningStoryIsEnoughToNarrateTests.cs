@@ -6,6 +6,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A running, switched-on stock story gives the Narrator something to tell with no character sheet, About me or scenario.</summary>
+[Trait("Category", "Integration")]
 public sealed class ARunningStoryIsEnoughToNarrateTests
 {
     private static readonly TimeSpan Gap = TimeSpan.FromMinutes(30);

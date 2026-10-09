@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The merge gate, the cadence and the block.</summary>
+[Trait("Category", "Integration")]
 public class StandingDirectionsTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(3311, 4, 2, 21, 0, 0, TimeSpan.Zero);

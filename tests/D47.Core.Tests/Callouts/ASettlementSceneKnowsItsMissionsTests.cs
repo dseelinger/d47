@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Callouts;
 /// A settlement scene's beat carries the live missions whose destination is the settlement or whose target is
 /// its faction, and its brief names them.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ASettlementSceneKnowsItsMissionsTests
 {
     private const string Scenario = "Recovering stolen data from a pirate den.";

@@ -18,6 +18,7 @@ public sealed class AFinishedStoryPostsItsEndingOnceTests
         StoppedAt = Now,
     };
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARunningStoryOwesNoEnding()
     {
@@ -28,6 +29,7 @@ public sealed class AFinishedStoryPostsItsEndingOnceTests
         Assert.Null(fixtures.Director.EndingDue("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFinishedStoryOwesItsEndingUntilItIsPosted()
     {
@@ -47,6 +49,7 @@ public sealed class AFinishedStoryPostsItsEndingOnceTests
         Assert.Equal(Now, fixtures.Stories.Find("F1", Id)!.EndingPostedAt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void APostedEndingStaysAnswerableAfterARestart()
     {

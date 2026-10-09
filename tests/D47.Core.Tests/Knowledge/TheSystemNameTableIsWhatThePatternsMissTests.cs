@@ -20,6 +20,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
     private static string[] Lines() =>
         File.ReadAllLines(Path.Combine(Root(), "src", "D47.Core", "Knowledge", "SystemNames.tsv"));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRowIsANameOnceInOrdinalOrder()
     {
@@ -31,6 +32,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
         Assert.Equal(rows.Order(StringComparer.Ordinal), rows);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoRowIsSomethingAPatternAlreadyFinds()
     {
@@ -42,6 +44,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
         Assert.Empty(caught);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheHeaderNamesTheScriptAndTheSource()
     {
@@ -51,6 +54,7 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
         Assert.Contains("https://www.edsm.net/dump/systemsPopulated.json.gz", header, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheEmbeddedTableIsTheFileOnDisk()
     {

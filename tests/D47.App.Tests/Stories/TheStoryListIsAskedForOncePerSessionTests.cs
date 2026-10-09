@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.App.Tests.Stories;
 
+[Trait("Category", "Integration")]
 public sealed class TheStoryListIsAskedForOncePerSessionTests
 {
     [Fact]

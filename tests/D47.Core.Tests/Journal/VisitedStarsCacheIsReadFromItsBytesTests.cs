@@ -103,6 +103,7 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
     public void OnlyAnFAndDigitsNamesAFile(string? frontierId, bool named) =>
         Assert.Equal(named, VisitedStarsCache.PathFor("root", frontierId) is not null);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFileIsTheCurrentCommandersAndIsReadAgainWhenItChanges()
     {

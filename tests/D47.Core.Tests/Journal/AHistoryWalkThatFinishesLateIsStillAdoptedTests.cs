@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Journal;
 /// The walk back through older journals runs after the window is up, so the priming tick meets every
 /// Commander before it has an answer and the state is offered to them afterwards (#148).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
 {
     private const string Fid = "F1234567";

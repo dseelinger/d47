@@ -79,6 +79,7 @@ public class ADonationCarriesItsOwnReceiptTests
     /// Two prefixes, because there are two opposite retention rules and a lifecycle rule is written
     /// against a prefix.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheTwoKindsLandUnderDifferentPrefixes()
     {
@@ -159,6 +160,7 @@ public class ADonationCarriesItsOwnReceiptTests
     /// And a corpus receipt says the opposite in as many words, rather than letting a reader carry the
     /// excerpt's claim across.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ACorpusReceiptSaysThePayloadIsNotKept()
     {
@@ -196,6 +198,7 @@ public class ADonationCarriesItsOwnReceiptTests
     /// Both files land, and the document is the payload byte for byte — asserted by hashing what was
     /// actually written rather than by trusting the string that was passed in.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void WritingLeavesTheBytesAndTheirHashSideBySide()
     {

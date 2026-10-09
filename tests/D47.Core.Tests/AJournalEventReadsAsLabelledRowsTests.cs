@@ -250,6 +250,7 @@ public class AJournalEventReadsAsLabelledRowsTests
         Assert.Equal("{ not json", Assert.Single(reading.Plumbing).Value);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryFixtureEventReadsWithCompletePlumbingAndNoDollarKeys()
     {

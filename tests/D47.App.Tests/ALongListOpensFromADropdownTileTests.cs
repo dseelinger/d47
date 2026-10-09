@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// A Choice row with more than <see cref="SettingsView.LongListThreshold"/> options is a ▼ tile that opens
 /// the picker page (#439).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ALongListOpensFromADropdownTileTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

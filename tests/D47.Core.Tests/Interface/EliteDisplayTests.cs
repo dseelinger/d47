@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Interface;
 
 /// <summary>Whether d47 can tell that a topmost strip will be visible over the game.</summary>
+[Trait("Category", "Integration")]
 public class EliteDisplayTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

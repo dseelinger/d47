@@ -22,6 +22,7 @@ namespace D47.App.Tests;
 /// one of its search terms, a named group's title or help, and — for a row that lives on a tab rather
 /// than a settings page — a match under "On other tabs" that opens the tab and root it belongs to (#222).
 /// </summary>
+[Trait("Category", "Integration")]
 public class SearchSettingsByAreaAndSectionNamesTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

@@ -213,6 +213,7 @@ public class ScrollingBySayingSoTests
     }
 
     /// <summary>The headset, through what it actually draws.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetPanelScrollsAndRedraws()
     {
@@ -240,6 +241,7 @@ public class ScrollingBySayingSoTests
     }
 
     /// <summary>The strip, which had no other way at all.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFlatStripScrollsAndDeclinesWhenItIsNotOnScreen()
     {

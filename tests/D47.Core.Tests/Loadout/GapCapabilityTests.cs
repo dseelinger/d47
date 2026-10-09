@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>The opening sentence of "what do my plans still need" (#303).</summary>
+[Trait("Category", "Integration")]
 public class GapCapabilityTests
 {
     private static JournalEvent Event(string json)

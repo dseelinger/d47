@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>A beat, said when it is reached — after a settle, never mid-danger, never from the priming
 /// backlog.</summary>
+[Trait("Category", "Integration")]
 public class AdventureCalloutTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

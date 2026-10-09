@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Storage;
 /// The tick reads <see cref="RoutePlanBook"/> and <see cref="MailLedger"/> through their state lock, so a file
 /// write on the tool path must not hold it (#910). Each test holds the write lock and reads state meanwhile.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);

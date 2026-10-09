@@ -8,6 +8,7 @@ namespace D47.Vr.Tests;
 /// Registration is retried on every tick until it takes, but a refusal that persists writes the
 /// manifest files once and says so once (#149).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ARefusedRegistrationIsRetriedQuietlyTests
 {
     [Fact]

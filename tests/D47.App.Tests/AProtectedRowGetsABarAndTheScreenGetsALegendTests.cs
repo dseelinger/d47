@@ -12,6 +12,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// The protected chip became a bar on the row, and one legend line said once per screen (#333).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AProtectedRowGetsABarAndTheScreenGetsALegendTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();

@@ -144,6 +144,7 @@ public class ColonisationCapabilityTests
     /// The join, end to end: the depot writes <c>$aluminium_name;</c> and the hold writes
     /// <c>aluminium</c>.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WhatIsAlreadyInTheHoldIsNettedOffTheShortfall()
     {
@@ -165,6 +166,7 @@ public class ColonisationCapabilityTests
     }
 
     /// <summary>Twenty aboard against six wanted is six tonnes of progress, not twenty.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task CarryingMoreThanIsWantedCountsOnlyWhatIsWanted()
     {

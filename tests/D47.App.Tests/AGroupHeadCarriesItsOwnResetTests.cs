@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// Every group is drawn under a head carrying its title, its description and its own reset, and a group
 /// with no row showing is not drawn at all (#436).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AGroupHeadCarriesItsOwnResetTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

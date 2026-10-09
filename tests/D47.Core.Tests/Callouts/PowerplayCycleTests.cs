@@ -115,6 +115,7 @@ public class PowerplayCycleTests
         Assert.Equal(100, ThisCycle(state));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void MeritsFromAnEarlierJournalThisCycleCountAfterARestart()
     {
@@ -142,6 +143,7 @@ public class PowerplayCycleTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALateWalkCountsTheCurrentJournalOnce()
     {

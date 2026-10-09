@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Input;
 
+[Trait("Category", "Integration")]
 public class BindsAreReReadWhenEliteRewritesThemTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Checklists;
 /// <c>data/</c>, polled on its write time so a hand edit is live with no restart, and problems reported
 /// rather than items silently dropped.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ChecklistStoreTests
 {
     private static ChecklistStore Store(TempInstall install) =>

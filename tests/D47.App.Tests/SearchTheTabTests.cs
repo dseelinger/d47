@@ -58,6 +58,7 @@ public class SearchTheTabTests
     private static List<Run> Highlighted(PanelView view) =>
         [.. view.TranscriptRuns.Where(run => run.Background is not null)];
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AQueryHighlightsEveryHitAndSaysHowManyThereAre()
     {
@@ -83,6 +84,7 @@ public class SearchTheTabTests
     /// One of the hits is the current one and is drawn differently, or the count is describing a
     /// position nothing on screen shows.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ExactlyOneHitIsAccentedAndSteppingMovesIt()
     {
@@ -110,6 +112,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>The highlight, the count and the steppers, for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSearchHighlightRendersToACapture()
     {
@@ -146,6 +149,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>A hit found in the live log stays found as lines arrive.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AHitStaysSelectedAcrossAnAppend()
     {
@@ -169,6 +173,7 @@ public class SearchTheTabTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AQueryThatMatchesNothingSaysSo()
     {
@@ -183,6 +188,7 @@ public class SearchTheTabTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheQueryIsDroppedWhenThePageChanges()
     {
@@ -203,6 +209,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>Ctrl+F reaches the box from inside the ask box, which is where the caret often is.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ControlFFocusesTheBoxAndEscapeGivesThePageBack()
     {
@@ -253,6 +260,7 @@ public class SearchTheTabTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SettingsFiltersTheOpenPageAndMarksTheNav()
     {
@@ -298,6 +306,7 @@ public class SearchTheTabTests
     /// The query is dropped when the page changes, and the page it was filtering is the page that has
     /// to hear about it.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void LeavingTheSettingsPageClearsTheFilterItWasLeftWith()
     {
@@ -330,6 +339,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>The cross appears only once there is a query behind it.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheClearGlyphIsOnlyThereWhenThereIsSomethingToClear()
     {
@@ -350,6 +360,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>The cross runs the same clear path Escape does, and the claim is about the page rather than the box.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheClearGlyphPutsTheWholeFilteredPageBack()
     {
@@ -394,6 +405,7 @@ public class SearchTheTabTests
             .Where(run => run.Background is not null)];
 
     /// <summary>The filter cuts the page down and the highlight says why each survivor is on it.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SurvivingRowsMarkWhatTheQueryFound()
     {
@@ -435,6 +447,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>A row matched on its key alone shows the key that matched: a filter looks broken when the one thing it matched is the one thing never drawn.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AKeyOnlyMatchShowsTheKeyThatMatched()
     {
@@ -474,6 +487,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>The filtered page with its hits marked, for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFilteredPageRendersToACapture()
     {
@@ -497,6 +511,7 @@ public class SearchTheTabTests
     /// A row is reachable by the key the documentation and a hand-edited settings file call it, not
     /// only by the words on screen.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ARowIsFoundByItsKeyAsWellAsItsLabel()
     {
@@ -520,6 +535,7 @@ public class SearchTheTabTests
     /// A query with no match on the open page says so, points at the pages that have one, and a marked
     /// page opens filtered by the same query.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AQueryWithNoMatchHereSaysSoAndPointsAtTheMarkedPages()
     {
@@ -570,6 +586,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>A section name is a match too.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASectionIsFoundByItsOwnName()
     {
@@ -616,6 +633,7 @@ public class SearchTheTabTests
     }
 
     /// <summary>The count and the steppers mean nothing on a page that filters, so they go.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCountAndTheSteppersAreHiddenOnTheSettingsPage()
     {

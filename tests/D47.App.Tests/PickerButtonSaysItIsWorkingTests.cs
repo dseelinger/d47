@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A row that opens a picker says it is working while the picker is being built.</summary>
+[Trait("Category", "Integration")]
 public class PickerButtonSaysItIsWorkingTests
 {
     private static SettingsHost Open()

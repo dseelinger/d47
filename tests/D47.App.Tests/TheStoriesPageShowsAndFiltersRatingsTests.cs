@@ -22,6 +22,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Stories page draws each story's average stars, filters and sorts by them, and lets the Commander rate a picked story.</summary>
+[Trait("Category", "Integration")]
 public class TheStoriesPageShowsAndFiltersRatingsTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 4, 20, 0, 0, TimeSpan.Zero);

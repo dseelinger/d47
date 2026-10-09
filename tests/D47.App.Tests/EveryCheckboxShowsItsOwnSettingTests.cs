@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A toggle row's checkbox shows what the setting behind it says.</summary>
+[Trait("Category", "Integration")]
 public class EveryCheckboxShowsItsOwnSettingTests
 {
     /// <summary>

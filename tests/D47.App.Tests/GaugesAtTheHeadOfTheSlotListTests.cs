@@ -111,6 +111,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void BothGaugesAreDrawnAboveTheSlots()
     {
@@ -133,6 +134,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePowerBlockOpensItsOwnPageAndTheBreadcrumbComesBack()
     {
@@ -161,6 +163,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheGaugesSitAboveTheFirstSlotRatherThanBelowIt()
     {
@@ -181,6 +184,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AModelledFigureIsMarkedAndAMeasuredOneIsNot()
     {
@@ -203,6 +207,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AShipD47HasNotBeenInsideSaysSoWhereTheGaugesWouldBe()
     {
@@ -269,6 +274,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         return [.. Enumerable.Range(0, size.Width * size.Height).Select(at => pixels[at * 4] > 128)];
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AModuleBehindAPledgeCarriesTheCoinOnItsRow()
     {
@@ -300,6 +306,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheWaitingQuestionIsLeftOnTheTabAsABanner()
     {
@@ -342,6 +349,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
     }
 
     /// <summary>The gauges at the size the headset renders the panel, for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheGaugesRenderToACapture()
     {
@@ -378,6 +386,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AQuestionAboutSomethingElseDoesNotLandOnTheShipsTab()
     {

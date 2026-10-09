@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>The shipped table, the Commander's own notes, and the tiers that keep them apart.</summary>
+[Trait("Category", "Integration")]
 public class LoreTests : IDisposable
 {
     private const long Sol = 10477373803;

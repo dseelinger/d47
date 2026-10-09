@@ -17,6 +17,7 @@ public class HelpCrossReferencesResolveTests
         return [.. TestSurface.For(install).Registry.All.Select(registered => registered.Descriptor)];
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void EveryLinkInSettingsHelpNamesARegisteredCapability()
     {
@@ -46,6 +47,7 @@ public class HelpCrossReferencesResolveTests
     }
 
     /// <summary>And the links exist at all.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheCrossReferencesAreStillWrittenAsLinks()
     {
@@ -61,6 +63,7 @@ public class HelpCrossReferencesResolveTests
     /// the settings page: <c>CoverageInventory</c> writes this text into markdown, the row filter
     /// matches against it, and neither should see a target the Commander never does.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ThePlainSentenceHasNoMarkupInIt()
     {

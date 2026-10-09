@@ -104,6 +104,7 @@ public partial class DocumentationGateTests
     /// The gate numbers pages from a registry with timers and alarms in it, whatever the app's startup
     /// flag says (#90); leaving the capability out removes that one entry and moves no other.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheGateNumbersThePagesWithTimersAndAlarmsRegistered()
     {
@@ -243,6 +244,7 @@ public partial class DocumentationGateTests
     }
 
     /// <summary>A card marked as a settings jump must land on rows that exist.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void EverySettingsJumpNamesACapabilityThatHasSettings()
     {

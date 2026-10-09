@@ -8,6 +8,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Activities;
 
+[Trait("Category", "Integration")]
 public sealed class VoiceAnswersForActivitiesNotDoneLatelyTests : IDisposable
 {
     private const string Fid = "F123";

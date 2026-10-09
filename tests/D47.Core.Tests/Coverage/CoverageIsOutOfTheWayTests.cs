@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Coverage;
 
 /// <summary>Coverage recording is a workbench aid for whoever builds d47, not a feature.</summary>
+[Trait("Category", "Integration")]
 public class CoverageIsOutOfTheWayTests
 {
     [Fact]

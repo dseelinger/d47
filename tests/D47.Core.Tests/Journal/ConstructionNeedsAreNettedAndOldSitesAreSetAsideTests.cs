@@ -185,6 +185,7 @@ public class ConstructionNeedsAreNettedAndOldSitesAreSetAsideTests
             Task.FromResult<BestCargoAnswer?>(null);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSourcingSearchAsksForWhatIsLeftToBuy()
     {

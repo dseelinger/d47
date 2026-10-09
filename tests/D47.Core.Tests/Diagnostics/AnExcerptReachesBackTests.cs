@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>Reading an incident off disk rather than out of memory.</summary>
+[Trait("Category", "Integration")]
 public class AnExcerptReachesBackTests : IDisposable
 {
     private static readonly TimeZoneInfo Utc = TimeZoneInfo.Utc;

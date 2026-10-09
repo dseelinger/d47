@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Adventures;
 /// A chapter's ask carries the chapter before it in full and the ones before that as a name and a
 /// premise, and the draft records which adventure it follows.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);

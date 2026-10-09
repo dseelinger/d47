@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Adventures;
 /// The list's own sentence, on real journals: fires at each place in order, once, and at nothing before
 /// the stamp.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AdventureCorpusTests
 {
     private const string Commander = "F735466";

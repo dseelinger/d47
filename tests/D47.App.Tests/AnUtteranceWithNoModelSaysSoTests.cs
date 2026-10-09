@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// An utterance that arrives with no speech model loaded is answered with a sentence saying so, at once
 /// and on the thread that captured it, and goes no further.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class AnUtteranceWithNoModelSaysSoTests : IDisposable
 {
     private const string Cannot = "I heard you, but I have no speech model loaded to understand it.";

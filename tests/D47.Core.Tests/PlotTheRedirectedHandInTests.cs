@@ -64,6 +64,7 @@ public class PlotTheRedirectedHandInTests
         Assert.Equal("Sol", offer.System);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void PlotItRoutesToPlotCourseWithTheNewSystemAsTheCommander()
     {
@@ -85,6 +86,7 @@ public class PlotTheRedirectedHandInTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoRedirectStandingPlotItIsNotClaimed()
     {

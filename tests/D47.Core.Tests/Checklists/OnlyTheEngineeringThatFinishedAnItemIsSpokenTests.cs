@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Checklists;
 /// An item is said to be done only on the tick whose events did the engineering that finished it. Every
 /// other move to Done ticks the item with nothing said (#446).
 /// </summary>
+[Trait("Category", "Integration")]
 public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
 {
     private const int ShipId = 37;

@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>What d47 is allowed to claim when it found nothing.</summary>
+[Trait("Category", "Integration")]
 public class ANegativeAnswerSaysHowFarItLookedTests
 {
     private sealed class Answering(CommodityAnswer answer) : ITradePlanService

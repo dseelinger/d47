@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Commander › This session: earnings by source and the session's figures since the game started (#554).</summary>
+[Trait("Category", "Integration")]
 public class TheSessionScreenCountsFromTheLoadGameTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 4, 16, 0, 0, TimeSpan.Zero);

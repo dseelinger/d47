@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary><c>look_at_screen</c> takes a picture only while the setting is on, and at most one per turn.</summary>
+[Trait("Category", "Integration")]
 public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
 {
     private static readonly byte[] Jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0x04, 0x07];

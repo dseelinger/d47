@@ -64,6 +64,7 @@ public class UpdateInstallerTests
     }
 
     /// <summary>A verified archive still has to be a d47 build.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnArchiveWithoutTheExecutableIsRefused()
     {
@@ -80,6 +81,7 @@ public class UpdateInstallerTests
     }
 
     /// <summary>Bytes that are not a zip at all — a truncated transfer that still hashed right.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnArchiveThatIsNotAnArchiveIsRefused()
     {
@@ -91,6 +93,7 @@ public class UpdateInstallerTests
         Assert.Null(installer.Extract(archive, "9.9.9"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARealArchiveUnpacksToItsPayloadFolder()
     {
@@ -107,6 +110,7 @@ public class UpdateInstallerTests
     /// The swap retires every running file rather than overwriting it, because Windows will not
     /// overwrite a running image — the exe, or a loaded native library — but will rename one.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSwapRetiresTheRunningBuildAndInstallsTheNewOne()
     {
@@ -124,6 +128,7 @@ public class UpdateInstallerTests
     }
 
     /// <summary>A second update does not trip over what the first one retired.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASecondUpdateReplacesTheAlreadyRetiredBuild()
     {
@@ -145,6 +150,7 @@ public class UpdateInstallerTests
     /// picks up whatever sits under runtimes\, and a stale library beside new ones is a load failure
     /// with nobody to blame.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ALibraryTheNewBuildDropsIsRetired()
     {
@@ -161,6 +167,7 @@ public class UpdateInstallerTests
     }
 
     /// <summary>If any file cannot be replaced, every file goes back — including ones already swapped.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFailedInstallPutsTheWholeRunningBuildBack()
     {
@@ -185,6 +192,7 @@ public class UpdateInstallerTests
     /// The Commander may have renamed the exe — it was "one file you put wherever you want it" for
     /// thirteen releases.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARenamedExecutableIsStillTheOneReplaced()
     {
@@ -204,6 +212,7 @@ public class UpdateInstallerTests
     /// The narrowest rollback case: a retirement succeeds and the move-in then fails — antivirus
     /// holding the staged file, say.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveThatFailsAfterItsRetirementRollsTheRetirementBack()
     {
@@ -226,6 +235,7 @@ public class UpdateInstallerTests
     }
 
     /// <summary>Startup clears what the previous update left, once it is no longer running.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void StartupRemovesTheRetiredBuildAndAnyStagedDownload()
     {

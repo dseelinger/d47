@@ -22,6 +22,7 @@ public class TheClockAnswersWithoutTheSwitchTests
         "cancel the timer", "cancel my timer", "cancel the alarm", "cancel my alarm", "stop the timer",
     ];
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OffTheClockIsRegisteredAndNoTimerOrAlarmToolIs()
     {
@@ -38,6 +39,7 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnTheClockAndEveryTimerToolAreRegistered()
     {
@@ -53,6 +55,7 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -69,6 +72,7 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OffNoTimerPhraseMatches()
     {

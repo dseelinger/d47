@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The nav column down the side of Settings, one entry per page.</summary>
+[Trait("Category", "Integration")]
 public class SettingsNavTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

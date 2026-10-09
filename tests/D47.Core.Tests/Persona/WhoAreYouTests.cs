@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>"Who are you?" has one answer and it is a name.</summary>
+[Trait("Category", "Integration")]
 public class WhoAreYouTests
 {
     private static async Task<string> AskAsync(TestSurface surface, string input)

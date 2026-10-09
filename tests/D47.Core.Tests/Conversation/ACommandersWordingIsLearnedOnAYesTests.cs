@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A run from a "did you mean" offer asks once whether to remember the Commander's own wording.</summary>
+[Trait("Category", "Integration")]
 public class ACommandersWordingIsLearnedOnAYesTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-phrases").FullName;

@@ -9,6 +9,7 @@ namespace D47.Core.Tests;
 /// <summary>
 /// About's Version and Build rows answer different questions and must not print the same string.
 /// </summary>
+[Trait("Category", "Integration")]
 public class VersionAndBuildAnswerDifferentQuestionsTests
 {
     private const string Semantic = "0.78.0";

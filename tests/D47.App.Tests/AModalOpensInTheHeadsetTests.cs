@@ -28,6 +28,7 @@ namespace D47.App.Tests;
 /// A Settings row that opens a modal opens it on the headset's own copy of the panel, where the ray can
 /// answer it (#530).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AModalOpensInTheHeadsetTests
 {
     private static readonly DateTimeOffset Instant = new(2026, 9, 27, 12, 0, 0, TimeSpan.Zero);

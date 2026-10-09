@@ -33,6 +33,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         return fixtures;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoRecordingThePickIsRefusedAndOneMessageNamesTheRecording()
     {
@@ -48,6 +49,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         Assert.Equal(0, fixtures.Provider.CallCount);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithoutChatterboxTheMessageNamesTheDownloadAndItsSize()
     {
@@ -61,6 +63,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         Assert.Single(posted);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithoutKokoroAKokoroMemberNamesItsDownload()
     {
@@ -74,6 +77,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
             refusal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithBothReadyThePickSucceeds()
     {
@@ -85,6 +89,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         Assert.NotNull(fixtures.Stories.Current("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task SwitchingToAnUnreadyStoryKeepsTheCurrentOne()
     {

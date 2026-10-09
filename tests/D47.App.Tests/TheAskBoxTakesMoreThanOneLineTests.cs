@@ -15,6 +15,7 @@ namespace D47.App.Tests;
 
 /// <summary>Shift+Enter starts a new line; Enter still sends; Up and Down walk history only from the
 /// box's first and last visual line.</summary>
+[Trait("Category", "Integration")]
 public class TheAskBoxTakesMoreThanOneLineTests
 {
     private static (Window Window, PanelView View, PanelViewModel Model) Open()

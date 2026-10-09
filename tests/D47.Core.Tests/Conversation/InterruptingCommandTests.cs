@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Never gated behind a turn completing".</summary>
+[Trait("Category", "Integration")]
 public class InterruptingCommandTests
 {
     private static KeywordRouter Router(TempInstall install, Action? onSilence = null)

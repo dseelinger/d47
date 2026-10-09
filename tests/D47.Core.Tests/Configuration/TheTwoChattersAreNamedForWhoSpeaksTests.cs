@@ -21,6 +21,7 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
 
     private static SettingRow Row(string key) => Rows().Single(row => row.Key == key);
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientKey, "In Ship chatter")]
     [InlineData(CalloutCapability.AmbientSecondsKey, "The least time between In Ship chatter (seconds)")]
@@ -32,6 +33,7 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
         Assert.Equal(label, Row(key).Label);
 
     /// <summary>And the old words reach no Commander through any of these six rows.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientKey)]
     [InlineData(CalloutCapability.AmbientSecondsKey)]
@@ -48,6 +50,7 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
         Assert.DoesNotContain("invented exchange", drawn, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientKey, "crew")]
     [InlineData(CalloutCapability.AmbientSecondsKey, "crew")]
@@ -59,10 +62,12 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
         Assert.Contains(who, Row(key).Help, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Only the AI speaks unasked, and the help says so.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheCrewHalfIsNotOversold() =>
         Assert.Contains("unasked", Row(CalloutCapability.AmbientKey).Help, StringComparison.OrdinalIgnoreCase);
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientKey, "stop calling out in ship chatter")]
     [InlineData(CalloutCapability.NpcChatterKey, "stop calling out npc chatter")]
@@ -88,6 +93,7 @@ public class TheTwoChattersAreNamedForWhoSpeaksTests
     /// The two pairs carry the same numbers out of the box, and the rows say the same numbers the
     /// record holds.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void BothPairsOfferFiveToTenMinutes()
     {

@@ -207,6 +207,7 @@ public class ColonisationDeadlinesAreSaidTests
         Assert.Equal("colonisation", new ColonisationCallout().Id);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
@@ -222,6 +223,7 @@ public class ColonisationDeadlinesAreSaidTests
         Assert.False(row.Binding!.Write!(D47Settings.Defaults, "false")!.Callouts.Colonisation);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AClaimMadeInAnEarlierSessionComesBackFromTheJournalHistory()
     {

@@ -71,6 +71,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     /// And the same surface, furnished, grows one handle per rule — never one on the outside edge,
     /// because there is nothing on the far side of it to resize.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AFurnishedSurfaceGrowsOneHandlePerRule()
     {
@@ -89,6 +90,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     /// The reflow still decides how many panes there are, and the handles follow it rather than
     /// competing with it: three panes is two rules, and two rules is two handles.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(520, 1, 0)]
     [InlineData(900, 2, 1)]
@@ -113,6 +115,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     }
 
     /// <summary>The trap the phase names.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ADragSurvivesTheNavigationThatRedrawsTheStrip()
     {
@@ -139,6 +142,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     /// A two-pane split and a three-pane split are different arrangements, and the reflow moves between
     /// them on its own as the window is dragged.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APaneCountKeepsItsOwnSplit()
     {
@@ -154,6 +158,7 @@ public sealed class ThePanesMoveWhereYouWantThemTests
     /// same number: otherwise a Commander can drag a pane down to a sliver that <c>ArrangeOverride</c>
     /// still believes is 380 wide.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryPaneCarriesTheReflowsOwnFloor()
     {

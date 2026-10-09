@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
+[Trait("Category", "Integration")]
 public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
 {
     private readonly ChatterboxTestFolder _folder = new();

@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Tts.Tests;
 
 /// <summary>Live: the undocumented endpoint still speaks <see cref="EdgeProtocol"/>.</summary>
+[Trait("Category", "Integration")]
 public class EdgeNeuralLiveTests
 {
     private static bool Enabled =>

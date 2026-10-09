@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// Navigation › Plan's Carrier Route card plots the Commander's own carrier through
 /// <c>plot_carrier_route</c>, and Fleet › Carrier opens it with From set (#637).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ACarrierRouteIsPlottedOnItsOwnCardTests
 {
     private const string CarrierSystem = "Sol";

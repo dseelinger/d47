@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>The read_mail tool answers from the mail ledger and marks what it said as read (#619).</summary>
+[Trait("Category", "Integration")]
 public sealed class ReadMyMailSaysItOnceTests : IDisposable
 {
     private const string Doug = "F1";

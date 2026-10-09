@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A double-click on a suit's Grade row opens the grade prompt (#682).</summary>
+[Trait("Category", "Integration")]
 public class DoubleClickingAKitGradeAsksForTheGradeTests
 {
     [AvaloniaFact]

@@ -279,6 +279,7 @@ public class AuditionDoesNotCommitTests
     }
 
     /// <summary>The list with its glyphs on it, for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public async Task TheListAndItsGlyphsAreDrawnForLookingAt()
     {

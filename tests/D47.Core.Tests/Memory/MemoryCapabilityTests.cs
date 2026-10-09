@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The memory capability's surface.</summary>
+[Trait("Category", "Integration")]
 public class MemoryCapabilityTests
 {
     private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;

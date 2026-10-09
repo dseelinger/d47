@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A compact row puts the caption and the control side by side.</summary>
+[Trait("Category", "Integration")]
 public class RowWidthTests
 {
     /// <summary>The longest choice label on the surface, and the one that broke the row.</summary>

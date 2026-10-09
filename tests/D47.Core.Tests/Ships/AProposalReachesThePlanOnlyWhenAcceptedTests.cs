@@ -13,6 +13,7 @@ namespace D47.Core.Tests.Ships;
 /// A proposal about a build is reviewed slot by slot: accepting writes that slot through the plan service, rejecting
 /// writes nothing, and a slot whose plan moved since the proposal is refused (#570).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AProposalReachesThePlanOnlyWhenAcceptedTests
 {
     private const int ShipId = 21;

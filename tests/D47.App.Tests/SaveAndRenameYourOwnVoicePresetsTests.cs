@@ -19,6 +19,7 @@ namespace D47.App.Tests;
 /// saved one, calling #237's <see cref="GuardianPresets.Save"/> and <see cref="GuardianPresets.Rename"/>
 /// and showing the sentence they return (#481).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class SaveAndRenameYourOwnVoicePresetsTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

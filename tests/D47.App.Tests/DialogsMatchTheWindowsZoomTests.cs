@@ -40,6 +40,7 @@ public class DialogsMatchTheWindowsZoomTests
             : null;
 
     /// <summary>A dialog over a zoomed panel is drawn at the panel's size.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ADialogIsDrawnAtTheOwnersZoom()
     {
@@ -53,6 +54,7 @@ public class DialogsMatchTheWindowsZoomTests
     }
 
     /// <summary>And grows with it, or it opens showing a scaled corner of itself.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AndTheWindowGrowsWithIt()
     {
@@ -66,6 +68,7 @@ public class DialogsMatchTheWindowsZoomTests
         Assert.Equal(450, dialog.Height);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AtOneHundredPercentNothingIsWrapped()
     {

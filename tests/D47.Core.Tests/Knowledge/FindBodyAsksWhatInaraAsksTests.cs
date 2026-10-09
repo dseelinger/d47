@@ -81,6 +81,7 @@ public class FindBodyAsksWhatInaraAsksTests
     private static Task<ToolResult> FindBody(CapabilityRegistry registry, params (string Name, string Value)[] values) =>
         registry.InvokeAsync("find_body", Args(values), TestContext.Current.CancellationToken);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSchemaOffersTheNewFiltersAndTheBodyVocabulary()
     {
@@ -103,6 +104,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.DoesNotContain("allegiance", names);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task VolcanismIsReadInTheCataloguesSpelling()
     {
@@ -116,6 +118,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("water geysers", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnknownVolcanismIsRefusedWithSuggestions()
     {
@@ -129,6 +132,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("Water Geysers", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task OrderingByMaterialKeepsTheRichestAndSaysAmongHowMany()
     {
@@ -147,6 +151,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("1.1% Polonium", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task OrderingByMaterialWithoutAMaterialIsRefused()
     {
@@ -176,6 +181,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Equal("Bodies can't be filtered by allegiance: Spansh's body index doesn't carry it.", failure);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ANewFilterAloneIsEnoughToSearch()
     {
@@ -189,6 +195,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("0.08 g", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedUnderBodies()
     {
@@ -207,6 +214,7 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("tidally locked", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFailedSearchPostsNothing()
     {

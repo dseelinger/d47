@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>A next-docking reminder fires at the first Docked of a replayed fixture, and not at the second.</summary>
+[Trait("Category", "Integration")]
 public class ANextDockingReminderFiresOnceTests
 {
     private const string Commander = "F1000001";

@@ -34,6 +34,7 @@ public class AGoalQuestionReachesTheModelTests
             asking);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(Asked))]
     public void NoRouterTakesTheQuestion(string question)

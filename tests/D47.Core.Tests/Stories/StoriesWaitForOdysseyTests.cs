@@ -26,6 +26,7 @@ public sealed class StoriesWaitForOdysseyTests
         Assert.Null(SessionSummary.Empty.Apply(LoadGame(Now, odyssey: null)).Odyssey);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PickIsRefusedWithTheReasonWithoutOdyssey()
     {
@@ -39,6 +40,7 @@ public sealed class StoriesWaitForOdysseyTests
         Assert.Null(fixtures.Backstory);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PickWorksBeforeAnyLoadGameIsSeen()
     {
@@ -48,6 +50,7 @@ public sealed class StoriesWaitForOdysseyTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARunningStoryWritesNoChapterUntilOdysseyIsBack()
     {
@@ -73,6 +76,7 @@ public sealed class StoriesWaitForOdysseyTests
         Assert.Equal(2, fixtures.Stories.Current("F1")!.Chapters.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NoClueIsOwedWithoutOdyssey()
     {
@@ -93,6 +97,7 @@ public sealed class StoriesWaitForOdysseyTests
         Assert.Null(fixtures.Director.Clue("F1", new StoryClueDue(Id, 0)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AStorySwitchedOffStaysOffWhenOdysseyReturns()
     {

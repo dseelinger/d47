@@ -91,6 +91,7 @@ public class AVoiceIsHeardFromItsFreeSampleTests
 
     /// <summary>Live: a real hosted sample decodes to the arbiter's format.</summary>
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task ARealSampleDecodesToTheArbitersFormat()
     {
         Assert.SkipUnless(

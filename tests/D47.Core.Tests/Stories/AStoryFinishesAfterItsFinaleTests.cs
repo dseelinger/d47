@@ -7,6 +7,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>When the fourth finale chapter is done and its clue given, no chapter is written, the story is finished and its chapters are archived.</summary>
+[Trait("Category", "Integration")]
 public sealed class AStoryFinishesAfterItsFinaleTests
 {
     [Fact]

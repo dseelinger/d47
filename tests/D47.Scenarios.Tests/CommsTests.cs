@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>In-game comms is not a path to the model.</summary>
+[Trait("Category", "Integration")]
 public class CommsTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;

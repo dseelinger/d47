@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.Core.Tests.Catalog;
 
 /// <summary>A model the provider lists for the key and the catalog does not name is offered, labelled new.</summary>
+[Trait("Category", "Integration")]
 [Collection(nameof(SharedModelCatalogCollection))]
 public sealed class AModelTheKeyReachesIsOfferedAsNewTests : IDisposable
 {

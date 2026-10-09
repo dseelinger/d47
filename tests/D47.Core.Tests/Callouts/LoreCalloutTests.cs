@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>Remarking on a system worth remarking on.</summary>
+[Trait("Category", "Integration")]
 public class LoreCalloutTests : IDisposable
 {
     /// <summary>Sol, whose address is a shipped row and is Frontier's own number for it.</summary>

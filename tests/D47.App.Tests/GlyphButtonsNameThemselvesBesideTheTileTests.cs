@@ -150,6 +150,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryGlyphButtonInSettingsHasLabelTextNoTooltipAndA44Target()
     {
@@ -222,6 +223,7 @@ public class GlyphButtonsNameThemselvesBesideTheTileTests
         window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryResetGlyphInSettingsIs16()
     {

@@ -15,6 +15,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>"Which ship do you intend to buy?" is picked from every hull there is.</summary>
+[Trait("Category", "Integration")]
 public class AHullIsPickedRatherThanGuessedTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()

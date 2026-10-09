@@ -149,6 +149,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
         return path;
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -190,6 +191,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     }
 
     /// <summary>The Commander's current system is Cyan inside a trigger, and the rest of the trigger A.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCurrentSystemIsCyanInATrigger()
     {
@@ -218,6 +220,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     }
 
     /// <summary>Stories are list rows with no border, and Decline and Remove are destructive.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void StoriesAreListRowsAndRemovingIsDestructive()
     {

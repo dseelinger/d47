@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>"How do I ..." lands on a feature by the words that reach it, model-free (#170).</summary>
+[Trait("Category", "Integration")]
 public class HowDoIAnswersWithAFeatureTests
 {
     private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null)

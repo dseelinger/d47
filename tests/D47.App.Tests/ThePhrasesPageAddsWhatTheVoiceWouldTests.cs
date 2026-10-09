@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Settings › Phrases adds through <c>add_phrase</c>, lists the Commander's phrases and every built-in one (#566).</summary>
+[Trait("Category", "Integration")]
 public class ThePhrasesPageAddsWhatTheVoiceWouldTests
 {
     private static readonly DateTimeOffset At = new(2026, 9, 13, 12, 0, 0, TimeSpan.Zero);

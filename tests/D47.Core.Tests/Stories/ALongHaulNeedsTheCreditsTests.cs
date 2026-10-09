@@ -17,6 +17,7 @@ public sealed class ALongHaulNeedsTheCreditsTests
         ]}
         """;
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(300_000_000, "sidewinder", "1-year", AdventureReach.Anywhere)]
     [InlineData(250_000_000, "sidewinder", "3-months", AdventureReach.Anywhere)]

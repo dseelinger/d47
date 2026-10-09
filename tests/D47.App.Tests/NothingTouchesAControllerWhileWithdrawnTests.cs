@@ -18,6 +18,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     }
 
     /// <summary>One choke point for every per-device call.</summary>
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(nameof(IOpenVrSystem), "GetTrackedDeviceClass")]
     [InlineData(nameof(SteamVrRuntime), "Note")]
@@ -33,6 +34,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     /// And the vendored binding is reached only through the adapter, which forwards and does nothing
     /// else — so the choke point above is the whole of it and not one of two roads.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheVendoredBindingIsReachedOnlyThroughTheAdapter()
     {
@@ -42,6 +44,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     }
 
     /// <summary>And that one method asks the row before it does any of it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheChokePointReadsTheRowItself()
     {
@@ -73,6 +76,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     /// pose reads — so the host has to consult the row before it starts one, and again before it lets a
     /// running one stand.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheHostAsksTheRowBeforeItRunsTheAimLoopOrReadsAGesture()
     {
@@ -88,6 +92,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     /// <summary>
     /// The aim loop has exactly one place that starts it, and it is the one above that reads the row.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyTheServeEverStartsTheAimLoop()
     {
@@ -97,6 +102,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     }
 
     /// <summary>The beam and the cursor go with it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheGuidesAreBuiltOnlyWhereTheRowIsConsulted()
     {
@@ -113,6 +119,7 @@ public class NothingTouchesAControllerWhileWithdrawnTests
     /// The row is reachable by voice with no model in the path, which is the route a Commander in a
     /// headset has: with the controllers withdrawn there is no Settings tab in there to open.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowCanBeTurnedBackOnByVoice()
     {

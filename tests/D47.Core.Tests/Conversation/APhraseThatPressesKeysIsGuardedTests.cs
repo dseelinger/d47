@@ -7,6 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
+[Trait("Category", "Integration")]
 public sealed class APhraseThatPressesKeysIsGuardedTests
 {
     [Fact]

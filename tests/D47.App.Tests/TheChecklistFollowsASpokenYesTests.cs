@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The page follows a change it did not make.</summary>
+[Trait("Category", "Integration")]
 public class TheChecklistFollowsASpokenYesTests
 {
     private static (PanelView Panel, ChecklistService Checklists) Waiting()

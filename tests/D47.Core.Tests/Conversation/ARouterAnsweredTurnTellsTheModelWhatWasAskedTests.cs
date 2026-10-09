@@ -6,6 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
+[Trait("Category", "Integration")]
 public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
 {
     /// <summary>The phrase for the action route.</summary>

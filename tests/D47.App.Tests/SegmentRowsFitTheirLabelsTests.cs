@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A settings <see cref="Segment"/> row grows to fit its buttons rather than clipping them (#408).</summary>
+[Trait("Category", "Integration")]
 public sealed class SegmentRowsFitTheirLabelsTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -228,6 +228,7 @@ public class TtsProviderCatalogTests
         Assert.Equal(TtsProviderCatalog.EdgeId, TtsProviderCatalog.Selected(null).Id);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyTheSelectedProvidersKeyRowIsOnScreen()
     {
@@ -289,6 +290,7 @@ public class PerProviderRateTests
         Assert.Equal(TtsProviderCatalog.ElevenLabs.MaximumRate, SpeechCapability.RateFor(settings));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WritingTheRowStoresItAgainstTheSelectedProviderOnly()
     {

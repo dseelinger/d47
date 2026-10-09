@@ -446,6 +446,7 @@ public class GameKnowledgeTests
         Assert.False(materials.SnapshotSeen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheLocalisedNameIsKeptForSpeakingAndTheSymbolForIdentity()
     {
@@ -633,6 +634,7 @@ public class GameKnowledgeTests
         return store.Active!;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSituationBlockStatesActualCargoFillNotJustCapacity()
     {
@@ -645,6 +647,7 @@ public class GameKnowledgeTests
         Assert.Contains("Cargo hold: Gold 25t, Silver 15t", block);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheCargoItemsSummaryStaysShortWhenTheHoldHasManyLines()
     {
@@ -664,6 +667,7 @@ public class GameKnowledgeTests
         Assert.DoesNotContain("Platinum", block);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyKnownHoldAddsNoCargoItemsLine()
     {
@@ -733,6 +737,7 @@ public class GameKnowledgeTests
         Assert.Contains($"say \"{said}\"", block);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AStatusFileWithNoBalanceKeyLeavesTheLineOutRatherThanSayingNought()
     {

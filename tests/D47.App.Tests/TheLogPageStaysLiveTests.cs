@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The log page keeps up with the file while it is open.</summary>
+[Trait("Category", "Integration")]
 public class TheLogPageStaysLiveTests
 {
     private static (Window Window, PanelView View, PanelViewModel Model) Open(Func<string> source)

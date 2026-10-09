@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Conversation;
 /// Every tool, setting and dynamic phrase reaches what it was declared for when it is said, so no
 /// two phrases in the registry resolve to different targets.
 /// </summary>
+[Trait("Category", "Integration")]
 public class NoTwoPhrasesReachDifferentTargetsGateTests
 {
     [Fact]

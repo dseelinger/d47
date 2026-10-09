@@ -91,6 +91,7 @@ public class ElevenLabsTests
 }
 
 /// <summary>The half that needs a real account.</summary>
+[Trait("Category", "Integration")]
 public class ElevenLabsLiveTests
 {
     private static string? Key => Environment.GetEnvironmentVariable("D47_ELEVENLABS_KEY");

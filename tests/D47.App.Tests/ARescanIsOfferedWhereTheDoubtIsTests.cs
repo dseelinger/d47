@@ -26,6 +26,7 @@ public class ARescanIsOfferedWhereTheDoubtIsTests
     /// <summary>
     /// The row is on the Asset Mgmt › Ships strip, it says what is stored, and the button runs the rescan.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public async Task TheRowSaysWhatIsStoredAndOffersToRebuildIt()
     {

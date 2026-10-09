@@ -158,6 +158,7 @@ public class SetCourseForMyCarrierTests
     }
 
     /// <summary>And it beats the keyword, which is the reason for the phrase.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesItAheadOfTheCarrierKeyword()
     {
@@ -175,6 +176,7 @@ public class SetCourseForMyCarrierTests
     }
 
     /// <summary>And the neighbouring question still reaches the capability that answers it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AskingWhereItIsStillReachesJournal()
     {

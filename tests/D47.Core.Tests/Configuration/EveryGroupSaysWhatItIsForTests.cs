@@ -33,6 +33,7 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.Equal([VrCapability.CurrentSlot, VrCapability.PanelSlot, VrCapability.MiniSlot], slots);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingAGroupLeavesTheOtherGroupsInItsPlaceAlone()
     {
@@ -53,6 +54,7 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.True(surface.Settings.IsChanged("listening.wakeWindow"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingThePanelOnScreenGivesTheBigPanelItsOwnDefaultSize()
     {
@@ -74,6 +76,7 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.False(surface.Settings.IsChanged("vr.current.size"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingPushToTalkBindsItsDefaultKeyRatherThanNone()
     {

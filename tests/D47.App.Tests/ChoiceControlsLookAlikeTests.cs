@@ -17,6 +17,7 @@ namespace D47.App.Tests;
 /// 44px filled frame (#349, #439). The segment's height is left out too: it grows to fit its buttons,
 /// wrapped lines included, rather than clipping them (#408).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ChoiceControlsLookAlikeTests
 {
     /// <summary>

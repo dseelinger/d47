@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 public class SharedModelListingCollection;
 
 /// <summary>A model the provider listed that the catalog does not name, chosen and drawn on its row.</summary>
+[Trait("Category", "Integration")]
 [Collection(nameof(SharedModelListingCollection))]
 public sealed class ANewModelIsDrawnOnItsRowTests : IDisposable
 {

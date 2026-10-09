@@ -111,6 +111,7 @@ public class InGameTextNeverReachesAModelTests
         Assert.True(FlavourBriefs.MayBeSpoken("Docking granted, Commander. Pad nine is yours."));
 
     /// <summary>Explaining a selected chat message sends who sent it and where, and not what they typed (#654).</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NorDoesExplainingASelectedMessage()
     {

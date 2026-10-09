@@ -5,6 +5,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>Switching the story off changes nothing the Commander keeps: the Backstory, the chapters and the story's place.</summary>
+[Trait("Category", "Integration")]
 public sealed class APausedStoryKeepsItsCoresTests
 {
     [Fact]

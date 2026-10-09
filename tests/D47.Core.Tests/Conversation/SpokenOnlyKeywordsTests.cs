@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Some phrases only mean what they say when they were spoken.</summary>
+[Trait("Category", "Integration")]
 public class SpokenOnlyKeywordsTests
 {
     private static KeywordRouter Router(TempInstall install) =>

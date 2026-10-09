@@ -6,6 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>#908: a rewrite's file write and change handlers do not hold the lock the tick takes.</summary>
+[Trait("Category", "Integration")]
 public sealed class ARewriteSavesOutsideTheBooksLockTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

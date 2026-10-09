@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>The seven common journal events that carry nested lists, read into rows that answer a question (#816).</summary>
+[Trait("Category", "Integration")]
 public class TheNestedCommonEventsAreGroupedByQuestionTests
 {
     private const string FsdJump =

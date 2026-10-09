@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>A <see cref="SettingsChanged"/> carries the caller that wrote it.</summary>
+[Trait("Category", "Integration")]
 public class ASettingsChangeSaysWhoMadeItTests
 {
     [Fact]

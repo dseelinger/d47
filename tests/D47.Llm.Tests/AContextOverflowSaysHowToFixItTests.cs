@@ -8,6 +8,7 @@ namespace D47.Llm.Tests;
 /// LM Studio answers 200 and sends llama.cpp's error body, wrapped in its own prefix, as an
 /// <c>event: error</c> frame. The Commander hears the numbers and the fix, not the JSON.
 /// </summary>
+[Trait("Category", "Integration")]
 [Collection(nameof(EndpointDemotionCollection))]
 public class AContextOverflowSaysHowToFixItTests
 {

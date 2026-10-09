@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Ships;
 /// A ship slot plan names no engineer (#465). A <c>ships.json</c> that still carries one loads, and the
 /// next save writes the slot without it.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AStoredSlotEngineerIsForgottenOnSaveTests
 {
     [Fact]

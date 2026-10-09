@@ -10,6 +10,7 @@ namespace D47.Core.Tests.Configuration;
 /// Rows disagree about whether their default reads as an aside — "(the provider's default)" — or as a
 /// value, like a model name, and they always will.
 /// </summary>
+[Trait("Category", "Integration")]
 public class DefaultDisplayTests
 {
     [Fact]

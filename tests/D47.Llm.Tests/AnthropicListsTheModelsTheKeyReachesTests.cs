@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Llm.Tests;
 
 /// <summary>Anthropic's model list, and how a model it lists that the catalog does not name is called.</summary>
+[Trait("Category", "Integration")]
 [Collection(nameof(EndpointDemotionCollection))]
 public class AnthropicListsTheModelsTheKeyReachesTests
 {

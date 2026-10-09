@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Applying the speech settings wires the selected provider to its slot and announces its voices.</summary>
+[Trait("Category", "Integration")]
 public class AnAppliedProviderSpeaksForItsSlotTests : IDisposable
 {
     private readonly SpeechClients _speech;

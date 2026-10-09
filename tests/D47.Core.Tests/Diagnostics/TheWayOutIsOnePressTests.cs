@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The row a Commander withdraws from.</summary>
+[Trait("Category", "Integration")]
 public class TheWayOutIsOnePressTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-way-out").FullName;

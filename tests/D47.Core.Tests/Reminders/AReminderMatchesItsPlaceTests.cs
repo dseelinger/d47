@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Station, system and carrier reminders fire where they were asked to, and nowhere else.</summary>
+[Trait("Category", "Integration")]
 public class AReminderMatchesItsPlaceTests
 {
     private const long CarrierId = 3700000000L;

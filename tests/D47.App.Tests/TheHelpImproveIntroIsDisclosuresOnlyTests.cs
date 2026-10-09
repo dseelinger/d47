@@ -68,6 +68,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         texts.Any(text => text.Contains(substring, StringComparison.Ordinal));
 
     /// <summary>Every term of the consent is on the surface, somewhere.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EveryDisclosureIsOnTheSurface()
     {
@@ -83,6 +84,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>And none of the machinery.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NothingNamesNoAddressNoPathAndNoHash()
     {
@@ -97,6 +99,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>One set of consent lines, two pages — differing only on the retention clause.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithAnAddressTheTwoPagesDifferOnlyOnRetention()
     {
@@ -110,6 +113,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>And none of the arguments for pressing.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NothingCarriesTheReasoning()
     {
@@ -149,6 +153,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
  /// The chooser says what it decides, at the size and colour of the control it names — a
     /// caption drawn muted and a step smaller read as a footnote beside its own combo box.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheChooserLabelReadsIncludeAtTheControlsOwnScale()
     {
@@ -169,6 +174,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     }
 
     /// <summary>The reasoning is the intro's hover, and no separate glyph carries it (#360).</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheReasoningIsTheIntrosHover()
     {
@@ -191,6 +197,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     /// than leaving it out — the warning about a file posted publicly is a fact about where it can end
     /// up, so it stays on the surface too.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoAddressTheConsentSaysSoAndKeepsTheWarning()
     {
@@ -205,6 +212,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
  /// Forget sits on both pages and makes the call — the same one the <c>Privacy and egress</c>
     /// row makes, with its sentence going to the line each page already talks on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
@@ -259,6 +267,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
     /// Eyes on the drawn window, because "shorter" is a claim about a rendered page and every assertion
     /// above is a claim about a string.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheTrimmedWindowRendersToACapture()
     {

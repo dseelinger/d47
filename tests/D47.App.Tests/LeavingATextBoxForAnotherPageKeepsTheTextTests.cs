@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Typing into a text row and then opening another settings page saves the text, and does not crash.</summary>
+[Trait("Category", "Integration")]
 public class LeavingATextBoxForAnotherPageKeepsTheTextTests
 {
 

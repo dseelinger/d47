@@ -20,6 +20,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Loadout tab's other two modes: Suits and weapons, and the gap.</summary>
+[Trait("Category", "Integration")]
 public class OnFootLoadoutTabTests
 {
     private sealed record Surface(

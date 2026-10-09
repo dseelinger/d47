@@ -74,6 +74,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
 
     private static GameStatus OnFoot() => new() { Flags2 = (uint)StatusFlags2.OnFoot, ReadAt = DateTimeOffset.UnixEpoch };
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task SetFocusOnEliteIsOfferedAndYesRunsIt()
     {
@@ -92,6 +93,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         Assert.Equal(0, provider.CallCount);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnguardedSettingSaidWithToForOnRunsWithNoOffer()
     {
@@ -182,6 +184,7 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         Assert.Empty(ship.Input.Steps);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AQuestionAboutEliteRankReachesTheModel()
     {

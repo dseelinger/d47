@@ -38,6 +38,7 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
         Assert.Equal(SttProviderCatalog.LocalId, effective.Listening);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void StartingWithTheKeySkippedLeavesNothingToAskForNextLaunch()
     {
@@ -59,6 +60,7 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
         Assert.False(FirstRun.IsNeeded(LlmProviderCatalog.Selected(saved.Llm.Provider), surface.Secrets.Has));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void StartingWithTheKeyStoredSavesThePaidChoice()
     {
@@ -73,6 +75,7 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
             LlmProviderCatalog.Selected(surface.Settings.Current.Llm.Provider), surface.Secrets.Has));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheReadyStepDisclosesWhatWillBeSavedRatherThanWhatWasPicked()
     {

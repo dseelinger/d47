@@ -20,6 +20,7 @@ namespace D47.App.Tests;
 public class VrSurfaceTests
 {
     /// <summary>The bug this pins is the obvious way to build mini and the wrong one.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void GoingMiniInTheHeadsetLeavesTheDesktopWindowAlone()
     {
@@ -40,6 +41,7 @@ public class VrSurfaceTests
         Assert.Contains("Fixture One", model.TranscriptText, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void MiniIsASmallerImageAtASmallerWidthRatherThanTheSameOneHungNearer()
     {
@@ -62,6 +64,7 @@ public class VrSurfaceTests
     /// A resize drag is drawn at the size it has reached before anything is written, and the slot's own
     /// pixels are read again once it is (#107).
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheMiniPanelRendersAtItsOwnPixelsAndADragOverridesThemUntilWritten()
     {
@@ -84,6 +87,7 @@ public class VrSurfaceTests
         Assert.Equal((1024, 640), surface.Size);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EachModeReadsItsOwnPlacementSlot()
     {
@@ -110,6 +114,7 @@ public class VrSurfaceTests
     /// A surface that has been put down reads its pose from view state and everything else from
     /// settings.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AWorldLockedSurfaceTakesItsPoseFromTheAnchorAndItsLookFromSettings()
     {
@@ -133,6 +138,7 @@ public class VrSurfaceTests
         Assert.Equal(placed.Position.X, placement.Where(against).Position.X, 4);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CurvatureReachingZeroIsWhatFlatMeans()
     {
@@ -155,6 +161,7 @@ public class VrSurfaceTests
     /// <summary>
     /// Scale changes how large everything on the panel is drawn; mini changes how much of it there is.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ScaleAndMiniAreDifferentLevers()
     {
@@ -174,6 +181,7 @@ public class VrSurfaceTests
         Assert.Equal(150, surface.Placement.ZoomPercent);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePlacementRowsExistForBothSurfacesAndNoneOfThemIsProtected()
     {
@@ -212,6 +220,7 @@ public class VrSurfaceTests
     }
 
  /// <summary>Captions gain a lock and nothing else.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCaptionSurfaceGainsALockAndNothingElseFromThePlacementRows()
     {
@@ -254,6 +263,7 @@ public class VrSurfaceTests
     }
 
     /// <summary>The headset card, captured for a human to look at.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheHeadsetSettingsCardRendersToACapture()
     {

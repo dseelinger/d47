@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>
 /// <c>find_nearest_station</c>'s <c>limit</c> is bounded out loud rather than reset in silence.
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheStationSearchsLimitIsSaidOutLoudTests
 {
     /// <summary>Records the search it was handed, and answers nothing.</summary>

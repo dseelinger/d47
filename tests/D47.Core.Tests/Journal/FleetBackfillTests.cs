@@ -9,6 +9,7 @@ public class FleetBackfillTests
 {
     private const string Fid = "F1234567";
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoJournalsAtAllLeavesTheFleetUnknownRatherThanEmpty()
     {
@@ -23,6 +24,7 @@ public class FleetBackfillTests
     /// "Unknown" and "no ships" are different answers and the surface renders them differently, so a
     /// folder with journals but no shipyard visit must not report a fleet of nothing.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void JournalsWithNoShipyardVisitLeaveTheFleetUnknown()
     {
@@ -35,6 +37,7 @@ public class FleetBackfillTests
     }
 
     /// <summary>The reported fault, in one test: the snapshot is in an older file, so read it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASnapshotInAnOlderFileIsFound()
     {
@@ -49,6 +52,7 @@ public class FleetBackfillTests
     }
 
     /// <summary>The reason the snapshot alone is not enough.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AShipSoldAfterTheSnapshotDoesNotComeBack()
     {
@@ -66,6 +70,7 @@ public class FleetBackfillTests
     }
 
     /// <summary>Swapping moves a ship out of storage and another into it.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void SwappingTakesOneShipOutOfStorageAndPutsOneIn()
     {
@@ -85,6 +90,7 @@ public class FleetBackfillTests
         Assert.Equal("Elsewhere Station", fleet.Ships[0].StationName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingStoresTheShipSteppedOutOf()
     {
@@ -108,6 +114,7 @@ public class FleetBackfillTests
     /// Two Commanders share one journal folder and neither may be handed the other's ships — the
  /// isolation rule the whole store is built on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersDoNotShareAFleet()
     {
@@ -126,6 +133,7 @@ public class FleetBackfillTests
     }
 
     /// <summary>The documented bound, pinned so it is a decision rather than a surprise.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ASnapshotOlderThanTheSearchWindowIsNotRecovered()
     {

@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Configuration;
 /// and protected rows are reachable by voice only through the model-free keyword router, so "by voice"
 /// never silently means "by the LLM".
 /// </summary>
+[Trait("Category", "Integration")]
 public class SettingsByVoiceTests
 {
     /// <summary>Rows whose value cannot be a closed phrase-to-value pair, with the reason.</summary>

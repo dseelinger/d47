@@ -94,6 +94,7 @@ public sealed class ARefusedBeatIsReplacedTests
         return fixtures;
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task RefusingABondBeatKeepsTheBeatsDoneAndReplacesTheRest()
     {
@@ -121,6 +122,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Equal("Another Way", standing.CurrentBeat!.Title);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheWriterIsToldWhatWasDoneAndWhatWasRefused()
     {
@@ -138,6 +140,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Contains("refused these activities for this story, and no objective may ask for any of them: earn combat kill bonds", prompt);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplacementArriveBeatWaitsForTheNextArrivalAfterTheRefusal()
     {
@@ -154,6 +157,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Equal(4, fixtures.Book.Standing("F1", ChapterKey)!.Fired.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ReplayingTheJournalFromAcceptanceGivesTheStandingLiveGave()
     {
@@ -179,6 +183,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Equal(5, replayed.Fired.Count);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task APartlyCountedBeatStartsFromNothingWhenItsReplacementIsCounted()
     {
@@ -191,6 +196,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Equal(0, fixtures.Book.Standing("F1", ChapterKey)!.Counted);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task RefusingADockBeatRemembersNothing()
     {
@@ -223,6 +229,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Empty(fixtures.Stories.Current("F1")!.Refused);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFailedWriteLeavesTheBeatAndRemembersNothing()
     {
@@ -240,6 +247,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheBeaconScanThatEndsActOneCannotBeRefused()
     {
@@ -258,6 +266,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.NotNull(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheRefusedActivitiesAreKeptOnDisk()
     {
@@ -296,6 +305,7 @@ public sealed class ARefusedBeatIsReplacedTests
         Assert.Equal(1, refused);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRefusedAdventureRoundTripsThroughTheFile()
     {

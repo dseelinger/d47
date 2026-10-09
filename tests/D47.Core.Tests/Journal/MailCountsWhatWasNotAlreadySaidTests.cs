@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>The events Elite also sends as mail, less what d47 already said, per Commander (#618).</summary>
+[Trait("Category", "Integration")]
 public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
 {
     private const string Doug = "F1";

@@ -24,6 +24,7 @@ public class AFileFromANewerBuildStillLoadsTests
     /// The whole of the first defence: the file loads, what this build understands is honoured, and
     /// what it does not is still there after a save.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnknownKeyUnderVrIsLoadedKeptAndWrittenBackUnchanged()
     {
@@ -53,6 +54,7 @@ public class AFileFromANewerBuildStillLoadsTests
     /// The key is named, by its path through the document, so a typo still surfaces now that it no
     /// longer refuses the load.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheUnknownKeyIsLoggedByNameAndPath()
     {
@@ -79,6 +81,7 @@ public class AFileFromANewerBuildStillLoadsTests
     /// A record d47 keeps one of per provider is reached through a dictionary, not a property, and a
     /// key inside one has to be kept and named like any other.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnknownKeyInsideAKeyedRecordIsKeptAndNamedToo()
     {
@@ -101,6 +104,7 @@ public class AFileFromANewerBuildStillLoadsTests
     }
 
     /// <summary>The cost the bags must not have.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileThisBuildFullyUnderstandsCarriesNoBagAtAll()
     {
@@ -128,6 +132,7 @@ public class AFileFromANewerBuildStillLoadsTests
     }
 
     /// <summary>The floor, independent of the other two.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARefusedFileIsAppliedInMemoryAndNeverWrittenOver()
     {
@@ -156,6 +161,7 @@ public class AFileFromANewerBuildStillLoadsTests
     }
 
     /// <summary>The same floor, reached by the other door.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARefusedFileIsNotWrittenOverByAResetEither()
     {

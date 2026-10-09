@@ -82,6 +82,7 @@ public class ANumberStepsAndTakesTypingTests
     public void TheValueCarriesItsUnitInCapitals(double value, string format, string? unit, string expected) =>
         Assert.Equal(expected, Amount.Display((decimal)value, format, unit));
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CaptureBeforeTheKeyStepsAndTakesATypedValue()
     {
@@ -106,6 +107,7 @@ public class ANumberStepsAndTakesTypingTests
         host.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePricePerThousandCharactersShowsDollarsAndTakesATypedValue()
     {
@@ -127,6 +129,7 @@ public class ANumberStepsAndTakesTypingTests
         host.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(1180)]
     [InlineData(924)]

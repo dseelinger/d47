@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>Consenting to a corpus nobody can read.</summary>
+[Trait("Category", "Integration")]
 public class ACorpusIsConsentedByKindTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-corpus").FullName;

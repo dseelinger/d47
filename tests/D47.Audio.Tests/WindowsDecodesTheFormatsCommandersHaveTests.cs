@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Audio.Tests;
 
 /// <summary>Media Foundation reads MP3 and non-standard WAV into 48 kHz mono 16-bit.</summary>
+[Trait("Category", "Integration")]
 public class WindowsDecodesTheFormatsCommandersHaveTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -8,6 +8,7 @@ namespace D47.App.Tests;
 /// <summary>d47 does not install, so nothing puts it anywhere findable.</summary>
 public class StartMenuShortcutTests
 {
+    [Trait("Category", "Integration")]
     [Fact]
     public void AShortcutIsWrittenPointingAtTheExecutable()
     {
@@ -26,6 +27,7 @@ public class StartMenuShortcutTests
     }
 
     /// <summary>The folder is created rather than assumed — a fresh profile may not have one.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AMissingFolderIsCreatedRatherThanFailing()
     {
@@ -44,6 +46,7 @@ public class StartMenuShortcutTests
     /// Failing to write a convenience is not a failure of the program: it reports and the Commander
     /// runs d47 exactly the way they just did.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnImpossiblePathIsReportedRatherThanThrown()
     {
@@ -64,6 +67,7 @@ public class StartMenuShortcutTests
     }
 
     /// <summary>The answer sticks whichever way it went.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheAnswerIsRememberedAcrossARestart()
     {
@@ -84,6 +88,7 @@ public class StartMenuShortcutTests
     /// Recording the answer must not discard what else is in the file — the window's placement shares
     /// it, and losing that would be a visible regression from an invisible feature.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void RememberingTheAnswerKeepsTheRestOfTheViewState()
     {

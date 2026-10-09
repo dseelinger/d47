@@ -16,6 +16,7 @@ namespace D47.App.Tests;
 /// The engineer filter answers from where the ship is, so the page has to redraw when it moves — with
 /// nothing touched between the two readings (#93).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheChecklistFollowsTheShipTests
 {
     private const int LeiCheung = 300120;

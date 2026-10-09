@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Stories;
 /// When a running story's cast loses a voice — the recording deleted, a model removed — the story is paused, its chapter
 /// stops, the message is posted again, and it cannot be resumed until the voice is back (#714).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class LosingACastVoicePausesTheStoryTests
 {
     [Fact]

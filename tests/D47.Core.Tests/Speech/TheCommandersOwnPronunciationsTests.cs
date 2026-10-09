@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Speech;
 /// The correction file, asked for on 2026-08-28: "We'll need to come up with a way to update
 /// Kokoro pronunciations without recompiling."
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheCommandersOwnPronunciationsTests : IDisposable
 {
     private readonly string _folder = Directory.CreateTempSubdirectory("d47-pronunciations").FullName;

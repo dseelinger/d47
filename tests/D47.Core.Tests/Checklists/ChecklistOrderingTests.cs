@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>The checklist in the order the Commander cares about.</summary>
+[Trait("Category", "Integration")]
 public class ChecklistOrderingTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

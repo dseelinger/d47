@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A hull the Commander intends to buy can be dropped again.</summary>
+[Trait("Category", "Integration")]
 public class AHullYouDoNotOwnCanBeDroppedTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()

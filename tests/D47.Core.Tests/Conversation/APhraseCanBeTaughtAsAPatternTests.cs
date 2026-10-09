@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A learned phrase is a pattern expanded into wordings, and matching stays an exact lookup (#537).</summary>
+[Trait("Category", "Integration")]
 public class APhraseCanBeTaughtAsAPatternTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("d47-phrase-patterns").FullName;

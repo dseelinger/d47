@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
+[Trait("Category", "Integration")]
 public class AnImportedRecordingKeepsSevenSecondsAfterItsSilenceTests : IDisposable
 {
     private const int Rate = 24_000;

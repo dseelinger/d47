@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
+[Trait("Category", "Integration")]
 public class AmbienceFollowsElitesOwnMusicTrackTests : IDisposable
 {
     private readonly string _root = Path.Combine(

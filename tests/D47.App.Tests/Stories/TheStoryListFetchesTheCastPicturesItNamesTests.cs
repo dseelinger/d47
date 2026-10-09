@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.App.Tests.Stories;
 
+[Trait("Category", "Integration")]
 public sealed class TheStoryListFetchesTheCastPicturesItNamesTests
 {
     private static readonly StoryCard Card = StoryFixture.Story with

@@ -52,6 +52,7 @@ public class AParkedShipHasSlotsToPlanTests
         return new ShipsMode(ships, checklists, () => live);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AShipNobodyIsFlyingOffersItsSlots()
     {
@@ -63,6 +64,7 @@ public class AParkedShipHasSlotsToPlanTests
     }
 
     /// <summary>And the whole hull, not the handful of slots something happened to mention.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void EverySlotOfTheHullIsThere()
     {
@@ -77,6 +79,7 @@ public class AParkedShipHasSlotsToPlanTests
     /// The page said the right things about the ship the whole time, which is what made the missing
     /// half read as a feature that had been taken away rather than as a lookup that failed.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheDetailsWereNeverTheProblemAndStillAreNot()
     {

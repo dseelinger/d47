@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>SEARCH › SYSTEM › BODIES draws every star and planet as one slab, in tree order (#826).</summary>
+[Trait("Category", "Integration")]
 public sealed class TheSystemPageDrawsItsBodiesTests
 {
     private static BodyProfile Body(string name) =>

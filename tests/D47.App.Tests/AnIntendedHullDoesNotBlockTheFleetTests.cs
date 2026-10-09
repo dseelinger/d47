@@ -13,6 +13,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// An intended hull does not stop the rest of the fleet being opened.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AnIntendedHullDoesNotBlockTheFleetTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()

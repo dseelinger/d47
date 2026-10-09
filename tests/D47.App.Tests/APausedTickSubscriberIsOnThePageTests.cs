@@ -11,6 +11,7 @@ namespace D47.App.Tests;
 /// A subscriber the tick loop has paused is a feature that has stopped running, so the Diagnostics card
 /// names it rather than leaving it to the log (https://github.com/dseelinger/d47/issues/58).
 /// </summary>
+[Trait("Category", "Integration")]
 public class APausedTickSubscriberIsOnThePageTests
 {
     private const string Label = "Paused after repeated failures";

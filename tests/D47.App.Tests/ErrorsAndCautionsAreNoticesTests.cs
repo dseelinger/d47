@@ -165,6 +165,7 @@ public partial class ErrorsAndCautionsAreNoticesTests
     }
 
 #if DEBUG
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Light)]

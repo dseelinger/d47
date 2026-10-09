@@ -20,6 +20,7 @@ namespace D47.App.Tests;
 /// A mini panel carries no clickable control, and this is the first test that ever built a page to find
 /// out.
 /// </summary>
+[Trait("Category", "Integration")]
 public class MiniCarriesNoPageChromeTests
 {
     /// <param name="all">Whether to drill to All lists, whose bar carries the filter and Delete completed.</param>

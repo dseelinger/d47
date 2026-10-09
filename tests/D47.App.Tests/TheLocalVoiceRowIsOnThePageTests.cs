@@ -10,6 +10,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheLocalVoiceRowIsOnThePageTests
 {
     private static SettingsHost Open()

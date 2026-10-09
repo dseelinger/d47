@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Hold and material reminders fire when their condition becomes true, and never before the hold is read.</summary>
+[Trait("Category", "Integration")]
 public class AHoldReminderWaitsForTheHoldTests
 {
     private static CommanderGameState WithCapacity(int capacity)

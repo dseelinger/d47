@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The control stays inside the column the row gave it.</summary>
+[Trait("Category", "Integration")]
 public class VoiceRowFitsItsColumnTests
 {
     /// <summary>What layout rounding is allowed to add.</summary>

@@ -4,6 +4,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
+[Trait("Category", "Integration")]
 public sealed class ACastMemberCarriesItsOwnEffectsTests
 {
     private static readonly StorySpeaker Plain = StoryFixtures.Secret.Cast[0];

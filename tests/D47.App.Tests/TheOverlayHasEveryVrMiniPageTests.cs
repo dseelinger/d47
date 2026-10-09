@@ -15,6 +15,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheOverlayHasEveryVrMiniPageTests
 {
     /// <summary>Both surfaces are furnished from the same services and must list the same destinations.</summary>

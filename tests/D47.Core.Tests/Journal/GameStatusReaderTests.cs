@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Journal;
 /// The one field of Status.json read for the galaxy-map macro (2026-08-21): <c>GuiFocus</c>, which is
 /// how d47 knows the map is showing before it types into it, and that it has closed again afterwards.
 /// </summary>
+[Trait("Category", "Integration")]
 public class GameStatusReaderTests
 {
     private static GameStatus Read(string json)

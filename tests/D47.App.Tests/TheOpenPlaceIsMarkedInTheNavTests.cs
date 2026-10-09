@@ -16,6 +16,7 @@ using static D47.App.Tests.SettingsPageReading;
 namespace D47.App.Tests;
 
 /// <summary>The nav's mark is on the place whose page is open, at every zoom.</summary>
+[Trait("Category", "Integration")]
 public class TheOpenPlaceIsMarkedInTheNavTests
 {
     private static void Jobs() => Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A declared keyword buried in a long remark must fall through to the model.</summary>
+[Trait("Category", "Integration")]
 public class AKeywordDoesNotHijackASentenceTests
 {
     /// <summary>

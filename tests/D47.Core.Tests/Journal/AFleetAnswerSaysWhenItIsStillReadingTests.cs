@@ -122,6 +122,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
     }
 
     /// <summary>The status report names the walk, so a slow start can be diagnosed by asking.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheStatusReportNamesTheWalkAndItsState()
     {

@@ -62,6 +62,7 @@ public sealed class TheReadingsAreNamedForTheCommanderTests
     /// And the journal reading answers to the label it no longer draws, which its existing alias list
     /// covers for free — the reason the rename needed no new word on that side.
     /// </summary>
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData("journal file")]
     [InlineData("elite dangerous journal")]

@@ -6,6 +6,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>When a story's chapter finishes, the tick has the next one written from it and begun.</summary>
+[Trait("Category", "Integration")]
 public sealed class AFinishedChapterWritesTheNextTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(

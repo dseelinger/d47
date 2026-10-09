@@ -155,6 +155,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         frame.SaveCapture(name);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void BestCargoSitsBetweenMarketAndTradeRoute()
     {
@@ -166,6 +167,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Equal(["Market", "Best cargo", "Trade route"], words.Skip(market).Take(3));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APanelWithoutTheBoardHasNoBestCargo()
     {
@@ -174,6 +176,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.DoesNotContain(opened.Panel.Nav.Roots(PanelTab.Navigation), root => root.Key == RoutingPages.BestCargoRoot);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASearchFromThePagePostsToTheBoardAndDrawsEveryPick()
     {
@@ -189,6 +192,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Equal(["HOLD", "HOLD", "SUPPLY", "HOLD", "DEMAND", "HOLD"], opened.Page.Rows.Select(row => RouteBestCargoPage.Limit(row.Limit)));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASearchByVoiceDrawsOnThePage()
     {
@@ -204,6 +208,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Equal("Sothis", opened.Page.SellIn);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void NotDockedDisablesFindCargo()
     {
@@ -213,6 +218,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.False(opened.Page.CanFind);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void LookupsOffDisablesFindCargo()
     {
@@ -222,6 +228,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.False(opened.Page.CanFind);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANullAnswerSaysTheMarketsPricesAreUnknown()
     {
@@ -234,6 +241,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Empty(opened.Page.Rows);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AnEmptyAnswerSaysNothingSellsAtAProfit()
     {
@@ -246,6 +254,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Empty(opened.Page.Rows);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RouteEndIsAbsentWithNoRoutePlotted()
     {
@@ -257,6 +266,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
             button => (button.Content as string)?.StartsWith("Route end", StringComparison.Ordinal) == true);
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RouteEndFillsTheFieldWithTheLastHop()
     {
@@ -280,6 +290,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
     }
 
     /// <summary>Captures 01 and 03–06 of the handoff, 01 in all four themes, for a look by eye.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EachStateIsCaptured()
     {

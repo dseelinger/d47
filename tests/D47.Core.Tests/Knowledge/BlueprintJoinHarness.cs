@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Knowledge;
 /// Remediation 15 item 6, step one: push every module name the Loadout tab can offer through <see
 /// cref="BlueprintCatalogue.ForModule"/> and print what comes back empty.
 /// </summary>
+[Trait("Category", "Integration")]
 public class BlueprintJoinHarness
 {
     [Fact(Skip = "Harness. Unskip to reprint the classification, then skip it again.")]

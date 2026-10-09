@@ -7,6 +7,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Adventures;
 
+[Trait("Category", "Integration")]
 public sealed class ACrimeIsWarnedOnceAtItsSettlementTests : IDisposable
 {
     private const string Illegal = "Mission_OnFoot_AssassinationIllegal_Covert_MB";

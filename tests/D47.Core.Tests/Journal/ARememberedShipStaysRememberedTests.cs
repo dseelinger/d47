@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Journal;
 /// A ship d47 has remembered stays in <c>loadouts.json</c> until the journal says it was sold or replaced,
 /// and a ship a build names is found however far back its last <c>Loadout</c> is (#475).
 /// </summary>
+[Trait("Category", "Integration")]
 public class ARememberedShipStaysRememberedTests : IDisposable
 {
     private static readonly int[] Fleet = [3, 5, 8, 13, 21, 24, 30, 37, 40, 44, 51];

@@ -106,6 +106,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Equal($"Stations can't be filtered by {name}: Spansh's station index doesn't carry it.", failure);
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("security")]
     [InlineData("faction")]
@@ -121,6 +122,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.DoesNotContain(tool.Parameters, parameter => parameter.Name == name);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchWithNothingButDistanceIsRefused()
     {
@@ -134,6 +136,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Null(galaxy.LastQuery);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMisspelledControllingFactionIsCorrectedAgainstTheJournals()
     {
@@ -147,6 +150,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Equal(["Mother Gaia"], Assert.Single(galaxy.LastQuery!.Criteria).Choices);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnmatchedFactionWithNoResultsMayBeMisspelled()
     {
@@ -163,6 +167,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheAnswerNamesTypePadArrivalAndTheAskedServices()
     {
@@ -179,6 +184,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedUnderStations()
     {
@@ -197,6 +203,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Null(board.Last(GalaxySearchKind.Systems));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachableServicePostsNothing()
     {

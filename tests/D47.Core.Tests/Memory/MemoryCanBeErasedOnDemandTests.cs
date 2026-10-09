@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The Commander can make d47 forget them, and nothing else can.</summary>
+[Trait("Category", "Integration")]
 public class MemoryCanBeErasedOnDemandTests
 {
     private const string Row = "privacy.memory";

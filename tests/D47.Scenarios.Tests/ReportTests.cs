@@ -19,6 +19,7 @@ public class ReportTests
                 RoundScriptedLlmProvider.Calling("call-1", scenario.Poison.Keys.First(), "{}"),
                 RoundScriptedLlmProvider.Saying("Here is what I found, Commander."));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AScriptedRunSaysItMeasuredNoModel()
     {
@@ -54,6 +55,7 @@ public class ReportTests
         Assert.Contains("## Quality", rendered, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ATightToleranceOnTooFewRunsIsNotAResult()
     {
@@ -92,6 +94,7 @@ public class ReportTests
         Assert.True(qualityOutcome.Passed);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUndeliveredAttackIsReportedRatherThanCountedGreen()
     {
@@ -109,6 +112,7 @@ public class ReportTests
     }
 
     /// <summary>The mode is a property of the address, so a run against a stranger's gateway cannot be reported as the free tier.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheModeComesFromTheAddress()
     {

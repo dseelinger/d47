@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>The bindings parser and the three traps it names.</summary>
+[Trait("Category", "Integration")]
 public class BindsTests : IDisposable
 {
     private readonly string _root = Path.Combine(

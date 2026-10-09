@@ -49,6 +49,7 @@ public class ASeatOverrideBelongsToItsProviderTests
         Assert.Equal("bm_george", SeatVoices.Resolve(Overridden, "kokoro", Kokoro, id => id != "am_adam"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheOverrideSurvivesTheSeatFile()
     {

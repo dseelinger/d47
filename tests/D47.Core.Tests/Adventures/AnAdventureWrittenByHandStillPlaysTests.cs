@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>An adventure already on file with source <c>commander</c>, or with no source, loads and begins.</summary>
+[Trait("Category", "Integration")]
 public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 6, 20, 0, 0, TimeSpan.Zero);

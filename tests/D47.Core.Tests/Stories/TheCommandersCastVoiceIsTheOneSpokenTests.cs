@@ -43,6 +43,7 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
         Assert.Equal("ellis-sample", StoryVoices.Of("cray", Versioned, CommanderGender.Woman, null, choices).Pinned!.VoiceId);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheChoiceSurvivesARestart()
     {
@@ -88,6 +89,7 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
         Assert.False(StoryVoices.Uses(Secret, null, TtsProviderCatalog.KokoroId, choices));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheDirectorSpeaksTheChoiceAndUseTheDefaultBringsThePinnedVoiceBack()
     {

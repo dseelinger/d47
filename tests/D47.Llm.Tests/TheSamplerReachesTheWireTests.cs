@@ -19,6 +19,7 @@ public class TheSamplerReachesTheWireTests
     private static double? TemperatureIn(JsonElement body) =>
         body.TryGetProperty("temperature", out var temperature) ? temperature.GetDouble() : null;
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(false, 0.9)]
     [InlineData(true, 0.0)]
@@ -38,6 +39,7 @@ public class TheSamplerReachesTheWireTests
         Assert.Equal(expected, TemperatureIn(Body(endpoint)));
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(false, 0.9)]
     [InlineData(true, 0.0)]
@@ -56,6 +58,7 @@ public class TheSamplerReachesTheWireTests
         Assert.Equal(expected, TemperatureIn(Body(endpoint)));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task UnstatedWritesNoFieldRatherThanAZero()
     {
@@ -72,6 +75,7 @@ public class TheSamplerReachesTheWireTests
         Assert.False(Body(endpoint).TryGetProperty("temperature", out _));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedTemperatureIsDroppedAndTheTurnStillAnswers()
     {
@@ -109,6 +113,7 @@ public class TheSamplerReachesTheWireTests
     internal void ARefusalNamingSamplingIsReadAsSampling(string message, Demotable? expected) =>
         Assert.Equal(expected, ChatCompletionsLlmProvider.WhatWasRejected(message));
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("claude-opus-5")]
     [InlineData("claude-sonnet-5")]

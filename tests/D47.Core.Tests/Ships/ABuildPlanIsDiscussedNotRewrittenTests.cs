@@ -159,6 +159,7 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
                 .Order(StringComparer.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NothingWritesToShipsJson()
     {

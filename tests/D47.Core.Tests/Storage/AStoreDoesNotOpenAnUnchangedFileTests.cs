@@ -12,6 +12,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Storage;
 
+[Trait("Category", "Integration")]
 public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
 {
     private static readonly DateTime Stamp = new(2026, 10, 7, 12, 0, 0, DateTimeKind.Utc);

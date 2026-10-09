@@ -6,6 +6,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>One fold, two callers.</summary>
+[Trait("Category", "Integration")]
 public class AdventureBookTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

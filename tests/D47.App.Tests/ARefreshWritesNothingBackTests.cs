@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A control redrawn from the settings never writes the settings back.</summary>
+[Trait("Category", "Integration")]
 public class ARefreshWritesNothingBackTests
 {
     private static SettingRow? First(SettingsService settings, Func<SettingRow, bool> pick) =>

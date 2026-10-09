@@ -78,6 +78,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
     private static TurnResult Result(List<TurnEvent> events) =>
         Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task VanceByNameIsAnsweredByVanceAndSoIsTheNextUnnamedLine()
     {
@@ -107,6 +108,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Contains("Vance: Like a dream, friend.", provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheLastWordOfANameReachesItsSpeaker()
     {
@@ -120,6 +122,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal("Dock hand Ressa", Assert.Single(events.OfType<TurnEvent.Addressed>()).Name);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NamingTheShipAiGoesToTheShipAiAndClosesTheLine()
     {
@@ -136,6 +139,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.False(line.IsOpen);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task NinetyOneSecondsAfterTheLastLineVanceIsOffTheChannel()
     {
@@ -150,6 +154,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASystemChangeShutsTheExchange()
     {
@@ -164,6 +169,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASituationChangeShutsTheExchange()
     {
@@ -178,6 +184,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheNextExchangeReplacesTheOneHeld()
     {
@@ -193,6 +200,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheFifthAddressIsRefused()
     {
@@ -221,6 +229,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal(calls, provider.CallCount);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplyThatEscalatesIsReplacedByTheSignOffAndShutsTheExchange()
     {
@@ -244,6 +253,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal(calls, provider.CallCount);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AControllerExchangeIsNeverTaken()
     {
@@ -263,6 +273,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task PassersbyThatMayNotNoticeTheCommanderAreNeverTaken()
     {

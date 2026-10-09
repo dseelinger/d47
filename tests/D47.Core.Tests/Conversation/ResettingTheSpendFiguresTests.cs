@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Resetting the cost figures from the Details dialog.</summary>
+[Trait("Category", "Integration")]
 public class ResettingTheSpendFiguresTests : IDisposable
 {
     private readonly string _root = Path.Combine(

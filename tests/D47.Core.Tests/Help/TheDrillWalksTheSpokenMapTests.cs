@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>"What can you do" walks the spoken map one level at a time (#168).</summary>
+[Trait("Category", "Integration")]
 public class TheDrillWalksTheSpokenMapTests
 {
     private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null)

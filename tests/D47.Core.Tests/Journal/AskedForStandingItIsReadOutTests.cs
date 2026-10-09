@@ -132,6 +132,7 @@ public class AskedForStandingItIsReadOutTests
     public void ABandStartsWhereEngineerAccessSaysItDoes(double reputation, ReputationBand band) =>
         Assert.Equal(band, ReputationBands.Of(reputation));
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what's my reputation with the Empire", "Empire")]
     [InlineData("my standing with the Federation", "Federation")]
@@ -153,6 +154,7 @@ public class AskedForStandingItIsReadOutTests
         Assert.Equal(faction, arguments.TryGetString("faction", out var named) ? named : null);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFactionByNameIsReachedWithoutTheModel()
     {

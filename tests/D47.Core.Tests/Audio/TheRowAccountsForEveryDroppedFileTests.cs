@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Every file under <c>data\audio</c> lands in a folder count, an Ignored line or a Skipped line (#499).</summary>
+[Trait("Category", "Integration")]
 public class TheRowAccountsForEveryDroppedFileTests : IDisposable
 {
     private readonly string _root = Path.Combine(

@@ -25,6 +25,7 @@ namespace D47.App.Tests;
 /// SEARCH › SYSTEM › POWERPLAY draws the system's own figures, then its Powerplay neighbours from one request
 /// made when the section first opens, filtered by state; a row opens that system here (#827).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheSystemPageListsNearbyPowerplayTests
 {
     private const long Ltt7786 = 633608311522;

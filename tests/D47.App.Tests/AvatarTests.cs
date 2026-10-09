@@ -145,6 +145,7 @@ public class AvatarLibraryTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NothingDroppedInMeansNothingToOverride()
     {
@@ -164,6 +165,7 @@ public class AvatarLibraryTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ReplacingOneStateLeavesTheOthersAlone()
     {
@@ -187,6 +189,7 @@ public class AvatarLibraryTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void FramesComeBackInFilenameOrderSoAnAnimationDoesNotReshuffle()
     {
@@ -208,6 +211,7 @@ public class AvatarLibraryTests
         }
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyOrUnknownFileIsNotOffered()
     {

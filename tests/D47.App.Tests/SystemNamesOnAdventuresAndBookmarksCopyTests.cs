@@ -133,6 +133,7 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCardCopiesTheNextSystemAndDoesNotOpenTheStory()
     {
@@ -149,6 +150,7 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         surface.Window.Close();
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheStoryPageCopiesTheNextSystemAndEachToldBeat()
     {
@@ -218,6 +220,7 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
             AdventuresPage.Trigger("Reach rank Scout.", null, null, _ => Task.FromResult(true)));
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ASurfaceWithNoCopyDrawsNoGlyphOnAdventures()
     {

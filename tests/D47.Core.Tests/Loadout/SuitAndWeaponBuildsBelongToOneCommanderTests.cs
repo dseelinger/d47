@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>Two Commanders share one on-foot.json and see only their own builds.</summary>
+[Trait("Category", "Integration")]
 public class SuitAndWeaponBuildsBelongToOneCommanderTests
 {
     private static CommanderGameState Commander(string fid, string name)

@@ -26,6 +26,7 @@ public class TheEgressListNamesAHiddenStoryTests
     public void ALoopbackModelIsSaidToReceiveAHiddenStory() =>
         Assert.Contains("a hidden story while a stock story runs", What("http://localhost:11434"), StringComparison.Ordinal);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void NoHiddenTextIsQuoted()
     {

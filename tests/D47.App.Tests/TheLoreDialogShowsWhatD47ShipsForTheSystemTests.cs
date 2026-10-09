@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The notes dialog shows the shipped lore for the current system, read-only, above the Commander's notes (#544).</summary>
+[Trait("Category", "Integration")]
 public class TheLoreDialogShowsWhatD47ShipsForTheSystemTests
 {
     private static readonly DateTimeOffset Instant = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);

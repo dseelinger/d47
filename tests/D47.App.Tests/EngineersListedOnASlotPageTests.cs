@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Who can roll a slot's plan, under the Planned block of a slot page (#195).</summary>
+[Trait("Category", "Integration")]
 public class EngineersListedOnASlotPageTests
 {
     private static JournalEvent Event(string json)

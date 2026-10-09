@@ -424,6 +424,7 @@ public class ArdentCommodityRequestTests
         Assert.Null(answer.Horizon);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARememberedMarketSpelledTheOtherWayIsStillRanked()
     {
@@ -609,6 +610,7 @@ public class ArdentCommodityRequestTests
         Assert.Empty(index.Urls);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AStationMissingFromAWholeReplyIsNotReAddedFromTheBook()
     {
@@ -653,6 +655,7 @@ public class ArdentCommodityRequestTests
         Assert.Equal(PriceSource.Seen, zeppelin.Market.Source);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACutReplyStillTakesTheBookButOnTheSearchsOwnTerms()
     {
@@ -691,6 +694,7 @@ public class ArdentCommodityRequestTests
         Assert.DoesNotContain(answer.Offers, offer => offer.Market.Station == "Nearly Empty Dock");
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task AColonisationSweepStillFoldsInAStationItNeverFetched()
     {

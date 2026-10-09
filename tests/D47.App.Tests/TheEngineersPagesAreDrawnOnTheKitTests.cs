@@ -111,6 +111,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
 
     private static Engineer Named(string name) => EngineerDirectory.All.First(engineer => engineer.Name == name);
 
+    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite, 1280, 860)]
     [InlineData(ThemeCatalog.Elite, 924, 640)]
@@ -143,6 +144,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
     }
 
     /// <summary>An engineer in the Commander's own system reads Cyan; one elsewhere reads A.</summary>
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AnEngineerInYourSystemIsCyan()
     {

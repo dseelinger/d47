@@ -14,6 +14,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The carrier page on the Fleet tab.</summary>
+[Trait("Category", "Integration")]
 public class TheCarrierPageDrawsWhatIsKnownTests
 {
     private const string Stats = """

@@ -34,6 +34,7 @@ public class FirstRunTests
         Assert.True(FirstRun.IsNeeded(provider: null, _ => true));
 
     /// <summary>The case a flag would get wrong, and the reason the item forbids one.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void ARestoredSecretsFileThatWillNotDecryptStillAsks()
     {

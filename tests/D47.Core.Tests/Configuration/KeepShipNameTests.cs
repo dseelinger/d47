@@ -27,6 +27,7 @@ public class KeepShipNameTests
         Assert.True(D47Settings.Defaults.Persona.KeepShipName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OnTheNameOutlivesTheSwitch()
     {
@@ -39,6 +40,7 @@ public class KeepShipNameTests
         Assert.Equal("cora", surface.Settings.Current.Persona.Id);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OffTheSwitchClearsIt()
     {
@@ -53,6 +55,7 @@ public class KeepShipNameTests
         Assert.Equal("cora", surface.Settings.Current.Persona.Id);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void WritingTheCoreThatIsAlreadyAboardIsNotASwitch()
     {
@@ -71,6 +74,7 @@ public class KeepShipNameTests
         Assert.Null(write(surface.Settings.Current, "cora").Persona.ShipName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowIsOnlyOfferedWhileThereIsANameToKeep()
     {
@@ -89,6 +93,7 @@ public class KeepShipNameTests
         Assert.False(row.Applies(surface.Settings.Current));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ClearingTheNameByHandIsStillTheCommandersToDo()
     {

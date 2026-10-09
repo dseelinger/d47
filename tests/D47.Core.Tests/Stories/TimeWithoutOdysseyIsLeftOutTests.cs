@@ -19,6 +19,7 @@ public sealed class TimeWithoutOdysseyIsLeftOutTests
         BeaconScanAt = Now,
     };
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TenDaysWithoutThenTenWithCountsTen()
     {

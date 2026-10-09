@@ -311,6 +311,7 @@ public class TheCommunityGoalSearchTests
         Assert.Equal(expected, new CommunityGoalSearch { Commodity = commodity }.IsCommodity(named));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesThePhraseWholeAndFirst()
     {

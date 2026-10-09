@@ -15,6 +15,7 @@ public class JournalCapabilityTests
     }
 
  /// <summary><c>get_ship</c> says how full the hold is, not just how big it is.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ReportsHowFullTheHoldIsRatherThanOnlyItsCapacity()
     {
@@ -192,6 +193,7 @@ public class JournalCapabilityTests
         Assert.DoesNotContain("In transit: ", result.Content, StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCarrierIsRememberedFromAnEarlierSessionAndSaysWhenItWasLastSeen()
     {
@@ -215,6 +217,7 @@ public class JournalCapabilityTests
     /// And the system it plots to is the one it just reported — the two answers cannot drift apart,
  /// whichever of them the Commander acts on.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACourseToTheCarrierGoesToTheSystemJustReported()
     {
@@ -233,6 +236,7 @@ public class JournalCapabilityTests
     }
 
     /// <summary>Unknown stays unknown.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoCarrierInAnyJournalItSaysItDoesNotKnow()
     {
@@ -257,6 +261,7 @@ public class JournalCapabilityTests
     /// isolation rule the whole store is built on, asserted through the answer rather than the backfill
     /// alone.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheRememberedCarrierIsPerCommander()
     {
@@ -277,6 +282,7 @@ public class JournalCapabilityTests
     }
 
  /// <summary>The ship list is only read out when it was asked for.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCarrierAnswerNamesNoShipsAndTheShipQuestionStillDoes()
     {
@@ -316,6 +322,7 @@ public class JournalCapabilityTests
     }
 
  /// <summary>A ship to a line, under the system that holds them.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task StoredShipsAreListedOneToALineWithNothingForAVoiceToReadOut()
     {

@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Checklists;
 public class FilteringToWhatCanBeDoneHereTests
 {
     /// <summary>Not offered where there is no engineer, which is the overwhelmingly common case.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowIsAbsentWhereNoEngineerIsBased()
     {
@@ -24,6 +25,7 @@ public class FilteringToWhatCanBeDoneHereTests
     /// And an item nobody here can roll is not offered by it either — asked of the same join the spoken
     /// parameter uses, so the page and the voice cannot disagree about what "here" means.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnItemNoEngineerHereCanRollIsFilteredOut()
     {

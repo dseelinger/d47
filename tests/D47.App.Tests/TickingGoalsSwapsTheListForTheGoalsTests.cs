@@ -17,6 +17,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Ticking Goals replaces the checklist with the goals, full height, and unticking brings the list back.</summary>
+[Trait("Category", "Integration")]
 public class TickingGoalsSwapsTheListForTheGoalsTests
 {
     private static readonly DateTimeOffset Now = new(3311, 6, 1, 0, 0, 0, TimeSpan.Zero);

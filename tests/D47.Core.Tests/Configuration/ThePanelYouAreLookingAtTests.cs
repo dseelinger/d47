@@ -11,6 +11,7 @@ namespace D47.Core.Tests.Configuration;
 /// A placement instruction lands on the panel the Commander is looking at, ruled 2026-08-24:
 /// "whichever panel I'm looking at."
 /// </summary>
+[Trait("Category", "Integration")]
 public class ThePanelYouAreLookingAtTests
 {
     private static IReadOnlyList<SettingRow> Rows()

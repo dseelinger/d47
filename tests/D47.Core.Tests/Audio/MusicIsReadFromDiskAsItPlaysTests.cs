@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>Ambience tracks stay on disk until they play, and are read a buffer at a time.</summary>
+[Trait("Category", "Integration")]
 public class MusicIsReadFromDiskAsItPlaysTests : IDisposable
 {
     private readonly string _root = Path.Combine(

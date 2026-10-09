@@ -142,6 +142,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
 
     private static string[] Raw(JsonElement array) => [.. array.EnumerateArray().Select(element => element.GetRawText())];
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(Operator)]
     [InlineData(Folding)]
@@ -164,6 +165,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal("tool_result", added[1].GetProperty("content")[0].GetProperty("type").GetString());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARoundsThinkingGoesBackUnchangedInItsPlace()
     {
@@ -178,6 +180,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal("tool_use", content[1].GetProperty("type").GetString());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARedactedBlockGoesBackAsItCame()
     {
@@ -190,6 +193,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
             content[0]));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task ChangedStateFollowsTheToolResultsAndTheEarlierCopyStays()
     {
@@ -205,6 +209,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal("Undocked from Jameson Memorial.", last.GetProperty("content").GetString());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task UnchangedStateIsNotSentAgain()
     {
@@ -213,6 +218,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal(first.GetProperty("messages").GetArrayLength() + 2, second.GetProperty("messages").GetArrayLength());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheLastRoundKeepsItsToolsAndMayNotCallThem()
     {
@@ -223,6 +229,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal("none", second.GetProperty("tool_choice").GetProperty("type").GetString());
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheTranscriptKeepsNoThinking()
     {

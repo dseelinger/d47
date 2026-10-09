@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>The walk that gives every arc its age.</summary>
+[Trait("Category", "Integration")]
 public class GoalMinerTests : IDisposable
 {
     private const string Cmdr = "F1234567";

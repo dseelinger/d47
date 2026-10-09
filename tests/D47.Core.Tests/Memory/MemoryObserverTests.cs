@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Memory;
 /// The only thing in Phase 31 that writes a memory nobody asked for, and the only producer of the
 /// observed tier.
 /// </summary>
+[Trait("Category", "Integration")]
 public class MemoryObserverTests : IDisposable
 {
     private static readonly DateTimeOffset Tick = new(3311, 4, 2, 9, 0, 0, TimeSpan.Zero);

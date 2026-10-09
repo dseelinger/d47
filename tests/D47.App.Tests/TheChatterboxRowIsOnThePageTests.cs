@@ -11,6 +11,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 public class TheChatterboxRowIsOnThePageTests
 {
     private static SettingsHost Open(string provider)

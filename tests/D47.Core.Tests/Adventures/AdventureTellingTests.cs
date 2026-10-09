@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary> What was said about a story, kept — and the wait between a beat firing and it being said.
 /// </summary>
+[Trait("Category", "Integration")]
 public class AdventureTellingTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

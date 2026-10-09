@@ -75,6 +75,7 @@ public class SpeechCountsInTheSessionTotalTests
         return panel;
     }
 
+    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSpendWindowHeaderAndSessionRowAddPricedSpeech()
     {

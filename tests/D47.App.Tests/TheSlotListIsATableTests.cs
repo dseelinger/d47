@@ -15,6 +15,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The slot list is a table: what is in the slot, and what you wanted there.</summary>
+[Trait("Category", "Integration")]
 public class TheSlotListIsATableTests
 {
     private sealed class Sitting
