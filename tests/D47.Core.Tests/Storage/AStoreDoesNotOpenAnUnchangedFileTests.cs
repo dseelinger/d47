@@ -71,7 +71,7 @@ public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
         "goals" => new GoalStore(path, NullLogger<GoalStore>.Instance).Poll,
         "switches" => new SwitchStore(path, NullLogger<SwitchStore>.Instance).Poll,
         "ship builds" => new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance).Poll,
-        "on-foot builds" => new OnFootBuildStore(path, NullLogger<OnFootBuildStore>.Instance).Poll,
+        "on-foot builds" => new OnFootBuildStore(path, new DiskFileSystem(), NullLogger<OnFootBuildStore>.Instance).Poll,
         "ship cores" => new ShipCoreStore(path, NullLogger<ShipCoreStore>.Instance).Poll,
         "memory" => new MemoryStore(path, NullLogger<MemoryStore>.Instance).Poll,
         "lore" => new LoreStore(path, NullLogger<LoreStore>.Instance).Poll,

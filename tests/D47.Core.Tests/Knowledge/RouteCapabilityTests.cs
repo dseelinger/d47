@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -752,7 +753,7 @@ public class RouteCapabilityTests
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
 
         var (registry, _, _, _) = Build(install, plans: plans);
 
@@ -781,7 +782,7 @@ public class RouteCapabilityTests
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), Microsoft.Extensions.Logging.Abstractions.NullLogger<RoutePlanBook>.Instance);
 
         var (registry, routes, _, _) = Build(install, plans: plans);
 
@@ -802,7 +803,7 @@ public class RouteCapabilityTests
     /// </summary>
     private static RoutePlanBook PlanBook(TempInstall install) => new(
         Path.Combine(install.Root, "data", "route-plans.json"),
-        NullLogger<RoutePlanBook>.Instance);
+        new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
     /// <summary>A navigation surface whose clipboard works but never drives the galaxy map.</summary>
     private static NavigationSurface CopyOnlyNavigation() => new()

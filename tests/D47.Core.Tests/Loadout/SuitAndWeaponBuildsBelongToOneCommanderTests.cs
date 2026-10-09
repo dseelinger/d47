@@ -38,7 +38,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
         public Harness()
         {
             Store = new OnFootBuildStore(
-                Path.Combine(_install.Root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+                Path.Combine(_install.Root, "on-foot.json"), new DiskFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
             Kit = new OnFootPlanService(
                 Store,

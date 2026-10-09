@@ -1,5 +1,6 @@
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -17,7 +18,7 @@ public class RoutePlanBookTests : IDisposable
 
     private string Path_ => Path.Combine(_folder, "route-plans.json");
 
-    private RoutePlanBook Book() => new(Path_, NullLogger<RoutePlanBook>.Instance);
+    private RoutePlanBook Book() => new(Path_, new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
     private static readonly DateTimeOffset At = new(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
 

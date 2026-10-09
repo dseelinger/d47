@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -118,7 +119,7 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
                 market,
                 () => gameState.Active,
                 settings,
-                new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), NullLogger<RoutePlanBook>.Instance),
+                new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance),
                 () => Now),
         ]);
 

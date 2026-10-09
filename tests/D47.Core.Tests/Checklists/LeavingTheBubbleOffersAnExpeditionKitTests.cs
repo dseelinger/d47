@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Text.Json;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -116,7 +117,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var checklists = TestSurface.Checklists(install.Paths, gameState);
-        var plans = new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+        var plans = new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         var registry = CapabilityRegistry.Build(
             [RouteCapability.Create(new Routes(route), null, () => gameState.Active, settings, plans, () => Now, null, checklists)]);

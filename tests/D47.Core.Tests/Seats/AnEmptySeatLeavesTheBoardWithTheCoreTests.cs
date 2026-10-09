@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Seats;
@@ -35,7 +36,7 @@ public class AnEmptySeatLeavesTheBoardWithTheCoreTests
     public async Task AFirstOfficerOnlyOnAnotherShipDoesNotReadTheBoard()
     {
         using var install = new TempInstall();
-        var store = new CrewSeatStore(Path.Combine(install.Root, "crew-seats.json"), NullLogger<CrewSeatStore>.Instance);
+        var store = new CrewSeatStore(Path.Combine(install.Root, "crew-seats.json"), new MemoryFileSystem(), NullLogger<CrewSeatStore>.Instance);
         store.Set(Aboard(9, Ilo));
         store.Set(Aboard(7, Teo));
 

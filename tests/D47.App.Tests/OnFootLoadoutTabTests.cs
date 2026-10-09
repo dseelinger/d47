@@ -52,7 +52,7 @@ public class OnFootLoadoutTabTests
 
         var kit = new OnFootPlanService(
             new OnFootBuildStore(
-                Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
+                Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
             () => state);
 
@@ -85,7 +85,7 @@ public class OnFootLoadoutTabTests
             () => state);
 
         var shipStore = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var onFootStore = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        var onFootStore = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
         var ships = new ShipPlanService(shipStore, checklists, () => state);
         var kit = new OnFootPlanService(onFootStore, checklists, () => state);

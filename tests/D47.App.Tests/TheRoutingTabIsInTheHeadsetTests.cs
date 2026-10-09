@@ -45,7 +45,7 @@ public class TheRoutingTabIsInTheHeadsetTests
             () => "Sol",
             registry,
             plans ?? new RoutePlanBook(
-                Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance),
+                Path.Combine(folder, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance),
             () => true,
             null,
             new CommodityBoard(),
@@ -367,7 +367,7 @@ public class TheRoutingTabIsInTheHeadsetTests
         Directory.CreateDirectory(folder);
 
         var plans = new RoutePlanBook(
-            Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+            Path.Combine(folder, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         var (panel, pixels, _) = Headset(plans);
 

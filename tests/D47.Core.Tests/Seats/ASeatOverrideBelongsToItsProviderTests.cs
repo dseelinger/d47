@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Seats;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -57,10 +58,10 @@ public class ASeatOverrideBelongsToItsProviderTests
 
         try
         {
-            new CrewSeatStore(path, NullLogger<CrewSeatStore>.Instance)
+            new CrewSeatStore(path, new DiskFileSystem(), NullLogger<CrewSeatStore>.Instance)
                 .Set(new ShipSeats(string.Empty, 7, "type9", [Overridden]));
 
-            var reread = new CrewSeatStore(path, NullLogger<CrewSeatStore>.Instance);
+            var reread = new CrewSeatStore(path, new DiskFileSystem(), NullLogger<CrewSeatStore>.Instance);
             reread.Poll();
 
             Assert.Equal(Overridden.Voice, reread.For(null, 7)!.Seats.Single().Voice);

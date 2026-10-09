@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -23,7 +24,7 @@ public class TheCrewPageFillsTheShipFlownTests
     {
         var path = Path.Combine(TempFolders.Create("d47-crew-seats-tests"), "crew-seats.json");
         var store = new GameStateStore();
-        var seats = new CrewSeatStore(path, NullLogger<CrewSeatStore>.Instance);
+        var seats = new CrewSeatStore(path, new DiskFileSystem(), NullLogger<CrewSeatStore>.Instance);
 
         string[] journal =
         [
@@ -81,7 +82,7 @@ public class TheCrewPageFillsTheShipFlownTests
 
         Assert.All(Boxes(surface.Page, CrewSeatsSection.NameBoxName), box => Assert.False(string.IsNullOrEmpty(box.Text)));
 
-        var again = new CrewSeatStore(surface.Path, NullLogger<CrewSeatStore>.Instance);
+        var again = new CrewSeatStore(surface.Path, new DiskFileSystem(), NullLogger<CrewSeatStore>.Instance);
         again.Poll();
         Assert.Equal(3, again.For("F1", 7)?.Seats.Count);
 

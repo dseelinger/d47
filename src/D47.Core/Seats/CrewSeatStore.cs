@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Seats;
@@ -7,7 +8,7 @@ namespace D47.Core.Seats;
 /// Every ship's crew seats, in one file beside the executable. Reads and writes block on file I/O: call
 /// from the pool, not from a tick.
 /// </summary>
-public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
+public sealed class CrewSeatStore(string path, IFileSystem files, ILogger<CrewSeatStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -67,7 +68,7 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (files.Stat(path) is null)
             {
                 if (_seen is null)
                 {
@@ -85,11 +86,14 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
         }
         catch (IOException ex)
         {
@@ -151,8 +155,7 @@ public sealed class CrewSeatStore(string path, ILogger<CrewSeatStore> logger)
 
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, text);
+            files.WriteText(path, text);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -88,6 +88,7 @@ public sealed class ScenarioWorld : IDisposable
 
             var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
                 Path.Combine(_install.Paths.Data, "on-foot.json"),
+                new D47.Core.Storage.DiskFileSystem(),
                 NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
             onFootBuilds.Poll();
 

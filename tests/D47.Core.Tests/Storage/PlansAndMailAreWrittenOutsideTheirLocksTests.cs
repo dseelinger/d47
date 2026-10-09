@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Reflection;
 using System.Text.Json;
 using D47.Core.Journal;
@@ -49,7 +50,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
     public async Task APlanIsReadableWhileItsFileIsBeingWritten()
     {
         var path = Path.Combine(_folder, "route-plans.json");
-        var book = new RoutePlanBook(path, NullLogger<RoutePlanBook>.Instance);
+        var book = new RoutePlanBook(path, new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
         var gate = WriteGate(book);
         Task keeping;
 
@@ -75,7 +76,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
     public async Task AnOlderPlanWrittenLastDoesNotReplaceANewerOne()
     {
         var path = Path.Combine(_folder, "route-plans.json");
-        var book = new RoutePlanBook(path, NullLogger<RoutePlanBook>.Instance);
+        var book = new RoutePlanBook(path, new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
         var gate = WriteGate(book);
         Task first;
         Task second;
@@ -97,7 +98,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
 
         await Task.WhenAll(first, second).WaitAsync(Patience, TestContext.Current.CancellationToken);
 
-        var reloaded = new RoutePlanBook(path, NullLogger<RoutePlanBook>.Instance);
+        var reloaded = new RoutePlanBook(path, new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
         reloaded.Load();
 
         Assert.NotNull(reloaded.Last(RoutePlanKind.Jump));

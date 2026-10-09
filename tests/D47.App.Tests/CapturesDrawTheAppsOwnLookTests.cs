@@ -146,7 +146,7 @@ public class CapturesDrawTheAppsOwnLookTests
             ["Slot01_Size7"]);
 
         var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        var kit = new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
         var ships = new ShipPlanService(builds, checklists, () => state);
         var onFoot = new OnFootPlanService(kit, checklists, () => state);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
@@ -161,7 +161,7 @@ public class CapturesDrawTheAppsOwnLookTests
             () => null, () => null, () => null, () => null, () => null, () => state,
             () => null, () => null, null, null, NullLogger.Instance);
 
-        var plans = new RoutePlanBook(Path.Combine(paths.Data, "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+        var plans = new RoutePlanBook(Path.Combine(paths.Data, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         var route = new NavRoute
         {

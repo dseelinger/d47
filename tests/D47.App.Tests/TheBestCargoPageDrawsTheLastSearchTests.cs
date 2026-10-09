@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -102,7 +103,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
 
         var fake = new FakeTrade();
         var board = new BestCargoBoard();
-        var plans = new RoutePlanBook(Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+        var plans = new RoutePlanBook(Path.Combine(folder, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         var registry = CapabilityRegistry.Build(
         [

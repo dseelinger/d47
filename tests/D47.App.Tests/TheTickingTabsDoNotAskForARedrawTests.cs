@@ -52,7 +52,7 @@ public class TheTickingTabsDoNotAskForARedrawTests
             Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var kit = new OnFootBuildStore(
-            Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+            Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
         var (settings, _, _) = TestSurface.Create();
 

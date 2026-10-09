@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Seats;
 using Xunit;
 
@@ -51,11 +52,11 @@ public class TheCrewPageFillsTheShipFlownTests
 
         try
         {
-            var store = new CrewSeatStore(path, Microsoft.Extensions.Logging.Abstractions.NullLogger<CrewSeatStore>.Instance);
+            var store = new CrewSeatStore(path, new DiskFileSystem(), Microsoft.Extensions.Logging.Abstractions.NullLogger<CrewSeatStore>.Instance);
             var seats = CrewSeatRules.Offered("anaconda", 7, [], []);
             store.Set(new ShipSeats("F1", 7, "anaconda", seats));
 
-            var again = new CrewSeatStore(path, Microsoft.Extensions.Logging.Abstractions.NullLogger<CrewSeatStore>.Instance);
+            var again = new CrewSeatStore(path, new DiskFileSystem(), Microsoft.Extensions.Logging.Abstractions.NullLogger<CrewSeatStore>.Instance);
             again.Poll();
 
             Assert.Equal(3, again.For("F1", 7)?.Seats.Count);

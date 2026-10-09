@@ -102,7 +102,7 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
         }
 
         var routes = new RecordedCarrierRoutes();
-        var plans = new RoutePlanBook(Path.Combine(folder, "route-plans.json"), NullLogger<RoutePlanBook>.Instance);
+        var plans = new RoutePlanBook(Path.Combine(folder, "route-plans.json"), new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         var registry = CapabilityRegistry.Build(
             [RouteCapability.Create(routes, null, () => gameState.Active, settings, plans)]);

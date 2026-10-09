@@ -87,7 +87,7 @@ public class HelpInTheHeadsetTests
                 [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]),
         ]);
 
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
         dump ??= TestSurface.VrDump;
 

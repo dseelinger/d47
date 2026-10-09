@@ -1,5 +1,6 @@
 using D47.Core.Knowledge;
 using D47.Core.Seats;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -277,7 +278,7 @@ public class ASeatFileCannotOverfillAHullTests
         new(CrewSeat.NewId(), role, title, name);
 
     private static CrewSeatStore Store(TempFolder folder) =>
-        new(folder.File, NullLogger<CrewSeatStore>.Instance);
+        new(folder.File, new DiskFileSystem(), NullLogger<CrewSeatStore>.Instance);
 
     private sealed class TempFolder : IDisposable
     {

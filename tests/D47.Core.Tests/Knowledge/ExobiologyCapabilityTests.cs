@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -341,7 +342,7 @@ public class ExobiologyCapabilityTests
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
-            NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
         var at = new DateTimeOffset(2026, 8, 20, 9, 0, 0, TimeSpan.Zero);
         var gameState = Store();
 

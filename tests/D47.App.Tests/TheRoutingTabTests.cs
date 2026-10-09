@@ -169,7 +169,7 @@ public class TheRoutingTabTests
 
         return new RoutePlanBook(
             Path.Combine(folder, "route-plans.json"),
-            NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
     }
 
     private static string Scratch() =>

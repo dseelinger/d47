@@ -67,7 +67,7 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
             () => store.Active);
 
         var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
+            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
             () => store.Active);
 

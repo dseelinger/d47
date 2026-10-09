@@ -14,7 +14,7 @@ public sealed record OnFootBuildProblem(string Where, string Reason);
 /// The Commander's suit and weapon builds, in one file beside the executable (Phase 27, "The same page,
 /// on foot").
 /// </summary>
-public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logger)
+public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnFootBuildStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -148,7 +148,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -159,7 +159,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: no builds is the normal state, and will be until somebody plans one.
                 if (_seen is null)
@@ -179,11 +179,14 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -224,8 +227,7 @@ public sealed class OnFootBuildStore(string path, ILogger<OnFootBuildStore> logg
 
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, text);
+            files.WriteText(path, text);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

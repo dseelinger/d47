@@ -61,7 +61,7 @@ public class AMaterialOpensOnItsOwnPageTests
         var ships = new ShipPlanService(
             new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance), checklists, State);
         var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance), checklists, State);
+            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance), checklists, State);
 
         var galaxy = new Galaxy();
         Surface? surface = null;

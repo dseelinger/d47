@@ -12,7 +12,7 @@ namespace D47.Core.Tests.Loadout;
 public class OnFootPlanTests
 {
     private static OnFootBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        new(Path.Combine(install.Root, "on-foot.json"), new DiskFileSystem(), NullLogger<OnFootBuildStore>.Instance);
 
     private static ChecklistService Checklists(TempInstall install, CommanderGameState? state = null) =>
         new(

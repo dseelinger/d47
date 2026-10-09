@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Knowledge;
@@ -73,7 +74,7 @@ public sealed record StoredRoutePlan
 /// The last plan each planner produced, shared by every path that can ask for one (Phase 37, "One last
 /// plan, shared by the voice and the panel").
 /// </summary>
-public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
+public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RoutePlanBook> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -295,14 +296,16 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
         {
             _plans.Clear();
 
-            if (!File.Exists(path))
+            var text = files.ReadText(path);
+
+            if (text is null)
             {
                 return;
             }
 
             try
             {
-                var stored = JsonSerializer.Deserialize<StoredRoutePlan[]>(File.ReadAllText(path), Json) ?? [];
+                var stored = JsonSerializer.Deserialize<StoredRoutePlan[]>(text, Json) ?? [];
 
                 foreach (var plan in stored)
                 {
@@ -331,8 +334,7 @@ public sealed class RoutePlanBook(string path, ILogger<RoutePlanBook> logger)
 
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-                File.WriteAllText(path, JsonSerializer.Serialize(snapshot, Json));
+                files.WriteText(path, JsonSerializer.Serialize(snapshot, Json));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

@@ -977,6 +977,7 @@ public sealed class AppHost : IDisposable
         // And a fourth (Phase 37).
         var planBook = new D47.Core.Knowledge.RoutePlanBook(
             Path.Combine(paths.Data, "route-plans.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>());
 
         planBook.Load();
@@ -1446,6 +1447,7 @@ public sealed class AppHost : IDisposable
         // And the same arrangement on foot (Phase 27).
         var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
             Path.Combine(paths.Data, "on-foot.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Loadout.OnFootBuildStore>());
 
         onFootBuilds.Poll();
@@ -4483,7 +4485,7 @@ public sealed class AppHost : IDisposable
         {
             if (_crewSeats is null)
             {
-                _crewSeats = new D47.Core.Seats.CrewSeatStore(Paths.CrewSeatsFile, _loggerFactory.CreateLogger<D47.Core.Seats.CrewSeatStore>());
+                _crewSeats = new D47.Core.Seats.CrewSeatStore(Paths.CrewSeatsFile, Files, _loggerFactory.CreateLogger<D47.Core.Seats.CrewSeatStore>());
                 _crewSeats.Poll();
             }
 

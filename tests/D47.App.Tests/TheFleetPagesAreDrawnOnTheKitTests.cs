@@ -72,7 +72,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
 
         panel.EnableCopy(new D47.Core.Capabilities.Builtin.RecordingClipboard());
         var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
+            new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
             () => store.Active);
 

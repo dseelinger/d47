@@ -44,7 +44,7 @@ public class PromotingARouteDoesNotRemovePrerequisitesTests
             () => store.Active);
 
         var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
-        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
+        var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => store.Active);
 
         var felicity = EngineerDirectory.ByName("Felicity Farseer")!;

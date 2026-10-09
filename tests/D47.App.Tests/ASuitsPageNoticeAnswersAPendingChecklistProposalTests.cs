@@ -49,7 +49,7 @@ public class ASuitsPageNoticeAnswersAPendingChecklistProposalTests
         var live = store.Active!;
 
         var kit = new OnFootPlanService(
-            new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
+            new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
             checklists,
             () => live);
 

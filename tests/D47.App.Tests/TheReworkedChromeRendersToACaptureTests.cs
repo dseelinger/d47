@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -39,7 +40,7 @@ public class TheReworkedChromeRendersToACaptureTests
 
         var book = new RoutePlanBook(
             Path.Combine(folder, "route-plans.json"),
-            NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         book.Record(
             new PlottedRoute(

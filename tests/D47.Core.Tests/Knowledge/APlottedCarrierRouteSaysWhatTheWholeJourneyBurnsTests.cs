@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Text.Json;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -93,7 +94,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
-            NullLogger<RoutePlanBook>.Instance);
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
         return (
             CapabilityRegistry.Build(

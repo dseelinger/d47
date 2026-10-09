@@ -175,7 +175,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
             () => null);
         var kit = onFoot
             ? new OnFootPlanService(
-                new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance),
+                new OnFootBuildStore(Path.Combine(root, "on-foot.json"), new MemoryFileSystem(), NullLogger<OnFootBuildStore>.Instance),
                 checklists,
                 () => state)
             : null;
