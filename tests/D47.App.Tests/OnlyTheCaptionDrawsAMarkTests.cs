@@ -34,6 +34,7 @@ public class OnlyTheCaptionDrawsAMarkTests
     }
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void NothingButTheCaptionPutsAMarkOnAButton()
     {
         var app = Path.Combine(RepositoryRoot(), "src", "D47.App");
@@ -52,6 +53,7 @@ public class OnlyTheCaptionDrawsAMarkTests
 
     /// <summary>The panel's own markup draws no path: the send arrow is the word SEND.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void ThePanelMarkupDrawsNoPath()
     {
         var markup = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", "Panel", "PanelView.axaml"));

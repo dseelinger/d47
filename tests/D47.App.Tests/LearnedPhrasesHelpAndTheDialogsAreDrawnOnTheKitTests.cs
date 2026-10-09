@@ -376,6 +376,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     [InlineData("Controls/SwitchPage.cs")]
     [InlineData("Controls/PickerPage.axaml")]
     [InlineData("Controls/PickerPage.axaml.cs")]
+    [Trait("Category", "Gate")]
     public void TheSourceDrawsOnlyInTheNewTokens(string relative)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", relative.Replace('/', Path.DirectorySeparatorChar)));

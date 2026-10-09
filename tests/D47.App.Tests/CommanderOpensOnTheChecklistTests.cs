@@ -6,6 +6,7 @@ namespace D47.App.Tests;
 /// Commander's roots land in call order, so the window and the headset both call
 /// <c>EnableChecklist</c>, then <c>EnableMissions</c>, before <c>EnableStanding</c>, <c>EnableStatistics</c> and <c>EnableSession</c>.
 /// </summary>
+[Trait("Category", "Gate")]
 public class CommanderOpensOnTheChecklistTests
 {
     [Theory]

@@ -78,6 +78,7 @@ public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
     /// The switch is the spelling the helper on the PATH passes, so the two cannot drift apart —
     /// <c>tools/rec-on.ps1</c> hands this exact string to the installed executable.
     /// </summary>
+    [Trait("Category", "Gate")]
     [Fact]
     public void TheHelperPassesTheSwitchThisReads()
     {

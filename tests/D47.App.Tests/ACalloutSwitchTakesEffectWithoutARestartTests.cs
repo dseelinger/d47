@@ -7,6 +7,7 @@ namespace D47.App.Tests;
 /// live <c>SettingsService</c> rather than a <c>D47Settings</c> snapshot, so a switch in the panel
 /// takes effect on the next tick instead of the next launch (#139).
 /// </summary>
+[Trait("Category", "Gate")]
 public class ACalloutSwitchTakesEffectWithoutARestartTests
 {
     [Fact]

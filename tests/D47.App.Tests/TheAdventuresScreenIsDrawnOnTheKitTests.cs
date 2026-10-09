@@ -256,6 +256,7 @@ public class TheAdventuresScreenIsDrawnOnTheKitTests
     [InlineData("AdventureMini.cs")]
     [InlineData("AdventureSurface.cs")]
     [InlineData("AdventureThinking.cs")]
+    [Trait("Category", "Gate")]
     public void TheAdventuresSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));

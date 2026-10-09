@@ -8,6 +8,7 @@ namespace D47.App.Tests;
 /// name, the PTT dot, and the active tab (top strip and rail edge) — a fifth site is a design
 /// question, not a drive-by addition.
 /// </summary>
+[Trait("Category", "Gate")]
 public sealed class BloomGlowsOnlyTheFourNamedElementsTests
 {
     private static readonly (string File, int Instantiations)[] Expected =

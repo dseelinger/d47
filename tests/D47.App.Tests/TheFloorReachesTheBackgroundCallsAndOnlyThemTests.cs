@@ -3,6 +3,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Which calls take the cheap model and which keep the Commander's.</summary>
+[Trait("Category", "Gate")]
 public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
 {
     /// <summary>The readers of the conversation model, exactly.</summary>

@@ -6,6 +6,7 @@ namespace D47.App.Tests;
 /// The installer script is the one piece of the shipped product the compiler never sees, so the things
 /// it has to agree with the app about are asserted here instead.
 /// </summary>
+[Trait("Category", "Gate")]
 public class InstallerScriptTests
 {
     private static string Script => File.ReadAllText(Path.Combine(RepositoryRoot(), "installer", "d47.iss"));

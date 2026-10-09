@@ -275,6 +275,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
     [InlineData("RouteTradePage.cs")]
     [InlineData("RouteMarketPage.cs")]
     [InlineData("RouteMini.cs")]
+    [Trait("Category", "Gate")]
     public void TheRoutingSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));

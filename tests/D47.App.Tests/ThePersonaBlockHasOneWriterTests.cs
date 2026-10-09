@@ -2,6 +2,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Gate")]
 public sealed class ThePersonaBlockHasOneWriterTests
 {
     [Fact]

@@ -93,32 +93,33 @@ dotnet build d47.slnx -c Debug      # must be 0 warnings, 0 errors
 `#pragma warning disable` or `SuppressMessage` anywhere in `src/`; adding the first one is a
 deliberate act and needs the maintainer's agreement, not a workaround you reach for at the end.
 
-Work against the filtered loop, not the whole solution:
+During issue work, run only the unit tests for the area you changed, plus the integration tests
+that the change affects. A unit test runs in under a second. Filter by the area, in each project
+the diff touches:
 
 ```bash
 dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~<Area>
+dotnet test tests/D47.App.Tests --filter FullyQualifiedName~<Area>
 ```
 
-The full suite is a release gate and runs on the runner. Running it here to check one fix is
-minutes you do not need to spend.
+An integration test is affected when it renders, captures or drives a screen, service or flow the
+diff changed. Run those by class name too. Do not run a whole test project unfiltered, and never
+`dotnet test d47.slnx`: the whole suite, `D47.App.Tests` included, is the release gate and runs
+in `/pre-release` and `tools/release.ps1`.
 
 Before committing, also run the gate tests. They check the whole tree against a list or a rule — a
-journal event dispatched on must be in `HandledEvents.ActedOn`, a capability must have a docs page
-— so a change can break one without matching the area filter (it takes a few seconds):
+journal event dispatched on must be in `HandledEvents.ActedOn`, `AppHost.cs` call sites are
+counted, a capability must have a docs page — so a change can break one without matching the area
+filter (each takes a few seconds):
 
 ```bash
 dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~Gate
+dotnet test tests/D47.App.Tests --filter "Category=Gate"
 ```
 
-One exception: when the diff touches anything under `src/D47.App/`, run the whole of
-`D47.App.Tests` before committing (about 90 seconds):
-
-```bash
-dotnet test tests/D47.App.Tests -c Release
-```
-
-Several of its tests read `AppHost.cs` as text and count call sites, so moving code out of the app
-breaks them even though the area filter passes. Nothing else runs them before `release.ps1` does.
+Run the second one whenever the diff touches `src/D47.App/`, `docs/` or `installer/`. A new App test
+that reads repository files as text carries `[Trait("Category", "Gate")]`, on the
+method when its class also has rendering tests.
 
 ## The rules that bite an implementer
 
@@ -335,8 +336,8 @@ never be followed by a merge in the same command.
      not resolve it. `git rebase --abort`, so the branch holds the commit as it was before the
      rebase, and stop.
 
-2. Run the checks again on the rebased tree — the build, the area filter, the `Gate` filter, and
-   `D47.App.Tests` when the diff touches `src/D47.App/` — because other lanes' work is now under
+2. Run the checks again on the rebased tree — the build, the area filters, the affected integration
+   tests and both gate filters — because other lanes' work is now under
    the change. If any fails, stop. Do not fix it in this session: the failure comes from the
    combination with another lane's work, which is the maintainer's to judge.
 

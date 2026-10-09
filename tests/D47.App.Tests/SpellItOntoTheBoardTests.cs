@@ -253,6 +253,7 @@ public class SpellItOntoTheBoardTests
     /// file that also sends keys to Elite, spelling has become a macro path.
     /// </summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void SpelledPressesReachDrawnBoardsAndNothingElse()
     {
         var readers = Directory

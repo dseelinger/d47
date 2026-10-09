@@ -96,6 +96,7 @@ public class DialogsMatchTheWindowsZoomTests
 
     /// <summary>And nothing in the app opens a dialog the other way.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NothingCallsShowDialogDirectly()
     {
         var source = Path.GetFullPath(

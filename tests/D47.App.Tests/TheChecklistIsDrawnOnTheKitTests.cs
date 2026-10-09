@@ -207,6 +207,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         ((ISolidColorBrush)Avalonia.Application.Current!.Resources[key]!).Color;
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void TheChecklistSourceDrawsOnlyInTheNewTokens()
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", "ChecklistPage.cs"));

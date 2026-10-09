@@ -157,6 +157,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
     [InlineData("HullPicture.cs")]
     [InlineData("HullViewer.cs")]
     [InlineData("ShipArt.cs")]
+    [Trait("Category", "Gate")]
     public void TheFleetSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));

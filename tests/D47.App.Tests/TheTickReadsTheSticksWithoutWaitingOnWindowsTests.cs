@@ -102,6 +102,7 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     }
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void TheTickSubscribersReadTheSamplerAndNotTheControllers()
     {
         Assert.NotEmpty(AppSource.CodeLines("PollTheStick(sampledControllers,"));

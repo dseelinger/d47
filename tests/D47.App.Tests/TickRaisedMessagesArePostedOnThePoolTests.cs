@@ -7,6 +7,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// <c>MessageStore.Post</c> writes files, so a handler raised on the tick posts from inside a <c>Task.Run</c> (#911).
 /// </summary>
+[Trait("Category", "Gate")]
 public sealed class TickRaisedMessagesArePostedOnThePoolTests
 {
     [Theory]

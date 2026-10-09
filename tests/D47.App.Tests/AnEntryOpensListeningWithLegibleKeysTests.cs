@@ -53,6 +53,7 @@ public class AnEntryOpensListeningWithLegibleKeysTests
         [.. page.GetVisualDescendants().OfType<Button>().Where(button => button.Content is string text && text is not ("Done" or "Back"))];
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoCallSiteOpensAnEntryOnTheKeyboard()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);

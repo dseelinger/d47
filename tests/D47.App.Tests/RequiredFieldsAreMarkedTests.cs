@@ -145,6 +145,7 @@ public sealed class RequiredFieldsAreMarkedTests
 
     /// <summary>And no field anywhere still says <c>required</c> in the slot where a default goes.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoPlaceholderIsTheWordRequired()
     {
         var offenders = Directory

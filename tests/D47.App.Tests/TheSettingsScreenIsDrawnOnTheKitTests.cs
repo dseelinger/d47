@@ -162,6 +162,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
 
     [Theory]
     [MemberData(nameof(SettingsSourceFiles))]
+    [Trait("Category", "Gate")]
     public void TheSettingsSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Settings", file));

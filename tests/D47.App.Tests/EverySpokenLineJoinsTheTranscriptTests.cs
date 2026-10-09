@@ -13,6 +13,7 @@ namespace D47.App.Tests;
 public class EverySpokenLineJoinsTheTranscriptTests
 {
     [Fact]
+    [Trait("Category", "Gate")]
     public void SayAsyncRaisesTheTranscriptLineAfterTheVoiceHasTheAnnouncement()
     {
         var say = AppSource.Method("SayAsync").Text;
@@ -24,6 +25,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
     }
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void OnlySayAsyncRaisesTheTranscriptLine()
     {
         Assert.Single(AppSource.CodeLines("CalloutSaid?.Invoke("));
@@ -83,6 +85,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
     }
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void AStoryEndingIsSpokenInTheVoiceItWasWrittenFor()
     {
         var lines = AppSource.Method("SpeakStoryLinesAsync").Text;

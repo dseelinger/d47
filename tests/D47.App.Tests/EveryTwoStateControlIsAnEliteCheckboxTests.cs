@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Every two-state control in the app is drawn as Elite's checkbox (#395).</summary>
+[Trait("Category", "Gate")]
 public sealed class EveryTwoStateControlIsAnEliteCheckboxTests
 {
     private static readonly Regex ToggleSwitchToken = new(@"\bToggleSwitch\b", RegexOptions.Compiled);

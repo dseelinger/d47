@@ -16,7 +16,9 @@ dotnet test tests/<Project> --filter FullyQualifiedName~<Name>
 ```
 
 - Run the filter you were given. If none was given, ask for one rather than running
-  `dotnet test d47.slnx`. Run the whole suite only when the caller says "full suite" explicitly.
+  `dotnet test d47.slnx` or a whole test project. An unfiltered `dotnet test tests/D47.App.Tests`
+  counts as the whole suite: it is a release gate too. Run the whole suite only when the caller says
+  "full suite" explicitly.
 - Warnings are errors in this repo (`TreatWarningsAsErrors`). Report every warning with its
   `path:line` and code.
 - If a build fails because a file is locked, the app is probably running from the build output.

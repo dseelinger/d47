@@ -192,6 +192,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
     [Theory]
     [InlineData("EngineersPages.cs")]
     [InlineData("EngineerLines.cs")]
+    [Trait("Category", "Gate")]
     public void TheEngineersSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));

@@ -39,6 +39,7 @@ public sealed class HelpNamesTheReadingsTests
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Gate")]
     public void EveryReadingIsNamedOnItsOwnHelpPage()
     {
         var pages = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -99,6 +100,7 @@ public sealed class HelpNamesTheReadingsTests
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Gate")]
     public void NoHelpPageNamesARetiredReading()
     {
         var readings = Readings();
@@ -137,6 +139,7 @@ public sealed class HelpNamesTheReadingsTests
     }
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void NothingTheAppSaysNamesARetiredReading()
     {
         var offences = new List<string>();

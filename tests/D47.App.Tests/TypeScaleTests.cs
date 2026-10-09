@@ -14,6 +14,7 @@ public partial class TypeScaleTests
 
     /// <summary>The gate.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoSurfaceWritesAFontSizeAsANumber()
     {
         var offenders = new List<string>();

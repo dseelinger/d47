@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The cause of a persona switch travels as an argument, never as shared state.</summary>
+[Trait("Category", "Gate")]
 public class TheSwitchCauseIsAnArgumentTests
 {
     [Fact]

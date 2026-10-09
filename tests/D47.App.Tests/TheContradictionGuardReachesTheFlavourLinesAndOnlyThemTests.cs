@@ -9,6 +9,7 @@ namespace D47.App.Tests;
 /// speaker's reply and the Narrator's reply are screened by Core's <c>ChatterLine.cs</c> and
 /// <c>NarratorLine.cs</c>, each with a ship reader from the app.
 /// </summary>
+[Trait("Category", "Gate")]
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 {
     /// <summary>

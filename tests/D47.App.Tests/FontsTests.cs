@@ -15,6 +15,7 @@ public partial class FontsTests
 
     /// <summary>The gate: Fonts.cs and Fonts.axaml are the only places a font is named by URI.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoOtherSurfaceNamesAFontByUri()
     {
         var root = Path.GetFullPath(

@@ -287,6 +287,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
 
     /// <summary>The linkage claim is not on the window: a random number, a file name and a way to delete it are how the grouping works rather than what leaves, and a Commander standing at a consent notice cannot act on any of it.</summary>
     [AvaloniaFact]
+    [Trait("Category", "Gate")]
     public void TheLinkageClaimMovedToTheNoticeAndIsNotOnTheWindow()
     {
         var window = Shown(_ => "### Incident excerpt\n");

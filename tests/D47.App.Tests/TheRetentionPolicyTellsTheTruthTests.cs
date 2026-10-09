@@ -20,6 +20,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     /// here — a second copy of the number in the test is a third place to keep in step.
     /// </summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void ThePageStatesTheLogRetentionTheSinksActuallyHold()
     {
         var policy = Policy;
@@ -34,6 +35,7 @@ public class TheRetentionPolicyTellsTheTruthTests
 
     /// <summary>The asymmetry is the rule, not the two numbers.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void TheReadableLogOutlivesTheMachineOne()
     {
         Assert.True(
@@ -45,6 +47,7 @@ public class TheRetentionPolicyTellsTheTruthTests
 
     /// <summary>The audio recorder's ring is the sharpest number on the page — a rolling recording of the audio in somebody's home — and it must never be a number a person remembers to apply.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void ThePageStatesTheAudioRingTheWriterEnforces()
     {
         Assert.Contains(
@@ -55,6 +58,7 @@ public class TheRetentionPolicyTellsTheTruthTests
 
     /// <summary>How long d47 remembers something about the Commander, out of the box.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void ThePageStatesTheMemoryExpiryTheSettingsDefaultTo()
     {
         Assert.Contains(
@@ -66,6 +70,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     /// <summary>The one rule that lives outside the .NET build: nothing else in <c>dotnet test</c> opens the
     /// Worker's runbook, so an expiry changed there would leave this page silently wrong.</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void ThePageStatesTheRuleThatLivesOutsideTheDotNetBuild()
     {
         var policy = Policy;
@@ -82,6 +87,7 @@ public class TheRetentionPolicyTellsTheTruthTests
     /// other.
     /// </summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void TheTwoDocumentsReachEachOther()
     {
         var notice = File.ReadAllText(

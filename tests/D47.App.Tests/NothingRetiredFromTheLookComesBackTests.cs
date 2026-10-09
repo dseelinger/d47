@@ -43,6 +43,7 @@ public sealed class NothingRetiredFromTheLookComesBackTests
         new(@"=\s*""\s*#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})\s*""", RegexOptions.Compiled);
 
     [Fact]
+    [Trait("Category", "Gate")]
     public void NothingUnderSrcNamesARetiredControlColourOrKey()
     {
         var root = RepositoryRoot();

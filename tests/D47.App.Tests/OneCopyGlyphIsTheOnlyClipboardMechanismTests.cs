@@ -42,6 +42,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     /// is not scanned here.
     /// </summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoPageThatDrawsASystemNameReachesForItsOwnClipboardMechanism()
     {
         var folder = Path.Combine(RepositoryRoot(), "src", "D47.App", "Panel");

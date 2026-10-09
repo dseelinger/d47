@@ -57,6 +57,7 @@ public partial class ErrorsAndCautionsAreNoticesTests
             .ToDictionary(found => found.Theme, found => Color.Parse(found.Warn.Groups["hex"].Value));
     }
 
+    [Trait("Category", "Gate")]
     [Fact]
     public void EachThemesWarnIsTheDesignsWarn()
     {

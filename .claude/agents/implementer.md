@@ -27,7 +27,8 @@ Stay inside the scope you were given. If the change needs something outside it, 
 cause turns out to be wrong, stop and report that instead of widening the change.
 
 Before reporting, build (`dotnet build d47.slnx -c Debug`) and run the tests that cover the change
-with a `--filter`. Do not run the whole suite.
+with a `--filter`. Do not run the whole suite or any test project unfiltered, `D47.App.Tests`
+included.
 
 Report:
 

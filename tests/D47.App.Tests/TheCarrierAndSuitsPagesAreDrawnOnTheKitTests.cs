@@ -166,6 +166,7 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
     [Theory]
     [InlineData("CarrierPage.cs")]
     [InlineData("OnFootMode.cs")]
+    [Trait("Category", "Gate")]
     public void TheCarrierAndSuitsSourceDrawsOnlyInTheNewTokens(string file)
     {
         var source = File.ReadAllText(Path.Combine(Root(), "src", "D47.App", "Panel", file));

@@ -58,6 +58,7 @@ public sealed class PopUpWindowsCarryAHelpMarkTests
     /// which is long and is mostly about providers and keys.
     /// </summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void TheSpendMarkNamesTheRunningTotals()
     {
         var url = DocsSite.Capability(

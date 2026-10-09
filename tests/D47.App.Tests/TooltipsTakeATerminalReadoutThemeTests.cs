@@ -80,6 +80,7 @@ public class TooltipsTakeATerminalReadoutThemeTests
 
     /// <summary>The delay is set once for every control rather than at each call site (#381).</summary>
     [Fact]
+    [Trait("Category", "Gate")]
     public void NoCallSiteSetsItsOwnShowDelay()
     {
         var root = RepositoryRoot();
