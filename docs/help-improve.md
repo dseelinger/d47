@@ -165,8 +165,8 @@ result, not the original.
 
 ### Why a history is shown as a report
 
-A history runs to hundreds of megabytes. Nobody reads that, so reviewing it directly would mean
-agreeing to something you had not read — which is not consent.
+A history runs to hundreds of megabytes. Nobody can read that much before agreeing, so reviewing it
+directly would mean agreeing to something you had not read — which is not consent.
 
 So Directive 47 builds a **report about** the history instead: it names every kind of event
 included, and shows one real scrubbed line of each. You are reading a faithful sample of the actual

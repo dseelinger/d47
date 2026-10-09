@@ -8,7 +8,7 @@
 
 ## 1.27.0 — Stock stories begin
 
-The consent text for an incident excerpt and a journal history on the Help improve page, and the Help improve, Donation privacy and Data retention help pages, named a replay tool that does not exist. They now say what a donation is used for: reproducing and diagnosing defects against play that really happened. A journal history is still kept until you ask for it back, and an incident excerpt is still deleted after 30 days.
+The consent text for an incident excerpt and a journal history on the Help improve page, and the Help improve, Donation privacy and Data retention help pages, named a replay tool that does not exist. They now say what a donation is used for: reproducing and diagnosing defects against play that really happened. A journal history may now also be read by the maintainer, including through AI coding sessions, to learn what the game writes for parts of the game d47 does not handle yet. Only event names, field names, counts and game symbols from it are published. A journal history is still kept until you ask for it back, and an incident excerpt is still deleted after 30 days.
 
 Transcription is now biased towards the name of every command d47 can give, including the Galnet, headset, panel, FSS, on-foot and fighter commands in this release. Previously the names after the first 120 were left out.
 

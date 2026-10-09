@@ -99,11 +99,15 @@ says so rather than claiming a person's habit as a mechanism.
 Two things are kept with no end date. Both are deliberate, and saying so is harder than leaving
 them off a table, which is exactly why they are on one.
 
-**A donated journal history, indefinitely.** It is used to reproduce defects against play that
-really happened, and a defect can be found long after the history was sent. Permanent retention is
-also why the anonymity has to hold rather than merely look right: a donation is scrubbed by field list, another player's words are dropped rather than scrubbed, and
-the stand-in names are deliberately not stable between donations so two of them cannot be joined.
-It goes when the donor asks.
+**A donated journal history, indefinitely.** It is used in two ways. It is test data, which may
+be run through the same code the running app uses so a defect can be shown fixed against real play,
+and a defect can be found long after the history was sent. And it is a record of what the game
+writes, read by the maintainer, including through AI coding sessions, to learn the events and fields
+of parts of the game d47 does not handle yet. Only event names, field names, counts and game symbols
+from it are ever published; no line from it, and no other value in one. Permanent retention is also
+why the anonymity has to hold rather than merely look right: a donation is scrubbed by field list,
+another player's words are dropped rather than scrubbed, and the stand-in names are deliberately not
+stable between donations so two of them cannot be joined. It goes when the donor asks.
 
 **Everything in `data\` that no rule above names.** Your settings, your checklist, your ships, your
 spend history. Kept forever because they are what the app is — a checklist that expired would be a

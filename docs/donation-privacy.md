@@ -75,11 +75,16 @@ hash of exactly what left, so you can check that claim rather than believe it.
 game did, so a defect is reproduced from what actually happened; its log half is what this build
 did with those events. A donated journal history is test data, not a bug report.
 
-That is the whole purpose, and the design is what enforces it rather than the promise being the
+**A record of what the game writes, for a journal history only.** A donated journal history is
+also read by the maintainer, including through AI coding sessions, to learn the events and fields
+of parts of the game d47 does not handle yet. Only event names, field names, counts and game
+symbols from it are ever published; no line from it, and no other value in one.
+
+Those are the whole purpose, and the design is what enforces it rather than the promise being the
 enforcement. There is no backend beyond an object store, nothing that indexes or searches what is
-in it, no profile of any kind, and no third party with access. Purpose limitation is not a slogan
-here: it is why donating a whole journal history stayed out of scope until there was a stated use
-for one, and why there is no backend beyond the store that use needs.
+in it, no profile of any kind, and no third party with access to the store. Purpose limitation is
+not a slogan here: it is why donating a whole journal history stayed out of scope until there was a
+stated use for one, and why there is no backend beyond the store that use needs.
 
 ## What is never taken
 

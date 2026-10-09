@@ -35,17 +35,22 @@ public static class CorpusReport
 
         report.AppendLine();
         report.AppendLine(
-            "**What it is for.** Finding and reproducing defects in Directive 47 against play that "
-            + "really happened, including situations nobody thought to test. Sent to Directive 47's "
-            + "store, it may be copied to the developer's machine by a utility that can read the "
-            + "store but not change it. It is test data, not a bug report.");
+            "**What it is for.** Two things. It is test data: it may be run through the same code "
+            + "the running app uses, so a defect can be shown fixed against real play and caught if "
+            + "it comes back. And it is a record of what the game writes: it is read to learn which "
+            + "events appear, in what order, and which fields they carry, for parts of the game d47 "
+            + "does not handle yet. The maintainer reads it, including through AI coding sessions. "
+            + "Sent to Directive 47's store, it may be copied to the developer's machine by a "
+            + "utility that can read the store but not change it. Only event names, field names, "
+            + "counts and game symbols (such as `Mission_RS_Massacre`) from it are ever published, "
+            + "on GitHub or anywhere else; no line from it, and no other value in one.");
 
         report.AppendLine();
         report.AppendLine(
             $"**Why you are reading this instead of the history itself.** {Count(survey.Tally.Events, "event")} "
-            + $"is {Size(survey.Bytes)}. Nobody reads that, and a yes given to a payload nobody "
-            + "could have read is not consent. So this describes every *kind* of thing in the "
-            + $"donation and shows a real scrubbed line of each — {Count(kinds.Count, "line")} "
+            + $"is {Size(survey.Bytes)}. Nobody can read that much before agreeing, and a yes "
+            + "given to a payload nobody could have read is not consent. So this describes every "
+            + $"*kind* of thing in the donation and shows a real scrubbed line of each — {Count(kinds.Count, "line")} "
             + $"instead of {Count(survey.Tally.Events, "line")}.");
 
         report.AppendLine();
