@@ -43,7 +43,7 @@ public class PromotingARouteDoesNotRemovePrerequisitesTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => store.Active);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => store.Active);
 

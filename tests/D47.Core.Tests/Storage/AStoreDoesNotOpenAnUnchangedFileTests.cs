@@ -6,6 +6,7 @@ using D47.Core.Lore;
 using D47.Core.Memory;
 using D47.Core.Persona;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using D47.Core.Utilities;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -69,7 +70,7 @@ public class AStoreDoesNotOpenAnUnchangedFileTests : IDisposable
         "adventures" => new AdventureStore(path, NullLogger<AdventureStore>.Instance).Poll,
         "goals" => new GoalStore(path, NullLogger<GoalStore>.Instance).Poll,
         "switches" => new SwitchStore(path, NullLogger<SwitchStore>.Instance).Poll,
-        "ship builds" => new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance).Poll,
+        "ship builds" => new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance).Poll,
         "on-foot builds" => new OnFootBuildStore(path, NullLogger<OnFootBuildStore>.Instance).Poll,
         "ship cores" => new ShipCoreStore(path, NullLogger<ShipCoreStore>.Instance).Poll,
         "memory" => new MemoryStore(path, NullLogger<MemoryStore>.Instance).Poll,

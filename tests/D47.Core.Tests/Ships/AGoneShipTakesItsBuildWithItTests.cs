@@ -37,7 +37,7 @@ public class AGoneShipTakesItsBuildWithItTests
             () => game.Active);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => game.Active);
 

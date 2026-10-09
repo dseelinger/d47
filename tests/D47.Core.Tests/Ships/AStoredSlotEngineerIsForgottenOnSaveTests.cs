@@ -1,4 +1,5 @@
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -26,7 +27,7 @@ public class AStoredSlotEngineerIsForgottenOnSaveTests
                            "engineer":"Felicity Farseer"}]}]}
                 """);
 
-            var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
             Assert.Empty(store.Problems);

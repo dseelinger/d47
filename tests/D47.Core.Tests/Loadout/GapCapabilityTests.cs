@@ -54,7 +54,7 @@ public class GapCapabilityTests
     private static async Task<string> Say(TempInstall install, bool secondShip = false)
     {
         var shipStore = new ShipBuildStore(
-            Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var state = State();
         var checklists = Checklists(install);
         var ships = new ShipPlanService(shipStore, checklists, () => state);

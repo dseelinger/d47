@@ -57,7 +57,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         }
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => store.Active);
 

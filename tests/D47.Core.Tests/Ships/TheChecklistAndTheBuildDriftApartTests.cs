@@ -45,7 +45,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     private static Bench Set(TempInstall install, bool planned = true)
     {
         var store = new ShipBuildStore(
-            Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var checklists = Checklists(install);
         var ships = new ShipPlanService(store, checklists, () => null);
@@ -88,7 +88,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         state.Apply(Identity("F1", "Alice"));
 
         var store = new ShipBuildStore(
-            Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var checklists = new ChecklistService(
             new ChecklistStore(

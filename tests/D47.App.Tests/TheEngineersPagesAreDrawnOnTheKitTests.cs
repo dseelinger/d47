@@ -61,7 +61,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         builds.Save([
             new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",

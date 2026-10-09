@@ -30,7 +30,7 @@ public class APriorityMoveIsRememberedButNotPlannedTests
     }
 
     private static ShipBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        new(Path.Combine(install.Root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
     private static ShipPlanService Service(TempInstall install, ShipBuildStore store) =>
         new(

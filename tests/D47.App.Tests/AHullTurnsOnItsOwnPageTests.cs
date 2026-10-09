@@ -85,7 +85,7 @@ public class AHullTurnsOnItsOwnPageTests
             () => null);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => null);
 

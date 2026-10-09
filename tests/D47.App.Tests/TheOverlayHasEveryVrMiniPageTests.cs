@@ -35,7 +35,7 @@ public class TheOverlayHasEveryVrMiniPageTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 
-        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var builds = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
         var ships = new ShipPlanService(builds, checklists, () => state);
         var onFoot = new OnFootPlanService(kit, checklists, () => state);

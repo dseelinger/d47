@@ -61,7 +61,7 @@ public class TheOpenEngineerIsOutlinedTests
             () => state);
 
         var builds = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var kit = new OnFootBuildStore(
             Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);

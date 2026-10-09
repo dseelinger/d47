@@ -1,4 +1,5 @@
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -25,7 +26,7 @@ public class APlanWrittenBeforePriorityExistedDefaultsToGroupOneTests
                  "slots":[{"slot":"MainEngines","blueprint":"Dirty Drives","grade":5}]}]}
                 """);
 
-            var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
 
@@ -46,12 +47,12 @@ public class APlanWrittenBeforePriorityExistedDefaultsToGroupOneTests
 
         try
         {
-            var writing = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var writing = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             writing.Save([new ShipBuild("F1", "ship-1", "python", 41, "Ox",
                 [new SlotPlan("MainEngines", "Dirty Drives", 5) { Priority = 3 }])]);
 
-            var reading = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var reading = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(reading.Poll());
 

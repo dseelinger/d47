@@ -48,7 +48,7 @@ internal sealed class SlotBench
             () => state);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => state);
 

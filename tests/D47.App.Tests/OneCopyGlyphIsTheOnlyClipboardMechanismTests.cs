@@ -97,7 +97,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var state = Flying();
         var ships = new ShipPlanService(store, checklists, () => state);
         var clipboard = new RecordingClipboard();

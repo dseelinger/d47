@@ -29,7 +29,7 @@ public class APriorityMoveFromTheCheckOutlivesARestartTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
-        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(Path.Combine(root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         // What the first tick after startup does.
         store.Poll();

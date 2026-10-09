@@ -81,6 +81,7 @@ public sealed class ScenarioWorld : IDisposable
 
             var shipBuilds = new D47.Core.Ships.ShipBuildStore(
                 Path.Combine(_install.Paths.Data, "ships.json"),
+                new D47.Core.Storage.DiskFileSystem(),
                 NullLogger<D47.Core.Ships.ShipBuildStore>.Instance);
             shipBuilds.Poll();
 

@@ -145,7 +145,7 @@ public class CapturesDrawTheAppsOwnLookTests
                 [new BuildRequest("Slot01_Size7", "Reinforced Shields", 5)]),
             ["Slot01_Size7"]);
 
-        var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var kit = new OnFootBuildStore(Path.Combine(paths.Data, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
         var ships = new ShipPlanService(builds, checklists, () => state);
         var onFoot = new OnFootPlanService(kit, checklists, () => state);

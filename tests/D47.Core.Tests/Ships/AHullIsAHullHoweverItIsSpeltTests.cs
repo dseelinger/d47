@@ -1,6 +1,7 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -90,7 +91,7 @@ public class AHullIsAHullHoweverItIsSpeltTests
                 {"ships":[{"id":"ship-1","hull":"Panther Clipper Mk II","shipId":41,"name":"Ox"}]}
                 """);
 
-            var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
             Assert.Empty(store.Problems);
@@ -119,7 +120,7 @@ public class AHullIsAHullHoweverItIsSpeltTests
                 {"ships":[{"id":"ship-1","hull":"Thargoid Interceptor","shipId":900}]}
                 """);
 
-            var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+            var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
             Assert.Equal("Thargoid Interceptor", Assert.Single(store.Builds).Hull);

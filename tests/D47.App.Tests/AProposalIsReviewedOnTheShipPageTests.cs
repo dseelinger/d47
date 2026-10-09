@@ -62,7 +62,7 @@ public class AProposalIsReviewedOnTheShipPageTests
             () => live);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => live);
 

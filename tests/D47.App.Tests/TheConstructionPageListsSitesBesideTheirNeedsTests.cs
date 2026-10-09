@@ -170,7 +170,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => null);
         var kit = onFoot

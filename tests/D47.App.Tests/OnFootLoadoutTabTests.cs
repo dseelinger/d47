@@ -46,7 +46,7 @@ public class OnFootLoadoutTabTests
             () => state);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => state);
 
@@ -84,7 +84,7 @@ public class OnFootLoadoutTabTests
                 NullLogger<ChecklistProposalStore>.Instance),
             () => state);
 
-        var shipStore = new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        var shipStore = new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
         var onFootStore = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
 
         var ships = new ShipPlanService(shipStore, checklists, () => state);
@@ -754,7 +754,7 @@ public class OnFootLoadoutTabTests
             () => null);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => null);
 

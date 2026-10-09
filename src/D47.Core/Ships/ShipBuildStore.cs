@@ -12,7 +12,7 @@ public sealed record ShipBuildProblem(string Where, string Reason);
 /// The Commander's ship builds, in one file beside the executable (Phase 26, "The fleet, and the fleet
 /// you intend").
 /// </summary>
-public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
+public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipBuildStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -99,7 +99,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -110,7 +110,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: no builds is the normal state, and will be until somebody plans one.
                 if (_seen is null)
@@ -130,11 +130,14 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -183,8 +186,7 @@ public sealed class ShipBuildStore(string path, ILogger<ShipBuildStore> logger)
 
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, text);
+            files.WriteText(path, text);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

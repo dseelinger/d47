@@ -56,7 +56,7 @@ public class LoadoutTabTests
             () => null);
 
         var store = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var sitting = new Sitting { State = flying ? Flying(engineered) : null };
         var ships = new ShipPlanService(store, checklists, () => sitting.State);

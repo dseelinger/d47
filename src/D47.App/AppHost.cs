@@ -855,6 +855,7 @@ public sealed class AppHost : IDisposable
         // The Commander's ship builds (Phase 26), before the history walk that looks for the ships they name.
         var shipBuilds = new ShipBuildStore(
             Path.Combine(paths.Data, "ships.json"),
+            files,
             loggerFactory.CreateLogger<ShipBuildStore>());
 
         shipBuilds.Poll();

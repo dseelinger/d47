@@ -11,7 +11,7 @@ namespace D47.Core.Tests.Ships;
 public class ShipPlanTests
 {
     private static ShipBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+        new(Path.Combine(install.Root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
     private static ChecklistService Checklists(TempInstall install, CommanderGameState? state = null) =>
         new(
@@ -226,7 +226,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         Assert.Single(store.Builds);
@@ -250,7 +250,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         Assert.Equal(2, store.Builds.Count);
@@ -308,7 +308,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         var game = new GameStateStore();
@@ -474,7 +474,7 @@ public class ShipPlanTests
     {
         using var install = new TempInstall();
         var path = Path.Combine(install.Root, "ships.json");
-        var store = new ShipBuildStore(path, NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         File.WriteAllText(path, """{ "ships": [ { "id": "ship-1", "hull": "python" } ] }""");
         Assert.True(store.Poll());

@@ -120,7 +120,7 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
                 () => null);
 
             var ships = new ShipPlanService(
-                new ShipBuildStore(Path.Combine(folder, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+                new ShipBuildStore(Path.Combine(folder, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
                 checklists,
                 () => null);
 

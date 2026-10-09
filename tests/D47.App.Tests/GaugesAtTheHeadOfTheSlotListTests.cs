@@ -41,7 +41,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
             () => null);
 
         var store = new ShipBuildStore(
-            Path.Combine(root, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
         var state = Flying(pledged);
         var ships = new ShipPlanService(store, checklists, () => state);

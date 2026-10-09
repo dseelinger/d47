@@ -119,7 +119,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Persona.ShipCoreStore",
         "D47.Core.Reminders.JournalReminderStore",
         "D47.Core.Seats.CrewSeatStore",
-        "D47.Core.Ships.ShipBuildStore",
         "D47.Core.Speech.ChatterboxAssets",
         "D47.Core.Speech.KokoroAssets",
         "D47.Core.Speech.PronunciationOverrides",

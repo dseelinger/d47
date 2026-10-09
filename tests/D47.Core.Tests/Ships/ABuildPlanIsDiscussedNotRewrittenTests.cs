@@ -3,6 +3,7 @@ using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -167,7 +168,7 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
 
         try
         {
-            var store = new ShipBuildStore(Path.Combine(root.FullName, "ships.json"), NullLogger<ShipBuildStore>.Instance);
+            var store = new ShipBuildStore(Path.Combine(root.FullName, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
             store.Save([Python]);
             var before = File.ReadAllBytes(store.Path);
             var written = File.GetLastWriteTimeUtc(store.Path);

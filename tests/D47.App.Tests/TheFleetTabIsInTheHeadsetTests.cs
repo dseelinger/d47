@@ -72,7 +72,7 @@ public class TheFleetTabIsInTheHeadsetTests
         var checklists = Checklists(paths.Data, state);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             state);
 
@@ -191,7 +191,7 @@ public class TheFleetTabIsInTheHeadsetTests
         Func<CommanderGameState?> state = () => flying;
         var checklists = Checklists(paths.Data, state);
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             state);
 
