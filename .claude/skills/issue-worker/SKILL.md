@@ -281,10 +281,44 @@ waits on it.
 
 ### Merging into main
 
-`main` takes fast-forwards only, so its history stays one line with no merge commits. The rebase,
-the checks and the merge are each attempted **once**. Other lanes keep landing while this one
-works, so retrying chases a moving `main`; a lane that cannot land on the first attempt stops, and
-the maintainer merges the stopped lanes one at a time once the others have finished.
+`main` takes fast-forwards only, so its history stays one line with no merge commits. Lanes merge
+one at a time under a lock, so `main` does not move between this lane's rebase and its merge.
+
+#### The merge lock
+
+The lock is the directory `<main checkout>/.git/d47-merge.lock`. Every worktree shares that `.git`,
+and `mkdir` either creates the directory or fails, so only one lane holds it. Take it once the
+issue's commit is made and its review is done, in a Bash call with `run_in_background`:
+
+```bash
+L="<main checkout>/.git/d47-merge.lock"
+while ! mkdir "$L" 2>/dev/null; do
+  if [ -n "$(find "$L/owner" -mmin +45 2>/dev/null)" ]; then echo "STALE: $(cat "$L/owner")"; exit 1; fi
+  sleep 5
+done
+echo "issue <N>, taken $(date -u +%FT%TZ)" > "$L/owner"
+echo ACQUIRED
+```
+
+It returns at once when no lane is merging. Otherwise it waits, and this session is notified when
+it exits; do nothing in the meantime. When several lanes wait, whichever `mkdir` succeeds first
+merges next and the others keep waiting.
+
+- `ACQUIRED`: run the three steps below.
+- `STALE`: a lane has held the lock for over 45 minutes, which means its session ended without
+  releasing it. Stop and report the owner line. Do not remove the lock: the maintainer checks that
+  session and removes it.
+
+Release the lock on **every** way out of the three steps — a merge, an aborted rebase, a failed
+check, a refused merge — before the report, and only when `owner` names this issue:
+
+```bash
+grep -q "issue <N>," "<main checkout>/.git/d47-merge.lock/owner" && rm -r "<main checkout>/.git/d47-merge.lock"
+```
+
+The lock's disappearing is what lets the waiting lanes continue; nothing else signals them.
+
+#### The three steps
 
 Run each step below as its own command. Never chain them with `&&` or `;`: a failed check must
 never be followed by a merge in the same command.
@@ -312,11 +346,12 @@ never be followed by a merge in the same command.
    git -C <main checkout> merge --ff-only issue/<N>
    ```
 
-   If another lane merged during the checks, `--ff-only` refuses; if one is merging at that moment,
-   git reports an `index.lock`. Either way, stop. Do not rebase again.
+   Under the lock no other lane can have merged, so a refusal or an `index.lock` means something
+   changed `main` outside the lanes, such as a commit made directly in the main checkout. Stop. Do
+   not rebase again.
 
-When any step stops, leave the worktree and branch in place and do not call `ExitWorktree`. The
-report says the lane is paused at this issue, which step stopped it, and:
+When any step stops, release the lock, leave the worktree and branch in place and do not call
+`ExitWorktree`. The report says the lane is paused at this issue, which step stopped it, and:
 
 - for a conflict, each conflicting file and the commits on `main` that changed it since the branch
   point (`git log --format='%h %s' issue/<N>..main -- <file>`);
@@ -327,8 +362,8 @@ report says the lane is paused at this issue, which step stopped it, and:
 A paused lane starts nothing new: the issue before the next one has no `Fixes #N` commit, so the
 check at the top of **Lanes** stops it. The other lanes keep running. The maintainer resumes the
 paused issue once the other lanes have finished, by starting `/issue-worker <N>` again. That session
-finds the worktree and branch already there, enters the worktree, and runs the three steps above,
-once. On resume, a conflict in a file other than `CHANGELOG.md` is resolved against everything
+finds the worktree and branch already there, enters the worktree, takes the lock, and runs the three
+steps above. On resume, a conflict in a file other than `CHANGELOG.md` is resolved against everything
 merged in the meantime rather than aborted, and a failed check is fixed in the worktree and amended
 into the issue's commit; a refused merge still stops.
 
