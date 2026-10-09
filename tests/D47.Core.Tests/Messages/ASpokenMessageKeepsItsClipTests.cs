@@ -161,4 +161,24 @@ public class ASpokenMessageKeepsItsClipTests : IDisposable
         Assert.Null(kept.Voice);
         Assert.Equal([other.Clip!], FilesOnDisk());
     }
+
+    [Fact]
+    public void DeletingACustomVoiceDeletesItsClipsAndKeepsTheirMessages()
+    {
+        var store = Open();
+        var gone = store.Post("narrator", "Mayday", "In one custom voice.", Noon, spoken: Spoken(10, "my-0badf00d"));
+        var kept = store.Post("narrator", "Mayday", "In another.", Noon.AddMinutes(1), spoken: Spoken(11, "my-1badf00d"));
+        var own = store.Post("narrator", "Mayday", "In mine.", Noon.AddMinutes(2), spoken: Spoken(12, OwnVoice.VoiceId));
+
+        Assert.Equal(1, store.ForgetCustomVoice("my-0badf00d"));
+
+        var reopened = Open().All;
+
+        Assert.Null(reopened.Single(message => message.Key == gone.Key).Clip);
+        Assert.Equal("In one custom voice.", reopened.Single(message => message.Key == gone.Key).Body);
+        Assert.NotNull(reopened.Single(message => message.Key == kept.Key).Clip);
+        Assert.NotNull(reopened.Single(message => message.Key == own.Key).Clip);
+        Assert.Equal(1, store.ForgetOwnVoice());
+        Assert.NotNull(Open().All.Single(message => message.Key == kept.Key).Clip);
+    }
 }

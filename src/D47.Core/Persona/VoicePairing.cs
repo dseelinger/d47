@@ -103,7 +103,7 @@ public static class VoicePairing
     {
         var chosen = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        voices = [.. voices.Where(voice => KokoroAssets.IsCastable(voice.Id))];
+        voices = [.. voices.Where(voice => !voice.Custom && KokoroAssets.IsCastable(voice.Id))];
 
         if (slots.Count == 0 || voices.Count == 0)
         {

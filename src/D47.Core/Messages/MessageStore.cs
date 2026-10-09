@@ -146,7 +146,15 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
     /// <summary>
     /// Deletes every clip spoken in the Commander's own voice and keeps those messages' text; returns the count.
     /// </summary>
-    public int ForgetOwnVoice()
+    public int ForgetOwnVoice() =>
+        Forget(message => message.Voice?.Id is not { } id
+                          || string.Equals(id, OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Deletes every clip spoken in custom voice <paramref name="voiceId"/> and keeps those messages' text.</summary>
+    public int ForgetCustomVoice(string voiceId) =>
+        Forget(message => string.Equals(message.Voice?.Id, voiceId, StringComparison.Ordinal));
+
+    private int Forget(Func<D47Message, bool> spokenInIt)
     {
         var forgotten = 0;
 
@@ -156,7 +164,7 @@ public sealed class MessageStore(string path, ILogger<MessageStore> logger, Mess
 
             for (var i = 0; i < messages.Count; i++)
             {
-                if (messages[i].Clip is { } file && MessageClips.IsProtected(file))
+                if (messages[i].Clip is { } file && MessageClips.IsProtected(file) && spokenInIt(messages[i]))
                 {
                     clips?.Delete(file);
                     messages[i] = messages[i] with { Clip = null, Voice = null };

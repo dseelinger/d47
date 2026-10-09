@@ -24,6 +24,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly Lock _load = new();
     private readonly Dictionary<string, IDisposable> _encoded = new(StringComparer.Ordinal);
     private readonly OwnVoice? _own;
+    private readonly CustomVoices? _custom;
+    private readonly Dictionary<string, (int Version, IDisposable Encoded)> _customEncoded = new(StringComparer.Ordinal);
 
     /// <summary>Guards the sets below.</summary>
     private readonly Lock _clips = new();
@@ -34,6 +36,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
     private readonly HashSet<string> _failureLogged = new(StringComparer.Ordinal);
     private readonly HashSet<string> _standInLogged = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, CustomVoice> _customKnown = new(StringComparer.Ordinal);
 
     private IChatterboxEngine? _engine;
     private ChatterboxTokeniser? _tokeniser;
@@ -45,13 +48,15 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <param name="modelFolder">Where <see cref="ChatterboxInstaller"/> put the graphs and tokenizer.</param>
     /// <param name="voicesFolder">Where <c>voices.tsv</c>, <c>catalog.tsv</c> and the shipped clips are.</param>
     /// <param name="fetchedFolder">Where fetched clips are kept.</param>
-    /// <param name="own">The Commander's own recording, answered as <see cref="OwnVoice.VoiceId"/> and never listed.</param>
+    /// <param name="own">The Commander's own recording, listed as <see cref="OwnVoice.VoiceId"/> while one is saved.</param>
+    /// <param name="custom">The Commander's custom voices, listed after the catalogue.</param>
     public ChatterboxTtsProvider(
         string modelFolder,
         string voicesFolder,
         string fetchedFolder,
         ILogger<ChatterboxTtsProvider> logger,
-        OwnVoice? own = null)
+        OwnVoice? own = null,
+        CustomVoices? custom = null)
         : this(
             modelFolder,
             voicesFolder,
@@ -60,7 +65,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             () => ChatterboxPipeline.Open(modelFolder, PerformanceCores.ForThisMachine()),
             () => ChatterboxAssets.IsInstalled(modelFolder),
             ChatterboxClipDownload.GetAsync,
-            own)
+            own,
+            custom)
     {
     }
 
@@ -72,7 +78,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         Func<IChatterboxEngine> open,
         Func<bool> installed,
         Func<Uri, long, CancellationToken, Task<byte[]>> download,
-        OwnVoice? own = null)
+        OwnVoice? own = null,
+        CustomVoices? custom = null)
     {
         _modelFolder = modelFolder;
         _voicesFolder = voicesFolder;
@@ -82,10 +89,16 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         _open = open;
         _installed = installed;
         _own = own;
+        _custom = custom;
 
         if (own is not null)
         {
             own.Changed += OnOwnVoiceChanged;
+        }
+
+        if (custom is not null)
+        {
+            custom.Changed += OnCustomVoicesChanged;
         }
     }
 
@@ -102,8 +115,41 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 + "fetched once, and then nothing D47 speaks through it leaves this machine."));
         }
 
-        return Task.FromResult(VoiceCatalogue.Of([.. Voices().Select(voice => voice.Voice)]));
+        return Task.FromResult(VoiceCatalogue.Of([.. Voices().Select(voice => voice.Voice), .. CustomListed()]));
     }
+
+    /// <summary>Your voice while a recording is saved, then every custom voice.</summary>
+    private List<VoiceInfo> CustomListed()
+    {
+        var listed = new List<VoiceInfo>();
+
+        if (_own is { Exists: true })
+        {
+            listed.Add(new VoiceInfo(OwnVoice.VoiceId, "Your voice", CustomVoices.Locale) { Custom = true });
+        }
+
+        if (_custom is not null)
+        {
+            foreach (var voice in _custom.List())
+            {
+                lock (_clips)
+                {
+                    _customKnown[voice.Id] = voice;
+                }
+
+                listed.Add(Info(voice));
+            }
+        }
+
+        return listed;
+    }
+
+    private static VoiceInfo Info(CustomVoice voice) =>
+        new(voice.Id, voice.Name, voice.Locale, voice.Gender.Length > 0 ? voice.Gender : null)
+        {
+            Custom = true,
+            Description = $"{voice.Pitch} pitch, {voice.Pace} pace",
+        };
 
     /// <summary>Every voice with its pitch and pace bands, whether or not its clip is on this machine.</summary>
     public IReadOnlyList<ChatterboxVoice> Catalogue() => Voices();
@@ -125,6 +171,16 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// </summary>
     public Task<bool> FetchAsync(string voiceId, CancellationToken cancellationToken = default)
     {
+        if (string.Equals(voiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
+        {
+            return Task.FromResult(_own is { Exists: true });
+        }
+
+        if (CustomVoices.IsId(voiceId))
+        {
+            return Task.FromResult(_custom?.List().Any(voice => voice.Id == voiceId) == true);
+        }
+
         if (Find(voiceId) is not { } voice)
         {
             return Task.FromResult(false);
@@ -172,6 +228,11 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         if (string.Equals(voice.VoiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
         {
             return null;
+        }
+
+        if (CustomVoices.IsId(voice.VoiceId))
+        {
+            return CustomOrStandIn(voice.VoiceId!, voice.Role);
         }
 
         var chosen = Find(voice.VoiceId)
@@ -228,6 +289,88 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         return standIn;
     }
 
+    /// <summary>The custom voice when it is saved and opens for this Windows user; otherwise a shipped stand-in.</summary>
+    private ChatterboxVoice CustomOrStandIn(string id, VoiceRole? role)
+    {
+        CustomVoice? row;
+
+        lock (_clips)
+        {
+            _customKnown.TryGetValue(id, out row);
+        }
+
+        if (_custom?.List().FirstOrDefault(voice => voice.Id == id) is { } saved)
+        {
+            row = saved;
+
+            lock (_clips)
+            {
+                _customKnown[id] = saved;
+            }
+
+            if (HasCustomEncoded(id) || DecryptsHere(id))
+            {
+                return new ChatterboxVoice(Info(saved), null, "custom", string.Empty)
+                {
+                    Shipped = false,
+                    Pitch = saved.Pitch,
+                    Pace = saved.Pace,
+                };
+            }
+        }
+
+        var wanted = new ChatterboxVoice(
+            new VoiceInfo(id, id, CustomVoices.Locale, row?.Gender is { Length: > 0 } gender ? gender : null) { Custom = true },
+            null,
+            "custom",
+            string.Empty)
+        {
+            Shipped = false,
+            Pitch = row?.Pitch,
+            Pace = row?.Pace,
+        };
+
+        var standIn = ChatterboxCatalog.StandIn(wanted, role, Voices())
+            ?? throw new TtsException(
+                $"The custom voice {id} is not saved or does not open on this PC, and no shipped voice can stand in.");
+
+        bool first;
+
+        lock (_clips)
+        {
+            first = _standInLogged.Add(id);
+        }
+
+        if (first)
+        {
+            _logger.LogInformation(
+                "Custom voice {Wanted} is not saved or does not open on this PC; its lines are spoken in {StandIn}",
+                id,
+                standIn.Voice.Id);
+        }
+
+        return standIn;
+    }
+
+    private bool HasCustomEncoded(string id)
+    {
+        lock (_gate)
+        {
+            return _customEncoded.TryGetValue(id, out var cached) && cached.Version == _custom!.Version(id);
+        }
+    }
+
+    private bool DecryptsHere(string id)
+    {
+        if (_custom?.Load(id) is not { } samples)
+        {
+            return false;
+        }
+
+        Array.Clear(samples);
+        return true;
+    }
+
     private AudioClip Speak(string text, ChatterboxVoice? chosen, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -235,6 +378,11 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         if (chosen is null)
         {
             return SpeakOwn(text, cancellationToken);
+        }
+
+        if (chosen.Voice.Custom)
+        {
+            return SpeakCustom(text, chosen.Voice.Id, cancellationToken);
         }
 
         // One line at a time: each already takes every performance core.
@@ -297,6 +445,59 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             }
 
             return Clip(text, engine.Speak(ids, _ownEncoded, cancellationToken));
+        }
+    }
+
+    /// <summary>A line in a custom voice, encoded from its clip decrypted into memory, once per version.</summary>
+    private AudioClip SpeakCustom(string text, string id, CancellationToken cancellationToken)
+    {
+        var ids = Tokeniser().Encode(text);
+
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+
+            var engine = _engine ??= Open();
+            var version = _custom!.Version(id);
+
+            if (!_customEncoded.TryGetValue(id, out var cached) || cached.Version != version)
+            {
+                if (cached.Encoded is not null)
+                {
+                    cached.Encoded.Dispose();
+                    _customEncoded.Remove(id);
+                }
+
+                var reference = _custom.Load(id)
+                    ?? throw new TtsException($"The custom voice {id} is not saved or does not open on this PC.");
+
+                try
+                {
+                    cached = (version, engine.Encode(reference));
+                    _customEncoded[id] = cached;
+                }
+                finally
+                {
+                    Array.Clear(reference);
+                }
+            }
+
+            return Clip(text, engine.Speak(ids, cached.Encoded, cancellationToken));
+        }
+    }
+
+    private void OnCustomVoicesChanged() => _ = Task.Run(DropCustom);
+
+    private void DropCustom()
+    {
+        lock (_gate)
+        {
+            foreach (var cached in _customEncoded.Values)
+            {
+                cached.Encoded.Dispose();
+            }
+
+            _customEncoded.Clear();
         }
     }
 
@@ -500,11 +701,23 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             _own.Changed -= OnOwnVoiceChanged;
         }
 
+        if (_custom is not null)
+        {
+            _custom.Changed -= OnCustomVoicesChanged;
+        }
+
         lock (_gate)
         {
             _disposed = true;
             _ownEncoded?.Dispose();
             _ownEncoded = null;
+
+            foreach (var cached in _customEncoded.Values)
+            {
+                cached.Encoded.Dispose();
+            }
+
+            _customEncoded.Clear();
 
             foreach (var encoded in _encoded.Values)
             {

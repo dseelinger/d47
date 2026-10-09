@@ -149,6 +149,7 @@ public sealed class AppHost : IDisposable
         StartupError = startupError;
 
         OwnVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
+        CustomVoices = new CustomVoices(paths.Data, new DpapiSecretProtector());
         _ownVoiceRecording = new OwnVoiceRecording(
             OwnVoice,
             new OwnVoiceCapture(loggerFactory.CreateLogger<OwnVoiceCapture>()),
@@ -670,6 +671,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The Commander's own recorded voice, which Chatterbox speaks as <see cref="OwnVoice.VoiceId"/>.</summary>
     internal OwnVoice OwnVoice { get; }
+
+    /// <summary>The Commander's custom Chatterbox voices, listed where a voice is picked and never drawn for anyone else.</summary>
+    internal CustomVoices CustomVoices { get; }
 
     /// <summary>When the Commander was last heard and understood.</summary>
     private StrongBox<DateTimeOffset?>? _heardAt;
@@ -1855,6 +1859,7 @@ public sealed class AppHost : IDisposable
                     Voices = group => self?.VoiceIds(group) ?? [],
                     VoiceLabel = (group, id) => self?.VoiceLabelFor(group, id) ?? id,
                     VoiceGender = (group, id) => self?.VoiceGenderFor(group, id),
+                    VoiceCustom = (group, id) => self?.VoiceIsCustom(group, id) == true,
                     WhyNoVoices = group => self?.WhyNoVoices(group),
                     SpeechSpend = () => self?.SpeechSpend,
 
@@ -2755,6 +2760,24 @@ public sealed class AppHost : IDisposable
             {
                 _ = Task.Run(messageStore.ForgetOwnVoice);
             }
+
+            host.RelistChatterboxVoices();
+        };
+
+        // The same for a deleted custom voice.
+        var customIds = host.CustomVoices.List().Select(voice => voice.Id).ToHashSet(StringComparer.Ordinal);
+
+        host.CustomVoices.Changed += () =>
+        {
+            var now = host.CustomVoices.List().Select(voice => voice.Id).ToHashSet(StringComparer.Ordinal);
+
+            foreach (var gone in customIds.Where(id => !now.Contains(id)).ToList())
+            {
+                _ = Task.Run(() => messageStore.ForgetCustomVoice(gone));
+            }
+
+            customIds = now;
+            host.RelistChatterboxVoices();
         };
 
         if (!host.OwnVoice.Exists)
@@ -3726,6 +3749,9 @@ public sealed class AppHost : IDisposable
             .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Gender;
 
+    internal bool VoiceIsCustom(VoiceGroup group, string id) =>
+        VoicesFor(group).Voices.Any(voice => voice.Custom && string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
+
     /// <inheritdoc cref="VoiceLabelFor(string)"/>
     internal string VoiceLabelFor(VoiceGroup group, string id) =>
         VoicesFor(group).LabelFor(
@@ -4570,7 +4596,8 @@ public sealed class AppHost : IDisposable
             ChatterboxVoicesFolder(),
             Path.Combine(Paths.Data, "voices", "chatterbox"),
             _loggerFactory.CreateLogger<ChatterboxTtsProvider>(),
-            OwnVoice),
+            OwnVoice,
+            CustomVoices),
 
         _ => null,
     };
@@ -4585,6 +4612,14 @@ public sealed class AppHost : IDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Could not record {Provider}'s speech models", provider.Id);
+        }
+    }
+
+    private void RelistChatterboxVoices()
+    {
+        if (_clients.GetValueOrDefault(TtsProviderCatalog.ChatterboxId) is ChatterboxTtsProvider chatterbox)
+        {
+            _ = LoadVoicesAsync(chatterbox);
         }
     }
 

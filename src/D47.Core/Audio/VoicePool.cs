@@ -16,7 +16,7 @@ public static class VoicePool
 {
     /// <summary>The ids a sender may be given, in the order the provider listed them.</summary>
     public static IReadOnlyList<string> From(IEnumerable<VoiceInfo> voices) =>
-        [.. voices.Where(voice => Eligible(voice.Locale)).Select(voice => voice.Id)];
+        [.. voices.Where(voice => !voice.Custom && Eligible(voice.Locale)).Select(voice => voice.Id)];
 
     /// <summary>
     /// Which of them are a woman's, by id, so a sender whose name reads as a woman's can be given one.
@@ -24,7 +24,7 @@ public static class VoicePool
     public static IReadOnlySet<string> Feminine(IEnumerable<VoiceInfo> voices) =>
         new HashSet<string>(
             voices
-                .Where(voice => Eligible(voice.Locale) && GenderOf(voice.Gender) == VoiceGender.Feminine)
+                .Where(voice => !voice.Custom && Eligible(voice.Locale) && GenderOf(voice.Gender) == VoiceGender.Feminine)
                 .Select(voice => voice.Id),
             StringComparer.OrdinalIgnoreCase);
 

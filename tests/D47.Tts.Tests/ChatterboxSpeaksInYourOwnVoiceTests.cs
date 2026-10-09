@@ -58,14 +58,17 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
     private static VoiceSelection Own => new(OwnVoice.VoiceId);
 
     [Fact]
-    public async Task TheVoiceListDoesNotOfferIt()
+    public async Task TheVoiceListOffersItAsYourVoice()
     {
         Record();
         using var provider = Provider();
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(listed.Voices, voice => voice.Id == OwnVoice.VoiceId);
+        var offered = Assert.Single(listed.Voices, voice => voice.Id == OwnVoice.VoiceId);
+
+        Assert.Equal("Your voice", offered.Name);
+        Assert.True(offered.Custom);
     }
 
     [Fact]

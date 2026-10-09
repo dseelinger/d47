@@ -8,7 +8,7 @@ namespace D47.Core.Audio;
 /// </summary>
 public sealed class OwnVoice
 {
-    /// <summary>The voice id a story's cast names; no picker offers it.</summary>
+    /// <summary>The voice id a story's cast names; Chatterbox lists it as Your voice while a recording is saved.</summary>
     public const string VoiceId = "own";
 
     public const string Sentence = "This is my voice, and d47 may use it for my stories on this PC.";

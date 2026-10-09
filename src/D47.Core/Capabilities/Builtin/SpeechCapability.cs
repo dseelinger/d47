@@ -126,8 +126,10 @@ public static class SpeechCapability
 
         VoiceGender Of(string id) => VoicePool.GenderOf(tag(group, id));
 
+        bool Custom(string id) => surface.VoiceCustom?.Invoke(group, id) == true;
+
         // Nothing to filter on.
-        if (!voices.Any(id => Of(id) != VoiceGender.Unlabelled))
+        if (!voices.Any(id => Of(id) != VoiceGender.Unlabelled || Custom(id)))
         {
             return null;
         }
@@ -142,6 +144,7 @@ public static class SpeechCapability
                 new SettingFacetOption("Female", id => Of(id) == VoiceGender.Feminine),
                 new SettingFacetOption("Male", id => Of(id) == VoiceGender.Masculine),
                 new SettingFacetOption("Unlabelled", id => Of(id) == VoiceGender.Unlabelled),
+                .. voices.Any(Custom) ? [new SettingFacetOption("Custom", Custom)] : Array.Empty<SettingFacetOption>(),
             ],
         };
     }
@@ -350,6 +353,9 @@ public static class SpeechCapability
         /// says nothing (#146).
         /// </summary>
         public Func<VoiceGroup, string, string?>? VoiceGender { get; init; }
+
+        /// <summary>Whether one voice is the Commander's own or a custom voice.</summary>
+        public Func<VoiceGroup, string, bool>? VoiceCustom { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()

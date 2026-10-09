@@ -43,6 +43,16 @@ public class TheLogSaysWhichVoiceSpokeTests
         Assert.Contains("JBFqnCBsd6RMkjVDRZzb", line, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ACustomVoiceIsNamedByItsIdOnly()
+    {
+        var said = await SpokenAsync(new VoiceSelection("my-0badf00d") { Name = "Secret Ally" }, speaker: "D47");
+        var line = Assert.Single(said, message => message.StartsWith("Spoken by", StringComparison.Ordinal));
+
+        Assert.Contains("my-0badf00d", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret Ally", line, StringComparison.Ordinal);
+    }
+
     /// <summary>And which service said it (2026-08-28).</summary>
     [Fact]
     public async Task TheProviderIsNamedBesideTheVoice()

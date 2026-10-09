@@ -3,8 +3,9 @@ namespace D47.Core.Audio;
 /// <summary>What one line sounded like as it was queued to play, and the provider and voice that spoke it.</summary>
 public sealed record SpokenClip(IReadOnlyList<AudioClip> Parts, string Provider, string? VoiceId)
 {
-    /// <summary>Whether it was spoken in the Commander's own recorded voice.</summary>
-    public bool Own => string.Equals(VoiceId, OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase);
+    /// <summary>Whether it was spoken in the Commander's own recorded voice or one of their custom voices.</summary>
+    public bool Own => string.Equals(VoiceId, OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase)
+                       || CustomVoices.IsId(VoiceId);
 
     /// <summary>The parts as one clip, converted to <see cref="AudioFormat.Standard"/> where their formats differ.</summary>
     public AudioClip Joined(string name)

@@ -462,6 +462,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </summary>
     private static string Named(VoiceSelection voice) => voice switch
     {
+        { VoiceId: { Length: > 0 } id } when CustomVoices.IsId(id) => id,
         { VoiceId: { Length: > 0 } id, Name: { Length: > 0 } name } => $"{name} ({id})",
         { VoiceId: { Length: > 0 } id } => id,
         _ => "the provider's own voice",
