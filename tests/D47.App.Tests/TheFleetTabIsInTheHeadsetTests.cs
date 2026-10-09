@@ -366,9 +366,7 @@ public class TheFleetTabIsInTheHeadsetTests
 
         Assert.NotNull(down);
 
-        panel.Board.Render().Save(
-            Path.Combine(TestSurface.CaptureDirectory, "headset-kit-grade-step.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        panel.Board.Render().SaveCapture("headset-kit-grade-step.png");
 
         Assert.True(Press(panel, pixels, down!));
         Dispatcher.UIThread.RunJobs();

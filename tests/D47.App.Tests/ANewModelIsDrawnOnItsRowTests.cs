@@ -71,9 +71,7 @@ public sealed class ANewModelIsDrawnOnItsRowTests : IDisposable
         host.View.ShowPlaceOf(key);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, file),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture(file);
 
         Assert.Contains(
             host.View.GetVisualDescendants().OfType<TextBlock>(),

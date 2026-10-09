@@ -166,15 +166,13 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
 
         var panel = Laid(model, commander: "John Deparagon");
         var window = (Window)TopLevel.GetTopLevel(panel)!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "transcript-footer.png");
+        var path = "transcript-footer.png";
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         window.Close();
-
-        Assert.True(File.Exists(path));
     }
 }

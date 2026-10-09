@@ -54,9 +54,7 @@ public class InShipHelpCaptureTests
         // And the long-form link is the address this page actually has.
         Assert.Contains("https://dseelinger.github.io/d47/in-ship.html", shown);
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "help-in-ship.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("help-in-ship.png");
 
         window.Close();
     }

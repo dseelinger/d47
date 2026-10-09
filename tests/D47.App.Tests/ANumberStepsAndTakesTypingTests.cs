@@ -138,16 +138,12 @@ public class ANumberStepsAndTakesTypingTests
         settings.Apply(ListeningCapability.PushToTalkButtonKey, "NonRoamable+Id/One=#10", SettingsCaller.Panel);
         var amount = AmountOn(host, ListeningCapability.PreRollKey, "Capture before the key");
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"binding-push-to-talk-{width}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture($"binding-push-to-talk-{width}.png");
 
         amount.BringIntoView();
         Jobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"amount-voice-input-{width}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture($"amount-voice-input-{width}.png");
 
         host.Close();
     }

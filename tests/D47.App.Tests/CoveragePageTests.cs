@@ -20,13 +20,6 @@ public class CoveragePageTests
 {
     private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);
 
-    private readonly ITestOutputHelper _output;
-
-    public CoveragePageTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     /// <summary>Three brushes, all already in every theme.</summary>
     [AvaloniaFact]
     public void EachStateCarriesItsOwnColour()
@@ -156,9 +149,6 @@ public class CoveragePageTests
     [AvaloniaFact]
     public void TheListRendersToACaptureAtRealSize()
     {
-        var output = TestSurface.CaptureDirectory;
-        _output.WriteLine($"Captures: {output}");
-
         var settings = Theme();
 
         foreach (var theme in D47.Core.Interface.ThemeCatalog.All)
@@ -176,18 +166,14 @@ public class CoveragePageTests
 
             var frame = TopLevel.GetTopLevel(window)!.CaptureRenderedFrame();
             Assert.NotNull(frame);
-            frame.Save(
-                Path.Combine(output, $"coverage-{theme.Id}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture($"coverage-{theme.Id}.png");
 
             // The far end, where the exercised lines are.
             var scroller = window.GetVisualDescendants().OfType<ScrollViewer>().First();
             scroller.ScrollToEnd();
             Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-            TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.Save(
-                Path.Combine(output, $"coverage-{theme.Id}-bottom.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.SaveCapture($"coverage-{theme.Id}-bottom.png");
 
             window.Close();
         }
@@ -200,9 +186,6 @@ public class CoveragePageTests
     [AvaloniaFact]
     public void TheDiagnosticsRowRendersToACapture()
     {
-        var output = TestSurface.CaptureDirectory;
-        _output.WriteLine($"Captures: {output}");
-
         var (settings, viewState, paths) = TestSurface.Create(() => Report().Summary);
 
         // Cards remember whether they were left open, and Diagnostics defaults to closed — a capture of a
@@ -218,9 +201,7 @@ public class CoveragePageTests
         scroller.ScrollToEnd();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(output, "coverage-row.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("coverage-row.png");
 
         host.Close();
     }

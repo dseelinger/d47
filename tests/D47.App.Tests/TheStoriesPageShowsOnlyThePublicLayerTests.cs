@@ -108,11 +108,11 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;

@@ -49,7 +49,7 @@ public class MiniCarriesNoPageChromeTests
             new PanelViewModel(),
             settings,
             _ => null,
-            dumpTo: TestSurface.CaptureDirectory,
+            dumpTo: TestSurface.VrDump,
             checklists: checklists,
             goals: goals);
 

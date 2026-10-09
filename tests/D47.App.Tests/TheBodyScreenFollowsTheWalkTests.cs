@@ -127,9 +127,8 @@ public class TheBodyScreenFollowsTheWalkTests
     private static void Capture(Window window, string name)
     {
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = name;
+        frame.SaveCapture(path);
     }
 
     [AvaloniaFact]

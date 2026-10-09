@@ -50,7 +50,7 @@ public class TheTranscriptIsDrawnAsAConversationTests
         // The smallest size is the mini panel, which is what the app draws there.
         var panel = Conversation(height < 400 ? PanelMode.Mini : PanelMode.Full);
 
-        var path = AppLook.Capture(
+        using var frame = AppLook.Capture(
             panel,
             $"transcript-{themeId}-{width}x{height}.png",
             themeId,
@@ -58,7 +58,7 @@ public class TheTranscriptIsDrawnAsAConversationTests
             height,
             themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
 
         var commander = panel.GetControl<StackPanel>("Bubbles").Children
             .OfType<Border>()

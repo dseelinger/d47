@@ -137,7 +137,7 @@ public sealed class StepperAmountAndLevelTakeTheDesignsSizesTests
             },
         };
 
-        AppLook.Capture(content, "stepper-amount-level.png", width: 480, height: 320);
+        AppLook.Capture(content, "stepper-amount-level.png", width: 480, height: 320).Dispose();
     }
 
     private static T Shown<T>(T control, out Window window)

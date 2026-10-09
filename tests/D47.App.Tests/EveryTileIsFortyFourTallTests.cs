@@ -110,8 +110,8 @@ public class EveryTileIsFortyFourTallTests
         panel.Children.Add(tiles);
         panel.Children.Add(view);
 
-        var path = AppLook.Capture(panel, "every-tile-44.png");
+        using var frame = AppLook.Capture(panel, "every-tile-44.png");
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
     }
 }

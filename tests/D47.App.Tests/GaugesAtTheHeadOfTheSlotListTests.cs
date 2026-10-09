@@ -358,9 +358,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         // Measured first — every figure read off the game — because that is what the two kinds being
         // distinguishable is asserted against by eye.
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-gauges-measured.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-gauges-measured.png");
 
         // One planned roll and one gated module, so a capture shows both the modelled hue and the coin beside
         // a measured row.
@@ -375,9 +373,7 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
         Dispatcher.UIThread.RunJobs();
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-gauges-modelled.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-gauges-modelled.png");
 
         surface.Window.Close();
     }

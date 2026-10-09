@@ -281,9 +281,7 @@ public class AModalOpensInTheHeadsetTests
         var left = frame.TranslatePoint(new Point(0, 0), scrim)!.Value.X;
         Assert.Equal(width - frame.Bounds.Width - left, left, precision: 0);
 
-        surface.Board.Render().Save(
-            Path.Combine(TestSurface.CaptureDirectory, "headset-modal-macros.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Board.Render().SaveCapture("headset-modal-macros.png");
     }
 
     /// <summary>A press on the scrim closes the modal and presses nothing on the panel under it.</summary>

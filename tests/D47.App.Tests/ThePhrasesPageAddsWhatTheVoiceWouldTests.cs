@@ -173,7 +173,7 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
         Assert.Contains("[turn|switch] [on|off] [gear|landing gear]", drawn);
         Assert.Contains("[deploy|lower|retract|raise] [gear|landing gear]", drawn);
         Assert.DoesNotContain("turn on landing gear", drawn);
-        Assert.True(File.Exists(Save(surface.Window, "phrases-game-action-patterns.png")));
+        Save(surface.Window, "phrases-game-action-patterns.png");
     }
 
     [AvaloniaFact]
@@ -360,14 +360,14 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
             Type(surface, "teach a phrase");
             Pick(surface, "new phrase");
             Add(surface);
-            Assert.True(File.Exists(Save(surface.Window, "phrases-clash.png")));
+            Save(surface.Window, "phrases-clash.png");
         }
 
         using (var surface = Open(width: 1280, height: 1100))
         {
             Type(surface, "hit it");
             surface.Page.GetVisualDescendants().OfType<InlinePicker>().Single().IsOpen = true;
-            Assert.True(File.Exists(Save(surface.Window, "phrases-pick.png")));
+            Save(surface.Window, "phrases-pick.png");
         }
 
         using (var surface = Open(width: 1280, height: 1100))
@@ -375,7 +375,7 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
             Type(surface, "hit it");
             Pick(surface, "teach a phrase");
             Add(surface);
-            Assert.True(File.Exists(Save(surface.Window, "phrases-added.png")));
+            Save(surface.Window, "phrases-added.png");
         }
     }
 
@@ -383,11 +383,11 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;

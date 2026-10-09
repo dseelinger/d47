@@ -100,9 +100,7 @@ public class TheReworkedChromeRendersToACaptureTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, name),
-            new PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture(name);
     }
 
     [AvaloniaFact]

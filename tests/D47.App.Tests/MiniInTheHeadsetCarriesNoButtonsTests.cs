@@ -22,7 +22,7 @@ public class MiniInTheHeadsetCarriesNoButtonsTests
             new PanelViewModel(),
             settings,
             _ => null,
-            dumpTo: TestSurface.CaptureDirectory);
+            dumpTo: TestSurface.VrDump);
 
         var view = (PanelView)typeof(VrPanelSurface)
             .GetField("_view", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!

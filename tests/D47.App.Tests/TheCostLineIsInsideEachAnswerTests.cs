@@ -220,7 +220,7 @@ public class TheCostLineIsInsideEachAnswerTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "turn-provenance-live.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("turn-provenance-live.png");
         }
 
         second.On(new TurnEvent.Completed(
@@ -229,7 +229,7 @@ public class TheCostLineIsInsideEachAnswerTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "turn-provenance-done.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("turn-provenance-done.png");
         }
 
         window.Close();

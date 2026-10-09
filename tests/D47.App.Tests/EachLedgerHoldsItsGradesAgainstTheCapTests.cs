@@ -223,14 +223,12 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         {
             Show(surface, view);
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"materials-ledger-{view}.png");
+            var path = $"materials-ledger-{view}.png";
 
             using (var frame = surface.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         surface.Window.Close();

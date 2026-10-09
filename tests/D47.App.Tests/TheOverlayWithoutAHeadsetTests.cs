@@ -523,9 +523,7 @@ public class TheOverlayWithoutAHeadsetTests
 
         Dispatcher.UIThread.RunJobs();
 
-        overlay.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "overlay-mini.png"),
-            new PngBitmapEncoderOptions());
+        overlay.CaptureRenderedFrame()!.SaveCapture("overlay-mini.png");
 
         overlay.Close();
     }
@@ -643,11 +641,7 @@ public class TheOverlayWithoutAHeadsetTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        using var stream = new MemoryStream();
-
-        overlay.CaptureRenderedFrame()!.Save(stream, new PngBitmapEncoderOptions());
-
-        return stream.ToArray();
+        return overlay.CaptureRenderedFrame()!.Encoded();
     }
 
     /// <summary>Elite's window as the overlay reads it.</summary>

@@ -276,16 +276,15 @@ public class EveryCareerFigureIsOneSearchAwayTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "commander-statistics.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("commander-statistics.png");
         }
 
         Type(panel, "profit");
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            var path = Path.Combine(TestSurface.CaptureDirectory, "commander-statistics-search.png");
-            frame.Save(path, new PngBitmapEncoderOptions());
-            Assert.True(File.Exists(path));
+            var path = "commander-statistics-search.png";
+            frame.SaveCapture(path);
         }
 
         window.Close();

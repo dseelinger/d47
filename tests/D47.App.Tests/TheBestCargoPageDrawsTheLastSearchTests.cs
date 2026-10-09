@@ -152,7 +152,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, name), new PngBitmapEncoderOptions());
+        frame.SaveCapture(name);
     }
 
     [AvaloniaFact]

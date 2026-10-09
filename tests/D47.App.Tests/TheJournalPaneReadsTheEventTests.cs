@@ -78,7 +78,7 @@ public sealed class TheJournalPaneReadsTheEventTests
     private static void Capture(Window window, string name)
     {
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, name), new PngBitmapEncoderOptions());
+        frame.SaveCapture(name);
     }
 
     [AvaloniaFact]

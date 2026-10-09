@@ -291,14 +291,14 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
         OpenPowerplay(panel);
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "system-powerplay.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("system-powerplay.png");
 
         window.Width = 1024;
         window.Height = 640;
         Dispatcher.UIThread.RunJobs();
 
         using var small = window.CaptureRenderedFrame()!;
-        small.Save(Path.Combine(TestSurface.CaptureDirectory, "system-powerplay-1024.png"), new PngBitmapEncoderOptions());
+        small.SaveCapture("system-powerplay-1024.png");
 
         window.Close();
     }

@@ -66,9 +66,8 @@ public class NumbersAndTimesAreDrawnInMonoTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "mono-stat-tiles.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "mono-stat-tiles.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

@@ -262,16 +262,15 @@ public class SwitchCommandersFromTheTitleBarTests
 
         using (var page = window.CaptureRenderedFrame()!)
         {
-            page.Save(Path.Combine(TestSurface.CaptureDirectory, "commander-commanders.png"), new PngBitmapEncoderOptions());
+            page.SaveCapture("commander-commanders.png");
         }
 
         switcher.Open();
         Dispatcher.UIThread.RunJobs();
 
         using var menu = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "commander-switcher-open.png");
-        menu.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "commander-switcher-open.png";
+        menu.SaveCapture(path);
 
         window.Close();
     }

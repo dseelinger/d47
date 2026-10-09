@@ -208,14 +208,12 @@ public class TheFleetComparesByJumpOrCargoTests
             Page(surface.Panel).Minimum(minimum);
             Dispatcher.UIThread.RunJobs();
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"fleet-compare-{name}.png");
+            var path = $"fleet-compare-{name}.png";
 
             using (var frame = surface.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         surface.Window.Close();
@@ -231,11 +229,11 @@ public class TheFleetComparesByJumpOrCargoTests
 
         Assert.Contains(surface.Panel.GetVisualDescendants().OfType<Button>(), button => button.Name == "CompareShips");
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, "fleet-ships-compare-tile.png");
+        var path = "fleet-ships-compare-tile.png";
 
         using (var frame = surface.Window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         surface.Window.Close();

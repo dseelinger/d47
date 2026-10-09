@@ -191,8 +191,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
             panel.GetControl<StackPanel>("ChromeRow").Children, child => child.IsVisible);
         Assert.True(panel.Avatar.IsVisible);
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "title-bar-chrome-1280.png"), new PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("title-bar-chrome-1280.png");
 
         window.Close();
     }

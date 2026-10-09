@@ -131,9 +131,9 @@ public sealed class AHoveredTileLightensToTile2Tests
             rows.Children.Add(row);
         }
 
-        var path = AppLook.Capture(rows, "tile-hover.png", width: 480, height: 170);
+        using var frame = AppLook.Capture(rows, "tile-hover.png", width: 480, height: 170);
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
     }
 
     private static void AssertHover(TemplatedControl tile)

@@ -208,14 +208,12 @@ public class TheFarmingRouteStartsNearestTests
             Page(surface.Panel).Filter(index);
             Dispatcher.UIThread.RunJobs();
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"materials-farming-route-{name}.png");
+            var path = $"materials-farming-route-{name}.png";
 
             using (var frame = surface.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         surface.Window.Close();

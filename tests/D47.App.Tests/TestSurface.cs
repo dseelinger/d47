@@ -27,8 +27,37 @@ public static class TestSurface
         return run;
     });
 
+    /// <summary>True when the run sets <c>D47_CAPTURES=1</c>; captures are then written to disk.</summary>
+    public static bool CapturesWanted => Environment.GetEnvironmentVariable("D47_CAPTURES") == "1";
+
     /// <summary>This run's capture folder, created on first use.</summary>
     public static string CaptureDirectory => Captures.Value;
+
+    /// <summary>The folder a VR surface dumps its first frame to: the capture folder when captures are wanted, otherwise none.</summary>
+    public static string? VrDump => CapturesWanted ? CaptureDirectory : null;
+
+    /// <summary>The PNG encoding of <paramref name="frame"/>, in memory.</summary>
+    public static byte[] Encoded(this Avalonia.Media.Imaging.Bitmap frame)
+    {
+        using var stream = new MemoryStream();
+        frame.Save(stream, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        return stream.ToArray();
+    }
+
+    /// <summary>Asserts <paramref name="frame"/> is not empty, then writes it to <see cref="CaptureDirectory"/> when captures are wanted; returns the path, or null when nothing was written.</summary>
+    public static string? SaveCapture(this Avalonia.Media.Imaging.Bitmap frame, string fileName)
+    {
+        Xunit.Assert.True(frame.PixelSize.Width > 0 && frame.PixelSize.Height > 0, $"the {fileName} capture is empty");
+
+        if (!CapturesWanted)
+        {
+            return null;
+        }
+
+        var path = Path.Combine(CaptureDirectory, fileName);
+        frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        return path;
+    }
 
     /// <summary>
     /// A <c>HelpImprovePage</c> build delegate that renders <paramref name="text"/> and reports an empty

@@ -67,7 +67,7 @@ public class BadgesAndCardsAreFilledNotOutlinedTests
         Assert.Equal(default, badge.BorderThickness);
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "current-ship-badge.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("current-ship-badge.png");
 
         window.Close();
     }

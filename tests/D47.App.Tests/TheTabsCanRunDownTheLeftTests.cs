@@ -147,9 +147,9 @@ public class TheTabsCanRunDownTheLeftTests
             var panel = Panel();
             panel.SetTabsDownTheLeft(left);
 
-            var path = AppLook.Capture(panel, file, width: width);
+            using var frame = AppLook.Capture(panel, file, width: width);
 
-            Assert.True(File.Exists(path));
+            Assert.True(frame.PixelSize.Width > 0);
         }
     }
 }

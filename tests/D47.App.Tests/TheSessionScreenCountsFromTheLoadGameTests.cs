@@ -201,9 +201,8 @@ public class TheSessionScreenCountsFromTheLoadGameTests
         var (window, _, _) = Open(Flight);
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "commander-session.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "commander-session.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

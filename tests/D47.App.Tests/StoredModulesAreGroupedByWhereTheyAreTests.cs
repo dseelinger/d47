@@ -203,14 +203,12 @@ public class StoredModulesAreGroupedByWhereTheyAreTests
             Search(surface.Panel).Text = query;
             Dispatcher.UIThread.RunJobs();
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"fleet-stored-modules-{name}.png");
+            var path = $"fleet-stored-modules-{name}.png";
 
             using (var frame = surface.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         surface.Window.Close();

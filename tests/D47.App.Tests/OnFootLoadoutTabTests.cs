@@ -322,9 +322,7 @@ public class OnFootLoadoutTabTests
         // The planned grade is marked, and only that one.
         Assert.Equal(["5"], grades.Where(button => button.BorderThickness.Top == 2).Select(button => (string)button.Content!));
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-grade.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-kit-grade.png");
 
         // One press commits and goes back to the slot.
         grades.Single(button => (string)button.Content! == "4").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -391,9 +389,7 @@ public class OnFootLoadoutTabTests
             ["STOWED RELOADING", "Automatically reloads a stowed weapon after 5 seconds"],
             row.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text));
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-kit-mod-picker.png");
 
         var filter = surface.Panel.GetVisualDescendants().OfType<TextBox>()
             .Single(box => AutomationProperties.GetName(box) == "Filter");
@@ -405,9 +401,7 @@ public class OnFootLoadoutTabTests
 
         Assert.Equal(["Reload speed", "Stowed reloading"], list.ItemsSource!.Cast<string>());
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker-filtered.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-kit-mod-picker-filtered.png");
 
         list.SelectedItem = "Stowed reloading";
         surface.Panel.GetVisualDescendants().OfType<Button>()
@@ -474,9 +468,7 @@ public class OnFootLoadoutTabTests
             Avalonia.Application.Current!.Resources[D47.App.Theming.ThemeManager.GreyKey],
             Description("Shortens the weapon’s reload time").Foreground);
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-mod-picker-planned-now.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-kit-mod-picker-planned-now.png");
 
         surface.Window.Close();
     }
@@ -562,9 +554,7 @@ public class OnFootLoadoutTabTests
         Assert.Contains(price.Describe(), shown);
         Assert.True(shown.ToList().IndexOf("WHAT IT COSTS") < shown.ToList().IndexOf(price.Describe()));
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-kit-grade-step.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-kit-grade-step.png");
 
         // Grade 5 is the top of the offer, so only down is live.
         var nudges = Nudges(surface.Panel);
@@ -730,18 +720,14 @@ public class OnFootLoadoutTabTests
         surface.Panel.Nav.SelectRoot(OnFootMode.Root);
         Dispatcher.UIThread.RunJobs();
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-suits.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-suits.png");
 
         surface.Window.Width = 1280;
         surface.Window.Height = 1000;
         surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-gap.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-gap.png");
 
         surface.Window.Close();
     }

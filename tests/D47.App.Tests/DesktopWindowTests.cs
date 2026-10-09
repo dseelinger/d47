@@ -335,8 +335,6 @@ public class DesktopWindowTests
         var zoom = ZoomHost.Attach(window, settings);
         window.Show();
 
-        var output = TestSurface.CaptureDirectory;
-
         foreach (var level in new[] { 50, 100, 150, 200 })
         {
             zoom.Set(level);
@@ -344,9 +342,7 @@ public class DesktopWindowTests
 
             var frame = window.CaptureRenderedFrame();
             Assert.NotNull(frame);
-            frame.Save(
-                Path.Combine(output, $"main-window-zoom-{level}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture($"main-window-zoom-{level}.png");
         }
 
         Assert.NotEmpty(ZoomLadder.Steps);

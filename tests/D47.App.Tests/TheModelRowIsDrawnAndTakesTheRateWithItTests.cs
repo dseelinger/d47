@@ -48,9 +48,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "elevenlabs-model-row.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("elevenlabs-model-row.png");
 
         host.Close();
     }

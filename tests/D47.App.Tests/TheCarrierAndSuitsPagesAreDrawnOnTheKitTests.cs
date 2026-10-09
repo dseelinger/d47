@@ -91,11 +91,11 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -131,10 +131,6 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.True(File.Exists(carrier));
-        Assert.True(File.Exists(suits));
-        Assert.True(File.Exists(grade));
     }
 
     /// <summary>The carrier in the Commander's own system reads Cyan; the squadron's, elsewhere, reads A.</summary>

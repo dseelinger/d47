@@ -61,9 +61,7 @@ public class PanelParityTests
         Assert.False(((Window)TopLevel.GetTopLevel(view)!).IsVisible);
 
         Assert.NotNull(frame);
-        frame.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "vr-panel-full.png"),
-            new PngBitmapEncoderOptions());
+        frame.SaveCapture("vr-panel-full.png");
     }
 
     /// <summary>Mini is a mode of the same panel, not a second surface and not a scaled-down copy.</summary>
@@ -102,9 +100,7 @@ public class PanelParityTests
         Assert.Contains("Fixture Anchorage", model.TranscriptText, StringComparison.Ordinal);
 
         Assert.NotNull(frame);
-        frame.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "vr-panel-mini.png"),
-            new PngBitmapEncoderOptions());
+        frame.SaveCapture("vr-panel-mini.png");
     }
 
     [AvaloniaFact]

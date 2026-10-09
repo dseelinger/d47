@@ -106,10 +106,8 @@ public class AProposalIsReviewedOnTheShipPageTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
-        frame.Save(path, new PngBitmapEncoderOptions());
-
-        Assert.True(File.Exists(path));
+        var path = name;
+        frame.SaveCapture(path);
     }
 
     private static Button Pressable(Control root, string label, int index = 0) =>

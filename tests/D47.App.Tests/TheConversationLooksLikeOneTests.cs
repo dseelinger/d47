@@ -258,9 +258,9 @@ public class TheConversationLooksLikeOneTests
         model.Append("Holding at Fixture Anchorage.");
         model.Append("Where am I?", voice: TranscriptVoice.Commander);
 
-        var path = AppLook.Capture(new PanelView { DataContext = model }, "transcript-turns.png", width: 1600);
+        using var frame = AppLook.Capture(new PanelView { DataContext = model }, "transcript-turns.png", width: 1600);
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
     }
 
     /// <summary>

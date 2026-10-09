@@ -73,13 +73,9 @@ public static class AppLook
         });
     }
 
-    /// <summary>
-    /// Renders <paramref name="content"/> in a window under <see cref="Put"/>, saves the frame as
-    /// <paramref name="fileName"/> in <see cref="TestSurface.CaptureDirectory"/> and returns its full path.
-    /// </summary>
-    public static string Capture(
+    /// <summary>Renders <paramref name="content"/> in a window under <see cref="Put"/> and returns the frame.</summary>
+    public static Avalonia.Media.Imaging.Bitmap Render(
         Control content,
-        string fileName,
         string themeId = ThemeCatalog.Elite,
         double width = CaptureWidth,
         double height = CaptureHeight,
@@ -91,17 +87,29 @@ public static class AppLook
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, fileName);
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.Save(path, new PngBitmapEncoderOptions());
-        }
+        var frame = window.CaptureRenderedFrame()!;
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
 
-        return path;
+        return frame;
+    }
+
+    /// <summary>
+    /// Renders <paramref name="content"/>, saves the frame as <paramref name="fileName"/> through
+    /// <see cref="TestSurface.SaveCapture"/> and returns it for the caller to dispose.
+    /// </summary>
+    public static Avalonia.Media.Imaging.Bitmap Capture(
+        Control content,
+        string fileName,
+        string themeId = ThemeCatalog.Elite,
+        double width = CaptureWidth,
+        double height = CaptureHeight,
+        GuiColourMatrix? matrix = null)
+    {
+        var frame = Render(content, themeId, width, height, matrix);
+        frame.SaveCapture(fileName);
+        return frame;
     }
 
     private sealed class Undo(Action undo) : IDisposable

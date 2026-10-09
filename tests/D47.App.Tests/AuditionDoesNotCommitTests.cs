@@ -313,9 +313,7 @@ public class AuditionDoesNotCommitTests
     {
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        ((Window)TopLevel.GetTopLevel(picker)!).CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"{name}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        ((Window)TopLevel.GetTopLevel(picker)!).CaptureRenderedFrame()!.SaveCapture($"{name}.png");
     }
 
     /// <summary>

@@ -210,9 +210,7 @@ public class TheLevelsAreOneMixerTableTests
         Assert.Single(grids.Select(grid => Edges(grid, host.Window)).Distinct());
         Assert.Equal(9, header.ColumnDefinitions.Count);
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"mixer-sounds-and-levels-{width}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture($"mixer-sounds-and-levels-{width}.png");
 
         host.Close();
     }

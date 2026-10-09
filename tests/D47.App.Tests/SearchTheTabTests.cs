@@ -121,9 +121,7 @@ public class SearchTheTabTests
         ((Button)Named(view, "SearchNext")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "search-highlight.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("search-highlight.png");
 
         window.Close();
     }
@@ -490,9 +488,7 @@ public class SearchTheTabTests
         box.Text = "microphone";
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "settings-filter-highlight.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("settings-filter-highlight.png");
 
         host.Close();
     }
@@ -595,9 +591,7 @@ public class SearchTheTabTests
 
         // Whether a mark on a heading reads as an answer or as noise is a question only eyes settle, and this
         // one lands on a page title and a nav item at once.
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "settings-section-name-highlight.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("settings-section-name-highlight.png");
 
         // And a named section keeps the rows it has, rather than only the ones that happen to repeat the
         // word: nothing inside Sounds and levels says "sounds and levels".

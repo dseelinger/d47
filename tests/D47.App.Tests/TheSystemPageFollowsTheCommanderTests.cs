@@ -595,7 +595,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         var (width, height) = headset.Size;
         using var frame = new RenderTargetBitmap(new Avalonia.PixelSize(width, height));
         frame.Render(view);
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "system-headset.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("system-headset.png");
     }
 
     /// <summary>One frame, into a buffer nobody reads, which lays the headset's panel out.</summary>
@@ -638,7 +638,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         }
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, name), new PngBitmapEncoderOptions());
+        frame.SaveCapture(name);
 
         window.Close();
     }

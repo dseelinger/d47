@@ -122,9 +122,7 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
 
         Assert.Equal(PanelTab.Commander, panel.Tab);
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "overlay-checklist.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("overlay-checklist.png");
 
         window.Close();
     }

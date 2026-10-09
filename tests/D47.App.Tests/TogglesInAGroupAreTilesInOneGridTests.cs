@@ -145,14 +145,12 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
                 ScrollTo(Grid(host.View, "Cancel D47's own voice out of the microphone"));
             }
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"toggle-tiles-{placeId}-{width}x{height}.png");
+            var path = $"toggle-tiles-{placeId}-{width}x{height}.png";
 
             using (var frame = host.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         host.Close();

@@ -404,8 +404,9 @@ more until they do.
 Where a result can be read off a picture — hex values in the Control Kit, a colour, a layout, a
 label — render the screen headlessly and check the image yourself, rather than handing over a step
 for the maintainer to judge by eye. Write or reuse a test in `D47.App.Tests` that renders the
-changed view and saves it with `CaptureRenderedFrame()` to `TestSurface.CaptureDirectory`, run it
-with a filter, and read the PNG. Capture before and after the change where the change is a look.
+changed view and saves it with `CaptureRenderedFrame()` and `SaveCapture` to
+`TestSurface.CaptureDirectory`, run it with a filter and `D47_CAPTURES=1` set (without it nothing is
+written), and read the PNG. Capture before and after the change where the change is a look.
 
 A capture shows what the app would draw. Anything the app loads at startup, the test sets up the
 same way — hull art is the one that has been missed: `MainWindow` points `ShipArt.Folder` and

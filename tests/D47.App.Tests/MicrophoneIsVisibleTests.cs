@@ -134,9 +134,7 @@ public class MicrophoneIsVisibleTests
         Assert.True(Named(view, "MicrophoneRow").IsVisible);
 
         Assert.NotNull(frame);
-        frame.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "vr-panel-mini-listening.png"),
-            new PngBitmapEncoderOptions());
+        frame.SaveCapture("vr-panel-mini-listening.png");
     }
 
     /// <summary>The state arrives from the gate, which is driven by the audio thread and the tick loop.</summary>

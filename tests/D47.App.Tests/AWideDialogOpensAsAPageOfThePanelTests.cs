@@ -219,9 +219,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         var frame = window.CaptureRenderedFrame();
 
         Assert.NotNull(frame);
-        frame!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "wide-dialog-coverage-page.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        frame!.SaveCapture("wide-dialog-coverage-page.png");
 
         panel.GoBack();
         Jobs();
@@ -235,9 +233,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
             destination: "donations.example"));
         Jobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "wide-dialog-help-improve-page.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("wide-dialog-help-improve-page.png");
 
         window.Close();
     }

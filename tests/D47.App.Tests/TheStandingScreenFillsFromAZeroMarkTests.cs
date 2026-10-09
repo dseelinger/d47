@@ -202,9 +202,8 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         var (window, _, _) = Open(Reputation, Rank, Progress);
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "commander-standing.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "commander-standing.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

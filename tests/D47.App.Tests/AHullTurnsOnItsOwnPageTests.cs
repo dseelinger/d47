@@ -324,7 +324,7 @@ public class AHullTurnsOnItsOwnPageTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "hull-viewer-whole-window.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("hull-viewer-whole-window.png");
         }
 
         Key(wide, Avalonia.Input.Key.Down);
@@ -353,14 +353,12 @@ public class AHullTurnsOnItsOwnPageTests
 
         Assert.Equal(HullCamera.Rest(Pose(viewer).Mesh), Pose(viewer).Camera);
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, $"hull-viewer-{themeId}.png");
+        var path = $"hull-viewer-{themeId}.png";
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
-
-        Assert.True(File.Exists(path));
 
         // Each face is mixed from the ground towards the text colour, so in every theme a lit face stands
         // further from the ground than an unlit one.

@@ -266,9 +266,7 @@ public sealed class TheHelpImproveIntroIsDisclosuresOnlyTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "help-improve-trimmed.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        TopLevel.GetTopLevel(window)!.CaptureRenderedFrame()!.SaveCapture("help-improve-trimmed.png");
 
         window.Close();
     }

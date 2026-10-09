@@ -55,9 +55,8 @@ public class AGlyphButtonIsCapturedWithItsLabelTests
         Assert.True(label.IsOpen);
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "glyph-button-hovered.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "glyph-button-hovered.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

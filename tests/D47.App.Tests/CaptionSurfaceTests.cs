@@ -76,9 +76,7 @@ public class CaptionSurfaceTests
 
             var name = size.ToString().ToLowerInvariant();
 
-            Render(model, (frame, _) => frame.Save(
-                Path.Combine(TestSurface.CaptureDirectory, $"vr-captions-{name}.png"),
-                new PngBitmapEncoderOptions()));
+            Render(model, (frame, _) => frame.SaveCapture($"vr-captions-{name}.png"));
         }
 
         // Two lines, which is the window: the long sentence wraps to two and the short one ahead of it has

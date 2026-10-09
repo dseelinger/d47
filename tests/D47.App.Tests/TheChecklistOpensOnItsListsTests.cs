@@ -352,22 +352,17 @@ public class TheChecklistOpensOnItsListsTests
         var mini = Save(miniWindow, "checklist-830-mini.png");
 
         miniWindow.Close();
-
-        Assert.True(File.Exists(lists));
-        Assert.True(File.Exists(one));
-        Assert.True(File.Exists(all));
-        Assert.True(File.Exists(mini));
     }
 
     private static string Save(Window window, string name)
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;

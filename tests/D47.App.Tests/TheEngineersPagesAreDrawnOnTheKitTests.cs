@@ -99,11 +99,11 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -140,11 +140,6 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.True(File.Exists(directory));
-        Assert.True(File.Exists(felicity));
-        Assert.True(File.Exists(marco));
-        Assert.True(File.Exists(route));
     }
 
     /// <summary>An engineer in the Commander's own system reads Cyan; one elsewhere reads A.</summary>

@@ -60,6 +60,6 @@ public class TheWindowIsFramedAndItsCaptionSitsOnBarTests
     private static void Save(Window window, string fileName)
     {
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, fileName), new PngBitmapEncoderOptions());
+        frame.SaveCapture(fileName);
     }
 }

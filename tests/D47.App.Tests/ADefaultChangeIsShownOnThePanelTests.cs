@@ -32,7 +32,7 @@ public class ADefaultChangeIsShownOnThePanelTests
         Assert.Equal("Keep Claude Sonnet 5", panel.FindControl<Button>("DefaultChangeActionButton")!.Content);
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "default-change-notice.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("default-change-notice.png");
 
         var accepted = 0;
         var dismissed = 0;

@@ -156,9 +156,8 @@ public sealed class AFieldSaysWhatIsWrongOnItselfTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = System.IO.Path.Combine(TestSurface.CaptureDirectory, "field-states.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "field-states.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

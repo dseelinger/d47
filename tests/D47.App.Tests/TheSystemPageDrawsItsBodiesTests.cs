@@ -100,14 +100,14 @@ public sealed class TheSystemPageDrawsItsBodiesTests
         TheSystemPageListsItsStationsTests.Section(panel, "Bodies");
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "system-bodies.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("system-bodies.png");
 
         window.Width = 1024;
         window.Height = 640;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         using var small = window.CaptureRenderedFrame()!;
-        small.Save(Path.Combine(TestSurface.CaptureDirectory, "system-bodies-1024.png"), new PngBitmapEncoderOptions());
+        small.SaveCapture("system-bodies-1024.png");
 
         window.Close();
     }

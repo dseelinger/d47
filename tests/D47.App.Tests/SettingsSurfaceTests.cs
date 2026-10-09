@@ -26,13 +26,6 @@ namespace D47.App.Tests;
 /// </summary>
 public class SettingsSurfaceTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public SettingsSurfaceTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     private static SettingsHost Open(SettingsService settings, ViewStateStore viewState, AppPaths paths)
     {
         // FollowSettings, not a one-shot Apply: the theme captures below change the setting and expect the
@@ -80,9 +73,6 @@ public class SettingsSurfaceTests
     public void EveryThemeRendersToACapture()
     {
         var (settings, viewState, paths) = TestSurface.Create();
-        var output = TestSurface.CaptureDirectory;
-        _output.WriteLine($"Captures: {output}");
-
         var host = Open(settings, viewState, paths);
 
         foreach (var theme in D47.Core.Interface.ThemeCatalog.All)
@@ -99,9 +89,7 @@ public class SettingsSurfaceTests
 
             var frame = host.Window.CaptureRenderedFrame();
             Assert.NotNull(frame);
-            frame.Save(
-                Path.Combine(output, $"settings-{theme.Id}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture($"settings-{theme.Id}.png");
         }
 
         // The far end of the scroll, so the rows the first screenful hides — the picker, the hotkey binders,
@@ -110,9 +98,7 @@ public class SettingsSurfaceTests
         scroller.ScrollToEnd();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(output, "settings-bottom.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("settings-bottom.png");
 
         host.Close();
     }
@@ -137,11 +123,7 @@ public class SettingsSurfaceTests
         var frame = window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        var output = TestSurface.CaptureDirectory;
-        _output.WriteLine($"Captures: {output}");
-        frame.Save(
-            Path.Combine(output, "main-window.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        frame.SaveCapture("main-window.png");
 
         window.Close();
     }

@@ -63,6 +63,8 @@ public sealed class AConfirmIsRedOnlyWhenAskedTests
             rows.Children.Add(row);
         }
 
-        Assert.True(File.Exists(AppLook.Capture(rows, "destructive-tiles.png", width: 360, height: 150)));
+        using var frame = AppLook.Capture(rows, "destructive-tiles.png", width: 360, height: 150);
+
+        Assert.True(frame.PixelSize.Width > 0);
     }
 }

@@ -25,11 +25,11 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -70,8 +70,6 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
 
         host.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
     /// <summary>
@@ -143,8 +141,6 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
 
         host.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
     private static Color Ink(string key) =>

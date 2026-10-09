@@ -132,7 +132,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "message-cast-picture-chosen.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("message-cast-picture-chosen.png");
         }
 
         var image = page.GetVisualDescendants().OfType<Image>().Single();
@@ -147,7 +147,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, "message-cast-picture-default.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("message-cast-picture-default.png");
         }
 
         window.Close();

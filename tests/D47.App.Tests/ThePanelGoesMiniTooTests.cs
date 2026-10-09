@@ -145,9 +145,7 @@ public class ThePanelGoesMiniTooTests
         Assert.NotEmpty(after);
         Assert.NotEqual(before, after);
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "window-mini.png"),
-            new PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("window-mini.png");
 
         window.Close();
     }
@@ -169,10 +167,6 @@ public class ThePanelGoesMiniTooTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        using var stream = new MemoryStream();
-
-        window.CaptureRenderedFrame()!.Save(stream, new PngBitmapEncoderOptions());
-
-        return stream.ToArray();
+        return window.CaptureRenderedFrame()!.Encoded();
     }
 }

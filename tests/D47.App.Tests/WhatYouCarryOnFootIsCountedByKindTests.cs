@@ -277,14 +277,13 @@ public class WhatYouCarryOnFootIsCountedByKindTests
                 Drill(surface, view, symbol);
             }
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"{name}.png");
+            var path = $"{name}.png";
 
             using (var frame = surface.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
 
-            Assert.True(File.Exists(path));
             surface.Window.Close();
         }
     }

@@ -93,9 +93,7 @@ public sealed partial class TheControlKitDrawsEveryDesignComponentTests
             Dispatcher.UIThread.RunJobs();
 
             using var frame = kit.CaptureRenderedFrame()!;
-            frame.Save(
-                Path.Combine(TestSurface.CaptureDirectory, $"control-kit-{themeId}-{page + 1:00}.png"),
-                new PngBitmapEncoderOptions());
+            frame.SaveCapture($"control-kit-{themeId}-{page + 1:00}.png");
         }
 
         kit.Close();

@@ -321,19 +321,19 @@ public sealed class TheSystemPageListsItsStationsTests
 
         using (var overview = window.CaptureRenderedFrame()!)
         {
-            overview.Save(Path.Combine(TestSurface.CaptureDirectory, "system-overview-kinds.png"), new PngBitmapEncoderOptions());
+            overview.SaveCapture("system-overview-kinds.png");
         }
 
         Section(panel, "Stations");
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "system-stations.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("system-stations.png");
 
         Kind(panel, "other");
         Tick(panel, "Shipyard");
 
         using var none = window.CaptureRenderedFrame()!;
-        none.Save(Path.Combine(TestSurface.CaptureDirectory, "system-stations-none.png"), new PngBitmapEncoderOptions());
+        none.SaveCapture("system-stations-none.png");
 
         window.Close();
     }
@@ -364,7 +364,7 @@ public sealed class TheSystemPageListsItsStationsTests
         var (width, height) = headset.Size;
         using var frame = new RenderTargetBitmap(new PixelSize(width, height));
         frame.Render(view);
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, "system-stations-headset.png"), new PngBitmapEncoderOptions());
+        frame.SaveCapture("system-stations-headset.png");
     }
 
     /// <summary>One frame, into a buffer nobody reads, which lays the headset's panel out.</summary>

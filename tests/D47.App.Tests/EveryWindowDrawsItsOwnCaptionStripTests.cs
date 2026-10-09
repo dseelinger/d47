@@ -319,8 +319,8 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         {
             Dispatcher.UIThread.RunJobs();
             using var frame = window.CaptureRenderedFrame()!;
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, $"caption-buttons-{state}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture($"caption-buttons-{state}.png");
+            Assert.True(frame.PixelSize.Width > 0);
         }
 
         Save("rest");
@@ -331,8 +331,6 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
         window.MouseMove(new Point(20, 200));
         maximize.Focus(Avalonia.Input.NavigationMethod.Tab);
         Save("focus-maximise");
-
-        Assert.True(File.Exists(Path.Combine(TestSurface.CaptureDirectory, "caption-buttons-focus-maximise.png")));
     }
 
     // -- The two ways a window actually gets the strip in the running app --
@@ -365,5 +363,4 @@ public class EveryWindowDrawsItsOwnCaptionStripTests
 
         Assert.NotNull(Strip(window));
     }
-
 }

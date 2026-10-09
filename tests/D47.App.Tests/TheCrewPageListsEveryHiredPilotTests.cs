@@ -146,14 +146,12 @@ public class TheCrewPageListsEveryHiredPilotTests
         using var look = AppLook.Put();
 
         var surface = Open(Journal);
-        var path = Path.Combine(TestSurface.CaptureDirectory, "fleet-crew.png");
+        var path = "fleet-crew.png";
 
         using (var frame = surface.Window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
-
-        Assert.True(File.Exists(path));
 
         surface.Window.Close();
     }

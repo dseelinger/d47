@@ -60,15 +60,14 @@ public class TheCarrierPageCountsItsUpkeepTests
             "Balance adjusted: 990,302,661 on 22 Sep, less one week's upkeep of 9,700,000 cr.",
             text);
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, "carrier-upkeep-adjusted.png");
+        var path = "carrier-upkeep-adjusted.png";
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         window.Close();
-        Assert.True(File.Exists(path));
     }
 
     [AvaloniaFact]

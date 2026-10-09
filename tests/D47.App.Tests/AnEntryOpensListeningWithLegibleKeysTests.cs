@@ -140,11 +140,11 @@ public class AnEntryOpensListeningWithLegibleKeysTests
                 $"\"{key.Content}\" needs {label.DesiredSize} and has {inside.Size}");
         }
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, $"entry-keyboard-{themeId}.png");
+        var path = $"entry-keyboard-{themeId}.png";
 
         using (var frame = opened.Window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         opened.Window.Close();

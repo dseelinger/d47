@@ -119,9 +119,7 @@ public class AvatarTests
         var frame = surface.Render();
 
         Assert.NotNull(frame);
-        frame.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "panel-avatar.png"),
-            new PngBitmapEncoderOptions());
+        frame.SaveCapture("panel-avatar.png");
     }
 }
 

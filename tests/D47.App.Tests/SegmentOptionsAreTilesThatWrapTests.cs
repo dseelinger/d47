@@ -201,14 +201,12 @@ public class SegmentOptionsAreTilesThatWrapTests
         window.Background = (Avalonia.Media.IBrush?)Resource(ThemeManager.BgKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, "segment-with-status.png");
+        var path = "segment-with-status.png";
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
-
-        Assert.True(File.Exists(path));
     }
 
     private static TextBlock StatusLine(RadioButton button, string text) =>

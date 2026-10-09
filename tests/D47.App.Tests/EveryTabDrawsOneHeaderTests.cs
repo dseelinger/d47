@@ -121,7 +121,7 @@ public class EveryTabDrawsOneHeaderTests
         panel.GetControl<Control>(name).TranslatePoint(default, panel)!.Value.Y;
 
     private static void Capture(Window window, string name) =>
-        window.CaptureRenderedFrame()!.Save(Path.Combine(TestSurface.CaptureDirectory, name), new PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture(name);
 
     [AvaloniaFact]
     public void EveryTabsH1IsItsNameAndTheRuleSitsAtOneHeight()

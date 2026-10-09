@@ -129,10 +129,13 @@ public class TheHeadsetMiniShowsItsWholeAvatarTests : IDisposable
 
         AssertInTheRail(view, 280);
 
-        File.Copy(
-            Path.Combine(_root, "vr-PanelMini.png"),
-            Path.Combine(TestSurface.CaptureDirectory, "headset-mini-avatar.png"),
-            overwrite: true);
+        if (TestSurface.CapturesWanted)
+        {
+            File.Copy(
+                Path.Combine(_root, "vr-PanelMini.png"),
+                Path.Combine(TestSurface.CaptureDirectory, "headset-mini-avatar.png"),
+                overwrite: true);
+        }
     }
 
     [AvaloniaFact]

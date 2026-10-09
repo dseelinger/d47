@@ -379,9 +379,7 @@ public class ChecklistTabTests
         panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "checklist-tab.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("checklist-tab.png");
 
         window.Close();
     }
@@ -434,9 +432,7 @@ public class ChecklistTabTests
         panel.Nav.Drill(ChecklistPage.AllLists);
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "checklist-movers.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("checklist-movers.png");
 
         window.Close();
     }

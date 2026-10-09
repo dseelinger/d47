@@ -98,7 +98,7 @@ public sealed class TheDonationWalkthroughIsCapturedTests
         Jobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, file), new PngBitmapEncoderOptions());
+        frame.SaveCapture(file);
 
         _shots.Add(new Shot(file, frame.PixelSize.Width, frame.PixelSize.Height, boxes));
     }
@@ -273,9 +273,12 @@ public sealed class TheDonationWalkthroughIsCapturedTests
 
         window.Close();
 
-        File.WriteAllText(
-            Path.Combine(TestSurface.CaptureDirectory, "donate-boxes.json"),
-            JsonSerializer.Serialize(_shots, new JsonSerializerOptions { WriteIndented = true }),
-            Encoding.UTF8);
+        if (TestSurface.CapturesWanted)
+        {
+            File.WriteAllText(
+                Path.Combine(TestSurface.CaptureDirectory, "donate-boxes.json"),
+                JsonSerializer.Serialize(_shots, new JsonSerializerOptions { WriteIndented = true }),
+                Encoding.UTF8);
+        }
     }
 }

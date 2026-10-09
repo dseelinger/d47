@@ -119,7 +119,7 @@ public sealed class GuardianEffectsMoveByHandleTests
 
             using (var frame = host.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(Path.Combine(TestSurface.CaptureDirectory, "guardian-voice-effects-dragging.png"), new PngBitmapEncoderOptions());
+                frame.SaveCapture("guardian-voice-effects-dragging.png");
             }
 
             host.Window.MouseUp(first, MouseButton.Left);

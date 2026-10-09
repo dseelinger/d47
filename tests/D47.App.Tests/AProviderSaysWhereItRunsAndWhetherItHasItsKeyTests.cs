@@ -140,14 +140,12 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
             host.View.ControlFor(key)?.BringIntoView();
             Dispatcher.UIThread.RunJobs();
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"provider-rows-{key}-{width}x{height}.png");
+            var path = $"provider-rows-{key}-{width}x{height}.png";
 
             using (var frame = host.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         host.Close();

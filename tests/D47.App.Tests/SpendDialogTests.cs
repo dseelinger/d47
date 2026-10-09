@@ -293,9 +293,7 @@ public class SpendDialogTests
         window.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "turn-line-short.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("turn-line-short.png");
 
         window.Close();
     }
@@ -355,9 +353,7 @@ public class SpendDialogTests
         var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "spend-dialog.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("spend-dialog.png");
 
         window.Close();
     }

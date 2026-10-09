@@ -74,11 +74,11 @@ public class TheChecklistIsDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -122,12 +122,6 @@ public class TheChecklistIsDrawnOnTheKitTests
 
         surface.Window.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.True(File.Exists(list));
-        Assert.True(File.Exists(lists));
-        Assert.True(File.Exists(one));
-        Assert.True(File.Exists(goals));
-        Assert.True(File.Exists(suggestions));
     }
 
     /// <summary>A tab's own settings strip, closed and open, on Elite.</summary>
@@ -150,9 +144,6 @@ public class TheChecklistIsDrawnOnTheKitTests
         var open = Save(window, "checklist-settings-strip-open.png");
 
         window.Close();
-
-        Assert.True(File.Exists(closed));
-        Assert.True(File.Exists(open));
     }
 
     /// <summary>The selected line is a solid A fill, and the others the list row's Tile.</summary>

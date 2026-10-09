@@ -173,20 +173,18 @@ public class TabsTurnToGlyphsWhenNarrowTests
         panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        var path = System.IO.Path.Combine(TestSurface.CaptureDirectory, "tab-glyphs-512.png");
+        var path = "tab-glyphs-512.png";
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         Resize(window, 1280);
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(System.IO.Path.Combine(TestSurface.CaptureDirectory, "tab-words-1280.png"), new PngBitmapEncoderOptions());
+            frame.SaveCapture("tab-words-1280.png");
         }
-
-        Assert.True(File.Exists(path));
     }
 }

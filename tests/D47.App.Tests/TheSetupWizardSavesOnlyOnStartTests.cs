@@ -332,9 +332,7 @@ public class TheSetupWizardSavesOnlyOnStartTests
             Go(wizard, step);
             Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-            host.CaptureRenderedFrame()!.Save(
-                Path.Combine(TestSurface.CaptureDirectory, $"setup-{(int)step + 1}-{step}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            host.CaptureRenderedFrame()!.SaveCapture($"setup-{(int)step + 1}-{step}.png");
         }
 
         host.Close();

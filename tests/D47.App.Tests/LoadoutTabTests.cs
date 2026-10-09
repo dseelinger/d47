@@ -436,9 +436,7 @@ public class LoadoutTabTests
 
         Dispatcher.UIThread.RunJobs();
 
-        surface.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "loadout-fleet.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-fleet.png");
 
         surface.Window.Close();
     }

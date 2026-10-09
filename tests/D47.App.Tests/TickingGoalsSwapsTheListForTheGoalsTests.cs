@@ -187,8 +187,6 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
 
         Toggle(panel);
 
-        _window!.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, file),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        _window!.CaptureRenderedFrame()!.SaveCapture(file);
     }
 }

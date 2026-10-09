@@ -34,8 +34,8 @@ public class CapturesDrawTheAppsOwnLookTests
     public void EachThemeDrawsADifferentCapture()
     {
         var captures = ThemeCatalog.Ids
-            .Select(id => File.ReadAllBytes(AppLook.Capture(
-                Transcript(), $"theme-{id}.png", id, matrix: id == ThemeCatalog.ElitePaletteId ? Swapped : null)))
+            .Select(id => Encoded(AppLook.Render(
+                Transcript(), id, matrix: id == ThemeCatalog.ElitePaletteId ? Swapped : null)))
             .ToList();
 
         for (var one = 0; one < captures.Count; one++)
@@ -57,7 +57,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var resources = application.Resources.ToDictionary(pair => pair.Key, pair => pair.Value);
         var variant = application.RequestedThemeVariant;
 
-        AppLook.Capture(Transcript(), "theme-restored.png", ThemeCatalog.Light);
+        AppLook.Render(Transcript(), ThemeCatalog.Light).Dispose();
 
         Assert.Equal(styles, application.Styles.ToList());
         Assert.Equal(resources, application.Resources.ToDictionary(pair => pair.Key, pair => pair.Value));
@@ -72,9 +72,15 @@ public class CapturesDrawTheAppsOwnLookTests
             var panel = Panel();
             panel.Tab = tab;
 
-            var path = AppLook.Capture(panel, $"tab-{tab.ToString().ToLowerInvariant()}.png");
+            Assert.True(Encoded(AppLook.Render(panel)).Length > 0, $"the {tab} capture is empty");
+        }
+    }
 
-            Assert.True(new FileInfo(path).Length > 0, $"the {tab} capture is empty");
+    private static byte[] Encoded(Avalonia.Media.Imaging.Bitmap frame)
+    {
+        using (frame)
+        {
+            return frame.Encoded();
         }
     }
 

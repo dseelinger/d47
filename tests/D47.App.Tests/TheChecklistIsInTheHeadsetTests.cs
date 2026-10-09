@@ -65,9 +65,10 @@ public class TheChecklistIsInTheHeadsetTests
     private static string Blocked => ChecklistNextAction.For(ChecklistState.Blocked)!;
 
     /// <summary>The headset's own copy of the panel, on the Checklist tab, drawn.</summary>
-    private static (VrPanelSurface Panel, PanelView View, ChecklistService Checklists, string Dump) Headset(
+    private static (VrPanelSurface Panel, PanelView View, ChecklistService Checklists, string? Dump) Headset(
         int lines = 0,
-        bool derived = false)
+        bool derived = false,
+        string? dump = null)
     {
         var (settings, _, _) = TestSurface.Create();
 
@@ -92,7 +93,7 @@ public class TheChecklistIsInTheHeadsetTests
             ]);
         }
 
-        var dump = TestSurface.CaptureDirectory;
+        dump ??= TestSurface.VrDump;
 
         var panel = new VrPanelSurface(
             new PanelViewModel(), settings, _ => null, dumpTo: dump, checklists: checklists);
@@ -173,12 +174,12 @@ public class TheChecklistIsInTheHeadsetTests
     [AvaloniaFact]
     public void ItRendersToACaptureAtTheOverlaysOwnSize()
     {
-        var (panel, _, _, dump) = Headset(lines: 12, derived: true);
+        var (panel, _, _, dump) = Headset(lines: 12, derived: true, dump: TempFolders.Create("d47-checklist-in-vr-dump"));
         using var _disposable = panel;
 
         Assert.Equal((1024, 640), panel.Size);
 
-        var capture = new FileInfo(Path.Combine(dump, $"vr-{panel.Surface}.png"));
+        var capture = new FileInfo(Path.Combine(dump!, $"vr-{panel.Surface}.png"));
 
         Assert.True(capture.Exists, $"the surface writes its first frame to {capture.FullName}");
 

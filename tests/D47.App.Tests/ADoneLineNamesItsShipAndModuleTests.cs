@@ -147,6 +147,6 @@ public class ADoneLineNamesItsShipAndModuleTests
         panel.Tab = PanelTab.Commander;
         panel.Nav.Drill(ChecklistPage.AllLists);
 
-        AppLook.Capture(panel, "checklist-named-line.png");
+        AppLook.Capture(panel, "checklist-named-line.png").Dispose();
     }
 }

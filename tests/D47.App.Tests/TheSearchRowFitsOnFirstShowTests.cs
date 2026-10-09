@@ -38,9 +38,7 @@ public class TheSearchRowFitsOnFirstShowTests
 
             if (width == 1000)
             {
-                window.CaptureRenderedFrame()!.Save(
-                    Path.Combine(TestSurface.CaptureDirectory, "search-row-first-show.png"),
-                    new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+                window.CaptureRenderedFrame()!.SaveCapture("search-row-first-show.png");
             }
 
             var bar = InWindow(window, panel.GetControl<DockPanel>("PageBar"));

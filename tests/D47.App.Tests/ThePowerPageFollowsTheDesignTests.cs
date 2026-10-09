@@ -127,12 +127,11 @@ public class ThePowerPageFollowsTheDesignTests
     }
 
     /// <summary>
-    /// Saves <paramref name="captured"/> beside the reference screenshot's POWER panel, the build on the
-    /// left and the design on the right, and returns the composite's path.
+    /// Draws <paramref name="ours"/> beside the reference screenshot's POWER panel, the build on the
+    /// left and the design on the right, saves it as <paramref name="compositeName"/> and returns its size.
     /// </summary>
-    private static string Composite(string captured, string reference)
+    private static PixelSize Composite(Bitmap ours, string compositeName, string reference)
     {
-        using var ours = new Bitmap(captured);
         using var theirs = new Bitmap(Path.Combine(Screenshots(), reference));
 
         // Where the POWER panel sits in the reference, which also carries the design page's header above it.
@@ -148,18 +147,16 @@ public class ThePowerPageFollowsTheDesignTests
             context.DrawImage(theirs, panel, new Rect(ours.Size.Width + 20, 0, panel.Width, panel.Height));
         }
 
-        var path = Path.ChangeExtension(captured, null) + "-vs-design.png";
+        frame.SaveCapture(compositeName);
 
-        frame.Save(path, new PngBitmapEncoderOptions());
-
-        return path;
+        return size;
     }
 
     /// <summary>
     /// Builds the view under the theme, since Segment and Stepper take their control themes when they
     /// are made, and saves it as <paramref name="name"/>.
     /// </summary>
-    private static (string Path, PowerView View) Capture(
+    private static (Bitmap Frame, PowerView View) Capture(
         Func<PowerView> build, string name, string theme = ThemeCatalog.Elite)
     {
         using var look = AppLook.Put(theme);
@@ -170,17 +167,13 @@ public class ThePowerPageFollowsTheDesignTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
-
-        using (var frame = window.CaptureRenderedFrame()!)
-        {
-            frame.Save(path, new PngBitmapEncoderOptions());
-        }
+        var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture(name);
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
 
-        return (path, view);
+        return (frame, view);
     }
 
     [AvaloniaFact]
@@ -188,12 +181,16 @@ public class ThePowerPageFollowsTheDesignTests
     {
         var states = new[]
         {
-            (Capture(() => View(), "power-deployed-p5.png"), "01-3a-deployed-P5.png"),
-            (Capture(() => View(retracted: true, selected: 5), "power-retracted-p5.png"), "02-3a-retracted-P5.png"),
-            (Capture(() => View(selected: 3), "power-deployed-p3.png"), "03-3a-deployed-P3-damage-line.png"),
-        }.Select(state => (state.Item1.View, Composite: Composite(state.Item1.Path, state.Item2))).ToList();
+            ("power-deployed-p5", Capture(() => View(), "power-deployed-p5.png"), "01-3a-deployed-P5.png"),
+            ("power-retracted-p5", Capture(() => View(retracted: true, selected: 5), "power-retracted-p5.png"), "02-3a-retracted-P5.png"),
+            ("power-deployed-p3", Capture(() => View(selected: 3), "power-deployed-p3.png"), "03-3a-deployed-P3-damage-line.png"),
+        }.Select(state =>
+        {
+            using var ours = state.Item2.Frame;
+            return (state.Item2.View, Composite: Composite(ours, $"{state.Item1}-vs-design.png", state.Item3));
+        }).ToList();
 
-        Assert.All(states, state => Assert.True(File.Exists(state.Composite)));
+        Assert.All(states, state => Assert.True(state.Composite.Width > 0));
 
         // The default opens the priority the full-output line falls inside.
         Assert.Equal(5, states[0].View.Selected);
@@ -336,9 +333,12 @@ public class ThePowerPageFollowsTheDesignTests
     [InlineData(ThemeCatalog.Light)]
     public void TheDefaultStateIsCapturedInTheOtherThemes(string theme)
     {
-        var (path, _) = Capture(() => View(), $"power-deployed-p5-{theme}.png", theme);
+        var (frame, _) = Capture(() => View(), $"power-deployed-p5-{theme}.png", theme);
 
-        Assert.True(File.Exists(path));
+        using (frame)
+        {
+            Assert.True(frame.PixelSize.Width > 0);
+        }
     }
 
     [AvaloniaFact]
@@ -347,7 +347,7 @@ public class ThePowerPageFollowsTheDesignTests
         var opened = 0;
         Button? block = null;
 
-        var path = AppLook.Capture(
+        using var frame = AppLook.Capture(
             new Border
             {
                 Width = 420,
@@ -360,7 +360,7 @@ public class ThePowerPageFollowsTheDesignTests
 
         block.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
         Assert.Equal(1, opened);
         Assert.Contains("OVER ~2.11", Said(block));
         Assert.Contains("FITS", Said(block));
@@ -696,15 +696,14 @@ public class ThePowerPageFollowsTheDesignTests
     [AvaloniaFact]
     public void TheDropStatesAreCaptured()
     {
-        var paths = new[]
+        var frames = new[]
         {
-            Capture(() => Moving(EmptyTop).View, "power-empty-p4-p5.png").Path,
-            Capture(() => Moving(EmptyMiddle).View, "power-empty-p3.png").Path,
-            Capture(() => Moving(ShortP1).View, "power-short-p1.png").Path,
+            Capture(() => Moving(EmptyTop).View, "power-empty-p4-p5.png").Frame,
+            Capture(() => Moving(EmptyMiddle).View, "power-empty-p3.png").Frame,
+            Capture(() => Moving(ShortP1).View, "power-short-p1.png").Frame,
         };
 
         var (view, _) = Moving();
-        var dragging = Path.Combine(TestSurface.CaptureDirectory, "power-dragging-onto-p2.png");
 
         using (var host = Host(view))
         {
@@ -714,11 +713,16 @@ public class ThePowerPageFollowsTheDesignTests
 
             Drag(host, host.On(view.Chart!.CentreOfBar("gfb")!.Value), host.On(view.Chart.CentreOf(2)!.Value), release: false);
 
-            using var frame = host.Window.CaptureRenderedFrame()!;
+            using var dragging = host.Window.CaptureRenderedFrame()!;
 
-            frame.Save(dragging, new PngBitmapEncoderOptions());
+            dragging.SaveCapture("power-dragging-onto-p2.png");
+
+            Assert.All([.. frames, dragging], frame => Assert.True(frame.PixelSize.Width > 0));
         }
 
-        Assert.All([.. paths, dragging], path => Assert.True(File.Exists(path)));
+        foreach (var frame in frames)
+        {
+            frame.Dispose();
+        }
     }
 }

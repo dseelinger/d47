@@ -289,9 +289,7 @@ public class SettingsIsATabTests
 
         var host = SettingsHost.Open(settings, viewState, paths, width: 820, height: 640);
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "settings-tab-narrow.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("settings-tab-narrow.png");
 
         host.Close();
     }

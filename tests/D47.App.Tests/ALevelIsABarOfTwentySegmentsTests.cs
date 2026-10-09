@@ -144,9 +144,7 @@ public class ALevelIsABarOfTwentySegmentsTests
 
         LevelOn(host, settings, AudioCapability.LevelKey(AudioChannel.Cue));
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"level-bar-sounds-and-levels-{width}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture($"level-bar-sounds-and-levels-{width}.png");
 
         host.Close();
     }

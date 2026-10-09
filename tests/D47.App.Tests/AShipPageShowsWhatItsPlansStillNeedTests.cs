@@ -127,9 +127,8 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, "ship-plan-section.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = "ship-plan-section.png";
+        frame.SaveCapture(path);
 
         window.Close();
     }

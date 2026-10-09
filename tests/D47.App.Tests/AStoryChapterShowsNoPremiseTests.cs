@@ -112,7 +112,7 @@ public class AStoryChapterShowsNoPremiseTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(TestSurface.CaptureDirectory, name), new PngBitmapEncoderOptions());
+        frame.SaveCapture(name);
     }
 
     private static void NoSpineOfTheChapter(PanelView panel)

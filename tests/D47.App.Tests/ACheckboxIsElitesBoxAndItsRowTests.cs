@@ -227,9 +227,9 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
 
         focused.Loaded += (_, _) => focused.Focus(NavigationMethod.Tab);
 
-        var path = AppLook.Capture(column, $"checkbox-{themeId}.png", themeId, width: 420, height: 440);
+        using var frame = AppLook.Capture(column, $"checkbox-{themeId}.png", themeId, width: 420, height: 440);
 
-        Assert.True(File.Exists(path));
+        Assert.True(frame.PixelSize.Width > 0);
     }
 
     private static (CheckBox Box, Window Window) Shown(string label)

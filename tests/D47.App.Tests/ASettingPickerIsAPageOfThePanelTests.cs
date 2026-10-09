@@ -340,8 +340,6 @@ public class ASettingPickerIsAPageOfThePanelTests
     {
         Jobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, $"{name}.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture($"{name}.png");
     }
 }

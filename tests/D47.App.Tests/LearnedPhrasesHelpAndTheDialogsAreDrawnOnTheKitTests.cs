@@ -43,11 +43,11 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -72,8 +72,6 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
             CaptureLearnedPhrases(themeId, width, height),
             CaptureHelp(themeId, width, height),
         };
-
-        Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
     private static string CaptureLearnedPhrases(string themeId, double width, double height)
@@ -318,8 +316,6 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
             window.Close();
             Dispatcher.UIThread.RunJobs();
         }
-
-        Assert.All(saved, path => Assert.True(File.Exists(path)));
     }
 
     [AvaloniaFact]

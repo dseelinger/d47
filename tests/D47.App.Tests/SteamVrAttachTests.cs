@@ -11,6 +11,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The real runtime's attach path, exercised on a machine with no headset session.</summary>
+[Trait("Category", "Integration")]
 public class SteamVrAttachTests
 {
     /// <summary>Why this file declined to run, or null when it ran.</summary>
@@ -149,7 +150,7 @@ public class SteamVrLiveTests
                 NullLogger<D47.App.Diagnostics.HeadsetEyeCapture>.Instance);
 
             var adapter = runtime.HeadsetAdapter() ?? 0;
-            var path = Path.Combine(TestSurface.CaptureDirectory, "headset-left-eye.png");
+            var path = Path.Combine(TempFolders.Create("d47-steamvr-eye"), "headset-left-eye.png");
 
             // The eye read itself, without asking whether SteamVR is showing Elite.
             Assert.Null(capture.Eye(

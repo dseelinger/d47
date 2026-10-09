@@ -106,9 +106,7 @@ public class RowWidthTests
         CompactRowFor(host, "Speech model").BringIntoView();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        host.Window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "settings-speech-model.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        host.Window.CaptureRenderedFrame()!.SaveCapture("settings-speech-model.png");
 
         host.Close();
     }

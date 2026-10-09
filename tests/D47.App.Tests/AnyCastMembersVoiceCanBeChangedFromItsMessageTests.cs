@@ -87,7 +87,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(Path.Combine(TestSurface.CaptureDirectory, capture), new PngBitmapEncoderOptions());
+            frame.SaveCapture(capture);
         }
 
         return window;

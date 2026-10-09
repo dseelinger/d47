@@ -283,14 +283,10 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
                 host.View.ControlFor(key)!.BringIntoView();
                 Jobs();
 
-                var path = Path.Combine(
-                    TestSurface.CaptureDirectory,
-                    $"secret-{place}-{(stored ? "stored" : "none")}-{width}x{height}.png");
-
                 using var frame = host.Window.CaptureRenderedFrame()!;
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture($"secret-{place}-{(stored ? "stored" : "none")}-{width}x{height}.png");
 
-                Assert.True(File.Exists(path));
+                Assert.True(frame.PixelSize.Width > 0);
             }
 
             host.Close();

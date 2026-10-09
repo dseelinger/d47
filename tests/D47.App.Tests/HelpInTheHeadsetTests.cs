@@ -60,7 +60,7 @@ public class HelpInTheHeadsetTests
     /// <summary>The big panel with the Engineers tab furnished.</summary>
     /// <param name="showingHelp">Opens help before the first frame.</param>
     /// <param name="dump">Where this surface's one PNG goes.</param>
-    private static (VrPanelSurface Panel, PanelView View, string Dump) Headset(
+    private static (VrPanelSurface Panel, PanelView View, string? Dump) Headset(
         bool showingHelp = false,
         string? dump = null)
     {
@@ -86,7 +86,7 @@ public class HelpInTheHeadsetTests
 
         var kit = new OnFootBuildStore(Path.Combine(root, "on-foot.json"), NullLogger<OnFootBuildStore>.Instance);
 
-        dump ??= TestSurface.CaptureDirectory;
+        dump ??= TestSurface.VrDump;
 
         var panel = new VrPanelSurface(
             new PanelViewModel(),
@@ -293,14 +293,13 @@ public class HelpInTheHeadsetTests
     [AvaloniaFact]
     public void TheHelpFrameRasterises()
     {
-        var folder = Path.Combine(TestSurface.CaptureDirectory, "help");
-        Directory.CreateDirectory(folder);
+        var folder = TempFolders.Create("d47-help-frame");
 
         var (panel, view, dump) = Headset(showingHelp: true, dump: folder);
 
         Assert.True(view.Nav.Modal, "the frame that was kept is the help page");
 
-        var written = Directory.GetFiles(dump, "vr-*.png");
+        var written = Directory.GetFiles(dump!, "vr-*.png");
 
         Assert.NotEmpty(written);
         Assert.All(written, file => Assert.True(new FileInfo(file).Length > 0, $"{file} is empty"));

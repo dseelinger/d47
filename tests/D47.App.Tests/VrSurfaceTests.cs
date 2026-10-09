@@ -282,9 +282,7 @@ public class VrSurfaceTests
         var frame = host.Window.CaptureRenderedFrame();
         Assert.NotNull(frame);
 
-        frame.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "settings-headset.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        frame.SaveCapture("settings-headset.png");
 
         host.Close();
     }

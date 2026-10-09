@@ -27,8 +27,6 @@ public class VrOverlayCaptureTests
         surface.Type(new TextBox { Text = "deciat" });
         surface.Render();
 
-        surface.Render().Save(
-            Path.Combine(TestSurface.CaptureDirectory, "vr-keyboard.png"),
-            new PngBitmapEncoderOptions());
+        surface.Render().SaveCapture("vr-keyboard.png");
     }
 }

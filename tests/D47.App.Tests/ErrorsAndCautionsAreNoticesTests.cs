@@ -183,9 +183,8 @@ public partial class ErrorsAndCautionsAreNoticesTests
         Dispatcher.UIThread.RunJobs();
 
         using var frame = kit.CaptureRenderedFrame()!;
-        var path = Path.Combine(TestSurface.CaptureDirectory, $"notices-{themeId}.png");
-        frame.Save(path, new PngBitmapEncoderOptions());
-        Assert.True(File.Exists(path));
+        var path = $"notices-{themeId}.png";
+        frame.SaveCapture(path);
 
         kit.Close();
     }

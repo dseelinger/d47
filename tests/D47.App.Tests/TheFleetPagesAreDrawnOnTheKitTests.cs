@@ -93,11 +93,11 @@ public class TheFleetPagesAreDrawnOnTheKitTests
     {
         Dispatcher.UIThread.RunJobs();
 
-        var path = Path.Combine(TestSurface.CaptureDirectory, name);
+        var path = name;
 
         using (var frame = window.CaptureRenderedFrame()!)
         {
-            frame.Save(path, new PngBitmapEncoderOptions());
+            frame.SaveCapture(path);
         }
 
         return path;
@@ -144,10 +144,6 @@ public class TheFleetPagesAreDrawnOnTheKitTests
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
-
-        Assert.True(File.Exists(ship));
-        Assert.True(File.Exists(slot));
-        Assert.True(File.Exists(materials));
     }
 
     [Theory]

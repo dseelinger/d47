@@ -139,16 +139,12 @@ public class AskHintRetiresTests
         var model = new PanelViewModel();
         var (window, _) = Open(model);
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "ask-hint-first-run.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("ask-hint-first-run.png");
 
         model.HasAsked = true;
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "ask-hint-retired.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("ask-hint-retired.png");
 
         window.Close();
     }

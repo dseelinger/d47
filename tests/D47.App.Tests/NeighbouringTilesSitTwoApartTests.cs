@@ -87,9 +87,7 @@ public class NeighbouringTilesSitTwoApartTests
         window.Height = 220;
         Dispatcher.UIThread.RunJobs();
 
-        window.CaptureRenderedFrame()!.Save(
-            Path.Combine(TestSurface.CaptureDirectory, "tile-rows-two-apart.png"),
-            new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+        window.CaptureRenderedFrame()!.SaveCapture("tile-rows-two-apart.png");
 
         window.Close();
     }

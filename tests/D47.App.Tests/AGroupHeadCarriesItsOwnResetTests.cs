@@ -193,14 +193,12 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
         {
             Open(host.View, placeId);
 
-            var path = Path.Combine(TestSurface.CaptureDirectory, $"group-heads-{placeId}-{width}x{height}.png");
+            var path = $"group-heads-{placeId}-{width}x{height}.png";
 
             using (var frame = host.Window.CaptureRenderedFrame()!)
             {
-                frame.Save(path, new PngBitmapEncoderOptions());
+                frame.SaveCapture(path);
             }
-
-            Assert.True(File.Exists(path));
         }
 
         host.Close();

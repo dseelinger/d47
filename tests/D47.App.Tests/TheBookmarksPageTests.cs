@@ -415,18 +415,18 @@ public class TheBookmarksPageTests
 
         var gameState = CommanderState("F1", "Jameson");
 
-        var full = AppLook.Capture(
+        using var full = AppLook.Capture(
             Full(store, () => gameState.Active),
             "bookmarks-page-three-bookmarks.png");
 
-        var empty = AppLook.Capture(
+        using var empty = AppLook.Capture(
             Full(new BookmarkStore(
                 Path.Combine(TempFolders.Create("d47-bookmarks-page-tests"), "bookmarks.json"),
                 NullLogger<BookmarkStore>.Instance), () => gameState.Active),
             "bookmarks-page-empty.png");
 
-        Assert.True(File.Exists(full));
-        Assert.True(File.Exists(empty));
+        Assert.True(full.PixelSize.Width > 0);
+        Assert.True(empty.PixelSize.Width > 0);
     }
 
     private static PanelView Full(BookmarkStore store, Func<CommanderGameState?> commander)
