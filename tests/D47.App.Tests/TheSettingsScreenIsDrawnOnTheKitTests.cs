@@ -153,7 +153,7 @@ public class TheSettingsScreenIsDrawnOnTheKitTests
     public static TheoryData<string> SettingsSourceFiles()
     {
         var folder = Path.Combine(Root(), "src", "D47.App", "Settings");
-        var names = Directory.EnumerateFiles(folder, "SettingsView*").Select(Path.GetFileName).OfType<string>()
+        var names = Directory.EnumerateFiles(folder, "SettingsView*").Concat(Directory.EnumerateFiles(folder, "SettingControls*")).Select(Path.GetFileName).OfType<string>()
             .Concat(["SecretEditor.cs", "SwitchEditing.cs", "LoreEditing.cs", "SetupWizard.cs", "BindCapture.cs"])
             .Distinct();
 

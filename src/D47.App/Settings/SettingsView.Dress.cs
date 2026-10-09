@@ -1,3 +1,5 @@
+using System.Globalization;
+using D47.Core.Audio;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -295,4 +297,84 @@ public partial class SettingsView
 
     private static void Ink(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target[!property] = new DynamicResourceExtension(key);
+
+    /// <summary>Marks the effects list, for a test to find it.</summary>
+    public const string GuardianEffectsName = "GuardianEffects";
+
+    /// <summary>Marks one effect's strip in the list.</summary>
+    public const string GuardianStripClass = "guardian-effect";
+
+    /// <summary>Marks the position number on a strip.</summary>
+    public const string GuardianNumberName = "GuardianNumber";
+
+    /// <summary>Marks the value a strip's stepper shows.</summary>
+    public const string GuardianValueName = "GuardianValue";
+
+    /// <summary>Marks the drag handle on a strip.</summary>
+    public const string GuardianHandleName = "GuardianHandle";
+
+    /// <summary>Marks the SAVE AS button, for a test to find it.</summary>
+    public const string GuardianSaveAsName = "GuardianSaveAs";
+
+    /// <summary>Marks the RENAME button, for a test to find it.</summary>
+    public const string GuardianRenameName = "GuardianRename";
+
+    /// <summary>Marks the UPDATE button, for a test to find it.</summary>
+    public const string GuardianUpdateName = "GuardianUpdate";
+
+    /// <summary>Marks the DELETE button, for a test to find it.</summary>
+    public const string GuardianDeleteName = "GuardianDelete";
+
+    /// <summary>Marks the UNDO button in the notice, for a test to find it.</summary>
+    public const string GuardianUndoName = "GuardianUndo";
+
+    /// <summary>Marks the name row, shown only while creating or renaming a preset.</summary>
+    public const string GuardianNameRowName = "GuardianNameRow";
+
+    /// <summary>Marks the name row's label: "Preset name" or "New name".</summary>
+    public const string GuardianNameLabelName = "GuardianNameLabel";
+
+    /// <summary>Marks the name row's text box.</summary>
+    public const string GuardianNameFieldName = "GuardianNameField";
+
+    /// <summary>Marks the name row's SAVE or RENAME button.</summary>
+    public const string GuardianNameActionName = "GuardianNameAction";
+
+    /// <summary>Marks the name row's CANCEL button.</summary>
+    public const string GuardianNameCancelName = "GuardianNameCancel";
+
+    /// <summary>Marks the name row's message line.</summary>
+    public const string GuardianNameMessageName = "GuardianNameMessage";
+
+    /// <summary>Marks the notice shown after a preset action.</summary>
+    public const string GuardianNoticeName = "GuardianNotice";
+
+    /// <summary>How long the notice stays up before it hides itself.</summary>
+    public static readonly TimeSpan GuardianNoticeDuration = TimeSpan.FromSeconds(6);
+
+    /// <summary>The narrowest the level track is drawn.</summary>
+    public const double GuardianTrackMinWidth = 180;
+
+    /// <summary>The handle's tooltip.</summary>
+    public const string GuardianHandleTip = "Drag to reorder. Arrow keys also move it.";
+
+    /// <summary>An effect's parameter at a level, in the unit its table names.</summary>
+    internal static string GuardianShown(GuardianEffect effect, int level)
+    {
+        var value = effect.Value(level);
+
+        return effect.Unit switch
+        {
+            "%" => string.Create(CultureInfo.InvariantCulture, $"{Math.Round(value * 100):0}%"),
+            "st" => string.Create(CultureInfo.InvariantCulture, $"{value:0.0} st").Replace('-', '−'),
+            "×" => string.Create(CultureInfo.InvariantCulture, $"{value:0.0}×"),
+            _ => string.Create(CultureInfo.InvariantCulture, $"{value:0.##} {effect.Unit}"),
+        };
+    }
+
+    /// <summary>Every effect off, default order and levels, basis cleared: <see cref="GuardianPresets.Reset"/>.</summary>
+    private void ResetGuardianVoice() =>
+        _settings!.Replace(
+            "Guardian voice reset",
+            settings => GuardianPresets.Reset(settings.Speech).Settings is { } speech ? settings with { Speech = speech } : settings);
 }

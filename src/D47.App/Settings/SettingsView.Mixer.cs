@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -167,7 +167,7 @@ public partial class SettingsView
                 continue;
             }
 
-            var (control, refresh) = BuildControl(row, message);
+            var (control, refresh, _) = _controls.Build(row, message);
             cells[c] = control;
 
             var view = new RowView(row, new Avalonia.Controls.Panel(), refresh)

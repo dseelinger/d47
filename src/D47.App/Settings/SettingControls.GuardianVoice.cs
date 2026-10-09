@@ -1,80 +1,35 @@
+﻿using System.Diagnostics;
 using System.Globalization;
+using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
+using Avalonia.Controls.Documents;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using D47.App.Controls;
+using D47.App.Input;
 using D47.App.Theming;
-using D47.Core.Audio;
+using D47.Core;
 using D47.Core.Capabilities;
+using D47.App.Windowing;
+using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
+using D47.Core.Coverage;
+using D47.Core.Persona;
 
 namespace D47.App.Settings;
 
-/// <summary>
-/// The Guardian Voice Effects group as one control, drawn from the preset row: the preset picker and
-/// TEST on the row, and every effect in chain order under it at the group's full width.
-/// </summary>
-public partial class SettingsView
+internal sealed partial class SettingControls
 {
-    /// <summary>Marks the effects list, for a test to find it.</summary>
-    public const string GuardianEffectsName = "GuardianEffects";
-
-    /// <summary>Marks one effect's strip in the list.</summary>
-    public const string GuardianStripClass = "guardian-effect";
-
-    /// <summary>Marks the position number on a strip.</summary>
-    public const string GuardianNumberName = "GuardianNumber";
-
-    /// <summary>Marks the value a strip's stepper shows.</summary>
-    public const string GuardianValueName = "GuardianValue";
-
-    /// <summary>Marks the drag handle on a strip.</summary>
-    public const string GuardianHandleName = "GuardianHandle";
-
-    /// <summary>Marks the SAVE AS button, for a test to find it.</summary>
-    public const string GuardianSaveAsName = "GuardianSaveAs";
-
-    /// <summary>Marks the RENAME button, for a test to find it.</summary>
-    public const string GuardianRenameName = "GuardianRename";
-
-    /// <summary>Marks the UPDATE button, for a test to find it.</summary>
-    public const string GuardianUpdateName = "GuardianUpdate";
-
-    /// <summary>Marks the DELETE button, for a test to find it.</summary>
-    public const string GuardianDeleteName = "GuardianDelete";
-
-    /// <summary>Marks the UNDO button in the notice, for a test to find it.</summary>
-    public const string GuardianUndoName = "GuardianUndo";
-
-    /// <summary>Marks the name row, shown only while creating or renaming a preset.</summary>
-    public const string GuardianNameRowName = "GuardianNameRow";
-
-    /// <summary>Marks the name row's label: "Preset name" or "New name".</summary>
-    public const string GuardianNameLabelName = "GuardianNameLabel";
-
-    /// <summary>Marks the name row's text box.</summary>
-    public const string GuardianNameFieldName = "GuardianNameField";
-
-    /// <summary>Marks the name row's SAVE or RENAME button.</summary>
-    public const string GuardianNameActionName = "GuardianNameAction";
-
-    /// <summary>Marks the name row's CANCEL button.</summary>
-    public const string GuardianNameCancelName = "GuardianNameCancel";
-
-    /// <summary>Marks the name row's message line.</summary>
-    public const string GuardianNameMessageName = "GuardianNameMessage";
-
-    /// <summary>Marks the notice shown after a preset action.</summary>
-    public const string GuardianNoticeName = "GuardianNotice";
-
-    /// <summary>How long the notice stays up before it hides itself.</summary>
-    public static readonly TimeSpan GuardianNoticeDuration = TimeSpan.FromSeconds(6);
-
     private const double GuardianHandleWidth = 24;
 
     private const double GuardianNumberWidth = 24;
@@ -83,24 +38,9 @@ public partial class SettingsView
 
     private const double GuardianParameterWidth = 58;
 
-    /// <summary>The narrowest the level track is drawn.</summary>
-    public const double GuardianTrackMinWidth = 180;
-
     private const double GuardianStepperWidth = 156;
 
     private const double GuardianTileButtonWidth = 120;
-
-    /// <summary>Controls a group's own builder draws for rows that have none of their own, by key.</summary>
-    private readonly Dictionary<string, Control> _drawnByGroup = new(StringComparer.Ordinal);
-
-    /// <summary>
-    /// Set by a builder whose control also draws a block at the group's full width under its row, and the
-    /// words a query matches that block by; taken by <see cref="BuildRow"/>.
-    /// </summary>
-    private (Control Block, string Words)? _underRow;
-
-    /// <summary>The handle's tooltip.</summary>
-    public const string GuardianHandleTip = "Drag to reorder. Arrow keys also move it.";
 
     private const double GuardianDraggedOpacity = 0.55;
 
@@ -147,12 +87,12 @@ public partial class SettingsView
         Rename,
     }
 
-    private (Control, Action) BuildGuardianVoice(SettingRow row, StatusLine message)
+    private SettingControl BuildGuardianVoice(SettingRow row, StatusLine message)
     {
         var picker = new InlinePicker { Label = row.Label };
-        picker.Picked += (_, id) => Apply(row, id, message);
+        picker.Picked += (_, id) => host.Apply(row.Key, id, message);
 
-        var testRow = _settings!.Find(SpeechCapability.GuardianTestKey);
+        var testRow = host.Settings.Find(SpeechCapability.GuardianTestKey);
         var test = GuardianTileButton(testRow?.PressLabel ?? "Test");
         test.Name = "GuardianTest";
         test.VerticalAlignment = VerticalAlignment.Top;
@@ -173,33 +113,33 @@ public partial class SettingsView
         {
             currentUndo?.Invoke();
             HideNotice();
-            Refresh();
+            host.Refresh();
         };
 
         var (nameRow, nameLabel, nameField, nameAction, nameMessage, nameCancel) = GuardianNameRow();
 
         var update = GuardianTileButton("Update");
-        update.Name = GuardianUpdateName;
+        update.Name = SettingsView.GuardianUpdateName;
         update.VerticalAlignment = VerticalAlignment.Top;
         AutomationProperties.SetName(update, "Update");
         update.Click += (_, _) => CommitUpdate();
 
         var saveAs = GuardianTileButton("Save as");
-        saveAs.Name = GuardianSaveAsName;
+        saveAs.Name = SettingsView.GuardianSaveAsName;
         saveAs.VerticalAlignment = VerticalAlignment.Top;
         AutomationProperties.SetName(saveAs, "Save as");
         saveAs.Click += (_, _) => OpenNameRow(GuardianNameMode.Create);
 
         var rename = GuardianTileButton("Rename");
-        rename.Name = GuardianRenameName;
+        rename.Name = SettingsView.GuardianRenameName;
         rename.VerticalAlignment = VerticalAlignment.Top;
         AutomationProperties.SetName(rename, "Rename");
         rename.Click += (_, _) => OpenNameRow(GuardianNameMode.Rename);
 
         var delete = GuardianTileButton("Delete");
-        delete.Name = GuardianDeleteName;
+        delete.Name = SettingsView.GuardianDeleteName;
         delete.VerticalAlignment = VerticalAlignment.Top;
-        delete.Classes.Add(DestructiveClass);
+        delete.Classes.Add(SettingsView.DestructiveClass);
         AutomationProperties.SetName(delete, "Delete");
         delete.Click += (_, _) => CommitDelete();
 
@@ -238,13 +178,13 @@ public partial class SettingsView
 
         var list = new StackPanel
         {
-            Name = GuardianEffectsName,
+            Name = SettingsView.GuardianEffectsName,
             Spacing = 10,
-            Margin = new Thickness(RowBarWidth + RowHorizontalPadding, 12, 0, 12),
+            Margin = new Thickness(SettingsView.RowBarWidth + SettingsView.RowHorizontalPadding, 12, 0, 12),
             Children = { notice, nameRow, head, strips },
         };
 
-        _underRow = (list, string.Join(" ", GuardianVoice.Table.Select(effect => $"{effect.Label} {effect.Parameter}")));
+        var under = (list, string.Join(" ", GuardianVoice.Table.Select(effect => $"{effect.Label} {effect.Parameter}")));
 
         void ShowNotice(string text, Action? undoAction = null)
         {
@@ -253,7 +193,7 @@ public partial class SettingsView
             currentUndo = undoAction;
             undo.IsVisible = undoAction is not null;
             notice.IsVisible = true;
-            noticeTimer = new DispatcherTimer { Interval = GuardianNoticeDuration };
+            noticeTimer = new DispatcherTimer { Interval = SettingsView.GuardianNoticeDuration };
             noticeTimer.Tick += (_, _) =>
             {
                 noticeTimer!.Stop();
@@ -272,7 +212,7 @@ public partial class SettingsView
 
         void CommitUpdate()
         {
-            var speech = _settings!.Current.Speech;
+            var speech = host.Settings.Current.Speech;
             var name = speech.GuardianVoice.Basis;
             var snapshot = speech.GuardianVoice;
             var result = GuardianPresets.Update(speech);
@@ -282,14 +222,14 @@ public partial class SettingsView
                 return;
             }
 
-            _settings!.Replace("Update Guardian voice preset", s => s with { Speech = updated });
+            host.Settings.Replace("Update Guardian voice preset", s => s with { Speech = updated });
             ShowNotice($"Updated {name} with the current effects.", () => RestoreGuardianVoice(snapshot));
-            Refresh();
+            host.Refresh();
         }
 
         void CommitDelete()
         {
-            var speech = _settings!.Current.Speech;
+            var speech = host.Settings.Current.Speech;
             var name = GuardianPresets.Label(GuardianPresets.Preset(speech));
             var snapshot = speech.GuardianVoice;
             var result = GuardianPresets.Delete(speech);
@@ -299,13 +239,13 @@ public partial class SettingsView
                 return;
             }
 
-            _settings!.Replace("Delete Guardian voice preset", s => s with { Speech = updated });
+            host.Settings.Replace("Delete Guardian voice preset", s => s with { Speech = updated });
             ShowNotice($"Deleted {name}.", () => RestoreGuardianVoice(snapshot));
-            Refresh();
+            host.Refresh();
         }
 
         void RestoreGuardianVoice(GuardianVoiceSettings snapshot) =>
-            _settings!.Replace("Undo Guardian voice preset change", s => s with { Speech = s.Speech with { GuardianVoice = snapshot } });
+            host.Settings.Replace("Undo Guardian voice preset change", s => s with { Speech = s.Speech with { GuardianVoice = snapshot } });
 
         void OpenNameRow(GuardianNameMode mode)
         {
@@ -313,7 +253,7 @@ public partial class SettingsView
             HideNotice();
             nameMode = mode;
 
-            var preset = GuardianPresets.Preset(_settings!.Current.Speech);
+            var preset = GuardianPresets.Preset(host.Settings.Current.Speech);
             var current = mode == GuardianNameMode.Rename ? GuardianPresets.Label(preset) : null;
             nameRowOldName = current;
 
@@ -341,7 +281,7 @@ public partial class SettingsView
                 return;
             }
 
-            var speech = _settings!.Current.Speech;
+            var speech = host.Settings.Current.Speech;
             var result = nameMode == GuardianNameMode.Rename
                 ? GuardianPresets.Rename(speech, nameField.Text)
                 : GuardianPresets.Save(speech, nameField.Text);
@@ -357,11 +297,11 @@ public partial class SettingsView
             var said = nameMode == GuardianNameMode.Rename ? $"Renamed {nameRowOldName} to {trimmed}." : $"Saved {trimmed}.";
             var reason = nameMode == GuardianNameMode.Rename ? "Rename Guardian voice preset" : "Save Guardian voice preset";
 
-            _settings!.Replace(reason, s => s with { Speech = result.Settings! });
+            host.Settings.Replace(reason, s => s with { Speech = result.Settings! });
 
             CloseNameRow();
             ShowNotice(said);
-            Refresh();
+            host.Refresh();
         }
 
         nameAction.Click += (_, _) => Commit();
@@ -383,9 +323,9 @@ public partial class SettingsView
             }
         };
 
-        return (control, () =>
+        return new SettingControl(control, () =>
         {
-            var speech = _settings!.Current.Speech;
+            var speech = host.Settings.Current.Speech;
             var preset = GuardianPresets.Preset(speech);
             var choices = GuardianPresets.Choices(speech);
             var saved = choices.Where(id => GuardianPresets.Find(id) is null && id != GuardianPresets.CustomId).ToList();
@@ -454,12 +394,12 @@ public partial class SettingsView
                 strip.Box.IsChecked = stored.Ticked;
                 strip.Level.Value = stored.Level / (double)GuardianVoice.HighestLevel;
                 strip.Level.Muted = !stored.Ticked;
-                strip.Value.Text = GuardianShown(effect, stored.Level);
+                strip.Value.Text = SettingsView.GuardianShown(effect, stored.Level);
                 strip.ValueInk?.Dispose();
                 strip.ValueInk = Themed(
                     strip.Value, TextBlock.ForegroundProperty, stored.Ticked ? ThemeManager.WhiteKey : ThemeManager.Grey2Key);
             }
-        });
+        }, under);
     }
 
     /// <summary>One effect's strip: reserved handle, position, checkbox, level and a − value + stepper.</summary>
@@ -487,19 +427,19 @@ public partial class SettingsView
 
         var handle = new Border
         {
-            Name = GuardianHandleName,
+            Name = SettingsView.GuardianHandleName,
             Width = GuardianHandleWidth,
             Focusable = true,
             Background = Brushes.Transparent,
             Cursor = new Cursor(StandardCursorType.SizeNorthSouth),
             Child = pattern,
         };
-        ToolTip.SetTip(handle, GuardianHandleTip);
+        ToolTip.SetTip(handle, SettingsView.GuardianHandleTip);
         AutomationProperties.SetName(handle, $"Move {effect.Label}");
 
         var number = new TextBlock
         {
-            Name = GuardianNumberName,
+            Name = SettingsView.GuardianNumberName,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Caption,
             TextAlignment = TextAlignment.Right,
@@ -517,9 +457,9 @@ public partial class SettingsView
 
         box.IsCheckedChanged += (_, _) =>
         {
-            if (!_refreshing)
+            if (!host.Refreshing())
             {
-                Apply(SpeechCapability.GuardianEffectKey(effect.Id), box.IsChecked == true ? "true" : "false", message);
+                host.Apply(SpeechCapability.GuardianEffectKey(effect.Id), box.IsChecked == true ? "true" : "false", message);
             }
         };
 
@@ -541,13 +481,13 @@ public partial class SettingsView
             Step = 1.0 / GuardianVoice.HighestLevel,
             ShowsReadout = false,
             OnTile = true,
-            MinWidth = GuardianTrackMinWidth,
+            MinWidth = SettingsView.GuardianTrackMinWidth,
         };
         AutomationProperties.SetName(level, $"{effect.Label} level");
 
         level.ValueChanged += (_, _) =>
         {
-            if (!_refreshing)
+            if (!host.Refreshing())
             {
                 WriteGuardianLevel(levelKey, (int)Math.Round(level.Value * GuardianVoice.HighestLevel), message);
             }
@@ -564,7 +504,7 @@ public partial class SettingsView
 
         var value = new TextBlock
         {
-            Name = GuardianValueName,
+            Name = SettingsView.GuardianValueName,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Small,
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -604,7 +544,7 @@ public partial class SettingsView
         columns.Children.Add(stepper);
 
         var strip = new Border { MinHeight = TypeScale.MinimumTarget, Child = columns, Tag = effect.Id };
-        strip.Classes.Add(GuardianStripClass);
+        strip.Classes.Add(SettingsView.GuardianStripClass);
 
         var made = new GuardianStrip(effect.Id, strip, handle, dots, number, box, level, value);
         PaintGuardianHandle(made);
@@ -612,7 +552,7 @@ public partial class SettingsView
         return made;
 
         int Stored() =>
-            int.TryParse(_settings!.Read(levelKey), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            int.TryParse(host.Settings.Read(levelKey), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
                 ? parsed
                 : effect.DefaultLevel;
 
@@ -803,7 +743,7 @@ public partial class SettingsView
         ids.RemoveAt(from);
         ids.Insert(to, moved);
 
-        Apply(SpeechCapability.GuardianOrderKey, string.Join(",", ids), message);
+        host.Apply(SpeechCapability.GuardianOrderKey, string.Join(",", ids), message);
     }
 
     /// <summary>
@@ -845,28 +785,14 @@ public partial class SettingsView
 
     /// <summary>Writes a level through its row, held between the lowest and highest level.</summary>
     private void WriteGuardianLevel(string key, int level, StatusLine message) =>
-        Apply(
+        host.Apply(
             key,
             Math.Clamp(level, GuardianVoice.LowestLevel, GuardianVoice.HighestLevel).ToString(CultureInfo.InvariantCulture),
             message);
 
-    /// <summary>An effect's parameter at a level, in the unit its table names.</summary>
-    internal static string GuardianShown(GuardianEffect effect, int level)
-    {
-        var value = effect.Value(level);
-
-        return effect.Unit switch
-        {
-            "%" => string.Create(CultureInfo.InvariantCulture, $"{Math.Round(value * 100):0}%"),
-            "st" => string.Create(CultureInfo.InvariantCulture, $"{value:0.0} st").Replace('-', '−'),
-            "×" => string.Create(CultureInfo.InvariantCulture, $"{value:0.0}×"),
-            _ => string.Create(CultureInfo.InvariantCulture, $"{value:0.##} {effect.Unit}"),
-        };
-    }
-
     /// <summary>Every effect off, default order and levels, basis cleared: <see cref="GuardianPresets.Reset"/>.</summary>
     private void ResetGuardianVoice() =>
-        _settings!.Replace(
+        host.Settings.Replace(
             "Guardian voice reset",
             settings => GuardianPresets.Reset(settings.Speech).Settings is { } speech ? settings with { Speech = speech } : settings);
 
@@ -898,7 +824,7 @@ public partial class SettingsView
 
         undo = new Button
         {
-            Name = GuardianUndoName,
+            Name = SettingsView.GuardianUndoName,
             Content = "Undo",
             IsVisible = false,
             VerticalAlignment = VerticalAlignment.Center,
@@ -912,7 +838,7 @@ public partial class SettingsView
 
         var notice = new Border
         {
-            Name = GuardianNoticeName,
+            Name = SettingsView.GuardianNoticeName,
             MinHeight = 36,
             Padding = new Thickness(15, 0, 12, 0),
             BorderThickness = new Thickness(3, 0, 0, 0),
@@ -933,27 +859,27 @@ public partial class SettingsView
     {
         var label = new TextBlock
         {
-            Name = GuardianNameLabelName,
+            Name = SettingsView.GuardianNameLabelName,
             FontFamily = Fonts.ProseFamily,
             FontSize = TypeScale.Body,
             VerticalAlignment = VerticalAlignment.Center,
-            Width = LabelColumnWidth,
+            Width = SettingsView.LabelColumnWidth,
         };
         Themed(label, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var field = new TextBox
         {
-            Name = GuardianNameFieldName,
+            Name = SettingsView.GuardianNameFieldName,
             MaxLength = 32,
             PlaceholderText = "Name this preset",
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         var action = GuardianTileButton("Save");
-        action.Name = GuardianNameActionName;
+        action.Name = SettingsView.GuardianNameActionName;
 
         var cancel = GuardianTileButton("Cancel");
-        cancel.Name = GuardianNameCancelName;
+        cancel.Name = SettingsView.GuardianNameCancelName;
         AutomationProperties.SetName(cancel, "Cancel preset name");
 
         var controls = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 2 };
@@ -964,7 +890,7 @@ public partial class SettingsView
         controls.Children.Add(action);
         controls.Children.Add(cancel);
 
-        var head = new Grid { ColumnDefinitions = new ColumnDefinitions($"{LabelColumnWidth},{RowColumnGap},*") };
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions($"{SettingsView.LabelColumnWidth},{SettingsView.RowColumnGap},*") };
         Grid.SetColumn(label, 0);
         Grid.SetColumn(controls, 2);
         head.Children.Add(label);
@@ -972,14 +898,14 @@ public partial class SettingsView
 
         var message = new Notice(inline: true)
         {
-            Name = GuardianNameMessageName,
+            Name = SettingsView.GuardianNameMessageName,
             Margin = new Thickness(0, 4, 0, 0),
             IsVisible = false,
         };
 
         var row = new StackPanel
         {
-            Name = GuardianNameRowName,
+            Name = SettingsView.GuardianNameRowName,
             IsVisible = false,
             Spacing = 6,
             Children = { head, message },
@@ -1023,7 +949,7 @@ public partial class SettingsView
             fill.Dispose();
             ink.Dispose();
             test.Content = label;
-            Refresh();
+            host.Refresh();
         }
     }
 }
