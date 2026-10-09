@@ -12,22 +12,15 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
     [Fact]
     public void BuildCalloutsTakesTheLiveSettingsServiceRatherThanAStartupSnapshot()
     {
-        var lines = AppHostLines();
-        var signature = Array.FindIndex(lines, line => line.Contains("private static CalloutEngine BuildCallouts("));
-
-        Assert.True(signature >= 0, "BuildCallouts was not found in AppHost.cs.");
-        Assert.Equal("SettingsService settings,", lines[signature + 1].Trim());
+        Assert.Equal("SettingsService settings", AppSource.Method("BuildCallouts").Parameters[0]);
     }
 
     [Fact]
     public void ApplyCalloutSettingsTakesTheLiveSettingsServiceRatherThanAStartupSnapshot()
     {
-        var lines = AppHostLines();
-
-        Assert.Contains(
-            lines,
-            line => line.Trim()
-                == "private static void ApplyCalloutSettings(CalloutEngine engine, SettingsService settings)");
+        Assert.Equal(
+            ["CalloutEngine engine", "SettingsService settings"],
+            AppSource.Method("ApplyCalloutSettings").Parameters);
     }
 
     /// <summary>
@@ -37,10 +30,8 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
     [Fact]
     public void TheSettingsChangedHandlerPassesTheLiveServiceToApplyCalloutSettings()
     {
-        var lines = AppHostLines();
-
-        Assert.Contains(lines, line => line.Trim() == "ApplyCalloutSettings(Callouts, Settings);");
-        Assert.DoesNotContain(lines, line => line.Contains("ApplyCalloutSettings(Callouts, Settings.Current)"));
+        Assert.Contains(AppSource.CodeLines("ApplyCalloutSettings("), line => line.Text == "ApplyCalloutSettings(Callouts, Settings);");
+        Assert.Empty(AppSource.CodeLines("ApplyCalloutSettings(Callouts, Settings.Current)"));
     }
 
     /// <summary>
@@ -86,38 +77,8 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
             region);
     }
 
-    /// <summary>
-    /// The full text of <c>BuildCallouts</c> and <c>ApplyCalloutSettings</c>, trimmed and with
-    /// comments left out — the two are adjacent in <c>AppHost.cs</c>, ending where the next member
-    /// begins.
-    /// </summary>
-    private static List<string> CalloutBuilderLines()
-    {
-        var lines = AppHostLines();
-        var start = Array.FindIndex(lines, line => line.Contains("private static CalloutEngine BuildCallouts("));
-        var end = Array.FindIndex(lines, line => line.Contains("public const string AnthropicApiKeySecret"));
-
-        Assert.True(start >= 0 && end > start, "Could not locate the BuildCallouts/ApplyCalloutSettings region.");
-
-        return [.. lines[start..end]
-            .Select(line => line.Trim())
-            .Where(line => !line.StartsWith("//", StringComparison.Ordinal))];
-    }
-
-    private static string[] AppHostLines() =>
-        File.ReadAllLines(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"));
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
+    /// <summary>The code lines of <c>BuildCallouts</c> and <c>ApplyCalloutSettings</c>, trimmed.</summary>
+    private static List<string> CalloutBuilderLines() =>
+        [.. AppSource.Method("BuildCallouts").CodeLines().Concat(AppSource.Method("ApplyCalloutSettings").CodeLines())
+            .Select(line => line.Text)];
 }

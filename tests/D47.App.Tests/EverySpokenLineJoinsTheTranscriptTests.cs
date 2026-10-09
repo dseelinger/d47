@@ -14,7 +14,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
     [Fact]
     public void SayAsyncRaisesTheTranscriptLineAfterTheVoiceHasTheAnnouncement()
     {
-        var say = Body("private async Task<SpokenClip?> SayAsync(");
+        var say = AppSource.Method("SayAsync").Text;
 
         var announce = say.IndexOf("Voice.AnnounceAsync(", StringComparison.Ordinal);
         var raised = say.IndexOf("CalloutSaid?.Invoke(", StringComparison.Ordinal);
@@ -25,12 +25,7 @@ public class EverySpokenLineJoinsTheTranscriptTests
     [Fact]
     public void OnlySayAsyncRaisesTheTranscriptLine()
     {
-        var raisers = File.ReadAllLines(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"))
-            .Select(line => line.Trim())
-            .Where(line => line.Contains("CalloutSaid?.Invoke(", StringComparison.Ordinal))
-            .ToList();
-
-        Assert.Single(raisers);
+        Assert.Single(AppSource.CodeLines("CalloutSaid?.Invoke("));
     }
 
     [Fact]
@@ -89,34 +84,8 @@ public class EverySpokenLineJoinsTheTranscriptTests
     [Fact]
     public void AStoryEndingIsSpokenInTheVoiceItWasWrittenFor()
     {
-        var lines = Body("private async Task SpeakStoryLinesAsync(");
+        var lines = AppSource.Method("SpeakStoryLinesAsync").Text;
 
         Assert.Contains("Voice = voice", lines, StringComparison.Ordinal);
-    }
-
-    private static string Body(string signature)
-    {
-        var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"));
-        var start = source.IndexOf(signature, StringComparison.Ordinal);
-
-        Assert.True(start >= 0, $"{signature} not found in AppHost.cs");
-
-        var end = source.IndexOf("\n    }", start, StringComparison.Ordinal);
-
-        return source[start..end];
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
     }
 }

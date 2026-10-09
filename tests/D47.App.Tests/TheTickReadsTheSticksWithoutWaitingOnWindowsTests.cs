@@ -104,25 +104,11 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     [Fact]
     public void TheTickSubscribersReadTheSamplerAndNotTheControllers()
     {
-        var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"));
-
-        Assert.Contains("PollTheStick(sampledControllers,", source, StringComparison.Ordinal);
-        Assert.Contains("Readings = sampledControllers.Poll(),", source, StringComparison.Ordinal);
-        Assert.DoesNotMatch(@"\bcontrollers\.(Poll\(|IsSettled)", source);
-    }
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
+        Assert.NotEmpty(AppSource.CodeLines("PollTheStick(sampledControllers,"));
+        Assert.NotEmpty(AppSource.CodeLines("Readings = sampledControllers.Poll(),"));
+        Assert.Empty(AppSource.CodeLinesMatchingOutside(
+            "SelfTest",
+            new System.Text.RegularExpressions.Regex(@"\b_?controllers\??\.(Poll\(|IsSettled)")));
     }
 
     /// <summary>A reader whose poll can be made to wait, as a Windows call might.</summary>

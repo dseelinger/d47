@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -39,22 +40,36 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         Assert.Equal(FlavourCallSites - 2, checkedFallbacks.Count);
     }
 
-    /// <summary>And nowhere else in the app.</summary>
+    /// <summary>And nowhere else: outside the app only the four Core files, inside it only three methods.</summary>
     [Fact]
     public void NothingOutsideTheCompositionRootReachesTheGuard()
     {
-        var source = Path.Combine(RepositoryRoot(), "src");
+        var src = Path.Combine(AppSource.RepositoryRoot(), "src");
+        var app = Path.Combine(src, "D47.App") + Path.DirectorySeparatorChar;
+        var skipped = new[] { $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}" };
 
         var reaching = Directory
-            .EnumerateFiles(source, "*.cs", SearchOption.AllDirectories)
-            .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
-            .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .EnumerateFiles(src, "*.cs", SearchOption.AllDirectories)
+            .Where(file => !file.StartsWith(app, StringComparison.Ordinal))
+            .Where(file => !skipped.Any(segment => file.Contains(segment, StringComparison.Ordinal)))
             .Where(file => File.ReadAllText(file).Contains("ContradictedClaims", StringComparison.Ordinal))
             .Select(file => Path.GetFileName(file))
             .Order()
             .ToList();
 
-        Assert.Equal(["AppHost.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
+        Assert.Equal(["ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
+
+        string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "ComposeStoryLineAsync"];
+        var stray = AppSource.Files
+            .SelectMany(file => file.Tree.GetRoot().DescendantNodes().OfType<IdentifierNameSyntax>()
+                .Where(identifier => identifier.Identifier.ValueText == "ContradictedClaims")
+                .Select(identifier => (file, identifier)))
+            .Where(pair => !permitted.Contains(
+                pair.identifier.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()?.Identifier.ValueText))
+            .Select(pair => $"{pair.file.Name}:{pair.identifier.GetLocation().GetLineSpan().StartLinePosition.Line + 1}")
+            .ToList();
+
+        Assert.True(stray.Count == 0, "ContradictedClaims is reached outside the three flavour methods:" + Environment.NewLine + string.Join(Environment.NewLine, stray));
     }
 
     /// <summary>
@@ -80,42 +95,18 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 
         // The announcement path hands Rewording a reader; Rewording reads it through one Lazy. That it is
         // read once, and before the model is asked, is tested in Core.
-        var rewording = CodeLines(Rewording);
+        var rewording = AppSource.CodeLinesIn(Rewording, "Lazy<ShipFacts>", "facts()").Select(line => line.Text).ToList();
         Assert.Contains("var ship = new Lazy<ShipFacts>(facts);", rewording);
         Assert.DoesNotContain(rewording, line => line.Contains("facts()", StringComparison.Ordinal));
     }
 
-    private static readonly string[] AppHost = ["src", "D47.App", "AppHost.cs"];
-
-    private static readonly string[] Rewording = ["src", "D47.Core", "Callouts", "Rewording.cs"];
+    private static readonly string Rewording = Path.Combine(
+        AppSource.RepositoryRoot(), "src", "D47.Core", "Callouts", "Rewording.cs");
 
     /// <summary>
-    /// Every code line of <c>AppHost.cs</c> and <c>Rewording.cs</c> containing <paramref name="fragment"/>.
+    /// Every code line of the app tree and <c>Rewording.cs</c> containing <paramref name="fragment"/>;
+    /// comments are left out, since they discuss the guard by name at length.
     /// </summary>
     private static List<string> CodeLinesContaining(string fragment) =>
-        [.. CodeLines(AppHost).Concat(CodeLines(Rewording))
-            .Where(line => line.Contains(fragment, StringComparison.Ordinal))];
-
-    /// <summary>
-    /// The file's lines, trimmed, with comments left out — the comments discuss the guard by name at
-    /// length, and a gate that counted those would be counting its own explanation.
-    /// </summary>
-    private static List<string> CodeLines(string[] path) =>
-        [.. File.ReadAllLines(Path.Combine([RepositoryRoot(), .. path]))
-            .Select(line => line.Trim())
-            .Where(line => !line.StartsWith("//", StringComparison.Ordinal))];
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
+        [.. AppSource.CodeLines(fragment).Concat(AppSource.CodeLinesIn(Rewording, fragment)).Select(line => line.Text)];
 }

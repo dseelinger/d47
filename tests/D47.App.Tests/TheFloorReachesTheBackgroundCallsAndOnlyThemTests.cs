@@ -69,28 +69,7 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
             CodeLinesContaining("Turns.BackgroundModel ="));
     }
 
-    /// <summary>
-    /// Every line of <c>AppHost.cs</c> mentioning any of <paramref name="fragments"/>, trimmed, with
-    /// comments left out — the comments discuss both properties by name at length, and a gate that
-    /// counted those would be counting its own explanation.
-    /// </summary>
+    /// <summary>Every code line in the tree mentioning any of <paramref name="fragments"/>.</summary>
     private static List<string> CodeLinesContaining(params string[] fragments) =>
-        [.. File.ReadAllLines(Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs"))
-            .Select(line => line.Trim())
-            .Where(line => !line.StartsWith("//", StringComparison.Ordinal))
-            .Where(line => fragments.Any(fragment => line.Contains(fragment, StringComparison.Ordinal)))];
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
+        [.. AppSource.CodeLines(fragments).Select(line => line.Text)];
 }

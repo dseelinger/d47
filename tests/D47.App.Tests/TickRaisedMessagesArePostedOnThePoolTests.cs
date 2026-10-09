@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Xunit;
 
@@ -15,16 +14,9 @@ public sealed class TickRaisedMessagesArePostedOnThePoolTests
     [InlineData("PostVoicesNotReady")]
     public void APostFromATickHandlerRunsInsideTaskRun(string method)
     {
-        var path = Path.Combine(RepositoryRoot(), "src", "D47.App", "AppHost.cs");
-        var tree = CSharpSyntaxTree.ParseText(
-            File.ReadAllText(path), path: path, cancellationToken: TestContext.Current.CancellationToken);
+        var declaration = AppSource.Method(method);
 
-        var declaration = tree.GetRoot(TestContext.Current.CancellationToken)
-            .DescendantNodes()
-            .OfType<MethodDeclarationSyntax>()
-            .Single(candidate => candidate.Identifier.ValueText == method);
-
-        var posts = declaration.DescendantNodes()
+        var posts = declaration.Node.DescendantNodes()
             .OfType<InvocationExpressionSyntax>()
             .Where(invocation => CalledName(invocation) == "Post")
             .ToList();
@@ -33,7 +25,7 @@ public sealed class TickRaisedMessagesArePostedOnThePoolTests
 
         var onTheCallingThread = posts
             .Where(post => !post.Ancestors().OfType<AnonymousFunctionExpressionSyntax>().Any(IsTaskRunArgument))
-            .Select(post => $"AppHost.cs:{post.GetLocation().GetLineSpan().StartLinePosition.Line + 1}")
+            .Select(post => $"{declaration.File.Name}:{post.GetLocation().GetLineSpan().StartLinePosition.Line + 1}")
             .ToList();
 
         Assert.True(
@@ -55,18 +47,4 @@ public sealed class TickRaisedMessagesArePostedOnThePoolTests
             Expression: IdentifierNameSyntax { Identifier.ValueText: "Task" },
             Name.Identifier.ValueText: "Run",
         };
-
-    private static string RepositoryRoot()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName
-               ?? throw new InvalidOperationException(
-                   $"Could not find the repository root: no d47.slnx above {AppContext.BaseDirectory}.");
-    }
 }
