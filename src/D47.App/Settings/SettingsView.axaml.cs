@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.Globalization;
 using D47.Core.Listening;
 using Avalonia;
@@ -143,10 +143,24 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Opens the tab and root a search match under "On other tabs" names (#222).</summary>
     private Action<string>? _openTabPlace;
 
+    private readonly QueryMarker _marker;
+
     public SettingsView()
     {
         InitializeComponent();
 
+        _marker = new QueryMarker(this, id =>
+        {
+            var index = SectionHolding(id);
+
+            if (index < 0)
+            {
+                return false;
+            }
+
+            ShowPlace(index);
+            return true;
+        });
     }
 
     /// <summary>The page-top toggles, for the panel to draw in its page bar; null off the settings page.</summary>
@@ -1472,7 +1486,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 // Only the survivors.
                 if (shown)
                 {
-                    Illuminate(row);
+                    _marker.Illuminate(row.Row, row.Label, row.Spoken, row.Help, row.KeyLine, _query);
                 }
             }
         }
@@ -1486,7 +1500,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // The section's name, marked in the nav, and its "Show N more" at the foot of its page.
         for (var i = 0; i < _sections.Count; i++)
         {
-            Paint(_sections[i].NavText, _sections[i].Title);
+            _marker.Paint(_sections[i].NavText, _sections[i].Title, _query);
 
             if (_sections[i].FoldButton is not { } button)
             {
@@ -1502,7 +1516,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // An area's title, marked in the nav (#222).
         foreach (var area in _navAreas)
         {
-            Paint(area.HeadingText, area.Title);
+            _marker.Paint(area.HeadingText, area.Title, _query);
         }
 
         // A group's own title and help, the other two things a query can match (#222). A group with no row
@@ -1514,8 +1528,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             group.Container.IsVisible = _sift.Groups[g].Showing;
             group.Reset.IsEnabled = _sift.Groups[g].Changed || (group.Slot is { } slot && HasAnchor(slot));
 
-            Paint(group.HeadingText, group.Title.ToUpperInvariant());
-            Paint(group.HelpText, group.Help);
+            _marker.Paint(group.HeadingText, group.Title.ToUpperInvariant(), _query);
+            _marker.Paint(group.HelpText, group.Help, _query);
         }
 
         foreach (var tiles in _tileGrids)
@@ -1583,213 +1597,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _query = wanted;
         Refresh();
     }
-
-    /// <summary>Label, help or key.</summary>
-    private void Illuminate(RowView row)
-    {
-        if (row.Label is { } label)
-        {
-            Paint(label, row.Row.Label);
-        }
-
-        if (row.Spoken is { } spoken)
-        {
-            Paint(spoken, row.Row.Help);
-        }
-
-        // **The help is behind a glyph, so a query that only it answers has to bring it out.** Matches() has
-        // always tested the help text, and since the callout it is no longer on screen — so a row could stay
-        // behind a filter with every visible word on it disagreeing with the query, which reads as the filter
-        // being broken rather than as a match the Commander cannot see.
-        if (row.Help is { } help)
-        {
-            var inTheHelp = _query.Length > 0
-                && row.Row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase)
-                && !row.Row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase);
-
-            help.IsVisible = inTheHelp;
-
-            if (inTheHelp)
-            {
-                Paint(help, row.Row.Help);
-            }
-        }
-
-        if (row.KeyLine is not { } keyLine)
-        {
-            return;
-        }
-
-        var onlyTheKey = _query.Length > 0
-            && row.Row.Key.Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !row.Row.Label.Contains(_query, StringComparison.OrdinalIgnoreCase)
-            && !row.Row.Help.Contains(_query, StringComparison.OrdinalIgnoreCase);
-
-        keyLine.IsVisible = onlyTheKey;
-
-        if (onlyTheKey)
-        {
-            Paint(keyLine, row.Row.Key);
-        }
-    }
-
-    /// <summary>
-    /// One block of caption text with the hits in it marked, or the plain string when there is no
-    /// query.
-    /// </summary>
-    private void Paint(TextBlock block, string markup)
-    {
-        // The sentence without its markup: what is read out, what is searched, and what is drawn where there
-        // is no link to draw.
-        var segments = D47.Core.Interface.HelpLinks.Parse(markup);
-        var text = D47.Core.Interface.HelpLinks.Plain(markup);
-
-        // A block composed of runs reports no Text of its own, and Text is what an automation peer reads — so
-        // the name is set outright rather than left to be inferred.
-        AutomationProperties.SetName(block, text);
-
-        // Qualified: Avalonia.Controls has a TextSearch of its own, about typing to select an item in a list,
-        // and it is the one that wins in this file's usings.
-        var matches = D47.Core.Interface.TextSearch.Find(text, _query);
-
-        var links = segments.Any(segment => segment.Target is not null);
-
-        if (matches.Count == 0 && !links)
-        {
-            block.Inlines?.Clear();
-            block.Text = text;
-            return;
-        }
-
-        if (links)
-        {
-            PaintWithLinks(block, segments, matches);
-            return;
-        }
-
-        // Text and Inlines both draw, one after the other.
-        block.Text = null;
-        block.Inlines!.Clear();
-
-        var cursor = 0;
-
-        foreach (var match in matches)
-        {
-            if (match.Start > cursor)
-            {
-                block.Inlines!.Add(new Run(text[cursor..match.Start]));
-            }
-
-            var hit = new Run(text[match.Start..match.End]);
-            hit.Bind(TextElement.BackgroundProperty, this.GetResourceObservable(ThemeManager.LineKey));
-
-            block.Inlines!.Add(hit);
-            cursor = match.End;
-        }
-
-        if (cursor < text.Length)
-        {
-            block.Inlines!.Add(new Run(text[cursor..]));
-        }
-    }
-
-    /// <summary>The same caption when some of it is a cross-reference (#65).</summary>
-    private void PaintWithLinks(
-        TextBlock block,
-        IReadOnlyList<D47.Core.Interface.HelpSegment> segments,
-        IReadOnlyList<D47.Core.Interface.SearchMatch> matches)
-    {
-        block.Text = null;
-        block.Inlines!.Clear();
-
-        var at = 0;
-
-        foreach (var segment in segments)
-        {
-            var start = at;
-            var end = at + segment.Text.Length;
-            at = end;
-
-            // Every boundary inside this stretch: where it starts, where it ends, and every edge of every hit
-            // that falls in it.
-            var cuts = new SortedSet<int> { start, end };
-
-            foreach (var match in matches)
-            {
-                if (match.Start > start && match.Start < end) { cuts.Add(match.Start); }
-                if (match.End > start && match.End < end) { cuts.Add(match.End); }
-            }
-
-            var edges = cuts.ToArray();
-
-            for (var i = 0; i + 1 < edges.Length; i++)
-            {
-                var from = edges[i];
-                var to = edges[i + 1];
-
-                var run = new Run(segment.Text[(from - start)..(to - start)]);
-                var marked = matches.Any(match => match.Start <= from && match.End >= to);
-
-                if (marked)
-                {
-                    run.Bind(
-                        TextElement.BackgroundProperty,
-                        this.GetResourceObservable(ThemeManager.LineKey));
-                }
-
-                if (segment.Target is not null)
-                {
-                    run.Bind(
-                        TextElement.ForegroundProperty,
-                        this.GetResourceObservable(ThemeManager.AKey));
-
-                    run.TextDecorations = TextDecorations.Underline;
-                }
-
-                block.Inlines!.Add(run);
-            }
-        }
-
-        // The click is on the block rather than per-run: a Run is not an input element in Avalonia, so it has
-        // no pointer events of its own.
-        var targets = segments.Where(segment => segment.Target is not null).ToList();
-
-        if (targets.Count == 0)
-        {
-            return;
-        }
-
-        block.Cursor = new Cursor(StandardCursorType.Hand);
-
-        // One handler per painted block, and Paint runs again on every filter keystroke - so the old one is
-        // dropped rather than stacked, or a caption painted twenty times would jump twenty times on one
-        // click.
-        if (_linkHandlers.TryGetValue(block, out var previous))
-        {
-            block.PointerPressed -= previous;
-        }
-
-        EventHandler<PointerPressedEventArgs> handler = (_, e) =>
-        {
-            // Whichever section the first link on this caption names.
-            var index = SectionHolding(targets[0].Target!);
-
-            if (index >= 0)
-            {
-                ShowPlace(index);
-                e.Handled = true;
-            }
-        };
-
-        block.PointerPressed += handler;
-        _linkHandlers[block] = handler;
-    }
-
-    /// <summary>
-    /// The click handler each linked caption currently carries, so repainting replaces it instead of
-    /// adding a second one.
-    /// </summary>
-    private readonly Dictionary<TextBlock, EventHandler<PointerPressedEventArgs>> _linkHandlers = [];
 
     /// <summary>
     /// Marks the nav: every place with a page, and while a query is typed, the count of its matching
@@ -1884,7 +1691,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             var nothing = filtering && MatchesIn(_activeSection) == 0;
 
             crumb.Text = $"{_navAreas[_activeArea].Title.ToUpperInvariant()} ›";
-            Paint(title, section.Title.ToUpperInvariant());
+            _marker.Paint(title, section.Title.ToUpperInvariant(), _query);
 
             legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == _activeSection);
 

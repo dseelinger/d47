@@ -215,7 +215,7 @@ public partial class SettingsView
                 channel.Reset.IsVisible = channel.Views.Any(
                     view => view.Row.Applies(_settings!.Current) && view.Row.BoundKeys.Any(_settings.IsChanged));
 
-                Paint(channel.NameText, channel.Name);
+                _marker.Paint(channel.NameText, channel.Name, _query);
             }
 
             mixer.Table.IsVisible = mixer.Channels.Any(channel => channel.Row.IsVisible);
