@@ -14,6 +14,8 @@ The consent text for an incident excerpt and a journal history on the Help impro
 
 Transcription is now biased towards the name of every command d47 can give, including the Galnet, headset, panel, FSS, on-foot and fighter commands in this release. Previously the names after the first 120 were left out.
 
+Changing the voice provider, or switching the local voice's build, while the local voice was speaking could close d47 or leave its model open. A local voice now finishes the line it is speaking before it is closed, and a closed one opens nothing again.
+
 Changing speech settings while a core change, a voice download or a voice repair was running could corrupt the list of voice clients, or close one that was about to speak. Speech wiring now changes on one thread at a time.
 
 A stated memory that expired while d47 was closed is now shown on the panel at startup and no longer spoken. Expiries found later are still announced.

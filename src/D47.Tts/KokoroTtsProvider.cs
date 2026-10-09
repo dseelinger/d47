@@ -20,6 +20,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     private readonly string? _pronunciations;
     private readonly ILogger<KokoroTtsProvider> _logger;
     private readonly Lock _gate = new();
+    private readonly RunsInFlight _runs;
 
     private InferenceSession? _session;
     private Dictionary<string, long>? _vocabulary;
@@ -47,6 +48,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         _folder = folder;
         _logger = logger;
         _pronunciations = pronunciations;
+        _runs = new RunsInFlight(FreeSession);
     }
 
     public string Id => ProviderId;
@@ -120,44 +122,70 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
 
         var (session, vocabulary, phonemiser) = Load();
 
-        var phonemes = phonemiser.ToPhonemes(text, voiceId);
-        var tokens = Encode(phonemes, vocabulary);
-
-        // Nothing sayable came out.
-        if (tokens.Length <= 2)
+        try
         {
-            return new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard);
+            var phonemes = phonemiser.ToPhonemes(text, voiceId);
+            var tokens = Encode(phonemes, vocabulary);
+
+            // Nothing sayable came out.
+            if (tokens.Length <= 2)
+            {
+                return new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard);
+            }
+
+            var style = Style(voiceId, tokens.Length);
+            var samples = Run(session, tokens, style, (float)voice.Rate);
+
+            // 24 kHz to the arbiter's 48, the exact doubling both the other local-ish paths use.
+            var pcm = PcmUpsample.Double(ToPcm(samples));
+
+            return new AudioClip(text, pcm, AudioFormat.Standard);
         }
-
-        var style = Style(voiceId, tokens.Length);
-        var samples = Run(session, tokens, style, (float)voice.Rate);
-
-        // 24 kHz to the arbiter's 48, the exact doubling both the other local-ish paths use.
-        var pcm = PcmUpsample.Double(ToPcm(samples));
-
-        return new AudioClip(text, pcm, AudioFormat.Standard);
+        finally
+        {
+            lock (_gate)
+            {
+                _runs.End();
+            }
+        }
     }
 
-    /// <summary>The session, the vocabulary and the dictionary, built once and kept.</summary>
+    /// <summary>
+    /// The session, the vocabulary and the dictionary, built once and kept. Counts a run that the caller ends
+    /// through <c>_runs</c>; throws <see cref="ObjectDisposedException"/> once disposed.
+    /// </summary>
     private (InferenceSession Session, Dictionary<string, long> Vocabulary, Phonemiser Phonemiser) Load()
     {
         lock (_gate)
         {
-            if (_session is not null && _vocabulary is not null && _phonemiser is not null)
+            if (!_runs.TryBegin())
             {
-                return (_session, _vocabulary, _phonemiser);
+                throw new ObjectDisposedException(nameof(KokoroTtsProvider));
             }
 
-            var started = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                if (_session is not null && _vocabulary is not null && _phonemiser is not null)
+                {
+                    return (_session, _vocabulary, _phonemiser);
+                }
 
-            _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
-            _vocabulary ??= ReadVocabulary();
-            var phonemiser = LoadPhonemiser();
+                var started = System.Diagnostics.Stopwatch.StartNew();
 
-            _logger.LogInformation(
-                "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
+                _session ??= new InferenceSession(Path.Combine(_folder, "model.onnx"));
+                _vocabulary ??= ReadVocabulary();
+                var phonemiser = LoadPhonemiser();
 
-            return (_session, _vocabulary, phonemiser);
+                _logger.LogInformation(
+                    "The local voice is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
+
+                return (_session, _vocabulary, phonemiser);
+            }
+            catch
+            {
+                _runs.End();
+                throw;
+            }
         }
     }
 
@@ -299,12 +327,18 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         return pcm;
     }
 
+    /// <summary>Frees the session now if no line is running, otherwise when the last line ends.</summary>
     public void Dispose()
     {
         lock (_gate)
         {
-            _session?.Dispose();
-            _session = null;
+            _runs.Dispose();
         }
+    }
+
+    private void FreeSession()
+    {
+        _session?.Dispose();
+        _session = null;
     }
 }

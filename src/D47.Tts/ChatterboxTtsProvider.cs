@@ -40,6 +40,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private IReadOnlyList<ChatterboxVoice>? _voices;
     private IDisposable? _ownEncoded;
     private int _ownVersion;
+    private bool _disposed;
 
     /// <param name="modelFolder">Where <see cref="ChatterboxInstaller"/> put the graphs and tokenizer.</param>
     /// <param name="voicesFolder">Where <c>voices.tsv</c>, <c>catalog.tsv</c> and the shipped clips are.</param>
@@ -241,6 +242,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         lock (_gate)
         {
+            ThrowIfDisposed();
+
             var engine = _engine ??= Open();
 
             if (!_encoded.TryGetValue(chosen.Voice.Id, out var encoded))
@@ -252,6 +255,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             return Clip(text, engine.Speak(ids, encoded, cancellationToken));
         }
     }
+
+    private void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(_disposed, nameof(ChatterboxTtsProvider));
 
     /// <summary>A line in the Commander's recorded voice, encoded from the recording decrypted into memory.</summary>
     private AudioClip SpeakOwn(string text, CancellationToken cancellationToken)
@@ -267,6 +273,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         lock (_gate)
         {
+            ThrowIfDisposed();
+
             var engine = _engine ??= Open();
             var version = _own.Version;
 
@@ -494,6 +502,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         lock (_gate)
         {
+            _disposed = true;
             _ownEncoded?.Dispose();
             _ownEncoded = null;
 
