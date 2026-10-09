@@ -684,7 +684,7 @@
       <Border x:Name="TranscriptPane"
               Padding="14">
         <Panel>
-          <ScrollViewer x:Name="TranscriptScroller" ScrollChanged="OnTranscriptScrolled">
+          <ScrollViewer x:Name="TranscriptScroller">
             <!--
               Two presentations of one page, and exactly one of them is ever visible. The
               conversation is a conversation, so it is drawn as one - each turn its own message,
@@ -794,7 +794,7 @@
               whichever of the two is showing (#233). Without this, moving through the list
               never told the button the Commander had left the newest entry.
             -->
-            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller" ScrollChanged="OnTranscriptScrolled">
+            <ScrollViewer Grid.Column="0" x:Name="JournalListScroller">
               <ListBox x:Name="JournalList"
                        Background="Transparent"
                        BorderThickness="0"
@@ -842,8 +842,7 @@
                   IsVisible="False"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Bottom"
-                  Margin="0,0,14,10"
-                  Click="OnFollowClick" />
+                  Margin="0,0,14,10" />
         </Panel>
       </Border>
 

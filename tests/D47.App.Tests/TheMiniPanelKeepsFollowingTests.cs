@@ -34,10 +34,7 @@ public class TheMiniPanelKeepsFollowingTests
         return model;
     }
 
-    private static bool Following(PanelView view) =>
-        (bool)typeof(PanelView)
-            .GetField("_following", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(view)!;
+    private static bool Following(PanelView view) => view.Following;
 
     private static bool AtTheEnd(PanelView view)
     {

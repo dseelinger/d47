@@ -120,26 +120,7 @@ public partial class PanelView : UserControl
 
     private int _hitOffset;
 
-    /// <summary>
-    /// Whether this surface is following the end of the transcript (Phase 19, "Follow the live log, or
-    /// stop following it").
-    /// </summary>
-    private bool _following = true;
-
-    /// <summary>
-    /// Set while this view is doing the scrolling, so the handler below does not read its own <see
-    /// cref="ScrollToEnd"/> as the Commander having moved.
-    /// </summary>
-    private bool _scrollingItself;
-
-    /// <summary>
-    /// Where the fold is, and on which reading (#413): the height the content had when Ctrl+L was last
-    /// pressed.
-    /// </summary>
-    private (TranscriptPage Page, double Mark, string? Anchor, double Settled)? _fold;
-
-    /// <summary>Set while the fold is being applied, so its own layout pass does not re-enter it.</summary>
-    private bool _folding;
+    private readonly TranscriptScroll _scroll;
 
     /// <summary>
     /// The bubbles on the conversation page, in order, each with the offset into the page where its
@@ -167,6 +148,17 @@ public partial class PanelView : UserControl
     {
         InitializeComponent();
 
+        _scroll = new TranscriptScroll(
+            TranscriptScroller,
+            JournalListScroller,
+            TranscriptContent,
+            JournalList,
+            Transcript,
+            FollowButton,
+            () => Page,
+            () => TranscriptShown,
+            () => OutputOnly);
+
         _journalPane = new JournalReadingPane(OpenReadingLink, () => _currentSystem?.Invoke(), Watch);
         JournalDetailScroller.Content = _journalPane;
 
@@ -189,7 +181,7 @@ public partial class PanelView : UserControl
         // on every move between the big panel and mini.
         Classes.CollectionChanged += (_, _) =>
         {
-            ShowFollowButton();
+            _scroll.ShowFollowButton();
             ShowResizeButton();
         };
 
@@ -323,7 +315,7 @@ public partial class PanelView : UserControl
             if (_bound is not null)
             {
                 _bound.TranscriptAppended -= OnTranscriptAppended;
-                _bound.TranscriptAppended -= ScrollToEnd;
+                _bound.TranscriptAppended -= _scroll.ScrollToEnd;
                 _bound.PropertyChanged -= OnModelChanged;
             }
 
@@ -334,7 +326,7 @@ public partial class PanelView : UserControl
                 // Drawn before the scroll, because scrolling to the end of text that has not been written yet
                 // lands one append behind.
                 _bound.TranscriptAppended += OnTranscriptAppended;
-                _bound.TranscriptAppended += ScrollToEnd;
+                _bound.TranscriptAppended += _scroll.ScrollToEnd;
 
                 // The avatar follows the loop state.
                 _bound.PropertyChanged += OnModelChanged;
@@ -1636,7 +1628,9 @@ public partial class PanelView : UserControl
 
         if (step == PanelScrollStep.Newest)
         {
-            return ScrollToNewest(scroller);
+            return ReferenceEquals(scroller, TranscriptScroller)
+                ? _scroll.ScrollToNewest()
+                : PanelScrollOutcome.NothingToScroll;
         }
 
         var viewport = scroller.Viewport.Height;
@@ -1673,39 +1667,9 @@ public partial class PanelView : UserControl
 
         if (ReferenceEquals(scroller, TranscriptScroller))
         {
-            _following = AtTheNewest();
-            ShowFollowButton();
+            _scroll.Moved();
         }
 
-        return PanelScrollOutcome.Moved;
-    }
-
-    /// <summary>What ↓ Newest does, for a surface with no button: follow again and go to the newest line.</summary>
-    private PanelScrollOutcome ScrollToNewest(ScrollViewer active)
-    {
-        if (!ReferenceEquals(active, TranscriptScroller))
-        {
-            return PanelScrollOutcome.NothingToScroll;
-        }
-
-        var atNewest = AtTheNewest();
-        var scroller = Scroller;
-
-        _following = true;
-
-        if (scroller.Viewport.Height <= 0 || scroller.Extent.Height <= scroller.Viewport.Height)
-        {
-            ShowFollowButton();
-            return PanelScrollOutcome.NothingToScroll;
-        }
-
-        if (atNewest)
-        {
-            ShowFollowButton();
-            return PanelScrollOutcome.AlreadyThere;
-        }
-
-        Follow();
         return PanelScrollOutcome.Moved;
     }
 
@@ -2369,237 +2333,11 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>Puts what is on the page above the top of the view, and deletes nothing (#413).</summary>
-    public bool ScrollPastReading()
-    {
-        // Only where there is a reading to fold, which is the same question the menu item's greying already
-        // asks.
-        if (Tab != PanelTab.Transcript)
-        {
-            return false;
-        }
+    public bool ScrollPastReading() => Tab == PanelTab.Transcript && _scroll.ScrollPastReading();
 
-        var scroller = Scroller;
+    internal bool ReadingIsAboveTheFold => _scroll.ReadingIsAboveTheFold;
 
-        // Laid out first, for the reason Follow gives: the mark is the height of the content as it is now,
-        // and a run appended a moment ago is not in the extent until this returns.
-        scroller.UpdateLayout();
-
-        if (scroller.Viewport.Height <= 0)
-        {
-            return false;
-        }
-
-        var content = Math.Max(0, scroller.Extent.Height - PadOn(FoldPad));
-        var anchor = FoldAnchor();
-
-        // What the anchor already reads as, taken off every later reading of it.
-        var arrived = anchor is null ? null : FoldArrived(anchor, content);
-
-        _fold = (Page, content, arrived is null ? null : anchor, arrived ?? 0);
-        ApplyFold(reassert: true);
-
-        return true;
-    }
-
-    /// <summary>How much of the reading's newest end is remembered as the fold's anchor (#413).</summary>
-    private const int FoldAnchorLength = 256;
-
-    /// <summary>
-    /// The text the fold is set against, on the readings drawn as a flat block — which are the two that
-    /// are files, and so the two that trim (#413).
-    /// </summary>
-    private string? FoldAnchor()
-    {
-        if (!Transcript.IsVisible || Page == TranscriptPage.Journal)
-        {
-            return null;
-        }
-
-        // The runs rather than Text: the flat block is written as inlines from code-behind, so the Text
-        // property is empty and the character offsets the layout answers about are these.
-        var text = TranscriptShown;
-
-        if (text.Length == 0)
-        {
-            return null;
-        }
-
-        var take = Math.Min(FoldAnchorLength, text.Length);
-
-        return NewestAtTop ? text[..take] : text[^take..];
-    }
-
-    /// <summary>
-    /// How much reading sits past the fold's anchor — below it where the reading grows downwards, above
-    /// it on the two newest-first ones (#413).
-    /// </summary>
-    private double? FoldArrived(string anchor, double content)
-    {
-        if (Transcript.TextLayout is not { } layout)
-        {
-            return null;
-        }
-
-        var text = TranscriptShown;
-
-        // The last occurrence on a reading that grows downwards and the first on one that grows upwards:
-        // either way the one nearest the end the anchor was taken from.
-        var at = NewestAtTop
-            ? text.IndexOf(anchor, StringComparison.Ordinal)
-            : text.LastIndexOf(anchor, StringComparison.Ordinal);
-
-        if (at < 0)
-        {
-            return null;
-        }
-
-        // Through the text layout for the reason ScrollToHit gives: it is the one thing that knows where a
-        // character offset landed once the text wrapped.
-        var where = layout.HitTestTextPosition(NewestAtTop ? at : at + anchor.Length - 1);
-
-        return NewestAtTop ? Math.Max(0, where.Top) : Math.Max(0, content - where.Bottom);
-    }
-
-    /// <summary>
-    /// Where the fold's empty space is added: the control inside whichever scroller this reading uses,
-    /// so the padding moves with <see cref="Scroller"/> rather than being a fifth thing to keep in
-    /// step.
-    /// </summary>
-    private Control FoldPad =>
-        Page == TranscriptPage.Journal ? JournalList : TranscriptContent;
-
-    private static double PadOn(Control pad) => pad.Margin.Top + pad.Margin.Bottom;
-
-    /// <summary>Holds the fold, and gives the space back as the reading grows into it (#413).</summary>
-    private void ApplyFold(bool reassert)
-    {
-        // Not from inside itself: the padding it sets changes the extent, and the extent changing is one of
-        // the two things that call this.
-        if (_folding)
-        {
-            return;
-        }
-
-        var pad = FoldPad;
-
-        if (_fold is not { } fold || fold.Page != Page)
-        {
-            DropFold(pad);
-            return;
-        }
-
-        var scroller = Scroller;
-        var viewport = scroller.Viewport.Height;
-        var content = Math.Max(0, scroller.Extent.Height - PadOn(pad));
-        var was = fold.Mark;
-        var mark = was;
-        var grown = Math.Max(0, content - was);
-
-        // Where the anchor is now, on a reading that trims its front: the lines the press was set against
-        // move up under a mark that would otherwise stay where it was put, and nothing there would ever count
-        // as having grown (#413).
-        if (fold.Anchor is { } anchor)
-        {
-            if (FoldArrived(anchor, content) is not { } arrived)
-            {
-                DropFold(pad);
-                return;
-            }
-
-            grown = Math.Max(0, arrived - fold.Settled);
-            mark = Math.Max(0, content - grown);
-            _fold = (fold.Page, mark, anchor, fold.Settled);
-        }
-
-        // Whether the view is still sitting on the fold, asked before the mark is allowed to move it.
-        var onTheFold = NewestAtTop
-            ? scroller.Offset.Y <= Transcript.FontSize
-            : Math.Abs(scroller.Offset.Y - was) <= Transcript.FontSize;
-
-        var wanted = Math.Max(0, viewport - grown);
-
-        _folding = true;
-
-        try
-        {
-            var margin = NewestAtTop
-                ? new Thickness(0, wanted, 0, 0)
-                : new Thickness(0, 0, 0, wanted);
-
-            if (pad.Margin != margin)
-            {
-                pad.Margin = margin;
-
-                // Laid out here rather than left to the next pass, because the caller's very next act is
-                // usually a scroll — <see cref="Follow"/>'s — and it would go to the end of an extent still
-                // holding the empty space this call has just given back.
-                scroller.UpdateLayout();
-            }
-        }
-        finally
-        {
-            _folding = false;
-        }
-
-        // On the press, and again whenever the reading has shifted under a view that was still sitting on the
-        // fold: the fold is a place in the text rather than a number of pixels down the page, so a reading
-        // that trims its front takes the view with it (#413).
-        if (!reassert && (mark == was || !onTheFold))
-        {
-            return;
-        }
-
-        _scrollingItself = true;
-
-        try
-        {
-            // The newest end goes to the top of the view.
-            scroller.Offset = scroller.Offset.WithY(
-                NewestAtTop
-                    ? 0
-                    : Math.Clamp(mark, 0, Math.Max(0, scroller.Extent.Height - viewport)));
-        }
-        finally
-        {
-            _scrollingItself = false;
-        }
-
-        ShowFollowButton();
-    }
-
-    /// <summary>
-    /// Gives the fold's empty space back and forgets it — on leaving the reading it belongs to, and
-    /// once the reading has trimmed the lines it was set against away entirely (#413).
-    /// </summary>
-    private void DropFold(Control pad)
-    {
-        _fold = null;
-
-        if (PadOn(pad) > 0)
-        {
-            pad.Margin = default;
-        }
-    }
-
-    /// <summary>
-    /// Whether none of the reading is inside the view — what the fold is for, asked of the drawn
-    /// controls rather than of the model (#413).
-    /// </summary>
-    internal bool ReadingIsAboveTheFold
-    {
-        get
-        {
-            var scroller = Scroller;
-            var pad = FoldPad;
-            var top = pad.Margin.Top;
-            var content = Math.Max(0, scroller.Extent.Height - PadOn(pad));
-
-            var from = scroller.Offset.Y;
-            var to = from + scroller.Viewport.Height;
-
-            return Math.Min(to, top + content) - Math.Max(from, top) <= 0.5;
-        }
-    }
+    internal bool Following => _scroll.Following;
 
     /// <summary>Puts the cursor in the search box.</summary>
     public void FocusSearch()
@@ -2806,7 +2544,7 @@ public partial class PanelView : UserControl
             where = where.WithY(placed.Y);
         }
 
-        // Deliberately not guarded by _scrollingItself.
+        // Deliberately not guarded: the scroll handler reads this as the Commander moving.
         TranscriptScroller.Offset = new Vector(
             TranscriptScroller.Offset.X,
             Math.Max(0, where.Y - (TranscriptScroller.Viewport.Height / 3)));
@@ -2876,7 +2614,7 @@ public partial class PanelView : UserControl
 
         // The transcript's own, which is drawn from a scroll position rather than from the mode — so it has
         // to be re-asked whenever the surface changes kind, not only when it scrolls.
-        ShowFollowButton();
+        _scroll.ShowFollowButton();
     }
 
     /// <summary>
@@ -2979,7 +2717,7 @@ public partial class PanelView : UserControl
             _showingRoot = root;
 
             DropSearch();
-            _following = true;
+            _scroll.Rejoin();
         }
 
         DrawModes();
@@ -3279,7 +3017,7 @@ public partial class PanelView : UserControl
             DrawTranscript();
 
             // Only if they are following, which ScrollToEnd already decides.
-            ScrollToEnd();
+            _scroll.ScrollToEnd();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -3303,7 +3041,7 @@ public partial class PanelView : UserControl
             }
 
             DrawTranscript();
-            ScrollToEnd();
+            _scroll.ScrollToEnd();
             return;
         }
 
@@ -3322,7 +3060,7 @@ public partial class PanelView : UserControl
 
             // At the end, because a log is read newest-first and this page has always opened at the top of
             // it.
-            ScrollToEnd();
+            _scroll.ScrollToEnd();
         });
     }
 
@@ -3786,7 +3524,7 @@ public partial class PanelView : UserControl
 
         // A fold belongs to the reading it was pressed on, so leaving that reading gives its empty space back
         // (#413).
-        ApplyFold(reassert: false);
+        _scroll.ApplyFold(reassert: false);
 
         JournalPane.IsVisible = listed;
         TranscriptScroller.IsVisible = !listed;
@@ -4725,154 +4463,8 @@ public partial class PanelView : UserControl
         Nav.ToRoot();
     }
 
-    /// <summary>Follows the transcript, from whichever thread grew it.</summary>
-    private void ScrollToEnd()
-    {
-        // Only while following.
-        if (!_following)
-        {
-            return;
-        }
-
-        // Posted only when it has to be.
-        if (Dispatcher.UIThread.CheckAccess())
-        {
-            Follow();
-            return;
-        }
-
-        Dispatcher.UIThread.Post(Follow);
-    }
-
-    /// <summary>
-    /// Goes to the newest line, without the trip through the handler deciding whether the Commander
-    /// meant to move.
-    /// </summary>
-    public void KeepUp()
-    {
-        if (_following)
-        {
-            Follow();
-        }
-    }
-
-    private void Follow()
-    {
-        _scrollingItself = true;
-
-        try
-        {
-            var scroller = Scroller;
-
-            // Laid out first.
-            scroller.UpdateLayout();
-
-            // And the fold gives back as much of its empty space as the new lines have taken (#413), before
-            // the scroll below reads the extent — otherwise the end of the extent is the empty space rather
-            // than the newest line, and following would land in it.
-            ApplyFold(reassert: false);
-
-            // The newest line, not the bottom (#233).
-            if (NewestAtTop)
-            {
-                scroller.Offset = scroller.Offset.WithY(0);
-            }
-            else
-            {
-                scroller.ScrollToEnd();
-            }
-        }
-        finally
-        {
-            _scrollingItself = false;
-        }
-
-        ShowFollowButton();
-    }
-
-    /// <summary>Which way this reading runs, and therefore where its newest line is (#233).</summary>
-    private bool NewestAtTop => Page is TranscriptPage.Journal or TranscriptPage.RawJournal;
-
-    /// <summary>The scroller the Newest button acts on, which is not always the transcript's.</summary>
-    private ScrollViewer Scroller =>
-        Page == TranscriptPage.Journal ? JournalListScroller : TranscriptScroller;
-
-    /// <summary>Whether the view is at the newest line of this reading, within a line's worth.</summary>
-    private bool AtTheNewest()
-    {
-        var scroller = Scroller;
-        var tolerance = Transcript.FontSize;
-
-        if (NewestAtTop)
-        {
-            return scroller.Offset.Y <= tolerance;
-        }
-
-        var slack = Math.Max(1, scroller.Extent.Height - scroller.Viewport.Height);
-
-        return scroller.Offset.Y >= slack - tolerance;
-    }
-
-    /// <summary>The Commander moved.</summary>
-    private void OnTranscriptScrolled(object? sender, ScrollChangedEventArgs e)
-    {
-        if (_scrollingItself)
-        {
-            return;
-        }
-
-        // The reading grew, or the view resized: the fold gives back as much of its empty space as the new
-        // lines have taken (#413).
-        if (e.ExtentDelta.Y != 0 || e.ViewportDelta.Y != 0)
-        {
-            ApplyFold(reassert: false);
-        }
-
-        if (e.ViewportDelta.Y != 0)
-        {
-            // A resize keeps the offset, so a reader who was following would lose the newest line off the
-            // bottom; posted, because this runs inside a layout pass.
-            if (_following)
-            {
-                Dispatcher.UIThread.Post(Follow);
-            }
-        }
-
-        // Only a move on its own is the Commander's. An offset change that arrives with a new extent or
-        // viewport is layout settling, measured against an extent that is not final.
-        if (e.OffsetDelta.Y != 0 && e.ExtentDelta.Y == 0 && e.ViewportDelta.Y == 0)
-        {
-            _following = AtTheNewest();
-        }
-        else if (e.OffsetDelta.Y != 0 && _following)
-        {
-            Dispatcher.UIThread.Post(Follow);
-        }
-
-        ShowFollowButton();
-    }
-
-    private void OnFollowClick(object? sender, RoutedEventArgs e)
-    {
-        _following = true;
-        Follow();
-    }
-
-    /// <summary>Shows the jump-to-latest control, and says how far behind the reader is.</summary>
-    private void ShowFollowButton()
-    {
-        var behind = !_following && !AtTheNewest();
-
-        // Not on a surface nothing can be pressed on (#202).
-        FollowButton.IsVisible = behind && !OutputOnly;
-
-        if (behind)
-        {
-            // The arrow points where the newest line actually is (#233), which is upwards on the two journal
-            // readings.
-            FollowButton.Content = NewestAtTop ? "↑ Newest" : "↓ Newest";
-        }
-    }
+    /// <summary>Goes to the newest line while following.</summary>
+    public void KeepUp() => _scroll.KeepUp();
 
     /// <summary>Copies the whole of the page being read (Phase 19, "Copy log").</summary>
     private async void OnCopyClick(object? sender, RoutedEventArgs e)
