@@ -10,6 +10,9 @@ public sealed record TtsProviderInfo
     /// <summary>How the provider row labels it.</summary>
     public required string Label { get; init; }
 
+    /// <summary>One line on what choosing it means, for the setup wizard.</summary>
+    public required string Summary { get; init; }
+
     /// <summary>The secret store name for this provider's key, or null if it needs none.</summary>
     public string? KeySecretName { get; init; }
 
@@ -102,6 +105,7 @@ public static class TtsProviderCatalog
         Id = NoneId,
         Name = "None",
         Label = "None",
+        Summary = "Replies stay on screen as text.",
         Destination = "nothing sent",
         Egress = "No voice provider is selected, so no text is sent anywhere to be spoken. "
                  + "Audio cues and the thinking bed still play; they are files on this machine.",
@@ -112,6 +116,7 @@ public static class TtsProviderCatalog
         Id = EdgeId,
         Name = "Edge Neural",
         Label = "Edge Neural",
+        Summary = "Microsoft's online voices. No account needed.",
         Destination = "speech.platform.bing.com",
         Egress = "The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to "
                  + "be turned into audio. That includes re-voiced in-game messages when you have "
@@ -124,6 +129,7 @@ public static class TtsProviderCatalog
         Id = ElevenLabsId,
         Name = "ElevenLabs",
         Label = "ElevenLabs",
+        Summary = "The widest choice of voices. One key also covers ElevenLabs listening.",
         KeySecretName = ElevenLabsKeySecretName,
         Destination = "api.elevenlabs.io, storage.googleapis.com",
 
@@ -155,6 +161,7 @@ public static class TtsProviderCatalog
         Id = OpenAiId,
         Name = "OpenAI",
         Label = "OpenAI",
+        Summary = "OpenAI's voices. Uses the same key as OpenAI conversation and listening.",
 
         // The same secret the language-model provider uses.
         KeySecretName = "openai.apiKey",
@@ -189,6 +196,7 @@ public static class TtsProviderCatalog
         Id = CartesiaId,
         Name = "Cartesia",
         Label = "Cartesia",
+        Summary = "Cartesia's hosted voices, with a key of its own.",
         KeySecretName = "cartesia.apiKey",
         Destination = "api.cartesia.ai",
         Egress = "The text of every line D47 speaks through this slot is sent to Cartesia to be "
@@ -224,6 +232,7 @@ public static class TtsProviderCatalog
         Id = KokoroId,
         Name = "Kokoro",
         Label = "Kokoro",
+        Summary = "Runs on this computer. Downloads once, then works offline.",
         Destination = "nothing sent",
         Egress =
             "Nothing is sent anywhere. The voice runs on this computer, so the text D47 speaks — "
@@ -257,6 +266,7 @@ public static class TtsProviderCatalog
         Id = ChatterboxId,
         Name = "Chatterbox",
         Label = "Chatterbox",
+        Summary = "Runs on this computer's processor. A larger download than Kokoro.",
         Destination = "nothing sent",
         Egress =
             "Nothing is sent anywhere. The voice runs on this computer's processor, so the text D47 "

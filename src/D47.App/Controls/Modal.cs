@@ -29,7 +29,8 @@ public static class Modal
     /// The layout. <paramref name="figure"/> is a key figure the dialog already shows, set at the top right
     /// of the header; <paramref name="buttons"/> are laid left-aligned in the footer in the order given.
     /// A body that does its own scrolling passes <paramref name="scrolls"/> false and is given the height
-    /// between the header and the footer. <paramref name="subtitle"/> is a Grey line under the title.
+    /// between the header and the footer. <paramref name="subtitle"/> is a Grey line under the title, and
+    /// <paramref name="below"/> a control under that. <paramref name="trailing"/> sits at the footer's right.
     /// </summary>
     public static DockPanel Build(
         string context,
@@ -38,16 +39,18 @@ public static class Modal
         IReadOnlyList<Control> buttons,
         Control? figure = null,
         bool scrolls = true,
-        string? subtitle = null)
+        string? subtitle = null,
+        Control? below = null,
+        Control? trailing = null)
     {
         var layout = new DockPanel { Name = "Modal" };
         Themed(layout, Avalonia.Controls.Panel.BackgroundProperty, ThemeManager.BarKey);
 
-        var header = Header(context, title, figure, subtitle);
+        var header = Header(context, title, figure, subtitle, below);
         DockPanel.SetDock(header, Dock.Top);
         layout.Children.Add(header);
 
-        var footer = Footer(buttons);
+        var footer = Footer(buttons, trailing);
         DockPanel.SetDock(footer, Dock.Bottom);
         layout.Children.Add(footer);
 
@@ -90,7 +93,7 @@ public static class Modal
         return row;
     }
 
-    private static Control Header(string context, string title, Control? figure, string? subtitle)
+    private static Control Header(string context, string title, Control? figure, string? subtitle, Control? below)
     {
         var line = new TextBlock
         {
@@ -122,6 +125,12 @@ public static class Modal
             words.Children.Add(under);
         }
 
+        if (below is not null)
+        {
+            below.Margin = new Thickness(0, 6, 0, 0);
+            words.Children.Add(below);
+        }
+
         var top = new DockPanel { Margin = new Thickness(Inset, 18, Inset, 10) };
 
         if (figure is not null)
@@ -140,7 +149,7 @@ public static class Modal
         return new StackPanel { Children = { top, rule } };
     }
 
-    private static Control Footer(IReadOnlyList<Control> buttons)
+    private static Control Footer(IReadOnlyList<Control> buttons, Control? trailing)
     {
         var rule = new Border { Height = 1 };
         Themed(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
@@ -150,7 +159,6 @@ public static class Modal
             HorizontalAlignment = HorizontalAlignment.Left,
             ItemSpacing = Gaps.Tile,
             LineSpacing = Gaps.Tile,
-            Margin = new Thickness(Inset, 12, Inset, 16),
         };
 
         foreach (var button in buttons)
@@ -158,7 +166,18 @@ public static class Modal
             row.Children.Add(button);
         }
 
-        return new StackPanel { Children = { rule, row } };
+        var line = new DockPanel { Margin = new Thickness(Inset, 12, Inset, 16) };
+
+        if (trailing is not null)
+        {
+            trailing.Margin = new Thickness(Gaps.Tile, 0, 0, 0);
+            DockPanel.SetDock(trailing, Dock.Right);
+            line.Children.Add(trailing);
+        }
+
+        line.Children.Add(row);
+
+        return new StackPanel { Children = { rule, line } };
     }
 
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>

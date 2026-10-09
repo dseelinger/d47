@@ -10,6 +10,10 @@
 
 A switch press or spoken answer in the first seconds after start-up is no longer dropped while the panels are being set up.
 
+The first launch now opens a seven-step setup in place of the key window. It asks which AI to talk to, which voice to speak with and how D47 hears you, listing every provider with one line on it and whether it needs a key, is free, or runs on this PC. It then asks only for the keys those choices need, each key once even when it serves more than one choice, with a link to the provider's key page and a line saying what is sent where. The talk button step binds a stick button or a key, warns when Elite already uses it, and sets Hold, Toggle, Always on or Wake word. The last step lists the choices and every destination they send to. Nothing is saved until Start, and Skip setup closes it with every setting unchanged. A choice whose key was skipped is saved as the free choice for that part: no AI, Edge Neural voices, or listening on this PC. About › Set up keys opens the same setup with the current settings chosen.
+
+A key bound to Scroll Lock is now shown as Scroll Lock rather than Scroll.
+
 Push-to-talk now starts out bound to Scroll Lock instead of Right Shift, a key Windows gives no shortcut and few games use. Scroll Lock can also be bound by hand. An install that already has a push-to-talk key saved keeps it.
 
 Privacy and egress has a new entry, Your custom voices: a voice you record or import for Chatterbox is kept in `data\voices\custom` on this PC, encrypted for your Windows user so no other account can read it, and is never sent anywhere or included in a donation. Nothing in the app records or imports one yet.

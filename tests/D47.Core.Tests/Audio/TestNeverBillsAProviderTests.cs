@@ -11,6 +11,7 @@ public class TestNeverBillsAProviderTests
         Id = id,
         Name = id,
         Label = id,
+        Summary = "test",
         Egress = "test",
         Destination = "test",
         Billed = billed,

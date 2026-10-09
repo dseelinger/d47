@@ -12,6 +12,9 @@ public sealed record SttProviderInfo
     /// <summary>How the provider row labels it.</summary>
     public required string Label { get; init; }
 
+    /// <summary>One line on what choosing it means, for the setup wizard.</summary>
+    public required string Summary { get; init; }
+
     /// <summary>The one model a hosted provider is asked for, or null for the local provider.</summary>
     public string? Model { get; init; }
 
@@ -54,6 +57,7 @@ public static class SttProviderCatalog
         Id = LocalId,
         Name = "This computer",
         Label = "Whisper",
+        Summary = "Whisper, on this computer. What you say stays here.",
         Destination = "nothing sent",
         Egress = "Speech is turned into words by a Whisper model running on this machine. No audio and "
                  + "no transcript leaves it.",
@@ -64,6 +68,7 @@ public static class SttProviderCatalog
         Id = GroqId,
         Name = "Groq",
         Label = "Groq",
+        Summary = "Whisper hosted by Groq. Faster than this computer when it is slow.",
         Model = "whisper-large-v3-turbo",
         KeySecretName = "groq.apiKey",
         Destination = "api.groq.com",
@@ -75,6 +80,7 @@ public static class SttProviderCatalog
         Id = OpenAiId,
         Name = "OpenAI",
         Label = "OpenAI",
+        Summary = "Uses the same key as OpenAI conversation and voice.",
         Model = "gpt-4o-mini-transcribe",
 
         // The same secret the language model and the OpenAI voice read.
@@ -88,6 +94,7 @@ public static class SttProviderCatalog
         Id = DeepgramId,
         Name = "Deepgram",
         Label = "Deepgram",
+        Summary = "Deepgram's hosted transcription, with a key of its own.",
         Model = "nova-3",
         KeySecretName = "deepgram.apiKey",
         Destination = "api.deepgram.com",
@@ -99,6 +106,7 @@ public static class SttProviderCatalog
         Id = ElevenLabsId,
         Name = "ElevenLabs",
         Label = "ElevenLabs Scribe",
+        Summary = "Uses the same key as an ElevenLabs voice.",
         Model = "scribe_v2",
 
         // The same secret the ElevenLabs voice reads.

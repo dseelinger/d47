@@ -19,6 +19,7 @@ public class GestureDisplayTests
     [InlineData("OemQuestion", "/")]
     [InlineData("Return", "Enter")]
     [InlineData("Escape", "Esc")]
+    [InlineData("Scroll", "Scroll Lock")]
     public void AKeyIsShownAsWhatIsPrintedOnIt(string stored, string shown)
     {
         Assert.Equal(shown, Gestures.Describe(stored));

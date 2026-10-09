@@ -3981,128 +3981,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             _ => "Press a button…",
         };
 
-        var captured = new TaskCompletionSource<(string Key, string? Value)?>();
-
-        // A modifier held on the way down, on a row where one is a binding in its own right.
-        Key? held = null;
-
-        void OnKey(object? sender, KeyEventArgs e)
-        {
-            var modifier = e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
-                or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin;
-
-            if (modifier)
-            {
-                // On a polled row, told apart by which edge it arrives on rather than refused: pressed, it is
-                // still someone assembling a chord; released with nothing else pressed, it was the binding.
-                held = bare ? e.Key : null;
-                return;
-            }
-
-            held = null;
-            e.Handled = true;
-
-            captured.TrySetResult(e.Key == Key.Escape
-                ? null
-                : (row.Key, new KeyGesture(e.Key, e.KeyModifiers).ToString()));
-        }
-
-        void OnKeyUp(object? sender, KeyEventArgs e)
-        {
-            if (held != e.Key)
-            {
-                return;
-            }
-
-            e.Handled = true;
-            captured.TrySetResult((row.Key, new KeyGesture(e.Key, KeyModifiers.None).ToString()));
-        }
-
-        if (keys)
-        {
-            // Tunnelling: the gesture belongs to the binding, not to whatever control the click left focused,
-            // so it has to be seen on the way down.
-            top.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
-
-            if (bare)
-            {
-                top.AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
-            }
-        }
-
-        var walking = stick ? Walk(_switches!, buttonKey!, message, captured) : null;
-
         try
         {
-            if (await captured.Task is { } caught)
+            if (await BindCapture.RunAsync(top, keys ? row.Key : null, bare, stick ? buttonKey : null, _switches, message)
+                is { } caught)
             {
                 Apply(caught.Key, caught.Value, message);
             }
         }
         finally
         {
-            if (keys)
-            {
-                top.RemoveHandler(KeyDownEvent, OnKey);
-                top.RemoveHandler(KeyUpEvent, OnKeyUp);
-            }
-
-            walking?.Stop();
             button.Content = previous;
             Refresh();
         }
-    }
-
-    /// <summary>
-    /// The controller half of a capture: the same 10 Hz walk the modal bind window ran, on a timer this
-    /// control owns.
-    /// </summary>
-    private DispatcherTimer Walk(
-        SwitchEditing editing,
-        string key,
-        StatusLine message,
-        TaskCompletionSource<(string Key, string? Value)?> captured)
-    {
-        var capture = new D47.Core.Hotas.ButtonCapture();
-        var opened = editing.Now();
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-
-        timer.Tick += (_, _) =>
-        {
-            if (editing.Reader.Unavailable is { Length: > 0 } why)
-            {
-                message.Fail(why);
-                timer.Stop();
-                return;
-            }
-
-            // Nothing is read until the device list stops changing: a single enumeration at startup reported
-            // three of six devices on the bench (Phase 21, finding 1).
-            if (!editing.Reader.IsSettled)
-            {
-                message.Say("Looking for your controllers…");
-                return;
-            }
-
-            var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
-
-            message.Say(result.Says);
-
-            if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Captured)
-            {
-                timer.Stop();
-                captured.TrySetResult((key, result.Binding!.Value.ToString()));
-            }
-            else if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Declined)
-            {
-                // The decline is the answer, and it stays on the line.
-                timer.Stop();
-            }
-        };
-
-        timer.Start();
-
-        return timer;
     }
 
     private bool Apply(SettingRow row, string? value, StatusLine message) =>

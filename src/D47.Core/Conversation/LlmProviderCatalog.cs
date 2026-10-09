@@ -83,14 +83,14 @@ public static class LlmProviderCatalog
         {
             Id = NoneId,
             Name = "None (local only)",
-            Summary = "No language model. The keyword router answers what it recognises and says so when it cannot.",
+            Summary = "No AI. D47 answers what it understands when you type, and says so when it cannot.",
             Egress = "Nothing. No turn text, journal content or game state leaves this machine.",
         },
         new LlmProviderInfo
         {
             Id = AnthropicId,
             Name = "Anthropic",
-            Summary = "Claude models, over the Anthropic Messages API.",
+            Summary = "Claude models.",
             KeySecretName = "anthropic.apiKey",
             DefaultEndpoint = "https://api.anthropic.com",
             Egress =
@@ -104,7 +104,7 @@ public static class LlmProviderCatalog
         {
             Id = OpenAiId,
             Name = "OpenAI",
-            Summary = "GPT models, over the OpenAI Responses API.",
+            Summary = "GPT models. One key also covers OpenAI voice and listening.",
             KeySecretName = "openai.apiKey",
             DefaultEndpoint = "https://api.openai.com/v1",
 
@@ -123,8 +123,8 @@ public static class LlmProviderCatalog
             Id = OpenAiCompatibleId,
             Name = "OpenAI-compatible endpoint",
             Summary =
-                "A model you run yourself — Ollama, LM Studio, vLLM, llama.cpp — or any gateway speaking the " +
-                "OpenAI Chat Completions protocol. Point it at the address and say which model.",
+                "A server you name that speaks the OpenAI API, such as Ollama or LM Studio, on this computer or " +
+                "elsewhere. Set its address in Settings.",
             KeySecretName = "openaiCompatible.apiKey",
 
             // The change this entry exists for.

@@ -25,6 +25,7 @@ public static class Gestures
         [Key.Next] = "Page Down",
         [Key.Escape] = "Esc",
         [Key.Space] = "Space",
+        [Key.Scroll] = "Scroll Lock",
     };
 
     public static string Describe(string? gesture)

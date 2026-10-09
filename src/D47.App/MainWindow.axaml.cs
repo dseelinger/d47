@@ -594,7 +594,7 @@ public partial class MainWindow : Window
 
     }
 
-    /// <summary>The guided key setup, shown when there is no usable language-model key (Phase 16).</summary>
+    /// <summary>The setup wizard, shown when there is no usable key for the selected AI.</summary>
     private async Task OfferKeysAsync()
     {
         if (_host is not { } host)
@@ -613,7 +613,7 @@ public partial class MainWindow : Window
         await ShowKeySetupAsync();
     }
 
-    /// <summary>The guided key setup, shown because it was asked for.</summary>
+    /// <summary>The setup wizard, shown because it was asked for.</summary>
     private async Task ShowKeySetupAsync()
     {
         if (_host is not { } host)
@@ -621,25 +621,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        var provider = LlmProviderCatalog.Selected(host.Settings.Current.Llm.Provider);
-
-        var steps = FirstRun.Steps(
-            host.Capabilities,
-            host.Settings.Current,
-            provider,
-            host.Secrets.Has,
-            ConversationCapability.KeyRowFor(provider),
-
-            // The voice key, offered because a companion that talks back is most of the point — and offered
-            // second, because one that does not is still a companion.
-            [SpeechCapability.KeyRowFor(TtsProviderCatalog.ElevenLabs)]);
-
-        if (steps.Count == 0)
-        {
-            return;
-        }
-
-        await new FirstRunDialog(steps, host.Settings).Over(this);
+        await new SetupWizard(
+            host.Settings,
+            () => host.Binds,
+            host.SwitchEditing,
+            openPrivacy: () =>
+            {
+                OpenSettings();
+                RevealSetting(PrivacyCapability.Id);
+            }).Over(this);
     }
 
     /// <summary>Window-scoped gestures, matched against the bound settings.</summary>
