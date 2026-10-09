@@ -15,7 +15,7 @@ public sealed class APauseSurvivesARestartTests
         using var fixtures = PauseSupport.Picked(out _);
         fixtures.Director.SetOn("F1", false, Now.AddMinutes(1));
 
-        var reopened = StoryStore.Open(fixtures.StoryPath, NullLogger<StoryStore>.Instance);
+        var reopened = StoryStore.Open(fixtures.StoryPath, fixtures.Files, NullLogger<StoryStore>.Instance);
 
         Assert.True(reopened.Current("F1")!.IsOff);
         Assert.True(reopened.Current("F1")!.WasOffAt(Now.AddHours(1)));
@@ -29,7 +29,7 @@ public sealed class APauseSurvivesARestartTests
         fixtures.Director.SetOn("F1", false, Now.AddMinutes(1));
         fixtures.Director.SetOn("F1", true, Now.AddMinutes(10));
 
-        var story = StoryStore.Open(fixtures.StoryPath, NullLogger<StoryStore>.Instance).Current("F1")!;
+        var story = StoryStore.Open(fixtures.StoryPath, fixtures.Files, NullLogger<StoryStore>.Instance).Current("F1")!;
 
         Assert.False(story.IsOff);
         Assert.True(story.WasOffAt(Now.AddMinutes(5)));

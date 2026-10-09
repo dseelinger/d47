@@ -97,4 +97,17 @@ public sealed class TheDiskFileSystemReplacesAtomicallyAndReadsSharedFilesTests 
 
         Assert.Equal("{}", _files.ReadText(path));
     }
+
+    [Fact]
+    public void ADeleteRemovesTheFileAndToleratesAMissingFileOrFolder()
+    {
+        var path = Path.Combine(_folder, "token.txt");
+        _files.WriteText(path, "x");
+
+        _files.Delete(path);
+        _files.Delete(path);
+        _files.Delete(Path.Combine(_folder, "no-such-folder", "token.txt"));
+
+        Assert.Null(_files.Stat(path));
+    }
 }

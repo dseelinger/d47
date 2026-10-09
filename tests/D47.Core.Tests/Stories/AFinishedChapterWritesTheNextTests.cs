@@ -92,7 +92,7 @@ public sealed class AFinishedChapterWritesTheNextTests
         using var fixtures = Fixtures();
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var reread = StoryStore.Open(fixtures.StoryPath, Microsoft.Extensions.Logging.Abstractions.NullLogger<StoryStore>.Instance);
+        var reread = StoryStore.Open(fixtures.StoryPath, fixtures.Files, Microsoft.Extensions.Logging.Abstractions.NullLogger<StoryStore>.Instance);
         var story = reread.Current("F1")!;
 
         Assert.Equal(Id, story.Id);

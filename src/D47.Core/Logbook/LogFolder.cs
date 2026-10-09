@@ -12,7 +12,7 @@ public sealed record LogEntry(string Path, DateTimeOffset Written, long Bytes)
 }
 
 /// <summary>The folder the logs live in (Phase 33, item 1).</summary>
-public sealed class LogFolder(string folder, ILogger<LogFolder> logger)
+public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolder> logger)
 {
     public const string FolderName = "commander-log";
 
@@ -27,12 +27,12 @@ public sealed class LogFolder(string folder, ILogger<LogFolder> logger)
         var path = System.IO.Path.Combine(folder, $"{stem}.md");
 
         // Never overwrite.
-        for (var suffix = 2; File.Exists(path) && suffix < 1000; suffix++)
+        for (var suffix = 2; files.Stat(path) is not null && suffix < 1000; suffix++)
         {
             path = System.IO.Path.Combine(folder, $"{stem}-{suffix.ToString(CultureInfo.InvariantCulture)}.md");
         }
 
-        AtomicFile.WriteAllText(path, content);
+        files.WriteText(path, content);
         logger.LogInformation("Wrote a Commander's log to {Path}", path);
 
         return path;
@@ -41,18 +41,14 @@ public sealed class LogFolder(string folder, ILogger<LogFolder> logger)
     /// <summary>What is in the folder, newest first.</summary>
     public IReadOnlyList<LogEntry> Entries()
     {
-        if (!Directory.Exists(folder))
-        {
-            return [];
-        }
-
         try
         {
             return
             [
-                .. Directory.EnumerateFiles(folder, "*.md")
-                    .Select(path => new FileInfo(path))
-                    .Select(file => new LogEntry(file.FullName, new DateTimeOffset(file.LastWriteTimeUtc, TimeSpan.Zero), file.Length))
+                .. files.Enumerate(folder, "*.md")
+                    .Select(path => (Path: path, State: files.Stat(path)))
+                    .Where(file => file.State is not null)
+                    .Select(file => new LogEntry(file.Path, new DateTimeOffset(file.State!.Value.Written, TimeSpan.Zero), file.State.Value.Length))
                     .OrderByDescending(entry => entry.Written),
             ];
         }

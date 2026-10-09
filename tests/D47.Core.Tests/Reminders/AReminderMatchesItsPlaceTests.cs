@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Station, system and carrier reminders fire where they were asked to, and nowhere else.</summary>
-[Trait("Category", "Integration")]
 public class AReminderMatchesItsPlaceTests
 {
     private const long CarrierId = 3700000000L;
@@ -18,7 +17,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void AnArrivalReminderFiresInTheNamedSystemAndNotAnother()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.ArrivalIn, "Sell the painite.", "Shinrarta Dezhra");
         var state = Fresh();
 
@@ -32,7 +31,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void AnArrivalReminderMatchesTheWholeNameOnly()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.ArrivalIn, "Sell the painite.", "Sol");
 
         Assert.Empty(bench.Say(Fresh(), events: ReminderBench.Event("FSDJump", ("StarSystem", "Solati"))));
@@ -41,7 +40,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void ADockingAtReminderFiresAtTheNamedStationOnly()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.DockingAt, "Hand in the bounties.", "Jameson Memorial");
         var state = Fresh();
 
@@ -52,7 +51,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void AnOwnCarrierReminderFiresAtTheCommandersOwnCarrier()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.OwnCarrier, "Load the tritium.");
         var state = Fresh();
         state.Carrier = state.Carrier with { CallSign = "K7Q-B4X", CarrierId = CarrierId, IsSquadron = false };
@@ -64,7 +63,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void AnOwnCarrierReminderDoesNotFireDockingAtASquadronCarrier()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.OwnCarrier, "Load the tritium.");
         var state = Fresh();
         var dock = AtTheCarrier();
@@ -80,7 +79,7 @@ public class AReminderMatchesItsPlaceTests
     [Fact]
     public void AnOwnCarrierReminderDoesNotFireDockingAtAStation()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.OwnCarrier, "Load the tritium.");
         var state = Fresh();
         state.Carrier = state.Carrier with { CallSign = "K7Q-B4X", CarrierId = CarrierId, IsSquadron = false };

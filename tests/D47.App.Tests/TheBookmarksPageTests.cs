@@ -10,6 +10,7 @@ using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -47,7 +48,7 @@ public class TheBookmarksPageTests
     {
         var root = TempFolders.Create("d47-bookmarks-page-tests");
 
-        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), NullLogger<BookmarkStore>.Instance);
+        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         if (seed)
         {
@@ -242,7 +243,7 @@ public class TheBookmarksPageTests
     public void ThePageListsTheFlyingCommandersBookmarksAndNotAnothers()
     {
         var root = TempFolders.Create("d47-bookmarks-page-tests");
-        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), NullLogger<BookmarkStore>.Instance);
+        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         store.Add("F1", "Current CG", "Deciat", At);
         store.Add("F2", "Somewhere Else", "Sol", At);
@@ -408,7 +409,7 @@ public class TheBookmarksPageTests
     public void TheStatesAreCaptured()
     {
         var root = TempFolders.Create("d47-bookmarks-page-tests");
-        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), NullLogger<BookmarkStore>.Instance);
+        var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         store.Add("F1", "Current CG", "Deciat", At);
         store.Add("F1", "Home", "Shinrarta Dezhra", At.AddDays(-1));
@@ -423,6 +424,7 @@ public class TheBookmarksPageTests
         using var empty = AppLook.Capture(
             Full(new BookmarkStore(
                 Path.Combine(TempFolders.Create("d47-bookmarks-page-tests"), "bookmarks.json"),
+                new MemoryFileSystem(),
                 NullLogger<BookmarkStore>.Instance), () => gameState.Active),
             "bookmarks-page-empty.png");
 

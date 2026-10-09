@@ -169,6 +169,8 @@ internal sealed class StoryFixtures : IDisposable
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-stories", Guid.NewGuid().ToString("N"));
 
+    public IFileSystem Files { get; } = new DiskFileSystem();
+
     public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null)
     {
         secret ??= Secret;
@@ -177,9 +179,9 @@ internal sealed class StoryFixtures : IDisposable
 
         Provider = provider;
         Book = new AdventureBook(
-            new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, "adventures.json"), Files, NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        Stories = StoryStore.Open(Path.Combine(_folder, "story.json"), NullLogger<StoryStore>.Instance);
+        Stories = StoryStore.Open(Path.Combine(_folder, "story.json"), Files, NullLogger<StoryStore>.Instance);
 
         Book.Silenced = (commander, id, at) => Stories.Find(commander, id)?.WasOffAt(at) == true;
 

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Diagnostics;
@@ -198,37 +199,31 @@ public class ADonationCarriesItsOwnReceiptTests
     /// Both files land, and the document is the payload byte for byte — asserted by hashing what was
     /// actually written rather than by trusting the string that was passed in.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void WritingLeavesTheBytesAndTheirHashSideBySide()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-receipt").FullName;
+        var files = new MemoryFileSystem();
+        var folder = @"C:\d47-test\donations";
 
-        try
-        {
-            const string payload = "### Incident excerpt\nkept beside the executable\n";
+        const string payload = "### Incident excerpt\nkept beside the executable\n";
 
-            var envelope = Sealed(payload);
-            var written = DonationReceipt.Write(
-                folder,
-                envelope,
-                DonationOutcome.Stored(envelope.PredictedKey()),
-                "https://example.invalid/donate",
-                payload,
-                documentIsPayload: true);
+        var envelope = Sealed(payload);
+        var written = DonationReceipt.Write(
+            files,
+            folder,
+            envelope,
+            DonationOutcome.Stored(envelope.PredictedKey()),
+            "https://example.invalid/donate",
+            payload,
+            documentIsPayload: true);
 
-            Assert.NotNull(written);
+        Assert.NotNull(written);
 
-            var document = Path.Combine(folder, DonationReceipt.NamesFor(envelope).Document);
+        var document = Path.Combine(folder, DonationReceipt.NamesFor(envelope).Document);
 
-            Assert.Equal(
-                envelope.Sha256,
-                Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(document))));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        Assert.Equal(
+            envelope.Sha256,
+            Convert.ToHexStringLower(SHA256.HashData(files.OpenRead(document)!)));
     }
 
     /// <summary>

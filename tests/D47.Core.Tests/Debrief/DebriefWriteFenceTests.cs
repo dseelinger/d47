@@ -1,29 +1,18 @@
 using D47.Core.Debrief;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The fence, driven by attempting the writes it exists to refuse.</summary>
-[Trait("Category", "Integration")]
-public class DebriefWriteFenceTests : IDisposable
+public class DebriefWriteFenceTests
 {
     private const string Untouched = "// the original bytes, which must survive every attempt\n";
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-debrief-fence", Guid.NewGuid().ToString("N"));
+    private const string _folder = @"C:\d47-test";
 
-    public DebriefWriteFenceTests() => Directory.CreateDirectory(Path.Combine(_folder, "data"));
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private readonly MemoryFileSystem _files = new();
 
     /// <summary>
     /// The names the issue calls out by hand, each one attempted against a real file that already has
@@ -47,15 +36,15 @@ public class DebriefWriteFenceTests : IDisposable
     public void TheStoreRefusesToBeBuiltOverAnythingButItsOwnFile(string name)
     {
         var target = Path.Combine(_folder, "data", name);
-        File.WriteAllText(target, Untouched);
+        _files.WriteText(target, Untouched);
 
         var refused = Assert.Throws<DebriefWriteRefused>(() =>
-            new StandingDirectionsStore(target, NullLogger<StandingDirectionsStore>.Instance));
+            new StandingDirectionsStore(target, _files, NullLogger<StandingDirectionsStore>.Instance));
 
         Assert.Equal(Path.GetFullPath(target), Path.GetFullPath(refused.Attempted));
 
         // The half that matters.
-        Assert.Equal(Untouched, File.ReadAllText(target));
+        Assert.Equal(Untouched, _files.ReadText(target));
     }
 
     /// <summary>
@@ -67,23 +56,22 @@ public class DebriefWriteFenceTests : IDisposable
     {
         var target = Path.Combine(_folder, "data", DebriefWriteFence.FileName);
 
-        var store = new StandingDirectionsStore(target, NullLogger<StandingDirectionsStore>.Instance);
+        var store = new StandingDirectionsStore(target, _files, NullLogger<StandingDirectionsStore>.Instance);
         store.Write("F1", new StandingDirection("drafted-1", "Shorter answers in combat."));
 
-        Assert.True(File.Exists(target));
-        Assert.Contains("Shorter answers in combat.", File.ReadAllText(target), StringComparison.Ordinal);
+        Assert.NotNull(_files.Stat(target));
+        Assert.Contains("Shorter answers in combat.", _files.ReadText(target), StringComparison.Ordinal);
     }
 
     [Fact]
     public void TheRightNameOutsideTheDataFolderIsRefused()
     {
         var elsewhere = Path.Combine(_folder, "src", DebriefWriteFence.FileName);
-        Directory.CreateDirectory(Path.GetDirectoryName(elsewhere)!);
 
         Assert.Throws<DebriefWriteRefused>(() =>
-            new StandingDirectionsStore(elsewhere, NullLogger<StandingDirectionsStore>.Instance));
+            new StandingDirectionsStore(elsewhere, _files, NullLogger<StandingDirectionsStore>.Instance));
 
-        Assert.False(File.Exists(elsewhere));
+        Assert.Null(_files.Stat(elsewhere));
     }
 
     /// <summary>
@@ -95,10 +83,10 @@ public class DebriefWriteFenceTests : IDisposable
     {
         var target = Path.Combine(_folder, "data", "Standing-Directions.JSON");
 
-        var store = new StandingDirectionsStore(target, NullLogger<StandingDirectionsStore>.Instance);
+        var store = new StandingDirectionsStore(target, _files, NullLogger<StandingDirectionsStore>.Instance);
         store.Write(null, new StandingDirection("drafted-1", "Keep it short."));
 
-        Assert.True(File.Exists(target));
+        Assert.NotNull(_files.Stat(target));
     }
 
     [Fact]

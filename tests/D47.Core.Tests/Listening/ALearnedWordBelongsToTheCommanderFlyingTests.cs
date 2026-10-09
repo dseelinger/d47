@@ -1,17 +1,16 @@
-using D47.Core.Storage;
 using D47.Core.Conversation;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Listening;
 
-[Trait("Category", "Integration")]
-public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
+public class ALearnedWordBelongsToTheCommanderFlyingTests
 {
     private static readonly DateTimeOffset At = new(2026, 10, 9, 20, 0, 0, TimeSpan.Zero);
 
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-wording").FullName;
+    private readonly MemoryFileSystem _files = new();
     private readonly HeardNamesStore _names;
     private readonly LearnedPhrasesStore _phrases;
     private IReadOnlyCollection<string> _reserved = [];
@@ -19,8 +18,8 @@ public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
 
     public ALearnedWordBelongsToTheCommanderFlyingTests()
     {
-        _names = new HeardNamesStore(NamesFile, NullLogger<HeardNamesStore>.Instance);
-        _phrases = new LearnedPhrasesStore(PhrasesFile, new DiskFileSystem(), NullLogger<LearnedPhrasesStore>.Instance);
+        _names = new HeardNamesStore(NamesFile, _files, NullLogger<HeardNamesStore>.Instance);
+        _phrases = new LearnedPhrasesStore(PhrasesFile, _files, NullLogger<LearnedPhrasesStore>.Instance);
         _names.RememberNames(
             new Dictionary<string, SpokenNames>(StringComparer.Ordinal)
             {
@@ -30,11 +29,9 @@ public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
             At);
     }
 
-    private string NamesFile => Path.Combine(_root, "heard-names.json");
+    private string NamesFile => Path.Combine(@"C:\d47-test", "heard-names.json");
 
-    private string PhrasesFile => Path.Combine(_root, "phrases.json");
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private string PhrasesFile => Path.Combine(@"C:\d47-test", "phrases.json");
 
     private LearnedWording Wording() =>
         new(_names, _phrases, () => _flying, () => _reserved, () => At);
@@ -46,7 +43,7 @@ public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
     {
         _flying = flying;
         var wording = Wording();
-        var namesBefore = File.ReadAllText(NamesFile);
+        var namesBefore = _files.ReadText(NamesFile);
 
         wording.LearnCorrection("Eurebia", "Eurybia");
         wording.LearnPhrase("half throttle please", "throttle to fifty");
@@ -54,8 +51,8 @@ public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
         Assert.Equal("go to Eurebia", wording.HeardAsMeant("go to Eurebia"));
         Assert.Null(wording.LearnedPhraseFor("half throttle please"));
         Assert.StartsWith("Nothing yet.", wording.LearnedCorrections(), StringComparison.Ordinal);
-        Assert.Equal(namesBefore, File.ReadAllText(NamesFile));
-        Assert.False(File.Exists(PhrasesFile));
+        Assert.Equal(namesBefore, _files.ReadText(NamesFile));
+        Assert.False(_files.Stat(PhrasesFile) is not null);
     }
 
     [Fact]

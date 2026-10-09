@@ -64,7 +64,7 @@ public class AStoryChapterShowsNoPremiseTests
         Assert.Null(book.Write("F1", Chapter("the-first-light", "The First Light", ChapterPremise, card.Id)));
         Assert.Null(book.Write("F1", Chapter("the-last-dock", "The Last Dock", OwnPremise, storyId: null)));
 
-        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
+        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
         stories.Save("F1", new Story
         {
             Id = card.Id,

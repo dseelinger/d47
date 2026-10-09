@@ -3,22 +3,20 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A voice command names the current destination, so it can be returned to by that name (#489).</summary>
-[Trait("Category", "Integration")]
-public class ADestinationIsBookmarkedByNameTests : IDisposable
+public class ADestinationIsBookmarkedByNameTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-bookmarks-capability").FullName;
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly MemoryFileSystem _files = new();
 
     private static readonly DateTimeOffset At = new(2026, 9, 25, 12, 0, 0, TimeSpan.Zero);
 
-    private BookmarkStore Store() => new(Path.Combine(_root, "bookmarks.json"), NullLogger<BookmarkStore>.Instance);
+    private BookmarkStore Store() => new(Path.Combine(@"C:\d47-test", "bookmarks.json"), _files, NullLogger<BookmarkStore>.Instance);
 
     private static Func<PhraseBook> EmptyBook() => () => PhraseBook.From(CapabilityRegistry.Build([]), []);
 

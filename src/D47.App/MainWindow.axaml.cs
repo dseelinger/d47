@@ -1194,7 +1194,7 @@ public partial class MainWindow : Window
     /// </summary>
     private static Donation.DonationDispatch DonationDispatchFor(AppHost host) =>
         Donation.DonationDispatch.For(
-            host.Paths, static () => D47.Core.Configuration.DonationSettings.Address, host.Loggers);
+            host.Paths, host.Files, static () => D47.Core.Configuration.DonationSettings.Address, host.Loggers);
 
     /// <summary>
     /// One page for both shapes of sharing since #238, offered under one button — and the same page

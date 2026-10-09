@@ -47,7 +47,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
     private static (AdventureSurface Surface, StoryDirector Director, Dictionary<string, StoryVoiceChoice> Choices) Open(AppPaths paths)
     {
         var surface = AdventureFixture.Surface(paths);
-        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
+        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
         var choices = new Dictionary<string, StoryVoiceChoice>(StringComparer.Ordinal);
         var director = new StoryDirector(
             stories, surface.Book, () => Catalog, surface.Generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance)

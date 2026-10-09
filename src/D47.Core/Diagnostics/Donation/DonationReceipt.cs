@@ -44,6 +44,7 @@ public static class DonationReceipt
     /// Whether <paramref name="document"/> is the payload byte for byte.
     /// </param>
     public static string? Write(
+        IFileSystem files,
         string folder,
         DonationEnvelope envelope,
         DonationOutcome outcome,
@@ -55,13 +56,11 @@ public static class DonationReceipt
 
         try
         {
-            Directory.CreateDirectory(folder);
-
             // The document first.
-            AtomicFile.WriteAllText(Path.Combine(folder, documentName), document);
+            files.WriteText(Path.Combine(folder, documentName), document);
 
             var receipt = Path.Combine(folder, receiptName);
-            AtomicFile.WriteAllText(
+            files.WriteText(
                 receipt,
                 Render(envelope, outcome, destination, documentName, documentIsPayload));
 

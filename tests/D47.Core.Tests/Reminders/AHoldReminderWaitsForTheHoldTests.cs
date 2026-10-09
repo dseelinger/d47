@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Hold and material reminders fire when their condition becomes true, and never before the hold is read.</summary>
-[Trait("Category", "Integration")]
 public class AHoldReminderWaitsForTheHoldTests
 {
     private static CommanderGameState WithCapacity(int capacity)
@@ -27,7 +26,7 @@ public class AHoldReminderWaitsForTheHoldTests
     [Fact]
     public void HoldRemindersAreSilentBeforeTheHoldHasBeenRead()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.HoldEmpty, "Go back for more.");
         bench.Arm("F1", JournalTrigger.HoldFull, "Go and sell.");
         var state = WithCapacity(64);
@@ -43,7 +42,7 @@ public class AHoldReminderWaitsForTheHoldTests
     [Fact]
     public void AnSrvManifestIsNotTheShipsHold()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.HoldEmpty, "Go back for more.");
         var state = WithCapacity(64);
 
@@ -57,7 +56,7 @@ public class AHoldReminderWaitsForTheHoldTests
     [Fact]
     public void AHoldFullReminderFiresWhenTheHoldFills()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.HoldFull, "Go and sell.");
         var state = WithCapacity(64);
 
@@ -72,7 +71,7 @@ public class AHoldReminderWaitsForTheHoldTests
     [Fact]
     public void AHoldEmptyReminderFiresWhenTheHoldEmpties()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.HoldEmpty, "Go back for more.");
         var state = WithCapacity(64);
 
@@ -86,7 +85,7 @@ public class AHoldReminderWaitsForTheHoldTests
     [Fact]
     public void AMaterialReminderFiresWhenTheMaterialReachesCapacity()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.MaterialFull, "Trade the surplus.", "iron");
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
         var capacity = MaterialGrades.CapacityOf("iron")!.Value;

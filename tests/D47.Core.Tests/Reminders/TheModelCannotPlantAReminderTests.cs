@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Setting and cancelling a journal reminder are the Commander's own acts (#643).</summary>
-[Trait("Category", "Integration")]
 public class TheModelCannotPlantAReminderTests
 {
     private const string Commander = "F100";
@@ -17,7 +16,7 @@ public class TheModelCannotPlantAReminderTests
     [Fact]
     public async Task TheModelIsRefusedSettingAndCancelling()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var registry = Registry(bench);
         var cancellation = TestContext.Current.CancellationToken;
 
@@ -45,7 +44,7 @@ public class TheModelCannotPlantAReminderTests
     [Fact]
     public async Task TheModelCanReadWhatIsArmed()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var registry = Registry(bench);
 
         bench.Arm(Commander, JournalTrigger.ArrivalIn, "sell data", "Sol");
@@ -60,7 +59,7 @@ public class TheModelCannotPlantAReminderTests
     [Fact]
     public async Task AnUnknownMaterialIsDeclined()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var registry = Registry(bench);
 
         var set = await registry.InvokeAsync(

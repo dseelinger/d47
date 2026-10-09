@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>"Remind me to" is read by the grammar and reaches the store with no model call (#643).</summary>
-[Trait("Category", "Integration")]
 public class SayItAndTheReminderIsSetTests
 {
     private const string Commander = "F100";
@@ -58,7 +57,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task ANextDockingReminderIsStoredAndReadBack()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "Remind me to buy limpets when I next dock.");
@@ -74,7 +73,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task AnArrivalReminderKeepsTheSystemAsSaid()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "Remind me to sell data when I arrive in Sol");
@@ -90,7 +89,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task AMaterialIsStoredByItsJournalName()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, _) = Build(bench);
 
         var said = await SaidAsync(loop, "remind me to visit a trader when my arsenic is full");
@@ -104,7 +103,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task AMomentTheGameCannotSeeIsDeclinedWithTheMomentsItCan()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "Remind me to eat when I'm bored");
@@ -118,7 +117,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task ATimeIsDeclinedInARunWithoutTimers()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "Remind me in twenty minutes to check the carrier");
@@ -131,7 +130,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task ATimeGoesToTheModelInARunWithTimers()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench, timers: true);
 
         var said = await SaidAsync(loop, "Remind me in twenty minutes to check the carrier");
@@ -144,7 +143,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task AReminderIsCancelledByItsWords()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         await SaidAsync(loop, "Remind me to buy limpets when I next dock");
@@ -160,7 +159,7 @@ public class SayItAndTheReminderIsSetTests
     [Fact]
     public async Task AQuestionThatStartsWithRemindMeIsLeftToTheModel()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "remind me what my rank is");

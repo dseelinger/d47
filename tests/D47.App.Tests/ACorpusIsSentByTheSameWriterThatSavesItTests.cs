@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Donation;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Diagnostics.Donation;
 using Xunit;
@@ -66,7 +67,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
     }
 
     private DonationDispatch Dispatch(Endpoint endpoint, string? address = "https://donate.invalid") =>
-        new(new AppPaths(_root), () => address, new DonationUpload(new HttpClient(endpoint)));
+        new(new AppPaths(_root), new DiskFileSystem(), () => address, new DonationUpload(new HttpClient(endpoint)));
 
     private static string Ungzip(byte[] compressed)
     {

@@ -78,6 +78,19 @@ public sealed class MemoryFileSystem : IFileSystem
         }
     }
 
+    public void Delete(string path)
+    {
+        lock (_gate)
+        {
+            var full = Full(path);
+
+            if (_files.Remove(full) && Path.GetDirectoryName(full) is { } folder)
+            {
+                _folders[folder] = Tick();
+            }
+        }
+    }
+
     public void Copy(string from, string to)
     {
         var source = Full(from);

@@ -79,7 +79,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
         Assert.Equal(1, fixtures.Asks[^1].Story!.FinaleChapter);
 
         var expected = new AdventureDestination(AdventureFixtures.Lantern, "Ossen's Lantern", 6, "Ossen's Lantern 2 a");
-        var reopened = StoryStore.Open(fixtures.StoryPath, NullLogger<StoryStore>.Instance);
+        var reopened = StoryStore.Open(fixtures.StoryPath, fixtures.Files, NullLogger<StoryStore>.Instance);
 
         Assert.Equal(expected, fixtures.Stories.Current("F1")!.FinaleDestination);
         Assert.Equal(expected, reopened.Current("F1")!.FinaleDestination);

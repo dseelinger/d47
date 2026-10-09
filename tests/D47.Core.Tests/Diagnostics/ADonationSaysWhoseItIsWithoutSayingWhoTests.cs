@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Diagnostics.Donation;
 using Xunit;
@@ -5,14 +6,13 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The per-installation donor token.</summary>
-[Trait("Category", "Integration")]
-public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
+public class ADonationSaysWhoseItIsWithoutSayingWhoTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-donor").FullName;
+    private const string _root = @"C:\d47-test";
 
-    private string File_ => Path.Combine(_root, "donor-token.txt");
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private static string File_ => Path.Combine(_root, "donor-token.txt");
 
     /// <summary>The strongest thing this suite can assert about "never derived".</summary>
     [Fact]
@@ -52,18 +52,18 @@ public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
     [Fact]
     public void ReadingDoesNotMintOne()
     {
-        Assert.Null(DonorToken.Read(File_));
-        Assert.False(System.IO.File.Exists(File_));
+        Assert.Null(DonorToken.Read(_files, File_));
+        Assert.Null(_files.Stat(File_));
     }
 
     /// <summary>The same installation keeps the same identifier, which is the reason for it.</summary>
     [Fact]
     public void TheSameInstallationKeepsTheSameToken()
     {
-        var first = DonorToken.Ensure(File_);
+        var first = DonorToken.Ensure(_files, File_);
 
-        Assert.Equal(first, DonorToken.Ensure(File_));
-        Assert.Equal(first, DonorToken.Read(File_));
+        Assert.Equal(first, DonorToken.Ensure(_files, File_));
+        Assert.Equal(first, DonorToken.Read(_files, File_));
     }
 
     /// <summary>
@@ -73,21 +73,21 @@ public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
     [Fact]
     public void ForgettingItEndsTheGroupingAndStartsANewOne()
     {
-        var first = DonorToken.Ensure(File_);
+        var first = DonorToken.Ensure(_files, File_);
 
-        Assert.Equal(first, DonorToken.Forget(File_));
-        Assert.Null(DonorToken.Read(File_));
-        Assert.NotEqual(first, DonorToken.Ensure(File_));
+        Assert.Equal(first, DonorToken.Forget(_files, File_));
+        Assert.Null(DonorToken.Read(_files, File_));
+        Assert.NotEqual(first, DonorToken.Ensure(_files, File_));
     }
 
     /// <summary>A file that was hand-edited into nonsense is no identifier, and is replaced.</summary>
     [Fact]
     public void AMangledFileIsNotAnIdentity()
     {
-        System.IO.File.WriteAllText(File_, "CMDR ALPHA");
+        _files.WriteText(File_, "CMDR ALPHA");
 
-        Assert.Null(DonorToken.Read(File_));
-        Assert.True(DonorToken.IsWellFormed(DonorToken.Ensure(File_)));
+        Assert.Null(DonorToken.Read(_files, File_));
+        Assert.True(DonorToken.IsWellFormed(DonorToken.Ensure(_files, File_)));
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ public class ADonationSaysWhoseItIsWithoutSayingWhoTests : IDisposable
     [Fact]
     public void TheSummarySaysWhatItIsAndWhatForgettingItDoes()
     {
-        var summary = DonorToken.Summarise(DonorToken.Ensure(File_));
+        var summary = DonorToken.Summarise(DonorToken.Ensure(_files, File_));
 
         Assert.Contains("not derived", summary, StringComparison.Ordinal);
         Assert.Contains("donations and nothing else", summary, StringComparison.Ordinal);

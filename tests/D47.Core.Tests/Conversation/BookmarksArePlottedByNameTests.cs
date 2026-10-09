@@ -1,24 +1,22 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A bookmark is a named system, stored per Commander and reachable by voice (#488).</summary>
-[Trait("Category", "Integration")]
-public class BookmarksArePlottedByNameTests : IDisposable
+public class BookmarksArePlottedByNameTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-bookmarks").FullName;
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly MemoryFileSystem _files = new();
 
     private static readonly DateTimeOffset At = new(2026, 9, 25, 12, 0, 0, TimeSpan.Zero);
 
-    private string StorePath => Path.Combine(_root, "bookmarks.json");
+    private string StorePath => Path.Combine(@"C:\d47-test", "bookmarks.json");
 
-    private BookmarkStore Store() => new(StorePath, NullLogger<BookmarkStore>.Instance);
+    private BookmarkStore Store() => new(StorePath, _files, NullLogger<BookmarkStore>.Instance);
 
     [Fact]
     public void ABookmarkSurvivesAReload()

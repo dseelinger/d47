@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -163,27 +164,20 @@ public sealed class AStoryIsPacedToItsLengthTests
         Assert.Contains("Length: 1 year", story.PublicLayer, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AStorySavedWithoutALengthIsAYear()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"d47-story-{Guid.NewGuid():N}.json");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test", "story.json");
 
-        try
-        {
-            File.WriteAllText(
-                path,
-                """{"commanders":[{"frontierId":"F1","stories":[{"id":"old","title":"Old","publicLayer":"Old.","pickedAt":"2026-09-30T12:00:00+00:00"}]}]}""");
+        files.WriteText(
+            path,
+            """{"commanders":[{"frontierId":"F1","stories":[{"id":"old","title":"Old","publicLayer":"Old.","pickedAt":"2026-09-30T12:00:00+00:00"}]}]}""");
 
-            var story = StoryStore.Open(path, NullLogger<StoryStore>.Instance).Current("F1")!;
+        var story = StoryStore.Open(path, files, NullLogger<StoryStore>.Instance).Current("F1")!;
 
-            Assert.Equal(StoryPacing.OneYear.Key, story.Length);
-            Assert.Same(StoryPacing.OneYear, story.Pacing);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Equal(StoryPacing.OneYear.Key, story.Length);
+        Assert.Same(StoryPacing.OneYear, story.Pacing);
     }
 
     private static string[] Keys(StoryStage stage, int? finale = null) =>

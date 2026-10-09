@@ -1,6 +1,7 @@
 using System.Globalization;
 using D47.Core.Journal;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -265,7 +266,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var file = Path.Combine(install.Paths.Data, "heard-names.json");
-        var names = new HeardNamesStore(file, NullLogger<HeardNamesStore>.Instance);
+        var names = new HeardNamesStore(file, new DiskFileSystem(), NullLogger<HeardNamesStore>.Instance);
 
         names.Load();
 

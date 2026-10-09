@@ -50,7 +50,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
+        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
         stories.Save("F1", new Story { Id = "story-1", Title = "Story 1", PublicLayer = "-", State = StoryState.Finished, Rating = 4 });
 
         var generator = new AdventureGenerator(

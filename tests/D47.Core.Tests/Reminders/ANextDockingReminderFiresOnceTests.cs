@@ -15,7 +15,7 @@ public class ANextDockingReminderFiresOnceTests
     [Fact]
     public void ItFiresAtTheFirstDockingOnlyAndEndsInTheCommandersWords()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var reminder = bench.Arm(Commander, JournalTrigger.NextDocking, "Buy limpets before you leave.");
 
         var lines = File.ReadAllLines(Path.Combine(FixturesDirectory(), "Journal.2026-02-10T090000.01.log"));
@@ -49,7 +49,7 @@ public class ANextDockingReminderFiresOnceTests
     [Fact]
     public void NothingFiresWhilePriming()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextDocking, "Buy limpets.");
 
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
@@ -61,7 +61,7 @@ public class ANextDockingReminderFiresOnceTests
     [Fact]
     public void AFiredReminderIsRemovedAtTheNextLoadGame()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextDocking, "Buy limpets.");
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
 
@@ -77,7 +77,7 @@ public class ANextDockingReminderFiresOnceTests
     [Fact]
     public void ANextSessionReminderFiresAtALaterLoadGameAndSurvivesItsOwn()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextSession, "Check the Community Goal.");
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
 
@@ -90,7 +90,7 @@ public class ANextDockingReminderFiresOnceTests
     [Fact]
     public void ANextSessionReminderFiresOnTheFirstLiveTickWhenTheSessionOpenedInTheBacklog()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextSession, "Check the Community Goal.");
         var state = new CommanderGameState(new CommanderIdentity("F1", "Fixture"));
 

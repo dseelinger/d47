@@ -10,13 +10,11 @@ namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The row a Commander withdraws from.</summary>
 [Trait("Category", "Integration")]
-public class TheWayOutIsOnePressTests : IDisposable
+public class TheWayOutIsOnePressTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-way-out").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
-
-    private string TokenFile => Path.Combine(_root, "donor-token.txt");
+    private static string TokenFile => Path.Combine(@"C:\d47-test", "donor-token.txt");
 
     private static SettingsService Settings(TempInstall install)
     {
@@ -31,7 +29,7 @@ public class TheWayOutIsOnePressTests : IDisposable
 
     private SettingRow Row(TempInstall install, LongPress? forget) =>
         PrivacyCapability
-            .Create(Settings(install), donorTokenFile: TokenFile, forgetDonations: forget)
+            .Create(Settings(install), donorTokenFile: TokenFile, forgetDonations: forget, files: _files)
             .Settings
             .Single(row => row.Key == PrivacyCapability.DonorKey);
 
@@ -95,8 +93,7 @@ public class TheWayOutIsOnePressTests : IDisposable
     {
         using var install = new TempInstall();
 
-        Directory.CreateDirectory(_root);
-        var token = DonorToken.Ensure(TokenFile);
+        var token = DonorToken.Ensure(_files, TokenFile);
 
         var row = Row(install, forget: null);
 
@@ -106,7 +103,7 @@ public class TheWayOutIsOnePressTests : IDisposable
 
         row.Press!();
 
-        Assert.False(File.Exists(TokenFile));
+        Assert.Null(_files.Stat(TokenFile));
     }
 
     /// <summary>The receipt promises only what something enforces (#167, raised by the retention lane).</summary>

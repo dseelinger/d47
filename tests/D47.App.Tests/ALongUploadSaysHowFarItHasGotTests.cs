@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Donation;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Diagnostics.Donation;
 using Xunit;
@@ -57,6 +58,7 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
     private DonationDispatch Dispatch(Endpoint endpoint) =>
         new(
             new AppPaths(_root),
+            new DiskFileSystem(),
             () => "https://donate.invalid",
             new DonationUpload(new HttpClient(endpoint)));
 

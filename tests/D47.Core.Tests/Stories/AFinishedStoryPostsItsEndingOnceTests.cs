@@ -58,7 +58,7 @@ public sealed class AFinishedStoryPostsItsEndingOnceTests
         fixtures.Stories.Save("F1", Done);
         fixtures.Director.EndingPosted("F1", Id, Now);
 
-        var reopened = StoryStore.Open(fixtures.StoryPath, Microsoft.Extensions.Logging.Abstractions.NullLogger<StoryStore>.Instance);
+        var reopened = StoryStore.Open(fixtures.StoryPath, fixtures.Files, Microsoft.Extensions.Logging.Abstractions.NullLogger<StoryStore>.Instance);
         var story = reopened.Find("F1", Id)!;
 
         Assert.Equal(Now, story.EndingPostedAt);

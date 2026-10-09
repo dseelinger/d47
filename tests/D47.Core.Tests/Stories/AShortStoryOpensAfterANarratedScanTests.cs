@@ -147,7 +147,7 @@ public sealed class AShortStoryOpensAfterANarratedScanTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        var reopened = StoryStore.Open(fixtures.StoryPath, NullLogger<StoryStore>.Instance).Current("F1")!;
+        var reopened = StoryStore.Open(fixtures.StoryPath, fixtures.Files, NullLogger<StoryStore>.Instance).Current("F1")!;
 
         Assert.True(reopened.BeaconNarrated);
         Assert.Equal(HeldCores.Heretic, reopened.HeldCores);

@@ -26,7 +26,7 @@ public sealed class StoryStore
 
     /// <summary>Held across each change and its file write, so writes reach the file in the order they were made.</summary>
     private readonly Lock _writeGate = new();
-    private readonly Action<string, string> _writeFile;
+    private readonly IFileSystem _files;
     private Dictionary<string, IReadOnlyList<Story>> _byCommander;
     private Dictionary<string, string> _voters;
 
@@ -35,27 +35,24 @@ public sealed class StoryStore
         ILogger? logger,
         Dictionary<string, IReadOnlyList<Story>> byCommander,
         Dictionary<string, string> voters,
-        Action<string, string> writeFile)
+        IFileSystem files)
     {
         _path = path;
         _logger = logger;
-        _writeFile = writeFile;
+        _files = files;
         _byCommander = byCommander;
         _voters = voters;
     }
 
     /// <summary>Held in memory only.</summary>
     public static StoryStore InMemory() =>
-        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), AtomicFile.WriteAllText);
+        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
 
-    public static StoryStore Open(string path, ILogger<StoryStore> logger) => Open(path, logger, AtomicFile.WriteAllText);
-
-    /// <summary>Opens the store with <paramref name="writeFile"/> standing in for the atomic write of the file.</summary>
-    internal static StoryStore Open(string path, ILogger<StoryStore> logger, Action<string, string> writeFile)
+    public static StoryStore Open(string path, IFileSystem files, ILogger<StoryStore> logger)
     {
-        var (byCommander, voters) = Read(path, logger);
+        var (byCommander, voters) = Read(path, files, logger);
 
-        return new(path, logger, byCommander, voters, writeFile);
+        return new(path, logger, byCommander, voters, files);
     }
 
     public event Action? Changed;
@@ -222,7 +219,7 @@ public sealed class StoryStore
 
         try
         {
-            _writeFile(_path, JsonSerializer.Serialize(document, Json));
+            _files.WriteText(_path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -230,19 +227,19 @@ public sealed class StoryStore
         }
     }
 
-    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters) Read(string path, ILogger logger)
+    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters) Read(string path, IFileSystem files, ILogger logger)
     {
         var loaded = new Dictionary<string, IReadOnlyList<Story>>(StringComparer.Ordinal);
         var voters = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        if (!File.Exists(path))
-        {
-            return (loaded, voters);
-        }
-
         try
         {
-            foreach (var commander in JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json)?.Commanders ?? [])
+            if (files.ReadText(path) is not { } text)
+            {
+                return (loaded, voters);
+            }
+
+            foreach (var commander in JsonSerializer.Deserialize<Document>(text, Json)?.Commanders ?? [])
             {
                 var key = commander.FrontierId ?? AdventureStore.NoCommander;
 

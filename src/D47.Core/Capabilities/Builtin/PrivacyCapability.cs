@@ -1,6 +1,7 @@
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -46,6 +47,7 @@ public static class PrivacyCapability
     /// Where the donation identifier lives, or null where nothing composed a data folder — under the
     /// designer and in tests that are not about it.
     /// </param>
+    /// <param name="files">Where the donation identifier is read and deleted; without it the row reports no identifier and has no press.</param>
     /// <param name="forgetDonations">
     /// Withdrawal that reaches the store as well as this machine (#167), or null where nothing composed
     /// a network — the designer, and every test that is not about it.
@@ -65,7 +67,8 @@ public static class PrivacyCapability
         LongPress? forgetDonations = null,
 
         // Whether the model in use reads pictures.
-        Func<bool>? imagesAvailable = null)
+        Func<bool>? imagesAvailable = null,
+        IFileSystem? files = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
@@ -118,7 +121,7 @@ public static class PrivacyCapability
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, InaraKeyPresent, canSearch, memories, recording, donorTokenFile, forgetDonations, readsImages),
+                KeyPresent, InaraKeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages),
         };
     }
 
@@ -129,6 +132,7 @@ public static class PrivacyCapability
         Memory.MemoryBook? memories,
         Diagnostics.Recording.RecordingLog? recording,
         string? donorTokenFile,
+        IFileSystem? files,
         LongPress? forgetDonations,
         Func<bool> imagesAvailable)
     {
@@ -238,14 +242,14 @@ public static class PrivacyCapability
                 : forgetDonations is null ? "Forget it" : "Forget it, and delete what was sent",
             Press = donorTokenFile is null || forgetDonations is not null
                 ? null
-                : () => DonorToken.Forget(donorTokenFile),
+                : () => DonorToken.Forget(files!, donorTokenFile),
             PressAsync = donorTokenFile is null ? null : forgetDonations,
             Binding = new SettingBinding
             {
                 Read = _ => donorTokenFile is null
                     ? "No donation identifier exists on this installation. One is created the "
                       + "first time you donate, and never before."
-                    : DonorToken.Summarise(DonorToken.Read(donorTokenFile)),
+                    : DonorToken.Summarise(DonorToken.Read(files!, donorTokenFile)),
             },
         });
 

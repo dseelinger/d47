@@ -1,5 +1,6 @@
 using System.Net;
 using D47.App.Donation;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Diagnostics.Donation;
 using Xunit;
@@ -7,12 +8,11 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Erasure on request, driven from the press a Commander actually makes.</summary>
-[Trait("Category", "Integration")]
-public class ADonationCanBeTakenBackTests : IDisposable
+public class ADonationCanBeTakenBackTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-forget").FullName;
+    private const string _root = @"C:\d47-test";
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly MemoryFileSystem _files = new();
 
     /// <summary>Answers every request the same way and keeps the last one.</summary>
     private sealed class Endpoint : HttpMessageHandler
@@ -42,14 +42,13 @@ public class ADonationCanBeTakenBackTests : IDisposable
     }
 
     private DonationDispatch Dispatch(Endpoint endpoint, string? address = "https://donate.invalid") =>
-        new(new AppPaths(_root), () => address, new DonationUpload(new HttpClient(endpoint)));
+        new(new AppPaths(_root), _files, () => address, new DonationUpload(new HttpClient(endpoint)));
 
     private string TokenFile => new AppPaths(_root).DonorTokenFile;
 
     private string Donated()
     {
-        Directory.CreateDirectory(new AppPaths(_root).Data);
-        return DonorToken.Ensure(TokenFile);
+        return DonorToken.Ensure(_files, TokenFile);
     }
 
     private static string Header(HttpRequestMessage request, string name) =>
@@ -71,7 +70,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
 
         Assert.True(forgotten.Outcome.Answered);
         Assert.Equal(2, forgotten.Outcome.Deleted);
-        Assert.False(File.Exists(TokenFile));
+        Assert.Null(_files.Stat(TokenFile));
     }
 
     /// <summary>
@@ -89,8 +88,8 @@ public class ADonationCanBeTakenBackTests : IDisposable
             .ForgetAsync(TestContext.Current.CancellationToken);
 
         Assert.False(forgotten.Outcome.Answered);
-        Assert.True(File.Exists(TokenFile));
-        Assert.Equal(token, DonorToken.Read(TokenFile));
+        Assert.NotNull(_files.Stat(TokenFile));
+        Assert.Equal(token, DonorToken.Read(_files, TokenFile));
         Assert.Contains("kept", forgotten.Outcome.Said, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -104,7 +103,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
             .ForgetAsync(TestContext.Current.CancellationToken);
 
         Assert.False(forgotten.Outcome.Answered);
-        Assert.True(File.Exists(TokenFile));
+        Assert.NotNull(_files.Stat(TokenFile));
     }
 
     /// <summary>Never mints one to forget it.</summary>
@@ -117,7 +116,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
 
         Assert.Equal(0, endpoint.Requests);
         Assert.False(forgotten.Outcome.Asked);
-        Assert.False(File.Exists(TokenFile));
+        Assert.Null(_files.Stat(TokenFile));
         Assert.Null(forgotten.Receipt);
     }
 
@@ -134,7 +133,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
             .ForgetAsync(TestContext.Current.CancellationToken);
 
         Assert.False(forgotten.Outcome.Asked);
-        Assert.False(File.Exists(TokenFile));
+        Assert.Null(_files.Stat(TokenFile));
     }
 
     /// <summary>The receipt keeps the identifier that was just forgotten.</summary>
@@ -148,7 +147,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
 
         Assert.NotNull(forgotten.Receipt);
 
-        var written = File.ReadAllText(forgotten.Receipt);
+        var written = _files.ReadText(forgotten.Receipt);
 
         Assert.Contains(token, written, StringComparison.Ordinal);
         Assert.Contains("corpus/a/one.jsonl.gz", written, StringComparison.Ordinal);
@@ -166,7 +165,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
 
         Assert.NotNull(forgotten.Receipt);
 
-        var written = File.ReadAllText(forgotten.Receipt);
+        var written = _files.ReadText(forgotten.Receipt);
 
         Assert.Contains("stays fixed", written, StringComparison.Ordinal);
         Assert.Contains("never moves", written, StringComparison.Ordinal);
@@ -188,7 +187,7 @@ public class ADonationCanBeTakenBackTests : IDisposable
         Assert.NotNull(forgotten.Receipt);
         Assert.Contains(
             "Nothing is confirmed deleted",
-            File.ReadAllText(forgotten.Receipt),
+            _files.ReadText(forgotten.Receipt),
             StringComparison.Ordinal);
     }
 

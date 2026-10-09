@@ -1,22 +1,20 @@
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
-[Trait("Category", "Integration")]
-public sealed class ACommandersVoteIsKeptWithTheirStoriesTests : IDisposable
+public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
 {
-    private readonly string _folder = Directory.CreateTempSubdirectory("d47-ratings").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    private string StoryPath => Path.Combine(_folder, "story.json");
-
-    public void Dispose() => Directory.Delete(_folder, recursive: true);
+    private static string StoryPath => Path.Combine(@"C:\d47-test", "story.json");
 
     private static Story Picked(string id) => new() { Id = id, Title = id, PublicLayer = "-" };
 
-    private StoryStore Reopen() => StoryStore.Open(StoryPath, NullLogger<StoryStore>.Instance);
+    private StoryStore Reopen() => StoryStore.Open(StoryPath, _files, NullLogger<StoryStore>.Instance);
 
     [Fact]
     public void AVoteAndItsPendingFlagSurviveARestart()
@@ -73,7 +71,7 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests : IDisposable
     [Fact]
     public void AStoryFileWrittenBeforeRatingsLoadsWithNoRatingsAndNoVoter()
     {
-        File.WriteAllText(
+        _files.WriteText(
             StoryPath,
             """{"commanders":[{"frontierId":"F1","stories":[{"id":"a","title":"A","publicLayer":"-","state":"running"}]}]}""");
 
@@ -87,7 +85,7 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests : IDisposable
     [Fact]
     public void AMalformedVoterInTheFileIsDropped()
     {
-        File.WriteAllText(
+        _files.WriteText(
             StoryPath,
             """{"commanders":[{"frontierId":"F1","voter":"NOT-A-TOKEN","stories":[{"id":"a","title":"A","publicLayer":"-","state":"running"}]}]}""");
 

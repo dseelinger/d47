@@ -16,7 +16,7 @@ public class TheRemindersSwitchSilencesThemTests
     [Fact]
     public void SwitchedOffNothingIsSaidAndNothingIsFired()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextDocking, "Buy limpets.");
 
         var engine = new CalloutEngine(NullLogger<CalloutEngine>.Instance).Add(bench.Callout);

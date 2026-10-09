@@ -192,7 +192,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         var data = Directory.CreateDirectory(Path.Combine(root, D47.Core.AppPaths.DataFolderName)).FullName;
 
         var store = new StandingDirectionsStore(
-            Path.Combine(data, DebriefWriteFence.FileName), NullLogger<StandingDirectionsStore>.Instance);
+            Path.Combine(data, DebriefWriteFence.FileName), new MemoryFileSystem(), NullLogger<StandingDirectionsStore>.Instance);
 
         var book = new DebriefBook(store, () => "F1");
 
@@ -207,7 +207,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         var root = TempFolders.Create("d47-dialogs-logbook");
 
         var book = new LogbookBook(
-            new LogFolder(root, NullLogger<LogFolder>.Instance),
+            new LogFolder(root, new MemoryFileSystem(), NullLogger<LogFolder>.Instance),
             new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => new LogbookSettings(),

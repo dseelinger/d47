@@ -58,6 +58,7 @@ public static class DonationErasure
 
     /// <summary>Writes it and returns where it landed, or null where nothing could be written.</summary>
     public static string? Write(
+        IFileSystem files,
         string folder,
         DateTimeOffset at,
         string? token,
@@ -66,10 +67,8 @@ public static class DonationErasure
     {
         try
         {
-            Directory.CreateDirectory(folder);
-
             var receipt = Path.Combine(folder, NameFor(at));
-            AtomicFile.WriteAllText(receipt, Render(at, token, outcome, destination));
+            files.WriteText(receipt, Render(at, token, outcome, destination));
 
             return receipt;
         }

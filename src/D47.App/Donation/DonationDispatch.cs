@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using D47.Core;
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Donation;
@@ -42,6 +43,7 @@ public sealed record DonationStep(bool Sending, int Files, long Sent = 0, long T
 public sealed class DonationDispatch
 {
     private readonly AppPaths _paths;
+    private readonly IFileSystem _files;
     private readonly Func<string?> _endpoint;
     private readonly DonationUpload _upload;
     private readonly ILogger? _log;
@@ -58,11 +60,13 @@ public sealed class DonationDispatch
     /// </param>
     public DonationDispatch(
         AppPaths paths,
+        IFileSystem files,
         Func<string?> endpoint,
         DonationUpload upload,
         ILogger? log = null)
     {
         _paths = paths;
+        _files = files;
         _endpoint = endpoint;
         _upload = upload;
         _log = log;
@@ -70,10 +74,10 @@ public sealed class DonationDispatch
 
     /// <summary>The ordinary construction, said once (#181).</summary>
     public static DonationDispatch For(
-        AppPaths paths, Func<string?> endpoint, ILoggerFactory loggers)
+        AppPaths paths, IFileSystem files, Func<string?> endpoint, ILoggerFactory loggers)
     {
         var log = loggers.CreateLogger("Donation");
-        return new DonationDispatch(paths, endpoint, new DonationUpload(log: log), log);
+        return new DonationDispatch(paths, files, endpoint, new DonationUpload(log: log), log);
     }
 
     /// <summary>Whether there is anywhere to send to.</summary>
@@ -134,12 +138,13 @@ public sealed class DonationDispatch
         }
 
         // Minted at the send, and only here.
-        var donor = DonorToken.Ensure(_paths.DonorTokenFile);
+        var donor = DonorToken.Ensure(_files, _paths.DonorTokenFile);
 
         var envelope = DonationEnvelope.For(kind, donor, paperwork, payload.Span);
         var outcome = await _upload.SendAsync(endpoint, envelope, payload, cancel);
 
         var receipt = DonationReceipt.Write(
+            _files,
             _paths.Donations,
             envelope,
             outcome,
@@ -181,7 +186,7 @@ public sealed class DonationDispatch
                 Receipt: null);
         }
 
-        var donor = DonorToken.Ensure(_paths.DonorTokenFile);
+        var donor = DonorToken.Ensure(_files, _paths.DonorTokenFile);
         var files = 0;
 
         var counting = new Progress<int>(read =>
@@ -252,6 +257,7 @@ public sealed class DonationDispatch
         // is the report the Commander read; the payload itself is hundreds of megabytes and a second copy of
         // it on their own disk would tell them nothing the hash does not.
         var receipt = DonationReceipt.Write(
+            _files,
             _paths.Donations,
             envelope,
             outcome,
@@ -275,7 +281,7 @@ public sealed class DonationDispatch
     {
         var at = DateTimeOffset.Now;
         var endpoint = _endpoint();
-        var token = DonorToken.Read(_paths.DonorTokenFile);
+        var token = DonorToken.Read(_files, _paths.DonorTokenFile);
 
         if (token is null)
         {
@@ -296,10 +302,11 @@ public sealed class DonationDispatch
         // Kept where the store was asked and refused — see the note on this method.
         if (outcome.Answered || !outcome.Asked)
         {
-            DonorToken.Forget(_paths.DonorTokenFile);
+            DonorToken.Forget(_files, _paths.DonorTokenFile);
         }
 
         var receipt = DonationErasure.Write(
+            _files,
             _paths.Donations,
             at,
             token,

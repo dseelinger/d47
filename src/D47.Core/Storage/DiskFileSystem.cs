@@ -82,6 +82,17 @@ public sealed class DiskFileSystem : IFileSystem
         File.AppendAllText(path, contents);
     }
 
+    public void Delete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+    }
+
     public void Copy(string from, string to)
     {
         CreateFolderOf(to);

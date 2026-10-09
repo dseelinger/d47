@@ -5,40 +5,36 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
-[Trait("Category", "Integration")]
 public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
 
-    private readonly string _folder = Directory.CreateTempSubdirectory("d47-story-lock").FullName;
+    private readonly MemoryFileSystem _files = new();
     private readonly ManualResetEventSlim _writing = new();
     private readonly ManualResetEventSlim _release = new();
     private int _writes;
 
-    private string StoryPath => Path.Combine(_folder, "story.json");
+    private static string StoryPath => Path.Combine(@"C:\d47-test", "story.json");
 
     public void Dispose()
     {
         _release.Set();
         _writing.Dispose();
         _release.Dispose();
-        Directory.Delete(_folder, recursive: true);
     }
 
     private static Story Picked(string id) => new() { Id = id, Title = id, PublicLayer = "-" };
 
     /// <summary>The first write signals <see cref="_writing"/> and waits for <see cref="_release"/>; later writes pass straight through.</summary>
     private StoryStore OpenWithAHeldFirstWrite() =>
-        StoryStore.Open(StoryPath, NullLogger<StoryStore>.Instance, (path, contents) =>
+        StoryStore.Open(StoryPath, new HeldWrites(_files, () =>
         {
             if (Interlocked.Increment(ref _writes) == 1)
             {
                 _writing.Set();
                 _release.Wait(Patience);
             }
-
-            AtomicFile.WriteAllText(path, contents);
-        });
+        }), NullLogger<StoryStore>.Instance);
 
     private Task StartHeldWrite(Action write)
     {
@@ -111,8 +107,35 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
         _release.Set();
         await Task.WhenAll(first, second);
 
-        var reopened = StoryStore.Open(StoryPath, NullLogger<StoryStore>.Instance);
+        var reopened = StoryStore.Open(StoryPath, _files, NullLogger<StoryStore>.Instance);
 
         Assert.Equal(["a", "b"], reopened.For("F1").Select(story => story.Id));
+    }
+
+    /// <summary>Runs <c>beforeWrite</c> ahead of each write to the wrapped file system.</summary>
+    private sealed class HeldWrites(IFileSystem inner, Action beforeWrite) : IFileSystem
+    {
+        public FileState? Stat(string path) => inner.Stat(path);
+
+        public DateTime? FolderWritten(string folder) => inner.FolderWritten(folder);
+
+        public string? ReadText(string path) => inner.ReadText(path);
+
+        public Stream? OpenRead(string path) => inner.OpenRead(path);
+
+        public void WriteText(string path, string contents)
+        {
+            beforeWrite();
+            inner.WriteText(path, contents);
+        }
+
+        public void AppendText(string path, string contents) => inner.AppendText(path, contents);
+
+        public void Delete(string path) => inner.Delete(path);
+
+        public void Copy(string from, string to) => inner.Copy(from, to);
+
+        public IReadOnlyList<string> Enumerate(string folder, string pattern, bool recursive = false) =>
+            inner.Enumerate(folder, pattern, recursive);
     }
 }

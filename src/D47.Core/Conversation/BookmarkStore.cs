@@ -12,7 +12,7 @@ public sealed record Bookmark(string Name, string System, DateTimeOffset MadeAt)
 /// Per Commander Frontier id, the systems they have named. Kept between sessions at
 /// <c>data/bookmarks.json</c>, beside <see cref="LearnedPhrasesStore"/>.
 /// </summary>
-public sealed class BookmarkStore(string path, ILogger<BookmarkStore> logger)
+public sealed class BookmarkStore(string path, IFileSystem files, ILogger<BookmarkStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -40,14 +40,14 @@ public sealed class BookmarkStore(string path, ILogger<BookmarkStore> logger)
 
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, Dictionary<string, Bookmark>>(StringComparer.Ordinal);
 
@@ -232,7 +232,7 @@ public sealed class BookmarkStore(string path, ILogger<BookmarkStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

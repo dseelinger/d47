@@ -24,16 +24,11 @@ public static class DonorToken
         token is { Length: Length } && token.All(IsLowerHex);
 
     /// <summary>The token on this installation, or null where there is none.</summary>
-    public static string? Read(string file)
+    public static string? Read(IFileSystem files, string file)
     {
         try
         {
-            if (!File.Exists(file))
-            {
-                return null;
-            }
-
-            var read = File.ReadAllText(file).Trim();
+            var read = files.ReadText(file)?.Trim();
             return IsWellFormed(read) ? read : null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -45,27 +40,27 @@ public static class DonorToken
     }
 
     /// <summary>The token on this installation, minting and writing one if there is none.</summary>
-    public static string Ensure(string file)
+    public static string Ensure(IFileSystem files, string file)
     {
-        if (Read(file) is { } existing)
+        if (Read(files, file) is { } existing)
         {
             return existing;
         }
 
         var minted = NewToken();
-        AtomicFile.WriteAllText(file, minted + Environment.NewLine);
+        files.WriteText(file, minted + Environment.NewLine);
         return minted;
     }
 
     /// <summary>Withdrawal.</summary>
     /// <returns>The token that was forgotten, or null where there was nothing to forget.</returns>
-    public static string? Forget(string file)
+    public static string? Forget(IFileSystem files, string file)
     {
-        var held = Read(file);
+        var held = Read(files, file);
 
         try
         {
-            File.Delete(file);
+            files.Delete(file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -1,6 +1,7 @@
 ﻿using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,7 +16,7 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     private HeardNamesStore Store() =>
-        new(Path.Combine(_root, "heard-names.json"), NullLogger<HeardNamesStore>.Instance);
+        new(Path.Combine(_root, "heard-names.json"), new DiskFileSystem(), NullLogger<HeardNamesStore>.Instance);
 
     private static readonly DateTimeOffset At = new(2026, 8, 27, 20, 0, 0, TimeSpan.Zero);
 

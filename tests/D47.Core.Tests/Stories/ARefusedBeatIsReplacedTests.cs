@@ -275,7 +275,7 @@ public sealed class ARefusedBeatIsReplacedTests
 
         Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 
-        var reread = StoryStore.Open(fixtures.StoryPath, NullLogger<StoryStore>.Instance);
+        var reread = StoryStore.Open(fixtures.StoryPath, fixtures.Files, NullLogger<StoryStore>.Instance);
 
         Assert.Equal(["bond"], reread.Current("F1")!.Refused);
     }

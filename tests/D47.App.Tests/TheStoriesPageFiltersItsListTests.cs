@@ -52,7 +52,7 @@ public class TheStoriesPageFiltersItsListTests
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), NullLogger<StoryStore>.Instance);
+        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), new DiskFileSystem(), NullLogger<StoryStore>.Instance);
         var generator = new AdventureGenerator(
             () => null, () => null, () => null, () => null, () => null, () => null,
             () => null, () => null, null, null, NullLogger.Instance);

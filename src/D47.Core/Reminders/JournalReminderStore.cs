@@ -9,7 +9,7 @@ namespace D47.Core.Reminders;
 public sealed record JournalReminderProblem(string Where, string Reason);
 
 /// <summary>The Commanders' journal-triggered reminders, per Frontier id, in one file beside the executable.</summary>
-public sealed class JournalReminderStore(string path, ILogger<JournalReminderStore> logger)
+public sealed class JournalReminderStore(string path, IFileSystem files, ILogger<JournalReminderStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -77,7 +77,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
 
         try
         {
-            if (!File.Exists(path))
+            if (files.ReadText(path) is not { } read)
             {
                 if (_seen is null)
                 {
@@ -95,11 +95,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            text = read;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -305,7 +301,7 @@ public sealed class JournalReminderStore(string path, ILogger<JournalReminderSto
 
             try
             {
-                AtomicFile.WriteAllText(path, text);
+                files.WriteText(path, text);
 
                 lock (_gate)
                 {

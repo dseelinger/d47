@@ -16,8 +16,9 @@ public class LogbookBookTests : IDisposable
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
     private readonly JournalCorpus _corpus = new();
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-logbook-out", Guid.NewGuid().ToString("N"));
+    private const string _folder = @"C:\d47-test\commander-log";
+
+    private readonly MemoryFileSystem _logs = new();
 
     private LogbookSettings _settings = new();
     private LogbookContext _context = new();
@@ -26,11 +27,6 @@ public class LogbookBookTests : IDisposable
     {
         GC.SuppressFinalize(this);
         _corpus.Dispose();
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
     }
 
     /// <summary>Item 4 in one assertion.</summary>
@@ -168,7 +164,7 @@ public class LogbookBookTests : IDisposable
 
         // And it says which voice was asked for and which one wrote, in the file — a Commander who chose a
         // narrator and got a report deserves to be told rather than to wonder.
-        var file = File.ReadAllText(outcome.Written!.Path!);
+        var file = _logs.ReadText(outcome.Written!.Path!);
         Assert.Contains("Personality is switched off", file, StringComparison.Ordinal);
     }
 
@@ -245,7 +241,7 @@ public class LogbookBookTests : IDisposable
         book.Estimate(null, null, null, out _);
 
         var outcome = await book.WriteAsync(CancellationToken.None);
-        var file = File.ReadAllText(outcome.Written!.Path!);
+        var file = _logs.ReadText(outcome.Written!.Path!);
 
         Assert.Contains("[1]", file, StringComparison.Ordinal);
         Assert.Contains("## Sources", file, StringComparison.Ordinal);
@@ -295,7 +291,7 @@ public class LogbookBookTests : IDisposable
         Evening1();
 
         var book = new LogbookBook(
-            new LogFolder(_folder, NullLogger<LogFolder>.Instance),
+            new LogFolder(_folder, _logs, NullLogger<LogFolder>.Instance),
             new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => _settings,
@@ -314,7 +310,7 @@ public class LogbookBookTests : IDisposable
         _context = _context with { Provider = provider, Model = _context.Model ?? "claude-opus-5" };
 
         return new LogbookBook(
-            new LogFolder(_folder, NullLogger<LogFolder>.Instance),
+            new LogFolder(_folder, _logs, NullLogger<LogFolder>.Instance),
             new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => _settings,

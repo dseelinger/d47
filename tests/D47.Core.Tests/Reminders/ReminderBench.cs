@@ -2,17 +2,16 @@ using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Reminders;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Reminders;
 
-/// <summary>A reminder store in a temporary install, saving on the calling thread, and a callout over it.</summary>
-internal sealed class ReminderBench : IDisposable
+/// <summary>A reminder store over an in-memory file system, saving on the calling thread, and a callout over it.</summary>
+internal sealed class ReminderBench
 {
     public static readonly DateTimeOffset Now = new(2026, 10, 5, 20, 0, 0, TimeSpan.Zero);
-
-    private readonly TempInstall _install = new();
 
     public ReminderBench()
     {
@@ -20,7 +19,9 @@ internal sealed class ReminderBench : IDisposable
         Callout = new JournalReminderCallout(Store) { Capacity = MaterialGrades.CapacityOf };
     }
 
-    public string FilePath => Path.Combine(_install.Paths.Data, "journal-reminders.json");
+    public MemoryFileSystem Files { get; } = new();
+
+    public static string FilePath => Path.Combine(@"C:\d47-test", "data", "journal-reminders.json");
 
     public JournalReminderStore Store { get; }
 
@@ -29,7 +30,7 @@ internal sealed class ReminderBench : IDisposable
     /// <summary>A second store over the same file, as a restart would read it.</summary>
     public JournalReminderStore Open()
     {
-        var store = new JournalReminderStore(FilePath, NullLogger<JournalReminderStore>.Instance) { Dispatch = work => work() };
+        var store = new JournalReminderStore(FilePath, Files, NullLogger<JournalReminderStore>.Instance) { Dispatch = work => work() };
         store.Poll();
         return store;
     }
@@ -72,6 +73,4 @@ internal sealed class ReminderBench : IDisposable
         Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
         return parsed!;
     }
-
-    public void Dispose() => _install.Dispose();
 }

@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>"Noted" and "remind me next time" answer the reminder that has just gone off, and only then (#644).</summary>
-[Trait("Category", "Integration")]
 public class ANotedOrASnoozeAnswersAFiredReminderTests
 {
     private const string Commander = "F100";
@@ -61,7 +60,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [InlineData("thanks")]
     public async Task NotedRemovesTheReminderThatWentOff(string answer)
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm(Commander, JournalTrigger.NextDocking, "buy limpets");
         Assert.Single(bench.Say(Flying(), events: Docked()));
         var (loop, model) = Build(bench);
@@ -77,7 +76,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [Fact]
     public async Task RemindMeNextTimeFiresAgainAtTheSecondDocking()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var reminder = bench.Arm(Commander, JournalTrigger.NextDocking, "buy limpets");
         var state = Flying();
         Assert.Single(bench.Say(state, events: Docked()));
@@ -101,7 +100,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [InlineData("remind me next session")]
     public async Task RemindMeTomorrowMovesTheReminderToTheNextSession(string answer)
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm(Commander, JournalTrigger.DockingAt, "sell data", "Jameson Memorial");
         Assert.Single(bench.Say(Flying(), events: Docked()));
         var (loop, _) = Build(bench);
@@ -118,7 +117,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [Fact]
     public async Task OnlyTheMostRecentlyFiredReminderIsAnswered()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var first = bench.Arm(Commander, JournalTrigger.NextDocking, "buy limpets");
         var second = bench.Arm(Commander, JournalTrigger.DockingAt, "sell data", "Jameson Memorial");
         var state = Flying();
@@ -138,7 +137,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [InlineData("remind me next time")]
     public async Task WithNothingFiredTheAnswerIsNotMatched(string answer)
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm(Commander, JournalTrigger.NextDocking, "buy limpets");
         var (loop, model) = Build(bench);
 
@@ -152,7 +151,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [Fact]
     public async Task RemindMeTomorrowWithNothingFiredIsStillDeclinedAsATime()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var (loop, model) = Build(bench);
 
         var said = await SaidAsync(loop, "remind me tomorrow");
@@ -164,7 +163,7 @@ public class ANotedOrASnoozeAnswersAFiredReminderTests
     [Fact]
     public void TheAnswersAreRefusedToTheModel()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         var tools = RemindersCapability.Create(bench.Store, () => Commander, () => ReminderBench.Now).Tools;
 
         Assert.True(tools.Single(tool => tool.Name == RemindersCapability.AcknowledgeTool).Protected);

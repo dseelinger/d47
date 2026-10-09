@@ -6,13 +6,12 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>Reminders survive a restart, filed under the Commander who set them.</summary>
-[Trait("Category", "Integration")]
 public class RemindersAreKeptPerCommanderTests
 {
     [Fact]
     public void AReminderSurvivesARestartAndAnotherCommandersIsNotFired()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         bench.Arm("F1", JournalTrigger.NextDocking, "Buy limpets.");
         bench.Arm("F2", JournalTrigger.NextDocking, "Sell the painite.");
 
@@ -33,8 +32,8 @@ public class RemindersAreKeptPerCommanderTests
     [Fact]
     public void AHandWrittenReminderWithNoNameToMatchIsRefused()
     {
-        using var bench = new ReminderBench();
-        File.WriteAllText(bench.FilePath, """
+        var bench = new ReminderBench();
+        bench.Files.WriteText(ReminderBench.FilePath, """
             {
               "commanders": [
                 { "frontierId": "F1", "reminders": [
@@ -54,7 +53,7 @@ public class RemindersAreKeptPerCommanderTests
     [Fact]
     public void AReminderTheFileWouldRefuseIsNotAdded()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
 
         Assert.False(bench.Store.Add("F1", new JournalReminder("a", "Trade the surplus.", JournalTrigger.MaterialFull)));
         Assert.False(bench.Store.Add("F1", new JournalReminder("b", "  ", JournalTrigger.NextDocking)));
@@ -64,8 +63,8 @@ public class RemindersAreKeptPerCommanderTests
     [Fact]
     public void TwoHandWrittenRemindersSharingAnIdKeepTheFirst()
     {
-        using var bench = new ReminderBench();
-        File.WriteAllText(bench.FilePath, """
+        var bench = new ReminderBench();
+        bench.Files.WriteText(ReminderBench.FilePath, """
             { "commanders": [ { "frontierId": "F1", "reminders": [
               { "id": "x", "sentence": "Buy limpets.", "trigger": "nextDocking" },
               { "id": "x", "sentence": "Sell the painite.", "trigger": "nextDocking" }
@@ -81,13 +80,13 @@ public class RemindersAreKeptPerCommanderTests
     [Fact]
     public void AFileThatDoesNotParseIsNotWrittenOver()
     {
-        using var bench = new ReminderBench();
+        var bench = new ReminderBench();
         const string Broken = """{ "commanders": [ { "frontierId": "F1", "reminders": [ { "trigger": "nextDockin" } ] } ] }""";
-        File.WriteAllText(bench.FilePath, Broken);
+        bench.Files.WriteText(ReminderBench.FilePath, Broken);
 
         var store = bench.Open();
 
         Assert.False(store.Add("F1", new JournalReminder("a", "Buy limpets.", JournalTrigger.NextDocking)));
-        Assert.Equal(Broken, File.ReadAllText(bench.FilePath));
+        Assert.Equal(Broken, bench.Files.ReadText(ReminderBench.FilePath));
     }
 }

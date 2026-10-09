@@ -22,6 +22,7 @@ public sealed class StandingDirectionsStore
     };
 
     private readonly string _path;
+    private readonly IFileSystem _files;
     private readonly ILogger _logger;
     private readonly Lock _gate = new();
 
@@ -34,12 +35,13 @@ public sealed class StandingDirectionsStore
     /// <summary>
     /// <exception cref="DebriefWriteRefused">The path is not the standing-directions file.</exception>
     /// </summary>
-    public StandingDirectionsStore(string path, ILogger<StandingDirectionsStore> logger)
+    public StandingDirectionsStore(string path, IFileSystem files, ILogger<StandingDirectionsStore> logger)
     {
         // Before the field is even assigned.
         DebriefWriteFence.Enforce(path);
 
         _path = path;
+        _files = files;
         _logger = logger;
     }
 
@@ -90,7 +92,7 @@ public sealed class StandingDirectionsStore
 
         try
         {
-            if (!File.Exists(_path))
+            if (_files.ReadText(_path) is not { } read)
             {
                 // Not an error: an empty file is the normal state until the first debrief runs.
                 if (_seen is null)
@@ -109,11 +111,7 @@ public sealed class StandingDirectionsStore
                 return true;
             }
 
-            using var stream = new FileStream(
-                _path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            text = read;
         }
         catch (IOException ex)
         {
@@ -292,7 +290,7 @@ public sealed class StandingDirectionsStore
 
         try
         {
-            AtomicFile.WriteAllText(_path, text);
+            _files.WriteText(_path, text);
 
             lock (_gate)
             {

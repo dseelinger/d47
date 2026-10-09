@@ -1,38 +1,26 @@
 ﻿using D47.Core.Conversation;
 using D47.Core.Debrief;
 using D47.Core.Memory;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The merge gate, the cadence and the block.</summary>
-[Trait("Category", "Integration")]
-public class StandingDirectionsTests : IDisposable
+public class StandingDirectionsTests
 {
     private static readonly DateTimeOffset Now = new(3311, 4, 2, 21, 0, 0, TimeSpan.Zero);
 
     private const string Cmdr = "F1234567";
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-directions", Guid.NewGuid().ToString("N"), "data");
+    private const string _folder = @"C:\d47-test\data";
 
-    public StandingDirectionsTests() => Directory.CreateDirectory(_folder);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        var root = Path.GetDirectoryName(_folder)!;
-
-        if (Directory.Exists(root))
-        {
-            Directory.Delete(root, recursive: true);
-        }
-    }
+    private readonly MemoryFileSystem _files = new();
 
     private StandingDirectionsStore Store() => new(
         Path.Combine(_folder, DebriefWriteFence.FileName),
+        _files,
         NullLogger<StandingDirectionsStore>.Instance);
 
     private DebriefBook Book(StandingDirectionsStore? store = null) => new(store ?? Store(), () => Cmdr);
@@ -264,7 +252,7 @@ public class StandingDirectionsTests : IDisposable
     {
         var path = Path.Combine(_folder, DebriefWriteFence.FileName);
 
-        File.WriteAllText(
+        _files.WriteText(
             path,
             """
             {

@@ -825,6 +825,7 @@ public sealed class AppHost : IDisposable
         // Every place this Commander has met, and what their transcriber gets wrong about them (#134).
         var heardNames = new HeardNamesStore(
             Path.Combine(paths.Data, "heard-names.json"),
+            files,
             loggerFactory.CreateLogger<HeardNamesStore>());
 
         heardNames.Load();
@@ -840,6 +841,7 @@ public sealed class AppHost : IDisposable
         // The systems this Commander has named, so they can be said back as a course (#488).
         var bookmarks = new BookmarkStore(
             Path.Combine(paths.Data, "bookmarks.json"),
+            files,
             loggerFactory.CreateLogger<BookmarkStore>());
 
         bookmarks.Load();
@@ -847,6 +849,7 @@ public sealed class AppHost : IDisposable
         // Every run, not only behind the timers switch (#90).
         var journalReminders = new D47.Core.Reminders.JournalReminderStore(
             Path.Combine(paths.Data, "journal-reminders.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Reminders.JournalReminderStore>());
 
         journalReminders.Poll();
@@ -1084,6 +1087,7 @@ public sealed class AppHost : IDisposable
         // The standing directions the debrief pass drafts and the Commander adopts (#162).
         var directions = new StandingDirectionsStore(
             Path.Combine(paths.Data, DebriefWriteFence.FileName),
+            files,
             loggerFactory.CreateLogger<StandingDirectionsStore>());
 
         directions.Poll();
@@ -1136,6 +1140,7 @@ public sealed class AppHost : IDisposable
         // Read before the catch-up below: a place visited while the Commander had the story off is not remembered.
         var storyStore = D47.Core.Stories.StoryStore.Open(
             Path.Combine(paths.Data, "story.json"),
+            files,
             loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>());
 
         var storyArchive = D47.Core.Stories.StoryChapterArchive.Open(
@@ -1517,6 +1522,7 @@ public sealed class AppHost : IDisposable
         var logbook = new D47.Core.Logbook.LogbookBook(
             new D47.Core.Logbook.LogFolder(
                 Path.Combine(paths.Data, D47.Core.Logbook.LogFolder.FolderName),
+                files,
                 loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>()),
             new D47.Core.Logbook.LogDigestBuilder(loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
             new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
@@ -2184,7 +2190,7 @@ public sealed class AppHost : IDisposable
                 async (_, cancel) =>
                 {
                     var forgotten = await Donation.DonationDispatch
-                        .For(paths, static () => DonationSettings.Address, loggerFactory)
+                        .For(paths, files, static () => DonationSettings.Address, loggerFactory)
                         .ForgetAsync(cancel);
 
                     return forgotten.Receipt is { } receipt
@@ -2256,7 +2262,8 @@ public sealed class AppHost : IDisposable
                 bindingProfiles: bindingProfiles,
                 screen: screenCapture,
                 imagesAvailable: () => self?.ReadsPictures ?? true,
-                pictureNote: () => self?.PictureNote));
+                pictureNote: () => self?.PictureNote,
+                files: files));
 
         buildingRegistry.Dispose();
 

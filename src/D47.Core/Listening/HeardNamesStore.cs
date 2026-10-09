@@ -18,7 +18,7 @@ public sealed record HeardNames(SpokenNames Names, SoundsLike Aliases)
 /// The two halves of hearing a proper noun right, kept between sessions (#134): the names this
 /// Commander has met, and the corrections they have confirmed.
 /// </summary>
-public sealed class HeardNamesStore(string path, ILogger<HeardNamesStore> logger)
+public sealed class HeardNamesStore(string path, IFileSystem files, ILogger<HeardNamesStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -73,14 +73,14 @@ public sealed class HeardNamesStore(string path, ILogger<HeardNamesStore> logger
 
     public void Load()
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            if (files.ReadText(path) is not { } text)
+            {
+                return;
+            }
+
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, HeardNames>(StringComparer.Ordinal);
 
@@ -177,7 +177,7 @@ public sealed class HeardNamesStore(string path, ILogger<HeardNamesStore> logger
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

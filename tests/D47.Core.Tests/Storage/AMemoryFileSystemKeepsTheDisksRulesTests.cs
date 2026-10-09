@@ -161,4 +161,26 @@ public sealed class AMemoryFileSystemKeepsTheDisksRulesTests
         Assert.Equal(_files.Stat(from), _files.Stat(to));
         Assert.Throws<FileNotFoundException>(() => _files.Copy(Path.Combine(Folder, "missing.json"), to));
     }
+
+    [Fact]
+    public void ADeleteRemovesTheFileAndMovesTheFoldersStamp()
+    {
+        var path = Path.Combine(Folder, "a.json");
+        _files.WriteText(path, "a");
+        var before = _files.FolderWritten(Folder);
+
+        _files.Delete(path);
+
+        Assert.Null(_files.Stat(path));
+        Assert.NotEqual(before, _files.FolderWritten(Folder));
+    }
+
+    [Fact]
+    public void ADeleteOfAMissingFileOrFolderDoesNothing()
+    {
+        _files.Delete(Path.Combine(Folder, "nowhere.json"));
+        _files.Delete(Path.Combine(Folder, "no-such-folder", "a.json"));
+
+        Assert.Null(_files.FolderWritten(Folder));
+    }
 }

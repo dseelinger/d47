@@ -1,12 +1,12 @@
 using D47.Core.Debrief;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Debrief;
 
 /// <summary>The launch's pass over drafted proposals, driven through a stub in place of the model (#677).</summary>
-[Trait("Category", "Integration")]
-public class TheModelRewordsAProposalOnceTests : IDisposable
+public class TheModelRewordsAProposalOnceTests
 {
     private const string Commander = "F1234";
 
@@ -14,22 +14,9 @@ public class TheModelRewordsAProposalOnceTests : IDisposable
 
     private static readonly DateTimeOffset Now = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-debrief-reword", Guid.NewGuid().ToString("N"));
+    private readonly MemoryFileSystem _files = new();
 
-    public TheModelRewordsAProposalOnceTests() => Directory.CreateDirectory(Path.Combine(_folder, "data"));
-
-    private string FilePath => Path.Combine(_folder, "data", DebriefWriteFence.FileName);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private static string FilePath => Path.Combine(@"C:\d47-test", "data", DebriefWriteFence.FileName);
 
     [Fact]
     public async Task AProposalReadsAsTheModelsAnswerAndKeepsWhatWasSaid()
@@ -146,7 +133,7 @@ public class TheModelRewordsAProposalOnceTests : IDisposable
 
     private StandingDirectionsStore Open()
     {
-        var store = new StandingDirectionsStore(FilePath, NullLogger<StandingDirectionsStore>.Instance);
+        var store = new StandingDirectionsStore(FilePath, _files, NullLogger<StandingDirectionsStore>.Instance);
         store.Poll();
         return store;
     }
