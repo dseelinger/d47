@@ -162,7 +162,7 @@ Vendored inside a package, and not covered by that package's own licence
 Other third-party components
 ----------------------------
 
-    spike/OverlaySpike/vendor/openvr_api.cs   Valve's official binding, BSD-3-Clause,
+    src/D47.Vr/vendor/openvr_api.cs           Valve's official binding, BSD-3-Clause,
                                               vendored from ValveSoftware/openvr.
 
     Saira                                    SIL Open Font License 1.1, by The Saira Project
@@ -181,5 +181,4 @@ Other third-party components
                                               the licence text ships beside it as
                                               assets/fonts/OFL-JetBrainsMono.txt.
 
-Package dependencies are declared in the project files and are permissively licensed;
-see the licence invariant in CLAUDE.md.
+Package dependencies are declared in the project files and are permissively licensed.
