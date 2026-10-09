@@ -86,6 +86,7 @@ public sealed class AppHost : IDisposable
         ScancodeInjector gameInput,
         HttpModelStore models,
         WhisperTranscriber transcriber,
+        LearnedWording wording,
         string version,
         string? startupError)
     {
@@ -145,6 +146,7 @@ public sealed class AppHost : IDisposable
         _gameInput = gameInput;
         Models = models;
         _transcriber = transcriber;
+        Wording = wording;
         Version = version;
         StartupError = startupError;
 
@@ -382,6 +384,9 @@ public sealed class AppHost : IDisposable
     /// What d47 remembers about the Commander, and the clock a fact typed on the panel is stamped with
     /// (Phase 31).
     /// </summary>
+    /// <summary>What the Commander flying has taught d47 about their words.</summary>
+    public LearnedWording Wording { get; }
+
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
 
     /// <summary>
@@ -525,21 +530,6 @@ public sealed class AppHost : IDisposable
     /// The stored loadouts, for the row that describes them and the press that rebuilds them (#128).
     /// </summary>
     private LoadoutStore? _loadouts;
-
-    /// <summary>
-    /// What this Commander has met and what their transcriber gets wrong (#134), for the settings row
-    /// that shows it, the pre-pass that applies it and the lookup that learns it.
-    /// </summary>
-    private HeardNamesStore? _heardNames;
-
-    /// <summary>
-    /// What this Commander has taught d47 their own wording means (#169), for the panel page that lists
-    /// and forgets one (#171).
-    /// </summary>
-    private LearnedPhrasesStore? _learnedPhrases;
-
-    /// <summary>The same store, for the panel page that lists and forgets a learned phrase (#171).</summary>
-    public LearnedPhrasesStore? LearnedPhrases => _learnedPhrases;
 
     /// <summary>The systems this Commander has named (#488), for the panel page that lists, renames and
     /// deletes one (#490).</summary>
@@ -1498,6 +1488,13 @@ public sealed class AppHost : IDisposable
 
         AppHost? self = null;
 
+        var wording = new LearnedWording(
+            heardNames,
+            learnedPhrases,
+            () => gameState.Active?.Identity.FrontierId,
+            () => self?.ReservedPhrases ?? [],
+            () => DateTimeOffset.Now);
+
         // The conversation about each build's plan (#570). Late-bound to the turn loop through `self`.
         var buildAdvisor = new ShipPlanAdvisor(
             () => self?.Turns.Provider,
@@ -1908,7 +1905,7 @@ public sealed class AppHost : IDisposable
                 new SpokenNamesSurface(
                     () => gameState.Active?.Names ?? SpokenNames.Empty,
                     new MishearingWatch(),
-                    (heard, meant) => self?.LearnCorrection(heard, meant)),
+                    wording.LearnCorrection),
                 cancellation,
                 callouts,
                 () => built ?? throw new InvalidOperationException(
@@ -1935,8 +1932,8 @@ public sealed class AppHost : IDisposable
 
                     // Read at draw time, so the row shows what has been learned rather than what had been
                     // when the surface was assembled (#134).
-                    Corrections = () => self?.LearnedCorrections() ?? "Nothing yet.",
-                    ForgetCorrections = () => self?.ForgetCorrections(),
+                    Corrections = () => wording.LearnedCorrections(),
+                    ForgetCorrections = wording.ForgetCorrections,
 
                     // What the gate policy is actually doing, which is the question a Commander running hands
                     // free is asking when they ask this one (Phase 13).
@@ -2445,7 +2442,7 @@ public sealed class AppHost : IDisposable
                      || router.MatchToolCommand(input) is not null
                      || router.Match(input, InputSource.Spoken) is not null
                      || router.Book.Candidates(input, InputSource.Spoken).Count > 0
-                     || self?.LearnedPhraseFor(input) is not null,
+                     || wording.LearnedPhraseFor(input) is not null,
             () => self?.HiddenStory(VoiceRole.Narrator),
             () => string.IsNullOrWhiteSpace(settings.Current.Llm.CharacterSheet)
                 ? CommanderStory.SheetOrName(null, gameState.Active?.Identity.Name)
@@ -2599,6 +2596,7 @@ public sealed class AppHost : IDisposable
             injector,
             models,
             transcriber,
+            wording,
             version,
             startupError);
 
@@ -2798,8 +2796,6 @@ public sealed class AppHost : IDisposable
         // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).
         history.Changed += host.ShowHistory;
         host._loadouts = loadouts;
-        host._heardNames = heardNames;
-        host._learnedPhrases = learnedPhrases;
         host._bookmarks = bookmarks;
 
         host.BookmarkPhrasesTaken = () => builtRouter is null
@@ -3594,13 +3590,13 @@ public sealed class AppHost : IDisposable
         Turns.EffortCeiling = current.Llm.EffortCeiling;
 
         // What the transcriber gets wrong, put right before anything reads the sentence (#134).
-        Turns.Heard = HeardAsMeant;
+        Turns.Heard = Wording.HeardAsMeant;
 
         // What this Commander's own wording means, put right after (#169).
-        Turns.LearnedPhraseFor = LearnedPhraseFor;
+        Turns.LearnedPhraseFor = Wording.LearnedPhraseFor;
         Turns.CommanderId = () => Flying is { Length: > 0 } fid ? fid : null;
         Turns.HiddenStory = () => HiddenStory(VoiceRole.ShipAi);
-        Turns.LearnPhrase = LearnPhrase;
+        Turns.LearnPhrase = Wording.LearnPhrase;
 
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
@@ -4236,58 +4232,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The Frontier id of the Commander flying, or empty before it is known.</summary>
     private string Flying => GameState.Active?.Identity.FrontierId ?? string.Empty;
-
-    /// <summary>What d47 has learned this transcriber gets wrong, for the settings row (#134).</summary>
-    internal string LearnedCorrections() =>
-        Flying.Length == 0 || _heardNames is not { } store
-            ? "Nothing yet. D47 learns one of these only when you correct a name it misheard."
-            : store.AliasesFor(Flying).Summarise();
-
-    /// <summary>Drops every learned correction for whoever is flying (#134).</summary>
-    internal void ForgetCorrections()
-    {
-        if (Flying is { Length: > 0 } fid)
-        {
-            _heardNames?.ForgetCorrections(fid, DateTimeOffset.Now);
-        }
-    }
-
-    /// <summary>
-    /// The transcript pre-pass (#134): what this Commander's transcriber reliably gets wrong, put right
-    /// before anything reads the sentence.
-    /// </summary>
-    internal string HeardAsMeant(string spoken) =>
-        Flying.Length == 0 || _heardNames is not { } store
-            ? spoken
-            : store.AliasesFor(Flying).Apply(spoken);
-
-    /// <summary>Records a correction the Commander steered d47 to (#134).</summary>
-    internal void LearnCorrection(string heard, string meant)
-    {
-        if (Flying is { Length: > 0 } fid)
-        {
-            _heardNames?.Learn(
-                fid,
-                heard,
-                meant,
-                DateTimeOffset.Now,
-                word => ReservedPhrases.Any(phrase =>
-                    phrase.Contains(word, StringComparison.OrdinalIgnoreCase)));
-        }
-    }
-
-    /// <summary>What this Commander has taught d47 an utterance stands for, or null for nothing (#169).</summary>
-    internal string? LearnedPhraseFor(string utterance) =>
-        Flying is { Length: > 0 } fid ? _learnedPhrases?.PhraseFor(fid, utterance) : null;
-
-    /// <summary>Records that an utterance stands for a phrase, for whoever is flying (#169).</summary>
-    internal void LearnPhrase(string said, string phrase)
-    {
-        if (Flying is { Length: > 0 } fid)
-        {
-            _learnedPhrases?.Learn(fid, said, phrase, DateTimeOffset.Now);
-        }
-    }
 
     internal string RememberedShips()
     {

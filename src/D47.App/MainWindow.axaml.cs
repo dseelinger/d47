@@ -143,10 +143,8 @@ public partial class MainWindow : Window
             Panel.EnableSettings(
                 BuildSettingsPage,
                 RevealSetting,
-                host.LearnedPhrases is { } learnedPhrases
-                    ? () => new PhrasesPage(
-                        host.Capabilities, learnedPhrases, () => host.GameState.Active, () => host.Router.Book)
-                    : null);
+                () => new PhrasesPage(
+                    host.Capabilities, host.Wording.Phrases, () => host.GameState.Active, () => host.Router.Book));
 
             // Every system name the panel draws goes through this one seam (#157).
             if (host.Clipboard is { } clipboard)
