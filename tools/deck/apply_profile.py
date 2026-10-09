@@ -80,6 +80,8 @@ PAGE_1 = {
     '0,1': send('/desktop', 'desktop'),
     '1,1': send('push', 'push'),
     '2,1': send('/wrap-up', 'wrapup'),
+    # Violet in the typing row because it opens the session the phone app reaches.
+    '4,1': run('launcher.cmd', 'launcher'),
 
     '0,2': run('test-drive.cmd', 'testdrive'),
     '1,2': run('restart-test-drive.cmd', 'restart'),

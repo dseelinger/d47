@@ -107,6 +107,15 @@ def g_handoff(d, cx, cy, r, col):
                (cx + r * 0.18, cy + r * 0.04)], fill=col)
 
 
+def g_phone(d, cx, cy, r, col):
+    """A phone: the session the phone app talks to."""
+    w = max(2, int(r * 0.14))
+    d.rounded_rectangle([cx - r * 0.52, cy - r * 0.92, cx + r * 0.52, cy + r * 0.92],
+                        radius=r * 0.18, outline=col, width=w)
+    _bar(d, cx, cy - r * 0.66, r * 0.16, r * 0.06, col)
+    _dot(d, cx, cy + r * 0.64, r * 0.12, col)
+
+
 def g_magnifier(d, cx, cy, r, col):
     """Review."""
     w = max(2, int(r * 0.15))
@@ -232,6 +241,7 @@ KEYS = {
     'issue':      (g_issue, VIOLET, 'Issue'),
     'review':     (g_magnifier, VIOLET, 'Review'),
     'prerelease': (g_gate, VIOLET, 'Pre-release'),
+    'launcher':   (g_phone, VIOLET, 'Launcher'),
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),
     'push':       (g_push, CYAN, 'Push'),
