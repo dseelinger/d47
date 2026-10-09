@@ -94,8 +94,8 @@ dotnet build d47.slnx -c Debug      # must be 0 warnings, 0 errors
 deliberate act and needs the maintainer's agreement, not a workaround you reach for at the end.
 
 During issue work, run only the unit tests for the area you changed, plus the integration tests
-that the change affects. A unit test does not cross a process boundary, and runs in under a second;
-an integration test crosses one. Filter by the area, in each project the diff touches:
+that the change affects. A unit test does not cross a process boundary or touch the file system, and runs in under a second;
+an integration test does either. Filter by the area, in each project the diff touches:
 
 ```bash
 dotnet test tests/D47.Core.Tests --filter FullyQualifiedName~<Area>
