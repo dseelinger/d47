@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Transcription is now biased towards the name of every command d47 can give, including the Galnet, headset, panel, FSS, on-foot and fighter commands in this release. Previously the names after the first 120 were left out.
+
 Changing speech settings while a core change, a voice download or a voice repair was running could corrupt the list of voice clients, or close one that was about to speak. Speech wiring now changes on one thread at a time.
 
 A stated memory that expired while d47 was closed is now shown on the panel at startup and no longer spoken. Expiries found later are still announced.
