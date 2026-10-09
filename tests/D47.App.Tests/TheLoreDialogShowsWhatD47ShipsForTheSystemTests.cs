@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -21,7 +22,7 @@ public class TheLoreDialogShowsWhatD47ShipsForTheSystemTests
     private static Window Open(long address, string name)
     {
         var root = TempFolders.Create("d47-lore-shipped");
-        var book = new LoreBook(new LoreStore(Path.Combine(root, "lore.json"), NullLogger<LoreStore>.Instance));
+        var book = new LoreBook(new LoreStore(Path.Combine(root, "lore.json"), new DiskFileSystem(), NullLogger<LoreStore>.Instance));
 
         book.Add(address, name, "My own note.", LoreArrival.Panel, Instant, null);
 

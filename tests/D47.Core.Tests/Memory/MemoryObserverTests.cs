@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Journal;
 using D47.Core.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -9,9 +10,10 @@ namespace D47.Core.Tests.Memory;
 /// The only thing in Phase 31 that writes a memory nobody asked for, and the only producer of the
 /// observed tier.
 /// </summary>
-[Trait("Category", "Integration")]
-public class MemoryObserverTests : IDisposable
+public class MemoryObserverTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private static readonly DateTimeOffset Tick = new(3311, 4, 2, 9, 0, 0, TimeSpan.Zero);
 
     private const string Cmdr = "F1";
@@ -20,17 +22,7 @@ public class MemoryObserverTests : IDisposable
         Path.GetTempPath(), "d47-observer-tests", Guid.NewGuid().ToString("N"));
 
     private MemoryStore Store() =>
-        new(Path.Combine(_folder, "memories.json"), NullLogger<MemoryStore>.Instance);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+        new(Path.Combine(_folder, "memories.json"), _files, NullLogger<MemoryStore>.Instance);
 
     private static JournalEvent Event(string json)
     {

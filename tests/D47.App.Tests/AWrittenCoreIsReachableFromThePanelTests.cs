@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -86,7 +87,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         Directory.CreateDirectory(_folder);
 
         var store = new OwnPersonaStore(
-            Path.Combine(_folder, "personas.json"),
+            Path.Combine(_folder, "personas.json"), new DiskFileSystem(),
             NullLogger<OwnPersonaStore>.Instance);
 
         PersonaCatalog.Own = () => [.. store.Cores.Select(core => core.AsPersona())];

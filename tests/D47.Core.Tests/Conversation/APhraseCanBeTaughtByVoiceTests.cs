@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -8,17 +9,16 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Teach a phrase" asks for the wording, then the phrase it runs, then a yes, and stores it (#539).</summary>
-[Trait("Category", "Integration")]
-public class APhraseCanBeTaughtByVoiceTests : IDisposable
+public class APhraseCanBeTaughtByVoiceTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-teach-by-voice").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-teach-by-voice");
 
     private readonly List<string> _pressed = [];
 
     private LearnedPhrasesStore Store() =>
-        new(Path.Combine(_root, "phrases.json"), NullLogger<LearnedPhrasesStore>.Instance);
+        new(Path.Combine(_root, "phrases.json"), _files, NullLogger<LearnedPhrasesStore>.Instance);
 
     private ToolDefinition Key(string name, string phrase) => new()
     {

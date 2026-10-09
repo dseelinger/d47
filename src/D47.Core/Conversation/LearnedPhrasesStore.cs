@@ -29,7 +29,7 @@ public sealed record PhraseClash(
 /// Per Commander Frontier id, the wording they have confirmed stands for a declared phrase (#169). Kept
 /// between sessions at <c>data/phrases.json</c>, beside <see cref="Listening.HeardNamesStore"/>.
 /// </summary>
-public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore> logger)
+public sealed class LearnedPhrasesStore(string path, IFileSystem files, ILogger<LearnedPhrasesStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -57,14 +57,16 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
 
     public void Load()
     {
-        if (!File.Exists(path))
+        var text = files.ReadText(path);
+
+        if (text is null)
         {
             return;
         }
 
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<string, Dictionary<string, LearnedPhrase>>(StringComparer.Ordinal);
 
@@ -285,7 +287,7 @@ public sealed class LearnedPhrasesStore(string path, ILogger<LearnedPhrasesStore
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {

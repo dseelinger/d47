@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -7,12 +8,11 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A run from a "did you mean" offer asks once whether to remember the Commander's own wording.</summary>
-[Trait("Category", "Integration")]
-public class ACommandersWordingIsLearnedOnAYesTests : IDisposable
+public class ACommandersWordingIsLearnedOnAYesTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-phrases").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-phrases");
 
     private static readonly DateTimeOffset At = new(2026, 9, 13, 12, 0, 0, TimeSpan.Zero);
 
@@ -48,7 +48,7 @@ public class ACommandersWordingIsLearnedOnAYesTests : IDisposable
     }
 
     private LearnedPhrasesStore Store() =>
-        new(Path.Combine(_root, "phrases.json"), NullLogger<LearnedPhrasesStore>.Instance);
+        new(Path.Combine(_root, "phrases.json"), _files, NullLogger<LearnedPhrasesStore>.Instance);
 
     private static TurnLoop Build(CapabilityRegistry registry, LearnedPhrasesStore? store = null, string? commander = "F1")
     {

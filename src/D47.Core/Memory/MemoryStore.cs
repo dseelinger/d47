@@ -9,7 +9,7 @@ namespace D47.Core.Memory;
 /// What d47 remembers about the Commander, on disk (Phase 31, "A memory is written down, never inferred
 /// into being").
 /// </summary>
-public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
+public sealed class MemoryStore(string path, IFileSystem files, ILogger<MemoryStore> logger)
 {
     /// <summary>The key every entry written without a Commander aboard is filed under.</summary>
     public const string NoCommander = "";
@@ -76,7 +76,7 @@ public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -87,7 +87,7 @@ public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: an empty store is the normal state of a fresh install.
                 if (_seen is null)
@@ -107,11 +107,14 @@ public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -289,7 +292,7 @@ public sealed class MemoryStore(string path, ILogger<MemoryStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, text);
+            files.WriteText(path, text);
 
             // Recorded as seen, so the write this instance just made does not read back as somebody else's
             // edit on the next poll.

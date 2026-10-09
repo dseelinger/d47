@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Journal;
 using D47.Core.Persona;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -5,13 +6,12 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-[Trait("Category", "Integration")]
 public class ShipCoreStoreTests
 {
     [Fact]
     public void ABindingSurvivesBeingWrittenAndReadBack()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
         var store = Store(folder);
 
         store.Bind(new ShipCoreBinding("F1", 12, "sentinel", "python", "Bad Idea"));
@@ -33,7 +33,7 @@ public class ShipCoreStoreTests
     [Fact]
     public void OneCorePerShip()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
         var store = Store(folder);
 
         store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
@@ -47,7 +47,7 @@ public class ShipCoreStoreTests
     [Fact]
     public void TwoCommandersMayEachBindTheSameShipId()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
         var store = Store(folder);
 
         store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
@@ -74,9 +74,9 @@ public class ShipCoreStoreTests
     [Fact]
     public void ALegacyFileIsAdoptedByTheFirstCommanderSeen()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
 
-        File.WriteAllText(folder.File, """
+        folder.Files.WriteText(folder.File, """
             {
               "ships": [
                 { "shipId": 12, "core": "sentinel", "hull": "python", "name": "Bad Idea" }
@@ -102,7 +102,7 @@ public class ShipCoreStoreTests
     [Fact]
     public void ForgettingLeavesTheOtherShipsAlone()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
         var store = Store(folder);
 
         store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
@@ -121,9 +121,9 @@ public class ShipCoreStoreTests
     [Fact]
     public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
 
-        File.WriteAllText(folder.File, """
+        folder.Files.WriteText(folder.File, """
             {
               "ships": [
                 { "shipId": 12, "core": "sentinel" },
@@ -154,7 +154,7 @@ public class ShipCoreStoreTests
     [Fact]
     public void AnEditWhileRunningIsPickedUp()
     {
-        using var folder = new TempFolder();
+        var folder = new TempFolder();
         var store = Store(folder);
         var changes = 0;
         store.Changed += () => changes++;
@@ -162,7 +162,7 @@ public class ShipCoreStoreTests
         store.Bind(new ShipCoreBinding("F1", 12, "sentinel"));
         Assert.False(store.Poll());
 
-        File.WriteAllText(
+        folder.Files.WriteText(
             folder.File,
             """{ "ships": [ { "commanderFid": "F1", "shipId": 12, "core": "kex" } ] }""");
 
@@ -172,36 +172,17 @@ public class ShipCoreStoreTests
     }
 
     private static ShipCoreStore Store(TempFolder folder) =>
-        new(folder.File, NullLogger<ShipCoreStore>.Instance);
+        new(folder.File, folder.Files, NullLogger<ShipCoreStore>.Instance);
 
-    private sealed class TempFolder : IDisposable
+    private sealed class TempFolder
     {
-        public TempFolder()
-        {
-            Root = Path.Combine(Path.GetTempPath(), $"d47-ship-cores-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(Root);
-        }
+        public MemoryFileSystem Files { get; } = new();
 
-        public string Root { get; }
-
-        public string File => Path.Combine(Root, "ship-cores.json");
-
-        public void Dispose()
-        {
-            try
-            {
-                Directory.Delete(Root, recursive: true);
-            }
-            catch (IOException)
-            {
-            // A temp folder that outlives the test costs nothing and is not what is being asserted.
-            }
-        }
+        public string File { get; } = Path.Combine(Path.GetTempPath(), "d47-ship-cores", "ship-cores.json");
     }
 }
 
 /// <summary>When a binding acts.</summary>
-[Trait("Category", "Integration")]
 public class ShipCoreWatchTests
 {
     private static readonly TimeSpan Settle = ShipCoreService.DefaultSettle;
@@ -427,7 +408,7 @@ public class ShipCoreWatchTests
         params (string Fid, int Ship, string Core)[] bound)
     {
         var store = new ShipCoreStore(
-            Path.Combine(Path.GetTempPath(), $"d47-ship-cores-{Guid.NewGuid():N}.json"),
+            Path.Combine(Path.GetTempPath(), $"d47-ship-cores-{Guid.NewGuid():N}.json"), new MemoryFileSystem(),
             NullLogger<ShipCoreStore>.Instance);
 
         foreach (var (fid, ship, core) in bound)

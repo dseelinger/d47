@@ -794,10 +794,12 @@ public sealed class AppHost : IDisposable
         // Systems worth remarking on, in two files with two different characters (Phase 23).
         var lore = new LoreBook(new LoreStore(
             Path.Combine(paths.Data, "lore.json"),
+            files,
             loggerFactory.CreateLogger<LoreStore>()));
 
         var loreVisits = new LoreVisits(
             Path.Combine(paths.Data, "lore-visits.json"),
+            files,
             loggerFactory.CreateLogger<LoreVisits>());
 
         lore.Store.Poll();
@@ -827,6 +829,7 @@ public sealed class AppHost : IDisposable
         // What this Commander has taught d47 stands for a declared phrase, on a "did you mean" yes (#169).
         var learnedPhrases = new LearnedPhrasesStore(
             Path.Combine(paths.Data, "phrases.json"),
+            files,
             loggerFactory.CreateLogger<LearnedPhrasesStore>());
 
         learnedPhrases.Load();
@@ -1054,6 +1057,7 @@ public sealed class AppHost : IDisposable
         // What d47 remembers about the Commander (Phase 31).
         var memories = new MemoryStore(
             Path.Combine(paths.Data, "memories.json"),
+            files,
             loggerFactory.CreateLogger<MemoryStore>());
 
         memories.Poll();
@@ -1431,7 +1435,7 @@ public sealed class AppHost : IDisposable
         var spend = new SpendTracker(spendLedger);
 
         // Clocks, timers and alarms (Phase 24): null unless this run was started with the switch (#90).
-        var timersAndAlarms = Timekeeping.TimersAndAlarms.Create(paths, loggerFactory);
+        var timersAndAlarms = Timekeeping.TimersAndAlarms.Create(paths, files, loggerFactory);
 
         // The fleet joined to the builds.
         var shipPlans = new ShipPlanService(shipBuilds, checklists, () => gameState.Active);
@@ -1442,6 +1446,7 @@ public sealed class AppHost : IDisposable
         // Which core flies which ship (Phase 35).
         var shipCoreStore = new ShipCoreStore(
             Path.Combine(paths.Data, "ship-cores.json"),
+            files,
             loggerFactory.CreateLogger<ShipCoreStore>());
 
         shipCoreStore.Poll();
@@ -1670,14 +1675,14 @@ public sealed class AppHost : IDisposable
 
         // The Commander's own macros, beside the executable like everything else d47 writes.
         var macros = new MacroStore(
-            Path.Combine(paths.Data, "macros.json"), loggerFactory.CreateLogger<MacroStore>());
+            Path.Combine(paths.Data, "macros.json"), files, loggerFactory.CreateLogger<MacroStore>());
 
         // What d47 last offered to put on the clipboard.
         var clipboardOffer = new D47.Core.Conversation.ClipboardOffer();
 
         // The Commander's HOTAS switches, in the same shape and beside the same executable (Phase 21).
         var switches = new SwitchStore(
-            Path.Combine(paths.Data, "switches.json"), loggerFactory.CreateLogger<SwitchStore>());
+            Path.Combine(paths.Data, "switches.json"), files, loggerFactory.CreateLogger<SwitchStore>());
 
         // The constructor only: the "Game controller added" lines arrive from Windows.Gaming.Input
         // callbacks after it has returned.
@@ -1695,6 +1700,7 @@ public sealed class AppHost : IDisposable
         // (remediation.md 11, item 9).
         var ownPersonas = new OwnPersonaStore(
             Path.Combine(paths.Data, "personas.json"),
+            files,
             loggerFactory.CreateLogger<OwnPersonaStore>());
 
         ownPersonas.Poll();

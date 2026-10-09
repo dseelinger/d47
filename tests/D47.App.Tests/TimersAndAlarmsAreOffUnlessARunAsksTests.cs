@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core;
 using D47.App.Timekeeping;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -61,12 +62,12 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
         var paths = Paths();
 
         TimersAndAlarms.ReadCommandLine([TimersAndAlarms.Flag]);
-        Assert.NotNull(TimersAndAlarms.Create(paths, NullLoggerFactory.Instance));
+        Assert.NotNull(TimersAndAlarms.Create(paths, new DiskFileSystem(), NullLoggerFactory.Instance));
 
         Assert.False(File.Exists(paths.SettingsFile));
 
         TimersAndAlarms.ReadCommandLine([]);
-        Assert.Null(TimersAndAlarms.Create(paths, NullLoggerFactory.Instance));
+        Assert.Null(TimersAndAlarms.Create(paths, new DiskFileSystem(), NullLoggerFactory.Instance));
     }
 
     /// <summary>Off: no stores, and the game-state block still carries both dates with no reminder list.</summary>
@@ -76,7 +77,7 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
     {
         TimersAndAlarms.ReadCommandLine([]);
 
-        var clocks = TimersAndAlarms.Create(Paths(), NullLoggerFactory.Instance);
+        var clocks = TimersAndAlarms.Create(Paths(), new DiskFileSystem(), NullLoggerFactory.Instance);
         var live = TimersAndAlarms.Live(clocks, new DateTimeOffset(2026, 8, 17, 21, 4, 0, TimeSpan.Zero), TimeZoneInfo.Utc);
 
         Assert.Null(clocks);
@@ -94,7 +95,7 @@ public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
         TimersAndAlarms.ReadCommandLine([TimersAndAlarms.Flag]);
 
         var now = new DateTimeOffset(2026, 8, 17, 21, 4, 0, TimeSpan.Zero);
-        var clocks = TimersAndAlarms.Create(Paths(), NullLoggerFactory.Instance);
+        var clocks = TimersAndAlarms.Create(Paths(), new DiskFileSystem(), NullLoggerFactory.Instance);
 
         Assert.NotNull(clocks);
         clocks.Timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), now);

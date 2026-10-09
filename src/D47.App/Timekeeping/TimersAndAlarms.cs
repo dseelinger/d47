@@ -1,5 +1,6 @@
 using D47.Core;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Storage;
 using D47.Core.Utilities;
 using Microsoft.Extensions.Logging;
 
@@ -46,7 +47,7 @@ public sealed class TimersAndAlarms
     /// The stores, with <c>alarms.json</c> read once; null when <see cref="Enabled"/> is false, in which
     /// case nothing is read or written.
     /// </summary>
-    public static TimersAndAlarms? Create(AppPaths paths, ILoggerFactory loggers)
+    public static TimersAndAlarms? Create(AppPaths paths, IFileSystem files, ILoggerFactory loggers)
     {
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(loggers);
@@ -58,6 +59,7 @@ public sealed class TimersAndAlarms
 
         var alarms = new AlarmStore(
             Path.Combine(paths.Data, "alarms.json"),
+            files,
             loggers.CreateLogger<AlarmStore>());
 
         alarms.Poll();

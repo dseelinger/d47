@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -8,9 +9,10 @@ using Xunit;
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>Remarking on a system worth remarking on.</summary>
-[Trait("Category", "Integration")]
-public class LoreCalloutTests : IDisposable
+public class LoreCalloutTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     /// <summary>Sol, whose address is a shipped row and is Frontier's own number for it.</summary>
     private const long Sol = 10477373803;
 
@@ -22,20 +24,10 @@ public class LoreCalloutTests : IDisposable
         Path.GetTempPath(), "d47-lore-tests", Guid.NewGuid().ToString("N"));
 
     private LoreStore Store() =>
-        new(Path.Combine(_folder, "lore.json"), NullLogger<LoreStore>.Instance);
+        new(Path.Combine(_folder, "lore.json"), _files, NullLogger<LoreStore>.Instance);
 
     private LoreVisits Visits() =>
-        new(Path.Combine(_folder, "lore-visits.json"), NullLogger<LoreVisits>.Instance);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+        new(Path.Combine(_folder, "lore-visits.json"), _files, NullLogger<LoreVisits>.Instance);
 
     private static JournalEvent Parse(string json)
     {

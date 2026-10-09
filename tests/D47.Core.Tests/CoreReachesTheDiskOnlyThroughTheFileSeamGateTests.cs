@@ -34,7 +34,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
     /// <summary>The types not yet converted to <c>IFileSystem</c>. Each conversion removes its own.</summary>
     private static readonly string[] NotYetConverted =
     [
-        "D47.Core.Actions.MacroStore",
         "D47.Core.Activities.ActivityLedger",
         "D47.Core.Audio.ChatterboxCatalog",
         "D47.Core.Audio.ChatterboxVoices",
@@ -45,7 +44,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Capabilities.Builtin.DiagnosticsCapability",
         "D47.Core.Catalog.ModelCatalogCache",
         "D47.Core.Conversation.BookmarkStore",
-        "D47.Core.Conversation.LearnedPhrasesStore",
         "D47.Core.Debrief.StandingDirectionsStore",
         "D47.Core.Diagnostics.Donation.CorpusDonation",
         "D47.Core.Diagnostics.Donation.DonationErasure",
@@ -54,7 +52,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Diagnostics.Donation.IncidentSources",
         "D47.Core.Diagnostics.Recording.RecordingLog",
         "D47.Core.Goals.GoalMiner",
-        "D47.Core.Hotas.SwitchStore",
         "D47.Core.Input.BindingProfiles",
         "D47.Core.Input.BindsResolver",
         "D47.Core.Input.BindsWatch",
@@ -99,13 +96,8 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Logbook.LogDigestBuilder",
         "D47.Core.Logbook.LogFolder",
         "D47.Core.Logbook.LogRanges",
-        "D47.Core.Lore.LoreStore",
-        "D47.Core.Lore.LoreVisits",
-        "D47.Core.Memory.MemoryStore",
         "D47.Core.Messages.MessageClips",
         "D47.Core.Mining.MiningTargetStore",
-        "D47.Core.Persona.OwnPersonaStore",
-        "D47.Core.Persona.ShipCoreStore",
         "D47.Core.Reminders.JournalReminderStore",
         "D47.Core.Speech.ChatterboxAssets",
         "D47.Core.Speech.KokoroAssets",
@@ -114,7 +106,6 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Stories.StoryCatalog",
         "D47.Core.Stories.StoryChapterArchive",
         "D47.Core.Stories.StoryStore",
-        "D47.Core.Utilities.AlarmStore",
     ];
 
     private static readonly Lazy<IReadOnlyDictionary<string, List<string>>> Surveyed = new(Survey);

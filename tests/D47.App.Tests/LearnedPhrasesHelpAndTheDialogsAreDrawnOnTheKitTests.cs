@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -80,7 +81,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
         var root = TempFolders.Create("d47-learned-phrases-kit");
 
         var store = new D47.Core.Conversation.LearnedPhrasesStore(
-            Path.Combine(root, "phrases.json"), NullLogger<D47.Core.Conversation.LearnedPhrasesStore>.Instance);
+            Path.Combine(root, "phrases.json"), new DiskFileSystem(), NullLogger<D47.Core.Conversation.LearnedPhrasesStore>.Instance);
 
         store.Learn("F1", "set focus on elite", "set focus to elite", Instant);
 
@@ -222,7 +223,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         var root = TempFolders.Create("d47-dialogs-lore");
 
-        var store = new LoreStore(Path.Combine(root, "lore.json"), NullLogger<LoreStore>.Instance);
+        var store = new LoreStore(Path.Combine(root, "lore.json"), new DiskFileSystem(), NullLogger<LoreStore>.Instance);
         var book = new LoreBook(store);
 
         book.Add(1L, "Colonia", "A long haul from the bubble.", LoreArrival.Panel, Instant, "F1");
@@ -241,7 +242,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         var root = TempFolders.Create("d47-dialogs-macros");
 
-        var store = new MacroStore(Path.Combine(root, "macros.json"), NullLogger<MacroStore>.Instance);
+        var store = new MacroStore(Path.Combine(root, "macros.json"), new DiskFileSystem(), NullLogger<MacroStore>.Instance);
         var action = GameActions.All.First(a => a.Group != GameActions.Weapons).Id;
 
         store.Save([new Macro { Name = "night flight", Steps = [new MacroStep(action, DesiredState.On, 250)] }]);
@@ -254,7 +255,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         var root = TempFolders.Create("d47-dialogs-memory");
 
-        var store = new MemoryStore(Path.Combine(root, "memory.json"), NullLogger<MemoryStore>.Instance);
+        var store = new MemoryStore(Path.Combine(root, "memory.json"), new DiskFileSystem(), NullLogger<MemoryStore>.Instance);
         var book = new MemoryBook(store, () => "F1", () => MemorySituation.Unknown);
 
         book.Remember("Prefers the scenic route.", MemoryArrival.Panel, Instant);
@@ -266,7 +267,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         var root = TempFolders.Create("d47-dialogs-persona");
 
-        var store = new OwnPersonaStore(Path.Combine(root, "personas.json"), NullLogger<OwnPersonaStore>.Instance);
+        var store = new OwnPersonaStore(Path.Combine(root, "personas.json"), new DiskFileSystem(), NullLogger<OwnPersonaStore>.Instance);
         store.Save([new OwnPersona("own.rusty", "Rusty", "You are Rusty. Salvage crew, not a Guardian.")]);
 
         return Hosted(new PersonaPage(store));
@@ -276,7 +277,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     {
         var root = TempFolders.Create("d47-dialogs-switches");
 
-        var store = new SwitchStore(Path.Combine(root, "switches.json"), NullLogger<SwitchStore>.Instance);
+        var store = new SwitchStore(Path.Combine(root, "switches.json"), new DiskFileSystem(), NullLogger<SwitchStore>.Instance);
 
         store.Save([new SwitchMapping
         {

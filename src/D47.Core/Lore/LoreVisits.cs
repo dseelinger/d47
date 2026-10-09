@@ -8,7 +8,7 @@ namespace D47.Core.Lore;
 /// When each system was last remarked on, kept between sessions (Phase 23, "Remark on arrival, and not
 /// again for a while").
 /// </summary>
-public sealed class LoreVisits(string path, ILogger<LoreVisits> logger)
+public sealed class LoreVisits(string path, IFileSystem files, ILogger<LoreVisits> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -57,14 +57,16 @@ public sealed class LoreVisits(string path, ILogger<LoreVisits> logger)
     /// <summary>Reads the file.</summary>
     public void Load()
     {
-        if (!File.Exists(path))
+        var text = files.ReadText(path);
+
+        if (text is null)
         {
             return;
         }
 
         try
         {
-            var document = JsonSerializer.Deserialize<Document>(File.ReadAllText(path), Json);
+            var document = JsonSerializer.Deserialize<Document>(text, Json);
 
             var loaded = new Dictionary<long, DateTimeOffset>();
 
@@ -90,7 +92,7 @@ public sealed class LoreVisits(string path, ILogger<LoreVisits> logger)
         }
     }
 
-    /// <summary>Writes through <see cref="AtomicFile"/>, and clears <see cref="Dirty"/>.</summary>
+    /// <summary>Writes the file, and clears <see cref="Dirty"/>.</summary>
     public void Save()
     {
         Document document;
@@ -110,7 +112,7 @@ public sealed class LoreVisits(string path, ILogger<LoreVisits> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, JsonSerializer.Serialize(document, Json));
+            files.WriteText(path, JsonSerializer.Serialize(document, Json));
 
             lock (_gate)
             {

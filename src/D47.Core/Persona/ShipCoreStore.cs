@@ -33,7 +33,7 @@ public sealed record ShipCoreProblem(string Where, string Reason);
 /// The Commander's ship-to-core bindings, in one file beside the executable (Phase 35, "Nothing is
 /// bound until it is asked for").
 /// </summary>
-public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
+public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCoreStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -108,7 +108,7 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -119,7 +119,7 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: nothing bound is the normal state, and stays it until the Commander says
                 // otherwise.
@@ -140,11 +140,14 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -212,8 +215,7 @@ public sealed class ShipCoreStore(string path, ILogger<ShipCoreStore> logger)
 
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, text);
+            files.WriteText(path, text);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -9,7 +9,7 @@ namespace D47.Core.Utilities;
 public sealed record AlarmProblem(string Where, string Reason);
 
 /// <summary>The Commander's alarms, in one file beside the executable (Phase 24, "Timers and alarms").</summary>
-public sealed class AlarmStore(string path, ILogger<AlarmStore> logger)
+public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -66,7 +66,7 @@ public sealed class AlarmStore(string path, ILogger<AlarmStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -77,7 +77,7 @@ public sealed class AlarmStore(string path, ILogger<AlarmStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: no alarms is the normal state, and will be for most Commanders.
                 if (_seen is null)
@@ -97,11 +97,14 @@ public sealed class AlarmStore(string path, ILogger<AlarmStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -136,8 +139,7 @@ public sealed class AlarmStore(string path, ILogger<AlarmStore> logger)
 
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, text);
+            files.WriteText(path, text);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

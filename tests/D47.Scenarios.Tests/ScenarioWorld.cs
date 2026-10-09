@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Capabilities;
@@ -46,7 +46,7 @@ public sealed class ScenarioWorld : IDisposable
 
         // A real book over a real (empty) file: a null book answers every attempt with "I have nowhere to keep notes", a pass this suite would not have earned.
         Lore = new LoreBook(new LoreStore(
-            Path.Combine(_install.Paths.Data, "lore.json"),
+            Path.Combine(_install.Paths.Data, "lore.json"), new DiskFileSystem(),
             NullLogger<LoreStore>.Instance));
 
         CapabilityRegistry? built = null;
@@ -134,7 +134,7 @@ public sealed class ScenarioWorld : IDisposable
             () => "No autonomous actions in a scenario run.",
             services is null ? NavigationSurface.Inert : services.Navigation(actions, Clipboard, () => Settings.Current.Actions.AutoPlot),
             new D47.Core.Actions.MacroStore(
-                Path.Combine(_install.Paths.Data, "macros.json"),
+                Path.Combine(_install.Paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             Personas,
             checklists,

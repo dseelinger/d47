@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Actions;
 
 /// <summary>The Commander's macros, in one file beside the executable (Phase 10, "Macros").</summary>
-public sealed class MacroStore(string path, ILogger<MacroStore> logger)
+public sealed class MacroStore(string path, IFileSystem files, ILogger<MacroStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -63,9 +63,9 @@ public sealed class MacroStore(string path, ILogger<MacroStore> logger)
 
         try
         {
-            var info = new FileInfo(path);
+            var info = files.Stat(path);
 
-            if (!info.Exists)
+            if (info is null)
             {
                 // Not an error: no macros is the normal state.
                 if (_stamp == default)
@@ -83,7 +83,7 @@ public sealed class MacroStore(string path, ILogger<MacroStore> logger)
                 return true;
             }
 
-            written = info.LastWriteTimeUtc;
+            written = info.Value.Written;
         }
         catch (IOException ex)
         {
@@ -105,10 +105,9 @@ public sealed class MacroStore(string path, ILogger<MacroStore> logger)
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var text = files.ReadText(path);
 
-            file = JsonSerializer.Deserialize<MacroFile>(stream, Json);
+            file = text is null ? null : JsonSerializer.Deserialize<MacroFile>(text, Json);
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {
@@ -161,14 +160,7 @@ public sealed class MacroStore(string path, ILogger<MacroStore> logger)
     /// <summary>Writes the file.</summary>
     public void Save(IReadOnlyList<Macro> macros)
     {
-        var directory = System.IO.Path.GetDirectoryName(path);
-
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        AtomicFile.WriteAllText(path, JsonSerializer.Serialize(new MacroFile { Macros = [.. macros] }, Json));
+        files.WriteText(path, JsonSerializer.Serialize(new MacroFile { Macros = [.. macros] }, Json));
 
         // Forces the next Poll to re-read rather than trusting what was just written, so the in-memory set is
         // always the validated one rather than the one that was submitted.

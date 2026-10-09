@@ -1,4 +1,5 @@
-﻿using D47.Core.Audio;
+using D47.Core.Storage;
+using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -36,7 +37,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"),
+                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));
@@ -181,7 +182,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"),
+                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));
@@ -229,7 +230,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"),
+                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));

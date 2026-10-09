@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
@@ -7,18 +8,17 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A learned phrase is a pattern expanded into wordings, and matching stays an exact lookup (#537).</summary>
-[Trait("Category", "Integration")]
-public class APhraseCanBeTaughtAsAPatternTests : IDisposable
+public class APhraseCanBeTaughtAsAPatternTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-phrase-patterns").FullName;
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-phrase-patterns");
 
     private static readonly DateTimeOffset At = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
 
     private string PhrasesPath => Path.Combine(_root, "phrases.json");
 
-    private LearnedPhrasesStore Store() => new(PhrasesPath, NullLogger<LearnedPhrasesStore>.Instance);
+    private LearnedPhrasesStore Store() => new(PhrasesPath, _files, NullLogger<LearnedPhrasesStore>.Instance);
 
     private static PhraseBook Book(LearnedPhrasesStore store)
     {
@@ -178,7 +178,7 @@ public class APhraseCanBeTaughtAsAPatternTests : IDisposable
     [Fact]
     public void APhrasesFileWrittenBeforePatternsStillLoadsAndMatches()
     {
-        File.WriteAllText(
+        _files.WriteText(
             PhrasesPath,
             """
             {"commanders":[{"frontierId":"F1","phrases":[

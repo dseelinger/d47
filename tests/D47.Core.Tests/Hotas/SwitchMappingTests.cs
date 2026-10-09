@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -169,27 +170,16 @@ public class SwitchMappingTests
 }
 
 /// <summary>The file, and the rule that a bad entry is reported rather than dropped.</summary>
-[Trait("Category", "Integration")]
-public class SwitchStoreTests : IDisposable
+public class SwitchStoreTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private readonly string _folder = Path.Combine(
         Path.GetTempPath(), "d47-switch-tests", Guid.NewGuid().ToString("N"));
 
     private string Path_ => Path.Combine(_folder, "switches.json");
 
-    private SwitchStore Store() => new(Path_, NullLogger<SwitchStore>.Instance);
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A leftover temp folder is not a test failure.
-        }
-    }
+    private SwitchStore Store() => new(Path_, _files, NullLogger<SwitchStore>.Instance);
 
     [Fact]
     public void NoFileIsNoSwitchesAndNoProblem()
@@ -233,9 +223,8 @@ public class SwitchStoreTests : IDisposable
     public void ABadSwitchIsRefusedByNameAndTheRestOfTheFileStillLoads()
     {
         // A switch that silently vanished would be a Commander flipping a toggle with no way to tell what it did.
-        Directory.CreateDirectory(_folder);
 
-        File.WriteAllText(Path_, """
+        _files.WriteText(Path_, """
             {
               "switches": [
                 { "name": "good", "deviceId": "d", "positions": [
@@ -261,8 +250,7 @@ public class SwitchStoreTests : IDisposable
     [Fact]
     public void AnUnreadableFileIsOneProblemWithOneNameRatherThanAThrow()
     {
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, "{ this is not json");
+        _files.WriteText(Path_, "{ this is not json");
 
         var store = Store();
 
@@ -277,9 +265,7 @@ public class SwitchStoreTests : IDisposable
         var store = Store();
         store.Save([]);
         store.Poll();
-
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, """
+        _files.WriteText(Path_, """
             {
               "switches": [
                 { "name": "gear switch", "deviceId": "d", "positions": [
@@ -295,39 +281,49 @@ public class SwitchStoreTests : IDisposable
 
     /// <summary>The same thing as above, with the timestamp held still.</summary>
     [Fact]
+    [Trait("Category", "Integration")]
     public void AnEditThatLandsOnTheSameTimestampIsStillPickedUp()
     {
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, """{ "switches": [] }""");
+        var folder = Directory.CreateTempSubdirectory("d47-switch-stamp");
 
-        var frozen = File.GetLastWriteTimeUtc(Path_);
+        try
+        {
+            var path = Path.Combine(folder.FullName, "switches.json");
+            var disk = new DiskFileSystem();
+            disk.WriteText(path, """{ "switches": [] }""");
 
-        var store = Store();
-        Assert.True(store.Poll());
-        Assert.Empty(store.Switches);
+            var frozen = File.GetLastWriteTimeUtc(path);
 
-        File.WriteAllText(Path_, """
-            {
-              "switches": [
-                { "name": "gear switch", "deviceId": "d", "positions": [
-                    { "button": 8, "action": "landing_gear", "state": "on" },
-                    { "button": 9, "action": "landing_gear", "state": "off" } ] }
-              ]
-            }
-            """);
+            var store = new SwitchStore(path, disk, NullLogger<SwitchStore>.Instance);
+            Assert.True(store.Poll());
+            Assert.Empty(store.Switches);
 
-        File.SetLastWriteTimeUtc(Path_, frozen);
-        Assert.Equal(frozen, File.GetLastWriteTimeUtc(Path_));
+            disk.WriteText(path, """
+                {
+                  "switches": [
+                    { "name": "gear switch", "deviceId": "d", "positions": [
+                        { "button": 8, "action": "landing_gear", "state": "on" },
+                        { "button": 9, "action": "landing_gear", "state": "off" } ] }
+                  ]
+                }
+                """);
 
-        Assert.True(store.Poll());
-        Assert.Single(store.Switches);
+            File.SetLastWriteTimeUtc(path, frozen);
+            Assert.Equal(frozen, File.GetLastWriteTimeUtc(path));
+
+            Assert.True(store.Poll());
+            Assert.Single(store.Switches);
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
     }
 
     [Fact]
     public void TwoSwitchesWithOneNameKeepTheFirstAndReportTheSecond()
     {
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, """
+        _files.WriteText(Path_, """
             {
               "switches": [
                 { "name": "gear switch", "deviceId": "a", "positions": [
@@ -351,8 +347,7 @@ public class SwitchStoreTests : IDisposable
     public void ADestinationIsItsOwnFieldInTheFileAndReadsBackAsOne()
     {
         // Declared, never a prefix on the action string — the NavCrumb.Level reasoning.
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, """
+        _files.WriteText(Path_, """
             {
               "switches": [
                 { "name": "transcript", "deviceId": "a", "positions": [

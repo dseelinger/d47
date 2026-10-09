@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Hotas;
 
 /// <summary>The Commander's switch mappings, in one file beside the executable (Phase 21).</summary>
-public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
+public sealed class SwitchStore(string path, IFileSystem files, ILogger<SwitchStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -57,7 +57,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -68,7 +68,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: no switches is the normal state, and will be for most Commanders.
                 if (_seen is null)
@@ -87,11 +87,14 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -171,14 +174,7 @@ public sealed class SwitchStore(string path, ILogger<SwitchStore> logger)
     /// <summary>Writes the file.</summary>
     public void Save(IReadOnlyList<SwitchMapping> switches)
     {
-        var directory = System.IO.Path.GetDirectoryName(path);
-
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        AtomicFile.WriteAllText(path, JsonSerializer.Serialize(new SwitchFile { Switches = [.. switches] }, Json));
+        files.WriteText(path, JsonSerializer.Serialize(new SwitchFile { Switches = [.. switches] }, Json));
 
         // Forces the next Poll to re-read rather than trusting what was just written, so the in-memory set is
         // always the validated one rather than the one that was submitted.

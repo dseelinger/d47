@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -67,7 +68,7 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
         using var install = new TempInstall();
         var book = PhraseBook.From(TestSurface.For(install).Registry, []);
         var store = new LearnedPhrasesStore(
-            Path.Combine(install.Root, "phrases.json"), NullLogger<LearnedPhrasesStore>.Instance);
+            Path.Combine(install.Root, "phrases.json"), new DiskFileSystem(), NullLogger<LearnedPhrasesStore>.Instance);
 
         var clash = store.FindClash("F1", ["throttle to 50"], "half throttle please", book);
 

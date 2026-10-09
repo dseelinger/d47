@@ -9,7 +9,7 @@ namespace D47.Core.Lore;
 public sealed record LoreProblem(string What, string Why);
 
 /// <summary>Commander's Lore on disk (Phase 23, "Commander's Lore").</summary>
-public sealed class LoreStore(string path, ILogger<LoreStore> logger)
+public sealed class LoreStore(string path, IFileSystem files, ILogger<LoreStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -61,7 +61,7 @@ public sealed class LoreStore(string path, ILogger<LoreStore> logger)
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
     {
-        var stamp = FileStamp.Stat(path);
+        var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
         {
@@ -72,7 +72,7 @@ public sealed class LoreStore(string path, ILogger<LoreStore> logger)
 
         try
         {
-            if (!File.Exists(path))
+            if (stamp is null)
             {
                 // Not an error: an empty book is the normal state, and will be for most Commanders.
                 if (_seen is null)
@@ -92,11 +92,14 @@ public sealed class LoreStore(string path, ILogger<LoreStore> logger)
                 return true;
             }
 
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var read = files.ReadText(path);
 
-            using var reader = new StreamReader(stream);
-            text = reader.ReadToEnd();
+            if (read is null)
+            {
+                return false;
+            }
+
+            text = read;
             _stamp.Record(stamp);
         }
         catch (IOException ex)
@@ -191,7 +194,7 @@ public sealed class LoreStore(string path, ILogger<LoreStore> logger)
 
         try
         {
-            AtomicFile.WriteAllText(path, text);
+            files.WriteText(path, text);
 
             // Recorded as seen, so the write this instance just made does not read back as somebody else's
             // edit on the next poll.

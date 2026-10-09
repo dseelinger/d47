@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Conversation;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,7 +20,7 @@ public class ALearnedWordBelongsToTheCommanderFlyingTests : IDisposable
     public ALearnedWordBelongsToTheCommanderFlyingTests()
     {
         _names = new HeardNamesStore(NamesFile, NullLogger<HeardNamesStore>.Instance);
-        _phrases = new LearnedPhrasesStore(PhrasesFile, NullLogger<LearnedPhrasesStore>.Instance);
+        _phrases = new LearnedPhrasesStore(PhrasesFile, new DiskFileSystem(), NullLogger<LearnedPhrasesStore>.Instance);
         _names.RememberNames(
             new Dictionary<string, SpokenNames>(StringComparer.Ordinal)
             {

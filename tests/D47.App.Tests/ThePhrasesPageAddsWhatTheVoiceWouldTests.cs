@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -35,7 +36,7 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
         var root = TempFolders.Create("d47-phrases-page-tests");
 
         var store = new LearnedPhrasesStore(
-            Path.Combine(root, "phrases.json"), NullLogger<LearnedPhrasesStore>.Instance);
+            Path.Combine(root, "phrases.json"), new DiskFileSystem(), NullLogger<LearnedPhrasesStore>.Instance);
 
         if (seed)
         {

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Knowledge;
@@ -8,9 +9,10 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>The shipped table, the Commander's own notes, and the tiers that keep them apart.</summary>
-[Trait("Category", "Integration")]
-public class LoreTests : IDisposable
+public class LoreTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private const long Sol = 10477373803;
     private const long Nowhere = 1234567890123;
 
@@ -21,17 +23,7 @@ public class LoreTests : IDisposable
 
     private string Path_ => System.IO.Path.Combine(_folder, "lore.json");
 
-    private LoreStore Store() => new(Path_, NullLogger<LoreStore>.Instance);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private LoreStore Store() => new(Path_, _files, NullLogger<LoreStore>.Instance);
 
     [Fact]
     public void TheShippedTableIsKeyedOnAddressAndEveryRowHasBoth()
@@ -152,31 +144,42 @@ public class LoreTests : IDisposable
     }
 
     [Fact]
+    [Trait("Category", "Integration")]
     public void AHandEditIsNoticedByComparingContentRatherThanAStamp()
     {
         // Phase 21's correction.
-        var store = Store();
-        store.Add(new LoreEntry(Nowhere, "Kremainn", "Mining.") { Tier = LoreTier.Commander, AddedAt = When });
+        var folder = Directory.CreateTempSubdirectory("d47-lore-stamp");
 
-        var stamp = File.GetLastWriteTimeUtc(Path_);
+        try
+        {
+            var path = System.IO.Path.Combine(folder.FullName, "lore.json");
+            var disk = new DiskFileSystem();
+            var store = new LoreStore(path, disk, NullLogger<LoreStore>.Instance);
+            store.Add(new LoreEntry(Nowhere, "Kremainn", "Mining.") { Tier = LoreTier.Commander, AddedAt = When });
 
-        File.WriteAllText(
-            Path_,
-            """
-            {"entries":[{"systemAddress":1234567890123,"name":"Kremainn","note":"Edited by hand.","tier":"commander"}]}
-            """);
+            var stamp = File.GetLastWriteTimeUtc(path);
 
-        File.SetLastWriteTimeUtc(Path_, stamp);
+            disk.WriteText(
+                path,
+                """
+                {"entries":[{"systemAddress":1234567890123,"name":"Kremainn","note":"Edited by hand.","tier":"commander"}]}
+                """);
 
-        Assert.True(store.Poll());
-        Assert.Equal("Edited by hand.", Assert.Single(store.Entries).Note);
+            File.SetLastWriteTimeUtc(path, stamp);
+
+            Assert.True(store.Poll());
+            Assert.Equal("Edited by hand.", Assert.Single(store.Entries).Note);
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
     }
 
     [Fact]
     public void AHandWrittenNoteWithNoTierIsTakenForTheCommandersWord()
     {
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(Path_, """{"entries":[{"systemAddress":1234567890123,"note":"Something."}]}""");
+        _files.WriteText(Path_, """{"entries":[{"systemAddress":1234567890123,"note":"Something."}]}""");
 
         var store = Store();
         store.Poll();
@@ -189,8 +192,7 @@ public class LoreTests : IDisposable
     {
         // These are the Commander's own words, so this file follows the checklist's rules rather than the
         // sampling history's: nothing rebuilds a note somebody typed.
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(
+        _files.WriteText(
             Path_,
             """
             {"entries":[{"systemAddress":0,"note":"Nowhere."},{"systemAddress":1234567890123,"note":"Here."}]}

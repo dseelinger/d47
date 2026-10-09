@@ -1,4 +1,4 @@
-﻿using D47.Core;
+using D47.Core;
 using D47.Core.Storage;
 using D47.Core.Audio;
 using D47.Core.Callouts;
@@ -171,7 +171,7 @@ public static class TestSurface
             ActionSurface.Inert,
             () => "No autonomous actions in a headless test.",
             NavigationSurface.Inert,
-            new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), NullLogger<D47.Core.Actions.MacroStore>.Instance),
+            new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), new DiskFileSystem(), NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
 
             // Real stores over real (empty) files.
@@ -194,7 +194,7 @@ public static class TestSurface
  // shipped app carried two tools it had never seen.
             shipCores: new D47.Core.Persona.ShipCoreService(
                 new D47.Core.Persona.ShipCoreStore(
-                    Path.Combine(paths.Data, "ship-cores.json"),
+                    Path.Combine(paths.Data, "ship-cores.json"), new DiskFileSystem(),
                     NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
                 () => null),
 

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Collections;
 using System.Reflection;
 using Avalonia;
@@ -63,12 +64,12 @@ public class AModalOpensInTheHeadsetTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var memories = new MemoryBook(
-            new MemoryStore(Path.Combine(paths.Data, "memory.json"), NullLogger<MemoryStore>.Instance),
+            new MemoryStore(Path.Combine(paths.Data, "memory.json"), new DiskFileSystem(), NullLogger<MemoryStore>.Instance),
             () => "F1",
             () => MemorySituation.Unknown);
 
         var lore = new LoreEditing(
-            new LoreBook(new LoreStore(Path.Combine(paths.Data, "lore.json"), NullLogger<LoreStore>.Instance)),
+            new LoreBook(new LoreStore(Path.Combine(paths.Data, "lore.json"), new DiskFileSystem(), NullLogger<LoreStore>.Instance)),
             () => new LoreCapability.LorePlace(1L, "Colonia", "F1"),
             () => false,
             (_, _) => Task.FromResult<string?>(null),
@@ -81,12 +82,12 @@ public class AModalOpensInTheHeadsetTests
             viewState,
             () => new CoverageReport([]),
             new D47.Core.Actions.MacroStore(
-                Path.Combine(paths.Data, "macros.json"),
+                Path.Combine(paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             lore: lore,
             memories: (memories, () => Instant),
             ownPersonas: new OwnPersonaStore(
-                Path.Combine(_folder, "personas.json"),
+                Path.Combine(_folder, "personas.json"), new DiskFileSystem(),
                 NullLogger<OwnPersonaStore>.Instance));
 
         return view;

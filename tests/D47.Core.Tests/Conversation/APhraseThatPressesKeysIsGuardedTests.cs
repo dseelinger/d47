@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -116,7 +117,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
         { "macros": [ { "name": "put the gear down", "steps": [ { "action": "lights" } ] } ] }
         """);
 
-        var store = new MacroStore(file, NullLogger<MacroStore>.Instance);
+        var store = new MacroStore(file, new DiskFileSystem(), NullLogger<MacroStore>.Instance);
         store.Poll([.. PhraseBook.From(registry, []).Entries.Select(entry => entry.Phrase)]);
 
         Assert.Empty(store.Macros);

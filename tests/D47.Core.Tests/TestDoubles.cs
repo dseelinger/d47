@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -262,7 +262,7 @@ public sealed class TestSurface
 
         var memories = new D47.Core.Memory.MemoryBook(
             new D47.Core.Memory.MemoryStore(
-                Path.Combine(install.Paths.Data, "memory.json"),
+                Path.Combine(install.Paths.Data, "memory.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Memory.MemoryStore>.Instance),
             () => state.Active?.Identity.FrontierId,
             () => new D47.Core.Memory.MemorySituation());
@@ -270,7 +270,7 @@ public sealed class TestSurface
         // A real store over a real (empty) file, for the reason ship cores is one below: the documentation
         // gate reads this registry, and a capability built with none registers with no tool at all.
         var learnedPhrases = new LearnedPhrasesStore(
-            Path.Combine(install.Paths.Data, "phrases.json"),
+            Path.Combine(install.Paths.Data, "phrases.json"), new DiskFileSystem(),
             NullLogger<LearnedPhrasesStore>.Instance);
 
         CapabilityRegistry? built = null;
@@ -287,7 +287,7 @@ public sealed class TestSurface
             () => "No autonomous actions in a test.",
             D47.Core.Capabilities.Builtin.NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"),
+                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
             checklists,
@@ -299,7 +299,7 @@ public sealed class TestSurface
  // capability while the shipped app carried two tools it had never seen.
             shipCores: new D47.Core.Persona.ShipCoreService(
                 new D47.Core.Persona.ShipCoreStore(
-                    Path.Combine(install.Paths.Data, "ship-cores.json"),
+                    Path.Combine(install.Paths.Data, "ship-cores.json"), new DiskFileSystem(),
                     NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
                 () => state.Active),
 

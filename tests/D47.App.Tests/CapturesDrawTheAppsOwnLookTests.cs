@@ -151,7 +151,7 @@ public class CapturesDrawTheAppsOwnLookTests
         var onFoot = new OnFootPlanService(kit, checklists, () => state);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
 
-        var alarms = new AlarmStore(Path.Combine(paths.Data, "alarms.json"), NullLogger<AlarmStore>.Instance);
+        var alarms = new AlarmStore(Path.Combine(paths.Data, "alarms.json"), new DiskFileSystem(), NullLogger<AlarmStore>.Instance);
 
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),

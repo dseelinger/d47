@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Actions;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -11,33 +12,18 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>Named sequences the Commander authored.</summary>
-[Trait("Category", "Integration")]
-public class MacroTests : IDisposable
+public class MacroTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private readonly string _root = Path.Combine(
         Path.GetTempPath(), "d47-macro-tests", Guid.NewGuid().ToString("N"));
 
     private string File => Path.Combine(_root, "macros.json");
 
-    public MacroTests() => Directory.CreateDirectory(_root);
+    private MacroStore Store() => new(File, _files, NullLogger<MacroStore>.Instance);
 
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A leftover temp folder is not worth failing a test over.
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-    private MacroStore Store() => new(File, NullLogger<MacroStore>.Instance);
-
-    private void Write(string json) => System.IO.File.WriteAllText(File, json);
+    private void Write(string json) => _files.WriteText(File, json);
 
     private static EliteBinds Binds(params (string Action, string Key)[] entries) => new()
     {

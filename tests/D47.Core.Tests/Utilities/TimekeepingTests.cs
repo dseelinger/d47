@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Utilities;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -7,11 +8,13 @@ namespace D47.Core.Tests.Utilities;
 /// <summary>Two clocks over one instant, and the timers and alarms beside them.</summary>
 public class TimekeepingTests
 {
+    private static readonly string AlarmsFile = Path.Combine(Path.GetTempPath(), "alarms.json");
+
     private static readonly DateTimeOffset Instant =
         new(2026, 8, 17, 21, 4, 0, TimeSpan.Zero);
 
-    private static AlarmStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "alarms.json"), NullLogger<AlarmStore>.Instance);
+    private static AlarmStore Store(MemoryFileSystem files) =>
+        new(AlarmsFile, files, NullLogger<AlarmStore>.Instance);
 
     /// <summary>Elite runs 1286 years ahead, so 2026 is 3312.</summary>
     [Fact]
@@ -71,12 +74,11 @@ public class TimekeepingTests
         Assert.Contains("2026", said, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ATimerFiresOnceWhenItIsDue()
     {
-        using var install = new TempInstall();
-        var timekeeper = new Timekeeper(Store(install));
+        var files = new MemoryFileSystem();
+        var timekeeper = new Timekeeper(Store(files));
 
         var timer = timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), Instant);
 
@@ -95,12 +97,11 @@ public class TimekeepingTests
     }
 
     /// <summary>Timers live only here, so a new Timekeeper over the same file has none of them.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TimersDoNotSurviveARestartAndAlarmsDo()
     {
-        using var install = new TempInstall();
-        var alarms = Store(install);
+        var files = new MemoryFileSystem();
+        var alarms = Store(files);
 
         var before = new Timekeeper(alarms);
 
@@ -109,7 +110,7 @@ public class TimekeepingTests
 
         Assert.Equal(2, before.Running.Count);
 
-        var reopened = Store(install);
+        var reopened = Store(files);
         reopened.Poll();
 
         var after = new Timekeeper(reopened);
@@ -122,16 +123,15 @@ public class TimekeepingTests
     /// An alarm that came round while d47 was closed is reported afterwards rather than sounded late as
     /// though nothing had happened.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnAlarmThatCameRoundWhileD47WasClosedIsReportedAsMissed()
     {
-        using var install = new TempInstall();
-        var alarms = Store(install);
+        var files = new MemoryFileSystem();
+        var alarms = Store(files);
 
         new Timekeeper(alarms).SetAlarm("wake up", Instant.AddHours(9), Instant);
 
-        var reopened = Store(install);
+        var reopened = Store(files);
         reopened.Poll();
 
         // The next launch, a day later.
@@ -143,12 +143,11 @@ public class TimekeepingTests
         Assert.Contains("not running", fired[0].Reminder.AnnounceMissed(TimeZoneInfo.Utc), StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnAlarmThatComesRoundWhileD47IsRunningIsNotMissed()
     {
-        using var install = new TempInstall();
-        var timekeeper = new Timekeeper(Store(install));
+        var files = new MemoryFileSystem();
+        var timekeeper = new Timekeeper(Store(files));
 
         timekeeper.SetAlarm("wake up", Instant.AddHours(9), Instant);
 
@@ -161,12 +160,11 @@ public class TimekeepingTests
         Assert.False(fired[0].Missed);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void CancellingTakesItOffTheList()
     {
-        using var install = new TempInstall();
-        var timekeeper = new Timekeeper(Store(install));
+        var files = new MemoryFileSystem();
+        var timekeeper = new Timekeeper(Store(files));
 
         var timer = timekeeper.StartTimer("mining run", TimeSpan.FromMinutes(40), Instant)!;
         var alarm = timekeeper.SetAlarm("wake up", Instant.AddHours(9), Instant)!;
@@ -183,12 +181,11 @@ public class TimekeepingTests
     /// Nought and several answer the same way rather than the second guessing: cancelling the wrong
     /// alarm of two is worse than being asked which.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void NoughtAndSeveralAreBothAnsweredRatherThanGuessedAt()
     {
-        using var install = new TempInstall();
-        var timekeeper = new Timekeeper(Store(install));
+        var files = new MemoryFileSystem();
+        var timekeeper = new Timekeeper(Store(files));
 
         timekeeper.StartTimer("run", TimeSpan.FromMinutes(10), Instant);
         timekeeper.StartTimer("run", TimeSpan.FromMinutes(20), Instant);
@@ -198,12 +195,11 @@ public class TimekeepingTests
     }
 
     /// <summary>A timer for no time at all, or for a moment already gone, is not a reminder.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void NonsenseIsRefused()
     {
-        using var install = new TempInstall();
-        var timekeeper = new Timekeeper(Store(install));
+        var files = new MemoryFileSystem();
+        var timekeeper = new Timekeeper(Store(files));
 
         Assert.Null(timekeeper.StartTimer("nothing", TimeSpan.Zero, Instant));
         Assert.Null(timekeeper.StartTimer("nothing", TimeSpan.FromMinutes(-5), Instant));
@@ -243,14 +239,12 @@ public class TimekeepingTests
     /// The file is hand-editable, so a line it gets wrong is reported rather than silently dropped —
     /// and the rest still loads.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ABadLineIsReportedAndTheRestStillLoads()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "alarms.json");
+        var files = new MemoryFileSystem();
 
-        File.WriteAllText(path, """
+        files.WriteText(AlarmsFile, """
         {
           "alarms": [
             { "id": "one", "name": "", "due": "2026-08-18T06:00:00+00:00" },
@@ -259,7 +253,7 @@ public class TimekeepingTests
         }
         """);
 
-        var store = new AlarmStore(path, NullLogger<AlarmStore>.Instance);
+        var store = new AlarmStore(AlarmsFile, files, NullLogger<AlarmStore>.Instance);
         store.Poll();
 
         Assert.Single(store.Alarms);
@@ -268,23 +262,21 @@ public class TimekeepingTests
     }
 
     /// <summary>Change is detected by content rather than by a last-write time.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoWritesInsideOneTickAreBothSeen()
     {
-        using var install = new TempInstall();
-        var path = Path.Combine(install.Root, "alarms.json");
-        var store = new AlarmStore(path, NullLogger<AlarmStore>.Instance);
+        var files = new MemoryFileSystem();
+        var store = new AlarmStore(AlarmsFile, files, NullLogger<AlarmStore>.Instance);
 
         const string One = """{ "alarms": [ { "id": "a", "name": "one", "due": "2026-08-18T06:00:00+00:00" } ] }""";
         const string Two = """{ "alarms": [ { "id": "b", "name": "two", "due": "2026-08-18T07:00:00+00:00" } ] }""";
 
-        File.WriteAllText(path, One);
+        files.WriteText(AlarmsFile, One);
         Assert.True(store.Poll());
         Assert.Equal("one", store.Alarms[0].Name);
 
         // Immediately, with no delay at all — which is what Poll is for.
-        File.WriteAllText(path, Two);
+        files.WriteText(AlarmsFile, Two);
         Assert.True(store.Poll());
         Assert.Equal("two", store.Alarms[0].Name);
 

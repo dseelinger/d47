@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using D47.Core.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -5,9 +6,10 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The store that survives.</summary>
-[Trait("Category", "Integration")]
-public class MemoryStoreTests : IDisposable
+public class MemoryStoreTests
 {
+    private readonly MemoryFileSystem _files = new();
+
     private static readonly DateTimeOffset Now = new(3311, 4, 2, 9, 0, 0, TimeSpan.Zero);
 
     private const string Cmdr = "F1234567";
@@ -17,25 +19,14 @@ public class MemoryStoreTests : IDisposable
 
     private string StorePath => Path.Combine(_folder, "memories.json");
 
-    private MemoryStore Store() => new(StorePath, NullLogger<MemoryStore>.Instance);
+    private MemoryStore Store() => new(StorePath, _files, NullLogger<MemoryStore>.Instance);
 
     private MemoryBook Book(MemoryStore? store = null, MemorySituation? situation = null) =>
         new(store ?? Store(), () => Cmdr, () => situation ?? MemorySituation.Unknown);
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
-
     private void Write(string json)
     {
-        Directory.CreateDirectory(_folder);
-        File.WriteAllText(StorePath, json);
+        _files.WriteText(StorePath, json);
     }
 
     [Fact]

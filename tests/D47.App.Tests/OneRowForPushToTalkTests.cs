@@ -1,4 +1,5 @@
-﻿using Avalonia;
+using D47.Core.Storage;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -185,7 +186,7 @@ public class OneRowForPushToTalkTests
     /// <summary>A controller seam with nothing plugged in — enough to be composed, and it is.</summary>
     private static SwitchEditing Editing(D47.Core.AppPaths paths) => new(
         new D47.Core.Hotas.SwitchStore(
-            Path.Combine(paths.Data, "switches.json"),
+            Path.Combine(paths.Data, "switches.json"), new DiskFileSystem(),
             NullLogger<D47.Core.Hotas.SwitchStore>.Instance),
         new D47.Core.Hotas.FakeHotasReader(),
         new D47.Core.Hotas.SwitchReconciler(NullLogger<D47.Core.Hotas.SwitchReconciler>.Instance),

@@ -45,7 +45,7 @@ public sealed record OwnPersonaProblem(string Which, string Reason);
 /// <summary>
 /// The cores the Commander wrote, in one file beside the executable (remediation.md 11, item 9).
 /// </summary>
-public sealed class OwnPersonaStore(string path, ILogger<OwnPersonaStore> logger)
+public sealed class OwnPersonaStore(string path, IFileSystem files, ILogger<OwnPersonaStore> logger)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -167,9 +167,9 @@ public sealed class OwnPersonaStore(string path, ILogger<OwnPersonaStore> logger
 
         try
         {
-            var info = new FileInfo(path);
+            var info = files.Stat(path);
 
-            if (!info.Exists)
+            if (info is null)
             {
                 // Not an error: no cores of your own is the normal state.
                 if (_stamp == default)
@@ -188,7 +188,7 @@ public sealed class OwnPersonaStore(string path, ILogger<OwnPersonaStore> logger
                 return true;
             }
 
-            written = info.LastWriteTimeUtc;
+            written = info.Value.Written;
         }
         catch (IOException ex)
         {
@@ -209,14 +209,7 @@ public sealed class OwnPersonaStore(string path, ILogger<OwnPersonaStore> logger
     /// <summary>Writes the file, keeping only what is fit to load.</summary>
     public void Save(IReadOnlyList<OwnPersona> cores)
     {
-        var directory = System.IO.Path.GetDirectoryName(path);
-
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        AtomicFile.WriteAllText(
+        files.WriteText(
             path,
             JsonSerializer.Serialize(new PersonaFile { Cores = [.. cores] }, Json));
 
@@ -232,10 +225,9 @@ public sealed class OwnPersonaStore(string path, ILogger<OwnPersonaStore> logger
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var text = files.ReadText(path);
 
-            file = JsonSerializer.Deserialize<PersonaFile>(stream, Json);
+            file = text is null ? null : JsonSerializer.Deserialize<PersonaFile>(text, Json);
         }
         catch (Exception ex) when (ex is IOException or JsonException)
         {
