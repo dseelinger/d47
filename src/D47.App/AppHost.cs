@@ -2966,7 +2966,7 @@ public sealed class AppHost : IDisposable
             onFootBuilds.Poll();
 
             // Before adoption, so a sale and a purchase reusing its id in one batch are taken in that order.
-            shipPlans.DropGone(context.IsFirst ? [] : arrived);
+            shipPlans.DropGone(arrived);
 
             if (settings.Current.Checklists.RemoveFulfilled)
             {
@@ -3004,7 +3004,7 @@ public sealed class AppHost : IDisposable
         });
 
         // What d47 remembers, on the tick like every other store (Phase 31).
-        var expiredAt = DateTimeOffset.MinValue;
+        var expiry = new MemoryExpiryPacing(ExpiryEvery);
 
         tick.Add("memory", context =>
         {
@@ -3024,12 +3024,11 @@ public sealed class AppHost : IDisposable
             }
 
             // Once at startup and then rarely.
-            if (context.Now - expiredAt >= ExpiryEvery)
+            if (expiry.TryBegin(context.Now, out var firstPass))
             {
-                expiredAt = context.Now;
                 host.ReportExpiredMemories(
                     memoryBook.Expire(context.Now, MemoryCapability.ExpiryOf(settings.Current.Memory)),
-                    context.IsFirst);
+                    firstPass);
             }
 
             host.ApplyRecall(memoryBook.Recall());
@@ -3064,7 +3063,7 @@ public sealed class AppHost : IDisposable
 
             foreach (var journalEvent in arrived)
             {
-                if (storyDirector.Observe(journalEvent, inGame) is { } waking && !context.IsFirst)
+                if (storyDirector.Observe(journalEvent, inGame) is { } waking)
                 {
                     // The callouts ran earlier on this tick, so a beat the same scan reached is already owed its line.
                     var chapter = storyStore.Current(commander)?.CurrentChapter;
@@ -3073,10 +3072,7 @@ public sealed class AppHost : IDisposable
                 }
 
                 // A dock beat whose station has its docks offline is written again on the pool.
-                if (!context.IsFirst)
-                {
-                    _ = storyDirector.DockOffline(journalEvent, inGame);
-                }
+                _ = storyDirector.DockOffline(journalEvent, inGame);
             }
 
             // The opening is said first, then a narrated scan, before the cores it wakes; the story's core comes aboard
@@ -3623,7 +3619,7 @@ public sealed class AppHost : IDisposable
     /// Says what an expiry took, when it took something worth saying (Phase 31, "Forgetting is said out
     /// loud when it matters").
     /// </summary>
-    /// <param name="priming">True on the startup tick.</param>
+    /// <param name="priming">True for the first expiry pass since launch.</param>
     private void ReportExpiredMemories(IReadOnlyList<MemoryEntry> expired, bool priming)
     {
         var told = expired.Where(entry => entry.Tier == MemoryTier.Stated).ToArray();
