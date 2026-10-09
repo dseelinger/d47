@@ -1,6 +1,6 @@
 ---
 name: deck
-description: Start the maintainer's deck sessions and releases from the phone, through the Launcher session — triage, architect, an issue worker, pre-release, or a patch or minor release. Each session opens in its own console on the PC with the settings its Stream Deck key uses, and shows up in the Claude app's Code tab. Use when the user invokes /deck <name>, or says "start triage", "open the architect", "work issue N", "run pre-release", "cut a patch", "cut a minor".
+description: Start the maintainer's deck sessions and releases from the phone, through the Launcher session — a plain session, triage, triage lanes, architect, an issue worker, pre-release, or a patch or minor release. Each session opens in its own console on the PC with the settings its Stream Deck key uses, and shows up in the Claude app's Code tab. Use when the user invokes /deck <name>, or says "start triage", "open the architect", "work issue N", "run pre-release", "cut a patch", "cut a minor".
 ---
 
 # Deck
@@ -14,7 +14,9 @@ Run from the repo root, with the Bash tool:
 
 | Argument | Command |
 | --- | --- |
+| *(none)* | `cmd.exe //c 'tools\deck\spawn.cmd' Claude claude.cmd` |
 | `triage` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd` |
+| `triage lanes` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd lanes` |
 | `architect` | `cmd.exe //c 'tools\deck\spawn.cmd' Architect architect.cmd` |
 | `issue <N>` or `issue <lane>` | `cmd.exe //c 'tools\deck\spawn.cmd' Issue issue-worker.cmd <N>` |
 | `pre-release` | `cmd.exe //c 'tools\deck\spawn.cmd' Pre-release pre-release.cmd` |
@@ -27,8 +29,11 @@ console on the PC cannot be answered from the phone. Before spawning, run
 `python tools/deck/issue_settings.py <arg>` and report its stderr line (which issue, which model
 and effort, how old the triage is). If it prints nothing on stdout, report why and spawn nothing.
 
-Then say the session is starting and will appear in the Code tab as its name (`Triage`,
-`Architect`, `#<N>`, `Pre-release`) within a few seconds.
+With no argument, the session is a plain one: Opus, high effort, no starting skill, as the Claude
+key opens it.
+
+Then say the session is starting and will appear in the Code tab within a few seconds: as its name
+(`Triage`, `Architect`, `#<N>`, `Pre-release`), or under an automatic name for a plain session.
 
 ## Cutting a release
 
@@ -50,4 +55,4 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch
 
 ## Anything else
 
-For an argument not listed, list the six and do nothing.
+For an argument not listed, list the ones above and do nothing.
