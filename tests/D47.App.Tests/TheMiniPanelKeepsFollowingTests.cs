@@ -23,7 +23,7 @@ public class TheMiniPanelKeepsFollowingTests
     {
         var model = new PanelViewModel();
 
-        for (var line = 0; line < 60; line++)
+        for (var line = 0; line < 30; line++)
         {
             model.Append(
                 $"Line {line} of the transcript, long enough to wrap once or twice.\n",

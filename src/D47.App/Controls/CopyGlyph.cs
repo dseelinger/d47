@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Timing;
 
 namespace D47.App.Controls;
 
@@ -76,15 +77,7 @@ public static class CopyGlyph
     {
         AutomationProperties.SetName(button, worked ? Copied : Failed);
 
-        var reset = new DispatcherTimer { Interval = Shown };
-
-        reset.Tick += (_, _) =>
-        {
-            reset.Stop();
-            AutomationProperties.SetName(button, Name);
-        };
-
-        reset.Start();
+        OneShot.Dispatcher(Shown, () => AutomationProperties.SetName(button, Name));
     }
 
     /// <summary>

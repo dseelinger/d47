@@ -157,8 +157,10 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
     /// is named <c>Copy</c> again, and its face is the two squares throughout.
     /// </summary>
     [AvaloniaFact]
-    public async Task ClickingItSaysWhatHappenedAndThenGoesBack()
+    public void ClickingItSaysWhatHappenedAndThenGoesBack()
     {
+        var clock = new ManualClock();
+        using var _ = clock.UseForDispatcher();
         var (window, panel, clipboard) = Open(enableCopy: true);
 
         clipboard.Works = false;
@@ -177,7 +179,7 @@ public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
         Assert.Equal(D47.App.Controls.CopyGlyph.Failed, AutomationProperties.GetName(copy));
         Assert.Same(face, copy.Content);
 
-        await Task.Delay(2200, TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromMilliseconds(2200));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(D47.App.Controls.CopyGlyph.Name, AutomationProperties.GetName(copy));

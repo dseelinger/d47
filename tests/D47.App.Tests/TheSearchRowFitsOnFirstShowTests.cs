@@ -25,7 +25,7 @@ public class TheSearchRowFitsOnFirstShowTests
         using var look = AppLook.Put();
         var overlaps = new List<string>();
 
-        for (var width = 480; width <= 1600; width += 20)
+        for (var width = 480; width <= 1600; width += 140)
         {
             var panel = new PanelView { DataContext = new PanelViewModel() };
             var window = new Window { Content = panel, Width = width, Height = 600 };

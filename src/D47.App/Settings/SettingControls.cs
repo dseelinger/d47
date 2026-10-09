@@ -14,6 +14,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Timing;
 using D47.App.Controls;
 using D47.App.Input;
 using D47.App.Theming;
@@ -616,13 +617,13 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
     private void WireConfirmPress(SettingRow row, Button press, ProgressBar bar, StatusLine message)
     {
         var armed = false;
-        DispatcherTimer? lapse = null;
+        IDisposable? lapse = null;
 
         void Disarm()
         {
             armed = false;
             press.Content = row.PressLabel;
-            lapse?.Stop();
+            lapse?.Dispose();
         }
 
         void Arm()
@@ -630,10 +631,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             armed = true;
             press.Content = "Press again to confirm";
 
-            lapse?.Stop();
-            lapse = new DispatcherTimer { Interval = SettingsView.ConfirmPressWindow };
-            lapse.Tick += (_, _) => Disarm();
-            lapse.Start();
+            lapse?.Dispose();
+            lapse = OneShot.Dispatcher(SettingsView.ConfirmPressWindow, Disarm);
         }
 
         press.Click += async (_, _) =>

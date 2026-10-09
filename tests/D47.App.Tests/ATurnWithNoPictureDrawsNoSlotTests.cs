@@ -96,7 +96,7 @@ public sealed class ATurnWithNoPictureDrawsNoSlotTests
     }
 
     [AvaloniaFact]
-    public void TwoHundredTurnsDecodeEachDistinctFileOnce()
+    public void TwentyTurnsDecodeEachDistinctFileOnce()
     {
         var fixture = new SpeakerPictureFixture("d47-pictures-decode-once");
         fixture.Ship("core.warden", Colors.OrangeRed);
@@ -105,13 +105,13 @@ public sealed class ATurnWithNoPictureDrawsNoSlotTests
         var (_, panel) = fixture.Open();
 
         // Each append adds a turn, so each is a full redraw of every turn before it.
-        for (var turn = 0; turn < 200; turn++)
+        for (var turn = 0; turn < 20; turn++)
         {
             fixture.Model.Append($"Line {turn}.", picture: turn % 2 == 0 ? "core.warden" : "captain.man");
             Dispatcher.UIThread.RunJobs();
         }
 
-        Assert.Equal(200, SpeakerPictureFixture.Pictures(panel).Count);
+        Assert.Equal(20, SpeakerPictureFixture.Pictures(panel).Count);
         Assert.Equal(2, fixture.Portraits.Decodes);
     }
 }

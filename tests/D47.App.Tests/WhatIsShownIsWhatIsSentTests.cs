@@ -270,7 +270,7 @@ public class WhatIsShownIsWhatIsSentTests : IDisposable
     public void TheRetiredDestinationIsNotNamedAnywhereInTheWindow()
     {
         // Over the size warning as well as the resting state, since that is where it lived.
-        var window = Shown(_ => "### Incident excerpt\n" + new string('x', 70_000));
+        var window = Shown(_ => "### Incident excerpt\n" + string.Concat(Enumerable.Repeat(new string('x', 99) + "\n", 700)));
 
         var words = Words(window);
 

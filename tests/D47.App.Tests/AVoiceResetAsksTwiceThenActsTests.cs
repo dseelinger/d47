@@ -87,8 +87,10 @@ public class AVoiceResetAsksTwiceThenActsTests
 
     /// <summary>Waiting past the window lapses the ask back to the first state, on its own.</summary>
     [AvaloniaFact]
-    public async Task WaitingPastTheWindowAsksAgainRatherThanActing()
+    public void WaitingPastTheWindowAsksAgainRatherThanActing()
     {
+        var clock = new ManualClock();
+        using var _ = clock.UseForDispatcher();
         var calls = 0;
         var host = Open(() =>
         {
@@ -99,8 +101,7 @@ public class AVoiceResetAsksTwiceThenActsTests
         var button = Press(host);
         Click(button);
 
-        await Task.Delay(
-            SettingsView.ConfirmPressWindow + TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+        clock.Advance(SettingsView.ConfirmPressWindow + TimeSpan.FromSeconds(1));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("Forget and pair again", button.Content as string);

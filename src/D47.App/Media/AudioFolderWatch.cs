@@ -1,3 +1,4 @@
+using D47.App.Timing;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging;
 
@@ -12,7 +13,9 @@ public sealed class AudioFolderWatch : IDisposable
     public static readonly TimeSpan QuietFor = TimeSpan.FromSeconds(3);
 
     private readonly FileSystemWatcher _watcher;
-    private readonly Timer _timer;
+    private readonly StartOneShot _start;
+    private readonly Func<DateTimeOffset> _now;
+    private IDisposable? _pending;
     private readonly Action _rebuild;
     private readonly ILogger _logger;
     private readonly QuietPeriod _quiet = new(QuietFor);
@@ -20,10 +23,21 @@ public sealed class AudioFolderWatch : IDisposable
     private bool _disposed;
 
     public AudioFolderWatch(string folder, Action rebuild, ILogger logger)
+        : this(folder, rebuild, logger, OneShot.OnThreadPool, MonotonicNow)
+    {
+    }
+
+    internal AudioFolderWatch(
+        string folder,
+        Action rebuild,
+        ILogger logger,
+        StartOneShot start,
+        Func<DateTimeOffset> now)
     {
         _rebuild = rebuild;
         _logger = logger;
-        _timer = new Timer(_ => Expired(), null, Timeout.Infinite, Timeout.Infinite);
+        _start = start;
+        _now = now;
 
         _watcher = new FileSystemWatcher(folder)
         {
@@ -47,20 +61,27 @@ public sealed class AudioFolderWatch : IDisposable
         _watcher.EnableRaisingEvents = true;
     }
 
+    /// <summary>Change notifications received, for tests that wait on the watcher.</summary>
+    internal int ChangesSeen => Volatile.Read(ref _changesSeen);
+
+    private int _changesSeen;
+
     private void Changed()
     {
         lock (_gate)
         {
-            _quiet.Changed(Now());
+            _quiet.Changed(_now());
             Arm();
         }
+
+        Interlocked.Increment(ref _changesSeen);
     }
 
     private void Expired()
     {
         lock (_gate)
         {
-            if (_disposed || !_quiet.Start(Now()))
+            if (_disposed || !_quiet.Start(_now()))
             {
                 Arm();
                 return;
@@ -88,14 +109,15 @@ public sealed class AudioFolderWatch : IDisposable
     /// <summary>Sets the timer for the next due rebuild, if one is waiting. Called under the gate.</summary>
     private void Arm()
     {
-        if (!_disposed && _quiet.Wait(Now()) is { } wait)
+        if (!_disposed && _quiet.Wait(_now()) is { } wait)
         {
-            _timer.Change(wait, Timeout.InfiniteTimeSpan);
+            _pending?.Dispose();
+            _pending = _start(wait, Expired);
         }
     }
 
     /// <summary>A monotonic clock, so a change to the system time cannot stretch the quiet period.</summary>
-    private static DateTimeOffset Now() =>
+    private static DateTimeOffset MonotonicNow() =>
         DateTimeOffset.UnixEpoch + TimeSpan.FromMilliseconds(Environment.TickCount64);
 
     public void Dispose()
@@ -103,9 +125,9 @@ public sealed class AudioFolderWatch : IDisposable
         lock (_gate)
         {
             _disposed = true;
+            _pending?.Dispose();
         }
 
         _watcher.Dispose();
-        _timer.Dispose();
     }
 }
