@@ -33,11 +33,9 @@ public static class ExcerptReport
 
         report.AppendLine();
         report.AppendLine(
-            "**What it is for.** The journal half is a replay case: `spike/CorpusReplay` drives it "
-            + "through the same fold the running app uses, so the fix is proven against what "
-            + "actually happened rather than against a reconstruction, and cannot regress "
-            + "silently afterwards. The log half is the diagnosis — what this build did with those "
-            + "events.");
+            "**What it is for.** Reproducing and diagnosing one defect. The journal half is what "
+            + "the game did, so the defect is reproduced from what actually happened rather than "
+            + "from a reconstruction. The log half is what this build did with those events.");
 
         report.AppendLine();
         report.AppendLine($"**What was done to it.** {Treatment(excerpt.Tally)}");

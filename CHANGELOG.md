@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The consent text for an incident excerpt and a journal history on the Help improve page, and the Help improve, Donation privacy and Data retention help pages, named a replay tool that does not exist. They now say what a donation is used for: reproducing and diagnosing defects against play that really happened. A journal history is still kept until you ask for it back, and an incident excerpt is still deleted after 30 days.
+
 Transcription is now biased towards the name of every command d47 can give, including the Galnet, headset, panel, FSS, on-foot and fighter commands in this release. Previously the names after the first 120 were left out.
 
 Changing speech settings while a core change, a voice download or a voice repair was running could corrupt the list of voice clients, or close one that was about to speak. Speech wiring now changes on one thread at a time.

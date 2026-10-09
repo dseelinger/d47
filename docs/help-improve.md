@@ -127,9 +127,8 @@ should not, a ship state nobody anticipated, an event Frontier added that the ap
 Reproducing one from a description means guessing at the situation. Reproducing it from the journal
 that produced it means replaying it.
 
-That is what the replay harness is for. A donated incident becomes a case it can run — the same
-events in the same order — so a fix can be proved against what actually happened rather than against
-somebody's account of it.
+A donated incident carries the same events in the same order, so a fix can be checked against what
+actually happened rather than against somebody's account of it.
 
 ### The two shapes
 

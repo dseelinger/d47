@@ -42,7 +42,7 @@ an installation. Nothing anywhere maps it to a person, because nothing anywhere 
 them — there is no account, no email address and no sign-up.
 
 **A donation may be copied to the holder's machine to be read.** An excerpt is evidence for a
-defect and a history is a replay case, and neither is any use unread. The copy is one file per
+defect and a history is test data, and neither is any use unread. The copy is one file per
 donation, in one folder, made by a utility that holds a read-only credential and can neither write
 to the store nor delete from it. It is not a second store: when the object goes — because you asked
 for it to be deleted, or because an excerpt reached its 30 days — the copy goes with it, the next
@@ -71,10 +71,9 @@ hash of exactly what left, so you can check that claim rather than believe it.
 
 ## For what, and nothing else
 
-**A replay case and a diagnosis, for defects in this software.** An excerpt's journal half is
-driven through the same fold the running app uses, so a fix is proven against what actually
-happened; its log half is what this build did with those events. A donated journal history is test
-data — nobody reads it.
+**Reproducing and diagnosing defects in this software.** An excerpt's journal half is what the
+game did, so a defect is reproduced from what actually happened; its log half is what this build
+did with those events. A donated journal history is test data, not a bug report.
 
 That is the whole purpose, and the design is what enforces it rather than the promise being the
 enforcement. There is no backend beyond an object store, nothing that indexes or searches what is

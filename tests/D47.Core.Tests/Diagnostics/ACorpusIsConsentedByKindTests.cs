@@ -210,5 +210,6 @@ public class ACorpusIsConsentedByKindTests : IDisposable
 
         Assert.Contains("kept indefinitely", report);
         Assert.Contains(DonationNotice.Url, report);
+        Assert.DoesNotContain("spike/", report);
     }
 }

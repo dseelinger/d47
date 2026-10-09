@@ -889,7 +889,8 @@ public class AnIncidentExcerptTests
         Assert.StartsWith(ExcerptReport.Marker, report, StringComparison.Ordinal);
         Assert.Contains("0.85.0+8b21b3d", report);
         Assert.Contains("2026-08-28 12:00:00Z", report);
-        Assert.Contains("CorpusReplay", report);
+        Assert.Contains("Reproducing and diagnosing one defect", report);
+        Assert.DoesNotContain("spike/", report);
         // **Not a deletion promise.** The old wording said the excerpt lived in one issue and would be
         // deleted on request, and a public repository can honour neither half: a comment is archived by third
         // parties within the hour and mailed whole to every watcher (<.com/dseelinger/d47/issues/165>).

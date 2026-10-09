@@ -35,10 +35,10 @@ public static class CorpusReport
 
         report.AppendLine();
         report.AppendLine(
-            "**What it is for.** Replaying what really happened. `spike/CorpusReplay` drives these events through "
-            + "the same fold the running app uses, so a defect can be proven fixed against play "
-            + "that really happened and cannot regress silently afterwards. Nobody reads it; it is "
-            + "test data, not a bug report.");
+            "**What it is for.** Finding and reproducing defects in Directive 47 against play that "
+            + "really happened, including situations nobody thought to test. Sent to Directive 47's "
+            + "store, it may be copied to the developer's machine by a utility that can read the "
+            + "store but not change it. It is test data, not a bug report.");
 
         report.AppendLine();
         report.AppendLine(
@@ -73,8 +73,8 @@ public static class CorpusReport
             // **The half of the paperwork this report did not have** (#168, #166).
             "**Where this goes, and for how long.** It was scrubbed on the machine it came off, and "
             + "the treatment above is checkable on every kind of thing in it. Sent to Directive 47's "
-            + "own store, it is **kept indefinitely** — that is what makes it useful, because a "
-            + "regression case that expires stops being one, and permanent retention is exactly "
+            + "own store, it is **kept indefinitely**, because a defect can be found long after "
+            + "the history was sent, and permanent retention is exactly "
             + "why the scrub above has to hold rather than merely look right. It is never "
             + "committed to a public repository, so it stays one object and one delete: ask, "
             + "quoting the receipt d47 kept beside its executable, and it goes.");

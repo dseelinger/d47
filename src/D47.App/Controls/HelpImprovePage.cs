@@ -443,7 +443,7 @@ public sealed class HelpImprovePage : DialogPage
         + "A bug is nearly always about a situation — a callout that fires when it should not, "
         + "a ship state nobody anticipated, an event Frontier added that the app had never "
         + "seen. Reproducing one from a description means guessing at the situation; from the "
-        + "journal that produced it, the replay harness runs the same events in the same order.\n"
+        + "journal that produced it, the situation is there in the events, in the order they happened.\n"
         + "\n"
         + "What the scrub does\n"
         + "It works from a list of fields it keeps, rather than a list of fields to remove. Other "
