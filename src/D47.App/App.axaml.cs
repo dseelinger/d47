@@ -128,7 +128,7 @@ public partial class App(AppHost? host) : Application
             var prompts = host.Vr.Prompts;
             var board = host.Vr.Board;
 
-            host.RoutePrompts(heard =>
+            host.PanelRouting.RoutePrompts(heard =>
             {
                 var taking = prompts.IsListening ? (D47.Core.Interface.IHearsText)prompts
                     : board.IsListening ? board
@@ -145,12 +145,12 @@ public partial class App(AppHost? host) : Application
 
             // And a spoken phrase moves the headset panel too.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
-            host.RouteNavigation(host.Vr.Nav, move => ui.Post(move), openSystem: host.Vr.OpenSystem);
-            host.RoutePromptSurface(prompts, move => ui.Post(move), headset: true);
+            host.PanelRouting.RouteNavigation(host.Vr.Nav, move => ui.Post(move), openSystem: host.Vr.OpenSystem);
+            host.PanelRouting.RoutePromptSurface(prompts, move => ui.Post(move), headset: true);
 
             // And a spoken "page down" moves the headset panel (#34) — the surface the request was made from,
             // where a ray on a twelve-pixel bar is the only alternative.
-            host.RouteScrolling(host.Vr.Scroll);
+            host.PanelRouting.RouteScrolling(host.Vr.Scroll);
 
             // And the third surface: the mini panel on a monitor, for a Commander with no headset (Phase 48).
             host.Overlay = Windowing.OverlayPanel.Attach(
@@ -187,11 +187,11 @@ public partial class App(AppHost? host) : Application
                 });
 
             // Through the same route as the other two (Phase 45).
-            host.RouteNavigation(host.Overlay.Nav, move => ui.Post(move));
+            host.PanelRouting.RouteNavigation(host.Overlay.Nav, move => ui.Post(move));
 
             // And the strip, which has no other way to scroll at all: the pointer goes straight through it,
             // so the wheel does too (#34).
-            host.RouteScrolling(host.Overlay.Scroll);
+            host.PanelRouting.RouteScrolling(host.Overlay.Scroll);
 
             // Last, because it reports the headset and the headset is brought up above.
             host.RecordStartup();

@@ -347,7 +347,7 @@ public partial class MainWindow : Window
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
             // 25).
-            host.RoutePrompts(heard =>
+            host.PanelRouting.RoutePrompts(heard =>
             {
                 if (!Panel.Prompts.IsListening)
                 {
@@ -365,13 +365,13 @@ public partial class MainWindow : Window
             var ui = Avalonia.Threading.Dispatcher.UIThread;
             // The window leads: its tab carries to any surface that furnished the same one
             // (change-requests.md 34).
-            host.RouteNavigation(
+            host.PanelRouting.RouteNavigation(
                 Panel.Nav, move => ui.Post(move), leads: true, openSystem: address => Panel.OpenSystem(address));
 
-            host.RoutePromptSurface(Panel.Prompts, move => ui.Post(move));
+            host.PanelRouting.RoutePromptSurface(Panel.Prompts, move => ui.Post(move));
 
             // And a spoken "page down" moves whatever page this surface is showing (#34).
-            host.RouteScrolling(Panel.Scroll);
+            host.PanelRouting.RouteScrolling(Panel.Scroll);
 
             // The engineer ranking changes when the Commander moves or re-fits, so it is pushed rather than pulled.
             host.Tick.Add("engineers", _ =>
@@ -962,7 +962,7 @@ public partial class MainWindow : Window
         }
 
         // Asked before the in-flight gate, never after.
-        if (_host.Navigate(input) is { } moved)
+        if (_host.PanelRouting.Navigate(input) is { } moved)
         {
             _model.AskText = string.Empty;
             _model.Append($"\n\n> {input}\n{moved}\n");
@@ -970,7 +970,7 @@ public partial class MainWindow : Window
         }
 
         // And moving the page rather than the panel (#34).
-        if (_host.Scroll(input) is { } scrolled)
+        if (_host.PanelRouting.Scroll(input) is { } scrolled)
         {
             _model.AskText = string.Empty;
             _model.Append($"\n\n> {input}\n{scrolled}\n");
@@ -1035,7 +1035,7 @@ public partial class MainWindow : Window
 
                             if (completed.Result.Page is { } page)
                             {
-                                _host.Open(page);
+                                _host.PanelRouting.Open(page);
                             }
 
                             break;

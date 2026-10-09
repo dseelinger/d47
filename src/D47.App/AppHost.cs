@@ -90,6 +90,7 @@ public sealed class AppHost : IDisposable
         string? startupError)
     {
         Paths = paths;
+        PanelRouting = new PanelRouting(() => Vr?.State == Core.Vr.VrState.Active, () => Ships.Fleet());
         Router = router;
         Cancellation = cancellation;
         _loggerFactory = loggerFactory;
@@ -208,6 +209,8 @@ public sealed class AppHost : IDisposable
     public Panel.PanelViewModel Panel { get; } = new();
 
     /// <summary>The headset path, once Avalonia has come up.</summary>
+    public PanelRouting PanelRouting { get; }
+
     public Headset.VrHost? Vr { get; set; }
 
     /// <summary>The flat mini panel over the game, once Avalonia has come up (Phase 48).</summary>
@@ -2698,7 +2701,7 @@ public sealed class AppHost : IDisposable
             reconciler,
             () => DateTimeOffset.Now,
             Path.Combine(paths.Data, "switch-capture.txt"),
-            () => host.PanelDestinations);
+            () => host.PanelRouting.Snapshot.Destinations);
         // Whether a lookup is possible is asked at the moment the window opens rather than captured now: the
         // Commander can change the setting or the provider between launching d47 and writing a note, and the
         // window's own first sentence depends on the answer.
@@ -2924,7 +2927,7 @@ public sealed class AppHost : IDisposable
             switches.Poll();
 
             // One snapshot for both fields, so the pages and the one showing were true together.
-            var panel = host._panel;
+            var panel = host.PanelRouting.Snapshot;
 
             reconciler.Poll(
                 new SwitchTick
@@ -5366,7 +5369,7 @@ public sealed class AppHost : IDisposable
 
                 // A panel is asking for a value and this is the answer to it (Phase 25, "Say it, or type
                 // it").
-                if (Prompted(new Core.Interface.Heard(
+                if (PanelRouting.Prompted(new Core.Interface.Heard(
                         transcription.Text, transcription.Confidence, Final: true)))
                 {
                     // Written down, because nothing after this point will.
@@ -5468,29 +5471,14 @@ public sealed class AppHost : IDisposable
         Voice.EnterState(Core.Audio.LoopState.Idle, cue: false);
     }
 
-    /// <summary>The surfaces that may be waiting on a spoken value (Phase 25, "Say it, or type it").</summary>
-    private readonly List<Func<Core.Interface.Heard, bool>> _prompts = [];
-
-    /// <summary>Adds a surface to the list of places a spoken value may be destined for.</summary>
-    public void RoutePrompts(Func<Core.Interface.Heard, bool> surface) => _prompts.Add(surface);
-
-    private readonly List<(PanelPrompts Prompts, Action<Action> Post, bool Headset)> _promptSurfaces = [];
-
-    /// <summary>
-    /// Adds a panel that can be opened on a keyboard entry. <paramref name="post"/> runs an action on the
-    /// surface's own thread.
-    /// </summary>
-    public void RoutePromptSurface(PanelPrompts prompts, Action<Action> post, bool headset = false) =>
-        _promptSurfaces.Add((prompts, post, headset));
-
     /// <summary>Opens the keyboard on "System to plot", holding <paramref name="initial"/>.</summary>
-    private void SpellSystem(string initial) => OnPromptSurface(prompts =>
+    private void SpellSystem(string initial) => PanelRouting.OnPromptSurface(prompts =>
         prompts.Enter(
             SpellSystemEntry.Request(initial),
             value => _ = PlotSpelledAsync(value.Trim())));
 
     /// <summary>Asks whether to spell the system a plot found no route to.</summary>
-    private void OfferSpelling(string system) => OnPromptSurface(prompts =>
+    private void OfferSpelling(string system) => PanelRouting.OnPromptSurface(prompts =>
         prompts.Choose(
             new Core.Interface.ChoiceRequest(
                 "spell-offer",
@@ -5508,31 +5496,6 @@ public sealed class AppHost : IDisposable
                 }
             }));
 
-    /// <summary>Runs <paramref name="open"/> on the headset panel while the overlay shows, else on the window's.</summary>
-    private void OnPromptSurface(Action<PanelPrompts> open)
-    {
-        var showing = Vr?.State == Core.Vr.VrState.Active;
-
-        foreach (var (prompts, post, headset) in _promptSurfaces)
-        {
-            if (headset != showing)
-            {
-                continue;
-            }
-
-            post(() =>
-            {
-                // One entry at a time, on whichever surface holds it.
-                if (!_promptSurfaces.Any(s => s.Prompts.IsOpen))
-                {
-                    open(prompts);
-                }
-            });
-
-            return;
-        }
-    }
-
     private async Task PlotSpelledAsync(string system)
     {
         var result = await Capabilities.InvokeAsync(
@@ -5541,134 +5504,6 @@ public sealed class AppHost : IDisposable
             CancellationToken.None).ConfigureAwait(false);
 
         await SayAsync(new Announcement("action.spelled-system", result.Spoken)).ConfigureAwait(false);
-    }
-
-    /// <summary>The navigators a spoken "show me the checklist" moves (Phase 25).</summary>
-    private readonly List<Core.Interface.PanelNavigator> _navigators = [];
-
-    /// <summary>
-    /// The one mechanism that carries a transcript root from the surface that moved it to the rest
-    /// (Phase 45).
-    /// </summary>
-    private readonly Core.Interface.TranscriptMirror _transcript = new();
-
-    /// <summary>
-    /// How to reach each navigator from a thread that does not own it, in the order they were routed.
-    /// </summary>
-    private readonly List<(Core.Interface.PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)> _surfaces =
-        [];
-
-    /// <summary>
-    /// The panel as the switch path sees it: every page any surface registered, and the one showing.
-    /// </summary>
-    private volatile PanelSnapshot _panel = new([], null);
-
-    private sealed record PanelSnapshot(IReadOnlyList<Core.Interface.PanelDestination> Destinations, string? Showing);
-
-    /// <summary>
-    /// Adds a surface's navigator to the ones a spoken phrase moves, with how to reach it from another
-    /// thread.
-    /// </summary>
-    /// <paramref name="post"/>
-    /// is called from the tick; it should carry a dispatcher the surface captured on its own thread
-    /// rather than read one at call time.
-    /// </paramref>
-    public void RouteNavigation(
-        Core.Interface.PanelNavigator nav, Action<Action> post, bool leads = false, Action<long>? openSystem = null)
-    {
-        _navigators.Add(nav);
-        _surfaces.Add((nav, post, openSystem));
-
-        // Into the mirror before the snapshot is hooked, so a surface that arrives behind the other is
-        // brought level and the first snapshot already reads two surfaces agreeing.
-        if (leads)
-        {
-            _transcript.Lead(nav);
-        }
-        else
-        {
-            _transcript.Add(nav);
-        }
-
-        // Taken here and retaken every time a surface moves, on the thread that moved it.
-        nav.Changed += (_, _) => SnapshotPanel();
-        SnapshotPanel();
-    }
-
-    private void SnapshotPanel()
-    {
-        var destinations = _navigators
-            .SelectMany(nav => nav.Destinations)
-            .DistinctBy(page => page.Root.Key)
-            .ToList();
-
-        // What the panel is showing is what every surface agrees it is showing.
-        var showing = _navigators.Select(nav => nav.Root.Key).Distinct().ToList();
-
-        _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null);
-    }
-
-    /// <summary>Every page any surface offers, for the switch editor's list (Phase 46).</summary>
-    public IReadOnlyList<Core.Interface.PanelDestination> PanelDestinations => _panel.Destinations;
-
-    /// <summary>
-    /// Puts every surface on this page, each on its own thread — what a switch position that names a
-    /// destination does (Phase 46).
-    /// </summary>
-    private void Show(string rootKey)
-    {
-        foreach (var (nav, post, _) in _surfaces)
-        {
-            post(() => nav.Show(rootKey));
-        }
-    }
-
-    /// <summary>Opens the page a Commander's question was about on every surface (#575).</summary>
-    public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, () => Ships.Fleet());
-
-    /// <summary>How each surface moves the page it is showing (#34).</summary>
-    private readonly List<Func<Core.Interface.PanelScrollStep, Core.Interface.PanelScrollOutcome>> _scrollers = [];
-
-    /// <summary>Adds a surface to the ones a spoken scroll moves (#34).</summary>
-    public void RouteScrolling(Func<Core.Interface.PanelScrollStep, Core.Interface.PanelScrollOutcome> scroll) =>
-        _scrollers.Add(scroll);
-
-    /// <summary>
-    /// Moves the page on every surface, and says so — or null when the phrase was not a scroll, which
-    /// is the common case and falls through to the turn (#34).
-    /// </summary>
-    public string? Scroll(string spoken)
-    {
-        if (Core.Interface.PanelScroll.Match(spoken) is not { } step)
-        {
-            return null;
-        }
-
-        // Every one of them, and then what that means out loud is asked of the vocabulary rather than decided
-        // here: the wording belongs beside the phrases it answers, where it can be asserted without an
-        // AppHost.
-        return Core.Interface.PanelScroll.Answer(
-            step,
-            _scrollers.Select(scroll => scroll(step)));
-    }
-
-    /// <summary>
-    /// Moves every surface the phrase named somewhere, and says what happened — or null when it named
-    /// nowhere, which is the common case and falls through to the turn.
-    /// </summary>
-    public string? Navigate(string spoken)
-    {
-        string? said = null;
-
-        foreach (var nav in _navigators)
-        {
-            // Every one of them, and the first answer is the one said out loud.
-            var moved = Core.Interface.PanelPhrases.Apply(spoken, nav);
-
-            said ??= moved;
-        }
-
-        return said;
     }
 
     private readonly Core.Help.Walkthrough _walkthrough = new();
@@ -5694,10 +5529,6 @@ public sealed class AppHost : IDisposable
         _ = Voice.AnnounceAsync(line);
         return line;
     }
-
-    /// <summary>Offers what was heard to each surface in turn, and says whether one took it.</summary>
-    private bool Prompted(Core.Interface.Heard heard) =>
-        _prompts.Any(surface => surface(heard));
 
     /// <summary>The plotted route, for proper-noun biasing.</summary>
     private Func<NavRoute>? _route;
@@ -6024,7 +5855,7 @@ public sealed class AppHost : IDisposable
         // and outside _acting, because a page move holds no keys for a honk to collide with (Phase 46).
         foreach (var page in pending.Where(reconcile => reconcile.Destination is not null))
         {
-            Show(page.Destination!);
+            PanelRouting.Show(page.Destination!);
         }
 
         pending = [.. pending.Where(reconcile => reconcile.Destination is null)];
