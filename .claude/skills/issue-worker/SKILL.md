@@ -459,10 +459,13 @@ report ends the turn. A sentence left until after the report is not spoken.
 
 An issue worked in a worktree adds two steps after the review: merge it into `main` and remove the
 worktree, as **Lanes** says. `/test-drive` then runs from the main checkout, so the build under test
-holds everything merged so far from every lane; say so in the line above the steps. The report
-ends with the next issue in this lane, if there is one: the Issue key given the lane letter starts
-it. When the merge stopped, there is no test drive and no next issue: the report says which step
-stopped it, as **Merging into main** lists, and that the lane is paused.
+holds everything merged so far from every lane; say so in the line above the steps. When the
+merge into `main` succeeded, the report's first line is `Lane <letter> issue complete`, with this
+issue's lane letter — `Lane A issue complete`, `Lane B issue complete`, `Lane C issue complete`.
+The report ends with the next issue in this lane, if there is one: the Issue key given the lane
+letter starts it. When the merge stopped, there is no completion line, no test drive and no next
+issue: the report says which step stopped it, as **Merging into main** lists, and that the lane is
+paused.
 
 This applies equally when the work lands on a turn started by a background agent's completion
 notice rather than by the maintainer.
