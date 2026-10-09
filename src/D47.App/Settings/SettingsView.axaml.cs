@@ -43,11 +43,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private SettingsService? _settings;
 
-    /// <summary>Each area's nav heading, and the run of sections beneath it.</summary>
-    private readonly List<AreaView> _navAreas = [];
-
-    /// <summary>The area holding the open place (#220), or −1 before <see cref="Build"/> runs.</summary>
-    private int _activeArea = -1;
+    private SettingsNav? _nav;
 
     /// <summary>The open place's head, and the parts of it that change with the place.</summary>
     private StackPanel? _pageHead;
@@ -72,13 +68,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private readonly List<Action> _barToolRefreshes = [];
 
     private readonly Dictionary<string, Control> _barToolControls = new(StringComparer.Ordinal);
-
-    /// <summary>The place picker shown once the nav has collapsed (#220).</summary>
-    private Stepper? _areaDropdown;
-
-    /// <summary>True while the view is writing <see cref="_areaDropdown"/>, so its own selection change
-    /// does not loop back into another page change.</summary>
-    private bool _settingAreaDropdown;
 
     /// <summary>Marks an area's heading in the nav, for a test to tell it from a place.</summary>
     public const string NavAreaClass = "nav-area";
@@ -112,9 +101,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>True while controls are being written from settings rather than read from.</summary>
     private bool _refreshing;
-
-    /// <summary>The open place, or −1 before one is open.</summary>
-    private int _activeSection = -1;
 
     /// <summary>
     /// Limits this instance to one <see cref="SettingsLayout"/> tab place — a tab's own strip rather
@@ -168,8 +154,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>The open place's guide, for the panel's HELP; null off the settings page.</summary>
     public string? HelpTopic =>
-        _tabPlaceId is null && _activeSection >= 0 && _activeSection < _sections.Count
-            ? _sections[_activeSection].DocsCapabilityId
+        _tabPlaceId is null && ActiveSection >= 0 && ActiveSection < _sections.Count
+            ? _sections[ActiveSection].DocsCapabilityId
             : null;
 
     /// <summary>Says the field filters, since a query removes rows here rather than marking them.</summary>
@@ -304,13 +290,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var settings = _settings ?? throw new InvalidOperationException("Attach() has not been called.");
 
         Cards.Children.Clear();
-        NavItems.Children.Clear();
+        _nav?.Clear();
         _sections.Clear();
         _rows.Clear();
         _revealedSections.Clear();
-        _navAreas.Clear();
-        _activeSection = -1;
-        _activeArea = -1;
         _pageHead = null;
         _pageCrumb = null;
         _pageTitle = null;
@@ -321,7 +304,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _barTool = null;
         _barToolRefreshes.Clear();
         _barToolControls.Clear();
-        _areaDropdown = null;
         _groups.Clear();
         _tileGrids.Clear();
         _tabPlaceRows.Clear();
@@ -332,9 +314,13 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         if (_tabPlaceId is { } placeId)
         {
+            _nav = null;
             BuildTabPlace(settings, placeId);
             return;
         }
+
+        var nav = _nav ??= new SettingsNav(
+            NavItems, NavScroller, this, (block, text) => _marker.Paint(block, text, _query), ShowPlace);
 
         foreach (var tab in SettingsLayout.Tabs)
         {
@@ -345,7 +331,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
 
         _otherTabsSection = BuildOtherTabsSection(out _otherTabsList);
-        _areaDropdown = BuildPlaceDropdown();
         _barTool = BuildBarTool(settings);
         _pageHead = BuildPageHead();
         _emptyBlock = BuildEmptyBlock();
@@ -362,31 +347,19 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         foreach (var area in SettingsLayout.Areas)
         {
-            var first = _sections.Count;
-            var areaIndex = _navAreas.Count;
-            var (areaHeading, areaHeadingText, areaHeadingBar) = BuildNavArea(area.Title, areaIndex);
-
-            NavItems.Children.Add(areaHeading);
+            nav.AddArea(area);
 
             foreach (var place in area.Places)
             {
                 var (content, rows, foldButton) = BuildPlace(settings, owners, place, _sections.Count);
 
-                var nav = BuildNavItem(_sections.Count, place.Title);
-                NavItems.Children.Add(nav.Item);
-
                 _sections.Add(
                     new SectionView(
-                        place.Id, place.Title, place.Terms, place.DocsCapabilityId, content, rows,
-                        nav.Item, nav.Bar, nav.Text, nav.Count)
+                        place.Id, place.Title, place.Terms, place.DocsCapabilityId, content, rows)
                     {
                         FoldButton = foldButton,
                     });
             }
-
-            _navAreas.Add(
-                new AreaView(
-                    area.Id, area.Title, areaHeading, areaHeadingText, areaHeadingBar, first, _sections.Count - first));
         }
 
         // Once to learn which places have a page, then to open the first of them.
@@ -734,50 +707,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             : host.AnchorFor(slot) is not null);
 
     /// <summary>
-    /// An area's title in the nav; pressing it selects the area. Upper case and tracked, the top-level
-    /// node's own mark (#279).
-    /// </summary>
-    private (Border Item, TextBlock Text, Border Bar) BuildNavArea(string title, int areaIndex)
-    {
-        var text = new TextBlock
-        {
-            Text = title.ToUpperInvariant(),
-            FontSize = TypeScale.Secondary,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = TypeScale.Secondary * Fonts.ChromeTracking,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-        Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        // The selected tree node's own mark (#279), shared in shape with a place's below.
-        var bar = new Border
-        {
-            Width = 3,
-            Margin = new Thickness(0, 4, 8, 4),
-            Opacity = 0,
-        };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
-
-        var layout = new DockPanel();
-        DockPanel.SetDock(bar, Dock.Left);
-        layout.Children.Add(bar);
-        layout.Children.Add(text);
-
-        var item = new Border
-        {
-            Padding = new Thickness(8, 12, 8, 4),
-            Background = Brushes.Transparent,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Child = layout,
-        };
-
-        item.Classes.Add(NavAreaClass);
-        item.PointerPressed += (_, _) => SelectArea(areaIndex);
-
-        return (item, text, bar);
-    }
-
-    /// <summary>
     /// Marks the "On other tabs" section, for a test to find it (#222).
     /// </summary>
     public const string OtherTabsName = "OtherTabs";
@@ -941,115 +870,28 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return strip;
     }
 
-    /// <summary>The place picker shown once the nav has collapsed (#220).</summary>
-    private Stepper BuildPlaceDropdown()
-    {
-        var combo = new Stepper
-        {
-            Name = "AreaDropdown",
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(0, 0, 0, 8),
-            IsVisible = false,
-        };
-        DressAsAChoice(combo);
-        AutomationProperties.SetName(combo, "Page");
-
-        combo.SelectionChanged += (_, _) =>
-        {
-            if (_settingAreaDropdown || combo.SelectedIndex < 0)
-            {
-                return;
-            }
-
-            ShowPlace(_dropdownPlaceIndexes[combo.SelectedIndex]);
-        };
-
-        return combo;
-    }
-
-    /// <summary>Which section each entry in <see cref="_areaDropdown"/> names, since a place with no page is
-    /// left out.</summary>
-    private readonly List<int> _dropdownPlaceIndexes = [];
-
-    /// <summary>Refills the place picker from the places that currently have a page.</summary>
-    private void SyncPlaceDropdown()
-    {
-        if (_areaDropdown is not { } combo)
-        {
-            return;
-        }
-
-        _dropdownPlaceIndexes.Clear();
-        var titles = new List<string>();
-
-        for (var i = 0; i < _sections.Count; i++)
-        {
-            if (!_sift.Places[i].Exists)
-            {
-                continue;
-            }
-
-            _dropdownPlaceIndexes.Add(i);
-            titles.Add($"{_navAreas[AreaOf(i)].Title} › {_sections[i].Title}");
-        }
-
-        _settingAreaDropdown = true;
-        try
-        {
-            if (combo.ItemsSource is not IEnumerable<string> shown || !shown.SequenceEqual(titles))
-            {
-                combo.ItemsSource = titles;
-            }
-
-            combo.SelectedIndex = _dropdownPlaceIndexes.IndexOf(_activeSection);
-        }
-        finally
-        {
-            _settingAreaDropdown = false;
-        }
-    }
-
-    /// <summary>
-    /// The area's first place with a match while a query is typed, else its first place with a page,
-    /// else its first place.
-    /// </summary>
-    private int FirstShownPlace(AreaView area)
-    {
-        var places = Enumerable.Range(area.First, area.Count).ToList();
-
-        if (_query.Length > 0 && places.FirstOrDefault(i => MatchesIn(i) > 0, -1) is var matched and >= 0)
-        {
-            return matched;
-        }
-
-        return places.FirstOrDefault(i => _sift.Places[i].Exists, area.First);
-    }
-
     /// <summary>Opens an area's first place (#220).</summary>
     public void SelectArea(int areaIndex)
     {
-        if (areaIndex < 0 || areaIndex >= _navAreas.Count)
+        if (_nav is not { } nav || areaIndex < 0 || areaIndex >= nav.AreaCount)
         {
             return;
         }
 
-        ShowPlace(FirstShownPlace(_navAreas[areaIndex]));
+        ShowPlace(nav.FirstShownPlace(areaIndex, _sift));
     }
 
     /// <summary>Replaces the page with one place, filtered by the current query.</summary>
     internal void ShowPlace(int index)
     {
-        if (index < 0 || index >= _sections.Count)
+        if (_nav is not { } nav || index < 0 || index >= _sections.Count)
         {
             return;
         }
 
-        var changed = _activeSection != index;
+        var changed = nav.ActiveSection != index;
 
-        _activeSection = index;
-        _activeArea = AreaOf(index);
-
-        ShowActiveInNav();
+        nav.Select(index);
         RememberSection();
         Refresh();
 
@@ -1059,121 +901,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
     }
 
-    /// <summary>Which area index a section belongs to.</summary>
-    private int AreaOf(int sectionIndex) =>
-        _navAreas.FindIndex(area => sectionIndex >= area.First && sectionIndex < area.First + area.Count);
-
     /// <summary>The area currently selected, by its id, for a test to read.</summary>
-    internal string? ActiveAreaId => _activeArea >= 0 && _activeArea < _navAreas.Count ? _navAreas[_activeArea].Id : null;
-
-    /// <summary>The open place's area heading is marked as its parent (#220).</summary>
-    private void PaintAreaHeading(AreaView area, NavPaint paint)
-    {
-        if (area.Painted == paint)
-        {
-            return;
-        }
-
-        area.Painted = paint;
-
-        area.Ink?.Dispose();
-        area.Ink = Themed(
-            area.HeadingText,
-            TextBlock.ForegroundProperty,
-            paint switch
-            {
-                NavPaint.Active => ThemeManager.WhiteKey,
-                NavPaint.Dim => ThemeManager.Grey2Key,
-                _ => ThemeManager.GreyKey,
-            });
-
-        area.HeadingBar.Opacity = paint == NavPaint.Active ? 1 : 0;
-
-        area.Fill?.Dispose();
-        area.Fill = null;
-
-        if (paint == NavPaint.Active)
-        {
-            area.Fill = Themed(area.Heading, Border.BackgroundProperty, ThemeManager.Tile2Key);
-        }
-        else
-        {
-            area.Heading.Background = Brushes.Transparent;
-        }
-    }
-
-    private (Border Item, Border Bar, TextBlock Text, TextBlock Count) BuildNavItem(int index, string title)
-    {
-        // The selected tree node's own mark: a 3px Accent bar (#279).
-        var bar = new Border
-        {
-            Width = 3,
-            Margin = new Thickness(0, 4),
-            Opacity = 0,
-        };
-        Themed(bar, Border.BackgroundProperty, ThemeManager.AKey);
-
-        var text = new TextBlock
-        {
-            Text = title,
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Body,
-            Margin = new Thickness(8, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-
-        // In the name's own ink, so it follows the same states.
-        var count = new TextBlock
-        {
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Secondary,
-            Margin = new Thickness(8, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            IsVisible = false,
-        };
-        count.Bind(TextBlock.ForegroundProperty, text.GetObservable(TextBlock.ForegroundProperty));
-
-        var words = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        Grid.SetColumn(count, 1);
-        words.Children.Add(text);
-        words.Children.Add(count);
-
-        var layout = new DockPanel();
-        DockPanel.SetDock(bar, Dock.Left);
-        layout.Children.Add(bar);
-        layout.Children.Add(words);
-
-        var item = new Border
-        {
-            Padding = new Thickness(8, 8),
-
-            // Indented under its area (#279).
-            Margin = new Thickness(16, 0, 0, 0),
-            Background = Brushes.Transparent,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            Child = layout,
-        };
-
-        item.Classes.Add(NavPlaceClass);
-        item.PointerPressed += (_, _) => ShowPlace(index);
-        item.PointerEntered += (_, _) =>
-        {
-            if (index != _activeSection)
-            {
-                item.Background = Res(ThemeManager.TileKey);
-            }
-        };
-        item.PointerExited += (_, _) =>
-        {
-            if (index != _activeSection)
-            {
-                item.Background = Brushes.Transparent;
-            }
-        };
-
-        return (item, bar, text, count);
-    }
+    internal string? ActiveAreaId => _nav?.ActiveAreaId;
 
     /// <summary>Opens the place the page was left on (#268).</summary>
     private void RestoreSection()
@@ -1200,7 +929,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     internal IReadOnlyList<string> SectionIds => [.. _sections.Select(section => section.PlaceId)];
 
     /// <inheritdoc cref="SectionIds"/>
-    internal int ActiveSection => _activeSection;
+    internal int ActiveSection => _nav?.ActiveSection ?? -1;
 
     private void RememberSection()
     {
@@ -1213,89 +942,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Writes down the place the page is on (#268).</summary>
     internal void SettleSection()
     {
-        if (_activeSection < 0 || _activeSection >= _sections.Count)
+        if (ActiveSection < 0 || ActiveSection >= _sections.Count)
         {
             return;
         }
 
-        var section = _sections[_activeSection].PlaceId;
+        var section = _sections[ActiveSection].PlaceId;
 
         if (!string.Equals(_viewState.SettingsSection, section, StringComparison.Ordinal))
         {
             SaveViewState(state => state with { SettingsSection = section });
-        }
-    }
-
-    /// <summary>
-    /// Brings the highlighted nav entry into view, and only when it is not already there
-    /// (remediation.md 17, item 3).
-    /// </summary>
-    private void ShowActiveInNav()
-    {
-        if (_activeSection < 0 || _activeSection >= _sections.Count)
-        {
-            return;
-        }
-
-        var item = _sections[_activeSection].NavItem;
-
-        if (item.Bounds.Height <= 0)
-        {
-            // Not laid out yet, which is the case during Build.
-            return;
-        }
-
-        var top = item.Bounds.Y;
-        var bottom = top + item.Bounds.Height;
-        var seen = NavScroller.Offset.Y;
-        var floor = seen + NavScroller.Viewport.Height;
-
-        if (top >= seen && bottom <= floor)
-        {
-            return;
-        }
-
-        // Scrolled to whichever edge it went past, so the list moves the least it can.
-        NavScroller.Offset = NavScroller.Offset.WithY(
-            top < seen ? top : bottom - NavScroller.Viewport.Height);
-    }
-
-    /// <summary>
-    /// The open place's node: an A fill with Knock text. Another is Grey, and Grey2 while a query finds
-    /// nothing in it (#279, #357).
-    /// </summary>
-    private void PaintNav(SectionView section, NavPaint paint)
-    {
-        if (section.Painted == paint)
-        {
-            return;
-        }
-
-        section.Painted = paint;
-
-        var active = paint == NavPaint.Active;
-
-        section.NavBar.Opacity = active ? 1 : 0;
-        section.NavText.FontWeight = active ? FontWeight.Medium : FontWeight.Normal;
-
-        section.NavFill?.Dispose();
-        section.NavFill = null;
-
-        section.NavInk?.Dispose();
-
-        if (active)
-        {
-            section.NavFill = Themed(section.NavItem, Border.BackgroundProperty, ThemeManager.AKey);
-            section.NavInk = Themed(section.NavText, TextBlock.ForegroundProperty, ThemeManager.KnockKey);
-        }
-        else
-        {
-            // No resource for "nothing", so the fill is dropped rather than bound.
-            section.NavItem.Background = Brushes.Transparent;
-            section.NavInk = Themed(
-                section.NavText,
-                TextBlock.ForegroundProperty,
-                paint == NavPaint.Dim ? ThemeManager.Grey2Key : ThemeManager.GreyKey);
         }
     }
 
@@ -1427,9 +1083,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         Root.ColumnDefinitions[0].Width = new GridLength(show ? NavWidth : 0);
         Root.MinWidth = show ? WideFloor : NarrowFloor;
 
-        if (_areaDropdown is { } dropdown)
+        if (_nav is { } nav)
         {
-            dropdown.IsVisible = !show;
+            nav.Dropdown.IsVisible = !show;
         }
     }
 
@@ -1451,8 +1107,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _sift = SettingsSieve.Sift(
             _query,
             [.. _rows.Select(row => new SieveRow(row.Row, row.Section, row.GroupIndex, row.Heading))],
-            [.. _sections.Select((section, i) => new SievePlace(section.Title, section.Terms, AreaOf(i)))],
-            [.. _navAreas.Select(area => area.Title)],
+            [.. _sections.Select((section, i) => new SievePlace(section.Title, section.Terms, _nav?.AreaOf(i) ?? -1))],
+            [.. Enumerable.Range(0, _nav?.AreaCount ?? 0).Select(area => _nav!.AreaTitle(area))],
             [.. _groups.Select(group => new SieveGroup(group.Title, group.Help))],
             _settings.Current,
             _settings.IsChanged,
@@ -1497,11 +1153,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var filtering = _sift.Filtering;
 
-        // The section's name, marked in the nav, and its "Show N more" at the foot of its page.
+        // Each section's "Show N more" at the foot of its page.
         for (var i = 0; i < _sections.Count; i++)
         {
-            _marker.Paint(_sections[i].NavText, _sections[i].Title, _query);
-
             if (_sections[i].FoldButton is not { } button)
             {
                 continue;
@@ -1511,12 +1165,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             button.IsVisible = !ShowingEverything && !filtering && (_sift.Places[i].Folded > 0 || revealed);
             button.Content = revealed ? "Show fewer" : $"Show {_sift.Places[i].Folded} more";
-        }
-
-        // An area's title, marked in the nav (#222).
-        foreach (var area in _navAreas)
-        {
-            _marker.Paint(area.HeadingText, area.Title, _query);
         }
 
         // A group's own title and help, the other two things a query can match (#222). A group with no row
@@ -1540,7 +1188,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         RefreshMixers();
 
         UpdateOtherTabs();
-        ApplyFilterToNav();
+        _nav?.Apply(_sift);
         LayoutPage();
     }
 
@@ -1598,60 +1246,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         Refresh();
     }
 
-    /// <summary>
-    /// Marks the nav: every place with a page, and while a query is typed, the count of its matching
-    /// rows beside it and every place and area without one drawn in Grey2.
-    /// </summary>
-    private void ApplyFilterToNav()
-    {
-        var filtering = _query.Length > 0;
-
-        for (var i = 0; i < _sections.Count; i++)
-        {
-            var section = _sections[i];
-
-            var matches = MatchesIn(i);
-
-            section.NavItem.IsVisible = _sift.Places[i].Exists;
-            section.NavCount.Text = matches.ToString(CultureInfo.InvariantCulture);
-            section.NavCount.IsVisible = matches > 0;
-        }
-
-        // A place none of whose rows apply is not left open.
-        if (_activeSection >= 0 && !_sift.Places[_activeSection].Exists && FirstExisting() is var next and >= 0)
-        {
-            _activeSection = next;
-            _activeArea = AreaOf(next);
-        }
-
-        for (var i = 0; i < _sections.Count; i++)
-        {
-            var section = _sections[i];
-
-            PaintNav(
-                section,
-                i == _activeSection ? NavPaint.Active
-                : filtering && MatchesIn(i) == 0 ? NavPaint.Dim
-                : NavPaint.Normal);
-        }
-
-        for (var a = 0; a < _navAreas.Count; a++)
-        {
-            var area = _navAreas[a];
-            var places = Enumerable.Range(area.First, area.Count);
-
-            area.Heading.IsVisible = places.Any(i => _sift.Places[i].Exists);
-
-            PaintAreaHeading(
-                area,
-                a == _activeArea ? NavPaint.Active
-                : filtering && !places.Any(i => MatchesIn(i) > 0) ? NavPaint.Dim
-                : NavPaint.Normal);
-        }
-
-        SyncPlaceDropdown();
-    }
-
     /// <summary>The first place with a page, or −1 where none has one.</summary>
     private int FirstExisting() => _sift.Places.ToList().FindIndex(place => place.Exists);
 
@@ -1677,23 +1271,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var order = new List<Control>();
 
-        if (_areaDropdown is { } dropdown)
+        if (_nav is { } nav)
         {
-            order.Add(dropdown);
+            order.Add(nav.Dropdown);
         }
 
-        if (_activeSection >= 0 && _activeSection < _sections.Count
+        if (_nav is { } active && active.ActiveSection >= 0 && active.ActiveSection < _sections.Count
             && _pageHead is { } head && _pageCrumb is { } crumb && _pageTitle is { } title
             && _areaLegend is { } legend && _emptyBlock is { } empty)
         {
-            var section = _sections[_activeSection];
+            var section = _sections[active.ActiveSection];
             var filtering = _query.Length > 0;
-            var nothing = filtering && MatchesIn(_activeSection) == 0;
+            var nothing = filtering && MatchesIn(active.ActiveSection) == 0;
 
-            crumb.Text = $"{_navAreas[_activeArea].Title.ToUpperInvariant()} ›";
+            crumb.Text = $"{active.AreaTitle(active.ActiveArea).ToUpperInvariant()} ›";
             _marker.Paint(title, section.Title.ToUpperInvariant(), _query);
 
-            legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == _activeSection);
+            legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == active.ActiveSection);
 
             order.Add(head);
 
@@ -1704,7 +1298,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             {
                 _emptyNote!.Text = $"Nothing on this page matches \"{_query}\".";
 
-                var others = Enumerable.Range(0, _sections.Count).Count(other => other != _activeSection && MatchesIn(other) > 0);
+                var others = Enumerable.Range(0, _sections.Count).Count(other => other != active.ActiveSection && MatchesIn(other) > 0);
 
                 _otherPagesNote!.IsVisible = others > 0;
                 _otherPagesNote.Text = others == 1
@@ -2237,16 +1831,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         SaveViewState(state => state.With(placeId, true));
     }
 
-    /// <summary>How a place's nav entry is painted.</summary>
-    private enum NavPaint
-    {
-        Normal,
-        Active,
-
-        /// <summary>No match for the query.</summary>
-        Dim,
-    }
-
     private sealed record SectionView(
         string PlaceId,
         string Title,
@@ -2259,45 +1843,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         /// <summary>The place's groups and rows, drawn as the page while it is open.</summary>
         StackPanel Content,
-        IReadOnlyList<SettingRow> Rows,
-        Border NavItem,
-        Border NavBar,
-        TextBlock NavText,
-
-        /// <summary>How many rows match the query, beside the place's name in the nav.</summary>
-        TextBlock NavCount)
+        IReadOnlyList<SettingRow> Rows)
     {
         /// <summary>This place's own "Show N more" for the rows its fold is hiding (#221).</summary>
         public Button? FoldButton { get; init; }
-
-        /// <summary>How the nav item is currently painted, or null before it has been painted at all.</summary>
-        public NavPaint? Painted { get; set; }
-
-        /// <summary>The nav item's live fill subscription, held so the next state can drop it.</summary>
-        public IDisposable? NavFill { get; set; }
-
-        /// <summary>The nav item's live text-ink subscription, held so the next state can drop it.</summary>
-        public IDisposable? NavInk { get; set; }
-    }
-
-    /// <summary>One area's nav heading and the run of sections beneath it (#220).</summary>
-    private sealed record AreaView(
-        string Id,
-        string Title,
-        Border Heading,
-        TextBlock HeadingText,
-
-        /// <summary>The 3px bar that marks the selected tree node, shared with a place's own (#279).</summary>
-        Border HeadingBar,
-        int First,
-        int Count)
-    {
-        /// <summary>How the heading is currently painted, or null before it has been painted at all.</summary>
-        public NavPaint? Painted { get; set; }
-
-        public IDisposable? Ink { get; set; }
-
-        public IDisposable? Fill { get; set; }
     }
 
     /// <summary>A named group heading within a place, so a query matching it reveals every row under it
