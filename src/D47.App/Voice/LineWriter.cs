@@ -429,6 +429,55 @@ internal sealed class LineWriter
     internal string? ScenarioFor(FlavourBrief brief, VoiceRole speaker) =>
         FlavourBriefs.ScenarioFor(brief, Settings.Current.Llm.ScenarioAudience, speaker, Settings.Current.Llm.Scenario);
 
+    /// <summary>The lines one queued callout is spoken as, in order; none when there is nothing true or authored to say.</summary>
+    internal async Task<IReadOnlyList<Announcement>> WriteAsync(Announcement announcement)
+    {
+        // A lore remark owed a second part that cannot come says so in its first sentence (Phase 23).
+        return [.. (await ComposeAsync(announcement).ConfigureAwait(false)).Select(Owing)];
+    }
+
+    private async Task<IReadOnlyList<Announcement>> ComposeAsync(Announcement announcement)
+    {
+        // Invented chatter is composed rather than varied (#244): the marker carries no text of its
+        // own, and the exchange arrives back as one announcement per line, each in an invented voice.
+        if (announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal))
+        {
+            return await ComposeNpcChatterAsync(announcement).ConfigureAwait(false);
+        }
+
+        // A clue is written from the hidden layer, which never rides on the marker.
+        if (D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is { } clue)
+        {
+            return await ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told ? [told] : [];
+        }
+
+        // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.
+        if (StoryVoiced(announcement) is { } voiced)
+        {
+            return [voiced];
+        }
+
+        var varied = await VaryAsync(await RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
+
+        // Nothing true left to say (#338): the model's line and the authored one both contradicted
+        // what the ship knows about itself, and both were logged on the way out.
+        if (varied is null)
+        {
+            return [];
+        }
+
+        // An ambient remark or a narration the model did not write is not spoken (#245), nor a line with no text.
+        if (string.IsNullOrWhiteSpace(varied.Text)
+            || (ReferenceEquals(varied, announcement)
+                && (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+                    || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))))
+        {
+            return [];
+        }
+
+        return [varied];
+    }
+
     /// <summary>The same lore remark, told that nothing further is coming when nothing further can.</summary>
     internal Announcement Owing(Announcement announcement) =>
         LoreCallout.AddressOf(announcement.Key) is not null

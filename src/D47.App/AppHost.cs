@@ -99,6 +99,7 @@ public sealed class AppHost : IDisposable
         string? startupError,
         D47.Core.Stories.StoryDirector stories,
         D47.Core.Adventures.AdventureBook adventures,
+        D47.Core.Messages.MessageStore messages,
         NearbyFight fight,
         SceneTracker scenes,
         Func<Core.Journal.GameStatus> liveStatus)
@@ -128,6 +129,7 @@ public sealed class AppHost : IDisposable
             CastFor,
             () => CanSearch,
             cast => SpeakerPictures.For(cast));
+        Records = new StoryRecords(messages, stories, adventures, personas, gameState, cast => SpeakerPictures.For(cast));
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
@@ -186,7 +188,14 @@ public sealed class AppHost : IDisposable
             loggerFactory,
             CastFor,
             RoleGender,
-            line => Said?.Invoke(line));
+            line => Said?.Invoke(line),
+            settings,
+            spend,
+            callouts,
+            Writer,
+            Records,
+            NoteHeardFromOutside,
+            () => CanSearch);
 
         Listener = new Listener(
             settings,
@@ -391,6 +400,8 @@ public sealed class AppHost : IDisposable
     public Announcer Announcer { get; }
 
     internal LineWriter Writer { get; }
+
+    internal StoryRecords Records { get; }
 
     /// <summary>The gate the microphone feeds.</summary>
     public ListenGate Listening { get; }
@@ -2659,6 +2670,7 @@ public sealed class AppHost : IDisposable
             startupError,
             storyDirector,
             adventureBook,
+            messageStore,
             fight,
             scenes,
             () => status.Current);
@@ -3188,7 +3200,7 @@ public sealed class AppHost : IDisposable
             host.PostEndingIfDue(commander);
         });
 
-        tick.Add("callout-drain", _ => host.SpeakPendingCallouts());
+        tick.Add("callout-drain", _ => host.Announcer.SpeakPending());
 
         // Ambience follows Elite's music track where its folder has tracks, and otherwise the situation
         // Status.json states, sampled on the tick after the journal has been read. It plays only while Elite
@@ -3722,7 +3734,7 @@ public sealed class AppHost : IDisposable
                 try
                 {
                     await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-                    Keep(posted, await Announcer.SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false));
+                    Records.Keep(posted, await Announcer.SayAsync(new Announcement($"persona.cores.{waking}", line)).ConfigureAwait(false));
                 }
                 catch (Exception ex)
                 {
@@ -4648,7 +4660,7 @@ public sealed class AppHost : IDisposable
             await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
         }
 
-        Keep(posted, await Announcer.SayAsync(Writer.Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
+        Records.Keep(posted, await Announcer.SayAsync(Writer.Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -4749,7 +4761,7 @@ public sealed class AppHost : IDisposable
 
                 foreach (var (line, posted) in lines)
                 {
-                    Keep(posted, await Announcer.SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
+                    Records.Keep(posted, await Announcer.SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
                 }
             }
             catch (Exception ex)
@@ -4757,41 +4769,6 @@ public sealed class AppHost : IDisposable
                 _logger.LogError(ex, "A story line could not be spoken");
             }
         }).ConfigureAwait(false);
-    }
-
-    /// <summary>Keeps a spoken clip on the message posted for it. Called on the pool once synthesis has finished.</summary>
-    private void Keep(D47.Core.Messages.D47Message? posted, SpokenClip? spoken)
-    {
-        if (posted is not null && spoken is not null)
-        {
-            Messages?.Attach(posted.Key, spoken);
-        }
-    }
-
-    /// <summary>A spoken clue, marked given and posted to Messages from whoever said it.</summary>
-    private void RecordClue(Announcement announcement, SpokenClip? spoken)
-    {
-        if (Stories is not { } stories
-            || D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is not { } due)
-        {
-            return;
-        }
-
-        var commander = GameState.Active?.Identity.FrontierId;
-        var title = stories.Clue(commander, due)?.Title ?? due.StoryId;
-        var voice = stories.ClueVoice(commander, due);
-
-        stories.ClueGiven(commander, due);
-
-        Messages?.Post(
-            voice?.From ?? (announcement.Voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id),
-            title,
-            announcement.Text,
-            DateTimeOffset.Now,
-            announcement.Key,
-            picture: SpeakerPictures.For(voice?.Cast),
-            spoken: spoken,
-            cast: voice?.Cast?.Picture);
     }
 
     /// <summary>Whether a web lookup could actually be run right now.</summary>
@@ -4858,78 +4835,6 @@ public sealed class AppHost : IDisposable
 
             // Cold, and the reason lives beside the instruction in Core (#98).
             sampling: LoreLookup.Sampling);
-
-    /// <summary>
-    /// The second half of an arrival remark: a web search, and what it found (Phase 23, "Look it up,
-    /// and say where the answer came from").
-    /// </summary>
-    private void LookUpLore(Announcement announcement)
-    {
-        if (LoreCallout.AddressOf(announcement.Key) is not { } address
-            || Settings.Current.Callouts.Lore != LoreRemarks.Lookup
-            || !CanSearch)
-        {
-            return;
-        }
-
-        // The name as the journal spelled it, taken now rather than when the answer lands: by then the
-        // Commander may be somewhere else, and this is the system being asked about.
-        var name = GameState.Active?.Location.StarSystem
-                   ?? Core.Knowledge.LoreDirectory.ByAddress(address)?.Name;
-
-        if (name is null)
-        {
-            return;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            using var budget = new CancellationTokenSource(LoreLookup.Budget);
-
-            var found = await FlavourTurn.AskAsync(
-                Turns.Provider,
-                Turns.BackgroundModel,
-
-                // No persona block.
-                persona: null,
-                aboutMe: null,
-                LoreLookup.Instruction(name),
-                gameState: null,
-                Spend,
-                PriceTable.Default,
-                _logger,
-                budget.Token,
-                webSearch: true,
-
-                // The same cold sampling the notes window asks for, from the same place.
-                sampling: LoreLookup.Sampling).ConfigureAwait(false);
-
-            // Dropped rather than spoken when the Commander has moved on.
-            if (LoreLookup.Spoken(found) is not { } line)
-            {
-                return;
-            }
-
-            if (!LoreLookup.StillHere(address, GameState.Active?.Location.SystemAddress))
-            {
-                _logger.LogInformation("A lore lookup for {System} landed after the Commander had left", name);
-                return;
-            }
-
-            await Announcer.InTurnAsync(async () =>
-            {
-                try
-                {
-                    await Announcer.SayAsync(new Announcement($"{LoreCallout.KeyPrefix}search.{address}", line))
-                        .ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "A lore lookup could not be spoken");
-                }
-            }).ConfigureAwait(false);
-        });
-    }
 
     /// <summary>The voice of a turn answered by an addressed speaker. Disposing restores the ship AI's.</summary>
     public sealed class AddressedVoice(AppHost host, VoiceSelection voice, string? captionSpeaker) : IDisposable
@@ -5028,227 +4933,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
     public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;
-
-    /// <summary>Takes whatever the callouts queued this tick and says it.</summary>
-    private void SpeakPendingCallouts()
-    {
-        var pending = Callouts.Drain();
-
-        // A line queued before a pick is about the Commander no longer shown.
-        if (pending.Count == 0 || GameState.IsOffDuty)
-        {
-            return;
-        }
-
-        // Somebody else's words, written down in the session record and extracted from by nothing (#162).
-        foreach (var message in pending.Where(announcement =>
-                     announcement.Key.StartsWith("message.", StringComparison.Ordinal)))
-        {
-            NoteHeardFromOutside(message.Text);
-        }
-
-        _ = Task.Run(async () =>
-        {
-            // Varied before the lock is taken, never while holding it.
-            var lines = new List<Announcement>(pending.Count);
-
-            foreach (var announcement in pending)
-            {
-                // Invented chatter is composed rather than varied (#244): the marker carries no text of its
-                // own, and the exchange arrives back as one announcement per line, each in an invented voice.
-                if (announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal))
-                {
-                    lines.AddRange(await Writer.ComposeNpcChatterAsync(announcement).ConfigureAwait(false));
-                    continue;
-                }
-
-                // A clue is written from the hidden layer, which never rides on the marker.
-                if (D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is { } clue)
-                {
-                    if (await Writer.ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told)
-                    {
-                        lines.Add(told);
-                    }
-
-                    continue;
-                }
-
-                // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.
-                if (Writer.StoryVoiced(announcement) is { } voiced)
-                {
-                    lines.Add(voiced);
-                    continue;
-                }
-
-                var varied = await Writer.VaryAsync(await Writer.RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
-
-                // Nothing true left to say (#338): the model's line and the authored one both contradicted
-                // what the ship knows about itself, and both were logged on the way out.
-                if (varied is null)
-                {
-                    continue;
-                }
-
-                // An ambient remark or a narration the model did not write is not spoken (#245), nor a line with no text.
-                if (string.IsNullOrWhiteSpace(varied.Text)
-                    || (ReferenceEquals(varied, announcement)
-                        && (announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
-                            || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal))))
-                {
-                    continue;
-                }
-
-                lines.Add(varied);
-            }
-
-            // Whether the lore remarks in this batch are owed a second part, decided here rather than inside
-            // the speaking loop: a Commander who asked for a lookup the endpoint cannot run is told so in the
-            // first sentence, and the alternative is leaving them waiting for something that was never coming
-            // (Phase 23).
-            lines = [.. lines.Select(Writer.Owing)];
-
-            // One at a time, and in order.
-            await Announcer.InTurnAsync(async () =>
-            {
-                try
-                {
-                    var beat = 0;
-
-                    foreach (var announcement in lines)
-                    {
-                        if (announcement.Key == NpcChatter.LineKey)
-                        {
-                            // Air between the lines of an exchange (#259), reported as two people never once
-                            // leaving a gap.
-                            await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
-
-                            // Checked after the beat rather than before it: this loop runs ahead of playback,
-                            // so the Commander starts talking while the next line is still waiting on its beat.
-                            // The arbiter refuses a line synthesised after that anyway; this only saves paying
-                            // to synthesise it (#61).
-                            if (Voice.Engaged)
-                            {
-                                continue;
-                            }
-                        }
-                        else
-                        {
-                            beat = 0;
-                        }
-
-                        var spoken = await Announcer.SayAsync(announcement).ConfigureAwait(false);
-
-                        // Only a line actually spoken can be answered.
-                        if (announcement.Invented is { } chatter)
-                        {
-                            Turns.Lines.OfType<ChatterLine>().FirstOrDefault()
-                                ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
-                        }
-
-                        if (announcement.Voice == VoiceRole.Narrator)
-                        {
-                            Turns.Lines.OfType<NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
-                        }
-
-                        // What the Commander actually heard about a story, kept (asked for 2026-08-22).
-                        RecordAdventure(announcement, spoken);
-                        RecordNudge(announcement, spoken);
-                        RecordClue(announcement, spoken);
-
-                        // After the fact has been spoken, and not awaited: the search is a round trip through
-                        // somebody else's index, and the rest of this batch is where a danger callout would be
-                        // waiting.
-                        LookUpLore(announcement);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // A callout that cannot be synthesised is a callout the Commander does not hear.
-                    _logger.LogError(ex, "A callout could not be spoken");
-                }
-            }).ConfigureAwait(false);
-        });
-    }
-
-    /// <summary>
-    /// The pause in front of a line of an invented exchange (#259), taken in slices so it can be
-    /// abandoned.
-    /// </summary>
-    private async Task HoldTheBeatAsync(TimeSpan beat)
-    {
-        var slice = TimeSpan.FromMilliseconds(100);
-
-        for (var held = TimeSpan.Zero; held < beat; held += slice)
-        {
-            if (Callouts.AnythingUrgentWaiting)
-            {
-                return;
-            }
-
-            await Task.Delay(slice < beat - held ? slice : beat - held).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>A beat, as it was said, onto the story's own feed (asked for 2026-08-22).</summary>
-    private void RecordAdventure(Announcement announcement, SpokenClip? spoken)
-    {
-        if (Adventures is not { } adventures
-            || D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line))
-        {
-            return;
-        }
-
-        var commander = GameState.Active?.Identity.FrontierId;
-        var story = adventures.Book.Store.Find(commander, key);
-        var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
-        var voice = story?.StoryId is null ? null : Stories?.LineVoice(commander, story.SpeakerOf(beat, line));
-
-        if (Messages is { } messages)
-        {
-            D47.Core.Adventures.AdventureMessages.Post(
-                messages, voice?.From ?? Personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, SpeakerPictures.For(voice?.Cast), voice?.Cast?.Picture);
-        }
-
-        adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
-        {
-            Kind = D47.Core.Adventures.AdventureToldKind.Beat,
-            Text = announcement.Text,
-            At = DateTimeOffset.Now,
-            Beat = beat,
-            Line = line,
-            Speaker = voice?.Cast?.Name ?? (voice is { } said ? VoiceRoles.Called(said.Role) : null),
-            Title = reached?.Title ?? (beat < 0 ? "Opening" : null),
-
-            // Stored rather than derived later: a story edited after a beat has fired would otherwise
-            // re-describe what the Commander did with the trigger it has now.
-            Trigger = reached?.Trigger.Describe(),
-        });
-    }
-
-    /// <summary>A spoken nudge, posted to Messages from the narrator and kept on the story's feed.</summary>
-    private void RecordNudge(Announcement announcement, SpokenClip? spoken)
-    {
-        if (Adventures is not { } adventures
-            || D47.Core.Callouts.NarratorCallout.Nudged(announcement.Key) is not { } key)
-        {
-            return;
-        }
-
-        var commander = GameState.Active?.Identity.FrontierId;
-        var story = adventures.Book.Standing(commander, key);
-        var now = DateTimeOffset.Now;
-
-        Messages?.Post("narrator", story?.Adventure.Name ?? key, announcement.Text, now, key, spoken: spoken);
-
-        adventures.Book.Told(commander, key, new D47.Core.Adventures.AdventureTold
-        {
-            Kind = D47.Core.Adventures.AdventureToldKind.Nudge,
-            Text = announcement.Text,
-            At = now,
-            Title = story?.CurrentBeat?.Title,
-            Trigger = story?.CurrentBeat?.Trigger.Describe(),
-        });
-    }
 
     /// <summary>One exchange, filed against any story it was about (asked for 2026-08-22).</summary>
     public void NoteTurn(string? asked, string? answered)

@@ -1,7 +1,9 @@
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Lore;
 using D47.Core.Utilities;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +18,8 @@ public sealed class Announcer : IDisposable
     private readonly Func<Announcement, VoiceCast> _castFor;
     private readonly Func<VoiceRole, VoiceGender> _genderOf;
     private readonly Action<string> _said;
+    private readonly Action<string> _heardFromOutside;
+    private readonly Func<bool> _canSearch;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     private readonly SpeakingTurn _speaking = new();
@@ -32,7 +36,14 @@ public sealed class Announcer : IDisposable
         ILoggerFactory loggers,
         Func<Announcement, VoiceCast> castFor,
         Func<VoiceRole, VoiceGender> genderOf,
-        Action<string> said)
+        Action<string> said,
+        SettingsService settings,
+        SpendTracker spend,
+        CalloutEngine callouts,
+        LineWriter writer,
+        StoryRecords records,
+        Action<string> heardFromOutside,
+        Func<bool> canSearch)
     {
         Voice = voice;
         _audio = audio;
@@ -46,6 +57,13 @@ public sealed class Announcer : IDisposable
         _castFor = castFor;
         _genderOf = genderOf;
         _said = said;
+        Settings = settings;
+        Spend = spend;
+        Callouts = callouts;
+        Writer = writer;
+        Records = records;
+        _heardFromOutside = heardFromOutside;
+        _canSearch = canSearch;
     }
 
     /// <summary>
@@ -62,6 +80,16 @@ public sealed class Announcer : IDisposable
     private D47.Core.Persona.PersonaHost Personas { get; }
 
     private GameStateStore GameState { get; }
+
+    private SettingsService Settings { get; }
+
+    private SpendTracker Spend { get; }
+
+    private CalloutEngine Callouts { get; }
+
+    private LineWriter Writer { get; }
+
+    private StoryRecords Records { get; }
 
     /// <summary>Where in-game comms are written down (#264).</summary>
     private ILogger Comms => _comms ??= _loggerFactory.CreateLogger("D47.App.Voice.Comms");
@@ -117,6 +145,188 @@ public sealed class Announcer : IDisposable
         // The Transcript keeps the names the voice replaced with a pronoun.
         CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, ConversationPicture(written));
         return clip;
+    }
+
+    /// <summary>Takes whatever the callouts queued this tick and says it. Called on the tick thread.</summary>
+    internal void SpeakPending()
+    {
+        var pending = Callouts.Drain();
+
+        // A line queued before a pick is about the Commander no longer shown.
+        if (pending.Count == 0 || GameState.IsOffDuty)
+        {
+            return;
+        }
+
+        // Somebody else's words, written down in the session record and extracted from by nothing (#162).
+        foreach (var message in pending.Where(announcement =>
+                     announcement.Key.StartsWith("message.", StringComparison.Ordinal)))
+        {
+            _heardFromOutside(message.Text);
+        }
+
+        _ = Task.Run(async () =>
+        {
+            // Written before the turn is taken, never while holding it.
+            var lines = new List<Announcement>(pending.Count);
+
+            foreach (var announcement in pending)
+            {
+                lines.AddRange(await Writer.WriteAsync(announcement).ConfigureAwait(false));
+            }
+
+            // One at a time, and in order.
+            await InTurnAsync(async () =>
+            {
+                try
+                {
+                    var beat = 0;
+
+                    foreach (var announcement in lines)
+                    {
+                        if (announcement.Key == NpcChatter.LineKey)
+                        {
+                            // Air between the lines of an exchange (#259), reported as two people never once
+                            // leaving a gap.
+                            await HoldTheBeatAsync(NpcChatter.Beat(beat++)).ConfigureAwait(false);
+
+                            // Checked after the beat rather than before it: this loop runs ahead of playback,
+                            // so the Commander starts talking while the next line is still waiting on its beat.
+                            // The arbiter refuses a line synthesised after that anyway; this only saves paying
+                            // to synthesise it (#61).
+                            if (Voice.Engaged)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            beat = 0;
+                        }
+
+                        var spoken = await SayAsync(announcement).ConfigureAwait(false);
+
+                        // Only a line actually spoken can be answered.
+                        if (announcement.Invented is { } chatter)
+                        {
+                            Turns.Lines.OfType<D47.Core.Persona.ChatterLine>().FirstOrDefault()
+                                ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
+                        }
+
+                        if (announcement.Voice == VoiceRole.Narrator)
+                        {
+                            Turns.Lines.OfType<D47.Core.Persona.NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
+                        }
+
+                        // What the Commander actually heard about a story, kept (asked for 2026-08-22).
+                        Records.RecordAdventure(announcement, spoken);
+                        Records.RecordNudge(announcement, spoken);
+                        Records.RecordClue(announcement, spoken);
+
+                        // After the fact has been spoken, and not awaited: the search is a round trip through
+                        // somebody else's index, and the rest of this batch is where a danger callout would be
+                        // waiting.
+                        LookUpLore(announcement);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // A callout that cannot be synthesised is a callout the Commander does not hear.
+                    _logger.LogError(ex, "A callout could not be spoken");
+                }
+            }).ConfigureAwait(false);
+        });
+    }
+
+    /// <summary>
+    /// The pause in front of a line of an invented exchange (#259), taken in slices so it can be
+    /// abandoned.
+    /// </summary>
+    private async Task HoldTheBeatAsync(TimeSpan beat)
+    {
+        var slice = TimeSpan.FromMilliseconds(100);
+
+        for (var held = TimeSpan.Zero; held < beat; held += slice)
+        {
+            if (Callouts.AnythingUrgentWaiting)
+            {
+                return;
+            }
+
+            await Task.Delay(slice < beat - held ? slice : beat - held).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// The second half of an arrival remark: a web search, and what it found (Phase 23, "Look it up,
+    /// and say where the answer came from"). Takes the turn on the pool, so the drain holding it never waits on it.
+    /// </summary>
+    private void LookUpLore(Announcement announcement)
+    {
+        if (LoreCallout.AddressOf(announcement.Key) is not { } address
+            || Settings.Current.Callouts.Lore != LoreRemarks.Lookup
+            || !_canSearch())
+        {
+            return;
+        }
+
+        // The name as the journal spelled it, taken now rather than when the answer lands: by then the
+        // Commander may be somewhere else, and this is the system being asked about.
+        var name = GameState.Active?.Location.StarSystem
+                   ?? D47.Core.Knowledge.LoreDirectory.ByAddress(address)?.Name;
+
+        if (name is null)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            using var budget = new CancellationTokenSource(LoreLookup.Budget);
+
+            var found = await FlavourTurn.AskAsync(
+                Turns.Provider,
+                Turns.BackgroundModel,
+
+                // No persona block.
+                persona: null,
+                aboutMe: null,
+                LoreLookup.Instruction(name),
+                gameState: null,
+                Spend,
+                PriceTable.Default,
+                _logger,
+                budget.Token,
+                webSearch: true,
+
+                // The same cold sampling the notes window asks for, from the same place.
+                sampling: LoreLookup.Sampling).ConfigureAwait(false);
+
+            // Dropped rather than spoken when the Commander has moved on.
+            if (LoreLookup.Spoken(found) is not { } line)
+            {
+                return;
+            }
+
+            if (!LoreLookup.StillHere(address, GameState.Active?.Location.SystemAddress))
+            {
+                _logger.LogInformation("A lore lookup for {System} landed after the Commander had left", name);
+                return;
+            }
+
+            await InTurnAsync(async () =>
+            {
+                try
+                {
+                    await SayAsync(new Announcement($"{LoreCallout.KeyPrefix}search.{address}", line))
+                        .ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "A lore lookup could not be spoken");
+                }
+            }).ConfigureAwait(false);
+        });
     }
 
     /// <summary>Sounds what came due, and says which (Phase 24, "A timer says its own name").</summary>
