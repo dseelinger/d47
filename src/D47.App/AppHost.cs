@@ -96,7 +96,12 @@ public sealed class AppHost : IDisposable
         WakeWordGate wake,
         StrongBox<DateTimeOffset?> heardAt,
         string version,
-        string? startupError)
+        string? startupError,
+        D47.Core.Stories.StoryDirector stories,
+        D47.Core.Adventures.AdventureBook adventures,
+        NearbyFight fight,
+        SceneTracker scenes,
+        Func<Core.Journal.GameStatus> liveStatus)
     {
         Paths = paths;
         Files = files;
@@ -105,7 +110,24 @@ public sealed class AppHost : IDisposable
         Cancellation = cancellation;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<AppHost>();
-        _rewording = new Core.Callouts.Rewording(new Core.Callouts.RewordChance(), _logger);
+        Writer = new LineWriter(
+            settings,
+            personas,
+            gameState,
+            turns,
+            spend,
+            _logger,
+            stories,
+            adventures,
+            () => Galaxy,
+            fight,
+            scenes,
+            liveStatus,
+            speech.DirectableIn,
+            speech.CastClient,
+            CastFor,
+            () => CanSearch,
+            cast => SpeakerPictures.For(cast));
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
@@ -367,6 +389,8 @@ public sealed class AppHost : IDisposable
 
     /// <summary>What d47 says unasked, one speaker at a time.</summary>
     public Announcer Announcer { get; }
+
+    internal LineWriter Writer { get; }
 
     /// <summary>The gate the microphone feeds.</summary>
     public ListenGate Listening { get; }
@@ -2454,7 +2478,7 @@ public sealed class AppHost : IDisposable
             () => AmbientLines.Situate(status.Current),
             () => personas.ShipName,
             () => turns.BackgroundModel,
-            voiceId => self?.NpcCast.AccentOf(voiceId),
+            voiceId => self?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<ChatterLine>()));
 
@@ -2468,7 +2492,7 @@ public sealed class AppHost : IDisposable
                      || router.Match(input, InputSource.Spoken) is not null
                      || router.Book.Candidates(input, InputSource.Spoken).Count > 0
                      || wording.LearnedPhraseFor(input) is not null,
-            () => self?.HiddenStory(VoiceRole.Narrator),
+            () => self?.Writer.HiddenStory(VoiceRole.Narrator),
             () => string.IsNullOrWhiteSpace(settings.Current.Llm.CharacterSheet)
                 ? CommanderStory.SheetOrName(null, gameState.Active?.Identity.Name)
                 : null,
@@ -2633,7 +2657,12 @@ public sealed class AppHost : IDisposable
             wake,
             heardAt,
             version,
-            startupError);
+            startupError,
+            storyDirector,
+            adventureBook,
+            fight,
+            scenes,
+            () => status.Current);
 
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;
@@ -2662,10 +2691,6 @@ public sealed class AppHost : IDisposable
 
         // The buffer the tick closure has been filling since before this instance existed (#51).
         host.JournalLog = journalLog;
-
-        host._fight = fight;
-        host._scenes = scenes;
-        host._liveStatus = () => status.Current;
 
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
@@ -3635,13 +3660,13 @@ public sealed class AppHost : IDisposable
         // What this Commander's own wording means, put right after (#169).
         Turns.LearnedPhraseFor = Wording.LearnedPhraseFor;
         Turns.CommanderId = () => Flying is { Length: > 0 } fid ? fid : null;
-        Turns.HiddenStory = () => HiddenStory(VoiceRole.ShipAi);
+        Turns.HiddenStory = () => Writer.HiddenStory(VoiceRole.ShipAi);
         Turns.LearnPhrase = Wording.LearnPhrase;
 
         // Position 3.5, and asked of the client that will speak rather than of the settings, so the prompt
         // describes the voice a Commander will actually hear.
         Turns.CanBeDirected = () => !Personas.Current.Stock && Speech.DirectableIn(VoiceGroup.Aboard);
-        Turns.HumorFor = HumorFor;
+        Turns.HumorFor = Writer.HumorFor;
 
         // Position 4, both halves: the turn path is cached above the breakpoint, so the story's thirteen
         // hundred tokens are paid once per edit rather than per turn (Phase 43).
@@ -4134,8 +4159,8 @@ public sealed class AppHost : IDisposable
                         Spend,
                         PriceTable.Default,
                         _logger,
-                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
-                        hiddenStory: HiddenStory(VoiceRole.ShipAi));
+                        humor: Writer.HumorFor(HumorGroup.Cores, canBeDirected: false),
+                        hiddenStory: Writer.HiddenStory(VoiceRole.ShipAi));
 
                     // A stock core says its authored line and asks no model.
                     var generated = change.Current.Stock ? null : await AskAsync(instruction).ConfigureAwait(false);
@@ -4162,15 +4187,15 @@ public sealed class AppHost : IDisposable
                         Turns.Provider,
                         Turns.BackgroundModel,
                         Personas.RenderBlock(brief.NeedsPersona),
-                        StoryFor(brief),
+                        Writer.StoryFor(brief),
                         ask,
                         gameState: null,
                         Spend,
                         PriceTable.Default,
                         _logger,
-                        humor: HumorFor(HumorGroup.Cores, canBeDirected: false),
-                        scenario: ScenarioFor(brief, VoiceRole.ShipAi),
-                        hiddenStory: HiddenStory(VoiceRole.ShipAi));
+                        humor: Writer.HumorFor(HumorGroup.Cores, canBeDirected: false),
+                        scenario: Writer.ScenarioFor(brief, VoiceRole.ShipAi),
+                        hiddenStory: Writer.HiddenStory(VoiceRole.ShipAi));
 
                     var generated = await AskAsync(brief.Instruction).ConfigureAwait(false);
 
@@ -4861,346 +4886,15 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>The fight around the Commander, as the chatter callout folds it.</summary>
-    private NearbyFight _fight = null!;
-    private SceneTracker _scenes = null!;
-
-    private Func<Core.Journal.GameStatus> _liveStatus = () => Core.Journal.GameStatus.Unknown;
 
     /// <summary>The last <c>Status.json</c> the tick read.</summary>
-    public Core.Journal.GameStatus LiveStatus => _liveStatus();
-
-    /// <summary>Whether the next carrier exchange may make his owning it the subject (#88).</summary>
-    private readonly NpcChatterOwnershipSpotlight _carrierSpotlight = new();
+    public Core.Journal.GameStatus LiveStatus => Writer.LiveStatus();
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
     private VoiceCast CastFor(Announcement announcement) =>
         Speech.Casting.Of(VoiceGroups.ProviderFor(
             Settings.Current.Speech,
             VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
-
-    /// <summary>Which lines with a brief actually go to the model, and what is said when none comes back.</summary>
-    private readonly Core.Callouts.Rewording _rewording;
-
-    /// <summary>Decides, line by line, which model-written lines get humor.</summary>
-    private readonly HumorRoll _humor = new();
-
-    /// <summary>Decides, line by line, which accented NPC lines are written to suit the accent.</summary>
-    private readonly AccentRoll _accent = new();
-
-    /// <summary>The humor instruction for one line from a group, or null on a miss.</summary>
-    private string? HumorFor(HumorGroup group, bool canBeDirected) =>
-        _humor.ForLine(Humor.DialFor(Settings.Current.Persona, group, Personas.Current.Stock), canBeDirected);
-
-    /// <summary>
-    /// The same announcement, said in character, when there is a model to ask and it is one of the
-    /// lines the checklist wants varied (Phase 11: "with varied LLM arrival and departure responses").
-    /// </summary>
-    private Task<Announcement?> VaryAsync(Announcement announcement)
-    {
-        return _rewording.VaryAsync(
-            announcement,
-            hasModel: Turns.Provider is not null,
-            Settings.Current.Llm.PersonalityEnabled,
-            Settings.Current.Llm.RewordPercent,
-            () => ShipFacts.Of(GameState.Active),
-            GameState.Active?.Identity.Name,
-            (brief, ask, token) =>
-            {
-                // Against the slot this line will be spoken in, not the ship's.
-                var directed = Speech.DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel));
-
-                return FlavourTurn.AskForAsync(
-                    Turns.Provider,
-                    Turns.BackgroundModel,
-                    brief.NeedsPersona
-                        ? Personas.RenderBlock(personalityEnabled: true)
-                        : SpeakerAccent.Join(
-                            brief.Speaker,
-                            SpeakerAccent.For(CastFor(announcement), announcement, _accent, Settings.Current.Speech.AccentPercent)),
-                    StoryFor(brief, announcement.Voice),
-                    ask,
-                    brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
-                    Spend,
-                    PriceTable.Default,
-                    _logger,
-                    token,
-                    canBeDirected: directed,
-                    humor: FlavourBriefs.HumorGroupOf(announcement, brief) is { } group
-                        ? HumorFor(group, directed)
-                        : null,
-                    scenario: ScenarioFor(brief, announcement.Voice),
-                    hiddenStory: brief.NeedsPersona ? HiddenStory(VoiceRole.ShipAi)
-                        : announcement.Voice == VoiceRole.Narrator ? HiddenStory(VoiceRole.Narrator)
-                        : null);
-            },
-            stockCoreAboard: () => Personas.Current.Stock);
-    }
-
-    /// <summary>The cast invented chatter is voiced from.</summary>
-    private VoiceCast NpcCast =>
-        CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.Comms, CommsChannel = "npc" });
-
-    /// <summary>How long an exchange may spend being written.</summary>
-    private static readonly TimeSpan ChatterBudget = TimeSpan.FromSeconds(10);
-
-    /// <summary>
-    /// The invented exchange a chatter marker asked for (#244), as one announcement per parsed line.
-    /// </summary>
-    private async Task<IReadOnlyList<Announcement>> ComposeNpcChatterAsync(Announcement marker)
-    {
-        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
-        {
-            return [];
-        }
-
-        var kind = NpcChatter.KindOf(marker.Key);
-
-        if (kind is not NpcChatterKind.Hail && Settings.Current.Audio.Overheard.Muted)
-        {
-            return [];
-        }
-
-        // A scene is written from its beat and the scenario, and without a scenario there is no scene.
-        var scene = kind == NpcChatterKind.Scene ? marker.Scene : null;
-        var scenario = Settings.Current.Llm.Scenario;
-
-        if (kind == NpcChatterKind.Scene
-            && (scene is null || string.IsNullOrWhiteSpace(scenario) || !SceneCallout.IsStillHappening(scene, _scenes.Snapshot)))
-        {
-            return [];
-        }
-
-        var location = GameState.Active?.Location;
-        var docked = location?.Docked ?? false;
-
-        // A combat marker is made in normal space; a Commander who has since docked, landed or entered
-        // supercruise has left the fight behind.
-        if (kind == NpcChatterKind.Combat
-            && AmbientLines.Situate(_liveStatus()) != AmbientSituation.NormalSpace)
-        {
-            return [];
-        }
-
-        // The kind was picked from the Docked flag when the marker was made; the exchange is composed
-        // later. A controller needs a dock to be at — one lifted off in between is worse than silence
-        // (#43).
-        if (kind == NpcChatterKind.Controller && !docked)
-        {
-            return [];
-        }
-
-        var carrier = scene is null ? NpcChatterCarrier.Of(GameState.Active?.Carrier, location) : NpcChatterCarrier.None;
-        var spotlight = scene is null && _carrierSpotlight.Claim(carrier.Present);
-
-        // The voices are cast before the exchange is written, so each line can be written for its accent (#415).
-        var npcs = NpcCast;
-        var posts = CastFor(new Announcement(NpcChatter.LineKey, string.Empty) { Voice = VoiceRole.TowerControl, CommsChannel = "npc" });
-
-        var roster = NpcChatterRoster.Cast(
-            npcs,
-            kind,
-            marker.Variant ?? 0,
-            location?.StarSystem,
-            docked ? location?.StationAllegiance : null,
-            posts.AccentOf(posts.For(VoiceRole.TowerControl).VoiceId),
-            posts.AccentOf(posts.For(VoiceRole.CarrierCaptain).VoiceId),
-            _fight.Snapshot.Dead).Rolled(_accent, Settings.Current.Speech.AccentPercent);
-
-        using var budget = new CancellationTokenSource(ChatterBudget);
-
-        var directed = Speech.DirectableIn(VoiceGroup.Npcs);
-
-        var script = await FlavourTurn.AskAsync(
-            Turns.Provider,
-            Turns.BackgroundModel,
-            NpcChatter.Speaker,
-            null,
-            NpcChatter.WithHumor(
-                scene is null
-                    ? NpcChatter.Instruction(kind, carrier, docked, spotlight, marker.Variant ?? 0, location?.StationType, roster, _fight.Snapshot,
-                        NpcChatter.ScenarioFor(Settings.Current.Llm.ScenarioAudience, scenario))
-                    : NpcChatter.SceneInstruction(
-                        scene,
-                        scenario!,
-                        roster,
-                        marker.Variant ?? 0,
-                        scene.Place == ScenePlace.Mission ? Stories?.MissionAsides.Take(scene.Missions ?? []) : null),
-                carrier,
-                Settings.Current.Persona,
-                _humor,
-                directed),
-            Turns.LiveGameState?.Invoke(),
-            Spend,
-            PriceTable.Default,
-            _logger,
-            budget.Token,
-            canBeDirected: directed,
-            hiddenStory: HiddenStory(VoiceRole.Comms)).ConfigureAwait(false);
-
-        // Checked again once written: the Commander may have left the scene while the model was writing.
-        if (scene is not null && !SceneCallout.IsStillHappening(scene, _scenes.Snapshot))
-        {
-            return [];
-        }
-
-        var facts = ShipFacts.Of(GameState.Active);
-        var heard = new List<Announcement>();
-        var exchange = marker.Variant ?? 0;
-        var answerable = NpcChatter.MayNotice(kind, exchange);
-
-        foreach (var line in NpcChatter.Parse(script, kind, carrier, roster))
-        {
-            var accent = roster.IsFlavoured(line)
-                ? SpeakerAccent.Sentence(line.Role is { } post
-                    ? posts.AccentOf(posts.For(post).VoiceId)
-                    : npcs.AccentOf(line.VoiceId))
-                : null;
-
-            // **Per line rather than per exchange** (#338).
-            var said = ContradictedClaims.AboutTheCommandersShip(line.Text)
-                ? await ContradictedClaims.SayableAsync(
-                    line.Text,
-                    facts,
-                    async contradiction => NpcChatter.Rewritten(
-                        await FlavourTurn.AskAsync(
-                            Turns.Provider,
-                            Turns.BackgroundModel,
-                            SpeakerAccent.Join(NpcChatter.Speaker, accent),
-                            null,
-                            ContradictedClaims.Rewrite(line.Text, contradiction),
-                            Turns.LiveGameState?.Invoke(),
-                            Spend,
-                            PriceTable.Default,
-                            _logger,
-                            budget.Token,
-                            canBeDirected: Speech.DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false),
-                        line.Role,
-                        carrier),
-                    _logger,
-                    NpcChatter.LineKey).ConfigureAwait(false)
-                : line.Text;
-
-            if (said is null)
-            {
-                continue;
-            }
-
-            // The slot's voice, whatever name the model gave it.
-            if (line.VoiceId is { } voice)
-            {
-                npcs.Keep(line.Name, voice);
-            }
-
-            heard.Add(new Announcement(NpcChatter.LineKey, said)
-            {
-                Urgency = CalloutUrgency.Routine,
-                Voice = line.Role ?? D47.Core.Audio.VoiceRole.Comms,
-                Speaker = line.Name,
-                SpeakerIsPlayer = false,
-                CommsChannel = "npc",
-                Overheard = kind is not NpcChatterKind.Hail,
-                Invented = new NpcChatterHeard(line with { Text = said }, exchange, answerable),
-            });
-        }
-
-        return heard;
-    }
-
-    /// <summary>The running stock story's hidden layer as this speaker reads it, or null.</summary>
-    private string? HiddenStory(VoiceRole speaker) =>
-        Stories?.HiddenBrief(GameState.Active?.Identity.FrontierId, speaker, Personas.Current);
-
-    /// <summary>A due clue, written by the model as its speaker says it, or null when no line came back.</summary>
-    private async Task<Announcement?> ComposeClueAsync(Announcement marker, D47.Core.Stories.StoryClueDue due)
-    {
-        var commander = GameState.Active?.Identity.FrontierId;
-
-        if (Stories?.Clue(commander, due) is not var (_, clue) || Stories.ClueVoice(commander, due) is not { } voice)
-        {
-            return null;
-        }
-
-        var brief = voice.Cast is { } cast
-            ? D47.Core.Stories.StoryClues.Speaking(clue, cast.Name, voice.Who)
-            : D47.Core.Stories.StoryClues.Speaking(clue, voice.Narrated);
-        var directed = voice.Pinned is { } pinned ? Speech.CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
-
-        return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed).ConfigureAwait(false) is { } said
-            ? Voiced(marker with { Text = said }, voice)
-            : null;
-    }
-
-    /// <summary>A story line as its speaker says it: the role, and for a cast member the name and the pinned voice.</summary>
-    private Announcement Voiced(Announcement line, D47.Core.Stories.StoryLineVoice voice) => line with
-    {
-        Voice = voice.Role,
-        Speaker = voice.Cast?.Name,
-        Pinned = voice.Pinned,
-        Picture = SpeakerPictures.For(voice.Cast),
-    };
-
-    /// <summary>
-    /// A beat of a story chapter whose line is not the ship's own, voiced by its speaker and said as written; null for
-    /// any other announcement, and for a line the core aboard speaks, which is reworded as every beat is.
-    /// </summary>
-    private Announcement? StoryVoiced(Announcement announcement)
-    {
-        var commander = GameState.Active?.Identity.FrontierId;
-
-        if (Stories is not { } stories
-            || Adventures is not { } adventures
-            || D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line)
-            || adventures.Book.Store.Find(commander, key) is not { StoryId: not null } chapter
-            || stories.LineVoice(commander, chapter.SpeakerOf(beat, line)) is not { } voice
-            || voice.Role == VoiceRole.ShipAi)
-        {
-            return null;
-        }
-
-        return Voiced(announcement, voice);
-    }
-
-    /// <summary>
-    /// A story line the model writes from the brief in the given voice, or null when no line came back. The ship's lines
-    /// are written by the core aboard; every other speaker's by the brief's own speaker.
-    /// </summary>
-    private async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null)
-    {
-        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
-        {
-            return null;
-        }
-
-        var ship = voice == VoiceRole.ShipAi;
-        var directed = canBeDirected ?? Speech.DirectableIn(VoiceGroups.Of(voice, channel));
-
-        using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-
-        Task<string?> AskAsync(string ask) => FlavourTurn.AskAsync(
-            Turns.Provider,
-            Turns.BackgroundModel,
-            ship ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
-            StoryFor(brief, voice),
-            ask,
-            Turns.LiveGameState?.Invoke(),
-            Spend,
-            PriceTable.Default,
-            _logger,
-            budget.Token,
-            canBeDirected: directed,
-            scenario: ScenarioFor(brief, voice),
-            hiddenStory: HiddenStory(voice));
-
-        var facts = ShipFacts.Of(GameState.Active);
-
-        return await ContradictedClaims.SayableAsync(
-            await AskAsync(brief.Instruction).ConfigureAwait(false),
-            facts,
-            contradiction => AskAsync($"{brief.Instruction} {contradiction.Correction}"),
-            _logger,
-            key).ConfigureAwait(false);
-    }
 
     private int _endingBusy;
 
@@ -5310,7 +5004,7 @@ public sealed class AppHost : IDisposable
             await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
         }
 
-        Keep(posted, await Announcer.SayAsync(Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
+        Keep(posted, await Announcer.SayAsync(Writer.Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
     }
 
     /// <summary>
@@ -5335,7 +5029,7 @@ public sealed class AppHost : IDisposable
                     : VoiceRole.ShipAi;
                 var key = D47.Core.Stories.StoryEnding.Key(due.StoryId);
 
-                if (await ComposeStoryLineAsync(D47.Core.Stories.StoryEnding.Speaking(due.End, voice == VoiceRole.Narrator), voice, null, key).ConfigureAwait(false) is not { } said
+                if (await Writer.ComposeStoryLineAsync(D47.Core.Stories.StoryEnding.Speaking(due.End, voice == VoiceRole.Narrator), voice, null, key).ConfigureAwait(false) is not { } said
                     || stories.EndingDue(commander)?.StoryId != due.StoryId)
                 {
                     return;
@@ -5456,24 +5150,6 @@ public sealed class AppHost : IDisposable
             cast: voice?.Cast?.Picture);
     }
 
-    /// <summary>
-    /// Position 4 for a flavour line, to the depth the brief asked for (Phase 43). The Narrator, given no
-    /// character sheet, names the Commander from the journal.
-    /// </summary>
-    private string? StoryFor(FlavourBrief brief, VoiceRole speaker = VoiceRole.ShipAi) =>
-        brief.NeedsAboutMe
-            ? CommanderStory.Compose(
-                speaker == VoiceRole.Narrator
-                    ? CommanderStory.SheetOrName(Settings.Current.Llm.CharacterSheet, GameState.Active?.Identity.Name)
-                    : Settings.Current.Llm.CharacterSheet,
-                Settings.Current.Llm.AboutMe,
-                withStory: brief.NeedsStory)
-            : null;
-
-    /// <summary>The Commander's scenario for a flavour line, or null when the brief or the audience leaves it out.</summary>
-    private string? ScenarioFor(FlavourBrief brief, VoiceRole speaker) =>
-        FlavourBriefs.ScenarioFor(brief, Settings.Current.Llm.ScenarioAudience, speaker, Settings.Current.Llm.Scenario);
-
     /// <summary>Whether a web lookup could actually be run right now.</summary>
     private bool CanSearch =>
         Settings.Current.Llm.WebSearch && Turns.Provider is not null && SearchReachesTheWeb;
@@ -5517,14 +5193,6 @@ public sealed class AppHost : IDisposable
                 ToolSurface.ForMode(Capabilities, mode, actions).Tools.Count);
         }
     }
-
-    /// <summary>The same lore remark, told that nothing further is coming when nothing further can.</summary>
-    private Announcement Owing(Announcement announcement) =>
-        LoreCallout.AddressOf(announcement.Key) is not null
-        && Settings.Current.Callouts.Lore == LoreRemarks.Lookup
-        && !CanSearch
-            ? announcement with { Text = $"{announcement.Text} {LoreLookup.CannotSearch}" }
-            : announcement;
 
     /// <summary>
     /// One web search about a system, for the notes window — the same call the arrival lookup makes, so
@@ -5638,7 +5306,7 @@ public sealed class AppHost : IDisposable
         // An invented speaker keeps the voice their exchange was heard in.
         Voice.Voice = addressed.Role switch
         {
-            VoiceRole.Comms => NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+            VoiceRole.Comms => Writer.NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
             VoiceRole.Narrator => CastFor(new Announcement(NarratorCallout.KeyPrefix, string.Empty) { Voice = VoiceRole.Narrator })
                 .For(VoiceRole.Narrator),
             _ => Speech.Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
@@ -5746,14 +5414,14 @@ public sealed class AppHost : IDisposable
                 // own, and the exchange arrives back as one announcement per line, each in an invented voice.
                 if (announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal))
                 {
-                    lines.AddRange(await ComposeNpcChatterAsync(announcement).ConfigureAwait(false));
+                    lines.AddRange(await Writer.ComposeNpcChatterAsync(announcement).ConfigureAwait(false));
                     continue;
                 }
 
                 // A clue is written from the hidden layer, which never rides on the marker.
                 if (D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is { } clue)
                 {
-                    if (await ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told)
+                    if (await Writer.ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told)
                     {
                         lines.Add(told);
                     }
@@ -5762,13 +5430,13 @@ public sealed class AppHost : IDisposable
                 }
 
                 // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.
-                if (StoryVoiced(announcement) is { } voiced)
+                if (Writer.StoryVoiced(announcement) is { } voiced)
                 {
                     lines.Add(voiced);
                     continue;
                 }
 
-                var varied = await VaryAsync(await RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
+                var varied = await Writer.VaryAsync(await Writer.RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);
 
                 // Nothing true left to say (#338): the model's line and the authored one both contradicted
                 // what the ship knows about itself, and both were logged on the way out.
@@ -5793,7 +5461,7 @@ public sealed class AppHost : IDisposable
             // the speaking loop: a Commander who asked for a lookup the endpoint cannot run is told so in the
             // first sentence, and the alternative is leaving them waiting for something that was never coming
             // (Phase 23).
-            lines = [.. lines.Select(Owing)];
+            lines = [.. lines.Select(Writer.Owing)];
 
             // One at a time, and in order.
             await Announcer.InTurnAsync(async () =>
@@ -5911,38 +5579,6 @@ public sealed class AppHost : IDisposable
             // re-describe what the Commander did with the trigger it has now.
             Trigger = reached?.Trigger.Describe(),
         });
-    }
-
-    /// <summary>A nudge with the route distance to the adventure's next beat added, when it can be found.</summary>
-    private async Task<Announcement> RoutedAsync(Announcement announcement)
-    {
-        if (D47.Core.Callouts.NarratorCallout.Nudged(announcement.Key) is not { } key
-            || Adventures is not { } adventures
-            || adventures.Book.Standing(GameState.Active?.Identity.FrontierId, key) is not { } standing)
-        {
-            return announcement;
-        }
-
-        double? distance = null;
-
-        if (Galaxy is { } galaxy
-            && GameState.Active?.Location.StarSystem is { Length: > 0 } here
-            && D47.Core.Adventures.AdventureNudge.Destination(standing) is { } there)
-        {
-            try
-            {
-                using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                distance = string.Equals(here, there, StringComparison.OrdinalIgnoreCase)
-                    ? 0
-                    : await galaxy.DistanceAsync(here, there, budget.Token).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("No route distance for the nudge toward {Name}: {Reason}", standing.Adventure.Name, ex.Message);
-            }
-        }
-
-        return announcement with { Text = D47.Core.Adventures.AdventureNudge.Facts(standing, distance) };
     }
 
     /// <summary>A spoken nudge, posted to Messages from the narrator and kept on the story's feed.</summary>
