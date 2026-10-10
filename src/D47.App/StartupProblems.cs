@@ -24,4 +24,20 @@ public static class StartupProblems
             LoopState.Unsure,
             $"I have no language model right now. {reason} I can still answer from my own capabilities.");
     }
+
+    /// <summary>The startup message for settings keys this build does not know; null in a test drive or when there are none.</summary>
+    public static string? UnknownKeys(bool isTestDrive, string settingsFile, IReadOnlyCollection<string> keys)
+    {
+        if (isTestDrive || keys.Count == 0)
+        {
+            return null;
+        }
+
+        return $"Settings at '{settingsFile}' hold "
+            + string.Join(", ", keys.Select(key => $"'{key}'"))
+            + ", which this build does not know; kept as written.";
+    }
+
+    /// <summary>Whether the update check runs at startup; a test drive never checks.</summary>
+    public static bool ChecksForUpdateAtStartup(bool isTestDrive, bool checkOnStartup) => !isTestDrive && checkOnStartup;
 }

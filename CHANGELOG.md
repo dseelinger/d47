@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A test drive no longer opens with the unknown-settings-keys message or the "is available" update band. The unknown-keys message is also no longer spoken at startup. A settings file d47 refuses still shows its error, and the update check from the Version row still works. An installed build behaves as before.
+
 On a first launch, d47 says nothing until the setup wizard closes. Before, a fuel warning and "I have no language model right now" were spoken over the wizard. Lines that come up meanwhile are dropped, not said afterwards, and d47 no longer announces the missing language model once the wizard has been shown, whether you pressed START, skipped the key or closed it. A launch that does not open the wizard speaks as before.
 
 The first line after setup is spoken instead of failing with "No OpenAI voice has been chosen. Pick one in Settings." Until d47 has chosen the core's voice, which takes a few seconds after START, lines are spoken in the provider's first listed voice: Alloy on OpenAI, and the first voice in your account's list on ElevenLabs and Cartesia. That voice is not saved, and the next line after d47 chooses uses the chosen voice. The "No … voice has been chosen" message now appears only when the provider lists no voices at all.

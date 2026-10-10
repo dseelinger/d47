@@ -573,7 +573,7 @@ public partial class MainWindow : Window
         // Optional in two senses: it must never delay the status the Commander is here for, and it is the one
         // network call d47 makes on its own — so it is a setting, and it is disclosed (Phase 4, "Say what
         // each provider receives").
-        if (_host.Settings.Current.Updates.CheckOnStartup)
+        if (StartupProblems.ChecksForUpdateAtStartup(_host.Paths.IsTestDrive, _host.Settings.Current.Updates.CheckOnStartup))
         {
             _ = CheckForUpdateAsync(_host);
         }

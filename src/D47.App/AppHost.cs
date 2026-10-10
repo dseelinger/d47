@@ -778,12 +778,8 @@ public sealed class AppHost : IDisposable
         // A key this build does not know is kept rather than refused (#368), so the startup message is now
         // the only place a typo shows: without it, a mistyped row would silently do nothing and the
         // protection that unmapped keys used to give would be gone.
-        if (store.UnknownKeys.Count > 0)
+        if (StartupProblems.UnknownKeys(paths.IsTestDrive, paths.SettingsFile, store.UnknownKeys) is { } kept)
         {
-            var kept = $"Settings at '{paths.SettingsFile}' hold "
-                + string.Join(", ", store.UnknownKeys.Select(key => $"'{key}'"))
-                + ", which this build does not know; kept as written.";
-
             startupError = startupError is null ? kept : $"{startupError} {kept}";
         }
 
