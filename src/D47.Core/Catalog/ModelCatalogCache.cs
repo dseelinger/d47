@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Catalog;
@@ -10,6 +11,7 @@ namespace D47.Core.Catalog;
 public sealed class ModelCatalogCache(
     ModelCatalogSource source,
     ModelCatalog embedded,
+    IFileSystem files,
     string path,
     ILogger<ModelCatalogCache> logger)
 {
@@ -82,7 +84,7 @@ public sealed class ModelCatalogCache(
     {
         try
         {
-            return File.Exists(path) ? ModelCatalog.Parse(File.ReadAllText(path)) : null;
+            return files.ReadText(path) is { } text ? ModelCatalog.Parse(text) : null;
         }
         catch (Exception ex) when (ex is FormatException or IOException or UnauthorizedAccessException)
         {
@@ -93,12 +95,9 @@ public sealed class ModelCatalogCache(
 
     private void Write(string json)
     {
-        var temporary = path + ".tmp";
-
         try
         {
-            File.WriteAllText(temporary, json);
-            File.Move(temporary, path, overwrite: true);
+            files.WriteText(path, json);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

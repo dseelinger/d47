@@ -205,7 +205,7 @@ internal sealed class StoryFixtures : IDisposable
             backstory => Backstory = backstory,
             NullLogger.Instance)
         {
-            Archive = StoryChapterArchive.Open(ArchivePath, NullLogger<StoryChapterArchive>.Instance),
+            Archive = StoryChapterArchive.Open(Files, ArchivePath, NullLogger<StoryChapterArchive>.Instance),
         };
     }
 

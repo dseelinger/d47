@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -20,7 +21,7 @@ internal sealed class SpeakerPictureFixture
         Paths = new AppPaths(root, Path.Combine(root, "build"));
         Paths.EnsureCreated();
         Directory.CreateDirectory(Paths.ShippedPortraits);
-        Portraits = new SpeakerPortraits(new SpeakerPictures(Paths));
+        Portraits = new SpeakerPortraits(new SpeakerPictures(new DiskFileSystem(), Paths));
     }
 
     public AppPaths Paths { get; }

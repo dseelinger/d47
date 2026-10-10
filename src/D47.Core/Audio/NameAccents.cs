@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -34,6 +35,7 @@ public sealed class NameAccents
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     private readonly object _gate = new();
+    private readonly IFileSystem? _files;
     private readonly string? _file;
     private readonly ILogger? _logger;
     private readonly Dictionary<string, Dictionary<string, NameReading>> _answers = new(StringComparer.OrdinalIgnoreCase);
@@ -44,8 +46,9 @@ public sealed class NameAccents
     private bool _running;
 
     /// <summary>Answers are read from <paramref name="file"/> if it exists and written back to it; null keeps them in memory.</summary>
-    public NameAccents(string? file = null, ILogger? logger = null)
+    public NameAccents(IFileSystem? files = null, string? file = null, ILogger? logger = null)
     {
+        _files = files;
         _file = file;
         _logger = logger;
         Load();
@@ -184,14 +187,19 @@ public sealed class NameAccents
 
     private void Load()
     {
-        if (_file is null || !File.Exists(_file))
+        if (_files is null || _file is null)
         {
             return;
         }
 
         try
         {
-            var stored = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, NameReading>>>(File.ReadAllText(_file));
+            if (_files.ReadText(_file) is not { } text)
+            {
+                return;
+            }
+
+            var stored = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, NameReading>>>(text);
 
             foreach (var (provider, names) in stored ?? [])
             {
@@ -206,18 +214,14 @@ public sealed class NameAccents
 
     private void Save()
     {
-        if (_file is null)
+        if (_files is null || _file is null)
         {
             return;
         }
 
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_file)!);
-
-            var temporary = _file + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(_answers, Json));
-            File.Move(temporary, _file, overwrite: true);
+            _files.WriteText(_file, JsonSerializer.Serialize(_answers, Json));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

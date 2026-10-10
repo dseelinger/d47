@@ -74,7 +74,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         Assert.Equal([chapters[3], chapters[4]], StoryChaptersOnFile(fixtures));
 
-        var reread = StoryChapterArchive.Open(fixtures.ArchivePath, NullLogger<StoryChapterArchive>.Instance).For("F1");
+        var reread = StoryChapterArchive.Open(fixtures.Files, fixtures.ArchivePath, NullLogger<StoryChapterArchive>.Instance).For("F1");
 
         Assert.Equal([chapters[0], chapters[1], chapters[2]], reread.Select(chapter => chapter.Adventure.Key));
         Assert.All(reread, chapter =>
@@ -179,7 +179,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         File.WriteAllLines(fixtures.ArchivePath, [lines[0], "{ not json", """{"storyId":"x"}""", lines[1]]);
 
-        var reread = StoryChapterArchive.Open(fixtures.ArchivePath, NullLogger<StoryChapterArchive>.Instance).For("F1");
+        var reread = StoryChapterArchive.Open(fixtures.Files, fixtures.ArchivePath, NullLogger<StoryChapterArchive>.Instance).For("F1");
 
         Assert.Equal(fixtures.Stories.Current("F1")!.Chapters.Take(2), reread.Select(chapter => chapter.Adventure.Key));
     }

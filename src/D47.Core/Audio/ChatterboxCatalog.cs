@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -35,12 +36,13 @@ public static partial class ChatterboxCatalog
     /// is logged with its reason.
     /// </summary>
     public static IReadOnlyList<ChatterboxVoice> Load(
-        string folder, string fetched, IReadOnlyList<ChatterboxVoice> shipped, ILogger logger)
+        IFileSystem files, string folder, string fetched, IReadOnlyList<ChatterboxVoice> shipped, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(shipped);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var rows = Rows(Path.Combine(folder, TableName), fetched, logger);
+        var rows = Rows(files, Path.Combine(folder, TableName), fetched, logger);
         var byId = rows.ToDictionary(row => row.Voice.Id, StringComparer.Ordinal);
         var voices = new List<ChatterboxVoice>(rows.Count + shipped.Count);
 
@@ -88,8 +90,9 @@ public static partial class ChatterboxCatalog
     /// The clip to speak a voice from: a shipped voice's own, or a fetched one whose size and SHA-256 match.
     /// A fetched file that does not match is deleted. Null when there is none to use.
     /// </summary>
-    public static string? Here(ChatterboxVoice voice, ILogger logger)
+    public static string? Here(IFileSystem files, ChatterboxVoice voice, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(voice);
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -100,17 +103,17 @@ public static partial class ChatterboxCatalog
 
         try
         {
-            if (!File.Exists(voice.ClipPath))
+            if (files.ReadBytes(voice.ClipPath) is not { } clip)
             {
                 return null;
             }
 
-            if (Matches(voice, File.ReadAllBytes(voice.ClipPath)))
+            if (Matches(voice, clip))
             {
                 return voice.ClipPath;
             }
 
-            File.Delete(voice.ClipPath);
+            files.Delete(voice.ClipPath);
             logger.LogWarning(
                 "Chatterbox voice {Id}: {Clip} did not match its catalog.tsv row and was deleted.", voice.Voice.Id, voice.ClipPath);
         }
@@ -148,15 +151,15 @@ public static partial class ChatterboxCatalog
 
     private static int Distance(int a, int b) => Math.Abs(a - b);
 
-    private static List<ChatterboxVoice> Rows(string table, string fetched, ILogger logger)
+    private static List<ChatterboxVoice> Rows(IFileSystem files, string table, string fetched, ILogger logger)
     {
-        if (!File.Exists(table))
+        if (files.ReadText(table) is not { } text)
         {
             logger.LogWarning("Chatterbox voices: {Table} is missing.", table);
             return [];
         }
 
-        var lines = File.ReadAllLines(table).Where(line => line.Length > 0).ToList();
+        var lines = text.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries).ToList();
 
         if (lines.Count == 0 || !lines[0].Split('\t').SequenceEqual(Columns))
         {

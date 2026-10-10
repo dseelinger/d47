@@ -51,6 +51,8 @@ public sealed class MemoryFileSystem : IFileSystem
         return reader.ReadToEnd();
     }
 
+    public byte[]? ReadBytes(string path) => Bytes(path) is { } bytes ? [.. bytes] : null;
+
     public Stream? OpenRead(string path)
     {
         var bytes = Bytes(path);
@@ -63,6 +65,14 @@ public sealed class MemoryFileSystem : IFileSystem
         lock (_gate)
         {
             Put(Full(path), Utf8NoBom.GetBytes(contents));
+        }
+    }
+
+    public void WriteBytes(string path, byte[] contents)
+    {
+        lock (_gate)
+        {
+            Put(Full(path), [.. contents]);
         }
     }
 

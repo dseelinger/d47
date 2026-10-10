@@ -12,11 +12,17 @@ public interface IFileSystem
     /// <summary>Null when the file is missing. Opened with FileShare.ReadWrite | Delete.</summary>
     string? ReadText(string path);
 
+    /// <summary>Null when the file is missing. Same sharing as ReadText.</summary>
+    byte[]? ReadBytes(string path);
+
     /// <summary>A seekable read-only stream, or null when missing. Same sharing as ReadText.</summary>
     Stream? OpenRead(string path);
 
     /// <summary>Atomic replace; creates the folder.</summary>
     void WriteText(string path, string contents);
+
+    /// <summary>Atomic replace; creates the folder.</summary>
+    void WriteBytes(string path, byte[] contents);
 
     /// <summary>Creates the file and folder when missing.</summary>
     void AppendText(string path, string contents);

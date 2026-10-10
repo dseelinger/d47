@@ -33,6 +33,20 @@ public sealed class TheDiskFileSystemReplacesAtomicallyAndReadsSharedFilesTests 
     }
 
     [Fact]
+    public void ABytesWriteReplacesTheFileThroughARenameAndLeavesNoPendingFile()
+    {
+        var path = Path.Combine(_folder, "nested", "voice.bin");
+
+        _files.WriteBytes(path, [1, 2, 3]);
+        _files.WriteBytes(path, [4, 5]);
+
+        Assert.Equal(new byte[] { 4, 5 }, _files.ReadBytes(path));
+        Assert.False(File.Exists(path + DiskFileSystem.PendingSuffix));
+        Assert.Equal([path], _files.Enumerate(Path.Combine(_folder, "nested"), "*"));
+        Assert.Null(_files.ReadBytes(Path.Combine(_folder, "nowhere.bin")));
+    }
+
+    [Fact]
     public void AnAbandonedPendingFileDoesNotBlockTheNextWrite()
     {
         var path = Path.Combine(_folder, "thing.json");

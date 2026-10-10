@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using D47.Core.Audio;
+using D47.Core.Storage;
 using D47.Core.Stories;
 
 namespace D47.Core.Interface;
@@ -10,13 +11,13 @@ namespace D47.Core.Interface;
 /// first, then the shipped <c>&lt;picture&gt;.jpg</c> in <see cref="AppPaths.ShippedPortraits"/>, then a story's
 /// downloaded <c>&lt;picture&gt;.jpg</c> in <see cref="AppPaths.Stories"/>.
 /// </summary>
-public sealed partial class SpeakerPictures(string chosenFolder, string shippedFolder, string storiesFolder)
+public sealed partial class SpeakerPictures(IFileSystem files, string chosenFolder, string shippedFolder, string storiesFolder)
 {
     /// <summary>The Narrator's picture name.</summary>
     public const string Narrator = "narrator";
 
-    public SpeakerPictures(AppPaths paths)
-        : this(paths.Pictures, paths.ShippedPortraits, paths.Stories)
+    public SpeakerPictures(IFileSystem files, AppPaths paths)
+        : this(files, paths.Pictures, paths.ShippedPortraits, paths.Stories)
     {
     }
 
@@ -65,7 +66,7 @@ public sealed partial class SpeakerPictures(string chosenFolder, string shippedF
         picture is { Length: > 0 } && !picture.Contains("..", StringComparison.Ordinal) && Name().IsMatch(picture);
 
     /// <summary>Whether the Commander has chosen their own file for <paramref name="picture"/>.</summary>
-    public bool IsChosen(string? picture) => IsName(picture) && File.Exists(Chosen(picture!));
+    public bool IsChosen(string? picture) => IsName(picture) && files.Stat(Chosen(picture!)) is not null;
 
     /// <summary>The file to show for <paramref name="picture"/>, or null when none is on disk.</summary>
     public string? Find(string? picture)
@@ -77,7 +78,7 @@ public sealed partial class SpeakerPictures(string chosenFolder, string shippedF
 
         foreach (var file in (string[])[Chosen(picture!), Shipped(picture!), Default(picture!)])
         {
-            if (File.Exists(file))
+            if (files.Stat(file) is not null)
             {
                 return file;
             }
@@ -103,7 +104,7 @@ public sealed partial class SpeakerPictures(string chosenFolder, string shippedF
             return;
         }
 
-        File.Delete(Chosen(picture));
+        files.Delete(Chosen(picture));
     }
 
     [GeneratedRegex(@"^[A-Za-z0-9._-]+$")]

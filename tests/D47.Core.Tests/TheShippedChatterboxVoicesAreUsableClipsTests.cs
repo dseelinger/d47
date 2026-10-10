@@ -26,7 +26,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
     [Fact]
     public void AClipOfFourSecondsOrEightSecondsIsLeftOutAndTheLogNamesItsLength()
     {
-        var files = new BytesFileSystem();
+        var files = new MemoryFileSystem();
         var folder = NewFolder();
         WriteClip(files, folder, "short", 4.0);
         WriteClip(files, folder, "long", 8.0);
@@ -49,7 +49,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
     [Fact]
     public void ARowWithNoSourceAMissingClipOrAWrongRateIsLeftOutWithItsReason()
     {
-        var files = new BytesFileSystem();
+        var files = new MemoryFileSystem();
         var folder = NewFolder();
         WriteClip(files, folder, "nosource", 6.0);
         WriteClip(files, folder, "slow", 6.0, sampleRate: 16_000);
@@ -74,7 +74,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
             Path.Combine(folder, ChatterboxVoices.TableName),
             ["id\tname\tgender\tlocale\trole\tsource", .. rows]);
 
-    private static void WriteClip(BytesFileSystem files, string folder, string id, double seconds, int sampleRate = ChatterboxVoices.SampleRate)
+    private static void WriteClip(MemoryFileSystem files, string folder, string id, double seconds, int sampleRate = ChatterboxVoices.SampleRate)
     {
         var format = new AudioFormat(sampleRate, 1);
         var pcm = new byte[(int)(seconds * sampleRate) * format.BytesPerFrame];

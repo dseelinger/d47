@@ -68,6 +68,21 @@ public sealed class DiskFileSystem : IFileSystem
         return reader.ReadToEnd();
     }
 
+    public byte[]? ReadBytes(string path)
+    {
+        using var stream = OpenRead(path);
+
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var copy = new MemoryStream();
+        stream.CopyTo(copy);
+
+        return copy.ToArray();
+    }
+
     public Stream? OpenRead(string path)
     {
         try
@@ -87,6 +102,16 @@ public sealed class DiskFileSystem : IFileSystem
 
         var pending = path + PendingSuffix;
         File.WriteAllText(pending, contents, Utf8NoBom);
+        File.Move(pending, path, overwrite: true);
+    }
+
+    /// <summary>Writes to a ".writing" sibling, then moves it over the target.</summary>
+    public void WriteBytes(string path, byte[] contents)
+    {
+        CreateFolderOf(path);
+
+        var pending = path + PendingSuffix;
+        File.WriteAllBytes(pending, contents);
         File.Move(pending, path, overwrite: true);
     }
 

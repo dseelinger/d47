@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 
 namespace D47.Core.Messages;
 
@@ -7,7 +8,7 @@ namespace D47.Core.Messages;
 /// The clips spoken messages keep, one file per message in <c>data\messages\</c>: a WAV, or for a line in the
 /// Commander's own voice the WAV protected with <see cref="ISecretProtector"/>, decrypted into memory to play.
 /// </summary>
-public sealed class MessageClips(string folder, ISecretProtector protector)
+public sealed class MessageClips(IFileSystem files, string folder, ISecretProtector protector)
 {
     public const string PlainExtension = ".wav";
 
@@ -34,12 +35,7 @@ public sealed class MessageClips(string folder, ISecretProtector protector)
             Array.Clear(plain);
         }
 
-        Directory.CreateDirectory(folder);
-
-        var path = Path.Combine(folder, file);
-        var staging = path + ".tmp";
-        File.WriteAllBytes(staging, wav);
-        File.Move(staging, path, overwrite: true);
+        files.WriteBytes(Path.Combine(folder, file), wav);
 
         return file;
     }
@@ -51,12 +47,10 @@ public sealed class MessageClips(string folder, ISecretProtector protector)
 
         try
         {
-            if (!File.Exists(path))
+            if (files.ReadBytes(path) is not { } bytes)
             {
                 return null;
             }
-
-            var bytes = File.ReadAllBytes(path);
 
             if (IsProtected(file))
             {
@@ -81,7 +75,7 @@ public sealed class MessageClips(string folder, ISecretProtector protector)
     {
         try
         {
-            File.Delete(Path.Combine(folder, Path.GetFileName(file)));
+            files.Delete(Path.Combine(folder, Path.GetFileName(file)));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -92,23 +86,18 @@ public sealed class MessageClips(string folder, ISecretProtector protector)
     /// <summary>Deletes every file in the folder whose name <paramref name="kept"/> does not hold.</summary>
     public void Sweep(IReadOnlySet<string> kept)
     {
-        if (!Directory.Exists(folder))
-        {
-            return;
-        }
-
-        string[] files;
+        IReadOnlyList<string> present;
 
         try
         {
-            files = Directory.GetFiles(folder);
+            present = files.Enumerate(folder, "*");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return;
         }
 
-        foreach (var path in files)
+        foreach (var path in present)
         {
             if (!kept.Contains(Path.GetFileName(path)))
             {

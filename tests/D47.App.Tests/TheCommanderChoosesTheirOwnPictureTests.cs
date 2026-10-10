@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -32,7 +33,7 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
     {
         var paths = new AppPaths(TempFolders.Create("d47-commander-picture"));
         paths.EnsureCreated();
-        return (new SpeakerPictures(paths), paths);
+        return (new SpeakerPictures(new DiskFileSystem(), paths), paths);
     }
 
     [AvaloniaFact]

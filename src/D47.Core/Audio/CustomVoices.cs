@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 
 namespace D47.Core.Audio;
 
@@ -35,15 +36,18 @@ public sealed class CustomVoices
 
     private static readonly JsonSerializerOptions IndexOptions = new() { WriteIndented = true };
 
+    private readonly IFileSystem _files;
     private readonly ISecretProtector _protector;
     private readonly Lock _gate = new();
     private readonly Dictionary<string, int> _versions = new(StringComparer.Ordinal);
 
-    public CustomVoices(string dataFolder, ISecretProtector protector)
+    public CustomVoices(string dataFolder, IFileSystem files, ISecretProtector protector)
     {
+        ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(protector);
 
         Folder = Path.Combine(dataFolder, "voices", "custom");
+        _files = files;
         _protector = protector;
     }
 
@@ -159,8 +163,7 @@ public sealed class CustomVoices
             }
             while (voices.Any(voice => voice.Id == fresh));
 
-            Directory.CreateDirectory(Folder);
-            WriteAtomically(AudioPath(fresh), sealedBytes);
+            _files.WriteBytes(AudioPath(fresh), sealedBytes);
             WriteIndex([.. voices, new CustomVoice(fresh, name, gender, pitch, pace)]);
             _versions[fresh] = _versions.GetValueOrDefault(fresh) + 1;
             id = fresh;
@@ -208,7 +211,7 @@ public sealed class CustomVoices
             }
 
             WriteIndex([.. voices.Where(voice => voice.Id != id)]);
-            File.Delete(AudioPath(id));
+            _files.Delete(AudioPath(id));
             _versions[id] = _versions.GetValueOrDefault(id) + 1;
         }
 
@@ -267,25 +270,18 @@ public sealed class CustomVoices
             : null;
     }
 
-    private static void WriteAtomically(string path, byte[] bytes)
-    {
-        var staging = path + ".tmp";
-        File.WriteAllBytes(staging, bytes);
-        File.Move(staging, path, overwrite: true);
-    }
-
     private string AudioPath(string id) => Path.Combine(Folder, id + ".bin");
 
     private List<CustomVoice> ReadIndex()
     {
-        if (!File.Exists(IndexPath))
+        if (_files.ReadBytes(IndexPath) is not { } stored)
         {
             return [];
         }
 
         try
         {
-            var rows = JsonSerializer.Deserialize<List<CustomVoice>>(File.ReadAllBytes(IndexPath)) ?? [];
+            var rows = JsonSerializer.Deserialize<List<CustomVoice>>(stored) ?? [];
 
             return [.. rows.Where(row => IsId(row.Id) && !string.IsNullOrWhiteSpace(row.Name))];
         }
@@ -297,8 +293,7 @@ public sealed class CustomVoices
 
     private void WriteIndex(List<CustomVoice> voices)
     {
-        Directory.CreateDirectory(Folder);
-        WriteAtomically(IndexPath, JsonSerializer.SerializeToUtf8Bytes(voices, IndexOptions));
+        _files.WriteBytes(IndexPath, JsonSerializer.SerializeToUtf8Bytes(voices, IndexOptions));
     }
 
     private byte[]? Pcm(string id)
@@ -308,16 +303,16 @@ public sealed class CustomVoices
             return null;
         }
 
-        byte[] sealedBytes;
+        byte[]? sealedBytes;
 
         lock (_gate)
         {
-            if (!File.Exists(AudioPath(id)))
-            {
-                return null;
-            }
+            sealedBytes = _files.ReadBytes(AudioPath(id));
+        }
 
-            sealedBytes = File.ReadAllBytes(AudioPath(id));
+        if (sealedBytes is null)
+        {
+            return null;
         }
 
         return _protector.TryUnprotect(sealedBytes, out var pcm) ? pcm : null;

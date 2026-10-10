@@ -15,7 +15,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
 
     public ChatterboxSpeaksInYourOwnVoiceTests()
     {
-        _own = new OwnVoice(Path.Combine(_folder.Root, "data"), new DpapiSecretProtector());
+        _own = new OwnVoice(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
     }
 
     public void Dispose()

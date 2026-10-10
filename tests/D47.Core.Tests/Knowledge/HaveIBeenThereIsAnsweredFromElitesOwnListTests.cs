@@ -26,7 +26,7 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
     public HaveIBeenThereIsAnsweredFromElitesOwnListTests()
     {
         const string root = "C:/d47-test/visits";
-        var files = new BytesFileSystem();
+        var files = new MemoryFileSystem();
         files.WriteBytes(
             Path.Combine(root, "735466", VisitedStarsCache.FileName),
             VisitedStarsCacheIsReadFromItsBytesTests.File(

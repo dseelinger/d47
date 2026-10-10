@@ -548,7 +548,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         lock (_load)
         {
             return _voices ??= ChatterboxCatalog.Load(
-                _voicesFolder, _fetchedFolder, ChatterboxVoices.Load(_files, _voicesFolder, _logger), _logger);
+                _files, _voicesFolder, _fetchedFolder, ChatterboxVoices.Load(_files, _voicesFolder, _logger), _logger);
         }
     }
 
@@ -574,7 +574,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             }
         }
 
-        if (ChatterboxCatalog.Here(voice, _logger) is null)
+        if (ChatterboxCatalog.Here(_files, voice, _logger) is null)
         {
             return false;
         }

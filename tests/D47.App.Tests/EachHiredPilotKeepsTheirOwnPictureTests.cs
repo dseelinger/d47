@@ -1,4 +1,5 @@
 using Avalonia;
+using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -24,7 +25,7 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(TestSurface.Settings().Current.Ui.Theme);
         var paths = new AppPaths(TempFolders.Create("d47-crew-pictures"));
         paths.EnsureCreated();
-        var pictures = new SpeakerPictures(paths);
+        var pictures = new SpeakerPictures(new DiskFileSystem(), paths);
         before?.Invoke(pictures);
         var store = new GameStateStore();
 

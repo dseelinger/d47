@@ -32,17 +32,9 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
     /// <summary>The types not yet converted to <c>IFileSystem</c>. Each conversion removes its own.</summary>
     private static readonly string[] NotYetConverted =
     [
-        "D47.Core.Audio.ChatterboxCatalog",
-        "D47.Core.Audio.CustomVoices",
-        "D47.Core.Audio.NameAccents",
-        "D47.Core.Audio.OwnVoice",
-        "D47.Core.Catalog.ModelCatalogCache",
         "D47.Core.Diagnostics.Recording.RecordingLog",
         "D47.Core.Input.BindingProfiles",
         "D47.Core.Input.BindsWatch",
-        "D47.Core.Interface.SpeakerPictures",
-        "D47.Core.Messages.MessageClips",
-        "D47.Core.Stories.StoryChapterArchive",
     ];
 
     private static readonly Lazy<IReadOnlyDictionary<string, List<string>>> Surveyed = new(Survey);

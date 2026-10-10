@@ -138,6 +138,7 @@ public sealed class VrHost : IDisposable
         ViewStateStore viewState,
         TickLoop tick,
         D47.Core.AppPaths paths,
+        D47.Core.Storage.IFileSystem files,
         ILoggerFactory loggers,
         D47.Core.Interface.AvatarLibrary? avatars = null,
         string? dumpTo = null,
@@ -180,7 +181,7 @@ public sealed class VrHost : IDisposable
             activities: activities,
             construction: construction,
             commanders: commanders,
-            portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
+            portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the
             // handles carry.

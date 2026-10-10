@@ -4,18 +4,11 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-[Trait("Category", "Integration")]
-public class ACustomVoiceIsKeptProtectedOnThisPcTests : IDisposable
+public class ACustomVoiceIsKeptProtectedOnThisPcTests
 {
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _install.Dispose();
-    }
-
-    private CustomVoices Store() => new(_install.Paths.Data, new DpapiSecretProtector());
+    private CustomVoices Store() => new(_install.Paths.Data, _install.Files, new DpapiSecretProtector());
 
     private static float[] Tone(double seconds, int rate) =>
         [.. Enumerable.Range(0, (int)(seconds * rate)).Select(i => 0.5f * (float)Math.Sin(2 * Math.PI * 220 * i / rate))];
@@ -29,10 +22,10 @@ public class ACustomVoiceIsKeptProtectedOnThisPcTests : IDisposable
         _ = store.Load(id!);
         _ = store.Clip(id!);
 
-        Assert.Empty(Directory.GetFiles(_install.Paths.Data, "*.wav", SearchOption.AllDirectories));
+        Assert.Empty(_install.Files.Enumerate(_install.Paths.Data, "*.wav", recursive: true));
 
-        var audio = Assert.Single(Directory.GetFiles(store.Folder, "*.bin"));
-        var bytes = File.ReadAllBytes(audio);
+        var audio = Assert.Single(_install.Files.Enumerate(store.Folder, "*.bin"));
+        var bytes = _install.Files.ReadBytes(audio)!;
 
         Assert.Equal(id + ".bin", Path.GetFileName(audio));
         Assert.NotEqual("RIFF"u8.ToArray(), bytes.Take(4).ToArray());
@@ -96,7 +89,7 @@ public class ACustomVoiceIsKeptProtectedOnThisPcTests : IDisposable
         store.Delete(id!);
 
         Assert.Empty(store.List());
-        Assert.False(File.Exists(Path.Combine(store.Folder, id + ".bin")));
+        Assert.Null(_install.Files.Stat(Path.Combine(store.Folder, id + ".bin")));
         Assert.Null(store.Load(id!));
         Assert.NotEqual(saved, store.Version(id!));
         Assert.Equal(2, changes);
@@ -105,10 +98,10 @@ public class ACustomVoiceIsKeptProtectedOnThisPcTests : IDisposable
     [Fact]
     public void AVoiceFromAnotherWindowsUserDoesNotLoad()
     {
-        new CustomVoices(_install.Paths.Data, new NeverUnprotects())
+        new CustomVoices(_install.Paths.Data, _install.Files, new NeverUnprotects())
             .Save("Mum", "", "mid", "even", Tone(6, 24_000), 24_000, out var id);
 
-        var other = new CustomVoices(_install.Paths.Data, new NeverUnprotects());
+        var other = new CustomVoices(_install.Paths.Data, _install.Files, new NeverUnprotects());
 
         Assert.Single(other.List());
         Assert.Null(other.Load(id!));

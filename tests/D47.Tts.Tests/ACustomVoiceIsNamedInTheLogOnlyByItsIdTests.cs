@@ -55,7 +55,7 @@ public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests : IDisposable
     [Fact]
     public async Task TheStandInLineHasTheIdAndNotTheName()
     {
-        var custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DpapiSecretProtector());
+        var custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
 
         Assert.Null(custom.Save(
             Name, "male", null, null, [.. Enumerable.Repeat(0.5f, ChatterboxVoices.SampleRate * 6)], ChatterboxVoices.SampleRate, out var id));

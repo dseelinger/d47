@@ -121,7 +121,15 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 
         public string? ReadText(string path) => inner.ReadText(path);
 
+        public byte[]? ReadBytes(string path) => inner.ReadBytes(path);
+
         public Stream? OpenRead(string path) => inner.OpenRead(path);
+
+        public void WriteBytes(string path, byte[] contents)
+        {
+            beforeWrite();
+            inner.WriteBytes(path, contents);
+        }
 
         public void WriteText(string path, string contents)
         {

@@ -1,4 +1,5 @@
 using D47.Core.Configuration;
+using D47.Core.Storage;
 
 namespace D47.Core.Audio;
 
@@ -22,15 +23,18 @@ public sealed class OwnVoice
 
     public static readonly TimeSpan MaxLength = ChatterboxVoices.MaxLength;
 
+    private readonly IFileSystem _files;
     private readonly ISecretProtector _protector;
     private readonly Lock _gate = new();
     private int _version;
 
-    public OwnVoice(string dataFolder, ISecretProtector protector)
+    public OwnVoice(string dataFolder, IFileSystem files, ISecretProtector protector)
     {
+        ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(protector);
 
         FilePath = Path.Combine(dataFolder, "voice", "own.bin");
+        _files = files;
         _protector = protector;
     }
 
@@ -42,7 +46,7 @@ public sealed class OwnVoice
     /// <summary>Changes on every save and delete, so a cache built from an earlier recording can tell it is stale.</summary>
     public int Version => Volatile.Read(ref _version);
 
-    public bool Exists => File.Exists(FilePath);
+    public bool Exists => _files.Stat(FilePath) is not null;
 
     /// <summary>Why <paramref name="samples"/> cannot be kept, or null when it can.</summary>
     public static string? Refuse(ReadOnlySpan<float> samples, int sampleRate)
@@ -99,11 +103,7 @@ public sealed class OwnVoice
 
         lock (_gate)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-
-            var staging = FilePath + ".tmp";
-            File.WriteAllBytes(staging, sealedBytes);
-            File.Move(staging, FilePath, overwrite: true);
+            _files.WriteBytes(FilePath, sealedBytes);
             Interlocked.Increment(ref _version);
         }
 
@@ -138,12 +138,12 @@ public sealed class OwnVoice
     {
         lock (_gate)
         {
-            if (!File.Exists(FilePath))
+            if (_files.Stat(FilePath) is null)
             {
                 return;
             }
 
-            File.Delete(FilePath);
+            _files.Delete(FilePath);
             Interlocked.Increment(ref _version);
         }
 
@@ -152,16 +152,16 @@ public sealed class OwnVoice
 
     private byte[]? Pcm()
     {
-        byte[] sealedBytes;
+        byte[]? sealedBytes;
 
         lock (_gate)
         {
-            if (!File.Exists(FilePath))
-            {
-                return null;
-            }
+            sealedBytes = _files.ReadBytes(FilePath);
+        }
 
-            sealedBytes = File.ReadAllBytes(FilePath);
+        if (sealedBytes is null)
+        {
+            return null;
         }
 
         return _protector.TryUnprotect(sealedBytes, out var pcm) ? pcm : null;

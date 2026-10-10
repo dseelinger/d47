@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Conversation;
 using D47.Core.Persona;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Audio;
@@ -82,11 +83,11 @@ public class ANameCanSuggestAnAccentTests
         Assert.Empty(asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSameNameAsksTheModelOnceAndTheAnswerSurvivesARestart()
     {
-        var file = Path.Combine(Path.GetTempPath(), $"d47-accents-{Guid.NewGuid():N}", "name-accents.json");
+        var files = new MemoryFileSystem();
+        var file = Path.Combine(@"C:\d47-memory", "name-accents.json");
         var calls = 0;
 
         Task<IReadOnlyDictionary<string, NameReading>?> Ask(
@@ -97,27 +98,20 @@ public class ANameCanSuggestAnAccentTests
                 names.ToDictionary(name => name, _ => new NameReading("French", "male")));
         }
 
-        try
-        {
-            var first = new NameAccents(file) { Ask = Ask };
-            first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-            first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-            await first.WhenIdleAsync();
-            first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-            await first.WhenIdleAsync();
+        var first = new NameAccents(files, file) { Ask = Ask };
+        first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
+        first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
+        await first.WhenIdleAsync();
+        first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
+        await first.WhenIdleAsync();
 
-            var restarted = new NameAccents(file) { Ask = Ask };
-            restarted.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-            await restarted.WhenIdleAsync();
+        var restarted = new NameAccents(files, file) { Ask = Ask };
+        restarted.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
+        await restarted.WhenIdleAsync();
 
-            Assert.Equal(1, calls);
-            Assert.Equal(new NameReading("French", "male"), restarted.Get("kokoro", "lucien marchand"));
-            Assert.Null(restarted.Get("elevenlabs", "Lucien Marchand"));
-        }
-        finally
-        {
-            Directory.Delete(Path.GetDirectoryName(file)!, recursive: true);
-        }
+        Assert.Equal(1, calls);
+        Assert.Equal(new NameReading("French", "male"), restarted.Get("kokoro", "lucien marchand"));
+        Assert.Null(restarted.Get("elevenlabs", "Lucien Marchand"));
     }
 
     [Fact]

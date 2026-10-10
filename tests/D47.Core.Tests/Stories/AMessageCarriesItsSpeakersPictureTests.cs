@@ -15,27 +15,13 @@ namespace D47.Core.Tests.Stories;
 /// A line from a primary cast member carries its picture; another member's carries one when its picture is on disk;
 /// the ship, the narrator and a member without one carry none. The message keeps the picture name across a reload.
 /// </summary>
-[Trait("Category", "Integration")]
-public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
+public sealed class AMessageCarriesItsSpeakersPictureTests
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-cast-pictures-" + Guid.NewGuid().ToString("N"));
+    private readonly MemoryInstall _install = new();
 
     private readonly SpeakerPictures _pictures;
 
-    public AMessageCarriesItsSpeakersPictureTests()
-    {
-        var paths = new AppPaths(_root);
-        Directory.CreateDirectory(paths.Stories);
-        _pictures = new SpeakerPictures(paths);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
+    public AMessageCarriesItsSpeakersPictureTests() => _pictures = new SpeakerPictures(_install.Files, _install.Paths);
 
     private static StorySpeaker DockHand => Versioned.Cast.Single(speaker => speaker.Id == "dock-hand");
 
@@ -50,7 +36,7 @@ public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
     {
         Assert.Null(_pictures.For(DockHand.Shown(Id, null)));
 
-        File.WriteAllBytes(_pictures.Default($"{Id}.dock-hand"), [1]);
+        _install.Files.WriteBytes(_pictures.Default($"{Id}.dock-hand"), [1]);
 
         Assert.Equal($"{Id}.dock-hand", _pictures.For(DockHand.Shown(Id, null)));
     }
@@ -94,8 +80,8 @@ public sealed class AMessageCarriesItsSpeakersPictureTests : IDisposable
     [Fact]
     public void TheMessageKeepsItsPictureAcrossAReload()
     {
-        var path = Path.Combine(_root, "messages.json");
-        var files = new MemoryFileSystem();
+        var path = Path.Combine(_install.Root, "messages.json");
+        var files = _install.Files;
         new MessageStore(path, files, NullLogger<MessageStore>.Instance)
             .Post("Ren", "Ride Along", "Mind the hatch.", Now, picture: $"{Id}.dock-hand");
 

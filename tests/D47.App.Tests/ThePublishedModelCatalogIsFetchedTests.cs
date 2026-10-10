@@ -92,6 +92,7 @@ public sealed class ThePublishedModelCatalogIsFetchedTests
         var cache = new ModelCatalogCache(
             _source,
             ModelCatalog.Embedded,
+            new DiskFileSystem(),
             Path.Combine(_root, ModelCatalogCache.FileName),
             NullLogger<ModelCatalogCache>.Instance);
 

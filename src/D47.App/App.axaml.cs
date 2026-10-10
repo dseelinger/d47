@@ -58,6 +58,7 @@ public partial class App(AppHost? host) : Application
                 host.ViewState,
                 host.Tick,
                 host.Paths,
+                host.Files,
                 host.Loggers,
                 host.Avatars,
                 host.Paths.Data,

@@ -21,62 +21,6 @@ public static class FileSystemTestExtensions
         files.AppendText(path, string.Concat(lines.Select(line => line + Environment.NewLine)));
 }
 
-/// <summary>A <see cref="MemoryFileSystem"/> that can also hold binary files, for readers of WAV clips and other bytes.</summary>
-public sealed class BytesFileSystem : IFileSystem
-{
-    private readonly MemoryFileSystem _text = new();
-
-    private readonly Dictionary<string, byte[]> _bytes = new(StringComparer.OrdinalIgnoreCase);
-
-    public void WriteBytes(string path, byte[] bytes)
-    {
-        _text.WriteText(path, string.Empty);
-        _bytes[Full(path)] = bytes;
-    }
-
-    public FileState? Stat(string path) =>
-        _text.Stat(path) is { } state && _bytes.TryGetValue(Full(path), out var bytes)
-            ? state with { Length = bytes.Length }
-            : _text.Stat(path);
-
-    public DateTime? FolderWritten(string folder) => _text.FolderWritten(folder);
-
-    public string? ReadText(string path) =>
-        _bytes.TryGetValue(Full(path), out var bytes) ? System.Text.Encoding.UTF8.GetString(bytes) : _text.ReadText(path);
-
-    public Stream? OpenRead(string path) =>
-        _bytes.TryGetValue(Full(path), out var bytes) ? new MemoryStream(bytes, writable: false) : _text.OpenRead(path);
-
-    public void WriteText(string path, string contents)
-    {
-        _bytes.Remove(Full(path));
-        _text.WriteText(path, contents);
-    }
-
-    public void AppendText(string path, string contents) => _text.AppendText(path, contents);
-
-    public void Delete(string path)
-    {
-        _bytes.Remove(Full(path));
-        _text.Delete(path);
-    }
-
-    public void Copy(string from, string to)
-    {
-        _text.Copy(from, to);
-
-        if (_bytes.TryGetValue(Full(from), out var bytes))
-        {
-            _bytes[Full(to)] = bytes;
-        }
-    }
-
-    public IReadOnlyList<string> Enumerate(string folder, string pattern, bool recursive = false) =>
-        _text.Enumerate(folder, pattern, recursive);
-
-    private static string Full(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
-}
-
 /// <summary>An install location that exists only as paths, for tests that touch no folder.</summary>
 public sealed class MemoryInstall
 {

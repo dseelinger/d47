@@ -56,7 +56,7 @@ public sealed class SpeechClients : IDisposable
         _ownVoice = ownVoice;
         _customVoices = customVoices;
         _crewSeats = crewSeats;
-        NameAccents = new NameAccents(paths.NameAccentsFile, _logger);
+        NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger);
 
         voice.SpeakerFor = Speaker;
         voice.PinnedFor = CastClient;

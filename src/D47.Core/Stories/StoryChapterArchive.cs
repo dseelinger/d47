@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Adventures;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
@@ -36,6 +37,7 @@ public sealed class StoryChapterArchive
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    private readonly IFileSystem? _files;
     private readonly string? _path;
     private readonly ILogger? _logger;
     private readonly Lock _gate = new();
@@ -44,8 +46,10 @@ public sealed class StoryChapterArchive
     /// <summary>Whether the file ends without a line terminator, as a process killed mid-append leaves it.</summary>
     private bool _danglingLine;
 
-    private StoryChapterArchive(string? path, ILogger? logger, List<ArchivedChapter> chapters, bool danglingLine)
+    private StoryChapterArchive(
+        IFileSystem? files, string? path, ILogger? logger, List<ArchivedChapter> chapters, bool danglingLine)
     {
+        _files = files;
         _path = path;
         _logger = logger;
         _chapters = chapters;
@@ -53,10 +57,10 @@ public sealed class StoryChapterArchive
     }
 
     /// <summary>Held in memory only.</summary>
-    public static StoryChapterArchive InMemory() => new(null, null, [], false);
+    public static StoryChapterArchive InMemory() => new(null, null, null, [], false);
 
-    public static StoryChapterArchive Open(string path, ILogger<StoryChapterArchive> logger) =>
-        new(path, logger, Read(path, logger), EndsMidLine(path));
+    public static StoryChapterArchive Open(IFileSystem files, string path, ILogger<StoryChapterArchive> logger) =>
+        new(files, path, logger, Read(files, path, logger), EndsMidLine(files, path));
 
     /// <summary>This Commander's archived chapters, oldest first.</summary>
     public IReadOnlyList<ArchivedChapter> For(string? frontierId)
@@ -81,7 +85,7 @@ public sealed class StoryChapterArchive
         {
             _chapters.Add(chapter);
 
-            if (_path is null)
+            if (_files is null || _path is null)
             {
                 return;
             }
@@ -100,7 +104,7 @@ public sealed class StoryChapterArchive
             {
                 var lead = _danglingLine ? Environment.NewLine : string.Empty;
 
-                File.AppendAllText(_path, lead + JsonSerializer.Serialize(line, Json) + Environment.NewLine);
+                _files.AppendText(_path, lead + JsonSerializer.Serialize(line, Json) + Environment.NewLine);
                 _danglingLine = false;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -110,20 +114,21 @@ public sealed class StoryChapterArchive
         }
     }
 
-    private static List<ArchivedChapter> Read(string path, ILogger logger)
+    private static List<ArchivedChapter> Read(IFileSystem files, string path, ILogger logger)
     {
         var chapters = new List<ArchivedChapter>();
 
-        if (!File.Exists(path))
-        {
-            return chapters;
-        }
-
         try
         {
+            if (files.OpenRead(path) is not { } stream)
+            {
+                return chapters;
+            }
+
+            using var reader = new StreamReader(stream);
             var number = 0;
 
-            foreach (var text in File.ReadLines(path))
+            while (reader.ReadLine() is { } text)
             {
                 number++;
 
@@ -174,18 +179,13 @@ public sealed class StoryChapterArchive
         }
     }
 
-    private static bool EndsMidLine(string path)
+    private static bool EndsMidLine(IFileSystem files, string path)
     {
         try
         {
-            if (!File.Exists(path))
-            {
-                return false;
-            }
+            using var stream = files.OpenRead(path);
 
-            using var stream = File.OpenRead(path);
-
-            if (stream.Length == 0)
+            if (stream is null || stream.Length == 0)
             {
                 return false;
             }

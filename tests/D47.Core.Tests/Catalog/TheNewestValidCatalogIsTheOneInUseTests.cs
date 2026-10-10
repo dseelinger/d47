@@ -6,17 +6,14 @@ using Xunit;
 
 namespace D47.Core.Tests.Catalog;
 
-[Trait("Category", "Integration")]
 [Collection(nameof(SharedModelCatalogCollection))]
-public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
+public sealed class TheNewestValidCatalogIsTheOneInUseTests
 {
-    private readonly string _folder = Directory.CreateTempSubdirectory("d47-catalog-").FullName;
+    private readonly MemoryInstall _install = new();
 
     private readonly RecordingLogger<ModelCatalogCache> _logger = new();
 
-    private string CachePath => Path.Combine(_folder, ModelCatalogCache.FileName);
-
-    public void Dispose() => Directory.Delete(_folder, recursive: true);
+    private string CachePath => Path.Combine(_install.Root, ModelCatalogCache.FileName);
 
     [Fact]
     public void AFetchedCatalogWithANewDefaultIsUsedWithoutARestart()
@@ -25,12 +22,12 @@ public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
 
         try
         {
-            var cache = new ModelCatalogCache(ModelCatalogSource.Shared, ModelCatalog.Embedded, CachePath, _logger);
+            var cache = new ModelCatalogCache(ModelCatalogSource.Shared, ModelCatalog.Embedded, _install.Files, CachePath, _logger);
 
             Assert.True(cache.Offer(Catalog("2099-01-01", "claude-later-6")));
 
             Assert.Equal("claude-later-6", LlmProviderCatalog.Selected(LlmProviderCatalog.AnthropicId).DefaultModel);
-            Assert.Equal(Catalog("2099-01-01", "claude-later-6"), File.ReadAllText(CachePath));
+            Assert.Equal(Catalog("2099-01-01", "claude-later-6"), _install.Files.ReadText(CachePath));
         }
         finally
         {
@@ -52,24 +49,24 @@ public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
         };
         var embedded = ModelCatalog.Parse(Catalog("2026-09-28", "model-a"));
         var source = new ModelCatalogSource(embedded);
-        var cache = new ModelCatalogCache(source, embedded, CachePath, _logger);
+        var cache = new ModelCatalogCache(source, embedded, _install.Files, CachePath, _logger);
 
         Assert.False(cache.Offer(json));
         Assert.False(cache.Offer(json));
 
         Assert.Same(embedded, source.Current);
-        Assert.False(File.Exists(CachePath));
+        Assert.Null(_install.Files.Stat(CachePath));
         Assert.Single(_logger.Entries, entry => entry.Level == LogLevel.Warning);
     }
 
     [Fact]
     public void AtStartupACachedCatalogNewerThanTheEmbeddedOneIsUsed()
     {
-        File.WriteAllText(CachePath, Catalog("2026-10-01", "model-b"));
+        _install.Files.WriteText(CachePath, Catalog("2026-10-01", "model-b"));
         var embedded = ModelCatalog.Parse(Catalog("2026-09-28", "model-a"));
         var source = new ModelCatalogSource(embedded);
 
-        new ModelCatalogCache(source, embedded, CachePath, _logger).Load();
+        new ModelCatalogCache(source, embedded, _install.Files, CachePath, _logger).Load();
 
         Assert.Equal("model-b", source.Current.DefaultFor("anthropic"));
     }
@@ -77,11 +74,11 @@ public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
     [Fact]
     public void AtStartupAReleaseWhoseCatalogIsNewerThanTheCacheWins()
     {
-        File.WriteAllText(CachePath, Catalog("2026-09-28", "model-b"));
+        _install.Files.WriteText(CachePath, Catalog("2026-09-28", "model-b"));
         var embedded = ModelCatalog.Parse(Catalog("2026-10-01", "model-a"));
         var source = new ModelCatalogSource(embedded);
 
-        new ModelCatalogCache(source, embedded, CachePath, _logger).Load();
+        new ModelCatalogCache(source, embedded, _install.Files, CachePath, _logger).Load();
 
         Assert.Same(embedded, source.Current);
     }
@@ -89,11 +86,11 @@ public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
     [Fact]
     public void AnUnreadableCacheLeavesTheEmbeddedCatalogInUse()
     {
-        File.WriteAllText(CachePath, "{ not json");
+        _install.Files.WriteText(CachePath, "{ not json");
         var embedded = ModelCatalog.Parse(Catalog("2026-09-28", "model-a"));
         var source = new ModelCatalogSource(embedded);
 
-        new ModelCatalogCache(source, embedded, CachePath, _logger).Load();
+        new ModelCatalogCache(source, embedded, _install.Files, CachePath, _logger).Load();
 
         Assert.Same(embedded, source.Current);
     }
@@ -102,16 +99,16 @@ public sealed class TheNewestValidCatalogIsTheOneInUseTests : IDisposable
     public void AnOlderFetchedCatalogReplacesNeitherTheOneInUseNorTheCache()
     {
         var newer = Catalog("2026-10-01", "model-b");
-        File.WriteAllText(CachePath, newer);
+        _install.Files.WriteText(CachePath, newer);
         var embedded = ModelCatalog.Parse(Catalog("2026-09-01", "model-a"));
         var source = new ModelCatalogSource(embedded);
-        var cache = new ModelCatalogCache(source, embedded, CachePath, _logger);
+        var cache = new ModelCatalogCache(source, embedded, _install.Files, CachePath, _logger);
         cache.Load();
 
         Assert.True(cache.Offer(Catalog("2026-09-15", "model-a")));
 
         Assert.Equal("model-b", source.Current.DefaultFor("anthropic"));
-        Assert.Equal(newer, File.ReadAllText(CachePath));
+        Assert.Equal(newer, _install.Files.ReadText(CachePath));
     }
 
     private static string Catalog(string published, string anthropicDefault, int schema = 1) => $$"""

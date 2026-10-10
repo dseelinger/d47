@@ -486,7 +486,7 @@ public sealed class AppHost : IDisposable
     private D47.Core.Interface.SpeakerPictures? _speakerPictures;
 
     /// <summary>Where a story cast member's picture is read, and the Commander's replacement kept.</summary>
-    public D47.Core.Interface.SpeakerPictures SpeakerPictures => _speakerPictures ??= new(Paths);
+    public D47.Core.Interface.SpeakerPictures SpeakerPictures => _speakerPictures ??= new(Files, Paths);
 
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
@@ -772,6 +772,7 @@ public sealed class AppHost : IDisposable
         var modelCatalog = new ModelCatalogCache(
             ModelCatalogSource.Shared,
             ModelCatalog.Embedded,
+            files,
             Path.Combine(paths.Data, ModelCatalogCache.FileName),
             loggerFactory.CreateLogger<ModelCatalogCache>());
 
@@ -1135,7 +1136,7 @@ public sealed class AppHost : IDisposable
             Path.Combine(paths.Data, "messages.json"),
             files,
             loggerFactory.CreateLogger<D47.Core.Messages.MessageStore>(),
-            new D47.Core.Messages.MessageClips(Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()));
+            new D47.Core.Messages.MessageClips(files, Path.Combine(paths.Data, "messages"), new DpapiSecretProtector()));
 
         var adventureBook = new D47.Core.Adventures.AdventureBook(
             adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
@@ -1147,6 +1148,7 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Stories.StoryStore>());
 
         var storyArchive = D47.Core.Stories.StoryChapterArchive.Open(
+            files,
             Path.Combine(paths.Data, "story-chapters.jsonl"),
             loggerFactory.CreateLogger<D47.Core.Stories.StoryChapterArchive>());
 
@@ -1803,8 +1805,8 @@ public sealed class AppHost : IDisposable
 
         var buildingRegistry = StartupTimer.Step("capability registry");
 
-        var ownVoice = new OwnVoice(paths.Data, new DpapiSecretProtector());
-        var customVoices = new CustomVoices(paths.Data, new DpapiSecretProtector());
+        var ownVoice = new OwnVoice(paths.Data, files, new DpapiSecretProtector());
+        var customVoices = new CustomVoices(paths.Data, files, new DpapiSecretProtector());
         var speech = new SpeechClients(
             settings,
             secrets,

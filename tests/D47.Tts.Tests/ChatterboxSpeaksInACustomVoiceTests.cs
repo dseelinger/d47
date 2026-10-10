@@ -27,7 +27,7 @@ public sealed class ChatterboxSpeaksInACustomVoiceTests : IDisposable
             Path.Combine(_folder.Voices, "orson.wav"),
             WavWriter.ToBytes([.. Enumerable.Repeat(0.25f, ChatterboxVoices.SampleRate * 6)], ChatterboxVoices.SampleRate));
 
-        _custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DpapiSecretProtector());
+        _custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
     }
 
     public void Dispose()

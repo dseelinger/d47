@@ -4,20 +4,13 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-[Trait("Category", "Integration")]
-public class AnImportedRecordingKeepsSevenSecondsAfterItsSilenceTests : IDisposable
+public class AnImportedRecordingKeepsSevenSecondsAfterItsSilenceTests
 {
     private const int Rate = 24_000;
 
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _install.Dispose();
-    }
-
-    private CustomVoices Store() => new(_install.Paths.Data, new DpapiSecretProtector());
+    private CustomVoices Store() => new(_install.Paths.Data, _install.Files, new DpapiSecretProtector());
 
     /// <summary>Silence, then sound whose level rises by 0.02 each second, so each second is recognisable.</summary>
     private static float[] Recording(double quiet, double loud) =>

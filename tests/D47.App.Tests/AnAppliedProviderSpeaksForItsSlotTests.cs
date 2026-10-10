@@ -33,8 +33,8 @@ public class AnAppliedProviderSpeaksForItsSlotTests : IDisposable
             new PersonaHost(),
             voice,
             arbiter,
-            new OwnVoice(paths.Data, new DpapiSecretProtector()),
-            new CustomVoices(paths.Data, new DpapiSecretProtector()),
+            new OwnVoice(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
+            new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
             () => throw new InvalidOperationException("No crew seat is looked up here."));
     }
 

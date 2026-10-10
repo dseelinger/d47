@@ -74,7 +74,7 @@ public class TheChatterboxCatalogListsEverySpeakerOnceTests
         var log = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         var shipped = D47.Core.Audio.ChatterboxVoices.Load(new D47.Core.Storage.DiskFileSystem(), Folder(), log);
 
-        var voices = D47.Core.Audio.ChatterboxCatalog.Load(Folder(), Path.GetTempPath(), shipped, log);
+        var voices = D47.Core.Audio.ChatterboxCatalog.Load(new D47.Core.Storage.DiskFileSystem(), Folder(), Path.GetTempPath(), shipped, log);
 
         Assert.Equal(Rows().Count, voices.Count);
         Assert.Equal(shipped.Select(voice => voice.Voice.Id), voices.Take(12).Select(voice => voice.Voice.Id));

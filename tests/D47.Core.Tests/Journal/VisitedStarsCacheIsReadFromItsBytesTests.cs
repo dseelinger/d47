@@ -108,7 +108,7 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
     public void TheFileIsTheCurrentCommandersAndIsReadAgainWhenItChanges()
     {
         const string root = "C:/d47-test/visits";
-        var files = new BytesFileSystem();
+        var files = new MemoryFileSystem();
         var mine = Path.Combine(root, "735466", VisitedStarsCache.FileName);
         files.WriteBytes(mine, File(512, [(Lave, 3, Second)]));
         files.WriteBytes(

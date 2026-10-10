@@ -149,8 +149,8 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
         paths.EnsureCreated();
         var changeVoice = new Button { Content = "Change voice" };
 
-        var chooser = new PictureChooser(new SpeakerPictures(paths), "the-test-story.juno", 240, null, changeVoice);
-        var second = new PictureChooser(new SpeakerPictures(paths), "the-test-story.juno", 240, null, changeVoice);
+        var chooser = new PictureChooser(new SpeakerPictures(new DiskFileSystem(), paths), "the-test-story.juno", 240, null, changeVoice);
+        var second = new PictureChooser(new SpeakerPictures(new DiskFileSystem(), paths), "the-test-story.juno", 240, null, changeVoice);
 
         Assert.Same(second.Children.OfType<StackPanel>().Single(), changeVoice.Parent);
         Assert.DoesNotContain(changeVoice, chooser.Children.OfType<StackPanel>().Single().Children);

@@ -6,33 +6,21 @@ using Xunit;
 
 namespace D47.Core.Tests.Messages;
 
-[Trait("Category", "Integration")]
-public class ASpokenMessageKeepsItsClipTests : IDisposable
+public class ASpokenMessageKeepsItsClipTests
 {
     private static readonly DateTimeOffset Noon = new(2026, 10, 2, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-message-clips", Guid.NewGuid().ToString("N"));
+    private readonly MemoryFileSystem _files = new();
 
-    public ASpokenMessageKeepsItsClipTests() => Directory.CreateDirectory(_folder);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private readonly string _folder = Path.Combine(@"C:\d47-memory", "message-clips");
 
     private string ClipFolder => Path.Combine(_folder, "messages");
 
     private MessageStore Open() => new(
         Path.Combine(_folder, "messages.json"),
-        new DiskFileSystem(),
+        _files,
         NullLogger<MessageStore>.Instance,
-        new MessageClips(ClipFolder, new ReversibleProtector()));
+        new MessageClips(_files, ClipFolder, new ReversibleProtector()));
 
     private static SpokenClip Spoken(byte seed, string? voice = "af_heart") =>
         new([Part(seed, 480), Part((byte)(seed + 1), 960)], "kokoro", voice);
@@ -43,7 +31,7 @@ public class ASpokenMessageKeepsItsClipTests : IDisposable
     private static byte[] Played(SpokenClip spoken) => spoken.Joined("line").Pcm.ToArray();
 
     private string[] FilesOnDisk() =>
-        Directory.Exists(ClipFolder) ? [.. Directory.GetFiles(ClipFolder).Select(Path.GetFileName).OfType<string>()] : [];
+        [.. _files.Enumerate(ClipFolder, "*").Select(Path.GetFileName).OfType<string>()];
 
     [Fact]
     public void ASpokenBeatPlaysTheSameAudioAfterARestart()
@@ -115,8 +103,7 @@ public class ASpokenMessageKeepsItsClipTests : IDisposable
     [Fact]
     public void AStrayFileIsSweptWhenTheStoreIsRead()
     {
-        Directory.CreateDirectory(ClipFolder);
-        File.WriteAllBytes(Path.Combine(ClipFolder, "left-behind.wav"), [1, 2, 3]);
+        _files.WriteBytes(Path.Combine(ClipFolder, "left-behind.wav"), [1, 2, 3]);
 
         var store = Open();
         var kept = store.Post("covas", "Beat", "Kept.", Noon, spoken: Spoken(5));
@@ -141,7 +128,7 @@ public class ASpokenMessageKeepsItsClipTests : IDisposable
         var store = Open();
         var message = store.Post("narrator", "Mayday", "This is my own voice.", Noon, spoken: spoken);
 
-        var bytes = File.ReadAllBytes(Path.Combine(ClipFolder, message.Clip!));
+        var bytes = _files.ReadBytes(Path.Combine(ClipFolder, message.Clip!))!;
 
         Assert.False(bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8));
         Assert.Throws<WavFormatException>(() => WavReader.Read(new MemoryStream(bytes), "own"));

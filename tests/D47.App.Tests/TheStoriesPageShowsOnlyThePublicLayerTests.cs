@@ -199,7 +199,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var paths = new AppPaths(TempFolders.Create("d47-cast-strip"));
-        var pictures = new SpeakerPictures(paths);
+        var pictures = new SpeakerPictures(new DiskFileSystem(), paths);
         var id = StoryFixture.Story.Id;
 
         WriteSquare(pictures.Default($"{id}.ren"));

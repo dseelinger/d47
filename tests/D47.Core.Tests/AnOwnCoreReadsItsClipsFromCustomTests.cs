@@ -22,7 +22,7 @@ public class AnOwnCoreReadsItsClipsFromCustomTests
     [Fact]
     public void OnlyANonEmptyFileIsOffered()
     {
-        var files = new BytesFileSystem();
+        var files = new MemoryFileSystem();
         const string folder = "C:/d47-test/clips";
 
         Assert.Null(CoreClips.For(files, folder, "covas", LoopState.Idle));

@@ -4,18 +4,11 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-[Trait("Category", "Integration")]
-public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
+public class YourVoiceIsKeptProtectedOnThisPcTests
 {
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _install.Dispose();
-    }
-
-    private OwnVoice Store() => new(_install.Paths.Data, new DpapiSecretProtector());
+    private OwnVoice Store() => new(_install.Paths.Data, _install.Files, new DpapiSecretProtector());
 
     /// <summary>A 220 Hz tone at half scale.</summary>
     private static float[] Tone(double seconds, int rate) =>
@@ -86,10 +79,10 @@ public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
         _ = store.Clip();
 
         Assert.Equal(Path.Combine(_install.Paths.Data, "voice", "own.bin"), store.FilePath);
-        Assert.Empty(Directory.GetFiles(_install.Paths.Data, "*.wav", SearchOption.AllDirectories));
+        Assert.Empty(_install.Files.Enumerate(_install.Paths.Data, "*.wav", recursive: true));
 
-        var written = Assert.Single(Directory.GetFiles(_install.Paths.Data, "*", SearchOption.AllDirectories));
-        var bytes = File.ReadAllBytes(written);
+        var written = Assert.Single(_install.Files.Enumerate(_install.Paths.Data, "*", recursive: true));
+        var bytes = _install.Files.ReadBytes(written)!;
 
         Assert.NotEqual("RIFF"u8.ToArray(), bytes.Take(4).ToArray());
         Assert.NotEqual(store.Clip()!.Pcm.Length, bytes.Length);
@@ -98,9 +91,9 @@ public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
     [Fact]
     public void ARecordingFromAnotherWindowsUserDoesNotLoad()
     {
-        new OwnVoice(_install.Paths.Data, new NeverUnprotects()).Save(Tone(6, 24_000), 24_000);
+        new OwnVoice(_install.Paths.Data, _install.Files, new NeverUnprotects()).Save(Tone(6, 24_000), 24_000);
 
-        var other = new OwnVoice(_install.Paths.Data, new NeverUnprotects());
+        var other = new OwnVoice(_install.Paths.Data, _install.Files, new NeverUnprotects());
 
         Assert.True(other.Exists);
         Assert.Null(other.Load());
@@ -117,7 +110,7 @@ public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
         var saved = store.Version;
         store.Delete();
 
-        Assert.False(File.Exists(store.FilePath));
+        Assert.Null(_install.Files.Stat(store.FilePath));
         Assert.Null(store.Load());
         Assert.NotEqual(saved, store.Version);
         Assert.Equal(2, changes);
@@ -138,7 +131,7 @@ public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
     [Fact]
     public void AShippedVoiceCannotTakeTheOwnId()
     {
-        var files = new BytesFileSystem();
+        var files = _install.Files;
         var folder = Path.Combine(_install.Root, "voices");
         files.WriteText(
             Path.Combine(folder, ChatterboxVoices.TableName),
