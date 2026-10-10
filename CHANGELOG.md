@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A core's line in the transcript always shows its shipped portrait. A `core.*.png` file placed in `data\pictures` is ignored.
+
 The Vocoder, Deep core, Flanged vocoder, Hive chorus, Shimmer core and Respirator Guardian presets now start playing before the sentence group has fully arrived. Cylon, Pitch down, Octave-down layer, Hive and Shimmer now work as the voice arrives, each holding back at most about a sixteenth of a second. The effects sound as they did; as with the presets that already started sooner, loudness can shift slightly at the start of a line.
 
 Chatterbox now applies the respellings in `pronunciations.json`, so `"Supercruise": "super cruise"` fixes how it says supercruise. IPA entries still work only for Kokoro.

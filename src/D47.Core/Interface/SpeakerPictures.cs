@@ -8,7 +8,7 @@ namespace D47.Core.Interface;
 
 /// <summary>
 /// A speaker's picture on disk: the Commander's own <c>&lt;picture&gt;.png</c> in <see cref="AppPaths.Pictures"/>
-/// first, then the shipped <c>&lt;picture&gt;.jpg</c> in <see cref="AppPaths.ShippedPortraits"/>, then a story's
+/// first (never for a core), then the shipped <c>&lt;picture&gt;.jpg</c> in <see cref="AppPaths.ShippedPortraits"/>, then a story's
 /// downloaded <c>&lt;picture&gt;.jpg</c> in <see cref="AppPaths.Stories"/>.
 /// </summary>
 public sealed partial class SpeakerPictures(IFileSystem files, string chosenFolder, string shippedFolder, string storiesFolder)
@@ -69,7 +69,7 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
         picture is { Length: > 0 } && !picture.Contains("..", StringComparison.Ordinal) && Name().IsMatch(picture);
 
     /// <summary>Whether the Commander has chosen their own file for <paramref name="picture"/>.</summary>
-    public bool IsChosen(string? picture) => IsName(picture) && files.Stat(Chosen(picture!)) is not null;
+    public bool IsChosen(string? picture) => IsName(picture) && !IsCore(picture!) && files.Stat(Chosen(picture!)) is not null;
 
     /// <summary>The file to show for <paramref name="picture"/>, or null when none is on disk.</summary>
     public string? Find(string? picture)
@@ -79,7 +79,7 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
             return null;
         }
 
-        foreach (var file in (string[])[Chosen(picture!), Shipped(picture!), Default(picture!)])
+        foreach (var file in IsCore(picture!) ? (string[])[Shipped(picture!), Default(picture!)] : [Chosen(picture!), Shipped(picture!), Default(picture!)])
         {
             if (files.Stat(file) is not null)
             {
@@ -89,6 +89,8 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
 
         return null;
     }
+
+    private static bool IsCore(string picture) => picture.StartsWith("core.", StringComparison.Ordinal);
 
     /// <summary>
     /// The picture a line from <paramref name="speaker"/> carries: a primary member's always, another member's
