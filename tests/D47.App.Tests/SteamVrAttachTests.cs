@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using D47.Core.Interface;
+using D47.Core.Storage;
 using D47.Core.Vr;
 using D47.Vr;
 using D47.Vr.Binding;
@@ -315,7 +316,7 @@ public class SteamVrLiveTests
         {
             var input = new VrActionInput(NullLogger.Instance, OpenVrBinding.Instance);
 
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
 
             Assert.True(input.Ready, "the action set and both action handles should resolve against a real runtime");
 

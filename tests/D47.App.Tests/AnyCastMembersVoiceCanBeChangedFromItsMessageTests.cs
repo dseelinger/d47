@@ -22,7 +22,6 @@ namespace D47.App.Tests;
 /// The card's reading page lists the story's primary cast, and no one else, each with its voice, Play sample and Change
 /// voice; a message from any cast member, primary or not, carries Change voice (#737).
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
 {
     private static readonly StoryCatalog Catalog = new(
@@ -96,6 +95,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void TheReadingPageListsTheTwoPrimaryMembersAndNotTheOther()
     {
         var paths = new AppPaths(TempFolders.Create("d47-cast-voices"));
@@ -120,6 +120,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void AMessageFromAMemberThatIsNotPrimaryHasChangeVoice()
     {
         var paths = new AppPaths(TempFolders.Create("d47-cast-voices"));
@@ -145,12 +146,11 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
     [AvaloniaFact]
     public void ChangeVoiceStaysBesideThePictureButtonsWhenThePictureIsShownAgain()
     {
-        var paths = new AppPaths(TempFolders.Create("d47-cast-voices"));
-        paths.EnsureCreated();
+        var pictures = new SpeakerPictures(new MemoryFileSystem(), new AppPaths(Path.Combine(Path.GetTempPath(), "d47-cast-voices")));
         var changeVoice = new Button { Content = "Change voice" };
 
-        var chooser = new PictureChooser(new SpeakerPictures(new DiskFileSystem(), paths), "the-test-story.juno", 240, null, changeVoice);
-        var second = new PictureChooser(new SpeakerPictures(new DiskFileSystem(), paths), "the-test-story.juno", 240, null, changeVoice);
+        var chooser = new PictureChooser(pictures, "the-test-story.juno", 240, null, changeVoice);
+        var second = new PictureChooser(pictures, "the-test-story.juno", 240, null, changeVoice);
 
         Assert.Same(second.Children.OfType<StackPanel>().Single(), changeVoice.Parent);
         Assert.DoesNotContain(changeVoice, chooser.Children.OfType<StackPanel>().Single().Children);

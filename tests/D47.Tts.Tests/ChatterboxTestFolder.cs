@@ -1,28 +1,28 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 
 namespace D47.Tts.Tests;
 
-/// <summary>A temporary model folder with a tiny tokenizer.json, and a voices folder with one valid clip.</summary>
-internal sealed class ChatterboxTestFolder : IDisposable
+/// <summary>A model folder with a tiny tokenizer.json, and a voices folder with one valid clip, in memory.</summary>
+internal sealed class ChatterboxTestFolder
 {
     public ChatterboxTestFolder()
     {
-        Root = Path.Combine(Path.GetTempPath(), "d47-chatterbox-" + Guid.NewGuid().ToString("N"));
+        Root = Path.Combine(Path.GetTempPath(), "d47-chatterbox");
         Models = Path.Combine(Root, "models");
         Voices = Path.Combine(Root, "voices");
         Fetched = Path.Combine(Root, "data", "voices", "chatterbox");
 
-        Directory.CreateDirectory(Models);
-        Directory.CreateDirectory(Voices);
-
-        File.WriteAllText(Path.Combine(Models, "tokenizer.json"), Tokenizer);
-        File.WriteAllText(
+        Files.WriteText(Path.Combine(Models, "tokenizer.json"), Tokenizer);
+        Files.WriteText(
             Path.Combine(Voices, ChatterboxVoices.TableName),
             "id\tname\tgender\tlocale\trole\tsource\nmarlow\tMarlow\tfemale\ten\t\ta test clip\n");
-        File.WriteAllBytes(
+        Files.WriteBytes(
             Path.Combine(Voices, "marlow.wav"),
             WavWriter.ToBytes(new float[ChatterboxVoices.SampleRate * 6], ChatterboxVoices.SampleRate));
     }
+
+    public MemoryFileSystem Files { get; } = new();
 
     public string Root { get; }
 
@@ -62,15 +62,4 @@ internal sealed class ChatterboxTestFolder : IDisposable
           }
         }
         """;
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(Root, recursive: true);
-        }
-        catch (IOException)
-        {
-        }
-    }
 }

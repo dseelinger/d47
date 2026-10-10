@@ -227,7 +227,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         _vocabulary ??= ReadVocabulary();
 
         return _phonemiser ??= new Phonemiser(
-            PhonemeDictionary.Read(Path.Combine(_folder, "phoneme_dict.json"), _logger),
+            PhonemeDictionary.Read(_files, Path.Combine(_folder, "phoneme_dict.json"), _logger),
             Overrides(_vocabulary),
             Note);
     }
@@ -238,8 +238,9 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     /// </summary>
     private Dictionary<string, long> ReadVocabulary()
     {
+        var path = Path.Combine(_folder, "tokenizer.json");
         using var document = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(_folder, "tokenizer.json")));
+            _files.ReadText(path) ?? throw new FileNotFoundException("No Kokoro tokenizer.", path));
 
         var vocabulary = document.RootElement.GetProperty("model").GetProperty("vocab");
         var map = new Dictionary<string, long>(StringComparer.Ordinal);
@@ -284,7 +285,8 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     /// <summary>One voice's style vector for a line of this length.</summary>
     private float[] Style(string voiceId, int tokens)
     {
-        var bytes = File.ReadAllBytes(Path.Combine(_folder, "voices", voiceId + ".bin"));
+        var path = Path.Combine(_folder, "voices", voiceId + ".bin");
+        var bytes = _files.ReadBytes(path) ?? throw new FileNotFoundException("No Kokoro voice file.", path);
         var floats = new float[bytes.Length / 4];
 
         Buffer.BlockCopy(bytes, 0, floats, 0, bytes.Length);

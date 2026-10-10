@@ -6,19 +6,12 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
-[Trait("Category", "Integration")]
-public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests : IDisposable
+public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests
 {
     private const string Name = "Secret Ally";
 
     private readonly ChatterboxTestFolder _folder = new();
     private readonly Recorded _log = new();
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _folder.Dispose();
-    }
 
     private sealed class Recorded : ILogger<ChatterboxTtsProvider>
     {
@@ -55,13 +48,13 @@ public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests : IDisposable
     [Fact]
     public async Task TheStandInLineHasTheIdAndNotTheName()
     {
-        var custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
+        var custom = new CustomVoices(Path.Combine(_folder.Root, "data"), _folder.Files, new DpapiSecretProtector());
 
         Assert.Null(custom.Save(
             Name, "male", null, null, [.. Enumerable.Repeat(0.5f, ChatterboxVoices.SampleRate * 6)], ChatterboxVoices.SampleRate, out var id));
 
         using var provider = new ChatterboxTtsProvider(
-            new DiskFileSystem(),
+            _folder.Files,
             _folder.Models, _folder.Voices, _folder.Fetched, _log, () => new Engine(), () => true, ChatterboxTestFolder.NoDownload, custom: custom);
 
         await provider.ListVoicesAsync(TestContext.Current.CancellationToken);

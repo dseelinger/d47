@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using D47.Core.Storage;
 using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
@@ -42,7 +43,7 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// Registers with SteamVR and loads the manifest. Called every tick until it succeeds: a refusal that
     /// persists writes the manifest files once and logs each distinct reason once.
     /// </summary>
-    public void Register(string actionFolder)
+    public void Register(IFileSystem files, string actionFolder)
     {
         if (_input is not null)
         {
@@ -63,8 +64,8 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
 
             if (_manifest is null)
             {
-                var written = VrActionManifest.Write(actionFolder);
-                _manifest = (written, VrActionManifest.WriteAppManifest(actionFolder, written));
+                var written = VrActionManifest.Write(files, actionFolder);
+                _manifest = (written, VrActionManifest.WriteAppManifest(files, actionFolder, written));
             }
 
             var (actions, application) = _manifest.Value;

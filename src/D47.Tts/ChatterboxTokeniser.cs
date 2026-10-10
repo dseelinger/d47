@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using D47.Core.Storage;
 
 namespace D47.Tts;
 
@@ -49,9 +50,9 @@ internal sealed partial class ChatterboxTokeniser
     /// <summary>Whether <paramref name="tag"/>, written without brackets, is one of the model's own tokens.</summary>
     public bool Performs(string tag) => _added.ContainsKey($"[{tag}]");
 
-    public static ChatterboxTokeniser Load(string path)
+    public static ChatterboxTokeniser Load(IFileSystem files, string path)
     {
-        using var doc = JsonDocument.Parse(File.ReadAllText(path, Encoding.UTF8));
+        using var doc = JsonDocument.Parse(files.ReadText(path) ?? throw new FileNotFoundException("No Chatterbox tokenizer.", path));
         var root = doc.RootElement;
         var model = root.GetProperty("model");
 

@@ -15,6 +15,9 @@ public sealed class AvatarLibrary
 
     private AvatarLibrary(IFileSystem fileSystem) => _fileSystem = fileSystem;
 
+    /// <summary>The file system the frames are read through.</summary>
+    public IFileSystem Files => _fileSystem;
+
     /// <summary>Where the core clips are read from, or null for none.</summary>
     public string? ClipFolder { get; init; }
 

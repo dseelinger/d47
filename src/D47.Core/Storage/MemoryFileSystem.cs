@@ -88,6 +88,14 @@ public sealed class MemoryFileSystem : IFileSystem
         }
     }
 
+    public void CreateFolder(string folder)
+    {
+        lock (_gate)
+        {
+            Make(Full(folder));
+        }
+    }
+
     public void Delete(string path)
     {
         lock (_gate)
@@ -155,14 +163,14 @@ public sealed class MemoryFileSystem : IFileSystem
 
         if (!_files.ContainsKey(full) && folder is not null)
         {
-            CreateFolder(folder);
+            Make(folder);
             _folders[folder] = Tick();
         }
 
         _files[full] = new Entry(bytes, written ?? Tick());
     }
 
-    private void CreateFolder(string folder)
+    private void Make(string folder)
     {
         if (_folders.ContainsKey(folder))
         {
@@ -173,7 +181,7 @@ public sealed class MemoryFileSystem : IFileSystem
 
         if (parent is not null)
         {
-            CreateFolder(parent);
+            Make(parent);
             _folders[parent] = Tick();
         }
 

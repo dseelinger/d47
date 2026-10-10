@@ -26,10 +26,13 @@ namespace D47.App.Tests;
 /// every message with that picture reads it ahead of the story's own; Use the default deletes it. A file that does
 /// not decode is refused and writes nothing.
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class TheCommandersPictureReplacesTheDefaultTests
 {
     private const string Picture = "ride-along.stowaway";
+
+    private static readonly string Root = Path.Combine(Path.GetTempPath(), "d47-cast-picture");
+
+    private readonly MemoryFileSystem _files = new();
 
     internal static byte[] Jpeg(int width, int height, Color colour)
     {
@@ -58,54 +61,55 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
         return stream.ToArray();
     }
 
-    private static PixelSize SizeOf(string file)
+    private PixelSize SizeOf(string file)
     {
-        using var bitmap = new Bitmap(file);
+        using var stream = _files.OpenRead(file)!;
+        using var bitmap = new Bitmap(stream);
         return bitmap.PixelSize;
     }
 
     [AvaloniaFact]
     public void ALargeJpegIsKeptAsAPngOf1024()
     {
-        var target = Path.Combine(TempFolders.Create("d47-cast-picture"), "pictures", Picture + ".png");
+        var target = Path.Combine(Root, "pictures", Picture + ".png");
         using var source = new MemoryStream(Jpeg(4000, 3000, Colors.SteelBlue));
 
-        Assert.Null(PictureImport.Save(source, "big.jpg", target));
+        Assert.Null(PictureImport.Save(_files, source, "big.jpg", target));
 
         Assert.Equal(new PixelSize(1024, 768), SizeOf(target));
-        Assert.Equal([0x89, (byte)'P', (byte)'N', (byte)'G'], File.ReadAllBytes(target).Take(4));
+        Assert.Equal([0x89, (byte)'P', (byte)'N', (byte)'G'], _files.ReadBytes(target)!.Take(4));
     }
 
     [AvaloniaFact]
     public void ATextFileNamedPngIsRefusedAndNothingIsWritten()
     {
-        var folder = Path.Combine(TempFolders.Create("d47-cast-picture"), "pictures");
+        var folder = Path.Combine(Root, "pictures");
         using var source = new MemoryStream("not a picture"u8.ToArray());
 
-        Assert.NotNull(PictureImport.Save(source, "notes.png", Path.Combine(folder, Picture + ".png")));
+        Assert.NotNull(PictureImport.Save(_files, source, "notes.png", Path.Combine(folder, Picture + ".png")));
 
-        Assert.False(Directory.Exists(folder) && Directory.EnumerateFileSystemEntries(folder).Any());
+        Assert.Empty(_files.Enumerate(Root, "*", recursive: true));
     }
 
     [AvaloniaFact]
     public void AFileOver10MbIsRefused()
     {
-        var target = Path.Combine(TempFolders.Create("d47-cast-picture"), Picture + ".png");
+        var target = Path.Combine(Root, Picture + ".png");
         using var source = new MemoryStream(new byte[PictureImport.MostBytes + 1]);
 
-        Assert.Contains("10 MB", PictureImport.Save(source, "huge.png", target), StringComparison.Ordinal);
-        Assert.False(File.Exists(target));
+        Assert.Contains("10 MB", PictureImport.Save(_files, source, "huge.png", target), StringComparison.Ordinal);
+        Assert.Null(_files.Stat(target));
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void TheMessageShowsTheCommandersPictureUntilTheDefaultIsChosen()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(TestSurface.Settings().Current.Ui.Theme);
 
         var paths = new AppPaths(TempFolders.Create("d47-cast-picture"));
-        Directory.CreateDirectory(paths.Stories);
-        var pictures = new SpeakerPictures(new DiskFileSystem(), paths);
-        File.WriteAllBytes(pictures.Default(Picture), Jpeg(300, 300, Colors.DarkOrange));
+        var pictures = new SpeakerPictures(_files, paths);
+        _files.WriteBytes(pictures.Default(Picture), Jpeg(300, 300, Colors.DarkOrange));
 
         var messages = new MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         var earlier = messages.Post("Juno", "Ride Along", "You did not see me.", DateTimeOffset.Now.AddDays(-1), picture: Picture);
@@ -113,7 +117,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
 
         using (var chosen = new MemoryStream(Jpeg(2000, 1000, Colors.SteelBlue)))
         {
-            Assert.Null(PictureImport.Save(chosen, "mine.jpg", pictures.Chosen(Picture)));
+            Assert.Null(PictureImport.Save(_files, chosen, "mine.jpg", pictures.Chosen(Picture)));
         }
 
         var view = new MessagesView(messages, new PanelNavigator(), AdventureFixture.Surface(paths) with { Pictures = pictures });
@@ -144,7 +148,7 @@ public sealed class TheCommandersPictureReplacesTheDefaultTests
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(File.Exists(pictures.Chosen(Picture)));
+        Assert.Null(_files.Stat(pictures.Chosen(Picture)));
         Assert.Equal(new PixelSize(300, 300), ShownIn(page).PixelSize);
 
         using (var frame = window.CaptureRenderedFrame()!)

@@ -214,14 +214,7 @@ public sealed class SwitchPage : DialogPage
 
         try
         {
-            var directory = Path.GetDirectoryName(_exportPath);
-
-            if (directory is not null)
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            File.WriteAllText(_exportPath, capture.Export());
+            _store.Files.WriteText(_exportPath, capture.Export());
             _walkSays.Text = $"Written to {_exportPath}.";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -31,11 +31,10 @@ public class ANoChosenVoiceIsRefusedTests
         Assert.Equal("No OpenAI voice has been chosen. Pick one in Settings.", failure.Message);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task KokoroRefusesWithNoVoice()
     {
-        using var provider = new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
+        using var provider = new KokoroTtsProvider(new MemoryFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
 
         var failure = await Assert.ThrowsAsync<TtsException>(
             () => provider.SynthesizeAsync("test", VoiceSelection.Default, TestContext.Current.CancellationToken));
@@ -43,11 +42,10 @@ public class ANoChosenVoiceIsRefusedTests
         Assert.Equal("No Kokoro voice has been chosen. Pick one in Settings.", failure.Message);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task KokoroRefusesAVoiceItDoesNotHave()
     {
-        using var provider = new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
+        using var provider = new KokoroTtsProvider(new MemoryFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
 
         var failure = await Assert.ThrowsAsync<TtsException>(() => provider.SynthesizeAsync(
             "test", new VoiceSelection("xx_nobody"), TestContext.Current.CancellationToken));

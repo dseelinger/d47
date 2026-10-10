@@ -253,6 +253,7 @@ public partial class MainWindow : Window
                 construction: Construction);
 
             // Where the hull art is read from, in the order it is searched.
+            ShipArt.Files = host.Files;
             ShipArt.Folder = host.Paths.Ships;
             ShipArt.Shipped = host.Paths.ShippedShips;
 

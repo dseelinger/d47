@@ -27,6 +27,9 @@ public interface IFileSystem
     /// <summary>Creates the file and folder when missing.</summary>
     void AppendText(string path, string contents);
 
+    /// <summary>Creates the folder and its parents; does nothing when it exists.</summary>
+    void CreateFolder(string folder);
+
     /// <summary>Removes the file; does nothing when it is missing.</summary>
     void Delete(string path);
 

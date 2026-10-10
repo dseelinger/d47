@@ -178,7 +178,7 @@ public sealed class LogbookPage : DialogPage
     {
         try
         {
-            Directory.CreateDirectory(_book.Folder.Folder);
+            _book.Folder.Files.CreateFolder(_book.Folder.Folder);
 
             Process.Start(new ProcessStartInfo
             {

@@ -6,8 +6,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
-[Trait("Category", "Integration")]
-public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
+public class ChatterboxSpeaksInYourOwnVoiceTests
 {
     private readonly ChatterboxTestFolder _folder = new();
     private readonly Engine _engine = new();
@@ -15,13 +14,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
 
     public ChatterboxSpeaksInYourOwnVoiceTests()
     {
-        _own = new OwnVoice(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _folder.Dispose();
+        _own = new OwnVoice(Path.Combine(_folder.Root, "data"), _folder.Files, new DpapiSecretProtector());
     }
 
     private sealed class Engine : IChatterboxEngine
@@ -50,7 +43,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
     }
 
     private ChatterboxTtsProvider Provider() =>
-        new(new DiskFileSystem(), _folder.Models, _folder.Voices, _folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, ChatterboxTestFolder.NoDownload, _own);
+        new(_folder.Files, _folder.Models, _folder.Voices, _folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, ChatterboxTestFolder.NoDownload, _own);
 
     private void Record() =>
         Assert.Null(_own.Save(

@@ -52,6 +52,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
         };
     }
 
+    /// <summary>The file system the pictures are found and read in.</summary>
+    public IFileSystem Files => files;
+
     /// <summary>Where the Commander's file for <paramref name="picture"/> is kept.</summary>
     public string Chosen(string picture) => Path.Combine(chosenFolder, picture + ".png");
 

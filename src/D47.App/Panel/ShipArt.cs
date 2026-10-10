@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia.Media.Imaging;
 using D47.Core.Hulls;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 
 namespace D47.App.Panel;
 
@@ -24,6 +25,7 @@ internal static class ShipArt
     /// <summary>How many meshes are held.</summary>
     internal const int MeshesHeld = 2;
 
+    private static IFileSystem _files = new DiskFileSystem();
     private static string? _folder;
     private static string? _shipped;
 
@@ -39,13 +41,23 @@ internal static class ShipArt
         }
     }
 
+    /// <summary>The file system art is read through, set once at startup.</summary>
+    internal static IFileSystem Files
+    {
+        get => _files;
+        set
+        {
+            Point(value, _folder, _shipped);
+        }
+    }
+
     /// <summary>Where art the Commander owns is read from — <c>AppPaths.Ships</c>, set once at startup.</summary>
     internal static string? Folder
     {
         get => _folder;
         set
         {
-            Point(value, _shipped);
+            Point(_files, value, _shipped);
         }
     }
 
@@ -55,7 +67,7 @@ internal static class ShipArt
         get => _shipped;
         set
         {
-            Point(_folder, value);
+            Point(_files, _folder, value);
         }
     }
 
@@ -194,11 +206,12 @@ internal static class ShipArt
         }
     }
 
-    /// <summary>Both folders at once, so setting either clears both caches exactly once.</summary>
-    private static void Point(string? folder, string? shipped)
+    /// <summary>The file system and both folders at once, so setting any of them clears the caches exactly once.</summary>
+    private static void Point(IFileSystem files, string? folder, string? shipped)
     {
         lock (Known)
         {
+            _files = files;
             _folder = folder;
             _shipped = shipped;
             Known.Clear();
@@ -253,16 +266,9 @@ internal static class ShipArt
 
             var path = Path.Combine(folder, file);
 
-            try
+            if (_files.Stat(path) is not null)
             {
-                if (File.Exists(path))
-                {
-                    return path;
-                }
-            }
-            catch (Exception)
-            {
-            // An unreadable folder is a miss, not a crash on the way to drawing a page.
+                return path;
             }
         }
 
@@ -282,7 +288,12 @@ internal static class ShipArt
         {
             // Read through a stream that is closed straight after, so a drawing being replaced on disk — a
             // look still in flux, a fetch landing — is not blocked by the app holding it.
-            using var stream = File.OpenRead(path);
+            using var stream = _files.OpenRead(path);
+
+            if (stream is null)
+            {
+                return null;
+            }
 
             return width > 0
                 ? Bitmap.DecodeToWidth(stream, width, BitmapInterpolationMode.HighQuality)
@@ -304,9 +315,9 @@ internal static class ShipArt
 
         try
         {
-            using var stream = File.OpenRead(path);
+            using var stream = _files.OpenRead(path);
 
-            return HullMesh.Read(stream);
+            return stream is null ? null : HullMesh.Read(stream);
         }
         catch (Exception)
         {

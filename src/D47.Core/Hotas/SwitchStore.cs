@@ -28,6 +28,8 @@ public sealed class SwitchStore(string path, IFileSystem files, ILogger<SwitchSt
 
     public string Path => path;
 
+    public IFileSystem Files => files;
+
     public IReadOnlyList<SwitchMapping> Switches
     {
         get

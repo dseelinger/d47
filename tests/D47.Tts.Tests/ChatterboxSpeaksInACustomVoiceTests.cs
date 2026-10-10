@@ -7,8 +7,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
-[Trait("Category", "Integration")]
-public sealed class ChatterboxSpeaksInACustomVoiceTests : IDisposable
+public sealed class ChatterboxSpeaksInACustomVoiceTests
 {
     private const string Name = "Secret Ally";
 
@@ -18,22 +17,16 @@ public sealed class ChatterboxSpeaksInACustomVoiceTests : IDisposable
 
     public ChatterboxSpeaksInACustomVoiceTests()
     {
-        File.WriteAllText(
+        _folder.Files.WriteText(
             Path.Combine(_folder.Voices, ChatterboxVoices.TableName),
             "id\tname\tgender\tlocale\trole\tsource\n"
             + "marlow\tMarlow\tfemale\ten\t\ta test clip\n"
             + "orson\tOrson\tmale\ten\t\ta test clip\n");
-        File.WriteAllBytes(
+        _folder.Files.WriteBytes(
             Path.Combine(_folder.Voices, "orson.wav"),
             WavWriter.ToBytes([.. Enumerable.Repeat(0.25f, ChatterboxVoices.SampleRate * 6)], ChatterboxVoices.SampleRate));
 
-        _custom = new CustomVoices(Path.Combine(_folder.Root, "data"), new DiskFileSystem(), new DpapiSecretProtector());
-    }
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _folder.Dispose();
+        _custom = new CustomVoices(Path.Combine(_folder.Root, "data"), _folder.Files, new DpapiSecretProtector());
     }
 
     /// <summary>Records the first sample of each reference it encodes, which tells the clips apart.</summary>
@@ -64,7 +57,7 @@ public sealed class ChatterboxSpeaksInACustomVoiceTests : IDisposable
 
     private ChatterboxTtsProvider Provider(ILogger<ChatterboxTtsProvider>? logger = null) =>
         new(
-            new DiskFileSystem(),
+            _folder.Files,
             _folder.Models,
             _folder.Voices,
             _folder.Fetched,

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -14,13 +15,13 @@ public sealed class PhonemeDictionary : IPronunciationDictionary
     public string? Lookup(string word) => _words.GetValueOrDefault(word);
 
     /// <summary>Reads the file, or answers a dictionary that knows nothing.</summary>
-    public static PhonemeDictionary Read(string path, ILogger logger)
+    public static PhonemeDictionary Read(IFileSystem files, string path, ILogger logger)
     {
         var words = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            using var document = JsonDocument.Parse(files.ReadText(path) ?? throw new FileNotFoundException("No pronunciation dictionary.", path));
 
             if (document.RootElement.TryGetProperty("en_us", out var english))
             {

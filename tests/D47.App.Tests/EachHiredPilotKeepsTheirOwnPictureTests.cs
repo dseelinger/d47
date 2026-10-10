@@ -23,9 +23,8 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
     private static (CrewPage Page, SpeakerPictures Pictures, GameStateStore Store, Window Window) Open(Action<SpeakerPictures>? before, params string[] hires)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(TestSurface.Settings().Current.Ui.Theme);
-        var paths = new AppPaths(TempFolders.Create("d47-crew-pictures"));
-        paths.EnsureCreated();
-        var pictures = new SpeakerPictures(new DiskFileSystem(), paths);
+        var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-crew-pictures"));
+        var pictures = new SpeakerPictures(new MemoryFileSystem(), paths);
         before?.Invoke(pictures);
         var store = new GameStateStore();
 
@@ -50,7 +49,7 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
     private static void Choose(SpeakerPictures pictures, string name, Color color)
     {
         using var source = new MemoryStream(TheCommandersPictureReplacesTheDefaultTests.Jpeg(200, 100, color));
-        Assert.Null(PictureImport.Save(source, "pilot.jpg", pictures.Chosen(name)));
+        Assert.Null(PictureImport.Save(pictures.Files, source, "pilot.jpg", pictures.Chosen(name)));
     }
 
     private static List<Button> Buttons(Control page, string label) =>
@@ -89,7 +88,7 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
         restore.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(File.Exists(pictures.Chosen(SpeakerPictures.Crew(2))));
+        Assert.Null(pictures.Files.Stat(pictures.Chosen(SpeakerPictures.Crew(2))));
         Assert.Empty(page.GetVisualDescendants().OfType<Image>());
         window.Close();
     }

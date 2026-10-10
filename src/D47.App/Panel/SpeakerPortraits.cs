@@ -29,16 +29,12 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
             return null;
         }
 
-        (string, DateTime) key;
-
-        try
-        {
-            key = (file, File.GetLastWriteTimeUtc(file));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        if (pictures.Files.Stat(file) is not { } state)
         {
             return null;
         }
+
+        var key = (file, state.Written);
 
         if (_decoded.TryGetValue(key, out var cached))
         {
@@ -49,7 +45,7 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
 
         try
         {
-            using var stream = File.OpenRead(file);
+            using var stream = pictures.Files.OpenRead(file) ?? throw new FileNotFoundException("The picture is gone.", file);
             return _decoded[key] = Bitmap.DecodeToWidth(stream, Size, BitmapInterpolationMode.HighQuality);
         }
         catch (Exception ex)

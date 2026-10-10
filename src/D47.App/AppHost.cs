@@ -1659,6 +1659,7 @@ public sealed class AppHost : IDisposable
         // Off unless D47_TRACE_INPUT=1 or --trace-input (#365).
         var inputTrace = Diagnostics.InputTraceWriter.Create(
             paths,
+            files,
             () => DateTimeOffset.Now,
             () => status.Current,
             () => eliteMusic.Track,
@@ -1756,6 +1757,7 @@ public sealed class AppHost : IDisposable
         // Off unless D47_COVERAGE=1.
         var coverage = D47.App.Coverage.CoverageRecorder.Create(
             paths,
+            files,
             () => DateTimeOffset.Now,
             loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
 

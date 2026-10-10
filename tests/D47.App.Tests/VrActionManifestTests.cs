@@ -1,25 +1,17 @@
 using System.Text;
 using System.Text.Json;
+using D47.Core.Storage;
 using D47.Vr;
 using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>The action manifest and its bindings, checked as files.</summary>
-[Trait("Category", "Integration")]
-public class VrActionManifestTests : IDisposable
+public class VrActionManifestTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(),
-        "d47-actions-" + Guid.NewGuid().ToString("N"));
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-actions");
 
     /// <summary>Both Oculus profiles, and that is not redundancy.</summary>
     [Theory]
@@ -29,7 +21,7 @@ public class VrActionManifestTests : IDisposable
     [InlineData("vive_controller")]
     public void EveryDeclaredProfileHasABindingFileBesideIt(string profile)
     {
-        var manifest = Read(VrActionManifest.Write(_folder));
+        var manifest = Read(VrActionManifest.Write(_files, _folder));
 
         var declared = manifest.GetProperty("default_bindings")
             .EnumerateArray()
@@ -53,7 +45,7 @@ public class VrActionManifestTests : IDisposable
     [Fact]
     public void TheBindingsOutputToTheActionTheManifestDeclares()
     {
-        var manifest = Read(VrActionManifest.Write(_folder));
+        var manifest = Read(VrActionManifest.Write(_files, _folder));
 
         var declared = manifest.GetProperty("actions").EnumerateArray()
             .Select(action => action.GetProperty("name").GetString() ?? string.Empty)
@@ -63,7 +55,7 @@ public class VrActionManifestTests : IDisposable
             new List<string> { VrActionManifest.GrabAction, VrActionManifest.BackAction },
             declared);
 
-        foreach (var file in Directory.GetFiles(_folder, "binding_*.json"))
+        foreach (var file in _files.Enumerate(_folder, "binding_*.json"))
         {
             var sources = Read(file)
                 .GetProperty("bindings")
@@ -108,8 +100,8 @@ public class VrActionManifestTests : IDisposable
     [Fact]
     public void TheApplicationManifestNamesThisProcessAndItsActions()
     {
-        var actions = VrActionManifest.Write(_folder);
-        var application = Read(VrActionManifest.WriteAppManifest(_folder, actions));
+        var actions = VrActionManifest.Write(_files, _folder);
+        var application = Read(VrActionManifest.WriteAppManifest(_files, _folder, actions));
 
         var app = application.GetProperty("applications").EnumerateArray().Single();
 
@@ -122,13 +114,11 @@ public class VrActionManifestTests : IDisposable
     [Fact]
     public void NothingIsWrittenWithAByteOrderMark()
     {
-        VrActionManifest.WriteAppManifest(_folder, VrActionManifest.Write(_folder));
+        VrActionManifest.WriteAppManifest(_files, _folder, VrActionManifest.Write(_files, _folder));
 
-        foreach (var file in Directory.GetFiles(_folder))
+        foreach (var file in _files.Enumerate(_folder, "*"))
         {
-            var head = new byte[3];
-            using var stream = File.OpenRead(file);
-            _ = stream.Read(head);
+            var head = _files.ReadBytes(file)!.Take(3);
 
             Assert.False(
                 head.SequenceEqual(Encoding.UTF8.Preamble.ToArray()),
@@ -140,13 +130,13 @@ public class VrActionManifestTests : IDisposable
     [Fact]
     public void WritingAgainOverAnExistingFolderIsFine()
     {
-        var first = VrActionManifest.Write(_folder);
-        var again = VrActionManifest.Write(_folder);
+        var first = VrActionManifest.Write(_files, _folder);
+        var again = VrActionManifest.Write(_files, _folder);
 
         Assert.Equal(first, again);
-        Assert.Equal(5, Directory.GetFiles(_folder).Length);
+        Assert.Equal(5, _files.Enumerate(_folder, "*").Count);
     }
 
-    private static JsonElement Read(string path) =>
-        JsonDocument.Parse(File.ReadAllText(path)).RootElement;
+    private JsonElement Read(string path) =>
+        JsonDocument.Parse(_files.ReadText(path)!).RootElement;
 }

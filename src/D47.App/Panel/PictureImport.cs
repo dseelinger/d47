@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media.Imaging;
+using D47.Core.Storage;
 
 namespace D47.App.Panel;
 
@@ -19,7 +20,7 @@ internal static class PictureImport
     /// writes it to <paramref name="target"/> as a PNG. Returns the reason it was refused, or null. A refused file
     /// writes nothing. Blocks on disk and decoding; call it on the pool.
     /// </summary>
-    public static string? Save(Stream source, string fileName, string target)
+    public static string? Save(IFileSystem files, Stream source, string fileName, string target)
     {
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
 
@@ -72,10 +73,9 @@ internal static class PictureImport
                     BitmapInterpolationMode.HighQuality)
                 : null;
 
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            var partial = target + ".part";
-            (scaled ?? decoded).Save(partial, new PngBitmapEncoderOptions());
-            File.Move(partial, target, overwrite: true);
+            using var png = new MemoryStream();
+            (scaled ?? decoded).Save(png, new PngBitmapEncoderOptions());
+            files.WriteBytes(target, png.ToArray());
         }
 
         return null;

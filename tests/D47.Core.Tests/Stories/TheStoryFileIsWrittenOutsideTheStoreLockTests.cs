@@ -139,6 +139,8 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 
         public void AppendText(string path, string contents) => inner.AppendText(path, contents);
 
+        public void CreateFolder(string folder) => inner.CreateFolder(folder);
+
         public void Delete(string path) => inner.Delete(path);
 
         public void Copy(string from, string to) => inner.Copy(from, to);

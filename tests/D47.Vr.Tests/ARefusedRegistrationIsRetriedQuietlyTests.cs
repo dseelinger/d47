@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
 using Xunit;
@@ -20,12 +21,12 @@ public class ARefusedRegistrationIsRetriedQuietlyTests
         {
             openVr.ManifestRefused = EVRInputError.InvalidHandle;
 
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
             Directory.Delete(folder, true);
 
             for (var again = 0; again < 99; again++)
             {
-                input.Register(folder);
+                input.Register(new DiskFileSystem(), folder);
             }
 
             Assert.False(Directory.Exists(folder));
@@ -47,16 +48,16 @@ public class ARefusedRegistrationIsRetriedQuietlyTests
         try
         {
             openVr.ManifestRefused = EVRInputError.InvalidHandle;
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
 
             openVr.ManifestRefused = EVRInputError.None;
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
 
             Assert.True(input.Ready);
             Assert.Contains(lines, line => line.Contains("Controller input is on", StringComparison.Ordinal));
 
             openVr.Calls.Clear();
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
 
             Assert.Equal(0, openVr.Count(nameof(FakeOpenVr.SetActionManifestPath)));
         }
@@ -74,12 +75,12 @@ public class ARefusedRegistrationIsRetriedQuietlyTests
         try
         {
             openVr.ManifestRefused = EVRInputError.InvalidHandle;
-            input.Register(folder);
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
+            input.Register(new DiskFileSystem(), folder);
 
             openVr.ManifestRefused = EVRInputError.NoActiveActionSet;
-            input.Register(folder);
-            input.Register(folder);
+            input.Register(new DiskFileSystem(), folder);
+            input.Register(new DiskFileSystem(), folder);
 
             Assert.Equal(
                 2,

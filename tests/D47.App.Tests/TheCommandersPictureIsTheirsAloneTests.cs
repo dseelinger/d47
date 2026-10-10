@@ -13,7 +13,6 @@ namespace D47.App.Tests;
 /// </summary>
 public sealed class TheCommandersPictureIsTheirsAloneTests
 {
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CommanderF123SeesTheirPicture()
     {
@@ -28,7 +27,6 @@ public sealed class TheCommandersPictureIsTheirsAloneTests
         Assert.Single(SpeakerPictureFixture.Pictures(panel));
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void CommanderF456DoesNotSeeF123sPicture()
     {

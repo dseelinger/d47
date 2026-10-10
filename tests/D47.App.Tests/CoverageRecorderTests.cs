@@ -15,7 +15,6 @@ namespace D47.App.Tests;
 /// The recorder is only useful if its two hooks actually fire in the running app — invoking a tool, and
 /// changing a settings row.
 /// </summary>
-[Trait("Category", "Integration")]
 public class CoverageRecorderTests
 {
     private static readonly DateTimeOffset Monday = new(2026, 8, 10, 9, 0, 0, TimeSpan.Zero);
@@ -62,7 +61,7 @@ public class CoverageRecorderTests
 
         // A second recorder over the same folder is what the next launch gets.
         var next = CoverageRecorder.Regardless(
-            probe.Paths, () => Monday, NullLogger<CoverageRecorder>.Instance);
+            probe.Paths, probe.Files, () => Monday, NullLogger<CoverageRecorder>.Instance);
 
         next.Follow(probe.Registry, probe.Settings);
 
@@ -80,7 +79,7 @@ public class CoverageRecorderTests
         probe.Recorder.Follow(probe.Registry, probe.Settings);
         probe.Recorder.Save();
 
-        var report = File.ReadAllText(probe.Recorder.ReportPath);
+        var report = probe.Files.ReadText(probe.Recorder.ReportPath)!;
 
         Assert.Contains("What you have actually exercised", report, StringComparison.Ordinal);
         Assert.Contains("probe_tool", report, StringComparison.Ordinal);
@@ -159,14 +158,13 @@ public class CoverageRecorderTests
     {
         public Probe()
         {
-            Paths = new AppPaths(TempFolders.Create("d47-coverage-tests"));
-            Paths.EnsureCreated();
+            Paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-coverage-tests"));
 
-            var store = new SettingsStore(Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+            var store = new SettingsStore(Paths, Files, NullLogger<SettingsStore>.Instance);
 
             Settings = new SettingsService(
                 store,
-                new SecretStore(Paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance),
+                new SecretStore(Paths, new PlainProtector(), Files, NullLogger<SecretStore>.Instance),
                 store.Load(),
                 NullLogger<SettingsService>.Instance);
 
@@ -233,8 +231,10 @@ public class CoverageRecorderTests
             Settings.Bind(Registry);
 
             Recorder = CoverageRecorder.Regardless(
-                Paths, () => Monday, NullLogger<CoverageRecorder>.Instance);
+                Paths, Files, () => Monday, NullLogger<CoverageRecorder>.Instance);
         }
+
+        public MemoryFileSystem Files { get; } = new();
 
         public AppPaths Paths { get; }
 

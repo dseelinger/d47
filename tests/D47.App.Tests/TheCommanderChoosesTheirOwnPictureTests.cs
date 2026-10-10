@@ -18,7 +18,6 @@ namespace D47.App.Tests;
 /// The Commander record shows the picture kept for the Commander flying and offers the buttons that replace it;
 /// before a Commander is known the buttons are disabled.
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class TheCommanderChoosesTheirOwnPictureTests
 {
     private static StandingPage Page(SpeakerPictures pictures, Func<string?> picture)
@@ -31,12 +30,12 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
 
     private static (SpeakerPictures Pictures, AppPaths Paths) Fresh()
     {
-        var paths = new AppPaths(TempFolders.Create("d47-commander-picture"));
-        paths.EnsureCreated();
-        return (new SpeakerPictures(new DiskFileSystem(), paths), paths);
+        var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-commander-picture"));
+        return (new SpeakerPictures(new MemoryFileSystem(), paths), paths);
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void WithNoFrontierIdTheButtonsAreDisabledAndSayWhy()
     {
         var (pictures, _) = Fresh();
@@ -56,13 +55,14 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
     }
 
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void TheCommandersFileShowsAndUseTheDefaultRemovesIt()
     {
         var (pictures, _) = Fresh();
         var name = SpeakerPictures.Commander("F1234");
         using (var source = new MemoryStream(TheCommandersPictureReplacesTheDefaultTests.Jpeg(300, 200, Avalonia.Media.Colors.SteelBlue)))
         {
-            Assert.Null(PictureImport.Save(source, "me.jpg", pictures.Chosen(name)));
+            Assert.Null(PictureImport.Save(pictures.Files, source, "me.jpg", pictures.Chosen(name)));
         }
 
         var page = Page(pictures, () => name);
@@ -75,7 +75,7 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
         Buttons(page).Single(button => Equals(button.Content, "Use the default")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(File.Exists(pictures.Chosen(name)));
+        Assert.Null(pictures.Files.Stat(pictures.Chosen(name)));
         Assert.Empty(page.GetVisualDescendants().OfType<Image>());
         window.Close();
     }
@@ -86,7 +86,7 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
         var (pictures, _) = Fresh();
         using (var source = new MemoryStream(TheCommandersPictureReplacesTheDefaultTests.Jpeg(100, 100, Avalonia.Media.Colors.SteelBlue)))
         {
-            Assert.Null(PictureImport.Save(source, "me.jpg", pictures.Chosen(SpeakerPictures.Commander("F1"))));
+            Assert.Null(PictureImport.Save(pictures.Files, source, "me.jpg", pictures.Chosen(SpeakerPictures.Commander("F1"))));
         }
 
         Assert.NotNull(pictures.Find(SpeakerPictures.Commander("F1")));
@@ -101,9 +101,9 @@ public sealed class TheCommanderChoosesTheirOwnPictureTests
         using var huge = new MemoryStream(new byte[PictureImport.MostBytes + 1]);
         using var text = new MemoryStream("not a picture"u8.ToArray());
 
-        Assert.NotNull(PictureImport.Save(huge, "huge.png", pictures.Chosen(name)));
-        Assert.NotNull(PictureImport.Save(text, "notes.png", pictures.Chosen(name)));
-        Assert.False(File.Exists(pictures.Chosen(name)));
+        Assert.NotNull(PictureImport.Save(pictures.Files, huge, "huge.png", pictures.Chosen(name)));
+        Assert.NotNull(PictureImport.Save(pictures.Files, text, "notes.png", pictures.Chosen(name)));
+        Assert.Null(pictures.Files.Stat(pictures.Chosen(name)));
         Assert.Null(pictures.Find(name));
     }
 }

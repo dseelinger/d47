@@ -6,8 +6,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
-[Trait("Category", "Integration")]
-public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisposable
+public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests
 {
     /// <summary>Records the first sample of each reference clip it encodes, which tells the clips apart.</summary>
     private sealed class Engine : IChatterboxEngine
@@ -71,7 +70,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
     {
         _download = (url, _, _) => Task.FromResult(Wren);
 
-        File.WriteAllText(
+        _folder.Files.WriteText(
             Path.Combine(_folder.Voices, ChatterboxCatalog.TableName),
             "id\tname\tgender\tlocale\tpitch\tpace\trole\tsource\tsha256\tbytes\n"
             + $"marlow\tMarlow\tfemale\ten\tmid\teven\tShipAi\ta test clip\t{new string('0', 64)}\t1\n"
@@ -82,7 +81,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
 
     private ChatterboxTtsProvider Provider() =>
         new(
-            new DiskFileSystem(),
+            _folder.Files,
             _folder.Models,
             _folder.Voices,
             _folder.Fetched,
@@ -128,14 +127,13 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
 
         Assert.Empty(_asked);
         Assert.Equal([0f], _engine.Encoded);
-        Assert.False(Directory.Exists(_folder.Fetched));
+        Assert.Empty(_folder.Files.Enumerate(_folder.Fetched, "*"));
     }
 
     [Fact]
     public async Task AMatchingClipInTheDataFolderIsUsedWithNoFetch()
     {
-        Directory.CreateDirectory(_folder.Fetched);
-        File.WriteAllBytes(WrenClip, Wren);
+        _folder.Files.WriteBytes(WrenClip, Wren);
         using var provider = Provider();
 
         await Say(provider, "wren");
@@ -149,8 +147,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
     {
         var tampered = (byte[])Wren.Clone();
         tampered[^1] ^= 0x7f;
-        Directory.CreateDirectory(_folder.Fetched);
-        File.WriteAllBytes(WrenClip, tampered);
+        _folder.Files.WriteBytes(WrenClip, tampered);
         using var provider = Provider();
 
         await Say(provider, "wren");
@@ -158,14 +155,13 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
         Assert.Equal(
             new Uri("https://github.com/dseelinger/d47/releases/download/chatterbox-voices-1/wren.wav"),
             Assert.Single(_asked));
-        Assert.Equal(Wren, File.ReadAllBytes(WrenClip));
+        Assert.Equal(Wren, _folder.Files.ReadBytes(WrenClip));
     }
 
     [Fact]
     public async Task AFileWithNoRowIsNeverLoaded()
     {
-        Directory.CreateDirectory(_folder.Fetched);
-        File.WriteAllBytes(Path.Combine(_folder.Fetched, "stranger.wav"), Wren);
+        _folder.Files.WriteBytes(Path.Combine(_folder.Fetched, "stranger.wav"), Wren);
         using var provider = Provider();
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
@@ -185,7 +181,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
         await Say(provider, "wren");
 
         Assert.Single(_asked);
-        Assert.Equal(Wren, File.ReadAllBytes(WrenClip));
+        Assert.Equal(Wren, _folder.Files.ReadBytes(WrenClip));
         Assert.Equal([WrenSample], _engine.Encoded);
     }
 
@@ -235,8 +231,8 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
 
         Assert.False(await provider.FetchAsync("wren", TestContext.Current.CancellationToken));
 
-        Assert.False(File.Exists(WrenClip));
-        Assert.Empty(Directory.Exists(_folder.Fetched) ? Directory.GetFiles(_folder.Fetched) : []);
+        Assert.Null(_folder.Files.Stat(WrenClip));
+        Assert.Empty(_folder.Files.Enumerate(_folder.Fetched, "*"));
     }
 
     [Fact]
@@ -249,6 +245,4 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
 
         Assert.Empty(_asked);
     }
-
-    public void Dispose() => _folder.Dispose();
 }

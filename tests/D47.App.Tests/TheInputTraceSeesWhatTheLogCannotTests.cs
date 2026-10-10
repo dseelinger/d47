@@ -4,19 +4,20 @@ using D47.App.Input;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>The input trace, driven through the real injector with the capture stubbed.</summary>
-[Trait("Category", "Integration")]
 public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 {
     private static readonly DateTimeOffset Noon = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-input-traces", Guid.NewGuid().ToString("N"));
+    private readonly MemoryFileSystem _files = new();
+
+    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-input-traces");
 
     public void Dispose()
     {
@@ -24,11 +25,6 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 
         // The switch is process-wide state, so it is put back.
         InputTraceWriter.ReadCommandLine([]);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
     }
 
     private sealed class FakeElite : IEliteWindow
@@ -44,7 +40,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     }
 
     /// <summary>A capture that writes a byte, or refuses with a sentence.</summary>
-    private sealed class StubCapture(string? refusal = null) : IWindowCapture
+    private sealed class StubCapture(IFileSystem files, string? refusal = null) : IWindowCapture
     {
         public List<string> Asked { get; } = [];
 
@@ -57,7 +53,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
                 return refusal;
             }
 
-            File.WriteAllBytes(path, [0x89, 0x50, 0x4E, 0x47]);
+            files.WriteBytes(path, [0x89, 0x50, 0x4E, 0x47]);
             return null;
         }
 
@@ -71,6 +67,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         Func<DateTimeOffset>? now = null) =>
         InputTraceWriter.Regardless(
             _folder,
+            _files,
             now ?? (() => Noon),
             () => new GameStatus { Flags = StatusFlags.InMainShip, GuiFocus = focus, ReadAt = Noon },
             () => music,
@@ -92,15 +89,19 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     /// <summary>Every line of a trace, in the order it was written.</summary>
     private IReadOnlyList<JsonElement> Lines()
     {
-        var folder = Assert.Single(Directory.GetDirectories(_folder));
+        var trace = Assert.Single(_files.Enumerate(_folder, "trace.jsonl", recursive: true));
 
         return
         [
-            .. File.ReadAllLines(Path.Combine(folder, "trace.jsonl"))
+            .. _files.ReadText(trace)!.Split(Environment.NewLine)
                 .Where(line => line.Length > 0)
                 .Select(line => JsonDocument.Parse(line).RootElement.Clone()),
         ];
     }
+
+    /// <summary>The one sequence folder a test's trace wrote.</summary>
+    private string TraceFolder() =>
+        Path.GetDirectoryName(Assert.Single(_files.Enumerate(_folder, "trace.jsonl", recursive: true)))!;
 
     private static string? Text(JsonElement line, string field) =>
         line.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.String
@@ -118,7 +119,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task EveryStepIsALineWithItsInstantForegroundFocusAndMusic()
     {
-        var writer = Writer(new StubCapture());
+        var writer = Writer(new StubCapture(_files));
         var injector = Injector(writer);
 
         var trace = injector.Trace("galaxy-map-plot");
@@ -158,7 +159,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task StillsAreWrittenAtTheMarkedStepsAndNowhereElse()
     {
-        var capture = new StubCapture();
+        var capture = new StubCapture(_files);
         var writer = Writer(capture);
         var injector = Injector(writer);
 
@@ -167,8 +168,8 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         writer.Dispose();
         injector.Dispose();
 
-        var folder = Assert.Single(Directory.GetDirectories(_folder));
-        var stills = Directory.GetFiles(folder, "*.png").Select(Path.GetFileName).ToList();
+        var folder = TraceFolder();
+        var stills = _files.Enumerate(folder, "*.png").Select(Path.GetFileName).ToList();
 
         Assert.Equal(2, stills.Count);
         Assert.Contains(stills, name => name!.EndsWith("after-the-walk.png", StringComparison.Ordinal));
@@ -185,7 +186,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task ASecondSequenceKeepsTheFirstOnesStills()
     {
-        var capture = new StubCapture();
+        var capture = new StubCapture(_files);
         var writer = Writer(capture);
         var injector = Injector(writer);
 
@@ -201,8 +202,8 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         writer.Dispose();
         injector.Dispose();
 
-        var folder = Assert.Single(Directory.GetDirectories(_folder));
-        var stills = Directory.GetFiles(folder, "*.png").Select(Path.GetFileName).ToList();
+        var folder = TraceFolder();
+        var stills = _files.Enumerate(folder, "*.png").Select(Path.GetFileName).ToList();
 
         Assert.Equal(4, stills.Count);
         Assert.Equal(4, stills.Distinct(StringComparer.Ordinal).Count());
@@ -224,7 +225,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     public async Task AStillSaysWhenItWasTakenAndHowLongItTook()
     {
         var ticks = 0;
-        var writer = Writer(new StubCapture(), now: () => Noon.AddSeconds(ticks++));
+        var writer = Writer(new StubCapture(_files), now: () => Noon.AddSeconds(ticks++));
         var injector = Injector(writer);
 
         await injector.SendAsync(Marked(), TestContext.Current.CancellationToken);
@@ -252,7 +253,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task ACaptureThatFailsIsALineRatherThanAFailedSequence()
     {
-        var writer = Writer(new StubCapture("Windows Graphics Capture is not available on this machine"));
+        var writer = Writer(new StubCapture(_files, "Windows Graphics Capture is not available on this machine"));
         var injector = Injector(writer);
 
         var result = await injector.SendAsync(Marked(), TestContext.Current.CancellationToken);
@@ -262,9 +263,9 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 
         Assert.True(result.Sent);
 
-        var folder = Assert.Single(Directory.GetDirectories(_folder));
+        var folder = TraceFolder();
 
-        Assert.Empty(Directory.GetFiles(folder, "*.png"));
+        Assert.Empty(_files.Enumerate(folder, "*.png"));
 
         var marked = Of(Lines(), "step").Where(line => Text(line, "mark") is not null).ToList();
 
@@ -282,7 +283,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task ACancelledSequenceLeavesATraceNamingTheStepItReached()
     {
-        var writer = Writer(new StubCapture());
+        var writer = Writer(new StubCapture(_files));
         var injector = Injector(writer);
 
         var trace = injector.Trace("galaxy-map-plot");
@@ -309,7 +310,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     [Fact]
     public async Task ASequenceWithNoTraceOfItsOwnIsStillWrittenDown()
     {
-        var writer = Writer(new StubCapture());
+        var writer = Writer(new StubCapture(_files));
         var injector = Injector(writer);
 
         await injector.SendAsync(Marked(), TestContext.Current.CancellationToken);
@@ -341,6 +342,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     /// row exists for it anywhere on the settings surface.
     /// </summary>
     [Fact]
+    [Trait("Category", "Integration")]
     public void TheFlagIsNotASettingAndHasNoRow()
     {
         InputTraceWriter.ReadCommandLine(["--trace-input"]);
@@ -373,12 +375,12 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         InputTraceWriter.ReadCommandLine(["--trace-input"]);
 
         var paths = new D47.Core.AppPaths(_folder);
-        paths.EnsureCreated();
 
         // The real composition path, so what is asserted is where a run actually writes rather than a second
         // copy of the same string.
         using var writer = InputTraceWriter.Create(
             paths,
+            _files,
             () => Noon,
             () => GameStatus.Unknown,
             () => null,

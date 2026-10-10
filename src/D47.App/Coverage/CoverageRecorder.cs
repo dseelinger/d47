@@ -3,6 +3,7 @@ using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Coverage;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Coverage;
@@ -20,6 +21,7 @@ public sealed class CoverageRecorder
 
     private readonly string _file;
     private readonly string _reportFile;
+    private readonly IFileSystem _files;
     private readonly Func<DateTimeOffset> _now;
     private readonly ILogger<CoverageRecorder> _logger;
     private readonly CoverageLedger _ledger;
@@ -28,12 +30,14 @@ public sealed class CoverageRecorder
 
     private CoverageRecorder(
         AppPaths paths,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         ILogger<CoverageRecorder> logger,
         CoverageLedger ledger)
     {
         _file = Path.Combine(paths.Data, "coverage.json");
         _reportFile = Path.Combine(paths.Data, "coverage.md");
+        _files = files;
         _now = now;
         _logger = logger;
         _ledger = ledger;
@@ -52,6 +56,7 @@ public sealed class CoverageRecorder
     /// </summary>
     public static CoverageRecorder? Create(
         AppPaths paths,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         ILogger<CoverageRecorder> logger)
     {
@@ -63,7 +68,7 @@ public sealed class CoverageRecorder
         logger.LogInformation(
             "Coverage recording is on; {File}", Path.Combine(paths.Data, "coverage.json"));
 
-        return Regardless(paths, now, logger);
+        return Regardless(paths, files, now, logger);
     }
 
     /// <summary>
@@ -72,12 +77,13 @@ public sealed class CoverageRecorder
     /// </summary>
     internal static CoverageRecorder Regardless(
         AppPaths paths,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         ILogger<CoverageRecorder> logger)
     {
         var file = Path.Combine(paths.Data, "coverage.json");
 
-        return new CoverageRecorder(paths, now, logger, Load(file, logger));
+        return new CoverageRecorder(paths, files, now, logger, Load(files, file, logger));
     }
 
     /// <summary>Takes the inventory and starts listening.</summary>
@@ -113,11 +119,11 @@ public sealed class CoverageRecorder
         {
             if (_ledger.Dirty)
             {
-                File.WriteAllText(_file, JsonSerializer.Serialize(_ledger.Marks, Json));
+                _files.WriteText(_file, JsonSerializer.Serialize(_ledger.Marks, Json));
                 _ledger.Saved();
             }
 
-            File.WriteAllText(_reportFile, Report().ToMarkdown(_now()));
+            _files.WriteText(_reportFile, Report().ToMarkdown(_now()));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -150,14 +156,13 @@ public sealed class CoverageRecorder
         }
     }
 
-    private static CoverageLedger Load(string file, ILogger logger)
+    private static CoverageLedger Load(IFileSystem files, string file, ILogger logger)
     {
         try
         {
-            if (File.Exists(file))
+            if (files.ReadText(file) is { } json)
             {
-                var marks = JsonSerializer.Deserialize<Dictionary<string, CoverageMark>>(
-                    File.ReadAllText(file));
+                var marks = JsonSerializer.Deserialize<Dictionary<string, CoverageMark>>(json);
 
                 if (marks is not null)
                 {

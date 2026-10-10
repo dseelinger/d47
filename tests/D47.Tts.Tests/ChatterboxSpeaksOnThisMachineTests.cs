@@ -5,7 +5,6 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
-[Trait("Category", "Integration")]
 public class ChatterboxSpeaksOnThisMachineTests
 {
     private sealed class CountingEngine : IChatterboxEngine
@@ -39,12 +38,12 @@ public class ChatterboxSpeaksOnThisMachineTests
     }
 
     private static ChatterboxTtsProvider Provider(ChatterboxTestFolder folder, CountingEngine engine) =>
-        new(new DiskFileSystem(), folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true, ChatterboxTestFolder.NoDownload);
+        new(folder.Files, folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true, ChatterboxTestFolder.NoDownload);
 
     [Fact]
     public async Task ALineComesBackInTheStandardFormatWithNoKey()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         var engine = new CountingEngine();
         using var provider = Provider(folder, engine);
 
@@ -60,7 +59,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public async Task TheEncoderRunsOncePerVoiceAcrossTwoLines()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         var engine = new CountingEngine();
         using var provider = Provider(folder, engine);
 
@@ -74,9 +73,9 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public async Task NotInstalledItListsNoVoicesAndNamesTheSize()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         using var provider = new ChatterboxTtsProvider(
-            new DiskFileSystem(),
+            folder.Files,
             folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance);
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
@@ -89,7 +88,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public async Task InstalledItListsTheShippedVoices()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         using var provider = Provider(folder, new CountingEngine());
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);
@@ -100,7 +99,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public void ItPerformsTheTagsInTheTokenizerAndNoOthers()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         using var provider = Provider(folder, new CountingEngine());
 
         Assert.True(provider.Performs("laugh"));
@@ -112,7 +111,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public void ItHasNoPhonemes()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         ITtsProvider provider = Provider(folder, new CountingEngine());
 
         Assert.Null(provider.Phonemes("hi", new VoiceSelection("marlow")));
@@ -122,7 +121,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public async Task AnUnknownVoiceIsRefused()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         using var provider = Provider(folder, new CountingEngine());
 
         await Assert.ThrowsAsync<TtsException>(() => provider.SynthesizeAsync("hi", new VoiceSelection("nobody"), TestContext.Current.CancellationToken));
@@ -131,8 +130,8 @@ public class ChatterboxSpeaksOnThisMachineTests
     [Fact]
     public void ATagIsOneTokenAndTheTemplateEndsTheLine()
     {
-        using var folder = new ChatterboxTestFolder();
-        var tokeniser = ChatterboxTokeniser.Load(Path.Combine(folder.Models, "tokenizer.json"));
+        var folder = new ChatterboxTestFolder();
+        var tokeniser = ChatterboxTokeniser.Load(folder.Files, Path.Combine(folder.Models, "tokenizer.json"));
 
         Assert.Equal([5, 4, 50275, 6, 50256, 50256], tokeniser.Encode("hi [Laugh] hi"));
         Assert.Equal(["sigh", "laugh"], tokeniser.Tags);

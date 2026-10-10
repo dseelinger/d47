@@ -4,6 +4,7 @@ using System.Text.Json;
 using D47.Core;
 using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Diagnostics;
@@ -46,6 +47,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
     public const int StillWidth = 960;
 
     private readonly string _folder;
+    private readonly IFileSystem _files;
     private readonly Func<DateTimeOffset> _now;
     private readonly Func<GameStatus> _status;
     private readonly Func<string?> _music;
@@ -57,6 +59,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
 
     private InputTraceWriter(
         string folder,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         Func<GameStatus> status,
         Func<string?> music,
@@ -64,6 +67,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
         ILogger logger)
     {
         _folder = folder;
+        _files = files;
         _now = now;
         _status = status;
         _music = music;
@@ -88,6 +92,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
     /// </summary>
     public static InputTraceWriter? Create(
         AppPaths paths,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         Func<GameStatus> status,
         Func<string?> music,
@@ -108,7 +113,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
             "Input tracing is on; every injected sequence writes a folder under {Folder}",
             folder);
 
-        return new InputTraceWriter(folder, now, status, music, capture, logger);
+        return new InputTraceWriter(folder, files, now, status, music, capture, logger);
     }
 
     /// <summary>
@@ -117,12 +122,13 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
     /// </summary>
     internal static InputTraceWriter Regardless(
         string folder,
+        IFileSystem files,
         Func<DateTimeOffset> now,
         Func<GameStatus> status,
         Func<string?> music,
         IWindowCapture? capture,
         ILogger logger) =>
-        new(folder, now, status, music, capture, logger);
+        new(folder, files, now, status, music, capture, logger);
 
     /// <summary>Where the traces of this run are, for a log line and for a test to read.</summary>
     public string Folder => _folder;
@@ -255,7 +261,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
         {
             try
             {
-                Directory.CreateDirectory(line.Folder);
+                _files.CreateFolder(line.Folder);
 
                 var fields = new List<(string Name, object? Value)>(line.Fields.Count + 4)
                 {
@@ -284,7 +290,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
                     fields.Add(("stillError", refused));
                 }
 
-                File.AppendAllText(
+                _files.AppendText(
                     Path.Combine(line.Folder, "trace.jsonl"),
                     Render(fields) + Environment.NewLine);
             }

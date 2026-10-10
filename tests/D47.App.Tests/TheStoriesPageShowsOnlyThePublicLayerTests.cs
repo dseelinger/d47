@@ -175,17 +175,17 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         surface.Window.Close();
     }
 
-    private static void WriteSquare(string path)
+    private static void WriteSquare(IFileSystem files, string path)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-
         var square = new Border { Width = 64, Height = 64, Background = Avalonia.Media.Brushes.Goldenrod };
         square.Measure(new Avalonia.Size(64, 64));
         square.Arrange(new Avalonia.Rect(0, 0, 64, 64));
 
         using var bitmap = new RenderTargetBitmap(new Avalonia.PixelSize(64, 64));
         bitmap.Render(square);
-        bitmap.Save(path, new PngBitmapEncoderOptions());
+        using var png = new MemoryStream();
+        bitmap.Save(png, new PngBitmapEncoderOptions());
+        files.WriteBytes(path, png.ToArray());
     }
 
     private static List<Image> CastStrip(PanelView panel) =>
@@ -198,13 +198,13 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
-        var paths = new AppPaths(TempFolders.Create("d47-cast-strip"));
-        var pictures = new SpeakerPictures(new DiskFileSystem(), paths);
+        var paths = new AppPaths(Path.Combine(Path.GetTempPath(), "d47-cast-strip"));
+        var pictures = new SpeakerPictures(new MemoryFileSystem(), paths);
         var id = StoryFixture.Story.Id;
 
-        WriteSquare(pictures.Default($"{id}.ren"));
-        WriteSquare(pictures.Default($"{id}.cray.for-woman"));
-        WriteSquare(pictures.Chosen($"{id}.ila"));
+        WriteSquare(pictures.Files, pictures.Default($"{id}.ren"));
+        WriteSquare(pictures.Files, pictures.Default($"{id}.cray.for-woman"));
+        WriteSquare(pictures.Files, pictures.Chosen($"{id}.ila"));
 
         var card = StoryFixture.Story with
         {

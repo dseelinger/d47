@@ -48,7 +48,7 @@ public sealed class PictureChooser : StackPanel
         {
             try
             {
-                using var bytes = new MemoryStream(File.ReadAllBytes(file));
+                using var bytes = new MemoryStream(pictures.Files.ReadBytes(file) ?? throw new FileNotFoundException("The picture is gone.", file));
                 holder.Children.Add(new Image
                 {
                     Source = new Bitmap(bytes),
@@ -94,7 +94,7 @@ public sealed class PictureChooser : StackPanel
             {
                 await using var stream = await picked[0].OpenReadAsync();
                 var name = picked[0].Name;
-                refusal = await Task.Run(() => PictureImport.Save(stream, name, pictures.Chosen(picture!)));
+                refusal = await Task.Run(() => PictureImport.Save(pictures.Files, stream, name, pictures.Chosen(picture!)));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

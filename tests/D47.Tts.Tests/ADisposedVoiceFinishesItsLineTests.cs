@@ -78,14 +78,13 @@ public class ADisposedVoiceFinishesItsLineTests
         Assert.Equal(1, freed);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADisposedChatterboxOpensNoEngine()
     {
-        using var folder = new ChatterboxTestFolder();
+        var folder = new ChatterboxTestFolder();
         var opened = 0;
         var provider = new ChatterboxTtsProvider(
-            new DiskFileSystem(),
+            folder.Files,
             folder.Models,
             folder.Voices,
             folder.Fetched,

@@ -29,6 +29,7 @@ public sealed class VrHost : IDisposable
     private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
     private readonly D47.Core.AppPaths _paths;
+    private readonly D47.Core.Storage.IFileSystem _files;
 
     private int _pending;
     private bool _disposed;
@@ -87,6 +88,7 @@ public sealed class VrHost : IDisposable
         SteamVrRuntime runtime,
         VrLifecycle lifecycle,
         D47.Core.AppPaths paths,
+        D47.Core.Storage.IFileSystem files,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -98,6 +100,7 @@ public sealed class VrHost : IDisposable
         _runtime = runtime;
         _lifecycle = lifecycle;
         _paths = paths;
+        _files = files;
         _logger = logger;
     }
 
@@ -198,7 +201,7 @@ public sealed class VrHost : IDisposable
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
-            settings, viewState, panel, captions, layer, runtime, lifecycle, paths,
+            settings, viewState, panel, captions, layer, runtime, lifecycle, paths, files,
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
@@ -477,7 +480,7 @@ public sealed class VrHost : IDisposable
                 {
                     // Here rather than inside the runtime: this is the real application, and only the real
                     // application may claim the d47 application key with SteamVR.
-                    _runtime.Actions.Register(_paths.VrActions);
+                    _runtime.Actions.Register(_files, _paths.VrActions);
                 }
 
                 RestIfNeverPlaced();

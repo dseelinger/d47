@@ -1,5 +1,5 @@
-using System.Text;
 using System.Text.Json;
+using D47.Core.Storage;
 
 namespace D47.Vr;
 
@@ -25,27 +25,24 @@ public static class VrActionManifest
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     /// <summary>Where the action manifest ended up, having written it and its bindings.</summary>
-    public static string Write(string folder)
+    public static string Write(IFileSystem files, string folder)
     {
-        Directory.CreateDirectory(folder);
-
         foreach (var profile in Profiles)
         {
-            WriteFile(Path.Combine(folder, BindingFile(profile)), Binding(profile));
+            WriteFile(files, Path.Combine(folder, BindingFile(profile)), Binding(profile));
         }
 
         var manifest = Path.Combine(folder, "actions.json");
-        WriteFile(manifest, Actions());
+        WriteFile(files, manifest, Actions());
         return manifest;
     }
 
     /// <summary>A throwaway <c>.vrmanifest</c> naming this process, written beside the action manifest.</summary>
-    public static string WriteAppManifest(string folder, string actionManifest)
+    public static string WriteAppManifest(IFileSystem files, string folder, string actionManifest)
     {
-        Directory.CreateDirectory(folder);
         var path = Path.Combine(folder, "d47.vrmanifest");
 
-        WriteFile(path, new
+        WriteFile(files, path, new
         {
             source = "builtin",
             applications = new[]
@@ -134,7 +131,6 @@ public static class VrActionManifest
 
     private static string BindingFile(string profile) => $"binding_{profile}.json";
 
-    /// <summary>UTF-8 without a byte-order mark.</summary>
-    private static void WriteFile(string path, object content) =>
-        File.WriteAllText(path, JsonSerializer.Serialize(content, Json), new UTF8Encoding(false));
+    private static void WriteFile(IFileSystem files, string path, object content) =>
+        files.WriteText(path, JsonSerializer.Serialize(content, Json));
 }

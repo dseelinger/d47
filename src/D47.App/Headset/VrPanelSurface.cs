@@ -526,9 +526,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         try
         {
-            rendered.Save(
-                Path.Combine(folder, $"vr-{Surface}.png"),
-                new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+            VrFrameDump.Save(rendered, Path.Combine(folder, $"vr-{Surface}.png"));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

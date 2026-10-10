@@ -12,7 +12,6 @@ namespace D47.Tts.Tests;
 /// Every refusal that tells the Commander to change something in Settings names the row it means, and the row
 /// is one the settings page places (#952).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AFailureThatSaysSettingsNamesItsRowTests
 {
     public enum Entry
@@ -65,7 +64,7 @@ public class AFailureThatSaysSettingsNamesItsRowTests
             VoiceSelection.Default,
             SpeechCapability.VoiceKey),
         ["kokoro no voice"] = (
-            () => new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance),
+            () => new KokoroTtsProvider(new MemoryFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance),
             VoiceSelection.Default,
             SpeechCapability.LocalVoiceKey),
         ["chatterbox not downloaded"] = (
@@ -84,10 +83,10 @@ public class AFailureThatSaysSettingsNamesItsRowTests
 
     private static ChatterboxTtsProvider Chatterbox(bool installed)
     {
-        var folder = Path.Combine(Path.GetTempPath(), "d47-chatterbox-" + Guid.NewGuid().ToString("N"));
+        var folder = Path.Combine(Path.GetTempPath(), "d47-chatterbox");
 
         return new ChatterboxTtsProvider(
-            new DiskFileSystem(),
+            new MemoryFileSystem(),
             folder,
             folder,
             folder,

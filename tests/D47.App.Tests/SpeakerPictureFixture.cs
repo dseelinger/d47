@@ -12,17 +12,17 @@ using D47.Core.Interface;
 
 namespace D47.App.Tests;
 
-/// <summary>A Conversation page with speaker pictures, over a data folder and a build folder of its own.</summary>
+/// <summary>A Conversation page with speaker pictures, over a data folder and a build folder of its own, in memory.</summary>
 internal sealed class SpeakerPictureFixture
 {
     public SpeakerPictureFixture(string name)
     {
-        var root = TempFolders.Create(name);
+        var root = Path.Combine(Path.GetTempPath(), name);
         Paths = new AppPaths(root, Path.Combine(root, "build"));
-        Paths.EnsureCreated();
-        Directory.CreateDirectory(Paths.ShippedPortraits);
-        Portraits = new SpeakerPortraits(new SpeakerPictures(new DiskFileSystem(), Paths));
+        Portraits = new SpeakerPortraits(new SpeakerPictures(Files, Paths));
     }
+
+    public MemoryFileSystem Files { get; } = new();
 
     public AppPaths Paths { get; }
 
@@ -32,14 +32,11 @@ internal sealed class SpeakerPictureFixture
 
     /// <summary>Writes a shipped portrait, <c>portraits\&lt;picture&gt;.jpg</c>.</summary>
     public void Ship(string picture, Color colour) =>
-        File.WriteAllBytes(Path.Combine(Paths.ShippedPortraits, picture + ".jpg"), Encoded(colour, jpeg: true));
+        Files.WriteBytes(Path.Combine(Paths.ShippedPortraits, picture + ".jpg"), Encoded(colour, jpeg: true));
 
     /// <summary>Writes the Commander's own file, <c>data\pictures\&lt;picture&gt;.png</c>.</summary>
-    public void Choose(string picture, Color colour)
-    {
-        Directory.CreateDirectory(Paths.Pictures);
-        File.WriteAllBytes(Path.Combine(Paths.Pictures, picture + ".png"), Encoded(colour, jpeg: false));
-    }
+    public void Choose(string picture, Color colour) =>
+        Files.WriteBytes(Path.Combine(Paths.Pictures, picture + ".png"), Encoded(colour, jpeg: false));
 
     public (Window Window, PanelView Panel) Open(double width = 900, double height = 700)
     {

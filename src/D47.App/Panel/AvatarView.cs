@@ -318,7 +318,7 @@ public sealed class AvatarView : UserControl
 
     private IReadOnlyList<Bitmap> LoadCustom(LoopState state)
     {
-        if (_library?.For(state) is not { Count: > 0 } files)
+        if (_library is null || _library.For(state) is not { Count: > 0 } files)
         {
             return [];
         }
@@ -329,7 +329,12 @@ public sealed class AvatarView : UserControl
         {
             try
             {
-                loaded.Add(new Bitmap(file));
+                using var stream = _library.Files.OpenRead(file);
+
+                if (stream is not null)
+                {
+                    loaded.Add(new Bitmap(stream));
+                }
             }
             catch (Exception)
             {

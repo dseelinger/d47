@@ -539,7 +539,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         lock (_load)
         {
             return _tokeniser ??= ChatterboxTokeniser.Load(
-                ChatterboxAssets.Destination(_modelFolder, ChatterboxAssets.Tokenizer));
+                _files, ChatterboxAssets.Destination(_modelFolder, ChatterboxAssets.Tokenizer));
         }
     }
 
@@ -607,7 +607,6 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         var id = voice.Voice.Id;
         var url = ChatterboxCatalog.Url(voice)!;
-        var partial = voice.ClipPath + ".part";
 
         try
         {
@@ -623,9 +622,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 throw new InvalidDataException("the clip that arrived does not match its size and SHA-256 in catalog.tsv");
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(voice.ClipPath)!);
-            await File.WriteAllBytesAsync(partial, clip).ConfigureAwait(false);
-            File.Move(partial, voice.ClipPath, overwrite: true);
+            _files.WriteBytes(voice.ClipPath, clip);
 
             lock (_clips)
             {
@@ -649,15 +646,6 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             if (first)
             {
                 _logger.LogWarning("Chatterbox voice {Id} could not be fetched from {Url}: {Reason}", id, url, ex.Message);
-            }
-
-            try
-            {
-                File.Delete(partial);
-            }
-            catch (Exception)
-            {
-                // A leftover .part is never read.
             }
 
             return false;

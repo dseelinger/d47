@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using D47.Core.Stories;
 using D47.Core.Interface;
+using D47.Core.Storage;
 
 namespace D47.App.Panel;
 
@@ -14,7 +15,7 @@ internal static class CastStrip
 {
     public const int Size = 44;
 
-    private static readonly ConcurrentDictionary<(string Path, DateTime Written), Bitmap> Cache = new();
+    private static readonly ConcurrentDictionary<(IFileSystem Files, string Path, DateTime Written), Bitmap> Cache = new();
 
     /// <summary>The strip for <paramref name="pictures"/> as <paramref name="gender"/> meets them, or null when none is on disk.</summary>
     public static Control? For(StoryCard card, string? gender, SpeakerPictures? pictures)
@@ -28,7 +29,7 @@ internal static class CastStrip
 
         foreach (var file in card.PicturesFor(gender).Select(pictures.Find).OfType<string>())
         {
-            if (Thumbnail(file) is { } bitmap)
+            if (Thumbnail(pictures.Files, file) is { } bitmap)
             {
                 strip.Children.Add(new Image { Source = bitmap, Width = Size, Height = Size, Stretch = Stretch.UniformToFill });
             }
@@ -43,19 +44,24 @@ internal static class CastStrip
         return strip;
     }
 
-    private static Bitmap? Thumbnail(string file)
+    private static Bitmap? Thumbnail(IFileSystem files, string file)
     {
         try
         {
-            var key = (file, File.GetLastWriteTimeUtc(file));
+            if (files.Stat(file) is not { } state)
+            {
+                return null;
+            }
+
+            var key = (files, file, state.Written);
 
             if (Cache.TryGetValue(key, out var cached))
             {
                 return cached;
             }
 
-            using var stream = File.OpenRead(file);
-            return Cache[key] = Bitmap.DecodeToWidth(stream, Size);
+            using var stream = files.OpenRead(file);
+            return stream is null ? null : Cache[key] = Bitmap.DecodeToWidth(stream, Size);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
         {

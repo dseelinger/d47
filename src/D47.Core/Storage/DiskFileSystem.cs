@@ -121,6 +121,8 @@ public sealed class DiskFileSystem : IFileSystem
         File.AppendAllText(path, contents);
     }
 
+    public void CreateFolder(string folder) => Directory.CreateDirectory(folder);
+
     public void Delete(string path)
     {
         try
