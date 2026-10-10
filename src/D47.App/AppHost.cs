@@ -2250,6 +2250,7 @@ public sealed class AppHost : IDisposable
                         transcriber.Model,
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => binds.Current,
+                    Controllers = () => services.SampledControllers.Poll(),
                     InstalledModels = () => models.Installed(),
                     KeyStored = secrets.Has,
 

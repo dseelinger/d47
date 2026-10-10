@@ -274,20 +274,21 @@ Warning: CapsLock is also bound in Elite (KeyboardMouseOnly) to HeadLookToggle. 
 will not work, and neither will say so — pick another key for one of them.
 ```
 
-**And the same for a stick button, with one difference that matters.** Elite records a joystick
-binding against its own name for the device, which is not the one Directive 47 reads — so when a
-button of that number is bound in Elite, it cannot tell you whether that is the same stick or a
-different one on your desk. It says so in those words rather than pretending to be sure:
+**And the same for a stick button, checked against that controller only.** Elite names a
+controller by its vendor and product ids, and Directive 47 reads the same ids from the controller
+the button is on, so a binding on another stick on your desk is not reported. Two cases stay
+uncertain, and it says so. If the controller is not connected, every controller is checked. If
+Windows shows the controller as several devices, as a WinWing throttle does, Elite's binding names
+one of them, and Directive 47 cannot tell which one the button is on:
 
 ```text
-Warning: button 7 on the Virpil Alpha may collide. Elite (Custom) binds a button of that number
-to SelectTarget, and I cannot tell whether that is the same controller. If the microphone will
-not open, this is the first thing to check.
+Warning: button 9 may collide. Windows shows that controller as 4 devices, and Elite (Custom)
+binds a button of that number on one of them to ShipSpotLightToggle. I cannot tell whether it is
+the device the button is on. If the microphone will not open, this is the first thing to check.
 ```
 
-Finding **nothing** is the stronger answer of the two, and is said plainly: no button of that
-number is bound anywhere in your preset, on any device, so there is nothing left to be unsure
-about.
+When **nothing** is found, it says so plainly: no button of that number is bound on that
+controller in your preset.
 
 **Your bindings are never written to.** Directive 47 only ever reads them.
 

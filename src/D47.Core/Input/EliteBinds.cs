@@ -1,4 +1,5 @@
 ﻿using System.Xml.Linq;
+using D47.Core.Hotas;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +34,17 @@ public sealed record EliteBinding(string Action, string Slot, string Device, str
     /// </summary>
     public static string Friendly(string key) =>
         key.StartsWith("Key_", StringComparison.OrdinalIgnoreCase) ? key[4..] : key;
+}
+
+/// <summary>What Elite binds to one controller button.</summary>
+/// <param name="Interfaces">
+/// How many interfaces Windows shows for the button's controller: 0 when the controller was not found and
+/// every device was searched, 1 when the bindings are certainly on this button. Above 1, Elite's
+/// <c>DeviceIndex</c> picks one of them and cannot be matched to the one the button is on.
+/// </param>
+public sealed record ButtonSharing(IReadOnlyList<EliteBinding> Bindings, int Interfaces)
+{
+    public bool Certain => Interfaces == 1;
 }
 
 /// <summary>The Commander's control bindings, parsed.</summary>
@@ -80,6 +92,24 @@ public sealed record EliteBinds
             && string.Equals(binding.Key, name, StringComparison.OrdinalIgnoreCase)
             && (device is not { Length: > 0 }
                 || string.Equals(binding.Device, device, StringComparison.OrdinalIgnoreCase)))];
+    }
+
+    /// <summary>
+    /// What Elite binds to a button of this number on the controller the button is on, found among
+    /// <paramref name="readings"/>. Every device is searched when the controller is not among them.
+    /// </summary>
+    public ButtonSharing SharingButton(HotasButton button, IReadOnlyList<HotasReading> readings)
+    {
+        if (readings.FirstOrDefault(reading => reading.Id == button.DeviceId) is not { } controller)
+        {
+            return new ButtonSharing(UsingJoystickButton(button.Button), Interfaces: 0);
+        }
+
+        var device = $"{controller.VendorId:X4}{controller.ProductId:X4}";
+        var interfaces = readings.Count(reading =>
+            reading.VendorId == controller.VendorId && reading.ProductId == controller.ProductId);
+
+        return new ButtonSharing(UsingJoystickButton(button.Button, device), interfaces);
     }
 
     /// <summary>

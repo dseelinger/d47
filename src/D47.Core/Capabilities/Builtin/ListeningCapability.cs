@@ -95,6 +95,9 @@ public static class ListeningCapability
         /// <summary>The Commander's Elite bindings, for the double-bind check.</summary>
         public required Func<EliteBinds> Binds { get; init; }
 
+        /// <summary>The controllers as last read, to find the device a stick button is on.</summary>
+        public Func<IReadOnlyList<Hotas.HotasReading>>? Controllers { get; init; }
+
         /// <summary>Which speech models are already on disk, so the row can mark them.</summary>
         public required Func<IReadOnlyList<string>> InstalledModels { get; init; }
 
@@ -1077,19 +1080,27 @@ public static class ListeningCapability
             return null;
         }
 
-        var sharing = binds.UsingJoystickButton(button.Button);
+        var sharing = binds.SharingButton(button, surface.Controllers?.Invoke() ?? []);
 
-        if (sharing.Count == 0)
+        if (sharing.Bindings.Count == 0)
         {
             return null;
         }
 
-        var actions = string.Join(", ", sharing.Select(binding => binding.Action).Distinct());
+        var actions = string.Join(", ", sharing.Bindings.Select(binding => binding.Action).Distinct());
 
-        return
-            $"Warning: {button.Describe()} may collide. Elite ({binds.PresetName}) binds a button of "
-            + $"that number to {actions}, and I cannot tell whether that is the same controller. "
-            + "If the microphone will not open, this is the first thing to check.";
+        return sharing.Interfaces switch
+        {
+            0 => $"Warning: {button.Describe()} may collide. Elite ({binds.PresetName}) binds a button of "
+                 + $"that number to {actions}, and I cannot tell whether that is the same controller. "
+                 + "If the microphone will not open, this is the first thing to check.",
+            1 => $"Warning: Elite ({binds.PresetName}) also binds {button.Describe()} on that controller to "
+                 + $"{actions}. One of the two will not work.",
+            var interfaces => $"Warning: {button.Describe()} may collide. Windows shows that controller as "
+                              + $"{interfaces} devices, and Elite ({binds.PresetName}) binds a button of that "
+                              + $"number on one of them to {actions}. I cannot tell whether it is the device "
+                              + "the button is on. If the microphone will not open, this is the first thing to check.",
+        };
     }
 
     /// <summary>The button collision or its all-clear, for the detailed inventory.</summary>
@@ -1112,8 +1123,9 @@ public static class ListeningCapability
 
         if (binds.IsKnown)
         {
-            yield return
-                $"No Elite binding uses a button of that number in the {binds.PresetName} preset.";
+            yield return binds.SharingButton(button, surface.Controllers?.Invoke() ?? []).Interfaces > 0
+                ? $"No Elite binding uses a button of that number on that controller in the {binds.PresetName} preset."
+                : $"No Elite binding uses a button of that number in the {binds.PresetName} preset.";
         }
     }
 

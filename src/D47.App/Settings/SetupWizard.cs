@@ -664,11 +664,21 @@ public sealed class SetupWizard : ModalDialog
             bind: () => _ = CaptureAsync(ListeningCapability.PushToTalkButtonKey, message),
             clear: () => Choose(Choices with { TalkButton = null })));
 
-        if (button is { } held && binds.IsKnown && binds.UsingJoystickButton(held.Button) is { Count: > 0 } sharing)
+        if (button is { } held
+            && binds.IsKnown
+            && binds.SharingButton(held, _switches?.Reader.Poll() ?? []) is { Bindings.Count: > 0 } sharing)
         {
-            stick.Children.Add(Warning(
-                $"Elite ({binds.PresetName}) binds a button of that number to {Actions(sharing)}. "
-                + "If it is the same controller, one of the two will not work."));
+            var actions = Actions(sharing.Bindings);
+
+            stick.Children.Add(Warning(sharing.Interfaces switch
+            {
+                0 => $"Elite ({binds.PresetName}) binds a button of that number to {actions}. "
+                     + "If it is the same controller, one of the two will not work.",
+                1 => $"Elite ({binds.PresetName}) also binds this button to {actions}. One of the two will not work.",
+                var interfaces => $"Windows shows this controller as {interfaces} devices, and Elite "
+                                  + $"({binds.PresetName}) binds a button of that number on one of them to {actions}. "
+                                  + "If it is the device this button is on, one of the two will not work.",
+            }));
         }
 
         stack.Children.Add(stick);
