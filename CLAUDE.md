@@ -42,6 +42,7 @@ dotnet test tests/D47.App.Tests --filter "Category=Gate"               # App gat
 
 During issue work, run area-filtered unit tests (each under a second), the integration tests the
 change affects, and the gate filters. An unfiltered `D47.App.Tests` run is part of the release gate.
+When fixing a failing test, never weaken it: deleting it, skipping it, loosening an assertion or widening a tolerance ships the defect. If the test makes a wrong claim, name the claim and say why it is wrong before changing it. A test that fails in a larger run and passes alone is shared state or ordering; report it, do not call it green.
 A unit test does not cross a process boundary or touch the file system; an integration test does either. Integration tests carry `[Trait("Category", "Integration")]`; `Category=Gate` tests count as integration.
 
 - SDK pinned by `global.json` to `10.0.400`, `rollForward: disable` — exact, because the suite

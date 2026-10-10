@@ -52,6 +52,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch
 - The script refuses a dirty tree, a branch other than main, or HEAD different from origin/main.
   Report the refusal; do not commit, stash or push to get past it. `/deck pre-release` is the step
   that pushes.
+- A refusal because the suite failed (`The suite failed. Nothing dispatched.`) is reported with the
+  failing tests named. This session does not fix them.
 
 ## Anything else
 

@@ -107,7 +107,7 @@ dotnet test tests/D47.App.Tests --filter "FullyQualifiedName~<Area>&Category!=In
 An integration test is affected when the code it reaches across the boundary is code the diff
 changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do not run a whole test project unfiltered, and never
 `dotnet test d47.slnx`: the whole suite, `D47.App.Tests` included, is the release gate and runs
-in `/pre-release` and `tools/release.ps1`.
+in `tools/release.ps1`, not in `/pre-release`.
 
 Before committing, also run the gate tests. They check the whole tree against a list or a rule — a
 journal event dispatched on must be in `HandledEvents.ActedOn`, `AppHost.cs` call sites are
