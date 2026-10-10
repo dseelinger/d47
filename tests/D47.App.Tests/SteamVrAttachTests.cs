@@ -70,6 +70,7 @@ public class SteamVrAttachTests
 }
 
 /// <summary>Attaching to a session that is actually there.</summary>
+[Trait("Category", "Integration")]
 public class SteamVrLiveTests
 {
     /// <summary>
@@ -132,7 +133,6 @@ public class SteamVrLiveTests
     /// image, it is wider than the 640-pixel desktop mirror a VR player often runs, and it is not blank. The
     /// picture of the screen is the same image cut to its lens crop and fitted to the caps.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheEyeImageIsReadAtRenderResolution()
     {
@@ -304,7 +304,6 @@ public class SteamVrLiveTests
     }
 
     /// <summary>The manifest the installed runtime actually parses, and the handles it hands back.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheActionManifestLoadsAndEveryHandleResolves()
     {
