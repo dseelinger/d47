@@ -26,8 +26,8 @@ public static class KokoroAssets
 
     public const string DictionaryRepository = "lookbe/open-phonemizer-onnx";
 
-    /// <summary>Voices never cast automatically to a core, the carrier captain, the tower or the Narrator.</summary>
-    public static readonly IReadOnlyList<string> NotCast = ["af_nicole"];
+    /// <summary>Voices of any provider never cast automatically to a core, the carrier captain, the tower or the Narrator.</summary>
+    public static readonly IReadOnlyList<string> NotCast = ["af_nicole", "en-GB-MaisieNeural", "en-US-AnaNeural"];
 
     /// <summary>Whether a voice id may be cast automatically.</summary>
     public static bool IsCastable(string? voiceId) =>

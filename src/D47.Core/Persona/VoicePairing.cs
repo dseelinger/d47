@@ -166,8 +166,8 @@ public static class VoicePairing
     }
 
     /// <summary>
-    /// The first non-empty of: female British voices with "calm" in the name or description, female British
-    /// voices, female voices. Empty when no voice is labelled female.
+    /// The first non-empty of: Edge's Sonia, female British voices with "calm" in the name or description,
+    /// female British voices, female voices. Empty when no voice is labelled female.
     /// </summary>
     private static VoiceInfo[] CovasCandidates(IReadOnlyList<VoiceInfo> free)
     {
@@ -177,6 +177,7 @@ public static class VoicePairing
 
         return new[]
         {
+            free.Where(voice => string.Equals(voice.Id, LocalVoiceStandIn.EdgeVoice, StringComparison.OrdinalIgnoreCase)).ToArray(),
             britishWomen.Where(voice => IsCalm(voice.Name) || IsCalm(voice.Description)).ToArray(),
             britishWomen,
             women,

@@ -1,4 +1,4 @@
-using D47.Core.Audio;
+﻿using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Catalog;
 using D47.Core.Configuration;
@@ -149,7 +149,7 @@ public sealed class VoicePairer
     /// <summary>Gives a new voice, once, to any core whose automatic pairing is a voice that is never cast.</summary>
     private async Task RepairNotCastVoicesAsync()
     {
-        if (_settings.Current.Persona.NotCastVoicesChecked)
+        if (_settings.Current.Persona is { NotCastVoicesChecked: true, ChildVoicesChecked: true })
         {
             return;
         }
@@ -166,6 +166,7 @@ public sealed class VoicePairer
             {
                 Voices = repair.Voices,
                 NotCastVoicesChecked = repair.Complete,
+                ChildVoicesChecked = repair.Complete,
                 PairedVoices = VoicePairing.WithPairingsRecorded(current.Persona.PairedVoices, before, repair.Voices),
             },
         });
