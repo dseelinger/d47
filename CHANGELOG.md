@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The setup wizard skips the Listening and Talk button steps on a machine with no microphone, and its Ready step shows Listening as "No microphone found". The listening settings are saved as they were. Set listening and push-to-talk in Settings once a microphone is plugged in.
+
 A test drive no longer opens with the unknown-settings-keys message or the "is available" update band. The unknown-keys message is also no longer spoken at startup. A settings file d47 refuses still shows its error, and the update check from the Version row still works. An installed build behaves as before.
 
 On a first launch, d47 says nothing until the setup wizard closes. Before, a fuel warning and "I have no language model right now" were spoken over the wizard. Lines that come up meanwhile are dropped, not said afterwards, and d47 no longer announces the missing language model once the wizard has been shown, whether you pressed START, skipped the key or closed it. A launch that does not open the wizard speaks as before.

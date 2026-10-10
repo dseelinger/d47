@@ -123,12 +123,12 @@ public static class FirstRun
     };
 
     /// <summary>The keys the choices need, each secret once, in the order of the slots that use them.</summary>
-    public static IReadOnlyList<SetupKey> Keys(SettingsService settings, SetupChoices choices)
+    public static IReadOnlyList<SetupKey> Keys(SettingsService settings, SetupChoices choices, bool microphone = true)
     {
         var draft = Draft(settings, choices);
         var keys = new List<SetupKey>();
 
-        foreach (var slot in Slots)
+        foreach (var slot in SlotsFor(microphone))
         {
             if (SecretFor(slot, choices) is not { } secret)
             {
@@ -161,12 +161,16 @@ public static class FirstRun
         return keys;
     }
 
+    /// <summary>The slots the setup asks about; Listening only where a microphone exists.</summary>
+    public static IReadOnlyList<SetupSlot> SlotsFor(bool microphone) =>
+        microphone ? Slots : [.. Slots.Where(slot => slot != SetupSlot.Listening)];
+
     /// <summary>The choices as they will be saved: a slot whose key is not stored takes its free choice.</summary>
-    public static SetupChoices Effective(SetupChoices choices, Func<string, bool> hasSecret)
+    public static SetupChoices Effective(SetupChoices choices, Func<string, bool> hasSecret, bool microphone = true)
     {
         var effective = choices;
 
-        foreach (var slot in Slots)
+        foreach (var slot in SlotsFor(microphone))
         {
             if (SecretFor(slot, choices) is { } secret && !hasSecret(secret))
             {
@@ -197,6 +201,10 @@ public static class FirstRun
         return draft;
     }
 
+    private static bool IsListeningKey(string key) =>
+        key is ListeningCapability.ProviderKey or ListeningCapability.PushToTalkKeyKey
+            or ListeningCapability.PushToTalkButtonKey or ListeningCapability.ModeKey;
+
     private static (string Key, string? Value)[] Changes(SetupChoices choices) =>
     [
         (ConversationCapability.ProviderKey, choices.Conversation),
@@ -219,11 +227,12 @@ public static class FirstRun
     public static IReadOnlyList<EgressEntry> Destinations(
         SettingsService settings,
         SetupChoices choices,
-        Func<string, bool>? hasSecret = null)
+        Func<string, bool>? hasSecret = null,
+        bool microphone = true)
     {
         hasSecret ??= name => settings.HasSecret(name);
 
-        var effective = Effective(choices, hasSecret);
+        var effective = Effective(choices, hasSecret, microphone);
         var draft = Draft(settings, effective);
         var llmKey = SecretFor(SetupSlot.Conversation, effective) is { } secret && hasSecret(secret);
 
@@ -232,12 +241,13 @@ public static class FirstRun
             .Where(entry => entry.Active)];
     }
 
-    /// <summary>Saves the effective choices, providers first, and returns any setting that refused.</summary>
-    public static IReadOnlyList<SettingApplyResult> Apply(SettingsService settings, SetupChoices choices)
+    /// <summary>Saves the effective choices, providers first, and returns any setting that refused. Without a microphone the listening settings are left as they are.</summary>
+    public static IReadOnlyList<SettingApplyResult> Apply(SettingsService settings, SetupChoices choices, bool microphone = true)
     {
-        var effective = Effective(choices, name => settings.HasSecret(name));
+        var effective = Effective(choices, name => settings.HasSecret(name), microphone);
 
         return [.. Changes(effective)
+            .Where(change => microphone || !IsListeningKey(change.Key))
             .Select(change => settings.Apply(change.Key, change.Value, SettingsCaller.Panel))
             .Where(result => !result.Ok)];
     }

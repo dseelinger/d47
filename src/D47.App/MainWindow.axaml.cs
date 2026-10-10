@@ -636,7 +636,8 @@ public partial class MainWindow : Window
                 RevealSetting(PrivacyCapability.Id);
             },
             localVoice: host.Speech.LocalVoiceToFetch,
-            logger: host.Loggers.CreateLogger<SetupWizard>()).Over(this);
+            logger: host.Loggers.CreateLogger<SetupWizard>(),
+            hasMicrophone: () => host.Microphone.Devices().Count > 0).Over(this);
     }
 
     /// <summary>Window-scoped gestures, matched against the bound settings.</summary>

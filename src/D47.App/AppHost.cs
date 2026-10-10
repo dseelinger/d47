@@ -150,6 +150,7 @@ public sealed class AppHost : IDisposable
         LlmAvailability = llmAvailability;
         Spend = spend;
         Speech = speech;
+        Microphone = microphone;
         Pairing = pairing;
         Speech.NameAccents.Ask = (names, accents, token) => VoicePairing.AskAccentsAsync(
             names,
@@ -412,6 +413,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>What removes d47's own voice from what the microphone hears (Phase 13).</summary>
     public EchoCanceller Echo { get; }
+
+    /// <summary>The capture endpoints.</summary>
+    public WasapiMicrophone Microphone { get; }
 
     /// <summary>Hearing: the microphone, the transcribers, push-to-talk and the wake word.</summary>
     public Listener Listener { get; }

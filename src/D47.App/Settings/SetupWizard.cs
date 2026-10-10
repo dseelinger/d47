@@ -59,6 +59,7 @@ public sealed class SetupWizard : ModalDialog
     private readonly SwitchEditing? _switches;
     private readonly Action? _openPrivacy;
     private readonly Func<string, LocalVoiceDownload?>? _localVoice;
+    private readonly bool _microphone;
 
     /// <summary>Kept across redraws, because a stick capture reports into it while it runs.</summary>
     private readonly StatusLine _message = new();
@@ -83,7 +84,8 @@ public sealed class SetupWizard : ModalDialog
         SwitchEditing? switches = null,
         Action? openPrivacy = null,
         Func<string, LocalVoiceDownload?>? localVoice = null,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        Func<bool>? hasMicrophone = null)
     {
         _logger = logger ?? NullLogger.Instance;
         _settings = settings;
@@ -91,6 +93,7 @@ public sealed class SetupWizard : ModalDialog
         _switches = switches;
         _openPrivacy = openPrivacy;
         _localVoice = localVoice;
+        _microphone = hasMicrophone?.Invoke() ?? true;
 
         Title = "Set up Directive 47";
         Width = Modal.Width;
@@ -112,7 +115,7 @@ public sealed class SetupWizard : ModalDialog
     public bool IsDownloading { get; private set; }
 
     /// <summary>The keys the current choices need.</summary>
-    public IReadOnlyList<SetupKey> Keys => FirstRun.Keys(_settings, Choices);
+    public IReadOnlyList<SetupKey> Keys => FirstRun.Keys(_settings, Choices, _microphone);
 
     /// <summary>Shows a step.</summary>
     public void Go(Step step)
@@ -197,7 +200,7 @@ public sealed class SetupWizard : ModalDialog
     {
         CancelCapture();
 
-        _refused = FirstRun.Apply(_settings, Choices);
+        _refused = FirstRun.Apply(_settings, Choices, _microphone);
 
         if (_refused.Count > 0)
         {
@@ -344,11 +347,25 @@ public sealed class SetupWizard : ModalDialog
         Content = Modal.Build("Set up · Downloading", $"Downloading {voice.Name}", stack, buttons);
     }
 
-    private Step Following(Step step) =>
-        step == Step.Listening && Keys.Count == 0 ? Step.TalkButton : step + 1;
+    private Step Following(Step step)
+    {
+        if (!_microphone)
+        {
+            return step == Step.Voice && Keys.Count > 0 ? Step.Keys : Step.Ready;
+        }
 
-    private Step Previous(Step step) =>
-        step == Step.TalkButton && Keys.Count == 0 ? Step.Listening : step - 1;
+        return step == Step.Listening && Keys.Count == 0 ? Step.TalkButton : step + 1;
+    }
+
+    private Step Previous(Step step)
+    {
+        if (!_microphone)
+        {
+            return step == Step.Ready && Keys.Count > 0 ? Step.Keys : Step.Voice;
+        }
+
+        return step == Step.TalkButton && Keys.Count == 0 ? Step.Listening : step - 1;
+    }
 
     private static string Label(Step step) => step switch
     {
@@ -386,7 +403,7 @@ public sealed class SetupWizard : ModalDialog
         var stack = Stack();
 
         stack.Children.Add(Lead(
-            "D47 reads the journal Elite writes and answers you out loud. Five short choices set it up."));
+            $"D47 reads the journal Elite writes and answers you out loud. {(_microphone ? "Five" : "Three")} short choices set it up."));
 
         var list = new StackPanel { Spacing = Gaps.Tile };
 
@@ -913,7 +930,7 @@ public sealed class SetupWizard : ModalDialog
     {
         var stack = Stack();
         var hasSecret = (string name) => _settings.HasSecret(name);
-        var effective = FirstRun.Effective(Choices, hasSecret);
+        var effective = FirstRun.Effective(Choices, hasSecret, _microphone);
 
         stack.Children.Add(Lead("Check your choices and what they send. Select one to change it."));
 
@@ -937,6 +954,12 @@ public sealed class SetupWizard : ModalDialog
 
         foreach (var slot in FirstRun.Slots)
         {
+            if (slot == SetupSlot.Listening && !_microphone)
+            {
+                grid.Children.Add(SummaryTile("Listening", "No microphone found", null, Step.Listening, enabled: false));
+                continue;
+            }
+
             var chosen = Options(slot).FirstOrDefault(option => option.Id == Choices.For(slot));
             var saved = Options(slot).FirstOrDefault(option => option.Id == effective.For(slot));
             var note = chosen is not null && saved is not null && chosen.Id != saved.Id
@@ -955,13 +978,17 @@ public sealed class SetupWizard : ModalDialog
                 }));
         }
 
-        grid.Children.Add(SummaryTile("Talk button", TalkSummary(), null, Step.TalkButton));
+        if (_microphone)
+        {
+            grid.Children.Add(SummaryTile("Talk button", TalkSummary(), null, Step.TalkButton));
+        }
+
         stack.Children.Add(grid);
 
         var egress = new StackPanel { Name = "SetupEgress" };
         egress.Children.Add(Head("What leaves this machine", null));
 
-        foreach (var entry in FirstRun.Destinations(_settings, Choices))
+        foreach (var entry in FirstRun.Destinations(_settings, Choices, microphone: _microphone))
         {
             var name = Chrome(DestinationName(entry), ThemeManager.WhiteKey);
             var where = Mono(entry.Destination);
@@ -1045,7 +1072,7 @@ public sealed class SetupWizard : ModalDialog
         return $"{string.Join(" or ", parts)} · {mode}";
     }
 
-    private Button SummaryTile(string label, string value, string? note, Step step)
+    private Button SummaryTile(string label, string value, string? note, Step step, bool enabled = true)
     {
         var words = new StackPanel { Spacing = 4 };
         words.Children.Add(ListRow.Sub(new TextBlock { Text = label }));
@@ -1065,9 +1092,10 @@ public sealed class SetupWizard : ModalDialog
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Stretch,
+            IsEnabled = enabled,
         });
 
-        AutomationProperties.SetName(tile, $"{label}: {value}. Change it.");
+        AutomationProperties.SetName(tile, enabled ? $"{label}: {value}. Change it." : $"{label}: {value}.");
         tile.Click += (_, _) => Go(step);
 
         return tile;
