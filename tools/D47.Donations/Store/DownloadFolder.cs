@@ -41,7 +41,7 @@ public sealed class DownloadFolder(string folder)
         Directory.CreateDirectory(Folder);
 
         var path = Path.Combine(Folder, key.ZipName);
-        var pending = path + AtomicFile.PendingSuffix;
+        var pending = path + DiskFileSystem.PendingSuffix;
 
         using (var file = File.Create(pending))
         using (var zip = new ZipArchive(file, ZipArchiveMode.Create))

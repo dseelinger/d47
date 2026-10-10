@@ -42,5 +42,5 @@ public sealed class UtilityState
     }
 
     public void Write(string path) =>
-        AtomicFile.WriteAllText(path, JsonSerializer.Serialize(this, Format));
+        new DiskFileSystem().WriteText(path, JsonSerializer.Serialize(this, Format));
 }

@@ -100,7 +100,7 @@ public sealed class KitStore(string path, IFileSystem files, ILogger<KitStore> l
     }
 
     /// <summary>
-    /// Writes every Commander's kit through <see cref="AtomicFile"/>, and keeps what it wrote so <see
+    /// Writes every Commander's kit through <see cref="IFileSystem"/>, and keeps what it wrote so <see
     /// cref="For"/> answers with it afterwards.
     /// </summary>
     public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)

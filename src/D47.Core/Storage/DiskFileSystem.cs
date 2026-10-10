@@ -1,9 +1,15 @@
+using System.Text;
+
 namespace D47.Core.Storage;
 
 /// <summary>The file system on disk. Reads share the file with writers and deleters, so a file Elite or an editor holds open still reads.</summary>
 public sealed class DiskFileSystem : IFileSystem
 {
+    public const string PendingSuffix = ".writing";
+
     private const FileShare Shared = FileShare.ReadWrite | FileShare.Delete;
+
+    private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     public FileState? Stat(string path)
     {
@@ -74,7 +80,15 @@ public sealed class DiskFileSystem : IFileSystem
         }
     }
 
-    public void WriteText(string path, string contents) => AtomicFile.WriteAllText(path, contents);
+    /// <summary>Writes to a ".writing" sibling, then moves it over the target, which is atomic on NTFS.</summary>
+    public void WriteText(string path, string contents)
+    {
+        CreateFolderOf(path);
+
+        var pending = path + PendingSuffix;
+        File.WriteAllText(pending, contents, Utf8NoBom);
+        File.Move(pending, path, overwrite: true);
+    }
 
     public void AppendText(string path, string contents)
     {

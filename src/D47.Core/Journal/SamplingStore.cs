@@ -68,7 +68,7 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
         }
     }
 
-    /// <summary>Writes every Commander's state through <see cref="AtomicFile"/>.</summary>
+    /// <summary>Writes every Commander's state through <see cref="IFileSystem"/>.</summary>
     public void Save(IEnumerable<CommanderGameState> commanders)
     {
         var document = new Document

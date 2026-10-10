@@ -107,7 +107,7 @@ public sealed class LoadoutStore(string path, IFileSystem files, ILogger<Loadout
     }
 
     /// <summary>
-    /// Writes every Commander's ships through <see cref="AtomicFile"/>, and keeps what it wrote so <see
+    /// Writes every Commander's ships through <see cref="IFileSystem"/>, and keeps what it wrote so <see
     /// cref="For"/> and <see cref="All"/> answer with it afterwards. A Commander whose loadouts are not
     /// <see cref="ShipLoadouts.IsWhole"/> is written over the ships the file held, less the ones they
     /// forgot, rather than in place of them (#475).

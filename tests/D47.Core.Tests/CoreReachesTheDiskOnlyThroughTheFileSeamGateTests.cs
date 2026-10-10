@@ -6,8 +6,8 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>
-/// A type in Core names <c>File</c>, <c>Directory</c>, <c>FileStream</c>, <c>FileInfo</c>, <c>DirectoryInfo</c> or
-/// <c>AtomicFile</c> only when it is listed here; every other type reaches the disk through <c>IFileSystem</c>.
+/// A type in Core names <c>File</c>, <c>Directory</c>, <c>FileStream</c>, <c>FileInfo</c>, <c>DirectoryInfo</c>
+/// only when it is listed here; every other type reaches the disk through <c>IFileSystem</c>.
 /// </summary>
 [Trait("Category", "Gate")]
 public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
@@ -20,14 +20,12 @@ public sealed class CoreReachesTheDiskOnlyThroughTheFileSeamGateTests
     private static readonly HashSet<string> Banned =
     [
         "System.IO.File", "System.IO.Directory", "System.IO.FileStream", "System.IO.FileInfo", "System.IO.DirectoryInfo",
-        "D47.Core.Storage.AtomicFile",
     ];
 
     /// <summary>The types that are the disk, and stay listed.</summary>
     private static readonly string[] Disk =
     [
         "D47.Core.AppPaths",
-        "D47.Core.Storage.AtomicFile",
         "D47.Core.Storage.DiskFileSystem",
     ];
 

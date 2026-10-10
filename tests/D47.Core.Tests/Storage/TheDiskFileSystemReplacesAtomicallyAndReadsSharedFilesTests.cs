@@ -28,8 +28,21 @@ public sealed class TheDiskFileSystemReplacesAtomicallyAndReadsSharedFilesTests 
         _files.WriteText(path, "new");
 
         Assert.Equal("new", _files.ReadText(path));
-        Assert.False(File.Exists(path + AtomicFile.PendingSuffix));
+        Assert.False(File.Exists(path + DiskFileSystem.PendingSuffix));
         Assert.Equal([path], _files.Enumerate(Path.Combine(_folder, "nested"), "*"));
+    }
+
+    [Fact]
+    public void AnAbandonedPendingFileDoesNotBlockTheNextWrite()
+    {
+        var path = Path.Combine(_folder, "thing.json");
+        _files.WriteText(path, "intact");
+        File.WriteAllText(path + DiskFileSystem.PendingSuffix, "half-written");
+
+        _files.WriteText(path, "recovered");
+
+        Assert.Equal("recovered", _files.ReadText(path));
+        Assert.False(File.Exists(path + DiskFileSystem.PendingSuffix));
     }
 
     [Fact]

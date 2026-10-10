@@ -305,7 +305,7 @@ public sealed class RecordingLog
             Recorded = row.When,
         });
 
-        AtomicFile.WriteAllText(file, JsonSerializer.Serialize(entries, Json));
+        new DiskFileSystem().WriteText(file, JsonSerializer.Serialize(entries, Json));
     }
 
     private long KeptBytes()
@@ -354,7 +354,7 @@ public sealed class RecordingLog
     {
         try
         {
-            AtomicFile.WriteAllText(
+            new DiskFileSystem().WriteText(
                 Path.Combine(_folder, IndexFileName),
                 JsonSerializer.Serialize(_rows, Json));
         }

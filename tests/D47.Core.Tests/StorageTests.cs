@@ -6,50 +6,6 @@ using Xunit;
 namespace D47.Core.Tests;
 
 [Trait("Category", "Integration")]
-public class AtomicFileTests
-{
-    [Fact]
-    public void WriteLeavesNoPendingSibling()
-    {
-        using var install = new TempInstall();
-        var target = Path.Combine(install.Root, "thing.json");
-
-        AtomicFile.WriteAllText(target, "{}");
-
-        Assert.True(File.Exists(target));
-        Assert.False(File.Exists(target + AtomicFile.PendingSuffix));
-    }
-
-    [Fact]
-    public void WriteOverExistingFileReplacesIt()
-    {
-        using var install = new TempInstall();
-        var target = Path.Combine(install.Root, "thing.json");
-
-        AtomicFile.WriteAllText(target, "first");
-        AtomicFile.WriteAllText(target, "second");
-
-        Assert.Equal("second", File.ReadAllText(target));
-    }
-
-    [Fact]
-    public void AbandonedPendingFileDoesNotBlockTheNextWrite()
-    {
-        using var install = new TempInstall();
-        var target = Path.Combine(install.Root, "thing.json");
-
-        // What a crash mid-write leaves behind.
-        File.WriteAllText(target + AtomicFile.PendingSuffix, "half-written");
-        File.WriteAllText(target, "intact");
-
-        AtomicFile.WriteAllText(target, "recovered");
-
-        Assert.Equal("recovered", File.ReadAllText(target));
-        Assert.False(File.Exists(target + AtomicFile.PendingSuffix));
-    }
-}
-
-[Trait("Category", "Integration")]
 public class SettingsStoreTests
 {
     private static SettingsStore StoreFor(TempInstall install) =>
