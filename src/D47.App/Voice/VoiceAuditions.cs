@@ -50,7 +50,7 @@ internal sealed class VoiceAuditions
 
         if (!_auditions.TryGetValue(key, out var clip))
         {
-            if (_speech.ClientFor(provider.Id) is ChatterboxTtsProvider chatterbox
+            if (LocalVoiceWithEdgeStandIn.Unwrapped(_speech.ClientFor(provider.Id)) is ChatterboxTtsProvider chatterbox
                 && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
             {
                 throw new InvalidOperationException(
@@ -144,7 +144,7 @@ internal sealed class VoiceAuditions
         // A Chatterbox voice whose clip cannot be fetched is not synthesised and cached under its name.
         if (source is GuardianVoiceTest.Source.Synthesize
             && !_auditions.ContainsKey(auditionKey)
-            && _speech.ClientFor(providerInfo.Id) is ChatterboxTtsProvider chatterbox
+            && LocalVoiceWithEdgeStandIn.Unwrapped(_speech.ClientFor(providerInfo.Id)) is ChatterboxTtsProvider chatterbox
             && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
         {
             source = GuardianVoiceTest.Source.StandIn;

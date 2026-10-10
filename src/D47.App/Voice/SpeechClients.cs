@@ -58,6 +58,10 @@ public sealed class SpeechClients : IDisposable
         _crewSeats = crewSeats;
         NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger);
 
+        D47.Core.Speech.LocalVoiceStandIn.Installed = id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+            ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
+            : D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder());
+
         voice.SpeakerFor = Speaker;
         voice.PinnedFor = CastClient;
         voice.CastVoiceFailed = (key, reason) => _castVoiceFailures[key] = reason;
@@ -147,7 +151,7 @@ public sealed class SpeechClients : IDisposable
         D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
             : $"Not downloaded. About {D47.Core.Speech.KokoroAssets.TotalMegabytes:0} MB, fetched "
-              + "once from huggingface.co.";
+              + "once from huggingface.co. Edge speaks until the download finishes.";
 
     /// <summary>Whether a download is already running, atomic because the button is a press.</summary>
     private int _fetchingVoice;
@@ -165,7 +169,7 @@ public sealed class SpeechClients : IDisposable
                 VoiceGroups.ProviderFor(_settings.Current.Speech, picked.Group),
                 TtsProviderCatalog.ChatterboxId,
                 StringComparison.OrdinalIgnoreCase)
-            || ClientFor(TtsProviderCatalog.ChatterboxId) is not ChatterboxTtsProvider chatterbox)
+            || LocalVoiceWithEdgeStandIn.Unwrapped(ClientFor(TtsProviderCatalog.ChatterboxId)) is not ChatterboxTtsProvider chatterbox)
         {
             return;
         }
@@ -177,7 +181,7 @@ public sealed class SpeechClients : IDisposable
         D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
             : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
-              + "once from huggingface.co.";
+              + "once from huggingface.co. Edge speaks until the download finishes.";
 
     /// <summary>The download setup offers for a voice provider, or null where it is not local or already installed.</summary>
     internal D47.App.Settings.LocalVoiceDownload? LocalVoiceToFetch(string providerId)
@@ -440,13 +444,18 @@ public sealed class SpeechClients : IDisposable
             _loggers.CreateLogger<CartesiaTtsProvider>()),
 
         // The local voice (Phase 59).
-        TtsProviderCatalog.KokoroId => new KokoroTtsProvider(
-            _files,
-            KokoroFolder(),
-            _loggers.CreateLogger<KokoroTtsProvider>(),
-            _paths.PronunciationsFile),
+        TtsProviderCatalog.KokoroId => WithEdgeStandIn(
+            TtsProviderCatalog.KokoroId,
+            new KokoroTtsProvider(
+                _files,
+                KokoroFolder(),
+                _loggers.CreateLogger<KokoroTtsProvider>(),
+                _paths.PronunciationsFile),
+            () => D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())),
 
-        TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
+        TtsProviderCatalog.ChatterboxId => WithEdgeStandIn(
+            TtsProviderCatalog.ChatterboxId,
+            new ChatterboxTtsProvider(
             _files,
             ChatterboxFolder(),
             ChatterboxVoicesFolder(),
@@ -455,9 +464,17 @@ public sealed class SpeechClients : IDisposable
             _ownVoice,
             _customVoices,
             _paths.PronunciationsFile),
+            () => D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())),
 
         _ => null,
     };
+
+    private LocalVoiceWithEdgeStandIn WithEdgeStandIn(string providerId, ITtsProvider local, Func<bool> installed) =>
+        new(
+            local,
+            new EdgeNeuralTtsProvider(_loggers.CreateLogger<EdgeNeuralTtsProvider>()),
+            installed,
+            () => SpeechCapability.RateFor(_settings.Current, SpeechCapability.EdgeId));
 
     /// <summary>Records the speech models the provider lists for its key, or none where it lists none.</summary>
     private async Task ListSpeechModelsAsync(ElevenLabsTtsProvider provider)
@@ -474,7 +491,7 @@ public sealed class SpeechClients : IDisposable
 
     internal void RelistChatterboxVoices()
     {
-        if (ClientFor(TtsProviderCatalog.ChatterboxId) is ChatterboxTtsProvider chatterbox)
+        if (LocalVoiceWithEdgeStandIn.Unwrapped(ClientFor(TtsProviderCatalog.ChatterboxId)) is ChatterboxTtsProvider chatterbox)
         {
             _ = LoadVoicesAsync(chatterbox);
         }

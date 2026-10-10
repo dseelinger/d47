@@ -621,8 +621,8 @@ public static class EgressDisclosure
     private static EgressEntry TextToSpeechEntry(D47Settings settings)
     {
         var speaking = Audio.VoiceGroups.All
-            .Select(slot => (Slot: slot, Provider: Audio.TtsProviderCatalog.Selected(
-                Audio.VoiceGroups.ProviderFor(settings.Speech, slot.Group))))
+            .Select(slot => (Slot: slot, Provider: Speech.LocalVoiceStandIn.Live(Audio.TtsProviderCatalog.Selected(
+                Audio.VoiceGroups.ProviderFor(settings.Speech, slot.Group)))))
             .Where(pair => pair.Provider.Speaks)
             .ToList();
 
@@ -702,6 +702,8 @@ public static class EgressDisclosure
     /// <summary>What choosing one provider for one slot causes to leave (Phase 57).</summary>
     public static EgressEntry TextToSpeechForSlot(Audio.VoiceGroupInfo slot, Audio.TtsProviderInfo provider)
     {
+        provider = Speech.LocalVoiceStandIn.Live(provider);
+
         var what = $"{slot.Name} — {slot.Covers} — is spoken by {provider.Name}. {provider.Egress}";
 
         if (slot.OtherPeoplesWords && provider.Billed)
@@ -739,8 +741,11 @@ public static class EgressDisclosure
                 summary: "Speech is turned into words on this machine. No audio leaves it.");
 
     /// <summary>What one named voice provider receives, whether or not it is the one selected.</summary>
-    public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider) =>
-        provider.Speaks
+    public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider)
+    {
+        provider = Speech.LocalVoiceStandIn.Live(provider);
+
+        return provider.Speaks
             ? new EgressEntry(
                 TextToSpeech,
                 NameOf(TextToSpeech),
@@ -750,6 +755,7 @@ public static class EgressDisclosure
                 Summary: $"{provider.Name} receives the text D47 speaks in this voice.")
             : EgressEntry.Silent(
                 TextToSpeech, NameOf(TextToSpeech), provider.Egress, $"{provider.Name} sends nothing.");
+    }
 
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,

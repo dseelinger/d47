@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A line for Kokoro or Chatterbox is spoken by Edge Neural in `en-GB-SoniaNeural` until that model is downloaded, instead of failing with "not downloaded yet". Every speaker uses that one voice meanwhile, and the next line after the download uses the voice you chose, with no restart. Until then the text goes to Microsoft (`speech.platform.bing.com`); the Privacy and egress section, `get_data_egress` and the setup Ready step say so, and the Settings voice row says that Edge speaks until the download finishes.
+
 Setup now downloads the voice you chose. When you pick Kokoro or Chatterbox and its model is not installed, START opens a download step with a progress bar and the megabytes fetched, and the wizard closes when the download finishes. Cancel keeps your choice, and the Settings row still offers the download. The Ready step says how large the download is before you press START.
 
 A core's line in the transcript always shows its shipped portrait. A `core.*.png` file placed in `data\pictures` is ignored.
