@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Stutter preset starts speaking sooner: it works as the voice arrives and holds back 300 milliseconds, instead of waiting for the whole line. What it does to the line is unchanged. The Ghost preset still waits for its whole line because Whisper does.
+
 Reverse reverb's swell into each word now lasts at most 0.3 seconds, and it works as the voice arrives, holding back about 40 milliseconds. The sound changes: the reverb's long tail no longer reaches back before a word. The Ghost preset still waits for its whole line because Whisper does.
 
 COVAS on Edge Neural now always speaks in Sonia, a British woman's voice, and no core or carrier role is given a child's voice (Maisie and Ana are never cast automatically, though you can still pick them). An install whose core was given one is cast again once.

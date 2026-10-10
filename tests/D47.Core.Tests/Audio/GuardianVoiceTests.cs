@@ -74,7 +74,7 @@ public class GuardianVoiceTests
     }
 
     /// <summary><paramref name="count"/> tone bursts, each <paramref name="burstMs"/> long, separated by silence.</summary>
-    private static AudioClip ToneBursts(int count, double hertz, double burstMs, double gapMs)
+    internal static AudioClip ToneBursts(int count, double hertz, double burstMs, double gapMs)
     {
         var burst = (int)(Rate * burstMs / 1000);
         var gap = (int)(Rate * gapMs / 1000);
