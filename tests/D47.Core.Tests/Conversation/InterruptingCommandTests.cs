@@ -10,10 +10,9 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Never gated behind a turn completing".</summary>
-[Trait("Category", "Integration")]
 public class InterruptingCommandTests
 {
-    private static KeywordRouter Router(TempInstall install, Action? onSilence = null)
+    private static KeywordRouter Router(MemoryInstall install, Action? onSilence = null)
     {
         CapabilityRegistry? built = null;
 
@@ -37,7 +36,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
+                Path.Combine(install.Paths.Data, "macros.json"), install.Files,
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));
@@ -60,7 +59,7 @@ public class InterruptingCommandTests
     [InlineData("\"stop\"")]
     public void SilenceIsRecognisedWhateverTheCaseOrPunctuation(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(Router(install).MatchInterrupting(said));
     }
@@ -75,7 +74,7 @@ public class InterruptingCommandTests
     [InlineData("nonstop")]
     public void AWordMerelyContainingStopIsNotTheCommand(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).MatchInterrupting(said));
     }
@@ -93,7 +92,7 @@ public class InterruptingCommandTests
     [InlineData("d47, shut up please")]
     public void EveryWayOfAskingForSilenceMayInterrupt(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).MatchInterrupting(said);
 
@@ -109,7 +108,7 @@ public class InterruptingCommandTests
     [InlineData("what can you do")]
     public void AnOrdinaryQuestionMayNot(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).MatchInterrupting(said));
     }
@@ -124,7 +123,7 @@ public class InterruptingCommandTests
     [InlineData("stop recording that macro")]
     public void BareStopIsNotAGeneralCommand(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).Match(said));
     }
@@ -138,7 +137,7 @@ public class InterruptingCommandTests
     [InlineData("stop talking")]
     public void AnUnambiguousSilencePhraseStillWorksWhenIdle(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match(said);
 
@@ -149,7 +148,7 @@ public class InterruptingCommandTests
     [Fact]
     public void NothingMatchesEmptyInput()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).MatchInterrupting("   "));
     }
@@ -158,7 +157,7 @@ public class InterruptingCommandTests
     [Fact]
     public void OnlyTheTwoInterruptsShip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         CapabilityRegistry? built = null;
 
@@ -182,7 +181,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
+                Path.Combine(install.Paths.Data, "macros.json"), install.Files,
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));
@@ -205,7 +204,7 @@ public class InterruptingCommandTests
     [Fact]
     public async Task TheCommandReachesTheArbiterAndSilencesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var silenced = 0;
 
         CapabilityRegistry? built = null;
@@ -230,7 +229,7 @@ public class InterruptingCommandTests
             () => "No autonomous actions in a test.",
             NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
+                Path.Combine(install.Paths.Data, "macros.json"), install.Files,
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             new D47.Core.Persona.PersonaHost(),
             TestSurface.Checklists(install.Paths)));
@@ -252,7 +251,7 @@ public class InterruptingCommandTests
     [Fact]
     public void SilenceNeedsNoModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var availability = new LlmAvailabilityState(providerConfigured: false);
 
         Assert.False(availability.CanAttemptModelTurn);

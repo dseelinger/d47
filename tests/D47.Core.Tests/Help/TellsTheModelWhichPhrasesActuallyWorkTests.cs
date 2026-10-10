@@ -7,12 +7,11 @@ namespace D47.Core.Tests.Help;
 /// find_phrase answers "what do I say" from the real phrase book instead of the model's memory, and
 /// never says a goal cannot be done just because nothing matched it (#229).
 /// </summary>
-[Trait("Category", "Integration")]
 public class TellsTheModelWhichPhrasesActuallyWorkTests
 {
     private static async Task<string> Answer(string goal)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var result = await registry.InvokeAsync(

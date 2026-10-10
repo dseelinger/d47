@@ -54,14 +54,13 @@ public class TalliesCountFromTheFirstListingTests
         Assert.Equal(new UnlockMeasure(5, 5, false), criterion.Measure);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheHistoryWalkAndTheLiveFoldCountEachSaleOnce()
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-11-03T173732.01.log"), SmearCampaign);
+        var install = new MemoryInstall();
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-11-03T173732.01.log"), SmearCampaign);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
         backfill.Run(TestContext.Current.CancellationToken);
 
         Assert.Equal(5, backfill.Evidence![Fid].Tallies.For(Yarden.Id)?.Total);

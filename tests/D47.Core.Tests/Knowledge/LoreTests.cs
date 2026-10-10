@@ -19,7 +19,7 @@ public class LoreTests
     private static readonly DateTimeOffset When = new(3307, 5, 1, 12, 0, 0, TimeSpan.Zero);
 
     private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-lore-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-lore-tests", Guid.NewGuid().ToString("N"));
 
     private string Path_ => System.IO.Path.Combine(_folder, "lore.json");
 

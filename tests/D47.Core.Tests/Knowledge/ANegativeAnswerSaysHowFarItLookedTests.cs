@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>What d47 is allowed to claim when it found nothing.</summary>
-[Trait("Category", "Integration")]
 public class ANegativeAnswerSaysHowFarItLookedTests
 {
     private sealed class Answering(CommodityAnswer answer) : ITradePlanService
@@ -58,7 +57,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
             throw new NotSupportedException();
     }
 
-    private static async Task<string> AskingFor(CommodityAnswer answer, TempInstall install)
+    private static async Task<string> AskingFor(CommodityAnswer answer, MemoryInstall install)
     {
         var surface = TestSurface.For(install);
 
@@ -93,7 +92,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task ASearchThatStoppedShortSaysWhereItStopped()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(
             new CommodityAnswer([], 150, 0, true) { Horizon = 14.2 },
@@ -107,7 +106,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task ASearchThatReachedTheEndStillClaimsTheRadius()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(new CommodityAnswer([], 30, 0, true), install);
 
@@ -142,7 +141,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task ABestOfNamesTheDistanceItActuallyReached()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(
             new CommodityAnswer([new CommodityOffer(ColemanRelay(), 444, 200, 11.0)], 150, 0, true)
@@ -160,7 +159,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task AnAnswerCutShortSaysSoAndNamesNoDistance()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(
             new CommodityAnswer([], 1_000, 0, true) { Complete = false },
@@ -176,7 +175,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task AnIndexThatSentNothingBackClaimsNoRadius()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(
             new CommodityAnswer([], 0, 0, false) { Complete = false },
@@ -195,7 +194,7 @@ public class ANegativeAnswerSaysHowFarItLookedTests
     [Fact]
     public async Task ABestOfOutOfACutListSaysThereMayBeNearerStock()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await AskingFor(
             new CommodityAnswer([new CommodityOffer(ColemanRelay(), 444, 200, 11.0)], 1_000, 0, true)

@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>A spoken faction name is corrected against the factions this Commander's journals name (#486).</summary>
-[Trait("Category", "Integration")]
 public class AFactionIsReadAsTheJournalSpellsItTests
 {
     private sealed class Recording : IGalaxyService
@@ -48,7 +47,7 @@ public class AFactionIsReadAsTheJournalSpellsItTests
         string value,
         GalaxySearchResult? answer = null)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 

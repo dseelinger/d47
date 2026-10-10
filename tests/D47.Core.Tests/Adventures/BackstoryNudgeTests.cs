@@ -11,7 +11,7 @@ namespace D47.Core.Tests.Adventures;
 /// <summary>Drives the Lantern Route to its midpoint (third beat) and its all-is-lost beat (fourth).</summary>
 public abstract class BackstoryNudgeTestBase
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     protected AdventureCallout Wired(bool backstory = true, bool switchedOn = true)
     {

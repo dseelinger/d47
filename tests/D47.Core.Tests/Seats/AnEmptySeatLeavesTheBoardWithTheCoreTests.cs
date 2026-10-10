@@ -31,11 +31,10 @@ public class AnEmptySeatLeavesTheBoardWithTheCoreTests
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFirstOfficerOnlyOnAnotherShipDoesNotReadTheBoard()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new CrewSeatStore(Path.Combine(install.Root, "crew-seats.json"), new MemoryFileSystem(), NullLogger<CrewSeatStore>.Instance);
         store.Set(Aboard(9, Ilo));
         store.Set(Aboard(7, Teo));

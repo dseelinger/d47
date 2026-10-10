@@ -33,11 +33,10 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.Equal([VrCapability.CurrentSlot, VrCapability.PanelSlot, VrCapability.MiniSlot], slots);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingAGroupLeavesTheOtherGroupsInItsPlaceAlone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var place = SettingsLayout.Areas.SelectMany(a => a.Places).Single(p => p.Id == "voice-input");
         var microphone = place.Groups.ToList().FindIndex(g => g.Title == "Microphone");
@@ -54,11 +53,10 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.True(surface.Settings.IsChanged("listening.wakeWindow"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingThePanelOnScreenGivesTheBigPanelItsOwnDefaultSize()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var headset = SettingsLayout.Areas.SelectMany(a => a.Places).Single(p => p.Id == "headset");
         var current = headset.Groups.ToList().FindIndex(g => g.Title == "Panel you are looking at placement");
@@ -76,11 +74,10 @@ public class EveryGroupSaysWhatItIsForTests
         Assert.False(surface.Settings.IsChanged("vr.current.size"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResettingPushToTalkBindsItsDefaultKeyRatherThanNone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ListeningCapability.PushToTalkKeyKey, "F9", SettingsCaller.Panel);

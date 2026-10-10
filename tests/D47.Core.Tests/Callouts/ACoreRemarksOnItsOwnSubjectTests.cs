@@ -326,11 +326,10 @@ public class ACoreRemarksOnItsOwnSubjectTests
         Assert.Empty(session.Tick(at, Sell(at, 9_000_000)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ChoosingACoreNeverSwitchesItOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var rows = surface.Registry.All.SelectMany(capability => capability.Descriptor.Settings).ToList();
 
@@ -344,11 +343,10 @@ public class ACoreRemarksOnItsOwnSubjectTests
         Assert.False(chosen.Callouts.Domain);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

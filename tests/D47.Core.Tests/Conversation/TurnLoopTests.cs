@@ -7,10 +7,9 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-[Trait("Category", "Integration")]
 public class TurnLoopTests
 {
-    private static CapabilityRegistry BuiltinRegistry(TempInstall install, GameStateStore? gameState = null) =>
+    private static CapabilityRegistry BuiltinRegistry(MemoryInstall install, GameStateStore? gameState = null) =>
         TestSurface.For(install, gameState).Registry;
 
     private static TurnLoop Build(
@@ -64,7 +63,7 @@ public class TurnLoopTests
     public async Task WithNoProviderTheKeywordRouterStillAnswers()
     {
         // The central claim: every input path is answerable with no capabilities at all.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
         var (result, text) = await RunAsync(loop, "what's your status");
@@ -77,7 +76,7 @@ public class TurnLoopTests
     [Fact]
     public async Task WithNoProviderAndNoKeywordMatchTheTurnIsUnsureNotFailed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
         var (result, text) = await RunAsync(loop, "compose a sonnet about hyperspace");
@@ -91,7 +90,7 @@ public class TurnLoopTests
     [Fact]
     public async Task WithNoProviderAnUnmatchedQuestionIsOfferedTheNearestArea()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(BuiltinRegistry(install), provider: null, out _, out _);
 
         var (result, text) = await RunAsync(loop, "how far along is this engineer");
@@ -110,7 +109,7 @@ public class TurnLoopTests
     [Fact]
     public async Task AProviderStillAnswersUtterancesThatWouldOtherwiseOfferAnArea()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Fetch me the numbers.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -125,7 +124,7 @@ public class TurnLoopTests
     {
         // Protected settings are reachable by voice only through this path, so it cannot be a fallback that a
         // configured model bypasses.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("The model answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -138,7 +137,7 @@ public class TurnLoopTests
     [Fact]
     public async Task UnmatchedInputReachesTheModelAndStreams()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("Hyperspace "),
             new LlmStreamEvent.TextDelta("is fine."),
@@ -156,7 +155,7 @@ public class TurnLoopTests
     [Fact]
     public async Task ARefusalIsAnUnsureTurnRatherThanAFailure()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Refusal));
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
@@ -170,7 +169,7 @@ public class TurnLoopTests
     public async Task ATransientFailureFlipsTheCapabilityOffAndTheNextTurnRoutesAround()
     {
         // "Capabilities as state, not guard": there is no failure handler, just a state the next turn reads.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Failed("Rate limited.", Transient: true));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
@@ -187,7 +186,7 @@ public class TurnLoopTests
     [Fact]
     public async Task ATransientOutageIsProbedAgainRatherThanLatchingOffForever()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Failed("Overloaded.", Transient: true));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
@@ -212,7 +211,7 @@ public class TurnLoopTests
     [Fact]
     public async Task ASuccessfulProbeRestoresTheCapability()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var availability = new LlmAvailabilityState(providerConfigured: true);
         availability.MarkFailed("Overloaded.", transient: true);
 
@@ -238,7 +237,7 @@ public class TurnLoopTests
     [Fact]
     public async Task AConfigurationFailureDoesNotClearItself()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Failed("The API key was rejected.", Transient: false));
         var loop = Build(BuiltinRegistry(install), provider, out var availability, out _);
@@ -257,7 +256,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheTurnCarriesItsPriceAndAddsToTheRunningTotal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering(
             "Answered.", new LlmUsage(InputTokens: 1_000_000, OutputTokens: 0, 0, 0));
         var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
@@ -275,7 +274,7 @@ public class TurnLoopTests
     [Fact]
     public async Task AnUnexpectedColdPrefixIsCountedAsARegression()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering(
             "Answered.", new LlmUsage(0, 10, CacheCreationInputTokens: 5_000, 0));
         var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
@@ -292,7 +291,7 @@ public class TurnLoopTests
     [Fact]
     public async Task EffortIsChosenPerTurnAndReportedOnTheResult()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -315,7 +314,7 @@ public class TurnLoopTests
     [InlineData("carefully plan the cheapest route to Colonia")]
     public async Task NoBoundsIsExactlyWhatTheRouterAnswered(string input)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -332,7 +331,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheFloorLiftsAPlainTurnAndTheRequestCarriesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -354,7 +353,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheCeilingCatchesTheRoutersOwnFalsePositive()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -375,7 +374,7 @@ public class TurnLoopTests
     [Fact]
     public async Task AModelWithNoEffortDialReportsNoEffortAndIsStillAskedForOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("Answered."),
@@ -417,7 +416,7 @@ public class TurnLoopTests
     [Fact]
     public async Task HistoryAccumulatesOnlyAnsweredTurns()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -436,7 +435,7 @@ public class TurnLoopTests
     [Fact]
     public async Task WhatItSaidUnpromptedReachesTheNextTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -476,7 +475,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheRoutersOwnAnswerIsRecorded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -496,7 +495,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheTranscriptIsBounded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -527,7 +526,7 @@ public class TurnLoopTests
     [Fact]
     public async Task TheGuardrailsReachTheProviderOnEveryTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
@@ -542,7 +541,7 @@ public class TurnLoopTests
     [Fact]
     public async Task LiveGameStateIsPassedBelowTheBreakpointNotInsideIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
         loop.LiveGameState = () => "Current system: Shinrarta Dezhra.";
@@ -559,7 +558,7 @@ public class TurnLoopTests
     {
         // End to end across two phases: the journal spine feeds game state, the registry exposes it, and the
         // keyword router reaches it with no provider configured at all.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
         Assert.True(JournalEvent.TryParse(
             """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using D47.Core.Storage;
+using D47.Core.Tests;
 using D47.Core;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
@@ -16,9 +17,9 @@ namespace D47.Scenarios.Tests;
 /// One scenario's world: a real <see cref="SettingsService"/>, a real <see cref="SecretStore"/> and the
 /// real builtin <see cref="CapabilityRegistry"/>, over a temporary <c>data/</c> tree.
 /// </summary>
-public sealed class ScenarioWorld : IDisposable
+public sealed class ScenarioWorld
 {
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
 
     private readonly List<(string Tool, string ArgumentsJson, bool Succeeded)> _ran = [];
 
@@ -36,17 +37,17 @@ public sealed class ScenarioWorld : IDisposable
     /// <param name="services">The live services a model comparison runs against, or null for the inert world.</param>
     public ScenarioWorld(ScenarioServices? services = null)
     {
-        services?.Seed(_install.Paths.Data);
+        services?.Seed(_install.Files, _install.Paths.Data);
 
-        var store = new SettingsStore(_install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
-        Secrets = new SecretStore(_install.Paths, new PlainProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(_install.Paths, _install.Files, NullLogger<SettingsStore>.Instance);
+        Secrets = new SecretStore(_install.Paths, new PlainProtector(), _install.Files, NullLogger<SecretStore>.Instance);
         Settings = new SettingsService(store, Secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
         GameState = new GameStateStore();
 
         // A real book over a real (empty) file: a null book answers every attempt with "I have nowhere to keep notes", a pass this suite would not have earned.
         Lore = new LoreBook(new LoreStore(
-            Path.Combine(_install.Paths.Data, "lore.json"), new DiskFileSystem(),
+            Path.Combine(_install.Paths.Data, "lore.json"), _install.Files,
             NullLogger<LoreStore>.Instance));
 
         CapabilityRegistry? built = null;
@@ -62,14 +63,14 @@ public sealed class ScenarioWorld : IDisposable
 
         var checklistStore = new D47.Core.Checklists.ChecklistStore(
             Path.Combine(_install.Paths.Data, "checklist.json"),
-            new D47.Core.Storage.DiskFileSystem(),
+            _install.Files,
             NullLogger<D47.Core.Checklists.ChecklistStore>.Instance);
 
         var checklists = new D47.Core.Checklists.ChecklistService(
             checklistStore,
             new D47.Core.Checklists.ChecklistProposalStore(
                 Path.Combine(_install.Paths.Data, "checklist-proposals.json"),
-                new D47.Core.Storage.DiskFileSystem(),
+                _install.Files,
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
             services is null ? () => null : () => GameState.Active);
 
@@ -82,13 +83,13 @@ public sealed class ScenarioWorld : IDisposable
 
             var shipBuilds = new D47.Core.Ships.ShipBuildStore(
                 Path.Combine(_install.Paths.Data, "ships.json"),
-                new D47.Core.Storage.DiskFileSystem(),
+                _install.Files,
                 NullLogger<D47.Core.Ships.ShipBuildStore>.Instance);
             shipBuilds.Poll();
 
             var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(
                 Path.Combine(_install.Paths.Data, "on-foot.json"),
-                new D47.Core.Storage.DiskFileSystem(),
+                _install.Files,
                 NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
             onFootBuilds.Poll();
 
@@ -134,7 +135,7 @@ public sealed class ScenarioWorld : IDisposable
             () => "No autonomous actions in a scenario run.",
             services is null ? NavigationSurface.Inert : services.Navigation(actions, Clipboard, () => Settings.Current.Actions.AutoPlot),
             new D47.Core.Actions.MacroStore(
-                Path.Combine(_install.Paths.Data, "macros.json"), new DiskFileSystem(),
+                Path.Combine(_install.Paths.Data, "macros.json"), _install.Files,
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             Personas,
             checklists,
@@ -288,21 +289,14 @@ public sealed class ScenarioWorld : IDisposable
     {
         var snapshot = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        if (!Directory.Exists(Paths.Data))
-        {
-            return snapshot;
-        }
-
-        foreach (var file in Directory.EnumerateFiles(Paths.Data, "*", SearchOption.AllDirectories))
+        foreach (var file in _install.Files.Enumerate(Paths.Data, "*", recursive: true))
         {
             snapshot[Path.GetRelativePath(Paths.Data, file)] =
-                Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file)));
+                Convert.ToHexString(SHA256.HashData(_install.Files.ReadBytes(file)!));
         }
 
         return snapshot;
     }
-
-    public void Dispose() => _install.Dispose();
 
     /// <summary>The same descriptor with every handler wrapped.</summary>
     private CapabilityDescriptor Recording(CapabilityDescriptor descriptor) =>
@@ -354,34 +348,6 @@ public sealed class ScenarioWorld : IDisposable
 
         public void SetDefault(LogLevel level)
         {
-        }
-    }
-}
-
-/// <summary>A throwaway install root, so every scenario gets its own <c>data/</c>.</summary>
-public sealed class TempInstall : IDisposable
-{
-    public TempInstall()
-    {
-        Root = Path.Combine(Path.GetTempPath(), "d47-scenarios", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Root);
-        Paths = new AppPaths(Root);
-        Paths.EnsureCreated();
-    }
-
-    public string Root { get; }
-
-    public AppPaths Paths { get; }
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(Root, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A leftover temp folder is not worth failing a run over.
         }
     }
 }

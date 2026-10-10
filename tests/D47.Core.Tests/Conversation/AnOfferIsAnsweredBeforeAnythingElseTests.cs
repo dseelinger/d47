@@ -152,11 +152,10 @@ public class AnOfferIsAnsweredBeforeAnythingElseTests
         Assert.False(loop.Offers.IsStanding);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task YesAnswersTheOfferBeforeAPendingChecklistProposal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.ChecklistService.AddNote(ChecklistScope.Universal, "Unlock Lei Cheung");
         surface.ChecklistService.ProposeChange("Unlock Lei Cheung", ProposalKind.Remove);

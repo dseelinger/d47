@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>One tool for "how do I get X", answering the method first and searching at most once (#179).</summary>
-[Trait("Category", "Integration")]
 public class HowToGetAsksWhatThenSearchesOnceTests
 {
     /// <summary>A service that records what it was asked and answers from a script.</summary>
@@ -74,7 +73,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
-        TempInstall install, ITradePlanService? trade = null, bool enabled = true, string? currentSystem = "Sol")
+        MemoryInstall install, ITradePlanService? trade = null, bool enabled = true, string? currentSystem = "Sol")
     {
         var galaxy = new FakeGalaxy();
         var settings = TestSurface.For(install).Settings;
@@ -93,7 +92,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task AnAnacondaNamesAShipyardAndSearchesForOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -107,7 +106,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task AGuardianFsdBoosterNamesATechBrokerAndSearchesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -122,7 +121,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task LowTemperatureDiamondsNameRingMiningAndSearchTheBodiesForTheHotspot()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -136,7 +135,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task EdenApplesOfAerialNameAndradeLegacyAndSearchNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -151,7 +150,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task AMarketCommodityWithNoOtherMethodSaysSoWhenNothingSellsIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var trade = new FakeTrade(new CommodityAnswer([], 0, 0, true));
         var (registry, _) = Build(install, trade);
 
@@ -167,7 +166,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task WithNoGalaxyServiceTheMethodStillAnswers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
@@ -183,7 +182,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     [Fact]
     public async Task AnUnknownNameOffersTheNearestNames()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -200,7 +199,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
 
     private static async Task<(string Content, StationQuery? Query)> AskModule(int total)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
         galaxy.Stations = Sellers(total);
 

@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>The live block outranks the transcript for the facts it states.</summary>
-[Trait("Category", "Integration")]
 public class StaleStateTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -35,7 +34,7 @@ public class StaleStateTests
     /// <summary>The block an earlier turn carried, built by folding the journal up to the dock.</summary>
     private static string DockedBlock()
     {
-        using var world = new ScenarioWorld();
+        var world = new ScenarioWorld();
         world.ApplyJournal([Commander, LoadGame, Docked]);
 
         var block = world.LiveGameState();

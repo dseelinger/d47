@@ -24,12 +24,11 @@ public class AFileFromANewerBuildStillLoadsTests
     /// The whole of the first defence: the file loads, what this build understands is honoured, and
     /// what it does not is still there after a save.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnknownKeyUnderVrIsLoadedKeptAndWrittenBackUnchanged()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, FromANewerBuild);
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, FromANewerBuild);
 
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         var settings = store.Load();
@@ -40,7 +39,7 @@ public class AFileFromANewerBuildStillLoadsTests
 
         store.Save(settings);
 
-        var written = File.ReadAllText(install.Paths.SettingsFile);
+        var written = install.Files.ReadText(install.Paths.SettingsFile);
         Assert.Contains("controlers", written, StringComparison.Ordinal);
         Assert.Contains("left", written, StringComparison.Ordinal);
 
@@ -54,12 +53,11 @@ public class AFileFromANewerBuildStillLoadsTests
     /// The key is named, by its path through the document, so a typo still surfaces now that it no
     /// longer refuses the load.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheUnknownKeyIsLoggedByNameAndPath()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, FromANewerBuild);
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, FromANewerBuild);
 
         var logger = new RecordingLogger<SettingsStore>();
         var store = new SettingsStore(install.Paths, install.Files, logger);
@@ -81,12 +79,11 @@ public class AFileFromANewerBuildStillLoadsTests
     /// A record d47 keeps one of per provider is reached through a dictionary, not a property, and a
     /// key inside one has to be kept and named like any other.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnknownKeyInsideAKeyedRecordIsKeptAndNamedToo()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, """
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, """
             {
               "schemaVersion": 1,
               "speech": { "providerVoices": { "edge": { "ship": "en-GB-RyanNeural", "timbre": "warm" } } }
@@ -100,15 +97,14 @@ public class AFileFromANewerBuildStillLoadsTests
         Assert.Equal("en-GB-RyanNeural", settings.Speech.ProviderVoices["edge"].Ship);
 
         store.Save(settings);
-        Assert.Contains("timbre", File.ReadAllText(install.Paths.SettingsFile), StringComparison.Ordinal);
+        Assert.Contains("timbre", install.Files.ReadText(install.Paths.SettingsFile), StringComparison.Ordinal);
     }
 
     /// <summary>The cost the bags must not have.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileThisBuildFullyUnderstandsCarriesNoBagAtAll()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
         store.Save(new D47Settings { Ui = new UiSettings { Theme = ThemeCatalog.Dark } });
@@ -132,13 +128,12 @@ public class AFileFromANewerBuildStillLoadsTests
     }
 
     /// <summary>The floor, independent of the other two.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARefusedFileIsAppliedInMemoryAndNeverWrittenOver()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         const string Unreadable = "{ this is not json";
-        File.WriteAllText(install.Paths.SettingsFile, Unreadable);
+        install.Files.WriteText(install.Paths.SettingsFile, Unreadable);
 
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
         Assert.Throws<SettingsLoadException>(() => store.Load());
@@ -157,17 +152,16 @@ public class AFileFromANewerBuildStillLoadsTests
         Assert.Contains(install.Paths.SettingsFile, result.Message, StringComparison.Ordinal);
 
         // Nothing was written: the Commander's file is exactly as they left it.
-        Assert.Equal(Unreadable, File.ReadAllText(install.Paths.SettingsFile));
+        Assert.Equal(Unreadable, install.Files.ReadText(install.Paths.SettingsFile));
     }
 
     /// <summary>The same floor, reached by the other door.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARefusedFileIsNotWrittenOverByAResetEither()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         const string Unreadable = "{ this is not json";
-        File.WriteAllText(install.Paths.SettingsFile, Unreadable);
+        install.Files.WriteText(install.Paths.SettingsFile, Unreadable);
 
         var surface = TestSurface.For(install, settings: new D47Settings(), loadFailed: true);
         surface.Settings.UseCommander("F1", "HADESD");
@@ -179,7 +173,7 @@ public class AFileFromANewerBuildStillLoadsTests
 
         Assert.Equal(SettingApplyStatus.Failed, result.Status);
         Assert.Contains("will not be remembered", result.Message, StringComparison.Ordinal);
-        Assert.Equal(Unreadable, File.ReadAllText(install.Paths.SettingsFile));
+        Assert.Equal(Unreadable, install.Files.ReadText(install.Paths.SettingsFile));
     }
 
     /// <summary>

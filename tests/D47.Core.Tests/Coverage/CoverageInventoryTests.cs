@@ -12,11 +12,10 @@ namespace D47.Core.Tests.Coverage;
 /// </summary>
 public class CoverageInventoryTests
 {
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryToolAndEverySettingsRowIsInTheInventory()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var inventory = CoverageInventory.Of(registry);
@@ -32,11 +31,10 @@ public class CoverageInventoryTests
     }
 
     /// <summary>Every line links to its capability's help page, and the id is what builds that URL.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryItemNamesTheCapabilityItCameFrom()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var inventory = CoverageInventory.Of(registry);
@@ -83,11 +81,10 @@ public class CoverageInventoryTests
     }
 
     /// <summary>Nothing is exercised on a machine that has never run d47.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFreshLedgerReportsTheWholeAppAsUntouched()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var inventory = CoverageInventory.Of(TestSurface.For(install).Registry);
 
         var report = new CoverageLedger().Report(inventory);
@@ -100,11 +97,10 @@ public class CoverageInventoryTests
     /// Two builds of the same code fingerprint identically, or every item would read as changed on
     /// every launch and the report would be noise.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSameDefinitionFingerprintsTheSameAcrossBuilds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var first = CoverageInventory.Of(TestSurface.For(install).Registry);
         var second = CoverageInventory.Of(TestSurface.For(install).Registry);
@@ -132,11 +128,10 @@ public class CoverageInventoryTests
     /// so schema alone would fingerprint them all the same and staleness would silently never fire for
     /// most of the tool surface.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ZeroArgumentToolsStillFingerprintDistinctly()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tools = CoverageInventory.Of(TestSurface.For(install).Registry)
             .Where(item => item.Kind == CoverageKind.Tool)

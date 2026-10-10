@@ -7,18 +7,17 @@ namespace D47.Core.Tests.Conversation;
 /// <summary>What a keyword reaches when its capability has more than one answer to give.</summary>
 public class AKeywordThatCouldMeanSeveralToolsTests
 {
-    private static KeywordRouter Router(TempInstall install) =>
+    private static KeywordRouter Router(MemoryInstall install) =>
         new(TestSurface.For(install).Registry);
 
     /// <summary>A jump-range question about a ship, and the second sentence broken the same way.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what's the Cobra Mk III's jump range?")]
     [InlineData("is the jump range on this thing any good")]
     [InlineData("what is a Python Mk II's jump range")]
     public void AJumpRangeQuestionAboutAShipIsNotAnsweredWithTheCommandersLocation(string asked)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = Router(install);
 
         var tool = router.MatchToolCommand(asked)?.ToolName ?? router.Match(asked)?.ToolName;
@@ -32,14 +31,13 @@ public class AKeywordThatCouldMeanSeveralToolsTests
     /// And the right answer is not traded away for the wrong one: the possessive phrasings still reach
     /// the ship, by the keyword route as well as by the declared phrases.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what's my jump range")]
     [InlineData("my jump range")]
     [InlineData("so what is my jump range these days")]
     public void AskingYourOwnJumpRangeStillReachesTheShip(string asked)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = Router(install);
 
         var tool = router.MatchToolCommand(asked)?.ToolName ?? router.Match(asked)?.ToolName;
@@ -48,14 +46,13 @@ public class AKeywordThatCouldMeanSeveralToolsTests
     }
 
     /// <summary>Asking which model is running reached <c>cancel_turn</c>, because Conversation declares it first.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("which model")]
     [InlineData("what model are you")]
     [InlineData("what have you cost me this session")]
     public void AskingAboutTheModelDoesNotCancelTheTurn(string asked)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match(asked);
 
@@ -67,11 +64,10 @@ public class AKeywordThatCouldMeanSeveralToolsTests
     /// The general rule, asserted against the registry rather than against a list: every declared
     /// keyword reaches a tool, and where its capability has several the keyword said which.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryKeywordOnACapabilityWithSeveralAnswersNamesTheOneItMeans()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var unnamed = (from capability in registry.All
@@ -93,11 +89,10 @@ public class AKeywordThatCouldMeanSeveralToolsTests
     /// And a keyword naming a tool that does not exist — or one the router could not call anyway — is
     /// caught rather than silently unreachable.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryNamedToolIsOneTheRouterCouldActuallyCall()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var wrong = (from capability in registry.All

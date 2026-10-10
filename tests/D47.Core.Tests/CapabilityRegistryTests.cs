@@ -307,12 +307,11 @@ public class CapabilityRegistryTests
     }
 }
 
-[Trait("Category", "Integration")]
 public class DiagnosticsCapabilityTests
 {
     // The whole surface, not the one capability: the verbosity tool writes a settings row, so the row table
     // and the level switches both have to be wired the way the app wires them.
-    private static (CapabilityRegistry Registry, FakeVerbosityControl Verbosity) Build(TempInstall install)
+    private static (CapabilityRegistry Registry, FakeVerbosityControl Verbosity) Build(MemoryInstall install)
     {
         var surface = TestSurface.For(install);
 
@@ -322,7 +321,7 @@ public class DiagnosticsCapabilityTests
     [Fact]
     public async Task StatusReportsVersionAndWhereWritableFilesLive()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install);
 
         var result = await registry.Invoke("get_app_status", ToolArguments.Empty);
@@ -335,7 +334,7 @@ public class DiagnosticsCapabilityTests
     [Fact]
     public async Task VerbosityChangesTakeEffectWithNoRestart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, verbosity) = Build(install);
 
         Assert.Equal(LogLevel.Information, verbosity.Levels["Journal"]);
@@ -351,7 +350,7 @@ public class DiagnosticsCapabilityTests
     [Fact]
     public async Task AnInventedSubsystemIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install);
 
         var result = await registry.Invoke(
@@ -364,7 +363,7 @@ public class DiagnosticsCapabilityTests
     [Fact]
     public void SettingsRowsAreProjectedFromTheSameClosedSetTheToolUses()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install);
 
         var capability = registry.Find(DiagnosticsCapability.Id);

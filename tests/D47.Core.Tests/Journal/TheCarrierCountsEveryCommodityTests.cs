@@ -134,20 +134,19 @@ public class TheCarrierCountsEveryCommodityTests
         Assert.Equal(12, hold.Holding("gold"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TransfersInTheCurrentJournalAreCountedOnce()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         string[] journal =
         [
             LoadGame, Buy, Stats("2026-09-13T16:00:30Z", 0), Dock,
             Transfer("2026-09-13T16:02:00Z", "steel", 500),
             Transfer("2026-09-13T16:03:00Z", "tritium", 200),
         ];
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), journal);
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), journal);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
         var store = new GameStateStore { RestoreCarrier = fid => backfill.Carriers?.GetValueOrDefault(fid) };
 
         foreach (var line in journal)
@@ -164,12 +163,11 @@ public class TheCarrierCountsEveryCommodityTests
         Assert.Equal(200, hold.Holding("tritium"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnOwnedLiveCarrierTakesTheWalksCountWhenItHasNoFreshStart()
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(
+        var install = new MemoryInstall();
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-12T100000.01.log"),
             [LoadGame.Replace("2026-09-13T15:59", "2026-09-12T10:00", StringComparison.Ordinal), Buy, Dock,
              Transfer("2026-09-13T16:02:00Z", "steel", 500)]);
@@ -179,9 +177,9 @@ public class TheCarrierCountsEveryCommodityTests
             LoadGame, Stats("2026-09-13T16:10:00Z", 500), Dock,
             Transfer("2026-09-13T16:11:00Z", "tritium", 200),
         ];
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), current);
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), current);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
         var store = new GameStateStore { RestoreCarrier = fid => backfill.Carriers?.GetValueOrDefault(fid) };
 
         foreach (var line in current)

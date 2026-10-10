@@ -11,7 +11,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Checklists;
 
-[Trait("Category", "Integration")]
 public class LeavingTheBubbleOffersAnExpeditionKitTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);
@@ -43,9 +42,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     /// <summary>The recorded Sol, Colonia, Sol plot, with spansh's x, y, z on every jump.</summary>
     private static CarrierRoute SolColoniaSol()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "spansh-fleetcarrier-route-sol-colonia-sol.json");
-
-        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = EmbeddedFixture.Json("spansh-fleetcarrier-route-sol-colonia-sol.json");
 
         return new CarrierRoute([.. document.RootElement.GetProperty("result").GetProperty("jumps").EnumerateArray()
             .Select(jump => new CarrierWaypoint(
@@ -96,7 +93,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
         """;
 
     private static async Task<(string Said, ChecklistService Checklists)> PlotAsync(
-        TempInstall install,
+        MemoryInstall install,
         CarrierRoute route,
         params string[] events)
     {
@@ -117,7 +114,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
         var checklists = TestSurface.Checklists(install.Paths, gameState);
-        var plans = new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), new DiskFileSystem(), NullLogger<RoutePlanBook>.Instance);
+        var plans = new RoutePlanBook(Path.Combine(install.Root, "data", "route-plans.json"), install.Files, NullLogger<RoutePlanBook>.Instance);
 
         var registry = CapabilityRegistry.Build(
             [RouteCapability.Create(new Routes(route), null, () => gameState.Active, settings, plans, () => Now, null, checklists)]);
@@ -135,7 +132,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     [Fact]
     public async Task TheSolColoniaSolPlotOffersTheKitOneProposalPerLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, checklists) = await PlotAsync(install, SolColoniaSol());
 
@@ -162,7 +159,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     [Fact]
     public async Task APlotInsideTheBubbleOffersNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, checklists) = await PlotAsync(install, InsideTheBubble());
 
@@ -173,7 +170,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     [Fact]
     public async Task OneScooplessShipAtTheCarrierGetsOneScoopLineNamingIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (_, checklists) = await PlotAsync(
             install,
@@ -201,7 +198,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     [Fact]
     public async Task NothingIsOnTheChecklistUntilALineIsAcceptedAndAcceptingOneAddsExactlyThatLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (_, checklists) = await PlotAsync(install, SolColoniaSol());
 
@@ -222,7 +219,7 @@ public class LeavingTheBubbleOffersAnExpeditionKitTests
     [Fact]
     public async Task PlottingAgainOffersTheSameLinesWithoutFilingThemTwice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (first, checklists) = await PlotAsync(install, SolColoniaSol());
         var count = checklists.Proposals.PendingFor("F1").Count;

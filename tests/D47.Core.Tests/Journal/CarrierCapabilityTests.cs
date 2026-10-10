@@ -61,11 +61,10 @@ public class CarrierCapabilityTests
     }
 
     /// <summary>"carrier report" reaches the tool through the keyword router with no model.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void CarrierReportReachesTheToolThroughTheKeywordRouter()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = new KeywordRouter(TestSurface.For(install).Registry).Match("carrier report");
 

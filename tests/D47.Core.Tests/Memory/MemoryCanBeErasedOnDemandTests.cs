@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The Commander can make d47 forget them, and nothing else can.</summary>
-[Trait("Category", "Integration")]
 public class MemoryCanBeErasedOnDemandTests
 {
     private const string Row = "privacy.memory";
@@ -19,7 +18,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void ThereIsAButtonForIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = Erase(surface);
@@ -35,7 +34,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void PressingItForgetsEverybody()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var memories = surface.Memories;
 
@@ -58,7 +57,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void AndItIsGoneFromTheFileToo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Memories.Store.Write("F1", Entry("likes-the-krait", "The Commander flies a Krait."));
@@ -74,7 +73,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void TheModelCannotPressIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Memories.Store.Write("F1", Entry("likes-the-krait", "The Commander flies a Krait."));
@@ -92,7 +91,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void ItIsNotOfferedToTheModelEither()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(SettingKind.Info, Erase(surface).Kind);
@@ -102,7 +101,7 @@ public class MemoryCanBeErasedOnDemandTests
     [Fact]
     public void NoPhraseReachesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         foreach (var said in new[]

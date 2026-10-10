@@ -14,7 +14,7 @@ namespace D47.Core.Tests.Adventures;
 /// </summary>
 public class AStalledStoryGetsANudgeTests
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     private static readonly TimeSpan Gap = TimeSpan.FromMinutes(30);
 

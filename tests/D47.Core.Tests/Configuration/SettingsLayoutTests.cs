@@ -8,7 +8,6 @@ namespace D47.Core.Tests.Configuration;
 /// <summary>The hand-authored map of settings rows into areas and places (#217), checked against a live surface.</summary>
 public class SettingsLayoutTests
 {
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryBoundRowIsPlacedExactlyOnceTests()
     {
@@ -56,7 +55,6 @@ public class SettingsLayoutTests
         Assert.DoesNotContain(SettingsLayout.Tabs, tab => tab.Id == "routing-community-goal");
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryEntryResolvesToAtLeastOneRowTests()
     {
@@ -98,7 +96,6 @@ public class SettingsLayoutTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryDocsCapabilityIdIsARegisteredCapabilityTests()
     {
@@ -126,7 +123,6 @@ public class SettingsLayoutTests
         Assert.True(offending.Length == 0, $"Areas over the cap: {string.Join(", ", offending)}");
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NoPlaceShowsMoreThanEightEntriesExceptTheDocumentedExceptionTests()
     {
@@ -161,7 +157,6 @@ public class SettingsLayoutTests
     /// The issue's own arrangement table names 8 of these; the acceptance rule requires every row
     /// <see cref="AboutCapability"/> declares, which is 11 (#217, "Notes for the build").
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void UpdatesHoldsExactlyTheElevenNamedRowsTests()
     {
@@ -189,7 +184,6 @@ public class SettingsLayoutTests
     }
 
     /// <summary>Every channel's Level and Mute, and Duck for the three that duck (#217, "Notes for the build").</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void SoundsHoldsExactlyEighteenAllAdvancedEntriesTests()
     {
@@ -206,7 +200,6 @@ public class SettingsLayoutTests
         Assert.Equal("install", SettingsLayout.Areas[^1].Id);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("voice-input", ListeningCapability.PushToTalkKeyKey)]
     [InlineData("voice", SpeechCapability.ProviderKey)]
@@ -227,7 +220,6 @@ public class SettingsLayoutTests
         Assert.Contains(key, keys);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFamilyEntryResolvesEveryMatchingBoundRowTests()
     {
@@ -248,7 +240,6 @@ public class SettingsLayoutTests
         Assert.True(bound.Count > 0);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ATabPlaceResolvesToItsFlatListOfRowsTests()
     {
@@ -259,11 +250,10 @@ public class SettingsLayoutTests
         Assert.Equal(["ships.remembered", "ships.art", "ships.hullgpu"], keys);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResetPlaceResetsAChangedAttemptsRowAndLeavesTheProviderRowAloneTests()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.RetryAttemptsKey, "5", SettingsCaller.Panel);
@@ -277,21 +267,19 @@ public class SettingsLayoutTests
         Assert.True(surface.Settings.IsChanged(ConversationCapability.ProviderKey));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResetPlaceWithNothingChangedResetsNothingTests()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(0, surface.Settings.ResetPlace("turn-fails", SettingsCaller.Panel));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ResetPlaceWorksOnATabPlaceTooTests()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply("knowledge.notablePlaces", "true", SettingsCaller.Panel);
@@ -302,7 +290,7 @@ public class SettingsLayoutTests
         Assert.False(surface.Settings.IsChanged("knowledge.notablePlaces"));
     }
 
-    private static TestSurface Surface() => TestSurface.For(new TempInstall(), everyOptionalSurface: true);
+    private static TestSurface Surface() => TestSurface.For(new MemoryInstall(), everyOptionalSurface: true);
 
     private static IEnumerable<string> AllPlaceIds() =>
         SettingsLayout.Areas.SelectMany(a => a.Places).Select(p => p.Id)

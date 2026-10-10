@@ -4,10 +4,9 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Some phrases only mean what they say when they were spoken.</summary>
-[Trait("Category", "Integration")]
 public class SpokenOnlyKeywordsTests
 {
-    private static KeywordRouter Router(TempInstall install) =>
+    private static KeywordRouter Router(MemoryInstall install) =>
         new(TestSurface.For(install).Registry);
 
     [Theory]
@@ -15,7 +14,7 @@ public class SpokenOnlyKeywordsTests
     [InlineData("are you listening")]
     public void ASpokenOnlyPhraseIsIgnoredWhenItWasTyped(string input)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).Match(input, InputSource.Typed));
     }
@@ -25,7 +24,7 @@ public class SpokenOnlyKeywordsTests
     [InlineData("are you listening")]
     public void ASpokenOnlyPhraseReachesTheReportWhenItWasSpoken(string input)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match(input, InputSource.Spoken);
 
@@ -44,7 +43,7 @@ public class SpokenOnlyKeywordsTests
     [InlineData("what is my push to talk key", InputSource.Spoken)]
     public void TheOrdinaryVocabularyMatchesWhicheverWayItArrived(string input, InputSource source)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(Router(install).Match(input, source));
     }
@@ -56,7 +55,7 @@ public class SpokenOnlyKeywordsTests
     [Fact]
     public void TheDefaultSourceIsTyped()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).Match("can you hear me"));
     }

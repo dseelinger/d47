@@ -8,13 +8,12 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-[Trait("Category", "Integration")]
 public sealed class APhraseThatPressesKeysIsGuardedTests
 {
     [Fact]
     public void EveryPhraseAlreadyTakenIsInTheBook()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var offer = new ClipboardOffer();
@@ -43,7 +42,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
     [Fact]
     public void PuttingTheGearDownIsGuarded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var entry = Assert.Single(
             PhraseBook.From(TestSurface.For(install).Registry, []).Entries,
@@ -56,7 +55,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
     [Fact]
     public void SettingFocusToEliteIsGuarded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var entry = Assert.Single(
             PhraseBook.From(TestSurface.For(install).Registry, []).Entries,
@@ -69,7 +68,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
     [Fact]
     public void CopyThatWithAnOfferStandingIsNotGuarded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var offer = new ClipboardOffer();
         offer.Offer("Cubeo", "the system");
@@ -97,7 +96,7 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
     [InlineData("copy_to_clipboard", false)]
     public void OnlyTheToolsThatReachTheKeyboardSendInput(string name, bool sendsInput)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tool = Assert.Single(
             TestSurface.For(install).Registry.All.SelectMany(c => c.Descriptor.Tools),
@@ -109,15 +108,15 @@ public sealed class APhraseThatPressesKeysIsGuardedTests
     [Fact]
     public void AMacroNamedForAPhraseACapabilityOwnsIsStillRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var file = Path.Combine(install.Paths.Data, "phrase-book-macros.json");
-        File.WriteAllText(file, """
+        install.Files.WriteText(file, """
         { "macros": [ { "name": "put the gear down", "steps": [ { "action": "lights" } ] } ] }
         """);
 
-        var store = new MacroStore(file, new DiskFileSystem(), NullLogger<MacroStore>.Instance);
+        var store = new MacroStore(file, install.Files, NullLogger<MacroStore>.Instance);
         store.Poll([.. PhraseBook.From(registry, []).Entries.Select(entry => entry.Phrase)]);
 
         Assert.Empty(store.Macros);

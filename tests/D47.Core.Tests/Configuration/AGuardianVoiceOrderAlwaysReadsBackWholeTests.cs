@@ -67,11 +67,10 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         Assert.Equal(20, effects.Single(e => e.Id == "chorus").Level);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WritingAnOrderWithAnIdMissingOrUnknownReadsBackWhole()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.GuardianEffectKey("glitch"), "true", SettingsCaller.Panel);
@@ -89,11 +88,10 @@ public class AGuardianVoiceOrderAlwaysReadsBackWholeTests
         Assert.Equal("3", surface.Settings.Read(SpeechCapability.GuardianLevelKey("glitch")));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ALevelIsHeldWithinOneToTwenty()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.GuardianLevelKey("reverb"), "35", SettingsCaller.Panel);

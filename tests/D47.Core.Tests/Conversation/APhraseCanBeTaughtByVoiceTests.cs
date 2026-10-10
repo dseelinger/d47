@@ -13,7 +13,7 @@ public class APhraseCanBeTaughtByVoiceTests
 {
     private readonly MemoryFileSystem _files = new();
 
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-teach-by-voice");
+    private readonly string _root = Path.Combine(MemoryInstall.FakeRoot, "d47-teach-by-voice");
 
     private readonly List<string> _pressed = [];
 

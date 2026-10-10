@@ -90,7 +90,7 @@ public class ModelComparisonTests
         var turns = ComparisonCases.Turns.Where(turn => Chosen(turn.Id)).ToList();
         var quiet = ComparisonCases.Quiet.Where(call => Chosen(call.Id)).ToList();
 
-        using (var shared = runner.NewWorld())
+        var shared = runner.NewWorld();
         {
             Log($"world: {shared.Registry.All.Sum(capability => capability.Descriptor.Tools.Count)} tools; commander {shared.GameState.Active?.Identity.Name ?? "none"} in {shared.GameState.Active?.Location.StarSystem ?? "nowhere"}");
 
@@ -114,7 +114,7 @@ public class ModelComparisonTests
 
                         if (turn.Mutates)
                         {
-                            using var fresh = runner.NewWorld();
+                            var fresh = runner.NewWorld();
                             Write(await runner.RunTurnAsync(turn, fresh, model, run, Token));
                         }
                         else

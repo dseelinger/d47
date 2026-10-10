@@ -38,11 +38,10 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
         Assert.Equal(SttProviderCatalog.LocalId, effective.Listening);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void StartingWithTheKeySkippedLeavesNothingToAskForNextLaunch()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.True(FirstRun.IsNeeded(
@@ -60,11 +59,10 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
         Assert.False(FirstRun.IsNeeded(LlmProviderCatalog.Selected(saved.Llm.Provider), surface.Secrets.Has));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void StartingWithTheKeyStoredSavesThePaidChoice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Secrets.Set("anthropic.apiKey", "sk-test");
 
@@ -75,11 +73,10 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
             LlmProviderCatalog.Selected(surface.Settings.Current.Llm.Provider), surface.Secrets.Has));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheReadyStepDisclosesWhatWillBeSavedRatherThanWhatWasPicked()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var without = FirstRun.Destinations(surface.Settings, AllPaid, _ => false);

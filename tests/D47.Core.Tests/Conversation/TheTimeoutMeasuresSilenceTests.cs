@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>An attempt fails on time only when the model has sent nothing for the whole timeout.</summary>
-[Trait("Category", "Integration")]
 public class TheTimeoutMeasuresSilenceTests
 {
     private static readonly RetryPolicy OneTry = new()
@@ -17,7 +16,7 @@ public class TheTimeoutMeasuresSilenceTests
     [Fact]
     public async Task AnAttemptThatKeepsThinkingRunsPastTheTimeoutAndAnswers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new ManualTurnClock();
 
         // Two minutes of thinking, a delta every 30 seconds.
@@ -36,7 +35,7 @@ public class TheTimeoutMeasuresSilenceTests
     [Fact]
     public async Task SilenceAfterEarlierEventsStillTimesOut()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new ManualTurnClock();
 
         LlmStreamEvent thinking = new LlmStreamEvent.ThinkingDelta("still working");
@@ -56,7 +55,7 @@ public class TheTimeoutMeasuresSilenceTests
     [Fact]
     public async Task AnAttemptThatSendsNothingTimesOut()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new ManualTurnClock();
 
         (TimeSpan, LlmStreamEvent)[] steps =
@@ -70,7 +69,7 @@ public class TheTimeoutMeasuresSilenceTests
         Assert.EndsWith("It sent nothing for 45 seconds.", result.Text, StringComparison.Ordinal);
     }
 
-    private static async Task<TurnResult> RunAsync(TempInstall install, ILlmProvider provider, ManualTurnClock clock)
+    private static async Task<TurnResult> RunAsync(MemoryInstall install, ILlmProvider provider, ManualTurnClock clock)
     {
         var registry = TestSurface.For(install).Registry;
 

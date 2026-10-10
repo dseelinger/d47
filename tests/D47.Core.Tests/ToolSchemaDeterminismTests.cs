@@ -43,13 +43,12 @@ public class ToolSchemaDeterminismTests
         Assert.Equal(ToolSchemaWriter.Canonical(one), ToolSchemaWriter.Canonical(other));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoIndependentlyBuiltRegistriesProduceIdenticalSchemas()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        static IReadOnlyDictionary<string, string> SchemasFor(TempInstall install) =>
+        static IReadOnlyDictionary<string, string> SchemasFor(MemoryInstall install) =>
             TestSurface.For(install).Registry.Find(DiagnosticsCapability.Id)!.ToolSchemas;
 
         var first = SchemasFor(install);

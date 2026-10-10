@@ -142,7 +142,7 @@ public class RouteCapabilityTests
     }
 
     private static (CapabilityRegistry Registry, FakeRoutes Routes, FakeTrade Trade, GameStateStore GameState) Build(
-        TempInstall install,
+        MemoryInstall install,
         bool enabled = true,
         bool docked = true,
         RoutePlanBook? plans = null,
@@ -195,12 +195,11 @@ public class RouteCapabilityTests
     private static ToolArguments Args(params (string Name, string Value)[] values) =>
         new(values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal));
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipsOwnJumpRangeAndPositionFillThemselvesIn()
     {
         // Nobody says "plot me a route to Colonia from Sol at 52.31 light years a jump".
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -213,12 +212,11 @@ public class RouteCapabilityTests
         Assert.Equal(52.31, routes.LastRoute?.JumpRange);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnEfficiencyOfOneHundredIsNeverSentBecauseTheServiceCannotRouteWithIt()
     {
         // Accepted and then failed to route, measured Sol to Colonia on 2026-08-14.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         await registry.InvokeAsync(
@@ -229,11 +227,10 @@ public class RouteCapabilityTests
         Assert.Equal(99, routes.LastRoute?.Efficiency);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AShipTooShortRangedToPlotForIsToldSoRatherThanRefusedByTheService()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -247,11 +244,10 @@ public class RouteCapabilityTests
     }
 
  /// <summary>The last waypoint does not announce zero light years left.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDestinationWaypointSaysNothingAboutDistanceLeft()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         routes.Route = new PlottedRoute(
@@ -288,11 +284,10 @@ public class RouteCapabilityTests
     public void ARemainderThatWouldPrintAsZeroIsNotWorthReporting(double left) =>
         Assert.Null(new RouteWaypoint("Meene", 1, left, false).DistanceLeftToReport);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ALongRouteSaysHowManyWaypointsThereAreRatherThanReadingThemAllOut()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         routes.Route = new PlottedRoute(
@@ -315,11 +310,10 @@ public class RouteCapabilityTests
         Assert.DoesNotContain("Waypoint 100", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task NoRouteIsAnAnswerRatherThanAFailure()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         routes.Route = null;
@@ -336,12 +330,11 @@ public class RouteCapabilityTests
         Assert.Contains("lower efficiency", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteWillNotInferTheCommandersBalance()
     {
         // The one figure here that is about the Commander rather than their ship.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         // Required in the schema, so the model is stopped before a turn is spent on it…
@@ -364,11 +357,10 @@ public class RouteCapabilityTests
         Assert.Null(trade.LastTrade);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteDoesFillInTheHoldFromTheShip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         await registry.InvokeAsync(
@@ -382,13 +374,12 @@ public class RouteCapabilityTests
     }
 
     /// <summary>A trade route never sells limpets, so they come off the default hold with no switch (#310).</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheDefaultHoldLeavesRoomForTheLimpetsAlreadyAboard()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-20T000000.01.log"),
             [
                 """{"timestamp":"2026-09-20T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
@@ -396,12 +387,12 @@ public class RouteCapabilityTests
                 """{"timestamp":"2026-09-20T00:00:02Z","event":"Docked","StarSystem":"Sol","StationName":"Abraham Lincoln"}""",
             ]);
 
-        File.WriteAllText(
+        install.Files.WriteText(
             Path.Combine(install.Root, D47.Core.Journal.CargoManifestReader.ManifestFile),
             """{ "timestamp":"2026-09-20T00:00:03Z", "event":"Cargo", "Vessel":"Ship", "Count":8, "Inventory":[ { "Name":"drones", "Name_Localised":"Limpet", "Count":8, "Stolen":0 } ] }""");
 
         var gameState = new GameStateStore();
-        new JournalSpine(install.Root, new DiskFileSystem(), gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(install.Root, install.Files, gameState, NullLoggerFactory.Instance).Poll();
 
         var routes = new FakeRoutes();
         var trade = new FakeTrade();
@@ -429,11 +420,10 @@ public class RouteCapabilityTests
     /// A stop behind a permit is one the Commander cannot fly to, so the switch is on unless they
     /// turn it off (#310).
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task PermitSystemsAreAvoidedUnlessTheCommanderSaysOtherwise()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(install);
 
         await registry.InvokeAsync(
@@ -455,11 +445,10 @@ public class RouteCapabilityTests
     /// The Trade route page's own saved values (#311) fill in anything a call doesn't give — a voice
     /// plot that names only the credits runs with whatever the page last saved.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteUsesTheSavedSettingsForAnythingNotGiven()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(
             install,
             configureSettings: settings => settings.Replace(
@@ -502,13 +491,12 @@ public class RouteCapabilityTests
         Assert.Equal(3, trade.LastTrade?.MaxHops);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteWithNoKnownJumpRangeAsksForOneRatherThanSendingAnything()
     {
         // The fixture's ship carries no modules, so d47 cannot work out a laden range for it, and none is
         // given here either.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -524,11 +512,10 @@ public class RouteCapabilityTests
     /// <summary>The staleness bound is spelled `max_price_age_hours` here as well as on the commodity search,
     /// and the handler reads it under that name — a rename that reached the schema and not the handler would
     /// advertise a knob that silently does nothing.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheStalenessBoundIsSpelledWithItsUnit()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(install);
 
         await registry.InvokeAsync(
@@ -539,11 +526,10 @@ public class RouteCapabilityTests
         Assert.Equal(48, trade.LastTrade?.MaxPriceAge);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeRouteCannotBePlottedFromSupercruise()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install, docked: false);
 
         var result = await registry.InvokeAsync(
@@ -558,11 +544,10 @@ public class RouteCapabilityTests
     }
 
     /// <summary>Asking the same question Trading Mode answers on its own, about any system (#313).</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForSaysWhatToBuyHereForTheNamedSystem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(install);
 
         trade.BestCargo = new BestCargoAnswer([new CargoPick("Gold", "Newholm Station", 8_204, 280, CargoLimit.Demand)], 384);
@@ -583,11 +568,10 @@ public class RouteCapabilityTests
         Assert.Equal(384, trade.LastBestCargo?.Hold);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForNeedsTheMarketYouAreDockedAt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(install, docked: false);
 
         var result = await registry.InvokeAsync(
@@ -601,11 +585,10 @@ public class RouteCapabilityTests
     }
 
     /// <summary>The page draws what the tool found, so the tool posts every search it finishes (#849).</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForPostsTheSearchAndItsAnswerToTheBoard()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var board = new BestCargoBoard();
         var (registry, _, trade, _) = Build(install, cargo: board);
         var posted = 0;
@@ -641,11 +624,10 @@ public class RouteCapabilityTests
         Assert.Null(board.Last.Answer);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedBestCargoSearchPostsNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var board = new BestCargoBoard();
         var (registry, _, _, _) = Build(install, docked: false, cargo: board);
 
@@ -654,11 +636,10 @@ public class RouteCapabilityTests
         Assert.Null(board.Last);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task BestCommoditiesForSaysWhenNothingPays()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, trade, _) = Build(install);
 
         trade.BestCargo = new BestCargoAnswer([], 384);
@@ -673,11 +654,10 @@ public class RouteCapabilityTests
         Assert.Null(trade.LastTrade);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARichesRouteReportsWhatItIsWorthAndHowFarItGoes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         routes.Riches = new RichesRoute(
@@ -709,11 +689,10 @@ public class RouteCapabilityTests
             < result.Content.IndexOf("A 3", StringComparison.Ordinal));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install, enabled: false);
 
         var result = await registry.InvokeAsync(
@@ -726,11 +705,10 @@ public class RouteCapabilityTests
         Assert.Null(routes.LastRoute);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachablePlotterIsAnErrorResultNotAnException()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, trade, _) = Build(install);
 
         routes.Throws = new GalaxyUnavailableException("The route plotter is still working after 90 seconds.");
@@ -745,11 +723,10 @@ public class RouteCapabilityTests
     }
 
  /// <summary>A route plotted by voice lands in the book the Routing tab reads.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task APlotMadeByVoiceIsThereForASurfaceToDraw()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
@@ -774,11 +751,10 @@ public class RouteCapabilityTests
         Assert.Equal(kept.Jump!.Waypoints.Count, kept.Jump.Waypoints.Count);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task APlotThatFoundNothingLeavesTheBookAlone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var plans = new RoutePlanBook(
             Path.Combine(install.Root, "data", "route-plans.json"),
@@ -801,7 +777,7 @@ public class RouteCapabilityTests
     /// Plotting the next stop on a stored plan by voice (#211): the Neutron Plotter, Road to Riches
     /// and trade planners all share this tool, told apart by <c>kind</c>.
     /// </summary>
-    private static RoutePlanBook PlanBook(TempInstall install) => new(
+    private static RoutePlanBook PlanBook(MemoryInstall install) => new(
         Path.Combine(install.Root, "data", "route-plans.json"),
         new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
 
@@ -843,11 +819,10 @@ public class RouteCapabilityTests
             new RouteWaypoint("Col 359 Sector NN-T e3-3", 11, 0, false),
         ]);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoStoredPlanOfThatKindNothingIsPlottedAndItSaysSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
 
@@ -865,11 +840,10 @@ public class RouteCapabilityTests
         Assert.Empty(((RecordingClipboard)navigation.Clipboard).Written);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNothingReachedItPlotsTheFirstStop()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
 
@@ -886,11 +860,10 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithAStopReachedItPlotsTheOneAfter()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
         plans.Apply([Arrival("FSDJump", "PSR J1752-2806", PlottedAt.AddMinutes(10))]);
@@ -911,11 +884,10 @@ public class RouteCapabilityTests
         Assert.Equal(0, plans.Last(RoutePlanKind.Jump)?.Reached);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithTheLastStopReachedNothingIsPlottedAndItSaysSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
         plans.Apply(
@@ -941,11 +913,10 @@ public class RouteCapabilityTests
     /// A trade plan's first stop is the station the Commander plotted from, so it is skipped rather than
     /// plotted back to — and its own kind's tool never reads another kind's book.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATradeStopInTheCurrentSystemIsSkippedAndTheStationIsNamed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
 
@@ -980,12 +951,11 @@ public class RouteCapabilityTests
         Assert.Null(plans.Last(RoutePlanKind.Jump)?.Reached);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AKindArgumentInAnyCaseStillReachesTheRightPlan()
     {
         // The registry checks AllowedValues case-insensitively before the handler ever sees it.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
 
@@ -1001,11 +971,10 @@ public class RouteCapabilityTests
         Assert.Equal("PSR J1752-2806", ((RecordingClipboard)navigation.Clipboard).Last);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AutomaticPlottingBothOnAndOffStillNamesTheStop()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(TwoWaypointJump(), "Procyon to Byua Euq XQ-G c10-18", PlottedAt);
 
@@ -1021,11 +990,10 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 1 of 2", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnExobiologyPlanPlotsItsNextSystem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var plans = PlanBook(install);
         plans.Record(
             new ExobiologyRoute([new ExobiologyStop("Opet", 3, []), new ExobiologyStop("Wregoe AC-D d12-8", 2, [])]),
@@ -1046,14 +1014,13 @@ public class RouteCapabilityTests
         Assert.Contains("Stop 2 of 2", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("plot next exobiology stop")]
     [InlineData("plot the next exobiology stop")]
     [InlineData("next exobiology stop")]
     public void TheNextExobiologyStopIsReachedWithoutTheModel(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = TestSurface.For(install).Router.MatchToolCommand(said);
 

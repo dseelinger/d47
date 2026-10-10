@@ -207,11 +207,10 @@ public class ColonisationDeadlinesAreSaidTests
         Assert.Equal("colonisation", new ColonisationCallout().Id);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

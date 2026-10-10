@@ -9,18 +9,17 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The three settings a floor and a ceiling arrive as, at the store seam.</summary>
-[Trait("Category", "Integration")]
 public class AFloorAndACeilingTests
 {
-    private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+    private static SettingsStore StoreFor(MemoryInstall install) =>
+        new(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
     /// <summary>Decision 3 of the phase: all three null means behaviour identical to today.</summary>
     [Fact]
     public void AFileWrittenBeforeTheBoundsExistedLoadsWithNone()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(
+        var install = new MemoryInstall();
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """{"schemaVersion":1,"llm":{"provider":"anthropic","model":"claude-opus-5"}}""");
 
@@ -35,7 +34,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void TheThreeSurviveARoundTrip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = StoreFor(install);
 
         store.Save(new D47Settings
@@ -60,12 +59,12 @@ public class AFloorAndACeilingTests
     [Fact]
     public void TheFifthRungIsWrittenAsOneWord()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = StoreFor(install);
 
         store.Save(new D47Settings { Llm = new LlmSettings { EffortCeiling = ThinkingEffort.Xhigh } });
 
-        Assert.Contains("\"xhigh\"", File.ReadAllText(install.Paths.SettingsFile), StringComparison.Ordinal);
+        Assert.Contains("\"xhigh\"", install.Files.ReadText(install.Paths.SettingsFile), StringComparison.Ordinal);
         Assert.Equal(ThinkingEffort.Xhigh, store.Load().Llm.EffortCeiling);
     }
 
@@ -73,7 +72,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void SwitchingProviderClearsTheBackgroundModelAsWellAsTheConversationOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
@@ -92,7 +91,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void ChangingTheEndpointClearsTheBackgroundModelAsWell()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ProviderKey, LlmProviderCatalog.OpenAiId, SettingsCaller.Panel);
@@ -116,7 +115,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void EachEffortRowTruncatesAgainstTheOther()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(
@@ -143,7 +142,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void TheEffortRowsAreAClosedLadderRatherThanAnOpenVocabulary()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.False(Row(surface, ConversationCapability.EffortFloorKey).IsOpenVocabulary);
@@ -157,7 +156,7 @@ public class AFloorAndACeilingTests
     [Fact]
     public void TheCeilingCanBeSetAndClearedByVoice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 

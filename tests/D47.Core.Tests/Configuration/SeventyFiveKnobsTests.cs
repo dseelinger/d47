@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The calm settings page.</summary>
-[Trait("Category", "Integration")]
 public class SeventyFiveKnobsTests
 {
     private static IReadOnlyList<SettingRow> Rows(TestSurface surface) =>
@@ -26,7 +25,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void FoldingWritesNothingAtAll()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.EffortCeilingKey, "Medium", SettingsCaller.Panel);
@@ -47,7 +46,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void WithTheToggleOnNothingIsFolded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.All(Rows(surface), row => Assert.False(Folded(surface, row, showEverything: true)));
@@ -60,7 +59,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void TheCalmPageStillGetsACommanderRunning()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         string[] essential =
@@ -91,7 +90,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void NoSecretIsEverFolded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.All(
@@ -108,7 +107,7 @@ public class SeventyFiveKnobsTests
     [InlineData("memory.enabled")]
     public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Find(key);
@@ -125,7 +124,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void APerSlotVoiceProviderRowIsFolded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var slots = Rows(surface)
@@ -146,7 +145,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void ARowTheCommanderChangedIsNeverFolded()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Find(ConversationCapability.EffortCeilingKey)!;
@@ -168,7 +167,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void TheVoiceRouteReachesAFoldedRow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new D47.Core.Conversation.KeywordRouter(surface.Registry);
 
@@ -189,7 +188,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void TheFoldCanSayHowMuchItIsHiding()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var folded = SettingsFold.Folded(
@@ -215,7 +214,7 @@ public class SeventyFiveKnobsTests
     [Fact]
     public void TheToggleIsNeverFoldedAwayByItself()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Find(InterfaceCapability.ShowEverySettingKey);

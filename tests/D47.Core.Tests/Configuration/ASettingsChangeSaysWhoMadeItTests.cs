@@ -4,13 +4,12 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>A <see cref="SettingsChanged"/> carries the caller that wrote it.</summary>
-[Trait("Category", "Integration")]
 public class ASettingsChangeSaysWhoMadeItTests
 {
     [Fact]
     public void AShipBindingWriteIsRaisedAsShipBinding()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         var raised = new List<SettingsChanged>();
         settings.Changed += raised.Add;
@@ -23,7 +22,7 @@ public class ASettingsChangeSaysWhoMadeItTests
     [Fact]
     public void APanelWriteIsRaisedAsPanel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         var raised = new List<SettingsChanged>();
         settings.Changed += raised.Add;
@@ -36,7 +35,7 @@ public class ASettingsChangeSaysWhoMadeItTests
     [Fact]
     public void AReloadForAnotherCommanderIsRaisedWithNoCaller()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         var raised = new List<SettingsChanged>();
         settings.Changed += raised.Add;

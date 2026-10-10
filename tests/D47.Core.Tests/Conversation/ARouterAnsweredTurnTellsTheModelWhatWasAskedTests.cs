@@ -6,7 +6,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-[Trait("Category", "Integration")]
 public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
 {
     /// <summary>The phrase for the action route.</summary>
@@ -15,7 +14,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task TheKeywordRoutersOwnAnswerCarriesWhatWasAskedForIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);
@@ -38,7 +37,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task AnActionPhrasesOwnAnswerCarriesWhatWasAskedForIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
@@ -57,7 +56,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task ASettingsPhrasesOwnAnswerCarriesWhatWasAskedForIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider, surface.Settings);
@@ -82,7 +81,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task TheMostRecentAskedForExchangeIsNamedAsTheSubject()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
@@ -104,7 +103,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task TheNamedSubjectDoesNotKeepAssertingItselfOnLaterTurns()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
@@ -131,7 +130,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task AmbientLinesCannotEvictTheExchangeBeforeTheModelReadsIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, ActionRouter(surface.Registry), provider);
@@ -161,7 +160,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task ACarriedAnswerIsMarkedAsPastRatherThanStanding()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);
@@ -189,7 +188,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task AnAmbientLineIsStillDescribedAsUnprompted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);
@@ -212,7 +211,7 @@ public class ARouterAnsweredTurnTellsTheModelWhatWasAskedTests
     [Fact]
     public async Task AnUnpromptedLineAndAnAskedForOneAreLabelledApart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Answered.");
         var loop = Build(surface, surface.Router, provider);

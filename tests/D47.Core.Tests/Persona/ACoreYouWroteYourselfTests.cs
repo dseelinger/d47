@@ -5,18 +5,16 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-[Trait("Category", "Integration")]
 public class ACoreYouWroteYourselfTests : IDisposable
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-own-personas", Guid.NewGuid().ToString("n"));
+    private readonly MemoryInstall _install = new();
+
+    private string _folder => _install.Root;
 
     private OwnPersonaStore Store()
     {
-        Directory.CreateDirectory(_folder);
-
         var store = new OwnPersonaStore(
-            Path.Combine(_folder, "personas.json"), new DiskFileSystem(),
+            Path.Combine(_folder, "personas.json"), _install.Files,
             NullLogger<OwnPersonaStore>.Instance);
 
         PersonaCatalog.Own = () => [.. store.Cores.Select(core => core.AsPersona())];
@@ -29,11 +27,6 @@ public class ACoreYouWroteYourselfTests : IDisposable
         // The catalogue's source is static, so a test that left one pointing at a deleted folder would hand
         // every later test somebody else's cores.
         PersonaCatalog.Own = null;
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
     }
 
     private static OwnPersona Written(string name, string body = "You are terse and you like mining.") =>
@@ -162,7 +155,7 @@ public class ACoreYouWroteYourselfTests : IDisposable
     {
         var store = Store();
 
-        File.WriteAllText(
+        _install.Files.WriteText(
             store.Path,
             """
             { "cores": [ { "id": "own.rusty", "name": "Rusty", "body": "You are terse." } ] }
@@ -195,7 +188,7 @@ public class ACoreYouWroteYourselfTests : IDisposable
     [Fact]
     public void ThePickerIsStillAClosedList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Sections
@@ -214,7 +207,7 @@ public class ACoreYouWroteYourselfTests : IDisposable
 
         store.Save([Written("Rusty")]);
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Sections
@@ -233,7 +226,7 @@ public class ACoreYouWroteYourselfTests : IDisposable
 
         store.Save([Written("Rusty")]);
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Sections

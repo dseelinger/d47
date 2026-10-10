@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The Voice row belongs to the core aboard.</summary>
-[Trait("Category", "Integration")]
 public class VoiceFollowsTheCoreTests
 {
     private static SettingApplyResult Choose(TestSurface surface, string key, string? value) =>
@@ -16,7 +15,7 @@ public class VoiceFollowsTheCoreTests
     [Fact]
     public void AVoiceChosenIsStoredAgainstTheCoreAboard()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Choose(surface, PersonaCapability.PersonaKey, "cora");
@@ -45,7 +44,7 @@ public class VoiceFollowsTheCoreTests
     [Fact]
     public void APairingBeatsTheVoiceChosenBeforeVoicesWerePerCore()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Replace("a file from before voices were per core", current => current with
@@ -70,7 +69,7 @@ public class VoiceFollowsTheCoreTests
     {
         // "Let d47 choose again" has to be expressible, and an empty pairing would read as a choice already
         // made — the one state that stops it being asked for.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Choose(surface, SpeechCapability.VoiceKey, "en-GB-SoniaNeural");
@@ -86,7 +85,7 @@ public class VoiceFollowsTheCoreTests
     public void TheOldSingleVoiceIsReadUntilACoreHasOneAndIsThenLetGo()
     {
         // A settings file written before voices were kept per core has one in the old place.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Replace(

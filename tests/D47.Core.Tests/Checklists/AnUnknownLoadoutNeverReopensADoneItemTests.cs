@@ -12,7 +12,6 @@ namespace D47.Core.Tests.Checklists;
 /// Between <c>LoadGame</c> and <c>Loadout</c> the ship aboard has an id and no modules. A done item on it
 /// stays done and is not announced again when the loadout arrives; a real change still gets through (#452).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AnUnknownLoadoutNeverReopensADoneItemTests
 {
     private readonly MemoryFileSystem _files = new();
@@ -24,7 +23,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     [Fact]
     public void ADoneItemStaysDoneAndSilentAcrossAStart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Finish(install);
 
         var (game, checklists) = Start(install);
@@ -48,7 +47,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     [Fact]
     public void ALowerGradeInTheArrivingLoadoutStillReopensTheItem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Finish(install);
 
         var (game, checklists) = Start(install);
@@ -65,7 +64,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     }
 
     /// <summary>The previous session: the radar is planned at grade 5 and reaches it.</summary>
-    private void Finish(TempInstall install)
+    private void Finish(MemoryInstall install)
     {
         var game = new GameStateStore();
 
@@ -91,7 +90,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
     }
 
     /// <summary>A fresh d47 on the same files, with the game at <c>LoadGame</c> and no loadout yet.</summary>
-    private (GameStateStore Game, ChecklistService Checklists) Start(TempInstall install)
+    private (GameStateStore Game, ChecklistService Checklists) Start(MemoryInstall install)
     {
         var game = new GameStateStore();
 
@@ -105,7 +104,7 @@ public class AnUnknownLoadoutNeverReopensADoneItemTests
         return (game, Checklists(install, game));
     }
 
-    private ChecklistService Checklists(TempInstall install, GameStateStore game) => new(
+    private ChecklistService Checklists(MemoryInstall install, GameStateStore game) => new(
         new ChecklistStore(Path.Combine(install.Root, "checklist.json"), _files, NullLogger<ChecklistStore>.Instance),
         new ChecklistProposalStore(
             Path.Combine(install.Root, "checklist-proposals.json"),

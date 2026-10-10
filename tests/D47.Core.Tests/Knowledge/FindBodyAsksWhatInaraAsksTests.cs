@@ -61,7 +61,7 @@ public class FindBodyAsksWhatInaraAsksTests
 
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(TempInstall install)
+    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(MemoryInstall install)
     {
         var galaxy = new FakeGalaxy();
         var board = new GalaxySearchBoard();
@@ -81,11 +81,10 @@ public class FindBodyAsksWhatInaraAsksTests
     private static Task<ToolResult> FindBody(CapabilityRegistry registry, params (string Name, string Value)[] values) =>
         registry.InvokeAsync("find_body", Args(values), TestContext.Current.CancellationToken);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSchemaOffersTheNewFiltersAndTheBodyVocabulary()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, _) = Build(install);
 
         var names = registry.All
@@ -104,11 +103,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.DoesNotContain("allegiance", names);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task VolcanismIsReadInTheCataloguesSpelling()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await FindBody(registry, ("volcanism", "water geysers"));
@@ -118,11 +116,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("water geysers", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnknownVolcanismIsRefusedWithSuggestions()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await FindBody(registry, ("volcanism", "water geyser"));
@@ -132,11 +129,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("Water Geysers", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task OrderingByMaterialKeepsTheRichestAndSaysAmongHowMany()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await FindBody(registry, ("material", "Polonium"), ("order_by", "material"), ("limit", "2"));
@@ -151,11 +147,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("1.1% Polonium", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task OrderingByMaterialWithoutAMaterialIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await FindBody(registry, ("landable", "true"), ("order_by", "material"));
@@ -181,11 +176,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Equal("Bodies can't be filtered by allegiance: Spansh's body index doesn't carry it.", failure);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ANewFilterAloneIsEnoughToSearch()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await FindBody(registry, ("gravity", "0.1"));
@@ -195,11 +189,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("0.08 g", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedUnderBodies()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
 
         var result = await FindBody(registry, ("tidally_locked", "true"));
@@ -214,11 +207,10 @@ public class FindBodyAsksWhatInaraAsksTests
         Assert.Contains("tidally locked", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFailedSearchPostsNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
         galaxy.Throws = new GalaxyUnavailableException("The galaxy search could not be reached.");
 

@@ -138,7 +138,7 @@ public class OnlyTheEngineeringThatFinishedAnItemIsSpokenTests
         Assert.Equal(ChecklistState.Done, Find(checklists, grade).State);
 
         // The same grade reached by a SuitLoadout alone, on a fresh install, is not spoken.
-        using var other = new TempInstall();
+        var other = new MemoryInstall();
         var elsewhere = Commander();
         var silent = TestSurface.Checklists(other.Paths, elsewhere);
         elsewhere.Apply(wearing);

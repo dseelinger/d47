@@ -476,14 +476,13 @@ public class GuardrailsSurvivePersonaTests
 }
 
 /// <summary>Who is allowed to change which core is aboard.</summary>
-[Trait("Category", "Integration")]
 public class PersonaIsNotTheModelsToChangeTests
 {
     [Fact]
     public void TheModelCannotSwitchPersonaButEveryOtherCallerCan()
     {
         // Directive 47 reads journals and in-game messages, and those are written by other people.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.True(surface.Settings.Find(PersonaCapability.PersonaKey)!.Protected);
@@ -505,7 +504,7 @@ public class PersonaIsNotTheModelsToChangeTests
     {
         // The row above is protected; this one deliberately is not. "Call yourself Fred" changes nothing
         // anything depends on, and refusing it would be protecting the Commander from a nickname.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.False(surface.Settings.Find(PersonaCapability.ShipNameKey)!.Protected);
@@ -517,7 +516,7 @@ public class PersonaIsNotTheModelsToChangeTests
     public void EveryCoreIsReachableByVoiceWithoutAModel()
     {
         // Protecting the row is only defensible because the model-free path still reaches it.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var phrases = surface.Settings.Find(PersonaCapability.PersonaKey)!.Commands;
@@ -531,7 +530,7 @@ public class PersonaIsNotTheModelsToChangeTests
     [Fact]
     public void AnUnknownValueWrittenToTheRowLandsOnTheDefaultRatherThanSticking()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(PersonaCapability.PersonaKey, "not-a-core", SettingsCaller.Panel);

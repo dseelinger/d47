@@ -10,7 +10,6 @@ namespace D47.Core.Tests.Ships;
 /// <summary>
 /// A build whose ship is gone is deleted with the checklist lines it put there, and nothing is said.
 /// </summary>
-[Trait("Category", "Integration")]
 public class AGoneShipTakesItsBuildWithItTests
 {
     private readonly MemoryFileSystem _files = new();
@@ -21,7 +20,7 @@ public class AGoneShipTakesItsBuildWithItTests
 
     private sealed record Bench(GameStateStore Game, ChecklistService Checklists, ShipPlanService Ships);
 
-    private Bench Set(TempInstall install)
+    private Bench Set(MemoryInstall install)
     {
         var game = new GameStateStore();
 
@@ -60,7 +59,7 @@ public class AGoneShipTakesItsBuildWithItTests
     [Fact]
     public void ASaleDeletesTheBuildAndItsLinesAndSaysNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (_, checklists, ships) = Set(install);
 
         ships.DropGone([Sell(Gone)]);
@@ -78,7 +77,7 @@ public class AGoneShipTakesItsBuildWithItTests
     [Fact]
     public void AnIdReportingAnotherHullDeletesTheBuildOnTheNextPoll()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists, ships) = Set(install);
 
         game.Apply(Loadout(Gone, "cutter"));
@@ -94,7 +93,7 @@ public class AGoneShipTakesItsBuildWithItTests
     [Fact]
     public void AShipStillReportingItsHullKeepsItsBuild()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists, ships) = Set(install);
 
         game.Apply(Loadout(Gone, "Python"));
@@ -109,7 +108,7 @@ public class AGoneShipTakesItsBuildWithItTests
     [Fact]
     public void NothingDerivedFromTheBuildIsLeftInTheFile()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (_, checklists, ships) = Set(install);
 
         // A revision that drops the line entirely.
@@ -130,7 +129,7 @@ public class AGoneShipTakesItsBuildWithItTests
     [Fact]
     public void AWaitingPlanForTheSoldShipIsWithdrawn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (_, checklists, ships) = Set(install);
 
         ships.Plan(ships.ForShip(Gone)!.Id, new SlotPlan("PowerPlant", "Overcharged", 5));

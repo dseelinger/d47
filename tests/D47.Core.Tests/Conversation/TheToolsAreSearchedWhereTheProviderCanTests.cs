@@ -46,11 +46,10 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         return result;
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchingProviderIsSentTheSameToolsOnFootInTheSrvAndWithKeyPressesOff()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("Elite."),
@@ -84,11 +83,10 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.All(sent, tools => Assert.Equal(searchable, tools));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AProviderThatCannotSearchIsSentTheModesList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("Elite."),
@@ -110,11 +108,10 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.DoesNotContain(tools, tool => tool.Deferred);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ARefusedSearchIsAskedAgainWithTheModesListAndSoIsEveryLaterTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new DemotingProvider();
 
@@ -178,13 +175,12 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
         Assert.Empty(input.Steps);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task TheSearchSentenceIsInTheGuardrailsOnlyWhenTheToolsAreSearchable(bool searchable)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("Elite."),
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed))

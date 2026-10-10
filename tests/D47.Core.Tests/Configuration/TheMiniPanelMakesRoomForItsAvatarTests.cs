@@ -23,7 +23,6 @@ public class TheMiniPanelMakesRoomForItsAvatarTests
         Assert.Equal(0.526, VrSurfaceSettings.Mini().Width);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnInstallAtTheOldDefaultIsWidened()
     {
@@ -33,7 +32,6 @@ public class TheMiniPanelMakesRoomForItsAvatarTests
         Assert.True(loaded.Vr.MiniWidened > 0);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AWidthTheCommanderChoseIsLeftAlone()
     {
@@ -41,7 +39,6 @@ public class TheMiniPanelMakesRoomForItsAvatarTests
     }
 
     /// <summary>A resize drag stores pixels with its width; that pair is the Commander's, even at 0.34.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AResizedPanelIsLeftAlone()
     {
@@ -52,7 +49,6 @@ public class TheMiniPanelMakesRoomForItsAvatarTests
     }
 
     /// <summary>Stamped, so a Commander who later sets 0.34 on purpose keeps it.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRepairHappensOnce()
     {
@@ -63,9 +59,9 @@ public class TheMiniPanelMakesRoomForItsAvatarTests
 
     private static D47Settings Load(string json)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(install.Paths.SettingsFile, json);
+        install.Files.WriteText(install.Paths.SettingsFile, json);
 
         return new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
     }

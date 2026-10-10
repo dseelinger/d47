@@ -12,7 +12,7 @@ public class ACommandersWordingIsLearnedOnAYesTests
 {
     private readonly MemoryFileSystem _files = new();
 
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-phrases");
+    private readonly string _root = Path.Combine(MemoryInstall.FakeRoot, "d47-phrases");
 
     private static readonly DateTimeOffset At = new(2026, 9, 13, 12, 0, 0, TimeSpan.Zero);
 

@@ -13,7 +13,7 @@ public class OrderingIsReachableWithoutTheModelTests
     /// <summary>A service over a throwaway install.</summary>
     private static ChecklistService Checklists()
     {
-        var install = new TempInstall();
+        var install = new MemoryInstall();
 
         return new ChecklistService(
             new ChecklistStore(

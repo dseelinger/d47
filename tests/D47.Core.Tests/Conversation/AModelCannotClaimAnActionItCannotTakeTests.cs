@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>The model said it had removed a checklist item, and it had not.</summary>
-[Trait("Category", "Integration")]
 public class AModelCannotClaimAnActionItCannotTakeTests
 {
     private static async Task<string> SaidAsync(TurnLoop loop, string input)
@@ -55,7 +54,7 @@ public class AModelCannotClaimAnActionItCannotTakeTests
     [Fact]
     public async Task AClaimedRemovalIsFollowedByTheTruth()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Propose(surface);
@@ -74,7 +73,7 @@ public class AModelCannotClaimAnActionItCannotTakeTests
     [Fact]
     public async Task NothingIsAddedWhenNothingIsWaiting()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var said = await SaidAsync(Build(surface, "Nothing on your list."), "anything outstanding");

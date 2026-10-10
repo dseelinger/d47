@@ -11,7 +11,6 @@ namespace D47.Core.Tests.Configuration;
 /// and protected rows are reachable by voice only through the model-free keyword router, so "by voice"
 /// never silently means "by the LLM".
 /// </summary>
-[Trait("Category", "Integration")]
 public class SettingsByVoiceTests
 {
     /// <summary>Rows whose value cannot be a closed phrase-to-value pair, with the reason.</summary>
@@ -41,7 +40,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void EveryProtectedRowWithAClosedValueSetIsReachableByVoice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var unreachable = surface.Settings.Sections
@@ -63,7 +62,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void EveryExemptionNamesARowThatStillExists()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var keys = surface.Settings.Sections
@@ -87,7 +86,7 @@ public class SettingsByVoiceTests
     [InlineData("show me the ")]
     public void EveryDeclaredCommandPhraseAlsoRoutesBehindAnOpener(string opener)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -108,7 +107,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void APhraseThatBeginsWithAnOpenerIsStillMatchedAsDeclared()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -138,7 +137,7 @@ public class SettingsByVoiceTests
     [InlineData("switch to full panel is the phrase I keep forgetting")]
     public void AnOpenerDoesNotMakeASentenceIntoACommand(string spoken)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -153,7 +152,7 @@ public class SettingsByVoiceTests
     [InlineData("thanks")]
     public void EveryDeclaredCommandPhraseAlsoRoutesBehindATail(string tail)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -177,7 +176,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void StartCallingThingsOutAgainTurnsTheCalloutsBackOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         var match = router.MatchSetting("start calling things out again");
@@ -194,7 +193,7 @@ public class SettingsByVoiceTests
     [InlineData("do not stop calling things out now")]
     public void ATailDoesNotMakeASentenceIntoACommand(string spoken)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         Assert.Null(router.MatchSetting(spoken));
@@ -203,7 +202,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void EveryDeclaredCommandPhraseActuallyRoutes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -224,7 +223,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void ASettingPhraseNeverReachesTheModelPath()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry);
 
@@ -247,7 +246,7 @@ public class SettingsByVoiceTests
     [Fact]
     public void ProtectedRowsRefuseTheModelEvenWhenItNamesThemExactly()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         foreach (var row in surface.Settings.Sections

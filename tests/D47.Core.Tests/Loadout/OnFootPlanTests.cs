@@ -11,10 +11,10 @@ namespace D47.Core.Tests.Loadout;
 /// <summary>Suit and weapon plans: the Ships arrangement, on foot.</summary>
 public class OnFootPlanTests
 {
-    private static OnFootBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "on-foot.json"), new DiskFileSystem(), NullLogger<OnFootBuildStore>.Instance);
+    private static OnFootBuildStore Store(MemoryInstall install) =>
+        new(Path.Combine(install.Root, "on-foot.json"), install.Files, NullLogger<OnFootBuildStore>.Instance);
 
-    private static ChecklistService Checklists(TempInstall install, CommanderGameState? state = null) =>
+    private static ChecklistService Checklists(MemoryInstall install, CommanderGameState? state = null) =>
         new(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
@@ -27,7 +27,7 @@ public class OnFootPlanTests
             () => state);
 
     private static OnFootPlanService Service(
-        TempInstall install, OnFootBuildStore store, CommanderGameState? state = null) =>
+        MemoryInstall install, OnFootBuildStore store, CommanderGameState? state = null) =>
         new(store, Checklists(install, state), () => state);
 
     /// <summary>The Commander on foot in a grade 3 Maverick, which is what the journal reports.</summary>
@@ -59,11 +59,10 @@ public class OnFootPlanTests
     /// rather than a precondition sitting outside it — the on-foot reading of "a hull you do not own is
     /// not in the fleet".
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnIntendedSuitHasNoItemIdAndIsNotOwned()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var build = Service(install, Store(install)).Intend("Maverick");
 
@@ -75,11 +74,10 @@ public class OnFootPlanTests
     }
 
     /// <summary>The shipped table is what answers "is that a suit", so a typo is refused.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASuitNoTableKnowsIsRefusedRatherThanInvented()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Service(install, Store(install)).Intend("Maverock Mark Nine"));
     }
@@ -88,11 +86,10 @@ public class OnFootPlanTests
     /// On foot the buy event carries the id, which is the opposite of the ship side — so adoption needs
     /// one event where Phase 26 needed the second of two.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingTheSuitAdoptsThePlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -121,11 +118,10 @@ public class OnFootPlanTests
     /// A weapon is adopted on its own event and its own id field, and a suit plan is not bound to a
     /// weapon the Commander bought.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingAWeaponAdoptsOnlyAWeaponPlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -145,11 +141,10 @@ public class OnFootPlanTests
     /// Frontier's own localisation reports every suit above grade 1 as Class1, so the symbol is what
     /// the adoption matches on.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AdoptionReadsTheSymbolRatherThanTheBrokenLocalisedName()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -167,11 +162,10 @@ public class OnFootPlanTests
  /// Selling is the buy backwards: the item goes and the plan stays, so the line answers "not
     /// bought yet" again rather than claiming the sold suit is still on the Commander.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void SellingTheSuitGivesUpTheItemAndKeepsThePlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store, OnFoot());
 
@@ -205,11 +199,10 @@ public class OnFootPlanTests
     /// A weapon sale disowns the weapon's build and nothing else, and a sale of something no build
  /// points at is not news.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void SellingAWeaponDisownsThatBuildAloneAndSaysNothingForAnUnplannedOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -242,11 +235,10 @@ public class OnFootPlanTests
     /// Buying the replacement adopts the plan back onto it, which is the point of keeping the build:
  /// the id is what the sale gave up, and the plan is what it did not.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingAgainAfterASaleAdoptsTheSamePlanOntoTheNewItem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -273,11 +265,10 @@ public class OnFootPlanTests
     }
 
     /// <summary>A slot holds one plan, because a slot holds one thing.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void PlanningASlotTwiceReplacesRatherThanAdds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -291,14 +282,13 @@ public class OnFootPlanTests
         Assert.Equal("Extra Ammo Capacity", slot.Modification);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASlotThatIsNotAModSlotIsRefusedAndReported()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
 
-        File.WriteAllText(
+        install.Files.WriteText(
             store.Path,
             """
             {"kit":[{"id":"kit-1","equipment":"Maverick Suit","kind":"suit","slots":[
@@ -315,14 +305,13 @@ public class OnFootPlanTests
     }
 
     /// <summary>One build per item, enforced where the file is read as well as where it is written.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void OneItemHasOneBuild()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
 
-        File.WriteAllText(
+        install.Files.WriteText(
             store.Path,
             """
             {"kit":[
@@ -336,11 +325,10 @@ public class OnFootPlanTests
     }
 
     /// <summary>Promotion is a proposal.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingProposesWithTheGradeFirst()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var state = OnFoot();
         var checklists = Checklists(install, state);
@@ -370,11 +358,10 @@ public class OnFootPlanTests
     /// Something not owned has no list for its items to be in, so promotion says so rather than
     /// inventing a scope.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingSomethingYouDoNotOwnSaysSoRatherThanInventingAList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -386,11 +373,10 @@ public class OnFootPlanTests
     }
 
     /// <summary>The free slot count comes from the grade the plan is aiming at.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFreeSlotCountFollowsThePlannedGradeRatherThanTheCurrentOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var kit = Service(install, store);
 
@@ -409,11 +395,10 @@ public class OnFootPlanTests
     }
 
     /// <summary>The suit being worn and the weapons carried are the index, and each keeps its own build.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheIndexIsWhatYouAreWearingAndCarrying()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var state = OnFoot();
         var kit = Service(install, Store(install), state);
 
@@ -430,11 +415,10 @@ public class OnFootPlanTests
     /// Elite reports one loadout and a second suit in the locker is invisible to it, so the index has to
     /// come from the ledger rather than from what is currently worn (#295).
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnOwnedSuitNotWornShowsItsLedgerGradeAndLastSeenDate()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new GameStateStore();
 
         foreach (var line in new[]
@@ -462,11 +446,10 @@ public class OnFootPlanTests
         Assert.Equal("grade 1, last seen 19 Aug 2026", stored.Where());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NothingNamedMeansTheOneThingThereIsOneOf()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var state = OnFoot();
         var kit = Service(install, Store(install), state);
 
@@ -483,11 +466,10 @@ public class OnFootPlanTests
     /// Dropping a plan keeps what it already put on the checklist: the Commander ordered their list
     /// around those lines, and silently removing them makes the history wrong.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void DroppingAPlanKeepsWhatItAlreadyPromoted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var state = OnFoot();
         var checklists = Checklists(install, state);

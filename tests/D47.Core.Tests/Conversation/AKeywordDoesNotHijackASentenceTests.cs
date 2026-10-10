@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A declared keyword buried in a long remark must fall through to the model.</summary>
-[Trait("Category", "Integration")]
 public class AKeywordDoesNotHijackASentenceTests
 {
     /// <summary>
@@ -19,7 +18,7 @@ public class AKeywordDoesNotHijackASentenceTests
     /// <summary>A word no declared phrase contains, so padding with it adds length and nothing else.</summary>
     private const string Filler = "anyway";
 
-    private static KeywordRouter Router(TempInstall install) =>
+    private static KeywordRouter Router(MemoryInstall install) =>
         new(TestSurface.For(install).Registry);
 
     private static IEnumerable<string> EveryKeyword(CapabilityRegistry registry) =>
@@ -40,7 +39,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void TheComplaintReachesTheModelRatherThanTheSessionSummary()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match(TheComplaint, InputSource.Spoken);
 
@@ -54,7 +53,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void TheLineAfterItStillStopsTheSpeaking()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(Router(install).MatchInterrupting("Oh stop it, you're an idiot."));
     }
@@ -70,7 +69,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [InlineData("you can stop talking now, I worked it out while you were reading it")]
     public void ALongRequestForSilenceStillStopsTheSpeaking(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(Router(install).MatchInterrupting(said));
     }
@@ -82,7 +81,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void EveryDeclaredKeywordStillRoutesOnItsOwn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -100,7 +99,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [InlineData("what has this session cost")]
     public void AskingForTheSessionSummaryStillGetsIt(string asked)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(Router(install).Match(asked, InputSource.Spoken));
     }
@@ -109,7 +108,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void NoDeclaredKeywordMatchesWhenBuriedInALongSentence()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -127,7 +126,7 @@ public class AKeywordDoesNotHijackASentenceTests
     {
         // If a capability ever declares "anyway", the test above would be padding one keyword with another
         // and would stop proving anything.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Router(install).Match(Buried(Filler), InputSource.Spoken));
     }
@@ -136,7 +135,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void ADynamicCommandStillMatchesTheWholeUtteranceAndOnlyThat()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         DynamicCommand[] commands =
         [
@@ -157,7 +156,7 @@ public class AKeywordDoesNotHijackASentenceTests
     [Fact]
     public void TheSettingAndToolCommandRoutesAreStillWholeUtterance()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 

@@ -11,7 +11,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary><c>describe_system</c> answers with a summary and names the system's page, or names close names and no page.</summary>
-[Trait("Category", "Integration")]
 public class DescribeSystemAnswersAndOpensItsPageTests
 {
     private const long Ltt7786 = 633608311522;
@@ -66,7 +65,7 @@ public class DescribeSystemAnswersAndOpensItsPageTests
 
     private static async Task<TurnResult> AskAsync(FakeSystems systems, string json, string input)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
@@ -105,7 +104,7 @@ public class DescribeSystemAnswersAndOpensItsPageTests
 
     private static Task<ToolResult> CallAsync(FakeSystems systems, Dictionary<string, string> arguments)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 

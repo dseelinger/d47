@@ -12,10 +12,9 @@ using Xunit;
 namespace D47.Core.Tests.Listening;
 
 /// <summary>Where the correction is applied, and where the asking happens.</summary>
-[Trait("Category", "Integration")]
 public class TheCorrectionReachesTheWholeSentenceTests
 {
-    private static TurnLoop Loop(TempInstall install, ILlmProvider provider, Func<string, string> heard)
+    private static TurnLoop Loop(MemoryInstall install, ILlmProvider provider, Func<string, string> heard)
     {
         var registry = TestSurface.For(install).Registry;
 
@@ -46,7 +45,7 @@ public class TheCorrectionReachesTheWholeSentenceTests
     [Fact]
     public async Task ASpokenSentenceIsCorrectedBeforeTheModelSeesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var learned = SoundsLike.Empty.Learn(
             "Eurebia", "Eurybia", new DateTimeOffset(2026, 8, 27, 20, 0, 0, TimeSpan.Zero));
@@ -73,7 +72,7 @@ public class TheCorrectionReachesTheWholeSentenceTests
     [Fact]
     public async Task ATypedSentenceIsLeftAlone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var learned = SoundsLike.Empty.Learn(
             "Eurebia", "Eurybia", new DateTimeOffset(2026, 8, 27, 20, 0, 0, TimeSpan.Zero));
@@ -118,7 +117,7 @@ public class TheCorrectionReachesTheWholeSentenceTests
     [Fact]
     public async Task TheFailingLookupAsksAndTheAnswerTeachesTheCorrection()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var surface = TestSurface.For(install);
 
@@ -160,7 +159,7 @@ public class TheCorrectionReachesTheWholeSentenceTests
     [Fact]
     public async Task ASecondFailureAsksRatherThanLooping()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var surface = TestSurface.For(install);
 
@@ -196,7 +195,7 @@ public class TheCorrectionReachesTheWholeSentenceTests
     [Fact]
     public async Task WithNoCatalogueTheOldWordingStands()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var surface = TestSurface.For(install);
 

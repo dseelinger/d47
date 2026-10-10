@@ -102,11 +102,10 @@ public class CommunityGoalExpiryCalloutTests
         Assert.Single(Say(callout, state, Now));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

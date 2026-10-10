@@ -17,7 +17,7 @@ public class MacroTests
     private readonly MemoryFileSystem _files = new();
 
     private readonly string _root = Path.Combine(
-        Path.GetTempPath(), "d47-macro-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-macro-tests", Guid.NewGuid().ToString("N"));
 
     private string File => Path.Combine(_root, "macros.json");
 

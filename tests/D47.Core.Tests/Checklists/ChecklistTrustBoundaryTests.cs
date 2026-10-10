@@ -10,15 +10,14 @@ namespace D47.Core.Tests.Checklists;
 /// The boundary the phase turns on: proposing is model-callable and committing is not, into
 /// two different files so the boundary is inspectable by looking at <c>data/</c>.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ChecklistTrustBoundaryTests
 {
-    private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;
+    private static CapabilityRegistry Registry(MemoryInstall install) => TestSurface.For(install).Registry;
 
     [Fact]
     public async Task TheModelCannotAcceptItsOwnProposal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var result = await Registry(install)
             .InvokeAsync(
@@ -34,7 +33,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public async Task TheCommanderCanAcceptThroughTheSameTool()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         // The panel and the model-free keyword router are this caller.
         var result = await Registry(install)
@@ -46,7 +45,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void CommittingIsNeverAdvertised()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var advertised = ToolSurface.All(registry)
@@ -66,7 +65,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void AcceptingIsStillReachableByVoiceThroughTheModelFreeRouter()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         // A protected tool is unreachable from the tool surface by design, so without a declared phrase it
         // could not be set by voice at all — and nothing would report that.
@@ -79,7 +78,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public async Task AProposalNeverTouchesTheCommandersOwnFile()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -95,7 +94,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void AcceptingMovesItAcrossAndTakesItOffTheProposalsFile()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -109,7 +108,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void DecliningLeavesTheListUntouched()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
@@ -122,7 +121,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void ProposalsAreBoundedSoOneRunawayCallerCannotBuryTheOneBeingAnswered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         for (var n = 0; n < ChecklistLimits.MaxPendingProposals; n++)
@@ -139,7 +138,7 @@ public class ChecklistTrustBoundaryTests
     [Fact]
     public void ProposingThatAComputedItemIsDoneStatesTheJournalInsteadOfAsking()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
 
         var intent = new ChecklistIntent(ChecklistIntentKind.Blueprint, "MainEngines") { Grade = 5 };

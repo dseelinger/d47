@@ -30,7 +30,6 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
         Assert.Equal(folded, KeywordRouter.Folded(said), StringComparer.OrdinalIgnoreCase);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("Throttle to 25.", "throttle to twenty-five")]
     [InlineData("50 percent", "fifty per cent")]
@@ -42,7 +41,7 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
     [InlineData("Deploy hard points.", "deploy hardpoints")]
     public void TheWrittenFormReachesWhatTheSpelledFormReaches(string said, string spelled)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         var declared = router.MatchToolCommand(spelled);
@@ -61,14 +60,13 @@ public class HoweverATranscriptWritesItTheCommandRoutesTests
     }
 
     /// <summary>A taught wording that folds to a built-in phrase would be shadowed by it, so it is refused.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ATaughtWordingThatFoldsToABuiltInPhraseClashes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = PhraseBook.From(TestSurface.For(install).Registry, []);
         var store = new LearnedPhrasesStore(
-            Path.Combine(install.Root, "phrases.json"), new DiskFileSystem(), NullLogger<LearnedPhrasesStore>.Instance);
+            Path.Combine(install.Root, "phrases.json"), install.Files, NullLogger<LearnedPhrasesStore>.Instance);
 
         var clash = store.FindClash("F1", ["throttle to 50"], "half throttle please", book);
 

@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>"What can you do" walks the spoken map one level at a time (#168).</summary>
-[Trait("Category", "Integration")]
 public class TheDrillWalksTheSpokenMapTests
 {
     private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null)
@@ -49,7 +48,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task WhatCanYouDoAsksAQuestionOverAtMostSixAreas()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -69,7 +68,7 @@ public class TheDrillWalksTheSpokenMapTests
     [InlineData("engineering")]
     public async Task AnOrdinalANameAndAPartialNameEachDescendOneLevel(string reply)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -84,7 +83,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task AnUnrelatedSentenceAfterALevelDropsTheOfferAndRoutesNormally()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(surface, provider);
@@ -99,7 +98,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task ALeafNamesTheFeatureItsPhrasesAndItsPanelPage_FlightAndNavigation()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -121,7 +120,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task ALeafNamesTheFeatureItsPhrasesAndItsPanelPage_Speech()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -138,7 +137,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task ALeafNamesTheFeatureItsPhrasesAndItsPanelPage_Interface()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -154,7 +153,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task TheModelCallingGetCapabilitiesOpensNoOffer()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = await surface.Registry.InvokeAsync(
@@ -170,7 +169,7 @@ public class TheDrillWalksTheSpokenMapTests
     [Fact]
     public async Task TheModelCannotReachTheDrill()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = await surface.Registry.InvokeAsync(

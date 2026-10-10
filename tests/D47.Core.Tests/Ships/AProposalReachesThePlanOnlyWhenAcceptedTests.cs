@@ -14,7 +14,6 @@ namespace D47.Core.Tests.Ships;
 /// A proposal about a build is reviewed slot by slot: accepting writes that slot through the plan service, rejecting
 /// writes nothing, and a slot whose plan moved since the proposal is refused (#570).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AProposalReachesThePlanOnlyWhenAcceptedTests
 {
     private const int ShipId = 21;
@@ -23,7 +22,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
 
     private sealed record Bench(GameStateStore Game, ShipPlanService Ships, string BuildId);
 
-    private static Bench Set(TempInstall install)
+    private static Bench Set(MemoryInstall install)
     {
         var game = new GameStateStore();
 
@@ -80,7 +79,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task NothingReachesThePlanUntilAChangeIsAccepted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var before = Build(bench).Slots;
 
@@ -94,7 +93,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task AcceptingOneChangeOfThreeWritesThatSlotOnly()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var (talk, round) = await Proposed(bench);
 
@@ -112,7 +111,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task RejectingLeavesThePlanUntouched()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var before = Build(bench).Slots;
         var (talk, round) = await Proposed(bench);
@@ -127,7 +126,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task ADecisionIsFinal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var (talk, round) = await Proposed(bench);
 
@@ -140,7 +139,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task AcceptingAChangeWhoseSlotMovedSinceIsRefusedAndWritesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var (talk, round) = await Proposed(bench);
 
@@ -164,7 +163,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task AFailedTurnIsKeptWithItsCodeAndCanBeAskedAgain()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var calls = 0;
 
@@ -190,7 +189,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task AModelThatNeverAnswersFailsTheRoundRatherThanHoldingThePage()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         var talk = new BuildTalk(
@@ -215,7 +214,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task ClearingForgetsTheExchange()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var (talk, _) = await Proposed(bench);
 
@@ -226,7 +225,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public async Task ASpokenGoalIsAnsweredInThreeModulesAndTheProposalIsOnThePage()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var model = new ScriptedModel("""
             {"kind":"goal","reply":"Fit a bigger Frame Shift Drive. Tune the Thrusters. Cool the Power Plant. Charge the Power Distributor. Lighten the Life Support.","changes":[
@@ -265,7 +264,7 @@ public class AProposalReachesThePlanOnlyWhenAcceptedTests
     [Fact]
     public void ASpokenRemarkGoesToTheShipOpenOnThePage()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
         var intended = bench.Ships.Intend("anaconda")!;
 

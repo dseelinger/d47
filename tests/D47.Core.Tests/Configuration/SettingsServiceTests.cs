@@ -10,7 +10,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
-[Trait("Category", "Integration")]
 public class SettingsServiceTests
 {
     private static readonly string AnthropicKeyRow =
@@ -24,7 +23,7 @@ public class SettingsServiceTests
     {
         // There is no save button and no dirty state: what is in memory and what is on disk cannot disagree,
         // because a rejected value never reaches either.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
@@ -40,7 +39,7 @@ public class SettingsServiceTests
     [Fact]
     public void SettingAValueTwiceIsNotAWrite()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(InterfaceCapability.ThemeKey, ThemeCatalog.Light, SettingsCaller.Panel);
@@ -52,7 +51,7 @@ public class SettingsServiceTests
     [Fact]
     public void AChangeIsAnnouncedOnceWithTheKeyThatChanged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var announced = new List<string>();
@@ -67,7 +66,7 @@ public class SettingsServiceTests
     [Fact]
     public void EveryAttemptIsAnnouncedWithItsStatusIncludingTheOnesThatChangedNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var announced = new List<SettingApplied>();
@@ -86,37 +85,11 @@ public class SettingsServiceTests
             announced);
     }
 
-    /// <summary>
-    /// The outcome most worth seeing, and the one Changed can never carry: a valid value that could not
-    /// be written.
-    /// </summary>
-    [Fact]
-    public void AFailedSaveIsAnnouncedAsAppliedButNotAsChanged()
-    {
-        using var install = new TempInstall();
-        var surface = TestSurface.For(install);
-
-        var applied = new List<SettingApplied>();
-        var changed = new List<string>();
-        surface.Settings.Applied += applied.Add;
-        surface.Settings.Changed += change => changed.Add(change.Key);
-
-        // A directory sitting where the pending write wants to put a file.
-        Directory.CreateDirectory(install.Paths.SettingsFile + ".writing");
-
-        var result = surface.Settings.Apply(
-            InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
-
-        Assert.Equal(SettingApplyStatus.Failed, result.Status);
-        Assert.Equal([new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Failed)], applied);
-        Assert.Empty(changed);
-    }
-
     /// <summary>Keys are matched case-insensitively, so "Ui.Theme" and "ui.theme" are one row.</summary>
     [Fact]
     public void BothEventsAnnounceTheRowsOwnKeyNotTheCallersSpelling()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var applied = new List<string>();
@@ -137,7 +110,7 @@ public class SettingsServiceTests
     [Fact]
     public void AnUnknownKeyIsNamedRatherThanIgnored()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply("ui.chrome", "sparkly", SettingsCaller.Panel);
@@ -153,7 +126,7 @@ public class SettingsServiceTests
     public void EveryCallerButTheModelReachesAProtectedRow(SettingsCaller caller)
     {
  // Protected is a property of the caller, not of the modality.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "false", caller);
@@ -165,7 +138,7 @@ public class SettingsServiceTests
     [Fact]
     public void TheModelIsRefusedAProtectedRow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(PrivacyCapability.UpdateCheckKey, "false", SettingsCaller.Model);
@@ -179,7 +152,7 @@ public class SettingsServiceTests
     {
         // Belt and braces on purpose: a key must be unreachable from the tool surface whether or not whoever
         // declared the row remembered to also mark it protected.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.False(surface.Settings.Find(AnthropicKeyRow)!.Protected);
@@ -193,7 +166,7 @@ public class SettingsServiceTests
     [Fact]
     public void ASecretIsWriteOnlyFromEverySurface()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var row = surface.Settings.Find(AnthropicKeyRow)!;
 
@@ -214,7 +187,7 @@ public class SettingsServiceTests
     [Fact]
     public void AProviderKeyIsStorableBeforeThatProviderIsSelected()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Settings.Find(ElevenLabsKeyRow)!;
@@ -236,7 +209,7 @@ public class SettingsServiceTests
     [Fact]
     public void ANonSecretRowThatDoesNotApplyIsStillRejected()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         // Anthropic has one address and no reason to accept another, so its endpoint row does not apply while
@@ -250,7 +223,7 @@ public class SettingsServiceTests
     [Fact]
     public void ADisclosureRowIsReportedRatherThanSet()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply($"egress.{EgressDisclosure.LanguageModel}", "off", SettingsCaller.Panel);
@@ -261,7 +234,7 @@ public class SettingsServiceTests
     [Fact]
     public void AValueOutsideAClosedChoiceIsRefusedWithTheRealList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(InterfaceCapability.ThemeKey, "sparkly", SettingsCaller.Panel);
@@ -273,7 +246,7 @@ public class SettingsServiceTests
     [Fact]
     public void AToggleAcceptsTheWordsAPersonWouldSayAndStoresOneForm()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(
@@ -291,7 +264,7 @@ public class SettingsServiceTests
     [Fact]
     public void ClearingARowRestoresTheDefaultTheePlaceholderAdvertised()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         // Set to something other than the default, so clearing is a visible change rather than a value that
@@ -311,7 +284,7 @@ public class SettingsServiceTests
     public void ChangingTheEndpointResetsTheModelListAndTheSelection()
     {
         // A model id belongs to its endpoint's namespace.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
@@ -330,7 +303,7 @@ public class SettingsServiceTests
     [Fact]
     public void TheEndpointRowDoesNotApplyToAProviderWithNowhereElseToPoint()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(
@@ -346,7 +319,7 @@ public class SettingsServiceTests
     public void AModelNameTheEndpointOnlyKnowsIsStillAccepted()
     {
         // The picker's fail-soft contract: with an empty list you can still type one.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
@@ -360,7 +333,7 @@ public class SettingsServiceTests
     [Fact]
     public void ChangingTheProviderClearsWhatBelongedToTheOldOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.EndpointKey, "https://gateway.example/v1", SettingsCaller.Panel);
@@ -376,7 +349,7 @@ public class SettingsServiceTests
     public void ARowThatDoesNotApplyIsNotWritableEither()
     {
         // Settings adapt to the selected provider rather than showing a hardwired set.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ProviderKey, LlmProviderCatalog.NoneId, SettingsCaller.Panel);
@@ -394,7 +367,7 @@ public class SettingsServiceTests
     {
         // The tool, the panel and the settings file all write the same row, and the verbosity control follows
         // the row.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(DiagnosticsCapability.LevelRowFor("Journal"), "Trace", SettingsCaller.Panel);
@@ -406,7 +379,7 @@ public class SettingsServiceTests
     [Fact]
     public void ARowWithNothingBehindItFailsAtStartupRatherThanOnScreen()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var descriptor = new CapabilityDescriptor
         {
@@ -446,7 +419,7 @@ public class SettingsServiceTests
     [Fact]
     public void AnInfoRowMadeOfItsButtonIsWired()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         static CapabilityDescriptor Descriptor(SettingRow row) => new()
         {
@@ -496,12 +469,11 @@ public class SettingsServiceTests
 
 public class SettingsSurfaceShapeTests
 {
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRowIsDocumentedAndReachableFromItsPage()
     {
         // A setup-guide link per row.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var missing = surface.Settings.Sections
@@ -513,11 +485,10 @@ public class SettingsSurfaceShapeTests
         Assert.True(missing.Length == 0, $"Settings rows with no documentation anchor: {string.Join(", ", missing)}");
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EverySettingsKeyIsUniqueAcrossCapabilities()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var keys = surface.Settings.Sections.SelectMany(s => s.Rows).Select(r => r.Key).ToArray();
@@ -712,5 +683,35 @@ public class EgressDisclosureTests
         {
             Assert.Contains(EgressDisclosure.NameOf(id), report, StringComparison.Ordinal);
         }
+    }
+}
+
+[Trait("Category", "Integration")]
+public class AFailedSaveIsAnnouncedTests
+{
+    /// <summary>
+    /// The outcome most worth seeing, and the one Changed can never carry: a valid value that could not
+    /// be written.
+    /// </summary>
+    [Fact]
+    public void AFailedSaveIsAnnouncedAsAppliedButNotAsChanged()
+    {
+        using var install = new TempInstall();
+        var surface = TestSurface.For(install.Paths, install.Files);
+
+        var applied = new List<SettingApplied>();
+        var changed = new List<string>();
+        surface.Settings.Applied += applied.Add;
+        surface.Settings.Changed += change => changed.Add(change.Key);
+
+        // A directory sitting where the pending write wants to put a file.
+        Directory.CreateDirectory(install.Paths.SettingsFile + ".writing");
+
+        var result = surface.Settings.Apply(
+            InterfaceCapability.ThemeKey, ThemeCatalog.ElitePaletteId, SettingsCaller.Panel);
+
+        Assert.Equal(SettingApplyStatus.Failed, result.Status);
+        Assert.Equal([new SettingApplied(InterfaceCapability.ThemeKey, SettingApplyStatus.Failed)], applied);
+        Assert.Empty(changed);
     }
 }

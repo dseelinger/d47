@@ -43,7 +43,7 @@ public class QuickGalaxySearchesRunByVoiceTests
             throw new NotSupportedException();
     }
 
-    private static CapabilityRegistry Build(TempInstall install, FakeGalaxy galaxy, bool lookupsOn)
+    private static CapabilityRegistry Build(MemoryInstall install, FakeGalaxy galaxy, bool lookupsOn)
     {
         var settings = TestSurface.For(install).Settings;
 
@@ -55,7 +55,6 @@ public class QuickGalaxySearchesRunByVoiceTests
         return CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "Sol", settings)]);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("interstellar factors search", "search_stations", "services", "Interstellar Factors")]
     [InlineData("nearest black market", "search_stations", "services", "Black Market")]
@@ -63,7 +62,7 @@ public class QuickGalaxySearchesRunByVoiceTests
     [InlineData("find the nearest raw material trader", "search_stations", "material_trader", "Raw")]
     public void ASpokenQuickSearchReachesItsToolWithItsArguments(string said, string tool, string key, string value)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry, QuickSearches.Phrases);
 
         var match = router.MatchToolCommand(said);
@@ -90,11 +89,10 @@ public class QuickGalaxySearchesRunByVoiceTests
         Assert.All(QuickSearches.All, search => Assert.False(search.Arguments.ContainsKey("near")));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task EveryQuickSearchPassesItsToolsValidation()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var galaxy = new FakeGalaxy();
         var registry = Build(install, galaxy, lookupsOn: true);
 
@@ -112,11 +110,10 @@ public class QuickGalaxySearchesRunByVoiceTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NoQuickSearchPhraseIsAlreadyInThePhraseBook()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var taken = PhraseBook.From(TestSurface.For(install).Registry, [])
             .Entries
@@ -126,11 +123,10 @@ public class QuickGalaxySearchesRunByVoiceTests
         Assert.DoesNotContain(QuickSearches.Phrases().Select(command => command.Phrase), taken.Contains);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchWithLookupsOffAnswersWithTheSwitchedOffSentence()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var galaxy = new FakeGalaxy();
         var registry = Build(install, galaxy, lookupsOn: false);
         var search = QuickSearches.All[0];

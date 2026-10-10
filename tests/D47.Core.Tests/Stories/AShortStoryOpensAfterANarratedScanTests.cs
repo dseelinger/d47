@@ -14,7 +14,6 @@ namespace D47.Core.Tests.Stories;
 /// A story shorter than a month opens after a beacon scan narrated at the pick: the clock starts at the pick, the cores
 /// wake, chapter one is act one with no beacon, and one real scan wakes the Heretic. From a month up the scan is real.
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class AShortStoryOpensAfterANarratedScanTests
 {
     private static readonly StoryCard WeekCard = Card with { Length = StoryPacing.OneWeek.Key };
@@ -107,7 +106,7 @@ public sealed class AShortStoryOpensAfterANarratedScanTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));
         var refused = surface.Settings.Apply(PersonaCapability.PersonaKey, "heretic", SettingsCaller.Panel);
 

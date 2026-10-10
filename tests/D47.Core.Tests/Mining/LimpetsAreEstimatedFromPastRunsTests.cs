@@ -33,9 +33,9 @@ public class LimpetsAreEstimatedFromPastRunsTests
         return lines;
     }
 
-    private static HistoryBackfill Walk(TempInstall install)
+    private static HistoryBackfill Walk(MemoryInstall install)
     {
-        var history = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+        var history = new HistoryBackfill { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
         history.Run(TestContext.Current.CancellationToken);
         return history;
     }
@@ -60,12 +60,11 @@ public class LimpetsAreEstimatedFromPastRunsTests
             caller: ToolCaller.Model);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheWalkFoldsTheJulyRun()
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
+        var install = new MemoryInstall();
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
 
         var runs = Walk(install).MiningRuns![Fid];
 
@@ -75,24 +74,22 @@ public class LimpetsAreEstimatedFromPastRunsTests
         Assert.Equal(33, run.ProspectorsLaunched);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARunStillOpenAtTheLastJournalIsNotCounted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var lines = TheJulyRun();
         lines.RemoveAt(lines.Count - 1);
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), lines);
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), lines);
 
         Assert.False(Walk(install).MiningRuns!.ContainsKey(Fid));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TenTonnesOverTheJulyRunIsTwoCollectorsAndFourProspectorsFromAllRuns()
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
+        var install = new MemoryInstall();
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
         var history = Walk(install);
 
         var result = await Estimate(history.State, history.MiningRuns![Fid], "10");
@@ -104,15 +101,14 @@ public class LimpetsAreEstimatedFromPastRunsTests
             result.Content);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMaterialMostRefinedInThreeRunsUsesItsOwnRatio()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         foreach (var day in new[] { "2025-07-10", "2025-07-11", "2025-07-12" })
         {
-            File.WriteAllLines(Path.Combine(install.Root, $"Journal.{day}T062344.01.log"), TheJulyRun(day));
+            install.Files.WriteLines(Path.Combine(install.Root, $"Journal.{day}T062344.01.log"), TheJulyRun(day));
         }
 
         var history = Walk(install);
@@ -126,12 +122,11 @@ public class LimpetsAreEstimatedFromPastRunsTests
             result.Content);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMaterialWithFewerThanThreeRunsSaysItUsedAllRuns()
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
+        var install = new MemoryInstall();
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
         var history = Walk(install);
 
         var result = await Estimate(history.State, history.MiningRuns![Fid], "10", "Osmium");
@@ -149,14 +144,13 @@ public class LimpetsAreEstimatedFromPastRunsTests
         Assert.DoesNotContain(result.Content, char.IsDigit);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(HistoryState.Pending)]
     [InlineData(HistoryState.Running)]
     public async Task BeforeTheWalkFinishesItGivesNoNumber(HistoryState state)
     {
-        using var install = new TempInstall();
-        File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
+        var install = new MemoryInstall();
+        install.Files.WriteLines(Path.Combine(install.Root, "Journal.2025-07-10T062344.01.log"), TheJulyRun());
         var runs = Walk(install).MiningRuns![Fid];
 
         var result = await Estimate(state, runs, "10");

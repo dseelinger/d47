@@ -547,7 +547,6 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
     /// Both "least time" rows say the two kinds are kept apart, because that is the row the floor
     /// clamps against.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientSecondsKey)]
     [InlineData(CalloutCapability.NpcChatterSecondsKey)]
@@ -563,7 +562,6 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
         Assert.DoesNotContain("invented exchange", help, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(CalloutCapability.AmbientMaxSecondsKey)]
     [InlineData(CalloutCapability.NpcChatterMaxSecondsKey)]
@@ -572,7 +570,7 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
 
     private static SettingRow Row(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         return TestSurface.For(install).Registry.All
             .SelectMany(capability => capability.Descriptor.Settings)

@@ -94,11 +94,10 @@ public class TurnCancellationTests
     /// <summary>
     /// The claim the whole component exists for: a cancelled turn stops asking the provider for more.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACancelledTurnStopsPullingFromTheProvider()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var cancellation = New();
         var provider = new EndlessLlmProvider();

@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>A distant carrier's captain loses words on the way, and only the Commander's side of it loses them.</summary>
-[Trait("Category", "Integration")]
 public class AFaintCaptainIsHeardInPiecesTests
 {
     private const string Answer =
@@ -67,7 +66,7 @@ public class AFaintCaptainIsHeardInPiecesTests
     [Fact]
     public async Task WithinClearRangeEveryWordArrives()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering(Answer), lightYears: 200);
 
         var events = await RunAsync(loop, "Captain, how much fuel have we got");
@@ -79,7 +78,7 @@ public class AFaintCaptainIsHeardInPiecesTests
     [Fact]
     public async Task FarOutTheCaptainLosesWords()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering(Answer), lightYears: 426);
 
         var events = await RunAsync(loop, "Captain, how much fuel have we got");
@@ -93,7 +92,7 @@ public class AFaintCaptainIsHeardInPiecesTests
     [Fact]
     public async Task TheCaptainRemembersTheFullAnswerAndTheShipAiOverhearsThePieces()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Answer),
             RoundScriptedLlmProvider.Saying("Noted."),

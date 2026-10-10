@@ -11,14 +11,13 @@ namespace D47.Core.Tests.Ships;
 /// A slot whose plan the fitted module already carries out entirely has its plan deleted — the tick
 /// disappears because the plan does, and there is nothing left for a revision to supersede (#255).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AMetSlotLosesItsPlanTests
 {
     private const int ShipId = 33;
 
     private sealed record Bench(GameStateStore Game, ShipPlanService Ships);
 
-    private static Bench Set(TempInstall install)
+    private static Bench Set(MemoryInstall install)
     {
         var game = new GameStateStore();
 
@@ -48,7 +47,7 @@ public class AMetSlotLosesItsPlanTests
     [Fact]
     public void AMetSlotsPlanIsDeleted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, ships) = Set(install);
 
         game.Apply(Engineered());
@@ -61,7 +60,7 @@ public class AMetSlotLosesItsPlanTests
     [Fact]
     public void AnUnmetSlotsPlanIsKept()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (_, ships) = Set(install);
 
         ships.DropMetSlots();
@@ -72,7 +71,7 @@ public class AMetSlotLosesItsPlanTests
     [Fact]
     public void APartlyMetSlotKeepsItsPlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, ships) = Set(install);
 
         var build = ships.ForShip(ShipId)!;

@@ -66,10 +66,9 @@ public class EffortRouterTests
     }
 }
 
-[Trait("Category", "Integration")]
 public class KeywordRouterTests
 {
-    private static CapabilityRegistry Registry(TempInstall install, GameStateStore? gameState = null) =>
+    private static CapabilityRegistry Registry(MemoryInstall install, GameStateStore? gameState = null) =>
         TestSurface.For(install, gameState).Registry;
 
     [Theory]
@@ -78,7 +77,7 @@ public class KeywordRouterTests
     [InlineData("give me a status report", "diagnostics")]
     public void DeclaredKeywordsRouteToTheirCapability(string input, string expectedCapability)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = new KeywordRouter(Registry(install)).Match(input);
 
@@ -89,7 +88,7 @@ public class KeywordRouterTests
     [Fact]
     public void UnmatchedInputReturnsNothingRatherThanGuessing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(new KeywordRouter(Registry(install)).Match("compose a sonnet about hyperspace"));
     }
@@ -108,7 +107,7 @@ public class KeywordRouterTests
     public void AQuestionThatMerelyContainsAKeywordWordIsNotRouted(string input)
     {
         // A miss costs a fall-through to the model.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(new KeywordRouter(Registry(install)).Match(input));
     }
@@ -123,7 +122,7 @@ public class KeywordRouterTests
     public void RealCommandsStillRoute(string input)
     {
         // The fix must not have made the router useless.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.NotNull(new KeywordRouter(Registry(install)).Match(input));
     }
@@ -137,7 +136,7 @@ public class KeywordRouterTests
         // Structural guard against the regression coming back by way of a new capability: a single-word
         // keyword is almost always too broad to be safe, so it needs a deliberate decision rather than a
         // default.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var bare = (from capability in registry.All
@@ -155,7 +154,7 @@ public class KeywordRouterTests
     [Fact]
     public void EmptyInputMatchesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(new KeywordRouter(Registry(install)).Match("   "));
     }
@@ -166,7 +165,7 @@ public class KeywordRouterTests
         // Filling arguments from free text without a closed grammar is how a router starts guessing, and
         // guessing is the thing this path exists to avoid. set_log_verbosity takes arguments, so "verbosity"
         // must not route to it.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = new KeywordRouter(Registry(install)).Match("change the verbosity");
 
@@ -179,7 +178,7 @@ public class KeywordRouterTests
     public void TheVocabularyIsAProjectionOfTheRegistry()
     {
         // Not a second list: every keyword the router matches is one a descriptor declared.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
         var router = new KeywordRouter(registry);
 

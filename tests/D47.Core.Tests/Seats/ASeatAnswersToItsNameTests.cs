@@ -9,7 +9,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Seats;
 
-[Trait("Category", "Integration")]
 public class ASeatAnswersToItsNameTests
 {
     private const string ShipAi = "Warden";
@@ -57,7 +56,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task TheSeatByNameIsAnsweredWithItsBriefAndNoTools()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Nothing unusual on the scanners.");
         var (loop, line) = Build(TestSurface.For(install), provider, () => [Teo, Ines]);
 
@@ -76,7 +75,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task ACustomSeatIsBriefedWithItsTitle()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Hold is full.");
         var (loop, _) = Build(TestSurface.For(install), provider, () => [Teo, Ines]);
 
@@ -88,7 +87,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task AFollowUpWithNoNameReachesTheSeatUntilDismissed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider, () => [Teo, Ines]);
 
@@ -105,7 +104,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task NamingTheShipAiClosesTheSeatsLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider, () => [Teo]);
 
@@ -119,7 +118,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task ASeatNotAboardTheShipFlownIsNotTaken()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("I have no crew by that name.");
         var seats = new List<CrewSeat> { Teo };
         var (loop, line) = Build(TestSurface.For(install), provider, () => seats);
@@ -137,7 +136,7 @@ public class ASeatAnswersToItsNameTests
     [Fact]
     public async Task TheLongerOfTwoOverlappingSeatNamesWins()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye.");
         var shorter = new CrewSeat("0000000c", CrewRole.Helm, null, "Teo");
         var (loop, _) = Build(TestSurface.For(install), provider, () => [shorter, Teo]);

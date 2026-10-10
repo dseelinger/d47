@@ -35,11 +35,10 @@ public class FirstRunTests
         Assert.True(FirstRun.IsNeeded(provider: null, _ => true));
 
     /// <summary>The case a flag would get wrong, and the reason the item forbids one.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARestoredSecretsFileThatWillNotDecryptStillAsks()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Secrets.Set(NeedsKey.KeySecretName!, "sk-from-the-old-machine");

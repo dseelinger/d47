@@ -12,7 +12,7 @@ public class APhraseCanBeTaughtAsAPatternTests
 {
     private readonly MemoryFileSystem _files = new();
 
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "d47-phrase-patterns");
+    private readonly string _root = Path.Combine(MemoryInstall.FakeRoot, "d47-phrase-patterns");
 
     private static readonly DateTimeOffset At = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
 

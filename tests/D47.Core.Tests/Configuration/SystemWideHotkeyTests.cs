@@ -9,7 +9,6 @@ namespace D47.Core.Tests.Configuration;
 /// A key claimed from the whole system cannot be a bare one: it would stop working in every other
 /// application, Elite included, so the binder refuses it.
 /// </summary>
-[Trait("Category", "Integration")]
 public class SystemWideHotkeyTests
 {
     [Theory]
@@ -18,7 +17,7 @@ public class SystemWideHotkeyTests
     [InlineData("A")]
     public void ABareKeyIsRefusedForASystemWideRow(string gesture)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(
@@ -37,7 +36,7 @@ public class SystemWideHotkeyTests
     [InlineData("Shift+F9")]
     public void AKeyWithAModifierIsAccepted(string gesture)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(
@@ -58,7 +57,7 @@ public class SystemWideHotkeyTests
     [Fact]
     public void ABareKeyIsStillFineForAKeyThatIsOnlyPolled()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(
@@ -70,7 +69,7 @@ public class SystemWideHotkeyTests
     [Fact]
     public void ClearingASystemWideRowIsAlwaysAllowed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(

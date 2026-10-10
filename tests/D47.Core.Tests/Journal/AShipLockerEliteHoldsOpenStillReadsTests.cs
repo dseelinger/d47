@@ -14,7 +14,7 @@ public class AShipLockerEliteHoldsOpenStillReadsTests
     {
         using var install = new TempInstall();
         var path = Path.Combine(install.Root, SuitInventoryReader.ShipLockerFile);
-        File.WriteAllText(path, "");
+        new DiskFileSystem().WriteText(path, "");
 
         using (var writer = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
         {

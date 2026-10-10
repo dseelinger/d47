@@ -1,4 +1,5 @@
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Storage;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -33,8 +34,8 @@ public sealed record ScenarioServices
 
     public Func<DateTimeOffset>? Now { get; init; }
 
-    /// <summary>Copies the seed files into <paramref name="data"/>.</summary>
-    public void Seed(string data)
+    /// <summary>Copies the seed files into <paramref name="data"/> on <paramref name="files"/>.</summary>
+    public void Seed(IFileSystem files, string data)
     {
         if (SeedFrom is null)
         {
@@ -47,7 +48,7 @@ public sealed record ScenarioServices
 
             if (File.Exists(source))
             {
-                File.Copy(source, Path.Combine(data, name), overwrite: true);
+                files.WriteBytes(Path.Combine(data, name), File.ReadAllBytes(source));
             }
         }
     }

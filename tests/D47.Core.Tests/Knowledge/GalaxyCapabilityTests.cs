@@ -10,7 +10,6 @@ namespace D47.Core.Tests.Knowledge;
 /// The model's view of galaxy search: what it can ask for, what it is told when it asks for something
 /// that does not exist, and what happens when the service is unreachable or off.
 /// </summary>
-[Trait("Category", "Integration")]
 public class GalaxyCapabilityTests
 {
     /// <summary>A service that answers from a script, and records what it was asked.</summary>
@@ -74,7 +73,7 @@ public class GalaxyCapabilityTests
     }
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
-        TempInstall install,
+        MemoryInstall install,
         bool enabled = true,
         string? currentSystem = "Sol")
     {
@@ -97,7 +96,7 @@ public class GalaxyCapabilityTests
     {
         // The case that matters: an unknown filter has to stop here, because it does not stop anywhere
         // downstream.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -112,7 +111,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ASearchWithNoFiltersIsRefusedRatherThanMatchingTheGalaxy()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync("search_systems", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -126,7 +125,7 @@ public class GalaxyCapabilityTests
     public async Task WhereTheCommanderIsBecomesTheReferenceWhenNoneIsNamed()
     {
         // "The nearest high tech system" cannot be asked without saying where from.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install, currentSystem: "Shinrarta Dezhra");
 
         await registry.InvokeAsync("search_systems", Args(("distance", "20")), TestContext.Current.CancellationToken);
@@ -137,7 +136,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AnExplicitReferenceOutranksWhereTheCommanderIs()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install, currentSystem: "Sol");
 
         await registry.InvokeAsync(
@@ -152,7 +151,7 @@ public class GalaxyCapabilityTests
     public async Task TheSummarySaysHowManyWereLeftOut()
     {
         // "412 matched; here are the nearest 5" is a different answer from "there are 5".
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Result = new GalaxySearchResult(
@@ -173,7 +172,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task TheSummaryNamesWhatDistancesWereMeasuredFrom()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Result = new GalaxySearchResult("Colonia", 1, [new SystemSummary { Name = "Ratraii" }]);
@@ -189,7 +188,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AnUnreachableServiceIsAnErrorResultNotAnException()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Throws = new GalaxyUnavailableException("I couldn't reach the galaxy search.");
@@ -206,7 +205,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task SwitchedOffIsACapabilityBeingOffRatherThanAFailure()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install, enabled: false);
 
         var result = await registry.InvokeAsync(
@@ -222,7 +221,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task DistanceIsMeasuredFromTheCommanderWhenOnlyADestinationIsGiven()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install, currentSystem: "Sol");
 
         var result = await registry.InvokeAsync(
@@ -238,7 +237,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AnUnknownSystemSaysSoRatherThanReportingADistance()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Distance = null;
@@ -255,7 +254,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AModuleNameIsMatchedAgainstTheRealCatalogue()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         // Said the way a Commander says it, not the way the catalogue spells it.
@@ -274,7 +273,7 @@ public class GalaxyCapabilityTests
     {
         // The service would honour this by returning nothing, and "nowhere sells a Frame Shift Drve" is a
         // false statement about the galaxy rather than an answer.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -290,7 +289,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AskingForNeitherAModuleNorAShipIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync(
@@ -307,7 +306,7 @@ public class GalaxyCapabilityTests
     {
         // Crowd-reported data read as current is how a Commander flies 200 light years for a module that is
         // not on the shelf.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Stations = new StationSearchResult(
@@ -334,7 +333,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task WithNoKnownLocationAndNoOriginTheToolAsksForOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Build(install, currentSystem: null);
 
         var result = await registry.InvokeAsync(
@@ -351,7 +350,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ABodyTypeIsMatchedFromWhatAPersonWouldActuallySay()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         // "Earth-like" names exactly one subtype, so the unique-fragment pass takes it.
@@ -367,7 +366,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AnAmbiguousBodyTypeIsRefusedWithTheCandidatesRatherThanPickingOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         // "gas giant" names six subtypes.
@@ -384,7 +383,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ABodySearchWithNoFiltersIsRefusedRatherThanMatchingEveryBody()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync("find_body", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -396,7 +395,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ASignalCountWithNoSignalToCountIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         // The service's `count` member means nothing without a `name` beside it — sent alone it returned zero
@@ -414,7 +413,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task LandableFalseIsReadAsNotAskingAboutLanding()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         await registry.InvokeAsync(
@@ -436,7 +435,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task AHotspotAnswerCarriesTheRingsAndHowOldTheReportIs()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Bodies = new BodySearchResult(
@@ -479,7 +478,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ASurfaceSearchReportsSignalsRatherThanRings()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Bodies = new BodySearchResult(
@@ -512,7 +511,7 @@ public class GalaxyCapabilityTests
     [Fact]
     public async Task ABodySearchIsOffWithTheRestOfTheGalaxySearch()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install, enabled: false);
 
         var result = await registry.InvokeAsync(

@@ -35,11 +35,10 @@ public class SetACourseFromASearchTests
         Assert.Empty(CommunityGoalCourse.Phrases(new LastFoundSystem()));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesItAheadOfAnythingElse()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var lastFound = new LastFoundSystem();
         lastFound.Remember("HR 6012");

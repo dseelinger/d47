@@ -78,11 +78,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
     private static TurnResult Result(List<TurnEvent> events) =>
         Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task VanceByNameIsAnsweredByVanceAndSoIsTheNextUnnamedLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Like a dream, friend.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -108,11 +107,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Contains("Vance: Like a dream, friend.", provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheLastWordOfANameReachesItsSpeaker()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world, name: "Dock hand Ressa");
@@ -122,11 +120,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal("Dock hand Ressa", Assert.Single(events.OfType<TurnEvent.Addressed>()).Name);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task NamingTheShipAiGoesToTheShipAiAndClosesTheLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Noted.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -139,11 +136,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.False(line.IsOpen);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task NinetyOneSecondsAfterTheLastLineVanceIsOffTheChannel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Hey.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -154,11 +150,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASystemChangeShutsTheExchange()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Hey.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -169,11 +164,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASituationChangeShutsTheExchange()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Hey.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -184,11 +178,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         AssertOffTheChannel(events, provider);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheNextExchangeReplacesTheOneHeld()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Hey.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world, exchangeIndex: 7);
@@ -200,11 +193,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheFifthAddressIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Sure thing.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -229,11 +221,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal(calls, provider.CallCount);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplyThatEscalatesIsReplacedByTheSignOffAndShutsTheExchange()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Keep talking and I'll interdict you myself.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
         Hail(line, world);
@@ -253,11 +244,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Equal(calls, provider.CallCount);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AControllerExchangeIsNeverTaken()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Noted.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
 
@@ -273,11 +263,10 @@ public class AnInventedSpeakerAnswersWhenNamedTests
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task PassersbyThatMayNotNoticeTheCommanderAreNeverTaken()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Noted.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
 

@@ -10,11 +10,10 @@ public class FleetBackfillTests
 {
     private const string Fid = "F1234567";
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NoJournalsAtAllLeavesTheFleetUnknownRatherThanEmpty()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var fleets = Fleets(install);
 
@@ -25,11 +24,10 @@ public class FleetBackfillTests
     /// "Unknown" and "no ships" are different answers and the surface renders them differently, so a
     /// folder with journals but no shipyard visit must not report a fleet of nothing.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void JournalsWithNoShipyardVisitLeaveTheFleetUnknown()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Loadout);
 
         var fleets = Fleets(install);
@@ -38,11 +36,10 @@ public class FleetBackfillTests
     }
 
     /// <summary>The reported fault, in one test: the snapshot is in an older file, so read it.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASnapshotInAnOlderFileIsFound()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored(("Anaconda", 51), ("Python", 52)));
         Write(install, "Journal.2026-08-02T100000.01.log", LoadGame, Loadout);
 
@@ -53,11 +50,10 @@ public class FleetBackfillTests
     }
 
     /// <summary>The reason the snapshot alone is not enough.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AShipSoldAfterTheSnapshotDoesNotComeBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored(("Anaconda", 51), ("Python", 52)));
         Write(
             install,
@@ -71,11 +67,10 @@ public class FleetBackfillTests
     }
 
     /// <summary>Swapping moves a ship out of storage and another into it.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void SwappingTakesOneShipOutOfStorageAndPutsOneIn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Docked, Stored(("Anaconda", 51)));
         Write(
             install,
@@ -91,11 +86,10 @@ public class FleetBackfillTests
         Assert.Equal("Elsewhere Station", fleet.Ships[0].StationName);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingStoresTheShipSteppedOutOf()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Docked, Stored(("Anaconda", 51)));
         Write(
             install,
@@ -115,11 +109,10 @@ public class FleetBackfillTests
     /// Two Commanders share one journal folder and neither may be handed the other's ships — the
  /// isolation rule the whole store is built on.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersDoNotShareAFleet()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored(("Anaconda", 51)));
         Write(
             install,
@@ -134,11 +127,10 @@ public class FleetBackfillTests
     }
 
     /// <summary>The documented bound, pinned so it is a decision rather than a surprise.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASnapshotOlderThanTheSearchWindowIsNotRecovered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T000000.01.log", LoadGame, Stored(("Anaconda", 51)));
 
         // Comfortably past the look-back, so the snapshot above falls outside the window.
@@ -163,8 +155,8 @@ public class FleetBackfillTests
         Assert.Empty(fleet.Ships);
     }
 
-    private static IReadOnlyDictionary<string, FleetRegistry> Fleets(TempInstall install) =>
-        FleetBackfill.FromHistory(new DiskFileSystem(), install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
+    private static IReadOnlyDictionary<string, FleetRegistry> Fleets(MemoryInstall install) =>
+        FleetBackfill.FromHistory(install.Files, install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private const string LoadGame =
         """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1234567", "Commander":"Fixture" }""";
@@ -185,6 +177,6 @@ public class FleetBackfillTests
             ? parsed
             : throw new InvalidOperationException($"Unparseable fixture line: {line}");
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 }

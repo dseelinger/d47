@@ -19,7 +19,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void NothingIsWalkedUntilRunIsCalled()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -36,7 +36,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ACommanderMetBeforeTheWalkFinishesGetsNoneOfIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -50,7 +50,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void TheCarrierArrivesOnceTheWalkIsAdopted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -68,7 +68,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ACommanderPickedBeforeTheWalkFinishesStillGetsIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -85,7 +85,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ACarrierFoldedFromTheLiveJournalIsNotReplaced()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -108,7 +108,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ALiveLocationWithNoCallsignTakesTheRecoveredCarrierAndKeepsItsSystem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -134,7 +134,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void LiveStatsBeforeAdoptionKeepTheLiveCarrierWhole()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -156,7 +156,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ALiveLocationWithNoCarrierInHistoryStillHasNoCallsign()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame);
 
         var backfill = Backfill(install);
@@ -179,7 +179,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void AShipBoardedBeforeAdoptionKeepsItsPlaceBesideTheRecoveredOnes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Loadout(shipId: 7, "Python"));
 
         var backfill = Backfill(install);
@@ -201,7 +201,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void NamesMetThisSessionSurviveAdoption()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(
             install,
             "Journal.2026-09-05T100000.01.log",
@@ -225,7 +225,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void ASecondRunWalksNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var backfill = Backfill(install);
@@ -243,8 +243,8 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     {
         var backfill = new HistoryBackfill
         {
-            Directory = Path.Combine(Path.GetTempPath(), "d47-tests", Guid.NewGuid().ToString("N")),
-            FileSystem = new DiskFileSystem(),
+            Directory = Path.Combine(@"C:\d47-memory", Guid.NewGuid().ToString("N")),
+            FileSystem = new MemoryFileSystem(),
             Loggers = NullLoggerFactory.Instance,
         };
 
@@ -263,11 +263,11 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     [Fact]
     public void AWalkToldToStopEndsWithoutWritingTheNamesFile()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, CarrierStats, CarrierLocation("Meene"));
 
         var file = Path.Combine(install.Paths.Data, "heard-names.json");
-        var names = new HeardNamesStore(file, new DiskFileSystem(), NullLogger<HeardNamesStore>.Instance);
+        var names = new HeardNamesStore(file, install.Files, NullLogger<HeardNamesStore>.Instance);
 
         names.Load();
 
@@ -277,7 +277,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         var backfill = new HistoryBackfill
         {
             Directory = install.Root,
-            FileSystem = new DiskFileSystem(),
+            FileSystem = install.Files,
             Loggers = NullLoggerFactory.Instance,
             NameFile = names,
         };
@@ -291,10 +291,10 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         Assert.False(File.Exists(file));
     }
 
-    private static HistoryBackfill Backfill(TempInstall install) => new()
+    private static HistoryBackfill Backfill(MemoryInstall install) => new()
     {
         Directory = install.Root,
-        FileSystem = new DiskFileSystem(),
+        FileSystem = install.Files,
         Loggers = NullLoggerFactory.Instance,
     };
 
@@ -330,6 +330,6 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         return parsed!;
     }
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 }

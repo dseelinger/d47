@@ -6,13 +6,12 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>A way back from a setting that has gone wrong.</summary>
-[Trait("Category", "Integration")]
 public class AWayBackTests
 {
     [Fact]
     public void ARowNobodyTouchedIsNotMarkedAsChanged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.False(surface.Settings.IsChanged(InterfaceCapability.ThemeKey));
@@ -21,7 +20,7 @@ public class AWayBackTests
     [Fact]
     public void SettingARowMarksItAndResettingUnmarksIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
@@ -41,7 +40,7 @@ public class AWayBackTests
     [Fact]
     public void ResetLandsOnTheShippedDefaultRatherThanOnAValueAnybodyWroteDown()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var shipped = surface.Settings.Current.Llm.PersonalityEnabled;
@@ -62,7 +61,7 @@ public class AWayBackTests
     [Fact]
     public void ASecretIsNeverReset()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var key = ConversationCapability.KeyRowFor(
@@ -86,7 +85,7 @@ public class AWayBackTests
     [Fact]
     public void ACardResetsEverythingOnItAndNoKeys()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var key = ConversationCapability.KeyRowFor(
@@ -110,7 +109,7 @@ public class AWayBackTests
     [Fact]
     public void ACardWithNothingChangedResetsNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(0, surface.Settings.ResetCard(ConversationCapability.Id, SettingsCaller.Panel));
@@ -123,7 +122,7 @@ public class AWayBackTests
     [Fact]
     public void TheModelCannotResetAProtectedRow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(
@@ -143,7 +142,7 @@ public class AWayBackTests
     [Fact]
     public void NoToolOffersAReset()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var offending = surface.Registry.All
@@ -167,7 +166,7 @@ public class AWayBackTests
     [Fact]
     public void ResettingACommanderRowRevealsTheInstallationsValueRatherThanBlankingIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         // The installation's answer, set before anybody is flying.
@@ -194,7 +193,7 @@ public class AWayBackTests
     [Fact]
     public void ClearingACommanderRowByHandIsStillDeliberatelyBlank()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply("llm.aboutMe", "the house story", SettingsCaller.Panel);

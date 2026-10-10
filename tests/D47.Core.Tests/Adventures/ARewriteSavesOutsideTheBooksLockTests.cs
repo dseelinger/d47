@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Adventures;
 /// <summary>#908: a rewrite's file write and change handlers do not hold the lock the tick takes.</summary>
 public sealed class ARewriteSavesOutsideTheBooksLockTests
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     private AdventureBook Book()
     {

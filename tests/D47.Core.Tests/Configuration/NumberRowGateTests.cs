@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>Every registered number row, held to rules it is easy to break one row at a time.</summary>
-[Trait("Category", "Integration")]
 public class NumberRowGateTests
 {
     public static TheoryData<string> NumberRows
@@ -28,7 +27,7 @@ public class NumberRowGateTests
     [MemberData(nameof(NumberRows))]
     public void ANumberRowReadsBackWhatItWrites(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         var current = settings.Read(key);
@@ -43,7 +42,7 @@ public class NumberRowGateTests
     [MemberData(nameof(NumberRows))]
     public void ARowThatStepsInFractionsCanHoldOne(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         var row = settings.Find(key)!;
@@ -81,7 +80,7 @@ public class NumberRowGateTests
     [MemberData(nameof(NumberRows))]
     public void ANumberRowIsCultureInvariant(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         var value = settings.Read(key);
@@ -93,7 +92,7 @@ public class NumberRowGateTests
     [Fact]
     public void CaptureBeforeTheKeyIsCountedInMilliseconds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         var row = settings.Find(D47.Core.Capabilities.Builtin.ListeningCapability.PreRollKey)!;
@@ -104,7 +103,7 @@ public class NumberRowGateTests
 
     private static IEnumerable<string> Keys()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         return

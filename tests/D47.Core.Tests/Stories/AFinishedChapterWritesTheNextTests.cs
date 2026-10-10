@@ -6,7 +6,6 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>When a story's chapter finishes, the tick has the next one written from it and begun.</summary>
-[Trait("Category", "Integration")]
 public sealed class AFinishedChapterWritesTheNextTests
 {
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
@@ -99,6 +98,6 @@ public sealed class AFinishedChapterWritesTheNextTests
         Assert.Equal(StoryState.Running, story.State);
         Assert.Equal(Now, story.PickedAt);
         Assert.Single(story.Chapters);
-        Assert.DoesNotContain("isCurrent", File.ReadAllText(fixtures.StoryPath), StringComparison.Ordinal);
+        Assert.DoesNotContain("isCurrent", fixtures.Files.ReadText(fixtures.StoryPath), StringComparison.Ordinal);
     }
 }

@@ -6,7 +6,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-[Trait("Category", "Integration")]
 public class TheMissionBoardIsAnsweredWithoutTheModelTests
 {
     [Theory]
@@ -16,7 +15,7 @@ public class TheMissionBoardIsAnsweredWithoutTheModelTests
     [InlineData("what am I hauling")]
     public async Task TheKeywordRouterAnswersWithNoModelCall(string phrase)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("The model should not be asked.");
 

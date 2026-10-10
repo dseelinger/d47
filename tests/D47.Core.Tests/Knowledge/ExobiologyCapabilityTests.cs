@@ -13,7 +13,6 @@ namespace D47.Core.Tests.Knowledge;
 /// Finding exobiology — two halves from two sources, and the tests
 /// that keep them from being mistaken for each other.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ExobiologyCapabilityTests
 {
     private sealed class FakeRoutes : IRouteService
@@ -85,7 +84,7 @@ public class ExobiologyCapabilityTests
         IRouteService? routes = null,
         bool galaxySearch = true)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, galaxySearch ? "true" : "false", SettingsCaller.Panel);
 
@@ -336,7 +335,7 @@ public class ExobiologyCapabilityTests
     [Fact]
     public async Task APlottedRouteIsKeptAsTheLastExobiologyPlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 

@@ -23,7 +23,7 @@ public static class ScenarioRunner
         ArgumentNullException.ThrowIfNull(scenario);
         ArgumentNullException.ThrowIfNull(provider);
 
-        using var world = new ScenarioWorld();
+        var world = new ScenarioWorld();
 
         world.ActionsEnabled = scenario.ActionsEnabled;
         world.ApplyJournal(scenario.Journal);

@@ -5,11 +5,10 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Retry with backoff, and saying so out loud when it runs out.</summary>
-[Trait("Category", "Integration")]
 public class TurnRetryTests
 {
     private static TurnLoop Build(
-        TempInstall install,
+        MemoryInstall install,
         ILlmProvider provider,
         InstantClock clock,
         RetryPolicy retry)
@@ -52,7 +51,7 @@ public class TurnRetryTests
     [Fact]
     public async Task ATransientFailureIsTriedAgainOnTheConfiguredSchedule()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FakeLlmProvider(new LlmStreamEvent.Failed("Overloaded.", Transient: true));
 
@@ -82,7 +81,7 @@ public class TurnRetryTests
     [Fact]
     public async Task AConfigurationFailureIsNotRetried()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Failed("That model does not exist.", Transient: false));
@@ -102,7 +101,7 @@ public class TurnRetryTests
     [Fact]
     public async Task AnAttemptThatAlreadySpokeIsNeverRetried()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.TextDelta("You are in Sol. "),
@@ -120,7 +119,7 @@ public class TurnRetryTests
     [Fact]
     public async Task RunningOutOfTriesIsSaidOutLoudRatherThanLeavingSilence()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FakeLlmProvider(new LlmStreamEvent.Failed("Overloaded.", Transient: true));
 
@@ -137,7 +136,7 @@ public class TurnRetryTests
     [Fact]
     public async Task OneAttemptIsNotCalledThreeTries()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.Failed("That model does not exist.", Transient: false));
@@ -156,7 +155,7 @@ public class TurnRetryTests
     [Fact]
     public async Task AProviderThatNeverAnswersBecomesAFailureRatherThanAHang()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock { TimeOutImmediately = true };
         var provider = new FakeLlmProvider(new LlmStreamEvent.TextDelta("this never arrives"));
 
@@ -175,7 +174,7 @@ public class TurnRetryTests
     [Fact]
     public async Task AProviderThatThrowsIsAFailedTurnRatherThanACrash()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new ThrowingLlmProvider();
 
@@ -191,7 +190,7 @@ public class TurnRetryTests
     [Fact]
     public async Task ARecoveryOnTheSecondTryAnswersNormallyAndCostsNothingExtra()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new InstantClock();
         var provider = new FlakyLlmProvider(failuresBeforeSuccess: 1);
 

@@ -290,7 +290,7 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         var gameState = new GameStateStore();
         gameState.Apply(Parse(Commander));
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         return CapabilityRegistry
@@ -298,7 +298,6 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
             .InvokeAsync(tool, ToolArguments.FromJson("{}"), TestContext.Current.CancellationToken, caller);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCommanderCanAskWhatTheyAreCarrying()
     {
@@ -315,7 +314,6 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         Assert.Contains("Tessera Nova", answer, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheResetIsRefusedToTheModelAndDoneForTheCommander()
     {

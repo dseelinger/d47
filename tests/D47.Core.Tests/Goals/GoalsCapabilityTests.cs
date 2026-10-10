@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Goals;
 
 /// <summary>The goals capability's surface.</summary>
-[Trait("Category", "Integration")]
 public class GoalsCapabilityTests
 {
     private static readonly ControlContext[] Modes =
@@ -23,7 +22,7 @@ public class GoalsCapabilityTests
     [Fact]
     public void ReadingTheArcsIsAdvertisedInEveryMode()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         Assert.All(Modes, mode => Assert.Contains("get_goals", Advertised(registry, mode)));
@@ -36,7 +35,7 @@ public class GoalsCapabilityTests
     [Fact]
     public void NothingThatWritesIsAdvertisedInAnyMode()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         Assert.All(Modes, mode =>
@@ -52,7 +51,7 @@ public class GoalsCapabilityTests
     [Fact]
     public void RemoveAndRecoverAreSaidByVoiceForTheMercenaryGoal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tools = TestSurface.For(install).Registry.Find(GoalsCapability.Id)!.Descriptor.Tools;
 
@@ -67,7 +66,7 @@ public class GoalsCapabilityTests
     [Fact]
     public void OnlyTheReadbackIsUnprotected()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tools = TestSurface.For(install).Registry.Find(GoalsCapability.Id)!.Descriptor.Tools;
 
@@ -85,7 +84,7 @@ public class GoalsCapabilityTests
     [Fact]
     public void TheBackfillIsARowAPersonPressesRatherThanATool()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var row = Assert.Single(
             TestSurface.For(install).Registry.Find(GoalsCapability.Id)!.Descriptor.Settings);

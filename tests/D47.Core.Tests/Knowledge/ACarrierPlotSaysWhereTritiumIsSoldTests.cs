@@ -9,7 +9,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-[Trait("Category", "Integration")]
 public class ACarrierPlotSaysWhereTritiumIsSoldTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 7, 12, 0, 0, TimeSpan.Zero);
@@ -96,7 +95,7 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
 
     private static async Task<string> PlotAsync(Market market, bool returnTrip)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
 
         foreach (var json in (string[])
@@ -194,7 +193,7 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
     [Fact]
     public async Task AStationSearchWithNoStationRunsAgainWithCarriersAndSaysSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
@@ -221,7 +220,7 @@ public class ACarrierPlotSaysWhereTritiumIsSoldTests
     [Fact]
     public void TheEgressTextNamesTheCarrierPlotsTritiumQuery()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 

@@ -64,11 +64,10 @@ public class PlotTheRedirectedHandInTests
         Assert.Equal("Sol", offer.System);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void PlotItRoutesToPlotCourseWithTheNewSystemAsTheCommander()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var offer = new HandInOffer();
         offer.Open(1, "Sol");
@@ -86,11 +85,10 @@ public class PlotTheRedirectedHandInTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoRedirectStandingPlotItIsNotClaimed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry, new HandInOffer().Phrases);
 

@@ -108,12 +108,11 @@ public class ACovasVoiceHasALightReverbTests
         Assert.Equal(ticked(Burst()).Pcm.ToArray(), unticked(Burst()).Pcm.ToArray());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASettingsFileWithoutTheKeyLoadsWithTheBoxTicked()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, """{ "schemaVersion": 1, "speech": { "cuesEnabled": false } }""");
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, """{ "schemaVersion": 1, "speech": { "cuesEnabled": false } }""");
 
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 

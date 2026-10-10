@@ -4,7 +4,6 @@ using Xunit;
 namespace D47.Scenarios.Tests;
 
 /// <summary>The routing table, checked without a model.</summary>
-[Trait("Category", "Integration")]
 public class RoutingTableTests
 {
     /// <summary>
@@ -13,7 +12,7 @@ public class RoutingTableTests
     /// </summary>
     private static IReadOnlySet<string> ToolNames()
     {
-        using var world = new ScenarioWorld();
+        var world = new ScenarioWorld();
 
         return world.Registry.All
             .SelectMany(capability => capability.Descriptor.Tools)

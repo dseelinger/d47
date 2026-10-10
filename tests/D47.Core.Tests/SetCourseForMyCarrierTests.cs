@@ -158,11 +158,10 @@ public class SetCourseForMyCarrierTests
     }
 
     /// <summary>And it beats the keyword, which is the reason for the phrase.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesItAheadOfTheCarrierKeyword()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry, () => Commands(Parked));
 
@@ -176,11 +175,10 @@ public class SetCourseForMyCarrierTests
     }
 
     /// <summary>And the neighbouring question still reaches the capability that answers it.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AskingWhereItIsStillReachesJournal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var router = new KeywordRouter(surface.Registry, () => Commands(Parked));
 

@@ -6,10 +6,9 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>One quantity, one spelling, across every tool that takes it.</summary>
-[Trait("Category", "Integration")]
 public class ThePriceAgeKnobIsSpelledOnceTests
 {
-    private static IReadOnlyList<ToolDefinition> Tools(TempInstall install)
+    private static IReadOnlyList<ToolDefinition> Tools(MemoryInstall install)
     {
         var settings = TestSurface.For(install).Settings;
 
@@ -28,7 +27,7 @@ public class ThePriceAgeKnobIsSpelledOnceTests
     [Fact]
     public void NoToolSpellsThePriceAgeWithoutItsUnit()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var wrong = Tools(install)
             .SelectMany(tool => tool.Parameters.Select(parameter => (Tool: tool.Name, Knob: parameter.Name)))
@@ -46,7 +45,7 @@ public class ThePriceAgeKnobIsSpelledOnceTests
     [Fact]
     public void BothPlannersTakeTheSameName()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var taking = Tools(install)
             .Where(tool => tool.Parameters.Any(p => p.Name == "max_price_age_hours"))

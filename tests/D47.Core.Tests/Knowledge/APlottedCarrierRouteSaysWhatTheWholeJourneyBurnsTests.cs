@@ -10,7 +10,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-[Trait("Category", "Integration")]
 public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
 {
     /// <summary>Answers with the recorded Sol, Colonia, Sol plot for the used capacity it is sent.</summary>
@@ -73,7 +72,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
         """;
 
     private static (CapabilityRegistry Registry, RecordedCarrierRoutes Routes, RoutePlanBook Plans) Build(
-        TempInstall install,
+        MemoryInstall install,
         params string[] events)
     {
         var gameState = new GameStateStore();
@@ -109,7 +108,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
     [Fact]
     public async Task ThePlotIsKeptAsTheCarriersOwnPlanAndTheAnswerGivesTheTotalAndTheReadingsAge()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, plans) = Build(install, Stats(freeSpace: 25_000));
 
         var result = await registry.InvokeAsync(
@@ -138,8 +137,8 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
     [Fact]
     public async Task TenThousandTonnesMoreAboardStatesALargerTotal()
     {
-        using var empty = new TempInstall();
-        using var laden = new TempInstall();
+        var empty = new MemoryInstall();
+        var laden = new MemoryInstall();
 
         var light = await Build(empty, Stats(freeSpace: 25_000)).Registry.InvokeAsync(
             "plot_carrier_route",
@@ -158,7 +157,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
     [Fact]
     public async Task ASquadronCarrierIsRefusedAndNothingIsKept()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, plans) = Build(install, Stats(freeSpace: 25_000, type: "SquadronCarrier"));
 
         var result = await registry.InvokeAsync(
@@ -175,7 +174,7 @@ public class APlottedCarrierRouteSaysWhatTheWholeJourneyBurnsTests
     [Fact]
     public async Task ACarrierWhoseHoldWasNeverReadIsRefusedAndNothingIsKept()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, routes, plans) = Build(
             install,
             """{"timestamp":"2026-09-05T12:00:00Z","event":"CarrierBuy","CarrierID":3700000000,"Callsign":"K7Q-B4X","Location":"Sol","BoughtAtMarket":1,"Price":5000000000,"Variant":"CarrierDockB"}""");

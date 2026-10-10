@@ -13,7 +13,6 @@ namespace D47.Core.Tests.Stories;
 /// A story keeps its current chapter and the one before it in the adventure file; the rest move to the archive with
 /// when their beats fired, and story chapters do not count toward the Commander's own adventures.
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class FinishedChaptersMoveToTheArchiveTests
 {
     private static string NamedSpine(string name, string premise) =>
@@ -174,10 +173,10 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         using var fixtures = Fixtures(4);
         await FlyTo(fixtures, 4);
 
-        var lines = File.ReadAllLines(fixtures.ArchivePath);
+        var lines = fixtures.Files.ReadText(fixtures.ArchivePath)!.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         Assert.Equal(2, lines.Length);
 
-        File.WriteAllLines(fixtures.ArchivePath, [lines[0], "{ not json", """{"storyId":"x"}""", lines[1]]);
+        fixtures.Files.WriteLines(fixtures.ArchivePath, [lines[0], "{ not json", """{"storyId":"x"}""", lines[1]]);
 
         var reread = StoryChapterArchive.Open(fixtures.Files, fixtures.ArchivePath, NullLogger<StoryChapterArchive>.Instance).For("F1");
 

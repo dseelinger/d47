@@ -178,7 +178,7 @@ public class ShipCoreStoreTests
     {
         public MemoryFileSystem Files { get; } = new();
 
-        public string File { get; } = Path.Combine(Path.GetTempPath(), "d47-ship-cores", "ship-cores.json");
+        public string File { get; } = Path.Combine(MemoryInstall.FakeRoot, "d47-ship-cores", "ship-cores.json");
     }
 }
 
@@ -408,7 +408,7 @@ public class ShipCoreWatchTests
         params (string Fid, int Ship, string Core)[] bound)
     {
         var store = new ShipCoreStore(
-            Path.Combine(Path.GetTempPath(), $"d47-ship-cores-{Guid.NewGuid():N}.json"), new MemoryFileSystem(),
+            Path.Combine(MemoryInstall.FakeRoot, $"d47-ship-cores-{Guid.NewGuid():N}.json"), new MemoryFileSystem(),
             NullLogger<ShipCoreStore>.Instance);
 
         foreach (var (fid, ship, core) in bound)

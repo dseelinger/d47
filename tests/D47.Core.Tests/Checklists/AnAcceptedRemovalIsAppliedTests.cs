@@ -4,10 +4,9 @@ using Xunit;
 namespace D47.Core.Tests.Checklists;
 
 /// <summary>Accepting a removal removes it.</summary>
-[Trait("Category", "Integration")]
 public class AnAcceptedRemovalIsAppliedTests
 {
-    private static ChecklistService One(TempInstall install, string line)
+    private static ChecklistService One(MemoryInstall install, string line)
     {
         var checklists = TestSurface.Checklists(install.Paths);
 
@@ -21,7 +20,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [Fact]
     public void TheLineIsGoneAfterAccepting()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = One(install, "Unlock Lei Cheung");
 
         var proposed = checklists.ProposeChange("Unlock Lei Cheung", ProposalKind.Remove);
@@ -39,7 +38,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [Fact]
     public void TheLineIsGoneFromTheFileToo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = One(install, "Unlock Lei Cheung");
 
         checklists.ProposeChange("Unlock Lei Cheung", ProposalKind.Remove);
@@ -54,7 +53,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [Fact]
     public void AcceptingARemovalOfSomethingGoneSaysSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = One(install, "Unlock Lei Cheung");
 
         checklists.ProposeChange("Unlock Lei Cheung", ProposalKind.Remove);
@@ -77,7 +76,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [InlineData("Accept the proposal.")]
     public void TheWordsAPersonActuallyUsesReachTheCommittingHalf(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(
@@ -92,7 +91,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [InlineData("decline it")]
     public void AndTheWordsForTheOtherAnswer(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(
@@ -108,7 +107,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [InlineData("confirm")]
     public void AConfirmationIsNotACommandUntilThereIsSomethingToConfirm(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Null(surface.Router.MatchToolCommand(said));
@@ -125,7 +124,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [InlineData("never mind")]
     public void AndTheSameForSayingNo(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Null(surface.Router.MatchToolCommand(said));
@@ -143,7 +142,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [Fact]
     public void AnsweringGivesTheWordsBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.ChecklistService.AddNote(ChecklistScope.Universal, "Unlock Lei Cheung");
@@ -162,7 +161,7 @@ public class AnAcceptedRemovalIsAppliedTests
     [Fact]
     public void TheStandingLineNamesTheProposalAndThenStops()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = One(install, "Unlock Lei Cheung");
 
         Assert.Null(checklists.Standing());

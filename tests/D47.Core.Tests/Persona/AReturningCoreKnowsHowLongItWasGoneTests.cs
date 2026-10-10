@@ -8,17 +8,14 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-[Trait("Category", "Integration")]
-public sealed class AReturningCoreKnowsHowLongItWasGoneTests : IDisposable
+public sealed class AReturningCoreKnowsHowLongItWasGoneTests
 {
     private static readonly DateTimeOffset Day = new(2026, 10, 8, 0, 0, 0, TimeSpan.Zero);
 
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
     private DateTimeOffset _now = Day.AddHours(10);
 
-    public void Dispose() => _install.Dispose();
-
-    private ViewStateStore Store() => new(_install.Paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance);
+    private ViewStateStore Store() => new(_install.Paths, _install.Files, NullLogger<ViewStateStore>.Instance);
 
     private CoreAbsences Open() => new(Store(), () => _now, NullLogger.Instance);
 

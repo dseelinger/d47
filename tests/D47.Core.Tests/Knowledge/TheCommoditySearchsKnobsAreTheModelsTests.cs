@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>Every knob the commodity search has is one the model can turn.</summary>
-[Trait("Category", "Integration")]
 public class TheCommoditySearchsKnobsAreTheModelsTests
 {
     /// <summary>Records the search it was handed, and answers whatever it was given.</summary>
@@ -82,7 +81,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     };
 
     private static async Task<(string Said, CommoditySearch Search)> AskAsync(
-        TempInstall install,
+        MemoryInstall install,
         CommodityAnswer answer,
         params (string Key, string Value)[] arguments)
     {
@@ -116,7 +115,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task FiveHundredLightYearsMeansFiveHundred()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await AskAsync(
             install,
@@ -132,7 +131,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task ThereIsNoCeilingOnTheDistance()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (_, search) = await AskAsync(
             install,
@@ -149,7 +148,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task TwoMonthsOfPricesIsAskableAndIsSaidBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await AskAsync(
             install,
@@ -164,7 +163,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task CarriersAreAskableAndAreSaidBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await AskAsync(
             install,
@@ -183,7 +182,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task ARefusedWideningNamesTheKnobAndTheCeiling()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await AskAsync(
             install,
@@ -199,7 +198,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task AnUnqualifiedSearchIsUnchanged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await AskAsync(
             install,
@@ -224,7 +223,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
     [Fact]
     public async Task AnUnqualifiedEmptyAnswerIsUnchanged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, _) = await AskAsync(install, new CommodityAnswer([], 30, 0, true));
 

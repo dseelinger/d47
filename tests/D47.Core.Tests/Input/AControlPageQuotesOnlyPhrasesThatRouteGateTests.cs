@@ -23,7 +23,7 @@ public partial class AControlPageQuotesOnlyPhrasesThatRouteGateTests
 
         Assert.NotEmpty(phrases);
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         var unrouted = phrases

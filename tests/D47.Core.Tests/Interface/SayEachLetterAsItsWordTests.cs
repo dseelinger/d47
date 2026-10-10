@@ -168,13 +168,12 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>And it is the router that answers, so no model is asked what a letter is called.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what is the word for K", "kilo")]
     [InlineData("what's the word for z", "zulu")]
     public async Task AskingForOneLetterIsAnsweredWithoutAModel(string asked, string expected)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var match = new KeywordRouter(surface.Registry).Match(asked, InputSource.Spoken);
@@ -189,11 +188,10 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>And asking for the whole of it gets every letter.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AskingForThePhoneticAlphabetGetsEveryLetter()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var match = new KeywordRouter(surface.Registry).Match("the phonetic alphabet", InputSource.Spoken);
@@ -210,11 +208,10 @@ public class SayEachLetterAsItsWordTests
     }
 
     /// <summary>Asking how to spell at all teaches the shape rather than the whole table.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AskingHowToSpellTeachesTheShape()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var match = new KeywordRouter(surface.Registry).Match("how do i spell something", InputSource.Spoken);

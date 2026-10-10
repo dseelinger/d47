@@ -62,13 +62,12 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         return provider.LastRequest!.Prompt.RenderCachedSystemBlock();
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(null)]
     [InlineData(VoiceRole.Crew)]
     public async Task AnAboardScenarioReachesTheShipsAiAndTheCrew(VoiceRole? addressed)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Understood.");
         var loop = Build(TestSurface.For(install), provider, ScenarioAudience.Aboard, addressed);
 
@@ -78,11 +77,10 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.Contains(Secret, block, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAboardScenarioDoesNotReachTheCarrierCaptain()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Captain here.");
         var loop = Build(TestSurface.For(install), provider, ScenarioAudience.Aboard, VoiceRole.CarrierCaptain);
 
@@ -92,11 +90,10 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.DoesNotContain(PromptAssembly.ScenarioLabel, block, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACarrierScenarioReachesTheCarrierCaptain()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Captain here.");
         var loop = Build(TestSurface.For(install), provider, ScenarioAudience.Carrier, VoiceRole.CarrierCaptain);
 
@@ -113,11 +110,10 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.True(ScenarioAudiences.Reaches(ScenarioAudience.Carrier, VoiceRole.TowerControl));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ClearingTheScenarioRemovesItFromTheNextTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Understood.");
         var loop = Build(TestSurface.For(install), provider, ScenarioAudience.Aboard, addressed: null);
 
@@ -128,7 +124,6 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.DoesNotContain(PromptAssembly.ScenarioLabel, await SystemBlockAsync(loop, provider), StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ThePrivacySectionNamesTheScenarioOnlyWhenOneIsSet()
     {
@@ -155,11 +150,10 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
         Assert.Contains("your character sheet and your backstory", what, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OneCommandersScenarioIsTheirsAndSurvivesARestart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.UseCommander("F1", "Alice");

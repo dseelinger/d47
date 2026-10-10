@@ -9,10 +9,9 @@ namespace D47.Core.Tests.Persona;
 /// The boundary Phase 35 turned on — the model may read a binding and never write one — now kept by
 /// there being nothing to reach.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ShipCoreTrustBoundaryTests
 {
-    private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;
+    private static CapabilityRegistry Registry(MemoryInstall install) => TestSurface.For(install).Registry;
 
     /// <summary>Neither tool exists, by any road.</summary>
     [Theory]
@@ -20,7 +19,7 @@ public class ShipCoreTrustBoundaryTests
     [InlineData("forget_ship_core")]
     public void NeitherHalfIsATooAtAllAnyMore(string gone)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var declared = Registry(install).All
             .SelectMany(capability => capability.Descriptor.Tools)
@@ -36,7 +35,7 @@ public class ShipCoreTrustBoundaryTests
     [InlineData("forget this ship's core")]
     public void ThePhrasesThatReachedThemReachNothing(string phrase)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(new KeywordRouter(Registry(install)).MatchToolCommand(phrase));
     }
@@ -48,7 +47,7 @@ public class ShipCoreTrustBoundaryTests
     [Fact]
     public void TheModelMayStillReadWhatAShipFliesWith()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var advertised = ToolSurface.All(Registry(install))
             .SelectMany(profile => profile.Tools)
@@ -65,7 +64,7 @@ public class ShipCoreTrustBoundaryTests
     [Fact]
     public void TheRowsCannotBeWrittenEither()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var persona = surface.Settings.Find(D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey);

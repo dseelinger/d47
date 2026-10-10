@@ -104,7 +104,6 @@ public partial class DocumentationGateTests
     /// The gate numbers pages from a registry with timers and alarms in it, whatever the app's startup
     /// flag says (#90); leaving the capability out removes that one entry and moves no other.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheGateNumbersThePagesWithTimersAndAlarmsRegistered()
     {
@@ -112,7 +111,7 @@ public partial class DocumentationGateTests
 
         Assert.NotNull(Registry().Find(id));
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var without = TestSurface.For(install, timersAndAlarms: false).Registry.All.Select(c => c.Descriptor.Id);
         var with = Registry().All.Select(c => c.Descriptor.Id).Where(other => other != id);
@@ -244,7 +243,6 @@ public partial class DocumentationGateTests
     }
 
     /// <summary>A card marked as a settings jump must land on rows that exist.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void EverySettingsJumpNamesACapabilityThatHasSettings()
     {
@@ -472,7 +470,7 @@ public partial class DocumentationGateTests
     /// A throwaway install: the gate cares about identity, schemas and settings rows, none of which
     /// depends on where the app happens to be installed.
     /// </summary>
-    private static TestSurface Surface() => TestSurface.For(new TempInstall());
+    private static TestSurface Surface() => TestSurface.For(new MemoryInstall());
 
     private static string RepositoryRoot()
     {

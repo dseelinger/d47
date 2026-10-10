@@ -10,7 +10,7 @@ namespace D47.Core.Tests.Adventures;
 
 public sealed class ACrimeIsWarnedOnceAtItsSettlementTests
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     private const string Illegal = "Mission_OnFoot_AssassinationIllegal_Covert_MB";
 

@@ -10,10 +10,10 @@ namespace D47.Core.Tests.Ships;
 /// <summary>The fleet, the fleet the Commander intends, and one build per ship.</summary>
 public class ShipPlanTests
 {
-    private static ShipBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+    private static ShipBuildStore Store(MemoryInstall install) =>
+        new(Path.Combine(install.Root, "ships.json"), install.Files, NullLogger<ShipBuildStore>.Instance);
 
-    private static ChecklistService Checklists(TempInstall install, CommanderGameState? state = null) =>
+    private static ChecklistService Checklists(MemoryInstall install, CommanderGameState? state = null) =>
         new(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
@@ -26,18 +26,17 @@ public class ShipPlanTests
             () => state);
 
     private static ShipPlanService Service(
-        TempInstall install, ShipBuildStore store, CommanderGameState? state = null) =>
+        MemoryInstall install, ShipBuildStore store, CommanderGameState? state = null) =>
         new(store, Checklists(install, state), () => state);
 
     /// <summary>
     /// A hull the Commander does not own has no ship id, because the journal's id is what a ship list
     /// is keyed by and a Corsair nobody has bought has none.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnIntendedHullHasNoShipIdAndIsNotOwned()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var ships = Service(install, Store(install));
 
         var build = ships.Intend("Python");
@@ -63,11 +62,10 @@ public class ShipPlanTests
     }
 
     /// <summary>The shipped table is what answers "is that a hull", so a typo is refused.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AHullNoTableKnowsIsRefusedRatherThanInvented()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Null(Service(install, Store(install)).Intend("Corsaire Mark Nine"));
     }
@@ -76,11 +74,10 @@ public class ShipPlanTests
     /// The identity is stable and independent of the ship id from the moment the build is made — which
     /// is what there is to rebind when the hull is bought.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void BuyingTheHullAdoptsThePlanRatherThanMakingTheCommanderRePointIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -106,11 +103,10 @@ public class ShipPlanTests
         Assert.Equal("Dirty Drive Tuning", adopted.For("MainEngines")?.Blueprint);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void BoardingAPlannedHullAdoptsItToo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -126,11 +122,10 @@ public class ShipPlanTests
         Assert.Equal(12, store.Find(intended.Id)?.ShipId);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void BoardingDoesNotStealAShipAnotherBuildAlreadyHolds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -155,11 +150,10 @@ public class ShipPlanTests
     /// Two Corsairs planned and one bought is a question rather than a guess: adopting the wrong one
     /// silently is worse than adopting neither.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoIntendedHullsOfOneTypeAreNotAdoptedAtAll()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -175,11 +169,10 @@ public class ShipPlanTests
     }
 
     /// <summary>A slot holds one plan, because a slot holds one module.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void PlanningASlotTwiceReplacesRatherThanAdds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -194,11 +187,10 @@ public class ShipPlanTests
         Assert.Equal(3, slot.Grade);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AShipHasOneBuild()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var ships = Service(install, store);
 
@@ -210,14 +202,13 @@ public class ShipPlanTests
     }
 
     /// <summary>And a hand edit that puts two on one ship is reported rather than obeyed.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileWithTwoBuildsForOneShipIsRefusedAndSaidSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var path = Path.Combine(install.Root, "ships.json");
 
-        File.WriteAllText(path, """
+        install.Files.WriteText(path, """
         {
           "ships": [
             { "id": "ship-1", "hull": "python", "shipId": 12 },
@@ -226,7 +217,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, install.Files, NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         Assert.Single(store.Builds);
@@ -234,14 +225,13 @@ public class ShipPlanTests
     }
 
     /// <summary>The Commander is half the key: Elite's ship ids are per Commander and start small, so two Commanders' ship 12s are two ships and neither build is a duplicate of the other.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoCommandersMayEachHaveABuildForTheSameShipId()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var path = Path.Combine(install.Root, "ships.json");
 
-        File.WriteAllText(path, """
+        install.Files.WriteText(path, """
         {
           "ships": [
             { "commanderFid": "F1", "id": "ship-1", "hull": "python", "shipId": 12 },
@@ -250,7 +240,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, install.Files, NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         Assert.Equal(2, store.Builds.Count);
@@ -260,11 +250,10 @@ public class ShipPlanTests
     }
 
     /// <summary>The same seen from the service: another Commander's ship 12 is a different ship, so their build must not answer for this Commander's.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnotherCommandersBuildDoesNotAnswerForThisCommandersShip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
 
         store.Save([new ShipBuild("F2", "ship-1", "anaconda", 12, "Someone Else's")]);
@@ -293,14 +282,13 @@ public class ShipPlanTests
     /// A file from before builds carried a Commander: claimed whole by the first one seen, the way the
     /// checklist adopts unowned notes — a release must not silently empty every fleet page.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ALegacyBuildFileIsAdoptedByTheFirstCommanderSeen()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var path = Path.Combine(install.Root, "ships.json");
 
-        File.WriteAllText(path, """
+        install.Files.WriteText(path, """
         {
           "ships": [
             { "id": "ship-1", "hull": "python", "shipId": 12 }
@@ -308,7 +296,7 @@ public class ShipPlanTests
         }
         """);
 
-        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, install.Files, NullLogger<ShipBuildStore>.Instance);
         store.Poll();
 
         var game = new GameStateStore();
@@ -326,11 +314,10 @@ public class ShipPlanTests
     }
 
     /// <summary>Promotion goes through the proposal path, so nothing lands on the checklist unasked.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void PromotingPutsTheBuildOnTheChecklistBecauseThatIsWhatTheButtonSays()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var checklists = Checklists(install);
         var ships = new ShipPlanService(store, checklists, () => null);
@@ -357,11 +344,10 @@ public class ShipPlanTests
     /// A prospective hull has no list to be on, and that is said rather than invented: scoping a
     /// Corsair's hardpoints to the universal list would outlive the decision to buy one.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void APlanForAHullYouDoNotOwnCannotBePromoted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var checklists = Checklists(install);
         var ships = new ShipPlanService(store, checklists, () => null);
@@ -377,11 +363,10 @@ public class ShipPlanTests
     }
 
     /// <summary>Dropping a plan keeps what it already put on the checklist.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void DroppingABuildKeepsWhatItAlreadyPromoted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var checklists = Checklists(install);
         var ships = new ShipPlanService(store, checklists, () => null);
@@ -407,11 +392,10 @@ public class ShipPlanTests
     /// Changing a slot and promoting again is a revision rather than a rebuild — which is the slot key
     /// of item one, seen from the far end of the phase.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ChangingASlotAndPromotingAgainRevisesRatherThanRebuilds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = Store(install);
         var checklists = Checklists(install);
         var ships = new ShipPlanService(store, checklists, () => null);
@@ -442,11 +426,10 @@ public class ShipPlanTests
     /// The fleet lists the ship being flown, which the journal's stored-ships snapshot never does:
     /// StoredShips is what is in the racks, and the one under the Commander is by definition not.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheShipBeingFlownIsInTheFleet()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new GameStateStore();
 
         store.Apply(Event(
@@ -468,18 +451,17 @@ public class ShipPlanTests
     }
 
     /// <summary>Change is detected by content, not by a stamp.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TwoWritesInsideOneTickAreBothSeen()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var path = Path.Combine(install.Root, "ships.json");
-        var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var store = new ShipBuildStore(path, install.Files, NullLogger<ShipBuildStore>.Instance);
 
-        File.WriteAllText(path, """{ "ships": [ { "id": "ship-1", "hull": "python" } ] }""");
+        install.Files.WriteText(path, """{ "ships": [ { "id": "ship-1", "hull": "python" } ] }""");
         Assert.True(store.Poll());
 
-        File.WriteAllText(path, """{ "ships": [ { "id": "ship-2", "hull": "anaconda" } ] }""");
+        install.Files.WriteText(path, """{ "ships": [ { "id": "ship-2", "hull": "anaconda" } ] }""");
         Assert.True(store.Poll());
 
         Assert.Equal("anaconda", store.Builds[0].Hull);
@@ -490,11 +472,10 @@ public class ShipPlanTests
     /// Every row names the system the ship is in, asked for 2026-08-20: "print in the ship list what
     /// system the ship is in".
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryRowNamesTheSystemTheShipIsIn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new GameStateStore();
 
         store.Apply(Event(
@@ -527,11 +508,10 @@ public class ShipPlanTests
     }
 
     /// <summary>With no location yet, the row says what it knows and no more.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AShipWithNoKnownSystemDoesNotInventOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new GameStateStore();
 
         store.Apply(Event(

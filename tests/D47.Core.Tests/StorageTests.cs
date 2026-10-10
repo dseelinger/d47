@@ -5,16 +5,15 @@ using Xunit;
 
 namespace D47.Core.Tests;
 
-[Trait("Category", "Integration")]
 public class SettingsStoreTests
 {
-    private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+    private static SettingsStore StoreFor(MemoryInstall install) =>
+        new(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
     [Fact]
     public void MissingFileYieldsDefaultsBecauseThatIsAFirstRun()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var settings = StoreFor(install).Load();
 
@@ -25,7 +24,7 @@ public class SettingsStoreTests
     [Fact]
     public void SettingsSurviveARoundTrip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = StoreFor(install);
 
         store.Save(new D47Settings
@@ -52,8 +51,8 @@ public class SettingsStoreTests
     [Fact]
     public void UnknownKeyIsNamedRatherThanRefusingTheFile()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, """{"schemaVersion":1,"logging":{"default":"Warning"},"speling":true}""");
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, """{"schemaVersion":1,"logging":{"default":"Warning"},"speling":true}""");
 
         var store = StoreFor(install);
         var settings = store.Load();
@@ -67,8 +66,8 @@ public class SettingsStoreTests
     [Fact]
     public void UnknownSubsystemIsRejected()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(
+        var install = new MemoryInstall();
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """{"schemaVersion":1,"logging":{"default":"Information","subsystems":{"Telepathy":"Debug"}}}""");
 
@@ -80,20 +79,19 @@ public class SettingsStoreTests
     [Fact]
     public void MalformedFileFailsLoudly()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, "{ this is not json");
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, "{ this is not json");
 
         Assert.Throws<SettingsLoadException>(() => StoreFor(install).Load());
     }
 }
 
-[Trait("Category", "Integration")]
 public class SecretStoreTests
 {
     [Fact]
     public void SecretsSurviveARoundTripThroughTheFile()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
@@ -107,18 +105,18 @@ public class SecretStoreTests
     [Fact]
     public void SecretsAreNotStoredInPlaintext()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
 
-        Assert.DoesNotContain("swordfish", File.ReadAllText(install.Paths.SecretsFile), StringComparison.Ordinal);
+        Assert.DoesNotContain("swordfish", install.Files.ReadText(install.Paths.SecretsFile), StringComparison.Ordinal);
     }
 
     [Fact]
     public void MissingSecretIsAbsenceNotFailure()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var store = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 
         Assert.False(store.TryGet("never.set", out _));
@@ -128,7 +126,7 @@ public class SecretStoreTests
     [Fact]
     public void SecretFromAnotherUserReadsAsAbsentRatherThanThrowing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
             .Set("inara.apiKey", "swordfish");
 
@@ -142,8 +140,8 @@ public class SecretStoreTests
     [Fact]
     public void UnreadableStoreStartsEmptyInsteadOfThrowing()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SecretsFile, "not json at all");
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SecretsFile, "not json at all");
 
         var store = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 

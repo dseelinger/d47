@@ -6,13 +6,12 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#237: the <c>speech.guardianVoice.preset</c> row through the settings surface.</summary>
-[Trait("Category", "Integration")]
 public class TheGuardianPresetRowReadsAndWritesTests
 {
     [Fact]
     public void ItStartsAtOffAndWritingVocoderTicksExactlyItsEffects()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal("off", surface.Settings.Read(SpeechCapability.GuardianPresetKey));
@@ -29,7 +28,7 @@ public class TheGuardianPresetRowReadsAndWritesTests
     [Fact]
     public void ChangingALevelAfterPickingABuiltinReadsCustom()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.GuardianPresetKey, "vocoder", SettingsCaller.Panel);
@@ -41,7 +40,7 @@ public class TheGuardianPresetRowReadsAndWritesTests
     [Fact]
     public void WritingCustomChangesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.GuardianEffectKey("reverb"), "true", SettingsCaller.Panel);
@@ -55,7 +54,7 @@ public class TheGuardianPresetRowReadsAndWritesTests
     [Fact]
     public void NoRowInTheGroupIsAdvanced()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var rows = surface.Registry.Find(SpeechCapability.Id)!.Descriptor.Settings

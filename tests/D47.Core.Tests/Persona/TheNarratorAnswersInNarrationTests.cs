@@ -78,11 +78,10 @@ public class TheNarratorAnswersInNarrationTests
         return events;
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WhatHappenedNextIsNarratedWithNoTools()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         const string reply = "She turned toward the beacon, and the beacon, patient as ever, turned toward her.";
         var provider = FakeLlmProvider.Answering(reply);
         var (loop, _, world) = Build(TestSurface.For(install), provider);
@@ -106,11 +105,10 @@ public class TheNarratorAnswersInNarrationTests
         Assert.Equal([reply], world.Posted);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AReplyThatSaysYouIsNotSaidAndClosesTheLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("You turned toward the beacon.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
 
@@ -121,11 +119,10 @@ public class TheNarratorAnswersInNarrationTests
         Assert.False(line.IsOpen);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task FourRepliesAndTheNextGoesToTheShip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("The silence held a moment longer.");
         var (loop, line, _) = Build(TestSurface.For(install), provider);
 
@@ -140,11 +137,10 @@ public class TheNarratorAnswersInNarrationTests
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task NinetyOneSecondsAfterTheNarrationTheShipAnswers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Standing by.");
         var (loop, line, world) = Build(TestSurface.For(install), provider);
 

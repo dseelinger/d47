@@ -9,7 +9,6 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>
 /// <c>find_nearest_station</c>'s <c>limit</c> is bounded out loud rather than reset in silence.
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheStationSearchsLimitIsSaidOutLoudTests
 {
     /// <summary>Records the search it was handed, and answers nothing.</summary>
@@ -75,7 +74,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
 
     /// <summary>The module-and-ship half — a module name, so the commodity fork is not taken.</summary>
     private static async Task<(string Said, StationQuery Query)> ForAModuleAsync(
-        TempInstall install,
+        MemoryInstall install,
         params (string Key, string Value)[] arguments)
     {
         var surface = TestSurface.For(install);
@@ -109,7 +108,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
 
     /// <summary>The commodity half — a commodity name, which forks above everything above.</summary>
     private static async Task<(string Said, CommoditySearch Search)> ForACommodityAsync(
-        TempInstall install,
+        MemoryInstall install,
         params (string Key, string Value)[] arguments)
     {
         var surface = TestSurface.For(install);
@@ -145,7 +144,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     [Fact]
     public async Task FiftyIsRefusedAtTwentyRatherThanResetToFive()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await ForACommodityAsync(install, ("limit", "50"));
 
@@ -159,7 +158,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     [Fact]
     public async Task TheModuleHalfRefusesTheSameWay()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, query) = await ForAModuleAsync(install, ("limit", "50"));
 
@@ -172,7 +171,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     [Fact]
     public async Task NoughtIsRefusedAtOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await ForACommodityAsync(install, ("limit", "0"));
 
@@ -185,7 +184,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     [Fact]
     public async Task AnHonouredCountIsSaidBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (said, search) = await ForACommodityAsync(install, ("limit", "12"));
 
@@ -198,7 +197,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     [Fact]
     public async Task AnUnqualifiedSearchSaysNothingAboutTheLimit()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var (commodity, search) = await ForACommodityAsync(install);
 

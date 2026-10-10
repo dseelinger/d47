@@ -6,12 +6,11 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>Every phrase in the book is described by one sentence built from what it reaches (#538).</summary>
-[Trait("Category", "Integration")]
-public class EveryPhraseSaysWhatItDoesTests : IDisposable
+public class EveryPhraseSaysWhatItDoesTests
 {
     private static readonly DateTimeOffset At = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
     private readonly CapabilityRegistry _registry;
     private readonly PhraseBook _book;
 
@@ -20,8 +19,6 @@ public class EveryPhraseSaysWhatItDoesTests : IDisposable
         _registry = TestSurface.For(_install).Registry;
         _book = PhraseBook.From(_registry, []);
     }
-
-    public void Dispose() => _install.Dispose();
 
     private PhraseEntry Reaching(Func<PhraseEntry, bool> where) => _book.Entries.First(where);
 

@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>Finding somewhere to colonise.</summary>
-[Trait("Category", "Integration")]
 public class ColonisationCandidateTests
 {
     private sealed class FakeGalaxy : IGalaxyService
@@ -89,7 +88,7 @@ public class ColonisationCandidateTests
     };
 
     private static (CapabilityRegistry Registry, FakeGalaxy Galaxy) Build(
-        TempInstall install,
+        MemoryInstall install,
         bool enabled = true)
     {
         var galaxy = new FakeGalaxy();
@@ -113,7 +112,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task NoAnswerEverSuggestsASystemIsFreeToClaim()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Sol", 40, [System("Candidate", 6.1)]);
@@ -138,7 +137,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task APopulatedSystemIsNeverACandidateHoweverWellItMatches()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan(
@@ -156,7 +155,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task ASystemSomebodyIsAlreadyBuildingInIsLeftOutAndCounted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan(
@@ -177,7 +176,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task ASystemNobodyHasSurveyedIsCountedRatherThanRecommendedOrHidden()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan(
@@ -196,7 +195,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task TheObjectiveNarrowsOnWhatTheSystemActuallyHolds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan(
@@ -219,7 +218,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task ABodyTypeTheCatalogueDoesNotKnowIsRefusedBeforeAnythingIsAsked()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await Find(registry, ("near", "Sol"), ("body_type", "Ringworld"));
@@ -236,7 +235,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task LandableAndRingsAreDecidedByTheSecondCallAndAskedForByName()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Sol", 2, [System("Flat", 1.0), System("Rocky", 4.0)]);
@@ -271,7 +270,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task LosingTheSecondCallDegradesTheAnswerRatherThanRefusingIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Sol", 2, [System("Somewhere", 3.0)]);
@@ -287,7 +286,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task AnUnreachableIndexIsASentenceRatherThanAnException()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.ScanThrows = new GalaxyUnavailableException("The galaxy search took too long to answer.");
@@ -301,7 +300,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task SearchingFromAnUnpopulatedSystemSaysSoBecauseThereIsNoContactThere()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan(
@@ -317,7 +316,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task TheRangeIsCappedAtWhatAClaimActuallyReaches()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         await Find(registry, ("near", "Sol"), ("max_distance", "80"));
@@ -328,7 +327,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task TheGalaxySwitchGovernsThisTheSameAsEveryOtherQuestionThatLeavesTheMachine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install, enabled: false);
 
         var result = await Find(registry, ("near", "Sol"));
@@ -349,7 +348,7 @@ public class ColonisationCandidateTests
     [InlineData("Earth-like world", 1, "1 Earth-like world")]
     public async Task BodyKindsArePluralisedByTheirHeadNoun(string subtype, int count, string expected)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Sol", 1, [System("Somewhere", 3.0, planets: [(subtype, count)])]);
@@ -362,7 +361,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task EveryNeighbourBeingPopulatedIsAnAnswerRatherThanAnEmptyList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Deciat", 22, [System("Deciat", 0.0, population: 3_000)]);
@@ -380,7 +379,7 @@ public class ColonisationCandidateTests
     [Fact]
     public async Task NothingToShowIsExplainedByWhatActuallyEmptiedTheList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         galaxy.Scan = new ColonisationScan("Sol", 9, [Unsurveyed("Nobody Went", 2.0)]);

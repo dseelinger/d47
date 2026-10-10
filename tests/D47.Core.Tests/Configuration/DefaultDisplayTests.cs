@@ -10,13 +10,12 @@ namespace D47.Core.Tests.Configuration;
 /// Rows disagree about whether their default reads as an aside — "(the provider's default)" — or as a
 /// value, like a model name, and they always will.
 /// </summary>
-[Trait("Category", "Integration")]
 public class DefaultDisplayTests
 {
     [Fact]
     public void ADefaultDeclaredAsAnAsideComesBackWithoutItsBrackets()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var voice = surface.Settings.Find(SpeechCapability.VoiceKey);
@@ -41,7 +40,7 @@ public class DefaultDisplayTests
     [Fact]
     public void ADefaultThatIsAValueIsLeftAlone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var model = surface.Settings.Find(ConversationCapability.ModelKey);
@@ -57,7 +56,7 @@ public class DefaultDisplayTests
     [Fact]
     public void NoRowOffersABareDefaultThatIsStillBracketed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         foreach (var row in surface.Registry.All.SelectMany(c => c.Descriptor.Settings))

@@ -24,41 +24,17 @@ public static class FileSystemTestExtensions
 /// <summary>An install location that exists only as paths, for tests that touch no folder.</summary>
 public sealed class MemoryInstall
 {
-    public AppPaths Paths { get; } = new(Path.Combine(@"C:\d47-memory", Guid.NewGuid().ToString("N")));
+    public const string FakeRoot = @"C:\d47-memory";
+
+    public AppPaths Paths { get; } = new(Path.Combine(FakeRoot, Guid.NewGuid().ToString("N")));
 
     public string Root => Paths.InstallRoot;
 
-    public IFileSystem Files { get; } = new MemoryFileSystem();
+    public IFileSystem Files { get; }
+
+    public MemoryInstall() => Files = TestSurface.FilesFor(Paths);
 }
 
-public sealed class TempInstall : IDisposable
-{
-    public TempInstall()
-    {
-        Root = Path.Combine(Path.GetTempPath(), "d47-tests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Root);
-        Paths = new AppPaths(Root);
-        Paths.EnsureCreated();
-    }
-
-    public string Root { get; }
-
-    public AppPaths Paths { get; }
-
-    public IFileSystem Files { get; } = new DiskFileSystem();
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(Root, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A leftover temp folder is not worth failing a test over.
-        }
-    }
-}
 
 /// <summary>Reversible "encryption".</summary>
 public sealed class ReversibleProtector : ISecretProtector
@@ -223,7 +199,7 @@ public sealed class TestSurface
     }
 
     /// <summary>
-    /// A checklist service over a folder rather than a whole <see cref="TempInstall"/>, for a test that
+    /// A checklist service over a folder rather than a whole <see cref="MemoryInstall"/>, for a test that
     /// needs one to exist and nothing else about it.
     /// </summary>
     public static D47.Core.Checklists.ChecklistService EmptyChecklists(
@@ -242,7 +218,20 @@ public sealed class TestSurface
 
     /// <param name="loadFailed">Whether <paramref name="settings"/> are defaults standing in for a file that refused to load.</param>
     public static TestSurface For(
-        TempInstall install,
+        MemoryInstall install,
+        GameStateStore? gameState = null,
+        D47Settings? settings = null,
+        D47.Core.Persona.PersonaHost? personas = null,
+        bool loadFailed = false,
+        bool timersAndAlarms = true,
+        bool everyOptionalSurface = false,
+        D47.Core.Activities.ActivityLedger? activities = null,
+        Func<DateTimeOffset>? now = null) =>
+        For(install.Paths, install.Files, gameState, settings, personas, loadFailed, timersAndAlarms, everyOptionalSurface, activities, now);
+
+    public static TestSurface For(
+        AppPaths paths,
+        IFileSystem files,
         GameStateStore? gameState = null,
         D47Settings? settings = null,
         D47.Core.Persona.PersonaHost? personas = null,
@@ -255,8 +244,8 @@ public sealed class TestSurface
         D47.Core.Activities.ActivityLedger? activities = null,
         Func<DateTimeOffset>? now = null)
     {
-        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(paths, files, NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(paths, new ReversibleProtector(), files, NullLogger<SecretStore>.Instance);
         var state = gameState ?? new GameStateStore();
         var availability = new LlmAvailabilityState(providerConfigured: false);
         var spend = new SpendTracker();
@@ -267,11 +256,11 @@ public sealed class TestSurface
             store, secrets, settings ?? store.Load(), NullLogger<SettingsService>.Instance, loadFailed);
 
         var verbosity = new FakeVerbosityControl();
-        var checklists = Checklists(install.Paths, state);
+        var checklists = Checklists(paths, state, files);
 
         var memories = new D47.Core.Memory.MemoryBook(
             new D47.Core.Memory.MemoryStore(
-                Path.Combine(install.Paths.Data, "memory.json"), new DiskFileSystem(),
+                Path.Combine(paths.Data, "memory.json"), files,
                 NullLogger<D47.Core.Memory.MemoryStore>.Instance),
             () => state.Active?.Identity.FrontierId,
             () => new D47.Core.Memory.MemorySituation());
@@ -279,14 +268,14 @@ public sealed class TestSurface
         // A real store over a real (empty) file, for the reason ship cores is one below: the documentation
         // gate reads this registry, and a capability built with none registers with no tool at all.
         var learnedPhrases = new LearnedPhrasesStore(
-            Path.Combine(install.Paths.Data, "phrases.json"), new DiskFileSystem(),
+            Path.Combine(paths.Data, "phrases.json"), files,
             NullLogger<LearnedPhrasesStore>.Instance);
 
         CapabilityRegistry? built = null;
         var offers = new OfferWindow();
 
         var registry = CapabilityRegistry.Build(BuiltinCapabilities.All(
-            install.Paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), NoFleet(), Capabilities.Builtin.SpokenNamesSurface.Inert,
+            paths, verbosity, state, service, availability, spend, Version, SilentSpeech(), NoFleet(), Capabilities.Builtin.SpokenNamesSurface.Inert,
             new D47.Core.Conversation.TurnCancellation(NullLogger<D47.Core.Conversation.TurnCancellation>.Instance),
             new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance),
             () => built!,
@@ -296,7 +285,7 @@ public sealed class TestSurface
             () => "No autonomous actions in a test.",
             D47.Core.Capabilities.Builtin.NavigationSurface.Inert,
             new D47.Core.Actions.MacroStore(
-                Path.Combine(install.Paths.Data, "macros.json"), new DiskFileSystem(),
+                Path.Combine(paths.Data, "macros.json"), files,
                 NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
             checklists,
@@ -308,7 +297,7 @@ public sealed class TestSurface
  // capability while the shipped app carried two tools it had never seen.
             shipCores: new D47.Core.Persona.ShipCoreService(
                 new D47.Core.Persona.ShipCoreStore(
-                    Path.Combine(install.Paths.Data, "ship-cores.json"), new DiskFileSystem(),
+                    Path.Combine(paths.Data, "ship-cores.json"), files,
                     NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
                 () => state.Active),
 
@@ -330,7 +319,7 @@ public sealed class TestSurface
             coverage: everyOptionalSurface ? () => "Nothing exercised yet." : null,
             recording: everyOptionalSurface
                 ? new D47.Core.Diagnostics.Recording.RecordingLog(
-                    Path.Combine(install.Paths.Data, "recordings"),
+                    Path.Combine(paths.Data, "recordings"),
                     NullLogger.Instance)
                 : null,
             ticking: everyOptionalSurface
@@ -347,7 +336,7 @@ public sealed class TestSurface
         verbosity.FollowSettings(service);
 
         return new TestSurface(
-            install.Paths, store, secrets, service, registry, state, availability, spend, verbosity,
+            paths, store, secrets, service, registry, state, availability, spend, verbosity,
             checklists, memories, offers);
     }
 

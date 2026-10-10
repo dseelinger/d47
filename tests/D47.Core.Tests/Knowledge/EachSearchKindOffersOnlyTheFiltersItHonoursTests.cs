@@ -53,7 +53,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
 
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(TempInstall install)
+    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(MemoryInstall install)
     {
         var galaxy = new FakeGalaxy();
         var board = new GalaxySearchBoard();
@@ -150,11 +150,10 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.Equal(0, population.Max);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSchemaOffersExactlyTheSystemFilters()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, _) = Build(install);
 
         var tool = registry.All
@@ -173,11 +172,10 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             tool.Parameters.Single(parameter => parameter.Name == "power").AllowedValues);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedWithTheArgumentsAsGiven()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
         GalaxySearchKind? raised = null;
         board.Posted += kind => raised = kind;
@@ -201,11 +199,10 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.Equal(AskedAt, posting.AskedAt);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task APowerSearchNamesThePowerAndItsState()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, _) = Build(install);
 
         var withPower = await registry.InvokeAsync(
@@ -221,11 +218,10 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         Assert.DoesNotContain("Jerome Archer", without.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachableServicePostsNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
         galaxy.Throws = new GalaxyUnavailableException("The galaxy search could not be reached.");
 

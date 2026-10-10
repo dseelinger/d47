@@ -13,11 +13,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
     private static SetupChoices Choose(string conversation, string voice, string listening) =>
         new(conversation, voice, listening, "Scroll", null, ListeningCapability.HoldMode);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OneOpenAiKeyServesConversationVoiceAndListening()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var keys = FirstRun.Keys(
@@ -30,11 +29,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         Assert.Equal(3, key.Egress.Count);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OneElevenLabsKeyServesVoiceAndListening()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var keys = FirstRun.Keys(
@@ -45,11 +43,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         Assert.Equal([SetupSlot.Voice, SetupSlot.Listening], keys[1].Serves);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheDefaultsNeedOnlyTheAnthropicKey()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var keys = FirstRun.Keys(surface.Settings, SetupChoices.From(surface.Settings.Current));
@@ -57,11 +54,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         Assert.Equal("anthropic.apiKey", Assert.Single(keys).SecretName);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void FreeChoicesNeedNoKeys()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Empty(FirstRun.Keys(
@@ -74,11 +70,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
             Choose(LlmProviderCatalog.OpenAiCompatibleId, TtsProviderCatalog.EdgeId, SttProviderCatalog.LocalId)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EachKeyUsesTheRegistrysOwnRow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var registered = surface.Registry.All
@@ -93,11 +88,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         Assert.All(keys, key => Assert.Same(registered[key.Row.Key], key.Row));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AKeyDisclosesItsOwnProviderRatherThanTheSelectedOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(TtsProviderCatalog.EdgeId, surface.Settings.Current.Speech.Provider);
@@ -112,11 +106,10 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         Assert.Equal(EgressDisclosure.TextToSpeechFor(TtsProviderCatalog.ElevenLabs).Summary, egress.Summary);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheConversationKeyDisclosesTheChosenProvidersEndpoint()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var key = FirstRun.Keys(

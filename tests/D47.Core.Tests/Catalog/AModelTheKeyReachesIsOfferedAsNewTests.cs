@@ -10,19 +10,17 @@ using Xunit;
 namespace D47.Core.Tests.Catalog;
 
 /// <summary>A model the provider lists for the key and the catalog does not name is offered, labelled new.</summary>
-[Trait("Category", "Integration")]
 [Collection(nameof(SharedModelCatalogCollection))]
 public sealed class AModelTheKeyReachesIsOfferedAsNewTests : IDisposable
 {
     private static readonly DateTimeOffset Catalogued = new(2026, 2, 1, 0, 0, 0, TimeSpan.Zero);
 
-    private readonly TempInstall _install = new();
+    private readonly MemoryInstall _install = new();
 
     public void Dispose()
     {
         ModelCatalogSource.Shared.List(LlmProviderCatalog.AnthropicId, []);
         ModelCatalogSource.Shared.ListSpeech(TtsProviderCatalog.ElevenLabsId, []);
-        _install.Dispose();
     }
 
     private static void ListAnthropic(bool? adaptive = null) =>

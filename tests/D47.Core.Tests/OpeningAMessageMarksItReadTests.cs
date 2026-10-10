@@ -12,7 +12,7 @@ public class OpeningAMessageMarksItReadTests
     [Fact]
     public void MarkingReadDropsTheUnreadCountAndSurvivesAReload()
     {
-        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json");
+        var path = Path.Combine(MemoryInstall.FakeRoot, Guid.NewGuid().ToString("N") + ".json");
         var files = new MemoryFileSystem();
         var store = new MessageStore(path, files, NullLogger<MessageStore>.Instance);
         var message = store.Post("narrator", "Subject", "Body", Noon);
@@ -29,7 +29,7 @@ public class OpeningAMessageMarksItReadTests
     [Fact]
     public void MessagesComeNewestFirst()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
+        var store = new MessageStore(Path.Combine(MemoryInstall.FakeRoot, Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
         store.Post("narrator", "old", "x", Noon);
         store.Post("narrator", "new", "x", Noon.AddHours(1));
 

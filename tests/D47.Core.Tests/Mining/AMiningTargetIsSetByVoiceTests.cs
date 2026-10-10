@@ -8,7 +8,6 @@ using Xunit;
 namespace D47.Core.Tests.Mining;
 
 /// <summary>The mining target is set by phrase or tool and kept per Commander between sessions (#607).</summary>
-[Trait("Category", "Integration")]
 public class AMiningTargetIsSetByVoiceTests
 {
     private readonly MemoryFileSystem _files = new();
@@ -29,7 +28,7 @@ public class AMiningTargetIsSetByVoiceTests
     [Fact]
     public async Task SayingMiningTargetPainiteSetsItWithoutTheModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = TestSurface.For(install).Router;
 
         Assert.Null(router.MatchSetting("mining target painite"));
@@ -50,7 +49,7 @@ public class AMiningTargetIsSetByVoiceTests
     [Fact]
     public void EveryMaterialHasAPhrase()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = TestSurface.For(install).Router;
 
         foreach (var material in MiningTarget.Materials)
@@ -92,7 +91,7 @@ public class AMiningTargetIsSetByVoiceTests
     [Fact]
     public async Task ClearingTheTargetRemovesIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var match = TestSurface.For(install).Router.MatchToolCommand("clear the mining target");
 
         Assert.NotNull(match);

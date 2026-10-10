@@ -9,7 +9,6 @@ using Xunit;
 
 namespace D47.Core.Tests.Seats;
 
-[Trait("Category", "Integration")]
 public class SeatsAreNotHiredPilotsTests
 {
     private const string ShipAi = "Warden";
@@ -61,7 +60,7 @@ public class SeatsAreNotHiredPilotsTests
     [Fact]
     public async Task APilotAndASeatOnTheSameShipAreEachReachedByTheirOwnName()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering("Aye."), Teo);
 
         Assert.Equal("Vance", await NameOfAsync(loop, "Vance, how is the fighter"));
@@ -72,7 +71,7 @@ public class SeatsAreNotHiredPilotsTests
     [Fact]
     public async Task ASeatNamedLikeAPilotIsReachedAsThePilot()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var twin = new CrewSeat("0000000d", CrewRole.Helm, null, "Vance");
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering("Aye."), twin);
 
@@ -82,7 +81,7 @@ public class SeatsAreNotHiredPilotsTests
     [Fact]
     public async Task ASeatsBriefOffersNoToolsAndIsNotAPilotsBrief()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye.");
         var loop = Build(TestSurface.For(install), provider, Teo);
 

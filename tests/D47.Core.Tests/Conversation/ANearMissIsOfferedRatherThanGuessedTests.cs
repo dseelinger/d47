@@ -74,11 +74,10 @@ public class ANearMissIsOfferedRatherThanGuessedTests
 
     private static GameStatus OnFoot() => new() { Flags2 = (uint)StatusFlags2.OnFoot, ReadAt = DateTimeOffset.UnixEpoch };
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task SetFocusOnEliteIsOfferedAndYesRunsIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(TestSurface.For(install).Registry, provider);
 
@@ -93,11 +92,10 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         Assert.Equal(0, provider.CallCount);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnguardedSettingSaidWithToForOnRunsWithNoOffer()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(surface.Registry, provider, surface.Settings);
@@ -184,11 +182,10 @@ public class ANearMissIsOfferedRatherThanGuessedTests
         Assert.Empty(ship.Input.Steps);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AQuestionAboutEliteRankReachesTheModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(TestSurface.For(install).Registry, provider);
 

@@ -63,11 +63,10 @@ public class EveryRowReachesItsSubsystemTests
         Assert.False(SettingsFanout.For(key).ChooseVoiceForCoreAboard);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRootReAppliesExactlyTheseSixPrefixes()
     {
-        var routed = TestSurface.For(new TempInstall()).Registry.All
+        var routed = TestSurface.For(new MemoryInstall()).Registry.All
             .SelectMany(capability => capability.Descriptor.Settings)
             .Select(row => SettingsFanout.For(row.Key).Subsystem)
             .Where(subsystem => subsystem != SettingsSubsystem.None)
@@ -91,11 +90,10 @@ public class EveryRowReachesItsSubsystemTests
     /// Every registered row that is the root's to re-apply reaches the subsystem named by its own
     /// prefix.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARowUnderARoutedPrefixReachesThatPrefixesSubsystem()
     {
-        var misrouted = TestSurface.For(new TempInstall()).Registry.All
+        var misrouted = TestSurface.For(new MemoryInstall()).Registry.All
             .SelectMany(capability => capability.Descriptor.Settings)
             .Select(row => row.Key)
             .Distinct(StringComparer.OrdinalIgnoreCase)

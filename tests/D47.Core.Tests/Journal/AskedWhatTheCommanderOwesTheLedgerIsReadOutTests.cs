@@ -123,7 +123,6 @@ public class AskedWhatTheCommanderOwesTheLedgerIsReadOutTests
         Assert.DoesNotContain("Alpha", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("crime status")]
     [InlineData("am I wanted")]
@@ -132,7 +131,7 @@ public class AskedWhatTheCommanderOwesTheLedgerIsReadOutTests
     [InlineData("what do I owe")]
     public void ItIsReachedWithoutTheModel(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var command = new KeywordRouter(TestSurface.For(install).Registry).MatchToolCommand(said);
 
         Assert.Equal("get_crime_status", command?.ToolName);

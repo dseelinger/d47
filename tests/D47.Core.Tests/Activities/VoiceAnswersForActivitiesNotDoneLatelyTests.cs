@@ -8,16 +8,13 @@ using Xunit;
 
 namespace D47.Core.Tests.Activities;
 
-[Trait("Category", "Integration")]
-public sealed class VoiceAnswersForActivitiesNotDoneLatelyTests : IDisposable
+public sealed class VoiceAnswersForActivitiesNotDoneLatelyTests
 {
     private const string Fid = "F123";
 
     private static readonly DateTimeOffset Now = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private readonly TempInstall _install = new();
-
-    public void Dispose() => _install.Dispose();
+    private readonly MemoryInstall _install = new();
 
     private static string Line(string at, string kind, string extra = "") =>
         $"{{\"timestamp\":\"{at}\",\"event\":\"{kind}\"{extra}}}";
@@ -28,8 +25,8 @@ public sealed class VoiceAnswersForActivitiesNotDoneLatelyTests : IDisposable
         lines.AddRange(done.Select(item => Line(item.At, item.Kind)));
 
         var file = Path.Combine(_install.Paths.Data, "Journal.test.log");
-        Directory.CreateDirectory(_install.Paths.Data);
-        File.WriteAllLines(file, lines);
+        _install.Files.CreateFolder(_install.Paths.Data);
+        _install.Files.WriteLines(file, lines);
 
         var ledger = new ActivityLedger(Path.Combine(_install.Paths.Data, "activities.json"), _install.Files, NullLogger.Instance);
 

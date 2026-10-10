@@ -167,15 +167,13 @@ internal sealed class StoryFixtures : IDisposable
         ]}
         """;
 
-    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-stories", Guid.NewGuid().ToString("N"));
+    private readonly string _folder = Path.Combine(MemoryInstall.FakeRoot, "d47-stories", Guid.NewGuid().ToString("N"));
 
-    public IFileSystem Files { get; } = new DiskFileSystem();
+    public IFileSystem Files { get; } = new MemoryFileSystem();
 
     public StoryFixtures(RoundScriptedLlmProvider provider, StorySecret? secret = null, StoryCard? card = null)
     {
         secret ??= Secret;
-
-        Directory.CreateDirectory(_folder);
 
         Provider = provider;
         Book = new AdventureBook(
@@ -324,9 +322,5 @@ internal sealed class StoryFixtures : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
     }
 }

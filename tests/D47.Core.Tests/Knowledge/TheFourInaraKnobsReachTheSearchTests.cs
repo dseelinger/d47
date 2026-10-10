@@ -11,7 +11,6 @@ namespace D47.Core.Tests.Knowledge;
 /// The four parameters #296 added to <c>find_nearest_station</c> reach the query, and a nearest-first
 /// answer is one sentence with the rest counted.
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheFourInaraKnobsReachTheSearchTests
 {
     private sealed class Capturing(CommodityAnswer answer) : ITradePlanService
@@ -80,7 +79,7 @@ public class TheFourInaraKnobsReachTheSearchTests
         CommodityAnswer answer,
         params (string Key, string Value)[] arguments)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
@@ -239,7 +238,7 @@ public class TheFourInaraKnobsReachTheSearchTests
     [Fact]
     public async Task NearestFirstPutsTheWinningSystemOnTheClipboardAndRemembersIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 
@@ -282,7 +281,7 @@ public class TheFourInaraKnobsReachTheSearchTests
     [Fact]
     public async Task ANearestFirstSearchThatFindsNothingClearsWhatWasRemembered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
 

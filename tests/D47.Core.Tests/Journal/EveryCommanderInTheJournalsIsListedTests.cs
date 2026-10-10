@@ -5,13 +5,12 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-[Trait("Category", "Integration")]
 public class EveryCommanderInTheJournalsIsListedTests
 {
     [Fact]
     public void TwoCommandersEachGetTheirNewestFilesValues()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Write(
             install,
@@ -36,7 +35,7 @@ public class EveryCommanderInTheJournalsIsListedTests
             """{ "timestamp":"2026-08-03T10:30:00Z", "event":"CarrierJump", "StarSystem":"Colonia" }""");
 
         var (commanders, examined) = CommanderBackfill.FromHistory(
-            new DiskFileSystem(),
+            install.Files,
             Files(install), NullLogger.Instance, TestContext.Current.CancellationToken);
 
         Assert.Equal(3, examined);
@@ -58,14 +57,14 @@ public class EveryCommanderInTheJournalsIsListedTests
     [Fact]
     public void AHistoryWalkOffersTheCommandersOnceItIsDone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Write(
             install,
             "Journal.2026-08-01T100000.01.log",
             """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"Alpha", "Ship":"python" }""");
 
-        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
 
         Assert.Null(backfill.Commanders);
 
@@ -75,9 +74,9 @@ public class EveryCommanderInTheJournalsIsListedTests
         Assert.Equal(1, backfill.CommanderFilesExamined);
     }
 
-    private static string[] Files(TempInstall install) =>
-        [.. Directory.EnumerateFiles(install.Root, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)];
+    private static string[] Files(MemoryInstall install) =>
+        [.. install.Files.Enumerate(install.Root, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)];
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 }

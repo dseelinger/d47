@@ -17,11 +17,10 @@ public class CommanderScopeTests
     private const string CharacterSheet = "llm.characterSheet";
 
     /// <summary>The gate.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowsDeclaredPerCommanderAreExactlyTheRowsTheOverlayReaches()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var stored = new D47Settings
@@ -63,11 +62,10 @@ public class CommanderScopeTests
     }
 
     /// <summary>d47 runs before Elite has said who is flying.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithNobodyFlyingAWriteIsTheInstallations()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(AboutMe, "Whoever sits here", SettingsCaller.Panel);
@@ -78,11 +76,10 @@ public class CommanderScopeTests
         Assert.Empty(reloaded.Commanders);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ACommandersWriteLandsInTheirOverlayAndTheInstallationsValueStands()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(AboutMe, "The installation's story", SettingsCaller.Panel);
 
@@ -112,11 +109,10 @@ public class CommanderScopeTests
         Assert.Equal("Alice's story", reloaded.Settings.Current.Llm.AboutMe);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EachCommanderKeepsTheirOwnHomeSystem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Sol", SettingsCaller.Panel);
 
@@ -131,11 +127,10 @@ public class CommanderScopeTests
         Assert.Equal("Shinrarta Dezhra", surface.Settings.Current.Callouts.HomeSystem);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void SwitchingCommanderAnnouncesTheHomeSystemToTheCalloutsRoute()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(CalloutCapability.HomeSystemKey, "Sol", SettingsCaller.Panel);
         surface.Settings.UseCommander("F1", "Alice");
@@ -150,11 +145,10 @@ public class CommanderScopeTests
     }
 
     /// <summary>For About Me, empty is meaningful.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ClearingACommanderRowIsDeliberatelyBlankRatherThanUnset()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         surface.Settings.Apply(AboutMe, "The installation's story", SettingsCaller.Panel);
 
@@ -177,11 +171,10 @@ public class CommanderScopeTests
         Assert.Equal("The installation's story", reloaded.Settings.Current.Llm.AboutMe);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnInstallationRowWrittenWhileACommanderIsFlyingIsStillTheInstallations()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.UseCommander("F1", "Alice");
@@ -198,11 +191,10 @@ public class CommanderScopeTests
     /// A switch announces each Commander row whose effective value moved, under that row's own key, so
     /// the prompt re-reads About Me through the same fan-out an edit would use.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void SwitchingCommanderAnnouncesTheRowsThatMovedUnderTheirOwnKeys()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var surface = TestSurface.For(install, settings: new D47Settings
         {

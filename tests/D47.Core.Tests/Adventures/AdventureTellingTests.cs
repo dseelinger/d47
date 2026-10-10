@@ -10,7 +10,7 @@ namespace D47.Core.Tests.Adventures;
 /// </summary>
 public class AdventureTellingTests
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     private AdventureBook Wired(bool begun = true)
     {

@@ -8,7 +8,6 @@ namespace D47.Core.Tests.Conversation;
 /// "the" is optional in every declared phrase, on every model-free route, and dropping or adding it
 /// is an exact match rather than a near miss (#525).
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheIsOptionalInEveryPhraseTests
 {
     /// <summary>The same fold the router applies internally, reimplemented here so the test does not
@@ -34,7 +33,7 @@ public class TheIsOptionalInEveryPhraseTests
     [InlineData("target next system", "target the next system")]
     public void ADeclaredPhraseWithoutTheReachesTheSameActionAsWithIt(string withoutThe, string withThe)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -53,7 +52,7 @@ public class TheIsOptionalInEveryPhraseTests
     [InlineData("hyperspace")]
     public void HyperspaceIsReachableByBothDeclaredWords(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -63,7 +62,7 @@ public class TheIsOptionalInEveryPhraseTests
     [Fact]
     public void AddingTheWhereNoneWasDeclaredStillMatches()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -79,7 +78,7 @@ public class TheIsOptionalInEveryPhraseTests
     [Fact]
     public void ASettingCommandPhraseMatchesWithoutIts()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var router = new KeywordRouter(registry);
 
@@ -99,7 +98,7 @@ public class TheIsOptionalInEveryPhraseTests
     [Fact]
     public void ExactMatchBeatsANearMissOfferOnceTheIsDropped()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var book = PhraseBook.From(registry, []);
 
@@ -119,7 +118,7 @@ public class TheIsOptionalInEveryPhraseTests
     [Fact]
     public void NoTwoPhrasesReachingDifferentTargetsCollideOnceTheIsRemoved()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var book = PhraseBook.From(registry, []);
 

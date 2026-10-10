@@ -5,7 +5,6 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>About is the last section in the panel, and it is last because it says so.</summary>
-[Trait("Category", "Integration")]
 public class AboutIsTheBottomOfThePageTests
 {
     private static IReadOnlyList<CapabilityDescriptor> OnThePanel() =>
@@ -80,7 +79,7 @@ public class AboutIsTheBottomOfThePageTests
     /// </summary>
     private static IReadOnlyList<CapabilityDescriptor> Registered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         return [.. TestSurface.For(install).Registry.All.Select(registered => registered.Descriptor)];
     }

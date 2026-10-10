@@ -9,10 +9,9 @@ namespace D47.Core.Tests.Ships;
 
 /// <summary>Asking, once, when the ship the Commander has boarded carries a build their checklist does
 /// not.</summary>
-[Trait("Category", "Integration")]
 public class TheChecklistAndTheBuildDriftApartTests
 {
-    private static ChecklistService Checklists(TempInstall install) =>
+    private static ChecklistService Checklists(MemoryInstall install) =>
         new(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
@@ -42,7 +41,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         public string BuildId { get; init; } = string.Empty;
     }
 
-    private static Bench Set(TempInstall install, bool planned = true)
+    private static Bench Set(MemoryInstall install, bool planned = true)
     {
         var store = new ShipBuildStore(
             Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
@@ -65,7 +64,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void BoardingAShipWhoseBuildTheChecklistHasNotGotAsks()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         var asked = bench.Drift.Observe([Boarding(12)]);
@@ -83,7 +82,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void ANewCommanderInTheSameShipIdIsAskedAboutTheirOwnBuild()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var state = new GameStateStore();
         state.Apply(Identity("F1", "Alice"));
 
@@ -137,7 +136,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void AShipWhoseChecklistAlreadyAgreesIsNotAskedAbout()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         // Promoted, so the two agree exactly.
@@ -150,7 +149,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void AShipWithNoPlanAtAllIsNotAskedAbout()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install, planned: false);
 
         Assert.Null(bench.Drift.Observe([Boarding(12)]));
@@ -159,7 +158,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void ItFiresOnASwapRatherThanOnEveryLoadout()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));
@@ -171,7 +170,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void SayingYesRevisesRatherThanRebuilds()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         bench.Ships.Plan(bench.BuildId, new SlotPlan("MainEngines", "Dirty Drive Tuning", 5, "Drag Drives"));
@@ -216,7 +215,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void SayingNoLeavesBothAloneAndIsNotAskedAgain()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));
@@ -247,7 +246,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void ADifferentDisagreementIsANewQuestionAndIsAsked()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));
@@ -267,7 +266,7 @@ public class TheChecklistAndTheBuildDriftApartTests
     [Fact]
     public void NothingIsAskedWhileSomethingIsAlreadyWaitingOnThatShip()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var bench = Set(install);
 
         Assert.NotNull(bench.Drift.Observe([Boarding(12)]));

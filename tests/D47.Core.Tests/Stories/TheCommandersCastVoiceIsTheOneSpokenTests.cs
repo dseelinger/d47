@@ -44,29 +44,19 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
         Assert.Equal("ellis-sample", StoryVoices.Of("cray", Versioned, CommanderGender.Woman, null, choices).Pinned!.VoiceId);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheChoiceSurvivesARestart()
     {
-        var folder = Path.Combine(Path.GetTempPath(), "d47-story-voices-" + Guid.NewGuid().ToString("N"));
-        var paths = new AppPaths(folder);
-        paths.EnsureCreated();
+        var install = new MemoryInstall();
 
-        try
+        new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Save(D47Settings.Defaults with
         {
-            new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Save(D47Settings.Defaults with
-            {
-                StoryVoices = Chose(DockHand, TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb"),
-            });
+            StoryVoices = Chose(DockHand, TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb"),
+        });
 
-            var loaded = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Load();
+        var loaded = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
 
-            Assert.Equal(new StoryVoiceChoice(TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb") { Story = Card.Title, Character = "Ren" }, loaded.StoryVoices[DockHand]);
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        Assert.Equal(new StoryVoiceChoice(TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb") { Story = Card.Title, Character = "Ren" }, loaded.StoryVoices[DockHand]);
     }
 
     [Fact]
@@ -90,7 +80,6 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
         Assert.False(StoryVoices.Uses(Secret, null, TtsProviderCatalog.KokoroId, choices));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheDirectorSpeaksTheChoiceAndUseTheDefaultBringsThePinnedVoiceBack()
     {

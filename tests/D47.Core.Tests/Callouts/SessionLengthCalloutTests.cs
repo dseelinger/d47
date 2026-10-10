@@ -86,11 +86,10 @@ public class SessionLengthCalloutTests
         Assert.Equal("You have been flying 2 hours, Commander.", said.Text);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowsExistAndTheReminderDefaultsOff()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var rows = surface.Registry.All.SelectMany(capability => capability.Descriptor.Settings).ToList();
 

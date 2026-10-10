@@ -117,13 +117,11 @@ public class GameActionPhrasesComeFromOneGrammarTests
         { "back", "ui_back", "toggle" },
     };
 
-    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(PhrasesDeclaredBefore))]
     public void APhraseThatRoutedBeforeStillReachesTheSameActionAndState(string phrase, string action, string state) =>
         AssertRoutes(phrase, action, state);
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("raise the landing gear", "landing_gear", "off")]
     [InlineData("retract the landing gear", "landing_gear", "off")]
@@ -226,7 +224,7 @@ public class GameActionPhrasesComeFromOneGrammarTests
 
     private static void AssertRoutes(string phrase, string action, string state)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         // TurnLoop's order: a setting command is tried before a tool command.

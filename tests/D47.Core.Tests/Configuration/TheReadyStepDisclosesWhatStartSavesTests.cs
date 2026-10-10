@@ -22,12 +22,11 @@ public class TheReadyStepDisclosesWhatStartSavesTests
         { LlmProviderCatalog.NoneId, TtsProviderCatalog.NoneId, SttProviderCatalog.LocalId, false },
     };
 
-    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(Choices))]
     public void AfterStartTheDisclosureMatchesTheReadyStep(string conversation, string voice, string listening, bool keys)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         // What a reopened wizard can find: a compatible endpoint pointed at this machine, and one slot

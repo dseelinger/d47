@@ -62,7 +62,7 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
         string frontierId = "F735466",
         long here = Sol)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
         settings.Apply(GalaxyCapability.EnabledKey, lookups ? "true" : "false", SettingsCaller.Panel);
 

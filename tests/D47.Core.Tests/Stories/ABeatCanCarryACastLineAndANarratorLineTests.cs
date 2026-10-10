@@ -11,20 +11,11 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>A beat holds up to three lines, each with its own speaker, said and posted in order (#867).</summary>
-[Trait("Category", "Integration")]
-public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
+public sealed class ABeatCanCarryACastLineAndANarratorLineTests
 {
-    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-beat-lines", Guid.NewGuid().ToString("N"));
+    private readonly string _folder = Path.Combine(MemoryInstall.FakeRoot, "d47-beat-lines", Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private readonly MemoryFileSystem _files = new();
 
     private static readonly StorySecret Cast = Secret with
     {
@@ -97,7 +88,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        var reopened = new AdventureStore(fixtures.AdventuresPath, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
+        var reopened = new AdventureStore(fixtures.AdventuresPath, fixtures.Files, NullLogger<AdventureStore>.Instance);
         Assert.True(reopened.Poll());
 
         Assert.Equal(fixtures.Book.Store.Find("F1", key)!.Beats, reopened.Find("F1", key)!.Beats);
@@ -109,15 +100,14 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests : IDisposable
     [Fact]
     public void AFileWrittenWithOneLineAndSpeakerPerBeatStillLoads()
     {
-        Directory.CreateDirectory(_folder);
         var path = Path.Combine(_folder, "adventures.json");
-        File.WriteAllText(path, """
+        _files.WriteText(path, """
             {"commanders": [{"frontierId": "F1", "adventures": [{"key": "old", "name": "Old", "beats": [
               {"title": "Yard Paint", "trigger": {"kind": "arrive", "systemAddress": 10477373803}, "line": "Anyone. Please.", "speaker": "caller"}
             ]}]}]}
             """);
 
-        var store = new AdventureStore(path, new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
+        var store = new AdventureStore(path, _files, NullLogger<AdventureStore>.Instance);
         store.Poll();
 
         var beat = Assert.Single(Assert.Single(store.For("F1")).Beats);

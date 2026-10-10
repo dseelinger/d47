@@ -8,7 +8,6 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Persona;
 
-[Trait("Category", "Integration")]
 public sealed class ABeaconScanWakesTheCoresTests
 {
     [Fact]
@@ -19,7 +18,7 @@ public sealed class ABeaconScanWakesTheCoresTests
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));
         var row = surface.Settings.Find(PersonaCapability.PersonaKey)!;
 
@@ -55,7 +54,7 @@ public sealed class ABeaconScanWakesTheCoresTests
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
 
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install, personas: new PersonaHost(cores: fixtures.Cores("F1")));
         Assert.Equal(
             SettingApplyStatus.Applied,

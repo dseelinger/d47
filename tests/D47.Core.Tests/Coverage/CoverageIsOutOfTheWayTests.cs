@@ -8,13 +8,12 @@ using Xunit;
 namespace D47.Core.Tests.Coverage;
 
 /// <summary>Coverage recording is a workbench aid for whoever builds d47, not a feature.</summary>
-[Trait("Category", "Integration")]
 public class CoverageIsOutOfTheWayTests
 {
     [Fact]
     public void ANormalRunHasNoCoverageRowAnywhereOnTheSurface()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var rows = TestSurface.For(install).Registry.All
             .SelectMany(capability => capability.Descriptor.Settings)
@@ -66,7 +65,7 @@ public class CoverageIsOutOfTheWayTests
     [Fact]
     public void ItIsNeverATool()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.DoesNotContain(
             TestSurface.For(install).Registry.ToolNames,

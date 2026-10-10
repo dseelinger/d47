@@ -11,7 +11,6 @@ namespace D47.Core.Tests.Knowledge;
 /// station rather than by the ship's hold (#118). The table names the station and the one market's
 /// quote gives the quantity, so nothing is left for the model to reason out of the ship report.
 /// </summary>
-[Trait("Category", "Integration")]
 public class ARaresCeilingIsTheStationsOfferTests
 {
     private static readonly DateTimeOffset Reported = new(2026, 9, 11, 0, 23, 0, TimeSpan.Zero);
@@ -111,7 +110,7 @@ public class ARaresCeilingIsTheStationsOfferTests
         bool galaxySearch = true,
         params (string Key, string Value)[] arguments)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(

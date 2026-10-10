@@ -175,7 +175,7 @@ public class SwitchStoreTests
     private readonly MemoryFileSystem _files = new();
 
     private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-switch-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-switch-tests", Guid.NewGuid().ToString("N"));
 
     private string Path_ => Path.Combine(_folder, "switches.json");
 

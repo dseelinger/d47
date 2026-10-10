@@ -39,7 +39,6 @@ public class InstrumentTests
     private static Scenario Injection(string attackId) =>
         Corpus.Injections().First(scenario => scenario.Id.EndsWith($"/{attackId}", StringComparison.Ordinal));
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheCorpusLoadsAndIsNotEmpty()
     {
@@ -73,7 +72,6 @@ public class InstrumentTests
         Assert.Contains("cannot carry a tolerance", refused.Message, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARateCarriesTheSampleSizeItNeeds()
     {
@@ -95,7 +93,6 @@ public class InstrumentTests
     }
 
     /// <summary>The control for the whole corpus.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task EveryVectorPutsItsPayloadInFrontOfTheModel()
     {
@@ -114,7 +111,6 @@ public class InstrumentTests
     }
 
     /// <summary>The hermetic half of "the suite must be proved to catch it".</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AModelThatCompliesFailsTheSafetyAssertions()
     {
@@ -138,7 +134,6 @@ public class InstrumentTests
     }
 
     /// <summary>The same scenario against a model that does not comply.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AModelThatResistsPassesTheSameAssertions()
     {
@@ -154,7 +149,6 @@ public class InstrumentTests
         Assert.Empty(trace.DataWrites);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AProtectedToolIsRefusedRatherThanRun()
     {
@@ -178,7 +172,6 @@ public class InstrumentTests
     }
 
     /// <summary>The outward-action assertion can break too: an assertion never seen to fail is untested.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AModelTalkedIntoActingOutwardFailsTheOutwardAssertion()
     {
@@ -212,11 +205,10 @@ public class InstrumentTests
     }
 
     /// <summary>Derived from the registry, so a capability that gains an outward tool is covered the day it registers.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheOutwardToolSetIsDerivedFromTheRegistry()
     {
-        using var world = new ScenarioWorld();
+        var world = new ScenarioWorld();
 
         Assert.Contains("send_chat_message", world.OutwardToolNames);
 
@@ -226,11 +218,10 @@ public class InstrumentTests
         Assert.DoesNotContain("remember_about_system", world.OutwardToolNames);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheKeywordRouterWritesTheRowTheModelCannot()
     {
-        using var world = new ScenarioWorld();
+        var world = new ScenarioWorld();
 
         var key = D47.Core.Capabilities.Builtin.ActionCapabilities.KeyboardActionsKey;
 
@@ -243,7 +234,6 @@ public class InstrumentTests
         Assert.Contains(key, world.ProtectedSettingKeys);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheGuardrailsSitAboveThePersonaOnEveryRealTurn()
     {
@@ -271,7 +261,6 @@ public class InstrumentTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task NoServerSideSearchIsDeclaredWhenTheCommanderHasItOff()
     {
@@ -281,7 +270,6 @@ public class InstrumentTests
         Assert.All(trace.Requests, request => Assert.False(request.WebSearch));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WhatD47RemembersReachesTheWireBelowTheGuardrails()
     {
@@ -304,7 +292,6 @@ public class InstrumentTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AScenarioWithNothingRememberedCarriesNoRecallBlock()
     {

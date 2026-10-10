@@ -10,7 +10,6 @@ namespace D47.Core.Tests.Knowledge;
 /// A misheard commodity gets the same nearest-name offer ships, engineers and modules already get,
 /// rather than the index's flat "no such commodity" (#117).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AMisheardCommodityIsOfferedItsNearestNameTests
 {
     private sealed class Recording : ITradePlanService
@@ -68,7 +67,7 @@ public class AMisheardCommodityIsOfferedItsNearestNameTests
 
     private static async Task<string> AskAsync(IGalaxyService? galaxy, ITradePlanService? trade, string commodity)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);

@@ -60,7 +60,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
 
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
 
-    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(TempInstall install)
+    private static (CapabilityRegistry Registry, FakeGalaxy Galaxy, GalaxySearchBoard Board) Build(MemoryInstall install)
     {
         var galaxy = new FakeGalaxy();
         var board = new GalaxySearchBoard();
@@ -106,13 +106,12 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Equal($"Stations can't be filtered by {name}: Spansh's station index doesn't carry it.", failure);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("security")]
     [InlineData("faction")]
     public void TheToolOffersNeitherSecurityNorFaction(string name)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, _) = Build(install);
 
         var tool = registry.All
@@ -122,11 +121,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.DoesNotContain(tool.Parameters, parameter => parameter.Name == name);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASearchWithNothingButDistanceIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await Ask(registry, ("max_distance", "20"));
@@ -136,11 +134,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Null(galaxy.LastQuery);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AMisspelledControllingFactionIsCorrectedAgainstTheJournals()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
         var result = await Ask(registry, ("controlling_faction", "mother gaia"));
@@ -150,11 +147,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Equal(["Mother Gaia"], Assert.Single(galaxy.LastQuery!.Criteria).Choices);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnmatchedFactionWithNoResultsMayBeMisspelled()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
         galaxy.Result = new StationSearchResult("Sol", 0, []);
 
@@ -167,11 +163,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheAnswerNamesTypePadArrivalAndTheAskedServices()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _, _) = Build(install);
 
         var result = await Ask(registry, ("services", "Material Trader, Rearm"));
@@ -184,11 +179,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerIsPostedUnderStations()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
 
         var result = await Ask(registry, ("min_pad", "Large"), ("station_type", "Outpost"));
@@ -203,11 +197,10 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
         Assert.Null(board.Last(GalaxySearchKind.Systems));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnUnreachableServicePostsNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, galaxy, board) = Build(install);
         galaxy.Throws = new GalaxyUnavailableException("The galaxy search could not be reached.");
 

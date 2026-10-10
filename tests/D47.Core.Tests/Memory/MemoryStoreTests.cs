@@ -15,7 +15,7 @@ public class MemoryStoreTests
     private const string Cmdr = "F1234567";
 
     private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-memory-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-memory-tests", Guid.NewGuid().ToString("N"));
 
     private string StorePath => Path.Combine(_folder, "memories.json");
 

@@ -10,7 +10,6 @@ namespace D47.Core.Tests.Configuration;
 /// Opacity was one of the six settings each headset surface kept its own copy of, and is now one knob
 /// for both.
 /// </summary>
-[Trait("Category", "Integration")]
 public class OneOpacityForBothPanelsTests
 {
     /// <summary>
@@ -89,7 +88,7 @@ public class OneOpacityForBothPanelsTests
     [Fact]
     public void ThereIsOneOpacityRowAndItBelongsToNeitherSurface()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
@@ -122,9 +121,9 @@ public class OneOpacityForBothPanelsTests
 
     private static D47Settings Load(string json)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(install.Paths.SettingsFile, json);
+        install.Files.WriteText(install.Paths.SettingsFile, json);
 
         return new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
     }

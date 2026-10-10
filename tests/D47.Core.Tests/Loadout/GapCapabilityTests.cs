@@ -12,7 +12,6 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>The opening sentence of "what do my plans still need" (#303).</summary>
-[Trait("Category", "Integration")]
 public class GapCapabilityTests
 {
     private static JournalEvent Event(string json)
@@ -21,7 +20,7 @@ public class GapCapabilityTests
         return parsed!;
     }
 
-    private static ChecklistService Checklists(TempInstall install) =>
+    private static ChecklistService Checklists(MemoryInstall install) =>
         new(
             new ChecklistStore(
                 Path.Combine(install.Root, "checklist.json"),
@@ -51,7 +50,7 @@ public class GapCapabilityTests
         return store.Active!;
     }
 
-    private static async Task<string> Say(TempInstall install, bool secondShip = false)
+    private static async Task<string> Say(MemoryInstall install, bool secondShip = false)
     {
         var shipStore = new ShipBuildStore(
             Path.Combine(install.Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
@@ -80,7 +79,7 @@ public class GapCapabilityTests
     [Fact]
     public async Task ThePluralsDropAtOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await Say(install);
 
@@ -94,7 +93,7 @@ public class GapCapabilityTests
     [Fact]
     public async Task MoreThanOnePlanIsPlural()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = await Say(install, secondShip: true);
 

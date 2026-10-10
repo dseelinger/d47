@@ -11,7 +11,6 @@ namespace D47.Core.Tests.Checklists;
 /// With the setting on, a derived item that reaches Done removes itself rather than staying ticked; an
 /// authored line is never touched, on or off (#255).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AFulfilledDerivedItemRemovesItselfTests
 {
     private const int ShipId = 21;
@@ -21,7 +20,7 @@ public class AFulfilledDerivedItemRemovesItselfTests
 
     private sealed record Bench(GameStateStore Game, ChecklistService Checklists, ShipPlanService Ships);
 
-    private static Bench Set(TempInstall install, bool removeFulfilled)
+    private static Bench Set(MemoryInstall install, bool removeFulfilled)
     {
         var game = new GameStateStore();
 
@@ -55,7 +54,7 @@ public class AFulfilledDerivedItemRemovesItselfTests
     [Fact]
     public void ADerivedItemThatReachesDoneIsRemovedWithTheSettingOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists, _) = Set(install, removeFulfilled: true);
 
         game.Apply(Engineered());
@@ -67,7 +66,7 @@ public class AFulfilledDerivedItemRemovesItselfTests
     [Fact]
     public void ADerivedItemThatReachesDoneIsKeptTickedWithTheSettingOff()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists, _) = Set(install, removeFulfilled: false);
 
         game.Apply(Engineered());
@@ -81,7 +80,7 @@ public class AFulfilledDerivedItemRemovesItselfTests
     [Fact]
     public void AnAuthoredLineTickedByHandStaysOnTheListWithTheSettingOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (game, checklists, _) = Set(install, removeFulfilled: true);
 
         var note = checklists.Document.Items.Single(item => item.Kind == ChecklistItemKind.Authored);

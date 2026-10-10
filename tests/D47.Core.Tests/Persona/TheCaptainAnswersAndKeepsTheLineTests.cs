@@ -70,11 +70,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     private static string Text(ConversationMessage message) =>
         string.Join(' ', message.Content.OfType<ConversationContent.Text>().Select(part => part.Value));
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task CaptainByNameIsAnsweredWithTheCaptainsBrief()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Seven hundred ninety-two tonnes, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 
@@ -90,11 +89,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.True(line.IsOpen);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheNextTurnWithNoNameIsTheCaptainsToo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, _) = Build(TestSurface.For(install), provider);
 
@@ -106,11 +104,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(3, provider.LastRequest.Prompt.History.Count);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ThatsAllCaptainEndsTheLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 
@@ -124,11 +121,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Empty(after.OfType<TurnEvent.Addressed>());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAisNameEndsTheLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 
@@ -142,11 +138,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Empty((await RunAsync(loop, "and how much cargo")).OfType<TurnEvent.Addressed>());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task BeyondRangeTheShipAiSaysSoWithoutAModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(600));
 
@@ -161,11 +156,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.False(line.IsOpen);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADistanceThatThrowsGivesACaptainsTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, _) = Build(
             TestSurface.For(install),
@@ -178,11 +172,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADistanceNobodyKnowsGivesACaptainsTurn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, _) = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(null));
 
@@ -192,11 +185,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoCarrierOwnedTheShipAiAnswers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider, carrier: CarrierState.None);
 
@@ -206,11 +198,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.False(line.IsOpen);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AProtectedToolTheCaptainCallsIsRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Calling("call-1", "accept_proposal", "{}"),
             RoundScriptedLlmProvider.Saying("I can't do that from here, Commander."));
@@ -228,11 +219,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Contains("not something I can do on my own", answered, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAiOverhearsTheCaptainWithoutTakingTheAnswerAsItsOwn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("Seven hundred ninety-two tonnes, Commander."),
             RoundScriptedLlmProvider.Saying("Noted."));
@@ -257,11 +247,10 @@ public class TheCaptainAnswersAndKeepsTheLineTests
                        && Text(message).Contains("Seven hundred", StringComparison.Ordinal));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACalloutSpokenDuringTheCaptainsLineStillReachesTheShipAi()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("Seven hundred ninety-two tonnes, Commander."),
             RoundScriptedLlmProvider.Saying("Five hundred forty tonnes aboard."),

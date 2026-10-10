@@ -8,10 +8,9 @@ using Xunit;
 namespace D47.Core.Tests.Memory;
 
 /// <summary>The memory capability's surface.</summary>
-[Trait("Category", "Integration")]
 public class MemoryCapabilityTests
 {
-    private static CapabilityRegistry Registry(TempInstall install) => TestSurface.For(install).Registry;
+    private static CapabilityRegistry Registry(MemoryInstall install) => TestSurface.For(install).Registry;
 
     private static IReadOnlyList<string> Advertised(CapabilityRegistry registry, ControlContext context) =>
         [.. ToolSurface.ForMode(registry, context, actionsEnabled: true).Tools.Select(tool => tool.Name)];
@@ -24,7 +23,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void TheWritePathIsOfferedToTheModelInEveryOrdinaryMode()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         ControlContext[] modes =
@@ -41,7 +40,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void ReadingAndForgettingAreNotAdvertisedAtAll()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var advertised = Advertised(Registry(install), ControlContext.Srv);
 
         Assert.DoesNotContain("get_memories", advertised);
@@ -51,7 +50,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void AskingWhatIsRememberedRoutesWithNoModelInThePath()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var routed = surface.Router.Match("what do you remember about me");
@@ -67,7 +66,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void ThereIsNoWayToEmptyTheStoreByVoiceOrByTool()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Null(surface.Router.Match("forget everything about me"));
@@ -89,7 +88,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void TheWriteToolCannotChooseHowMuchToBeBelieved()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tool = Assert.Single(
             Registry(install).Find(MemoryCapability.Id)!.Descriptor.Tools,
@@ -102,7 +101,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void TheExpirySettingOffersNeverAsARealChoice()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var row = Assert.Single(
             Registry(install).Find(MemoryCapability.Id)!.Descriptor.Settings,
@@ -122,7 +121,7 @@ public class MemoryCapabilityTests
     [Fact]
     public void WithNoStoreComposedEveryToolStillAnswers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
         var capability = registry.Find(MemoryCapability.Id)!;
 

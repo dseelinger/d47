@@ -9,23 +9,15 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>A beacon beat fires on a data-link scan made in its Guardian beacon system, and on nothing else.</summary>
-public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
+public sealed class ABeaconBeatFiresOnTheScanTests
 {
     private const long Beacon = 13872878396833;
 
     private const long OtherBeacon = 4208161886922;
 
-    private readonly string _folder = Path.Combine(Path.GetTempPath(), "d47-beacon-beat", Guid.NewGuid().ToString("N"));
+    private readonly string _folder = Path.Combine(MemoryInstall.FakeRoot, "d47-beacon-beat", Guid.NewGuid().ToString("N"));
 
-    public ABeaconBeatFiresOnTheScanTests() => Directory.CreateDirectory(_folder);
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_folder))
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-    }
+    private readonly MemoryFileSystem _files = new();
 
     private static Adventure ChapterOne(DateTimeOffset? acceptedAt = null) => new()
     {
@@ -46,7 +38,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
     private static AdventureStanding Run(Adventure adventure, IEnumerable<JournalEvent> events) =>
         events.Aggregate(AdventureFold.Start(adventure), AdventureFold.Apply);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ArrivingIsNotEnoughAndTheScanFinishesTheChapter()
     {
@@ -62,7 +53,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.Equal(Accepted.AddMinutes(3), scanned.FinishedAt);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AScanInAnotherBeaconSystemOrNoneDoesNotFireIt()
     {
@@ -78,7 +68,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.False(elsewhere.IsDone);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ACommanderAlreadyThereAtAcceptanceNeedsOnlyTheScan()
     {
@@ -92,12 +81,11 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.True(standing.IsDone);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void BeginningInTheBeaconSystemCountsTheSystemOnTheLivePath()
     {
         var book = new AdventureBook(
-            new AdventureStore(Path.Combine(_folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, "adventures.json"), _files, NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         book.Observe(Location(Beacon, Accepted.AddMinutes(-5)), "F1");
@@ -113,7 +101,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.True(book.Standing("F1", "chapter-one")!.IsDone);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheCatchUpReachesTheSameStandingAsTheLiveFold()
     {
@@ -127,10 +114,10 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         ];
 
         var path = Path.Combine(_folder, "Journal.2026-08-22T194000.01.log");
-        File.WriteAllLines(path, journal.Select(e => e.Raw.GetRawText()));
+        _files.WriteLines(path, journal.Select(e => e.Raw.GetRawText()));
 
         AdventureBook Book(string name) => new(
-            new AdventureStore(Path.Combine(_folder, name), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
+            new AdventureStore(Path.Combine(_folder, name), _files, NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
 
         var live = Book("live.json");
@@ -153,7 +140,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
         Assert.Equal(fromLive.SystemAddress, fromWalk.SystemAddress);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ABeaconBeatIsResolvedOnlyInABeaconSystem()
     {
@@ -166,7 +152,6 @@ public sealed class ABeaconBeatFiresOnTheScanTests : IDisposable
             new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = Beacon }.Describe());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AWrittenBeaconBeatOutsideABeaconSystemIsRefused()
     {

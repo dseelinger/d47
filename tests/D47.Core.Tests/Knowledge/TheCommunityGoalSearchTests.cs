@@ -311,11 +311,10 @@ public class TheCommunityGoalSearchTests
         Assert.Equal(expected, new CommunityGoalSearch { Commodity = commodity }.IsCommodity(named));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRouterTakesThePhraseWholeAndFirst()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var search = new CommunityGoalSearch();
         var router = new KeywordRouter(surface.Registry, search.Phrases);

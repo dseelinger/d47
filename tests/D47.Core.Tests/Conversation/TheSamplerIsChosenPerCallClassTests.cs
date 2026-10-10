@@ -130,11 +130,10 @@ public class TheSamplerIsChosenPerCallClassTests
         Assert.Equal(0.0, LoreLookup.Sampling.Temperature);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ATurnTheCommanderAskedForIsWarm()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var provider = FakeLlmProvider.Answering("Hyperspace is fine.");
 

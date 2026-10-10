@@ -6,11 +6,10 @@ namespace D47.Core.Tests.Conversation;
 /// <summary>Which tool a declared keyword actually reaches.</summary>
 public class AKeywordReachesTheToolItMeansTests
 {
-    private static KeywordRouter Router(TempInstall install) =>
+    private static KeywordRouter Router(MemoryInstall install) =>
         new(TestSurface.For(install).Registry);
 
     /// <summary>Four sentences that were broken the same way, three of which nobody had asked yet.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where is my fleet carrier", "get_fleet")]
     [InlineData("where is my carrier", "get_fleet")]
@@ -20,7 +19,7 @@ public class AKeywordReachesTheToolItMeansTests
     [InlineData("what am i flying", "get_ship")]
     public void AQuestionReachesTheToolThatAnswersIt(string asked, string tool)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).MatchToolCommand(asked)
             ?? (ToolCommandMatch?)null;
@@ -30,11 +29,10 @@ public class AKeywordReachesTheToolItMeansTests
     }
 
  /// <summary>And the keyword route now reaches it too.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ACapabilityKeywordNamesTheToolItMeans()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match("where is my fleet carrier");
 
@@ -43,7 +41,6 @@ public class AKeywordReachesTheToolItMeansTests
     }
 
  /// <summary>And it reaches it asking the question that was asked.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where is my carrier", false)]
     [InlineData("what system is my fleet carrier in", false)]
@@ -51,7 +48,7 @@ public class AKeywordReachesTheToolItMeansTests
     [InlineData("what ships are on the carrier", true)]
     public void AskingWhereTheCarrierIsDoesNotAskForTheShipList(string asked, bool ships)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).MatchToolCommand(asked);
 
@@ -62,7 +59,6 @@ public class AKeywordReachesTheToolItMeansTests
 
     /// <summary>The same claim on the capability-keyword route, which is the one that catches a padded
     /// sentence.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("so where is my carrier parked at the moment", false)]
     [InlineData("where's my fleet carrier at the moment", false)]
@@ -70,7 +66,7 @@ public class AKeywordReachesTheToolItMeansTests
     [InlineData("remind me what ships do i own again", true)]
     public void ThePaddedQuestionCarriesTheSameAnswer(string asked, bool ships)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).Match(asked);
 
@@ -130,13 +126,12 @@ public class AKeywordReachesTheToolItMeansTests
     /// And the one that was always right stays right: asking where you are is the question
     /// <c>get_location</c> is for.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("where am i")]
     [InlineData("am i docked")]
     public void AndAskingWhereYouAreStillReachesTheLocation(string asked)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var tool = Router(install).MatchToolCommand(asked)?.ToolName
                    ?? Router(install).Match(asked)?.ToolName;

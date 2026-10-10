@@ -6,10 +6,9 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Which tools ship on a turn.</summary>
-[Trait("Category", "Integration")]
 public class ToolSurfaceTests
 {
-    private static CapabilityRegistry Registry(TempInstall install) =>
+    private static CapabilityRegistry Registry(MemoryInstall install) =>
         TestSurface.For(install).Registry;
 
     private static IEnumerable<ToolProfile> EveryForMode(CapabilityRegistry registry) =>
@@ -23,7 +22,7 @@ public class ToolSurfaceTests
     [Fact]
     public void TheSameSituationShipsTheSameBytesEveryTime()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var first = ToolSurface.ForMode(registry, ControlContext.Supercruise, actionsEnabled: true);
@@ -38,7 +37,7 @@ public class ToolSurfaceTests
     {
         // Pinned as a set rather than one at a time: a new capability that varies its schema by mode would
         // show up here rather than as an unexplained cache miss months later.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         foreach (var profile in ToolSurface.All(registry))
@@ -54,7 +53,7 @@ public class ToolSurfaceTests
     {
         // Two different modes may share a profile; what must never happen is a profile that differs by one
         // tool because one action happened to be unbound this second.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var names = ToolSurface.All(registry).Select(profile => profile.Id).Distinct().ToArray();
@@ -66,7 +65,7 @@ public class ToolSurfaceTests
     public void NoActionToolShipsWhenTheCommanderHasNotAllowedKeyPresses()
     {
         // Advertising a tool that will refuse every call is paying for a refusal every turn.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var profile = ToolSurface.ForMode(Registry(install), ControlContext.NormalSpace, actionsEnabled: false);
 
@@ -77,7 +76,7 @@ public class ToolSurfaceTests
     [Fact]
     public void OnFootDoesNotOfferTheShipsControls()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var profile = ToolSurface.ForMode(Registry(install), ControlContext.OnFoot, actionsEnabled: true);
 
@@ -94,7 +93,7 @@ public class ToolSurfaceTests
     [Fact]
     public void TheSrvOffersTheSrvsControlsAndNormalSpaceDoesNot()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         Assert.Contains(
@@ -110,7 +109,7 @@ public class ToolSurfaceTests
     public void WitchspaceOffersNothingToActWith()
     {
         // The game has the controls during the tunnel.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var profile = ToolSurface.ForMode(Registry(install), ControlContext.Hyperspace, actionsEnabled: true);
 
@@ -120,7 +119,7 @@ public class ToolSurfaceTests
     [Fact]
     public void EveryProfileCanStillAnswerAndBeDiagnosed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         foreach (var profile in ToolSurface.All(Registry(install)))
         {
@@ -131,7 +130,7 @@ public class ToolSurfaceTests
     [Fact]
     public void TheSearchableListIsEveryUnprotectedToolInRegistrationOrder()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var searchable = ToolSurface.Searchable(registry).Tools.Select(tool => tool.Name).ToArray();
@@ -146,7 +145,7 @@ public class ToolSurfaceTests
     public void TheSearchableListKeepsWhatAModeWithholds()
     {
         // A tool found by search earlier in a conversation must still be declared after the mode changes.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var searchable = ToolSurface.Searchable(registry);
@@ -163,7 +162,7 @@ public class ToolSurfaceTests
     [Fact]
     public void NoProtectedToolIsAdvertisedByEitherProjection()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var protectedNames = Definitions(registry)
@@ -182,7 +181,7 @@ public class ToolSurfaceTests
     [Fact]
     public void OnlyTheAlwaysLoadedToolsWaitForNoSearch()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = Registry(install);
 
         var definitions = Definitions(registry).ToDictionary(tool => tool.Name, StringComparer.Ordinal);
@@ -198,7 +197,7 @@ public class ToolSurfaceTests
     [Fact]
     public void AModesListDefersNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.All(
             EveryForMode(Registry(install)).SelectMany(profile => profile.Tools),
@@ -210,7 +209,7 @@ public class ToolSurfaceTests
     {
         // Advertising a tool the turn loop would silently drop is worse than not offering it: the model then
         // tells the Commander it has done something that never happened.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var capabilities = new LlmProviderCapabilities

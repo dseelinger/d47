@@ -193,11 +193,10 @@ public class CommunityGoalSaleCalloutTests
         Assert.Single(engine.Drain());
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

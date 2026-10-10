@@ -21,7 +21,7 @@ public class LoreCalloutTests
     private static readonly DateTimeOffset Start = new(3307, 5, 1, 12, 0, 0, TimeSpan.Zero);
 
     private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-lore-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-lore-tests", Guid.NewGuid().ToString("N"));
 
     private LoreStore Store() =>
         new(Path.Combine(_folder, "lore.json"), _files, NullLogger<LoreStore>.Instance);

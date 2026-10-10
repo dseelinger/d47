@@ -4,12 +4,11 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Asking about the Elite rank is not an instruction, and must not score against anything.</summary>
-[Trait("Category", "Integration")]
 public class AQuestionAboutEliteScoresNothingTests
 {
     private static IReadOnlyList<string> BuiltinPhrases()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         return [.. PhraseBook.From(registry, []).Entries.Select(entry => entry.Phrase)];

@@ -19,7 +19,7 @@ public class MemoryObserverTests
     private const string Cmdr = "F1";
 
     private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-observer-tests", Guid.NewGuid().ToString("N"));
+        MemoryInstall.FakeRoot, "d47-observer-tests", Guid.NewGuid().ToString("N"));
 
     private MemoryStore Store() =>
         new(Path.Combine(_folder, "memories.json"), _files, NullLogger<MemoryStore>.Instance);

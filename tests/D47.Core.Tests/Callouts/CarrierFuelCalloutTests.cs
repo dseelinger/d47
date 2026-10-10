@@ -178,11 +178,10 @@ public class CarrierFuelCalloutTests
         Assert.Empty(new CarrierFuelCallout().Examine(Context(state, true, dock)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

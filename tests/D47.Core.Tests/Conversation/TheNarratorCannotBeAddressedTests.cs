@@ -8,13 +8,12 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>"Narrator, ..." reaches no addressed speaker: the Narrator tells the story and takes no questions.</summary>
-[Trait("Category", "Integration")]
 public class TheNarratorCannotBeAddressedTests
 {
     [Fact]
     public async Task SayingNarratorFirstDoesNotRouteToASpeaker()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = FakeLlmProvider.Answering("Standing by.");
         var now = new DateTimeOffset(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);

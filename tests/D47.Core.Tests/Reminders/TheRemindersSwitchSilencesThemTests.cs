@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.Core.Tests.Reminders;
 
 /// <summary>One switch, Reminders, default on.</summary>
-[Trait("Category", "Integration")]
 public class TheRemindersSwitchSilencesThemTests
 {
     [Fact]
@@ -40,7 +39,7 @@ public class TheRemindersSwitchSilencesThemTests
     [Fact]
     public void TheRowExistsAndDefaultsOn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var row = surface.Registry.All

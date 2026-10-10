@@ -29,10 +29,10 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         return ShipLoadout.Unknown.Apply(journalEvent!);
     }
 
-    private static ShipBuildStore Store(TempInstall install) =>
-        new(Path.Combine(install.Root, "ships.json"), new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
+    private static ShipBuildStore Store(MemoryInstall install) =>
+        new(Path.Combine(install.Root, "ships.json"), install.Files, NullLogger<ShipBuildStore>.Instance);
 
-    private static ShipPlanService Service(TempInstall install, ShipBuildStore store) =>
+    private static ShipPlanService Service(MemoryInstall install, ShipBuildStore store) =>
         new(
             store,
             new ChecklistService(
@@ -47,11 +47,10 @@ public class APriorityMoveIsRememberedButNotPlannedTests
                 () => null),
             () => null);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveSurvivesAReloadAndTheGaugeCountsTheSlotInItsMovedGroup()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var ships = Service(install, Store(install));
         var loadout = Flown(Cobra);
 
@@ -91,11 +90,10 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(FigureKind.Measured, power.Kind);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveIsNotASlotPlan()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var ships = Service(install, Store(install));
 
         var build = ships.BuildFor(10, "cobramkv");
@@ -108,11 +106,10 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(before, ships.Store.Find(build.Id)!.Slots);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ClearingMovesTakesEveryMoveOnThatBuildAndNothingElse()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var ships = Service(install, Store(install));
 
         var cobra = ships.BuildFor(10, "cobramkv");
@@ -132,13 +129,12 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Equal(4, ships.Store.Find(python.Id)!.PriorityMoves["MainEngines"]);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileWrittenBeforeMovesExistedLoadsWithNoneAndNoProblem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(
+        install.Files.WriteText(
             Path.Combine(install.Root, "ships.json"),
             """
             {"ships":[{"id":"ship-1","hull":"python","shipId":41,
@@ -152,13 +148,12 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         Assert.Empty(store.Problems);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveOutsideOneToFiveIsDroppedAndReported()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(
+        install.Files.WriteText(
             Path.Combine(install.Root, "ships.json"),
             """
             {"ships":[{"id":"ship-1","hull":"python","shipId":41,

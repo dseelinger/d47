@@ -3,10 +3,9 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-[Trait("Category", "Integration")]
 public class AGameCommandSaidPoliteStillRunsTests
 {
-    private static KeywordRouter Router(TempInstall install, DynamicCommand[]? taught = null) =>
+    private static KeywordRouter Router(MemoryInstall install, DynamicCommand[]? taught = null) =>
         new(TestSurface.For(install).Registry, taught is null ? null : () => taught);
 
     [Theory]
@@ -15,7 +14,7 @@ public class AGameCommandSaidPoliteStillRunsTests
     [InlineData("engage supercruise for me", "engage supercruise")]
     public void ATailOnAGameCommandIsIgnored(string said, string phrase)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = Router(install);
 
         var bare = router.MatchToolCommand(phrase);
@@ -29,7 +28,7 @@ public class AGameCommandSaidPoliteStillRunsTests
     [Fact]
     public void OpeningTheCargoScoopPleaseOpensIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).MatchToolCommand("open the cargo scoop please");
 
@@ -42,7 +41,7 @@ public class AGameCommandSaidPoliteStillRunsTests
     [Fact]
     public void AnUtteranceThatMatchesAsSaidIsNeverReadThroughAStrippedReading()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var match = Router(install).MatchToolCommand("open the galaxy map");
 
@@ -53,7 +52,7 @@ public class AGameCommandSaidPoliteStillRunsTests
     [Fact]
     public void ATaughtPhraseFollowedByPleaseRunsTheTaughtCommand()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         DynamicCommand[] taught =
         [
             new("run the docking checklist", "checklists", "get_checklist", new Dictionary<string, string>()),

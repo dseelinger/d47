@@ -228,11 +228,10 @@ public class TtsProviderCatalogTests
         Assert.Equal(TtsProviderCatalog.EdgeId, TtsProviderCatalog.Selected(null).Id);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyTheSelectedProvidersKeyRowIsOnScreen()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var key = SpeechCapability.KeyRowFor(TtsProviderCatalog.ElevenLabs);
@@ -290,11 +289,10 @@ public class PerProviderRateTests
         Assert.Equal(TtsProviderCatalog.ElevenLabs.MaximumRate, SpeechCapability.RateFor(settings));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WritingTheRowStoresItAgainstTheSelectedProviderOnly()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         surface.Settings.Apply(SpeechCapability.ProviderKey, TtsProviderCatalog.ElevenLabsId, SettingsCaller.Panel);

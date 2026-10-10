@@ -183,11 +183,10 @@ public class ChecklistStoreTests
         Assert.True(raised > 0);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AComputedTickGoingBackwardsIsSaidOnce()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
         var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
@@ -271,11 +270,10 @@ public class ChecklistStoreTests
     }
 
     /// <summary>A move into Blocked is shown, on the Checklist page and to a direct question, but not spoken.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMoveIntoBlockedIsShownButNeverSpoken()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var gameState = new GameStateStore();
         var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
@@ -340,11 +338,10 @@ public class ChecklistStoreTests
     /// <summary>
     /// Reported 2026-08-23 as a stream of "X is done" for work finished while d47 was not running.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ADocumentThatArrivedFromOutsideIsFoldedWithoutAnnouncingIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
         var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
@@ -412,11 +409,10 @@ public class ChecklistStoreTests
         Assert.Contains("no longer done", undone.Text, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void PrimingFoldsTheBacklogWithoutAnnouncingAnyOfIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
         var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
@@ -467,11 +463,10 @@ public class ChecklistStoreTests
         Assert.True(checklists.Document.Items.Single().IsComplete);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ALineTakenBeforeAnyCommanderWasKnownIsAdoptedRatherThanLost()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = new GameStateStore();
         var checklists = TestSurface.Checklists(install.Paths, gameState, _files);
 
@@ -490,11 +485,10 @@ public class ChecklistStoreTests
         Assert.Equal("F1", checklists.Document.CommanderFid);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFilterRowIsAProjectionRatherThanAList()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths, files: _files);
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");

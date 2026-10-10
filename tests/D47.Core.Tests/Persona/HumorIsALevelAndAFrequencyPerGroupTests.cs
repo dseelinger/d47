@@ -164,15 +164,14 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
         Assert.Contains("No humor for the invented speakers", text, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("true", 3)]
     [InlineData("false", 0)]
     public void AFileWithTheOldToggleLoadsAsCoresAtThreeAndTwentyFive(string humor, int level)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(install.Paths.SettingsFile, $$"""{ "persona": { "humor": {{humor}} } }""");
+        install.Files.WriteText(install.Paths.SettingsFile, $$"""{ "persona": { "humor": {{humor}} } }""");
 
         var loaded = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
 
@@ -183,14 +182,13 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
         Assert.Null(loaded.Persona.Humor);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("persona.coreHumor", "persona.coreHumorPercent")]
     [InlineData("persona.npcHumor", "persona.npcHumorPercent")]
     [InlineData("persona.carrierHumor", "persona.carrierHumorPercent")]
     public void TheFrequencyIsDisabledWhileItsLevelIsZero(string level, string percent)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var levelRow = Row(surface, level);
@@ -203,24 +201,22 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
         Assert.False(percentRow.DisabledWhen!(on));
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("11", "10")]
     [InlineData("-3", "0")]
     [InlineData("7", "7")]
     public void ALevelIsHeldBetweenZeroAndTen(string written, string read)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var row = Row(TestSurface.For(install), Capabilities.Builtin.PersonaCapability.CoreHumorKey);
 
         Assert.Equal(read, row.Binding!.Read(row.Binding.Write!(new D47Settings(), written)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheToggleIsGone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.DoesNotContain(
             TestSurface.For(install).Settings.Sections.SelectMany(section => section.Rows),

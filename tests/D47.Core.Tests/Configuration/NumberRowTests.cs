@@ -8,11 +8,10 @@ namespace D47.Core.Tests.Configuration;
 /// <summary>A number row holds the numbers its own help text offers.</summary>
 public class NumberRowTests
 {
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARowThatOffersFifthsAcceptsAFifth()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         var applied = settings.Apply(SpeechCapability.RateKey, "1.2", SettingsCaller.Panel);
@@ -21,11 +20,10 @@ public class NumberRowTests
         Assert.Equal("1.2", settings.Read(SpeechCapability.RateKey));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARowThatCountsThingsStillRoundsToWholeOnes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         settings.Apply(CalloutCapability.RouteEveryKey, "3.7", SettingsCaller.Panel);
@@ -34,14 +32,13 @@ public class NumberRowTests
     }
 
     /// <summary>A row reads back exactly what it wrote.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("1")]
     [InlineData("1.2")]
     [InlineData("0.75")]
     public void ApplyingTheSameRateTwiceIsAChangeOnceAndNotTwice(string rate)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         Assert.True(settings.Apply(SpeechCapability.RateKey, rate, SettingsCaller.Panel).Ok);
@@ -54,11 +51,10 @@ public class NumberRowTests
             settings.Apply(SpeechCapability.RateKey, rate, SettingsCaller.Panel).Status);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void SomethingThatIsNotANumberIsStillRefused()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         Assert.Equal(
@@ -88,11 +84,10 @@ public class NumberRowTests
         Assert.Equal(expected, row.NumberFormat);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryPlacementRowStepsInSomethingSmallerThanAMetre()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var settings = TestSurface.For(install).Settings;
 
         foreach (var slot in new[] { VrCapability.PanelSlot, VrCapability.MiniSlot })

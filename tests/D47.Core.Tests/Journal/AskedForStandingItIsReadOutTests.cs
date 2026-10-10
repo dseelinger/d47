@@ -132,7 +132,6 @@ public class AskedForStandingItIsReadOutTests
     public void ABandStartsWhereEngineerAccessSaysItDoes(double reputation, ReputationBand band) =>
         Assert.Equal(band, ReputationBands.Of(reputation));
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("what's my reputation with the Empire", "Empire")]
     [InlineData("my standing with the Federation", "Federation")]
@@ -141,7 +140,7 @@ public class AskedForStandingItIsReadOutTests
     [InlineData("what's my reputation", null)]
     public void ItIsReachedWithoutTheModel(string said, string? faction)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         var (tool, arguments) = router.MatchToolCommand(said) is { } command
@@ -154,11 +153,10 @@ public class AskedForStandingItIsReadOutTests
         Assert.Equal(faction, arguments.TryGetString("faction", out var named) ? named : null);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFactionByNameIsReachedWithoutTheModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var gameState = Standing();
         var router = new KeywordRouter(
             TestSurface.For(install).Registry, () => JournalCapability.StandingPhrases(() => gameState.Active));

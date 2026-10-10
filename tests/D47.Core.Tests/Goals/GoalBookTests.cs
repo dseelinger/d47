@@ -30,7 +30,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void EveryBuiltInArcIsOnThePageAndNoneOfThemIsCqc()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = Book(install);
 
         Assert.Equal(9, book.Standings.Count);
@@ -44,7 +44,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ARemovedArcLeavesThePageAndRecoverBringsItBack()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = Book(install);
 
         book.Remove("rank.soldier");
@@ -64,7 +64,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void APromotedLineSaysWhichArcItCameFrom()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
         var book = Book(install, checklists);
 
@@ -87,7 +87,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void PromotingProposesRatherThanCommits()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
         var book = Book(install, checklists);
 
@@ -101,7 +101,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ACareerArcOffersNoLineAndNamesTheToolItDoesHave()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var checklists = TestSurface.Checklists(install.Paths);
         var book = Book(install, checklists);
 
@@ -119,7 +119,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void AGoalTheCommanderInventedIsTheirsToCallDone()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = Book(install);
 
         book.Author("See the war out", "When it ends.", Now);
@@ -140,7 +140,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ADerivedArcCannotBeTickedByHand()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = Book(install);
 
         var said = book.Finish(GoalCatalogue.Engineers, finished: true, Now);
@@ -152,7 +152,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ABuiltInArcIsRemovedRatherThanDeleted()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var book = Book(install);
 
         Assert.Contains("removed but not deleted", book.Forget(GoalCatalogue.Ships), StringComparison.Ordinal);
@@ -162,7 +162,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void WithNothingMinedTheReadbackSaysSoRatherThanReportingNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var said = Book(install).Describe(Now);
 
@@ -177,7 +177,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ThePowerplayArcIsOnThePageOnlyWhilePledged()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
         var book = Book(install, state: () => state);
@@ -202,7 +202,7 @@ public class GoalBookTests : IDisposable
     [Fact]
     public void ThePowerplayArcOffersNoLineAndSaysWhereItsRankComesFrom()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
         state.Apply(Event("Powerplay", "\"Power\":\"Li Yong-Rui\",\"Rank\":8"));
@@ -223,7 +223,7 @@ public class GoalBookTests : IDisposable
     }
 
     private GoalBook Book(
-        TempInstall install,
+        MemoryInstall install,
         ChecklistService? checklists = null,
         Func<CommanderGameState?>? state = null)
     {

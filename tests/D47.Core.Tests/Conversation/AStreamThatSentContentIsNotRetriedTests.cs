@@ -5,11 +5,10 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>An attempt that sent content is not resent, and d47's own timeout does not mark the model unavailable.</summary>
-[Trait("Category", "Integration")]
 public class AStreamThatSentContentIsNotRetriedTests
 {
     private static TurnLoop Build(
-        TempInstall install,
+        MemoryInstall install,
         ILlmProvider provider,
         ITurnClock clock,
         RetryPolicy retry,
@@ -50,7 +49,7 @@ public class AStreamThatSentContentIsNotRetriedTests
     [Fact]
     public async Task AnAttemptThatThoughtThenFailedIsTriedOnce()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.ThinkingDelta("working"),
             new LlmStreamEvent.Failed("Connection reset.", Transient: true));
@@ -64,7 +63,7 @@ public class AStreamThatSentContentIsNotRetriedTests
     [Fact]
     public async Task AnAttemptThatAskedForAToolThenFailedIsTriedOnce()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(
             new LlmStreamEvent.ToolUse("t1", "get_status", "{}"),
             new LlmStreamEvent.Failed("Connection reset.", Transient: true));
@@ -78,7 +77,7 @@ public class AStreamThatSentContentIsNotRetriedTests
     [Fact]
     public async Task AnAttemptThatFailedBeforeAnyEventIsStillRetried()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new FakeLlmProvider(new LlmStreamEvent.Failed("Overloaded.", Transient: true));
         var loop = Build(install, provider, new InstantClock(), new RetryPolicy { Attempts = 4 }, new LlmAvailabilityState(true));
 
@@ -90,7 +89,7 @@ public class AStreamThatSentContentIsNotRetriedTests
     [Fact]
     public async Task TheTurnAfterATimeoutReachesTheModel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var clock = new ManualTurnClock();
         var availability = new LlmAvailabilityState(true);
         var provider = new StallingLlmProvider(clock);

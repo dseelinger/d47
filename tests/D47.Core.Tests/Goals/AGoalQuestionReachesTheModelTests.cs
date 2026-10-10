@@ -34,12 +34,11 @@ public class AGoalQuestionReachesTheModelTests
             asking);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [MemberData(nameof(Asked))]
     public void NoRouterTakesTheQuestion(string question)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install).Registry);
 
         Assert.Null(router.MatchSetting(question));

@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Utilities;
 /// <summary>Two clocks over one instant, and the timers and alarms beside them.</summary>
 public class TimekeepingTests
 {
-    private static readonly string AlarmsFile = Path.Combine(Path.GetTempPath(), "alarms.json");
+    private static readonly string AlarmsFile = Path.Combine(MemoryInstall.FakeRoot, "alarms.json");
 
     private static readonly DateTimeOffset Instant =
         new(2026, 8, 17, 21, 4, 0, TimeSpan.Zero);

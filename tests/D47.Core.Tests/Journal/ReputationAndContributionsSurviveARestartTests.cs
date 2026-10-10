@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Faction reputation and engineer contributions recovered from older journals (#182).</summary>
-[Trait("Category", "Integration")]
 public class ReputationAndContributionsSurviveARestartTests
 {
     private const string Fid = "F1234567";
@@ -14,7 +13,7 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void AFactionReadingFromAnOlderJournalIsRestoredWithItsTimestamp()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-07-05T100000.01.log", LoadGame(Fid, "07-05"), ColoniaLocation);
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame(Fid, "09-05"), Jump("Beta", "Someone Else", 1.0, "09-05"));
 
@@ -29,7 +28,7 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void ALiveReadingTakenAfterTheRestoreWins()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-07-05T100000.01.log", LoadGame(Fid, "07-05"), ColoniaLocation);
 
         var backfill = Backfill(install);
@@ -47,7 +46,7 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void AContributionTotalFromAnOlderJournalIsRestored()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-07-05T100000.01.log", LoadGame(Fid, "07-05"), Contribution(30));
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame(Fid, "09-05"));
 
@@ -60,7 +59,7 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void ANewCommanderBetweenTheJournalsRestoresNeither()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-07-05T100000.01.log", LoadGame(Fid, "07-05"), ColoniaLocation, Contribution(30));
         Write(
             install,
@@ -78,7 +77,7 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void TwoCommandersInOneFolderRestoreSeparately()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-07-05T100000.01.log", LoadGame("F1", "07-05"), ColoniaLocation);
         Write(install, "Journal.2026-07-06T100000.01.log", LoadGame("F2", "07-06"), Contribution(30));
 
@@ -98,13 +97,13 @@ public class ReputationAndContributionsSurviveARestartTests
     [Fact]
     public void TheWalkIsTimedAsAStartupStep()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var steps = new List<string>();
 
         var backfill = new HistoryBackfill
         {
             Directory = install.Root,
-            FileSystem = new DiskFileSystem(),
+            FileSystem = install.Files,
             Loggers = NullLoggerFactory.Instance,
             Step = name =>
             {
@@ -119,17 +118,17 @@ public class ReputationAndContributionsSurviveARestartTests
         Assert.Empty(backfill.Evidence!);
     }
 
-    private static GameStateStore RestoredStore(TempInstall install)
+    private static GameStateStore RestoredStore(MemoryInstall install)
     {
         var backfill = Backfill(install);
         backfill.Run(TestContext.Current.CancellationToken);
         return StoreOver(backfill);
     }
 
-    private static HistoryBackfill Backfill(TempInstall install) => new()
+    private static HistoryBackfill Backfill(MemoryInstall install) => new()
     {
         Directory = install.Root,
-        FileSystem = new DiskFileSystem(),
+        FileSystem = install.Files,
         Loggers = NullLoggerFactory.Instance,
     };
 
@@ -156,6 +155,6 @@ public class ReputationAndContributionsSurviveARestartTests
         return parsed!;
     }
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 }

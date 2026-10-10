@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Loadout;
 
 /// <summary>Two Commanders share one on-foot.json and see only their own builds.</summary>
-[Trait("Category", "Integration")]
 public class SuitAndWeaponBuildsBelongToOneCommanderTests
 {
     private static CommanderGameState Commander(string fid, string name)
@@ -31,23 +30,25 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
         return parsed!;
     }
 
-    private sealed class Harness : IDisposable
+    private sealed class Harness
     {
-        private readonly TempInstall _install = new();
+        private readonly MemoryInstall _install = new();
+
+        public IFileSystem Files => _install.Files;
 
         public Harness()
         {
             Store = new OnFootBuildStore(
-                Path.Combine(_install.Root, "on-foot.json"), new DiskFileSystem(), NullLogger<OnFootBuildStore>.Instance);
+                Path.Combine(_install.Root, "on-foot.json"), _install.Files, NullLogger<OnFootBuildStore>.Instance);
 
             Kit = new OnFootPlanService(
                 Store,
                 new ChecklistService(
                     new ChecklistStore(
-                        Path.Combine(_install.Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
+                        Path.Combine(_install.Root, "checklist.json"), _install.Files, NullLogger<ChecklistStore>.Instance),
                     new ChecklistProposalStore(
                         Path.Combine(_install.Root, "checklist-proposals.json"),
-                        new MemoryFileSystem(),
+                        _install.Files,
                         NullLogger<ChecklistProposalStore>.Instance),
                     () => Active),
                 () => Active,
@@ -61,14 +62,12 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
         public OnFootPlanService Kit { get; }
 
         public CommanderGameState? Active { get; set; }
-
-        public void Dispose() => _install.Dispose();
     }
 
     [Fact]
     public void EachCommanderSeesOnlyTheirOwnKitPage()
     {
-        using var world = new Harness();
+        var world = new Harness();
         var jameson = Commander("F1", "Jameson");
         var other = Commander("F2", "Other");
 
@@ -89,14 +88,14 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void ABuildIsStampedWithTheActiveCommanderAndWrittenToTheFile()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Active = Commander("F1", "Jameson");
 
         var build = world.Kit.Intend("Maverick")!;
 
         Assert.Equal("F1", build.CommanderFid);
 
-        var text = File.ReadAllText(world.Store.Path);
+        var text = world.Files.ReadText(world.Store.Path);
 
         Assert.Contains("\"commanderFid\": \"F1\"", text, StringComparison.Ordinal);
         Assert.Contains("\"commanderName\": \"Jameson\"", text, StringComparison.Ordinal);
@@ -105,7 +104,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void AnotherCommanderCannotChangeOrDropABuildItDoesNotOwn()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Active = Commander("F1", "Jameson");
         var build = world.Kit.Intend("Maverick")!;
 
@@ -119,7 +118,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void ABuyEventAdoptsOnlyTheBuyersPlan()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Active = Commander("F1", "Jameson");
         world.Kit.Intend("Maverick");
 
@@ -141,14 +140,14 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
 
     private static void Write(Harness world, string json)
     {
-        File.WriteAllText(world.Store.Path, json);
+        world.Files.WriteText(world.Store.Path, json);
         world.Store.Poll();
     }
 
     [Fact]
     public void OldBuildsGoToTheCommanderWhoseLedgerHoldsTheItemEvenWhenAnotherIsSeenFirst()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
         world.Ledgers["F2"] = new OwnedKit();
 
@@ -168,7 +167,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void AnIntendedBuildAndASoldItemGoWithTheCommanderWhoOwnsTheRest()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
 
         Write(world, """
@@ -189,7 +188,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void AFileMatchingNoLedgerGoesToTheFirstCommanderSeen()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
 
         Write(world, """
@@ -207,7 +206,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void TwoCommandersTyingForTheMostBuildsLeaveTheRestWithTheFirstSeen()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
         world.Ledgers["F2"] = Owning(12, 22);
         world.Ledgers["F3"] = new OwnedKit();
@@ -230,7 +229,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void AMatchedOwnerIsNamedFromTheirActiveIdentityOnlyWhenKnown()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
 
         Write(world, """
@@ -248,7 +247,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void ABuildAlreadyCarryingACommanderIsNotChanged()
     {
-        using var world = new Harness();
+        var world = new Harness();
         world.Ledgers["F1"] = Owning(11, 21);
 
         Write(world, """
@@ -266,7 +265,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
     [Fact]
     public void TheGapCountsOnlyTheActiveCommandersPlans()
     {
-        using var world = new Harness();
+        var world = new Harness();
         var jameson = Commander("F1", "Jameson");
         var other = Commander("F2", "Other");
 

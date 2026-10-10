@@ -8,7 +8,6 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>"Who are you?" has one answer and it is a name.</summary>
-[Trait("Category", "Integration")]
 public class WhoAreYouTests
 {
     private static async Task<string> AskAsync(TestSurface surface, string input)
@@ -31,7 +30,7 @@ public class WhoAreYouTests
     [InlineData("which core is this")]
     public async Task EveryWayOfAskingGetsTheNameAndNothingElse(string input)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal("I am COVAS.", await AskAsync(surface, input));
@@ -40,7 +39,7 @@ public class WhoAreYouTests
     [Fact]
     public async Task ItIsTheCoreAboard()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var personas = new PersonaHost();
         var surface = TestSurface.For(install, personas: personas);
 
@@ -52,7 +51,7 @@ public class WhoAreYouTests
     [Fact]
     public async Task AShipAiNameTheCommanderSetIsWhatItAnswersWith()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var personas = new PersonaHost();
         var surface = TestSurface.For(install, personas: personas);
 
@@ -65,7 +64,7 @@ public class WhoAreYouTests
     public async Task AShipAiNameOfNothingButSpacesIsNoName()
     {
         // Whitespace is not a name.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var personas = new PersonaHost();
         var surface = TestSurface.For(install, personas: personas);
 

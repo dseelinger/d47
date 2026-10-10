@@ -9,13 +9,12 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>The model's reach over settings, asserted from the outside.</summary>
-[Trait("Category", "Integration")]
 public class SettingsCapabilityTests
 {
     [Fact]
     public async Task ProtectedAndSecretRowsAreNotEvenListed()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var listed = await surface.Registry.Invoke("list_settings", ToolArguments.Empty);
@@ -63,7 +62,7 @@ public class SettingsCapabilityTests
     [Fact]
     public async Task AListedRowIsOneTheModelCanActuallyChange()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = await surface.Registry.Invoke(
@@ -85,7 +84,7 @@ public class SettingsCapabilityTests
     [InlineData("hotkeys.openSettings")]
     public async Task AProtectedRowIsRefusedThroughTheToolSurface(string key)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var before = surface.Settings.Read(key);
@@ -101,7 +100,7 @@ public class SettingsCapabilityTests
     [Fact]
     public async Task AKeyCannotBeStoredOrReadThroughTheToolSurface()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var provider = LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId)!;
         var row = ConversationCapability.KeyRowFor(provider);
@@ -129,7 +128,7 @@ public class SettingsCapabilityTests
     {
         // The refusal is the safety property, not the silence: a Commander asking d47 to change their
         // provider deserves to be told where it is.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = await surface.Registry.Invoke(
@@ -141,7 +140,6 @@ public class SettingsCapabilityTests
     }
 }
 
-[Trait("Category", "Integration")]
 public class SettingCommandRoutingTests
 {
     [Fact]
@@ -149,7 +147,7 @@ public class SettingCommandRoutingTests
     {
         // The whole shape of the protected rule in one test: the same change the tool surface refuses goes
         // through when it arrives as a declared phrase with no model involved.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var loop = new TurnLoop(
@@ -179,7 +177,7 @@ public class SettingCommandRoutingTests
     [Fact]
     public void EveryDeclaredPhraseMatchesTheRowThatDeclaredIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var rows = surface.Settings.Sections.SelectMany(s => s.Rows).Where(r => r.Commands.Count > 0).ToArray();
@@ -202,7 +200,7 @@ public class SettingCommandRoutingTests
     [Fact]
     public void AnOrdinaryQuestionIsNotASettingsCommand()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Null(surface.Router.MatchSetting("what does personality off actually change"));

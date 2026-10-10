@@ -9,14 +9,13 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The row a Commander withdraws from.</summary>
-[Trait("Category", "Integration")]
 public class TheWayOutIsOnePressTests
 {
     private readonly MemoryFileSystem _files = new();
 
     private static string TokenFile => Path.Combine(@"C:\d47-test", "donor-token.txt");
 
-    private static SettingsService Settings(TempInstall install)
+    private static SettingsService Settings(MemoryInstall install)
     {
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
@@ -27,7 +26,7 @@ public class TheWayOutIsOnePressTests
             NullLogger<SettingsService>.Instance);
     }
 
-    private SettingRow Row(TempInstall install, LongPress? forget) =>
+    private SettingRow Row(MemoryInstall install, LongPress? forget) =>
         PrivacyCapability
             .Create(Settings(install), donorTokenFile: TokenFile, forgetDonations: forget, files: _files)
             .Settings
@@ -40,7 +39,7 @@ public class TheWayOutIsOnePressTests
     [Fact]
     public async Task WithSomewhereToAskThePressIsTheOneThatAsks()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var asked = 0;
 
         var row = Row(install, (_, _) => { asked++; return Task.FromResult<string?>("done"); });
@@ -62,7 +61,7 @@ public class TheWayOutIsOnePressTests
     [Fact]
     public void TheLabelSaysThatSomethingIsDeletedAndNotOnlyForgotten()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Contains(
             "delete",
@@ -77,7 +76,7 @@ public class TheWayOutIsOnePressTests
     [Fact]
     public void TheHelpSaysWhatSurvivesADeletion()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var help = Row(install, (_, _) => Task.FromResult<string?>(null)).Help;
 
         Assert.Contains("stays fixed", help, StringComparison.Ordinal);
@@ -91,7 +90,7 @@ public class TheWayOutIsOnePressTests
     [Fact]
     public void WithNothingToAskWithTheRowIsStillThereAndStillForgets()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var token = DonorToken.Ensure(_files, TokenFile);
 
@@ -137,7 +136,7 @@ public class TheWayOutIsOnePressTests
     [Fact]
     public void TheModelCannotReachIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var row = Row(install, (_, _) => Task.FromResult<string?>(null));
 
         Assert.Equal(SettingKind.Info, row.Kind);

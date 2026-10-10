@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Persona;
 
 /// <summary>"Vance, ..." is answered by the hired pilot on the intercom, who keeps the line until dismissed.</summary>
-[Trait("Category", "Integration")]
 public class TheCrewAnswersOnTheIntercomTests
 {
     private const string ShipAi = "Warden";
@@ -65,7 +64,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task ThePilotByNameIsAnsweredWithNoTools()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Holding steady, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 
@@ -85,7 +84,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task TheNextTurnWithNoNameReachesThePilotToo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, _) = Build(TestSurface.For(install), provider);
 
@@ -99,7 +98,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task NamingTheCaptainClosesThePilotsLineAndOpensHers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var surface = TestSurface.For(install);
         var (loop, crewLine) = Build(surface, provider);
@@ -120,7 +119,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task ThatsAllReturnsTheTurnToTheShipAi()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 
@@ -137,7 +136,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task TheShipAiOverhearsThePilotWithoutTakingTheAnswerAsItsOwn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("Holding steady, Commander."),
             RoundScriptedLlmProvider.Saying("Noted."));
@@ -165,7 +164,7 @@ public class TheCrewAnswersOnTheIntercomTests
     [Fact]
     public async Task ANameOffTheRosterReachesTheShipAi()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("I don't have a crew member by that name aboard.");
         var (loop, line) = Build(TestSurface.For(install), provider);
 

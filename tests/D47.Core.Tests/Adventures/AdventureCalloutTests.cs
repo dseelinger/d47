@@ -12,7 +12,7 @@ namespace D47.Core.Tests.Adventures;
 /// backlog.</summary>
 public class AdventureCalloutTests
 {
-    private static readonly string AdventuresFile = Path.Combine(Path.GetTempPath(), "adventures.json");
+    private static readonly string AdventuresFile = Path.Combine(MemoryInstall.FakeRoot, "adventures.json");
 
     private (AdventureBook Book, AdventureCallout Callout) Wired()
     {

@@ -14,7 +14,7 @@ public class APreReleaseSaysSoTests
     private static string VersionRow(ReleaseChannel channel)
     {
         var rows = AboutCapability.Create(
-            new AppPaths(Path.Combine(Path.GetTempPath(), "d47-channel-rows")),
+            new AppPaths(Path.Combine(MemoryInstall.FakeRoot, "d47-channel-rows")),
             Version,
             $"{Version}+4b18aaecbe2510b0aeae95d3f19583edd18ea205",
             showChangelog: () => { },
@@ -29,7 +29,6 @@ public class APreReleaseSaysSoTests
             .Binding!.Read(D47Settings.Defaults) ?? string.Empty;
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AboutSaysSoOnAPreRelease()
     {
@@ -38,7 +37,6 @@ public class APreReleaseSaysSoTests
     }
 
     /// <summary>A final release is the unmarked case.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AndSaysNothingOnAFinalRelease()
     {
@@ -46,7 +44,6 @@ public class APreReleaseSaysSoTests
     }
 
     /// <summary>The state the whole enum exists for.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AndClaimsNothingWhenItCouldNotAsk()
     {
@@ -58,12 +55,11 @@ public class APreReleaseSaysSoTests
     /// A host that supplies no channel at all — the designer, and every test that is not about this —
     /// behaves as Unknown rather than throwing or claiming.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AndAHostThatNeverAnswersIsTreatedAsUnknown()
     {
         var rows = AboutCapability.Create(
-            new AppPaths(Path.Combine(Path.GetTempPath(), "d47-channel-rows")),
+            new AppPaths(Path.Combine(MemoryInstall.FakeRoot, "d47-channel-rows")),
             Version,
             $"{Version}+abc1234",
             showChangelog: () => { },

@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>"How have I done today", and this week, answered from the ledger.</summary>
-[Trait("Category", "Integration")]
 public class HowHaveIDoneTests
 {
     private const string Fid = "F1234";
@@ -25,7 +24,7 @@ public class HowHaveIDoneTests
     private static JournalEvent Sell(DateTimeOffset at, int count, int price, int paid, long market) =>
         Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"MarketSell", "MarketID":{{market}}, "Type":"palladium", "Count":{{count}}, "SellPrice":{{price}}, "TotalSale":{{count * price}}, "AvgPricePaid":{{paid}} }""");
 
-    private static (CapabilityRegistry Registry, CommodityLedger Ledger) Registry(TempInstall install)
+    private static (CapabilityRegistry Registry, CommodityLedger Ledger) Registry(MemoryInstall install)
     {
         var surface = TestSurface.For(install);
         var state = new CommanderGameState(new CommanderIdentity(Fid, "Doug"));
@@ -70,7 +69,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task TheSessionIsSinceTheLastLoadGame()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Registry(install);
 
         var said = await AskAsync(registry, null);
@@ -82,7 +81,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task TodayReachesAcrossSessions()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Registry(install);
 
         Assert.StartsWith("Palladium: 2 million up today", await AskAsync(registry, "today"), StringComparison.Ordinal);
@@ -96,7 +95,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task TheWeekIsTheEliteWeekAndReachesAcrossSessions()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Registry(install);
 
         var week = await AskAsync(registry, "week");
@@ -114,7 +113,7 @@ public class HowHaveIDoneTests
         // #340: the goal-named range went, and "goal" is no longer among the tool's allowed values — the
         // schema itself refuses it rather than silently falling back to a stretch the Commander did not ask
         // for.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Registry(install);
 
         var result = await registry.InvokeAsync(
@@ -128,7 +127,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task WithNoSalesItSaysSo()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var state = new CommanderGameState(new CommanderIdentity(Fid, "Doug"));
 
@@ -143,7 +142,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task WithNoCommanderTheToolRefusesRatherThanGuessingWho()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var registry = CapabilityRegistry.Build(
@@ -160,7 +159,7 @@ public class HowHaveIDoneTests
     [Fact]
     public async Task WithoutALedgerTheToolSaysNothingIsKeepingOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = await surface.Registry.InvokeAsync(
@@ -182,7 +181,7 @@ public class HowHaveIDoneTests
     [InlineData("How have I done since the tick?", "week")]
     public void ThePhrasesReachTheToolWithoutAModel(string sentence, string range)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var (registry, _) = Registry(install);
         var router = new KeywordRouter(registry);
 

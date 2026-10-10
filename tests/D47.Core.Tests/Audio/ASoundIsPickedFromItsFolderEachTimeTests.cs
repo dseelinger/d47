@@ -67,12 +67,11 @@ public class ASoundIsPickedFromItsFolderEachTimeTests
         Assert.Equal(CueLibrary.DefaultBed, Load(new Random(1)).Bed().Name);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASettingsFileThatStillPicksABedLoads()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(
+        var install = new MemoryInstall();
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """{ "schemaVersion": 1, "speech": { "thinkingBedEnabled": false, "thinkingBed": "thinking-pulse" } }""");
 

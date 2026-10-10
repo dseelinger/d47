@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Configuration;
 /// <summary>Whether a name the Commander gave the ship's AI survives a change of core.</summary>
 public class KeepShipNameTests
 {
-    private static TestSurface Named(TempInstall install, string name, bool keep)
+    private static TestSurface Named(MemoryInstall install, string name, bool keep)
     {
         var surface = TestSurface.For(install);
 
@@ -27,11 +27,10 @@ public class KeepShipNameTests
         Assert.True(D47Settings.Defaults.Persona.KeepShipName);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OnTheNameOutlivesTheSwitch()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = Named(install, "Fred", keep: true);
 
         surface.Settings.Apply(PersonaCapability.PersonaKey, "cora", SettingsCaller.Panel);
@@ -40,11 +39,10 @@ public class KeepShipNameTests
         Assert.Equal("cora", surface.Settings.Current.Persona.Id);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OffTheSwitchClearsIt()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = Named(install, "Fred", keep: false);
 
         surface.Settings.Apply(PersonaCapability.PersonaKey, "cora", SettingsCaller.Panel);
@@ -55,13 +53,12 @@ public class KeepShipNameTests
         Assert.Equal("cora", surface.Settings.Current.Persona.Id);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WritingTheCoreThatIsAlreadyAboardIsNotASwitch()
     {
         // Otherwise an unrelated settings edit that rewrites the same core would silently rename the
         // Commander's companion.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = Named(install, "Fred", keep: false);
         var write = surface.Settings.Find(PersonaCapability.PersonaKey)!.Binding!.Write!;
 
@@ -74,11 +71,10 @@ public class KeepShipNameTests
         Assert.Null(write(surface.Settings.Current, "cora").Persona.ShipName);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheRowIsOnlyOfferedWhileThereIsANameToKeep()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var row = surface.Settings.Find(PersonaCapability.KeepShipNameKey);
 
@@ -93,12 +89,11 @@ public class KeepShipNameTests
         Assert.False(row.Applies(surface.Settings.Current));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ClearingTheNameByHandIsStillTheCommandersToDo()
     {
         // The toggle governs what a switch does to the name.
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = Named(install, "Fred", keep: true);
 
         surface.Settings.Apply(PersonaCapability.ShipNameKey, null, SettingsCaller.Panel);

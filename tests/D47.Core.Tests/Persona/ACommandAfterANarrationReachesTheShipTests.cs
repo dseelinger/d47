@@ -65,11 +65,10 @@ public class ACommandAfterANarrationReachesTheShipTests
         Assert.Null(provider.LastRequest);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheShipAiByNameGoesToTheShipAiAndClosesTheLine()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Noted.");
         var (loop, line, _) = Build(TestSurface.For(install), provider);
 

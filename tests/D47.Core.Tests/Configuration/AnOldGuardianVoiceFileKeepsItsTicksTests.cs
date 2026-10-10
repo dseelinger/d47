@@ -7,7 +7,6 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>#478: a file saved with a bool per Guardian voice effect loads as the effect list.</summary>
-[Trait("Category", "Integration")]
 public class AnOldGuardianVoiceFileKeepsItsTicksTests
 {
     private const string WithTheBools = """
@@ -17,14 +16,14 @@ public class AnOldGuardianVoiceFileKeepsItsTicksTests
         }
         """;
 
-    private static SettingsStore StoreFor(TempInstall install) =>
-        new(install.Paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
+    private static SettingsStore StoreFor(MemoryInstall install) =>
+        new(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
     [Fact]
     public void TheEffectsItTickedAreTickedInTheDefaultOrder()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, WithTheBools);
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, WithTheBools);
 
         var store = StoreFor(install);
         var effects = GuardianVoice.Effects(store.Load().Speech.GuardianVoice);
@@ -38,13 +37,13 @@ public class AnOldGuardianVoiceFileKeepsItsTicksTests
     [Fact]
     public void SavingItWritesTheListAndNotTheBools()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(install.Paths.SettingsFile, WithTheBools);
+        var install = new MemoryInstall();
+        install.Files.WriteText(install.Paths.SettingsFile, WithTheBools);
 
         var store = StoreFor(install);
         store.Save(store.Load());
 
-        var written = File.ReadAllText(install.Paths.SettingsFile);
+        var written = install.Files.ReadText(install.Paths.SettingsFile);
         Assert.Contains("\"guardianVoice\"", written, StringComparison.Ordinal);
         Assert.DoesNotContain("guardianVoiceReverb", written, StringComparison.Ordinal);
         Assert.DoesNotContain("guardianVoiceCylon", written, StringComparison.Ordinal);
@@ -56,8 +55,8 @@ public class AnOldGuardianVoiceFileKeepsItsTicksTests
     [Fact]
     public void AFileThatHasTheListIgnoresTheBools()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(
+        var install = new MemoryInstall();
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """
             {

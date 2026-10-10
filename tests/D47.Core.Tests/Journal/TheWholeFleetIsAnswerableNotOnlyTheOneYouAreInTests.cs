@@ -143,11 +143,10 @@ public class TheWholeFleetIsAnswerableNotOnlyTheOneYouAreInTests
     /// The count the model is told every turn stays a count, so asking how many ships there are still
     /// costs no tool call.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFleetCountIsStillToldWithoutATool()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var state = Fleet().Active;
 
         var ships = new ShipPlanService(

@@ -7,7 +7,6 @@ namespace D47.Core.Tests.Configuration;
 /// <summary>The ambient interval was in minutes and is now in seconds.</summary>
 public class TheAmbientIntervalMovedToSecondsTests
 {
-    [Trait("Category", "Integration")]
     [Fact]
     public void AChosenIntervalIsCarriedOverToTheSecond()
     {
@@ -21,7 +20,6 @@ public class TheAmbientIntervalMovedToSecondsTests
     /// rather than as a decision — carrying it forward would mean the new default reached nobody who
     /// had ever run d47.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheOldDefaultGivesWayToTheNewOne()
     {
@@ -30,7 +28,6 @@ public class TheAmbientIntervalMovedToSecondsTests
         Assert.Equal(new CalloutSettings().AmbientSeconds, loaded.Callouts.AmbientSeconds);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void SilenceStaysSilence()
     {
@@ -40,7 +37,6 @@ public class TheAmbientIntervalMovedToSecondsTests
         Assert.Equal(0, loaded.Callouts.AmbientSeconds);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheOldKeyIsClearedSoTheConversionHappensOnce()
     {
@@ -49,7 +45,6 @@ public class TheAmbientIntervalMovedToSecondsTests
         Assert.Null(loaded.Callouts.AmbientMinutes);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileWrittenSinceIsLeftAlone()
     {
@@ -63,7 +58,6 @@ public class TheAmbientIntervalMovedToSecondsTests
     /// and a floor above the new ceiling's default reads as a pinned cadence, which is exactly what
     /// that file already had.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileFromBeforeTheCeilingKeepsTheCadenceItChose()
     {
@@ -94,9 +88,9 @@ public class TheAmbientIntervalMovedToSecondsTests
 
     private static D47Settings Load(string json)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(install.Paths.SettingsFile, json);
+        install.Files.WriteText(install.Paths.SettingsFile, json);
 
         return new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance).Load();
     }

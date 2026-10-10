@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Help;
 
 /// <summary>"How do I ..." lands on a feature by the words that reach it, model-free (#170).</summary>
-[Trait("Category", "Integration")]
 public class HowDoIAnswersWithAFeatureTests
 {
     private static TurnLoop Build(TestSurface surface, ILlmProvider? provider = null)
@@ -49,7 +48,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public async Task ASingleMatchAnswersWithTheLeaf()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -66,7 +65,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public async Task TwoOrThreeMatchesOfferThemAndAnAnswerPicksOne()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
         var loop = Build(surface);
 
@@ -88,7 +87,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public async Task NoMatchReachesTheModelWhenOneIsConfigured()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(TestSurface.For(install), provider);
 
@@ -101,7 +100,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public async Task NoMatchWithNoModelAnswersWithTheTopLevel()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install));
 
         var result = await RunAsync(loop, "how do I get rich quick");
@@ -117,7 +116,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public void MoreThanThreeSharedWordsDoesNotNarrowToAFewLeaves()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var matched = HowDoI.Match("ship", registry);
@@ -128,7 +127,7 @@ public class HowDoIAnswersWithAFeatureTests
     [Fact]
     public async Task AQuestionAboutEliteRankIsNotTakenByThisStep()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("From the model.");
         var loop = Build(TestSurface.For(install), provider);
 

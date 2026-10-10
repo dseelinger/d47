@@ -49,14 +49,13 @@ public class AskedForMercCoinsTheBalanceIsReadOutTests
         Assert.Contains("Spent On Ships: 500,000 cr", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("how many merc coins do I have")]
     [InlineData("what's my merc coin balance")]
     [InlineData("my merc coins")]
     public void ItIsReachedWithoutTheModel(string said)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var command = new KeywordRouter(TestSurface.For(install).Registry).MatchToolCommand(said);
 
         Assert.Equal("get_commander_statistics", command?.ToolName);

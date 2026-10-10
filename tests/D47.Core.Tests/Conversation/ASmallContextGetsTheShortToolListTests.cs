@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>A model that refuses a prompt as larger than its context is asked again with the short tool list (#423).</summary>
-[Trait("Category", "Integration")]
 public class ASmallContextGetsTheShortToolListTests
 {
     /// <summary>A question no model-free route answers.</summary>
@@ -72,7 +71,7 @@ public class ASmallContextGetsTheShortToolListTests
     [Fact]
     public void TheCompactListIsTheEighteenAlwaysLoadedTools()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
 
         var compact = ToolSurface.Compact(registry, ControlContext.None, actionsEnabled: false).Tools;
@@ -84,7 +83,7 @@ public class ASmallContextGetsTheShortToolListTests
     [Fact]
     public async Task AnOverflowIsAskedAgainWithTheShortListAndAnswered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new OverflowingProvider(refuseRequests: [0]);
 
@@ -100,7 +99,7 @@ public class ASmallContextGetsTheShortToolListTests
     [Fact]
     public async Task TheNextTurnSendsTheShortListFirst()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new OverflowingProvider(refuseRequests: [0]);
         var loop = Build(registry, provider);
@@ -116,7 +115,7 @@ public class ASmallContextGetsTheShortToolListTests
     [Fact]
     public async Task RefusedWithTheShortListAndWithoutTheEarlierTurnsItFailsAfterThreeRequests()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
         var provider = new OverflowingProvider(refuseRequests: [1, 2, 3]);
         var loop = Build(registry, provider);
@@ -137,7 +136,7 @@ public class ASmallContextGetsTheShortToolListTests
     [Fact]
     public void TheModelRowSaysHowManyToolsTheSmallContextGets()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var local = new D47Settings { Llm = new LlmSettings { Provider = LlmProviderCatalog.OpenAiCompatibleId } };
 
         Assert.Equal(
@@ -149,7 +148,7 @@ public class ASmallContextGetsTheShortToolListTests
         Assert.Null(ModelRow(install, () => "unused").Note!(new D47Settings()));
     }
 
-    private static SettingRow ModelRow(TempInstall install, Func<string?> note)
+    private static SettingRow ModelRow(MemoryInstall install, Func<string?> note)
     {
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 

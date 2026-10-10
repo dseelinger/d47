@@ -22,11 +22,10 @@ public class TheClockAnswersWithoutTheSwitchTests
         "cancel the timer", "cancel my timer", "cancel the alarm", "cancel my alarm", "stop the timer",
     ];
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OffTheClockIsRegisteredAndNoTimerOrAlarmToolIs()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install, timersAndAlarms: false).Registry;
 
         Assert.NotNull(registry.Find(ClockCapability.Id));
@@ -39,11 +38,10 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OnTheClockAndEveryTimerToolAreRegistered()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var registry = TestSurface.For(install, timersAndAlarms: true).Registry;
 
         Assert.NotNull(registry.Find(ClockCapability.Id));
@@ -55,13 +53,12 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void EveryClockPhraseReachesSayTheTime(bool timersAndAlarms)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install, timersAndAlarms: timersAndAlarms).Registry);
 
         foreach (var phrase in ClockPhrases)
@@ -72,11 +69,10 @@ public class TheClockAnswersWithoutTheSwitchTests
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OffNoTimerPhraseMatches()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var router = new KeywordRouter(TestSurface.For(install, timersAndAlarms: false).Registry);
 
         foreach (var phrase in TimerPhrases)

@@ -8,7 +8,6 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>how_to_get adds the rank a Power unlocks a Powerplay module at, said against the pledge (#598).</summary>
-[Trait("Category", "Integration")]
 public class APowerplayModuleNamesItsUnlockRankTests
 {
     private const string Gate = "It needs a Powerplay pledge.";
@@ -31,7 +30,7 @@ public class APowerplayModuleNamesItsUnlockRankTests
 
     private static async Task<string> Ask(string item, CommanderGameState? state)
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         var registry = CapabilityRegistry.Build(
             [GalaxyCapability.Create(null, () => "Sol", TestSurface.For(install).Settings, gameState: () => state)]);

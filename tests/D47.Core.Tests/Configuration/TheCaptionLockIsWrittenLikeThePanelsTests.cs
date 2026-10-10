@@ -6,20 +6,19 @@ using Xunit;
 namespace D47.Core.Tests.Configuration;
 
 /// <summary>What <c>vr.captions.lock</c> puts in the file.</summary>
-[Trait("Category", "Integration")]
 public class TheCaptionLockIsWrittenLikeThePanelsTests
 {
     [Fact]
     public void TheWordInTheFileIsTheWordTheRowOffers()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         Assert.Equal(
             SettingApplyStatus.Applied,
             surface.Settings.Apply(VrCapability.CaptionLockKey, "world", SettingsCaller.Panel).Status);
 
-        var written = File.ReadAllText(install.Paths.SettingsFile);
+        var written = install.Files.ReadText(install.Paths.SettingsFile);
 
         Assert.Contains("\"lock\": \"world\"", written, StringComparison.Ordinal);
         Assert.DoesNotContain("worldLocked", written, StringComparison.Ordinal);
@@ -32,7 +31,7 @@ public class TheCaptionLockIsWrittenLikeThePanelsTests
     [Fact]
     public void ItSurvivesARestart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         TestSurface.For(install).Settings.Apply(VrCapability.CaptionLockKey, "world", SettingsCaller.Panel);
 
@@ -47,9 +46,9 @@ public class TheCaptionLockIsWrittenLikeThePanelsTests
     [Fact]
     public void AFileFromBeforeTheRowReadsAsHeadLocked()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """{ "vr": { "captions": { "enabled": true, "size": "large" } } }""");
 
@@ -66,9 +65,9 @@ public class TheCaptionLockIsWrittenLikeThePanelsTests
     [Fact]
     public void AWordNobodyRecognisesReadsAsHeadLockedRatherThanRefusingToLoad()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllText(
+        install.Files.WriteText(
             install.Paths.SettingsFile,
             """{ "vr": { "captions": { "lock": "footwell" } } }""");
 
