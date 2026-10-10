@@ -23,7 +23,7 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
 
     private bool _wasLowFuel;
     private bool _wasCritical;
-    private string? _warnedAboutRouteFrom;
+    private (string System, string? Destination)? _warnedAboutRoute;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -95,8 +95,17 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
     {
         var current = state.Location.StarSystem;
 
-        if (current is null || context.IsPriming)
+        if (current is null)
         {
+            yield break;
+        }
+
+        var destination = context.Route.IsPlotted ? context.Route.Hops[^1].StarSystem : null;
+
+        // A route already plotted where the backlog leaves the Commander is not news on the first live tick.
+        if (context.IsPriming)
+        {
+            _warnedAboutRoute = (current, destination);
             yield break;
         }
 
@@ -109,8 +118,10 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
             yield break;
         }
 
-        // Once per system.
-        if (string.Equals(_warnedAboutRouteFrom, current, StringComparison.OrdinalIgnoreCase))
+        // Once per system and route.
+        if (_warnedAboutRoute is { } warned &&
+            string.Equals(warned.System, current, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(warned.Destination, destination, StringComparison.OrdinalIgnoreCase))
         {
             yield break;
         }
@@ -122,7 +133,7 @@ public sealed class FuelCallout(ILogger? logger = null) : ICallout
             yield break;
         }
 
-        _warnedAboutRouteFrom = current;
+        _warnedAboutRoute = (current, destination);
 
         var next = ahead[0];
 

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A route already plotted when d47 starts no longer gets a fuel warning on launch, such as "Bolones is class Y — no fuel there." ahead of the greeting. A fuel warning is given when you plot a route or jump while d47 is running.
+
 Galaxy search can find a system where any faction present is in a state or has a government, not only the controlling faction: "find a system within 40 light years with a faction in Civil Unrest or Expansion". Each system in the answer names the faction that matched and its state or government. A faction name, a faction state and a faction government asked together match one faction. A station search can now filter by the station's own economy; the existing economy filter still means the system's.
 
 The Stutter preset starts speaking sooner: it works as the voice arrives and holds back 300 milliseconds, instead of waiting for the whole line. What it does to the line is unchanged. The Ghost preset still waits for its whole line because Whisper does.

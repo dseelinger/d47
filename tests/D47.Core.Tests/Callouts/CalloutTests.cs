@@ -607,6 +607,59 @@ public class CalloutTests
                 .Any(a => a.Key.StartsWith("fuel.route", StringComparison.Ordinal)));
     }
 
+    [Fact]
+    public void ARoutePlottedBeforeLaunchIsNotWarnedOnTheFirstLiveTick()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"Anaconda","MaxJumpRange":50,"FuelCapacity":{"Main":32}}""",
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"Location","StarSystem":"LTT 7786"}""");
+
+        var route = Route(("LTT 7786", "K", 0), ("Bolones", "Y", 3.4));
+
+        Assert.Empty(callout.Examine(Context(state, route: route, priming: true)));
+        Assert.DoesNotContain(
+            callout.Examine(Context(state, route: route, atSecond: 1)),
+            a => a.Key.StartsWith("fuel.route", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ARoutePlottedAfterLaunchIsWarnedWithoutAJump()
+    {
+        var callout = new FuelCallout();
+        var state = StateFrom(
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"Anaconda","MaxJumpRange":50,"FuelCapacity":{"Main":32}}""",
+            """{"timestamp":"3311-01-01T00:00:01Z","event":"Location","StarSystem":"LTT 7786"}""");
+
+        var before = Route(("LTT 7786", "K", 0), ("Fine", "G", 10));
+        var plotted = Route(("LTT 7786", "K", 0), ("Bolones", "Y", 3.4));
+
+        Assert.Empty(callout.Examine(Context(state, route: before, priming: true)));
+        Assert.Contains(
+            callout.Examine(Context(state, route: plotted, atSecond: 1)),
+            a => a.Key == "fuel.route.destination");
+    }
+
+    [Fact]
+    public void AJumpAfterLaunchStillWarnsOfAnUnscoopableNextStar()
+    {
+        var callout = new FuelCallout();
+        var store = new GameStateStore();
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:00Z","event":"Loadout","Ship":"Anaconda","MaxJumpRange":50,"FuelCapacity":{"Main":32}}"""));
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:01Z","event":"Location","StarSystem":"Start"}"""));
+
+        var route = Route(("Start", "K", 0), ("Here", "K", 20), ("Bolones", "Y", 40));
+
+        Assert.Empty(callout.Examine(Context(store.Active, route: route, priming: true)));
+
+        store.Apply(Event("""{"timestamp":"3311-01-01T00:00:02Z","event":"FSDJump","StarSystem":"Here","JumpDist":20}"""));
+
+        Assert.Contains(
+            callout.Examine(Context(store.Active, route: route, atSecond: 2)),
+            a => a.Key == "fuel.route.destination");
+    }
+
     /// <summary>The tank warnings are not scoop talk and stay.</summary>
     [Fact]
     public void LowFuelIsStillSaidToAShipWithNoScoop()
