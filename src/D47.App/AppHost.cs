@@ -1802,16 +1802,6 @@ public sealed class AppHost : IDisposable
         var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Knowledge.SpanshGalaxyService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()));
 
-        foreach (var missions in callouts.Callouts.OfType<MissionCallout>())
-        {
-            missions.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
-        }
-
-        foreach (var surveyed in callouts.Callouts.OfType<SurveyedBiologyCallout>())
-        {
-            surveyed.Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null;
-        }
-
         var starSystems = new D47.Knowledge.SpanshStarSystemService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshStarSystemService>());
 
@@ -1830,11 +1820,6 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Knowledge.SpanshTradePlanService>(),
             commodities,
             marketBook);
-
-        foreach (var trading in callouts.Callouts.OfType<TradingModeCallout>())
-        {
-            trading.Trade = () => settings.Current.Knowledge.GalaxySearch ? tradePlanner : null;
-        }
 
         // The key is read on every call rather than captured here, so pasting one in or clearing it takes
         // effect without a restart — the same rule the galaxy service's setting follows.
@@ -2575,49 +2560,16 @@ public sealed class AppHost : IDisposable
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
 
-        foreach (var narrator in callouts.Callouts.OfType<NarratorCallout>())
+        ShippedCallouts.Connect(callouts, new ShippedCallouts.Services
         {
-            narrator.StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId);
-            narrator.StoryAsides = storyDirector.MissionAsides;
-        }
-
-        // A stock core makes no idle remarks; the Narrator takes the ambient slot.
-        Func<bool> stockCoreAboard = () => personas.Current.Stock;
-
-        foreach (var callout in callouts.Callouts)
-        {
-            switch (callout)
-            {
-                case AmbientCallout ambient:
-                    ambient.StockCoreAboard = stockCoreAboard;
-                    break;
-
-                case ContinuityCallout continuity:
-                    continuity.StockCoreAboard = stockCoreAboard;
-                    break;
-
-                case RecapCallout recap:
-                    recap.StockCoreAboard = stockCoreAboard;
-
-                    // Reads journal files, so off the tick.
-                    recap.Prepare = before => _ = Task.Run(() =>
-                        recap.Supply(ComposeRecap(files, before, JournalsOnDisk(journalDirectory, logger), loggerFactory)));
-                    break;
-
-                case SessionCallout session:
-                    session.StockCoreAboard = stockCoreAboard;
-                    break;
-
-                case NarratorCallout narrator:
-                    narrator.StockCoreAboard = stockCoreAboard;
-                    break;
-            }
-        }
-
-        foreach (var missions in callouts.Callouts.OfType<MissionCallout>())
-        {
-            missions.StoryAsides = storyDirector.MissionAsides;
-        }
+            Settings = settings,
+            Galaxy = galaxy,
+            Trade = tradePlanner,
+            StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
+            StoryAsides = storyDirector.MissionAsides,
+            StockCoreAboard = () => personas.Current.Stock,
+            ComposeRecap = before => ComposeRecap(files, before, JournalsOnDisk(journalDirectory, logger), loggerFactory),
+        });
 
         var pairing = new VoicePairer(
             speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>());

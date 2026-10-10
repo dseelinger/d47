@@ -67,6 +67,28 @@ public static class ShippedCallouts
         public required Func<string?, bool> StoryOpening { get; init; }
     }
 
+    /// <summary>What the shipped callouts are connected to once the services they call exist.</summary>
+    public sealed record Services
+    {
+        public required SettingsService Settings { get; init; }
+
+        public required IGalaxyService Galaxy { get; init; }
+
+        public required ITradePlanService Trade { get; init; }
+
+        public required Func<bool> StoryRunning { get; init; }
+
+        public required StoryMissionAsides StoryAsides { get; init; }
+
+        public required Func<bool> StockCoreAboard { get; init; }
+
+        /// <summary>The recap line for the session that started before the instant given, or null; reads journal files.</summary>
+        public required Func<DateTimeOffset, string?> ComposeRecap { get; init; }
+
+        /// <summary>Runs work off the tick; <see cref="ComposeRecap"/> is called through it.</summary>
+        public Action<Action> Dispatch { get; init; } = work => _ = Task.Run(work);
+    }
+
     /// <summary>Builds the shipped catalogue and applies the current callout settings to it.</summary>
     public static CalloutEngine Build(Sources sources, DateTimeOffset now)
     {
@@ -238,6 +260,60 @@ public static class ShippedCallouts
 
         Apply(engine, settings, now);
         return engine;
+    }
+
+    /// <summary>Connects the catalogue to the services built after it. Called once.</summary>
+    public static void Connect(CalloutEngine engine, Services services)
+    {
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(services);
+
+        var galaxy = services.Galaxy;
+        var trade = services.Trade;
+        var compose = services.ComposeRecap;
+        var dispatch = services.Dispatch;
+
+        foreach (var callout in engine.Callouts)
+        {
+            switch (callout)
+            {
+                case MissionCallout missions:
+                    missions.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+                    missions.StoryAsides = services.StoryAsides;
+                    break;
+
+                case SurveyedBiologyCallout surveyed:
+                    surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
+                    break;
+
+                case TradingModeCallout trading:
+                    trading.Trade = () => services.Settings.Current.Knowledge.GalaxySearch ? trade : null;
+                    break;
+
+                case AmbientCallout ambient:
+                    ambient.StockCoreAboard = services.StockCoreAboard;
+                    break;
+
+                case ContinuityCallout continuity:
+                    continuity.StockCoreAboard = services.StockCoreAboard;
+                    break;
+
+                case RecapCallout recap:
+                    recap.StockCoreAboard = services.StockCoreAboard;
+                    recap.Prepare = before => dispatch(() => recap.Supply(compose(before)));
+                    break;
+
+                case SessionCallout session:
+                    session.StockCoreAboard = services.StockCoreAboard;
+                    break;
+
+                case NarratorCallout narrator:
+                    narrator.StoryRunning = services.StoryRunning;
+                    narrator.StoryAsides = services.StoryAsides;
+                    narrator.StockCoreAboard = services.StockCoreAboard;
+                    break;
+            }
+        }
     }
 
     /// <summary>
