@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using D47.Core.Audio;
@@ -172,7 +173,7 @@ public sealed class KeywordRouter(
                 from capability in registry.All
                 from row in capability.Descriptor.Settings
                 from command in row.Commands
-                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                where string.Equals(folded, Phrasing(command.Phrase).Folded, StringComparison.OrdinalIgnoreCase)
                 select new SettingCommandMatch(capability.Descriptor.Id, row, command.Value, command.Phrase))
                 .FirstOrDefault();
         }
@@ -197,7 +198,7 @@ public sealed class KeywordRouter(
 
             var dynamic = (
                 from command in dynamicCommands?.Invoke() ?? []
-                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                where string.Equals(folded, Phrasing(command.Phrase).Folded, StringComparison.OrdinalIgnoreCase)
                 orderby command.Phrase.Length descending
                 select new ToolCommandMatch(
                     command.CapabilityId,
@@ -210,7 +211,7 @@ public sealed class KeywordRouter(
                 from capability in registry.All
                 from tool in capability.Descriptor.Tools
                 from command in tool.Commands
-                where string.Equals(folded, Folded(command.Phrase), StringComparison.OrdinalIgnoreCase)
+                where string.Equals(folded, Phrasing(command.Phrase).Folded, StringComparison.OrdinalIgnoreCase)
 
                 // A phrase that is only an answer while there is a question.
                 where command.When?.Invoke() ?? true
@@ -238,7 +239,7 @@ public sealed class KeywordRouter(
 
     /// <summary>
     /// One utterance, reduced to what was said: no surrounding punctuation, no doubled spaces, and
-    /// apostrophes normalised the same way <see cref="ContainsPhrase"/> normalises them.
+    /// apostrophes normalised the same way phrase matching normalises them.
     /// </summary>
     internal static string Utterance(string text) => string.Join(' ', Words(text));
 
@@ -268,29 +269,31 @@ public sealed class KeywordRouter(
     /// </remarks>
     private static bool MatchesAsCommand(string folded, string phrase, int? words)
     {
-        var foldedPhrase = Folded(phrase);
+        var declared = Phrasing(phrase);
 
-        return ContainsPhrase(folded, foldedPhrase)
-            && (words is not { } count || count <= Words(foldedPhrase).Length + MaxWordsAroundAKeyword);
+        return declared.Pattern?.IsMatch(folded) == true
+            && (words is not { } count || count <= declared.WordCount + MaxWordsAroundAKeyword);
     }
 
-    /// <summary>
-    /// True when the phrase appears in the text bounded by word edges, so "docked" does not match
-    /// inside a longer word and "where am i" only matches those three words in that order. Both sides
-    /// must already have passed through <see cref="Folded"/>.
-    /// </summary>
-    private static bool ContainsPhrase(string folded, string foldedPhrase)
-    {
-        if (string.IsNullOrWhiteSpace(foldedPhrase))
+    /// <summary>A phrase folded, with its word-bounded pattern and word count, computed once.</summary>
+    private sealed record FoldedPhrase(string Folded, Regex? Pattern, int WordCount);
+
+    private static readonly ConcurrentDictionary<string, FoldedPhrase> PhraseCache = new(StringComparer.Ordinal);
+
+    private static FoldedPhrase Phrasing(string phrase) =>
+        PhraseCache.GetOrAdd(phrase, static declared =>
         {
-            return false;
-        }
+            var folded = Folded(declared);
 
-        return Regex.IsMatch(
-            folded,
-            $@"\b{Regex.Escape(foldedPhrase)}\b",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    }
+            return new FoldedPhrase(
+                folded,
+                string.IsNullOrWhiteSpace(folded)
+                    ? null
+                    : new Regex(
+                        $@"\b{Regex.Escape(folded)}\b",
+                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                Words(folded).Length);
+        });
 
     /// <summary>Apostrophes vary by keyboard and by autocorrect; "what's" and "what’s" are the same word.</summary>
     private static string Normalise(string value) =>
