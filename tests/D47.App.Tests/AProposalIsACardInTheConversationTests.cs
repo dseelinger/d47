@@ -17,14 +17,12 @@ namespace D47.App.Tests;
 /// A checklist proposal shows as a card in the conversation, in place of the bare sentence it used to
 /// be the only trace of — Accept and Decline settle it from either page, or by voice (#277).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AProposalIsACardInTheConversationTests
 {
     /// <summary>The two events AppHost wires between the checklist and the transcript (#277).</summary>
     private static ChecklistService Wired(PanelViewModel model)
     {
-        var paths = new AppPaths(TempFolders.Create("d47-proposal-card-tests"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-proposal-card-tests"));
 
         var checklists = new ChecklistService(
             new ChecklistStore(

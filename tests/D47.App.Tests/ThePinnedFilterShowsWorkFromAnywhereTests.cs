@@ -14,7 +14,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The pinned-blueprint filter, on the page, from nowhere near the engineer (#113).</summary>
-[Trait("Category", "Integration")]
 public class ThePinnedFilterShowsWorkFromAnywhereTests
 {
     private const int LeiCheung = 300120;
@@ -41,8 +40,7 @@ public class ThePinnedFilterShowsWorkFromAnywhereTests
 
     private static ChecklistService Checklists(CommanderGameState state)
     {
-        var paths = new AppPaths(TempFolders.Create("d47-pinned-filter-tests"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-pinned-filter-tests"));
 
         var checklists = new ChecklistService(
             new ChecklistStore(

@@ -20,7 +20,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Checklist opens on the Commander's lists, and drilling into one is the normal way to use it (#830).</summary>
-[Trait("Category", "Integration")]
 public class TheChecklistOpensOnItsListsTests
 {
     private static CommanderGameState State()
@@ -52,8 +51,7 @@ public class TheChecklistOpensOnItsListsTests
     /// <summary>Six lists: notes, engineer unlocks, two ships and two systems, with done lines on three.</summary>
     private static ChecklistService Checklists()
     {
-        var paths = new AppPaths(TempFolders.Create("d47-checklist-lists"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-checklist-lists"));
 
         var state = State();
 

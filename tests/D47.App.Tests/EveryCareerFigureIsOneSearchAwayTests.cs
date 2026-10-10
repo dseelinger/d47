@@ -21,7 +21,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Commander › Statistics: a sidebar of the sixteen sections, a grid of one, and a search across all (#553).</summary>
-[Trait("Category", "Integration")]
 public class EveryCareerFigureIsOneSearchAwayTests
 {
     private const string Statistics =
@@ -63,7 +62,7 @@ public class EveryCareerFigureIsOneSearchAwayTests
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
-        var root = TempFolders.Create("d47-statistics-page-tests");
+        var root = TestSurface.MemoryFolder("d47-statistics-page-tests");
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(

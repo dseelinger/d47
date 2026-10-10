@@ -18,7 +18,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Ticking Goals replaces the checklist with the goals, full height, and unticking brings the list back.</summary>
-[Trait("Category", "Integration")]
 public class TickingGoalsSwapsTheListForTheGoalsTests
 {
     private static readonly DateTimeOffset Now = new(3311, 6, 1, 0, 0, 0, TimeSpan.Zero);
@@ -27,9 +26,8 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
 
     private static (PanelView Panel, ChecklistService Checklists) Open(double height = 640, double width = 820)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-goals-mode-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-goals-mode-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

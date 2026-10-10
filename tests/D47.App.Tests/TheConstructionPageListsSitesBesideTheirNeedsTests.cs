@@ -161,7 +161,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         bool lookups = true,
         bool onFoot = false)
     {
-        var root = TempFolders.Create("d47-construction-page-tests");
+        var root = TestSurface.MemoryFolder("d47-construction-page-tests");
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
@@ -239,7 +239,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         frame.SaveCapture(path);
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ConstructionLandsBetweenCarrierAndMaterials()
     {
@@ -263,7 +262,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Assert.Equal(["Construction"], panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void OneCurrentAndOneStaleSiteFillOneHeadEachAndTheStaleOneWarns()
     {
@@ -289,7 +287,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ACommodityTheCarrierCoversIsCoveredAndAnUnreconciledCarrierIsUnknown()
     {
@@ -313,7 +310,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheLastSearchForThisSiteIsDrawnStopByStop()
     {
@@ -344,7 +340,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SearchMarketsAsksForTheSelectedSitesShoppingList()
     {
@@ -367,7 +362,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithLookupsOffTheSearchTileIsDisabledAndSaysWhy()
     {
@@ -381,7 +375,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANewDepotEventRedrawsThePageOnTheTick()
     {
@@ -400,7 +393,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoSitesTheEmptyStateDraws()
     {
@@ -417,7 +409,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaTheory]
     [InlineData(ThemeCatalog.Elite)]
     [InlineData(ThemeCatalog.Dark)]

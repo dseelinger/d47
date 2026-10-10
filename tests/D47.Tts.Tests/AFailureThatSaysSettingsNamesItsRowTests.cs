@@ -12,6 +12,7 @@ namespace D47.Tts.Tests;
 /// Every refusal that tells the Commander to change something in Settings names the row it means, and the row
 /// is one the settings page places (#952).
 /// </summary>
+[Trait("Category", "Integration")]
 public class AFailureThatSaysSettingsNamesItsRowTests
 {
     public enum Entry

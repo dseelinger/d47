@@ -12,12 +12,14 @@ public sealed record SourceFile(string Path, string Text, SyntaxTree Tree)
 }
 
 /// <summary>A code line with where it came from.</summary>
+[Trait("Category", "Gate")]
 public sealed record CodeLine(string File, int Line, string Text)
 {
     public override string ToString() => $"{File}:{Line} {Text}";
 }
 
 /// <summary>A method found by name, with its declaration, file and code lines.</summary>
+[Trait("Category", "Gate")]
 public sealed record SourceMethod(SourceFile File, MethodDeclarationSyntax Node)
 {
     public int Line => Node.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
@@ -41,6 +43,7 @@ public sealed record SourceMethod(SourceFile File, MethodDeclarationSyntax Node)
 /// Every <c>.cs</c> file under <c>src/D47.App</c>, parsed once per test run, syntax only. A gate
 /// that reads a member finds it by name; a gate that counts or forbids a fragment reads the tree.
 /// </summary>
+[Trait("Category", "Gate")]
 public static class AppSource
 {
     private static readonly Lazy<IReadOnlyList<SourceFile>> Parsed = new(Parse);

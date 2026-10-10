@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>The log-level rows actually reach the code they name.</summary>
+[Trait("Category", "Gate")]
 public class LogRoutingTests
 {
     /// <summary>Every namespace declared anywhere under <c>src/</c>.</summary>

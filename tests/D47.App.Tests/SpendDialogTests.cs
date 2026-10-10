@@ -19,7 +19,6 @@ namespace D47.App.Tests;
 /// <summary>
 /// The turn line's figures, moved somewhere they can be read.
 /// </summary>
-[Trait("Category", "Integration")]
 public class SpendDialogTests
 {
     private sealed class StoppedClock(DateTimeOffset at) : IWallClock
@@ -34,7 +33,7 @@ public class SpendDialogTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
 
-        var root = Path.Combine(TempFolders.Create("d47-spend-dialog"), "spend.jsonl");
+        var root = Path.Combine(TestSurface.MemoryFolder("d47-spend-dialog"), "spend.jsonl");
         var clock = new StoppedClock(Noon);
         var ledger = new SpendLedger(root, new MemoryFileSystem(), clock, NullLogger.Instance);
 
@@ -326,7 +325,7 @@ public class SpendDialogTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
 
-        var root = Path.Combine(TempFolders.Create("d47-spend-dialog-empty"), "spend.jsonl");
+        var root = Path.Combine(TestSurface.MemoryFolder("d47-spend-dialog-empty"), "spend.jsonl");
         var ledger = new SpendLedger(root, new MemoryFileSystem(), new StoppedClock(Noon), NullLogger.Instance);
 
         var dialog = new SpendDialog(

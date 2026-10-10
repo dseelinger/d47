@@ -32,7 +32,7 @@ public class TheFarmingRouteStartsNearestTests
 
     private static Surface Open(string location)
     {
-        var root = TempFolders.Create("d47-farming-route-tests");
+        var root = TestSurface.MemoryFolder("d47-farming-route-tests");
         var store = new GameStateStore();
 
         Apply(store, """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");
@@ -86,7 +86,6 @@ public class TheFarmingRouteStartsNearestTests
         return [.. Text(page).Where(names.Contains)];
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSidebarCarriesTheFarmingRouteWithItsSiteCount()
     {
@@ -102,7 +101,6 @@ public class TheFarmingRouteStartsNearestTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void SitesAreListedNearestFirstFromTheCommander()
     {
@@ -118,7 +116,6 @@ public class TheFarmingRouteStartsNearestTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheCurrentSystemReadsHere()
     {
@@ -132,7 +129,6 @@ public class TheFarmingRouteStartsNearestTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSegmentNarrowsTheListToOneKind()
     {
@@ -152,7 +148,6 @@ public class TheFarmingRouteStartsNearestTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRouteRedrawsWhenTheSystemChanges()
     {
@@ -168,7 +163,6 @@ public class TheFarmingRouteStartsNearestTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EverySystemNameCarriesACopyGlyphLevelWithIt()
     {
@@ -203,7 +197,6 @@ public class TheFarmingRouteStartsNearestTests
         Assert.StartsWith("1 × G4 raw › 3 × G3", MaterialsPage.TradeDownText(polonium), StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRouteIsCapturedAllAndRaw()
     {

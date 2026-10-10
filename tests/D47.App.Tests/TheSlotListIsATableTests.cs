@@ -16,7 +16,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The slot list is a table: what is in the slot, and what you wanted there.</summary>
-[Trait("Category", "Integration")]
 public class TheSlotListIsATableTests
 {
     private sealed class Sitting
@@ -32,7 +31,7 @@ public class TheSlotListIsATableTests
     /// </summary>
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-slot-table-tests");
+        var root = TestSurface.MemoryFolder("d47-slot-table-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

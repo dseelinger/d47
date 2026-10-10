@@ -19,7 +19,6 @@ namespace D47.App.Tests;
 /// <summary>
 /// "It should have the same tabs as the VR mini panel, including Checklist".
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheOverlayCarriesTheHeadsetsTabsTests
 {
     /// <summary>The claim itself.</summary>
@@ -172,8 +171,7 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
 
     private static ChecklistService Checklists()
     {
-        var paths = new AppPaths(TempFolders.Create("d47-overlay-tabs"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-overlay-tabs"));
 
         return new ChecklistService(
             new ChecklistStore(

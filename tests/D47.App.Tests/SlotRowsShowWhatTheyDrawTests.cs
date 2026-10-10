@@ -17,14 +17,13 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The megawatts a slot row carries beside what is fitted and what is planned (#252).</summary>
-[Trait("Category", "Integration")]
 public class SlotRowsShowWhatTheyDrawTests
 {
     private sealed record Surface(Window Window, PanelView Panel, ShipPlanService Ships);
 
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-slot-draw-tests");
+        var root = TestSurface.MemoryFolder("d47-slot-draw-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

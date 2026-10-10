@@ -21,7 +21,8 @@ public sealed class SavedBindingProfilesAreListedWithADeleteTests
     [AvaloniaFact]
     public void EachSavedProfileHasADeleteThatRemovesIt()
     {
-        var (settings, viewState, paths) = TestSurface.Create();
+        var folder = TempFolders.Create("d47-binding-profiles");
+        var (settings, viewState, paths) = TestSurface.Create(root: folder);
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var bindings = TestSurface.BindingsFolder(paths);

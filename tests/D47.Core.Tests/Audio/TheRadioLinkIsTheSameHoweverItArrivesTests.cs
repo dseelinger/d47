@@ -5,6 +5,7 @@ using Xunit;
 namespace D47.Core.Tests.Audio;
 
 /// <summary>The radio link as a running filter gives the same bytes however its input is cut, at a level its gain control sets.</summary>
+[Trait("Category", "Integration")]
 public class TheRadioLinkIsTheSameHoweverItArrivesTests
 {
     private const int Rate = 48_000;

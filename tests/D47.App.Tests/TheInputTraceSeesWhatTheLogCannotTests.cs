@@ -10,6 +10,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 /// <summary>The input trace, driven through the real injector with the capture stubbed.</summary>
 public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 {
@@ -342,19 +343,18 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
     /// row exists for it anywhere on the settings surface.
     /// </summary>
     [Fact]
-    [Trait("Category", "Integration")]
     public void TheFlagIsNotASettingAndHasNoRow()
     {
         InputTraceWriter.ReadCommandLine(["--trace-input"]);
 
         var (settings, _, paths, registry, _) = TestSurface.CreateFull();
 
-        // A real write, so the file on disk is the whole of what the app would leave behind.
+        // A real write, so the stored file is the whole of what the app would leave behind.
         settings.Replace(
             "a test",
             current => current with { Actions = current.Actions with { AutoPlot = !current.Actions.AutoPlot } });
 
-        var stored = File.ReadAllText(paths.SettingsFile);
+        var stored = TestSurface.FilesFor(paths).ReadText(paths.SettingsFile)!;
 
         Assert.DoesNotContain("trace", stored, StringComparison.OrdinalIgnoreCase);
 

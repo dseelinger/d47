@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Xunit;
 
 namespace D47.Scenarios.Tests;
 
@@ -107,6 +108,7 @@ public sealed record Vector
 }
 
 /// <summary>Reading the corpus files, and refusing them when they say something impossible.</summary>
+[Trait("Category", "Integration")]
 public static class Corpus
 {
     private static readonly JsonSerializerOptions Options = new()

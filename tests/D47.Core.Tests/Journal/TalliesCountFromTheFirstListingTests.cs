@@ -54,6 +54,7 @@ public class TalliesCountFromTheFirstListingTests
         Assert.Equal(new UnlockMeasure(5, 5, false), criterion.Measure);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheHistoryWalkAndTheLiveFoldCountEachSaleOnce()
     {

@@ -13,13 +13,11 @@ namespace D47.App.Tests;
 
 /// <summary>The Checklist filter was applied in the Windows app and the headset, a foot away, went on drawing
 /// the unfiltered list.</summary>
-[Trait("Category", "Integration")]
 public class TheFilterIsTheSameOnBothSurfacesTests
 {
     private static ChecklistService Checklists(string root, Action<ChecklistView>? remember = null)
     {
         var paths = new D47.Core.AppPaths(root);
-        paths.EnsureCreated();
 
         return new ChecklistService(
             new ChecklistStore(
@@ -67,7 +65,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
     [AvaloniaFact]
     public void AFilterChosenOnOneSurfaceNarrowsTheOther()
     {
-        var checklists = Checklists(TempFolders.Create("d47-shared-filter"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-shared-filter"));
 
         checklists.List.Save(
         [
@@ -109,7 +107,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
     [AvaloniaFact]
     public void ASearchTypedOnOneSurfaceNarrowsTheOther()
     {
-        var checklists = Checklists(TempFolders.Create("d47-shared-filter"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-shared-filter"));
 
         checklists.List.Save(
         [
@@ -144,7 +142,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
     public void TheFilterIsWrittenDownAndTheSearchIsNot()
     {
         var written = new List<ChecklistView>();
-        var checklists = Checklists(TempFolders.Create("d47-shared-filter"), written.Add);
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-shared-filter"), written.Add);
 
         checklists.Choose("open");
         checklists.Search("limpets");
@@ -152,7 +150,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
         Assert.Equal(["open"], written.Select(view => view.Filter));
 
         // And a later run takes it up without writing it back or redrawing anything.
-        var next = Checklists(TempFolders.Create("d47-shared-filter"), written.Add);
+        var next = Checklists(TestSurface.MemoryFolder("d47-shared-filter"), written.Add);
 
         next.Restore(new ChecklistView("open", IncludePartialGrades: false));
 
@@ -164,7 +162,7 @@ public class TheFilterIsTheSameOnBothSurfacesTests
     [AvaloniaFact]
     public void TheMiniPanelStillSaysWhatTheListIsUnder()
     {
-        var checklists = Checklists(TempFolders.Create("d47-shared-filter"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-shared-filter"));
 
         checklists.List.Save(
         [

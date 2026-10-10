@@ -18,6 +18,7 @@ namespace D47.App.Tests;
 /// The Commander record shows the picture kept for the Commander flying and offers the buttons that replace it;
 /// before a Commander is known the buttons are disabled.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheCommanderChoosesTheirOwnPictureTests
 {
     private static StandingPage Page(SpeakerPictures pictures, Func<string?> picture)

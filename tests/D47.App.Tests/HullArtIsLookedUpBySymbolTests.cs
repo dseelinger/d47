@@ -21,7 +21,9 @@ public sealed class HullArtIsLookedUpBySymbolTests : IDisposable
 {
     private readonly MemoryFileSystem _files = new();
 
-    private readonly AppPaths _paths = new(Path.Combine(Path.GetTempPath(), "d47-hull-art"), Path.Combine(Path.GetTempPath(), "d47-hull-art", "build"));
+    private readonly IFileSystem _previous = ShipArt.Files;
+
+    private readonly AppPaths _paths = new(Path.Combine(TestSurface.FakeRoot, "d47-hull-art"), Path.Combine(TestSurface.FakeRoot, "d47-hull-art", "build"));
 
     public HullArtIsLookedUpBySymbolTests()
     {
@@ -34,7 +36,7 @@ public sealed class HullArtIsLookedUpBySymbolTests : IDisposable
     {
         ShipArt.Folder = null;
         ShipArt.Shipped = null;
-        ShipArt.Files = new DiskFileSystem();
+        ShipArt.Files = _previous;
     }
 
     /// <summary>A small picture; encoding it needs the headless platform, so only an Avalonia test calls it.</summary>

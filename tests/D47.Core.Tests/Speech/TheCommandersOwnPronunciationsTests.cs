@@ -8,6 +8,7 @@ namespace D47.Core.Tests.Speech;
 /// The correction file, asked for on 2026-08-28: "We'll need to come up with a way to update
 /// Kokoro pronunciations without recompiling."
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheCommandersOwnPronunciationsTests
 {
     private const string _folder = "C:/d47-test/pronunciations";
@@ -178,6 +179,7 @@ public class TheCommandersOwnPronunciationsTests
     /// Deleting the file restores shipped behaviour exactly, which is why nothing writes one back: a
     /// file d47 recreated on the next start would make this untrue.
     /// </summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void DeletingTheFileRestoresTheShippedLadder()
     {

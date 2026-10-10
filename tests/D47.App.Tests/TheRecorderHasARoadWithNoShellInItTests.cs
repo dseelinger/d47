@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The audio recorder is reachable without a shell.</summary>
+[Trait("Category", "Integration")]
 public class TheRecorderHasARoadWithNoShellInItTests : IDisposable
 {
     private readonly string _folder = Path.Combine(

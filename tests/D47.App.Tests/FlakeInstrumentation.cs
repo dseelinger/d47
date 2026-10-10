@@ -4,10 +4,12 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
+using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>Diagnostic hook for the headless-session flake.</summary>
+[Trait("Category", "Integration")]
 internal static class FlakeInstrumentation
 {
     private static readonly object Gate = new();

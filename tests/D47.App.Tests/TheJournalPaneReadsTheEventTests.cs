@@ -319,7 +319,6 @@ public sealed class TheJournalPaneReadsTheEventTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PressingTheEngineerOpensTheirPageOnTheEngineersTab()
     {
@@ -337,7 +336,6 @@ public sealed class TheJournalPaneReadsTheEventTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AShipInTheFleetLinksToItsPageAndOneSoldIsPlainText()
     {
@@ -386,7 +384,7 @@ public sealed class TheJournalPaneReadsTheEventTests
     /// <summary>A panel with the Engineers and Ships tabs, for a Commander flying ship 12.</summary>
     private static Surface Furnished()
     {
-        var root = TempFolders.Create("d47-journal-pane-tests");
+        var root = TestSurface.MemoryFolder("d47-journal-pane-tests");
         var store = new GameStateStore();
 
         foreach (var line in new[]

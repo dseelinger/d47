@@ -17,7 +17,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Bookmarks page on the Routing tab: listing, renaming and deleting a bookmark (#490).</summary>
-[Trait("Category", "Integration")]
 public class TheBookmarksPageTests
 {
     private static readonly DateTimeOffset At = new(2026, 9, 25, 12, 0, 0, TimeSpan.Zero);
@@ -46,7 +45,7 @@ public class TheBookmarksPageTests
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
         GameStatus? target = null)
     {
-        var root = TempFolders.Create("d47-bookmarks-page-tests");
+        var root = TestSurface.MemoryFolder("d47-bookmarks-page-tests");
 
         var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
@@ -242,7 +241,7 @@ public class TheBookmarksPageTests
     [AvaloniaFact]
     public void ThePageListsTheFlyingCommandersBookmarksAndNotAnothers()
     {
-        var root = TempFolders.Create("d47-bookmarks-page-tests");
+        var root = TestSurface.MemoryFolder("d47-bookmarks-page-tests");
         var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         store.Add("F1", "Current CG", "Deciat", At);
@@ -408,7 +407,7 @@ public class TheBookmarksPageTests
     [AvaloniaFact]
     public void TheStatesAreCaptured()
     {
-        var root = TempFolders.Create("d47-bookmarks-page-tests");
+        var root = TestSurface.MemoryFolder("d47-bookmarks-page-tests");
         var store = new BookmarkStore(Path.Combine(root, "bookmarks.json"), new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         store.Add("F1", "Current CG", "Deciat", At);
@@ -423,7 +422,7 @@ public class TheBookmarksPageTests
 
         using var empty = AppLook.Capture(
             Full(new BookmarkStore(
-                Path.Combine(TempFolders.Create("d47-bookmarks-page-tests"), "bookmarks.json"),
+                Path.Combine(TestSurface.MemoryFolder("d47-bookmarks-page-tests"), "bookmarks.json"),
                 new MemoryFileSystem(),
                 NullLogger<BookmarkStore>.Instance), () => gameState.Active),
             "bookmarks-page-empty.png");

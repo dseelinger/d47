@@ -1,8 +1,10 @@
 using System.Xml.Linq;
+using Xunit;
 
 namespace D47.Core.Tests;
 
 /// <summary>What a NuGet package says its licence is, and whether that is one d47 may ship.</summary>
+[Trait("Category", "Integration")]
 internal static class LicenceGate
 {
     /// <summary>The identifiers d47 may ship.</summary>

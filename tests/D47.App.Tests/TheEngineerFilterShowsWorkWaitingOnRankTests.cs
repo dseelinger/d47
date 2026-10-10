@@ -16,7 +16,6 @@ namespace D47.App.Tests;
 /// <summary>
 /// The engineer filter, on the page, with a roll the Commander has not earned the grade for.
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheEngineerFilterShowsWorkWaitingOnRankTests
 {
     private const int LeiCheung = 300120;
@@ -46,8 +45,7 @@ public class TheEngineerFilterShowsWorkWaitingOnRankTests
 
     private static ChecklistService Checklists(CommanderGameState state)
     {
-        var paths = new AppPaths(TempFolders.Create("d47-engineer-filter-rank-tests"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-engineer-filter-rank-tests"));
 
         var checklists = new ChecklistService(
             new ChecklistStore(

@@ -7,6 +7,7 @@ namespace D47.Core.Tests.Knowledge;
 /// The <c>meeting_test</c> and <c>unlock_test</c> columns <c>tools/gen-engineers.py</c> derives from
 /// Frontier's prose (#180), and <see cref="UnlockTest.Parse"/>, which reads them.
 /// </summary>
+[Trait("Category", "Gate")]
 public class StructuredUnlockTestsTests
 {
     [Fact]

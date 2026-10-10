@@ -22,7 +22,6 @@ namespace D47.App.Tests;
 /// The "Add to checklist" control on an engineer's own page adds every unmet prerequisite line in one
 /// press, and goes away once there is nothing left to add (#257).
 /// </summary>
-[Trait("Category", "Integration")]
 public class EngineerPrerequisitesCanBeAddedToTheChecklistTests
 {
     private sealed record Surface(Window Window, PanelView Panel, ChecklistService Checklists);
@@ -52,7 +51,7 @@ public class EngineerPrerequisitesCanBeAddedToTheChecklistTests
 
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-engineer-prerequisites-tests");
+        var root = TestSurface.MemoryFolder("d47-engineer-prerequisites-tests");
         var state = State();
 
         var checklists = new ChecklistService(

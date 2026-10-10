@@ -13,6 +13,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The rule between two panes becomes something the mouse can take hold of.</summary>
+[Trait("Category", "Integration")]
 public sealed class ThePanesMoveWhereYouWantThemTests
 {
     private static PanelView Laid(PanelView panel, double width, double height = 700)

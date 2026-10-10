@@ -11,15 +11,13 @@ namespace D47.App.Tests;
 /// A hull the table has no figures for still names itself and says which figures are missing,
 /// rather than reading as though d47 knew nothing about the ship (#387).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AMissingHullNamesWhatIsMissingTests
 {
     [Fact]
     public void TheLoadoutPageNamesTheHullAndItsMissingFigures()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-missing-hull-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-missing-hull-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

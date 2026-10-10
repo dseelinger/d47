@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The action manifest and its bindings, checked as files.</summary>
+[Trait("Category", "Integration")]
 public class VrActionManifestTests
 {
     private readonly MemoryFileSystem _files = new();

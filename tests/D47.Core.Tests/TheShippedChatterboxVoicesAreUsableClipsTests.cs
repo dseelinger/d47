@@ -5,6 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests;
 
+[Trait("Category", "Gate")]
 public class TheShippedChatterboxVoicesAreUsableClipsTests
 {
     [Trait("Category", "Gate")]

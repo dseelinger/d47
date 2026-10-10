@@ -17,6 +17,12 @@ namespace D47.App.Tests;
 /// <summary>The wiring the composition root performs, in a throwaway folder.</summary>
 public static class TestSurface
 {
+    /// <summary>A root that is never created on disk.</summary>
+    public const string FakeRoot = @"C:\d47-memory";
+
+    /// <summary>A folder path under <see cref="FakeRoot"/> that nothing creates.</summary>
+    public static string MemoryFolder(string prefix) => Path.Combine(FakeRoot, prefix, Guid.NewGuid().ToString("N"));
+
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<AppPaths, D47.Core.Storage.MemoryFileSystem> InstallFiles = new();
 
     /// <summary>The in-memory file system the checklist stores of one install share.</summary>
@@ -99,14 +105,13 @@ public static class TestSurface
         SpeechSpend? speechSpend = null,
         Action? forgetCorrections = null,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
-        Func<CancellationToken, Task<string?>>? guardianTest = null)
+        Func<CancellationToken, Task<string?>>? guardianTest = null,
+        string? root = null)
     {
-        var root = TempFolders.Create("d47-app-tests");
-        var paths = new AppPaths(root);
-        paths.EnsureCreated();
+        var paths = new AppPaths(root ?? Path.Combine(FakeRoot, Guid.NewGuid().ToString("N")));
 
-        var store = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance);
-        var secrets = new SecretStore(paths, new NoopProtector(), new DiskFileSystem(), NullLogger<SecretStore>.Instance);
+        var store = new SettingsStore(paths, FilesFor(paths), NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(paths, new NoopProtector(), FilesFor(paths), NullLogger<SecretStore>.Instance);
         var settings = new SettingsService(store, secrets, store.Load(), NullLogger<SettingsService>.Instance);
 
         CapabilityRegistry? built = null;
@@ -171,7 +176,7 @@ public static class TestSurface
             ActionSurface.Inert,
             () => "No autonomous actions in a headless test.",
             NavigationSurface.Inert,
-            new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), new DiskFileSystem(), NullLogger<D47.Core.Actions.MacroStore>.Instance),
+            new D47.Core.Actions.MacroStore(Path.Combine(paths.Data, "macros.json"), FilesFor(paths), NullLogger<D47.Core.Actions.MacroStore>.Instance),
             personas ?? new D47.Core.Persona.PersonaHost(),
 
             // Real stores over real (empty) files.
@@ -194,7 +199,7 @@ public static class TestSurface
  // shipped app carried two tools it had never seen.
             shipCores: new D47.Core.Persona.ShipCoreService(
                 new D47.Core.Persona.ShipCoreStore(
-                    Path.Combine(paths.Data, "ship-cores.json"), new DiskFileSystem(),
+                    Path.Combine(paths.Data, "ship-cores.json"), FilesFor(paths),
                     NullLogger<D47.Core.Persona.ShipCoreStore>.Instance),
                 () => null),
 
@@ -217,7 +222,7 @@ public static class TestSurface
         // The registry and the secret store come back too: the guided key setup is built from the real
         // descriptor rows and asks the real store whether a key is present, so a test that cannot reach
         // either could only assert against a copy of them.
-        return (settings, new ViewStateStore(paths, new DiskFileSystem(), NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
+        return (settings, new ViewStateStore(paths, FilesFor(paths), NullLogger<ViewStateStore>.Instance), paths, registry, secrets);
     }
 
     /// <summary>Where the binding profile store of a surface reads Elite's bindings from.</summary>
@@ -240,12 +245,13 @@ public static class TestSurface
         IReadOnlyList<string>? inputDevices = null,
         SpeechSpend? speechSpend = null,
         Action? forgetCorrections = null,
-        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null)
+        Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
+        string? root = null)
     {
         var (settings, viewState, paths, _, _) = CreateFull(
             coverage, personas, voices, localVoice, recording, rescan,
             resetVoices: resetVoices, audition: audition, inputDevices: inputDevices,
-            speechSpend: speechSpend, forgetCorrections: forgetCorrections, verifyKey: verifyKey);
+            speechSpend: speechSpend, forgetCorrections: forgetCorrections, verifyKey: verifyKey, root: root);
         return (settings, viewState, paths);
     }
 

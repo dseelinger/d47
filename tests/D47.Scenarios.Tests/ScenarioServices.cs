@@ -3,6 +3,7 @@ using D47.Core.Storage;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using Xunit;
 
 namespace D47.Scenarios.Tests;
 
@@ -10,6 +11,7 @@ namespace D47.Scenarios.Tests;
 /// The live services and seed data a <see cref="ScenarioWorld"/> runs against when it stands in for the app
 /// in a model comparison, rather than the inert world the safety scenarios use.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed record ScenarioServices
 {
     /// <summary>The data files a world may be seeded with. Never secrets or settings.</summary>

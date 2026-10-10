@@ -1,9 +1,11 @@
 using D47.Core.Audio;
 using D47.Core.Storage;
+using Xunit;
 
 namespace D47.Tts.Tests;
 
 /// <summary>A model folder with a tiny tokenizer.json, and a voices folder with one valid clip, in memory.</summary>
+[Trait("Category", "Integration")]
 internal sealed class ChatterboxTestFolder
 {
     public ChatterboxTestFolder()

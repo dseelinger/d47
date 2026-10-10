@@ -18,6 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Navigation › Best cargo draws the last best cargo search, by voice or from the page (#849).</summary>
+[Trait("Category", "Integration")]
 public class TheBestCargoPageDrawsTheLastSearchTests
 {
     private static readonly DateTimeOffset AskedAt = new(2026, 10, 3, 19, 42, 0, TimeSpan.Zero);

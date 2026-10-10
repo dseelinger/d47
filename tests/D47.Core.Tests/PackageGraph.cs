@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using System.Text.Json;
+using Xunit;
 
 namespace D47.Core.Tests;
 
@@ -26,6 +27,7 @@ internal enum LicenceVerdict
 /// The transitive package graph of one project, read from the <c>project.assets.json</c> NuGet writes
 /// at restore.
 /// </summary>
+[Trait("Category", "Integration")]
 internal sealed class ProjectPackages
 {
     private ProjectPackages(

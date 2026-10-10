@@ -18,6 +18,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
+[Trait("Category", "Integration")]
 /// <summary>The Routing tab: where the Commander is going, in three readings of one journey.</summary>
 public class TheRoutingTabTests
 {
@@ -525,7 +526,7 @@ public class TheRoutingTabTests
             Assert.True(settings.Current.Trade.LargePadOnly);
 
             // A fresh store over the same file, the way a restart reads it.
-            var reloaded = new SettingsStore(paths, new DiskFileSystem(), NullLogger<SettingsStore>.Instance).Load();
+            var reloaded = new SettingsStore(paths, TestSurface.FilesFor(paths), NullLogger<SettingsStore>.Instance).Load();
 
             Assert.Equal(8, reloaded.Trade.Hops);
             Assert.Equal(4, reloaded.Trade.MaxJumps);
@@ -560,7 +561,7 @@ public class TheRoutingTabTests
             FieldNamed(panel, "Hops").Text = "7";
             Dispatcher.UIThread.RunJobs();
 
-            var raw = File.ReadAllText(paths.SettingsFile);
+            var raw = TestSurface.FilesFor(paths).ReadText(paths.SettingsFile)!;
 
             Assert.DoesNotContain("123456789", raw, StringComparison.Ordinal);
             Assert.DoesNotContain("capital", raw, StringComparison.OrdinalIgnoreCase);

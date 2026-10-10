@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Transcript's pop-up windows carry a help mark, and it goes to the site.</summary>
+[Trait("Category", "Gate")]
 public sealed class PopUpWindowsCarryAHelpMarkTests
 {
     private static Button Mark(Control window, string name) =>

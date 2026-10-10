@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary> Where <c>find_material</c> sends a Commander for a high-grade-emission material. </summary>
+[Trait("Category", "Gate")]
 public class FindMaterialAsksTheOneTableTests
 {
     /// <summary>

@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Timers and alarms exist only for a run started with the switch (#90).</summary>
+[Trait("Category", "Integration")]
 public class TimersAndAlarmsAreOffUnlessARunAsksTests : IDisposable
 {
     /// <summary>The switch and the variable are process-wide state, so both are put back.</summary>

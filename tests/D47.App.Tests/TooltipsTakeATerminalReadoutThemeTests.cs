@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// only — the same resource the tooltip's own production code resolves from, not a copy built for
 /// the test.
 /// </summary>
+[Trait("Category", "Gate")]
 public class TooltipsTakeATerminalReadoutThemeTests
 {
     private static (Window Window, Button Button) Open()

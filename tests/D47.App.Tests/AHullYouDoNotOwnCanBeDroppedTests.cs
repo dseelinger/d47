@@ -14,14 +14,12 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A hull the Commander intends to buy can be dropped again.</summary>
-[Trait("Category", "Integration")]
 public class AHullYouDoNotOwnCanBeDroppedTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-drop-hull-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-drop-hull-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -131,9 +129,8 @@ public class AHullYouDoNotOwnCanBeDroppedTests
     [Fact]
     public void AnOwnedShipIsNotDroppable()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-drop-owned-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-drop-owned-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

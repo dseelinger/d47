@@ -23,7 +23,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
 
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-materials-needed-tests");
+        var root = TestSurface.MemoryFolder("d47-materials-needed-tests");
         var store = new GameStateStore();
 
         void Apply(string line)
@@ -74,7 +74,6 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Kit.Plan(suit.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ThePageOpensOnNeededByPlansWithOneGroupPerBuild()
     {
@@ -116,7 +115,6 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AMaterialHeldInFullReadsMet()
     {
@@ -142,7 +140,6 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void WithNoPlanThePageSaysSo()
     {

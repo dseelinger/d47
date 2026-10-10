@@ -34,6 +34,7 @@ namespace D47.App.Tests;
 /// each theme and saved to <see cref="TestSurface.CaptureDirectory"/> for comparison with brief 03
 /// (#406).
 /// </summary>
+[Trait("Category", "Integration")]
 public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
 {
     private static readonly DateTimeOffset Instant = new(2026, 9, 23, 12, 0, 0, TimeSpan.Zero);

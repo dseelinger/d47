@@ -38,7 +38,7 @@ internal sealed class SlotBench
 
     public static SlotBench Open(double width = 1400)
     {
-        var root = TempFolders.Create("d47-slot-bench");
+        var root = TestSurface.MemoryFolder("d47-slot-bench");
         var state = Flying();
 
         var checklists = new ChecklistService(

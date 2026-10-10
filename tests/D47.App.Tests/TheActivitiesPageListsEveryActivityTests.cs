@@ -21,7 +21,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Activities page off the Checklist: every activity, its date, and the Suggest box (#587).</summary>
-[Trait("Category", "Integration")]
 public sealed class TheActivitiesPageListsEveryActivityTests
 {
     private const string Fid = "F1";
@@ -67,8 +66,7 @@ public sealed class TheActivitiesPageListsEveryActivityTests
             out var parsed));
         store.Apply(parsed!);
 
-        var paths = new AppPaths(TempFolders.Create("d47-activities-checklist"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-activities-checklist"));
 
         return new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

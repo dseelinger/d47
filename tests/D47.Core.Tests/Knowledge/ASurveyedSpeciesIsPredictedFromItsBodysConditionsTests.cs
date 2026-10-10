@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>The generated exobiology table, and what a body's own scan can predict from it (#204).</summary>
+[Trait("Category", "Gate")]
 public class ASurveyedSpeciesIsPredictedFromItsBodysConditionsTests
 {
     [Fact]

@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// The gate for #407: the app names no ToggleSwitch, ComboBox or CornerRadius, writes no colour outside
 /// Palette.cs, and nothing in src/ reads a retired ThemeManager key. Comments are not uses.
 /// </summary>
+[Trait("Category", "Gate")]
 public sealed class NothingRetiredFromTheLookComesBackTests
 {
     private static readonly string[] RetiredControls = ["ToggleSwitch", "ComboBox", "CornerRadius"];

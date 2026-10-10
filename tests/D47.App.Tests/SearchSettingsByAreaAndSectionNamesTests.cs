@@ -23,7 +23,6 @@ namespace D47.App.Tests;
 /// one of its search terms, a named group's title or help, and — for a row that lives on a tab rather
 /// than a settings page — a match under "On other tabs" that opens the tab and root it belongs to (#222).
 /// </summary>
-[Trait("Category", "Integration")]
 public class SearchSettingsByAreaAndSectionNamesTests
 {
     private static void Jobs() => Dispatcher.UIThread.RunJobs();
@@ -173,7 +172,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
-        var root = TempFolders.Create("d47-search-other-tabs-tests");
+        var root = TestSurface.MemoryFolder("d47-search-other-tabs-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

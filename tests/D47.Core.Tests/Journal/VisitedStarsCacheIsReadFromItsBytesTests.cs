@@ -53,6 +53,7 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
         return bytes;
     }
 
+    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(0u)]
     [InlineData(256u)]
@@ -67,6 +68,7 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
         Assert.Equal(new SystemVisits(1, Fifth), visits[Sol]);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void OneTrailingMarkerParsesAsWellAsTwo()
     {
@@ -75,22 +77,27 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
         Assert.Equal(new SystemVisits(3, Second), Assert.Single(visits!).Value);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileShorterThanItsRecordCountIsRefused() =>
         Assert.Null(VisitedStarsCache.Parse(File(512, [(Lave, 3, Second), (Sol, 1, Fifth)], markers: 0, claimed: 3)));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileCutInsideTheHeaderIsRefused() =>
         Assert.Null(VisitedStarsCache.Parse(File(512, [(Lave, 3, Second)])[..40]));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AWrongSignatureIsRefused() =>
         Assert.Null(VisitedStarsCache.Parse(File(512, [(Lave, 3, Second)], signature: "VisitedStarz")));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AWrongHeaderSizeIsRefused() =>
         Assert.Null(VisitedStarsCache.Parse(File(512, [(Lave, 3, Second)], headerSize: 64)));
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AWrongRecordSizeIsRefused() =>
         Assert.Null(VisitedStarsCache.Parse(File(512, [(Lave, 3, Second)], recordSize: 24)));
@@ -104,6 +111,7 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
     public void OnlyAnFAndDigitsNamesAFile(string? frontierId, bool named) =>
         Assert.Equal(named, VisitedStarsCache.PathFor("root", frontierId) is not null);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheFileIsTheCurrentCommandersAndIsReadAgainWhenItChanges()
     {

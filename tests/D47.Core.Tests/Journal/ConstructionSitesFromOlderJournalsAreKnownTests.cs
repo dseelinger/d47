@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>A construction site docked at in an earlier session is known from the start of this one (#798).</summary>
+[Trait("Category", "Integration")]
 public class ConstructionSitesFromOlderJournalsAreKnownTests
 {
     private const string Fid = "F1234567";
@@ -102,6 +103,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal("Apianus's Pride", location.StationName);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheWalkIsTimedAsAStepOfStartup()
     {

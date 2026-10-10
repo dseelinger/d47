@@ -15,7 +15,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The carrier page on the Fleet tab.</summary>
-[Trait("Category", "Integration")]
 public class TheCarrierPageDrawsWhatIsKnownTests
 {
     private const string Stats = """
@@ -40,7 +39,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
     private static (Window Window, PanelView Panel) Open(
         D47.Core.Capabilities.Builtin.IClipboard? clipboard, params string[] events)
     {
-        var root = TempFolders.Create("d47-carrier-page-tests");
+        var root = TestSurface.MemoryFolder("d47-carrier-page-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

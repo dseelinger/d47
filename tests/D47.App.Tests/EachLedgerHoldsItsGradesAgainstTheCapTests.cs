@@ -28,7 +28,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
 
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-materials-ledger-tests");
+        var root = TestSurface.MemoryFolder("d47-materials-ledger-tests");
         var store = new GameStateStore();
 
         void Apply(string line)
@@ -85,7 +85,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSidebarListsTheFiveShipLedgersWithTheirCounts()
     {
@@ -107,7 +106,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void RawIsOneGroupPerGradeWithItsCapAndNoGuardianMaterial()
     {
@@ -135,7 +133,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void AMaterialAtItsCapIsYellowAndOneBelowIsNot()
     {
@@ -156,7 +153,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void GuardianIsGroupedByJournalCategoryThenGrade()
     {
@@ -178,7 +174,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         surface.Window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ATilePlansNeedCarriesTheTotalNeed()
     {
@@ -218,7 +213,6 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
             row => Assert.Null(row.Material.Line));
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheRawAndGuardianLedgersAreCaptured()
     {

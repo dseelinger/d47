@@ -16,9 +16,8 @@ public class TheShipPageShowsFuelHardnessAndCrewTests
 
     private static ShipsMode Mode(GameStatus? status, bool flown = true)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-fuel-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-fuel-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -66,21 +65,18 @@ public class TheShipPageShowsFuelHardnessAndCrewTests
         return [.. mode.Details(ship.Key).SelectMany(line => line.Stats).Select(stat => $"{stat.Label}={stat.Value}")];
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFlownShipShowsItsFuelLevelAgainstItsTank()
     {
         Assert.Contains("Fuel=12.5 of 16 t", Tiles(Mode(InShip(12.5))));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AShipWithNoLiveStatusShowsItsTankAlone()
     {
         Assert.Contains("Fuel=16 t tank", Tiles(Mode(null)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void EveryHullShowsItsHardnessAndCrewSeats()
     {

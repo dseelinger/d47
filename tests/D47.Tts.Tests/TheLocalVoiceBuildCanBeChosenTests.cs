@@ -6,6 +6,7 @@ using Xunit;
 
 namespace D47.Tts.Tests;
 
+[Trait("Category", "Integration")]
 public class TheLocalVoiceBuildCanBeChosenTests
 {
 

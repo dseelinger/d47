@@ -9,6 +9,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A Commander can tell which fields they have to fill.</summary>
+[Trait("Category", "Gate")]
 public sealed class RequiredFieldsAreMarkedTests
 {
     private static IEnumerable<TextBlock> Captions(Control root) =>

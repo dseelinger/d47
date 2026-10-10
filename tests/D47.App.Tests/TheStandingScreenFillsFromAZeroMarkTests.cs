@@ -46,7 +46,7 @@ public class TheStandingScreenFillsFromAZeroMarkTests
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
-        var root = TempFolders.Create("d47-standing-page-tests");
+        var root = TestSurface.MemoryFolder("d47-standing-page-tests");
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
@@ -88,7 +88,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
     private static bool Shows(PanelView panel, string text) =>
         panel.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text);
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void StandingIsTheCommanderTabsFirstRoot()
     {
@@ -101,7 +100,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void EachPowerShowsItsBandAndASignedNumber()
     {
@@ -117,7 +115,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANegativeNumberAndAnUnfriendlyBandAreRed()
     {
@@ -131,7 +128,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void APowerNotYetSeenDrawsADashAndAnEmptyGauge()
     {
@@ -160,7 +156,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         Assert.Equal(0, unseen.ColumnDefinitions[2].Width.Value);
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANavyRankSaysHowFarToTheNextAndTheTopHasNoNext()
     {
@@ -174,7 +169,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void ANewReputationEventRedrawsThePageOnTheTick()
     {
@@ -193,7 +187,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFooterCarriesAPhraseGetStandingAnswers()
     {
@@ -205,7 +198,6 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         window.Close();
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheStandingScreenIsCaptured()
     {

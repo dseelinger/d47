@@ -9,6 +9,7 @@ namespace D47.Core.Tests.Callouts;
 /// Taking, finishing and losing missions, replayed from the journal, emit mission beats merged over a minute,
 /// named from the event or, for a loss, from the board.
 /// </summary>
+[Trait("Category", "Integration")]
 public class MissionsAreAnsweredOnCommsByTheirFactionTests
 {
     private const string Strike = "Journal.2025-07-12T012607.01.log";

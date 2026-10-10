@@ -19,7 +19,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Materials › one material: a page with a breadcrumb, not a dialog (#559).</summary>
-[Trait("Category", "Integration")]
 public class AMaterialOpensOnItsOwnPageTests
 {
     private sealed class Surface(Window window, PanelView panel, ShipPlanService ships, GameStateStore store, Galaxy galaxy)
@@ -39,7 +38,7 @@ public class AMaterialOpensOnItsOwnPageTests
 
     private static Surface Open(bool searchOn = false)
     {
-        var root = TempFolders.Create("d47-material-detail-tests");
+        var root = TestSurface.MemoryFolder("d47-material-detail-tests");
         var store = new GameStateStore();
 
         Apply(store, """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");

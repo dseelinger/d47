@@ -16,12 +16,11 @@ namespace D47.App.Tests;
 /// <summary>
 /// On a hull with no layout, the grade is a row of 1 to 5 and Any, where Any plans any grade (#434).
 /// </summary>
-[Trait("Category", "Integration")]
 public class AShipGradeIsPickedFromButtonsTests
 {
     private static (PanelView Panel, ShipsMode Mode, ShipPlanService Ships, string Item) Open()
     {
-        var root = TempFolders.Create("d47-ship-grade-tests");
+        var root = TestSurface.MemoryFolder("d47-ship-grade-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

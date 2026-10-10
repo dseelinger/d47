@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Seats;
 
 /// <summary>Every callout id under <c>src/D47.Core</c> is given a crew role or kept by the core, read with the compiler.</summary>
+[Trait("Category", "Gate")]
 public class EveryCalloutHasAnOwnerTests
 {
     [Trait("Category", "Gate")]

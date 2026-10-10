@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>The gate that makes "write the docs later" impossible rather than merely discouraged.</summary>
+[Trait("Category", "Gate")]
 public partial class DocumentationGateTests
 {
     private const string CapabilityDocsFolder = "docs/capabilities";

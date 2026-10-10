@@ -11,16 +11,14 @@ namespace D47.App.Tests;
 /// <summary>
 /// A modifier whose value is already a percentage is drawn as that value, not as a proportion.
 /// </summary>
-[Trait("Category", "Integration")]
 public class AResistanceIsShownAsItsValueTests
 {
     /// <summary>A 2D hull reinforcement rolled Heavy Duty G5, with the three resistances Elite actually wrote
     /// and the two ratio quantities beside them.</summary>
     private static ShipsMode Flying()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-resistance-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-resistance-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

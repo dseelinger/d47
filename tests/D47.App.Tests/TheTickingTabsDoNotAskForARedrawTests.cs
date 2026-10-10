@@ -18,7 +18,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The two tabs the headset pokes on every tick do not ask to be redrawn when nothing on them moved.</summary>
-[Trait("Category", "Integration")]
 public class TheTickingTabsDoNotAskForARedrawTests
 {
     private static readonly DateTimeOffset Instant =
@@ -34,7 +33,7 @@ public class TheTickingTabsDoNotAskForARedrawTests
     [AvaloniaFact]
     public void AnEngineerRankingThatDidNotMoveDoesNotAskForARedraw()
     {
-        var root = TempFolders.Create("d47-ticking-tabs-tests");
+        var root = TestSurface.MemoryFolder("d47-ticking-tabs-tests");
 
         // No game state at all, which is the stillest case there is: the stamp behind the ranking cannot
         // change, so every tick after the first has nothing to draw.

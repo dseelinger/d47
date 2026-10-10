@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>One scale, named by role, and nowhere left to write a number.</summary>
+[Trait("Category", "Integration")]
 public partial class TypeScaleTests
 {
     [GeneratedRegex(@"FontSize\s*=\s*""?\d")]

@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// A capture taken through <see cref="AppLook.Capture"/> draws the theme the app draws, leaves
 /// <see cref="Application.Current"/> as it found it, and exists for every panel tab.
 /// </summary>
+[Trait("Category", "Integration")]
 public class CapturesDrawTheAppsOwnLookTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);

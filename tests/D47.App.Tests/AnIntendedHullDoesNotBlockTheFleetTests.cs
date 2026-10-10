@@ -14,14 +14,12 @@ namespace D47.App.Tests;
 /// <summary>
 /// An intended hull does not stop the rest of the fleet being opened.
 /// </summary>
-[Trait("Category", "Integration")]
 public class AnIntendedHullDoesNotBlockTheFleetTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-intended-hull-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-intended-hull-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -102,9 +100,8 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
     [Fact]
     public void EveryShipHasItsOwnKey()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-intended-keys-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-intended-keys-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

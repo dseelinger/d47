@@ -11,14 +11,12 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The search box is drawn where a query would do something.</summary>
-[Trait("Category", "Integration")]
 public class TheSearchBoxOnlyAppearsWhereItWorksTests
 {
     private static PanelView Furnished()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-search-visibility-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-search-visibility-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

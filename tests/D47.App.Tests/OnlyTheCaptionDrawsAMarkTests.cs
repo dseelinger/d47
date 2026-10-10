@@ -7,6 +7,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// Every affordance but the window caption's is a word or one of the text glyphs <c>◄ ► ▲ ▼ ↺ ▸ ▾ ▌ ↗</c> (#360).
 /// </summary>
+[Trait("Category", "Gate")]
 public class OnlyTheCaptionDrawsAMarkTests
 {
     private static string RepositoryRoot()

@@ -54,6 +54,7 @@ public class EveryCommanderInTheJournalsIsListedTests
         Assert.Equal("Python", bravo.Ship);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AHistoryWalkOffersTheCommandersOnceItIsDone()
     {

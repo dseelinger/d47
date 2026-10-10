@@ -12,6 +12,7 @@ using Xunit;
 namespace D47.Core.Tests.Input;
 
 /// <summary>Named sequences the Commander authored.</summary>
+[Trait("Category", "Integration")]
 public class MacroTests
 {
     private readonly MemoryFileSystem _files = new();

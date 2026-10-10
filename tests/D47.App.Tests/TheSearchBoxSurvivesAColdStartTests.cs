@@ -15,7 +15,6 @@ namespace D47.App.Tests;
 /// window attached the panel to a visual tree — a cold start, where the strip's own first draw runs
 /// later than the row was decided (#103).
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheSearchBoxSurvivesAColdStartTests
 {
     private static bool BoxShown(PanelView panel) => panel.GetControl<DockPanel>("SearchRow").IsVisible;
@@ -23,9 +22,8 @@ public class TheSearchBoxSurvivesAColdStartTests
     [AvaloniaFact]
     public void AFilterableTabDrawsItsSearchOnFirstVisit()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-search-cold-start-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-search-cold-start-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

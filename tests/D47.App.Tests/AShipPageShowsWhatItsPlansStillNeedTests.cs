@@ -18,16 +18,14 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A ship's page draws a PLAN section while its plans or deliveries still need something (#565).</summary>
-[Trait("Category", "Integration")]
 public class AShipPageShowsWhatItsPlansStillNeedTests
 {
     private static readonly ChecklistScope Reaper = ChecklistScope.Ship(12);
 
     private static ShipsMode Fleet(bool planned)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-ship-plan-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-ship-plan-tests"));
 
-        paths.EnsureCreated();
 
         var store = new GameStateStore();
 

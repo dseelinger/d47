@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// the three panel sizes and saved to <see cref="TestSurface.CaptureDirectory"/> for comparison with
 /// brief 03 (#404).
 /// </summary>
+[Trait("Category", "Integration")]
 public class TheAdventuresScreenIsDrawnOnTheKitTests
 {
     private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);

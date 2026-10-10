@@ -12,14 +12,12 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The page follows a change it did not make.</summary>
-[Trait("Category", "Integration")]
 public class TheChecklistFollowsASpokenYesTests
 {
     private static (PanelView Panel, ChecklistService Checklists) Waiting()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-spoken-yes-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-spoken-yes-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

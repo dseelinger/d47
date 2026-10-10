@@ -14,13 +14,11 @@ namespace D47.App.Tests;
 /// <summary>"Nothing on your list matches that." never says what "that" was — survivable on the full
 /// panel, where the query box and the scope button sit beside it, and not in mini, where neither does
 /// (#94).</summary>
-[Trait("Category", "Integration")]
 public class AnEmptyChecklistNamesItsFilterTests
 {
     private static ChecklistService Checklists()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-empty-checklist-message"));
-        paths.EnsureCreated();
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-empty-checklist-message"));
 
         return new ChecklistService(
             new ChecklistStore(

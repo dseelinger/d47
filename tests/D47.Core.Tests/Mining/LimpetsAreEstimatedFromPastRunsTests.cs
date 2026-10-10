@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.Core.Tests.Mining;
 
 /// <summary>The history walk folds finished mining runs, and estimate_limpets answers from them (#610).</summary>
+[Trait("Category", "Integration")]
 public class LimpetsAreEstimatedFromPastRunsTests
 {
     private const string Fid = "F1";

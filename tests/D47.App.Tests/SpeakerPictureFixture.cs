@@ -9,10 +9,12 @@ using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Interface;
+using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>A Conversation page with speaker pictures, over a data folder and a build folder of its own, in memory.</summary>
+[Trait("Category", "Integration")]
 internal sealed class SpeakerPictureFixture
 {
     public SpeakerPictureFixture(string name)

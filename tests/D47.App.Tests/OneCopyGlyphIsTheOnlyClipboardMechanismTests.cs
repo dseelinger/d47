@@ -21,6 +21,7 @@ namespace D47.App.Tests;
 /// <see cref="D47.Core.Capabilities.Builtin.IClipboard"/> seam, rather than three mechanisms of
 /// their own (#157).
 /// </summary>
+[Trait("Category", "Gate")]
 public class OneCopyGlyphIsTheOnlyClipboardMechanismTests
 {
     private static string RepositoryRoot()

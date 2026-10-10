@@ -9,7 +9,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Two things a slot row was getting wrong about a plan.</summary>
-[Trait("Category", "Integration")]
 public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
 {
     /// <summary>
@@ -18,9 +17,8 @@ public class ARollIsNotDraggedOntoAModuleThatCannotTakeItTests
     /// </summary>
     private static (ShipsMode Mode, ShipPlanService Ships) InTheAnaconda()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-rollable-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-rollable-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

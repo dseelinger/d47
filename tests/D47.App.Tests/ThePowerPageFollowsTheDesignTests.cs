@@ -22,6 +22,7 @@ namespace D47.App.Tests;
 /// The Power page drawn from the design prototype's own ship, captured beside the design's reference
 /// screenshots, and driven the way the design says it is driven.
 /// </summary>
+[Trait("Category", "Integration")]
 public class ThePowerPageFollowsTheDesignTests
 {
     private const double Plant = 22.93;

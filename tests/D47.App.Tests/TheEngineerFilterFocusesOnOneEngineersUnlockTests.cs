@@ -14,13 +14,11 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The one-engineer checklist filter, drawn on the page (#265).</summary>
-[Trait("Category", "Integration")]
 public class TheEngineerFilterFocusesOnOneEngineersUnlockTests
 {
     private static ChecklistService Checklists()
     {
-        var paths = new AppPaths(TempFolders.Create("d47-engineer-focus-filter-tests"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-engineer-focus-filter-tests"));
 
         var checklists = new ChecklistService(
             new ChecklistStore(

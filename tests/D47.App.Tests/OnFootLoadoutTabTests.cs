@@ -21,7 +21,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Loadout tab's other two modes: Suits and weapons, and the gap.</summary>
-[Trait("Category", "Integration")]
 public class OnFootLoadoutTabTests
 {
     private sealed record Surface(
@@ -33,7 +32,7 @@ public class OnFootLoadoutTabTests
 
     private static Surface Open(bool onFoot = true)
     {
-        var root = TempFolders.Create("d47-onfoot-loadout-tests");
+        var root = TestSurface.MemoryFolder("d47-onfoot-loadout-tests");
 
         var state = onFoot ? OnFoot() : null;
 
@@ -72,7 +71,7 @@ public class OnFootLoadoutTabTests
     /// <summary>The same surface, with the Engineers root enabled too, so the Materials gate can name a route.</summary>
     private static Surface OpenWithEngineers()
     {
-        var root = TempFolders.Create("d47-onfoot-loadout-tests");
+        var root = TestSurface.MemoryFolder("d47-onfoot-loadout-tests");
 
         var state = OnFoot();
 
@@ -743,7 +742,7 @@ public class OnFootLoadoutTabTests
     [AvaloniaFact]
     public void ASurfaceWithNoOnFootHalfKeepsTheOneRoot()
     {
-        var root = TempFolders.Create("d47-onfoot-loadout-tests");
+        var root = TestSurface.MemoryFolder("d47-onfoot-loadout-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

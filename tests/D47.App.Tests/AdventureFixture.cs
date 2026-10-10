@@ -3,6 +3,7 @@ using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace D47.App.Tests;
 
@@ -11,13 +12,11 @@ internal static class AdventureFixture
 {
     public static AdventureSurface Surface(AppPaths? paths = null)
     {
-        var folder = paths?.Data
-                     ?? TempFolders.Create("d47-adventure-fixture");
-
-        Directory.CreateDirectory(folder);
+        paths ??= new AppPaths(TestSurface.MemoryFolder("d47-adventure-fixture"));
+        var folder = paths.Data;
 
         var store = new AdventureStore(
-            Path.Combine(folder, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance);
+            Path.Combine(folder, "adventures.json"), TestSurface.FilesFor(paths), NullLogger<AdventureStore>.Instance);
 
         var book = new AdventureBook(store, NullLogger<AdventureBook>.Instance);
 

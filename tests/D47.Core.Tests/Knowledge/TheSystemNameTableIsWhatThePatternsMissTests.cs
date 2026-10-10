@@ -3,6 +3,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
+[Trait("Category", "Integration")]
 public class TheSystemNameTableIsWhatThePatternsMissTests
 {
     private static string Root()

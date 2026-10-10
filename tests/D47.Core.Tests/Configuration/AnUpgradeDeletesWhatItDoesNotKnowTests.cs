@@ -23,6 +23,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
     private static SettingsStore StoreFor(MemoryInstall install) =>
         new(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AnUpgradeBacksTheFileUpAndDeletesTheUnknownKeys()
     {
@@ -48,6 +49,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         Assert.Equal(original, install.Files.ReadText(install.Paths.SettingsFile + ".0.169.0.bak"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void AFileNoPublishedBuildHasStampedCountsAsAnUpgrade()
     {
@@ -61,6 +63,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         Assert.True(install.Files.Stat(install.Paths.SettingsFile + ".unversioned.bak") is not null);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ATestDriveKeepsAndNamesThem()
     {
@@ -74,6 +77,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         Assert.Contains("habits", install.Files.ReadText(install.Paths.SettingsFile), StringComparison.Ordinal);
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void TheSameVersionKeepsAndNamesAKeyTypedByHand()
     {
@@ -87,6 +91,7 @@ public class AnUpgradeDeletesWhatItDoesNotKnowTests
         Assert.Empty(install.Files.Enumerate(install.Paths.Data, "*.bak"));
     }
 
+    [Trait("Category", "Integration")]
     [Fact]
     public void ADowngradeKeepsWhatTheNewerBuildWrote()
     {

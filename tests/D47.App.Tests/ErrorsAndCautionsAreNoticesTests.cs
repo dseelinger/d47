@@ -20,6 +20,7 @@ namespace D47.App.Tests;
 /// A failure is a red notice and a caution an amber one: a 3px bar in the level colour on a 12% ground of
 /// it, with the warn colours taken from the design's palette.
 /// </summary>
+[Trait("Category", "Gate")]
 public partial class ErrorsAndCautionsAreNoticesTests
 {
     private static ThemeManager Manager() => new(Application.Current!, NullLogger<ThemeManager>.Instance);

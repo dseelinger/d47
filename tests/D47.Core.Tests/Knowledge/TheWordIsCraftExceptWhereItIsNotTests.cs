@@ -6,6 +6,7 @@ namespace D47.Core.Tests.Knowledge;
 
 /// <summary> "Roll" is a word from a version of engineering that no longer exists, and five uses of it are
 /// correct English about something else. </summary>
+[Trait("Category", "Integration")]
 public class TheWordIsCraftExceptWhereItIsNotTests
 {
     /// <summary>The sentence a Commander hears most, and the one #33 made sure they hear once.</summary>

@@ -7,6 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Conversation;
 
 /// <summary>Charges kept between runs, so "what has this cost this month" has an answer.</summary>
+[Trait("Category", "Integration")]
 public class SpendLedgerTests
 {
     private readonly MemoryFileSystem _files = new();
@@ -146,6 +147,7 @@ public class SpendLedgerTests
     }
 
     /// <summary>The commonest way this file breaks is a process killed mid-append, leaving half a line.</summary>
+    [Trait("Category", "Integration")]
     [Fact]
     public void AHalfWrittenRowIsSkippedRatherThanTakingTheFileWithIt()
     {

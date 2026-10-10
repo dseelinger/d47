@@ -9,15 +9,13 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary> The Loadout row draws a plan as though it were fitted, and its marker never clears. </summary>
-[Trait("Category", "Integration")]
 public class APlanIsNotDrawnAsThoughItWereFittedTests
 {
     /// <summary>One ship, one Loadout, and whatever plan the test wants on top of it.</summary>
     private static (ShipsMode Mode, ShipPlanService Ships) Flying(params SlotPlan[] plans)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-plan-vs-fitted-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-plan-vs-fitted-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -294,9 +292,8 @@ public class APlanIsNotDrawnAsThoughItWereFittedTests
         string? experimental,
         params SlotPlan[] plans)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-roll-vs-plan-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-roll-vs-plan-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

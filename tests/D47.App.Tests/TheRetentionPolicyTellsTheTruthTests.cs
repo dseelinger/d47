@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// <summary>
 /// <c>docs/data-retention.md</c> states every number, and every number is somewhere else.
 /// </summary>
+[Trait("Category", "Gate")]
 public class TheRetentionPolicyTellsTheTruthTests
 {
     private static string Policy =>

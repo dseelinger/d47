@@ -10,6 +10,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A value said onto a drawn keyboard, key by key, in one breath (#51).</summary>
+[Trait("Category", "Gate")]
 public class SpellItOntoTheBoardTests
 {
     private static readonly PixelSize Quad = new(1024, 640);

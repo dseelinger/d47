@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests.Knowledge;
 
 /// <summary>The generated rare goods table, and the one station each row names (#115).</summary>
+[Trait("Category", "Gate")]
 public class ARareGoodHasOneStationToBeSoldAtTests
 {
     [Fact]

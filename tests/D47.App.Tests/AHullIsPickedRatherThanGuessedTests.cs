@@ -16,14 +16,12 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>"Which ship do you intend to buy?" is picked from every hull there is.</summary>
-[Trait("Category", "Integration")]
 public class AHullIsPickedRatherThanGuessedTests
 {
     private static (PanelView Panel, ShipPlanService Ships) Fleet()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-hull-picker-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-hull-picker-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

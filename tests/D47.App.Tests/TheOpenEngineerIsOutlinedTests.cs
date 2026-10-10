@@ -20,7 +20,6 @@ namespace D47.App.Tests;
 /// The left list says which engineer the right pane is drawing, and the detail pane's prose can
 /// be selected and copied.
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheOpenEngineerIsOutlinedTests
 {
     private static JournalEvent Event(string json)
@@ -49,7 +48,7 @@ public class TheOpenEngineerIsOutlinedTests
 
     private static (Window Window, PanelView Panel) Open()
     {
-        var root = TempFolders.Create("d47-outlined-row-tests");
+        var root = TestSurface.MemoryFolder("d47-outlined-row-tests");
         var state = State();
 
         var checklists = new ChecklistService(

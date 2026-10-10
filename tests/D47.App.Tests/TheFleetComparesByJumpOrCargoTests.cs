@@ -20,7 +20,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Ships › Compare: every ship as last seen, ordered by jump or cargo and filtered by cargo (#562).</summary>
-[Trait("Category", "Integration")]
 public class TheFleetComparesByJumpOrCargoTests
 {
     private sealed record Surface(Window Window, PanelView Panel, GameStateStore Store);
@@ -36,7 +35,7 @@ public class TheFleetComparesByJumpOrCargoTests
 
     private static Surface Open(IEnumerable<string> journal, bool drill = true)
     {
-        var root = TempFolders.Create("d47-fleet-compare-tests");
+        var root = TestSurface.MemoryFolder("d47-fleet-compare-tests");
         var store = new GameStateStore();
 
         foreach (var line in journal)

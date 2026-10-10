@@ -19,7 +19,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Commander › This session: earnings by source and the session's figures since the game started (#554).</summary>
-[Trait("Category", "Integration")]
 public class TheSessionScreenCountsFromTheLoadGameTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 4, 16, 0, 0, TimeSpan.Zero);
@@ -50,7 +49,7 @@ public class TheSessionScreenCountsFromTheLoadGameTests
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
-        var root = TempFolders.Create("d47-session-page-tests");
+        var root = TestSurface.MemoryFolder("d47-session-page-tests");
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(

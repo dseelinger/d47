@@ -22,6 +22,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>A system name drawn on the Adventures and Bookmarks pages carries a copy glyph (#864).</summary>
+[Trait("Category", "Integration")]
 public class SystemNamesOnAdventuresAndBookmarksCopyTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 20, 0, 0, TimeSpan.Zero);

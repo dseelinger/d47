@@ -8,6 +8,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The help pages name the Transcript readings the panel actually has.</summary>
+[Trait("Category", "Gate")]
 public sealed class HelpNamesTheReadingsTests
 {
     /// <summary>Retired Transcript reading names.</summary>

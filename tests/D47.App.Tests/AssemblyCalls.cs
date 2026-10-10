@@ -3,10 +3,12 @@ using System.Runtime.CompilerServices;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>Reads compiled IL to answer "does anything call this, and what".</summary>
+[Trait("Category", "Integration")]
 internal static class AssemblyCalls
 {
     /// <summary>Whether any method body in the assembly issues a call to the named method.</summary>

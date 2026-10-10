@@ -26,6 +26,7 @@ namespace D47.App.Tests;
 /// SEARCH › SYSTEM opens on the Commander's system, follows them while it shows it, opens any typed name, and
 /// draws each state Spansh can leave it in (#824).
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class TheSystemPageFollowsTheCommanderTests
 {
     private const long Ltt7786 = 633608311522;

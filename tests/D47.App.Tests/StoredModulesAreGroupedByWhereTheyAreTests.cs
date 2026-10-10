@@ -19,7 +19,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Fleet › Stored modules: every stored module, grouped by system, filtered by name (#563).</summary>
-[Trait("Category", "Integration")]
 public class StoredModulesAreGroupedByWhereTheyAreTests
 {
     private sealed record Surface(Window Window, PanelView Panel, GameStateStore Store);
@@ -48,7 +47,7 @@ public class StoredModulesAreGroupedByWhereTheyAreTests
 
     private static Surface Open(IEnumerable<string> journal)
     {
-        var root = TempFolders.Create("d47-stored-modules-tests");
+        var root = TestSurface.MemoryFolder("d47-stored-modules-tests");
         var store = new GameStateStore();
 
         foreach (var line in journal)

@@ -6,6 +6,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>One journal event read into a headline, rows and every field (#813).</summary>
+[Trait("Category", "Gate")]
 public class AJournalEventReadsAsLabelledRowsTests
 {
     private const string FleetCarrierDocked =

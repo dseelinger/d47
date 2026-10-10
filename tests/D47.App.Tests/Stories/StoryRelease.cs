@@ -7,10 +7,12 @@ using System.Text.Json;
 using D47.App.Panel;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace D47.App.Tests.Stories;
 
 /// <summary>A stand-in for the stories release: serves files by name, counts requests, and can hold a response.</summary>
+[Trait("Category", "Integration")]
 internal sealed class StoryRelease : HttpMessageHandler
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using D47.Core.Conversation;
+using Xunit;
 
 namespace D47.Scenarios.Tests.ModelComparison;
 
@@ -49,6 +50,7 @@ public sealed record MeteredRequest(string Model, LlmUsage Usage, decimal Dollar
 /// A provider that prices every request at <see cref="PublishedPrices"/>, appends it to a ledger that
 /// outlives the run, and refuses to start a request once the ledger reaches the cap.
 /// </summary>
+[Trait("Category", "Integration")]
 public sealed class MeteredLlmProvider : ILlmProvider
 {
     private readonly ILlmProvider _inner;

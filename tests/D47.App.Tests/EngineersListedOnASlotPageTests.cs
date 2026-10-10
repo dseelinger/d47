@@ -10,7 +10,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>Who can roll a slot's plan, under the Planned block of a slot page (#195).</summary>
-[Trait("Category", "Integration")]
 public class EngineersListedOnASlotPageTests
 {
     private static JournalEvent Event(string json)
@@ -21,9 +20,8 @@ public class EngineersListedOnASlotPageTests
 
     private static (ShipsMode Mode, ShipPlanService Ships) Ship(bool progressKnown)
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-slot-engineers-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-slot-engineers-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
@@ -130,9 +128,8 @@ public class EngineersListedOnASlotPageTests
 
     private static (OnFootMode Mode, OnFootPlanService Kit, string Item) Suit()
     {
-        var paths = new D47.Core.AppPaths(TempFolders.Create("d47-slot-engineers-onfoot-tests"));
+        var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-slot-engineers-onfoot-tests"));
 
-        paths.EnsureCreated();
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),

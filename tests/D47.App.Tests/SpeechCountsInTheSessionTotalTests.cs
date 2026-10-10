@@ -51,7 +51,7 @@ public class SpeechCountsInTheSessionTotalTests
             session,
             speech,
             new SpendLedger(
-                Path.Combine(TempFolders.Create("d47-session-total"), "spend.jsonl"), new MemoryFileSystem(),
+                Path.Combine(TestSurface.MemoryFolder("d47-session-total"), "spend.jsonl"), new MemoryFileSystem(),
                 new StoppedClock(Noon),
                 NullLogger.Instance),
             ElevenAtFiveCents,
@@ -76,7 +76,6 @@ public class SpeechCountsInTheSessionTotalTests
         return panel;
     }
 
-    [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheSpendWindowHeaderAndSessionRowAddPricedSpeech()
     {

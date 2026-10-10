@@ -48,6 +48,9 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Audio.MediaFoundationDecoder",
         "D47.Audio.MediaFoundationFileDecoder",
         "D47.Core.AppPaths",
+        "D47.Core.Diagnostics.Recording.RecordingLog",
+        "D47.Core.Input.BindingProfiles",
+        "D47.Core.Input.BindsWatch",
         "D47.Core.Storage.DiskFileSystem",
         "D47.Stt.HttpModelStore",
         "D47.Stt.WhisperTranscriber",
@@ -55,14 +58,6 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Tts.KokoroInstaller",
         "D47.Tts.ModelDownload",
         "D47.Vr.OpenVrLoader",
-    ];
-
-    /// <summary>The types not yet converted to <c>IFileSystem</c>. Each conversion removes its own.</summary>
-    private static readonly string[] NotYetConverted =
-    [
-        "D47.Core.Diagnostics.Recording.RecordingLog",
-        "D47.Core.Input.BindingProfiles",
-        "D47.Core.Input.BindsWatch",
     ];
 
     /// <summary>
@@ -80,7 +75,7 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
     [Fact]
     public void NoUnlistedTypeNamesTheDisk()
     {
-        var listed = Disk.Concat(NotYetConverted).ToHashSet(StringComparer.Ordinal);
+        var listed = Disk.ToHashSet(StringComparer.Ordinal);
         var unlisted = Surveyed.Value.Where(pair => !listed.Contains(pair.Key)).OrderBy(pair => pair.Key, StringComparer.Ordinal).ToList();
 
         Assert.True(
@@ -95,7 +90,7 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
     [Fact]
     public void EveryListedTypeStillNamesTheDisk()
     {
-        var stale = Disk.Concat(NotYetConverted).Where(type => !Surveyed.Value.ContainsKey(type)).ToList();
+        var stale = Disk.Where(type => !Surveyed.Value.ContainsKey(type)).ToList();
 
         Assert.True(
             stale.Count == 0,

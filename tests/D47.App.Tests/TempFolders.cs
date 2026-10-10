@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using Xunit;
 
 namespace D47.App.Tests;
 
 /// <summary>Temporary folders that go away again.</summary>
+[Trait("Category", "Integration")]
 internal static class TempFolders
 {
     /// <summary>Old enough that nothing running now can still want it.</summary>

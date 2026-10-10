@@ -17,7 +17,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The one surface, now a tab of the panel rather than a window over it.</summary>
-[Trait("Category", "Integration")]
 public class ChecklistTabTests
 {
     private static ChecklistService Checklists(string root) => Checklists(root, () => null);
@@ -26,7 +25,6 @@ public class ChecklistTabTests
         string root, Func<D47.Core.Journal.CommanderGameState?> state)
     {
         var paths = new AppPaths(root);
-        paths.EnsureCreated();
 
         return new ChecklistService(
             new ChecklistStore(
@@ -88,7 +86,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheTabIsThereOnceTheHostGivesIt()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         Assert.False(panel.FindControl<Control>("CommanderTab")!.IsVisible);
@@ -103,7 +101,7 @@ public class ChecklistTabTests
     public void TheHeadsetCopyHasTheChecklist()
     {
         var (settings, _, _) = TestSurface.Create();
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         using var surface = new Headset.VrPanelSurface(
             new PanelViewModel(),
@@ -126,7 +124,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheWindowKeepsBoth()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
         var (window, panel) = Open(checklists);
 
         Assert.True(panel.FindControl<Control>("CommanderTab")!.IsVisible);
@@ -137,7 +135,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void ADerivedItemHasNoCheckboxAtAll()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.List.Save(
@@ -159,7 +157,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void FinishedItemsSitBelowTheLineWithTheirCountShowing()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.Complete(checklists.Document.Items[0].Id);
@@ -181,7 +179,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void ScopeIsALabelOnTheLineRatherThanAHeadingOverAGroup()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Ship(12), "fit a fuel scoop");
@@ -201,7 +199,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheSelectedLineGrowsMoversAndMovingReordersTheList()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Universal, "fit a fuel scoop");
@@ -249,7 +247,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void SuggestionsWaitOnTheirOwnPage()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
@@ -292,7 +290,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void AcceptingFromThePageCommitsIt()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.ProposeAdd(ChecklistScope.Universal, ["buy limpets"]);
 
@@ -320,7 +318,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void ThePageFollowsAChangeMadeFromSomewhereElse()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         var (window, panel) = Open(checklists);
 
@@ -339,7 +337,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheSelectedLineCarriesBothStepsAndBothEnds()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Universal, "sell the cargo");
@@ -367,7 +365,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheChecklistTabRendersToACapture()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Ship(12), "fit a fuel scoop");
@@ -392,7 +390,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void NoMoverGlyphIsBlank()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
@@ -421,7 +419,7 @@ public class ChecklistTabTests
     [AvaloniaFact]
     public void TheMoversRenderToACapture()
     {
-        var checklists = Checklists(TempFolders.Create("d47-checklist-tests"));
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.Universal, "refill manufactured materials");
@@ -446,7 +444,7 @@ public class ChecklistTabTests
     public void TheEngineerFilterDrawsOnlyWorkThatEngineerCanActuallyDo()
     {
         var state = InLaksakWithAShieldBooster();
-        var checklists = Checklists(TempFolders.Create("d47-engineer-filter"), () => state);
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-engineer-filter"), () => state);
 
         checklists.List.Save(
         [
@@ -510,7 +508,7 @@ public class ChecklistTabTests
     public void ARankGateNamesTheBlockAndTeachesNothing()
     {
         var state = InLaksakWithAShieldBooster(rank: 1);
-        var checklists = Checklists(TempFolders.Create("d47-one-explanation"), () => state);
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-one-explanation"), () => state);
 
         checklists.List.Save(
         [
@@ -603,7 +601,7 @@ public class ChecklistTabTests
     public void PartialGradesAreOfferedBesideTheEngineerFilterAndSayHowFarTheyGo()
     {
         var state = InLaksakWithAShieldBooster();
-        var checklists = Checklists(TempFolders.Create("d47-partial-grades"), () => state);
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-partial-grades"), () => state);
 
         checklists.List.Save(
         [
@@ -644,7 +642,7 @@ public class ChecklistTabTests
     public void TheCheckboxIsNotThereWhenTheEngineerFilterIsNot()
     {
         var state = InLaksakWithAShieldBooster();
-        var checklists = Checklists(TempFolders.Create("d47-partial-grades"), () => state);
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-partial-grades"), () => state);
 
         checklists.List.Save(
         [

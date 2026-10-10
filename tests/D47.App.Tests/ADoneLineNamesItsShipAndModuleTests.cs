@@ -16,7 +16,6 @@ namespace D47.App.Tests;
 
 /// <summary>Three finished rolls reading Grade 5 Reinforced Shields on Slot01_Size7 over a caption saying ship
 /// 51.</summary>
-[Trait("Category", "Integration")]
 public class ADoneLineNamesItsShipAndModuleTests
 {
     private const string Flamebrand =
@@ -49,8 +48,7 @@ public class ADoneLineNamesItsShipAndModuleTests
 
     private static ChecklistService Checklists(CommanderGameState? state)
     {
-        var paths = new AppPaths(TempFolders.Create("d47-checklist-naming-tests"));
-        paths.EnsureCreated();
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-checklist-naming-tests"));
 
         return new ChecklistService(
             new ChecklistStore(

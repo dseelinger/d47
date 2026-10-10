@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 /// Installing an update downloads a program and then runs it, which is the most dangerous thing d47
 /// does.
 /// </summary>
+[Trait("Category", "Integration")]
 public class UpdateInstallerTests
 {
     [Theory]

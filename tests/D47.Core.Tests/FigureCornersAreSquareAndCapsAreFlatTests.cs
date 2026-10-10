@@ -4,6 +4,7 @@ using Xunit;
 namespace D47.Core.Tests;
 
 /// <summary>The gate that keeps the docs figures matching the design's zero-radius ruling (#519).</summary>
+[Trait("Category", "Gate")]
 public partial class FigureCornersAreSquareAndCapsAreFlatTests
 {
     [Trait("Category", "Gate")]

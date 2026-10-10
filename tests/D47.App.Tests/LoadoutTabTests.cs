@@ -21,7 +21,6 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Loadout tab: Fleet, then a ship, then a slot.</summary>
-[Trait("Category", "Integration")]
 public class LoadoutTabTests
 {
     private sealed record Surface(
@@ -45,7 +44,7 @@ public class LoadoutTabTests
 
     private static Surface Open(bool flying = true, bool checklist = false, bool engineered = false)
     {
-        var root = TempFolders.Create("d47-loadout-tests");
+        var root = TestSurface.MemoryFolder("d47-loadout-tests");
 
         var checklists = new ChecklistService(
             new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
