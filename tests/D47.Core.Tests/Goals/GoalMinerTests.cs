@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using D47.Core.Goals;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -153,7 +154,7 @@ public class GoalMinerTests : IDisposable
     [Fact]
     public void AFolderWithNothingInItMinesToNothingRatherThanThrowing()
     {
-        Assert.Empty(new GoalMiner(NullLogger<GoalMiner>.Instance)
+        Assert.Empty(new GoalMiner(new DiskFileSystem(), NullLogger<GoalMiner>.Instance)
             .Mine(Path.Combine(_folder, "nowhere"), Start));
     }
 
@@ -175,7 +176,7 @@ public class GoalMinerTests : IDisposable
     }
 
     private IReadOnlyList<GoalMine> Mine() =>
-        new GoalMiner(NullLogger<GoalMiner>.Instance).Mine(Files(), Start.AddYears(1));
+        new GoalMiner(new DiskFileSystem(), NullLogger<GoalMiner>.Instance).Mine(Files(), Start.AddYears(1));
 
     private IReadOnlyList<string> Files() =>
         [.. Directory.EnumerateFiles(_folder, "Journal.*.log").OrderBy(Path.GetFileName, StringComparer.Ordinal)];

@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -53,6 +54,7 @@ public class KitOutlivesTheBackfillWindowTests : IDisposable
             """{"timestamp":"2026-08-21T10:05:00Z","event":"FSDJump","StarSystem":"Sol"}""");
 
         var found = KitBackfill.FromHistory(
+            new DiskFileSystem(),
             [older, newer], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         Assert.NotNull(found["F1"].Suits.GetValueOrDefault(1));
@@ -73,6 +75,7 @@ public class KitOutlivesTheBackfillWindowTests : IDisposable
             SoldSuit("2026-08-21T10:05:00Z", 1));
 
         var found = KitBackfill.FromHistory(
+            new DiskFileSystem(),
             [older, newer], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         Assert.Null(found.GetValueOrDefault("F1")?.Suits.GetValueOrDefault(1));
@@ -125,6 +128,7 @@ public class KitOutlivesTheBackfillWindowTests : IDisposable
             """{"timestamp":"2026-08-20T12:00:00Z","event":"NewCommander","FID":"F1","Name":"Jameson","Package":"Default3"}""");
 
         var found = KitBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         Assert.False(found.ContainsKey("F1"));

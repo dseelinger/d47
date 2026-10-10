@@ -1,5 +1,6 @@
 using System.Text.Json;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -9,6 +10,10 @@ namespace D47.Core.Tests.Journal;
 public class CommodityLedgerTests
 {
     private const string Fid = "F1234";
+
+    private const string Folder = @"C:\d47-test";
+
+    private readonly MemoryFileSystem _files = new();
 
     private static readonly DateTimeOffset Noon = new(2026, 9, 5, 12, 0, 0, TimeSpan.Zero);
 
@@ -219,44 +224,32 @@ public class CommodityLedgerTests
         Assert.Equal("2.1 billion up", new LedgerTotal(2_129_966_400, 1, 1, 0, 0).Said);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void HistoryIsFoldedFromTheJournalFilesThatCoverTheWindow()
     {
-        var folder = Path.Combine(Path.GetTempPath(), "d47-ledger-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
+        // One file well before the window, one just before it that runs into it, one inside.
+        Write(Noon.AddDays(-30), [LoadGame(Noon.AddDays(-30)), Sell(Noon.AddDays(-30), 10, 50_000, 40_000)]);
+        Write(Noon.AddDays(-11), [LoadGame(Noon.AddDays(-11)), Sell(Noon.AddDays(-9), 10, 50_000, 40_000)]);
+        Write(Noon.AddDays(-2), [LoadGame(Noon.AddDays(-2)), Sell(Noon.AddDays(-2), 10, 50_000, 40_000)]);
 
-        try
-        {
-            // One file well before the window, one just before it that runs into it, one inside.
-            Write(folder, Noon.AddDays(-30), [LoadGame(Noon.AddDays(-30)), Sell(Noon.AddDays(-30), 10, 50_000, 40_000)]);
-            Write(folder, Noon.AddDays(-11), [LoadGame(Noon.AddDays(-11)), Sell(Noon.AddDays(-9), 10, 50_000, 40_000)]);
-            Write(folder, Noon.AddDays(-2), [LoadGame(Noon.AddDays(-2)), Sell(Noon.AddDays(-2), 10, 50_000, 40_000)]);
+        var ledger = new CommodityLedger();
 
-            var ledger = new CommodityLedger();
+        var read = ledger.FoldHistory(_files, Folder, Noon - CommodityLedger.Lookback, NullLogger.Instance);
 
-            var read = ledger.FoldHistory(folder, Noon - CommodityLedger.Lookback, NullLogger.Instance);
+        Assert.Equal(2, read);
 
-            Assert.Equal(2, read);
+        var window = new LedgerWindow(Noon.AddDays(-12), Noon, "the window");
 
-            var window = new LedgerWindow(Noon.AddDays(-12), Noon, "the window");
-
-            Assert.Equal(200_000, ledger.Between(Fid, "Palladium", window).Net);
-            Assert.Equal(200_000, ledger.Between(Fid, "Palladium", new LedgerWindow(Noon.AddDays(-40), Noon, "all")).Net);
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        Assert.Equal(200_000, ledger.Between(Fid, "Palladium", window).Net);
+        Assert.Equal(200_000, ledger.Between(Fid, "Palladium", new LedgerWindow(Noon.AddDays(-40), Noon, "all")).Net);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AMissingJournalFolderLeavesTheLedgerEmpty()
     {
         var ledger = new CommodityLedger();
 
-        Assert.Equal(0, ledger.FoldHistory(Path.Combine(Path.GetTempPath(), "nowhere-" + Guid.NewGuid()), Noon, NullLogger.Instance));
+        Assert.Equal(0, ledger.FoldHistory(_files, Path.Combine(Folder, "nowhere"), Noon, NullLogger.Instance));
         Assert.Equal(LedgerTotal.Empty, ledger.Session(Fid, "Palladium"));
     }
 
@@ -319,38 +312,27 @@ public class CommodityLedgerTests
         Assert.Equal(2_500_000, second.Net);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AContinuationFileWithNoLoadGameIsAttributedToTheCommanderItContinues()
     {
-        var folder = Path.Combine(Path.GetTempPath(), "d47-ledger-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
+        // The opening file carries the identity and sits before the fold's start; the continuation that
+        // becomes the fold's start file carries none of its own, as a real Journal.*.02.log would.
+        Write(Noon.AddDays(-11), [LoadGame(Noon.AddDays(-11))]);
+        Write(Noon.AddDays(-11).AddMinutes(1), [Sell(Noon.AddDays(-11).AddMinutes(2), 10, 50_000, 40_000)]);
+        Write(Noon.AddDays(-9), [Sell(Noon.AddDays(-9), 10, 50_000, 40_000)]);
 
-        try
-        {
-            // The opening file carries the identity and sits before the fold's start; the continuation that
- // becomes the fold's start file carries none of its own, as a real Journal.*.02.log would.
-            Write(folder, Noon.AddDays(-11), [LoadGame(Noon.AddDays(-11))]);
-            Write(folder, Noon.AddDays(-11).AddMinutes(1), [Sell(Noon.AddDays(-11).AddMinutes(2), 10, 50_000, 40_000)]);
-            Write(folder, Noon.AddDays(-9), [Sell(Noon.AddDays(-9), 10, 50_000, 40_000)]);
+        var ledger = new CommodityLedger();
 
-            var ledger = new CommodityLedger();
+        var read = ledger.FoldHistory(_files, Folder, Noon - CommodityLedger.Lookback, NullLogger.Instance);
 
-            var read = ledger.FoldHistory(folder, Noon - CommodityLedger.Lookback, NullLogger.Instance);
-
-            Assert.Equal(2, read);
-            Assert.Equal(200_000, ledger.Session(Fid, "Palladium").Net);
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        Assert.Equal(2, read);
+        Assert.Equal(200_000, ledger.Session(Fid, "Palladium").Net);
     }
 
-    private static void Write(string folder, DateTimeOffset opened, IEnumerable<JournalEvent> events)
+    private void Write(DateTimeOffset opened, IEnumerable<JournalEvent> events)
     {
-        var path = Path.Combine(folder, $"Journal.{opened:yyyy-MM-ddTHHmmss}.01.log");
+        var path = Path.Combine(Folder, $"Journal.{opened:yyyy-MM-ddTHHmmss}.01.log");
 
-        File.WriteAllLines(path, events.Select(journalEvent => journalEvent.Raw.GetRawText()));
+        _files.WriteText(path, string.Join('\n', events.Select(journalEvent => journalEvent.Raw.GetRawText())) + "\n");
     }
 }

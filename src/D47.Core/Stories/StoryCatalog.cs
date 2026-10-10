@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using D47.Core.Persona;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Stories;
@@ -582,23 +583,27 @@ public sealed class StoryCatalog
     /// <c>&lt;id&gt;.sealed</c> present. A card without its file is listed with no hidden entry; an entry that is
     /// unreadable or fails the format is not loaded and is logged by story id and field.
     /// </summary>
-    public static StoryCatalog Load(string folder, ILogger? logger = null)
+    public static StoryCatalog Load(IFileSystem files, string folder, ILogger? logger = null)
     {
-        var cards = ReadIndex(folder, logger);
+        var cards = ReadIndex(files, folder, logger);
         var secrets = new List<StorySecret>();
 
         foreach (var card in cards)
         {
             var path = Path.Combine(folder, card.Id + SealedExtension);
 
-            if (!File.Exists(path))
-            {
-                continue;
-            }
-
             try
             {
-                var hidden = Unseal(File.ReadAllText(path, Encoding.ASCII)).FirstOrDefault(entry =>
+                using var stream = files.OpenRead(path);
+
+                if (stream is null)
+                {
+                    continue;
+                }
+
+                using var reader = new StreamReader(stream, Encoding.ASCII);
+
+                var hidden = Unseal(reader.ReadToEnd()).FirstOrDefault(entry =>
                     string.Equals(entry.Id, card.Id, StringComparison.OrdinalIgnoreCase));
 
                 if (hidden is null)
@@ -629,18 +634,19 @@ public sealed class StoryCatalog
         return new StoryCatalog(cards, () => secrets);
     }
 
-    private static IReadOnlyList<StoryCard> ReadIndex(string folder, ILogger? logger)
+    private static IReadOnlyList<StoryCard> ReadIndex(IFileSystem files, string folder, ILogger? logger)
     {
         var path = Path.Combine(folder, IndexFile);
 
         try
         {
-            if (!File.Exists(path))
+            using var stream = files.OpenRead(path);
+
+            if (stream is null)
             {
                 return [];
             }
 
-            using var stream = File.OpenRead(path);
             var cards = JsonSerializer.Deserialize<List<StoryCard>>(stream, Json) ?? [];
             return [.. cards.DistinctBy(card => card.Id, StringComparer.OrdinalIgnoreCase)];
         }

@@ -13,7 +13,9 @@
     <EmbeddedResource Include="..\fixtures\beacons\*.log" LogicalName="Fixtures.beacons.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\cartography\*.log" LogicalName="Fixtures.cartography.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\exobiology\*.log" LogicalName="Fixtures.exobiology.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\journal\*.log" LogicalName="Fixtures.journal.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\kills\*.log" LogicalName="Fixtures.kills.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\missions\*.log" LogicalName="Fixtures.missions.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\scenes\*.log" LogicalName="Fixtures.scenes.%(Filename)%(Extension)" />
     <None Include="..\..\assets\voices\chatterbox\*.wav"
           Link="voices\chatterbox\%(Filename)%(Extension)"

@@ -2,6 +2,7 @@ using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -395,14 +396,16 @@ public class EmissionCalloutTests
     /// </summary>
     private static CommanderGameState Flying(string module, int? limpets, string vessel = "Ship")
     {
-        var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-09-05T170000.01.log"),
-            [
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-09-05T170000.01.log"),
+            string.Join(
+                '\n',
                 """{"timestamp":"2026-09-05T17:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
-                $$"""{"timestamp":"2026-09-05T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":256,"Modules":[{"Slot":"Slot03_Size6","Item":"{{module}}","On":true,"Health":1.0}]}""",
-            ]);
+                $$"""{"timestamp":"2026-09-05T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":256,"Modules":[{"Slot":"Slot03_Size6","Item":"{{module}}","On":true,"Health":1.0}]}""")
+            + "\n");
 
         if (limpets is { } aboard)
         {
@@ -410,13 +413,13 @@ public class EmissionCalloutTests
                 ? ""
                 : $$"""{ "Name":"drones", "Name_Localised":"Limpet", "Count":{{aboard}}, "Stolen":0 }""";
 
-            File.WriteAllText(
-                Path.Combine(install.Root, CargoManifestReader.ManifestFile),
+            files.WriteText(
+                Path.Combine(root, CargoManifestReader.ManifestFile),
                 $$"""{ "timestamp":"2026-09-05T17:00:11Z", "event":"Cargo", "Vessel":"{{vessel}}", "Count":{{aboard}}, "Inventory":[ {{inventory}} ] }""");
         }
 
         var store = new GameStateStore();
-        new JournalSpine(install.Root, store, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
 
         return store.Active!;
     }
@@ -428,7 +431,6 @@ public class EmissionCalloutTests
     /// hears nothing — the same "costs attention, cannot be acted on" rule the full hold already gets,
     /// applied to the other end of the same act.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("int_cargorack_size6_class1")]
     [InlineData("int_dronecontrol_fueltransfer_size3_class5")]
@@ -453,7 +455,6 @@ public class EmissionCalloutTests
     }
 
     /// <summary>A Multi Limpet Controller is a limpet controller.</summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData("int_multidronecontrol_universal_size7_class5")]
     [InlineData("int_multidronecontrol_mining_size3_class3")]
@@ -471,7 +472,6 @@ public class EmissionCalloutTests
     }
 
     /// <summary>An empty rack collects as much as no controller does, so it is the same silence.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AControllerWithNoLimpetsAboardHearsNothing()
     {
@@ -484,7 +484,6 @@ public class EmissionCalloutTests
     /// And a Commander who can act on it hears the ordinary line, with nothing said about the hold
     /// either way.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Theory]
     [InlineData(200, "Ship")]
     [InlineData(null, "Ship")]

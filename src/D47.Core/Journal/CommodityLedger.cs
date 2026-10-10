@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -113,17 +114,18 @@ public sealed class CommodityLedger
     public void Apply(JournalEvent journalEvent) => Apply([journalEvent]);
 
     /// <summary>Folds the journal files on disk that cover a window, oldest first.</summary>
-    public int FoldHistory(string directory, DateTimeOffset since, ILogger logger)
+    public int FoldHistory(IFileSystem fileSystem, string directory, DateTimeOffset since, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(fileSystem);
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}; the commodity ledger starts empty", directory);
             return 0;
         }
 
-        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -136,7 +138,7 @@ public sealed class CommodityLedger
         {
             for (var i = start - 1; i >= 0 && _current is null; i--)
             {
-                _current = LatestIdentity(files[i], logger);
+                _current = LatestIdentity(fileSystem, files[i], logger);
             }
         }
 
@@ -144,7 +146,7 @@ public sealed class CommodityLedger
 
         for (var i = Math.Max(0, start); i < files.Count; i++)
         {
-            var reader = new JournalReader(files[i], logger);
+            var reader = new JournalReader(files[i], fileSystem, logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {
@@ -160,14 +162,11 @@ public sealed class CommodityLedger
     }
 
     /// <summary>The last Commander/LoadGame FID a file carries, without folding it (#314).</summary>
-    private static string? LatestIdentity(string file, ILogger logger)
+    private static string? LatestIdentity(IFileSystem fileSystem, string file, ILogger logger)
     {
         string? fid = null;
 
-        // FileShare.ReadWrite | Delete for the reason JournalReader gives: Elite holds a journal open for
-        // writing for the whole session, and a plain read share fails against that.
-        using var stream = new FileStream(
-            file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
 
         using var lines = new StreamReader(stream);
 

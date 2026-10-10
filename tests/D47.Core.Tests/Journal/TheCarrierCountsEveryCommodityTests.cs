@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -146,7 +147,7 @@ public class TheCarrierCountsEveryCommodityTests
         ];
         File.WriteAllLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), journal);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
         var store = new GameStateStore { RestoreCarrier = fid => backfill.Carriers?.GetValueOrDefault(fid) };
 
         foreach (var line in journal)
@@ -180,7 +181,7 @@ public class TheCarrierCountsEveryCommodityTests
         ];
         File.WriteAllLines(Path.Combine(install.Root, "Journal.2026-09-13T155900.01.log"), current);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
         var store = new GameStateStore { RestoreCarrier = fid => backfill.Carriers?.GetValueOrDefault(fid) };
 
         foreach (var line in current)

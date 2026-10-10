@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -197,7 +198,7 @@ public sealed record GameStatus
 }
 
 /// <summary>Pull-based reads of Status.json.</summary>
-public sealed class GameStatusReader(string directory, ILogger logger)
+public sealed class GameStatusReader(string directory, IFileSystem files, ILogger logger)
 {
     public const string FileName = "Status.json";
 
@@ -210,35 +211,22 @@ public sealed class GameStatusReader(string directory, ILogger logger)
     {
         var path = Path.Combine(directory, FileName);
 
-        DateTime written;
+        // Not an error: Elite has never run, or is not running now.
+        if (files.Stat(path) is not { } state || state.Written == _stamp)
+        {
+            return false;
+        }
+
+        var written = state.Written;
 
         try
         {
-            var info = new FileInfo(path);
+            using var stream = files.OpenRead(path);
 
-            // Not an error: Elite has never run, or is not running now.
-            if (!info.Exists)
+            if (stream is null)
             {
                 return false;
             }
-
-            written = info.LastWriteTimeUtc;
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not stat Status.json");
-            return false;
-        }
-
-        if (written == _stamp)
-        {
-            return false;
-        }
-
-        try
-        {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
             using var document = JsonDocument.Parse(stream);
             var root = document.RootElement;

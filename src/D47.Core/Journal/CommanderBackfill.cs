@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -20,6 +21,7 @@ public static class CommanderBackfill
     /// and the number of files in that window.
     /// </summary>
     public static (IReadOnlyDictionary<string, CommanderSighting> Commanders, int FilesExamined) FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -34,12 +36,12 @@ public static class CommanderBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            if (Owner(files[i], logger) is not { } owner || found.ContainsKey(owner))
+            if (Owner(fileSystem, files[i], logger) is not { } owner || found.ContainsKey(owner))
             {
                 continue;
             }
 
-            if (Read(files[i], owner, logger) is { } sighting)
+            if (Read(fileSystem, files[i], owner, logger) is { } sighting)
             {
                 found[owner] = sighting;
             }
@@ -48,14 +50,14 @@ public static class CommanderBackfill
         return (found, files.Count - floor);
     }
 
-    private static CommanderSighting? Read(string file, string fid, ILogger logger)
+    private static CommanderSighting? Read(IFileSystem fileSystem, string file, string fid, ILogger logger)
     {
         string? name = null;
         string? system = null;
         ShipLoadout ship = ShipLoadout.Unknown;
         var lastSeen = DateTimeOffset.MinValue;
 
-        var reader = new JournalReader(file, logger);
+        var reader = new JournalReader(file, fileSystem, logger);
 
         while (reader.Poll() is { Count: > 0 } batch)
         {
@@ -97,12 +99,11 @@ public static class CommanderBackfill
     }
 
     /// <summary>The FID on the first line that carries one, or null for an unreadable or ownerless file.</summary>
-    private static string? Owner(string file, ILogger logger)
+    private static string? Owner(IFileSystem fileSystem, string file, ILogger logger)
     {
         try
         {
-            using var stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
 
             using var reader = new StreamReader(stream);
 

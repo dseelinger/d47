@@ -1,6 +1,7 @@
 using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using JournalEvidence = D47.Core.Journal.UnlockEvidence;
@@ -60,7 +61,7 @@ public class TalliesCountFromTheFirstListingTests
         using var install = new TempInstall();
         File.WriteAllLines(Path.Combine(install.Root, "Journal.2025-11-03T173732.01.log"), SmearCampaign);
 
-        var backfill = new HistoryBackfill { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
         backfill.Run(TestContext.Current.CancellationToken);
 
         Assert.Equal(5, backfill.Evidence![Fid].Tallies.For(Yarden.Id)?.Total);

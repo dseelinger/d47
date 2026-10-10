@@ -2,6 +2,7 @@ using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -101,28 +102,30 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
     /// <summary>A Commander docked at <paramref name="station"/> in a ship carrying limpets.</summary>
     private static CommanderGameState Commander(int cargoCapacity = 280, int limpets = 0, string? station = Pad)
     {
-        var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-09-19T090000.01.log"),
-            [
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-09-19T090000.01.log"),
+            string.Join(
+                '\n',
                 """{"timestamp":"2026-09-19T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
                 $$"""{"timestamp":"2026-09-19T09:00:01Z","event":"Loadout","Ship":"type9","ShipID":1,"CargoCapacity":{{cargoCapacity}},"Modules":[]}""",
                 station is null
                     ? $$"""{"timestamp":"2026-09-19T09:00:02Z","event":"Location","StarSystem":"{{Home}}","SystemAddress":1001,"Docked":false}"""
-                    : $$"""{"timestamp":"2026-09-19T09:00:02Z","event":"Location","StarSystem":"{{Home}}","SystemAddress":1001,"Docked":true,"StationName":"{{station}}","StationType":"Coriolis"}""",
-            ]);
+                    : $$"""{"timestamp":"2026-09-19T09:00:02Z","event":"Location","StarSystem":"{{Home}}","SystemAddress":1001,"Docked":true,"StationName":"{{station}}","StationType":"Coriolis"}""")
+            + "\n");
 
         var inventory = limpets == 0
             ? ""
             : $$"""{ "Name":"drones", "Name_Localised":"Limpet", "Count":{{limpets}}, "Stolen":0 }""";
 
-        File.WriteAllText(
-            Path.Combine(install.Root, CargoManifestReader.ManifestFile),
+        files.WriteText(
+            Path.Combine(root, CargoManifestReader.ManifestFile),
             $$"""{ "timestamp":"2026-09-19T09:00:03Z", "event":"Cargo", "Vessel":"Ship", "Count":{{limpets}}, "Inventory":[ {{inventory}} ] }""");
 
         var store = new GameStateStore();
-        new JournalSpine(install.Root, store, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
 
         return store.Active!;
     }
@@ -142,7 +145,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
          "StarSystem":"Fixture"}
         """;
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task PlottingARouteWhileDockedNamesWhatToBuyForTheLastSystemOnIt()
     {
@@ -163,7 +165,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
             said.Text);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ASecondPlotToTheSameSystemFromTheSamePadAsksNothingMore()
     {
@@ -181,7 +182,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Single(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnotherDestinationFromTheSamePadIsAskedAgain()
     {
@@ -201,7 +201,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Equal([Far, "Ceos"], trade.Asked.Select(search => search.Destination));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AHoldUnderTheThresholdAsksNothing()
     {
@@ -215,7 +214,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheLimpetsAboardComeOffTheHoldBeforeTheThresholdIsApplied()
     {
@@ -235,7 +233,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Equal(292, Assert.Single(trade.Asked).Hold);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NotDockedAsksNothing()
     {
@@ -248,7 +245,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoRoutePlottedAsksNothing()
     {
@@ -260,7 +256,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARouteThatEndsWhereYouAreStandingAsksNothing()
     {
@@ -272,7 +267,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithGalaxySearchOffNoCallIsMade()
     {
@@ -284,7 +278,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WhilePrimingNoCallIsMade()
     {
@@ -297,7 +290,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithTheToggleOffNoCallIsMade()
     {
@@ -310,7 +302,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(dispatched);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void WithNoEventThisTickNoCallIsMade()
     {
@@ -322,7 +313,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ADestinationWhereNothingPaysSaysSo()
     {
@@ -338,7 +328,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
             Assert.Single(callout.Examine(Context(state, route))).Text);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AnAnswerThatArrivesAfterTheRouteChangedIsNotSaid()
     {
@@ -351,7 +340,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(callout.Examine(Context(state, Route(Home, "Ceos"))));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task AFailedLookupIsNotSpoken()
     {
@@ -365,7 +353,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(callout.Examine(Context(state, route)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task APairWhoseLookupFailedIsAskedAgainOnTheNextPlot()
     {
@@ -386,7 +373,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Single(callout.Examine(Context(state, route)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void APairWithALookupStillOutIsNotAskedTwice()
     {
@@ -401,7 +387,6 @@ public class WhatToBuyHereIsSaidOnceForEachDestinationTests
         Assert.Empty(trade.Asked);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheSavedTradeFiltersReachTheSearch()
     {

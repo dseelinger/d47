@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -114,6 +115,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         var backfill = new HistoryBackfill
         {
             Directory = install.Root,
+            FileSystem = new DiskFileSystem(),
             Loggers = NullLoggerFactory.Instance,
             Step = name =>
             {
@@ -134,7 +136,7 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         ColonisationBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private static HistoryBackfill Backfill(TempInstall install) =>
-        new() { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        new() { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
 
     private static GameStateStore StoreOver(HistoryBackfill backfill) =>
         new() { RestoreColonisation = fid => backfill.Colonisation?.GetValueOrDefault(fid) };

@@ -1,6 +1,7 @@
 ﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,25 +16,26 @@ public class JournalCapabilityTests
     }
 
  /// <summary><c>get_ship</c> says how full the hold is, not just how big it is.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ReportsHowFullTheHoldIsRatherThanOnlyItsCapacity()
     {
-        var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-09-05T000000.01.log"),
-            [
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-09-05T000000.01.log"),
+            string.Join(
+                '\n',
                 """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                """{"timestamp":"3311-01-01T00:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour","CargoCapacity":64,"Modules":[]}""",
-            ]);
+                """{"timestamp":"3311-01-01T00:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour","CargoCapacity":64,"Modules":[]}""")
+            + "\n");
 
-        File.WriteAllText(
-            Path.Combine(install.Root, CargoManifestReader.ManifestFile),
+        files.WriteText(
+            Path.Combine(root, CargoManifestReader.ManifestFile),
             """{ "timestamp":"3311-01-01T00:01:00Z", "event":"Cargo", "Vessel":"Ship", "Count":64, "Inventory":[ { "Name":"gold", "Name_Localised":"Gold", "Count":64, "Stolen":0 } ] }""");
 
         var gameState = new GameStateStore();
-        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, gameState, NullLoggerFactory.Instance).Poll();
 
         var registry = CapabilityRegistry.Build([JournalCapability.Create(gameState)]);
         var result = await registry.InvokeAsync("get_ship", ToolArguments.Empty, TestContext.Current.CancellationToken);
@@ -396,7 +398,7 @@ public class JournalCapabilityTests
             RestoreCarrier = fid => carriers.TryGetValue(fid, out var carrier) ? carrier : null,
         };
 
-        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(install.Root, new DiskFileSystem(), gameState, NullLoggerFactory.Instance).Poll();
 
         return gameState;
     }

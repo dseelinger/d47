@@ -338,7 +338,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 ? mark.Position
                 : (long?)null;
 
-            var reader = new JournalReader(file, logger, limit);
+            var reader = new JournalReader(file, store.Files, logger, limit);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {

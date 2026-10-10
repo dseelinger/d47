@@ -1,3 +1,5 @@
+using D47.Core.Storage;
+
 namespace D47.Core.Journal;
 
 /// <summary>Elite writes one file per session into one folder shared by every Commander on the machine.</summary>
@@ -17,15 +19,8 @@ public static class JournalFolder
     /// The newest journal file by ordinal filename sort, or null if the folder is missing or has none —
     /// a legitimate state (no Elite install, or Elite has never run) rather than an error.
     /// </summary>
-    public static string? LatestFile(string directory)
-    {
-        if (!Directory.Exists(directory))
-        {
-            return null;
-        }
-
-        return Directory.EnumerateFiles(directory, FilePattern)
+    public static string? LatestFile(IFileSystem files, string directory) =>
+        files.Enumerate(directory, FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .LastOrDefault();
-    }
 }

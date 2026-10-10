@@ -194,6 +194,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         ]);
 
         var caught = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.True(caught.TryGetValue("F1", out var ships));
@@ -240,6 +241,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         Assert.True(window.Count > 25, $"walked {window.Count} files");
 
         var caught = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             window, NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.Null(caught["F1"].For(42));
@@ -308,7 +310,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             """{"timestamp":"2026-01-03T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
             Boarding("2026-01-03T10:05:00Z", "anaconda", 51, "int_engine_size7_class2"));
 
-        var found = LoadoutBackfill.Rescan(_root, NullLogger.Instance);
+        var found = LoadoutBackfill.Rescan(new DiskFileSystem(), _root, NullLogger.Instance);
 
         Assert.Equal(1, found.Files);
         Assert.Equal(1, found.Ships);
@@ -326,11 +328,11 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
     [Fact]
     public void ARescanOfAFolderWithNoJournalsFindsNothingAndSaysSo()
     {
-        Assert.Equal(0, LoadoutBackfill.Rescan(_root, NullLogger.Instance).Files);
+        Assert.Equal(0, LoadoutBackfill.Rescan(new DiskFileSystem(), _root, NullLogger.Instance).Files);
 
         Assert.Equal(
             0,
-            LoadoutBackfill.Rescan(Path.Combine(_root, "not-there"), NullLogger.Instance).Files);
+            LoadoutBackfill.Rescan(new DiskFileSystem(), Path.Combine(_root, "not-there"), NullLogger.Instance).Files);
     }
 
     /// <summary>A rescan replaces every known Commander, including one it found nothing for.</summary>
@@ -373,7 +375,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
 
         var seen = new List<double>();
 
-        LoadoutBackfill.Rescan(_root, NullLogger.Instance, new Steps(seen));
+        LoadoutBackfill.Rescan(new DiskFileSystem(), _root, NullLogger.Instance, new Steps(seen));
 
         Assert.Equal(0, seen[0]);
         Assert.Equal(1, seen[^1]);
@@ -493,6 +495,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         ]);
 
         var rebuilt = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, corrupt.All, cancellation: TestContext.Current.CancellationToken);
 
         Assert.NotNull(rebuilt["F1"].For(51));
@@ -596,6 +599,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             Boarding("2026-08-21T09:10:00Z", "sidewinder", 1, "int_engine_size2_class1"));
 
         var found = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         Assert.Null(found["F1"].For(42));
@@ -630,6 +634,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
             ResetOf("F1"));
 
         var found = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         // Fully forgotten, so it no longer has a known fleet at all.

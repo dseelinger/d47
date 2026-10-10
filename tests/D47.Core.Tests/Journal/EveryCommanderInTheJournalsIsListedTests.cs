@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -35,6 +36,7 @@ public class EveryCommanderInTheJournalsIsListedTests
             """{ "timestamp":"2026-08-03T10:30:00Z", "event":"CarrierJump", "StarSystem":"Colonia" }""");
 
         var (commanders, examined) = CommanderBackfill.FromHistory(
+            new DiskFileSystem(),
             Files(install), NullLogger.Instance, TestContext.Current.CancellationToken);
 
         Assert.Equal(3, examined);
@@ -63,7 +65,7 @@ public class EveryCommanderInTheJournalsIsListedTests
             "Journal.2026-08-01T100000.01.log",
             """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"Alpha", "Ship":"python" }""");
 
-        var backfill = new HistoryBackfill { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        var backfill = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
 
         Assert.Null(backfill.Commanders);
 

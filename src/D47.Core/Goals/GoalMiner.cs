@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Goals;
@@ -45,17 +46,17 @@ public sealed record GoalMine
 /// The batch walk that gives every arc its age (Phase 34, "Goals that outlive a checklist" — how long
 /// it has been running).
 /// </summary>
-public sealed class GoalMiner(ILogger<GoalMiner> logger)
+public sealed class GoalMiner(IFileSystem fileSystem, ILogger<GoalMiner> logger)
 {
     public IReadOnlyList<GoalMine> Mine(string directory, DateTimeOffset now)
     {
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return [];
         }
 
-        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -76,7 +77,7 @@ public sealed class GoalMiner(ILogger<GoalMiner> logger)
 
         foreach (var file in files)
         {
-            var reader = new JournalReader(file, logger);
+            var reader = new JournalReader(file, fileSystem, logger);
             var seen = new HashSet<string>(StringComparer.Ordinal);
 
             while (reader.Poll() is { Count: > 0 } batch)

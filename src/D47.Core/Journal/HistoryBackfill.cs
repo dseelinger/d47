@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -35,6 +36,8 @@ public sealed class HistoryBackfill
 
     /// <summary>The journal folder to walk.</summary>
     public required string Directory { get; init; }
+
+    public required IFileSystem FileSystem { get; init; }
 
     public required ILoggerFactory Loggers { get; init; }
 
@@ -139,6 +142,7 @@ public sealed class HistoryBackfill
             Fleets = Timed(
                 "fleet backfill",
                 () => FleetBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(FleetBackfill)),
                     cancellation));
@@ -146,6 +150,7 @@ public sealed class HistoryBackfill
             Loadouts = Timed(
                 "loadout backfill",
                 () => LoadoutBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(LoadoutBackfill)),
                     LoadoutFile?.All,
@@ -156,6 +161,7 @@ public sealed class HistoryBackfill
             Kits = Timed(
                 "kit backfill",
                 () => KitBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(KitBackfill)),
                     KitFile?.All,
@@ -172,6 +178,7 @@ public sealed class HistoryBackfill
             Missions = Timed(
                 "mission backfill",
                 () => MissionBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(MissionBackfill)),
                     cancellation));
@@ -197,6 +204,7 @@ public sealed class HistoryBackfill
                 () =>
                 {
                     var (sightings, examined) = CommanderBackfill.FromHistory(
+                        FileSystem,
                         Files(),
                         Loggers.CreateLogger(nameof(CommanderBackfill)),
                         cancellation);
@@ -290,6 +298,7 @@ public sealed class HistoryBackfill
     private IReadOnlyDictionary<string, SpokenNames> MineNames(CancellationToken cancellation)
     {
         var found = SpokenNameMiner.FromHistory(
+            FileSystem,
             Directory,
             Loggers.CreateLogger(nameof(SpokenNameMiner)),
             NameFile?.All.ToDictionary(entry => entry.Key, entry => entry.Value.Names, StringComparer.Ordinal),
@@ -305,9 +314,7 @@ public sealed class HistoryBackfill
     }
 
     private IReadOnlyList<string> Files() =>
-        System.IO.Directory.Exists(Directory)
-            ? [.. System.IO.Directory.EnumerateFiles(Directory, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)]
-            : [];
+        [.. FileSystem.Enumerate(Directory, JournalFolder.FilePattern).OrderBy(Path.GetFileName, StringComparer.Ordinal)];
 
     private T Timed<T>(string name, Func<T> fold)
     {

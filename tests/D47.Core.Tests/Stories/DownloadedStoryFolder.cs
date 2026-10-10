@@ -1,21 +1,21 @@
 using System.IO.Compression;
-using System.Text;
 using System.Text.Json;
 using D47.Core.Stories;
+using D47.Core.Storage;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>A temporary <c>data\stories</c> folder, written the way the release publishes it.</summary>
-internal sealed class DownloadedStoryFolder : IDisposable
+/// <summary>A <c>data\stories</c> folder in memory, written the way the release publishes it.</summary>
+internal sealed class DownloadedStoryFolder
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    public DownloadedStoryFolder() => Directory.CreateDirectory(Path);
+    public MemoryFileSystem Files { get; } = new();
 
-    public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "d47-stories-" + Guid.NewGuid().ToString("N"));
+    public string Path { get; } = @"C:\d47-test\data\stories";
 
     public void WriteIndex(params StoryCard[] cards) =>
-        File.WriteAllText(System.IO.Path.Combine(Path, StoryCatalog.IndexFile), JsonSerializer.Serialize(cards, Json));
+        Files.WriteText(System.IO.Path.Combine(Path, StoryCatalog.IndexFile), JsonSerializer.Serialize(cards, Json));
 
     public void WriteSealed(StorySecret secret)
     {
@@ -27,8 +27,6 @@ internal sealed class DownloadedStoryFolder : IDisposable
             deflate.Write(raw);
         }
 
-        File.WriteAllText(System.IO.Path.Combine(Path, secret.Id + StoryCatalog.SealedExtension), Convert.ToBase64String(packed.ToArray()), Encoding.ASCII);
+        Files.WriteText(System.IO.Path.Combine(Path, secret.Id + StoryCatalog.SealedExtension), Convert.ToBase64String(packed.ToArray()));
     }
-
-    public void Dispose() => Directory.Delete(Path, recursive: true);
 }

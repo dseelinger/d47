@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -42,7 +43,7 @@ public sealed record CargoHold
 }
 
 /// <summary>Pull-based reads of <c>Cargo.json</c>.</summary>
-public sealed class CargoManifestReader(string directory, ILogger logger)
+public sealed class CargoManifestReader(string directory, IFileSystem files, ILogger logger)
 {
     public const string ManifestFile = "Cargo.json";
 
@@ -55,37 +56,22 @@ public sealed class CargoManifestReader(string directory, ILogger logger)
     {
         var path = Path.Combine(directory, ManifestFile);
 
-        DateTime written;
+        // Not an error.
+        if (files.Stat(path) is not { } state || state.Written == _stamp)
+        {
+            return false;
+        }
+
+        var written = state.Written;
 
         try
         {
-            var info = new FileInfo(path);
+            using var stream = files.OpenRead(path);
 
-            // Not an error.
-            if (!info.Exists)
+            if (stream is null)
             {
                 return false;
             }
-
-            written = info.LastWriteTimeUtc;
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not stat {File}", ManifestFile);
-            return false;
-        }
-
-        if (written == _stamp)
-        {
-            return false;
-        }
-
-        try
-        {
-            // Share everything: Elite is actively rewriting this file, and a plain OpenRead loses the race
-            // often enough to matter at 10 Hz.
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
             using var document = JsonDocument.Parse(stream);
 

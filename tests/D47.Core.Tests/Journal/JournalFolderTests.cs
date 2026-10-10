@@ -1,50 +1,49 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-[Trait("Category", "Integration")]
 public class JournalFolderTests
 {
+    private const string Root = @"C:\d47-test\journals";
+
+    private readonly MemoryFileSystem _files = new();
+
     [Fact]
     public void MissingDirectoryYieldsNoFileRatherThanThrowing()
     {
-        var missing = Path.Combine(Path.GetTempPath(), "d47-tests", "does-not-exist-" + Guid.NewGuid().ToString("N"));
-
-        Assert.Null(JournalFolder.LatestFile(missing));
+        Assert.Null(JournalFolder.LatestFile(_files, Root));
     }
 
     [Fact]
     public void EmptyDirectoryYieldsNoFile()
     {
-        using var install = new TempInstall();
+        _files.WriteText(Path.Combine(Root, "Status.json"), "");
+        _files.Delete(Path.Combine(Root, "Status.json"));
 
-        Assert.Null(JournalFolder.LatestFile(install.Root));
+        Assert.Null(JournalFolder.LatestFile(_files, Root));
     }
 
     [Fact]
     public void PicksTheLatestFileByFilenameNotByFilesystemTimestamp()
     {
-        using var install = new TempInstall();
+        // Written out of chronological order, with the earlier-named file written last, so a write-time picker
+        // would get this wrong; only a filename sort gets it right.
+        var older = Path.Combine(Root, "Journal.2026-02-10T090000.01.log");
+        var newer = Path.Combine(Root, "Journal.2026-02-10T113000.01.log");
+        _files.WriteText(newer, "");
+        _files.WriteText(older, "");
 
-        // Written out of chronological order, with the earlier-named file touched last, so a
-        // filesystem-mtime-based picker would get this wrong; only a filename sort gets it right.
-        var older = Path.Combine(install.Root, "Journal.2026-02-10T090000.01.log");
-        var newer = Path.Combine(install.Root, "Journal.2026-02-10T113000.01.log");
-        File.WriteAllText(newer, "");
-        File.WriteAllText(older, "");
-        File.SetLastWriteTimeUtc(older, DateTime.UtcNow);
-
-        Assert.Equal(newer, JournalFolder.LatestFile(install.Root));
+        Assert.Equal(newer, JournalFolder.LatestFile(_files, Root));
     }
 
     [Fact]
     public void IgnoresFilesThatDoNotMatchTheJournalPattern()
     {
-        using var install = new TempInstall();
-        File.WriteAllText(Path.Combine(install.Root, "Journal.2026-02-10T090000.01.log"), "");
-        File.WriteAllText(Path.Combine(install.Root, "Status.json"), "");
+        _files.WriteText(Path.Combine(Root, "Journal.2026-02-10T090000.01.log"), "");
+        _files.WriteText(Path.Combine(Root, "Status.json"), "");
 
-        Assert.EndsWith("Journal.2026-02-10T090000.01.log", JournalFolder.LatestFile(install.Root));
+        Assert.EndsWith("Journal.2026-02-10T090000.01.log", JournalFolder.LatestFile(_files, Root));
     }
 }

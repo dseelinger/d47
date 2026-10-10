@@ -1,4 +1,5 @@
 ﻿using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Listening;
@@ -13,6 +14,7 @@ public static class SpokenNameMiner
     /// <param name="stored">What the file already held, to add to rather than replace.</param>
     /// <param name="since">How far the file has been read, or null to read everything.</param>
     public static IReadOnlyDictionary<string, SpokenNames> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         IReadOnlyDictionary<string, SpokenNames>? stored = null,
@@ -22,13 +24,13 @@ public static class SpokenNameMiner
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return stored ?? new Dictionary<string, SpokenNames>(StringComparer.Ordinal);
         }
 
-        var all = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -36,11 +38,12 @@ public static class SpokenNameMiner
         // catalogue is one that cannot recover the name the Commander is about to say.
         var walking = since is null ? all : LoadoutBackfill.Window(all, since);
 
-        return FromHistory(walking, logger, stored, progress, cancellation);
+        return FromHistory(fileSystem, walking, logger, stored, progress, cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, SpokenNames> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         IReadOnlyDictionary<string, SpokenNames>? stored = null,
@@ -62,7 +65,7 @@ public static class SpokenNameMiner
 
             progress?.Report((double)i / Math.Max(1, files.Count));
 
-            var reader = new JournalReader(files[i], logger);
+            var reader = new JournalReader(files[i], fileSystem, logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {

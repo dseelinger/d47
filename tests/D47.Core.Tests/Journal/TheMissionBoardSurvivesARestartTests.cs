@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -10,10 +11,15 @@ namespace D47.Core.Tests.Journal;
 /// restart. Replayed from <c>tests/fixtures/missions</c>: three sessions, the newest holding only a
 /// <c>Missions</c> snapshot.
 /// </summary>
-[Trait("Category", "Integration")]
 public sealed class TheMissionBoardSurvivesARestartTests
 {
     private const string Fid = "F100";
+
+    private const string Root = @"C:\d47-test";
+
+    private static readonly string Fixtures = Path.Combine(Root, "missions");
+
+    private static readonly MemoryFileSystem Recorded = LoadFixtures();
 
     private const long Courier = 1066795391;
     private const long Massacre = 1066820845;
@@ -134,22 +140,22 @@ public sealed class TheMissionBoardSurvivesARestartTests
     [Fact]
     public void TheSearchStopsOnceEveryLiveMissionIsFound()
     {
-        using var install = new TempInstall();
+        var files = new MemoryFileSystem();
 
-        var oldest = Write(install, "Journal.2026-09-10T100000.01.log", LoadGame("2026-09-10"), Accept(9001, "2026-09-10"));
-        Write(install, "Journal.2026-09-12T100000.01.log", LoadGame("2026-09-12"), Accept(Courier, "2026-09-12"));
-        Write(install, "Journal.2026-09-14T100000.01.log", LoadGame("2026-09-14"));
-        Write(install, "Journal.2026-09-16T100000.01.log", LoadGame("2026-09-16"), Snapshot(Courier, "2026-09-16"));
+        var oldest = Write(files, "Journal.2026-09-10T100000.01.log", LoadGame("2026-09-10"), Accept(9001, "2026-09-10"));
+        Write(files, "Journal.2026-09-12T100000.01.log", LoadGame("2026-09-12"), Accept(Courier, "2026-09-12"));
+        Write(files, "Journal.2026-09-14T100000.01.log", LoadGame("2026-09-14"));
+        Write(files, "Journal.2026-09-16T100000.01.log", LoadGame("2026-09-16"), Snapshot(Courier, "2026-09-16"));
 
         var opened = new List<string>();
 
         var boards = MissionBackfill.FromHistory(
-            [.. Directory.EnumerateFiles(install.Root, "Journal.*.log").Order(StringComparer.Ordinal)],
+            files.Enumerate(Root, "Journal.*.log"),
             NullLogger.Instance,
             path =>
             {
                 opened.Add(Path.GetFileName(path));
-                return File.ReadAllText(path);
+                return files.ReadText(path);
             },
             TestContext.Current.CancellationToken);
 
@@ -202,7 +208,7 @@ public sealed class TheMissionBoardSurvivesARestartTests
     /// </summary>
     private static CommanderGameState Restarted()
     {
-        var recovered = MissionBackfill.FromHistory(Fixtures, NullLogger.Instance, TestContext.Current.CancellationToken);
+        var recovered = MissionBackfill.FromHistory(Recorded, Fixtures, NullLogger.Instance, TestContext.Current.CancellationToken);
 
         var store = new GameStateStore { RestoreMissions = recovered.GetValueOrDefault };
         Replay(store, Newest);
@@ -213,7 +219,7 @@ public sealed class TheMissionBoardSurvivesARestartTests
 
     private static void Replay(GameStateStore store, string file)
     {
-        var reader = new JournalReader(file, NullLogger.Instance);
+        var reader = new JournalReader(file, Recorded, NullLogger.Instance);
 
         while (reader.Poll() is { Count: > 0 } batch)
         {
@@ -224,20 +230,16 @@ public sealed class TheMissionBoardSurvivesARestartTests
         }
     }
 
-    private static string Fixtures
+    private static MemoryFileSystem LoadFixtures()
     {
-        get
+        var files = new MemoryFileSystem();
+
+        foreach (var name in (string[])["Journal.2026-09-20T100000.01.log", "Journal.2026-09-22T100000.01.log", "Journal.2026-09-24T100000.01.log"])
         {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-            while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-            {
-                directory = directory.Parent;
-            }
-
-            Assert.NotNull(directory);
-            return Path.Combine(directory.FullName, "tests", "fixtures", "missions");
+            files.WriteText(Path.Combine(Fixtures, name), EmbeddedFixture.Text("missions." + name));
         }
+
+        return files;
     }
 
     private static string Newest => Path.Combine(Fixtures, "Journal.2026-09-24T100000.01.log");
@@ -260,10 +262,10 @@ public sealed class TheMissionBoardSurvivesARestartTests
     private static string Snapshot(long id, string day) =>
         $$"""{ "timestamp":"{{day}}T10:00:30Z", "event":"Missions", "Active":[ { "MissionID":{{id}}, "Name":"Mission_Courier", "PassengerMission":false, "Expires":3600 } ], "Failed":[], "Complete":[] }""";
 
-    private static string Write(TempInstall install, string name, params string[] lines)
+    private static string Write(MemoryFileSystem files, string name, params string[] lines)
     {
-        var path = Path.Combine(install.Root, name);
-        File.WriteAllLines(path, lines);
+        var path = Path.Combine(Root, name);
+        files.WriteText(path, string.Join('\n', lines) + "\n");
         return path;
     }
 }

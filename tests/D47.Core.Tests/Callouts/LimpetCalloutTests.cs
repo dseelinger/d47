@@ -1,13 +1,13 @@
 using System.Text.Json;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
 /// <summary>The limpet reminder.</summary>
-[Trait("Category", "Integration")]
 public class LimpetCalloutTests
 {
     private static JournalEvent Event(string kind, params (string Key, object? Value)[] fields)
@@ -43,14 +43,16 @@ public class LimpetCalloutTests
     /// </summary>
     private static CommanderGameState Commander(int capacity, int? limpets, string vessel = "Ship")
     {
-        var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-08-21T170000.01.log"),
-            [
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-08-21T170000.01.log"),
+            string.Join(
+                '\n',
                 """{"timestamp":"2026-08-21T17:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
-                $$"""{"timestamp":"2026-08-21T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":{{capacity}},"Modules":[]}""",
-            ]);
+                $$"""{"timestamp":"2026-08-21T17:00:01Z","event":"Loadout","Ship":"python","ShipID":7,"CargoCapacity":{{capacity}},"Modules":[]}""")
+            + "\n");
 
         if (limpets is { } aboard)
         {
@@ -58,13 +60,13 @@ public class LimpetCalloutTests
                 ? ""
                 : $$"""{ "Name":"drones", "Name_Localised":"Limpet", "Count":{{aboard}}, "Stolen":0 }""";
 
-            File.WriteAllText(
-                Path.Combine(install.Root, CargoManifestReader.ManifestFile),
+            files.WriteText(
+                Path.Combine(root, CargoManifestReader.ManifestFile),
                 $$"""{ "timestamp":"2026-08-21T17:00:11Z", "event":"Cargo", "Vessel":"{{vessel}}", "Count":{{aboard}}, "Inventory":[ {{inventory}} ] }""");
         }
 
         var store = new GameStateStore();
-        new JournalSpine(install.Root, store, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
 
         return store.Active!;
     }

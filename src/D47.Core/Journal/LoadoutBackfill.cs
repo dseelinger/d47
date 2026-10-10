@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using D47.Core.Storage;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Journal;
@@ -24,6 +25,7 @@ public static class LoadoutBackfill
     /// Frontier id, where an empty id matches any Commander (#475).
     /// </param>
     public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         IReadOnlyDictionary<string, ShipLoadouts>? stored = null,
@@ -33,7 +35,7 @@ public static class LoadoutBackfill
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
 
@@ -41,7 +43,7 @@ public static class LoadoutBackfill
             return stored ?? new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal);
         }
 
-        var all = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -57,7 +59,7 @@ public static class LoadoutBackfill
                 since);
         }
 
-        var found = FromHistory(walking, logger, stored, cancellation: cancellation);
+        var found = FromHistory(fileSystem, walking, logger, stored, cancellation: cancellation);
 
         var missing = (wanted ?? [])
             .Where(ship => !Holds(found, ship))
@@ -69,7 +71,7 @@ public static class LoadoutBackfill
             return found;
         }
 
-        var from = EarliestLoadout(all, all.Count - walking.Count, missing, cancellation);
+        var from = EarliestLoadout(fileSystem, all, all.Count - walking.Count, missing, cancellation);
 
         if (from is not { } start)
         {
@@ -87,7 +89,7 @@ public static class LoadoutBackfill
             Path.GetFileName(all[start]),
             missing.Count);
 
-        return FromHistory([.. all.Skip(start)], logger, stored, cancellation: cancellation);
+        return FromHistory(fileSystem, [.. all.Skip(start)], logger, stored, cancellation: cancellation);
     }
 
     /// <summary>Whether this ship is remembered, or was forgotten by a sale the walk saw.</summary>
@@ -102,6 +104,7 @@ public static class LoadoutBackfill
     /// replaced in a file is not looked for in older ones.
     /// </summary>
     private static int? EarliestLoadout(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         int before,
         List<(string Fid, int ShipId)> missing,
@@ -113,17 +116,18 @@ public static class LoadoutBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            string text;
+            string? text;
 
             try
             {
-                using var stream = new FileStream(
-                    files[i], FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-                using var reader = new StreamReader(stream);
-                text = reader.ReadToEnd();
+                text = fileSystem.ReadText(files[i]);
             }
             catch (IOException)
+            {
+                continue;
+            }
+
+            if (text is null)
             {
                 continue;
             }
@@ -252,6 +256,7 @@ public static class LoadoutBackfill
     /// How far through the files it has got, nought to one, or null to say nothing (#128).
     /// </param>
     public static IReadOnlyDictionary<string, ShipLoadouts> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         IReadOnlyDictionary<string, ShipLoadouts>? stored = null,
@@ -278,7 +283,7 @@ public static class LoadoutBackfill
             // empty through the first one.
             progress?.Report((double)i / Math.Max(1, files.Count));
 
-            var reader = new JournalReader(files[i], logger);
+            var reader = new JournalReader(files[i], fileSystem, logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {
@@ -345,25 +350,26 @@ public static class LoadoutBackfill
 
     /// <summary>Everything, from the first journal on disk, discarding what was stored (#128).</summary>
     public static LoadoutRescan Rescan(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         IProgress<double>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("Asked to rescan {Directory}, which is not there", directory);
             return new LoadoutRescan(0, 0, new Dictionary<string, ShipLoadouts>(StringComparer.Ordinal));
         }
 
-        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var files = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
         logger.LogInformation("Rescanning {Files} journal files at the Commander's request", files.Count);
 
-        var found = FromHistory(files, logger, stored: null, progress);
+        var found = FromHistory(fileSystem, files, logger, stored: null, progress);
 
         return new LoadoutRescan(
             files.Count,

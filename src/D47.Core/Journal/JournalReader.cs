@@ -1,10 +1,11 @@
 using System.Text;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
 
 /// <summary>Pull-based tail of one journal file.</summary>
-public sealed class JournalReader(string path, ILogger logger, long? until = null)
+public sealed class JournalReader(string path, IFileSystem files, ILogger logger, long? until = null)
 {
     private long _position;
 
@@ -18,9 +19,7 @@ public sealed class JournalReader(string path, ILogger logger, long? until = nul
     {
         byte[] bytes;
 
-        // FileShare.ReadWrite | Delete: Elite holds this file open for writing for the whole session, and a
-        // plain File.OpenRead fails intermittently against that.
-        using (var stream = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        using (var stream = files.OpenRead(Path) ?? throw new FileNotFoundException("The journal file is missing.", Path))
         {
             if (_position > stream.Length)
             {

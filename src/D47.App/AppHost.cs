@@ -910,6 +910,7 @@ public sealed class AppHost : IDisposable
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
+            FileSystem = files,
             Loggers = loggerFactory,
             LoadoutFile = loadouts,
             WantedShips = () =>
@@ -973,7 +974,7 @@ public sealed class AppHost : IDisposable
             settings.UseCommander(change.Current.FrontierId, change.Current.Name);
 
         // The two state files Elite rewrites in place.
-        var status = new GameStatusReader(journalDirectory, loggerFactory.CreateLogger<GameStatusReader>());
+        var status = new GameStatusReader(journalDirectory, files, loggerFactory.CreateLogger<GameStatusReader>());
         var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
 
         // A third of the same kind (Phase 38): what Elite says each module in the ship the Commander is
@@ -1021,6 +1022,7 @@ public sealed class AppHost : IDisposable
         var lastFoundSystem = new D47.Core.Conversation.LastFoundSystem();
 
         commodityLedger.FoldHistory(
+            files,
             journalDirectory,
             DateTimeOffset.Now - D47.Core.Journal.CommodityLedger.Lookback,
             loggerFactory.CreateLogger<D47.Core.Journal.CommodityLedger>());
@@ -1033,7 +1035,7 @@ public sealed class AppHost : IDisposable
 
         // After the status reader, because the spine stamps a surface position onto events that carry none —
         // organic sampling is the whole reason (Phase 18).
-        var journal = new JournalSpine(journalDirectory, gameState, loggerFactory, () => status.Current);
+        var journal = new JournalSpine(journalDirectory, files, gameState, loggerFactory, () => status.Current);
 
         // The Commander's checklist and the proposals waiting on it, in two files beside the executable
         // (Phase 17).
@@ -1155,7 +1157,7 @@ public sealed class AppHost : IDisposable
 
         var storyLogger = loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>();
 
-        D47.Core.Stories.StoryCatalog LoadStories() => D47.Core.Stories.StoryCatalog.Load(paths.Stories, storyLogger);
+        D47.Core.Stories.StoryCatalog LoadStories() => D47.Core.Stories.StoryCatalog.Load(files, paths.Stories, storyLogger);
 
         var storyCatalog = LoadStories();
 
@@ -1182,6 +1184,7 @@ public sealed class AppHost : IDisposable
         storyStore.Changed += SweepOrphanMessages;
 
         var goalMiner = new D47.Core.Goals.GoalMiner(
+            files,
             loggerFactory.CreateLogger<D47.Core.Goals.GoalMiner>());
 
         var backfilling = 0;
@@ -3796,6 +3799,7 @@ public sealed class AppHost : IDisposable
         {
             var found = await Task.Run(
                 () => LoadoutBackfill.Rescan(
+                    Files,
                     directory,
                     _loggerFactory.CreateLogger(nameof(LoadoutBackfill)),
                     progress),

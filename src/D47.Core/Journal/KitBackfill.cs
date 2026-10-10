@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -13,6 +14,7 @@ public static class KitBackfill
     /// <param name="stored">What <see cref="KitStore"/> held, to start from rather than to rebuild over.</param>
     /// <param name="since">How far the stored file has already been folded, or null where nothing says.</param>
     public static IReadOnlyDictionary<string, OwnedKit> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         IReadOnlyDictionary<string, OwnedKit>? stored = null,
@@ -21,7 +23,7 @@ public static class KitBackfill
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
 
@@ -29,7 +31,7 @@ public static class KitBackfill
             return stored ?? new Dictionary<string, OwnedKit>(StringComparer.Ordinal);
         }
 
-        var all = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var all = fileSystem.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -43,7 +45,7 @@ public static class KitBackfill
                 since);
         }
 
-        return FromHistory(walking, logger, stored, cancellation: cancellation);
+        return FromHistory(fileSystem, walking, logger, stored, cancellation: cancellation);
     }
 
     /// <summary>
@@ -86,6 +88,7 @@ public static class KitBackfill
     /// <summary>The same, over an explicit list oldest-first.</summary>
     /// <param name="progress">How far through the files it has got, nought to one, or null to say nothing.</param>
     public static IReadOnlyDictionary<string, OwnedKit> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         IReadOnlyDictionary<string, OwnedKit>? stored = null,
@@ -112,7 +115,7 @@ public static class KitBackfill
             // empty through the first one.
             progress?.Report((double)i / Math.Max(1, files.Count));
 
-            var reader = new JournalReader(files[i], logger);
+            var reader = new JournalReader(files[i], fileSystem, logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {

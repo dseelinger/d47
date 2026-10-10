@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -20,7 +21,7 @@ public class TheJournalFolderIsListedOnlyWhenItChangesTests
         WriteJournal(install.Root, Older);
         Directory.SetLastWriteTimeUtc(install.Root, Earlier);
 
-        var spine = new JournalSpine(install.Root, new GameStateStore(), NullLoggerFactory.Instance);
+        var spine = new JournalSpine(install.Root, new DiskFileSystem(), new GameStateStore(), NullLoggerFactory.Instance);
         spine.Poll();
         spine.Poll();
 
@@ -39,7 +40,7 @@ public class TheJournalFolderIsListedOnlyWhenItChangesTests
         WriteJournal(install.Root, Older);
         Directory.SetLastWriteTimeUtc(install.Root, Earlier);
 
-        var spine = new JournalSpine(install.Root, new GameStateStore(), NullLoggerFactory.Instance);
+        var spine = new JournalSpine(install.Root, new DiskFileSystem(), new GameStateStore(), NullLoggerFactory.Instance);
         spine.Poll();
         spine.Poll();
         spine.Poll();
@@ -65,7 +66,7 @@ public class TheJournalFolderIsListedOnlyWhenItChangesTests
             WriteJournal(target, Older);
             Directory.SetLastWriteTimeUtc(target, Earlier);
 
-            var spine = new JournalSpine(junction, new GameStateStore(), NullLoggerFactory.Instance);
+            var spine = new JournalSpine(junction, new DiskFileSystem(), new GameStateStore(), NullLoggerFactory.Instance);
             spine.Poll();
             spine.Poll();
             spine.Poll();
@@ -91,7 +92,7 @@ public class TheJournalFolderIsListedOnlyWhenItChangesTests
         WriteJournal(install.Root, Older);
         WriteJournal(install.Root, Newer);
 
-        var spine = new JournalSpine(install.Root, new GameStateStore(), NullLoggerFactory.Instance);
+        var spine = new JournalSpine(install.Root, new DiskFileSystem(), new GameStateStore(), NullLoggerFactory.Instance);
         spine.Poll(priming: true);
 
         Assert.EndsWith(Newer, spine.CurrentFile);

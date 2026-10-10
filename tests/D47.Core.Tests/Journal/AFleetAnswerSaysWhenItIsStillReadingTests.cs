@@ -2,6 +2,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -131,6 +132,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
         var history = new HistoryBackfill
         {
             Directory = install.Root,
+            FileSystem = new DiskFileSystem(),
             Loggers = NullLoggerFactory.Instance,
         };
 

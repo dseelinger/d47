@@ -1,4 +1,5 @@
 using D47.Core.Stories;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.App.Tests.Stories;
@@ -21,7 +22,7 @@ public sealed class TheStoryListIsAskedForOncePerSessionTests
 
         Assert.Equal(1, release.Asked.Count(file => file == StoryCatalog.IndexFile));
         Assert.Equal(1, landed);
-        Assert.Equal(StoryFixture.Story.Id, Assert.Single(StoryCatalog.Load(release.Folder).Cards).Id);
+        Assert.Equal(StoryFixture.Story.Id, Assert.Single(StoryCatalog.Load(new DiskFileSystem(), release.Folder).Cards).Id);
         Assert.Empty(Directory.GetFiles(release.Folder, "*.part"));
     }
 
@@ -35,7 +36,7 @@ public sealed class TheStoryListIsAskedForOncePerSessionTests
         release.Serve(StoryCatalog.IndexFile, "not a list"u8.ToArray());
         await release.Downloader().AskForList();
 
-        Assert.Equal(StoryFixture.Story.Id, Assert.Single(StoryCatalog.Load(release.Folder).Cards).Id);
+        Assert.Equal(StoryFixture.Story.Id, Assert.Single(StoryCatalog.Load(new DiskFileSystem(), release.Folder).Cards).Id);
         Assert.Empty(Directory.GetFiles(release.Folder, "*.part"));
     }
 }

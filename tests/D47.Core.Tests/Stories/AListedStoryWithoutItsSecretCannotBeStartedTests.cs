@@ -3,16 +3,15 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
-[Trait("Category", "Integration")]
 public sealed class AListedStoryWithoutItsSecretCannotBeStartedTests
 {
     [Fact]
     public void TheCardIsListedAndTheSecretIsNull()
     {
-        using var folder = new DownloadedStoryFolder();
+        var folder = new DownloadedStoryFolder();
         folder.WriteIndex(StoryFixtures.Card);
 
-        var catalog = StoryCatalog.Load(folder.Path);
+        var catalog = StoryCatalog.Load(folder.Files, folder.Path);
 
         Assert.NotNull(catalog.Find(StoryFixtures.Card.Id));
         Assert.Null(catalog.Secret(StoryFixtures.Card.Id));

@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -14,23 +15,25 @@ public static class MissionBackfill
     private static readonly string[] Relevant = ["\"event\":\"Mission", "\"event\":\"CargoDepot\"", "\"event\":\"Commander\"", "\"event\":\"LoadGame\""];
 
     public static IReadOnlyDictionary<string, MissionBoard> FromHistory(
+        IFileSystem files,
         string directory,
         ILogger logger,
         CancellationToken cancellation = default)
     {
+        ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (files.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return new Dictionary<string, MissionBoard>(StringComparer.Ordinal);
         }
 
-        var files = Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+        var journals = files.Enumerate(directory, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
-        return FromHistory(files, logger, ReadAll, cancellation);
+        return FromHistory(journals, logger, path => ReadAll(files, path), cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
@@ -218,13 +221,11 @@ public static class MissionBackfill
         return false;
     }
 
-    private static string? ReadAll(string path)
+    private static string? ReadAll(IFileSystem files, string path)
     {
         try
         {
-            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
+            return files.ReadText(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

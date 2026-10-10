@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -9,20 +10,22 @@ public static class FleetBackfill
     /// The fleet as of the newest journal that recorded one, folded forward to the end of history.
     /// </summary>
     public static IReadOnlyDictionary<string, FleetRegistry> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return new Dictionary<string, FleetRegistry>(StringComparer.Ordinal);
         }
 
         return FromHistory(
-            [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            fileSystem,
+            [.. fileSystem.Enumerate(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
             logger,
             cancellation);
@@ -30,6 +33,7 @@ public static class FleetBackfill
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, FleetRegistry> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -52,7 +56,7 @@ public static class FleetBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            var (owner, holds) = Scan(files[i], logger);
+            var (owner, holds) = Scan(fileSystem, files[i], logger);
 
             if (owner is null)
             {
@@ -96,7 +100,7 @@ public static class FleetBackfill
 
         for (var i = seed; i < files.Count; i++)
         {
-            var reader = new JournalReader(files[i], logger);
+            var reader = new JournalReader(files[i], fileSystem, logger);
 
             while (reader.Poll() is { Count: > 0 } batch)
             {
@@ -149,17 +153,14 @@ public static class FleetBackfill
     /// Whose file this is, and whether it holds a <c>StoredShips</c> at all — both in one pass, as a
     /// text scan rather than a parse.
     /// </summary>
-    private static (string? Owner, bool Holds) Scan(string file, ILogger logger)
+    private static (string? Owner, bool Holds) Scan(IFileSystem fileSystem, string file, ILogger logger)
     {
         string? owner = null;
         var holds = false;
 
         try
         {
-            // **FileShare.ReadWrite | Delete, exactly as JournalReader opens the same files**
-            //.
-            using var stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
 
             using var reader = new StreamReader(stream);
 

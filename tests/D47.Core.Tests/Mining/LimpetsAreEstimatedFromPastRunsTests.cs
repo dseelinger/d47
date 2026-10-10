@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -34,7 +35,7 @@ public class LimpetsAreEstimatedFromPastRunsTests
 
     private static HistoryBackfill Walk(TempInstall install)
     {
-        var history = new HistoryBackfill { Directory = install.Root, Loggers = NullLoggerFactory.Instance };
+        var history = new HistoryBackfill { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
         history.Run(TestContext.Current.CancellationToken);
         return history;
     }

@@ -1,5 +1,6 @@
 ﻿using D47.Core.Journal;
 using D47.Core.Persona;
+using D47.Core.Storage;
 using D47.Core.Tests;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -609,32 +610,33 @@ public class GameKnowledgeTests
         Assert.DoesNotContain("not docked", block!);
     }
 
-    /// <summary>A Commander in an Anaconda (64t hold) carrying the given items, built through <see cref="JournalSpine"/> with a real <c>Cargo.json</c> on disk, because the hold cannot arrive any other way.</summary>
+    /// <summary>A Commander in an Anaconda (64t hold) carrying the given items, built through <see cref="JournalSpine"/> with a real <c>Cargo.json</c>, because the hold cannot arrive any other way.</summary>
     private static CommanderGameState CommanderWithCargo(int count, params (string Symbol, string Name, int Tonnes)[] items)
     {
-        var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-09-05T000000.01.log"),
-            [
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-09-05T000000.01.log"),
+            string.Join(
+                '\n',
                 """{"timestamp":"3311-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                """{"timestamp":"3311-01-01T00:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour","CargoCapacity":64,"Modules":[]}""",
-            ]);
+                """{"timestamp":"3311-01-01T00:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour","CargoCapacity":64,"Modules":[]}""")
+            + "\n");
 
         var inventory = string.Join(",", items.Select(item =>
             $$"""{ "Name":"{{item.Symbol}}", "Name_Localised":"{{item.Name}}", "Count":{{item.Tonnes}}, "Stolen":0 }"""));
 
-        File.WriteAllText(
-            Path.Combine(install.Root, CargoManifestReader.ManifestFile),
+        files.WriteText(
+            Path.Combine(root, CargoManifestReader.ManifestFile),
             $$"""{ "timestamp":"3311-01-01T00:01:00Z", "event":"Cargo", "Vessel":"Ship", "Count":{{count}}, "Inventory":[ {{inventory}} ] }""");
 
         var store = new GameStateStore();
-        new JournalSpine(install.Root, store, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
 
         return store.Active!;
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSituationBlockStatesActualCargoFillNotJustCapacity()
     {
@@ -647,7 +649,6 @@ public class GameKnowledgeTests
         Assert.Contains("Cargo hold: Gold 25t, Silver 15t", block);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheCargoItemsSummaryStaysShortWhenTheHoldHasManyLines()
     {
@@ -667,7 +668,6 @@ public class GameKnowledgeTests
         Assert.DoesNotContain("Platinum", block);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyKnownHoldAddsNoCargoItemsLine()
     {
@@ -698,10 +698,11 @@ public class GameKnowledgeTests
     /// <summary>A real <c>Status.json</c>, read the way the app reads it.</summary>
     private static GameStatus ReadStatus(string json)
     {
-        var install = new TempInstall();
-        File.WriteAllText(Path.Combine(install.Root, GameStatusReader.FileName), json);
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
+        files.WriteText(Path.Combine(root, GameStatusReader.FileName), json);
 
-        var reader = new GameStatusReader(install.Root, NullLogger.Instance);
+        var reader = new GameStatusReader(root, files, NullLogger.Instance);
         Assert.True(reader.Poll());
 
         return reader.Current;
@@ -737,7 +738,6 @@ public class GameKnowledgeTests
         Assert.Contains($"say \"{said}\"", block);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AStatusFileWithNoBalanceKeyLeavesTheLineOutRatherThanSayingNought()
     {

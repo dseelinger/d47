@@ -1,4 +1,6 @@
+using System.Text;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -7,17 +9,14 @@ namespace D47.Core.Tests.Journal;
 /// <summary>Reading the cargo hold, and the commodity-name fold that joins it to a construction site.</summary>
 public class CargoHoldTests
 {
-    private static string Folder()
-    {
-        var path = Path.Combine(Path.GetTempPath(), "d47-cargo-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(path);
-        return path;
-    }
+    private const string Folder = @"C:\d47-test\journals";
 
-    private static CargoManifestReader ReaderOver(string folder, string contents)
+    private readonly MemoryFileSystem _files = new();
+
+    private CargoManifestReader ReaderOver(string contents)
     {
-        File.WriteAllText(Path.Combine(folder, CargoManifestReader.ManifestFile), contents);
-        return new CargoManifestReader(folder, NullLogger.Instance);
+        _files.WriteText(Path.Combine(Folder, CargoManifestReader.ManifestFile), contents);
+        return new CargoManifestReader(Folder, _files, NullLogger.Instance);
     }
 
     private const string Manifest =
@@ -28,11 +27,10 @@ public class CargoHoldTests
             { "Name":"computercomponents", "Name_Localised":"Computer Components", "Count":100, "Stolen":4 } ] }
         """;
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheManifestIsReadFromTheFile()
     {
-        var reader = ReaderOver(Folder(), Manifest);
+        var reader = ReaderOver(Manifest);
 
         Assert.True(reader.Poll());
 
@@ -48,11 +46,10 @@ public class CargoHoldTests
     }
 
     /// <summary>The join.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ADepotSpellingFindsTheSameCommodityInTheHold()
     {
-        var reader = ReaderOver(Folder(), Manifest);
+        var reader = ReaderOver(Manifest);
         reader.Poll();
 
         Assert.Equal(200, reader.Current.Of("$aluminium_name;"));
@@ -61,11 +58,10 @@ public class CargoHoldTests
     /// <summary>
     /// The case fold, which is the whole of why <see cref="JournalJson.Symbol(string?)"/> lowercases.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AContributionSpellingFindsItTooDespiteTheCase()
     {
-        var reader = ReaderOver(Folder(), Manifest);
+        var reader = ReaderOver(Manifest);
         reader.Poll();
 
         Assert.Equal(100, reader.Current.Of("$ComputerComponents_name;"));
@@ -73,12 +69,10 @@ public class CargoHoldTests
     }
 
     /// <summary>Elite rewrites this file for the SRV's own hold.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSrvManifestSaysItIsTheSrvs()
     {
         var reader = ReaderOver(
-            Folder(),
             """
             { "timestamp":"2026-08-16T10:00:00Z", "event":"Cargo", "Vessel":"SRV", "Count":8,
               "Inventory":[ { "Name":"aluminium", "Count":8, "Stolen":0 } ] }
@@ -90,12 +84,10 @@ public class CargoHoldTests
         Assert.False(reader.Current.IsShip);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyHoldIsKnownRatherThanUnknown()
     {
         var reader = ReaderOver(
-            Folder(),
             """
             { "timestamp":"2026-08-16T10:00:00Z", "event":"Cargo", "Vessel":"Ship", "Count":0, "Inventory":[] }
             """);
@@ -107,43 +99,37 @@ public class CargoHoldTests
     }
 
     /// <summary>A Commander who has not launched since installing has no file, and that is not an error.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnAbsentFileLeavesTheHoldUnknown()
     {
-        var reader = new CargoManifestReader(Folder(), NullLogger.Instance);
+        var reader = new CargoManifestReader(Folder, _files, NullLogger.Instance);
 
         Assert.False(reader.Poll());
         Assert.False(reader.Current.IsKnown);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AFileCaughtMidWriteIsRetriedRatherThanSkipped()
     {
-        var folder = Folder();
-        var path = Path.Combine(folder, CargoManifestReader.ManifestFile);
+        var path = Path.Combine(Folder, CargoManifestReader.ManifestFile);
 
-        File.WriteAllText(path, """{ "event":"Cargo", "Vessel":"Ship", "Count":30, "Inv""");
+        _files.WriteText(path, """{ "event":"Cargo", "Vessel":"Ship", "Count":30, "Inv""");
 
-        var reader = new CargoManifestReader(folder, NullLogger.Instance);
+        var reader = new CargoManifestReader(Folder, _files, NullLogger.Instance);
 
         Assert.False(reader.Poll());
         Assert.False(reader.Current.IsKnown);
 
-        // Same last-write time is not enough to prove the retry, so rewrite whole and move it on.
-        File.WriteAllText(path, Manifest);
-        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(1));
+        _files.WriteText(path, Manifest);
 
         Assert.True(reader.Poll());
         Assert.Equal(300, reader.Current.Count);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnUnchangedFileIsNotReRead()
     {
-        var reader = ReaderOver(Folder(), Manifest);
+        var reader = ReaderOver(Manifest);
 
         Assert.True(reader.Poll());
         Assert.False(reader.Poll());
@@ -165,4 +151,27 @@ public class CargoHoldTests
     [InlineData("$_name;")]
     public void TheSymbolFoldRefusesRatherThanInventingAnEmptyKey(string? written) =>
         Assert.Null(JournalJson.Symbol(written));
+}
+
+[Trait("Category", "Integration")]
+public class ACargoFileEliteHoldsOpenStillReadsTests
+{
+    [Fact]
+    public void ReadingWorksWhileAnotherHandleHasTheFileOpenForWriting()
+    {
+        using var install = new TempInstall();
+        var path = Path.Combine(install.Root, CargoManifestReader.ManifestFile);
+        File.WriteAllText(path, "");
+
+        using (var writer = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+        {
+            writer.Write(Encoding.UTF8.GetBytes("""{ "event":"Cargo", "Vessel":"Ship", "Count":4, "Inventory":[ { "Name":"gold", "Count":4 } ] }"""));
+            writer.Flush();
+
+            var reader = new CargoManifestReader(install.Root, new DiskFileSystem(), NullLogger.Instance);
+
+            Assert.True(reader.Poll());
+            Assert.Equal(4, reader.Current.Count);
+        }
+    }
 }

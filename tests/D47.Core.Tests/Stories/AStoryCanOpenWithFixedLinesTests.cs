@@ -144,25 +144,23 @@ public sealed class AStoryCanOpenWithFixedLinesTests
         Assert.Contains(WithOpening.Texts(), text => text == ("opening[1]", Opening[1].Text));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASealedFileCarriesTheOpening()
     {
-        using var folder = new DownloadedStoryFolder();
+        var folder = new DownloadedStoryFolder();
         folder.WriteIndex(Card);
         folder.WriteSealed(WithOpening);
 
-        Assert.Equal(Opening, StoryCatalog.Load(folder.Path).Secret(Id)!.Opening);
+        Assert.Equal(Opening, StoryCatalog.Load(folder.Files, folder.Path).Secret(Id)!.Opening);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASealedFileWithoutAnOpeningHasNone()
     {
-        using var folder = new DownloadedStoryFolder();
+        var folder = new DownloadedStoryFolder();
         folder.WriteIndex(Card);
         folder.WriteSealed(Secret);
 
-        Assert.Null(StoryCatalog.Load(folder.Path).Secret(Id)!.Opening);
+        Assert.Null(StoryCatalog.Load(folder.Files, folder.Path).Secret(Id)!.Opening);
     }
 }

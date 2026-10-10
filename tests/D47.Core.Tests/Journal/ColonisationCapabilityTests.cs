@@ -1,6 +1,7 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -33,19 +34,25 @@ public class ColonisationCapabilityTests
     /// <c>Cargo.json</c> — because the hold is the one part of this that does not come from an event,
     /// and a test that assigned it directly would not exercise the path that reads it.
     /// </summary>
-    private static GameStateStore StoreWithHold(TempInstall install, string manifest, params string[] lines)
+    private static GameStateStore StoreWithHold(string manifest, params string[] lines)
     {
-        File.WriteAllLines(
-            Path.Combine(install.Root, "Journal.2026-08-16T090000.01.log"),
-            [
-                """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
-                .. lines.Select(line => line.ReplaceLineEndings(" ")),
-            ]);
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.WriteAllText(Path.Combine(install.Root, CargoManifestReader.ManifestFile), manifest);
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-08-16T090000.01.log"),
+            string.Join(
+                '\n',
+                [
+                    """{"timestamp":"2026-08-16T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+                    .. lines.Select(line => line.ReplaceLineEndings(" ")),
+                ])
+            + "\n");
+
+        files.WriteText(Path.Combine(root, CargoManifestReader.ManifestFile), manifest);
 
         var gameState = new GameStateStore();
-        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(root, files, gameState, NullLoggerFactory.Instance).Poll();
 
         return gameState;
     }
@@ -144,14 +151,10 @@ public class ColonisationCapabilityTests
     /// The join, end to end: the depot writes <c>$aluminium_name;</c> and the hold writes
     /// <c>aluminium</c>.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WhatIsAlreadyInTheHoldIsNettedOffTheShortfall()
     {
-        using var install = new TempInstall();
-
         var gameState = StoreWithHold(
-            install,
             """
             { "event":"Cargo", "Vessel":"Ship", "Count":150,
               "Inventory":[ { "Name":"aluminium", "Count":150, "Stolen":0 } ] }
@@ -166,14 +169,10 @@ public class ColonisationCapabilityTests
     }
 
     /// <summary>Twenty aboard against six wanted is six tonnes of progress, not twenty.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task CarryingMoreThanIsWantedCountsOnlyWhatIsWanted()
     {
-        using var install = new TempInstall();
-
         var gameState = StoreWithHold(
-            install,
             """
             { "event":"Cargo", "Vessel":"Ship", "Count":900,
               "Inventory":[ { "Name":"aluminium", "Count":900, "Stolen":0 } ] }

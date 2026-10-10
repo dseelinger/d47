@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -66,7 +67,7 @@ public sealed record SuitInventory
 }
 
 /// <summary>Pull-based reads of the two on-foot inventory files.</summary>
-public sealed class SuitInventoryReader(string directory, ILogger logger)
+public sealed class SuitInventoryReader(string directory, IFileSystem files, ILogger logger)
 {
     public const string BackpackFile = "Backpack.json";
 
@@ -111,37 +112,22 @@ public sealed class SuitInventoryReader(string directory, ILogger logger)
     {
         var path = Path.Combine(directory, fileName);
 
-        DateTime written;
+        // Not an error.
+        if (files.Stat(path) is not { } state || state.Written == stamp)
+        {
+            return null;
+        }
+
+        var written = state.Written;
 
         try
         {
-            var info = new FileInfo(path);
+            using var stream = files.OpenRead(path);
 
-            // Not an error.
-            if (!info.Exists)
+            if (stream is null)
             {
                 return null;
             }
-
-            written = info.LastWriteTimeUtc;
-        }
-        catch (IOException ex)
-        {
-            logger.LogDebug(ex, "Could not stat {File}", fileName);
-            return null;
-        }
-
-        if (written == stamp)
-        {
-            return null;
-        }
-
-        try
-        {
-            // Share everything: Elite is actively rewriting this file, and a plain OpenRead loses the race
-            // often enough to matter at 10 Hz.
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
             using var document = JsonDocument.Parse(stream);
 

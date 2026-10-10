@@ -244,6 +244,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         var backfill = new HistoryBackfill
         {
             Directory = Path.Combine(Path.GetTempPath(), "d47-tests", Guid.NewGuid().ToString("N")),
+            FileSystem = new DiskFileSystem(),
             Loggers = NullLoggerFactory.Instance,
         };
 
@@ -276,6 +277,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
         var backfill = new HistoryBackfill
         {
             Directory = install.Root,
+            FileSystem = new DiskFileSystem(),
             Loggers = NullLoggerFactory.Instance,
             NameFile = names,
         };
@@ -292,6 +294,7 @@ public class AHistoryWalkThatFinishesLateIsStillAdoptedTests
     private static HistoryBackfill Backfill(TempInstall install) => new()
     {
         Directory = install.Root,
+        FileSystem = new DiskFileSystem(),
         Loggers = NullLoggerFactory.Instance,
     };
 

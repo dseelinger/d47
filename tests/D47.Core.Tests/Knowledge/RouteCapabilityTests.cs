@@ -401,7 +401,7 @@ public class RouteCapabilityTests
             """{ "timestamp":"2026-09-20T00:00:03Z", "event":"Cargo", "Vessel":"Ship", "Count":8, "Inventory":[ { "Name":"drones", "Name_Localised":"Limpet", "Count":8, "Stolen":0 } ] }""");
 
         var gameState = new GameStateStore();
-        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(install.Root, new DiskFileSystem(), gameState, NullLoggerFactory.Instance).Poll();
 
         var routes = new FakeRoutes();
         var trade = new FakeTrade();

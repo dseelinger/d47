@@ -1,19 +1,20 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-[Trait("Category", "Integration")]
 public class JournalSpineTests
 {
-    private static string FixturesDirectory { get; } = FindFixturesDirectory();
+    private const string Root = @"C:\d47-test\journals";
+
+    private readonly MemoryFileSystem _files = new();
 
     [Fact]
     public void PollWithNoFilesYetReturnsNoEventsRatherThanThrowing()
     {
-        using var install = new TempInstall();
-        var spine = new JournalSpine(install.Root, new GameStateStore(), NullLoggerFactory.Instance);
+        var spine = new JournalSpine(Root, _files, new GameStateStore(), NullLoggerFactory.Instance);
 
         Assert.Empty(spine.Poll());
         Assert.Null(spine.CurrentFile);
@@ -22,11 +23,10 @@ public class JournalSpineTests
     [Fact]
     public void TailingTheOnlyFixtureAnswersTheCommandersLocation()
     {
-        using var install = new TempInstall();
-        CopyFixture("Journal.2026-02-10T090000.01.log", install.Root);
+        CopyFixture("Journal.2026-02-10T090000.01.log");
 
         var gameState = new GameStateStore();
-        new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(Root, _files, gameState, NullLoggerFactory.Instance).Poll();
 
         Assert.Equal("Fixture One", gameState.Active!.Identity.Name);
         Assert.Equal("Fixture Nebula Point", gameState.Active!.Location.StarSystem);
@@ -40,12 +40,11 @@ public class JournalSpineTests
     [Fact]
     public void TwoCommandersRemainIsolatedWhenBothFixturesArePresent()
     {
-        using var install = new TempInstall();
-        CopyFixture("Journal.2026-02-10T090000.01.log", install.Root);
-        CopyFixture("Journal.2026-02-10T113000.01.log", install.Root);
+        CopyFixture("Journal.2026-02-10T090000.01.log");
+        CopyFixture("Journal.2026-02-10T113000.01.log");
 
         var gameState = new GameStateStore();
-        var spine = new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance);
+        var spine = new JournalSpine(Root, _files, gameState, NullLoggerFactory.Instance);
         spine.Poll();
 
         // The later-named file is latest, so it - Fixture Two - is the one actually tailed.
@@ -61,16 +60,15 @@ public class JournalSpineTests
     [Fact]
     public void SwitchingToANewlyAppearedFileMidRunPicksItUpFromScratch()
     {
-        using var install = new TempInstall();
-        CopyFixture("Journal.2026-02-10T090000.01.log", install.Root);
+        CopyFixture("Journal.2026-02-10T090000.01.log");
 
         var gameState = new GameStateStore();
-        var spine = new JournalSpine(install.Root, gameState, NullLoggerFactory.Instance);
+        var spine = new JournalSpine(Root, _files, gameState, NullLoggerFactory.Instance);
         spine.Poll();
         Assert.Equal("Fixture One", gameState.Active!.Identity.Name);
 
         // Elite restarts as a different Commander mid-run: a new, later-named file appears.
-        CopyFixture("Journal.2026-02-10T113000.01.log", install.Root);
+        CopyFixture("Journal.2026-02-10T113000.01.log");
         spine.Poll();
 
         Assert.Equal("Fixture Two", gameState.Active!.Identity.Name);
@@ -85,14 +83,13 @@ public class JournalSpineTests
     {
         // The literal "1x vs 100x" property: hammering Poll() far more often than there is new data must be
         // harmless, and must converge on the same state as calling it once.
-        using var install = new TempInstall();
-        CopyFixture("Journal.2026-02-10T090000.01.log", install.Root);
+        CopyFixture("Journal.2026-02-10T090000.01.log");
 
         var singlePoll = new GameStateStore();
-        new JournalSpine(install.Root, singlePoll, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(Root, _files, singlePoll, NullLoggerFactory.Instance).Poll();
 
         var manyPolls = new GameStateStore();
-        var spine = new JournalSpine(install.Root, manyPolls, NullLoggerFactory.Instance);
+        var spine = new JournalSpine(Root, _files, manyPolls, NullLoggerFactory.Instance);
         for (var i = 0; i < 100; i++)
         {
             spine.Poll();
@@ -102,20 +99,6 @@ public class JournalSpineTests
         Assert.Equal(singlePoll.Active!.Location, manyPolls.Active!.Location);
     }
 
-    private static void CopyFixture(string fileName, string destinationDirectory) =>
-        File.Copy(Path.Combine(FixturesDirectory, fileName), Path.Combine(destinationDirectory, fileName));
-
-    private static string FindFixturesDirectory()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory is null
-            ? throw new InvalidOperationException($"Could not find the repository root above {AppContext.BaseDirectory}.")
-            : Path.Combine(directory.FullName, "tests", "fixtures", "journal");
-    }
+    private void CopyFixture(string fileName) =>
+        _files.WriteText(Path.Combine(Root, fileName), EmbeddedFixture.Text("journal." + fileName));
 }

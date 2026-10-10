@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -163,7 +164,7 @@ public class FleetBackfillTests
     }
 
     private static IReadOnlyDictionary<string, FleetRegistry> Fleets(TempInstall install) =>
-        FleetBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
+        FleetBackfill.FromHistory(new DiskFileSystem(), install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private const string LoadGame =
         """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1234567", "Commander":"Fixture" }""";

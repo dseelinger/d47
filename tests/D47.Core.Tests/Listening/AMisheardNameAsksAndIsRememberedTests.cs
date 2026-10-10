@@ -254,6 +254,7 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
         ]);
 
         var mined = SpokenNameMiner.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, cancellation: TestContext.Current.CancellationToken);
 
         var names = mined["F1"];

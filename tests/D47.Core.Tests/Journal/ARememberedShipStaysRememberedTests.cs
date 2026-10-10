@@ -96,6 +96,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
             Boarding("2026-09-25T03:29:41Z", 37));
 
         history = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         gameState.RestoreLate();
@@ -148,6 +149,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
             Boarding("2026-09-25T03:30:00Z", 51));
 
         var history = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             [journal], NullLogger.Instance, store.All, cancellation: TestContext.Current.CancellationToken);
 
         var gameState = new GameStateStore { RestoreLoadouts = history.GetValueOrDefault };
@@ -221,11 +223,13 @@ public class ARememberedShipStaysRememberedTests : IDisposable
         var (store, since) = CartageBeyondTheWindow();
 
         var unasked = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             _root, NullLogger.Instance, store.All, since, cancellation: TestContext.Current.CancellationToken);
 
         Assert.Null(unasked["F1"].For(48));
 
         var found = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             _root, NullLogger.Instance, store.All, since, [("F1", 48)], TestContext.Current.CancellationToken);
 
         Assert.Equal("type8", found["F1"].For(48)!.Loadout.Type);
@@ -233,6 +237,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
 
         // A build from before the file carried a Commander matches whoever flew it.
         var unadopted = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             _root, NullLogger.Instance, store.All, since, [(string.Empty, 48)], TestContext.Current.CancellationToken);
 
         Assert.NotNull(unadopted["F1"].For(48));
@@ -245,6 +250,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
             (3, """{ "timestamp":"2026-01-03T11:00:00Z", "event":"ShipyardSell", "ShipType":"type8", "SellShipID":48 }"""));
 
         var found = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             _root, NullLogger.Instance, store.All, since, [("F1", 48)], TestContext.Current.CancellationToken);
 
         Assert.Null(found["F1"].For(48));
@@ -257,6 +263,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
             (39, """{ "timestamp":"2026-02-08T11:00:00Z", "event":"ShipyardSell", "ShipType":"type8", "SellShipID":48 }"""));
 
         var found = LoadoutBackfill.FromHistory(
+            new DiskFileSystem(),
             _root, NullLogger.Instance, store.All, since, [("F1", 48)], TestContext.Current.CancellationToken);
 
         Assert.Null(found["F1"].For(48));

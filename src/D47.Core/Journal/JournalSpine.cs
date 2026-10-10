@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -12,6 +13,7 @@ namespace D47.Core.Journal;
 /// </param>
 public sealed class JournalSpine(
     string directory,
+    IFileSystem files,
     GameStateStore gameState,
     ILoggerFactory loggerFactory,
     Func<GameStatus>? position = null)
@@ -19,10 +21,10 @@ public sealed class JournalSpine(
     private readonly ILogger _logger = loggerFactory.CreateLogger<JournalSpine>();
 
     private readonly SuitInventoryReader _suit =
-        new(directory, loggerFactory.CreateLogger<SuitInventoryReader>());
+        new(directory, files, loggerFactory.CreateLogger<SuitInventoryReader>());
 
     private readonly CargoManifestReader _hold =
-        new(directory, loggerFactory.CreateLogger<CargoManifestReader>());
+        new(directory, files, loggerFactory.CreateLogger<CargoManifestReader>());
 
     private JournalReader? _reader;
 
@@ -60,7 +62,7 @@ public sealed class JournalSpine(
             // A new file becoming latest means a new session — Elite restarted, or a different Commander
             // logged in.
             _logger.LogInformation("Now tailing {Path}", latest);
-            _reader = new JournalReader(latest, _logger);
+            _reader = new JournalReader(latest, files, _logger);
         }
 
         var events = _reader.Poll();
@@ -90,7 +92,7 @@ public sealed class JournalSpine(
     /// </summary>
     private string? LatestFile()
     {
-        var writtenAt = FolderWrittenAt(Directory);
+        var writtenAt = files.FolderWritten(Directory);
 
         if (writtenAt == _listedAt && !_relistNext)
         {
@@ -99,20 +101,8 @@ public sealed class JournalSpine(
 
         _relistNext = writtenAt != _listedAt;
         _listedAt = writtenAt;
-        _latest = JournalFolder.LatestFile(Directory);
+        _latest = JournalFolder.LatestFile(files, Directory);
         return _latest;
-    }
-
-    /// <summary>The folder's write time, read from the target when the folder is a junction or link.</summary>
-    private static DateTime FolderWrittenAt(string directory)
-    {
-        var folder = new DirectoryInfo(directory);
-
-        return folder.Exists
-            && folder.Attributes.HasFlag(FileAttributes.ReparsePoint)
-            && folder.ResolveLinkTarget(returnFinalTarget: true) is { } target
-                ? target.LastWriteTimeUtc
-                : folder.LastWriteTimeUtc;
     }
 
     /// <summary>

@@ -42,18 +42,20 @@ public class WhatYouCarryOnFootIsCountedByKindTests
 
     private static Surface Open()
     {
-        var root = TempFolders.Create("d47-on-foot-views-tests");
+        const string root = @"C:\d47-test";
+        var files = new MemoryFileSystem();
         var store = new GameStateStore();
 
-        File.WriteAllLines(
+        files.WriteText(
             Path.Combine(root, "Journal.2026-08-18T090000.01.log"),
-            [
-                """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
-                """{"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":7,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[]}""",
-            ]);
-        File.WriteAllText(Path.Combine(root, SuitInventoryReader.BackpackFile), BackpackJson);
-        File.WriteAllText(Path.Combine(root, SuitInventoryReader.ShipLockerFile), LockerJson);
-        new JournalSpine(root, store, NullLoggerFactory.Instance).Poll();
+            """
+            {"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}
+            {"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":7,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[]}
+
+            """);
+        files.WriteText(Path.Combine(root, SuitInventoryReader.BackpackFile), BackpackJson);
+        files.WriteText(Path.Combine(root, SuitInventoryReader.ShipLockerFile), LockerJson);
+        new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
         Assert.Equal(4, store.Active!.Suit.Backpack.Count);
 
         CommanderGameState? State() => store.Active;

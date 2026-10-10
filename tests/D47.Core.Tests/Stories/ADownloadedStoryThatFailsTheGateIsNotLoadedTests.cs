@@ -4,18 +4,17 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
-[Trait("Category", "Integration")]
 public sealed class ADownloadedStoryThatFailsTheGateIsNotLoadedTests
 {
     [Fact]
     public void ThirteenCluesForAYearAreNotLoadedAndTheLogNamesTheFieldOnly()
     {
-        using var folder = new DownloadedStoryFolder();
+        var folder = new DownloadedStoryFolder();
         folder.WriteIndex(StoryFixtures.Card);
         folder.WriteSealed(StoryFixtures.Secret with { Clues = [.. StoryFixtures.Secret.Clues.Skip(1)] });
         var log = new RecordingLogger();
 
-        var catalog = StoryCatalog.Load(folder.Path, log);
+        var catalog = StoryCatalog.Load(folder.Files, folder.Path, log);
 
         Assert.NotNull(catalog.Find(StoryFixtures.Card.Id));
         Assert.Null(catalog.Secret(StoryFixtures.Card.Id));

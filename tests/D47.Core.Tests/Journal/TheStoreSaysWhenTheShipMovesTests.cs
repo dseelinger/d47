@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -7,11 +8,8 @@ namespace D47.Core.Tests.Journal;
 /// <summary>
 /// The signal a surface reading live state needs: the system the Commander is in changed (#93).
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheStoreSaysWhenTheShipMovesTests
 {
-    private static string FixturesDirectory { get; } = FindFixturesDirectory();
-
     private static GameStateStore Counting(out Func<int> moves)
     {
         var store = new GameStateStore();
@@ -35,14 +33,15 @@ public class TheStoreSaysWhenTheShipMovesTests
     [Fact]
     public void OneRaisePerLocationChangeRatherThanOnePerEvent()
     {
-        using var install = new TempInstall();
+        var files = new MemoryFileSystem();
+        const string root = @"C:\d47-test";
 
-        File.Copy(
-            Path.Combine(FixturesDirectory, "Journal.2026-02-10T090000.01.log"),
-            Path.Combine(install.Root, "Journal.2026-02-10T090000.01.log"));
+        files.WriteText(
+            Path.Combine(root, "Journal.2026-02-10T090000.01.log"),
+            EmbeddedFixture.Text("journal.Journal.2026-02-10T090000.01.log"));
 
         var store = Counting(out var moves);
-        var events = new JournalSpine(install.Root, store, NullLoggerFactory.Instance).Poll();
+        var events = new JournalSpine(root, files, store, NullLoggerFactory.Instance).Poll();
 
         // The fixture holds eight parsable events and moves the ship twice: the opening Location, and the
         // FSDJump. The Docked that follows names the system it is already in, and the Undocked names none.
@@ -113,19 +112,5 @@ public class TheStoreSaysWhenTheShipMovesTests
 
         // Laksak, then the switch to a Commander who is nowhere yet, then Deciat.
         Assert.Equal(3, moves());
-    }
-
-    private static string FindFixturesDirectory()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "d47.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory is null
-            ? throw new InvalidOperationException($"Could not find the repository root above {AppContext.BaseDirectory}.")
-            : Path.Combine(directory.FullName, "tests", "fixtures", "journal");
     }
 }

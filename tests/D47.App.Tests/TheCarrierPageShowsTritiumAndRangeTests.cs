@@ -17,11 +17,11 @@ namespace D47.App.Tests;
 /// The tritium block on the carrier page: the tank, the hold, the ship, a total and a rough range
 /// (#307).
 /// </summary>
-[Trait("Category", "Integration")]
 public class TheCarrierPageShowsTritiumAndRangeTests
 {
     private const long CarrierId = 3715429376;
     private const string Sign = "BNH-T2F";
+    private const string Root = @"C:\d47-test";
 
     private static string[] CarrierLines(int? intoHold = null, bool tradeOrderOpen = false)
     {
@@ -48,14 +48,14 @@ public class TheCarrierPageShowsTritiumAndRangeTests
         return [.. lines];
     }
 
-    private static void WriteCargo(string root, string vessel, int tritium)
+    private static void WriteCargo(MemoryFileSystem files, string vessel, int tritium)
     {
         var inventory = tritium > 0
             ? $$"""[{ "Name":"tritium", "Name_Localised":"Tritium", "Count":{{tritium}}, "Stolen":0 }]"""
             : "[]";
 
-        File.WriteAllText(
-            Path.Combine(root, CargoManifestReader.ManifestFile),
+        files.WriteText(
+            Path.Combine(Root, CargoManifestReader.ManifestFile),
             $$"""{ "timestamp":"2026-09-13T16:00:06Z", "event":"Cargo", "Vessel":"{{vessel}}", "Count":{{tritium}}, "Inventory":{{inventory}} }""");
     }
 
@@ -63,43 +63,41 @@ public class TheCarrierPageShowsTritiumAndRangeTests
     /// A Commander with a carrier, and the ship's hold read from a real <c>Cargo.json</c> — because,
     /// unlike everything else this page draws, the ship's hold cannot arrive any other way.
     /// </summary>
-    private static (GameStateStore Store, JournalSpine Spine, string Root) Commander(
+    private static (GameStateStore Store, JournalSpine Spine, MemoryFileSystem Files) Commander(
         int shipTritium = 0,
         string vessel = "Ship",
         int? carrierHoldTritium = null,
         bool tradeOrderOpen = false)
     {
-        var root = TempFolders.Create("d47-carrier-tritium-tests");
+        var files = new MemoryFileSystem();
 
-        File.WriteAllLines(
-            Path.Combine(root, "Journal.2026-09-13T160000.01.log"),
-            CarrierLines(carrierHoldTritium, tradeOrderOpen));
+        files.WriteText(
+            Path.Combine(Root, "Journal.2026-09-13T160000.01.log"),
+            string.Join('\n', CarrierLines(carrierHoldTritium, tradeOrderOpen)) + "\n");
 
-        WriteCargo(root, vessel, shipTritium);
+        WriteCargo(files, vessel, shipTritium);
 
         var store = new GameStateStore();
-        var spine = new JournalSpine(root, store, NullLoggerFactory.Instance);
+        var spine = new JournalSpine(Root, files, store, NullLoggerFactory.Instance);
 
         spine.Poll();
 
-        return (store, spine, root);
+        return (store, spine, files);
     }
 
     /// <summary>The page drawn for a Commander whose state the panel reads live.</summary>
     private static (Window Window, PanelView Panel) Open(Func<CommanderGameState?> state)
     {
-        var root = TempFolders.Create("d47-carrier-tritium-page");
-
         var checklists = new ChecklistService(
-            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
+            new ChecklistStore(Path.Combine(Root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
             new ChecklistProposalStore(
-                Path.Combine(root, "checklist-proposals.json"),
+                Path.Combine(Root, "checklist-proposals.json"),
                 new MemoryFileSystem(),
                 NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
         var ships = new ShipPlanService(
-            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
+            new ShipBuildStore(Path.Combine(Root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             () => null);
 
@@ -208,14 +206,12 @@ public class TheCarrierPageShowsTritiumAndRangeTests
     [AvaloniaFact]
     public void ThePageRedrawsWhenTheShipsHoldChangesAlone()
     {
-        var (store, spine, root) = Commander(shipTritium: 0);
+        var (store, spine, files) = Commander(shipTritium: 0);
         var (window, panel) = Open(() => store.Active);
 
         Assert.DoesNotContain("Your ship's hold", Text(panel), StringComparison.Ordinal);
 
-        WriteCargo(root, "Ship", 40);
-        File.SetLastWriteTimeUtc(
-            Path.Combine(root, CargoManifestReader.ManifestFile), DateTime.UtcNow.AddSeconds(1));
+        WriteCargo(files, "Ship", 40);
         spine.Poll();
 
         Assert.True(panel.TickLoadout(), "a changed ship's hold is drawn");
