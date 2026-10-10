@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Reverse reverb's swell into each word now lasts at most 0.3 seconds, and it works as the voice arrives, holding back about 40 milliseconds. The sound changes: the reverb's long tail no longer reaches back before a word. The Ghost preset still waits for its whole line because Whisper does.
+
 COVAS on Edge Neural now always speaks in Sonia, a British woman's voice, and no core or carrier role is given a child's voice (Maisie and Ana are never cast automatically, though you can still pick them). An install whose core was given one is cast again once.
 
 A line for Kokoro or Chatterbox is spoken by Edge Neural in `en-GB-SoniaNeural` until that model is downloaded, instead of failing with "not downloaded yet". Every speaker uses that one voice meanwhile, and the next line after the download uses the voice you chose, with no restart. Until then the text goes to Microsoft (`speech.platform.bing.com`); the Privacy and egress section, `get_data_egress` and the setup Ready step say so, and the Settings voice row says that Edge speaks until the download finishes.

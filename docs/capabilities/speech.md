@@ -832,8 +832,9 @@ raises the static and loses stretches of the voice.
 
 ##### Reverse reverb: mix {#guardian-voice-reverse-reverb}
 
-A reverb run backwards, so its tail swells up into each word instead of trailing after it. Every
-line starts 0.3 seconds later, to make room for the swell before its first word. Mix is the
+A reverb run backwards, so its tail swells up into each word instead of trailing after it. The
+swell lasts at most 0.3 seconds, and every line starts 0.3 seconds later to make room for it before
+its first word. Mix is the
 reverb's volume against the dry voice: 5% a level, 45% at the default of 9.
 
 ##### Shimmer: shimmer {#guardian-voice-shimmer}

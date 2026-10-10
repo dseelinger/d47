@@ -19,6 +19,8 @@ public static partial class GuardianVoice
     /// <summary>Stages in series, each one's output pushed into the next.</summary>
     private sealed class ChainStage(IGuardianStage[] stages) : IGuardianStage
     {
+        public int Delay => stages.Sum(stage => stage.Delay);
+
         public void Push(ReadOnlySpan<double> input, List<double> output) => Run(0, input, output);
 
         public void Finish(List<double> output)

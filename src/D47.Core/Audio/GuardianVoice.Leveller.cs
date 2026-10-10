@@ -39,7 +39,7 @@ public static partial class GuardianVoice
                 .. Enumerable.Range(0, _channels)
                     .Select(_ => new ChainStage([.. chain.Select(link => link.Effect.Start(link.Value, basePitchHz, rate))])),
             ];
-            _leveller = new Leveller(_channels, rate);
+            _leveller = new Leveller(_channels, rate, _chains[0].Delay);
         }
 
         public byte[] Push(ReadOnlySpan<byte> pcm)
@@ -115,8 +115,8 @@ public static partial class GuardianVoice
 
     /// <summary>
     /// Brings the treated signal to the dry signal's loudness as it arrives, then limits it to <see cref="Ceiling"/>.
-    /// Treated frame <c>n</c> is levelled by the dry and treated energy over frames 0 to <c>n</c>, summed across
-    /// channels; frames before the warm-up are held and given the gain measured at its end. Frames released by
+    /// Treated frame <c>n</c> is levelled by the treated energy over frames 0 to <c>n</c> and the dry energy over
+    /// frames 0 to <c>n</c> less the chain's <see cref="IGuardianStage.Delay"/>, summed across channels; frames before the warm-up are held and given the gain measured at its end. Frames released by
     /// <see cref="Drain"/> once finished get the gain over the whole dry input and the treated frames beside it, so the
     /// output does not depend on how either arrived.
     /// </summary>
@@ -142,9 +142,15 @@ public static partial class GuardianVoice
         private double _limit = 1;
         private int _peaksAhead;
 
-        public Leveller(int channels, int rate)
+        public Leveller(int channels, int rate, int delay)
         {
             _channels = channels;
+
+            for (var frame = 0; frame < delay; frame++)
+            {
+                _dryEnergy.Enqueue(0);
+            }
+
             _warmup = Samples(LevellerWarmupMs, rate);
             _smoothing = 1 - Math.Exp(-1 / (LevellerSmoothingMs / 1000 * rate));
             _lookAhead = Samples(LimiterLookAheadMs, rate);

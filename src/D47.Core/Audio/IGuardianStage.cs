@@ -8,4 +8,7 @@ internal interface IGuardianStage
 
     /// <summary>Appends the rest: samples held back for look-ahead, then any tail.</summary>
     void Finish(List<double> output);
+
+    /// <summary>Samples of silence the output begins with before the first input sample's effect.</summary>
+    int Delay => 0;
 }

@@ -288,7 +288,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 9,
             Value = level => level / 20.0,
-            Start = (wet, _, rate) => WholeClip(signal => ReverseReverb(signal, wet, rate)),
+            Start = (wet, _, rate) => new ReverseReverbStage(wet, rate),
         },
         new GuardianEffect
         {
@@ -429,7 +429,7 @@ public static partial class GuardianVoice
 
     private const uint WhisperSeed = 0x3C6EF372u;
 
-    /// <summary>The reversed reverb's tail, added at the front of the clip; every line's first word waits this long.</summary>
+    /// <summary>The reversed reverb's tail, added at the front of the clip and the length its swell is cut to; every line's first word waits this long.</summary>
     private const double ReverseTailSeconds = 0.3;
 
     /// <summary>The shimmer reverb's share of the output, fixed at Reverb's default mix.</summary>
@@ -933,36 +933,6 @@ public static partial class GuardianVoice
             var remain = next.Length - fade;
             Array.Copy(next, fade, output, at, remain);
             at += remain;
-        }
-
-        return output;
-    }
-
-    /// <summary>
-    /// Reverb on the clip reversed, reversed back, so the tail comes before each sound and swells into it. The
-    /// clip gains <see cref="ReverseTailSeconds"/> at the front, faded in from zero.
-    /// </summary>
-    private static double[] ReverseReverb(double[] signal, double mix, int rate)
-    {
-        var tail = (int)Math.Round(ReverseTailSeconds * rate);
-        var total = signal.Length + tail;
-        var reversed = (double[])signal.Clone();
-        Array.Reverse(reversed);
-
-        var low = ReverbWet(reversed, total, rate);
-        var output = new double[total];
-
-        for (var index = 0; index < total; index++)
-        {
-            var source = total - 1 - index;
-            var wet = mix * low[source];
-
-            if (source >= signal.Length)
-            {
-                wet *= (double)(total - 1 - source) / tail;
-            }
-
-            output[index] = (ReverbDry * (index >= tail ? signal[index - tail] : 0)) + wet;
         }
 
         return output;
