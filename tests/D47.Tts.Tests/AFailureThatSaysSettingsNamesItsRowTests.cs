@@ -37,23 +37,24 @@ public class AFailureThatSaysSettingsNamesItsRowTests
     private static readonly Dictionary<string, (Func<ITtsProvider> Provider, VoiceSelection Voice, string Row)> Cases = new()
     {
         ["edge no voice"] = (
-            () => new EdgeNeuralTtsProvider(NullLogger<EdgeNeuralTtsProvider>.Instance),
+            () => new EdgeNeuralTtsProvider(
+                NullLogger<EdgeNeuralTtsProvider>.Instance,
+                new HttpClient(new ANoChosenVoiceIsRefusedTests.ListsNothing())),
             VoiceSelection.Default,
             SpeechCapability.VoiceKey),
         ["openai no key"] = (
             () => new OpenAiTtsProvider(() => null, NullLogger<OpenAiTtsProvider>.Instance),
             new VoiceSelection("alloy"),
             "speech.openai.apiKey"),
-        ["openai no voice"] = (
-            () => new OpenAiTtsProvider(() => "sk-test", NullLogger<OpenAiTtsProvider>.Instance),
-            VoiceSelection.Default,
-            SpeechCapability.VoiceKey),
         ["cartesia no key"] = (
             () => new CartesiaTtsProvider(() => null, NullLogger<CartesiaTtsProvider>.Instance),
             new VoiceSelection("a-voice"),
             "speech.cartesia.apiKey"),
         ["cartesia no voice"] = (
-            () => new CartesiaTtsProvider(() => "sk-test", NullLogger<CartesiaTtsProvider>.Instance),
+            () => new CartesiaTtsProvider(
+                () => "sk-test",
+                NullLogger<CartesiaTtsProvider>.Instance,
+                new ANoChosenVoiceIsRefusedTests.ListsNothing()),
             VoiceSelection.Default,
             SpeechCapability.VoiceKey),
         ["elevenlabs no key"] = (
@@ -61,7 +62,10 @@ public class AFailureThatSaysSettingsNamesItsRowTests
             new VoiceSelection("a-voice"),
             "speech.elevenlabs.apiKey"),
         ["elevenlabs no voice"] = (
-            () => new ElevenLabsTtsProvider(() => "sk-test", NullLogger<ElevenLabsTtsProvider>.Instance),
+            () => new ElevenLabsTtsProvider(
+                () => "sk-test",
+                NullLogger<ElevenLabsTtsProvider>.Instance,
+                new HttpClient(new ANoChosenVoiceIsRefusedTests.ListsNothing("""{"voices":[]}"""))),
             VoiceSelection.Default,
             SpeechCapability.VoiceKey),
         ["kokoro no voice"] = (
@@ -121,7 +125,7 @@ public class AFailureThatSaysSettingsNamesItsRowTests
     }
 
     [Theory]
-    [InlineData("openai no voice")]
+    [InlineData("cartesia no voice")]
     [InlineData("chatterbox no voice")]
     [InlineData("kokoro no voice")]
     public async Task ANoVoiceRefusalSaysTheVoiceIsWhatIsMissing(string refusal)

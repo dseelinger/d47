@@ -112,6 +112,8 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             throw new TtsException("No OpenAI voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
@@ -179,6 +181,8 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
                 fault: TtsFault.KeyRejected,
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
+
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {

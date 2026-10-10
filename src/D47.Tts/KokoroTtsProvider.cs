@@ -107,9 +107,12 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         return VoiceIdFor(voice) is { } voiceId ? phonemiser.ToPhonemes(text, voiceId) : null;
     }
 
-    /// <summary>The chosen voice where Kokoro has it, or null.</summary>
-    private static string? VoiceIdFor(VoiceSelection voice) =>
-        voice.VoiceId is { Length: > 0 } chosen && KokoroAssets.VoiceIds.Contains(chosen) ? chosen : null;
+    /// <summary>The chosen voice where Kokoro has it, the first voice when none is chosen and Kokoro is installed, or null.</summary>
+    private string? VoiceIdFor(VoiceSelection voice) =>
+        InterimVoice.For(voice.VoiceId, KokoroAssets.IsInstalled(_files, _folder) ? KokoroAssets.VoiceIds : [])
+            is { } chosen && KokoroAssets.VoiceIds.Contains(chosen)
+            ? chosen
+            : null;
 
     private AudioClip Speak(string text, VoiceSelection voice, CancellationToken cancellationToken)
     {

@@ -91,6 +91,8 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         VoiceSelection voice,
         CancellationToken cancellationToken = default)
     {
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);
@@ -132,6 +134,8 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         VoiceSelection voice,
         CancellationToken cancellationToken = default)
     {
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             throw new TtsException("No Edge Neural voice has been chosen. Pick one in Settings.", fault: TtsFault.NoVoice, settingKey: SpeechCapability.VoiceKey);

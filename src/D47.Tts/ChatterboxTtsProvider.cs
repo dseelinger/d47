@@ -245,6 +245,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 settingKey: SpeechCapability.ChatterboxVoiceKey);
         }
 
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (string.Equals(voice.VoiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
         {
             return null;

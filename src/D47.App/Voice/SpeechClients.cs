@@ -388,9 +388,9 @@ public sealed class SpeechClients : IDisposable
     /// else that makes a sound.
     /// </summary>
     internal static string LocalVoiceProofVoice(string? shipVoice) =>
-        shipVoice is not null && D47.Core.Speech.KokoroAssets.VoiceIds.Contains(shipVoice)
-            ? shipVoice
-            : D47.Core.Speech.KokoroAssets.VoiceIds[0];
+        InterimVoice.For(
+            shipVoice is not null && D47.Core.Speech.KokoroAssets.VoiceIds.Contains(shipVoice) ? shipVoice : null,
+            D47.Core.Speech.KokoroAssets.VoiceIds)!;
 
     private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
     {
@@ -524,6 +524,14 @@ public sealed class SpeechClients : IDisposable
             lock (_speechGate)
             {
                 _voicesByProvider[provider.Id] = listed;
+
+                if (string.Equals(
+                        provider.Id,
+                        VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Aboard),
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    CastTheShipVoice(provider.Id);
+                }
             }
 
             _logger.LogInformation(
@@ -646,7 +654,7 @@ public sealed class SpeechClients : IDisposable
 
                 // The ship's voice belongs to the ship's provider and to nobody else's.
                 cast.DefaultVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
-                    ? SpeechCapability.ShipVoiceFor(_settings.Current, _personas.Current.Id)
+                    ? ShipVoiceOrFirst(providerId)
                     : null;
 
                 // Likewise the carrier's two, which are ids issued by whoever speaks for the carrier.
@@ -700,6 +708,21 @@ public sealed class SpeechClients : IDisposable
         {
             _ = Task.Run(() => VoicesReady?.Invoke(aboard));
         }
+    }
+
+    /// <summary>The stored voice for the core aboard, else the provider's first listed voice. The caller holds <c>_speechGate</c>.</summary>
+    private string? ShipVoiceOrFirst(string providerId) =>
+        InterimVoice.For(
+            SpeechCapability.ShipVoiceFor(_settings.Current, _personas.Current.Id),
+            HeldVoices(providerId).Voices.Select(voice => voice.Id));
+
+    /// <summary>Gives the ship's cast its voice once its provider's list is held. The caller holds <c>_speechGate</c>.</summary>
+    private void CastTheShipVoice(string aboard)
+    {
+        var cast = Casting.Of(aboard);
+
+        cast.DefaultVoice = ShipVoiceOrFirst(aboard);
+        _voice.Voice = cast.For(VoiceRole.ShipAi);
     }
 
     /// <summary>Serialises every read and write of <c>_clients</c>, <c>_slots</c>, <c>_speechWiring</c> and <c>_voicesByProvider</c>. Held only for in-memory work.</summary>
@@ -854,11 +877,15 @@ public sealed class SpeechClients : IDisposable
     {
         lock (_speechGate)
         {
-            return _heldForTest.GetValueOrDefault(providerId)
-                ?? _voicesByProvider.GetValueOrDefault(providerId)
-                ?? VoiceCatalogue.Silent;
+            return HeldVoices(providerId);
         }
     }
+
+    /// <summary>What one provider offers, read without the gate. The caller holds <c>_speechGate</c>.</summary>
+    private VoiceCatalogue HeldVoices(string providerId) =>
+        _heldForTest.GetValueOrDefault(providerId)
+        ?? _voicesByProvider.GetValueOrDefault(providerId)
+        ?? VoiceCatalogue.Silent;
 
     private readonly Dictionary<string, VoiceCatalogue> _heldForTest = new(StringComparer.OrdinalIgnoreCase);
 

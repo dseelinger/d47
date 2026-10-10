@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The first line after setup is spoken instead of failing with "No OpenAI voice has been chosen. Pick one in Settings." Until d47 has chosen the core's voice, which takes a few seconds after START, lines are spoken in the provider's first listed voice: Alloy on OpenAI, and the first voice in your account's list on ElevenLabs and Cartesia. That voice is not saved, and the next line after d47 chooses uses the chosen voice. The "No … voice has been chosen" message now appears only when the provider lists no voices at all.
+
 The setup wizard closes when the Kokoro download finishes. Before, it stayed on "335 of 335 MB" because the spoken "Local voice installed" line failed after the download and the wizard never saw the failure. Setup no longer speaks that line, and a download that fails for any reason shows its message with RETRY. From the Settings row, the line is spoken in a Kokoro voice even before one is chosen, and a line that cannot be spoken reports "Downloaded, but the voice could not speak" instead of a failed download.
 
 The push-to-talk button warning in setup and in the listening status checks only the controller the button is on. Before, a binding on button 9 of your stick produced a warning for button 9 on your throttle. When Windows shows the controller as several devices, as a WinWing throttle does, the warning says Elite binds that button number on one of them and that d47 cannot tell whether it is the one your button is on.

@@ -175,6 +175,8 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             // No hardcoded fallback id, for ElevenLabs' reason: this catalogue's ids are opaque and belong to
@@ -244,6 +246,8 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
                 fault: TtsFault.KeyRejected,
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
+
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {

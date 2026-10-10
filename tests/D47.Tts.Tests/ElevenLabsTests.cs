@@ -78,10 +78,12 @@ public class ElevenLabsTests
     }
 
     [Fact]
-    public async Task WithNoVoiceChosenItSaysSoRatherThanGuessingAnId()
+    public async Task WithNoVoiceChosenAndNoneListedItSaysSoRatherThanGuessingAnId()
     {
         // Deliberately not a hardcoded fallback voice.
-        using var provider = Provider("a-key-shaped-string");
+        using var http = new HttpClient(new CannedResponse("""{"voices":[]}"""));
+        using var provider = new ElevenLabsTtsProvider(
+            () => "a-key-shaped-string", NullLogger<ElevenLabsTtsProvider>.Instance, http);
 
         var failure = await Assert.ThrowsAsync<TtsException>(
             () => provider.SynthesizeAsync("test", VoiceSelection.Default, TestContext.Current.CancellationToken));

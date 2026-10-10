@@ -138,10 +138,10 @@ public class WhatCartesiaIsAskedForTests
     /// belong to an account, so a guess would fail as a 404 that reads like an outage.
     /// </summary>
     [Fact]
-    public async Task WithNoVoiceChosenItSaysSoRatherThanGuessingAnId()
+    public async Task WithNoVoiceChosenAndNoneListedItSaysSoRatherThanGuessingAnId()
     {
         using var provider = new CartesiaTtsProvider(
-            () => "sk-test", NullLogger<CartesiaTtsProvider>.Instance, new CaptureSpeech());
+            () => "sk-test", NullLogger<CartesiaTtsProvider>.Instance, new ANoChosenVoiceIsRefusedTests.ListsNothing());
 
         var refused = await Assert.ThrowsAsync<TtsException>(() => provider.SynthesizeAsync(
             "Hull integrity is nominal.",

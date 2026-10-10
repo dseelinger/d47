@@ -373,6 +373,8 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
 
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
+
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
             // Deliberately not a hardcoded fallback voice id.
@@ -441,6 +443,8 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
                 "No ElevenLabs API key is stored. Add one in Settings.",
                 settingKey: SpeechCapability.KeyRowFor(TtsProviderCatalog.Selected(ProviderId)));
         }
+
+        voice = await this.OrFirstListedAsync(voice, cancellationToken).ConfigureAwait(false);
 
         if (voice.VoiceId is not { Length: > 0 } voiceId)
         {
