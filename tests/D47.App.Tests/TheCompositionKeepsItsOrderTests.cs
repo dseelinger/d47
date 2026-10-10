@@ -8,6 +8,12 @@ namespace D47.App.Tests;
 [Trait("Category", "Gate")]
 public sealed class TheCompositionKeepsItsOrderTests
 {
+    private static readonly string[] Stages =
+    [
+        "ComposeFoundations", "ComposeStores", "PrimeGameLoop", "ComposeServices", "ComposeCapabilities",
+        "ComposeCrew", "ComposeHost", "RegisterHostTicks", "StartRunning",
+    ];
+
     private static readonly string[] Registrations =
     [
         "journal", "journal history", "commander pick", "push-to-talk", "default-audio-devices", "macros",
@@ -15,15 +21,17 @@ public sealed class TheCompositionKeepsItsOrderTests
         "callout-drain", "ambience", "voice-scope", "autonomous-drain", "switch-drain",
     ];
 
-    private static SyntaxNode Start() =>
+    private static MethodDeclarationSyntax Start() =>
         AppSource.Methods()
             .Single(method => method.Node.Identifier.ValueText == "Start"
                 && AppSource.EnclosingTypeName(method.Node) == "AppHost"
                 && method.Parameters.Count == 1)
             .Node;
 
-    private static IEnumerable<InvocationExpressionSyntax> Invocations(SyntaxNode start, string member) =>
-        start.DescendantNodes().OfType<InvocationExpressionSyntax>()
+    private static SyntaxNode Stage(string name) => AppSource.Method(name).Node;
+
+    private static IEnumerable<InvocationExpressionSyntax> Invocations(SyntaxNode scope, string member) =>
+        scope.DescendantNodes().OfType<InvocationExpressionSyntax>()
             .Where(call => MemberName(call) == member)
             .OrderBy(call => call.SpanStart);
 
@@ -34,55 +42,75 @@ public sealed class TheCompositionKeepsItsOrderTests
         _ => null,
     };
 
-    private static List<InvocationExpressionSyntax> TickAdds(SyntaxNode start) =>
-        [.. Invocations(start, "Add")
+    private static List<InvocationExpressionSyntax> TickAdds(SyntaxNode scope) =>
+        [.. Invocations(scope, "Add")
             .Where(call => call.Expression is MemberAccessExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "tick" } })
             .Where(call => call.ArgumentList.Arguments.FirstOrDefault()?.Expression is LiteralExpressionSyntax)];
 
-    private static int FirstAdd(SyntaxNode start, string name) =>
-        TickAdds(start).First(call => Name(call) == name).SpanStart;
+    private static int FirstAdd(SyntaxNode scope, string name) =>
+        TickAdds(scope).First(call => Name(call) == name).SpanStart;
 
     private static string Name(InvocationExpressionSyntax call) =>
         ((LiteralExpressionSyntax)call.ArgumentList.Arguments[0].Expression).Token.ValueText;
 
-    private static int First(SyntaxNode start, string member, Func<InvocationExpressionSyntax, bool>? where = null)
+    private static int First(SyntaxNode scope, string member, Func<InvocationExpressionSyntax, bool>? where = null)
     {
-        var found = Invocations(start, member).Where(call => where?.Invoke(call) ?? true).ToList();
-        Assert.True(found.Count > 0, $"Start() has no call to {member}.");
+        var found = Invocations(scope, member).Where(call => where?.Invoke(call) ?? true).ToList();
+        Assert.True(found.Count > 0, $"No call to {member} where it was expected.");
         return found[0].SpanStart;
     }
 
-    private static int Subscription(SyntaxNode start, string handler)
+    private static int Subscription(SyntaxNode scope, string handler)
     {
-        var found = start.DescendantNodes().OfType<AssignmentExpressionSyntax>()
+        var found = scope.DescendantNodes().OfType<AssignmentExpressionSyntax>()
             .Where(assignment => assignment.IsKind(SyntaxKind.AddAssignmentExpression))
             .Where(assignment => assignment.Right.ToString().Contains(handler, StringComparison.Ordinal))
             .ToList();
-        Assert.True(found.Count == 1, $"Expected one += naming {handler} in Start(); found {found.Count}.");
+        Assert.True(found.Count == 1, $"Expected one += naming {handler}; found {found.Count}.");
         return found[0].SpanStart;
     }
 
-    private static int PrimingTick(SyntaxNode start)
+    private static int PrimingTick(SyntaxNode scope)
     {
-        var found = Invocations(start, "Tick")
-            .Where(call => !call.Ancestors().TakeWhile(node => node != start).OfType<LambdaExpressionSyntax>().Any())
+        var found = Invocations(scope, "Tick")
+            .Where(call => !call.Ancestors().TakeWhile(node => node != scope).OfType<LambdaExpressionSyntax>().Any())
             .ToList();
         Assert.True(found.Count == 1, $"Expected one Tick( outside the tick subscribers; found {found.Count}.");
         return found[0].SpanStart;
     }
 
-    [Fact]
-    public void TickSubscribersAreRegisteredInTheOrderTheyRely()
-    {
-        var actual = TickAdds(Start()).Select(Name).ToList();
+    private static int StageCall(string stage) => First(Start(), stage);
 
-        Assert.True(
-            Registrations.SequenceEqual(actual),
-            "tick.Add registrations in Start() were:\n" + string.Join(", ", actual));
+    private static List<ObjectCreationExpressionSyntax> Creations(SyntaxNode scope, string type) =>
+        [.. scope.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().Where(creation => creation.Type.ToString() == type)];
+
+    [Fact]
+    public void StartCallsTheNineStagesInOrderAndNothingElse()
+    {
+        var start = Start();
+        var calls = start.DescendantNodes().OfType<InvocationExpressionSyntax>().Select(MemberName).ToList();
+
+        Assert.True(Stages.SequenceEqual(calls), "Start() calls:\n" + string.Join(", ", calls));
+
+        var statements = start.Body!.Statements;
+
+        Assert.Equal(Stages.Length + 2, statements.Count);
+        Assert.Single(Creations(statements[0], "LateBound"));
+        Assert.IsType<ReturnStatementSyntax>(statements[^1]);
     }
 
     [Fact]
-    public void NoTickSubscriberIsRegisteredOutsideStartExceptTheVrAndOverlayOnes()
+    public void TickSubscribersAreRegisteredInTheOrderTheyRely()
+    {
+        var actual = TickAdds(Stage("PrimeGameLoop")).Concat(TickAdds(Stage("RegisterHostTicks"))).Select(Name).ToList();
+
+        Assert.True(
+            Registrations.SequenceEqual(actual),
+            "tick.Add registrations in PrimeGameLoop and RegisterHostTicks were:\n" + string.Join(", ", actual));
+    }
+
+    [Fact]
+    public void NoTickSubscriberIsRegisteredOutsideTheRegisteringStagesExceptTheVrAndOverlayOnes()
     {
         var outside = AppSource.CodeLines("tick.Add(")
             .Where(line => line.File != "AppHost.cs")
@@ -102,58 +130,57 @@ public sealed class TheCompositionKeepsItsOrderTests
     [Fact]
     public void TheCommanderIsPickedBeforeThePrimingTick()
     {
-        var start = Start();
+        var prime = Stage("PrimeGameLoop");
 
-        Assert.True(FirstAdd(start, "commander pick") < PrimingTick(start));
+        Assert.True(FirstAdd(prime, "commander pick") < PrimingTick(prime));
     }
 
     [Fact]
     public void TheHostIsBuiltAfterThePrimingTick()
     {
-        var start = Start();
+        PrimingTick(Stage("PrimeGameLoop"));
+        Assert.Single(Creations(Stage("ComposeHost"), "AppHost"));
 
-        Assert.True(PrimingTick(start) < NewAppHost(start));
+        Assert.True(StageCall("PrimeGameLoop") < StageCall("ComposeHost"));
     }
 
     [Fact]
     public void ThePersonaIsWatchedBeforeTheLlmSettingsAreApplied()
     {
-        var start = Start();
+        var host = Stage("ComposeHost");
 
-        Assert.True(Subscription(start, "OnPersonaChanged") < First(start, "ApplyLlmSettings"));
+        Assert.True(Subscription(host, "OnPersonaChanged") < First(host, "ApplyLlmSettings"));
     }
 
     [Fact]
     public void EverySettingIsAppliedBeforeSettingsChangesAreWatched()
     {
-        var start = Start();
-        var watched = Subscription(start, "OnSettingsChanged");
+        var host = Stage("ComposeHost");
+        var watched = Subscription(host, "OnSettingsChanged");
 
         foreach (var apply in new[] { "ApplyLlmSettings", "ApplySpeechSettings", "ApplyListeningSettings" })
         {
-            Assert.True(First(start, apply) < watched, $"{apply} must come before the OnSettingsChanged subscription.");
+            Assert.True(First(host, apply) < watched, $"{apply} must come before the OnSettingsChanged subscription.");
         }
     }
 
     [Fact]
     public void DirectionsBeginBeforeProposalsAreReworded()
     {
-        var start = Start();
+        var host = Stage("ComposeHost");
 
-        Assert.True(First(start, "BeginDirections") < First(start, "RewordProposals"));
+        Assert.True(First(host, "BeginDirections") < First(host, "RewordProposals"));
     }
 
     [Fact]
     public void TheTickDriverStartsAfterEveryRegistration()
     {
-        var start = Start();
-        var driver = start.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
-            .Single(creation => creation.Type.ToString() == "TickDriver").SpanStart;
+        var running = Stage("StartRunning");
 
-        Assert.True(TickAdds(start).All(call => call.SpanStart < driver));
+        Assert.Single(Creations(running, "TickDriver"));
+        Assert.Empty(TickAdds(running));
+
+        Assert.True(StageCall("PrimeGameLoop") < StageCall("StartRunning"));
+        Assert.True(StageCall("RegisterHostTicks") < StageCall("StartRunning"));
     }
-
-    private static int NewAppHost(SyntaxNode start) =>
-        start.DescendantNodes().OfType<ObjectCreationExpressionSyntax>()
-            .First(creation => creation.Type.ToString() == "AppHost").SpanStart;
 }

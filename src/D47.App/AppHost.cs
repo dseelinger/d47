@@ -703,10 +703,27 @@ public sealed class AppHost : IDisposable
 
     public static AppHost Start() => Start(startTicking: true);
 
-    /// <summary>The whole of <see cref="Start"/> except the last line (#79).</summary>
+    /// <summary><see cref="Start"/> without starting the catalog refresh, the controller sampler or the tick driver (#79).</summary>
     internal static AppHost Compose() => Start(startTicking: false);
 
     private static AppHost Start(bool startTicking)
+    {
+        var late = new LateBound();
+
+        var foundations = ComposeFoundations();
+        var stores = ComposeStores(foundations, late);
+        var loop = PrimeGameLoop(foundations, stores);
+        var services = ComposeServices(foundations, stores, loop, late);
+        var registry = ComposeCapabilities(foundations, stores, loop, services, late);
+        var crew = ComposeCrew(foundations, stores, services, registry, late);
+        var host = ComposeHost(foundations, stores, loop, services, registry, crew, late);
+        RegisterHostTicks(host, foundations, stores, loop, services, registry, crew, late);
+        StartRunning(host, foundations, loop, services, startTicking);
+
+        return host;
+    }
+
+    private static FoundationParts ComposeFoundations()
     {
         var paths = AppPaths.ForRunningBuild();
         paths.EnsureCreated();
@@ -799,9 +816,36 @@ public sealed class AppHost : IDisposable
 
         var viewState = new ViewStateStore(paths, files, loggerFactory.CreateLogger<ViewStateStore>());
 
+        return new FoundationParts
+        {
+            Files = files,
+            Loaded = loaded,
+            LoadingStores = loadingStores,
+            Logger = logger,
+            LoggerFactory = loggerFactory,
+            ModelCatalog = modelCatalog,
+            Paths = paths,
+            Secrets = secrets,
+            Settings = settings,
+            StartedLogging = startedLogging,
+            StartupError = startupError,
+            Verbosity = verbosity,
+            Version = version,
+            ViewState = viewState,
+        };
+    }
+
+    private static StoreParts ComposeStores(FoundationParts foundations, LateBound late)
+    {
+        var files = foundations.Files;
+        var loadingStores = foundations.LoadingStores;
+        var logger = foundations.Logger;
+        var loggerFactory = foundations.LoggerFactory;
+        var paths = foundations.Paths;
+        var settings = foundations.Settings;
+        var viewState = foundations.ViewState;
+
         var journalDirectory = ResolveJournalDirectory();
-        // Assigned once the bindings have been resolved, below.
-        Func<EliteBinds>? bindsRef = null;
 
         // Sampling history, which is the one derived state that has to outlive a session: the spine tails the
         // newest journal, so a run begun yesterday is otherwise simply gone (Phase 18).
@@ -1160,7 +1204,7 @@ public sealed class AppHost : IDisposable
         var adventureBook = new D47.Core.Adventures.AdventureBook(
             adventureStore, loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>());
 
-        // Read before the catch-up below: a place visited while the Commander had the story off is not remembered.
+        // Read before the catch-up in PrimeGameLoop: a place visited while the Commander had the story off is not remembered.
         var storyStore = D47.Core.Stories.StoryStore.Open(
             Path.Combine(paths.Data, "story.json"),
             files,
@@ -1174,7 +1218,7 @@ public sealed class AppHost : IDisposable
         adventureBook.Silenced = (commander, id, at) => storyStore.Find(commander, id)?.WasOffAt(at) == true;
 
         // A hand edit, a Begin or an Abandon all arrive here; the book keeps what it can and asks for a walk
-        // over the files when a stamp moved, which the tick below grants.
+        // over the files when a stamp moved, which the adventures tick grants.
         adventureStore.Changed += adventureBook.Reconcile;
 
         var storyLogger = loggerFactory.CreateLogger<D47.Core.Stories.StoryCatalog>();
@@ -1237,9 +1281,6 @@ public sealed class AppHost : IDisposable
             });
         }
 
-        // Assigned once the ship and on-foot plans exist, below.
-        D47.Core.Engineers.EngineerPlanService? unlocksRef = null;
-
         // Reads the same holder the callouts do, because the engineers arc delegates its "what do I do about
         // this today" to the unlock solver rather than growing a worse one.
         var goalBook = new D47.Core.Goals.GoalBook(
@@ -1247,13 +1288,12 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Identity.FrontierId,
             () => gameState.Active,
             checklists,
-            () => unlocksRef);
+            () => late.Unlocks);
 
         var fight = new NearbyFight();
         var scenes = new SceneTracker();
         var handInOffer = new D47.Core.Conversation.HandInOffer();
         var storyClue = new D47.Core.Stories.StoryClueCallout(fight);
-        Func<string?, bool>? storyOpeningRef = null;
 
         var callouts = ShippedCallouts.Build(
             new ShippedCallouts.Sources
@@ -1280,7 +1320,7 @@ public sealed class AppHost : IDisposable
                 JournalReminders = journalReminders,
                 StandingWarnings = standingWarnings,
                 MiningTargets = miningTargets,
-                StoryOpening = commander => storyOpeningRef?.Invoke(commander) == true,
+                StoryOpening = commander => late.StoryOpening?.Invoke(commander) == true,
             },
             DateTimeOffset.Now);
 
@@ -1288,28 +1328,107 @@ public sealed class AppHost : IDisposable
         var autonomous = new AutonomousActionRunner(loggerFactory.CreateLogger<AutonomousActionRunner>())
             .Add(new HonkOnArrival(
                 () => settings.Current.Actions.HonkOnArrival,
-                () => bindsRef!()));
+                () => late.Binds!()));
 
         loadingStores.Dispose();
 
+        return new StoreParts
+        {
+            Activities = activities,
+            AdventureBook = adventureBook,
+            AdventureStore = adventureStore,
+            Autonomous = autonomous,
+            BackfillGoals = BackfillGoals,
+            Bookmarks = bookmarks,
+            Callouts = callouts,
+            CargoBoard = cargoBoard,
+            Cartography = cartography,
+            Checklists = checklists,
+            CommodityBoard = commodityBoard,
+            CommodityLedger = commodityLedger,
+            CommunityGoalSearch = communityGoalSearch,
+            Crimes = crimes,
+            DebriefBook = debriefBook,
+            Exobiology = exobiology,
+            Fight = fight,
+            GalaxySearchBoard = galaxySearchBoard,
+            GameState = gameState,
+            GoalBook = goalBook,
+            Goals = goals,
+            HandInOffer = handInOffer,
+            HeardNames = heardNames,
+            History = history,
+            Journal = journal,
+            JournalDirectory = journalDirectory,
+            JournalReminders = journalReminders,
+            Kit = kit,
+            LastFoundSystem = lastFoundSystem,
+            LearnedPhrases = learnedPhrases,
+            Loadouts = loadouts,
+            Lore = lore,
+            LoreVisits = loreVisits,
+            Mail = mail,
+            MarketBook = marketBook,
+            Markets = markets,
+            Memories = memories,
+            MemoryBook = memoryBook,
+            MemoryObserver = memoryObserver,
+            MessageStore = messageStore,
+            MiningTargets = miningTargets,
+            ModulePower = modulePower,
+            PlanBook = planBook,
+            Route = route,
+            Sampling = sampling,
+            Scenes = scenes,
+            ShipBuilds = shipBuilds,
+            SourcingBoard = sourcingBoard,
+            StandingWarnings = standingWarnings,
+            Status = status,
+            StoryArchive = storyArchive,
+            StoryCatalog = () => storyCatalog,
+            StoryClue = storyClue,
+            StoryDownloads = storyDownloads,
+            StoryRatings = storyRatings,
+            StoryStore = storyStore,
+        };
+    }
+
+    private static LoopParts PrimeGameLoop(FoundationParts foundations, StoreParts stores)
+    {
+        var files = foundations.Files;
+        var logger = foundations.Logger;
+        var loggerFactory = foundations.LoggerFactory;
+        var activities = stores.Activities;
+        var adventureBook = stores.AdventureBook;
+        var autonomous = stores.Autonomous;
+        var callouts = stores.Callouts;
+        var cartography = stores.Cartography;
+        var checklists = stores.Checklists;
+        var commodityLedger = stores.CommodityLedger;
+        var crimes = stores.Crimes;
+        var exobiology = stores.Exobiology;
+        var fight = stores.Fight;
+        var gameState = stores.GameState;
+        var history = stores.History;
+        var journal = stores.Journal;
+        var journalDirectory = stores.JournalDirectory;
+        var kit = stores.Kit;
+        var loadouts = stores.Loadouts;
+        var lore = stores.Lore;
+        var loreVisits = stores.LoreVisits;
+        var mail = stores.Mail;
+        var markets = stores.Markets;
+        var modulePower = stores.ModulePower;
+        var planBook = stores.PlanBook;
+        var route = stores.Route;
+        var sampling = stores.Sampling;
+        var scenes = stores.Scenes;
+        var status = stores.Status;
+
+        var feed = new JournalFeed();
+
         // The ~4-10 Hz loop.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
-
-        // This tick's journal events, for the subscribers registered after the host exists and therefore too
-        // late to be inside the closure below.
-        IReadOnlyList<JournalEvent> arrived = [];
-
-        // Captured rather than reached through the host, for the same reason `arrived` is: this closure is
-        // built before the instance exists (#51).
-        var journalLog = new D47.Core.Journal.JournalLog();
-
-        // Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what
-        // ambience follows.
-        var eliteMusic = new EliteMusic();
-
-        // The journal's own witness that a docking request went in (#150): counted on the tick thread, read
-        // by the wait the contacts walk ends on.
-        var dockingRequests = 0;
 
         tick.Add("journal", context =>
         {
@@ -1323,17 +1442,17 @@ public sealed class AppHost : IDisposable
             var inGame = gameState.InGame?.Identity.FrontierId;
             var shown = gameState.Shown(events);
 
-            arrived = shown;
+            feed.Arrived = shown;
 
-            eliteMusic.Observe(events);
+            feed.EliteMusic.Observe(events);
 
             if (events.Any(journalEvent => journalEvent.Kind == "DockingRequested"))
             {
-                Interlocked.Increment(ref dockingRequests);
+                Interlocked.Increment(ref feed.DockingRequests);
             }
 
             // Kept for the Journal page to read (#51).
-            journalLog.Add(events, journal.Receipts);
+            feed.JournalLog.Add(events, journal.Receipts);
             status.Poll();
             route.Poll();
 
@@ -1417,7 +1536,7 @@ public sealed class AppHost : IDisposable
             }
         });
 
-        // Directly after the journal, so every subscriber registered below reads the adopted state on the
+        // Directly after the journal, so every subscriber registered after it reads the adopted state on the
         // same tick rather than the next one (#148). Game state is written on the tick thread and nowhere
         // else, which is why the walk's result is taken here rather than where it finishes.
         var adopted = false;
@@ -1435,11 +1554,9 @@ public sealed class AppHost : IDisposable
 
         // A Commander picked on the title bar or the Commanders page, taken here because game state is written
         // on the tick thread.
-        var picks = new System.Collections.Concurrent.ConcurrentQueue<CommanderIdentity>();
-
         tick.Add("commander pick", _ =>
         {
-            while (picks.TryDequeue(out var picked))
+            while (feed.Picks.TryDequeue(out var picked))
             {
                 gameState.Pick(picked);
             }
@@ -1463,6 +1580,38 @@ public sealed class AppHost : IDisposable
             "Journal folder {Directory}; tailing {File}",
             journalDirectory,
             journal.CurrentFile ?? "(none found)");
+
+        return new LoopParts
+        {
+            Feed = feed,
+            Tick = tick,
+        };
+    }
+
+    private static ServiceParts ComposeServices(FoundationParts foundations, StoreParts stores, LoopParts loop, LateBound late)
+    {
+        var files = foundations.Files;
+        var loaded = foundations.Loaded;
+        var logger = foundations.Logger;
+        var loggerFactory = foundations.LoggerFactory;
+        var paths = foundations.Paths;
+        var secrets = foundations.Secrets;
+        var settings = foundations.Settings;
+        var version = foundations.Version;
+        var viewState = foundations.ViewState;
+        var adventureBook = stores.AdventureBook;
+        var checklists = stores.Checklists;
+        var gameState = stores.GameState;
+        var heardNames = stores.HeardNames;
+        var journalDirectory = stores.JournalDirectory;
+        var kit = stores.Kit;
+        var learnedPhrases = stores.LearnedPhrases;
+        var marketBook = stores.MarketBook;
+        var shipBuilds = stores.ShipBuilds;
+        var status = stores.Status;
+        var storyArchive = stores.StoryArchive;
+        var storyStore = stores.StoryStore;
+        var feed = loop.Feed;
 
         // Availability and spend exist before the registry because capabilities report on them; the provider
         // itself is built afterwards, from settings, by ApplyLlmSettings.
@@ -1511,15 +1660,10 @@ public sealed class AppHost : IDisposable
         var unlocks = new D47.Core.Engineers.EngineerPlanService(
             shipBuilds, onFootBuilds, checklists, () => gameState.Active);
 
-        // The holder declared before the callouts, filled in now.
-        unlocksRef = unlocks;
+        // The goal book reads it through the holder.
+        late.Unlocks = unlocks;
 
-        // Late-bound, because several things built here have to read something that does not exist until the
-        // host does — the voice list, the headset report, and now the cue library, which is replaced whenever
-        // the Commander drops a file into data/audio.
         var clipboard = new DesktopClipboard(loggerFactory.CreateLogger<DesktopClipboard>());
-
-        AppHost? self = null;
 
         var wake = new WakeWordGate();
 
@@ -1527,14 +1671,14 @@ public sealed class AppHost : IDisposable
             heardNames,
             learnedPhrases,
             () => gameState.Active?.Identity.FrontierId,
-            () => self?.ReservedPhrases ?? [],
+            () => late.Host?.ReservedPhrases ?? [],
             () => DateTimeOffset.Now);
 
-        // The conversation about each build's plan (#570). Late-bound to the turn loop through `self`.
+        // The conversation about each build's plan (#570). Late-bound to the turn loop through `late.Host`.
         var buildAdvisor = new ShipPlanAdvisor(
-            () => self?.Turns.Provider,
-            () => self?.Turns.Model,
-            () => self?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+            () => late.Host?.Turns.Provider,
+            () => late.Host?.Turns.Model,
+            () => late.Host?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
             () => CommanderStory.Compose(settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: false),
             () => gameState.Active,
             spend,
@@ -1543,7 +1687,7 @@ public sealed class AppHost : IDisposable
 
         var buildTalk = new BuildTalk(shipPlans, buildAdvisor.AdviseAsync, () => SystemWallClock.Instance.UtcNow)
         {
-            TurnSource = () => self?.Turns.Source ?? InputSource.Spoken,
+            TurnSource = () => late.Host?.Turns.Source ?? InputSource.Spoken,
         };
 
         // A session, written up (Phase 33).
@@ -1564,10 +1708,10 @@ public sealed class AppHost : IDisposable
             // The provider, the model and the persona as they are at this instant.
             () => new D47.Core.Logbook.LogbookContext
             {
-                Provider = self?.Turns.Provider,
-                Model = self?.Turns.Model,
+                Provider = late.Host?.Turns.Provider,
+                Model = late.Host?.Turns.Model,
                 PersonalityEnabled = settings.Current.Llm.PersonalityEnabled,
-                Persona = self?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
+                Persona = late.Host?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
 
                 // Both halves.
                 AboutMe = CommanderStory.Compose(
@@ -1593,10 +1737,10 @@ public sealed class AppHost : IDisposable
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
-        var voice = new VoicePipeline(audio, () => self!.Cues, loggerFactory)
+        var voice = new VoicePipeline(audio, () => late.Host!.Cues, loggerFactory)
         {
             // What a voice is called, for the log line that says who spoke (remediation.md 10, item 9).
-            VoiceName = id => id is { Length: > 0 } ? self?.Speech.VoiceNameFor(id) : null,
+            VoiceName = id => id is { Length: > 0 } ? late.Host?.Speech.VoiceNameFor(id) : null,
         };
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn returns,
@@ -1619,7 +1763,7 @@ public sealed class AppHost : IDisposable
         }
 
         // A track ending is how the next one is asked for.
-        audio.MusicFinished += () => self?.Music.TrackFinished();
+        audio.MusicFinished += () => late.Host?.Music.TrackFinished();
 
         try
         {
@@ -1669,7 +1813,7 @@ public sealed class AppHost : IDisposable
         // The input trace's stills and the pictures of the screen, from one capture. Nothing touches Direct3D
         // until the first still.
         var screenCapture = new Diagnostics.HeadsetEyeCapture(
-            () => self?.Vr?.Session,
+            () => late.Host?.Vr?.Session,
             () => eliteWindow.ProcessId,
             new Diagnostics.EliteWindowCapture(
                 () => eliteWindow.Handle,
@@ -1684,7 +1828,7 @@ public sealed class AppHost : IDisposable
             files,
             () => DateTimeOffset.Now,
             () => status.Current,
-            () => eliteMusic.Track,
+            () => feed.EliteMusic.Track,
             screenCapture,
             loggerFactory.CreateLogger<Diagnostics.InputTraceWriter>());
 
@@ -1696,11 +1840,6 @@ public sealed class AppHost : IDisposable
         // Nothing is pressed in a game running a Commander other than the one shown.
         var gameInput = new OffDutyGameInput(injector, gameState);
 
-        // Declared here and assigned inside the registry build below, so the capabilities and the prompt's
-        // game-state block are looking at one surface rather than two that could disagree about what is
-        // reachable.
-        ActionSurface actionSurface;
-
         // Read at startup and re-read when Elite rewrites it.
         var binds = StartupTimer.Time(
             "bindings",
@@ -1710,7 +1849,7 @@ public sealed class AppHost : IDisposable
                 EliteInstallations(),
                 loggerFactory.CreateLogger<AppHost>()));
 
-        bindsRef = () => binds.Current;
+        late.Binds = () => binds.Current;
 
         // Named copies of the bindings, copied only while Elite is closed.
         var bindingProfiles = new BindingProfiles(
@@ -1764,14 +1903,6 @@ public sealed class AppHost : IDisposable
             PersonaCatalog.Resolve(settings.Current.Persona.Id),
             new ViewStateIntroductions(viewState),
             guardianCores);
-
-        // The help capability answers from the registry it is itself registered in, so the accessor is filled
-        // in immediately after Build.
-        CapabilityRegistry? built = null;
-
-        // Same story, for the phrase book find_phrase reads (#229): the router that builds it is created
-        // after the registry it is registered in.
-        KeywordRouter? builtRouter = null;
 
         // When the Commander was last understood.
         var heardAt = new StrongBox<DateTimeOffset?>(null);
@@ -1827,11 +1958,11 @@ public sealed class AppHost : IDisposable
             audio,
             ownVoice,
             customVoices,
-            crewSeats: () => self!.CrewSeats);
+            crewSeats: () => late.Host!.CrewSeats);
 
         var auditions = new VoiceAuditions(speech, audio, settings, personas);
 
-        // Built once and shared with TurnLoop below, so the drill capability (#168) opens an offer TurnLoop
+        // Built once and shared with TurnLoop, so the drill capability (#168) opens an offer TurnLoop
         // itself reads, rather than one nobody looks at.
         var offers = new OfferWindow();
 
@@ -1839,6 +1970,171 @@ public sealed class AppHost : IDisposable
         var endingAnswer = new AdventureCapability.EndingAnswer();
         var beatRefusal = new AdventureCapability.BeatRefusal();
         var adventureDesk = new AdventureCapability.AdventureDesk();
+
+        return new ServiceParts
+        {
+            AdventureDesk = adventureDesk,
+            Audio = audio,
+            AudioSink = audioSink,
+            Auditions = auditions,
+            BeatRefusal = beatRefusal,
+            BindingProfiles = bindingProfiles,
+            Binds = binds,
+            BuildTalk = buildTalk,
+            BuildingRegistry = buildingRegistry,
+            Cancellation = cancellation,
+            Clipboard = clipboard,
+            ClipboardOffer = clipboardOffer,
+            CommunityGoals = communityGoals,
+            Controllers = controllers,
+            Coverage = coverage,
+            CueLogger = cueLogger,
+            Cues = cues,
+            CustomVoices = customVoices,
+            Drift = drift,
+            DropsLogger = dropsLogger,
+            Echo = echo,
+            EliteWindow = eliteWindow,
+            EndingAnswer = endingAnswer,
+            Galaxy = galaxy,
+            GameInput = gameInput,
+            Gate = gate,
+            HeardAt = heardAt,
+            Injector = injector,
+            InputTrace = inputTrace,
+            LlmAvailability = llmAvailability,
+            Logbook = logbook,
+            Macros = macros,
+            Microphone = microphone,
+            Models = models,
+            Offers = offers,
+            OnFootBuilds = onFootBuilds,
+            OnFootPlans = onFootPlans,
+            OwnPersonas = ownPersonas,
+            OwnVoice = ownVoice,
+            Personas = personas,
+            PushToTalk = pushToTalk,
+            PushToTalkButton = pushToTalkButton,
+            Reconciler = reconciler,
+            Recording = recording,
+            RoutePlanner = routePlanner,
+            SampledControllers = sampledControllers,
+            ScreenCapture = screenCapture,
+            ShipCoreStore = shipCoreStore,
+            ShipCores = shipCores,
+            ShipPlans = shipPlans,
+            Sources = sources,
+            Speech = speech,
+            Spend = spend,
+            SpendLedger = spendLedger,
+            StarSystems = starSystems,
+            StorySwitch = storySwitch,
+            Switches = switches,
+            TimersAndAlarms = timersAndAlarms,
+            TradePlanner = tradePlanner,
+            Transcriber = transcriber,
+            Unlocks = unlocks,
+            Voice = voice,
+            Wake = wake,
+            Wording = wording,
+        };
+    }
+
+    private static CapabilityParts ComposeCapabilities(FoundationParts foundations, StoreParts stores, LoopParts loop, ServiceParts services, LateBound late)
+    {
+        var files = foundations.Files;
+        var logger = foundations.Logger;
+        var loggerFactory = foundations.LoggerFactory;
+        var paths = foundations.Paths;
+        var secrets = foundations.Secrets;
+        var settings = foundations.Settings;
+        var verbosity = foundations.Verbosity;
+        var version = foundations.Version;
+        var activities = stores.Activities;
+        var autonomous = stores.Autonomous;
+        var backfillGoals = stores.BackfillGoals;
+        var bookmarks = stores.Bookmarks;
+        var callouts = stores.Callouts;
+        var cargoBoard = stores.CargoBoard;
+        var cartography = stores.Cartography;
+        var checklists = stores.Checklists;
+        var commodityBoard = stores.CommodityBoard;
+        var commodityLedger = stores.CommodityLedger;
+        var communityGoalSearch = stores.CommunityGoalSearch;
+        var crimes = stores.Crimes;
+        var debriefBook = stores.DebriefBook;
+        var exobiology = stores.Exobiology;
+        var galaxySearchBoard = stores.GalaxySearchBoard;
+        var gameState = stores.GameState;
+        var goalBook = stores.GoalBook;
+        var handInOffer = stores.HandInOffer;
+        var history = stores.History;
+        var journalReminders = stores.JournalReminders;
+        var lastFoundSystem = stores.LastFoundSystem;
+        var learnedPhrases = stores.LearnedPhrases;
+        var lore = stores.Lore;
+        var mail = stores.Mail;
+        var memoryBook = stores.MemoryBook;
+        var miningTargets = stores.MiningTargets;
+        var planBook = stores.PlanBook;
+        var route = stores.Route;
+        var sourcingBoard = stores.SourcingBoard;
+        var standingWarnings = stores.StandingWarnings;
+        var status = stores.Status;
+        var feed = loop.Feed;
+        var tick = loop.Tick;
+        var adventureDesk = services.AdventureDesk;
+        var audio = services.Audio;
+        var audioSink = services.AudioSink;
+        var auditions = services.Auditions;
+        var beatRefusal = services.BeatRefusal;
+        var bindingProfiles = services.BindingProfiles;
+        var binds = services.Binds;
+        var buildTalk = services.BuildTalk;
+        var buildingRegistry = services.BuildingRegistry;
+        var cancellation = services.Cancellation;
+        var clipboard = services.Clipboard;
+        var clipboardOffer = services.ClipboardOffer;
+        var communityGoals = services.CommunityGoals;
+        var controllers = services.Controllers;
+        var coverage = services.Coverage;
+        var cues = services.Cues;
+        var echo = services.Echo;
+        var eliteWindow = services.EliteWindow;
+        var endingAnswer = services.EndingAnswer;
+        var galaxy = services.Galaxy;
+        var gameInput = services.GameInput;
+        var gate = services.Gate;
+        var heardAt = services.HeardAt;
+        var llmAvailability = services.LlmAvailability;
+        var logbook = services.Logbook;
+        var macros = services.Macros;
+        var microphone = services.Microphone;
+        var models = services.Models;
+        var offers = services.Offers;
+        var onFootPlans = services.OnFootPlans;
+        var personas = services.Personas;
+        var reconciler = services.Reconciler;
+        var recording = services.Recording;
+        var routePlanner = services.RoutePlanner;
+        var screenCapture = services.ScreenCapture;
+        var shipCores = services.ShipCores;
+        var shipPlans = services.ShipPlans;
+        var speech = services.Speech;
+        var spend = services.Spend;
+        var starSystems = services.StarSystems;
+        var storySwitch = services.StorySwitch;
+        var switches = services.Switches;
+        var timersAndAlarms = services.TimersAndAlarms;
+        var tradePlanner = services.TradePlanner;
+        var transcriber = services.Transcriber;
+        var unlocks = services.Unlocks;
+        var wake = services.Wake;
+        var wording = services.Wording;
+
+        // Assigned inside the registry build, so the capabilities and the prompt's game-state block are looking
+        // at one surface rather than two that could disagree about what is reachable.
+        ActionSurface actionSurface;
 
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
@@ -1864,14 +2160,14 @@ public sealed class AppHost : IDisposable
                     SwitchLocalVoiceBuild = build => (progress, cancellationToken) =>
                         speech.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     ChatterboxState = speech.ChatterboxState,
-                    OwnVoiceState = () => self?._ownVoiceRecording.State() ?? "Not available.",
-                    OwnVoiceRecording = () => self?._ownVoiceRecording.Recording ?? false,
-                    RecordOwnVoice = () => self?._ownVoiceRecording.Toggle(),
-                    PlayOwnVoice = () => self?._ownVoiceRecording.Play(),
-                    DeleteOwnVoice = () => self?._ownVoiceRecording.Delete(),
+                    OwnVoiceState = () => late.Host?._ownVoiceRecording.State() ?? "Not available.",
+                    OwnVoiceRecording = () => late.Host?._ownVoiceRecording.Recording ?? false,
+                    RecordOwnVoice = () => late.Host?._ownVoiceRecording.Toggle(),
+                    PlayOwnVoice = () => late.Host?._ownVoiceRecording.Play(),
+                    DeleteOwnVoice = () => late.Host?._ownVoiceRecording.Delete(),
                     WatchOwnVoice = refresh =>
                     {
-                        if (self is not { } host)
+                        if (late.Host is not { } host)
                         {
                             return () => { };
                         }
@@ -1881,7 +2177,7 @@ public sealed class AppHost : IDisposable
                     },
                     DownloadChatterbox = () => speech.DownloadChatterbox,
                     ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(files, speech.ChatterboxFolder()),
-                    StoryCastUses = providerId => self?.Stories?.CastUses(providerId) == true,
+                    StoryCastUses = providerId => late.Host?.Stories?.CastUses(providerId) == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,
@@ -1912,18 +2208,18 @@ public sealed class AppHost : IDisposable
                     VerifyKey = speech.VerifySpeechKeyAsync,
 
                     // Late-bound for the same reason as the local voice download above.
-                    ResetVoices = () => self is null ? null : self.Pairing.ResetVoicesAsync,
+                    ResetVoices = () => late.Host is null ? null : late.Host.Pairing.ResetVoicesAsync,
                 },
                 new ShipsCapability.ShipsSurface
                 {
                     // Read at draw time, so the row says what is stored now rather than what was stored when
                     // the surface was assembled — including straight after a rescan.
-                    Remembered = () => self?.RememberedShips() ?? "Nothing is remembered yet.",
+                    Remembered = () => late.Host?.RememberedShips() ?? "Nothing is remembered yet.",
 
                     // The delegate answers a press rather than being one, for the reason
-                    // SpeechCapability.DownloadLocalVoice records: rows are built before `self` exists, so a
+                    // SpeechCapability.DownloadLocalVoice records: rows are built before `late.Host` exists, so a
                     // press asked for here would be null and stay null.
-                    Rescan = () => self is null ? null : self.RescanLoadoutsAsync,
+                    Rescan = () => late.Host is null ? null : late.Host.RescanLoadoutsAsync,
 
                     Talk = () => buildTalk,
                 },
@@ -1935,7 +2231,7 @@ public sealed class AppHost : IDisposable
                     wording.LearnCorrection),
                 cancellation,
                 callouts,
-                () => built ?? throw new InvalidOperationException(
+                () => late.Registry ?? throw new InvalidOperationException(
                     "Spoken help was asked what D47 can do before the registry finished building."),
                 new ListeningCapability.ListeningSurface
                 {
@@ -1975,15 +2271,15 @@ public sealed class AppHost : IDisposable
                 // dispatcher and a widget tree, so it does not exist yet.
                 new VrCapability.HeadsetSurface
                 {
-                    Report = () => self?.Vr is { } vr
+                    Report = () => late.Host?.Vr is { } vr
                         ? (vr.State, vr.Reason)
                         : (Core.Vr.VrState.Connecting, "Looking for a headset."),
                     Nudge = (nudge, steps) =>
-                        self?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
-                    Resize = on => self?.Vr?.Resize(on) ?? Core.Vr.VrResizeOutcome.NoHeadset,
-                    PlaceWhereLooking = () => self?.Vr?.PlaceWhereLooking() ?? Core.Vr.VrGazeOutcome.NoHeadset,
+                        late.Host?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
+                    Resize = on => late.Host?.Vr?.Resize(on) ?? Core.Vr.VrResizeOutcome.NoHeadset,
+                    PlaceWhereLooking = () => late.Host?.Vr?.PlaceWhereLooking() ?? Core.Vr.VrGazeOutcome.NoHeadset,
                     ResetPlacement = slot =>
-                        self?.Vr?.ResetPlacement(slot) ?? Core.Vr.VrResetOutcome.ResetNoHeadset,
+                        late.Host?.Vr?.ResetPlacement(slot) ?? Core.Vr.VrResetOutcome.ResetNoHeadset,
                 },
                 actionSurface = new ActionSurface
                 {
@@ -1999,7 +2295,7 @@ public sealed class AppHost : IDisposable
                             .JumpsRemaining > 0,
 
                     // Not awaited (#158).
-                    Acknowledge = said => _ = self?.Announcer.SayAsync(
+                    Acknowledge = said => _ = late.Host?.Announcer.SayAsync(
                         new Announcement("action.acknowledge", said)),
                 },
                 () => AutonomousCapability.Describe(autonomous),
@@ -2008,8 +2304,8 @@ public sealed class AppHost : IDisposable
                     Clipboard = clipboard,
                     Actions = actionSurface,
                     AutoPlotEnabled = () => settings.Current.Actions.AutoPlot,
-                    SpellSystem = initial => self?.SpellSystem(initial),
-                    OfferSpelling = system => self?.OfferSpelling(system),
+                    SpellSystem = initial => late.Host?.SpellSystem(initial),
+                    OfferSpelling = system => late.Host?.OfferSpelling(system),
                     WatchRoute = () => new Input.RoutePlotWatch(
                         route,
                         loggerFactory.CreateLogger<Input.RoutePlotWatch>(),
@@ -2022,7 +2318,7 @@ public sealed class AppHost : IDisposable
                 macros,
                 personas,
                 checklists,
-                () => (self?.Cues ?? cues).DescribeDrops(),
+                () => (late.Host?.Cues ?? cues).DescribeDrops(),
                 coverage is null ? null : () => coverage.Report().Summary,
 
                 // Constructed unconditionally and gated by its setting rather than by whether it exists: the
@@ -2036,7 +2332,7 @@ public sealed class AppHost : IDisposable
 
                 // Late-bound like the surfaces above: the check is a real network call and the host that
                 // makes it does not exist yet at this point in composition.
-                (provider, token) => self is { } host
+                (provider, token) => late.Host is { } host
                     ? host.VerifyLanguageModelKeyAsync(provider, token)
                     : Task.FromResult(SecretCheck.Unreachable("D47 is still starting up.")),
 
@@ -2070,10 +2366,10 @@ public sealed class AppHost : IDisposable
                 unlocks,
 
                 // The endpoint half of web search, for the egress row.
-                () => self?.SearchReachesTheWeb ?? true,
+                () => late.Host?.SearchReachesTheWeb ?? true,
 
                 // What the endpoint said it serves (Phase 29).
-                () => self?.EndpointModelIds ?? [],
+                () => late.Host?.EndpointModelIds ?? [],
 
                 // What d47 remembers about the Commander (Phase 31).
                 memoryBook,
@@ -2085,7 +2381,7 @@ public sealed class AppHost : IDisposable
                 goalBook,
 
                 // What the "read my journals" button does for the arcs' ages.
-                () => BackfillGoals,
+                () => backfillGoals,
 
                 // Which core flies which ship (Phase 35).
                 shipCores,
@@ -2126,7 +2422,7 @@ public sealed class AppHost : IDisposable
                     // Opened before the contacts walk sends a key, so a request already in is not read as
                     // this one (#150).
                     WatchDockingRequest = () => new Input.DockingRequestWatch(
-                        () => Volatile.Read(ref dockingRequests), logger),
+                        () => Volatile.Read(ref feed.DockingRequests), logger),
 
                     DockingComputerFitted = () =>
                         gameState.Active?.FlownShip.Fitted(Core.Journal.ShipLoadout.DockingComputer),
@@ -2150,11 +2446,11 @@ public sealed class AppHost : IDisposable
                     // Asked each time the row is drawn, not captured: the answer arrives over the network
                     // after this page exists, and it changes again if the release is promoted while d47 is
                     // running (#92).
-                    Channel = () => self?.Channel ?? D47.Core.Updates.ReleaseChannel.Unknown,
+                    Channel = () => late.Host?.Channel ?? D47.Core.Updates.ReleaseChannel.Unknown,
 
                     // Late-bound through the host like the speech surface's three, because the changelog opens on
                     // a panel and nothing here has one yet.
-                    ShowChangelog = () => self?.ShowChangelog?.Invoke(),
+                    ShowChangelog = () => late.Host?.ShowChangelog?.Invoke(),
                     ShowChangelogOnline = () => System.Diagnostics.Process.Start(
                         new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.OnlineUrl)
                         {
@@ -2171,17 +2467,17 @@ public sealed class AppHost : IDisposable
                     },
 
                     StartMenuWanted = () => !StartMenuShortcut.Exists() && Environment.ProcessPath is not null,
-                    SetUpKeys = () => _ = self?.SetUpKeys?.Invoke(),
+                    SetUpKeys = () => _ = late.Host?.SetUpKeys?.Invoke(),
 
-                    CheckForUpdate = (progress, token) => self?.CheckForUpdate is { } check
+                    CheckForUpdate = (progress, token) => late.Host?.CheckForUpdate is { } check
                         ? check(progress, token)
                         : Task.FromResult<string?>(null),
 
-                    InstallUpdate = (progress, token) => self?.InstallUpdate is { } install
+                    InstallUpdate = (progress, token) => late.Host?.InstallUpdate is { } install
                         ? install(progress, token)
                         : Task.FromResult<string?>(null),
 
-                    PendingUpdateVersion = () => self?.PendingUpdateVersion,
+                    PendingUpdateVersion = () => late.Host?.PendingUpdateVersion,
 
                     ShowCommunity = () => System.Diagnostics.Process.Start(
                         new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.CommunityUrl)
@@ -2240,17 +2536,17 @@ public sealed class AppHost : IDisposable
                 offers: offers,
                 learnedPhrases: learnedPhrases,
                 bookmarks: bookmarks,
-                phraseBook: () => builtRouter?.Book ?? throw new InvalidOperationException(
+                phraseBook: () => late.Router?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
-                contextNote: () => self?.ContextNote,
+                contextNote: () => late.Host?.ContextNote,
                 openAudioFolder: () => System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
-                controlMusic: action => self?.Music.Control(action) ?? "Ambient music is not available.",
-                musicState: () => self?.Music.State ?? new MusicState(null, false, false),
+                controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
+                musicState: () => late.Host?.Music.State ?? new MusicState(null, false, false),
                 watchMusic: refresh =>
                 {
                     void Changed(MusicState _) => refresh();
-                    var music = self!.Music;
+                    var music = late.Host!.Music;
                     music.Changed += Changed;
                     return () => music.Changed -= Changed;
                 },
@@ -2270,17 +2566,17 @@ public sealed class AppHost : IDisposable
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
-                pickCommander: picks.Enqueue,
+                pickCommander: feed.Picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
                 screen: screenCapture,
-                imagesAvailable: () => self?.ReadsPictures ?? true,
-                pictureNote: () => self?.PictureNote,
+                imagesAvailable: () => late.Host?.ReadsPictures ?? true,
+                pictureNote: () => late.Host?.PictureNote,
                 files: files));
 
         buildingRegistry.Dispose();
 
-        built = capabilities;
+        late.Registry = capabilities;
 
         // The one late-bound edge in the composition: descriptors declare the settings rows and some
         // descriptors read settings, so the row table is supplied once the registry exists.
@@ -2354,7 +2650,52 @@ public sealed class AppHost : IDisposable
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));
 
-        builtRouter = router;
+        late.Router = router;
+
+        return new CapabilityParts
+        {
+            ActionSurface = actionSurface,
+            Capabilities = capabilities,
+            Installer = installer,
+            OtherDynamicCommands = OtherDynamicCommands,
+            Router = router,
+            Updates = updates,
+        };
+    }
+
+    private static CrewParts ComposeCrew(FoundationParts foundations, StoreParts stores, ServiceParts services, CapabilityParts registry, LateBound late)
+    {
+        var files = foundations.Files;
+        var logger = foundations.Logger;
+        var loggerFactory = foundations.LoggerFactory;
+        var settings = foundations.Settings;
+        var adventureBook = stores.AdventureBook;
+        var callouts = stores.Callouts;
+        var checklists = stores.Checklists;
+        var gameState = stores.GameState;
+        var goalBook = stores.GoalBook;
+        var journalDirectory = stores.JournalDirectory;
+        var route = stores.Route;
+        var status = stores.Status;
+        var storyArchive = stores.StoryArchive;
+        var storyClue = stores.StoryClue;
+        var storyStore = stores.StoryStore;
+        var adventureDesk = services.AdventureDesk;
+        var beatRefusal = services.BeatRefusal;
+        var galaxy = services.Galaxy;
+        var llmAvailability = services.LlmAvailability;
+        var macros = services.Macros;
+        var offers = services.Offers;
+        var personas = services.Personas;
+        var speech = services.Speech;
+        var spend = services.Spend;
+        var storySwitch = services.StorySwitch;
+        var timersAndAlarms = services.TimersAndAlarms;
+        var tradePlanner = services.TradePlanner;
+        var wording = services.Wording;
+        var actionSurface = registry.ActionSurface;
+        var capabilities = registry.Capabilities;
+        var router = registry.Router;
 
         var turns = new TurnLoop(
             capabilities,
@@ -2411,7 +2752,7 @@ public sealed class AppHost : IDisposable
                                 // Why d47 cannot look something up, when it cannot.
                                 ConversationCapability.LiveSearch(
                                     settings.Current.Llm.WebSearch,
-                                    self?.SearchReachesTheWeb ?? true))))))),
+                                    late.Host?.SearchReachesTheWeb ?? true))))))),
         };
 
         // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
@@ -2426,7 +2767,7 @@ public sealed class AppHost : IDisposable
 
         D47.Core.Seats.ShipSeats? SeatsFlown() =>
             gameState.Active is { } active && active.FlownShip.ShipId is { } shipId
-                ? self?.CrewSeats.For(active.Identity.FrontierId, shipId)
+                ? late.Host?.CrewSeats.For(active.Identity.FrontierId, shipId)
                 : null;
 
         IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() => SeatsFlown()?.Seats ?? [];
@@ -2457,7 +2798,7 @@ public sealed class AppHost : IDisposable
             () => AmbientLines.Situate(status.Current),
             () => personas.ShipName,
             () => turns.BackgroundModel,
-            voiceId => self?.Writer.NpcCast.AccentOf(voiceId),
+            voiceId => late.Host?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<ChatterLine>()));
 
@@ -2471,7 +2812,7 @@ public sealed class AppHost : IDisposable
                      || router.Match(input, InputSource.Spoken) is not null
                      || router.Book.Candidates(input, InputSource.Spoken).Count > 0
                      || wording.LearnedPhraseFor(input) is not null,
-            () => self?.Writer.HiddenStory(VoiceRole.Narrator),
+            () => late.Host?.Writer.HiddenStory(VoiceRole.Narrator),
             () => string.IsNullOrWhiteSpace(settings.Current.Llm.CharacterSheet)
                 ? CommanderStory.SheetOrName(null, gameState.Active?.Identity.Name)
                 : null,
@@ -2479,7 +2820,7 @@ public sealed class AppHost : IDisposable
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<NarratorLine>())
         {
-            Said = reply => self?.Messages?.Post(
+            Said = reply => late.Host?.Messages?.Post(
                 D47.Core.Messages.MessageStore.Narrator, "Narration", reply, DateTimeOffset.Now),
         });
 
@@ -2505,7 +2846,7 @@ public sealed class AppHost : IDisposable
         var storyDirector = new D47.Core.Stories.StoryDirector(
             storyStore,
             adventureBook,
-            () => storyCatalog,
+            stores.StoryCatalog,
             adventureGenerator.GenerateAsync,
             () => gameState.Active?.Location.StarPos,
             backstory => settings.Apply("llm.aboutMe", backstory, SettingsCaller.Panel),
@@ -2554,7 +2895,125 @@ public sealed class AppHost : IDisposable
         var pairing = new VoicePairer(
             speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>());
 
-        var host = self = new AppHost(
+        return new CrewParts
+        {
+            AdventureGenerator = adventureGenerator,
+            Pairing = pairing,
+            StoryDirector = storyDirector,
+            Turns = turns,
+        };
+    }
+
+    private static AppHost ComposeHost(FoundationParts foundations, StoreParts stores, LoopParts loop, ServiceParts services, CapabilityParts registry, CrewParts crew, LateBound late)
+    {
+        var files = foundations.Files;
+        var loaded = foundations.Loaded;
+        var loggerFactory = foundations.LoggerFactory;
+        var paths = foundations.Paths;
+        var secrets = foundations.Secrets;
+        var settings = foundations.Settings;
+        var startedLogging = foundations.StartedLogging;
+        var startupError = foundations.StartupError;
+        var verbosity = foundations.Verbosity;
+        var version = foundations.Version;
+        var viewState = foundations.ViewState;
+        var activities = stores.Activities;
+        var adventureBook = stores.AdventureBook;
+        var backfillGoals = stores.BackfillGoals;
+        var bookmarks = stores.Bookmarks;
+        var callouts = stores.Callouts;
+        var cargoBoard = stores.CargoBoard;
+        var checklists = stores.Checklists;
+        var commodityBoard = stores.CommodityBoard;
+        var commodityLedger = stores.CommodityLedger;
+        var communityGoalSearch = stores.CommunityGoalSearch;
+        var debriefBook = stores.DebriefBook;
+        var fight = stores.Fight;
+        var galaxySearchBoard = stores.GalaxySearchBoard;
+        var gameState = stores.GameState;
+        var goalBook = stores.GoalBook;
+        var history = stores.History;
+        var journal = stores.Journal;
+        var journalDirectory = stores.JournalDirectory;
+        var loadouts = stores.Loadouts;
+        var lore = stores.Lore;
+        var memoryBook = stores.MemoryBook;
+        var messageStore = stores.MessageStore;
+        var modulePower = stores.ModulePower;
+        var planBook = stores.PlanBook;
+        var route = stores.Route;
+        var scenes = stores.Scenes;
+        var shipBuilds = stores.ShipBuilds;
+        var sourcingBoard = stores.SourcingBoard;
+        var status = stores.Status;
+        var storyDownloads = stores.StoryDownloads;
+        var storyRatings = stores.StoryRatings;
+        var storyStore = stores.StoryStore;
+        var feed = loop.Feed;
+        var tick = loop.Tick;
+        var adventureDesk = services.AdventureDesk;
+        var audio = services.Audio;
+        var audioSink = services.AudioSink;
+        var bindingProfiles = services.BindingProfiles;
+        var binds = services.Binds;
+        var buildTalk = services.BuildTalk;
+        var cancellation = services.Cancellation;
+        var clipboard = services.Clipboard;
+        var clipboardOffer = services.ClipboardOffer;
+        var controllers = services.Controllers;
+        var coverage = services.Coverage;
+        var cueLogger = services.CueLogger;
+        var cues = services.Cues;
+        var customVoices = services.CustomVoices;
+        var drift = services.Drift;
+        var dropsLogger = services.DropsLogger;
+        var echo = services.Echo;
+        var eliteWindow = services.EliteWindow;
+        var endingAnswer = services.EndingAnswer;
+        var galaxy = services.Galaxy;
+        var gate = services.Gate;
+        var heardAt = services.HeardAt;
+        var injector = services.Injector;
+        var inputTrace = services.InputTrace;
+        var llmAvailability = services.LlmAvailability;
+        var logbook = services.Logbook;
+        var macros = services.Macros;
+        var microphone = services.Microphone;
+        var models = services.Models;
+        var onFootBuilds = services.OnFootBuilds;
+        var onFootPlans = services.OnFootPlans;
+        var ownPersonas = services.OwnPersonas;
+        var ownVoice = services.OwnVoice;
+        var personas = services.Personas;
+        var pushToTalk = services.PushToTalk;
+        var pushToTalkButton = services.PushToTalkButton;
+        var reconciler = services.Reconciler;
+        var recording = services.Recording;
+        var screenCapture = services.ScreenCapture;
+        var shipCores = services.ShipCores;
+        var shipPlans = services.ShipPlans;
+        var sources = services.Sources;
+        var speech = services.Speech;
+        var spend = services.Spend;
+        var spendLedger = services.SpendLedger;
+        var starSystems = services.StarSystems;
+        var switches = services.Switches;
+        var transcriber = services.Transcriber;
+        var unlocks = services.Unlocks;
+        var voice = services.Voice;
+        var wake = services.Wake;
+        var wording = services.Wording;
+        var capabilities = registry.Capabilities;
+        var installer = registry.Installer;
+        var otherDynamicCommands = registry.OtherDynamicCommands;
+        var router = registry.Router;
+        var updates = registry.Updates;
+        var adventureGenerator = crew.AdventureGenerator;
+        var pairing = crew.Pairing;
+        var storyDirector = crew.StoryDirector;
+        var turns = crew.Turns;
+
+        var host = late.Host = new AppHost(
             paths,
             files,
             router,
@@ -2633,7 +3092,7 @@ public sealed class AppHost : IDisposable
         AvatarClipStore.Want(personas.Current.Id);
 
         // The buffer the tick closure has been filling since before this instance existed (#51).
-        host.JournalLog = journalLog;
+        host.JournalLog = feed.JournalLog;
 
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
@@ -2736,7 +3195,7 @@ public sealed class AppHost : IDisposable
         // A callout switched off within seconds of it speaking (#162).
         callouts.Silenced += debrief.NoteSilenced;
         host.Logbook = logbook;
-        host.Goals = (goalBook, BackfillGoals);
+        host.Goals = (goalBook, backfillGoals);
         host.Activities = activities;
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
@@ -2752,7 +3211,7 @@ public sealed class AppHost : IDisposable
         storyDirector.Says += host.Announcer.SayAside;
 
         // A story's opening is said before any beat of its chapter one.
-        storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.Narration.IsSayingOpening;
+        late.StoryOpening = commander => storyDirector.OpeningWaits(commander) || host.Narration.IsSayingOpening;
 
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
@@ -2793,7 +3252,7 @@ public sealed class AppHost : IDisposable
             () => history.Commanders,
             () => history.CommanderFilesExamined,
             () => gameState.Active?.Identity.FrontierId,
-            picks.Enqueue);
+            feed.Picks.Enqueue);
         host._startedLogging = startedLogging;
 
         // Through the dispatcher: the walk raises this on the thread pool thread WarmUp put it on (#148).
@@ -2801,9 +3260,9 @@ public sealed class AppHost : IDisposable
         host._loadouts = loadouts;
         host._bookmarks = bookmarks;
 
-        host.BookmarkPhrasesTaken = () => builtRouter is null
+        host.BookmarkPhrasesTaken = () => late.Router is null
             ? []
-            : BookmarksCapability.TakenPhrases(builtRouter.Book);
+            : BookmarksCapability.TakenPhrases(late.Router.Book);
 
         host.Plans = planBook;
 
@@ -2874,7 +3333,7 @@ public sealed class AppHost : IDisposable
         host.Cargo = cargoBoard;
         host.GalaxySearches = galaxySearchBoard;
 
-        host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, OtherDynamicCommands());
+        host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
 
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
@@ -2891,30 +3350,6 @@ public sealed class AppHost : IDisposable
         // in the route file.
         host._route = () => route.Current;
         host._modulePower = () => modulePower.Current;
-
-        // Push-to-talk, sampled here rather than hooked.
-        tick.Add("push-to-talk", context =>
-        {
-            pushToTalk.Poll();
-
-            // And the stick, on the same tick (Phase 53).
-            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host._logger);
-
-            // Whether the device is actually delivering audio, which only it knows and which is half of what
-            // the panel's microphone indicator says.
-            gate.Capturing = microphone.IsCapturing;
-
-            // Where the hands-free gate opens and closes.
-            gate.Poll(context.Now);
-        });
-
-        // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
-        // open, so this asks (#67).
-        tick.Add("default-audio-devices", context =>
-        {
-            host.FollowOutputDevice(context.Now);
-            host.Listener.FollowInputDevice(context.Now);
-        });
 
         // Two sources, one gate (Phase 53).
         pushToTalk.Pressed += sources.KeyPressed;
@@ -2940,8 +3375,81 @@ public sealed class AppHost : IDisposable
             }
         };
 
+        // The audio folder, which the Commander can add to while d47 is running.
+        host._audioWatch = new AudioFolderWatch(
+            paths.Audio,
+            () => host.RebuildAudio(paths.Audio, dropsLogger, cueLogger),
+            loggerFactory.CreateLogger<AudioFolderWatch>());
+
+        return host;
+    }
+
+    private static void RegisterHostTicks(AppHost host, FoundationParts foundations, StoreParts stores, LoopParts loop, ServiceParts services, CapabilityParts registry, CrewParts crew, LateBound late)
+    {
+        var settings = foundations.Settings;
+        var adventureBook = stores.AdventureBook;
+        var adventureStore = stores.AdventureStore;
+        var autonomous = stores.Autonomous;
+        var gameState = stores.GameState;
+        var goals = stores.Goals;
+        var journal = stores.Journal;
+        var journalDirectory = stores.JournalDirectory;
+        var memories = stores.Memories;
+        var memoryBook = stores.MemoryBook;
+        var memoryObserver = stores.MemoryObserver;
+        var shipBuilds = stores.ShipBuilds;
+        var status = stores.Status;
+        var storyStore = stores.StoryStore;
+        var feed = loop.Feed;
+        var tick = loop.Tick;
+        var binds = services.Binds;
+        var drift = services.Drift;
+        var gameInput = services.GameInput;
+        var gate = services.Gate;
+        var macros = services.Macros;
+        var microphone = services.Microphone;
+        var onFootBuilds = services.OnFootBuilds;
+        var onFootPlans = services.OnFootPlans;
+        var ownPersonas = services.OwnPersonas;
+        var pushToTalk = services.PushToTalk;
+        var pushToTalkButton = services.PushToTalkButton;
+        var reconciler = services.Reconciler;
+        var sampledControllers = services.SampledControllers;
+        var shipCoreStore = services.ShipCoreStore;
+        var shipCores = services.ShipCores;
+        var shipPlans = services.ShipPlans;
+        var switches = services.Switches;
+        var timersAndAlarms = services.TimersAndAlarms;
+        var capabilities = registry.Capabilities;
+        var otherDynamicCommands = registry.OtherDynamicCommands;
+        var storyDirector = crew.StoryDirector;
+
+        // Push-to-talk, sampled here rather than hooked.
+        tick.Add("push-to-talk", context =>
+        {
+            pushToTalk.Poll();
+
+            // And the stick, on the same tick (Phase 53).
+            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host._logger);
+
+            // Whether the device is actually delivering audio, which only it knows and which is half of what
+            // the panel's microphone indicator says.
+            gate.Capturing = microphone.IsCapturing;
+
+            // Where the hands-free gate opens and closes.
+            gate.Poll(context.Now);
+        });
+
+        // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
+        // open, so this asks (#67).
+        tick.Add("default-audio-devices", context =>
+        {
+            host.FollowOutputDevice(context.Now);
+            host.Listener.FollowInputDevice(context.Now);
+        });
+
         // The async half of a synchronous tick.
-        tick.Add("macros", _ => macros.Poll(() => PhrasesAlreadyTaken(capabilities, OtherDynamicCommands())));
+        tick.Add("macros", _ => macros.Poll(() => PhrasesAlreadyTaken(capabilities, otherDynamicCommands())));
 
         // Same shape, same reason: a file Elite owns, re-read only when it moves.
         tick.Add("binds", _ => binds.Poll());
@@ -2960,7 +3468,7 @@ public sealed class AppHost : IDisposable
                     Now = context.Now,
                     Readings = sampledControllers.Poll(),
                     Status = status.Current,
-                    Binds = bindsRef!(),
+                    Binds = late.Binds!(),
 
                     // Gated by key injection as well as by its own row.
                     Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
@@ -2991,7 +3499,7 @@ public sealed class AppHost : IDisposable
             onFootBuilds.Poll();
 
             // Before adoption, so a sale and a purchase reusing its id in one batch are taken in that order.
-            shipPlans.DropGone(arrived);
+            shipPlans.DropGone(feed.Arrived);
 
             if (settings.Current.Checklists.RemoveFulfilled)
             {
@@ -2999,7 +3507,7 @@ public sealed class AppHost : IDisposable
             }
 
             // Both halves of the same offer.
-            foreach (var adopted in shipPlans.Observe(arrived).Concat(onFootPlans.Observe(arrived)))
+            foreach (var adopted in shipPlans.Observe(feed.Arrived).Concat(onFootPlans.Observe(feed.Arrived)))
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
@@ -3007,7 +3515,7 @@ public sealed class AppHost : IDisposable
 
             // Boarding a ship whose build carries engineering the checklist has not got is the moment to say
             // so, once (Phase 38).
-            if (drift.Observe(arrived) is { Length: > 0 } asked)
+            if (drift.Observe(feed.Arrived) is { Length: > 0 } asked)
             {
                 host.Panel.Append($"{asked}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(asked);
@@ -3017,7 +3525,7 @@ public sealed class AppHost : IDisposable
         // The cores the Commander wrote, on the tick like every other store.
         tick.Add("own cores", _ => ownPersonas.Poll());
 
-        tick.Add("core absences", context => host.Absences.Observe(arrived, context.IsFirst, host.Personas.Current.Id));
+        tick.Add("core absences", context => host.Absences.Observe(feed.Arrived, context.IsFirst, host.Personas.Current.Id));
 
         // A core per ship (Phase 35).
         tick.Add("ship cores", context =>
@@ -3088,7 +3596,7 @@ public sealed class AppHost : IDisposable
             var commander = gameState.Active?.Identity.FrontierId;
             var inGame = gameState.InGame?.Identity.FrontierId;
 
-            foreach (var journalEvent in arrived)
+            foreach (var journalEvent in feed.Arrived)
             {
                 if (storyDirector.Observe(journalEvent, inGame) is { } waking)
                 {
@@ -3147,14 +3655,8 @@ public sealed class AppHost : IDisposable
                 host.Music.GameRunning(host.Elite.IsRunning);
             }
 
-            host.Music.Follow(status.Current, eliteMusic.Track);
+            host.Music.Follow(status.Current, feed.EliteMusic.Track);
         });
-
-        // The folder those tracks came from, which the Commander can add to while d47 is running.
-        host._audioWatch = new AudioFolderWatch(
-            paths.Audio,
-            () => host.RebuildAudio(paths.Audio, dropsLogger, cueLogger),
-            loggerFactory.CreateLogger<AudioFolderWatch>());
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
@@ -3166,9 +3668,18 @@ public sealed class AppHost : IDisposable
         // After the autonomous drain and for the same reason it exists: the tick is synchronous and a key
         // press is not.
         tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput));
+    }
+
+    private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)
+    {
+        var loggerFactory = foundations.LoggerFactory;
+        var modelCatalog = foundations.ModelCatalog;
+        var settings = foundations.Settings;
+        var tick = loop.Tick;
+        var sampledControllers = services.SampledControllers;
 
         // Last, so every subscriber registered during composition is in place before the first timer-driven
-        // tick — and so a failure above happens against a loop that never started rather than one already
+        // tick — and so a failure in an earlier stage happens against a loop that never started rather than one already
         // running against half-built state.
         host._modelCatalog = new ModelCatalogRefresher(
             modelCatalog, settings, loggerFactory.CreateLogger<ModelCatalogRefresher>());
@@ -3181,8 +3692,357 @@ public sealed class AppHost : IDisposable
             host._ticking = StartupTimer.Time(
                 "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
         }
+    }
 
-        return host;
+    /// <summary>Values composition reads through a closure before the stage that sets them has run.</summary>
+    private sealed class LateBound
+    {
+        /// <summary>The resolved bindings, set by <see cref="ComposeServices"/>.</summary>
+        public Func<EliteBinds>? Binds { get; set; }
+
+        /// <summary>The engineer solver, set by <see cref="ComposeServices"/>.</summary>
+        public D47.Core.Engineers.EngineerPlanService? Unlocks { get; set; }
+
+        /// <summary>Whether a story's opening is still to be said, set by <see cref="ComposeHost"/>.</summary>
+        public Func<string?, bool>? StoryOpening { get; set; }
+
+        /// <summary>The registry spoken help answers from, set straight after it is built.</summary>
+        public CapabilityRegistry? Registry { get; set; }
+
+        /// <summary>The router whose phrase book find_phrase reads (#229), set straight after it is built.</summary>
+        public KeywordRouter? Router { get; set; }
+
+        /// <summary>The host, for what is built before it: the voice list, the headset report, the cue library.</summary>
+        public AppHost? Host { get; set; }
+    }
+
+    /// <summary>What the journal tick leaves for the subscribers registered after the host exists.</summary>
+    private sealed class JournalFeed
+    {
+        /// <summary>This tick's journal events for the Commander shown.</summary>
+        public IReadOnlyList<JournalEvent> Arrived { get; set; } = [];
+
+        /// <summary>Docking requests seen in the journal (#150): counted on the tick thread, read by the contacts walk's wait.</summary>
+        public int DockingRequests;
+
+        /// <summary>Commanders picked on the title bar or the Commanders page, taken on the tick thread.</summary>
+        public System.Collections.Concurrent.ConcurrentQueue<CommanderIdentity> Picks { get; } = new();
+
+        /// <summary>The events the Journal page reads (#51).</summary>
+        public D47.Core.Journal.JournalLog JournalLog { get; } = new();
+
+        /// <summary>Elite's own music track: the journal's witness that the galaxy map is showing (#365), and what ambience follows.</summary>
+        public EliteMusic EliteMusic { get; } = new();
+    }
+
+    private sealed record FoundationParts
+    {
+        public required DiskFileSystem Files { get; init; }
+
+        public required D47Settings Loaded { get; init; }
+
+        public required IDisposable LoadingStores { get; init; }
+
+        public required ILogger<AppHost> Logger { get; init; }
+
+        public required SerilogLoggerFactory LoggerFactory { get; init; }
+
+        public required ModelCatalogCache ModelCatalog { get; init; }
+
+        public required AppPaths Paths { get; init; }
+
+        public required SecretStore Secrets { get; init; }
+
+        public required SettingsService Settings { get; init; }
+
+        public required long StartedLogging { get; init; }
+
+        public required string? StartupError { get; init; }
+
+        public required SerilogVerbosityControl Verbosity { get; init; }
+
+        public required string Version { get; init; }
+
+        public required ViewStateStore ViewState { get; init; }
+    }
+
+    private sealed record StoreParts
+    {
+        public required D47.Core.Activities.ActivityLedger Activities { get; init; }
+
+        public required D47.Core.Adventures.AdventureBook AdventureBook { get; init; }
+
+        public required D47.Core.Adventures.AdventureStore AdventureStore { get; init; }
+
+        public required AutonomousActionRunner Autonomous { get; init; }
+
+        public required Action BackfillGoals { get; init; }
+
+        public required BookmarkStore Bookmarks { get; init; }
+
+        public required CalloutEngine Callouts { get; init; }
+
+        public required D47.Core.Knowledge.BestCargoBoard CargoBoard { get; init; }
+
+        public required CartographyLedger Cartography { get; init; }
+
+        public required ChecklistService Checklists { get; init; }
+
+        public required D47.Core.Knowledge.CommodityBoard CommodityBoard { get; init; }
+
+        public required CommodityLedger CommodityLedger { get; init; }
+
+        public required D47.Core.Knowledge.CommunityGoalSearch CommunityGoalSearch { get; init; }
+
+        public required OutstandingCrimes Crimes { get; init; }
+
+        public required DebriefBook DebriefBook { get; init; }
+
+        public required ExobiologyLedger Exobiology { get; init; }
+
+        public required NearbyFight Fight { get; init; }
+
+        public required D47.Core.Knowledge.GalaxySearchBoard GalaxySearchBoard { get; init; }
+
+        public required GameStateStore GameState { get; init; }
+
+        public required D47.Core.Goals.GoalBook GoalBook { get; init; }
+
+        public required D47.Core.Goals.GoalStore Goals { get; init; }
+
+        public required HandInOffer HandInOffer { get; init; }
+
+        public required HeardNamesStore HeardNames { get; init; }
+
+        public required HistoryBackfill History { get; init; }
+
+        public required JournalSpine Journal { get; init; }
+
+        public required string JournalDirectory { get; init; }
+
+        public required D47.Core.Reminders.JournalReminderStore JournalReminders { get; init; }
+
+        public required KitStore Kit { get; init; }
+
+        public required LastFoundSystem LastFoundSystem { get; init; }
+
+        public required LearnedPhrasesStore LearnedPhrases { get; init; }
+
+        public required LoadoutStore Loadouts { get; init; }
+
+        public required LoreBook Lore { get; init; }
+
+        public required LoreVisits LoreVisits { get; init; }
+
+        public required MailLedger Mail { get; init; }
+
+        public required D47.Core.Knowledge.MarketBook MarketBook { get; init; }
+
+        public required D47.Core.Knowledge.MarketReader Markets { get; init; }
+
+        public required MemoryStore Memories { get; init; }
+
+        public required MemoryBook MemoryBook { get; init; }
+
+        public required MemoryObserver MemoryObserver { get; init; }
+
+        public required D47.Core.Messages.MessageStore MessageStore { get; init; }
+
+        public required D47.Core.Mining.MiningTargetStore MiningTargets { get; init; }
+
+        public required ModulePowerReader ModulePower { get; init; }
+
+        public required D47.Core.Knowledge.RoutePlanBook PlanBook { get; init; }
+
+        public required NavRouteReader Route { get; init; }
+
+        public required SamplingStore Sampling { get; init; }
+
+        public required SceneTracker Scenes { get; init; }
+
+        public required ShipBuildStore ShipBuilds { get; init; }
+
+        public required D47.Core.Knowledge.SourcingBoard SourcingBoard { get; init; }
+
+        public required StandingWarnings StandingWarnings { get; init; }
+
+        public required GameStatusReader Status { get; init; }
+
+        public required D47.Core.Stories.StoryChapterArchive StoryArchive { get; init; }
+
+        public required Func<D47.Core.Stories.StoryCatalog> StoryCatalog { get; init; }
+
+        public required D47.Core.Stories.StoryClueCallout StoryClue { get; init; }
+
+        public required StoryDownloader StoryDownloads { get; init; }
+
+        public required StoryRatingClient StoryRatings { get; init; }
+
+        public required D47.Core.Stories.StoryStore StoryStore { get; init; }
+    }
+
+    private sealed record LoopParts
+    {
+        public required JournalFeed Feed { get; init; }
+
+        public required TickLoop Tick { get; init; }
+    }
+
+    private sealed record ServiceParts
+    {
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk AdventureDesk { get; init; }
+
+        public required AudioArbiter Audio { get; init; }
+
+        public required WasapiAudioSink AudioSink { get; init; }
+
+        public required VoiceAuditions Auditions { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.BeatRefusal BeatRefusal { get; init; }
+
+        public required BindingProfiles BindingProfiles { get; init; }
+
+        public required BindsWatch Binds { get; init; }
+
+        public required BuildTalk BuildTalk { get; init; }
+
+        public required IDisposable BuildingRegistry { get; init; }
+
+        public required TurnCancellation Cancellation { get; init; }
+
+        public required DesktopClipboard Clipboard { get; init; }
+
+        public required ClipboardOffer ClipboardOffer { get; init; }
+
+        public required D47.Knowledge.InaraCommunityGoalService CommunityGoals { get; init; }
+
+        public required HotasControllers Controllers { get; init; }
+
+        public required Coverage.CoverageRecorder? Coverage { get; init; }
+
+        public required ILogger<CueLibrary> CueLogger { get; init; }
+
+        public required CueLibrary Cues { get; init; }
+
+        public required CustomVoices CustomVoices { get; init; }
+
+        public required ShipDriftWatch Drift { get; init; }
+
+        public required ILogger<FolderAudioSource> DropsLogger { get; init; }
+
+        public required EchoCanceller Echo { get; init; }
+
+        public required EliteWindow EliteWindow { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.EndingAnswer EndingAnswer { get; init; }
+
+        public required D47.Core.Knowledge.GalaxySearchNames Galaxy { get; init; }
+
+        public required OffDutyGameInput GameInput { get; init; }
+
+        public required ListenGate Gate { get; init; }
+
+        public required System.Runtime.CompilerServices.StrongBox<DateTimeOffset?> HeardAt { get; init; }
+
+        public required ScancodeInjector Injector { get; init; }
+
+        public required Diagnostics.InputTraceWriter? InputTrace { get; init; }
+
+        public required LlmAvailabilityState LlmAvailability { get; init; }
+
+        public required D47.Core.Logbook.LogbookBook Logbook { get; init; }
+
+        public required MacroStore Macros { get; init; }
+
+        public required WasapiMicrophone Microphone { get; init; }
+
+        public required HttpModelStore Models { get; init; }
+
+        public required OfferWindow Offers { get; init; }
+
+        public required D47.Core.Loadout.OnFootBuildStore OnFootBuilds { get; init; }
+
+        public required D47.Core.Loadout.OnFootPlanService OnFootPlans { get; init; }
+
+        public required OwnPersonaStore OwnPersonas { get; init; }
+
+        public required OwnVoice OwnVoice { get; init; }
+
+        public required PersonaHost Personas { get; init; }
+
+        public required PushToTalkKey PushToTalk { get; init; }
+
+        public required BoundButton PushToTalkButton { get; init; }
+
+        public required SwitchReconciler Reconciler { get; init; }
+
+        public required Recording.AudioRecorder? Recording { get; init; }
+
+        public required D47.Knowledge.SpanshRouteService RoutePlanner { get; init; }
+
+        public required ControllerSampler SampledControllers { get; init; }
+
+        public required HeadsetEyeCapture ScreenCapture { get; init; }
+
+        public required ShipCoreStore ShipCoreStore { get; init; }
+
+        public required ShipCoreService ShipCores { get; init; }
+
+        public required ShipPlanService ShipPlans { get; init; }
+
+        public required PushToTalkSources Sources { get; init; }
+
+        public required SpeechClients Speech { get; init; }
+
+        public required SpendTracker Spend { get; init; }
+
+        public required SpendLedger SpendLedger { get; init; }
+
+        public required D47.Knowledge.SpanshStarSystemService StarSystems { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.StorySwitch StorySwitch { get; init; }
+
+        public required SwitchStore Switches { get; init; }
+
+        public required Timekeeping.TimersAndAlarms? TimersAndAlarms { get; init; }
+
+        public required D47.Knowledge.SpanshTradePlanService TradePlanner { get; init; }
+
+        public required WhisperTranscriber Transcriber { get; init; }
+
+        public required D47.Core.Engineers.EngineerPlanService Unlocks { get; init; }
+
+        public required VoicePipeline Voice { get; init; }
+
+        public required WakeWordGate Wake { get; init; }
+
+        public required LearnedWording Wording { get; init; }
+    }
+
+    private sealed record CapabilityParts
+    {
+        public required ActionSurface ActionSurface { get; init; }
+
+        public required CapabilityRegistry Capabilities { get; init; }
+
+        public required UpdateInstaller Installer { get; init; }
+
+        public required Func<IEnumerable<DynamicCommand>> OtherDynamicCommands { get; init; }
+
+        public required KeywordRouter Router { get; init; }
+
+        public required UpdateChecker Updates { get; init; }
+    }
+
+    private sealed record CrewParts
+    {
+        public required D47.Core.Adventures.AdventureGenerator AdventureGenerator { get; init; }
+
+        public required VoicePairer Pairing { get; init; }
+
+        public required D47.Core.Stories.StoryDirector StoryDirector { get; init; }
+
+        public required TurnLoop Turns { get; init; }
     }
 
     /// <summary>Where the Anthropic key lives in the secret store.</summary>

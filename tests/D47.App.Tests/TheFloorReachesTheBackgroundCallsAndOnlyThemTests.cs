@@ -10,13 +10,13 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
     private static readonly string[] KeepTheConversationModel =
     [
         // The Commander's log, quoted at a price before anything is written.
-        "Model = self?.Turns.Model,",
+        "Model = late.Host?.Turns.Model,",
 
         // Adventure generation.
         "() => turns.Model,",
 
         // Advice on a ship's build, which the Commander waits on (#570).
-        "() => self?.Turns.Model,",
+        "() => late.Host?.Turns.Model,",
 
         // The debrief's proposed wording.
         "Turns.Model,",
