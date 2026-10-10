@@ -15,6 +15,7 @@ using D47.App.Panel;
 using D47.Core.Diagnostics.Donation;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -147,7 +148,7 @@ public sealed class TheDonationWalkthroughIsCapturedTests
         Func<ExcerptRequest, (string Text, ExcerptTally Tally)> build = request =>
         {
             var excerpt = IncidentExcerpt.Take(
-                IncidentSources.Journals(folder, request.From, request.To),
+                IncidentSources.Journals(new DiskFileSystem(), folder, request.From, request.To),
                 [],
                 request);
 
@@ -159,7 +160,7 @@ public sealed class TheDonationWalkthroughIsCapturedTests
                 () =>
                 {
                     names = IncidentExcerpt.Seeded(null, null);
-                    var survey = CorpusDonation.Survey(folder, scope.From(Now), Now, names, null, progress, cancel);
+                    var survey = CorpusDonation.Survey(new DiskFileSystem(), folder, scope.From(Now), Now, names, null, progress, cancel);
                     return new HelpImprovePage.CorpusReading(survey, CorpusReport.Render(survey, paperwork));
                 },
                 cancel);

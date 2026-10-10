@@ -6,7 +6,6 @@ using Xunit;
 namespace D47.Core.Tests.Journal;
 
 /// <summary>Where the carrier is, recovered from journals d47 was not running for.</summary>
-[Trait("Category", "Integration")]
 public class CarrierBackfillTests
 {
     private const string Fid = "F1234567";
@@ -14,7 +13,7 @@ public class CarrierBackfillTests
     [Fact]
     public void NoJournalsAtAllLeavesTheCarrierUnknown()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
         Assert.Empty(Carriers(install));
     }
@@ -26,7 +25,7 @@ public class CarrierBackfillTests
     [Fact]
     public void JournalsWithNoCarrierEventsInventNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-08-01T100000.01.log", LoadGame, Stored);
 
         Assert.Empty(Carriers(install));
@@ -36,7 +35,7 @@ public class CarrierBackfillTests
     [Fact]
     public void ACarrierLocationInAnEarlierSessionIsFound()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
         Write(install, "Journal.2026-09-07T100000.01.log", LoadGame, Stored);
 
@@ -51,7 +50,7 @@ public class CarrierBackfillTests
     [Fact]
     public void ACarrierJumpMovesTheRememberedSystem()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
         Write(
             install,
@@ -69,7 +68,7 @@ public class CarrierBackfillTests
     [Fact]
     public void ASquadronCarrierIsNotAdoptedAsTheCommandersOwn()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(
             install,
             "Journal.2026-09-05T100000.01.log",
@@ -90,7 +89,7 @@ public class CarrierBackfillTests
     [Fact]
     public void TwoCommandersDoNotShareACarrier()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, Stats, Location("Meene"));
         Write(
             install,
@@ -108,7 +107,7 @@ public class CarrierBackfillTests
     [Fact]
     public void TheCarriersFiguresSurviveARestartTests()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-18T100000.01.log", LoadGame, StatsFull, Location("Meene"));
 
         Assert.True(JournalEvent.TryParse(StatsFull, NullLogger.Instance, out var parsed));
@@ -132,7 +131,7 @@ public class CarrierBackfillTests
     [Fact]
     public void ADepositAfterTheStatsLeavesFuelAtTheDepositsTotal()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(
             install,
             "Journal.2026-09-18T100000.01.log",
@@ -147,7 +146,7 @@ public class CarrierBackfillTests
     [Fact]
     public void TritiumInTheHoldSurvivesARestart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(
             install,
             "Journal.2026-09-13T100000.01.log",
@@ -171,7 +170,7 @@ public class CarrierBackfillTests
     [Fact]
     public void APendingJumpDoesNotSurviveARestart()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(
             install,
             "Journal.2026-09-18T100000.01.log",
@@ -192,7 +191,7 @@ public class CarrierBackfillTests
     [Fact]
     public void ACarrierOlderThanTheFleetLookBackIsStillFound()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-01-01T100000.01.log", LoadGame, Stats, Location("Meene"));
 
         for (var day = 2; day <= 40; day++)
@@ -203,8 +202,8 @@ public class CarrierBackfillTests
         Assert.Equal("Meene", Carriers(install)[Fid].StarSystem);
     }
 
-    private static IReadOnlyDictionary<string, CarrierState> Carriers(TempInstall install) =>
-        CarrierBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
+    private static IReadOnlyDictionary<string, CarrierState> Carriers(MemoryInstall install) =>
+        CarrierBackfill.FromHistory(install.Files, install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
     private const string LoadGame =
         """{ "timestamp":"2026-09-05T10:00:00Z", "event":"LoadGame", "FID":"F1234567", "Commander":"Fixture" }""";
@@ -231,6 +230,6 @@ public class CarrierBackfillTests
     private static DateTimeOffset At(string timestamp) =>
         DateTimeOffset.Parse(timestamp, CultureInfo.InvariantCulture);
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 }

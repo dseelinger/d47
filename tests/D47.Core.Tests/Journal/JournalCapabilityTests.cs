@@ -195,11 +195,10 @@ public class JournalCapabilityTests
         Assert.DoesNotContain("In transit: ", result.Content, StringComparison.Ordinal);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCarrierIsRememberedFromAnEarlierSessionAndSaysWhenItWasLastSeen()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         WriteCarrierHistory(install);
 
         foreach (var _ in new[] { "first run", "after a restart" })
@@ -219,11 +218,10 @@ public class JournalCapabilityTests
     /// And the system it plots to is the one it just reported — the two answers cannot drift apart,
  /// whichever of them the Commander acts on.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task ACourseToTheCarrierGoesToTheSystemJustReported()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         WriteCarrierHistory(install);
 
         var gameState = StoreOver(install);
@@ -238,13 +236,12 @@ public class JournalCapabilityTests
     }
 
     /// <summary>Unknown stays unknown.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task WithNoCarrierInAnyJournalItSaysItDoesNotKnow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-07T100000.01.log"),
             [
                 """{"timestamp":"2026-09-07T10:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
@@ -263,14 +260,13 @@ public class JournalCapabilityTests
     /// isolation rule the whole store is built on, asserted through the answer rather than the backfill
     /// alone.
     /// </summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheRememberedCarrierIsPerCommander()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         WriteCarrierHistory(install);
 
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-08T100000.01.log"),
             [
                 """{"timestamp":"2026-09-08T10:00:00Z","event":"LoadGame","FID":"F7654321","Commander":"Other"}""",
@@ -284,14 +280,13 @@ public class JournalCapabilityTests
     }
 
  /// <summary>The ship list is only read out when it was asked for.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task TheCarrierAnswerNamesNoShipsAndTheShipQuestionStillDoes()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         WriteCarrierHistory(install);
 
-        File.AppendAllLines(
+        install.Files.AppendLines(
             Path.Combine(install.Root, "Journal.2026-09-07T100000.01.log"),
             [
                 """{"timestamp":"2026-09-07T10:05:00Z","event":"StoredShips","StarSystem":"Meene","StationName":"BNH-T2F","ShipsHere":[{"ShipID":13,"ShipType":"krait_mkii","Name":"Reaper","Value":1}],"ShipsRemote":[]}""",
@@ -324,14 +319,13 @@ public class JournalCapabilityTests
     }
 
  /// <summary>A ship to a line, under the system that holds them.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public async Task StoredShipsAreListedOneToALineWithNothingForAVoiceToReadOut()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         WriteCarrierHistory(install);
 
-        File.AppendAllLines(
+        install.Files.AppendLines(
             Path.Combine(install.Root, "Journal.2026-09-07T100000.01.log"),
             [
                 """{"timestamp":"2026-09-07T10:05:00Z","event":"StoredShips","StarSystem":"Meene","StationName":"BNH-T2F","ShipsHere":[{"ShipID":13,"ShipType":"krait_mkii","Name":"Reaper","Value":1},{"ShipID":14,"ShipType":"anaconda","Name":"Flamebrand","Value":1}],"ShipsRemote":[]}""",
@@ -369,9 +363,9 @@ public class JournalCapabilityTests
     /// A folder holding one session that reports the carrier and a later one that does not — the
     /// reported shape exactly.
     /// </summary>
-    private static void WriteCarrierHistory(TempInstall install)
+    private static void WriteCarrierHistory(MemoryInstall install)
     {
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-05T100000.01.log"),
             [
                 """{"timestamp":"2026-09-05T10:00:00Z","event":"LoadGame","FID":"F1","Commander":"Fixture"}""",
@@ -379,7 +373,7 @@ public class JournalCapabilityTests
                 """{"timestamp":"2026-09-05T16:36:00Z","event":"CarrierLocation","CarrierID":3715429376,"CarrierType":"FleetCarrier","StarSystem":"Meene"}""",
             ]);
 
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-09-07T100000.01.log"),
             [
                 """{"timestamp":"2026-09-07T10:00:00Z","event":"LoadGame","FID":"F1","Commander":"Fixture"}""",
@@ -389,21 +383,21 @@ public class JournalCapabilityTests
     /// <summary>
     /// A store wired to the folder the way <c>AppHost</c> wires the real one, and driven over it once.
     /// </summary>
-    private static GameStateStore StoreOver(TempInstall install)
+    private static GameStateStore StoreOver(MemoryInstall install)
     {
-        var carriers = CarrierBackfill.FromHistory(install.Root, NullLogger.Instance);
+        var carriers = CarrierBackfill.FromHistory(install.Files, install.Root, NullLogger.Instance);
 
         var gameState = new GameStateStore
         {
             RestoreCarrier = fid => carriers.TryGetValue(fid, out var carrier) ? carrier : null,
         };
 
-        new JournalSpine(install.Root, new DiskFileSystem(), gameState, NullLoggerFactory.Instance).Poll();
+        new JournalSpine(install.Root, install.Files, gameState, NullLoggerFactory.Instance).Poll();
 
         return gameState;
     }
 
-    private static Task<string> CarrierReportAsync(TempInstall install) =>
+    private static Task<string> CarrierReportAsync(MemoryInstall install) =>
         CarrierReportAsync(StoreOver(install));
 
     private static async Task<string> CarrierReportAsync(GameStateStore gameState)

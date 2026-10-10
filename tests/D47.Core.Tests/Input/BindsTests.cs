@@ -1,44 +1,25 @@
 using D47.Core.Input;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Input;
 
 /// <summary>The bindings parser and the three traps it names.</summary>
-[Trait("Category", "Integration")]
-public class BindsTests : IDisposable
+public class BindsTests
 {
-    private readonly string _root = Path.Combine(
-        Path.GetTempPath(), "d47-binds-tests", Guid.NewGuid().ToString("N"));
+    private const string _root = @"C:\d47-test\binds";
+
+    private readonly MemoryFileSystem _files = new();
 
     private string Bindings => Path.Combine(_root, "Options", "Bindings");
 
     private string Game => Path.Combine(_root, "Game");
 
-    public BindsTests()
-    {
-        Directory.CreateDirectory(Bindings);
-        Directory.CreateDirectory(Game);
-    }
-
-    public void Dispose()
-    {
-        try
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A leftover temp folder is not worth failing a test over.
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
     private void StartPreset(string fileName, string preset) =>
-        File.WriteAllText(Path.Combine(Bindings, fileName), preset + "\n" + preset + "\n");
+        _files.WriteText(Path.Combine(Bindings, fileName), preset + "\n" + preset + "\n");
 
-    private static void Binds(string path, params (string Action, string Key, string[] Modifiers)[] actions)
+    private void Binds(string path, params (string Action, string Key, string[] Modifiers)[] actions)
     {
         var body = string.Join("\n", actions.Select(action =>
         {
@@ -53,12 +34,11 @@ public class BindsTests : IDisposable
                     """;
         }));
 
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, $"<Root PresetName=\"Test\">\n{body}\n</Root>");
+        _files.WriteText(path, $"<Root PresetName=\"Test\">\n{body}\n</Root>");
     }
 
     private EliteBinds Resolve() =>
-        BindsResolver.Resolve(Bindings, [Game], NullLogger.Instance);
+        BindsResolver.Resolve(_files, Bindings, [Game], NullLogger.Instance);
 
     // ---- Trap 1: the active preset is named, not assumed --------------------------------
 
@@ -157,7 +137,7 @@ public class BindsTests : IDisposable
     {
         StartPreset("StartPreset.4.start", "Custom");
 
-        File.WriteAllText(Path.Combine(Bindings, "Custom.4.0.binds"),
+        _files.WriteText(Path.Combine(Bindings, "Custom.4.0.binds"),
             """
             <Root PresetName="Test">
               <YawLeftButton>
@@ -197,7 +177,7 @@ public class BindsTests : IDisposable
     public void AMalformedBindingsFileIsAStateNotACrash()
     {
         StartPreset("StartPreset.4.start", "Custom");
-        File.WriteAllText(Path.Combine(Bindings, "Custom.4.0.binds"), "<Root><Unclosed>");
+        _files.WriteText(Path.Combine(Bindings, "Custom.4.0.binds"), "<Root><Unclosed>");
 
         var binds = Resolve();
 

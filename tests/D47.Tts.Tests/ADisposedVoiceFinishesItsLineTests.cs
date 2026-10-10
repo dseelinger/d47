@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -84,6 +85,7 @@ public class ADisposedVoiceFinishesItsLineTests
         using var folder = new ChatterboxTestFolder();
         var opened = 0;
         var provider = new ChatterboxTtsProvider(
+            new DiskFileSystem(),
             folder.Models,
             folder.Voices,
             folder.Fetched,

@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Journal;
@@ -103,38 +104,27 @@ public class VisitedStarsCacheIsReadFromItsBytesTests
     public void OnlyAnFAndDigitsNamesAFile(string? frontierId, bool named) =>
         Assert.Equal(named, VisitedStarsCache.PathFor("root", frontierId) is not null);
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheFileIsTheCurrentCommandersAndIsReadAgainWhenItChanges()
     {
-        var root = Directory.CreateTempSubdirectory("d47-visits-");
+        const string root = "C:/d47-test/visits";
+        var files = new BytesFileSystem();
+        var mine = Path.Combine(root, "735466", VisitedStarsCache.FileName);
+        files.WriteBytes(mine, File(512, [(Lave, 3, Second)]));
+        files.WriteBytes(
+            Path.Combine(root, "12484034", VisitedStarsCache.FileName),
+            File(256, [(Sol, 9, Fifth)]));
 
-        try
-        {
-            Directory.CreateDirectory(Path.Combine(root.FullName, "735466"));
-            Directory.CreateDirectory(Path.Combine(root.FullName, "12484034"));
-            var mine = Path.Combine(root.FullName, "735466", VisitedStarsCache.FileName);
-            System.IO.File.WriteAllBytes(mine, File(512, [(Lave, 3, Second)]));
-            System.IO.File.WriteAllBytes(
-                Path.Combine(root.FullName, "12484034", VisitedStarsCache.FileName),
-                File(256, [(Sol, 9, Fifth)]));
+        var book = new VisitedStarsBook(root, files);
 
-            var book = new VisitedStarsBook(root.FullName);
+        Assert.Equal(new VisitLookup(VisitState.Visited, new SystemVisits(3, Second)), book.Find("F735466", Lave));
+        Assert.Equal(VisitState.NotListed, book.Find("F735466", Sol).State);
+        Assert.Equal(VisitState.Visited, book.Find("F12484034", Sol).State);
+        Assert.Equal(VisitState.Unreadable, book.Find("F14064573", Sol).State);
+        Assert.Equal(VisitState.Unreadable, book.Find(null, Sol).State);
 
-            Assert.Equal(new VisitLookup(VisitState.Visited, new SystemVisits(3, Second)), book.Find("F735466", Lave));
-            Assert.Equal(VisitState.NotListed, book.Find("F735466", Sol).State);
-            Assert.Equal(VisitState.Visited, book.Find("F12484034", Sol).State);
-            Assert.Equal(VisitState.Unreadable, book.Find("F14064573", Sol).State);
-            Assert.Equal(VisitState.Unreadable, book.Find(null, Sol).State);
+        files.WriteBytes(mine, File(512, [(Lave, 4, Second.AddDays(1))]));
 
-            System.IO.File.WriteAllBytes(mine, File(512, [(Lave, 4, Second.AddDays(1))]));
-            System.IO.File.SetLastWriteTimeUtc(mine, DateTime.UtcNow.AddMinutes(5));
-
-            Assert.Equal(new SystemVisits(4, Second.AddDays(1)), book.Find("F735466", Lave).Visits);
-        }
-        finally
-        {
-            root.Delete(recursive: true);
-        }
+        Assert.Equal(new SystemVisits(4, Second.AddDays(1)), book.Find("F735466", Lave).Visits);
     }
 }

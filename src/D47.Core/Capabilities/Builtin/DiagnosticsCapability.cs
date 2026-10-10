@@ -1,6 +1,7 @@
 using System.Text;
 using D47.Core.Configuration;
 using D47.Core.Diagnostics;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -36,6 +37,7 @@ public static class DiagnosticsCapability
     /// </param>
     public static CapabilityDescriptor Create(
         AppPaths paths,
+        IFileSystem fileSystem,
         ILogVerbosityControl verbosity,
         SettingsService settings,
         string version,
@@ -80,7 +82,7 @@ public static class DiagnosticsCapability
                     Description =
                         "Report D47's version, where it keeps its writable files, and the current log level of every subsystem.",
                     Handler = (_, _) =>
-                        Task.FromResult(ToolResult.Ok(DescribeStatus(paths, verbosity, version, history, ticking))),
+                        Task.FromResult(ToolResult.Ok(DescribeStatus(paths, fileSystem, verbosity, version, history, ticking))),
                 },
                 new ToolDefinition
                 {
@@ -115,6 +117,7 @@ public static class DiagnosticsCapability
 
     private static string DescribeStatus(
         AppPaths paths,
+        IFileSystem fileSystem,
         ILogVerbosityControl verbosity,
         string version,
         Journal.HistoryBackfill? history,
@@ -131,7 +134,7 @@ public static class DiagnosticsCapability
         // only surface that can say where it is.
         report.AppendLine(
             $"Pronunciations: {paths.PronunciationsFile} "
-            + (File.Exists(paths.PronunciationsFile) ? "(present)" : "(none written yet)"));
+            + (fileSystem.Stat(paths.PronunciationsFile) is not null ? "(present)" : "(none written yet)"));
 
         // What the answers about the fleet, the loadouts and the names are still waiting on (#148).
         if (history is not null)

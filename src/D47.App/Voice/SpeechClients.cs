@@ -6,6 +6,7 @@ using D47.Core.Catalog;
 using D47.Core.Configuration;
 using D47.Core.Persona;
 using D47.Core.Seats;
+using D47.Core.Storage;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
 
@@ -28,12 +29,14 @@ public sealed class SpeechClients : IDisposable
     private readonly OwnVoice _ownVoice;
     private readonly CustomVoices _customVoices;
     private readonly Func<CrewSeatStore> _crewSeats;
+    private readonly IFileSystem _files;
 
     internal SpeechClients(
         SettingsService settings,
         SecretStore secrets,
         ILoggerFactory loggers,
         AppPaths paths,
+        IFileSystem files,
         PersonaHost personas,
         VoicePipeline voice,
         AudioArbiter audio,
@@ -41,6 +44,7 @@ public sealed class SpeechClients : IDisposable
         CustomVoices customVoices,
         Func<CrewSeatStore> crewSeats)
     {
+        _files = files;
         _settings = settings;
         _secrets = secrets;
         _loggers = loggers;
@@ -140,7 +144,7 @@ public sealed class SpeechClients : IDisposable
 
     /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
     internal string LocalVoiceState() =>
-        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder())
+        D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
             : $"Not downloaded. About {D47.Core.Speech.KokoroAssets.TotalMegabytes:0} MB, fetched "
               + "once from huggingface.co.";
@@ -170,7 +174,7 @@ public sealed class SpeechClients : IDisposable
     }
 
     internal string ChatterboxState() =>
-        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder())
+        D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
             : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
               + "once from huggingface.co.";
@@ -188,6 +192,7 @@ public sealed class SpeechClients : IDisposable
         try
         {
             using var installer = new ChatterboxInstaller(
+                _files,
                 ChatterboxFolder(), _loggers.CreateLogger<ChatterboxInstaller>());
 
             var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
@@ -239,6 +244,7 @@ public sealed class SpeechClients : IDisposable
         try
         {
             using var installer = new KokoroInstaller(
+                _files,
                 KokoroFolder(), _loggers.CreateLogger<KokoroInstaller>());
 
             var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
@@ -284,6 +290,7 @@ public sealed class SpeechClients : IDisposable
         try
         {
             using var installer = new KokoroInstaller(
+                _files,
                 KokoroFolder(), _loggers.CreateLogger<KokoroInstaller>());
 
             var reported = new Progress<KokoroProgress>(step => progress.Report(step.Fraction));
@@ -349,6 +356,7 @@ public sealed class SpeechClients : IDisposable
         var shared = ClientFor(TtsProviderCatalog.KokoroId);
         var own = shared is null
             ? new KokoroTtsProvider(
+                _files,
                 KokoroFolder(),
                 _loggers.CreateLogger<KokoroTtsProvider>(),
                 _paths.PronunciationsFile)
@@ -415,11 +423,13 @@ public sealed class SpeechClients : IDisposable
 
         // The local voice (Phase 59).
         TtsProviderCatalog.KokoroId => new KokoroTtsProvider(
+            _files,
             KokoroFolder(),
             _loggers.CreateLogger<KokoroTtsProvider>(),
             _paths.PronunciationsFile),
 
         TtsProviderCatalog.ChatterboxId => new ChatterboxTtsProvider(
+            _files,
             ChatterboxFolder(),
             ChatterboxVoicesFolder(),
             Path.Combine(_paths.Data, "voices", "chatterbox"),
@@ -753,8 +763,8 @@ public sealed class SpeechClients : IDisposable
 
     /// <summary>What is on this PC for a story's cast to speak with.</summary>
     internal D47.Core.Stories.CastVoicesHere CastVoicesHere() => new(
-        D47.Core.Speech.KokoroAssets.IsInstalled(KokoroFolder()),
-        D47.Core.Speech.ChatterboxAssets.IsInstalled(ChatterboxFolder()),
+        D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder()),
+        D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder()),
         _ownVoice.Exists)
     {
         HasKey = id => TtsProviderCatalog.Selected(id).KeySecretName is not { } secret || _secrets.Names.Contains(secret),

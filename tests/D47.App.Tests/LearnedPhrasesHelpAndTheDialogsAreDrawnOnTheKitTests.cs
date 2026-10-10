@@ -208,7 +208,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
 
         var book = new LogbookBook(
             new LogFolder(root, new MemoryFileSystem(), NullLogger<LogFolder>.Instance),
-            new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
+            new LogDigestBuilder(new MemoryFileSystem(), NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => new LogbookSettings(),
             () => [],

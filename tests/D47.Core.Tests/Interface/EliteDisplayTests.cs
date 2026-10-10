@@ -1,30 +1,15 @@
 using D47.Core.Interface;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
 
 /// <summary>Whether d47 can tell that a topmost strip will be visible over the game.</summary>
-[Trait("Category", "Integration")]
-public class EliteDisplayTests : IDisposable
+public class EliteDisplayTests
 {
-    private readonly string _folder = Path.Combine(
-        Path.GetTempPath(), "d47-display-" + Guid.NewGuid().ToString("N"));
+    private const string _folder = @"C:\d47-test\display";
 
-    public EliteDisplayTests() => Directory.CreateDirectory(_folder);
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        try
-        {
-            Directory.Delete(_folder, recursive: true);
-        }
-        catch (IOException)
-        {
-        // A test's own scratch folder is not worth failing a run over.
-        }
-    }
+    private readonly MemoryFileSystem _files = new();
 
     /// <summary>
     /// The file as it stands on the Commander's own machine, read 2026-08-22 with the game set to
@@ -51,7 +36,7 @@ public class EliteDisplayTests : IDisposable
     [Fact]
     public void TwoIsBorderlessOnTheCommandersOwnFile()
     {
-        Assert.Equal(EliteDisplayMode.Borderless, EliteDisplay.Read(Write(Real)));
+        Assert.Equal(EliteDisplayMode.Borderless, EliteDisplay.Read(_files, Write(Real)));
     }
 
     [Theory]
@@ -60,7 +45,7 @@ public class EliteDisplayTests : IDisposable
     [InlineData(2, EliteDisplayMode.Borderless)]
     public void EachDocumentedNumberReadsAsItsMode(int number, EliteDisplayMode expected)
     {
-        Assert.Equal(expected, EliteDisplay.Read(Write(Config(number.ToString()))));
+        Assert.Equal(expected, EliteDisplay.Read(_files, Write(Config(number.ToString()))));
     }
 
     /// <summary>
@@ -70,11 +55,11 @@ public class EliteDisplayTests : IDisposable
     [Fact]
     public void AFileItCannotReadIsCannotTellRatherThanAnError()
     {
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(Path.Combine(_folder, "absent.xml")));
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(Write("<DisplayConfig>")));
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(Write(Config("borderless"))));
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(Write(Config(string.Empty))));
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(Write("<Something><FullScreen>2</FullScreen></Something>")));
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, Path.Combine(_folder, "absent.xml")));
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, Write("<DisplayConfig>")));
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, Write(Config("borderless"))));
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, Write(Config(string.Empty))));
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, Write("<Something><FullScreen>2</FullScreen></Something>")));
     }
 
     /// <summary>
@@ -87,15 +72,15 @@ public class EliteDisplayTests : IDisposable
     {
         var path = Write(Config("7"));
 
-        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(path));
-        Assert.Contains("7", EliteDisplay.Describe(path), StringComparison.Ordinal);
+        Assert.Equal(EliteDisplayMode.Unknown, EliteDisplay.Read(_files, path));
+        Assert.Contains("7", EliteDisplay.Describe(_files, path), StringComparison.Ordinal);
     }
 
     /// <summary>The sentence is worth more than the feature it guards.</summary>
     [Fact]
     public void ExclusiveFullScreenIsSaidByName()
     {
-        var said = EliteDisplay.Describe(Write(Config("1")));
+        var said = EliteDisplay.Describe(_files, Write(Config("1")));
 
         Assert.Contains("exclusive full screen", said, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("borderless", said, StringComparison.OrdinalIgnoreCase);
@@ -104,7 +89,7 @@ public class EliteDisplayTests : IDisposable
     [Fact]
     public void CannotTellSaysSoAndDrawsAnyway()
     {
-        var said = EliteDisplay.Describe(Path.Combine(_folder, "absent.xml"));
+        var said = EliteDisplay.Describe(_files, Path.Combine(_folder, "absent.xml"));
 
         Assert.Contains("could not read", said, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("anyway", said, StringComparison.OrdinalIgnoreCase);
@@ -127,7 +112,7 @@ public class EliteDisplayTests : IDisposable
     private string Write(string xml)
     {
         var path = Path.Combine(_folder, Guid.NewGuid().ToString("N") + ".xml");
-        File.WriteAllText(path, xml);
+        _files.WriteText(path, xml);
         return path;
     }
 }

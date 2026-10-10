@@ -1,6 +1,7 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
 using D47.Core.Input;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -60,7 +61,7 @@ public class ChangedBindingsAreResolvedOffTheTickTests : IDisposable
 
     /// <summary>Each resolve waits for <paramref name="release"/> before it starts, on the pool.</summary>
     private BindsWatch Watch(ManualResetEventSlim release) =>
-        new(Bindings, [Game], NullLogger.Instance)
+        new(new DiskFileSystem(), Bindings, [Game], NullLogger.Instance)
         {
             Dispatch = work => _dispatched.Add(Task.Run(() =>
             {

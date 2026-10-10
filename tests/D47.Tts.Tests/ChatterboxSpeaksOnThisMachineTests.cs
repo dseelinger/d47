@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -38,7 +39,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     }
 
     private static ChatterboxTtsProvider Provider(ChatterboxTestFolder folder, CountingEngine engine) =>
-        new(folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true, ChatterboxTestFolder.NoDownload);
+        new(new DiskFileSystem(), folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => engine, () => true, ChatterboxTestFolder.NoDownload);
 
     [Fact]
     public async Task ALineComesBackInTheStandardFormatWithNoKey()
@@ -75,6 +76,7 @@ public class ChatterboxSpeaksOnThisMachineTests
     {
         using var folder = new ChatterboxTestFolder();
         using var provider = new ChatterboxTtsProvider(
+            new DiskFileSystem(),
             folder.Models, folder.Voices, folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance);
 
         var listed = await provider.ListVoicesAsync(TestContext.Current.CancellationToken);

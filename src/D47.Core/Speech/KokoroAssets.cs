@@ -1,4 +1,6 @@
-﻿namespace D47.Core.Speech;
+﻿using D47.Core.Storage;
+
+namespace D47.Core.Speech;
 
 /// <summary>One file the local voice needs, and what it should be when it lands.</summary>
 /// <param name="Path">Where it sits under the models folder, and its path in the repository.</param>
@@ -99,14 +101,10 @@ public static class KokoroAssets
     public static readonly KokoroAsset Model = Builds[0].Asset;
 
     /// <summary>Which build is actually on disk, read from the file rather than from settings.</summary>
-    public static KokoroBuild? InstalledBuild(string folder)
-    {
-        var model = new FileInfo(System.IO.Path.Combine(folder, "model.onnx"));
-
-        return model.Exists
+    public static KokoroBuild? InstalledBuild(IFileSystem fileSystem, string folder) =>
+        fileSystem.Stat(System.IO.Path.Combine(folder, "model.onnx")) is { } model
             ? Builds.FirstOrDefault(build => build.Asset.Bytes == model.Length)
             : null;
-    }
 
     /// <summary>The phoneme vocabulary.</summary>
     public static readonly KokoroAsset Tokenizer = new(
@@ -169,12 +167,14 @@ public static class KokoroAssets
             : char.ToUpperInvariant(voiceId[3]) + voiceId[4..];
 
     /// <summary>Whether every file is present, which is what the settings row reports.</summary>
-    public static bool IsInstalled(string folder) =>
-        File.Exists(System.IO.Path.Combine(folder, "model.onnx"))
-        && File.Exists(System.IO.Path.Combine(folder, "tokenizer.json"))
-        && File.Exists(System.IO.Path.Combine(folder, "phoneme_dict.json"))
+    public static bool IsInstalled(IFileSystem fileSystem, string folder) =>
+        Present(fileSystem, System.IO.Path.Combine(folder, "model.onnx"))
+        && Present(fileSystem, System.IO.Path.Combine(folder, "tokenizer.json"))
+        && Present(fileSystem, System.IO.Path.Combine(folder, "phoneme_dict.json"))
         && VoiceIds.All(voice =>
-            File.Exists(System.IO.Path.Combine(folder, "voices", voice + ".bin")));
+            Present(fileSystem, System.IO.Path.Combine(folder, "voices", voice + ".bin")));
+
+    private static bool Present(IFileSystem fileSystem, string path) => fileSystem.Stat(path) is not null;
 
     /// <summary>
     /// Roughly what the whole thing costs to fetch, for the sentence a Commander reads before agreeing

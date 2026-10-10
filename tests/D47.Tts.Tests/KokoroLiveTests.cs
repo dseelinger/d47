@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -21,7 +22,7 @@ public class KokoroLiveTests
     {
         Assert.SkipUnless(Enabled, "set D47_TTS_LIVE=1 to run tests that download and synthesise");
 
-        using var installer = new KokoroInstaller(Folder, NullLogger<KokoroInstaller>.Instance);
+        using var installer = new KokoroInstaller(new DiskFileSystem(), Folder, NullLogger<KokoroInstaller>.Instance);
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(20));
 
         var result = await installer.InstallAsync(cancellationToken: timeout.Token);
@@ -30,9 +31,9 @@ public class KokoroLiveTests
             result.Outcome is KokoroInstall.Installed or KokoroInstall.AlreadyPresent,
             $"{result.Outcome}: {result.Detail}");
 
-        Assert.True(KokoroAssets.IsInstalled(Folder));
+        Assert.True(KokoroAssets.IsInstalled(new DiskFileSystem(), Folder));
 
-        using var provider = new KokoroTtsProvider(Folder, NullLogger<KokoroTtsProvider>.Instance);
+        using var provider = new KokoroTtsProvider(new DiskFileSystem(), Folder, NullLogger<KokoroTtsProvider>.Instance);
 
         var voices = await provider.ListVoicesAsync(timeout.Token);
 

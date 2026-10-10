@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using D47.App.Theming;
 using Avalonia.LogicalTree;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Interface;
@@ -126,115 +127,69 @@ public class AvatarTests
 /// <summary>The Commander's own frames, resolved per state.</summary>
 public class AvatarLibraryTests
 {
-    private static (AppPaths Paths, string Root) Install()
-    {
-        var root = Path.Combine(Path.GetTempPath(), "d47-avatar-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(root);
+    private readonly MemoryFileSystem _files = new();
 
-        return (new AppPaths(root), root);
-    }
+    private readonly AppPaths _paths = new("C:/d47-test/avatar");
 
-    private static void Drop(AppPaths paths, LoopState state, params string[] names)
+    private void Drop(LoopState state, params string[] names)
     {
-        var folder = AvatarLibrary.FolderFor(paths, state);
-        Directory.CreateDirectory(folder);
+        var folder = AvatarLibrary.FolderFor(_paths, state);
 
         foreach (var name in names)
         {
-            File.WriteAllBytes(Path.Combine(folder, name), [1, 2, 3, 4]);
+            _files.WriteText(Path.Combine(folder, name), "frame");
         }
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void NothingDroppedInMeansNothingToOverride()
     {
         // The overwhelmingly common case.
-        var (paths, root) = Install();
+        var library = AvatarLibrary.Load(_files, _paths);
 
-        try
-        {
-            var library = AvatarLibrary.Load(paths);
-
-            Assert.False(library.Any);
-            Assert.All(Enum.GetValues<LoopState>(), state => Assert.Empty(library.For(state)));
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
+        Assert.False(library.Any);
+        Assert.All(Enum.GetValues<LoopState>(), state => Assert.Empty(library.For(state)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ReplacingOneStateLeavesTheOthersAlone()
     {
         // Per-state and all-or-nothing, the same shape the audio cues use.
-        var (paths, root) = Install();
+        Drop(LoopState.Thinking, "01.png", "02.png");
 
-        try
-        {
-            Drop(paths, LoopState.Thinking, "01.png", "02.png");
+        var library = AvatarLibrary.Load(_files, _paths);
 
-            var library = AvatarLibrary.Load(paths);
-
-            Assert.True(library.Any);
-            Assert.Equal([LoopState.Thinking], library.Replaced);
-            Assert.Equal(2, library.For(LoopState.Thinking).Count);
-            Assert.Empty(library.For(LoopState.Idle));
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
+        Assert.True(library.Any);
+        Assert.Equal([LoopState.Thinking], library.Replaced);
+        Assert.Equal(2, library.For(LoopState.Thinking).Count);
+        Assert.Empty(library.For(LoopState.Idle));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void FramesComeBackInFilenameOrderSoAnAnimationDoesNotReshuffle()
     {
-        var (paths, root) = Install();
+        Drop(LoopState.Speaking, "03.png", "01.png", "02.png");
 
-        try
-        {
-            Drop(paths, LoopState.Speaking, "03.png", "01.png", "02.png");
+        var frames = AvatarLibrary.Load(_files, _paths).For(LoopState.Speaking);
 
-            var frames = AvatarLibrary.Load(paths).For(LoopState.Speaking);
-
-            Assert.Equal(
-                ["01.png", "02.png", "03.png"],
-                frames.Select(Path.GetFileName));
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
+        Assert.Equal(
+            ["01.png", "02.png", "03.png"],
+            frames.Select(Path.GetFileName));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AnEmptyOrUnknownFileIsNotOffered()
     {
         // Readability is checked here; decoding is not.
-        var (paths, root) = Install();
+        var folder = AvatarLibrary.FolderFor(_paths, LoopState.Idle);
 
-        try
-        {
-            var folder = AvatarLibrary.FolderFor(paths, LoopState.Idle);
-            Directory.CreateDirectory(folder);
+        _files.WriteText(Path.Combine(folder, "empty.png"), string.Empty);
+        _files.WriteText(Path.Combine(folder, "README.txt"), "put your frames here");
+        _files.WriteText(Path.Combine(folder, "good.png"), "frame");
 
-            File.WriteAllBytes(Path.Combine(folder, "empty.png"), []);
-            File.WriteAllText(Path.Combine(folder, "README.txt"), "put your frames here");
-            File.WriteAllBytes(Path.Combine(folder, "good.png"), [1, 2, 3]);
+        var frames = AvatarLibrary.Load(_files, _paths).For(LoopState.Idle);
 
-            var frames = AvatarLibrary.Load(paths).For(LoopState.Idle);
-
-            Assert.Equal(["good.png"], frames.Select(Path.GetFileName));
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
+        Assert.Equal(["good.png"], frames.Select(Path.GetFileName));
     }
 
     [Fact]

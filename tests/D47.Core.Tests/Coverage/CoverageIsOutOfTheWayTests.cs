@@ -1,6 +1,8 @@
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Tests;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Coverage;
@@ -30,16 +32,22 @@ public class CoverageIsOutOfTheWayTests
     [Fact]
     public void AskingForItAddsExactlyOneRow()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
 
-        var settings = TestSurface.For(install).Settings;
+        var settings = new SettingsService(
+            store,
+            new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance),
+            store.Load(),
+            NullLogger<SettingsService>.Instance,
+            loadFailed: false);
 
         var without = DiagnosticsCapability
-            .Create(install.Paths, new FakeVerbosityControl(), settings, "1.0.0-test")
+            .Create(install.Paths, install.Files, new FakeVerbosityControl(), settings, "1.0.0-test")
             .Settings;
 
         var with = DiagnosticsCapability
-            .Create(install.Paths, new FakeVerbosityControl(), settings, "1.0.0-test", () => "3 of 4 exercised.")
+            .Create(install.Paths, install.Files, new FakeVerbosityControl(), settings, "1.0.0-test", () => "3 of 4 exercised.")
             .Settings;
 
         Assert.Equal(without.Count + 1, with.Count);

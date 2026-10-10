@@ -4,6 +4,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics;
 using D47.Core.Journal;
+using D47.Core.Storage;
 
 namespace D47.Core.Capabilities;
 
@@ -267,7 +268,7 @@ public static class BuiltinCapabilities
             offers ?? new OfferWindow(),
             phraseBook ?? (() => PhraseBook.From(registry(), [])),
             () => gameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? learnedPhrases?.For(fid) ?? [] : []),
-        DiagnosticsCapability.Create(paths, verbosity, settings, version, coverage, history, ticking),
+        DiagnosticsCapability.Create(paths, files ?? new Storage.DiskFileSystem(), verbosity, settings, version, coverage, history, ticking),
         JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus),
         CrewCapability.Create(() => gameState.Active),
         CarrierCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),

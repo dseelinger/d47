@@ -1,14 +1,19 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 
 namespace D47.Core.Interface;
 
 /// <summary>The Commander's own avatar imagery, per loop state (Phase 11, "Ship's AI Avatar").</summary>
 public sealed class AvatarLibrary
 {
+    private readonly IFileSystem _fileSystem;
+
     /// <summary>What the panel will attempt.</summary>
     public static readonly IReadOnlyList<string> Extensions = [".png", ".jpg", ".jpeg", ".bmp", ".webp"];
 
     private readonly Dictionary<LoopState, IReadOnlyList<string>> _frames = [];
+
+    private AvatarLibrary(IFileSystem fileSystem) => _fileSystem = fileSystem;
 
     /// <summary>Where the core clips are read from, or null for none.</summary>
     public string? ClipFolder { get; init; }
@@ -18,13 +23,13 @@ public sealed class AvatarLibrary
         Path.Combine(paths.Data, "avatar", state.ToString().ToLowerInvariant());
 
     /// <summary>Scans every state's folder.</summary>
-    public static AvatarLibrary Load(AppPaths paths)
+    public static AvatarLibrary Load(IFileSystem fileSystem, AppPaths paths)
     {
-        var library = new AvatarLibrary { ClipFolder = paths.AvatarClips };
+        var library = new AvatarLibrary(fileSystem) { ClipFolder = paths.AvatarClips };
 
         foreach (var state in Enum.GetValues<LoopState>())
         {
-            if (Scan(FolderFor(paths, state)) is { Count: > 0 } frames)
+            if (Scan(fileSystem, FolderFor(paths, state)) is { Count: > 0 } frames)
             {
                 library._frames[state] = frames;
             }
@@ -40,29 +45,28 @@ public sealed class AvatarLibrary
     public IReadOnlyList<string> For(LoopState state) =>
         _frames.TryGetValue(state, out var frames) ? frames : [];
 
+    /// <summary>The core's clip for a state from <see cref="ClipFolder"/>, or null when there is none.</summary>
+    public string? ClipFor(string coreId, LoopState state) =>
+        ClipFolder is { } folder ? CoreClips.For(_fileSystem, folder, coreId, state) : null;
+
     /// <summary>Whether anything has been dropped in at all.</summary>
     public bool Any => _frames.Count > 0;
 
     /// <summary>Which states the Commander has replaced.</summary>
     public IReadOnlyList<LoopState> Replaced => [.. _frames.Keys.Order()];
 
-    private static IReadOnlyList<string> Scan(string folder)
+    private static IReadOnlyList<string> Scan(IFileSystem fileSystem, string folder)
     {
         try
         {
-            if (!Directory.Exists(folder))
-            {
-                return [];
-            }
-
             return
             [
                 // Ordered by name, so a Commander numbering their frames gets them in that order and a reload
                 // does not reshuffle the animation.
-                .. Directory
-                    .EnumerateFiles(folder)
+                .. fileSystem
+                    .Enumerate(folder, "*")
                     .Where(file => Extensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
-                    .Where(Readable)
+                    .Where(file => Readable(fileSystem, file))
                     .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase),
             ];
         }
@@ -74,12 +78,12 @@ public sealed class AvatarLibrary
     }
 
     /// <summary>A non-empty file that opens.</summary>
-    internal static bool Readable(string file)
+    internal static bool Readable(IFileSystem fileSystem, string file)
     {
         try
         {
-            using var stream = File.OpenRead(file);
-            return stream.Length > 0;
+            using var stream = fileSystem.OpenRead(file);
+            return stream is { Length: > 0 };
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

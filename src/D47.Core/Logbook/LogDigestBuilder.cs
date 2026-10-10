@@ -1,11 +1,12 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Logbook;
 
 /// <summary>Folds a window of journals into a <see cref="LogDigest"/> (Phase 33, item 2).</summary>
-public sealed class LogDigestBuilder(ILogger logger)
+public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 {
     /// <summary>The most facts a digest carries.</summary>
     public const int MaxFacts = 150;
@@ -47,11 +48,11 @@ public sealed class LogDigestBuilder(ILogger logger)
         {
             var used = false;
 
-            IEnumerable<string> lines;
+            Stream stream;
 
             try
             {
-                lines = File.ReadLines(file);
+                stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -59,7 +60,9 @@ public sealed class LogDigestBuilder(ILogger logger)
                 continue;
             }
 
-            foreach (var line in lines)
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
             {
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Buffers.Binary;
 using System.Text;
 
@@ -95,7 +96,7 @@ public static class VisitedStarsCache
 /// Reads the current Commander's visited-systems file on demand, re-reading when its write time or length
 /// changes. Blocks on file IO: never call it from the tick.
 /// </summary>
-public sealed class VisitedStarsBook(string folder)
+public sealed class VisitedStarsBook(string folder, IFileSystem files)
 {
     private sealed record Snapshot(string Path, DateTime WrittenAt, long Length, IReadOnlyDictionary<long, SystemVisits> Visits);
 
@@ -122,22 +123,19 @@ public sealed class VisitedStarsBook(string folder)
 
         try
         {
-            var file = new FileInfo(path);
-
-            if (!file.Exists)
+            if (files.Stat(path) is not { } file)
             {
                 return null;
             }
 
-            if (_last is { } last && last.Path == path && last.WrittenAt == file.LastWriteTimeUtc && last.Length == file.Length)
+            if (_last is { } last && last.Path == path && last.WrittenAt == file.Written && last.Length == file.Length)
             {
                 return last.Visits;
             }
 
             byte[] bytes;
 
-            using (var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var stream = files.OpenRead(path) ?? throw new FileNotFoundException("The file is missing.", path))
             {
                 bytes = new byte[stream.Length];
                 stream.ReadExactly(bytes);
@@ -148,7 +146,7 @@ public sealed class VisitedStarsBook(string folder)
                 return null;
             }
 
-            _last = new Snapshot(path, file.LastWriteTimeUtc, file.Length, visits);
+            _last = new Snapshot(path, file.Written, file.Length, visits);
             return visits;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -49,7 +50,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests : IDisposable
     }
 
     private ChatterboxTtsProvider Provider() =>
-        new(_folder.Models, _folder.Voices, _folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, ChatterboxTestFolder.NoDownload, _own);
+        new(new DiskFileSystem(), _folder.Models, _folder.Voices, _folder.Fetched, NullLogger<ChatterboxTtsProvider>.Instance, () => _engine, () => true, ChatterboxTestFolder.NoDownload, _own);
 
     private void Record() =>
         Assert.Null(_own.Save(

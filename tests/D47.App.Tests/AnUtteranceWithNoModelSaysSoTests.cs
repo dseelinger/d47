@@ -7,6 +7,7 @@ using D47.Core.Audio;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using D47.Stt;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -63,7 +64,7 @@ public sealed class AnUtteranceWithNoModelSaysSoTests : IDisposable
             new WasapiMicrophone(echo, NullLogger<WasapiMicrophone>.Instance),
             new WhisperTranscriber(NullLogger<WhisperTranscriber>.Instance),
             _models,
-            new BindsWatch(TestSurface.BindingsFolder(paths), [], NullLogger.Instance),
+            new BindsWatch(new DiskFileSystem(), TestSurface.BindingsFolder(paths), [], NullLogger.Instance),
             new PushToTalkKey(NullLogger<PushToTalkKey>.Instance),
             new BoundButton(),
             new WakeWordGate(),

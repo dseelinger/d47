@@ -1,35 +1,24 @@
 using System.Globalization;
-using System.Text;
+using D47.Core.Storage;
 
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>A folder of journals written by hand, for the Commander's log tests.</summary>
-public sealed class JournalCorpus : IDisposable
+public sealed class JournalCorpus
 {
     public const string Cmdr = "F1234567";
 
     private int _files;
 
-    public JournalCorpus() => Directory.CreateDirectory(Folder);
+    public MemoryFileSystem FileSystem { get; } = new();
 
-    public string Folder { get; } = Path.Combine(
-        Path.GetTempPath(), "d47-logbook-tests", Guid.NewGuid().ToString("N"));
+    public string Folder { get; } = @"C:\d47-test\journals";
 
     /// <summary>Every journal written, oldest first — what the App hands the digest builder.</summary>
     public IReadOnlyList<string> Files =>
     [
-        .. Directory.EnumerateFiles(Folder, "Journal.*.log").OrderBy(Path.GetFileName, StringComparer.Ordinal),
+        .. FileSystem.Enumerate(Folder, "Journal.*.log").OrderBy(Path.GetFileName, StringComparer.Ordinal),
     ];
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-
-        if (Directory.Exists(Folder))
-        {
-            Directory.Delete(Folder, recursive: true);
-        }
-    }
 
     /// <summary>
     /// One journal file, named for the instant it starts — which is how Elite names them and what <see
@@ -42,7 +31,7 @@ public sealed class JournalCorpus : IDisposable
             $"Journal.{startedAt.UtcDateTime.ToString("yyyy-MM-dd'T'HHmmss", CultureInfo.InvariantCulture)}."
             + $"{(++_files).ToString("00", CultureInfo.InvariantCulture)}.log");
 
-        File.WriteAllText(path, string.Join(Environment.NewLine, lines) + Environment.NewLine, Encoding.UTF8);
+        FileSystem.WriteText(path, string.Join(Environment.NewLine, lines) + Environment.NewLine);
         return path;
     }
 

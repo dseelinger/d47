@@ -149,6 +149,7 @@ public class AFleetAnswerSaysWhenItIsStillReadingTests
         [
             DiagnosticsCapability.Create(
                 install.Paths,
+                install.Files,
                 new FakeVerbosityControl(),
                 settings,
                 TestSurface.Version,

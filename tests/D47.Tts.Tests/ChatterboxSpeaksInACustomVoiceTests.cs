@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -63,6 +64,7 @@ public sealed class ChatterboxSpeaksInACustomVoiceTests : IDisposable
 
     private ChatterboxTtsProvider Provider(ILogger<ChatterboxTtsProvider>? logger = null) =>
         new(
+            new DiskFileSystem(),
             _folder.Models,
             _folder.Voices,
             _folder.Fetched,

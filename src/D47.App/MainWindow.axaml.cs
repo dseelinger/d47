@@ -1223,8 +1223,8 @@ public partial class MainWindow : Window
         // figures (#338) do not have to re-derive it from the prose.
         Func<ExcerptRequest, (string Text, ExcerptTally Tally)> build = request =>
         {
-            var journal = IncidentSources.Journals(folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
-            var log = IncidentSources.Logs(host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
+            var journal = IncidentSources.Journals(host.Files, folder, request.From, request.To, _host?.Loggers.CreateLogger("Excerpt"));
+            var log = IncidentSources.Logs(host.Files, host.Paths.Logs, request.From, request.To, TimeZoneInfo.Local);
 
             var excerpt = IncidentExcerpt.Take(
                 journal,
@@ -1252,7 +1252,7 @@ public partial class MainWindow : Window
 
                     from = scope.From(now);
 
-                    var survey = CorpusDonation.Survey(folder, from, now, names, logger, progress, cancel);
+                    var survey = CorpusDonation.Survey(host.Files, folder, from, now, names, logger, progress, cancel);
 
                     return new Controls.HelpImprovePage.CorpusReading(
                         survey,
@@ -1278,7 +1278,7 @@ public partial class MainWindow : Window
                         bufferSize: 65536,
                         leaveOpen: true);
 
-                    CorpusDonation.Write(folder, from, now, standIns, writer, logger, progress, cancel);
+                    CorpusDonation.Write(host.Files, folder, from, now, standIns, writer, logger, progress, cancel);
                 },
                 cancel);
 

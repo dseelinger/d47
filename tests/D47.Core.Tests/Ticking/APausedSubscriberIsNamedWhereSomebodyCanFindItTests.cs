@@ -44,6 +44,7 @@ public class APausedSubscriberIsNamedWhereSomebodyCanFindItTests
 
         var descriptor = DiagnosticsCapability.Create(
             install.Paths,
+            install.Files,
             new FakeVerbosityControl(),
             settings,
             TestSurface.Version,

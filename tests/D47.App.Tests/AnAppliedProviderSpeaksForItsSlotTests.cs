@@ -4,6 +4,7 @@ using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Persona;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -28,6 +29,7 @@ public class AnAppliedProviderSpeaksForItsSlotTests : IDisposable
             secrets,
             NullLoggerFactory.Instance,
             paths,
+            new DiskFileSystem(),
             new PersonaHost(),
             voice,
             arbiter,

@@ -223,20 +223,19 @@ public class ColonisationDeadlinesAreSaidTests
         Assert.False(row.Binding!.Write!(D47Settings.Defaults, "false")!.Callouts.Colonisation);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AClaimMadeInAnEarlierSessionComesBackFromTheJournalHistory()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
 
-        File.WriteAllLines(
+        install.Files.WriteLines(
             Path.Combine(install.Root, "Journal.2026-10-01T120000.01.log"),
             [
                 """{"timestamp":"2026-10-01T12:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
                 """{"timestamp":"2026-10-01T12:00:01Z","event":"ColonisationSystemClaim","StarSystem":"Wolf 359","SystemAddress":1234}""",
             ]);
 
-        var found = ColonisationBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
+        var found = ColonisationBackfill.FromHistory(install.Files, install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
         var claim = Assert.Single(found["F1"].Claims);
         Assert.Equal("Wolf 359", claim.StarSystem);

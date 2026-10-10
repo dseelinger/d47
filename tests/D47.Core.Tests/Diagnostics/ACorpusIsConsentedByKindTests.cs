@@ -1,24 +1,25 @@
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Diagnostics;
 
 /// <summary>Consenting to a corpus nobody can read.</summary>
-[Trait("Category", "Integration")]
-public class ACorpusIsConsentedByKindTests : IDisposable
+public class ACorpusIsConsentedByKindTests
 {
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-corpus").FullName;
+    private const string _root = "C:/d47-test/corpus";
+
+    private readonly MemoryFileSystem _files = new();
 
     private static readonly ExcerptPaperwork Paperwork =
         new("0.88.0+test", new DateTimeOffset(2026, 8, 29, 12, 0, 0, TimeSpan.Zero));
 
-    public void Dispose() => Directory.Delete(_root, recursive: true);
-
     private void Journal(string startedAt, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(_root, $"Journal.{startedAt}.01.log"), lines);
+        _files.WriteLines(Path.Combine(_root, $"Journal.{startedAt}.01.log"), lines);
 
     private CorpusSurvey Survey(Pseudonyms names) =>
         CorpusDonation.Survey(
+            _files,
             _root,
             DateTimeOffset.MinValue,
             DateTimeOffset.MaxValue,
@@ -40,6 +41,7 @@ public class ACorpusIsConsentedByKindTests : IDisposable
 
         var payload = new StringWriter();
         CorpusDonation.Write(
+            _files,
             _root,
             DateTimeOffset.MinValue,
             DateTimeOffset.MaxValue,
@@ -74,7 +76,7 @@ public class ACorpusIsConsentedByKindTests : IDisposable
         var small = CorpusReport.Render(Survey(new Pseudonyms()), Paperwork);
         var smallEvents = Survey(new Pseudonyms()).Tally.Events;
 
-        File.Delete(Path.Combine(_root, "Journal.2026-01-01T100000.01.log"));
+        _files.Delete(Path.Combine(_root, "Journal.2026-01-01T100000.01.log"));
         Journal("2026-01-01T100000", Jumps(100));
         var large = CorpusReport.Render(Survey(new Pseudonyms()), Paperwork);
         var largeEvents = Survey(new Pseudonyms()).Tally.Events;

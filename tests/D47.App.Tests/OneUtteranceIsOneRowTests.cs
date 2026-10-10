@@ -2,6 +2,7 @@ using D47.App.Recording;
 using D47.Core.Audio;
 using D47.Core.Diagnostics.Recording;
 using D47.Core.Listening;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -241,7 +242,7 @@ public class OneUtteranceIsOneRowTests : IDisposable
 
         // Read back as audio rather than as a byte count: the reason for retaining it is that somebody
         // can play it, and a header this writer got wrong would pass a length check.
-        var clip = WavReader.Read(Path.Combine(_folder, row.Clip));
+        var clip = WavReader.Read(new DiskFileSystem(), Path.Combine(_folder, row.Clip));
 
         Assert.Equal(16_000, clip.Format.SampleRate);
         Assert.Equal(TimeSpan.FromSeconds(1), clip.Duration);

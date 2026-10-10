@@ -354,8 +354,7 @@ public sealed class AvatarView : UserControl
     private bool PlayClip(LoopState state)
     {
         if (_coreId is null
-            || _library?.ClipFolder is not { } folder
-            || CoreClips.For(folder, _coreId, state) is not { } path)
+            || _library?.ClipFor(_coreId, state) is not { } path)
         {
             return false;
         }

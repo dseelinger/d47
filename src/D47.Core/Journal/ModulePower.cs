@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -56,7 +57,7 @@ public sealed record ModulePower
 /// Pull-based reads of <c>ModulesInfo.json</c>, on the same terms as every other reader here: no
 /// thread, no clock, re-read only when the file's write time moves.
 /// </summary>
-public sealed class ModulePowerReader(string directory, ILogger logger)
+public sealed class ModulePowerReader(string directory, IFileSystem files, ILogger logger)
 {
     public const string FileName = "ModulesInfo.json";
 
@@ -72,14 +73,12 @@ public sealed class ModulePowerReader(string directory, ILogger logger)
 
         try
         {
-            var info = new FileInfo(path);
-
-            if (!info.Exists)
+            if (files.Stat(path) is not { } info)
             {
                 return false;
             }
 
-            written = info.LastWriteTimeUtc;
+            written = info.Written;
         }
         catch (IOException ex)
         {
@@ -94,8 +93,7 @@ public sealed class ModulePowerReader(string directory, ILogger logger)
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = files.OpenRead(path) ?? throw new FileNotFoundException("The file is missing.", path);
 
             using var document = JsonDocument.Parse(stream);
 

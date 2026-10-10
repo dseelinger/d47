@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Logbook;
@@ -99,6 +100,7 @@ public static class LogRanges
 
     /// <summary>Resolves a span against the corpus.</summary>
     public static LogRange Resolve(
+        IFileSystem fileSystem,
         LogSpan span,
         DateTimeOffset now,
         IReadOnlyList<string> files,
@@ -132,12 +134,12 @@ public static class LogRanges
                 Label = "the last thirty days",
             },
 
-            _ => Session(now, files, logger),
+            _ => Session(fileSystem, now, files, logger),
         };
     }
 
     /// <summary>Walks the newest journals backwards for the most recent <c>LoadGame</c>.</summary>
-    private static LogRange Session(DateTimeOffset now, IReadOnlyList<string> files, ILogger logger)
+    private static LogRange Session(IFileSystem fileSystem, DateTimeOffset now, IReadOnlyList<string> files, ILogger logger)
     {
         const int LookBack = 8;
 
@@ -147,7 +149,10 @@ public static class LogRanges
 
             try
             {
-                foreach (var line in File.ReadLines(files[index]))
+                using var stream = fileSystem.OpenRead(files[index]) ?? throw new FileNotFoundException("The journal file is missing.", files[index]);
+                using var reader = new StreamReader(stream);
+
+                while (reader.ReadLine() is { } line)
                 {
                     if (!line.Contains("\"LoadGame\"", StringComparison.Ordinal) ||
                         !JournalEvent.TryParse(line, logger, out var parsed) ||
@@ -193,7 +198,7 @@ public static class LogRanges
     /// The session before the one that started at <paramref name="before"/>: from the last <c>LoadGame</c>
     /// before that instant to the last event before it, or null where no earlier <c>LoadGame</c> is in reach.
     /// </summary>
-    public static LogRange? PreviousSession(DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
+    public static LogRange? PreviousSession(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -208,7 +213,10 @@ public static class LogRanges
         {
             try
             {
-                foreach (var line in File.ReadLines(file))
+                using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
+                using var reader = new StreamReader(stream);
+
+                while (reader.ReadLine() is { } line)
                 {
                     if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null || parsed.Timestamp >= before)
                     {

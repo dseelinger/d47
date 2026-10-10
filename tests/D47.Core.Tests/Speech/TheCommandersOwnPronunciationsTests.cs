@@ -1,4 +1,5 @@
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Speech;
@@ -7,14 +8,13 @@ namespace D47.Core.Tests.Speech;
 /// The correction file, asked for on 2026-08-28: "We'll need to come up with a way to update
 /// Kokoro pronunciations without recompiling."
 /// </summary>
-[Trait("Category", "Integration")]
-public class TheCommandersOwnPronunciationsTests : IDisposable
+public class TheCommandersOwnPronunciationsTests
 {
-    private readonly string _folder = Directory.CreateTempSubdirectory("d47-pronunciations").FullName;
+    private const string _folder = "C:/d47-test/pronunciations";
 
-    private string File => Path.Combine(_folder, PronunciationOverrides.FileName);
+    private readonly MemoryFileSystem _files = new();
 
-    public void Dispose() => Directory.Delete(_folder, recursive: true);
+    private static string File => Path.Combine(_folder, PronunciationOverrides.FileName);
 
     /// <summary>
     /// The two entries the shipped dictionary would otherwise answer, so the rung order is testable.
@@ -33,11 +33,11 @@ public class TheCommandersOwnPronunciationsTests : IDisposable
     }
 
     private void Write(string json) =>
-        System.IO.File.WriteAllText(File, json);
+        _files.WriteText(File, json);
 
     private Phonemiser Ladder(
         IReadOnlySet<char>? speakable = null, Action<string>? complain = null) =>
-        new(new Shipped(), new PronunciationOverrides(File, speakable, complain));
+        new(new Shipped(), new PronunciationOverrides(_files, File, speakable, complain));
 
     // ---- The two ways to write one -------------------------------------------------------
 
@@ -186,7 +186,7 @@ public class TheCommandersOwnPronunciationsTests : IDisposable
         Write("""{ "Dezhra": "ipa:dɛzˈɹɑː" }""");
         Assert.Equal("dɛzˈɹɑː", ladder.ToPhonemes("Dezhra"));
 
-        System.IO.File.Delete(File);
+        _files.Delete(File);
 
         Assert.Equal(new Phonemiser(new Shipped()).ToPhonemes("Dezhra"), ladder.ToPhonemes("Dezhra"));
     }
@@ -292,10 +292,6 @@ public class TheCommandersOwnPronunciationsTests : IDisposable
         Assert.Equal(new Phonemiser().ToPhonemes("Kuk"), Ladder().ToPhonemes("Kuk"));
     }
 
-    /// <summary>A rewrite the file system might stamp within the same tick, made visible.</summary>
-    private void Touch(string json)
-    {
-        Write(json);
-        System.IO.File.SetLastWriteTimeUtc(File, DateTime.UtcNow.AddSeconds(1));
-    }
+    /// <summary>A rewrite, which moves the file's write time.</summary>
+    private void Touch(string json) => Write(json);
 }

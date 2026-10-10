@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -12,18 +13,14 @@ public static class IncidentSources
 {
     /// <summary>Elite's own events across every journal that overlaps the window, oldest first.</summary>
     public static IReadOnlyList<JournalEntry> Journals(
+        IFileSystem fileSystem,
         string folder,
         DateTimeOffset from,
         DateTimeOffset to,
         ILogger? logger = null)
     {
-        if (!Directory.Exists(folder))
-        {
-            return [];
-        }
-
-        var files = Directory
-            .EnumerateFiles(folder, JournalFolder.FilePattern)
+        var files = fileSystem
+            .Enumerate(folder, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -31,7 +28,7 @@ public static class IncidentSources
 
         foreach (var file in Overlapping(files, from, to))
         {
-            foreach (var line in ReadLines(file))
+            foreach (var line in ReadLines(fileSystem, file))
             {
                 if (JournalEvent.TryParse(line, logger ?? NullLogger.Instance, out var parsed)
                     && parsed is { } journalEvent
@@ -50,19 +47,15 @@ public static class IncidentSources
     /// <summary>d47's own log across every retained day the window touches, oldest first.</summary>
     /// <param name="zone">The zone the sink wrote in.</param>
     public static IReadOnlyList<LogEntry> Logs(
+        IFileSystem fileSystem,
         string folder,
         DateTimeOffset from,
         DateTimeOffset to,
         TimeZoneInfo zone)
     {
-        if (!Directory.Exists(folder))
-        {
-            return [];
-        }
-
         var entries = new List<LogEntry>();
 
-        foreach (var file in Directory.EnumerateFiles(folder, "d47-*.log").OrderBy(p => p, StringComparer.Ordinal))
+        foreach (var file in fileSystem.Enumerate(folder, "d47-*.log").OrderBy(p => p, StringComparer.Ordinal))
         {
             if (DayOf(file) is not { } day)
             {
@@ -77,7 +70,7 @@ public static class IncidentSources
                 continue;
             }
 
-            foreach (var entry in LogScrub.Parse(ReadAll(file), day, zone))
+            foreach (var entry in LogScrub.Parse(ReadAll(fileSystem, file), day, zone))
             {
                 if (entry.At >= from && entry.At <= to)
                 {
@@ -146,9 +139,9 @@ public static class IncidentSources
     }
 
     /// <summary>Shared with whatever is still writing, deletion included.</summary>
-    internal static IEnumerable<string> ReadLines(string path)
+    internal static IEnumerable<string> ReadLines(IFileSystem fileSystem, string path)
     {
-        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var file = fileSystem.OpenRead(path) ?? throw new FileNotFoundException("The file is missing.", path);
         using var reader = new StreamReader(file);
 
         while (reader.ReadLine() is { } line)
@@ -157,9 +150,9 @@ public static class IncidentSources
         }
     }
 
-    private static string ReadAll(string path)
+    private static string ReadAll(IFileSystem fileSystem, string path)
     {
-        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var file = fileSystem.OpenRead(path) ?? throw new FileNotFoundException("The file is missing.", path);
         using var reader = new StreamReader(file);
 
         return reader.ReadToEnd();

@@ -2,6 +2,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -35,7 +36,7 @@ public class AskedWhatTheCommanderOwesTheLedgerIsReadOutTests
     private static async Task<ToolResult> Ask(string[] journal, GameStatus? status = null)
     {
         var gameState = new GameStateStore();
-        var crimes = new OutstandingCrimes(NullLogger.Instance);
+        var crimes = new OutstandingCrimes(new MemoryFileSystem(), NullLogger.Instance);
 
         foreach (var line in journal)
         {

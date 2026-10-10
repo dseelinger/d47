@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
+using D47.Core.Storage;
 
 namespace D47.Core.Interface;
 
@@ -42,16 +43,18 @@ public static class ElitePalette
         "Graphics",
         "GraphicsConfigurationOverride.xml");
 
-    public static GuiColourMatrix? Read(string path)
+    public static GuiColourMatrix? Read(IFileSystem fileSystem, string path)
     {
-        if (!File.Exists(path))
-        {
-            return null;
-        }
-
         try
         {
-            var document = XDocument.Load(path);
+            using var stream = fileSystem.OpenRead(path);
+
+            if (stream is null)
+            {
+                return null;
+            }
+
+            var document = XDocument.Load(stream);
 
             var section = document.Descendants("GUIColour").Elements("Default").FirstOrDefault();
             if (section is null)

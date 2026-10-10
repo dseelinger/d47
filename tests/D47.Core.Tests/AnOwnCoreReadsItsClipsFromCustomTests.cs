@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Xunit;
 using D47.Core.Audio;
 using D47.Core.Interface;
@@ -18,27 +19,19 @@ public class AnOwnCoreReadsItsClipsFromCustomTests
         Assert.Equal("covas.speaking.mp4", CoreClips.FileName("covas", LoopState.Speaking));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void OnlyANonEmptyFileIsOffered()
     {
-        var folder = Path.Combine(Path.GetTempPath(), "d47-core-clips-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
+        var files = new BytesFileSystem();
+        const string folder = "C:/d47-test/clips";
 
-        try
-        {
-            Assert.Null(CoreClips.For(folder, "covas", LoopState.Idle));
+        Assert.Null(CoreClips.For(files, folder, "covas", LoopState.Idle));
 
-            var path = Path.Combine(folder, CoreClips.FileName("covas", LoopState.Idle));
-            File.WriteAllBytes(path, []);
-            Assert.Null(CoreClips.For(folder, "covas", LoopState.Idle));
+        var path = Path.Combine(folder, CoreClips.FileName("covas", LoopState.Idle));
+        files.WriteBytes(path, []);
+        Assert.Null(CoreClips.For(files, folder, "covas", LoopState.Idle));
 
-            File.WriteAllBytes(path, [1]);
-            Assert.Equal(path, CoreClips.For(folder, "covas", LoopState.Idle));
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
-        }
+        files.WriteBytes(path, [1]);
+        Assert.Equal(path, CoreClips.For(files, folder, "covas", LoopState.Idle));
     }
 }

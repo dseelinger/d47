@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Logbook;
+using D47.Core.Storage;
 using D47.Core.Stories;
 using D47.Core.Tests.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -52,7 +53,7 @@ public sealed class AReachedBeatIsALogFactTests
         var story = TheMarker(adventure);
         var beats = LogStoryBeat.From([TwoBeatsReached(adventure)], id => id == story.Id ? story : null);
 
-        return new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build([], Window, beats);
+        return new LogDigestBuilder(new MemoryFileSystem(), NullLogger<LogDigestBuilder>.Instance).Build([], Window, beats);
     }
 
     [Fact]
@@ -87,7 +88,7 @@ public sealed class AReachedBeatIsALogFactTests
         var beats = LogStoryBeat.From([TwoBeatsReached(adventure)], _ => null);
         var narrow = Window with { From = Accepted.AddMinutes(2), To = Accepted.AddMinutes(10) };
 
-        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build([], narrow, beats);
+        var digest = new LogDigestBuilder(new MemoryFileSystem(), NullLogger<LogDigestBuilder>.Instance).Build([], narrow, beats);
 
         Assert.Equal(
             "Reached \"The Count\" in the adventure The Marker, three.",
@@ -103,7 +104,7 @@ public sealed class AReachedBeatIsALogFactTests
         var archived = new ArchivedChapter("F1", story.Id, story.PickedAt, adventure, standing.Fired, standing.FiredBy);
         var beats = LogStoryBeat.From([], id => id == story.Id ? story : null, [archived]);
 
-        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build([], Window, beats);
+        var digest = new LogDigestBuilder(new MemoryFileSystem(), NullLogger<LogDigestBuilder>.Instance).Build([], Window, beats);
         var facts = digest.Facts.Where(fact => fact.Kind == LogFactKind.Story).ToList();
 
         Assert.Equal(2, facts.Count);

@@ -1,3 +1,5 @@
+using D47.Core.Storage;
+
 namespace D47.Core.Audio;
 
 public sealed class WavFormatException(string message) : Exception(message);
@@ -5,9 +7,9 @@ public sealed class WavFormatException(string message) : Exception(message);
 /// <summary>Just enough RIFF to read the shipped cues: 16-bit PCM, any rate, any channel count.</summary>
 public static class WavReader
 {
-    public static AudioClip Read(string path)
+    public static AudioClip Read(IFileSystem fileSystem, string path)
     {
-        using var stream = File.OpenRead(path);
+        using var stream = fileSystem.OpenRead(path) ?? throw new FileNotFoundException("The WAV file is missing.", path);
         return Read(stream, Path.GetFileNameWithoutExtension(path));
     }
 

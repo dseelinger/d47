@@ -61,7 +61,7 @@ public class ModelComparisonTests
             Galaxy = new GalaxySearchNames(new SpanshGalaxyService(NullLogger<SpanshGalaxyService>.Instance)),
             Routes = new SpanshRouteService(NullLogger<SpanshRouteService>.Instance),
             StarSystems = new SpanshStarSystemService(NullLogger<SpanshStarSystemService>.Instance),
-            VisitedStars = new VisitedStarsBook(VisitedStarsCache.DefaultFolder()),
+            VisitedStars = new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), new DiskFileSystem()),
             Screen = Env("D47_COMPARE_SCREEN") is { } screen ? new FileScreen(screen) : null,
             Now = () => DateTimeOffset.Now,
         };

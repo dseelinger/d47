@@ -1,25 +1,24 @@
 using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Input;
 
 /// <summary>Night vision resolves to the ship binding in the ship and SRV, and the suit binding on foot (#456).</summary>
-[Trait("Category", "Integration")]
-public sealed class NightVisionWorksInTheShipAndOnFootTests : IDisposable
+public sealed class NightVisionWorksInTheShipAndOnFootTests
 {
     private static readonly DateTimeOffset Start = new(2026, 8, 29, 20, 0, 0, TimeSpan.Zero);
 
-    private readonly string _path = Path.Combine(
-        Path.GetTempPath(), "d47-night-vision-tests", Guid.NewGuid().ToString("N") + ".binds");
+    private const string _path = @"C:\d47-test\night-vision.binds";
+
+    private readonly MemoryFileSystem _files = new();
 
     public NightVisionWorksInTheShipAndOnFootTests()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-
         // The Commander's own two bindings, from Custom.4.2.binds.
-        File.WriteAllText(_path, """
+        _files.WriteText(_path, """
             <Root PresetName="Custom">
               <NightVisionToggle>
                 <Primary Device="Keyboard" Key="Key_V">
@@ -35,26 +34,12 @@ public sealed class NightVisionWorksInTheShipAndOnFootTests : IDisposable
             """);
     }
 
-    public void Dispose()
-    {
-        try
-        {
-            File.Delete(_path);
-        }
-        catch (IOException)
-        {
-            // A leftover temp file is not worth failing a test over.
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
     private static GameAction NightVision =>
         GameActions.Find("night_vision") ?? throw new InvalidOperationException("No night_vision action.");
 
     private IReadOnlyList<InputStep> Presses(ControlContext context)
     {
-        var binds = EliteBinds.Parse(_path, "Custom", NullLogger.Instance);
+        var binds = EliteBinds.Parse(_files, _path, "Custom", NullLogger.Instance);
         var reach = ActionReachability.Resolve(NightVision, binds, context);
 
         Assert.True(reach.IsOffered, reach.Reason);

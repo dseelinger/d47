@@ -1,5 +1,6 @@
 using D47.App.Input;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -22,7 +23,7 @@ public class RoutePlotWatchTests
     {
         var directory = Path.Combine(Path.GetTempPath(), "d47-plotwatch-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
-        return (directory, new NavRouteReader(directory, NullLogger.Instance));
+        return (directory, new NavRouteReader(directory, new DiskFileSystem(), NullLogger.Instance));
     }
 
     private static void Write(string directory, string json, DateTime writtenUtc)

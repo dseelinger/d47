@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -7,20 +8,22 @@ public static class ColonisationBackfill
 {
     /// <summary>Every Commander's sites as their journals last reported them, keyed by Frontier id. Sites only, never contributions.</summary>
     public static IReadOnlyDictionary<string, ColonisationSites> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return new Dictionary<string, ColonisationSites>(StringComparer.Ordinal);
         }
 
         return FromHistory(
-            [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            fileSystem,
+            [.. fileSystem.Enumerate(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
             logger,
             cancellation);
@@ -28,6 +31,7 @@ public static class ColonisationBackfill
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, ColonisationSites> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -43,7 +47,7 @@ public static class ColonisationBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(file, logger))
+            foreach (var line in Lines(fileSystem, file, logger))
             {
                 // ColonisationContribution is left out: a running sum folded here and again by the live reader
                 // would count the current journal twice.
@@ -110,14 +114,13 @@ public static class ColonisationBackfill
     }
 
     /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(string file, ILogger logger)
+    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
     {
-        FileStream stream;
+        Stream stream;
 
         try
         {
-            stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

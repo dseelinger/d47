@@ -1,5 +1,6 @@
 using System.IO;
 using D47.Core.Input;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -34,7 +35,7 @@ public class ALockedBindsFileKeepsItsBindingsTests : IDisposable
         File.WriteAllText(Path.Combine(Bindings, "Custom.4.2.binds"), body);
     }
 
-    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
+    private BindsWatch Watch() => new(new DiskFileSystem(), Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
 
     /// <summary>Holds the preset file exactly as Elite does while it writes one.</summary>
     private FileStream Lock() =>
@@ -108,11 +109,11 @@ public class ALockedBindsFileKeepsItsBindingsTests : IDisposable
 
         using (Lock())
         {
-            Assert.Null(BindsResolver.ActivePresetName(Bindings, NullLogger.Instance, out var locked));
+            Assert.Null(BindsResolver.ActivePresetName(new DiskFileSystem(), Bindings, NullLogger.Instance, out var locked));
             Assert.True(locked, "a file something else has open is not a file that is absent");
         }
 
-        Assert.Equal("Custom", BindsResolver.ActivePresetName(Bindings, NullLogger.Instance, out var free));
+        Assert.Equal("Custom", BindsResolver.ActivePresetName(new DiskFileSystem(), Bindings, NullLogger.Instance, out var free));
         Assert.False(free);
     }
 

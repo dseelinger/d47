@@ -1,5 +1,6 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -42,9 +43,11 @@ public class UnpaidFinesAreSaidOnArrivalTests
     private static JournalEvent Jump(params string[] factions) =>
         Parse($$"""{"timestamp":"2026-09-05T12:00:00Z","event":"FSDJump","StarSystem":"Sirius","SystemAddress":121569805492,"Factions":[{{string.Join(',', factions.Select(name => $$"""{"Name":"{{name}}","FactionState":"None"}"""))}}]}""");
 
+    private const string JournalFolder = @"C:\d47-test\journals";
+
     private static OutstandingCrimes Ledger(params string[] lines)
     {
-        var crimes = new OutstandingCrimes(NullLogger.Instance);
+        var crimes = new OutstandingCrimes(new MemoryFileSystem(), NullLogger.Instance);
         crimes.Apply([.. lines.Select(Parse)]);
         crimes.FoldHistory([]);
         return crimes;
@@ -185,57 +188,39 @@ public class UnpaidFinesAreSaidOnArrivalTests
             Assert.Single(Arrive(crimes, Jump(Sirius, Turner))).Text);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ADebtFromAnEarlierJournalIsSaidAfterARestart()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-crimes-");
+        var files = new MemoryFileSystem();
+        var old = Path.Combine(JournalFolder, "Journal.2026-09-01T100000.01.log");
+        files.WriteLines(old, [Load(2), Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00")]);
 
-        try
-        {
-            var old = Path.Combine(folder.FullName, "Journal.2026-09-01T100000.01.log");
-            File.WriteAllLines(old, [Load(2), Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00")]);
+        var crimes = new OutstandingCrimes(files, NullLogger.Instance);
+        crimes.Apply([Parse(Load(2, "11:00:00"))]);
+        crimes.FoldHistory([old], TestContext.Current.CancellationToken);
 
-            var crimes = new OutstandingCrimes(NullLogger.Instance);
-            crimes.Apply([Parse(Load(2, "11:00:00"))]);
-            crimes.FoldHistory([old], TestContext.Current.CancellationToken);
-
-            Assert.Single(Arrive(crimes, Jump(Sirius)));
-        }
-        finally
-        {
-            folder.Delete(recursive: true);
-        }
+        Assert.Single(Arrive(crimes, Jump(Sirius)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheSameJournalFoldedTwiceCountsOnce()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-crimes-");
+        string[] lines =
+        [
+            Load(2),
+            Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00"),
+            Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00"),
+        ];
 
-        try
-        {
-            string[] lines =
-            [
-                Load(2),
-                Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00"),
-                Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00"),
-            ];
+        var files = new MemoryFileSystem();
+        var current = Path.Combine(JournalFolder, "Journal.2026-09-05T100000.01.log");
+        files.WriteLines(current, lines);
 
-            var current = Path.Combine(folder.FullName, "Journal.2026-09-05T100000.01.log");
-            File.WriteAllLines(current, lines);
+        var crimes = new OutstandingCrimes(files, NullLogger.Instance);
+        crimes.Apply([.. lines.Select(Parse)]);
+        crimes.FoldHistory([current], TestContext.Current.CancellationToken);
 
-            var crimes = new OutstandingCrimes(NullLogger.Instance);
-            crimes.Apply([.. lines.Select(Parse)]);
-            crimes.FoldHistory([current], TestContext.Current.CancellationToken);
-
-            Assert.Equal(300, Assert.Single(crimes.Owed(Fid, 2)).Fines);
-        }
-        finally
-        {
-            folder.Delete(recursive: true);
-        }
+        Assert.Equal(300, Assert.Single(crimes.Owed(Fid, 2)).Fines);
     }
 
     [Fact]
@@ -245,7 +230,7 @@ public class UnpaidFinesAreSaidOnArrivalTests
     [Fact]
     public void NothingIsSaidBeforeTheHistoryIsFolded()
     {
-        var crimes = new OutstandingCrimes(NullLogger.Instance);
+        var crimes = new OutstandingCrimes(new MemoryFileSystem(), NullLogger.Instance);
         crimes.Apply([Parse(Load(2)), Parse(Crime(Sirius, "dumpingDangerous", "\"Fine\":150", "10:05:00"))]);
 
         Assert.Empty(Arrive(crimes, Jump(Sirius)));

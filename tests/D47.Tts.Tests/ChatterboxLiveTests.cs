@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -22,7 +23,7 @@ public class ChatterboxLiveTests
     {
         Assert.SkipUnless(Enabled, "set D47_TTS_LIVE=1 to run tests that download and synthesise");
 
-        using var installer = new ChatterboxInstaller(Folder, NullLogger<ChatterboxInstaller>.Instance);
+        using var installer = new ChatterboxInstaller(new DiskFileSystem(), Folder, NullLogger<ChatterboxInstaller>.Instance);
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(30));
 
         var result = await installer.InstallAsync(cancellationToken: timeout.Token);
@@ -30,9 +31,9 @@ public class ChatterboxLiveTests
         Assert.True(
             result.Outcome is KokoroInstall.Installed or KokoroInstall.AlreadyPresent,
             $"{result.Outcome}: {result.Detail}");
-        Assert.True(ChatterboxAssets.IsInstalled(Folder));
+        Assert.True(ChatterboxAssets.IsInstalled(new DiskFileSystem(), Folder));
 
-        using var provider = new ChatterboxTtsProvider(Folder, Voices, Path.Combine(Path.GetTempPath(), "d47-chatterbox-fetched"), NullLogger<ChatterboxTtsProvider>.Instance);
+        using var provider = new ChatterboxTtsProvider(new DiskFileSystem(), Folder, Voices, Path.Combine(Path.GetTempPath(), "d47-chatterbox-fetched"), NullLogger<ChatterboxTtsProvider>.Instance);
 
         var voices = await provider.ListVoicesAsync(timeout.Token);
         Assert.Contains(voices.Voices, voice => voice.Id == "marlow");

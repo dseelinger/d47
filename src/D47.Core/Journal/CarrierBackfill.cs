@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -9,20 +10,22 @@ public static class CarrierBackfill
 {
     /// <summary>Every Commander's own carrier as their journals last reported it, keyed by Frontier id.</summary>
     public static IReadOnlyDictionary<string, CarrierState> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return new Dictionary<string, CarrierState>(StringComparer.Ordinal);
         }
 
         return FromHistory(
-            [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            fileSystem,
+            [.. fileSystem.Enumerate(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
             logger,
             cancellation);
@@ -30,6 +33,7 @@ public static class CarrierBackfill
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, CarrierState> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -44,7 +48,7 @@ public static class CarrierBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(file, logger))
+            foreach (var line in Lines(fileSystem, file, logger))
             {
                 // The text test, before any JSON is touched: a handful of event names out of the hundreds a
                 // journal holds, so the cost is a read of the folder rather than a replay of it.
@@ -116,14 +120,13 @@ public static class CarrierBackfill
     }
 
     /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(string file, ILogger logger)
+    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
     {
-        FileStream stream;
+        Stream stream;
 
         try
         {
-            stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -14,7 +15,7 @@ public sealed record CrimeDebt(string Faction, int? ShipId, long Fines, long Bou
 /// and faction, and an on-foot ledger keyed by faction. A payment clears the entry it names; it never
 /// subtracts its <c>Amount</c>, which includes the broker's percentage.
 /// </summary>
-public sealed class OutstandingCrimes(ILogger logger)
+public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
 {
     /// <summary><c>PayFines</c> and <c>PayBounties</c> name a suit loadout with a <c>ShipID</c> at or above this.</summary>
     public const long SuitLoadoutIds = 4_293_000_000;
@@ -357,11 +358,11 @@ public sealed class OutstandingCrimes(ILogger logger)
 
     private IEnumerable<string> Lines(string file)
     {
-        FileStream stream;
+        Stream stream;
 
         try
         {
-            stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

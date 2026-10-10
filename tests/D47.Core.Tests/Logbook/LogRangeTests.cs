@@ -5,18 +5,11 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>What span a log covers.</summary>
-[Trait("Category", "Integration")]
-public class LogRangeTests : IDisposable
+public class LogRangeTests
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
     private readonly JournalCorpus _corpus = new();
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _corpus.Dispose();
-    }
 
     /// <summary>
     /// The trap <see cref="D47.Core.Journal.SessionSummary"/> already records, met a second time.
@@ -35,7 +28,7 @@ public class LogRangeTests : IDisposable
             JournalCorpus.Event(Evening.AddHours(3), "Fileheader", "\"part\":2"),
             JournalCorpus.Jump(Evening.AddHours(3).AddMinutes(10), "Shinrarta Dezhra", 40));
 
-        var range = LogRanges.Resolve(
+        var range = LogRanges.Resolve(_corpus.FileSystem, 
             LogSpan.Session,
             Evening.AddHours(4),
             _corpus.Files,
@@ -104,7 +97,7 @@ public class LogRangeTests : IDisposable
     {
         _corpus.Journal(Evening, JournalCorpus.Jump(Evening, "Deciat", 8.09));
 
-        var range = LogRanges.Resolve(LogSpan.Session, Evening.AddHours(1), _corpus.Files, NullLogger.Instance);
+        var range = LogRanges.Resolve(_corpus.FileSystem, LogSpan.Session, Evening.AddHours(1), _corpus.Files, NullLogger.Instance);
 
         // "You did nothing" and "I could not find where you started" are different answers, and only one of
         // them is true.

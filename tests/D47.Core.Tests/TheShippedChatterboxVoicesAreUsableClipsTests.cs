@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -13,7 +14,7 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         var folder = Path.Combine(RepositoryRoot(), "assets", "voices", "chatterbox");
         var log = new ListLogger();
 
-        var voices = ChatterboxVoices.Load(folder, log);
+        var voices = ChatterboxVoices.Load(new DiskFileSystem(), folder, log);
 
         Assert.Empty(log.Messages);
         Assert.Equal(12, voices.Count);
@@ -22,21 +23,21 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         Assert.All(voices, voice => Assert.False(string.IsNullOrWhiteSpace(voice.Source)));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void AClipOfFourSecondsOrEightSecondsIsLeftOutAndTheLogNamesItsLength()
     {
+        var files = new BytesFileSystem();
         var folder = NewFolder();
-        WriteClip(folder, "short", 4.0);
-        WriteClip(folder, "long", 8.0);
-        WriteClip(folder, "fine", 6.0);
-        WriteTable(folder,
+        WriteClip(files, folder, "short", 4.0);
+        WriteClip(files, folder, "long", 8.0);
+        WriteClip(files, folder, "fine", 6.0);
+        WriteTable(files, folder,
             "short\tShort\tfemale\ten\t\tsource",
             "long\tLong\tmale\ten\t\tsource",
             "fine\tFine\tmale\ten\tNarrator\tsource");
         var log = new ListLogger();
 
-        var voices = ChatterboxVoices.Load(folder, log);
+        var voices = ChatterboxVoices.Load(files, folder, log);
 
         var voice = Assert.Single(voices);
         Assert.Equal("fine", voice.Voice.Id);
@@ -45,20 +46,20 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         Assert.Contains(log.Messages, message => message.Contains("long") && message.Contains("8.0 s"));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARowWithNoSourceAMissingClipOrAWrongRateIsLeftOutWithItsReason()
     {
+        var files = new BytesFileSystem();
         var folder = NewFolder();
-        WriteClip(folder, "nosource", 6.0);
-        WriteClip(folder, "slow", 6.0, sampleRate: 16_000);
-        WriteTable(folder,
+        WriteClip(files, folder, "nosource", 6.0);
+        WriteClip(files, folder, "slow", 6.0, sampleRate: 16_000);
+        WriteTable(files, folder,
             "nosource\tA\tfemale\ten\t\t",
             "missing\tB\tmale\ten\t\tsource",
             "slow\tC\tmale\ten\t\tsource");
         var log = new ListLogger();
 
-        var voices = ChatterboxVoices.Load(folder, log);
+        var voices = ChatterboxVoices.Load(files, folder, log);
 
         Assert.Empty(voices);
         Assert.Contains(log.Messages, message => message.Contains("nosource") && message.Contains("source is empty"));
@@ -66,23 +67,18 @@ public class TheShippedChatterboxVoicesAreUsableClipsTests
         Assert.Contains(log.Messages, message => message.Contains("slow") && message.Contains("16000 Hz"));
     }
 
-    private static string NewFolder()
-    {
-        var folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(folder);
-        return folder;
-    }
+    private static string NewFolder() => "C:/d47-test/voices";
 
-    private static void WriteTable(string folder, params string[] rows) =>
-        File.WriteAllLines(
+    private static void WriteTable(IFileSystem files, string folder, params string[] rows) =>
+        files.WriteLines(
             Path.Combine(folder, ChatterboxVoices.TableName),
             ["id\tname\tgender\tlocale\trole\tsource", .. rows]);
 
-    private static void WriteClip(string folder, string id, double seconds, int sampleRate = ChatterboxVoices.SampleRate)
+    private static void WriteClip(BytesFileSystem files, string folder, string id, double seconds, int sampleRate = ChatterboxVoices.SampleRate)
     {
         var format = new AudioFormat(sampleRate, 1);
         var pcm = new byte[(int)(seconds * sampleRate) * format.BytesPerFrame];
-        File.WriteAllBytes(Path.Combine(folder, id + ".wav"), WavWriter.ToBytes(pcm, format));
+        files.WriteBytes(Path.Combine(folder, id + ".wav"), WavWriter.ToBytes(pcm, format));
     }
 
     private static string RepositoryRoot()

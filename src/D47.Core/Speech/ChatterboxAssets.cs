@@ -1,3 +1,5 @@
+using D47.Core.Storage;
+
 namespace D47.Core.Speech;
 
 /// <summary>What has to be on this machine before Chatterbox Turbo can speak: its q4 graphs and tokenizer.</summary>
@@ -47,8 +49,8 @@ public static class ChatterboxAssets
         System.IO.Path.Combine(folder, asset.Path.Replace('/', System.IO.Path.DirectorySeparatorChar));
 
     /// <summary>Whether every file is present at its pinned size.</summary>
-    public static bool IsInstalled(string folder) =>
-        All.All(asset => new FileInfo(Destination(folder, asset)) is { Exists: true } file
+    public static bool IsInstalled(IFileSystem fileSystem, string folder) =>
+        All.All(asset => fileSystem.Stat(Destination(folder, asset)) is { } file
                          && file.Length == asset.Bytes);
 
     public static double TotalMegabytes => All.Sum(asset => asset.Bytes) / 1024.0 / 1024.0;

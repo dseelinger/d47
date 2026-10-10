@@ -10,24 +10,16 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>The two acts, the money, and the voice.</summary>
-[Trait("Category", "Integration")]
-public class LogbookBookTests : IDisposable
+public class LogbookBookTests
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
     private readonly JournalCorpus _corpus = new();
     private const string _folder = @"C:\d47-test\commander-log";
 
-    private readonly MemoryFileSystem _logs = new();
 
     private LogbookSettings _settings = new();
     private LogbookContext _context = new();
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _corpus.Dispose();
-    }
 
     /// <summary>Item 4 in one assertion.</summary>
     [Fact]
@@ -164,7 +156,7 @@ public class LogbookBookTests : IDisposable
 
         // And it says which voice was asked for and which one wrote, in the file — a Commander who chose a
         // narrator and got a report deserves to be told rather than to wonder.
-        var file = _logs.ReadText(outcome.Written!.Path!);
+        var file = _corpus.FileSystem.ReadText(outcome.Written!.Path!);
         Assert.Contains("Personality is switched off", file, StringComparison.Ordinal);
     }
 
@@ -241,7 +233,7 @@ public class LogbookBookTests : IDisposable
         book.Estimate(null, null, null, out _);
 
         var outcome = await book.WriteAsync(CancellationToken.None);
-        var file = _logs.ReadText(outcome.Written!.Path!);
+        var file = _corpus.FileSystem.ReadText(outcome.Written!.Path!);
 
         Assert.Contains("[1]", file, StringComparison.Ordinal);
         Assert.Contains("## Sources", file, StringComparison.Ordinal);
@@ -291,8 +283,8 @@ public class LogbookBookTests : IDisposable
         Evening1();
 
         var book = new LogbookBook(
-            new LogFolder(_folder, _logs, NullLogger<LogFolder>.Instance),
-            new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
+            new LogFolder(_folder, _corpus.FileSystem, NullLogger<LogFolder>.Instance),
+            new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => _settings,
             () => _corpus.Files,
@@ -310,8 +302,8 @@ public class LogbookBookTests : IDisposable
         _context = _context with { Provider = provider, Model = _context.Model ?? "claude-opus-5" };
 
         return new LogbookBook(
-            new LogFolder(_folder, _logs, NullLogger<LogFolder>.Instance),
-            new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance),
+            new LogFolder(_folder, _corpus.FileSystem, NullLogger<LogFolder>.Instance),
+            new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance),
             new LogWriter(NullLogger<LogWriter>.Instance),
             () => _settings,
             () => _corpus.Files,

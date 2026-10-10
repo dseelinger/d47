@@ -2,6 +2,7 @@
 using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -16,6 +17,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     /// <summary>What Kokoro emits, before the arbiter's doubling.</summary>
     private const int ModelSampleRate = 24_000;
 
+    private readonly IFileSystem _files;
     private readonly string _folder;
     private readonly string? _pronunciations;
     private readonly ILogger<KokoroTtsProvider> _logger;
@@ -41,10 +43,12 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     /// what a provider built for an audition rather than for the app wants.
     /// </param>
     public KokoroTtsProvider(
+        IFileSystem files,
         string folder,
         ILogger<KokoroTtsProvider> logger,
         string? pronunciations = null)
     {
+        _files = files;
         _folder = folder;
         _logger = logger;
         _pronunciations = pronunciations;
@@ -58,7 +62,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     /// <summary>The voices, which are files on disk rather than an answer from a service.</summary>
     public Task<VoiceCatalogue> ListVoicesAsync(CancellationToken cancellationToken = default)
     {
-        if (!KokoroAssets.IsInstalled(_folder))
+        if (!KokoroAssets.IsInstalled(_files, _folder))
         {
             return Task.FromResult(VoiceCatalogue.Unreachable(
                 $"The local voice is not downloaded yet. It is about {KokoroAssets.TotalMegabytes:0} MB, "
@@ -88,7 +92,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
     {
         ArgumentNullException.ThrowIfNull(voice);
 
-        if (!KokoroAssets.IsInstalled(_folder))
+        if (!KokoroAssets.IsInstalled(_files, _folder))
         {
             return null;
         }
@@ -197,6 +201,7 @@ public sealed class KokoroTtsProvider : ITtsProvider, IDisposable
         _pronunciations is null
             ? null
             : new PronunciationOverrides(
+                _files,
                 _pronunciations,
                 vocabulary.Keys
                     .Where(symbol => symbol.Length == 1)

@@ -30,11 +30,10 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
     private const string Elsewhere =
         """{ "timestamp":"2026-09-07T10:01:00Z", "event":"Location", "StarSystem":"Sol", "SystemAddress":10477373803, "Docked":false }""";
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASiteInAnEarlierJournalIsFoundWithItsSystemAndStation()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, DockedAtShip, Depot("2026-09-05T10:06:00Z", 0.25), Undocked);
         Write(install, "Journal.2026-09-07T100000.01.log", LaterLoadGame, Elsewhere);
 
@@ -46,11 +45,10 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal(0.25, site.Progress);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ASiteSeenLiveMoreRecentlyKeepsTheLiveFigures()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         Write(install, "Journal.2026-09-05T100000.01.log", LoadGame, DockedAtShip, Depot("2026-09-05T10:06:00Z", 0.25));
 
         var backfill = Backfill(install);
@@ -69,11 +67,10 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal(DateTimeOffset.Parse("2026-09-07T10:06:00Z", System.Globalization.CultureInfo.InvariantCulture), site.SeenAt);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheCurrentJournalFoldedByBothTheWalkAndTheReaderChangesNothing()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         string[] journal = [LoadGame, DockedAtShip, Depot("2026-09-05T10:06:00Z", 0.25), Contribution];
         Write(install, "Journal.2026-09-05T100000.01.log", journal);
 
@@ -105,17 +102,16 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         Assert.Equal("Apianus's Pride", location.StationName);
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheWalkIsTimedAsAStepOfStartup()
     {
-        using var install = new TempInstall();
+        var install = new MemoryInstall();
         var steps = new List<string>();
 
         var backfill = new HistoryBackfill
         {
             Directory = install.Root,
-            FileSystem = new DiskFileSystem(),
+            FileSystem = install.Files,
             Loggers = NullLoggerFactory.Instance,
             Step = name =>
             {
@@ -132,11 +128,11 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
     private static string Depot(string at, double progress) =>
         $$"""{ "timestamp":"{{at}}", "event":"ColonisationConstructionDepot", "MarketID":3960809986, "ConstructionProgress":{{progress.ToString(System.Globalization.CultureInfo.InvariantCulture)}}, "ConstructionComplete":false, "ConstructionFailed":false, "ResourcesRequired":[{"Name":"$steel_name;","Name_Localised":"Steel","RequiredAmount":500,"ProvidedAmount":80,"Payment":3239}] }""";
 
-    private static IReadOnlyDictionary<string, ColonisationSites> Sites(TempInstall install) =>
-        ColonisationBackfill.FromHistory(install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
+    private static IReadOnlyDictionary<string, ColonisationSites> Sites(MemoryInstall install) =>
+        ColonisationBackfill.FromHistory(install.Files, install.Root, NullLogger.Instance, TestContext.Current.CancellationToken);
 
-    private static HistoryBackfill Backfill(TempInstall install) =>
-        new() { Directory = install.Root, FileSystem = new DiskFileSystem(), Loggers = NullLoggerFactory.Instance };
+    private static HistoryBackfill Backfill(MemoryInstall install) =>
+        new() { Directory = install.Root, FileSystem = install.Files, Loggers = NullLoggerFactory.Instance };
 
     private static GameStateStore StoreOver(HistoryBackfill backfill) =>
         new() { RestoreColonisation = fid => backfill.Colonisation?.GetValueOrDefault(fid) };
@@ -147,8 +143,8 @@ public class ConstructionSitesFromOlderJournalsAreKnownTests
         return parsed!;
     }
 
-    private static void Write(TempInstall install, string name, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(install.Root, name), lines);
+    private static void Write(MemoryInstall install, string name, params string[] lines) =>
+        install.Files.WriteLines(Path.Combine(install.Root, name), lines);
 
     private sealed class Done : IDisposable
     {

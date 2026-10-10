@@ -5,6 +5,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Persona;
+using D47.Core.Storage;
 using D47.Tts;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -34,6 +35,7 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
             secrets,
             NullLoggerFactory.Instance,
             paths,
+            new DiskFileSystem(),
             _personas,
             voice,
             arbiter,

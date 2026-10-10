@@ -1,6 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -115,70 +116,54 @@ public class PowerplayCycleTests
         Assert.Equal(100, ThisCycle(state));
     }
 
-    [Trait("Category", "Integration")]
+    private const string JournalFolder = @"C:\d47-test\journals";
+
     [Fact]
     public void MeritsFromAnEarlierJournalThisCycleCountAfterARestart()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-powerplay-cycle-");
+        var files = new MemoryFileSystem();
+        var earlier = Path.Combine(JournalFolder, "Journal.2026-10-02T120000.01.log");
+        var current = Path.Combine(JournalFolder, "Journal.2026-10-04T090000.01.log");
 
-        try
-        {
-            var earlier = Path.Combine(folder.FullName, "Journal.2026-10-02T120000.01.log");
-            var current = Path.Combine(folder.FullName, "Journal.2026-10-04T090000.01.log");
+        files.WriteLines(earlier, [Login, Pledge, Merits("2026-09-30T12:00:00Z", 900), Merits("2026-10-02T12:30:00Z", 400)]);
 
-            File.WriteAllLines(earlier, [Login, Pledge, Merits("2026-09-30T12:00:00Z", 900), Merits("2026-10-02T12:30:00Z", 400)]);
+        string[] today = [Login, Pledge, Merits("2026-10-04T09:30:00Z", 29), Merits("2026-10-04T09:30:00Z", 29)];
+        files.WriteLines(current, today);
 
-            string[] today = [Login, Pledge, Merits("2026-10-04T09:30:00Z", 29), Merits("2026-10-04T09:30:00Z", 29)];
-            File.WriteAllLines(current, today);
+        // The walk finished before the Commander was met: the live journal adds to what it found.
+        var walkedFirst = PowerplayCycleBackfill.FromHistory(files, [earlier], NullLogger.Instance, TestContext.Current.CancellationToken);
+        var store = StoreFrom(new GameStateStore { RestoreCycleMerits = walkedFirst.GetValueOrDefault }, today[1..]);
 
-            // The walk finished before the Commander was met: the live journal adds to what it found.
-            var walkedFirst = PowerplayCycleBackfill.FromHistory([earlier], NullLogger.Instance, TestContext.Current.CancellationToken);
-            var store = StoreFrom(new GameStateStore { RestoreCycleMerits = walkedFirst.GetValueOrDefault }, today[1..]);
-
-            Assert.Equal(458, ThisCycle(store.Active!));
-        }
-        finally
-        {
-            folder.Delete(recursive: true);
-        }
+        Assert.Equal(458, ThisCycle(store.Active!));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void ALateWalkCountsTheCurrentJournalOnce()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-powerplay-cycle-");
+        var files = new MemoryFileSystem();
+        var earlier = Path.Combine(JournalFolder, "Journal.2026-10-02T120000.01.log");
+        var current = Path.Combine(JournalFolder, "Journal.2026-10-04T090000.01.log");
 
-        try
-        {
-            var earlier = Path.Combine(folder.FullName, "Journal.2026-10-02T120000.01.log");
-            var current = Path.Combine(folder.FullName, "Journal.2026-10-04T090000.01.log");
+        files.WriteLines(earlier, [Login, Pledge, Merits("2026-10-02T12:30:00Z", 400)]);
 
-            File.WriteAllLines(earlier, [Login, Pledge, Merits("2026-10-02T12:30:00Z", 400)]);
+        string[] read = [Login, Pledge, Merits("2026-10-04T09:30:00Z", 29), Merits("2026-10-04T09:30:00Z", 29)];
+        files.WriteLines(current, read);
 
-            string[] read = [Login, Pledge, Merits("2026-10-04T09:30:00Z", 29), Merits("2026-10-04T09:30:00Z", 29)];
-            File.WriteAllLines(current, read);
+        IReadOnlyDictionary<string, PowerplayCycleMerits>? walked = null;
+        var store = new GameStateStore { RestoreCycleMerits = fid => walked?.GetValueOrDefault(fid) };
 
-            IReadOnlyDictionary<string, PowerplayCycleMerits>? walked = null;
-            var store = new GameStateStore { RestoreCycleMerits = fid => walked?.GetValueOrDefault(fid) };
+        // Primed from the current journal before the walk is done.
+        StoreFrom(store, read[1..]);
+        Assert.Equal(58, ThisCycle(store.Active!));
 
-            // Primed from the current journal before the walk is done.
-            StoreFrom(store, read[1..]);
-            Assert.Equal(58, ThisCycle(store.Active!));
+        walked = PowerplayCycleBackfill.FromHistory(files, [earlier, current], NullLogger.Instance, TestContext.Current.CancellationToken);
 
-            walked = PowerplayCycleBackfill.FromHistory([earlier, current], NullLogger.Instance, TestContext.Current.CancellationToken);
+        // Then one more gain in the same second as the walk's last, and one after.
+        store.Apply(Event(Merits("2026-10-04T09:30:00Z", 29)));
+        store.Apply(Event(Merits("2026-10-04T10:00:00Z", 5)));
+        store.RestoreLate();
 
-            // Then one more gain in the same second as the walk's last, and one after.
-            store.Apply(Event(Merits("2026-10-04T09:30:00Z", 29)));
-            store.Apply(Event(Merits("2026-10-04T10:00:00Z", 5)));
-            store.RestoreLate();
-
-            Assert.Equal(400 + 29 + 29 + 29 + 5, ThisCycle(store.Active!));
-        }
-        finally
-        {
-            folder.Delete(recursive: true);
-        }
+        Assert.Equal(400 + 29 + 29 + 29 + 5, ThisCycle(store.Active!));
     }
 
     [Fact]

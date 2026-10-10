@@ -892,6 +892,7 @@ public sealed class AppHost : IDisposable
 
         // Unpaid fines and bounties, rebuilt by the same walk (#639).
         var crimes = new D47.Core.Journal.OutstandingCrimes(
+            files,
             loggerFactory.CreateLogger<D47.Core.Journal.OutstandingCrimes>());
 
         var activities = new D47.Core.Activities.ActivityLedger(
@@ -975,12 +976,12 @@ public sealed class AppHost : IDisposable
 
         // The two state files Elite rewrites in place.
         var status = new GameStatusReader(journalDirectory, files, loggerFactory.CreateLogger<GameStatusReader>());
-        var route = new NavRouteReader(journalDirectory, loggerFactory.CreateLogger<NavRouteReader>());
+        var route = new NavRouteReader(journalDirectory, files, loggerFactory.CreateLogger<NavRouteReader>());
 
         // A third of the same kind (Phase 38): what Elite says each module in the ship the Commander is
         // flying actually draws, engineering included.
         var modulePower = new ModulePowerReader(
-            journalDirectory, loggerFactory.CreateLogger<ModulePowerReader>());
+            journalDirectory, files, loggerFactory.CreateLogger<ModulePowerReader>());
 
         // A third file of the same kind, and the markets read out of it (Phase 36).
         var marketBook = new D47.Core.Knowledge.MarketBook(
@@ -1527,7 +1528,7 @@ public sealed class AppHost : IDisposable
                 Path.Combine(paths.Data, D47.Core.Logbook.LogFolder.FolderName),
                 files,
                 loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>()),
-            new D47.Core.Logbook.LogDigestBuilder(loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
+            new D47.Core.Logbook.LogDigestBuilder(files, loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
             new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
             () => settings.Current.Logbook,
 
@@ -1679,6 +1680,7 @@ public sealed class AppHost : IDisposable
         var binds = StartupTimer.Time(
             "bindings",
             () => new BindsWatch(
+                files,
                 BindsResolver.DefaultBindingsDirectory(),
                 EliteInstallations(),
                 loggerFactory.CreateLogger<AppHost>()));
@@ -1808,6 +1810,7 @@ public sealed class AppHost : IDisposable
             secrets,
             loggerFactory,
             paths,
+            files,
             personas,
             voice,
             audio,
@@ -1840,11 +1843,11 @@ public sealed class AppHost : IDisposable
                     // The local voice, and what fetching it would cost (Phase 59).
                     LocalVoiceState = speech.LocalVoiceState,
                     DownloadLocalVoice = () => speech.DownloadLocalVoice,
-                    LocalVoiceInstalled = () => D47.Core.Speech.KokoroAssets.IsInstalled(speech.KokoroFolder()),
+                    LocalVoiceInstalled = () => D47.Core.Speech.KokoroAssets.IsInstalled(files, speech.KokoroFolder()),
 
                     // Which of the eight builds is actually on disk, and the swap onto another (#139).
                     InstalledLocalVoiceBuild = () =>
-                        D47.Core.Speech.KokoroAssets.InstalledBuild(speech.KokoroFolder())?.Id,
+                        D47.Core.Speech.KokoroAssets.InstalledBuild(files, speech.KokoroFolder())?.Id,
                     SwitchLocalVoiceBuild = build => (progress, cancellationToken) =>
                         speech.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     ChatterboxState = speech.ChatterboxState,
@@ -1864,7 +1867,7 @@ public sealed class AppHost : IDisposable
                         return () => host._ownVoiceRecording.Changed -= refresh;
                     },
                     DownloadChatterbox = () => speech.DownloadChatterbox,
-                    ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(speech.ChatterboxFolder()),
+                    ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(files, speech.ChatterboxFolder()),
                     StoryCastUses = providerId => self?.Stories?.CastUses(providerId) == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
@@ -2259,7 +2262,7 @@ public sealed class AppHost : IDisposable
                 mail: mail,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
-                visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder()),
+                visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
                 pickCommander: picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
@@ -2556,7 +2559,7 @@ public sealed class AppHost : IDisposable
 
                     // Reads journal files, so off the tick.
                     recap.Prepare = before => _ = Task.Run(() =>
-                        recap.Supply(ComposeRecap(before, JournalsOnDisk(journalDirectory, logger), loggerFactory)));
+                        recap.Supply(ComposeRecap(files, before, JournalsOnDisk(journalDirectory, logger), loggerFactory)));
                     break;
 
                 case SessionCallout session:
@@ -2638,7 +2641,7 @@ public sealed class AppHost : IDisposable
         host.Speech.Spend.LedgerTo(spendLedger, () => settings.Current);
 
         // The avatar's own imagery, if the Commander has dropped any in.
-        host.Avatars = D47.Core.Interface.AvatarLibrary.Load(paths);
+        host.Avatars = D47.Core.Interface.AvatarLibrary.Load(files, paths);
         host.Panel.CoreId = personas.Current.Id;
 
         // The entry reference is set on the UI thread and read here whole, so the turn thread sees either the old or the new one.
@@ -6412,14 +6415,15 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>The plain recap of the session before <paramref name="before"/>, or null for none.</summary>
-    private static string? ComposeRecap(DateTimeOffset before, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
     {
         var logger = loggerFactory.CreateLogger<RecapCallout>();
 
         try
         {
-            return D47.Core.Logbook.LogRanges.PreviousSession(before, files, logger) is { } range
+            return D47.Core.Logbook.LogRanges.PreviousSession(fileSystem, before, files, logger) is { } range
                 ? RecapCallout.Compose(new D47.Core.Logbook.LogDigestBuilder(
+                    fileSystem,
                     loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()).Build(files, range))
                 : null;
         }

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -10,6 +11,7 @@ public static class MiningBackfill
     /// over a list of journals oldest-first. A run still open at the last journal is not counted.
     /// </summary>
     public static IReadOnlyDictionary<string, IReadOnlyList<MiningRun>> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -25,7 +27,7 @@ public static class MiningBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(file, logger))
+            foreach (var line in Lines(fileSystem, file, logger))
             {
                 if (!line.Contains("\"event\":\"LaunchDrone\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"ProspectedAsteroid\"", StringComparison.Ordinal)
@@ -90,14 +92,13 @@ public static class MiningBackfill
             StringComparer.Ordinal);
     }
 
-    private static IEnumerable<string> Lines(string file, ILogger logger)
+    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
     {
-        FileStream stream;
+        Stream stream;
 
         try
         {
-            stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

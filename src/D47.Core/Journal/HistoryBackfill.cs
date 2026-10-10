@@ -171,6 +171,7 @@ public sealed class HistoryBackfill
             Carriers = Timed(
                 "carrier backfill",
                 () => CarrierBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(CarrierBackfill)),
                     cancellation));
@@ -186,6 +187,7 @@ public sealed class HistoryBackfill
             Colonisation = Timed(
                 "colonisation backfill",
                 () => ColonisationBackfill.FromHistory(
+                    FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(ColonisationBackfill)),
                     cancellation));
@@ -195,6 +197,7 @@ public sealed class HistoryBackfill
             Evidence = Timed(
                 "unlock evidence backfill",
                 () => UnlockEvidenceBackfill.FromHistory(
+                    FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
                     cancellation));
@@ -216,6 +219,7 @@ public sealed class HistoryBackfill
             MiningRuns = Timed(
                 "mining backfill",
                 () => MiningBackfill.FromHistory(
+                    FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(MiningBackfill)),
                     cancellation));
@@ -223,6 +227,7 @@ public sealed class HistoryBackfill
             CycleMerits = Timed(
                 "powerplay cycle backfill",
                 () => PowerplayCycleBackfill.FromHistory(
+                    FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(PowerplayCycleBackfill)),
                     cancellation));

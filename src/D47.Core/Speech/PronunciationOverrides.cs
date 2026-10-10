@@ -1,4 +1,5 @@
 using System.Text.Json;
+using D47.Core.Storage;
 
 namespace D47.Core.Speech;
 
@@ -23,6 +24,7 @@ public sealed class PronunciationOverrides
     /// <summary>What marks a value as IPA rather than a respelling.</summary>
     public const string IpaMarker = "ipa:";
 
+    private readonly IFileSystem _fileSystem;
     private readonly string _path;
     private readonly IReadOnlySet<char>? _speakable;
     private readonly Action<string>? _complain;
@@ -40,10 +42,12 @@ public sealed class PronunciationOverrides
     /// </param>
     /// <param name="complain">Where a rejected entry is named.</param>
     public PronunciationOverrides(
+        IFileSystem fileSystem,
         string path,
         IReadOnlySet<char>? speakable = null,
         Action<string>? complain = null)
     {
+        _fileSystem = fileSystem;
         _path = path;
         _speakable = speakable;
         _complain = complain;
@@ -58,9 +62,8 @@ public sealed class PronunciationOverrides
     /// <summary>Re-reads the file if it has changed since the last look.</summary>
     public void Refresh()
     {
-        var file = new FileInfo(_path);
-        var stamp = file.Exists
-            ? (true, file.Length, file.LastWriteTimeUtc)
+        var stamp = _fileSystem.Stat(_path) is { } file
+            ? (true, file.Length, file.Written)
             : (false, -1L, DateTime.MinValue);
 
         lock (_gate)
@@ -121,7 +124,7 @@ public sealed class PronunciationOverrides
         try
         {
             using var document = JsonDocument.Parse(
-                File.ReadAllText(_path),
+                _fileSystem.ReadText(_path) ?? throw new FileNotFoundException("The pronunciations file is missing.", _path),
                 new JsonDocumentOptions
                 {
                     AllowTrailingCommas = true,

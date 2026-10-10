@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Interface;
@@ -49,7 +50,7 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
 
     private AvatarView Avatar(string core, LoopState state, bool still = false)
     {
-        var view = new AvatarView { Library = AvatarLibrary.Load(_paths), Still = still };
+        var view = new AvatarView { Library = AvatarLibrary.Load(new DiskFileSystem(), _paths), Still = still };
 
         view.Show(state);
         view.Core = core;

@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Audio;
@@ -35,17 +36,17 @@ public static class ChatterboxVoices
     private static readonly string[] Columns = ["id", "name", "gender", "locale", "role", "source"];
 
     /// <summary>The voices in <paramref name="folder"/> whose rows and clips are valid; each rejected row is logged with its reason.</summary>
-    public static IReadOnlyList<ChatterboxVoice> Load(string folder, ILogger logger)
+    public static IReadOnlyList<ChatterboxVoice> Load(IFileSystem fileSystem, string folder, ILogger logger)
     {
         var table = Path.Combine(folder, TableName);
 
-        if (!File.Exists(table))
+        if (fileSystem.ReadText(table) is not { } text)
         {
             logger.LogWarning("Chatterbox voices: {Table} is missing.", table);
             return [];
         }
 
-        var lines = File.ReadAllLines(table).Where(line => line.Length > 0).ToList();
+        var lines = text.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries).Where(line => line.Length > 0).ToList();
 
         if (lines.Count == 0 || !lines[0].Split('\t').SequenceEqual(Columns))
         {
@@ -66,7 +67,7 @@ public static class ChatterboxVoices
             }
 
             var id = fields[0];
-            var reason = Reject(folder, fields, out var role, out var clipPath);
+            var reason = Reject(fileSystem, folder, fields, out var role, out var clipPath);
 
             if (reason is not null)
             {
@@ -81,7 +82,7 @@ public static class ChatterboxVoices
         return voices;
     }
 
-    private static string? Reject(string folder, string[] fields, out VoiceRole? role, out string clipPath)
+    private static string? Reject(IFileSystem fileSystem, string folder, string[] fields, out VoiceRole? role, out string clipPath)
     {
         role = null;
         clipPath = Path.Combine(folder, fields[0] + ".wav");
@@ -116,7 +117,7 @@ public static class ChatterboxVoices
             role = parsed;
         }
 
-        if (!File.Exists(clipPath))
+        if (fileSystem.Stat(clipPath) is null)
         {
             return $"the clip {clipPath} is missing.";
         }
@@ -125,7 +126,7 @@ public static class ChatterboxVoices
 
         try
         {
-            clip = WavReader.Read(clipPath);
+            clip = WavReader.Read(fileSystem, clipPath);
         }
         catch (WavFormatException ex)
         {

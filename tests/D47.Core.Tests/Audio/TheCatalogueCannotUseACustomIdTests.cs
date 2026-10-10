@@ -35,13 +35,14 @@ public class TheCatalogueCannotUseACustomIdTests : IDisposable
     [Fact]
     public void AVoicesRowWithAMyIdIsLeftOutAndLogged()
     {
-        File.WriteAllText(
+        var files = new BytesFileSystem();
+        files.WriteText(
             Path.Combine(_folder, ChatterboxVoices.TableName),
             "id\tname\tgender\tlocale\trole\tsource\nmy-12345678\tMine\tfemale\ten\t\ta clip\n");
-        File.WriteAllBytes(Path.Combine(_folder, "my-12345678.wav"), WavWriter.ToBytes(new float[6 * 24_000], 24_000));
+        files.WriteBytes(Path.Combine(_folder, "my-12345678.wav"), WavWriter.ToBytes(new float[6 * 24_000], 24_000));
         var log = new RecordingLogger();
 
-        Assert.Empty(ChatterboxVoices.Load(_folder, log));
+        Assert.Empty(ChatterboxVoices.Load(files, _folder, log));
         Assert.Contains(log.Entries, entry => entry.Message.Contains("my-12345678", StringComparison.Ordinal));
     }
 }

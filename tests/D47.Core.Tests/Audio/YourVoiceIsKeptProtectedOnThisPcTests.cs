@@ -138,15 +138,15 @@ public class YourVoiceIsKeptProtectedOnThisPcTests : IDisposable
     [Fact]
     public void AShippedVoiceCannotTakeTheOwnId()
     {
+        var files = new BytesFileSystem();
         var folder = Path.Combine(_install.Root, "voices");
-        Directory.CreateDirectory(folder);
-        File.WriteAllText(
+        files.WriteText(
             Path.Combine(folder, ChatterboxVoices.TableName),
             "id\tname\tgender\tlocale\trole\tsource\nown\tOwn\tfemale\ten\t\ta clip\n");
-        File.WriteAllBytes(
+        files.WriteBytes(
             Path.Combine(folder, "own.wav"),
             WavWriter.ToBytes(Tone(6, ChatterboxVoices.SampleRate), ChatterboxVoices.SampleRate));
 
-        Assert.Empty(ChatterboxVoices.Load(folder, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance));
+        Assert.Empty(ChatterboxVoices.Load(files, folder,Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance));
     }
 }

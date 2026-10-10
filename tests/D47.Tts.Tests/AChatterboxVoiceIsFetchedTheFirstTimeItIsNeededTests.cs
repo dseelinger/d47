@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using D47.Core.Audio;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -81,6 +82,7 @@ public sealed class AChatterboxVoiceIsFetchedTheFirstTimeItIsNeededTests : IDisp
 
     private ChatterboxTtsProvider Provider() =>
         new(
+            new DiskFileSystem(),
             _folder.Models,
             _folder.Voices,
             _folder.Fetched,

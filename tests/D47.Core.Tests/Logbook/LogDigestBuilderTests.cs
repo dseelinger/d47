@@ -5,18 +5,11 @@ using Xunit;
 namespace D47.Core.Tests.Logbook;
 
 /// <summary>The facts the generator is handed, and the ones it is not.</summary>
-[Trait("Category", "Integration")]
-public class LogDigestBuilderTests : IDisposable
+public class LogDigestBuilderTests
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
     private readonly JournalCorpus _corpus = new();
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _corpus.Dispose();
-    }
 
     /// <summary>The assertion the whole phase rests on.</summary>
     [Fact]
@@ -178,5 +171,5 @@ public class LogDigestBuilderTests : IDisposable
     });
 
     private LogDigest Build(LogRange range) =>
-        new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build(_corpus.Files, range);
+        new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance).Build(_corpus.Files, range);
 }

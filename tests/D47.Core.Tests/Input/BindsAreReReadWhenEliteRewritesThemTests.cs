@@ -1,4 +1,5 @@
 using D47.Core.Input;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -34,7 +35,7 @@ public class BindsAreReReadWhenEliteRewritesThemTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private BindsWatch Watch() => new(Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
+    private BindsWatch Watch() => new(new DiskFileSystem(), Bindings, [Game], NullLogger.Instance) { Dispatch = work => work() };
 
     private void StartPreset(string fileName, string preset) =>
         Write(Path.Combine(Bindings, fileName), preset + "\n" + preset + "\n");

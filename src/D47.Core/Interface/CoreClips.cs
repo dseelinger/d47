@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 
 namespace D47.Core.Interface;
 
@@ -17,10 +18,10 @@ public static class CoreClips
     }
 
     /// <summary>The clip's path when the file is non-empty and opens, otherwise null.</summary>
-    public static string? For(string folder, string coreId, LoopState state)
+    public static string? For(IFileSystem fileSystem, string folder, string coreId, LoopState state)
     {
         var path = Path.Combine(folder, FileName(coreId, state));
 
-        return AvatarLibrary.Readable(path) ? path : null;
+        return AvatarLibrary.Readable(fileSystem, path) ? path : null;
     }
 }

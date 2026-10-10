@@ -1,6 +1,7 @@
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -219,40 +220,33 @@ public class BuildGaugeTests
         Assert.True(mine.Describes(loadout));
     }
 
-    [Trait("Category", "Integration")]
     [Fact]
     public void TheReaderTakesBothFiguresAndSurvivesAModuleWithNeither()
     {
-        var directory = Directory.CreateTempSubdirectory("d47-modulesinfo");
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(@"C:\d47-test\journals", ModulePowerReader.FileName);
 
-        try
-        {
-            // Real shape, including the entries that carry no Priority at all — the cockpit and the cosmetics
-            // — which is a state and not a parse failure.
-            File.WriteAllText(
-                Path.Combine(directory.FullName, ModulePowerReader.FileName),
-                """
-                { "timestamp":"2026-08-21T01:36:30Z", "event":"ModuleInfo", "Modules":[
-                { "Slot":"MainEngines", "Item":"int_engine_size7_class5", "Power":9.120000, "Priority":0 },
-                { "Slot":"ShipCockpit", "Item":"corsair_cockpit", "Power":0.000000 },
-                { "Slot":"PowerPlant", "Item":"int_powerplant_size7_class5", "Power":0.000000, "Priority":1 } ] }
-                """);
+        // Real shape, including the entries that carry no Priority at all — the cockpit and the cosmetics
+        // — which is a state and not a parse failure.
+        files.WriteText(
+            path,
+            """
+            { "timestamp":"2026-08-21T01:36:30Z", "event":"ModuleInfo", "Modules":[
+            { "Slot":"MainEngines", "Item":"int_engine_size7_class5", "Power":9.120000, "Priority":0 },
+            { "Slot":"ShipCockpit", "Item":"corsair_cockpit", "Power":0.000000 },
+            { "Slot":"PowerPlant", "Item":"int_powerplant_size7_class5", "Power":0.000000, "Priority":1 } ] }
+            """);
 
-            var reader = new ModulePowerReader(directory.FullName, NullLogger.Instance);
+        var reader = new ModulePowerReader(Path.GetDirectoryName(path)!, files, NullLogger.Instance);
 
-            Assert.True(reader.Poll());
-            Assert.Equal(9.12, reader.Current.Draw["MainEngines"], 3);
-            Assert.Equal(0, reader.Current.Priority["MainEngines"]);
-            Assert.False(reader.Current.Priority.ContainsKey("ShipCockpit"));
-            Assert.Equal("int_powerplant_size7_class5", reader.Current.Items["PowerPlant"]);
+        Assert.True(reader.Poll());
+        Assert.Equal(9.12, reader.Current.Draw["MainEngines"], 3);
+        Assert.Equal(0, reader.Current.Priority["MainEngines"]);
+        Assert.False(reader.Current.Priority.ContainsKey("ShipCockpit"));
+        Assert.Equal("int_powerplant_size7_class5", reader.Current.Items["PowerPlant"]);
 
-            // Read only when the write time moves, like every other reader in that namespace.
-            Assert.False(reader.Poll());
-        }
-        finally
-        {
-            directory.Delete(recursive: true);
-        }
+        // Read only when the write time moves, like every other reader in that namespace.
+        Assert.False(reader.Poll());
     }
 
     [Fact]

@@ -7,18 +7,11 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-[Trait("Category", "Integration")]
-public sealed class InfluenceLedgerTests : IDisposable
+public sealed class InfluenceLedgerTests
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
     private readonly JournalCorpus _corpus = new();
-
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _corpus.Dispose();
-    }
 
     private static string Completed(int minute, params (string Faction, string Trend, string Marks)[] effects)
     {
@@ -145,7 +138,7 @@ public sealed class InfluenceLedgerTests : IDisposable
             Completed(1, ("Party of Yoru", "UpGood", "++")),
             Completed(2, ("Party of Yoru", "DownBad", "+")));
 
-        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build(
+        var digest = new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance).Build(
             _corpus.Files,
             new LogRange { Span = LogSpan.Session, From = Evening.AddMinutes(-1), To = Evening.AddDays(1), Label = "the last session" });
 
@@ -159,7 +152,7 @@ public sealed class InfluenceLedgerTests : IDisposable
     {
         _corpus.Journal(Evening, JournalCorpus.LoadGame(Evening), JournalCorpus.Jump(Evening.AddMinutes(1), "Deciat", 8.09));
 
-        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build(
+        var digest = new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance).Build(
             _corpus.Files,
             new LogRange { Span = LogSpan.Session, From = Evening.AddMinutes(-1), To = Evening.AddDays(1), Label = "the last session" });
 

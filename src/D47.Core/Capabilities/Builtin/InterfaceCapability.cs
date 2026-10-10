@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Interface;
+using D47.Core.Storage;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -281,7 +282,7 @@ public static class InterfaceCapability
     };
 
     /// <summary>The Commander's own <c>DisplaySettings.xml</c>, read fresh every time the row is drawn.</summary>
-    private static string DefaultDisplay() => EliteDisplay.Describe(EliteDisplay.DefaultPath());
+    private static string DefaultDisplay() => EliteDisplay.Describe(new DiskFileSystem(), EliteDisplay.DefaultPath());
 
     private static int Parse(string? value) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var percent)

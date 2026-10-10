@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using D47.App.Headset;
 using D47.App.Panel;
+using D47.Core.Storage;
 using D47.Core;
 using D47.Core.Audio;
 using D47.Core.Configuration;
@@ -68,7 +69,7 @@ public class TheHeadsetMiniShowsItsWholeAvatarTests : IDisposable
             new PanelViewModel { CoreId = "covas" },
             settings,
             _ => null,
-            avatars: AvatarLibrary.Load(_paths),
+            avatars: AvatarLibrary.Load(new DiskFileSystem(), _paths),
             dumpTo: dumpTo);
 
         var view = (PanelView)typeof(VrPanelSurface)

@@ -18,6 +18,8 @@ public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolde
 
     public string Folder => folder;
 
+    public IFileSystem Files => files;
+
     /// <summary>Writes one log and answers where it went.</summary>
     public string Write(string content, LogRange range, DateTimeOffset now)
     {

@@ -1,5 +1,6 @@
 using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -60,6 +61,7 @@ public sealed class ACustomVoiceIsNamedInTheLogOnlyByItsIdTests : IDisposable
             Name, "male", null, null, [.. Enumerable.Repeat(0.5f, ChatterboxVoices.SampleRate * 6)], ChatterboxVoices.SampleRate, out var id));
 
         using var provider = new ChatterboxTtsProvider(
+            new DiskFileSystem(),
             _folder.Models, _folder.Voices, _folder.Fetched, _log, () => new Engine(), () => true, ChatterboxTestFolder.NoDownload, custom: custom);
 
         await provider.ListVoicesAsync(TestContext.Current.CancellationToken);

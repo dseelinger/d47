@@ -1,4 +1,5 @@
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Speech;
@@ -277,31 +278,22 @@ public class TheStressMarkGoesBeforeTheVowelTests
     }
 
     /// <summary>And the Commander's own corrections go through the same guard.</summary>
-    [Trait("Category", "Integration")]
     [Fact]
     public void ARespelledOverrideMarksAVowel()
     {
-        var folder = Directory.CreateTempSubdirectory("d47-marks").FullName;
+        var files = new MemoryFileSystem();
+        var file = Path.Combine("C:/d47-test/marks", PronunciationOverrides.FileName);
 
-        try
+        files.WriteText(file, """{ "Deciat": "desh ee at", "Kuk": "kook" }""");
+
+        var said = new Phonemiser(null, new PronunciationOverrides(files, file))
+            .ToPhonemes("Deciat and Kuk");
+
+        for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
         {
-            var file = Path.Combine(folder, PronunciationOverrides.FileName);
-
-            File.WriteAllText(file, """{ "Deciat": "desh ee at", "Kuk": "kook" }""");
-
-            var said = new Phonemiser(null, new PronunciationOverrides(file))
-                .ToPhonemes("Deciat and Kuk");
-
-            for (var i = said.IndexOf(Mark); i >= 0; i = said.IndexOf(Mark, i + 1))
-            {
-                Assert.True(
-                    i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
-                    $"\"{said}\" marks a consonant at {i}.");
-            }
-        }
-        finally
-        {
-            Directory.Delete(folder, recursive: true);
+            Assert.True(
+                i + 1 < said.Length && Vowels.Contains(said[i + 1], StringComparison.Ordinal),
+                $"\"{said}\" marks a consonant at {i}.");
         }
     }
 }

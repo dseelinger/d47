@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Storage;
 using D47.Tts;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -34,7 +35,7 @@ public class ANoChosenVoiceIsRefusedTests
     [Fact]
     public async Task KokoroRefusesWithNoVoice()
     {
-        using var provider = new KokoroTtsProvider(Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
+        using var provider = new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
 
         var failure = await Assert.ThrowsAsync<TtsException>(
             () => provider.SynthesizeAsync("test", VoiceSelection.Default, TestContext.Current.CancellationToken));
@@ -46,7 +47,7 @@ public class ANoChosenVoiceIsRefusedTests
     [Fact]
     public async Task KokoroRefusesAVoiceItDoesNotHave()
     {
-        using var provider = new KokoroTtsProvider(Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
+        using var provider = new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance);
 
         var failure = await Assert.ThrowsAsync<TtsException>(() => provider.SynthesizeAsync(
             "test", new VoiceSelection("xx_nobody"), TestContext.Current.CancellationToken));

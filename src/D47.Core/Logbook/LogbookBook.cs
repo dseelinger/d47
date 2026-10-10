@@ -83,7 +83,7 @@ public sealed class LogbookBook(
 
         var range = from is { } start && to is { } end
             ? LogRanges.Between(start, end)
-            : LogRanges.Resolve(LogRanges.Parse(spanId ?? current.Range), now(), files, logger);
+            : LogRanges.Resolve(folder.Files, LogRanges.Parse(spanId ?? current.Range), now(), files, logger);
 
         var digest = digests.Build(files, range, storyBeats?.Invoke());
         var host = context();

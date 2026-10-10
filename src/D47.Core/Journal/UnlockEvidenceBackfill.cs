@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Journal;
@@ -32,20 +33,22 @@ public static class UnlockEvidenceBackfill
 {
     /// <summary>Every Commander's readings and contributions as their journals last wrote them, keyed by Frontier id.</summary>
     public static IReadOnlyDictionary<string, UnlockEvidence> FromHistory(
+        IFileSystem fileSystem,
         string directory,
         ILogger logger,
         CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
-        if (!Directory.Exists(directory))
+        if (fileSystem.FolderWritten(directory) is null)
         {
             logger.LogWarning("No journal folder at {Directory}", directory);
             return new Dictionary<string, UnlockEvidence>(StringComparer.Ordinal);
         }
 
         return FromHistory(
-            [.. Directory.EnumerateFiles(directory, JournalFolder.FilePattern)
+            fileSystem,
+            [.. fileSystem.Enumerate(directory, JournalFolder.FilePattern)
                 .OrderBy(Path.GetFileName, StringComparer.Ordinal)],
             logger,
             cancellation);
@@ -53,6 +56,7 @@ public static class UnlockEvidenceBackfill
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
     public static IReadOnlyDictionary<string, UnlockEvidence> FromHistory(
+        IFileSystem fileSystem,
         IReadOnlyList<string> files,
         ILogger logger,
         CancellationToken cancellation = default)
@@ -67,7 +71,7 @@ public static class UnlockEvidenceBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            foreach (var line in Lines(file, logger))
+            foreach (var line in Lines(fileSystem, file, logger))
             {
                 if (!Relevant(line) || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
@@ -139,14 +143,13 @@ public static class UnlockEvidenceBackfill
         folded.TryGetValue(fid, out var held) ? held : UnlockEvidence.Empty;
 
     /// <summary>One journal's lines.</summary>
-    private static IEnumerable<string> Lines(string file, ILogger logger)
+    private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)
     {
-        FileStream stream;
+        Stream stream;
 
         try
         {
-            stream = new FileStream(
-                file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

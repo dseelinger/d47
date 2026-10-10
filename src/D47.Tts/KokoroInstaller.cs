@@ -1,4 +1,5 @@
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -23,12 +24,14 @@ public sealed record KokoroInstallResult(KokoroInstall Outcome, string? Detail =
 /// <summary>Fetches what the local voice needs, once (#101).</summary>
 public sealed class KokoroInstaller : IDisposable
 {
+    private readonly IFileSystem _files;
     private readonly string _folder;
     private readonly HttpClient _http;
     private readonly ILogger<KokoroInstaller> _logger;
 
-    public KokoroInstaller(string folder, ILogger<KokoroInstaller> logger)
+    public KokoroInstaller(IFileSystem files, string folder, ILogger<KokoroInstaller> logger)
     {
+        _files = files;
         _folder = folder;
         _logger = logger;
 
@@ -43,7 +46,7 @@ public sealed class KokoroInstaller : IDisposable
 
     public string Folder => _folder;
 
-    public bool IsInstalled => KokoroAssets.IsInstalled(_folder);
+    public bool IsInstalled => KokoroAssets.IsInstalled(_files, _folder);
 
     /// <summary>Everything, in one go, reporting against the whole set rather than per file.</summary>
     public async Task<KokoroInstallResult> InstallAsync(
@@ -103,7 +106,7 @@ public sealed class KokoroInstaller : IDisposable
     {
         var build = KokoroAssets.BuildFor(buildId);
 
-        if (KokoroAssets.InstalledBuild(_folder)?.Id == build.Id)
+        if (KokoroAssets.InstalledBuild(_files, _folder)?.Id == build.Id)
         {
             return new KokoroInstallResult(KokoroInstall.AlreadyPresent);
         }

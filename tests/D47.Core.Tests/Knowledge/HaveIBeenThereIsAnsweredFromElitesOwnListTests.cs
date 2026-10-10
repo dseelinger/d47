@@ -3,6 +3,7 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Storage;
 using D47.Core.Tests.Journal;
 using Xunit;
 
@@ -12,8 +13,7 @@ namespace D47.Core.Tests.Knowledge;
 /// <c>system_visits</c> and <c>describe_system</c> answer from the current Commander's
 /// <c>VisitedStarsCache.dat</c>, and a system the file does not list is no record, not never.
 /// </summary>
-[Trait("Category", "Integration")]
-public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests : IDisposable
+public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
 {
     private const long Lave = VisitedStarsCacheIsReadFromItsBytesTests.Lave;
 
@@ -21,25 +21,22 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests : IDisposable
 
     private const long Diaguandri = 670417429889;
 
-    private readonly DirectoryInfo _root = Directory.CreateTempSubdirectory("d47-visits-");
-
     private readonly VisitedStarsBook _book;
 
     public HaveIBeenThereIsAnsweredFromElitesOwnListTests()
     {
-        Directory.CreateDirectory(Path.Combine(_root.FullName, "735466"));
-        File.WriteAllBytes(
-            Path.Combine(_root.FullName, "735466", VisitedStarsCache.FileName),
+        const string root = "C:/d47-test/visits";
+        var files = new BytesFileSystem();
+        files.WriteBytes(
+            Path.Combine(root, "735466", VisitedStarsCache.FileName),
             VisitedStarsCacheIsReadFromItsBytesTests.File(
                 512,
                 [
                     (Lave, 3, VisitedStarsCacheIsReadFromItsBytesTests.Second),
                     (Sol, 1, VisitedStarsCacheIsReadFromItsBytesTests.Fifth),
                 ]));
-        _book = new VisitedStarsBook(_root.FullName);
+        _book = new VisitedStarsBook(root, files);
     }
-
-    public void Dispose() => _root.Delete(recursive: true);
 
     private sealed class FakeSystems : IStarSystemService
     {

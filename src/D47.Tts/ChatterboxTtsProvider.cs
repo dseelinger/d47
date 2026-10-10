@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -17,6 +18,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly string _voicesFolder;
     private readonly string _fetchedFolder;
     private readonly Func<Uri, long, CancellationToken, Task<byte[]>> _download;
+    private readonly IFileSystem _files;
     private readonly ILogger<ChatterboxTtsProvider> _logger;
     private readonly Func<IChatterboxEngine> _open;
     private readonly Func<bool> _installed;
@@ -51,6 +53,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <param name="own">The Commander's own recording, listed as <see cref="OwnVoice.VoiceId"/> while one is saved.</param>
     /// <param name="custom">The Commander's custom voices, listed after the catalogue.</param>
     public ChatterboxTtsProvider(
+        IFileSystem files,
         string modelFolder,
         string voicesFolder,
         string fetchedFolder,
@@ -58,12 +61,13 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         OwnVoice? own = null,
         CustomVoices? custom = null)
         : this(
+            files,
             modelFolder,
             voicesFolder,
             fetchedFolder,
             logger,
             () => ChatterboxPipeline.Open(modelFolder, PerformanceCores.ForThisMachine()),
-            () => ChatterboxAssets.IsInstalled(modelFolder),
+            () => ChatterboxAssets.IsInstalled(files, modelFolder),
             ChatterboxClipDownload.GetAsync,
             own,
             custom)
@@ -71,6 +75,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     }
 
     internal ChatterboxTtsProvider(
+        IFileSystem files,
         string modelFolder,
         string voicesFolder,
         string fetchedFolder,
@@ -81,6 +86,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         OwnVoice? own = null,
         CustomVoices? custom = null)
     {
+        _files = files;
         _modelFolder = modelFolder;
         _voicesFolder = voicesFolder;
         _fetchedFolder = fetchedFolder;
@@ -396,7 +402,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
             if (!_encoded.TryGetValue(chosen.Voice.Id, out var encoded))
             {
-                encoded = engine.Encode(Reference(chosen.ClipPath));
+                encoded = engine.Encode(Reference(_files, chosen.ClipPath));
                 _encoded[chosen.Voice.Id] = encoded;
             }
 
@@ -542,7 +548,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         lock (_load)
         {
             return _voices ??= ChatterboxCatalog.Load(
-                _voicesFolder, _fetchedFolder, ChatterboxVoices.Load(_voicesFolder, _logger), _logger);
+                _voicesFolder, _fetchedFolder, ChatterboxVoices.Load(_files, _voicesFolder, _logger), _logger);
         }
     }
 
@@ -666,9 +672,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     }
 
     /// <summary>A shipped clip, already 24 kHz mono 16-bit, as floats.</summary>
-    private static float[] Reference(string clipPath)
+    private static float[] Reference(IFileSystem files, string clipPath)
     {
-        var pcm = WavReader.Read(clipPath).Pcm.Span;
+        var pcm = WavReader.Read(files, clipPath).Pcm.Span;
         var samples = new float[pcm.Length / 2];
 
         for (var i = 0; i < samples.Length; i++)

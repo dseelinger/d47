@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Input;
@@ -21,10 +22,11 @@ public static partial class BindsResolver
     /// Install locations to search for shipped presets.
     /// </param>
     public static EliteBinds Resolve(
+        IFileSystem fileSystem,
         string bindingsDirectory,
         IEnumerable<string> gameDirectories,
         ILogger logger) =>
-        Resolve(bindingsDirectory, gameDirectories, logger, out _);
+        Resolve(fileSystem, bindingsDirectory, gameDirectories, logger, out _);
 
     /// <summary>
     /// As above, and says whether the answer is "nothing is bound" or "I could not look" — which used
@@ -32,6 +34,7 @@ public static partial class BindsResolver
     /// minutes (#24).
     /// </summary>
     public static EliteBinds Resolve(
+        IFileSystem fileSystem,
         string bindingsDirectory,
         IEnumerable<string> gameDirectories,
         ILogger logger,
@@ -39,7 +42,7 @@ public static partial class BindsResolver
     {
         unreadable = false;
 
-        var preset = ActivePresetName(bindingsDirectory, logger, out var locked);
+        var preset = ActivePresetName(fileSystem, bindingsDirectory, logger, out var locked);
 
         if (preset is null)
         {
@@ -66,7 +69,7 @@ public static partial class BindsResolver
         var searched = new List<string> { bindingsDirectory };
         searched.AddRange(gameDirectories);
 
-        if (HighestVersioned(searched, preset, logger) is not { } file)
+        if (HighestVersioned(fileSystem, searched, preset, logger) is not { } file)
         {
             // Named rather than shrugged at: knowing which preset is active and not finding its file is a
             // different problem from not knowing the preset, and points at a different fix.
@@ -78,28 +81,23 @@ public static partial class BindsResolver
             return EliteBinds.None;
         }
 
-        return EliteBinds.Parse(file, preset, logger);
+        return EliteBinds.Parse(fileSystem, file, preset, logger);
     }
 
     /// <summary>The preset named by the highest-versioned <c>StartPreset.*.start</c>.</summary>
-    public static string? ActivePresetName(string bindingsDirectory, ILogger logger) =>
-        ActivePresetName(bindingsDirectory, logger, out _);
+    public static string? ActivePresetName(IFileSystem fileSystem, string bindingsDirectory, ILogger logger) =>
+        ActivePresetName(fileSystem, bindingsDirectory, logger, out _);
 
     /// <summary>
     /// As above, and reports through <paramref name="locked"/> whether the null means there is no such
     /// file or a file was there and something else had it open.
     /// </summary>
-    public static string? ActivePresetName(string bindingsDirectory, ILogger logger, out bool locked)
+    public static string? ActivePresetName(IFileSystem fileSystem, string bindingsDirectory, ILogger logger, out bool locked)
     {
         locked = false;
 
-        if (!Directory.Exists(bindingsDirectory))
-        {
-            return null;
-        }
-
-        var startFiles = Directory
-            .EnumerateFiles(bindingsDirectory, "StartPreset*.start")
+        var startFiles = fileSystem
+            .Enumerate(bindingsDirectory, "StartPreset*.start")
             .Select(path => (Path: path, Version: VersionOf(Path.GetFileName(path))))
             // With VersionOrder, exactly as HighestVersioned does below.
             .OrderByDescending(entry => entry.Version, VersionOrder.Instance)
@@ -109,7 +107,16 @@ public static partial class BindsResolver
         {
             try
             {
-                foreach (var line in File.ReadLines(path))
+                using var stream = fileSystem.OpenRead(path);
+
+                if (stream is null)
+                {
+                    continue;
+                }
+
+                using var reader = new StreamReader(stream);
+
+                while (reader.ReadLine() is { } line)
                 {
                     var name = line.Trim();
 
@@ -133,13 +140,14 @@ public static partial class BindsResolver
 
     /// <summary>The highest-versioned <c>&lt;preset&gt;.*.binds</c> across every directory searched.</summary>
     private static string? HighestVersioned(
+        IFileSystem fileSystem,
         IEnumerable<string> directories,
         string preset,
         ILogger logger)
     {
         var candidates = new List<(string Path, int[] Version)>();
 
-        foreach (var directory in directories.Where(Directory.Exists))
+        foreach (var directory in directories)
         {
             IEnumerable<string> files;
 
@@ -148,7 +156,7 @@ public static partial class BindsResolver
                 // Recursive for the game directory: the shipped presets sit under a ControlSchemes folder
                 // whose exact path has moved between game versions, and searching for the file beats
                 // hardcoding the folder that holds it.
-                files = Directory.EnumerateFiles(directory, "*.binds", SearchOption.AllDirectories);
+                files = fileSystem.Enumerate(directory, "*.binds", recursive: true);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

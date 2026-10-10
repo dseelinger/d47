@@ -1,4 +1,5 @@
 using D47.Core.Speech;
+using D47.Core.Storage;
 using D47.Tts;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -143,7 +144,7 @@ public class TheLocalVoiceBuildCanBeChosenTests
 
         try
         {
-            using var installer = new KokoroInstaller(folder, NullLogger<KokoroInstaller>.Instance);
+            using var installer = new KokoroInstaller(new DiskFileSystem(), folder, NullLogger<KokoroInstaller>.Instance);
 
             foreach (var build in KokoroAssets.Builds)
             {
@@ -184,18 +185,18 @@ public class TheLocalVoiceBuildCanBeChosenTests
             var model = Path.Combine(folder, "model.onnx");
 
             // Nothing there at all.
-            Assert.Null(KokoroAssets.InstalledBuild(folder));
+            Assert.Null(KokoroAssets.InstalledBuild(new DiskFileSystem(), folder));
 
             // A build's exact size is that build.
             var wanted = KokoroAssets.BuildFor("uint8");
             Grow(model, wanted.Asset.Bytes);
 
-            Assert.Equal("uint8", KokoroAssets.InstalledBuild(folder)?.Id);
+            Assert.Equal("uint8", KokoroAssets.InstalledBuild(new DiskFileSystem(), folder)?.Id);
 
             // A size none of the eight has is a build from a different version of the repository, and is
             // reported as unknown rather than guessed at.
             Grow(model, 1234);
-            Assert.Null(KokoroAssets.InstalledBuild(folder));
+            Assert.Null(KokoroAssets.InstalledBuild(new DiskFileSystem(), folder));
         }
         finally
         {
@@ -217,7 +218,7 @@ public class TheLocalVoiceBuildCanBeChosenTests
         {
             Grow(Path.Combine(folder, "model.onnx"), KokoroAssets.BuildFor("q4f16").Asset.Bytes);
 
-            using var installer = new KokoroInstaller(folder, NullLogger<KokoroInstaller>.Instance);
+            using var installer = new KokoroInstaller(new DiskFileSystem(), folder, NullLogger<KokoroInstaller>.Instance);
 
             var result = await installer.SwitchAsync(
                 "q4f16", cancellationToken: TestContext.Current.CancellationToken);

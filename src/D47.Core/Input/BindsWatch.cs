@@ -1,3 +1,4 @@
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Input;
@@ -8,6 +9,7 @@ public sealed class BindsWatch
     /// <summary>What a tick that could not read the files reports.</summary>
     private const string Unreadable = "unreadable";
 
+    private readonly IFileSystem _fileSystem;
     private readonly string _bindingsDirectory;
     private readonly IReadOnlyList<string> _gameDirectories;
     private readonly ILogger _logger;
@@ -30,12 +32,13 @@ public sealed class BindsWatch
     private Resolved? _resolved;
 
     /// <summary>Resolves once, immediately, so the first caller sees the same thing it always did.</summary>
-    public BindsWatch(string bindingsDirectory, IEnumerable<string> gameDirectories, ILogger logger)
+    public BindsWatch(IFileSystem fileSystem, string bindingsDirectory, IEnumerable<string> gameDirectories, ILogger logger)
     {
         _bindingsDirectory = bindingsDirectory;
         _gameDirectories = [.. gameDirectories];
         _logger = logger;
-        _current = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, logger);
+        _fileSystem = fileSystem;
+        _current = BindsResolver.Resolve(_fileSystem, _bindingsDirectory, _gameDirectories, logger);
         _stamp = Stamp(_current);
     }
 
@@ -91,7 +94,7 @@ public sealed class BindsWatch
     {
         try
         {
-            var binds = BindsResolver.Resolve(_bindingsDirectory, _gameDirectories, _logger, out var unreadable);
+            var binds = BindsResolver.Resolve(_fileSystem, _bindingsDirectory, _gameDirectories, _logger, out var unreadable);
 
             // Taken from the file resolved, which a preset switch changes.
             return new Resolved(binds, unreadable, startedAt, Stamp(binds));

@@ -2,6 +2,7 @@ using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -64,7 +65,7 @@ public class AFailureThatSaysSettingsNamesItsRowTests
             VoiceSelection.Default,
             SpeechCapability.VoiceKey),
         ["kokoro no voice"] = (
-            () => new KokoroTtsProvider(Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance),
+            () => new KokoroTtsProvider(new DiskFileSystem(), Path.GetTempPath(), NullLogger<KokoroTtsProvider>.Instance),
             VoiceSelection.Default,
             SpeechCapability.LocalVoiceKey),
         ["chatterbox not downloaded"] = (
@@ -86,6 +87,7 @@ public class AFailureThatSaysSettingsNamesItsRowTests
         var folder = Path.Combine(Path.GetTempPath(), "d47-chatterbox-" + Guid.NewGuid().ToString("N"));
 
         return new ChatterboxTtsProvider(
+            new DiskFileSystem(),
             folder,
             folder,
             folder,

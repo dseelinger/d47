@@ -1,4 +1,5 @@
 ﻿using System.Xml.Linq;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Input;
@@ -152,14 +153,13 @@ public sealed record EliteBinds
     }
 
     /// <summary>Parses one .binds file.</summary>
-    public static EliteBinds Parse(string path, string? presetName, ILogger logger)
+    public static EliteBinds Parse(IFileSystem fileSystem, string path, string? presetName, ILogger logger)
     {
         XDocument document;
 
         try
         {
-            using var stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var stream = fileSystem.OpenRead(path) ?? throw new FileNotFoundException("The bindings file is missing.", path);
 
             document = XDocument.Load(stream);
         }

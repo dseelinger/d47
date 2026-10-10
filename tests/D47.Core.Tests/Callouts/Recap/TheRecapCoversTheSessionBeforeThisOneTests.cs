@@ -7,8 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Callouts.Recap;
 
 /// <summary>With two sessions on disk, the recap is drawn from the earlier one.</summary>
-[Trait("Category", "Integration")]
-public sealed class TheRecapCoversTheSessionBeforeThisOneTests : IDisposable
+public sealed class TheRecapCoversTheSessionBeforeThisOneTests
 {
     private static readonly DateTimeOffset Evening = new(3311, 4, 2, 19, 0, 0, TimeSpan.Zero);
 
@@ -34,16 +33,10 @@ public sealed class TheRecapCoversTheSessionBeforeThisOneTests : IDisposable
             JournalCorpus.Jump(NextEvening.AddMinutes(5), "Sol", 12));
     }
 
-    public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _corpus.Dispose();
-    }
-
     [Fact]
     public void TheWindowRunsFromTheEarlierLoadGameToItsLastEvent()
     {
-        var range = LogRanges.PreviousSession(NextEvening, _corpus.Files, NullLogger.Instance);
+        var range = LogRanges.PreviousSession(_corpus.FileSystem, NextEvening, _corpus.Files, NullLogger.Instance);
 
         Assert.NotNull(range);
         Assert.Equal(Evening, range.From);
@@ -53,8 +46,8 @@ public sealed class TheRecapCoversTheSessionBeforeThisOneTests : IDisposable
     [Fact]
     public void TheLineNamesWhereItEndedTheShipAndThePromotion()
     {
-        var range = LogRanges.PreviousSession(NextEvening, _corpus.Files, NullLogger.Instance)!;
-        var digest = new LogDigestBuilder(NullLogger<LogDigestBuilder>.Instance).Build(_corpus.Files, range);
+        var range = LogRanges.PreviousSession(_corpus.FileSystem, NextEvening, _corpus.Files, NullLogger.Instance)!;
+        var digest = new LogDigestBuilder(_corpus.FileSystem, NullLogger<LogDigestBuilder>.Instance).Build(_corpus.Files, range);
 
         var line = RecapCallout.Compose(digest);
 
@@ -68,7 +61,7 @@ public sealed class TheRecapCoversTheSessionBeforeThisOneTests : IDisposable
     [Fact]
     public void WithTheGameClosedTheNewestSessionIsTheLastOne()
     {
-        var range = LogRanges.PreviousSession(NextEvening.AddHours(2), _corpus.Files, NullLogger.Instance);
+        var range = LogRanges.PreviousSession(_corpus.FileSystem, NextEvening.AddHours(2), _corpus.Files, NullLogger.Instance);
 
         Assert.NotNull(range);
         Assert.Equal(NextEvening, range.From);

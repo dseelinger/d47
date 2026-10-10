@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Theming;
@@ -119,7 +120,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
             return palette;
         }
 
-        var matrix = matrixOverride ?? ElitePalette.Read(ElitePalette.DefaultPath());
+        var matrix = matrixOverride ?? ElitePalette.Read(new DiskFileSystem(), ElitePalette.DefaultPath());
 
         if (matrix is null)
         {

@@ -1,4 +1,5 @@
 using D47.Core.Speech;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Tts;
@@ -6,12 +7,14 @@ namespace D47.Tts;
 /// <summary>Fetches Chatterbox Turbo's q4 graphs and tokenizer, once.</summary>
 public sealed class ChatterboxInstaller : IDisposable
 {
+    private readonly IFileSystem _files;
     private readonly string _folder;
     private readonly HttpClient _http;
     private readonly ILogger<ChatterboxInstaller> _logger;
 
-    public ChatterboxInstaller(string folder, ILogger<ChatterboxInstaller> logger)
+    public ChatterboxInstaller(IFileSystem files, string folder, ILogger<ChatterboxInstaller> logger)
     {
+        _files = files;
         _folder = folder;
         _logger = logger;
         _http = ModelDownload.CreateClient();
@@ -19,7 +22,7 @@ public sealed class ChatterboxInstaller : IDisposable
 
     public string Folder => _folder;
 
-    public bool IsInstalled => ChatterboxAssets.IsInstalled(_folder);
+    public bool IsInstalled => ChatterboxAssets.IsInstalled(_files, _folder);
 
     /// <summary>Every file not already present at its pinned size, reporting against the whole set.</summary>
     public async Task<KokoroInstallResult> InstallAsync(

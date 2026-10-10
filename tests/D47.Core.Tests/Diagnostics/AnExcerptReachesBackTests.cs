@@ -1,30 +1,30 @@
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Storage;
 using Xunit;
 
 namespace D47.Core.Tests.Diagnostics;
 
-/// <summary>Reading an incident off disk rather than out of memory.</summary>
-[Trait("Category", "Integration")]
-public class AnExcerptReachesBackTests : IDisposable
+/// <summary>Reading an incident out of the journal and log folders rather than the running session.</summary>
+public class AnExcerptReachesBackTests
 {
     private static readonly TimeZoneInfo Utc = TimeZoneInfo.Utc;
 
-    private readonly string _root = Directory.CreateTempSubdirectory("d47-reach").FullName;
+    private const string _root = "C:/d47-test/reach";
+
+    private readonly MemoryFileSystem _files = new();
 
     private string Journal(string startedAt, params string[] lines)
     {
         var path = Path.Combine(_root, $"Journal.{startedAt}.01.log");
-        File.WriteAllLines(path, lines);
+        _files.WriteLines(path, lines);
         return path;
     }
 
     private void Log(string day, params string[] lines) =>
-        File.WriteAllLines(Path.Combine(_root, $"d47-{day}.log"), lines);
+        _files.WriteLines(Path.Combine(_root, $"d47-{day}.log"), lines);
 
     private static string Event(string at, string kind) =>
         $$"""{"timestamp":"{{at}}","event":"{{kind}}"}""";
-
-    public void Dispose() => Directory.Delete(_root, recursive: true);
 
     /// <summary>
     /// The change this file is named for: an excerpt now spans the files a window touches, rather than the one Elite
@@ -38,6 +38,7 @@ public class AnExcerptReachesBackTests : IDisposable
         Journal("2026-08-28T100000", Event("2026-08-28T10:00:00Z", "Docked"));
 
         var entries = IncidentSources.Journals(
+            _files,
             _root,
             new DateTimeOffset(2026, 8, 27, 0, 0, 0, TimeSpan.Zero),
             new DateTimeOffset(2026, 8, 29, 0, 0, 0, TimeSpan.Zero));
@@ -53,6 +54,7 @@ public class AnExcerptReachesBackTests : IDisposable
         Journal("2026-08-28T100000", Event("2026-08-28T10:00:00Z", "Docked"));
 
         var entries = IncidentSources.Journals(
+            _files,
             _root,
             new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero),
             new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero));
@@ -72,6 +74,7 @@ public class AnExcerptReachesBackTests : IDisposable
         Journal("2026-08-28T200000", Event("2026-08-28T20:00:00Z", "Shutdown"));
 
         var entries = IncidentSources.Journals(
+            _files,
             _root,
             new DateTimeOffset(2026, 8, 28, 12, 0, 0, TimeSpan.Zero),
             new DateTimeOffset(2026, 8, 28, 13, 0, 0, TimeSpan.Zero));
@@ -91,6 +94,7 @@ public class AnExcerptReachesBackTests : IDisposable
         Log("20260829", "[00:01:00 INF] D47.App.AppHost: just after");
 
         var entries = IncidentSources.Logs(
+            _files,
             _root,
             new DateTimeOffset(2026, 8, 28, 23, 55, 0, TimeSpan.Zero),
             new DateTimeOffset(2026, 8, 29, 0, 5, 0, TimeSpan.Zero),
@@ -111,22 +115,8 @@ public class AnExcerptReachesBackTests : IDisposable
     {
         var absent = Path.Combine(_root, "nowhere");
 
-        Assert.Empty(IncidentSources.Journals(absent, DateTimeOffset.MinValue, DateTimeOffset.MaxValue));
-        Assert.Empty(IncidentSources.Logs(absent, DateTimeOffset.MinValue, DateTimeOffset.MaxValue, Utc));
-    }
-
-    /// <summary>
-    /// Elite holds the current journal open and Serilog holds today's log open, so a reader that wanted
-    /// them to itself would throw on exactly the two files an incident is most likely to be in.
-    /// </summary>
-    [Fact]
-    public void FilesSomethingElseIsWritingAreStillRead()
-    {
-        var path = Journal("2026-08-28T100000", Event("2026-08-28T10:00:00Z", "FSDJump"));
-
-        using var held = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-
-        Assert.Single(IncidentSources.Journals(_root, DateTimeOffset.MinValue, DateTimeOffset.MaxValue));
+        Assert.Empty(IncidentSources.Journals(_files, absent, DateTimeOffset.MinValue, DateTimeOffset.MaxValue));
+        Assert.Empty(IncidentSources.Logs(_files, absent, DateTimeOffset.MinValue, DateTimeOffset.MaxValue, Utc));
     }
 
     /// <summary>

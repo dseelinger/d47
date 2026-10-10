@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -52,6 +53,7 @@ public static class CorpusDonation
 {
     /// <summary>Walks the history and reports what is in it, keeping one scrubbed line per kind.</summary>
     public static CorpusSurvey Survey(
+        IFileSystem fileSystem,
         string folder,
         DateTimeOffset from,
         DateTimeOffset to,
@@ -69,7 +71,7 @@ public static class CorpusDonation
         DateTimeOffset? first = null;
         DateTimeOffset? last = null;
 
-        var walked = Walk(folder, from, to, names, logger, progress, cancel, (entry, scrubbed) =>
+        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, (entry, scrubbed) =>
         {
             census.Saw(entry.Kind, entry.Compact, scrubbed.Json);
 
@@ -105,6 +107,7 @@ public static class CorpusDonation
     /// </summary>
     /// <returns>What actually travelled, so a caller can check it against the survey.</returns>
     public static CorpusTally Write(
+        IFileSystem fileSystem,
         string folder,
         DateTimeOffset from,
         DateTimeOffset to,
@@ -119,7 +122,7 @@ public static class CorpusDonation
         var messages = 0;
         var links = 0;
 
-        var walked = Walk(folder, from, to, names, logger, progress, cancel, (_, scrubbed) =>
+        var walked = Walk(fileSystem, folder, from, to, names, logger, progress, cancel, (_, scrubbed) =>
         {
             if (scrubbed.Json is not { } line)
             {
@@ -144,6 +147,7 @@ public static class CorpusDonation
     /// </summary>
     /// <returns>How many files were opened, and how many lines in them were unreadable.</returns>
     private static Walked Walk(
+        IFileSystem fileSystem,
         string folder,
         DateTimeOffset from,
         DateTimeOffset to,
@@ -153,13 +157,8 @@ public static class CorpusDonation
         CancellationToken cancel,
         Action<JournalEntry, ScrubbedLine> onEvent)
     {
-        if (!Directory.Exists(folder))
-        {
-            return new Walked(0, 0);
-        }
-
-        var files = Directory
-            .EnumerateFiles(folder, JournalFolder.FilePattern)
+        var files = fileSystem
+            .Enumerate(folder, JournalFolder.FilePattern)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)
             .ToList();
 
@@ -176,7 +175,7 @@ public static class CorpusDonation
             var log = new JournalLog(keep: int.MaxValue);
             var parsed = new List<JournalEvent>();
 
-            foreach (var line in IncidentSources.ReadLines(file))
+            foreach (var line in IncidentSources.ReadLines(fileSystem, file))
             {
                 if (!JournalEvent.TryParse(line, logger ?? NullLogger.Instance, out var journalEvent)
                     || journalEvent is not { } read)

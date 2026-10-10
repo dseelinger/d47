@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
+using D47.Core.Storage;
 
 namespace D47.Core.Interface;
 
@@ -44,7 +45,7 @@ public static class EliteDisplay
     /// The mode the file names, or <see cref="EliteDisplayMode.Unknown"/> for anything this cannot read
     /// with confidence.
     /// </summary>
-    public static EliteDisplayMode Read(string path) => Number(path) switch
+    public static EliteDisplayMode Read(IFileSystem fileSystem, string path) => Number(fileSystem, path) switch
     {
         0 => EliteDisplayMode.Windowed,
         1 => EliteDisplayMode.Exclusive,
@@ -53,16 +54,18 @@ public static class EliteDisplay
     };
 
     /// <summary>The raw <c>FullScreen</c> element, or null when there is not one to read.</summary>
-    public static int? Number(string path)
+    public static int? Number(IFileSystem fileSystem, string path)
     {
-        if (!File.Exists(path))
-        {
-            return null;
-        }
-
         try
         {
-            var document = XDocument.Load(path);
+            using var stream = fileSystem.OpenRead(path);
+
+            if (stream is null)
+            {
+                return null;
+            }
+
+            var document = XDocument.Load(stream);
 
             if (document.Root is not { Name.LocalName: "DisplayConfig" } root)
             {
@@ -84,9 +87,9 @@ public static class EliteDisplay
     }
 
     /// <summary>What the settings row says.</summary>
-    public static string Describe(string path) => Describe(Read(path), Number(path));
+    public static string Describe(IFileSystem fileSystem, string path) => Describe(Read(fileSystem, path), Number(fileSystem, path));
 
-    /// <inheritdoc cref="Describe(string)"/>
+    /// <inheritdoc cref="Describe(IFileSystem, string)"/>
     public static string Describe(EliteDisplayMode mode, int? number) => mode switch
     {
         EliteDisplayMode.Borderless =>
