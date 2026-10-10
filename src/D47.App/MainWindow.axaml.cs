@@ -969,7 +969,7 @@ public partial class MainWindow : Window
             // Feedback nobody typed (#162).
             if (_host.Audio.IsSpeaking)
             {
-                _host.NoteInterrupted();
+                _host.Debrief?.NoteInterrupted();
             }
 
             _model.AskText = string.Empty;

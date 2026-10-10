@@ -152,6 +152,37 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
+    /// <summary>Files one exchange as an aside on each active story it mentions, returning how many it filed.</summary>
+    public int FileAsides(string? frontierId, string? asked, string? answered, DateTimeOffset at)
+    {
+        if (string.IsNullOrWhiteSpace(answered))
+        {
+            return 0;
+        }
+
+        var filed = 0;
+
+        foreach (var standing in Active(frontierId))
+        {
+            if (!AdventureMention.InExchange(standing.Adventure, asked, answered))
+            {
+                continue;
+            }
+
+            Told(frontierId, standing.Adventure.Key, new AdventureTold
+            {
+                Kind = AdventureToldKind.Aside,
+                Text = answered.Trim(),
+                Asked = asked?.Trim(),
+                At = at,
+            });
+
+            filed++;
+        }
+
+        return filed;
+    }
+
     /// <summary>
     /// Stops the waiting without recording anything — the beat was dropped rather than spoken, which is
     /// what the callout does when it comes due mid-interdiction.

@@ -194,7 +194,7 @@ public sealed class AppHost : IDisposable
             callouts,
             Writer,
             Records,
-            NoteHeardFromOutside,
+            text => Debrief?.NoteHeardFromOutside(text),
             () => CanSearch);
 
         Listener = new Listener(
@@ -472,30 +472,13 @@ public sealed class AppHost : IDisposable
 
     public (MemoryBook Book, Func<DateTimeOffset> Now)? Memories { get; private set; }
 
-    /// <summary>
-    /// The standing directions the debrief pass drafts and the Commander adopts, and the clock an
-    /// adoption is stamped with (#162).
-    /// </summary>
-    public (DebriefBook Book, Func<DateTimeOffset> Now)? Debrief { get; private set; }
-
-    /// <summary>What this session has sounded like, in memory and never on disk (#162).</summary>
-    public DebriefSession Debriefing { get; } = new();
-
-    /// <summary>
-    /// The feedback nobody typed, collected across the session and turned into questions by the pass
-    /// (#162).
-    /// </summary>
-    private readonly List<DebriefSignal> _signals = [];
-
-    private readonly Lock _signalGate = new();
+    /// <summary>The debrief: the session record, the signals and the standing directions (#162).</summary>
+    public DebriefHost? Debrief { get; private set; }
 
     private readonly Lock _personaGate = new();
 
     /// <summary>The <see cref="HeldCores"/> the persona was last admitted under.</summary>
     private int _heldCores;
-
-    /// <summary>What the prompt carries for the length of this session (#162).</summary>
-    private readonly StandingDirectionsSession _directions = new();
 
     /// <summary>The Commander's log (Phase 33).</summary>
     public D47.Core.Logbook.LogbookBook? Logbook { get; private set; }
@@ -555,9 +538,6 @@ public sealed class AppHost : IDisposable
     private readonly CancellationTokenSource _warming = new();
 
     private Task? _warmingUp;
-
-    /// <summary>Stops the launch's rewording of debrief proposals, at shutdown (#677).</summary>
-    private readonly CancellationTokenSource _rewordingProposals = new();
 
     /// <summary>
     /// Reads the journal history off the startup path. Idempotent: a second call is handed the first
@@ -2742,9 +2722,9 @@ public sealed class AppHost : IDisposable
         // Core reads no clock of its own.
         host.Memories = (memoryBook, () => DateTimeOffset.Now);
 
-        // Same pairing, same reason (#162): an adoption is stamped with a real instant and Core reads no
-        // clock of its own.
-        host.Debrief = (debriefBook, () => DateTimeOffset.Now);
+        // Same reason (#162): an adoption is stamped with a real instant and Core reads no clock of its own.
+        var debrief = new DebriefHost(debriefBook, () => DateTimeOffset.Now, settings, host.Personas, loggerFactory.CreateLogger<DebriefHost>());
+        host.Debrief = debrief;
 
         // The session opens here, over what the file says right now.
         host.BeginDirections();
@@ -2754,7 +2734,7 @@ public sealed class AppHost : IDisposable
         host.RewordProposals();
 
         // A callout switched off within seconds of it speaking (#162).
-        callouts.Silenced += host.NoteSilenced;
+        callouts.Silenced += debrief.NoteSilenced;
         host.Logbook = logbook;
         host.Goals = (goalBook, BackfillGoals);
         host.Activities = activities;
@@ -3597,7 +3577,7 @@ public sealed class AppHost : IDisposable
         // The debrief too, and in this order for a reason: the session that just ended was the previous
         // Commander's, so it is filed under their id — named rather than asked for, because the game state is
         // already pointed at whoever logged in (#162).
-        RunDebrief(change.Previous.FrontierId);
+        Debrief?.Run(change.Previous.FrontierId);
 
         // And the directions are re-latched, because they are one person's and the person changed.
         BeginDirections();
@@ -4445,84 +4425,11 @@ public sealed class AppHost : IDisposable
     /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
     public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;
 
-    /// <summary>One exchange, filed against any story it was about (asked for 2026-08-22).</summary>
+    /// <summary>One exchange, written to the debrief and filed against any story it was about (asked for 2026-08-22).</summary>
     public void NoteTurn(string? asked, string? answered)
     {
-        // The debrief's record, and it is written here rather than at the panel for one reason: this is the
-        // single call site that has both halves of a turn with the speakers already told apart.
-        if (Settings.Current.Debrief.Enabled)
-        {
-            var heardAt = DateTimeOffset.Now;
-
-            Debriefing.Say(heardAt, DebriefSpeaker.Commander, asked ?? string.Empty);
-            Debriefing.Say(heardAt, DebriefSpeaker.Ship, answered ?? string.Empty);
-        }
-
-        if (Adventures is not { } adventures
-            || string.IsNullOrWhiteSpace(answered))
-        {
-            return;
-        }
-
-        var commander = GameState.Active?.Identity.FrontierId;
-
-        foreach (var standing in adventures.Book.Active(commander))
-        {
-            if (!D47.Core.Adventures.AdventureMention.InExchange(standing.Adventure, asked, answered))
-            {
-                continue;
-            }
-
-            adventures.Book.Told(commander, standing.Adventure.Key, new D47.Core.Adventures.AdventureTold
-            {
-                Kind = D47.Core.Adventures.AdventureToldKind.Aside,
-                Text = answered.Trim(),
-                Asked = asked?.Trim(),
-                At = DateTimeOffset.Now,
-            });
-        }
-    }
-
-    /// <summary>
-    /// Writes down something that reached the Commander from outside the two of them — an in-game
-    /// message read aloud, a quoted search result (#162).
-    /// </summary>
-    public void NoteHeardFromOutside(string text)
-    {
-        if (Settings.Current.Debrief.Enabled)
-        {
-            Debriefing.Say(DateTimeOffset.Now, DebriefSpeaker.Game, text);
-        }
-    }
-
-    /// <summary>Records that d47 was stopped mid-sentence (#162).</summary>
-    public void NoteInterrupted() => NoteSignal(new DebriefSignal(
-        DateTimeOffset.Now,
-        DebriefSignalKind.SpeechCutOff,
-        "you stopped me while I was talking"));
-
-    /// <summary>Records that a callout was switched off within seconds of it speaking (#162).</summary>
-    public void NoteSilenced(CalloutSilenced silenced)
-    {
-        ArgumentNullException.ThrowIfNull(silenced);
-
-        NoteSignal(new DebriefSignal(
-            silenced.When,
-            DebriefSignalKind.WarningDisabledSoonAfter,
-            $"the {silenced.Id} callout"));
-    }
-
-    private void NoteSignal(DebriefSignal signal)
-    {
-        if (!Settings.Current.Debrief.Enabled)
-        {
-            return;
-        }
-
-        lock (_signalGate)
-        {
-            _signals.Add(signal);
-        }
+        Debrief?.NoteTurn(asked, answered);
+        Adventures?.Book.FileAsides(GameState.Active?.Identity.FrontierId, asked, answered, DateTimeOffset.Now);
     }
 
     /// <summary>
@@ -4536,10 +4443,9 @@ public sealed class AppHost : IDisposable
             return;
         }
 
-        debrief.Book.Store.Poll();
-        _directions.Begin(debrief.Book.Adopted);
+        debrief.Begin();
 
-        Turns.Directions = _directions.Block();
+        Turns.Directions = debrief.Directions.Block();
 
         // Position 3 is rebuilt too, because a per-core direction rides in the persona block: the overlay
         // lives beside the Commander's other data and the pack is never touched (#162).
@@ -4547,7 +4453,7 @@ public sealed class AppHost : IDisposable
 
         _logger.LogInformation(
             "Standing directions latched: {Count} adopted, {Bytes} characters at position 6",
-            _directions.Latched.Count,
+            debrief.Directions.Latched.Count,
             Turns.Directions?.Length ?? 0);
     }
 
@@ -4557,37 +4463,18 @@ public sealed class AppHost : IDisposable
     public void RewordProposals()
     {
         if (Debrief is not { } debrief
-            || !Settings.Current.Debrief.Enabled
             || !LlmAvailability.CanAttemptModelTurn
-            || Turns.Provider is not { } provider
-            || DebriefRewording.Pending(debrief.Book.Store).Count == 0)
+            || Turns.Provider is not { } provider)
         {
             return;
         }
 
-        var ask = DebriefRewording.Asker(
+        _ = debrief.Reword(DebriefRewording.Asker(
             provider,
             Turns.Model,
             Spend,
             PriceTable.Default,
-            _logger);
-        var token = _rewordingProposals.Token;
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await DebriefRewording.RunAsync(debrief.Book.Store, ask, _logger, token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                // Shutdown; what was not asked is asked at the next launch.
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                _logger.LogWarning(ex, "Could not write a reworded debrief proposal");
-            }
-        });
+            _logger));
     }
 
     /// <summary>Position 3, with this core's overlay behind it (#162).</summary>
@@ -4595,54 +4482,9 @@ public sealed class AppHost : IDisposable
     {
         lock (_personaGate)
         {
-            Turns.Persona = _directions.PersonaBlock(Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled), Personas.Current.Id);
-        }
-    }
+            var rendered = Personas.RenderBlock(Settings.Current.Llm.PersonalityEnabled);
 
-    /// <summary>Runs the debrief over what this session sounded like, and files what it drafted (#162).</summary>
-    /// <param name="frontierId">Who the session belonged to.</param>
-    public void RunDebrief(string? frontierId = null)
-    {
-        if (Debrief is not { } debrief || !Settings.Current.Debrief.Enabled)
-        {
-            return;
-        }
-
-        DebriefSignal[] signals;
-
-        lock (_signalGate)
-        {
-            signals = [.. _signals];
-            _signals.Clear();
-        }
-
-        try
-        {
-            var drafted = debrief.Book.Propose(
-                Debriefing,
-                signals,
-                DateTimeOffset.Now,
-                Personas.Current.Id,
-
-                // What this installation answers to, so "hey Warden, stop calling it that" reads as an
-                // instruction rather than as a sentence beginning with a name.
-                [Personas.Current.Name, Settings.Current.Persona.ShipName ?? string.Empty],
-                frontierId);
-
-            _logger.LogInformation(
-                "Debrief drafted {Count} proposals from {Lines} lines and {Signals} signals",
-                drafted.Count,
-                Debriefing.Lines.Count,
-                signals.Length);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Losing a debrief costs a list nobody had agreed to.
-            _logger.LogWarning(ex, "The debrief pass could not write its proposals");
-        }
-        finally
-        {
-            Debriefing.Empty();
+            Turns.Persona = Debrief is { } debrief ? debrief.Directions.PersonaBlock(rendered, Personas.Current.Id) : rendered;
         }
     }
 
@@ -5031,12 +4873,12 @@ public sealed class AppHost : IDisposable
         StopWarmingUp();
 
         // Before the debrief below files this session's proposals, which are reworded at the next launch.
-        _rewordingProposals.Cancel();
+        Debrief?.CancelRewording();
 
         CoverageRecorder?.Save();
 
         // The debrief, over what this session sounded like (#162).
-        RunDebrief();
+        Debrief?.Run();
 
         Absences.Exiting(Personas.Current.Id);
 
@@ -5078,7 +4920,7 @@ public sealed class AppHost : IDisposable
         Speech.Dispose();
 
         _warming.Dispose();
-        _rewordingProposals.Dispose();
+        Debrief?.Dispose();
 
         // Before the factory that owns the sink it writes to.
         _logger.LogInformation("d47 stopped cleanly");
