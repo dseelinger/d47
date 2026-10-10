@@ -6,7 +6,7 @@ nav_order: 9
 
 # Correcting a pronunciation
 
-The local voice works a word out from its spelling when nobody has written the pronunciation
+The local voices work a word out from its spelling when nobody has written the pronunciation
 down for it. Most of the time that is right. Sometimes it is not — Elite has four hundred
 billion system names, Frontier keep adding to them, and the community argues about half the
 ones that already exist.
@@ -36,7 +36,7 @@ Delete the file and everything goes back to how it shipped.
 
 **Respell it.** Write the word the way it sounds, in ordinary letters, and d47 says it the way
 it would say those letters. `"Deciat": "dessy at"`. This is the one to reach for first — it
-needs nothing but your ear.
+needs nothing but your ear. It works for both local voices, Kokoro and Chatterbox.
 
 Capitals are for you, not for d47: it reads `DEZH` and `dezh` the same way. If you want the
 emphasis in a particular place, use the other form.
@@ -44,7 +44,8 @@ emphasis in a particular place, use the other form.
 **Write the sounds exactly.** Put `ipa:` in front and the rest is taken as
 [IPA](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet), symbol for symbol,
 including where the stress mark `ˈ` goes. `"Dezhra": "ipa:ˈdɛʒɹə"`. This is exact control and
-it is expert-hostile; it is here for the stubborn ones.
+it is expert-hostile; it is here for the stubborn ones. IPA works only for Kokoro. Chatterbox
+skips an IPA entry and says the word as written.
 
 ## What the rules are
 
@@ -62,7 +63,7 @@ it is expert-hostile; it is here for the stubborn ones.
 
 ## What it does not cover
 
-This is the **local voice** only. ElevenLabs, OpenAI, Cartesia and Edge each work out their own
+This is the **local voices** only, Kokoro and Chatterbox. ElevenLabs, OpenAI, Cartesia and Edge each work out their own
 pronunciations inside their own service, where d47 cannot reach — so an entry here does nothing
 when one of those is speaking. That is not a bug to report.
 

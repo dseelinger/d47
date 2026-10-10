@@ -40,6 +40,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly HashSet<string> _standInLogged = new(StringComparer.Ordinal);
     private readonly Dictionary<string, CustomVoice> _customKnown = new(StringComparer.Ordinal);
 
+    private readonly PronunciationOverrides? _overrides;
+    private readonly HashSet<string> _ipaLogged = new(StringComparer.OrdinalIgnoreCase);
+
     private IChatterboxEngine? _engine;
     private ChatterboxTokeniser? _tokeniser;
     private IReadOnlyList<ChatterboxVoice>? _voices;
@@ -52,6 +55,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <param name="fetchedFolder">Where fetched clips are kept.</param>
     /// <param name="own">The Commander's own recording, listed as <see cref="OwnVoice.VoiceId"/> while one is saved.</param>
     /// <param name="custom">The Commander's custom voices, listed after the catalogue.</param>
+    /// <param name="pronunciations">The Commander's <c>pronunciations.json</c>, whose respellings are applied before a line is encoded.</param>
     public ChatterboxTtsProvider(
         IFileSystem files,
         string modelFolder,
@@ -59,7 +63,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         string fetchedFolder,
         ILogger<ChatterboxTtsProvider> logger,
         OwnVoice? own = null,
-        CustomVoices? custom = null)
+        CustomVoices? custom = null,
+        string? pronunciations = null)
         : this(
             files,
             modelFolder,
@@ -70,7 +75,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             () => ChatterboxAssets.IsInstalled(files, modelFolder),
             ChatterboxClipDownload.GetAsync,
             own,
-            custom)
+            custom,
+            pronunciations)
     {
     }
 
@@ -84,9 +90,17 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         Func<bool> installed,
         Func<Uri, long, CancellationToken, Task<byte[]>> download,
         OwnVoice? own = null,
-        CustomVoices? custom = null)
+        CustomVoices? custom = null,
+        string? pronunciations = null)
     {
         _files = files;
+        _overrides = pronunciations is null
+            ? null
+            : new PronunciationOverrides(
+                files,
+                pronunciations,
+                speakable: null,
+                complain: entry => logger.LogWarning("{Entry}", entry));
         _modelFolder = modelFolder;
         _voicesFolder = voicesFolder;
         _fetchedFolder = fetchedFolder;
@@ -381,18 +395,20 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var spoken = Respelled(text);
+
         if (chosen is null)
         {
-            return SpeakOwn(text, cancellationToken);
+            return SpeakOwn(text, spoken, cancellationToken);
         }
 
         if (chosen.Voice.Custom)
         {
-            return SpeakCustom(text, chosen.Voice.Id, cancellationToken);
+            return SpeakCustom(text, spoken, chosen.Voice.Id, cancellationToken);
         }
 
         // One line at a time: each already takes every performance core.
-        var ids = Tokeniser().Encode(text);
+        var ids = Tokeniser().Encode(spoken);
 
         lock (_gate)
         {
@@ -410,11 +426,42 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         }
     }
 
+    /// <summary>The line with the Commander's respellings applied; an IPA entry is skipped and named once.</summary>
+    internal string Respelled(string text)
+    {
+        if (_overrides is null)
+        {
+            return text;
+        }
+
+        _overrides.Refresh();
+
+        return Respelling.Apply(
+            text,
+            _overrides,
+            skipped =>
+            {
+                bool first;
+
+                lock (_ipaLogged)
+                {
+                    first = _ipaLogged.Add(skipped.Key);
+                }
+
+                if (first)
+                {
+                    _logger.LogWarning(
+                        "pronunciations.json: \"{Key}\" is IPA, which Chatterbox cannot say; it is spoken as written",
+                        skipped.Key);
+                }
+            });
+    }
+
     private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(_disposed, nameof(ChatterboxTtsProvider));
 
     /// <summary>A line in the Commander's recorded voice, encoded from the recording decrypted into memory.</summary>
-    private AudioClip SpeakOwn(string text, CancellationToken cancellationToken)
+    private AudioClip SpeakOwn(string text, string spoken, CancellationToken cancellationToken)
     {
         const string none = "No recording of your voice is saved. Record one in Settings, under Your voice.";
 
@@ -423,7 +470,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             throw new TtsException(none, settingKey: SpeechCapability.OwnVoiceKey);
         }
 
-        var ids = Tokeniser().Encode(text);
+        var ids = Tokeniser().Encode(spoken);
 
         lock (_gate)
         {
@@ -455,9 +502,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     }
 
     /// <summary>A line in a custom voice, encoded from its clip decrypted into memory, once per version.</summary>
-    private AudioClip SpeakCustom(string text, string id, CancellationToken cancellationToken)
+    private AudioClip SpeakCustom(string text, string spoken, string id, CancellationToken cancellationToken)
     {
-        var ids = Tokeniser().Encode(text);
+        var ids = Tokeniser().Encode(spoken);
 
         lock (_gate)
         {

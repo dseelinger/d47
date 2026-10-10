@@ -10,6 +10,8 @@
 
 The Vocoder, Deep core, Flanged vocoder, Hive chorus, Shimmer core and Respirator Guardian presets now start playing before the sentence group has fully arrived. Cylon, Pitch down, Octave-down layer, Hive and Shimmer now work as the voice arrives, each holding back at most about a sixteenth of a second. The effects sound as they did; as with the presets that already started sooner, loudness can shift slightly at the start of a line.
 
+Chatterbox now applies the respellings in `pronunciations.json`, so `"Supercruise": "super cruise"` fixes how it says supercruise. IPA entries still work only for Kokoro.
+
 A core switched back in reacts to the time since it left, not since it last came aboard. A core aboard when Elite closed counts its absence from then.
 
 A line still waiting to be spoken when D47 closed could throw an error on the way out. It is now dropped quietly.

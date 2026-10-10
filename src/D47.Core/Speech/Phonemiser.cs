@@ -136,23 +136,26 @@ public sealed class Phonemiser(
         return built.ToString();
     }
 
-    /// <summary>A token split into what is said and the punctuation kept after it.</summary>
-    private readonly record struct Trimmed(string Body, string Tail);
+    /// <summary>A token split into the marks dropped before it, what is said, and the punctuation kept after it.</summary>
+    internal readonly record struct Trimmed(string Body, string Tail, string Lead);
 
     /// <summary>
     /// The marks around a token stripped off it: the phrasing kept as the tail, the decoration dropped
     /// wherever in the run it sat.
     /// </summary>
-    private static Trimmed Trim(string token)
+    internal static Trimmed Trim(string token)
     {
         var body = token.TrimEnd(Trailing);
         var tail = token[body.Length..];
 
+        var said = body.TrimStart(Leading);
+
         return new Trimmed(
-            body.TrimStart(Leading),
+            said,
             tail.Any(mark => Decoration.Contains(mark))
                 ? string.Concat(tail.Where(mark => !Decoration.Contains(mark)))
-                : tail);
+                : tail,
+            body[..^said.Length]);
     }
 
     /// <summary>

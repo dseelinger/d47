@@ -435,7 +435,8 @@ public sealed class SpeechClients : IDisposable
             Path.Combine(_paths.Data, "voices", "chatterbox"),
             _loggers.CreateLogger<ChatterboxTtsProvider>(),
             _ownVoice,
-            _customVoices),
+            _customVoices,
+            _paths.PronunciationsFile),
 
         _ => null,
     };
