@@ -42,8 +42,8 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
             [.. (events ?? []).Select(Event)]);
 
     /// <summary>
-    /// The two in the order <c>BuildCallouts</c> registers them — the exchange above the remark, which
-    /// is the tie-break when both are due on one tick.
+    /// The two in the order <c>ShippedCallouts.Build</c> registers them — the exchange above the remark,
+    /// which is the tie-break when both are due on one tick.
     /// </summary>
     private static CalloutEngine Shipped(AmbientCallout remarks, NpcChatterCallout exchanges) =>
         Engine(exchanges, remarks);
@@ -528,6 +528,19 @@ public class TwoUnpromptedVoicesKeepTheirDistanceTests
 
         Assert.NotEmpty(throughTheEngine);
         Assert.Equal(unhindered, throughTheEngine);
+    }
+
+    /// <summary>The order <see cref="Shipped"/> copies is the order the shipped catalogue has.</summary>
+    [Fact]
+    public void TheShippedCatalogueRegistersTheExchangeAboveTheRemark()
+    {
+        var callouts = ShippedCatalogue.Build().Engine.Callouts.ToList();
+
+        var exchange = callouts.FindIndex(callout => callout is NpcChatterCallout);
+        var remark = callouts.FindIndex(callout => callout is AmbientCallout);
+
+        Assert.True(exchange >= 0 && remark >= 0, "the shipped catalogue lost one of the two");
+        Assert.True(exchange < remark, $"the exchange is at {exchange}, after the remark at {remark}");
     }
 
     /// <summary>The tie-break, at the order the app ships.</summary>
