@@ -322,7 +322,14 @@ public class GuardianVoiceTests
     [Fact]
     public void BitcrusherHoldsSixSampleRunsWithAtMostThirtyTwoDistinctValues()
     {
-        var treated = Samples(GuardianVoice.Apply(Tone(2, seconds: 1.0, amplitude: 0.9), Ticking("bitcrusher"), BasePitch));
+        var effect = GuardianVoice.Find("bitcrusher")!;
+        var stage = effect.Start(effect.Value(effect.DefaultLevel), BasePitch, Rate);
+        var output = new List<double>();
+
+        stage.Push(Samples(Tone(2, seconds: 1.0, amplitude: 0.9)), output);
+        stage.Finish(output);
+
+        var treated = output.ToArray();
 
         Assert.True(treated.Distinct().Count() <= 32, $"{treated.Distinct().Count()} distinct values came out");
 

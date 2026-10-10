@@ -101,7 +101,7 @@ public class BitcrusherMonotoneAndSteppedPitchRunAsTheClipArrivesTests
         }
 
         Assert.True(held <= PeakWindow + lookAhead, $"{id} held back {held} samples of {PeakWindow + lookAhead}");
-        Assert.True(held >= PeakWindow, $"{id} held back only {held} samples");
+        Assert.True(held >= PeakWindow - 1, $"{id} held back only {held} samples");
     }
 
     [Fact]

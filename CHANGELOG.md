@@ -18,6 +18,8 @@ The Helmet comms and Hologram Guardian presets now start playing before the sent
 
 The Vocoder, Deep core, Flanged vocoder, Hive chorus, Shimmer core and Respirator Guardian presets now start playing before the sentence group has fully arrived. Cylon, Pitch down, Octave-down layer, Hive and Shimmer now work as the voice arrives, each holding back at most about a sixteenth of a second. The effects sound as they did; as with the presets that already started sooner, loudness can shift slightly at the start of a line.
 
+The 8-bit computer, Flat robot and Stepped synth Guardian presets now start playing before the sentence group has fully arrived. Bitcrusher, Monotone and Stepped pitch work as the voice arrives, holding back the first 300 milliseconds and a little under a tenth of a second more. The effects sound as they did; as with the presets that already started sooner, loudness can shift slightly at the start of a line.
+
 Chatterbox now applies the respellings in `pronunciations.json`, so `"Supercruise": "super cruise"` fixes how it says supercruise. IPA entries still work only for Kokoro.
 
 A core switched back in reacts to the time since it left, not since it last came aboard. A core aboard when Elite closed counts its absence from then.

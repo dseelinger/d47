@@ -66,7 +66,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Start = (amount, basePitchHz, rate) => WholeClip(signal => Monotone(signal, amount, basePitchHz, rate)),
+            Start = (amount, basePitchHz, rate) => new MonotoneStage(amount, basePitchHz, rate),
         },
         new GuardianEffect
         {
@@ -77,7 +77,7 @@ public static partial class GuardianVoice
             Unit = "ms",
             DefaultLevel = 12,
             Value = level => level * 10.0,
-            Start = (holdMs, _, rate) => WholeClip(signal => SteppedPitch(signal, holdMs, rate)),
+            Start = (holdMs, _, rate) => new SteppedPitchStage(holdMs, rate),
             SkippedBy = "monotone",
         },
         new GuardianEffect
@@ -244,7 +244,7 @@ public static partial class GuardianVoice
             Unit = "bit",
             DefaultLevel = 16,
             Value = level => Math.Round(16 + ((2.0 - 16.0) * (level - 1) / 19.0)),
-            Start = (bits, _, rate) => WholeClip(signal => Bitcrusher(signal, bits, rate)),
+            Start = (bits, _, rate) => new BitcrusherStage(bits, rate),
         },
         new GuardianEffect
         {
@@ -459,7 +459,7 @@ public static partial class GuardianVoice
     /// <summary>The YIN threshold: a frame whose normalised difference never falls below it is unvoiced.</summary>
     private const double PitchVoicing = 0.2;
 
-    /// <summary>A frame's RMS relative to the clip's peak, −40 dB, below which it is unvoiced.</summary>
+    /// <summary>A frame's RMS relative to the reference peak, −40 dB, below which it is unvoiced.</summary>
     private const double PitchSilence = 0.01;
 
     private const double SemitoneReferenceHz = 440;
@@ -765,38 +765,6 @@ public static partial class GuardianVoice
     }
 
     /// <summary>
-    /// Sample-and-hold to <see cref="BitcrusherSampleHz"/>, then a mid-tread quantiser at <paramref name="bits"/>
-    /// bits either side of zero, scaled to the clip's peak so a quiet clip keeps its levels and silence stays
-    /// silent.
-    /// </summary>
-    private static double[] Bitcrusher(double[] signal, double bits, int rate)
-    {
-        var peak = signal.Length == 0 ? 0 : signal.Max(Math.Abs);
-        var output = new double[signal.Length];
-
-        if (peak == 0)
-        {
-            return output;
-        }
-
-        var half = (Math.Pow(2, Math.Round(bits) - 1) - 1) / peak;
-        var step = Math.Max(1, (int)Math.Round(rate / BitcrusherSampleHz));
-        var held = 0.0;
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            if (index % step == 0)
-            {
-                held = signal[index];
-            }
-
-            output[index] = Math.Clamp(Math.Round(held * half) / half, -1, 1);
-        }
-
-        return output;
-    }
-
-    /// <summary>
     /// Repeats each word's start with a seeded chance, and shifts whole phrases with another. Onsets split the
     /// clip into phrases; the schedule comes from a fixed seed, so the same clip stutters the same way every
     /// time. Lengthens the clip by the repeats it adds.
@@ -969,270 +937,6 @@ public static partial class GuardianVoice
 
         return output;
     }
-
-    /// <summary>Each voiced frame's pitch moved <paramref name="amount"/> of the way to <paramref name="basePitchHz"/>, on a log scale.</summary>
-    private static double[] Monotone(double[] signal, double amount, double basePitchHz, int rate)
-    {
-        var track = PitchTrack(signal, rate);
-        var pitch = PerSample(track, signal.Length, rate);
-        var target = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            target[index] = pitch[index] > 0 ? pitch[index] * Math.Pow(basePitchHz / pitch[index], amount) : 0;
-        }
-
-        return Resynthesise(signal, track, pitch, target, rate);
-    }
-
-    /// <summary>
-    /// Each voiced frame's pitch moved to the nearest equal-tempered semitone, a new semitone taken only once the
-    /// current one has been held for <paramref name="holdMs"/>.
-    /// </summary>
-    private static double[] SteppedPitch(double[] signal, double holdMs, int rate)
-    {
-        var track = PitchTrack(signal, rate);
-        var pitch = PerSample(track, signal.Length, rate);
-        var notes = new double[track.Length];
-        var holdFrames = (int)Math.Ceiling(holdMs / PitchHopMs);
-        int? current = null;
-        var held = 0;
-
-        for (var frame = 0; frame < track.Length; frame++)
-        {
-            if (track[frame] > 0)
-            {
-                var nearest = (int)Math.Round(12 * Math.Log2(track[frame] / SemitoneReferenceHz));
-
-                if (current is null || (nearest != current && held >= holdFrames))
-                {
-                    current = nearest;
-                    held = 0;
-                }
-
-                notes[frame] = SemitoneReferenceHz * Math.Pow(2, current.Value / 12.0);
-            }
-
-            held++;
-        }
-
-        var hop = Samples(PitchHopMs, rate);
-        var target = new double[signal.Length];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            if (pitch[index] <= 0)
-            {
-                continue;
-            }
-
-            var below = Math.Min(track.Length - 1, index / hop);
-            var above = Math.Min(track.Length - 1, below + 1);
-            var (near, far) = index - (below * hop) < hop / 2 ? (below, above) : (above, below);
-            target[index] = notes[near] > 0 ? notes[near] : notes[far];
-        }
-
-        return Resynthesise(signal, track, pitch, target, rate);
-    }
-
-    /// <summary>
-    /// The pitch of each 40 ms frame by YIN on the clip averaged down to about 12 kHz, frame k centred on k × 10 ms,
-    /// or 0 where the frame is quiet or aperiodic.
-    /// </summary>
-    private static double[] PitchTrack(double[] signal, int rate)
-    {
-        var track = new double[(signal.Length / Samples(PitchHopMs, rate)) + 1];
-        var factor = Math.Max(1, rate / PitchAnalysisHz);
-        var analysisRate = (double)rate / factor;
-        var decimated = new double[signal.Length / factor];
-
-        for (var index = 0; index < decimated.Length; index++)
-        {
-            var total = 0.0;
-
-            for (var offset = 0; offset < factor; offset++)
-            {
-                total += signal[(index * factor) + offset];
-            }
-
-            decimated[index] = total / factor;
-        }
-
-        signal = decimated;
-
-        var frame = (int)Math.Round(PitchFrameMs / 1000 * analysisRate);
-        var minLag = Math.Max(2, (int)(analysisRate / PitchHighestHz));
-        var maxLag = (int)Math.Ceiling(analysisRate / PitchLowestHz);
-        var width = Math.Max(1, frame - maxLag - 1);
-        var normalised = new double[maxLag + 2];
-        var peak = 0.0;
-
-        foreach (var sample in signal)
-        {
-            peak = Math.Max(peak, Math.Abs(sample));
-        }
-
-        for (var k = 0; k < track.Length; k++)
-        {
-            var start = (int)Math.Round(k * PitchHopMs / 1000 * analysisRate) - (frame / 2);
-            var squared = 0.0;
-
-            for (var index = 0; index < frame; index++)
-            {
-                var sample = Sample(signal, start + index);
-                squared += sample * sample;
-            }
-
-            if (peak == 0 || Math.Sqrt(squared / frame) < peak * PitchSilence)
-            {
-                continue;
-            }
-
-            var running = 0.0;
-            normalised[0] = 1;
-
-            for (var lag = 1; lag <= maxLag + 1; lag++)
-            {
-                var difference = 0.0;
-
-                for (var index = 0; index < width; index++)
-                {
-                    var delta = Sample(signal, start + index) - Sample(signal, start + index + lag);
-                    difference += delta * delta;
-                }
-
-                running += difference;
-                normalised[lag] = running > 0 ? difference * lag / running : 1;
-            }
-
-            var found = 0;
-
-            for (var lag = minLag; lag <= maxLag; lag++)
-            {
-                if (normalised[lag] < PitchVoicing)
-                {
-                    while (lag < maxLag && normalised[lag + 1] < normalised[lag])
-                    {
-                        lag++;
-                    }
-
-                    found = lag;
-                    break;
-                }
-            }
-
-            if (found == 0)
-            {
-                continue;
-            }
-
-            var before = normalised[found - 1];
-            var after = normalised[found + 1];
-            var curve = before - (2 * normalised[found]) + after;
-
-            track[k] = analysisRate / (found + (curve > 0 ? (before - after) / (2 * curve) : 0));
-        }
-
-        return track;
-    }
-
-    /// <summary>
-    /// The frame track as a pitch per sample: linear between two voiced frames, the voiced one's pitch beside an
-    /// unvoiced frame, and 0 between two unvoiced ones.
-    /// </summary>
-    private static double[] PerSample(double[] track, int length, int rate)
-    {
-        var hop = Samples(PitchHopMs, rate);
-        var pitch = new double[length];
-
-        for (var index = 0; index < length; index++)
-        {
-            var k = Math.Min(track.Length - 1, index / hop);
-            var left = track[k];
-            var right = track[Math.Min(track.Length - 1, k + 1)];
-            var fraction = (double)(index - (k * hop)) / hop;
-
-            pitch[index] = (left > 0, right > 0) switch
-            {
-                (true, true) => left + ((right - left) * fraction),
-                (true, false) => left,
-                (false, true) => right,
-                _ => 0,
-            };
-        }
-
-        return pitch;
-    }
-
-    /// <summary>
-    /// TD-PSOLA: two-period Hann grains cut one analysis period apart at <paramref name="pitch"/> and laid one
-    /// synthesis period apart at <paramref name="target"/>, keeping the length. The result is blended with the dry
-    /// signal by how voiced the neighbouring frames are, so unvoiced stretches pass unchanged.
-    /// </summary>
-    private static double[] Resynthesise(double[] signal, double[] track, double[] pitch, double[] target, int rate)
-    {
-        var length = signal.Length;
-        var hop = Samples(PitchHopMs, rate);
-        var marks = new List<int>();
-
-        for (var position = 0.0; position < length;)
-        {
-            marks.Add((int)position);
-            position += pitch[(int)position] > 0 ? rate / pitch[(int)position] : hop;
-        }
-
-        var sum = new double[length];
-        var weight = new double[length];
-        var mark = 0;
-
-        for (var time = 0.0; time < length;)
-        {
-            var at = (int)Math.Round(time);
-
-            while (mark + 1 < marks.Count && Math.Abs(marks[mark + 1] - time) <= Math.Abs(marks[mark] - time))
-            {
-                mark++;
-            }
-
-            var centre = marks[mark];
-            var half = Math.Max(1, (int)Math.Round(pitch[centre] > 0 ? rate / pitch[centre] : hop));
-
-            for (var offset = -half; offset < half; offset++)
-            {
-                var source = centre + offset;
-                var destination = at + offset;
-
-                if (source >= 0 && source < length && destination >= 0 && destination < length)
-                {
-                    var window = 0.5 + (0.5 * Math.Cos(Math.PI * offset / half));
-                    sum[destination] += window * signal[source];
-                    weight[destination] += window;
-                }
-            }
-
-            var place = Math.Min(length - 1, at);
-            time += target[place] > 0 ? rate / target[place] : pitch[place] > 0 ? rate / pitch[place] : hop;
-        }
-
-        var output = new double[length];
-
-        for (var index = 0; index < length; index++)
-        {
-            var k = Math.Min(track.Length - 1, index / hop);
-            var fraction = (double)(index - (k * hop)) / hop;
-            var voiced = ((track[k] > 0 ? 1 : 0) * (1 - fraction))
-                + ((track[Math.Min(track.Length - 1, k + 1)] > 0 ? 1 : 0) * fraction);
-            var moved = weight[index] > 1e-9 ? sum[index] / weight[index] : 0;
-
-            output[index] = (voiced * moved) + ((1 - voiced) * signal[index]);
-        }
-
-        return output;
-    }
-
-    /// <summary>The sample at <paramref name="index"/>, zero outside the signal.</summary>
-    private static double Sample(double[] signal, int index) =>
-        index >= 0 && index < signal.Length ? signal[index] : 0;
 
     /// <summary>
     /// Reverb on the clip reversed, reversed back, so the tail comes before each sound and swells into it. The
