@@ -17,11 +17,11 @@ namespace D47.App.Tests;
 /// </summary>
 public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
 {
-    private static readonly SpeechSettings CylonTicked = new()
+    private static readonly SpeechSettings WhisperTicked = new()
     {
         GuardianVoice = new GuardianVoiceSettings
         {
-            Effects = [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = effect.Id == "cylon" })],
+            Effects = [.. GuardianVoice.Defaults.Select(effect => effect with { Ticked = effect.Id == "whisper" })],
         },
     };
 
@@ -141,7 +141,7 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
     [Fact]
     public async Task AChainThatNeedsTheWholeClipCompletesOnlyAfterItsSource()
     {
-        var (voice, played) = Build(PersonaCatalog.Warden, CylonTicked);
+        var (voice, played) = Build(PersonaCatalog.Warden, WhisperTicked);
         var held = new HeldOpen(seconds: 1);
         voice.Tts = held;
 

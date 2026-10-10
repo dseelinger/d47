@@ -90,7 +90,7 @@ public static partial class GuardianVoice
             DefaultLevel = 20,
             Value = level => level / 20.0,
             Start = (depth, basePitchHz, rate) =>
-                WholeClip(signal => Mix(signal, 1 - depth, Cylon(signal, basePitchHz * CarrierShare, rate), depth)),
+                new DryWetStage(new CylonStage(basePitchHz * CarrierShare, rate), 1 - depth, depth),
         },
         new GuardianEffect
         {
@@ -101,7 +101,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Start = (wet, _, rate) => WholeClip(signal => Mix(signal, 1 - wet, Whisper(signal, rate), wet)),
+            Start = (wet, _, rate) => WholeClip(signal => Run(new DryWetStage(new WhisperStage(rate), 1 - wet, wet), signal)),
         },
         new GuardianEffect
         {
@@ -112,7 +112,7 @@ public static partial class GuardianVoice
             Unit = "st",
             DefaultLevel = 8,
             Value = level => -level / 2.0,
-            Start = (semitones, _, rate) => WholeClip(signal => Shift(signal, Math.Pow(2, semitones / 12), rate)),
+            Start = (semitones, _, rate) => new ShiftStage(Math.Pow(2, semitones / 12), rate),
         },
         new GuardianEffect
         {
@@ -123,7 +123,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 12,
             Value = level => level / 20.0,
-            Start = (mix, _, rate) => WholeClip(signal => Mix(signal, 1, Shift(signal, 0.5, rate), mix)),
+            Start = (mix, _, rate) => new DryWetStage(new ShiftStage(0.5, rate), 1, mix),
         },
         new GuardianEffect
         {
@@ -145,7 +145,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 12,
             Value = level => level / 20.0,
-            Start = (gain, _, rate) => WholeClip(signal => Hive(signal, gain, rate)),
+            Start = (gain, _, rate) => new HiveStage(gain, rate),
         },
         new GuardianEffect
         {
@@ -299,7 +299,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 10,
             Value = level => level / 20.0,
-            Start = (layer, _, rate) => WholeClip(signal => Shimmer(signal, layer, rate)),
+            Start = (layer, _, rate) => new ShimmerStage(layer, rate),
         },
         new GuardianEffect
         {
@@ -633,94 +633,6 @@ public static partial class GuardianVoice
         return chain;
     }
 
-    /// <summary>The speech's smoothed spectral envelope imposed on a flattened sawtooth-plus-noise carrier.</summary>
-    private static double[] Cylon(double[] speech, double carrierHz, int rate)
-    {
-        var length = speech.Length;
-        var frame = FrameLength(rate);
-        var hop = frame / 4;
-        var bins = frame / 2;
-        var padded = length + (2 * frame);
-        var halfWidth = Math.Max(1, (int)Math.Round(EnvelopeHalfWidthHz / ((double)rate / frame)));
-
-        var carrier = Carrier(padded, carrierHz, rate);
-        var output = new double[padded];
-        var window = Hann(frame);
-
-        var speechRe = new double[frame];
-        var speechIm = new double[frame];
-        var carrierRe = new double[frame];
-        var carrierIm = new double[frame];
-        var speechMagnitude = new double[bins + 1];
-        var carrierMagnitude = new double[bins + 1];
-        var speechEnvelope = new double[bins + 1];
-        var carrierEnvelope = new double[bins + 1];
-
-        for (var start = 0; start + frame <= padded; start += hop)
-        {
-            for (var index = 0; index < frame; index++)
-            {
-                var source = start + index - frame;
-                speechRe[index] = (source >= 0 && source < length ? speech[source] : 0) * window[index];
-                speechIm[index] = 0;
-                carrierRe[index] = carrier[start + index] * window[index];
-                carrierIm[index] = 0;
-            }
-
-            Fourier(speechRe, speechIm, inverse: false);
-            Fourier(carrierRe, carrierIm, inverse: false);
-
-            for (var bin = 0; bin <= bins; bin++)
-            {
-                speechMagnitude[bin] = Math.Sqrt((speechRe[bin] * speechRe[bin]) + (speechIm[bin] * speechIm[bin]));
-                carrierMagnitude[bin] = Math.Sqrt((carrierRe[bin] * carrierRe[bin]) + (carrierIm[bin] * carrierIm[bin]));
-            }
-
-            Smooth(speechMagnitude, speechEnvelope, halfWidth);
-            Smooth(carrierMagnitude, carrierEnvelope, halfWidth);
-
-            for (var bin = 0; bin <= bins; bin++)
-            {
-                var gain = carrierEnvelope[bin] > 1e-12 ? speechEnvelope[bin] / carrierEnvelope[bin] : 0;
-                carrierRe[bin] *= gain;
-                carrierIm[bin] *= gain;
-            }
-
-            Mirror(carrierRe, carrierIm);
-            Fourier(carrierRe, carrierIm, inverse: true);
-
-            for (var index = 0; index < frame; index++)
-            {
-                output[start + index] += carrierRe[index] * window[index] / OverlapGain;
-            }
-        }
-
-        return output.AsSpan(frame, length).ToArray();
-    }
-
-    /// <summary>A band-limited sawtooth at unit amplitude with white noise under it.</summary>
-    private static double[] Carrier(int length, double hertz, int rate)
-    {
-        var carrier = new double[length];
-        var step = Math.Clamp(hertz, 1, rate * 0.45) / rate;
-        var phase = 0.0;
-        var noise = new Noise(0x6A09E667u);
-
-        for (var index = 0; index < length; index++)
-        {
-            carrier[index] = (2 * phase) - 1 - PolyBlep(phase, step) + (CarrierNoise * noise.Next(-1, 1));
-
-            phase += step;
-
-            if (phase >= 1)
-            {
-                phase -= 1;
-            }
-        }
-
-        return carrier;
-    }
-
     /// <summary>The correction that removes the aliasing from a sawtooth's reset.</summary>
     private static double PolyBlep(double phase, double step)
     {
@@ -743,81 +655,15 @@ public static partial class GuardianVoice
     /// A pitch shift by <paramref name="factor"/> that keeps the duration: a phase vocoder with identity phase
     /// locking compresses time by the factor, and resampling restores the length.
     /// </summary>
-    private static double[] Shift(double[] signal, double factor, int rate)
+    private static double[] Shift(double[] signal, double factor, int rate) => Run(new ShiftStage(factor, rate), signal);
+
+    /// <summary>The stage's whole output for the signal pushed as one chunk.</summary>
+    private static double[] Run(IGuardianStage stage, double[] signal)
     {
-        var length = signal.Length;
-        var frame = FrameLength(rate);
-        var synthesisHop = frame / 4;
-        var analysisHop = Math.Max(1, (int)Math.Round(synthesisHop / factor));
-        var bins = frame / 2;
-        var frames = ((length + frame) / analysisHop) + 1;
-
-        var stretched = new double[((frames - 1) * synthesisHop) + frame];
-        var window = Hann(frame);
-        var re = new double[frame];
-        var im = new double[frame];
-        var magnitude = new double[bins + 1];
-        var phase = new double[bins + 1];
-        var previous = new double[bins + 1];
-        var synthesis = new double[bins + 1];
-        var peaks = new List<int>();
-
-        for (var k = 0; k < frames; k++)
-        {
-            var start = (k * analysisHop) - frame;
-
-            for (var index = 0; index < frame; index++)
-            {
-                var source = start + index;
-                re[index] = (source >= 0 && source < length ? signal[source] : 0) * window[index];
-                im[index] = 0;
-            }
-
-            Fourier(re, im, inverse: false);
-
-            for (var bin = 0; bin <= bins; bin++)
-            {
-                magnitude[bin] = Math.Sqrt((re[bin] * re[bin]) + (im[bin] * im[bin]));
-                phase[bin] = Math.Atan2(im[bin], re[bin]);
-            }
-
-            if (k == 0)
-            {
-                Array.Copy(phase, synthesis, bins + 1);
-            }
-            else
-            {
-                Lock(magnitude, phase, previous, synthesis, peaks, frame, analysisHop, synthesisHop);
-            }
-
-            Array.Copy(phase, previous, bins + 1);
-
-            for (var bin = 0; bin <= bins; bin++)
-            {
-                re[bin] = magnitude[bin] * Math.Cos(synthesis[bin]);
-                im[bin] = magnitude[bin] * Math.Sin(synthesis[bin]);
-            }
-
-            Mirror(re, im);
-            Fourier(re, im, inverse: true);
-
-            var at = k * synthesisHop;
-
-            for (var index = 0; index < frame; index++)
-            {
-                stretched[at + index] += re[index] * window[index] / OverlapGain;
-            }
-        }
-
-        var ratio = (double)synthesisHop / analysisHop;
-        var shifted = new double[length];
-
-        for (var index = 0; index < length; index++)
-        {
-            shifted[index] = Read(stretched, ((index + (frame / 2.0)) * ratio) + (frame / 2.0));
-        }
-
-        return shifted;
+        var output = new List<double>(signal.Length);
+        stage.Push(signal, output);
+        stage.Finish(output);
+        return [.. output];
     }
 
     /// <summary>
@@ -1453,98 +1299,6 @@ public static partial class GuardianVoice
         }
 
         return output;
-    }
-
-    /// <summary>Reverb whose wet signal has a copy an octave up mixed in at <paramref name="layer"/>, with Reverb's faded tail.</summary>
-    private static double[] Shimmer(double[] signal, double layer, int rate)
-    {
-        var tail = (int)Math.Round(ReverbTailSeconds * rate);
-        var total = signal.Length + tail;
-        var low = ReverbWet(signal, total, rate);
-        var octave = Shift(low, 2, rate);
-        var output = new double[total];
-
-        for (var index = 0; index < total; index++)
-        {
-            var sample = (ReverbDry * (index < signal.Length ? signal[index] : 0))
-                + (ShimmerWet * (low[index] + (layer * octave[index])));
-
-            if (index >= signal.Length)
-            {
-                sample *= (double)(total - 1 - index) / tail;
-            }
-
-            output[index] = sample;
-        }
-
-        return output;
-    }
-
-    /// <summary>The dry voice with a pitch-shifted, delayed copy per <see cref="HiveCopies"/> row under it, each at <paramref name="gain"/>.</summary>
-    private static double[] Hive(double[] signal, double gain, int rate)
-    {
-        var output = (double[])signal.Clone();
-
-        foreach (var (semitones, delayMs) in HiveCopies)
-        {
-            var copy = Shift(signal, Math.Pow(2, semitones / 12), rate);
-            var delay = Samples(delayMs, rate);
-
-            for (var index = delay; index < output.Length; index++)
-            {
-                output[index] += gain * copy[index - delay];
-            }
-        }
-
-        return output;
-    }
-
-    /// <summary>
-    /// Each frame's magnitude spectrum kept and its phase replaced with values from a fixed seed, overlap-added
-    /// at a quarter-frame hop; the same clip whispers the same way every time.
-    /// </summary>
-    private static double[] Whisper(double[] signal, int rate)
-    {
-        var length = signal.Length;
-        var frame = FrameLength(rate);
-        var hop = frame / 4;
-        var bins = frame / 2;
-        var padded = length + (2 * frame);
-        var output = new double[padded];
-        var window = Hann(frame);
-        var re = new double[frame];
-        var im = new double[frame];
-        var random = new Noise(WhisperSeed);
-
-        for (var start = 0; start + frame <= padded; start += hop)
-        {
-            for (var index = 0; index < frame; index++)
-            {
-                var source = start + index - frame;
-                re[index] = (source >= 0 && source < length ? signal[source] : 0) * window[index];
-                im[index] = 0;
-            }
-
-            Fourier(re, im, inverse: false);
-
-            for (var bin = 0; bin <= bins; bin++)
-            {
-                var magnitude = Math.Sqrt((re[bin] * re[bin]) + (im[bin] * im[bin]));
-                var phase = random.Next(-Math.PI, Math.PI);
-                re[bin] = magnitude * Math.Cos(phase);
-                im[bin] = magnitude * Math.Sin(phase);
-            }
-
-            Mirror(re, im);
-            Fourier(re, im, inverse: true);
-
-            for (var index = 0; index < frame; index++)
-            {
-                output[start + index] += re[index] * window[index] / OverlapGain;
-            }
-        }
-
-        return output.AsSpan(frame, length).ToArray();
     }
 
     /// <summary>
