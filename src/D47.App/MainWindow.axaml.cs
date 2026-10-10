@@ -203,7 +203,7 @@ public partial class MainWindow : Window
                     OpenSettings,
                     host.Messages,
                     host.Stories,
-                    option => host.AnswerEnding(option).Refusal,
+                    option => host.Narration.AnswerEnding(option).Refusal,
                     host.StoryDownloads,
                     new StoryFilterMemory(host.ViewState),
                     host.SpeakerPictures,

@@ -230,6 +230,7 @@ public sealed class AppHost : IDisposable
             PlayOwnVoice,
             loggerFactory.CreateLogger<OwnVoiceRecording>());
         Absences = new CoreAbsences(viewState, () => DateTimeOffset.Now, loggerFactory.CreateLogger<CoreAbsences>());
+        Narration = new StoryNarration(Announcer, Writer, Records, pairing, stories, messages, personas, gameState, settings, SpeakerPictures, _logger);
     }
 
     /// <summary>Shows the changelog that shipped inside this build (#50).</summary>
@@ -402,6 +403,9 @@ public sealed class AppHost : IDisposable
     internal LineWriter Writer { get; }
 
     internal StoryRecords Records { get; }
+
+    /// <summary>What d47 says of a story's openings, scan and ending.</summary>
+    public StoryNarration Narration { get; }
 
     /// <summary>The gate the microphone feeds.</summary>
     public ListenGate Listening { get; }
@@ -2762,7 +2766,7 @@ public sealed class AppHost : IDisposable
         host.Stories = storyDirector;
         host.StoryDownloads = storyDownloads;
         host.StoryRatings = storyRatings;
-        endingAnswer.Answer = host.AnswerEnding;
+        endingAnswer.Answer = host.Narration.AnswerEnding;
         host.AdventureDesk = adventureDesk;
         host.Messages = messageStore;
 
@@ -2772,7 +2776,7 @@ public sealed class AppHost : IDisposable
         storyDirector.Says += host.Announcer.SayAside;
 
         // A story's opening is said before any beat of its chapter one.
-        storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.IsSayingOpening;
+        storyOpeningRef = commander => storyDirector.OpeningWaits(commander) || host.Narration.IsSayingOpening;
 
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
@@ -3129,16 +3133,16 @@ public sealed class AppHost : IDisposable
 
             if (opening is not null || narrated is not null)
             {
-                host.NarrateStart(opening, narrated, commander);
+                host.Narration.NarrateStart(opening, narrated, commander);
             }
 
             if (narrated is not null)
             {
-                wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), NarratedScanKey, context.Now);
+                wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), StoryNarration.NarratedScanKey, context.Now);
             }
 
             foreach (var (waking, core) in wakings.Due(
-                         owed => owed == NarratedScanKey ? host.IsNarratingScan : adventureBook.IsStirring(commander, owed),
+                         owed => owed == StoryNarration.NarratedScanKey ? host.Narration.IsNarratingScan : adventureBook.IsStirring(commander, owed),
                          context.Now))
             {
                 host.OnCoresWoke(waking, core);
@@ -3149,7 +3153,7 @@ public sealed class AppHost : IDisposable
 
             // A finished chapter's successor is written on the pool; the tick only starts it.
             _ = storyDirector.Tick(commander, context.Now);
-            host.PostEndingIfDue(commander);
+            host.Narration.PostEndingIfDue(commander);
         });
 
         tick.Add("callout-drain", _ => host.Announcer.SpeakPending());
@@ -4503,225 +4507,6 @@ public sealed class AppHost : IDisposable
         Speech.Casting.Of(VoiceGroups.ProviderFor(
             Settings.Current.Speech,
             VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
-
-    private int _endingBusy;
-
-    /// <summary>What a waking held behind a narrated scan line waits on, in place of a chapter key.</summary>
-    private const string NarratedScanKey = "story.scan";
-
-    /// <summary>The key prefix of a story's opening lines as they are said.</summary>
-    private const string OpeningKey = "story.opening";
-
-    /// <summary>Narrated scan lines waiting to be said.</summary>
-    private int _narratingScans;
-
-    /// <summary>Whether a narrated scan line is waiting to be said.</summary>
-    private bool IsNarratingScan => Volatile.Read(ref _narratingScans) > 0;
-
-    /// <summary>Openings whose last line has not yet been said.</summary>
-    private int _sayingOpenings;
-
-    /// <summary>Whether a story's opening is still being said, which holds back the beats of its chapter one.</summary>
-    private bool IsSayingOpening => Volatile.Read(ref _sayingOpenings) > 0;
-
-    /// <summary>
-    /// Says a picked story's opening lines in order, then its narrated beacon scan, each posted to Messages from its
-    /// speaker and said word for word: the ship in the voice aboard, a cast member in theirs, anyone else in the
-    /// Narrator's. Called on the tick thread; the speaking runs on the pool.
-    /// </summary>
-    private void NarrateStart(D47.Core.Stories.StoryOpeningDue? opening, D47.Core.Stories.StoryScanDue? scan, string? commander)
-    {
-        var openingLines = opening?.Lines ?? [];
-        var scanLine = scan?.Line;
-
-        if (openingLines.Count == 0 && scanLine is null)
-        {
-            return;
-        }
-
-        if (openingLines.Count > 0)
-        {
-            Interlocked.Increment(ref _sayingOpenings);
-        }
-
-        if (scanLine is not null)
-        {
-            Interlocked.Increment(ref _narratingScans);
-        }
-
-        _ = Task.Run(() => Announcer.InTurnAsync(async () =>
-        {
-            if (opening is not null && openingLines.Count > 0)
-            {
-                try
-                {
-                    foreach (var line in openingLines)
-                    {
-                        try
-                        {
-                            await NarrateLineAsync(OpeningKey, opening.StoryId, opening.Title, line, commander).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "A line of the story opening could not be spoken");
-                        }
-                    }
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref _sayingOpenings);
-                }
-            }
-
-            if (scan is not null && scanLine is not null)
-            {
-                try
-                {
-                    await NarrateLineAsync(NarratedScanKey, scan.StoryId, scan.Title, scanLine, commander).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "The narrated beacon scan could not be spoken");
-                }
-                finally
-                {
-                    Interlocked.Decrement(ref _narratingScans);
-                }
-            }
-        }));
-    }
-
-    /// <summary>Posts one fixed story line to Messages and says it, with its Commander tokens resolved now. Call holding the speaking turn.</summary>
-    private async Task NarrateLineAsync(string key, string storyId, string title, D47.Core.Stories.StoryLine line, string? commander)
-    {
-        var voice = Stories?.LineVoice(commander, line.Speaker)
-            ?? new D47.Core.Stories.StoryLineVoice(VoiceRole.Narrator, D47.Core.Messages.MessageStore.Narrator);
-        var text = D47.Core.Stories.StorySecret.ForCommander(line.Text, GameState.Active?.Identity.Name, Stories?.Gender());
-
-        var posted = Messages?.Post(
-            voice.From,
-            title,
-            text,
-            DateTimeOffset.Now,
-            D47.Core.Stories.StoryLines.Key(storyId),
-            picture: SpeakerPictures.For(voice.Cast),
-            cast: voice.Cast?.Picture);
-
-        if (voice.Role == VoiceRole.ShipAi)
-        {
-            await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-        }
-
-        Records.Keep(posted, await Announcer.SayAsync(Writer.Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
-    }
-
-    /// <summary>
-    /// When a story has finished, has the model write its ending, posts it to Messages with the options as
-    /// answers, says it, and records that it was posted. Starts on the pool; a failed write is tried again later.
-    /// </summary>
-    public void PostEndingIfDue(string? commander)
-    {
-        if (Stories is not { } stories
-            || stories.EndingDue(commander) is not { } due
-            || Interlocked.CompareExchange(ref _endingBusy, 1, 0) != 0)
-        {
-            return;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var voice = D47.Core.Stories.StoryClues.Narrated(Personas.Current, Settings.Current.Callouts is { Narrator: true, NarratorSeconds: > 0 })
-                    ? VoiceRole.Narrator
-                    : VoiceRole.ShipAi;
-                var key = D47.Core.Stories.StoryEnding.Key(due.StoryId);
-
-                if (await Writer.ComposeStoryLineAsync(D47.Core.Stories.StoryEnding.Speaking(due.End, voice == VoiceRole.Narrator), voice, null, key).ConfigureAwait(false) is not { } said
-                    || stories.EndingDue(commander)?.StoryId != due.StoryId)
-                {
-                    return;
-                }
-
-                var options = due.Options.Select(option => new D47.Core.Messages.MessageAnswer(option.Id, option.Label)).ToList();
-
-                var posted = Messages?.Post(
-                    voice == VoiceRole.Narrator ? D47.Core.Messages.MessageStore.Narrator : Personas.Current.Id,
-                    due.Title,
-                    said,
-                    DateTimeOffset.Now,
-                    key,
-                    options);
-
-                stories.EndingPosted(commander, due.StoryId, DateTimeOffset.Now);
-                await SpeakStoryLinesAsync(key, voice, [(said, posted)]).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "The story ending could not be posted");
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _endingBusy, 0);
-            }
-        });
-    }
-
-    /// <summary>
-    /// Answers the waiting ending with the option at this position, from one: posts the story's last line and each
-    /// added core's waking line to Messages and says them. Only the Commander reaches this.
-    /// </summary>
-    public D47.Core.Stories.StoryAnswer AnswerEnding(int? option)
-    {
-        var commander = GameState.Active?.Identity.FrontierId;
-
-        if (Stories is not { } stories || stories.EndingTitle(commander) is not { } title
-            || stories.EndingStoryId(commander) is not { } storyId)
-        {
-            return D47.Core.Stories.StoryAnswer.Refused("No ending is waiting for an answer.");
-        }
-
-        var answer = stories.Answer(commander, option);
-
-        if (answer.Refusal is not null)
-        {
-            return answer;
-        }
-
-        var lines = new List<string> { answer.After };
-        lines.AddRange(answer.Wakings);
-
-        var posted = lines
-            .Select(line => (line, Messages?.Post(Personas.Current.Id, title, line, DateTimeOffset.Now, D47.Core.Stories.StoryEnding.Key(storyId))))
-            .ToList();
-
-        _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", VoiceRole.ShipAi, posted));
-        return answer;
-    }
-
-    /// <summary>Says each line in the given voice, keeping each clip on the message posted for it.</summary>
-    private async Task SpeakStoryLinesAsync(string key, VoiceRole voice, IReadOnlyList<(string Line, D47.Core.Messages.D47Message? Posted)> lines)
-    {
-        await Announcer.InTurnAsync(async () =>
-        {
-            try
-            {
-                if (voice == VoiceRole.ShipAi)
-                {
-                    await Pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
-                }
-
-                foreach (var (line, posted) in lines)
-                {
-                    Records.Keep(posted, await Announcer.SayAsync(new Announcement(key, line) { Voice = voice }).ConfigureAwait(false));
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "A story line could not be spoken");
-            }
-        }).ConfigureAwait(false);
-    }
 
     /// <summary>Whether a web lookup could actually be run right now.</summary>
     private bool CanSearch =>
