@@ -109,6 +109,21 @@ public class TheSetupWizardDownloadsTheChosenLocalVoiceTests
     }
 
     [AvaloniaFact]
+    public void ADownloadThatThrowsShowsItsMessageInsteadOfHanging()
+    {
+        var (wizard, host, fetch, closed) = Open();
+
+        Press(wizard, "SetupNext");
+        fetch.Done.SetException(new TtsException("No Kokoro voice has been chosen."));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(closed());
+        Assert.Contains("No Kokoro voice has been chosen.", Text(wizard));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
     public void CancellingStopsTheDownloadAndKeepsTheSavedChoice()
     {
         var (wizard, host, fetch, closed) = Open();

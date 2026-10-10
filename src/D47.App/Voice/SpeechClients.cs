@@ -189,7 +189,7 @@ public sealed class SpeechClients : IDisposable
         if (string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
             && !D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder()))
         {
-            return new("Kokoro", D47.Core.Speech.KokoroAssets.TotalMegabytes, DownloadLocalVoice);
+            return new("Kokoro", D47.Core.Speech.KokoroAssets.TotalMegabytes, DownloadLocalVoiceForSetup);
         }
 
         if (string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
@@ -253,9 +253,21 @@ public sealed class SpeechClients : IDisposable
         "Local voice installed. This is D47, speaking from your own machine. Nothing I say through "
         + "this provider leaves it.";
 
-    /// <summary>Fetches the local voice, off the UI thread, saying how far it has got.</summary>
-    internal async Task<string?> DownloadLocalVoice(
+    /// <summary>Fetches the local voice, off the UI thread, saying how far it has got, then speaks the proof line.</summary>
+    internal Task<string?> DownloadLocalVoice(
         IProgress<double> progress,
+        CancellationToken cancellationToken) =>
+        DownloadLocalVoiceAsync(progress, speakProof: true, cancellationToken);
+
+    /// <summary>The setup wizard's download: the same fetch, with no proof line.</summary>
+    internal Task<string?> DownloadLocalVoiceForSetup(
+        IProgress<double> progress,
+        CancellationToken cancellationToken) =>
+        DownloadLocalVoiceAsync(progress, speakProof: false, cancellationToken);
+
+    private async Task<string?> DownloadLocalVoiceAsync(
+        IProgress<double> progress,
+        bool speakProof,
         CancellationToken cancellationToken)
     {
         if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
@@ -285,7 +297,9 @@ public sealed class SpeechClients : IDisposable
             // The picker's list, asked for again now that there is something to list.
             await RefreshLocalVoicesAsync().ConfigureAwait(false);
 
-            return await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false);
+            return speakProof
+                ? await SpeakLocalVoiceProofAsync(cancellationToken).ConfigureAwait(false)
+                : null;
         }
         catch (Exception ex) when (ex is IOException or HttpRequestException)
         {
@@ -373,6 +387,11 @@ public sealed class SpeechClients : IDisposable
     /// Speaks one line in the voice that was just downloaded, through the one arbiter like everything
     /// else that makes a sound.
     /// </summary>
+    internal static string LocalVoiceProofVoice(string? shipVoice) =>
+        shipVoice is not null && D47.Core.Speech.KokoroAssets.VoiceIds.Contains(shipVoice)
+            ? shipVoice
+            : D47.Core.Speech.KokoroAssets.VoiceIds[0];
+
     private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
     {
         var shared = ClientFor(TtsProviderCatalog.KokoroId);
@@ -389,7 +408,7 @@ public sealed class SpeechClients : IDisposable
             var clip = await (shared ?? own!).SynthesizeAsync(
                 LocalVoiceProof,
                 new VoiceSelection(
-                    SpeechCapability.ShipVoiceFor(_settings.Current, _personas.Current.Id),
+                    LocalVoiceProofVoice(SpeechCapability.ShipVoiceFor(_settings.Current, _personas.Current.Id)),
                     SpeechCapability.RateFor(_settings.Current, TtsProviderCatalog.KokoroId)),
                 cancellationToken).ConfigureAwait(false);
 
@@ -403,7 +422,7 @@ public sealed class SpeechClients : IDisposable
 
             return null;
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or TtsException)
         {
             // The files are there and something else is wrong, which is worth saying on the row: the state
             // above it now reads "installed" and the Commander heard nothing.

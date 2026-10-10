@@ -629,7 +629,8 @@ public partial class MainWindow : Window
                 OpenSettings();
                 RevealSetting(PrivacyCapability.Id);
             },
-            localVoice: host.Speech.LocalVoiceToFetch).Over(this);
+            localVoice: host.Speech.LocalVoiceToFetch,
+            logger: host.Loggers.CreateLogger<SetupWizard>()).Over(this);
     }
 
     /// <summary>Window-scoped gestures, matched against the bound settings.</summary>

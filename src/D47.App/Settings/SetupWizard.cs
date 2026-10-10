@@ -16,6 +16,8 @@ using D47.Core.Conversation;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Listening;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.App.Settings;
 
@@ -69,6 +71,7 @@ public sealed class SetupWizard : ModalDialog
 
     private CancellationTokenSource? _download;
     private LocalVoiceDownload? _fetching;
+    private readonly ILogger _logger;
     private string? _downloadFailure;
     private double _fraction;
     private ProgressBar? _bar;
@@ -79,8 +82,10 @@ public sealed class SetupWizard : ModalDialog
         Func<EliteBinds>? binds = null,
         SwitchEditing? switches = null,
         Action? openPrivacy = null,
-        Func<string, LocalVoiceDownload?>? localVoice = null)
+        Func<string, LocalVoiceDownload?>? localVoice = null,
+        ILogger? logger = null)
     {
+        _logger = logger ?? NullLogger.Instance;
         _settings = settings;
         _binds = binds ?? (() => EliteBinds.None);
         _switches = switches;
@@ -245,6 +250,11 @@ public sealed class SetupWizard : ModalDialog
         catch (OperationCanceledException)
         {
             return;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "The {Voice} download failed", voice.Name);
+            failure = ex.Message;
         }
 
         if (_download != source)
