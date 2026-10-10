@@ -27,6 +27,9 @@ public static class RadioVoice
     /// <summary>The link as a running filter on <see cref="AudioFormat.Standard"/> PCM.</summary>
     public static IPcmFilter Filter(double strength, bool overheard) => new Link(AudioFormat.Standard, strength, overheard);
 
+    /// <summary>The link as a running filter on PCM of <paramref name="format"/>.</summary>
+    internal static IPcmFilter Filter(AudioFormat format, double strength, bool overheard) => new Link(format, strength, overheard);
+
     /// <summary>The bottom of the passband.</summary>
     private const double LowEdgeHz = 400;
 

@@ -266,7 +266,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 20,
             Value = level => level / 20.0,
-            Start = (mix, _, rate) => WholeClip(signal => Helmet(signal, mix, rate)),
+            Start = (mix, _, rate) => new HelmetStage(mix, rate),
         },
         new GuardianEffect
         {
@@ -277,7 +277,7 @@ public static partial class GuardianVoice
             Unit = "%",
             DefaultLevel = 6,
             Value = level => level / 20.0,
-            Start = (strength, _, rate) => WholeClip(signal => Radio(signal, strength, rate)),
+            Start = (strength, _, rate) => new RadioStage(strength, rate),
         },
         new GuardianEffect
         {
@@ -720,43 +720,6 @@ public static partial class GuardianVoice
                 synthesis[bin] = synthesis[peak] + phase[bin] - phase[peak];
             }
         }
-    }
-
-    /// <summary>The line run through <see cref="RadioVoice"/> at <paramref name="strength"/>, mono, at this rate.</summary>
-    private static double[] Radio(double[] signal, double strength, int rate)
-    {
-        var pcm = Encode([signal], 1);
-        var clip = new AudioClip("segment", pcm, new AudioFormat(rate, 1));
-        var treated = RadioVoice.Apply(clip, strength);
-        var frames = treated.Pcm.Length / 2;
-
-        return Decode(treated.Pcm.Span, 1, frames)[0];
-    }
-
-    /// <summary>
-    /// The line put through <see cref="RadioVoice"/> at full strength, blended with the dry line by
-    /// <paramref name="mix"/>, with a click added before the first sample and after the last.
-    /// </summary>
-    private static double[] Helmet(double[] signal, double mix, int rate)
-    {
-        var treated = Radio(signal, 1, rate);
-        var body = new double[treated.Length];
-
-        for (var index = 0; index < treated.Length; index++)
-        {
-            var dry = index < signal.Length ? signal[index] : 0;
-            body[index] = (mix * treated[index]) + ((1 - mix) * dry);
-        }
-
-        var open = Click(rate, rising: false);
-        var close = Click(rate, rising: true);
-        var output = new double[open.Length + body.Length + close.Length];
-
-        Array.Copy(open, output, open.Length);
-        Array.Copy(body, 0, output, open.Length, body.Length);
-        Array.Copy(close, 0, output, open.Length + body.Length, close.Length);
-
-        return output;
     }
 
     /// <summary>

@@ -471,6 +471,68 @@ public static partial class GuardianVoice
         }
     }
 
+    /// <summary>The line through <see cref="RadioVoice"/> at <c>strength</c>, quantised to 16-bit PCM as the link reads it, with the link's tail on finish.</summary>
+    private sealed class RadioStage(double strength, int rate) : IGuardianStage
+    {
+        private readonly IPcmFilter _link = RadioVoice.Filter(new AudioFormat(rate, 1), strength, overheard: false);
+
+        public void Push(ReadOnlySpan<double> input, List<double> output) =>
+            Append(_link.Push(Encode([input.ToArray()], 1)), output);
+
+        public void Finish(List<double> output) => Append(_link.Finish(), output);
+
+        private static void Append(byte[] pcm, List<double> output) =>
+            output.AddRange(Decode(pcm, 1, pcm.Length / 2)[0]);
+    }
+
+    /// <summary>The radio link blended with the dry line by <c>mix</c>, with a click before the first sample and after the last.</summary>
+    private sealed class HelmetStage(double mix, int rate) : IGuardianStage
+    {
+        private readonly RadioStage _radio = new(1, rate);
+        private readonly List<double> _dry = [];
+        private int _emitted;
+        private bool _opened;
+
+        public void Push(ReadOnlySpan<double> input, List<double> output)
+        {
+            Open(output);
+            _dry.AddRange(input);
+
+            var treated = new List<double>();
+            _radio.Push(input, treated);
+            Blend(treated, output);
+        }
+
+        public void Finish(List<double> output)
+        {
+            Open(output);
+
+            var treated = new List<double>();
+            _radio.Finish(treated);
+            Blend(treated, output);
+            output.AddRange(Click(rate, rising: true));
+        }
+
+        private void Open(List<double> output)
+        {
+            if (!_opened)
+            {
+                _opened = true;
+                output.AddRange(Click(rate, rising: false));
+            }
+        }
+
+        private void Blend(List<double> treated, List<double> output)
+        {
+            foreach (var sample in treated)
+            {
+                var dry = _emitted < _dry.Count ? _dry[_emitted] : 0;
+                output.Add((mix * sample) + ((1 - mix) * dry));
+                _emitted++;
+            }
+        }
+    }
+
     /// <summary>The line with a synthesised breath, the parameter's milliseconds long, added after it.</summary>
     private sealed class RespiratorStage(double breathMs, int rate) : IGuardianStage
     {
