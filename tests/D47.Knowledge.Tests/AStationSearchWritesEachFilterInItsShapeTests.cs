@@ -164,4 +164,21 @@ public class AStationSearchWritesEachFilterInItsShapeTests
         Assert.False(filters.TryGetProperty("type", out _));
         Assert.False(filters.TryGetProperty("services", out _));
     }
+
+    [Fact]
+    public void AStationEconomyIsTheStationsOwnAndPrimaryEconomyStaysTheSystems()
+    {
+        var filters = Filters(new StationSearch
+        {
+            Filters = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["station_economy"] = "refinery",
+                ["primary_economy"] = "Industrial",
+            },
+        });
+
+        Assert.Equal(["Refinery"], Values(filters.GetProperty("primary_economy")));
+        Assert.Equal(["Industrial"], Values(filters.GetProperty("system_primary_economy")));
+        Assert.Equal(1, filters.EnumerateObject().Count(property => property.Name == "primary_economy"));
+    }
 }

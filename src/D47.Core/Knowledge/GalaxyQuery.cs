@@ -38,6 +38,18 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
     /// <summary>The tool parameter's description.</summary>
     public string Description { get; init; } = string.Empty;
 
+    /// <summary>
+    /// The key inside the one <c>minor_faction_presences</c> element, for a filter on a faction present. Every
+    /// such filter in a search describes the same faction.
+    /// </summary>
+    public string? Presence { get; init; }
+
+    /// <summary>
+    /// Takes several choices, comma-separated. The tool schema lists them in the description, because an enum
+    /// would refuse the list.
+    /// </summary>
+    public bool Several { get; init; }
+
     public bool Honours(GalaxySearchKind kind) => Fields.ContainsKey(kind);
 
     /// <summary>The key on <paramref name="kind"/>; only valid where <see cref="Honours"/> holds.</summary>
@@ -78,6 +90,19 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
 /// <summary>The filter vocabulary, and the local validation that is the reason for it.</summary>
 public static class GalaxyFilters
 {
+    private static readonly string[] Governments =
+    [
+        "Anarchy", "Communism", "Confederacy", "Cooperative", "Corporate", "Democracy", "Dictatorship", "Feudal",
+        "None", "Patronage", "Prison", "Prison Colony", "Theocracy",
+    ];
+
+    private static readonly string[] States =
+    [
+        "Blight", "Boom", "Bust", "Civil Liberty", "Civil Unrest", "Civil War", "Drought", "Election", "Expansion",
+        "Famine", "Infrastructure Failure", "Investment", "Lockdown", "Natural Disaster", "None", "Outbreak",
+        "Pirate Attack", "Public Holiday", "Retreat", "Terrorist Attack", "War",
+    ];
+
     /// <summary>Every filter d47 offers, on any search kind.</summary>
     public static IReadOnlyList<GalaxyFilter> All { get; } =
     [
@@ -87,11 +112,7 @@ public static class GalaxyFilters
             "Superpower allegiance.",
             "Alliance", "Empire", "Federation", "Guardian", "Independent", "Pilots Federation", "Thargoid")
             .On(GalaxySearchKind.Stations, "allegiance"),
-        GalaxyFilter.Choice(
-            "government",
-            "Form of government.",
-            "Anarchy", "Communism", "Confederacy", "Cooperative", "Corporate", "Democracy", "Dictatorship",
-            "Feudal", "None", "Patronage", "Prison", "Prison Colony", "Theocracy")
+        GalaxyFilter.ChoiceOf("government", "government", "Form of government.", Governments)
             .On(GalaxySearchKind.Stations, "government"),
         GalaxyFilter.Choice(
             "primary_economy",
@@ -100,6 +121,18 @@ public static class GalaxyFilters
             "Service", "Terraforming", "Tourism")
             .On(GalaxySearchKind.Stations, "system_primary_economy"),
         GalaxyFilter.Choice("security", "Security level.", "Anarchy", "High", "Low", "Medium"),
+        new GalaxyFilter(
+            "station_economy",
+            GalaxyFilterKind.Choice,
+            [
+                "Agriculture", "Colony", "Extraction", "High Tech", "Industrial", "Military", "Prison",
+                "Private Enterprise", "Refinery", "Rescue", "Service", "Terraforming", "Tourism",
+            ])
+        {
+            Fields = new Dictionary<GalaxySearchKind, string> { [GalaxySearchKind.Stations] = "primary_economy" },
+            Description = "The station's own main economy.",
+            Several = true,
+        },
 
         // What the controlling faction is going through, which is what a Commander means by "a system in
         // Boom" and what gates where several grade-5 materials can be found at all
@@ -109,15 +142,24 @@ public static class GalaxyFilters
             "controlling_minor_faction_state",
             "What the controlling faction is going through. Crowd-reported, so this finds systems reported in "
             + "that state.",
-            [
-                "Blight", "Boom", "Bust", "Civil Liberty", "Civil Unrest", "Civil War", "Drought", "Election",
-                "Expansion", "Famine", "Infrastructure Failure", "Investment", "Lockdown", "Natural Disaster",
-                "None", "Outbreak", "Pirate Attack", "Public Holiday", "Retreat", "Terrorist Attack", "War",
-            ]).On(GalaxySearchKind.Stations, "controlling_minor_faction_state"),
+            States).On(GalaxySearchKind.Stations, "controlling_minor_faction_state"),
 
-        // Measured as silently ignored: minor_faction_presences: {"name":{"value":[…]}}, and a top-level minor_faction.
+        // faction, faction_state and faction_government are written together as one element of
+        // minor_faction_presences, so together they match one faction that is all of them.
         GalaxyFilter.NameOf(
-            "faction", "minor_faction_presences", "A minor faction present in the system, by its exact name."),
+            "faction", "minor_faction_presences", "A minor faction present in the system, by its exact name.")
+            with { Presence = "name" },
+        GalaxyFilter.ChoiceOf(
+            "faction_state",
+            "minor_faction_presences",
+            "What any faction present is going through. Crowd-reported. With faction or faction_government, the "
+            + "same faction.",
+            States) with { Presence = "state", Several = true },
+        GalaxyFilter.ChoiceOf(
+            "faction_government",
+            "minor_faction_presences",
+            "The form of government of any faction present. With faction or faction_state, the same faction.",
+            Governments) with { Presence = "government", Several = true },
         GalaxyFilter.NameOf(
             "controlling_faction",
             "controlling_minor_faction",

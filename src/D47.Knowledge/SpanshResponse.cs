@@ -587,7 +587,11 @@ internal static class SpanshResponse
                    && presences.ValueKind == JsonValueKind.Array
             ? [.. presences.EnumerateArray()
                 .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
-                .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence")))]
+                .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence"))
+                {
+                    State = String(presence, "state"),
+                    Government = String(presence, "government"),
+                })]
             : [],
         AtWar = element.TryGetProperty("minor_faction_presences", out var states)
                 && states.ValueKind == JsonValueKind.Array

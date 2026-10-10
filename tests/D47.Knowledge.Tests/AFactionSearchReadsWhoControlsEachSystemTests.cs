@@ -25,7 +25,9 @@ public class AFactionSearchReadsWhoControlsEachSystemTests
         Assert.Equal("Eurybia", eurybia.Name);
         Assert.Equal(Faction, eurybia.ControllingFaction);
         Assert.Equal(new DateTimeOffset(2026, 9, 26, 1, 15, 32, TimeSpan.Zero), eurybia.ReportedAt);
-        Assert.Contains(new FactionPresence("Democrats of Eurybia", 0.121335), eurybia.Factions);
+        Assert.Contains(
+            new FactionPresence("Democrats of Eurybia", 0.121335) { State = "Civil War", Government = "Democracy" },
+            eurybia.Factions);
     }
 
     [Fact]

@@ -84,19 +84,20 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
     }
 
     [Fact]
-    public void TheSystemSearchHoldsTheEightFiltersAndTheFourPowerAndPopulationOnes()
+    public void EachKindHoldsExactlyTheFiltersItHonours()
     {
         Assert.Equal(
             [
                 "distance", "allegiance", "government", "primary_economy", "security", "state", "faction",
-                "controlling_faction", "power", "power_state", "population", "colonised",
+                "faction_state", "faction_government", "controlling_faction", "power", "power_state", "population",
+                "colonised",
             ],
             GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name));
 
         Assert.Equal(
             [
-                "allegiance", "government", "primary_economy", "state", "controlling_faction", "power",
-                "power_state", "population", "colonised",
+                "allegiance", "government", "primary_economy", "station_economy", "state", "controlling_faction",
+                "power", "power_state", "population", "colonised",
             ],
             GalaxyFilters.For(GalaxySearchKind.Stations).Select(filter => filter.Name));
         Assert.Equal(["power", "power_state"], GalaxyFilters.For(GalaxySearchKind.Bodies).Select(filter => filter.Name));
@@ -115,9 +116,31 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
     }
 
     [Theory]
+    [InlineData(GalaxySearchKind.Stations, "faction_state", "Civil Unrest", "Stations", "station")]
+    [InlineData(GalaxySearchKind.Stations, "faction_government", "Corporate", "Stations", "station")]
+    [InlineData(GalaxySearchKind.Systems, "station_economy", "Refinery", "Systems", "system")]
+    public void AFactionPresentIsRefusedToStationsAndAStationEconomyToSystems(
+        GalaxySearchKind kind,
+        string filter,
+        string value,
+        string plural,
+        string singular)
+    {
+        Assert.False(GalaxyCriteria.TryParse(
+            kind,
+            new Dictionary<string, string>(StringComparer.Ordinal) { [filter] = value },
+            out _,
+            out var failure));
+
+        Assert.Equal($"{plural} can't be filtered by {filter}: Spansh's {singular} index doesn't carry it.", failure);
+    }
+
+    [Theory]
     [InlineData("power", "Zachary Hudson")]
     [InlineData("power_state", "Contested")]
-    public void AnUnknownPowerOrStateIsRefusedWithTheValidOnes(string filter, string value)
+    [InlineData("faction_state", "Civil Unrst")]
+    [InlineData("faction_government", "Corprate")]
+    public void AnUnknownChoiceIsRefusedWithTheValidOnes(string filter, string value)
     {
         Assert.False(GalaxyCriteria.TryParse(
             GalaxySearchKind.Systems,
@@ -216,6 +239,58 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
 
         Assert.Contains("Jerome Archer, Fortified", withPower.Content, StringComparison.Ordinal);
         Assert.DoesNotContain("Jerome Archer", without.Content, StringComparison.Ordinal);
+    }
+
+    private static readonly GalaxySearchResult Barnards = new(
+        "Sol",
+        1,
+        [new SystemSummary
+        {
+            Name = "Barnard's Star",
+            Distance = 5.95,
+            ControllingFaction = "Barnard's Star Labour",
+            Factions =
+            [
+                new FactionPresence("Barnard's Star Labour", 0.61) { State = "Boom", Government = "Democracy" },
+                new FactionPresence("Barnard's Star Alliance", 0.12) { State = "Civil Unrest", Government = "Corporate" },
+                new FactionPresence("Barnard's Star Crimson Gang", 0.27) { State = "Expansion", Government = "Anarchy" },
+            ],
+        }]);
+
+    [Fact]
+    public async Task AFactionStateSearchNamesTheFactionInThatState()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+        galaxy.Result = Barnards;
+
+        var result = await registry.InvokeAsync(
+            "search_systems",
+            Args(("faction_state", "civil unrest")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains(
+            "controlled by Barnard's Star Labour; Barnard's Star Alliance in Civil Unrest",
+            result.Content,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Crimson Gang", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AFactionStateAndGovernmentSearchNamesTheFactionThatIsBoth()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+        galaxy.Result = Barnards;
+
+        var result = await registry.InvokeAsync(
+            "search_systems",
+            Args(("faction_state", "Civil Unrest, Expansion"), ("faction_government", "Anarchy")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains("; Barnard's Star Crimson Gang, Anarchy, in Expansion", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Barnard's Star Alliance", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -89,7 +89,6 @@ public class SpanshRequestTests
     }
 
     [Theory]
-    [InlineData("faction", "minor_faction_presences")]
     [InlineData("controlling_faction", "controlling_minor_faction")]
     public void AFactionIsSentAsOneNameInTheChoiceShape(string filter, string field)
     {

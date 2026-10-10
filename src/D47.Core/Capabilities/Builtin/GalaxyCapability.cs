@@ -700,8 +700,10 @@ public static class GalaxyCapability
     {
         Name = filter.Name,
         Type = filter.Kind == GalaxyFilterKind.Flag ? ToolParameterType.Boolean : ToolParameterType.String,
-        Description = filter.Description,
-        AllowedValues = filter.Kind == GalaxyFilterKind.Choice ? filter.Choices : [],
+        Description = filter.Several
+            ? $"{filter.Description} One or more, comma-separated: {string.Join(", ", filter.Choices)}."
+            : filter.Description,
+        AllowedValues = filter.Kind == GalaxyFilterKind.Choice && !filter.Several ? filter.Choices : [],
     };
 
     private static async Task<ToolResult> SearchAsync(
@@ -2596,6 +2598,11 @@ public static class GalaxyCapability
 
         var askedPower = query.Criteria.Any(criterion => criterion.Filter.Name is "power" or "power_state");
 
+        var presence = query.Criteria.Where(criterion => criterion.Filter.Presence is not null).ToList();
+        var askedState = presence.FirstOrDefault(criterion => criterion.Filter.Presence == "state");
+        var askedGovernment = presence.FirstOrDefault(criterion => criterion.Filter.Presence == "government");
+        var askedName = presence.FirstOrDefault(criterion => criterion.Filter.Presence == "name");
+
         if (result.Systems.Count == 0)
         {
             return "Nothing matched that search.";
@@ -2679,14 +2686,40 @@ public static class GalaxyCapability
                 report.Append($"; {string.Join(", ", facts)}");
             }
 
-            if (asked is not null)
+            if (asked is not null || presence.Count > 0)
             {
                 if (system.ControllingFaction is not null)
                 {
                     report.Append($"; controlled by {system.ControllingFaction}");
                 }
 
-                if (system.Factions.FirstOrDefault(faction =>
+                if (askedState is not null || askedGovernment is not null)
+                {
+                    foreach (var faction in system.Factions.Where(faction =>
+                                 Matches(askedName, faction.Name)
+                                 && Matches(askedState, faction.State)
+                                 && Matches(askedGovernment, faction.Government)))
+                    {
+                        report.Append($"; {faction.Name}");
+
+                        if (askedGovernment is not null)
+                        {
+                            report.Append(askedState is null ? $", {faction.Government}" : $", {faction.Government},");
+                        }
+
+                        if (askedState is not null)
+                        {
+                            report.Append($" in {faction.State}");
+                        }
+
+                        if (askedName is not null && faction.Influence is { } share)
+                        {
+                            report.Append(
+                                $" at {(share * 100).ToString("0.0", CultureInfo.InvariantCulture)}% influence");
+                        }
+                    }
+                }
+                else if (asked is not null && system.Factions.FirstOrDefault(faction =>
                         string.Equals(faction.Name, asked, StringComparison.OrdinalIgnoreCase)) is { Influence: { } influence } present)
                 {
                     report.Append(
@@ -2702,4 +2735,9 @@ public static class GalaxyCapability
 
         return report.ToString().TrimEnd();
     }
+
+    /// <summary>True when nothing was asked, or <paramref name="value"/> is one of the values asked for.</summary>
+    private static bool Matches(GalaxyCriterion? asked, string? value) =>
+        asked is null
+        || asked.Choices.Any(choice => string.Equals(choice, value, StringComparison.OrdinalIgnoreCase));
 }

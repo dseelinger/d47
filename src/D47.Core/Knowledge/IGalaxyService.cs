@@ -44,7 +44,13 @@ public sealed record SystemSummary
 }
 
 /// <summary>A minor faction present in a system, and its influence there as a fraction of 1.</summary>
-public sealed record FactionPresence(string Name, double? Influence);
+public sealed record FactionPresence(string Name, double? Influence)
+{
+    /// <summary>The one state the service reports for it, which may be one of several active.</summary>
+    public string? State { get; init; }
+
+    public string? Government { get; init; }
+}
 
 /// <summary>What a galaxy search produced, and how much of it was left behind.</summary>
 /// <param name="Reference">

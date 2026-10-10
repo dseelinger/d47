@@ -48,49 +48,77 @@ internal static class SpanshRequest
     /// <summary>Writes each criterion under its key on <paramref name="kind"/>, in its filter's shape.</summary>
     public static void WriteCriteria(Utf8JsonWriter writer, GalaxySearchKind kind, IReadOnlyList<GalaxyCriterion> criteria)
     {
-        foreach (var criterion in criteria)
+        foreach (var criterion in criteria.Where(criterion => criterion.Filter.Presence is null))
         {
             // The service's own key, which is not always the word d47 offers for it — "state" is sent as
             // controlling_minor_faction_state, because the field actually called "state" is honoured and
             // matches nothing.
             writer.WriteStartObject(criterion.Filter.FieldOn(kind));
-
-            switch (criterion.Filter.Kind)
-            {
-                case GalaxyFilterKind.Choice or GalaxyFilterKind.Name:
-                    writer.WriteStartArray("value");
-
-                    foreach (var choice in criterion.Choices)
-                    {
-                        writer.WriteStringValue(choice);
-                    }
-
-                    writer.WriteEndArray();
-                    break;
-
-                case GalaxyFilterKind.Flag:
-                    writer.WriteStartArray("value");
-                    writer.WriteStringValue("true");
-                    writer.WriteEndArray();
-                    break;
-
-                case GalaxyFilterKind.Comparison:
-                    writer.WriteStartArray("value");
-                    writer.WriteStringValue(Number(criterion.Min ?? 0));
-                    writer.WriteStringValue(Number(criterion.Max ?? UnboundedMax));
-                    writer.WriteEndArray();
-                    writer.WriteString("comparison", "<=>");
-                    break;
-
-                default:
-                    // Both ends are always written, with an absent bound becoming the widest value that still
-                    // means "unbounded".
-                    writer.WriteString("min", Number(criterion.Min ?? 0));
-                    writer.WriteString("max", Number(criterion.Max ?? UnboundedMax));
-                    break;
-            }
-
+            WriteShape(writer, criterion);
             writer.WriteEndObject();
+        }
+
+        WritePresence(writer, kind, [.. criteria.Where(criterion => criterion.Filter.Presence is not null)]);
+    }
+
+    /// <summary>Every presence criterion as one array element, so together they match one faction.</summary>
+    private static void WritePresence(Utf8JsonWriter writer, GalaxySearchKind kind, IReadOnlyList<GalaxyCriterion> presence)
+    {
+        if (presence.Count == 0)
+        {
+            return;
+        }
+
+        writer.WriteStartArray(presence[0].Filter.FieldOn(kind));
+        writer.WriteStartObject();
+
+        foreach (var criterion in presence)
+        {
+            writer.WriteStartObject(criterion.Filter.Presence!);
+            WriteShape(writer, criterion);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndObject();
+        writer.WriteEndArray();
+    }
+
+    /// <summary>The body of one criterion's object, in its filter's shape.</summary>
+    private static void WriteShape(Utf8JsonWriter writer, GalaxyCriterion criterion)
+    {
+        switch (criterion.Filter.Kind)
+        {
+            case GalaxyFilterKind.Choice or GalaxyFilterKind.Name:
+                writer.WriteStartArray("value");
+
+                foreach (var choice in criterion.Choices)
+                {
+                    writer.WriteStringValue(choice);
+                }
+
+                writer.WriteEndArray();
+                break;
+
+            case GalaxyFilterKind.Flag:
+                writer.WriteStartArray("value");
+                writer.WriteStringValue("true");
+                writer.WriteEndArray();
+                break;
+
+            case GalaxyFilterKind.Comparison:
+                writer.WriteStartArray("value");
+                writer.WriteStringValue(Number(criterion.Min ?? 0));
+                writer.WriteStringValue(Number(criterion.Max ?? UnboundedMax));
+                writer.WriteEndArray();
+                writer.WriteString("comparison", "<=>");
+                break;
+
+            default:
+                // Both ends are always written, with an absent bound becoming the widest value that still
+                // means "unbounded".
+                writer.WriteString("min", Number(criterion.Min ?? 0));
+                writer.WriteString("max", Number(criterion.Max ?? UnboundedMax));
+                break;
         }
     }
 
