@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Setup now downloads the voice you chose. When you pick Kokoro or Chatterbox and its model is not installed, START opens a download step with a progress bar and the megabytes fetched, and the wizard closes when the download finishes. Cancel keeps your choice, and the Settings row still offers the download. The Ready step says how large the download is before you press START.
+
 A core's line in the transcript always shows its shipped portrait. A `core.*.png` file placed in `data\pictures` is ignored.
 
 The Vocoder, Deep core, Flanged vocoder, Hive chorus, Shimmer core and Respirator Guardian presets now start playing before the sentence group has fully arrived. Cylon, Pitch down, Octave-down layer, Hive and Shimmer now work as the voice arrives, each holding back at most about a sixteenth of a second. The effects sound as they did; as with the presets that already started sooner, loudness can shift slightly at the start of a line.

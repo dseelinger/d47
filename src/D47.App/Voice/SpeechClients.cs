@@ -179,6 +179,24 @@ public sealed class SpeechClients : IDisposable
             : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
               + "once from huggingface.co.";
 
+    /// <summary>The download setup offers for a voice provider, or null where it is not local or already installed.</summary>
+    internal D47.App.Settings.LocalVoiceDownload? LocalVoiceToFetch(string providerId)
+    {
+        if (string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+            && !D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder()))
+        {
+            return new("Kokoro", D47.Core.Speech.KokoroAssets.TotalMegabytes, DownloadLocalVoice);
+        }
+
+        if (string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
+            && !D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder()))
+        {
+            return new("Chatterbox", D47.Core.Speech.ChatterboxAssets.TotalMegabytes, DownloadChatterbox);
+        }
+
+        return null;
+    }
+
     /// <summary>Fetches Chatterbox's model, off the UI thread, then asks it for its voices.</summary>
     internal async Task<string?> DownloadChatterbox(
         IProgress<double> progress,

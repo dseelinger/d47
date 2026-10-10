@@ -19,6 +19,9 @@ using D47.Core.Listening;
 
 namespace D47.App.Settings;
 
+/// <summary>A local voice model the setup wizard fetches: its name, size and the download itself.</summary>
+public sealed record LocalVoiceDownload(string Name, double Megabytes, LongPress Fetch);
+
 /// <summary>
 /// The first-run setup: welcome, three provider choices, the keys they need, the talk button, and a
 /// summary. Nothing is saved until START; SKIP SETUP and Esc close it with every setting unchanged.
@@ -53,6 +56,7 @@ public sealed class SetupWizard : ModalDialog
     private readonly Func<EliteBinds> _binds;
     private readonly SwitchEditing? _switches;
     private readonly Action? _openPrivacy;
+    private readonly Func<string, LocalVoiceDownload?>? _localVoice;
 
     /// <summary>Kept across redraws, because a stick capture reports into it while it runs.</summary>
     private readonly StatusLine _message = new();
@@ -63,16 +67,25 @@ public sealed class SetupWizard : ModalDialog
     /// <summary>What START could not save, shown on the Ready step.</summary>
     private IReadOnlyList<SettingApplyResult> _refused = [];
 
+    private CancellationTokenSource? _download;
+    private LocalVoiceDownload? _fetching;
+    private string? _downloadFailure;
+    private double _fraction;
+    private ProgressBar? _bar;
+    private TextBlock? _fetched;
+
     public SetupWizard(
         SettingsService settings,
         Func<EliteBinds>? binds = null,
         SwitchEditing? switches = null,
-        Action? openPrivacy = null)
+        Action? openPrivacy = null,
+        Func<string, LocalVoiceDownload?>? localVoice = null)
     {
         _settings = settings;
         _binds = binds ?? (() => EliteBinds.None);
         _switches = switches;
         _openPrivacy = openPrivacy;
+        _localVoice = localVoice;
 
         Title = "Set up Directive 47";
         Width = Modal.Width;
@@ -89,6 +102,9 @@ public sealed class SetupWizard : ModalDialog
 
     /// <summary>Whether START saved the choices.</summary>
     public bool Started { get; private set; }
+
+    /// <summary>Whether the download step is showing, after START saved a local voice that is not installed.</summary>
+    public bool IsDownloading { get; private set; }
 
     /// <summary>The keys the current choices need.</summary>
     public IReadOnlyList<SetupKey> Keys => FirstRun.Keys(_settings, Choices);
@@ -110,6 +126,12 @@ public sealed class SetupWizard : ModalDialog
     private void Render()
     {
         var step = Current;
+
+        if (IsDownloading)
+        {
+            RenderDownload();
+            return;
+        }
 
         var (title, body) = step switch
         {
@@ -179,7 +201,137 @@ public sealed class SetupWizard : ModalDialog
         }
 
         Started = true;
+
+        if (_localVoice?.Invoke(Choices.Voice) is { } voice)
+        {
+            BeginDownload(voice);
+            return;
+        }
+
         Close();
+    }
+
+    private void BeginDownload(LocalVoiceDownload voice)
+    {
+        CancelDownload();
+        _fetching = voice;
+        _downloadFailure = null;
+        _fraction = 0;
+        IsDownloading = true;
+        Go(Step.Ready);
+
+        var source = new CancellationTokenSource();
+        _download = source;
+        _ = RunDownloadAsync(voice, source);
+    }
+
+    private async Task RunDownloadAsync(LocalVoiceDownload voice, CancellationTokenSource source)
+    {
+        string? failure;
+
+        try
+        {
+            var progress = new Progress<double>(fraction =>
+            {
+                if (_download == source)
+                {
+                    _fraction = fraction;
+                    ShowFraction();
+                }
+            });
+
+            failure = await voice.Fetch(progress, source.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (_download != source)
+        {
+            return;
+        }
+
+        if (failure is null)
+        {
+            Close();
+            return;
+        }
+
+        _downloadFailure = failure;
+        Render();
+    }
+
+    private void CancelDownload()
+    {
+        if (_download is { } source)
+        {
+            _download = null;
+            source.Cancel();
+            source.Dispose();
+        }
+    }
+
+    private void ShowFraction()
+    {
+        if (_bar is null || _fetched is null || _fetching is null)
+        {
+            return;
+        }
+
+        _bar.Value = _fraction;
+        _fetched.Text = Fetched(_fetching, _fraction);
+    }
+
+    private static string Fetched(LocalVoiceDownload voice, double fraction) =>
+        $"{Math.Clamp(fraction, 0, 1) * voice.Megabytes:0} of {voice.Megabytes:0} MB";
+
+    private void RenderDownload()
+    {
+        var voice = _fetching!;
+        var failed = _downloadFailure is not null;
+        var stack = Stack();
+
+        if (failed)
+        {
+            stack.Children.Add(new Notice(NoticeLevel.Error, inline: true)
+            {
+                Name = "SetupDownloadFailed",
+                Text = _downloadFailure,
+            });
+        }
+        else
+        {
+            _bar = new ProgressBar { Name = "SetupDownloadProgress", Height = 6, Minimum = 0, Maximum = 1, Value = _fraction };
+            _fetched = Mono(Fetched(voice, _fraction));
+            _fetched.Name = "SetupDownloadFetched";
+            stack.Children.Add(_bar);
+            stack.Children.Add(_fetched);
+            stack.Children.Add(Help("Fetched once from huggingface.co."));
+        }
+
+        Button[] buttons;
+
+        if (failed)
+        {
+            var retry = new Button { Name = "SetupDownloadRetry", Content = "RETRY" };
+            retry.Click += (_, _) => BeginDownload(voice);
+
+            var close = new Button { Name = "SetupDownloadClose", Content = "CLOSE" };
+            close.Click += (_, _) => Close();
+
+            buttons = [retry, close];
+        }
+        else
+        {
+            var cancel = new Button { Name = "SetupDownloadCancel", Content = "CANCEL" };
+            cancel.Click += (_, _) => Close();
+
+            buttons = [cancel];
+        }
+
+        this[!TemplatedControl.BackgroundProperty] = new DynamicResourceExtension(ThemeManager.BarKey);
+        Content = Modal.Build("Set up · Downloading", $"Downloading {voice.Name}", stack, buttons);
     }
 
     private Step Following(Step step) =>
@@ -671,6 +823,7 @@ public sealed class SetupWizard : ModalDialog
     protected override void OnClosed(EventArgs e)
     {
         CancelCapture();
+        CancelDownload();
         base.OnClosed(e);
     }
 
@@ -743,6 +896,13 @@ public sealed class SetupWizard : ModalDialog
         var effective = FirstRun.Effective(Choices, hasSecret);
 
         stack.Children.Add(Lead("Check your choices and what they send. Select one to change it."));
+
+        if (_localVoice?.Invoke(Choices.Voice) is { } voice)
+        {
+            var note = Help($"START downloads about {voice.Megabytes:0} MB from huggingface.co, for the {voice.Name} voice.");
+            note.Name = "SetupDownloadNote";
+            stack.Children.Add(note);
+        }
 
         if (_refused.Count > 0)
         {
@@ -820,7 +980,7 @@ public sealed class SetupWizard : ModalDialog
             {
                 Start();
 
-                if (Started)
+                if (Started && !IsDownloading)
                 {
                     open();
                 }
