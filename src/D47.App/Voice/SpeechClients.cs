@@ -375,7 +375,7 @@ public sealed class SpeechClients : IDisposable
             {
                 Channel = AudioChannel.Speech,
                 Clip = clip,
-                Group = AppHost.AuditionGroup,
+                Group = VoiceAuditions.Group,
                 Caption = clip.Name,
             });
 

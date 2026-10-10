@@ -90,7 +90,7 @@ public class TestNeverBillsAProviderTests
 
     /// <summary>
     /// A billed provider never comes back as <see cref="GuardianVoiceTest.Source.Synthesize"/> — the
-    /// one case AppHost.GuardianTestAsync calls SynthesizeAsync for — whatever else is true of it.
+    /// one case VoiceAuditions.GuardianTestAsync calls SynthesizeAsync for — whatever else is true of it.
     /// </summary>
     [Theory]
     [InlineData(false, false, false)]

@@ -1849,6 +1849,8 @@ public sealed class AppHost : IDisposable
             customVoices,
             crewSeats: () => self!.CrewSeats);
 
+        var auditions = new VoiceAuditions(speech, audio, settings, personas);
+
         // Built once and shared with TurnLoop below, so the drill capability (#168) opens an offer TurnLoop
         // itself reads, rather than one nobody looks at.
         var offers = new OfferWindow();
@@ -1919,17 +1921,11 @@ public sealed class AppHost : IDisposable
                     // Asked of the slot's own provider, not the ship's.
                     HasKey = group => speech.HasKeyFor(TtsProviderCatalog.Selected(
                         VoiceGroups.ProviderFor(settings.Current.Speech, group))),
-                    Audition = (voiceId, role, token) => self is { } host
-                        ? host.AuditionVoiceAsync(voiceId, role, token)
-                        : Task.CompletedTask,
-                    Preview = (voiceId, role, token) => self is { } host
-                        ? host.AuditionPreviewAsync(voiceId, role, token)
-                        : Task.CompletedTask,
+                    Audition = auditions.AuditionVoiceAsync,
+                    Preview = auditions.AuditionPreviewAsync,
                     HasPreview = (group, id) => speech.HasPreviewFor(group, id),
-                    GuardianTest = token => self is { } host
-                        ? host.GuardianTestAsync(token)
-                        : Task.FromResult<string?>(null),
-                    CovasTest = _ => Task.FromResult(self?.CovasTest()),
+                    GuardianTest = auditions.GuardianTestAsync,
+                    CovasTest = _ => Task.FromResult<string?>(auditions.CovasTest()),
 
                     // Late-bound like the two above, because the check is a network call made by a host that
                     // does not exist yet at this point in composition.
@@ -4217,228 +4213,6 @@ public sealed class AppHost : IDisposable
 
     /// <summary>How many times an endpoint has been asked, so only the latest answer is kept.</summary>
     private int _endpointModelsAsked;
-
-    /// <summary>
-    /// Auditions already paid for, keyed by the provider that issued the voice, the role being cast and
-    /// the voice itself (Phase 19).
-    /// </summary>
-    private readonly Dictionary<(string Provider, string Voice), AudioClip> _auditions = new();
-
-    /// <summary>The group auditions play in, so a second one drops the first mid-word.</summary>
-    internal const string AuditionGroup = "voice-audition";
-
-    /// <summary>
-    /// Speaks one voice so it can be judged before it is chosen (Phase 19, "Hear a voice before you
-    /// choose it").
-    /// </summary>
-    internal async Task AuditionVoiceAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
-    {
-        // The slot the role belongs to, so the carrier's tower is auditioned through whoever speaks for the
-        // carrier — and billed to that slot (Phase 57).
-        var group = VoiceGroups.Of(role);
-
-        if (Speech.Speaker(group) is not { } provider)
-        {
-            throw new InvalidOperationException("No voice provider is selected.");
-        }
-
-        // Before the synthesis rather than after it, so pressing the button twice in a row silences the first
-        // attempt while the second is still being fetched — which on a paid provider is most of the wait.
-        Audio.DropGroup(AuditionGroup);
-
-        var key = (provider.Id, $"{role}:{voiceId}");
-
-        if (!_auditions.TryGetValue(key, out var clip))
-        {
-            // The voice itself, never a stand-in cached under its name.
-            if (Speech.ClientFor(provider.Id) is ChatterboxTtsProvider chatterbox
-                && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
-            {
-                throw new InvalidOperationException(
-                    $"That Chatterbox voice could not be fetched from {ChatterboxCatalog.Host}. Press Play to try again.");
-            }
-
-            clip = await provider.SynthesizeAsync(
-                role == VoiceRole.ShipAi ? AuditionLine.For(Personas.Current) : AuditionLine.For(role),
-                new VoiceSelection(
-                    voiceId,
-                    SpeechCapability.RateFor(
-                        Settings.Current,
-                        VoiceGroups.ProviderFor(Settings.Current.Speech, group))),
-                cancellationToken).ConfigureAwait(false);
-
-            // Cached after the await, so a cancelled or failed synthesis caches nothing and the next press
-            // tries again.
-            _auditions[key] = clip;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        Audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = clip,
-            Group = AuditionGroup,
-            // The clip's name is the text it was synthesised from, which is what the caption layer wants — so
-            // an audition is captioned in the headset like any other speech.
-            Caption = clip.Name,
-        });
-    }
-
-    /// <summary>
-    /// Plays a voice's free sample from its provider, which bills nothing (#106). The sample is the
-    /// provider's own sentence, so it carries no caption.
-    /// </summary>
-    internal async Task AuditionPreviewAsync(string voiceId, VoiceRole role, CancellationToken cancellationToken)
-    {
-        if (Speech.Speaker(VoiceGroups.Of(role)) is not { } provider)
-        {
-            throw new InvalidOperationException("No voice provider is selected.");
-        }
-
-        Audio.DropGroup(AuditionGroup);
-
-        var key = (provider.Id, $"sample:{voiceId}");
-
-        if (!_auditions.TryGetValue(key, out var clip))
-        {
-            clip = await provider.PreviewAsync(voiceId, cancellationToken).ConfigureAwait(false)
-                   ?? throw new InvalidOperationException($"{provider.Name} has no free sample of that voice.");
-
-            _auditions[key] = clip;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        Audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = clip,
-            Group = AuditionGroup,
-        });
-    }
-
-    /// <summary>What the Test row says when it played the bundled stand-in rather than the ship's own voice.</summary>
-    private const string StandInSaid =
-        "That was a stand-in voice, not the one you have chosen — nothing free was available to test with.";
-
-    /// <summary>
-    /// Plays the Guardian voice treatments currently toggled, on a clip chosen so nothing is ever
-    /// billed (#226). Which clip that is follows <see cref="GuardianVoiceTest.SourceFor"/>, and the
-    /// treatments themselves come from <see cref="GuardianVoice.ColourFor"/> — the same function the
-    /// ship's real speech is coloured through.
-    /// </summary>
-    internal async Task<string?> GuardianTestAsync(CancellationToken cancellationToken)
-    {
-        var speech = Settings.Current.Speech;
-        var voiceId = SpeechCapability.ShipVoiceFor(Settings.Current, Personas.Current.Id) ?? string.Empty;
-        var providerId = VoiceGroups.ProviderFor(speech, VoiceGroup.Aboard);
-        var providerInfo = TtsProviderCatalog.Selected(providerId);
-
-        Audio.DropGroup(AuditionGroup);
-
-        var auditionKey = (providerInfo.Id, $"{VoiceRole.ShipAi}:{voiceId}");
-        var sampleKey = (providerInfo.Id, $"sample:{voiceId}");
-        var hasFreeSample = providerInfo.OffersFreePreviews && Speech.HasPreviewFor(VoiceGroup.Aboard, voiceId);
-
-        var source = GuardianVoiceTest.SourceFor(
-            providerInfo, hasFreeSample, _auditions.ContainsKey(auditionKey));
-
-        // Synthesize and FreeSample both need the live client, which Speech.Speaker(group) does not have
-        // where the provider needs a key that has not been set. Falling back to the stand-in here
-        // rather than throwing keeps Test doing what it promises: it never fails, only ever plays
-        // something.
-        if (source is GuardianVoiceTest.Source.Synthesize or GuardianVoiceTest.Source.FreeSample
-            && Speech.Speaker(VoiceGroup.Aboard) is null)
-        {
-            source = GuardianVoiceTest.Source.StandIn;
-        }
-
-        // A Chatterbox voice whose clip cannot be fetched would be spoken in a shipped stand-in and cached under its name.
-        if (source is GuardianVoiceTest.Source.Synthesize
-            && !_auditions.ContainsKey(auditionKey)
-            && Speech.ClientFor(providerInfo.Id) is ChatterboxTtsProvider chatterbox
-            && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
-        {
-            source = GuardianVoiceTest.Source.StandIn;
-        }
-
-        AudioClip clip;
-        string? said = null;
-
-        switch (source)
-        {
-            case GuardianVoiceTest.Source.Synthesize:
-                if (!_auditions.TryGetValue(auditionKey, out var synthesized))
-                {
-                    synthesized = await Speech.Speaker(VoiceGroup.Aboard)!.SynthesizeAsync(
-                        AuditionLine.For(Personas.Current),
-                        new VoiceSelection(voiceId, SpeechCapability.RateFor(Settings.Current, providerId)),
-                        cancellationToken).ConfigureAwait(false);
-
-                    _auditions[auditionKey] = synthesized;
-                }
-
-                clip = synthesized;
-                break;
-
-            case GuardianVoiceTest.Source.FreeSample:
-                if (!_auditions.TryGetValue(sampleKey, out var sampled))
-                {
-                    sampled = await Speech.Speaker(VoiceGroup.Aboard)!.PreviewAsync(voiceId, cancellationToken)
-                                  .ConfigureAwait(false)
-                              ?? throw new InvalidOperationException(
-                                  $"{providerInfo.Name} has no free sample of that voice.");
-
-                    _auditions[sampleKey] = sampled;
-                }
-
-                clip = sampled;
-                break;
-
-            case GuardianVoiceTest.Source.CachedAudition:
-                clip = _auditions[auditionKey];
-                break;
-
-            default:
-                clip = StandInVoice.Clip;
-                said = StandInSaid;
-                break;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var colour = GuardianVoice.ColourFor(speech, Personas.Current.VoiceHint.Gender);
-
-        Audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = colour is null ? clip : colour(clip),
-            Group = AuditionGroup,
-            Caption = clip.Name,
-        });
-
-        return said;
-    }
-
-    /// <summary>Plays the bundled stand-in through the COVAS reverb, which bills nothing.</summary>
-    private string CovasTest()
-    {
-        Audio.DropGroup(AuditionGroup);
-
-        Audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = CovasVoice.Apply(StandInVoice.Clip),
-            Group = AuditionGroup,
-            Caption = StandInVoice.Clip.Name,
-        });
-
-        return CovasStandInSaid;
-    }
-
-    /// <summary>What the COVAS Test row says once it has played.</summary>
-    private const string CovasStandInSaid = "That was a stand-in voice through the COVAS reverb.";
 
     /// <summary>One autonomous action at a time.</summary>
     private readonly SemaphoreSlim _acting = new(1, 1);
