@@ -570,10 +570,6 @@ public partial class MainWindow : Window
 
         // Deliberately not focusing the Ask box.
 
-        // Said aloud as well as shown, because a misconfigured provider otherwise presents as silence, and
-        // silence is indistinguishable from a model with nothing to say (Phase 5).
-        _ = _host.AnnounceStartupProblemsAsync();
-
         // Optional in two senses: it must never delay the status the Commander is here for, and it is the one
         // network call d47 makes on its own — so it is a setting, and it is disclosed (Phase 4, "Say what
         // each provider receives").
@@ -585,7 +581,16 @@ public partial class MainWindow : Window
         // Before the Start Menu offer, because it is the one that decides whether d47 can answer at all — and
         // a Commander who has just been asked about a shortcut has already formed a view about how much this
         // app asks of them.
-        await OfferKeysAsync();
+        var setupShown = await OfferKeysAsync();
+
+        if (_host is { } started)
+        {
+            started.Voice.Held = false;
+
+            // Said aloud as well as shown, because a misconfigured provider otherwise presents as silence, and
+            // silence is indistinguishable from a model with nothing to say (Phase 5).
+            _ = started.AnnounceStartupProblemsAsync(setupShown);
+        }
 
         // Last, and awaited rather than fired and forgotten: it is modal, so it must not appear over a panel
         // that is still assembling itself.
@@ -594,11 +599,11 @@ public partial class MainWindow : Window
     }
 
     /// <summary>The setup wizard, shown when there is no usable key for the selected AI.</summary>
-    private async Task OfferKeysAsync()
+    private async Task<bool> OfferKeysAsync()
     {
         if (_host is not { } host)
         {
-            return;
+            return false;
         }
 
         // The one gate, and it is on the *offer* rather than on the window.
@@ -606,10 +611,11 @@ public partial class MainWindow : Window
                 LlmProviderCatalog.Selected(host.Settings.Current.Llm.Provider),
                 host.Secrets.Has))
         {
-            return;
+            return false;
         }
 
         await ShowKeySetupAsync();
+        return true;
     }
 
     /// <summary>The setup wizard, shown because it was asked for.</summary>

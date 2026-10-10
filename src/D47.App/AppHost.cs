@@ -3687,6 +3687,10 @@ public sealed class AppHost : IDisposable
 
         if (startTicking)
         {
+            host.Voice.Held = FirstRun.IsNeeded(
+                LlmProviderCatalog.Selected(settings.Current.Llm.Provider),
+                foundations.Secrets.Has);
+
             host._modelCatalog.Start();
             host._controllerSampler = sampledControllers.Start();
 
@@ -4939,26 +4943,20 @@ public sealed class AppHost : IDisposable
         });
     }
 
-    /// <summary>Says out loud that the model is not usable, if there is a voice to say it with.</summary>
-    public async Task AnnounceStartupProblemsAsync()
+    /// <summary>Says out loud that settings or the model are unusable, if there is a voice to say it with.</summary>
+    /// <param name="setupShown">Whether the first-run wizard was offered, which already covers a missing model.</param>
+    public async Task AnnounceStartupProblemsAsync(bool setupShown = false)
     {
-        if (StartupError is not null)
+        if (StartupProblems.Say(
+                StartupError is not null, setupShown, LlmAvailability.CanAttemptModelTurn, LlmAvailability.Reason) is not { } problem)
         {
-            Voice.EnterState(Core.Audio.LoopState.Failed);
-            // The detail carries a settings.json path and, for a kept unknown key, its full name;
-            // neither belongs in speech. It stays on screen and in the log.
-            await Voice.AnnounceAsync("My settings did not load cleanly.")
-                .ConfigureAwait(false);
             return;
         }
 
-        if (!LlmAvailability.CanAttemptModelTurn && LlmAvailability.Reason is { } reason)
-        {
-            Voice.EnterState(Core.Audio.LoopState.Unsure);
-            await Voice.AnnounceAsync(
-                $"I have no language model right now. {reason} I can still answer from my own capabilities.")
-                .ConfigureAwait(false);
-        }
+        // The detail of a settings error carries a settings.json path and, for a kept unknown key, its full
+        // name; neither belongs in speech. It stays on screen and in the log.
+        Voice.EnterState(problem.State);
+        await Voice.AnnounceAsync(problem.Text).ConfigureAwait(false);
     }
 
     private TickDriver? _ticking;

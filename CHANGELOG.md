@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+On a first launch, d47 says nothing until the setup wizard closes. Before, a fuel warning and "I have no language model right now" were spoken over the wizard. Lines that come up meanwhile are dropped, not said afterwards, and d47 no longer announces the missing language model once the wizard has been shown, whether you pressed START, skipped the key or closed it. A launch that does not open the wizard speaks as before.
+
 The first line after setup is spoken instead of failing with "No OpenAI voice has been chosen. Pick one in Settings." Until d47 has chosen the core's voice, which takes a few seconds after START, lines are spoken in the provider's first listed voice: Alloy on OpenAI, and the first voice in your account's list on ElevenLabs and Cartesia. That voice is not saved, and the next line after d47 chooses uses the chosen voice. The "No … voice has been chosen" message now appears only when the provider lists no voices at all.
 
 The setup wizard closes when the Kokoro download finishes. Before, it stayed on "335 of 335 MB" because the spoken "Local voice installed" line failed after the download and the wizard never saw the failure. Setup no longer speaks that line, and a download that fails for any reason shows its message with RETRY. From the Settings row, the line is spoken in a Kokoro voice even before one is chosen, and a line that cannot be spoken reports "Downloaded, but the voice could not speak" instead of a failed download.

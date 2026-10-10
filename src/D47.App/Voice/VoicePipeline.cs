@@ -63,6 +63,15 @@ public sealed class VoicePipeline(
     /// <summary>Told the StoryVoices key and the reason when a character's chosen voice fails and its pinned voice speaks instead.</summary>
     public Action<string, string>? CastVoiceFailed { get; set; }
 
+    private volatile bool _held;
+
+    /// <summary>While true, nothing is synthesised or played, and a line pushed meanwhile is dropped, not queued.</summary>
+    public bool Held
+    {
+        get => _held;
+        set => _held = value;
+    }
+
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
     /// <summary>Who to name on the captions of the next turn, or null for the ship's AI (#201).</summary>
@@ -133,7 +142,7 @@ public sealed class VoicePipeline(
                         // Created on the first delta rather than up front, so a turn that never speaks never
                         // opens a pipeline — and, more to the point, the bed stops the moment there are words
                         // rather than when the turn ends.
-                        if (speech is null && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
+                        if (speech is null && !_held && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
                         {
                             _spoke = true;
 
@@ -230,7 +239,7 @@ public sealed class VoicePipeline(
         VoiceRole role = VoiceRole.ShipAi,
         bool overheard = false)
     {
-        if (Speaker(slot) is not { } provider)
+        if (_held || Speaker(slot) is not { } provider)
         {
             return null;
         }
@@ -340,6 +349,11 @@ public sealed class VoicePipeline(
     /// <summary>Speaks one unprompted callout (Phase 8), and returns what was queued to play.</summary>
     public async Task<SpokenClip?> AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
     {
+        if (_held)
+        {
+            return null;
+        }
+
         if (announcement.Urgency == CalloutUrgency.Urgent)
         {
             arbiter.Silence();
