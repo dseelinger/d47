@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Knowledge;
@@ -36,8 +36,10 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
         public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
+        public StationSearchResult? Stations { get; set; }
+
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+            Stations is not null ? Task.FromResult(Stations) : throw new NotSupportedException();
 
         public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
@@ -96,7 +98,8 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
 
         Assert.Equal(
             [
-                "allegiance", "government", "primary_economy", "station_economy", "state", "controlling_faction",
+                "allegiance", "government", "primary_economy", "station_economy", "station_state", "state",
+                "controlling_faction",
                 "power", "power_state", "population", "colonised",
             ],
             GalaxyFilters.For(GalaxySearchKind.Stations).Select(filter => filter.Name));
@@ -291,6 +294,30 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
 
         Assert.Contains("; Barnard's Star Crimson Gang, Anarchy, in Expansion", result.Content, StringComparison.Ordinal);
         Assert.DoesNotContain("Barnard's Star Alliance", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AStationStateSearchSaysEachStationsStateInWords()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+        galaxy.Stations = new StationSearchResult(
+            "Sol",
+            2,
+            [
+                new StationSummary { Name = "Galileo", SystemName = "Sol", State = "UnderRepairs" },
+                new StationSummary { Name = "Boston Base", SystemName = "Barnard's Star", State = "DamagedHuman" },
+            ]);
+
+        var result = await registry.InvokeAsync(
+            "search_stations",
+            Args(("station_state", "UnderRepairs, DamagedHuman")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Contains("Galileo in Sol; under repairs", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Boston Base in Barnard's Star; damaged", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("DamagedHuman", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Knowledge;
 using D47.Knowledge;
 using Xunit;
@@ -191,5 +191,21 @@ public class AStationSearchWritesEachFilterInItsShapeTests
         Assert.Equal(["Refinery"], Values(filters.GetProperty("primary_economy")));
         Assert.Equal(["Industrial"], Values(filters.GetProperty("system_primary_economy")));
         Assert.Equal(1, filters.EnumerateObject().Count(property => property.Name == "primary_economy"));
+    }
+
+    [Fact]
+    public void AStationStateIsWrittenUnderStateAndTheFactionsStateUnderItsOwnKey()
+    {
+        var filters = Filters(new StationSearch
+        {
+            Filters = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["station_state"] = "UnderRepairs,UnderAttack",
+                ["state"] = "Boom",
+            },
+        });
+
+        Assert.Equal(["UnderRepairs", "UnderAttack"], Values(filters.GetProperty("state")));
+        Assert.Equal(["Boom"], Values(filters.GetProperty("controlling_minor_faction_state")));
     }
 }

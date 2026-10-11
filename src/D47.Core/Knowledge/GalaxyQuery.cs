@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace D47.Core.Knowledge;
 
@@ -131,6 +131,16 @@ public static class GalaxyFilters
         {
             Fields = new Dictionary<GalaxySearchKind, string> { [GalaxySearchKind.Stations] = "primary_economy" },
             Description = "The station's own main economy.",
+            Several = true,
+        },
+
+        new GalaxyFilter(
+            "station_state",
+            GalaxyFilterKind.Choice,
+            ["Construction", "Damaged", "DamagedHuman", "UnderAttack", "UnderRepairs"])
+        {
+            Fields = new Dictionary<GalaxySearchKind, string> { [GalaxySearchKind.Stations] = "state" },
+            Description = "The station's own state.",
             Several = true,
         },
 

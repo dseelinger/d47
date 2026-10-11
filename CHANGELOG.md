@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Station search can filter by the station's own state. `station_state` takes Construction, Damaged, DamagedHuman, UnderAttack and UnderRepairs, one or more, so "find the nearest damaged station" and "which stations near me are under attack" work. Each result says whether the station is under construction, damaged, under attack or under repairs.
+
 Every control you press in the panel is now 44 pixels tall, the size a ray hits in the headset. That covers the breadcrumb above a picker page, the session figures button, dropdown pickers and their options, the Phrases page's Say box, Add and ✕, engineer names, the level cells in Transcript › Log File, the checklist's "completed" box, the rows on a choice page, Powerplay system rows, and "Change filters" and "Plot" on Best Cargo. Dropdown pickers are 4 pixels taller when closed.
 
 Station search offers every service Elite has, not only 19 of them. `services` now also accepts Contacts, Missions, Missions Generated, On Dock Mission, Tuning, Workshop, Refinery Contact, Powerplay, Shop, Livery, Social Space, Squadron Bank, System Colonisation, Construction Services, Fleet Carrier Administration, Fleet Carrier Fuel, Fleet Carrier Management and Fleet Carrier Vendor, so "find a station with a workshop near Sol" works. The earlier 19 keep their names.

@@ -1,4 +1,4 @@
-namespace D47.Core.Knowledge;
+﻿namespace D47.Core.Knowledge;
 
 /// <summary>A landing pad size, smallest first.</summary>
 public enum PadSize
@@ -68,6 +68,9 @@ public sealed record StationSummary
 
     /// <summary>The station's controlling minor faction.</summary>
     public string? ControllingFaction { get; init; }
+
+    /// <summary>The station's own state, in the service's spelling.</summary>
+    public string? State { get; init; }
 
     /// <summary>When the service last had a report of this station.</summary>
     public DateTimeOffset? UpdatedAt { get; init; }

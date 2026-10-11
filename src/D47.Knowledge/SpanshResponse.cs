@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -548,6 +548,7 @@ internal static class SpanshResponse
                 .OfType<string>()]
             : [],
         ControllingFaction = String(element, "controlling_minor_faction"),
+        State = String(element, "state"),
         UpdatedAt = Timestamp(element, "updated_at"),
     };
 

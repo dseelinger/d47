@@ -2513,6 +2513,7 @@ public static class GalaxyCapability
         }
 
         var askedFaction = query.Criteria.Any(criterion => criterion.Filter.Kind == GalaxyFilterKind.Name);
+        var askedState = query.Criteria.Any(criterion => criterion.Filter.Name == "station_state");
         var report = new StringBuilder();
 
         report.Append(result.Total == result.Stations.Count
@@ -2570,10 +2571,24 @@ public static class GalaxyCapability
             {
                 report.Append($"; controlled by {station.ControllingFaction}");
             }
+
+            if (askedState && StationStateInWords(station.State) is { } state)
+            {
+                report.Append($"; {state}");
+            }
         }
 
         return report.ToString().TrimEnd();
     }
+
+    private static string? StationStateInWords(string? state) => state switch
+    {
+        "Construction" => "under construction",
+        "Damaged" or "DamagedHuman" => "damaged",
+        "UnderAttack" => "under attack",
+        "UnderRepairs" => "under repairs",
+        _ => null,
+    };
 
     private static string Describe(StationQuery query)
     {
