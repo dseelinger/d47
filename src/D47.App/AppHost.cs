@@ -913,6 +913,13 @@ public sealed class AppHost : IDisposable
 
         bookmarks.Load();
 
+        var savedSearches = new D47.Core.Knowledge.SavedSearchStore(
+            Path.Combine(paths.Data, "saved-searches.json"),
+            files,
+            loggerFactory.CreateLogger<D47.Core.Knowledge.SavedSearchStore>());
+
+        savedSearches.Load();
+
         // Every run, not only behind the timers switch (#90).
         var journalReminders = new D47.Core.Reminders.JournalReminderStore(
             Path.Combine(paths.Data, "journal-reminders.json"),
@@ -1343,6 +1350,7 @@ public sealed class AppHost : IDisposable
             Autonomous = autonomous,
             BackfillGoals = BackfillGoals,
             Bookmarks = bookmarks,
+            SavedSearches = savedSearches,
             Callouts = callouts,
             CargoBoard = cargoBoard,
             Cartography = cartography,
@@ -2057,6 +2065,7 @@ public sealed class AppHost : IDisposable
         var autonomous = stores.Autonomous;
         var backfillGoals = stores.BackfillGoals;
         var bookmarks = stores.Bookmarks;
+        var savedSearches = stores.SavedSearches;
         var callouts = stores.Callouts;
         var cargoBoard = stores.CargoBoard;
         var cartography = stores.Cartography;
@@ -2622,6 +2631,10 @@ public sealed class AppHost : IDisposable
 
                 // And the fixed quick searches, such as "interstellar factors search" (#812).
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases())
+
+                // And the Commander's own saved searches, such as "large pad repairs search" (#1078).
+                .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(
+                    savedSearches, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
 
                 // And "set a course" (#325): plot_course pointed at whatever a nearest-first commodity search
                 // last found. "Set a course and take us out" is not here — it is a fixed phrase on
@@ -3789,6 +3802,8 @@ public sealed class AppHost : IDisposable
         public required Action BackfillGoals { get; init; }
 
         public required BookmarkStore Bookmarks { get; init; }
+
+        public required D47.Core.Knowledge.SavedSearchStore SavedSearches { get; init; }
 
         public required CalloutEngine Callouts { get; init; }
 
