@@ -325,7 +325,15 @@ public partial class MainWindow : Window
                     systems,
                     () => host.GameState.Active?.Location,
                     () => host.Settings.Current.Knowledge.GalaxySearch,
-                    OpenSettings);
+                    OpenSettings)
+                {
+                    Searches = new GalaxySearchSurface(
+                        host.Capabilities,
+                        host.GalaxySearches,
+                        host.SavedSearches,
+                        () => host.GameState.Active?.Identity.FrontierId ?? string.Empty,
+                        () => host.BookmarkPhrasesTaken()),
+                };
 
                 Panel.EnableStarSystem(StarSystem);
             }

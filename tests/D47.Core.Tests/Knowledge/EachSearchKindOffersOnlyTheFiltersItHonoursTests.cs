@@ -229,6 +229,33 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
     }
 
     [Fact]
+    public async Task ACorrectedFactionNameIsPostedAsANoteBesideTheAnswer()
+    {
+        var install = new MemoryInstall();
+        var board = new GalaxySearchBoard();
+        var settings = TestSurface.For(install).Settings;
+        settings.Apply(GalaxyCapability.EnabledKey, "true", SettingsCaller.Panel);
+
+        var registry = CapabilityRegistry.Build(
+        [
+            GalaxyCapability.Create(
+                new FakeGalaxy(), () => "Sol", settings, now: () => AskedAt, searches: board, factions: () => ["Diamond Frogs"]),
+        ]);
+
+        var result = await registry.InvokeAsync(
+            "search_systems",
+            Args(("faction", "diamond frogs")),
+            TestContext.Current.CancellationToken);
+
+        var posting = board.Last(GalaxySearchKind.Systems);
+
+        Assert.NotNull(posting);
+        Assert.Equal("Read as Diamond Frogs.", posting.Notes);
+        Assert.StartsWith(posting.Notes, result.Content, StringComparison.Ordinal);
+        Assert.Equal(result.Content, posting.Answer);
+    }
+
+    [Fact]
     public async Task APowerSearchNamesThePowerAndItsState()
     {
         var install = new MemoryInstall();

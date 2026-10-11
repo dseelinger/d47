@@ -45,4 +45,8 @@ public sealed record GalaxySearchPosting(
     string? Reference,
     object Result,
     string Answer,
-    DateTimeOffset AskedAt);
+    DateTimeOffset AskedAt)
+{
+    /// <summary>The sentences <see cref="Answer"/> opens with that are about how the search was read, such as a corrected faction name.</summary>
+    public string Notes { get; init; } = string.Empty;
+}

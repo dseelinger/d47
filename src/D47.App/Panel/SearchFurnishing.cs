@@ -1,26 +1,99 @@
+using System.Globalization;
+using Avalonia.Controls;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The Search tab, with the System page as its root.</summary>
+/// <summary>The Search tab: the System page, then Systems where the host gives it a way to search.</summary>
 internal sealed class SearchFurnishing(IPanelTabHost host)
 {
+    /// <summary>Opens the System page on one system, by its id64, beneath Systems.</summary>
+    public const string FoundKeyPrefix = "search.systems.found:";
+
     private StarSystemPage? _starSystem;
+    private SystemSearchPage? _systems;
+    private StarSystemPage? _found;
 
-    public void EnableStarSystem(StarSystemSurface surface) =>
-        host.Furnish(
-            PanelTab.Search,
-            _ =>
-            {
-                _starSystem = new StarSystemPage(surface);
-                _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
+    public void EnableStarSystem(StarSystemSurface surface)
+    {
+        var roots = new List<NavCrumb> { new(StarSystemPage.RootKey, "System") { Help = GalaxyCapability.Id } };
 
-                return _starSystem;
-            },
-            new NavCrumb(StarSystemPage.RootKey, "System") { Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id });
+        if (surface.Searches is not null)
+        {
+            roots.Add(new NavCrumb(SystemSearchPage.RootKey, "Systems") { Help = GalaxyCapability.Id });
+        }
 
-    /// <summary>Lets the System page follow the Commander while Search is the open tab; true when it redrew.</summary>
-    public bool Tick() => host.Tab == PanelTab.Search && _starSystem is { } page && page.Tick();
+        host.Furnish(PanelTab.Search, crumb => Build(crumb, surface), [.. roots]);
+    }
+
+    /// <summary>Lets the Search pages follow the Commander and the setting while Search is the open tab; true when one redrew.</summary>
+    public bool Tick()
+    {
+        if (host.Tab != PanelTab.Search)
+        {
+            return false;
+        }
+
+        var redrawn = _starSystem is { } page && page.Tick();
+        redrawn |= _found is { } found
+            && host.Nav.TrailOf(PanelTab.Search) is { Count: > 1 } trail
+            && trail[^1].Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
+            && found.Tick();
+        redrawn |= _systems is { } systems && host.Nav.RootKeyOf(PanelTab.Search) == SystemSearchPage.RootKey && systems.Tick();
+
+        return redrawn;
+    }
 
     public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
+
+    private Control Build(NavCrumb crumb, StarSystemSurface surface)
+    {
+        if (crumb.Key == SystemSearchPage.RootKey && surface.Searches is { } searches)
+        {
+            return _systems = new SystemSearchPage(
+                searches,
+                surface.LookupsEnabled,
+                () => surface.Here()?.StarSystem,
+                OpenFound,
+                surface.OpenSettings,
+                host.Headset);
+        }
+
+        if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
+            && long.TryParse(crumb.Key[FoundKeyPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var address))
+        {
+            var found = _found = new StarSystemPage(surface);
+            found.FiltersChanged += (_, _) => host.ShowSearch();
+            found.OpenSystem(address);
+
+            return found;
+        }
+
+        _starSystem = new StarSystemPage(surface);
+        _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
+
+        return _starSystem;
+    }
+
+    private void OpenFound(SystemSummary system)
+    {
+        if (system.SystemAddress is not { } address)
+        {
+            return;
+        }
+
+        var crumb = new NavCrumb(FoundKeyPrefix + address.ToString(CultureInfo.InvariantCulture), system.Name)
+        {
+            Help = GalaxyCapability.Id,
+        };
+
+        // A row pressed under one already open replaces it rather than stacking a second.
+        while (host.Tab == PanelTab.Search && host.Nav.TrailOf(PanelTab.Search).Count > 1 && host.Nav.Back())
+        {
+        }
+
+        host.Nav.Drill(PanelTab.Search, crumb);
+    }
 }

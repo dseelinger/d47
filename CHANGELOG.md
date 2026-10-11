@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Search has a Systems page beside System. The form on the left takes every filter the systems search takes, from where to search out from and how far, through allegiance, government, economy, security, population and colonised systems, to the factions and Powerplay. RUN SEARCH runs it. The answer on the right lists each system with its controlling faction, distance, allegiance and government, economy and security, population, power and when it was last reported. A row opens that system's page. A search asked by voice shows here too. REFRESH runs the same search again. SAVE THIS SEARCH names it, so saying its name followed by "search" runs it. The SAVED row lists the quick searches and your own, and ✕ forgets one of yours. With "Look things up in the galaxy" off, RUN SEARCH is disabled and the page points to the setting. In the headset the page shows the answer and the saved searches.
+
 A recording that is too short is refused with its length and the 5 s minimum, without the advice to read the whole sentence, since a voice can come from a file and the sentence is only a suggestion.
 
 A story can pin a cast member to any speaking voice provider, not only Kokoro and Chatterbox. A story pinned to a provider whose API key is not stored cannot start, and the ship says to add the key. While such a story runs, Privacy and egress names the character and the story under that provider.

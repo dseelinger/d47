@@ -751,8 +751,8 @@ public static class GalaxyCapability
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-            var said = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known)
-                       + Describe(result, query);
+            var notes = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known);
+            var said = notes + Describe(result, query);
 
             searches?.Post(new GalaxySearchPosting(
                 GalaxySearchKind.Systems,
@@ -760,7 +760,7 @@ public static class GalaxyCapability
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow));
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd() });
 
             return ToolResult.Ok(said);
         }

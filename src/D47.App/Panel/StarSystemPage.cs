@@ -21,7 +21,11 @@ public sealed record StarSystemSurface(
     IStarSystemService Systems,
     Func<JournalLocation?> Here,
     Func<bool> LookupsEnabled,
-    Action? OpenSettings = null);
+    Action? OpenSettings = null)
+{
+    /// <summary>What the Systems search page runs its searches through, or null for no Systems page.</summary>
+    public GalaxySearchSurface? Searches { get; init; }
+}
 
 /// <summary>
 /// One star system's record from Spansh: the Commander's own while following them, or any system typed or

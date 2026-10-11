@@ -645,6 +645,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The last answer of each galaxy search kind.</summary>
     public D47.Core.Knowledge.GalaxySearchBoard GalaxySearches { get; private set; } = new();
 
+    /// <summary>The galaxy searches each Commander has named, saved and forgotten on the search pages.</summary>
+    public D47.Core.Knowledge.SavedSearchStore? SavedSearches { get; private set; }
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -3365,6 +3368,7 @@ public sealed class AppHost : IDisposable
         host.Sourcing = sourcingBoard;
         host.Cargo = cargoBoard;
         host.GalaxySearches = galaxySearchBoard;
+        host.SavedSearches = stores.SavedSearches;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
 
