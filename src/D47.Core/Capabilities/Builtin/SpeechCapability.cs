@@ -170,6 +170,46 @@ public static class SpeechCapability
         ];
     }
 
+    /// <summary>
+    /// The clip state, detail line and fetch a Chatterbox slot's voice rows add to the picker, or null where the
+    /// slot speaks through another provider.
+    /// </summary>
+    private static Func<D47Settings, SettingChoiceClips?> ClipsOf(SpeechSurface surface, VoiceRole role) => settings =>
+    {
+        var group = VoiceGroups.Of(role);
+
+        if (surface.VoiceClip is not { } clip
+            || !string.Equals(VoiceGroups.ProviderFor(settings.Speech, group), TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return new SettingChoiceClips
+        {
+            Clip = id => clip(group, id) is { } state ? ChoiceClip.Of(state) : null,
+            Detail = id => VoiceDetail(
+                surface.VoiceGender?.Invoke(group, id),
+                surface.VoicePitch?.Invoke(group, id),
+                surface.VoicePace?.Invoke(group, id)),
+            Watch = surface.WatchVoiceClips,
+            Fetch = surface.FetchVoice is { } fetch ? id => fetch(group, id) : null,
+            Suggested = surface.SuggestedVoice?.Invoke(role) is { } voice ? (voice, role == VoiceRole.ShipAi ? "Ship AI" : VoiceRoles.Called(role) ?? role.ToString()) : null,
+        };
+    };
+
+    /// <summary>A voice's gender, pitch and pace as one line, <c>Female · mid pitch · even pace</c>, or null where it has none.</summary>
+    public static string? VoiceDetail(string? gender, string? pitch, string? pace)
+    {
+        string?[] parts =
+        [
+            string.IsNullOrWhiteSpace(gender) ? null : char.ToUpperInvariant(gender[0]) + gender[1..].ToLowerInvariant(),
+            string.IsNullOrWhiteSpace(pitch) ? null : $"{pitch.ToLowerInvariant()} pitch",
+            string.IsNullOrWhiteSpace(pace) ? null : $"{pace.ToLowerInvariant()} pace",
+        ];
+
+        return parts.OfType<string>().ToArray() is { Length: > 0 } present ? string.Join(" · ", present) : null;
+    }
+
     /// <summary>The gender filter for a listed catalogue, or null where its voices carry nothing to filter on.</summary>
     public static SettingFacet? GenderFacet(VoiceCatalogue catalogue)
     {
@@ -444,6 +484,12 @@ public static class SpeechCapability
         /// thread, so the refresh marshals to the UI itself.
         /// </summary>
         public Func<Action<string>, Action>? WatchVoiceClips { get; init; }
+
+        /// <summary>Starts fetching one voice's Chatterbox clip, never waiting for it.</summary>
+        public Action<VoiceGroup, string>? FetchVoice { get; init; }
+
+        /// <summary>The shipped Chatterbox voice suggested for a role, or null where none is.</summary>
+        public Func<VoiceRole, string?>? SuggestedVoice { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()
@@ -562,6 +608,7 @@ public static class SpeechCapability
                 Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
                 ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.ShipAi),
+                ChoiceClips = ClipsOf(surface, VoiceRole.ShipAi),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
 
@@ -863,6 +910,7 @@ public static class SpeechCapability
                 Facets = s => ChatterboxFacets(surface, VoiceGroup.Carrier, s),
                 ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.CarrierCaptain),
+                ChoiceClips = ClipsOf(surface, VoiceRole.CarrierCaptain),
 
                 // Only on offer to a Commander who has one.
                 AppliesWhen = s => s.Speech.Provider != NoneId,
@@ -910,6 +958,7 @@ public static class SpeechCapability
                 Facets = s => ChatterboxFacets(surface, VoiceGroup.Carrier, s),
                 ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.TowerControl),
+                ChoiceClips = ClipsOf(surface, VoiceRole.TowerControl),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
                 DocsAnchor = "carrier-voices",
@@ -936,6 +985,7 @@ public static class SpeechCapability
                 Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
                 ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.Narrator),
+                ChoiceClips = ClipsOf(surface, VoiceRole.Narrator),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
                 DocsAnchor = "narrator-voice",
@@ -1799,6 +1849,7 @@ public static class SpeechCapability
             Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
             ChoiceNoun = "voices",
             Audition = AuditionOf(surface, VoiceRole.Crew),
+            ChoiceClips = ClipsOf(surface, VoiceRole.Crew),
             AppliesWhen = s => s.Speech.Provider != NoneId,
             Group = "Other voices",
             DocsAnchor = "crew-voices",

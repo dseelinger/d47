@@ -72,6 +72,8 @@ public enum ChoiceTone
 {
     Grey,
     Yellow,
+    White,
+    Red,
 }
 
 /// <summary>A short line of live state drawn under one choice — "PAID · KEY STORED".</summary>
@@ -177,6 +179,9 @@ public sealed record SettingRow
     /// 19, "Hear a voice before you choose it").
     /// </summary>
     public SettingAudition? Audition { get; init; }
+
+    /// <summary>The clip state, detail line and fetch a Chatterbox voice picker adds, or null where the slot is not on Chatterbox.</summary>
+    public Func<D47Settings, SettingChoiceClips?>? ChoiceClips { get; init; }
 
     /// <summary>A line of live state shown under the row's label, or null when there is nothing to say.</summary>
     public Func<D47Settings, string?>? Note { get; init; }

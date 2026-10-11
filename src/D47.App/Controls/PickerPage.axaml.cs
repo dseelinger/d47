@@ -66,6 +66,12 @@ public sealed record PickerRequest
     /// <summary>The status line shown beside a choice, or null for none.</summary>
     public Func<string, ChoiceStatus?>? Status { get; init; }
 
+    /// <summary>
+    /// Clip state, detail line and fetch for a Chatterbox voice list; splits it into what is on this PC and what
+    /// is fetched when played or chosen.
+    /// </summary>
+    public SettingChoiceClips? Clips { get; init; }
+
     /// <summary>What the accept button says.</summary>
     public string AcceptText { get; init; } = "Use this";
 }
@@ -118,6 +124,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     private bool _ticked;
 
+    private ChoiceClip? _clip;
+
+    private string? _head;
+
+    private string? _headCount;
+
     /// <summary>What choosing this row writes to settings — an id, not the words above it.</summary>
     public required string Value { get; init; }
 
@@ -142,11 +154,93 @@ public sealed class PickerChoice : INotifyPropertyChanged
     /// <summary>What the second glyph's press costs, or why it cannot be pressed.</summary>
     public string? LineWhy { get; init; }
 
-    /// <summary>The status text beside the label, or null.</summary>
-    public string? Status { get; init; }
+    /// <summary>The status text a row's own status gives, or null.</summary>
+    public string? StatusText { get; init; }
 
-    /// <summary>Whether <see cref="Status"/> is drawn in the highlight ink.</summary>
-    public bool StatusIsYellow { get; init; }
+    /// <summary>The tone of <see cref="StatusText"/>.</summary>
+    public ChoiceTone StatusTone { get; init; }
+
+    /// <summary>The second line under the label, or null.</summary>
+    public string? Detail { get; init; }
+
+    /// <summary>The clip line of a Chatterbox voice, or null on a list that has none.</summary>
+    public ChoiceClip? Clip
+    {
+        get => _clip;
+        set
+        {
+            _clip = value;
+            Raise(nameof(Clip));
+            Raise(nameof(Status));
+            Raise(nameof(StatusIsYellow));
+            Raise(nameof(StatusIsWhite));
+            Raise(nameof(StatusIsRed));
+            Raise(nameof(Size));
+            Raise(nameof(CanRetry));
+        }
+    }
+
+    /// <summary>The status text beside the label: the clip's state word in capitals, else <see cref="StatusText"/>.</summary>
+    public string? Status => _clip?.State.Text.ToUpperInvariant() ?? StatusText;
+
+    /// <summary>The clip's size, or null.</summary>
+    public string? Size => _clip?.Size;
+
+    /// <summary>Whether the row offers Retry.</summary>
+    public bool CanRetry => _clip?.CanRetry == true;
+
+    /// <summary>Whether the voice plays without a fetch.</summary>
+    public bool OnThisPc => _clip?.OnThisPc == true;
+
+    /// <summary>The tone <see cref="Status"/> is drawn in.</summary>
+    public ChoiceTone Tone => _clip?.State.Tone ?? StatusTone;
+
+    public bool StatusIsYellow => Tone == ChoiceTone.Yellow;
+
+    public bool StatusIsWhite => Tone == ChoiceTone.White;
+
+    public bool StatusIsRed => Tone == ChoiceTone.Red;
+
+    /// <summary>The row uses this voice now.</summary>
+    public bool InUse { get; init; }
+
+    /// <summary>The role this shipped voice is suggested for, or null.</summary>
+    public string? SuggestedFor { get; init; }
+
+    /// <summary>The tag text: <c>Suggested for</c> and the role, or null.</summary>
+    public string? Suggestion => SuggestedFor is null ? null : $"SUGGESTED FOR {SuggestedFor.ToUpperInvariant()}";
+
+    /// <summary>The head drawn above this row, when it is the first of its group.</summary>
+    public string? Head
+    {
+        get => _head;
+        set
+        {
+            if (_head == value)
+            {
+                return;
+            }
+
+            _head = value;
+            Raise(nameof(Head));
+        }
+    }
+
+    /// <summary>The group's count, drawn beside <see cref="Head"/>.</summary>
+    public string? HeadCount
+    {
+        get => _headCount;
+        set
+        {
+            if (_headCount == value)
+            {
+                return;
+            }
+
+            _headCount = value;
+            Raise(nameof(HeadCount));
+        }
+    }
 
     /// <summary>The tooltip: the unavailable reason while shut, the action and its cost while live (#383).</summary>
     public string? Tip => Playable ? Why is { Length: > 0 } cost ? $"{ActionName}. {cost}" : ActionName : Why;
@@ -248,6 +342,9 @@ public partial class PickerPage : UserControl
     /// <summary>The audition in flight, so the next press can drop it.</summary>
     private CancellationTokenSource? _auditioning;
 
+    /// <summary>Ends the subscription to clip changes.</summary>
+    private Action? _unwatch;
+
     public PickerPage()
     {
         InitializeComponent();
@@ -326,8 +423,15 @@ public partial class PickerPage : UserControl
             {
                 Value = value,
                 Text = Label(value),
-                Status = _request.Status?.Invoke(value)?.Text.ToUpperInvariant(),
-                StatusIsYellow = _request.Status?.Invoke(value)?.Tone == ChoiceTone.Yellow,
+                StatusText = _request.Status?.Invoke(value)?.Text.ToUpperInvariant(),
+                StatusTone = _request.Status?.Invoke(value)?.Tone ?? ChoiceTone.Grey,
+                Detail = _request.Clips?.Detail?.Invoke(value),
+                Clip = _request.Clips?.Clip(value),
+                InUse = !_request.Several && string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase),
+                SuggestedFor = _request.Clips?.Suggested is { } suggested
+                    && string.Equals(suggested.Voice, value, StringComparison.OrdinalIgnoreCase)
+                        ? suggested.Role
+                        : null,
                 CanPlay = auditioned is not null,
                 Playable = auditioned is { Unavailable: null },
                 HasSample = sample,
@@ -356,6 +460,9 @@ public partial class PickerPage : UserControl
 
         AttachedToVisualTree += (_, _) =>
         {
+            _unwatch?.Invoke();
+            _unwatch = _request.Clips?.Watch?.Invoke(OnClipChanged);
+
             // The headset lays out a window that is never shown, where a virtualizing panel is never told its
             // viewport and realizes no rows.
             if (this.FindAncestorOfType<Panel.PanelView>()?.Classes.Contains("headset") == true)
@@ -384,7 +491,12 @@ public partial class PickerPage : UserControl
         };
 
         // Leaving the page stops whatever it was playing.
-        DetachedFromVisualTree += (_, _) => _auditioning?.Cancel();
+        DetachedFromVisualTree += (_, _) =>
+        {
+            _auditioning?.Cancel();
+            _unwatch?.Invoke();
+            _unwatch = null;
+        };
     }
 
     /// <summary>Rows become tick boxes; ticking chooses nothing until USE THESE.</summary>
@@ -502,6 +614,7 @@ public partial class PickerPage : UserControl
                                  || ChoiceMatch.Matches(choice.Text, filter)))
             .ToArray();
 
+        matches = Grouped(matches);
         _visible = matches;
 
         // The same row objects, filtered — never new ones.
@@ -526,6 +639,81 @@ public partial class PickerPage : UserControl
                 : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectedItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
 
         ShowWhetherAnythingCanBeTaken();
+    }
+
+    /// <summary>
+    /// Under a Chatterbox list, the rows on this PC first with the suggested voice leading them, then the rest,
+    /// each group headed by its first row. Other lists pass through.
+    /// </summary>
+    private PickerChoice[] Grouped(PickerChoice[] rows)
+    {
+        foreach (var row in rows)
+        {
+            row.Head = null;
+        }
+
+        if (_request.Clips is null)
+        {
+            return rows;
+        }
+
+        var here = rows.Where(row => row.OnThisPc).OrderBy(row => row.SuggestedFor is null).ToArray();
+        var elsewhere = rows.Where(row => !row.OnThisPc).ToArray();
+
+        Head(here, "ON THIS PC");
+        Head(elsewhere, "FETCHED WHEN PLAYED OR CHOSEN");
+
+        return [.. here, .. elsewhere];
+    }
+
+    private static void Head(PickerChoice[] group, string head)
+    {
+        if (group.Length == 0)
+        {
+            return;
+        }
+
+        group[0].HeadCount = group.Length.ToString();
+        group[0].Head = head;
+    }
+
+    /// <summary>A clip changed state: the row follows it, and moves between the heads when it crossed.</summary>
+    private void OnClipChanged(string id) =>
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_all.FirstOrDefault(row => string.Equals(row.Value, id, StringComparison.OrdinalIgnoreCase)) is not { } row
+                || _request.Clips is not { } clips)
+            {
+                return;
+            }
+
+            var was = row.OnThisPc;
+
+            row.Clip = clips.Clip(id);
+
+            if (row.OnThisPc == was)
+            {
+                return;
+            }
+
+            var selected = Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count
+                ? _visible[Choices.SelectedIndex].Value
+                : null;
+
+            ApplyFilter();
+
+            if (selected is not null)
+            {
+                Choices.SelectedIndex = Array.FindIndex([.. _visible], visible => visible.Value == selected);
+            }
+        });
+
+    private void OnRetryClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PickerChoice choice })
+        {
+            _request.Clips?.Fetch?.Invoke(choice.Value);
+        }
     }
 
     /// <summary>Use this is enabled exactly when <see cref="Accept"/> would take something (#190).</summary>

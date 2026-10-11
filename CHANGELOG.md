@@ -12,6 +12,8 @@ The headset panel now has four things the window already had: Settings › Phras
 
 The headset panel now has the search field with its previous and next buttons, Copy page, and the filter field on every page that has one. A ray press on a field opens the drawn keyboard, and Done runs the search or filter on what you typed. The buttons are 44 pixels tall.
 
+When a voice slot speaks through Chatterbox, each row in the voice picker now says whether its clip is on this PC: Shipped, Fetched or Custom in yellow, Not fetched in grey with the clip's size, Fetching in white, and Fetch failed in red with a Retry button that fetches again without playing. A row also shows its gender, pitch and pace, the voice in use is tagged In use, and the list is split under On this PC and Fetched when played or chosen, with the voice suggested for the role first. Pressing play on a voice that is not on this PC fetches it first, and the row moves to On this PC when the clip arrives.
+
 On docking at a station that is under attack, damaged, under repairs or abandoned, your core says so once: "Galileo is under repairs." A station under construction is not mentioned. Callouts has a Station damage toggle, on by default.
 
 D47 keeps the last 25 galaxy searches you asked, for each Commander, in `search-history.json`, with the answer each one gave. That covers system, station and body searches, whether asked by voice or on the search pages, and a system you name by voice or by typing on the System page. Asking the same search again keeps the newer one.

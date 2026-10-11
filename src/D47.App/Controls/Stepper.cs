@@ -281,7 +281,11 @@ public sealed class Stepper : ContentControl, IChoiceControl
 
     /// <summary>The theme brush a status tone is drawn in.</summary>
     internal static IObservable<object?> Ink(ChoiceTone tone) =>
-        Application.Current!.Resources.GetResourceObservable(tone == ChoiceTone.Yellow
-            ? Theming.ThemeManager.YellowKey
-            : Theming.ThemeManager.GreyKey);
+        Application.Current!.Resources.GetResourceObservable(tone switch
+        {
+            ChoiceTone.Yellow => Theming.ThemeManager.YellowKey,
+            ChoiceTone.White => Theming.ThemeManager.WhiteKey,
+            ChoiceTone.Red => Theming.ThemeManager.RedKey,
+            _ => Theming.ThemeManager.GreyKey,
+        });
 }

@@ -630,6 +630,7 @@ internal sealed partial class SettingControls
         // The work is "until the list is on screen", not "until the Commander has chosen": what can take a
         // moment is asking the machine for its capture devices or a provider for its voices.
         var listed = new TaskCompletionSource();
+        var clips = row.ChoiceClips?.Invoke(host.Settings.Current);
 
         prompts.Pick(
             $"settings-pick:{row.Key}",
@@ -640,7 +641,8 @@ internal sealed partial class SettingControls
 
                 // A voice row states what a press costs instead; every other row's help is readable here,
                 // where a ray cannot reach the label's hover text.
-                Help = row.Audition is null ? row.Help : null,
+                Help = row.Audition is null ? row.Help : clips?.Help,
+                Clips = clips,
                 Choices = row.ChoicesFor(host.Settings.Current),
 
                 // Read at open like the choices themselves: a label can depend on the provider serving the

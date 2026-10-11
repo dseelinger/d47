@@ -212,6 +212,28 @@ public sealed class SpeechClients : IDisposable
             ? chatterbox.ClipState(id)
             : null;
 
+    /// <summary>Starts fetching one voice's Chatterbox clip without playing it. Never waits.</summary>
+    internal void FetchVoice(VoiceGroup group, string id)
+    {
+        if (ChatterboxFor(group) is { } chatterbox)
+        {
+            _ = Task.Run(() => chatterbox.FetchAsync(id));
+        }
+    }
+
+    /// <summary>The shipped voice <c>voices.tsv</c> suggests for a role, or null where the role's slot is not on Chatterbox.</summary>
+    internal string? SuggestedVoiceFor(VoiceRole role) =>
+        ChatterboxFor(VoiceGroups.Of(role))?.Catalogue().FirstOrDefault(voice => voice.Shipped && voice.Role == role)?.Voice.Id;
+
+    private ChatterboxTtsProvider? ChatterboxFor(VoiceGroup group) =>
+        string.Equals(
+            VoiceGroups.ProviderFor(_settings.Current.Speech, group),
+            TtsProviderCatalog.ChatterboxId,
+            StringComparison.OrdinalIgnoreCase)
+        && LocalVoiceWithEdgeStandIn.Unwrapped(ClientFor(TtsProviderCatalog.ChatterboxId)) is ChatterboxTtsProvider chatterbox
+            ? chatterbox
+            : null;
+
     internal string ChatterboxState() =>
         D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."

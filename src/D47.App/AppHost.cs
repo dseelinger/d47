@@ -2227,6 +2227,8 @@ public sealed class AppHost : IDisposable
                         speech.ChatterboxClipChanged += refresh;
                         return () => speech.ChatterboxClipChanged -= refresh;
                     },
+                    FetchVoice = (group, id) => speech.FetchVoice(group, id),
+                    SuggestedVoice = role => speech.SuggestedVoiceFor(role),
                     WhyNoVoices = group => speech.WhyNoVoices(group),
                     SpeechSpend = () => speech.Spend,
 
