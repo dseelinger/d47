@@ -39,10 +39,11 @@ of the report is the order, not the filter.
 ## What each issue needs first
 
 Many bodies name their prerequisites: a `Needs first: #537, #538.` line, or a sentence
-`Needs #582 first`. Title and labels do not show them, so read them in one more call:
+`Needs #582 first` or `Needs #582.`. Title and labels do not show them, so read them in one more
+call:
 
 ```bash
-gh issue list --state open --limit 300 --json number,body --jq '.[] | {n: .number, needs: ([.body | scan("(?:^|[^`])Needs first:[^.\n]*"), scan("Needs #[0-9][^.\n]* first")] | map([scan("#[0-9]+") | ltrimstr("#")]) | add // [] | unique)} | select(.needs != []) | "\(.n): \(.needs | join(" "))"'
+gh issue list --state open --limit 300 --json number,body --jq '.[] | {n: .number, needs: ([.body | scan("(?:^|[^`])Needs(?: first:| #[0-9])[^.\n]*")] | map([scan("#[0-9]+") | ltrimstr("#")]) | add // [] | unique)} | select(.needs != []) | "\(.n): \(.needs | join(" "))"'
 ```
 
 A needed issue is done when it is not in the open list, or when `git log main --format=%B` has the
