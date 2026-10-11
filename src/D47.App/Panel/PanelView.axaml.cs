@@ -17,7 +17,7 @@ using System.Globalization;
 namespace D47.App.Panel;
 
 /// <summary>The panel, as a view.</summary>
-public partial class PanelView : UserControl
+public partial class PanelView : UserControl, IPanelTabHost
 {
     /// <summary>How much of the panel this instantiation shows.</summary>
     public static readonly StyledProperty<PanelMode> ModeProperty =
@@ -127,6 +127,8 @@ public partial class PanelView : UserControl
 
     public PanelView()
     {
+        _searchFurnishing = new SearchFurnishing(this);
+        _stories = new StoriesFurnishing(this);
         InitializeComponent();
         _selecting = new TranscriptSelection(
             Bubbles,
@@ -365,6 +367,18 @@ public partial class PanelView : UserControl
     }
 
     private PanelViewModel? Model => DataContext as PanelViewModel;
+
+    PanelViewModel? IPanelTabHost.Model => Model;
+
+    bool IPanelTabHost.Headset => Classes.Contains("headset");
+
+    Func<string, Task<bool>>? IPanelTabHost.Copy => _copy;
+
+    SpeakerPortraits? IPanelTabHost.Portraits => _portraits;
+
+    Func<string?>? IPanelTabHost.CommanderName => _commanderName;
+
+    void IPanelTabHost.ShowSearch() => ShowSearch();
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -1010,33 +1024,7 @@ public partial class PanelView : UserControl
     public void EnableAdventures(
         AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
     {
-        AdventuresPage? page = null;
-
-        AdventuresPage Page() => page ??= new AdventuresPage(surface, Nav, Prompts, settingsStrip?.Invoke(), () => _copy);
-
-        if (desk is not null)
-        {
-            static string? OnUi(Func<string?> act) =>
-                Avalonia.Threading.Dispatcher.UIThread.CheckAccess() ? act() : Avalonia.Threading.Dispatcher.UIThread.Invoke(act);
-
-            desk.Change = () => OnUi(() => Page().ChangeDraft());
-            desk.Accept = () => OnUi(() => Page().AcceptDraft());
-            desk.Reject = () => OnUi(() => Page().RejectDraft());
-            desk.Ask = () => OnUi(() => Page().AskByVoice());
-        }
-
-        Furnish(
-            PanelTab.Stories,
-            crumb => crumb.Key == AdventuresPage.RootKey
-                ? Page()
-                : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
-            new NavCrumb(AdventuresPage.RootKey, "Stories")
-            {
-                Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
-            });
-
-        // And the same story at mini's size (asked for 2026-08-22).
-        _adventureMini = new AdventureMini(surface);
+        _stories.EnableAdventures(surface, settingsStrip, desk);
         ApplyChrome();
     }
 
@@ -1462,28 +1450,19 @@ public partial class PanelView : UserControl
     }
 
     /// <summary>Gives this surface the Search tab, with the System page as its root.</summary>
-    public void EnableStarSystem(StarSystemSurface surface) =>
-        Furnish(
-            PanelTab.Search,
-            _ =>
-            {
-                _starSystem = new StarSystemPage(surface);
-                _starSystem.FiltersChanged += (_, _) => ShowSearch();
-
-                return _starSystem;
-            },
-            new NavCrumb(StarSystemPage.RootKey, "System") { Help = D47.Core.Capabilities.Builtin.GalaxyCapability.Id });
+    public void EnableStarSystem(StarSystemSurface surface) => _searchFurnishing.EnableStarSystem(surface);
 
     /// <summary>
     /// Lets the System page follow the Commander, from the host's tick, only while Search is the open tab;
     /// true when it redrew.
     /// </summary>
-    public bool TickSearch() => Tab == PanelTab.Search && _starSystem is { } page && page.Tick();
+    public bool TickSearch() => _searchFurnishing.Tick();
 
     /// <summary>Opens the System page on one system, where this surface has one; true when it did.</summary>
-    public bool OpenSystem(long systemAddress) => _starSystem is { } page && page.OpenSystem(systemAddress);
+    public bool OpenSystem(long systemAddress) => _searchFurnishing.OpenSystem(systemAddress);
 
-    private StarSystemPage? _starSystem;
+    private readonly SearchFurnishing _searchFurnishing;
+    private readonly StoriesFurnishing _stories;
     private RouteProgressPage? _routeProgress;
     private BodyPage? _bodyPage;
     private UnsoldPage? _unsoldPage;
@@ -1491,7 +1470,6 @@ public partial class PanelView : UserControl
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;
     private RouteBestCargoPage? _bestCargo;
-    private AdventureMini? _adventureMini;
     private RouteMini? _routeMini;
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
@@ -2564,7 +2542,7 @@ public partial class PanelView : UserControl
         // rest of Routing keeps drawing its full-size page even at mini's size.
         Control? miniControl = Tab switch
         {
-            PanelTab.Stories => _adventureMini,
+            PanelTab.Stories => _stories.Mini,
             PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _routeMini,
             _ => null,
         };
