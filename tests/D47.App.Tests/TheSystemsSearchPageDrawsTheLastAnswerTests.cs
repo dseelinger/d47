@@ -197,14 +197,14 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Concat(text.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? []))];
 
     [AvaloniaFact]
-    public void SearchOffersSystemThenSystemsAndSystemStillFollowsTheCommander()
+    public void SearchOffersSystemThenSystemsThenStationsAndSystemStillFollowsTheCommander()
     {
         var world = new World(lookups: true);
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, systems: false);
 
         Assert.Equal(
-            [StarSystemPage.RootKey, SystemSearchPage.RootKey],
+            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey],
             panel.Nav.Roots(PanelTab.Search).Select(root => root.Key));
         Assert.Equal(StarSystemPage.RootKey, panel.Nav.RootKeyOf(PanelTab.Search));
 

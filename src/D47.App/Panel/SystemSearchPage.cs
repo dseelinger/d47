@@ -410,7 +410,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return ListRow.Dress(row);
     }
 
-    private static IReadOnlyList<string> Choices(string name) => GalaxyFilters.Find(name)?.Choices ?? [];
+    internal static IReadOnlyList<string> Choices(string name) => GalaxyFilters.Find(name)?.Choices ?? [];
 
     private TextBox TextField(string name) => name switch
     {
@@ -439,7 +439,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         };
     }
 
-    private static (string From, string To) Split(string? range)
+    internal static (string From, string To) Split(string? range)
     {
         if (range is null || !GalaxyCriteria.TryParseRange(range, out var min, out var max))
         {
@@ -449,7 +449,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return (min is { } low ? Number(low) : string.Empty, max is { } high ? Number(high) : string.Empty);
     }
 
-    private static int Index(IReadOnlyList<string> items, string? value)
+    internal static int Index(IReadOnlyList<string> items, string? value)
     {
         if (value is null)
         {
@@ -467,9 +467,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return 0;
     }
 
-    private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    internal static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
-    private static TextBox Field(string name, bool mono = false)
+    internal static TextBox Field(string name, bool mono = false)
     {
         var box = new TextBox
         {
@@ -487,7 +487,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return box;
     }
 
-    private static Control Group(string name, params Control[] children)
+    internal static Control Group(string name, params Control[] children)
     {
         var head = TitleText.GroupRow(TitleText.Build(name, TypeScale.Section, TitleRank.Group));
         var group = new StackPanel { Spacing = 10, Children = { head } };
@@ -500,17 +500,17 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return group;
     }
 
-    private static Control Labelled(string label, Control control) =>
+    internal static Control Labelled(string label, Control control) =>
         new StackPanel { Spacing = 4, Children = { Label(label, width: null), control } };
 
-    private static Grid Columns2(string columns, Control left, Control right)
+    internal static Grid Columns2(string columns, Control left, Control right)
     {
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 12, Children = { left, right } };
         Grid.SetColumn(right, 1);
         return grid;
     }
 
-    private static Grid Span(TextBox from, TextBox to, string? unit)
+    internal static Grid Span(TextBox from, TextBox to, string? unit)
     {
         var dash = Mono("–", TypeScale.Small, ThemeManager.GreyKey);
         dash.VerticalAlignment = VerticalAlignment.Center;
@@ -527,10 +527,10 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,*"), ColumnSpacing = 6, Children = { from, dash, to } };
     }
 
-    private static StackPanel Pair(TextBlock top, TextBlock bottom) =>
+    internal static StackPanel Pair(TextBlock top, TextBlock bottom) =>
         new() { VerticalAlignment = VerticalAlignment.Center, Children = { top, bottom } };
 
-    private static TextBlock Value(string? text)
+    internal static TextBlock Value(string? text)
     {
         var block = new TextBlock
         {
@@ -544,7 +544,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return block;
     }
 
-    private static TextBlock Sub(string? text)
+    internal static TextBlock Sub(string? text)
     {
         var block = new TextBlock
         {
@@ -557,7 +557,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return block;
     }
 
-    private static T Cell<T>(T control, int column)
+    internal static T Cell<T>(T control, int column)
         where T : Control
     {
         control.VerticalAlignment = VerticalAlignment.Center;
@@ -565,7 +565,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return control;
     }
 
-    private static TextBlock Right(TextBlock block)
+    internal static TextBlock Right(TextBlock block)
     {
         block.HorizontalAlignment = HorizontalAlignment.Right;
         block.TextAlignment = TextAlignment.Right;

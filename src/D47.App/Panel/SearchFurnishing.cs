@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia.Controls;
 using D47.Core.Capabilities.Builtin;
+using D47.App.Controls;
 using D47.Core.Interface;
 using D47.Core.Knowledge;
 
@@ -14,6 +15,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
     private StarSystemPage? _starSystem;
     private SystemSearchPage? _systems;
+    private StationSearchPage? _stations;
     private StarSystemPage? _found;
 
     public void EnableStarSystem(StarSystemSurface surface)
@@ -23,6 +25,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         if (surface.Searches is not null)
         {
             roots.Add(new NavCrumb(SystemSearchPage.RootKey, "Systems") { Help = GalaxyCapability.Id });
+            roots.Add(new NavCrumb(StationSearchPage.RootKey, "Stations") { Help = GalaxyCapability.Id });
         }
 
         host.Furnish(PanelTab.Search, crumb => Build(crumb, surface), [.. roots]);
@@ -42,6 +45,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             && trail[^1].Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && found.Tick();
         redrawn |= _systems is { } systems && host.Nav.RootKeyOf(PanelTab.Search) == SystemSearchPage.RootKey && systems.Tick();
+        redrawn |= _stations is { } stations && host.Nav.RootKeyOf(PanelTab.Search) == StationSearchPage.RootKey && stations.Tick();
 
         return redrawn;
     }
@@ -61,6 +65,17 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset);
         }
 
+        if (crumb.Key == StationSearchPage.RootKey && surface.Searches is { } stationSearches)
+        {
+            return _stations = new StationSearchPage(
+                stationSearches,
+                surface.LookupsEnabled,
+                () => surface.Here()?.StarSystem,
+                ChooseServices,
+                surface.OpenSettings,
+                host.Headset);
+        }
+
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && long.TryParse(crumb.Key[FoundKeyPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var address))
         {
@@ -76,6 +91,21 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
         return _starSystem;
     }
+
+    private void ChooseServices(IReadOnlyList<string> current, Action<IReadOnlyList<string>> chosen) =>
+        host.Prompts.Pick(
+            StationSearchPage.ServicesKey,
+            "Services",
+            new PickerRequest
+            {
+                Prompt = "Services",
+                Help = StationSearchPage.ServicesHelp,
+                Choices = [.. StationQuery.ServiceNames.Select(service => service.Name)],
+                Several = true,
+                CurrentSeveral = current,
+                DefaultDisplay = "ANY SERVICES",
+            },
+            result => chosen(result.Values ?? []));
 
     private void OpenFound(SystemSummary system)
     {
