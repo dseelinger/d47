@@ -939,7 +939,7 @@ public sealed class ControlKitWindow : Window
         };
 
         var panel = new PanelView { DataContext = model };
-        panel.EnableTurnDetails(() => Task.CompletedTask, () => 0.1432m);
+        panel.EnableTurnDetails(_ => Task.CompletedTask, () => 0.1432m);
 
         return Card(
             "StatusRow",

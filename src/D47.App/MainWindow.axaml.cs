@@ -363,12 +363,9 @@ public partial class MainWindow : Window
             // (Phase 55).
             Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));
 
-            // And the same window is the one with somewhere to open a dialog, which is what the turn line's
-            // figures need.
-            Panel.EnableTurnDetails(
-                ShowSpendAsync,
-                () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current),
-                () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
+            var spend = SpendDeskFor(host);
+
+            Panel.EnableTurnDetails(spend.Show, spend.Session, spend.Detail);
             host.Speech.Spend.Recorded += Panel.RefreshSessionSpend;
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
@@ -1201,25 +1198,20 @@ public partial class MainWindow : Window
         });
     }
 
-    /// <summary>Opens the figures.</summary>
-    private async Task ShowSpendAsync()
-    {
-        if (_host is null)
-        {
-            return;
-        }
-
-        await new SpendDialog(
-            _host.Spend.Last,
-            _host.Spend,
-            _host.Speech.Spend,
-            _host.SpendLedger,
-            _host.Settings.Current,
+    /// <summary>The SPEND row's figure and the dialog it opens, for whichever surface shows the row.</summary>
+    internal static SpendDesk SpendDeskFor(AppHost host) => new(
+        owner => new SpendDialog(
+            host.Spend.Last,
+            host.Spend,
+            host.Speech.Spend,
+            host.SpendLedger,
+            host.Settings.Current,
             TimeZoneInfo.Local,
 
             // What makes the Reset button appear, and what "this session" means to it (#197).
-            _host.LaunchedAt).Over(this);
-    }
+            host.LaunchedAt).Over(owner),
+        () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current),
+        () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
 
     /// <summary>
     /// Cuts an incident out of what is already in memory, and puts it in front of the Commander (#160).

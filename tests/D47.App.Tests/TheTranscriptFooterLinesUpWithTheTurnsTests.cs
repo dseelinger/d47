@@ -37,7 +37,7 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
         var panel = new PanelView { DataContext = model };
 
         panel.EnableSearch();
-        panel.EnableTurnDetails(() => Task.CompletedTask, session ?? (() => 0.0231m));
+        panel.EnableTurnDetails(_ => Task.CompletedTask, session ?? (() => 0.0231m));
         panel.EnableCommanderName(() => commander);
 
         var window = new Window { Width = width, Height = height, Content = panel };

@@ -128,7 +128,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.SpeakerPortraits? portraits = null,
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CrewSeatsHost? crewSeats = null,
-        D47.Core.Ships.BuildTalk? buildTalk = null)
+        D47.Core.Ships.BuildTalk? buildTalk = null,
+        Panel.SpendDesk? spend = null)
     {
         _dumpTo = dumpTo;
 
@@ -183,6 +184,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         }.Furnish(_view);
 
         _view.EnableSearch();
+
+        if (spend is not null)
+        {
+            _view.EnableTurnDetails(spend.Show, spend.Session, spend.Detail);
+        }
 
         if (routing?.Plans is { } plans)
         {
@@ -240,6 +246,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// Closes the top modal, or goes back one level on this surface, and says whether there was anything to
     /// do — so the controller button stays available to whatever else wants it at a root (Phase 25).
     /// </summary>
+    /// <summary>Reads the SPEND row's session figure again; safe from any thread.</summary>
+    public void RefreshSessionSpend() => _view.RefreshSessionSpend();
+
     public bool Back()
     {
         if (_modals.Top is { } top)

@@ -27,7 +27,7 @@ public class TheCostLineIsInsideEachAnswerTests
     {
         var panel = new PanelView { DataContext = model };
 
-        panel.EnableTurnDetails(() => Task.CompletedTask, () => 0.069m);
+        panel.EnableTurnDetails(_ => Task.CompletedTask, () => 0.069m);
 
         var window = new Window { Width = 1280, Height = 860, Content = panel };
         window.Show();

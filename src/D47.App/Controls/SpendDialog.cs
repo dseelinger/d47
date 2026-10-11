@@ -124,15 +124,18 @@ public sealed class SpendDialog : ModalDialog
     /// <summary>The help mark and Close.</summary>
     private void Buttons(StackPanel row)
     {
-        var close = new Button { Content = "Close", MinWidth = 110 };
+        var close = new Button { Content = "Close", MinWidth = 110, MinHeight = TypeScale.MinimumTarget };
         close.Click += (_, _) => Close();
 
         // The mark, on the left of the row so it is not mistaken for one of the two controls that do
         // something (#252).
-        row.Children.Add(SiteHelpMark.For(
+        var help = SiteHelpMark.For(
             DocsSite.Capability(
                 D47.Core.Capabilities.Builtin.ConversationCapability.Id, "running-totals"),
-            "SpendHelp"));
+            "SpendHelp");
+
+        help.MinHeight = TypeScale.MinimumTarget;
+        row.Children.Add(help);
 
         row.Children.Add(close);
     }

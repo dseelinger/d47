@@ -126,7 +126,10 @@ public partial class App(AppHost? host) : Application
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
                 crewSeats: host.CrewSeatsHost,
-                buildTalk: host.BuildTalk);
+                buildTalk: host.BuildTalk,
+                spend: MainWindow.SpendDeskFor(host));
+
+            host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

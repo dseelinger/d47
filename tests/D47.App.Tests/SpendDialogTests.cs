@@ -259,7 +259,7 @@ public class SpendDialogTests
 
         var asked = 0;
         headset.EnableTurnDetails(
-            () =>
+            _ =>
             {
                 asked++;
                 return Task.CompletedTask;
@@ -288,7 +288,7 @@ public class SpendDialogTests
         model.AttachProvenance(0, new D47.App.Panel.TurnProvenance("ANSWERED VIA CLAUDE-SONNET-5 · EFFORT MEDIUM", "$0.0231"));
         var view = new D47.App.Panel.PanelView { DataContext = model };
 
-        view.EnableTurnDetails(() => Task.CompletedTask, () => 0.0231m);
+        view.EnableTurnDetails(_ => Task.CompletedTask, () => 0.0231m);
 
         var window = new Window { Content = view, Width = 900, Height = 700 };
         window.Show();
@@ -365,7 +365,7 @@ public class SpendDialogTests
         var headset = new D47.App.Panel.PanelView { DataContext = new D47.App.Panel.PanelViewModel() };
         var window = new Window { Content = headset, Width = 900, Height = 700 };
         window.Show();
-        headset.EnableTurnDetails(() => Task.CompletedTask, () => 0m);
+        headset.EnableTurnDetails(_ => Task.CompletedTask, () => 0m);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         Assert.True(headset.FindControl<Control>("TurnDetails")!.Bounds.Height >= TypeScale.MinimumTarget);

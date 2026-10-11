@@ -10,6 +10,8 @@
 
 The headset panel now has four things the window already had: Settings › Phrases, the draft actions on a story, Fleet › Crew seats, and the talk section on a ship build.
 
+The headset panel now has the SPEND row under the transcript, and pressing it opens the spend figures on the headset.
+
 The headset panel now has the search field with its previous and next buttons, Copy page, and the filter field on every page that has one. A ray press on a field opens the drawn keyboard, and Done runs the search or filter on what you typed. The buttons are 44 pixels tall.
 
 When a voice slot speaks through Chatterbox, each row in the voice picker now says whether its clip is on this PC: Shipped, Fetched or Custom in yellow, Not fetched in grey with the clip's size, Fetching in white, and Fetch failed in red with a Retry button that fetches again without playing. A row also shows its gender, pitch and pace, the voice in use is tagged In use, and the list is split under On this PC and Fetched when played or chosen, with the voice suggested for the role first. Pressing play on a voice that is not on this PC fetches it first, and the row moves to On this PC when the clip arrives.
