@@ -69,7 +69,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "five-options" => ("options has 5", Card, Secret with { Options = [.. Enumerable.Repeat(Secret.Options[0], 5)] }),
         "option-without-after" => ("needs an id, a label and an after", Card, Secret with { Options = [Secret.Options[0] with { After = "" }] }),
         "option-adds-a-stranger" => ("not a persona", Card, Secret with { Options = [Secret.Options[0] with { Add = ["nobody"] }] }),
-        "hosted-provider" => ("the provider", Card, Secret with { Cast = [Speaker with { Provider = "elevenlabs" }] }),
+        "unknown-provider" => ("the provider", Card, Secret with { Cast = [Speaker with { Provider = "nobody" }] }),
+        "silent-provider" => ("the provider", Card, Secret with { Cast = [Speaker with { Provider = "none" }] }),
+        "openai-voice-it-lacks" => ("a voice that openai does not have", Card, Secret with { Cast = [Speaker with { Provider = "openai", Voice = "af_river" }] }),
+        "hosted-provider-without-a-voice" => ("a voice that elevenlabs does not have", Card, Secret with { Cast = [Speaker with { Provider = "elevenlabs", Voice = " " }] }),
         "own-voice-on-kokoro" => ("a voice that kokoro does not have", Card, Secret with { Cast = [Speaker with { Voice = StorySpeaker.Own }] }),
         "cast-named-ship" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Ship }] }),
         "cast-named-narrator" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Narrator }] }),
@@ -172,7 +175,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("five-options")]
     [InlineData("option-without-after")]
     [InlineData("option-adds-a-stranger")]
-    [InlineData("hosted-provider")]
+    [InlineData("unknown-provider")]
+    [InlineData("silent-provider")]
+    [InlineData("openai-voice-it-lacks")]
+    [InlineData("hosted-provider-without-a-voice")]
     [InlineData("own-voice-on-kokoro")]
     [InlineData("cast-named-ship")]
     [InlineData("cast-named-narrator")]

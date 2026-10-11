@@ -2585,7 +2585,8 @@ public sealed class AppHost : IDisposable
                 screen: screenCapture,
                 imagesAvailable: () => late.Host?.ReadsPictures ?? true,
                 pictureNote: () => late.Host?.PictureNote,
-                files: files));
+                files: files,
+                runningStory: () => late.Host?.Stories?.RunningVoices(gameState.Active?.Identity.FrontierId) ?? []));
 
         buildingRegistry.Dispose();
 

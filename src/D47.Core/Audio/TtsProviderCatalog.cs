@@ -96,6 +96,10 @@ public static class TtsProviderCatalog
 
     public const string CartesiaId = "cartesia";
 
+    /// <summary>The voice ids OpenAI offers; its voice list is fixed.</summary>
+    public static IReadOnlyList<string> OpenAiVoiceIds { get; } =
+        ["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse", "marin", "cedar"];
+
     public const string KokoroId = "kokoro";
 
     public const string ChatterboxId = "chatterbox";

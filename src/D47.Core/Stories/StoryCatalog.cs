@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using D47.Core.Audio;
 using D47.Core.Persona;
 using D47.Core.Speech;
 using D47.Core.Storage;
@@ -242,7 +243,7 @@ public sealed record StorySpeaker
     /// <summary>One line for the writer: who they are and how they speak.</summary>
     public required string Who { get; init; }
 
-    /// <summary><see cref="Kokoro"/> or <see cref="Chatterbox"/>.</summary>
+    /// <summary>The id of a speaking provider in <see cref="TtsProviderCatalog"/>.</summary>
     public required string Provider { get; init; }
 
     /// <summary>Null when the member has <see cref="Versions"/>.</summary>
@@ -988,19 +989,21 @@ public sealed class StoryCatalog
 
     private static string? VoiceFault(string name, string? provider, string? voice)
     {
-        bool? voiceFits = provider switch
+        var info = provider is null ? null : TtsProviderCatalog.All.FirstOrDefault(p => p.Id == provider);
+
+        if (info is not { Speaks: true })
+        {
+            return $"{name} has the provider {provider}, which is not a speaking voice provider.";
+        }
+
+        var voiceFits = provider switch
         {
             StorySpeaker.Kokoro => voice is not null && KokoroAssets.VoiceIds.Contains(voice, StringComparer.Ordinal),
-            StorySpeaker.Chatterbox => !string.IsNullOrWhiteSpace(voice),
-            _ => null,
+            TtsProviderCatalog.OpenAiId => voice is not null && TtsProviderCatalog.OpenAiVoiceIds.Contains(voice, StringComparer.Ordinal),
+            _ => !string.IsNullOrWhiteSpace(voice),
         };
 
-        return voiceFits switch
-        {
-            null => $"{name} has the provider {provider}, not {StorySpeaker.Kokoro} or {StorySpeaker.Chatterbox}.",
-            false => $"{name} has a voice that {provider} does not have.",
-            _ => null,
-        };
+        return voiceFits ? null : $"{name} has a voice that {provider} does not have.";
     }
 
     /// <summary>Where a card names a member that has versions: by token, or by either version's name.</summary>

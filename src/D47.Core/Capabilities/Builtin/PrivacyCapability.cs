@@ -68,10 +68,12 @@ public static class PrivacyCapability
 
         // Whether the model in use reads pictures.
         Func<bool>? imagesAvailable = null,
-        IFileSystem? files = null)
+        IFileSystem? files = null,
+        Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
+        var storyVoices = runningStory ?? (() => []);
 
         // Presence of the key, never its value — the disclosure has to distinguish "configured and sending"
         // from "selected but inert", and that is the only bit it needs.
@@ -117,11 +119,11 @@ public static class PrivacyCapability
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(
-                            settings.Current, KeyPresent(), InaraKeyPresent(), canSearch(), readsImages()))),
+                            settings.Current, KeyPresent(), InaraKeyPresent(), canSearch(), readsImages(), storyVoices()))),
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, InaraKeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages),
+                KeyPresent, InaraKeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices),
         };
     }
 
@@ -134,7 +136,8 @@ public static class PrivacyCapability
         string? donorTokenFile,
         IFileSystem? files,
         LongPress? forgetDonations,
-        Func<bool> imagesAvailable)
+        Func<bool> imagesAvailable,
+        Func<IReadOnlyList<RunningStoryVoice>> runningStory)
     {
         var rows = new List<SettingRow>
         {
@@ -272,12 +275,12 @@ public static class PrivacyCapability
                 Read = s =>
                 {
                     var entry = EgressDisclosure.Entry(
-                        id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable());
+                        id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable(), runningStory());
                     return $"{entry.Line}\n{entry.Summary}";
                 },
             },
             DetailBinding = s => EgressDisclosure.Entry(
-                id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable()).What,
+                id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable(), runningStory()).What,
         }));
 
         return rows;

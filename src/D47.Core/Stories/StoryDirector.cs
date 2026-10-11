@@ -95,6 +95,22 @@ public sealed class StoryDirector(
     public (StorySecret Secret, string Title)? CurrentCast(string? frontierId) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? (secret, story.Title) : null;
 
+    /// <summary>The voices the running story pins for its cast, as the Commander meets them; empty when no story is running.</summary>
+    public IReadOnlyList<Configuration.RunningStoryVoice> RunningVoices(string? frontierId)
+    {
+        if (stories.Current(frontierId) is not { State: StoryState.Running } story || Hidden(story.Id) is not { } secret)
+        {
+            return [];
+        }
+
+        var gender = Gender();
+
+        return [.. secret.Cast
+            .Select(member => member.Shown(secret.Id, gender))
+            .Where(shown => shown.Pinned)
+            .Select(shown => new Configuration.RunningStoryVoice(shown.Picture, story.Title, shown.Name, shown.Provider))];
+    }
+
     /// <summary>What the cast of story <paramref name="id"/> needs and does not have here; empty when ready or when its hidden layer is not on disk.</summary>
     public IReadOnlyList<string> VoicesMissing(string id) =>
         catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere(), Choices(), Ship()) : [];

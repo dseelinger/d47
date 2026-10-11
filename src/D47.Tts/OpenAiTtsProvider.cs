@@ -43,21 +43,8 @@ public sealed class OpenAiTtsProvider : ITtsProvider, IDisposable
 
     /// <summary>Every voice the service offers, from the request schema's own <c>voice</c> description.</summary>
     private static readonly IReadOnlyList<VoiceInfo> Catalogue =
-    [
-        new("alloy", "Alloy", "multilingual"),
-        new("ash", "Ash", "multilingual"),
-        new("ballad", "Ballad", "multilingual"),
-        new("coral", "Coral", "multilingual"),
-        new("echo", "Echo", "multilingual"),
-        new("fable", "Fable", "multilingual"),
-        new("onyx", "Onyx", "multilingual"),
-        new("nova", "Nova", "multilingual"),
-        new("sage", "Sage", "multilingual"),
-        new("shimmer", "Shimmer", "multilingual"),
-        new("verse", "Verse", "multilingual"),
-        new("marin", "Marin", "multilingual"),
-        new("cedar", "Cedar", "multilingual"),
-    ];
+        [.. TtsProviderCatalog.OpenAiVoiceIds.Select(id => new VoiceInfo(id, char.ToUpperInvariant(id[0]) + id[1..], "multilingual"))];
+
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {

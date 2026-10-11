@@ -173,6 +173,8 @@ add.
 - **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
   when the story needs it, #41) and `voice`; write them as before, and add `pinned: true` only when the story
   asks for a particular voice (a member on `own` is pinned already). Voice `own` is the Commander's recording (#713).
+  A pin to any other provider (`elevenlabs`, `openai`, `cartesia`, `edge`) costs the Commander money and needs their
+  key, and the story cannot start without it. Use one only when the story asks for it, and say so in the pitch (#1072).
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
   `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
   and every cast member gets a picture, `<story-id>.<cast-id>.png`, a square

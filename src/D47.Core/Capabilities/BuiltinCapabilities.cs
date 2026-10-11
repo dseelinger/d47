@@ -261,7 +261,10 @@ public static class BuiltinCapabilities
         Func<string?>? pictureNote = null,
 
         // Where the donation identifier is read and deleted.
-        Storage.IFileSystem? files = null) =>
+        Storage.IFileSystem? files = null,
+
+        // The running story's pinned voices, for the voice-provider disclosure.
+        Func<IReadOnlyList<Configuration.RunningStoryVoice>>? runningStory = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -408,7 +411,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

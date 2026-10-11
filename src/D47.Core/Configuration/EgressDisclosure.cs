@@ -18,6 +18,9 @@ public sealed record EgressEntry(string Id, string Name, string Destination, str
     public string Line => Active ? $"{Name} → {Destination}" : $"{Name} → nothing sent";
 }
 
+/// <summary>A voice the running story pins for one of its characters, keyed as <see cref="D47Settings.StoryVoices"/>.</summary>
+public sealed record RunningStoryVoice(string Key, string Story, string Character, string Provider);
+
 /// <summary>What is leaving this machine, as of the current settings.</summary>
 public static class EgressDisclosure
 {
@@ -167,13 +170,14 @@ public static class EgressDisclosure
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
-        bool imagesAvailable = true) => id switch
+        bool imagesAvailable = true,
+        IReadOnlyList<RunningStoryVoice>? runningStory = null) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
         Screen => ScreenEntry(settings, llmKeyPresent, imagesAvailable),
         Recap => RecapEntry(settings, llmKeyPresent),
-        TextToSpeech => TextToSpeechEntry(settings),
+        TextToSpeech => TextToSpeechEntry(settings, runningStory ?? []),
         SpeechRecognition => SpeechRecognitionFor(Listening.SttProviderCatalog.Selected(settings.Listening.Provider)),
 
         GalaxySearch => settings.Knowledge.GalaxySearch
@@ -618,7 +622,7 @@ public static class EgressDisclosure
     /// What the voice providers receive — a table since Phase 57, because one sentence can no longer be
     /// true.
     /// </summary>
-    private static EgressEntry TextToSpeechEntry(D47Settings settings)
+    private static EgressEntry TextToSpeechEntry(D47Settings settings, IReadOnlyList<RunningStoryVoice> runningStory)
     {
         var speaking = Audio.VoiceGroups.All
             .Select(slot => (Slot: slot, Provider: Speech.LocalVoiceStandIn.Live(Audio.TtsProviderCatalog.Selected(
@@ -626,7 +630,7 @@ public static class EgressDisclosure
             .Where(pair => pair.Provider.Speaks)
             .ToList();
 
-        var cast = StoryCast(settings);
+        var cast = StoryCast(settings, runningStory);
 
         if (speaking.Count == 0 && cast.Count == 0)
         {
@@ -690,13 +694,20 @@ public static class EgressDisclosure
             Summary: headline);
     }
 
-    /// <summary>Each story character the Commander put on a provider that is not local, in key order.</summary>
-    private static List<(string Story, string Character, Audio.TtsProviderInfo Provider)> StoryCast(D47Settings settings) =>
+    /// <summary>
+    /// Each story character on a provider that is not local, in key order: the Commander's choices, then the running
+    /// story's pinned voices that no choice replaces.
+    /// </summary>
+    private static List<(string Story, string Character, Audio.TtsProviderInfo Provider)> StoryCast(
+        D47Settings settings, IReadOnlyList<RunningStoryVoice> runningStory) =>
         [.. settings.StoryVoices
-            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-            .Select(pair => (Pair: pair, Provider: Audio.TtsProviderCatalog.Selected(pair.Value.Provider)))
-            .Where(line => line.Provider.Speaks && !Audio.TtsProviderCatalog.IsLocal(line.Provider.Id))
-            .Select(line => (line.Pair.Value.Story ?? line.Pair.Key, line.Pair.Value.Character ?? line.Pair.Key, line.Provider))];
+            .Select(pair => (pair.Key, Story: pair.Value.Story ?? pair.Key, Character: pair.Value.Character ?? pair.Key, pair.Value.Provider))
+            .Concat(runningStory
+                .Where(pin => !settings.StoryVoices.ContainsKey(pin.Key))
+                .Select(pin => (pin.Key, pin.Story, pin.Character, pin.Provider)))
+            .OrderBy(line => line.Key, StringComparer.Ordinal)
+            .Select(line => (line.Story, line.Character, Provider: Audio.TtsProviderCatalog.Selected(line.Provider)))
+            .Where(line => line.Provider.Speaks && !Audio.TtsProviderCatalog.IsLocal(line.Provider.Id))];
 
     /// <summary>Where the bytes actually go, each host once, in the order the slots run.</summary>
     private static string Destinations(IEnumerable<Audio.TtsProviderInfo> providers) =>
@@ -767,8 +778,9 @@ public static class EgressDisclosure
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
-        bool imagesAvailable = true) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable))];
+        bool imagesAvailable = true,
+        IReadOnlyList<RunningStoryVoice>? runningStory = null) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
@@ -776,9 +788,10 @@ public static class EgressDisclosure
         bool llmKeyPresent,
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
-        bool imagesAvailable = true)
+        bool imagesAvailable = true,
+        IReadOnlyList<RunningStoryVoice>? runningStory = null)
     {
-        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable);
+        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();
