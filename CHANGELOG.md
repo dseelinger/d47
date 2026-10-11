@@ -12,7 +12,9 @@ The headset panel now has four things the window already had: Settings › Phras
 
 On docking at a station that is under attack, damaged, under repairs or abandoned, your core says so once: "Galileo is under repairs." A station under construction is not mentioned. Callouts has a Station damage toggle, on by default.
 
-D47 keeps the last 25 galaxy searches you asked, for each Commander, in `search-history.json`, with the answer each one gave. That covers system, station and body searches, whether asked by voice or on the search pages, and a system you name by voice or by typing on the System page. Asking the same search again keeps the newer one. Nothing in the app lists them yet.
+D47 keeps the last 25 galaxy searches you asked, for each Commander, in `search-history.json`, with the answer each one gave. That covers system, station and body searches, whether asked by voice or on the search pages, and a system you name by voice or by typing on the System page. Asking the same search again keeps the newer one.
+
+HISTORY on the System, Systems, Stations and Bodies pages opens your last 25 searches in a full-page list, newest first, with a Kind filter. Open shows a galaxy search's stored answer and how long ago you asked it, with no new request, or a system's page fetched again. REFRESH asks the same question again from the system the search measured from.
 
 The AI can propose a watch for a checklist line, either on a new line or on one you already wrote. The proposal names the condition, for example "Add \"Buy 5 Hydrogen Fuel\" to the custom list, ticked when you buy 5 Hydrogen Fuel at Archambeau's Serenity +", and nothing is armed until you accept it. Counting starts when you accept, so an event between the proposal and your yes does not count. A condition that cannot work is refused with the reason, and nothing is recorded.
 

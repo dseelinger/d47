@@ -65,6 +65,9 @@ public sealed record PickerRequest
 
     /// <summary>The status line shown beside a choice, or null for none.</summary>
     public Func<string, ChoiceStatus?>? Status { get; init; }
+
+    /// <summary>What the accept button says.</summary>
+    public string AcceptText { get; init; } = "Use this";
 }
 
 /// <summary>Hearing a value before choosing it.</summary>
@@ -296,6 +299,7 @@ public partial class PickerPage : UserControl
         BindFacets();
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
+        AcceptButton.Content = _request.AcceptText;
 
         // Bracketed here because the row hands over the bare phrase (SettingRow.BareDefaultFor).
         var useDefault = _request.Several

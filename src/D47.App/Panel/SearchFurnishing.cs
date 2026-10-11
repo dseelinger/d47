@@ -18,9 +18,20 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private StationSearchPage? _stations;
     private BodySearchPage? _bodies;
     private StarSystemPage? _found;
+    private StarSystemSurface? _surface;
+    private (long Address, string Id)? _pendingSystem;
+    private string? _systemEntry;
+    private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
 
     public void EnableStarSystem(StarSystemSurface surface)
     {
+        if (surface.Searches is { } searches)
+        {
+            surface = surface with { Searches = searches with { OpenHistory = OpenHistory } };
+        }
+
+        _surface = surface;
+
         var roots = new List<NavCrumb> { new(StarSystemPage.RootKey, "System") { Help = GalaxyCapability.Id } };
 
         if (surface.Searches is not null)
@@ -59,34 +70,43 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         if (crumb.Key == SystemSearchPage.RootKey && surface.Searches is { } searches)
         {
-            return _systems = new SystemSearchPage(
+            _systems = new SystemSearchPage(
                 searches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 surface.OpenSettings,
                 host.Headset);
+            ApplyPending();
+
+            return _systems;
         }
 
         if (crumb.Key == StationSearchPage.RootKey && surface.Searches is { } stationSearches)
         {
-            return _stations = new StationSearchPage(
+            _stations = new StationSearchPage(
                 stationSearches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
                 surface.OpenSettings,
                 host.Headset);
+            ApplyPending();
+
+            return _stations;
         }
 
         if (crumb.Key == BodySearchPage.RootKey && surface.Searches is { } bodySearches)
         {
-            return _bodies = new BodySearchPage(
+            _bodies = new BodySearchPage(
                 bodySearches,
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 surface.OpenSettings,
                 host.Headset);
+            ApplyPending();
+
+            return _bodies;
         }
 
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
@@ -101,8 +121,92 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
         _starSystem = new StarSystemPage(surface);
         _starSystem.FiltersChanged += (_, _) => host.ShowSearch();
+        ApplyPending();
 
         return _starSystem;
+    }
+
+    private void OpenHistory()
+    {
+        if (_surface?.Searches is not { History: { } history } searches
+            || searches.FrontierId() is not { Length: > 0 } frontierId
+            || history.For(frontierId) is not { Count: > 0 } entries)
+        {
+            return;
+        }
+
+        host.Prompts.Pick(
+            SearchHistoryPicker.Key,
+            SearchHistoryPicker.Word,
+            SearchHistoryPicker.Request(entries, ShownEntryId(), DateTimeOffset.UtcNow),
+            result =>
+            {
+                if (entries.FirstOrDefault(entry => entry.Id == result.Value) is { } chosen)
+                {
+                    OpenEntry(chosen);
+                }
+            });
+    }
+
+    /// <summary>The history entry the open root draws, or null when it draws anything else.</summary>
+    private string? ShownEntryId() =>
+        host.Nav.RootKeyOf(PanelTab.Search) switch
+        {
+            SystemSearchPage.RootKey => _systems?.HistoryId,
+            StationSearchPage.RootKey => _stations?.HistoryId,
+            BodySearchPage.RootKey => _bodies?.HistoryId,
+            _ => _pendingSystem is null && _systemEntry is not null && _surface?.Searches is { History: { } history } searches
+                && history.For(searches.FrontierId()).FirstOrDefault(entry => entry.Id == _systemEntry)?.SystemAddress == _starSystem?.ShownAddress
+                    ? _systemEntry
+                    : null,
+        };
+
+    /// <summary>Opens the root for <paramref name="entry"/>'s kind and has its page draw the entry.</summary>
+    private void OpenEntry(SearchHistoryEntry entry)
+    {
+        _pending.Clear();
+        _pendingSystem = null;
+
+        if (entry.Tool == "describe_system" && entry.SystemAddress is { } address)
+        {
+            _pendingSystem = (address, entry.Id);
+            host.Nav.Show(StarSystemPage.RootKey);
+        }
+        else if (SearchHistoryPicker.KindOf(entry) is { } kind)
+        {
+            _pending[kind] = entry;
+            host.Nav.Show(kind switch
+            {
+                GalaxySearchKind.Systems => SystemSearchPage.RootKey,
+                GalaxySearchKind.Stations => StationSearchPage.RootKey,
+                _ => BodySearchPage.RootKey,
+            });
+        }
+
+        ApplyPending();
+    }
+
+    /// <summary>Hands a waiting entry to its page, once that page exists.</summary>
+    private void ApplyPending()
+    {
+        if (_pendingSystem is { } system && _starSystem is { } page)
+        {
+            _pendingSystem = null;
+            _systemEntry = system.Id;
+            page.OpenSystem(system.Address);
+        }
+
+        Deliver(GalaxySearchKind.Systems, _systems);
+        Deliver(GalaxySearchKind.Stations, _stations);
+        Deliver(GalaxySearchKind.Bodies, _bodies);
+    }
+
+    private void Deliver(GalaxySearchKind kind, GalaxySearchPage? page)
+    {
+        if (page is not null && _pending.Remove(kind, out var entry))
+        {
+            page.ShowEntry(entry);
+        }
     }
 
     private void ChooseServices(IReadOnlyList<string> current, Action<IReadOnlyList<string>> chosen) =>

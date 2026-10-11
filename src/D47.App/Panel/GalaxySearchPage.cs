@@ -19,7 +19,14 @@ public sealed record GalaxySearchSurface(
     GalaxySearchBoard Board,
     SavedSearchStore? Saved,
     Func<string> FrontierId,
-    Func<IReadOnlyCollection<string>> PhrasesTaken);
+    Func<IReadOnlyCollection<string>> PhrasesTaken)
+{
+    /// <summary>The Commander's past searches, or null for none kept.</summary>
+    public SearchHistory? History { get; init; }
+
+    /// <summary>Opens the history picker; set by the panel that hosts the pages.</summary>
+    public Action? OpenHistory { get; init; }
+}
 
 /// <summary>What a search page draws where the answer goes.</summary>
 public enum GalaxySearchView
@@ -51,7 +58,7 @@ public enum GalaxySearchView
 /// searches and its last answer on <see cref="GalaxySearchBoard"/>, however it was asked. The headset draws
 /// the answer and the saved searches only.
 /// </summary>
-public abstract class GalaxySearchPage : UserControl, IPageSummary
+public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 {
     public const string LookupsOffText =
         "Turn on “Look things up in the galaxy” in Settings and D47 will search Spansh for star systems, stations and bodies.";
@@ -65,6 +72,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     public const string SaveName = "SaveSearch";
 
     public const string RetryName = "RetrySearch";
+
+    public const string AskedName = "AskedAgo";
 
     public const string OpenSettingName = "OpenTheSetting";
 
@@ -97,6 +106,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     private (GalaxySearchView View, string Text, DateTimeOffset At, IReadOnlyDictionary<string, string> Arguments)? _failure;
     private object? _seen;
     private GalaxySearchPosting? _filledFrom;
+    private readonly HistoryTile _history;
+    private GalaxySearchPosting? _fromHistory;
 
     protected GalaxySearchPage(GalaxySearchSurface searches, Func<bool> lookupsEnabled, Action? openSettings, bool headset)
     {
@@ -104,6 +115,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         _lookupsEnabled = lookupsEnabled;
         _openSettings = openSettings;
         _headset = headset;
+        _history = new HistoryTile(searches);
 
         _run.Click += (_, _) => _ = RunAsync(FormArguments());
         _clear.Click += (_, _) => ClearForm();
@@ -112,6 +124,38 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     }
 
     public event EventHandler? SummaryChanged;
+
+    public Control? BarTool => _history.Button;
+
+    public string? HelpTopic => null;
+
+    /// <summary>The history entry drawn instead of the board's last answer, or null.</summary>
+    public string? HistoryId { get; private set; }
+
+    /// <summary>Whether the HISTORY tile can be pressed.</summary>
+    public bool CanOpenHistory => _history.CanOpen;
+
+    /// <summary>
+    /// Draws <paramref name="entry"/>'s stored answer and arguments until the next answer of this kind lands.
+    /// </summary>
+    public void ShowEntry(SearchHistoryEntry entry)
+    {
+        if (SearchHistoryPicker.Posting(entry) is not { } posting || posting.Kind != Kind)
+        {
+            return;
+        }
+
+        HistoryId = entry.Id;
+        _fromHistory = posting;
+        _failure = null;
+
+        if (!_headset)
+        {
+            FillForm(posting.Arguments);
+        }
+
+        Draw();
+    }
 
     /// <summary>The search tool this page runs.</summary>
     public abstract string Tool { get; }
@@ -147,9 +191,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     /// <summary>Redraws when the setting or the Commander's system changed; true when it did.</summary>
     public bool Tick()
     {
+        var tileChanged = _history.Refresh();
+
         if (Equals(Stamp(), _seen))
         {
-            return false;
+            return tileChanged;
         }
 
         Draw();
@@ -229,6 +275,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     {
         base.OnAttachedToVisualTree(e);
         _searches.Board.Posted += OnPosted;
+        _history.Attach();
 
         if (_searches.Saved is { } saved)
         {
@@ -242,6 +289,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _searches.Board.Posted -= OnPosted;
+        _history.Detach();
 
         if (_searches.Saved is { } saved)
         {
@@ -261,6 +309,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         Dispatcher.UIThread.Post(() =>
         {
             _failure = null;
+            _fromHistory = null;
+            HistoryId = null;
             FillFromLast();
             Draw();
         });
@@ -271,7 +321,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
     /// <summary>Sets the form to a posting it has not shown yet, so typing survives the page being re-attached.</summary>
     private void FillFromLast()
     {
-        if (_headset || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last, _filledFrom))
+        if (_headset || _fromHistory is not null || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last, _filledFrom))
         {
             return;
         }
@@ -280,7 +330,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         FillForm(last.Arguments);
     }
 
-    private object Stamp() => (_lookupsEnabled(), _searches.Board.Last(Kind), _searches.FrontierId(), Followed);
+    private GalaxySearchPosting? Latest => _fromHistory ?? _searches.Board.Last(Kind);
+
+    private object Stamp() => (_lookupsEnabled(), Latest, _searches.FrontierId(), Followed);
 
     private void Draw()
     {
@@ -288,7 +340,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         Follow();
 
         var lookups = _lookupsEnabled();
-        var last = _searches.Board.Last(Kind);
+        var last = Latest;
 
         View = !lookups ? GalaxySearchView.LookupsOff
             : _running is not null ? GalaxySearchView.Running
@@ -524,13 +576,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
                 break;
 
             case GalaxySearchView.NoResults:
-                block.Children.Add(Head($"0 {Noun}", Aside(last!.Arguments, last.Reference), last.Arguments, save: true));
+                block.Children.Add(Head($"0 {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments));
                 AddNotes(block, last);
                 block.Children.Add(Prose(Sentence!, TypeScale.Secondary, ThemeManager.WhiteKey));
                 break;
 
             case GalaxySearchView.Answer:
-                block.Children.Add(Head($"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), last.Arguments, save: true));
+                block.Children.Add(Head($"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments));
                 AddNotes(block, last);
 
                 if (Table(last, _headset) is { } table)
@@ -558,12 +610,24 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
             ? posting.Answer[posting.Notes.Length..].Trim()
             : posting.Answer;
 
+    /// <summary>The arguments REFRESH and SAVE use: a history entry's <c>near</c> is its stored reference when left out.</summary>
+    private IReadOnlyDictionary<string, string> Rerun(GalaxySearchPosting posting) =>
+        ReferenceEquals(posting, _fromHistory)
+            ? SearchHistoryPicker.Rerun(posting.Arguments, posting.Reference)
+            : posting.Arguments;
+
+    /// <summary>"Asked 6 hours ago" while a history entry is drawn, or null.</summary>
+    private string? Asked(GalaxySearchPosting posting) =>
+        ReferenceEquals(posting, _fromHistory) ? $"Asked {MissionsPage.Ago(DateTimeOffset.UtcNow - posting.AskedAt)}" : null;
+
     private Control Head(
         string count,
         (string Lead, string Reference)? aside,
         IReadOnlyDictionary<string, string>? refresh,
         bool save,
-        bool disabled = false)
+        bool disabled = false,
+        string? asked = null,
+        IReadOnlyDictionary<string, string>? saved = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Bottom, Children = { name } };
@@ -587,6 +651,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
             left.Children.Add(line);
         }
 
+        if (asked is not null)
+        {
+            var when = Chrome(asked, TypeScale.Small, ThemeManager.GreyKey);
+            when.Name = AskedName;
+            when.VerticalAlignment = VerticalAlignment.Bottom;
+            left.Children.Add(when);
+        }
+
         var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, HorizontalAlignment = HorizontalAlignment.Right };
 
         if (refresh is not null || disabled)
@@ -606,7 +678,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         if (!_headset && (save || disabled))
         {
             var fid = _searches.FrontierId();
-            var posting = refresh;
+            var posting = saved ?? refresh;
             var button = new Button
             {
                 Name = SaveName,

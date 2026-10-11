@@ -344,7 +344,10 @@ public partial class MainWindow : Window
                         host.GalaxySearches,
                         host.SavedSearches,
                         () => host.GameState.Active?.Identity.FrontierId ?? string.Empty,
-                        () => host.BookmarkPhrasesTaken()),
+                        () => host.BookmarkPhrasesTaken())
+                    {
+                        History = host.SearchHistory,
+                    },
                 };
 
                 Panel.EnableStarSystem(StarSystem);

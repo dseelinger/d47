@@ -34,7 +34,7 @@ public sealed record StarSystemSurface(
 /// One star system's record from Spansh: the Commander's own while following them, or any system typed or
 /// opened.
 /// </summary>
-public sealed partial class StarSystemPage : UserControl, IPageSummary, IFilterablePage
+public sealed partial class StarSystemPage : UserControl, IPageSummary, IFilterablePage, IPageChrome
 {
     public const string RootKey = "search.system";
 
@@ -61,6 +61,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private readonly StarSystemSurface _surface;
     private readonly StackPanel _body = new() { Spacing = 18 };
     private readonly TextBox _name;
+    private readonly HistoryTile _history;
 
     private bool _following = true;
     private bool _redrawn;
@@ -82,6 +83,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     public StarSystemPage(StarSystemSurface surface)
     {
         _surface = surface;
+        _history = new HistoryTile(surface.Searches);
 
         _name = new TextBox
         {
@@ -135,6 +137,28 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     public string Summary => SummaryText;
 
+    public Control? BarTool => _history.Button;
+
+    public string? HelpTopic => null;
+
+    /// <summary>Whether the HISTORY tile can be pressed.</summary>
+    public bool CanOpenHistory => _history.CanOpen;
+
+    /// <summary>The address of the system drawn, or null while none is.</summary>
+    public long? ShownAddress => _opened?.Address;
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _history.Attach();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _history.Detach();
+        base.OnDetachedFromVisualTree(e);
+    }
+
     event EventHandler? IPageSummary.SummaryChanged
     {
         add { }
@@ -153,12 +177,13 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     /// </summary>
     public bool Tick()
     {
+        var tileChanged = _history.Refresh();
         Check();
 
         var redrawn = _redrawn;
         _redrawn = false;
 
-        return redrawn;
+        return redrawn || tileChanged;
     }
 
     private void Check()
