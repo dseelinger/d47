@@ -469,6 +469,7 @@ public static class SettingsLayout
                                 E("callouts.arrival"),
                                 E("callouts.homeSystem", under: true),
                                 E("callouts.dockingPad"),
+                                E("callouts.stationDamage"),
                                 E("callouts.lore"),
                                 E("callouts.loreCooldownDays", under: true),
                                 E("callouts.discovery"),

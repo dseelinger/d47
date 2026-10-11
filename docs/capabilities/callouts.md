@@ -356,6 +356,18 @@ station's own "Docking request granted". It is dropped if you dock, cancel, are 
 before then, and a second grant replaces the first. Nothing is said at a fleet carrier, an outpost,
 a surface port or a settlement.
 
+#### Station damage {#station-damage}
+
+When you dock at a station that is under attack, damaged, under repairs or abandoned, your core says
+so once ([#1060](https://github.com/dseelinger/d47/issues/1060)). It is on by default.
+
+```text
+Galileo is under repairs.
+```
+
+A station under construction, one in its normal state and one whose state D47 does not know are not
+mentioned. Nothing is said when D47 starts while you are already docked.
+
 #### Route progress {#route}
 
 Jumps remaining, what is next, and what is coming:

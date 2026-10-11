@@ -195,6 +195,7 @@ public static class ShippedCallouts
             .Add(new SessionLengthCallout())
             .Add(new FighterCallout())
             .Add(new DockingCallout())
+            .Add(new StationDamageCallout())
 
             // A remark on the subject the core aboard pays attention to (#611).
             .Add(new DomainCallout())
@@ -371,6 +372,7 @@ public static class ShippedCallouts
         engine.SetEnabled("session-length", callouts.SessionLength, now);
         engine.SetEnabled("fighter", callouts.Fighter, now);
         engine.SetEnabled("docking", callouts.DockingPad, now);
+        engine.SetEnabled("station-damage", callouts.StationDamage, now);
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);

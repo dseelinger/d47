@@ -62,6 +62,7 @@ public static class CalloutCapability
     public const string ColonisationKey = "callouts.colonisation";
     public const string FighterKey = "callouts.fighter";
     public const string DockingPadKey = "callouts.dockingPad";
+    public const string StationDamageKey = "callouts.stationDamage";
     public const string SessionLengthKey = "callouts.sessionLength";
     public const string SessionLengthHoursKey = "callouts.sessionLengthHours";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
@@ -578,6 +579,15 @@ public static class CalloutCapability
                 "the landing pad",
                 s => s.Callouts.DockingPad,
                 (s, v) => s with { Callouts = s.Callouts with { DockingPad = v } }),
+
+            Toggle(
+                StationDamageKey,
+                "Station damage",
+                "On docking, when the station is under attack, damaged, under repairs or abandoned.",
+                "station-damage",
+                "damaged stations",
+                s => s.Callouts.StationDamage,
+                (s, v) => s with { Callouts = s.Callouts with { StationDamage = v } }),
 
             Toggle(
                 SessionLengthKey,

@@ -642,6 +642,9 @@ public sealed record CalloutSettings
     /// <summary>Where the granted pad is in a ring station, said after a docking grant (#574).</summary>
     public bool DockingPad { get; init; } = true;
 
+    /// <summary>A station that is under attack, damaged, under repairs or abandoned, said on docking (#1060).</summary>
+    public bool StationDamage { get; init; } = true;
+
     /// <summary>A warning when the own carrier's tritium is under two full jumps (#834).</summary>
     public bool CarrierFuel { get; init; } = true;
 
