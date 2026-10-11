@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -111,13 +110,18 @@ public sealed class SpendDialog : ModalDialog
 
         _body.Children.Add(ByProviderSection());
 
+        if (_launchedAt is { } launched)
+        {
+            _body.Children.Add(ResetSection(launched));
+        }
+
         _figure.Text = SessionDollars(_session, _speech, _settings).ToString("C4");
 
         _buttons.Children.Clear();
         Buttons(_buttons);
     }
 
-    /// <summary>Close, and — on a window that was told when the process started — Reset beside it.</summary>
+    /// <summary>The help mark and Close.</summary>
     private void Buttons(StackPanel row)
     {
         var close = new Button { Content = "Close", MinWidth = 110 };
@@ -130,40 +134,33 @@ public sealed class SpendDialog : ModalDialog
                 D47.Core.Capabilities.Builtin.ConversationCapability.Id, "running-totals"),
             "SpendHelp"));
 
-        if (_launchedAt is { } launched)
-        {
-            var reset = new Button
-            {
-                Name = "SpendReset",
-                Content = "Reset\u2026",
-                MinWidth = 110,
-                Flyout = Choices(launched),
-            };
-
-            row.Children.Add(reset);
-        }
-
         row.Children.Add(close);
     }
 
-    /// <summary>How far back to reset, as a menu over the button.</summary>
-    private MenuFlyout Choices(DateTimeOffset launched)
+    /// <summary>How far back to reset, as a list that opens in the page.</summary>
+    private Control ResetSection(DateTimeOffset launched)
     {
-        var flyout = new MenuFlyout { Placement = PlacementMode.Top };
+        // The windows are captured here rather than re-derived on pick, so what the Commander is asked
+        // about and what is cleared are the same instants.
+        var windows = _ledger.Resettable(_zone, launched).ToDictionary(window => window.Name);
 
-        foreach (var window in _ledger.Resettable(_zone, launched))
+        var picker = new InlinePicker { Name = "SpendReset", Label = "Reset" };
+        picker.Show(
+            [.. windows.Keys.Select(name => new InlinePickerOption(name, name, ThemeManager.WhiteKey))],
+            string.Empty,
+            "Choose a window to reset",
+            ThemeManager.GreyKey,
+            null);
+
+        picker.Picked += async (_, id) =>
         {
-            var item = new MenuItem { Header = window.Name };
+            if (windows.TryGetValue(id, out var window))
+            {
+                await ResetAsync(window);
+            }
+        };
 
-            // The window is captured rather than re-derived on click, so what the Commander is asked about
-            // and what is cleared are the same instants — a menu left open across a midnight would otherwise
-            // reset a different span than it offered.
-            item.Click += async (_, _) => await ResetAsync(window);
-
-            flyout.Items.Add(item);
-        }
-
-        return flyout;
+        return Section("Reset", [picker]);
     }
 
     /// <summary>Asks, then resets, then redraws.</summary>

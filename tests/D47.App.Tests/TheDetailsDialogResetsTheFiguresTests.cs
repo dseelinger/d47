@@ -72,8 +72,19 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
             launchedAt);
     }
 
-    private static Button? Reset(Control control) =>
-        control.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == "SpendReset");
+    private static InlinePicker? Reset(Control control) =>
+        control.GetVisualDescendants().OfType<InlinePicker>().FirstOrDefault(p => p.Name == "SpendReset");
+
+    private static List<string> Offered(InlinePicker picker)
+    {
+        picker.IsOpen = true;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        return [.. picker.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(button => button.Classes.Contains(InlinePicker.OptionClass))
+            .Select(button => $"{((TextBlock)button.Content!).Text}")];
+    }
 
     private static string Words(Control control) =>
         string.Join(
@@ -81,7 +92,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
             control.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
 
     [AvaloniaFact]
-    public void TheButtonIsThereWhenTheWindowKnowsWhenTheProcessStarted()
+    public void ThePickerIsThereWhenTheWindowKnowsWhenTheProcessStarted()
     {
         var dialog = Dialog(out _, Noon.AddHours(-1));
         var window = dialog.Show();
@@ -113,18 +124,60 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
         var dialog = Dialog(out _, Noon.AddHours(-1));
         var window = dialog.Show();
 
-        var flyout = Assert.IsType<MenuFlyout>(Reset(dialog)!.Flyout);
-
-        var offered = flyout.Items
-            .OfType<MenuItem>()
-            .Select(item => $"{item.Header}")
-            .ToList();
+        var offered = Offered(Reset(dialog)!);
 
         Assert.Equal(
             ["This session", "Today", "This week", "Last 7 days", "This month", "Last 30 days"],
             offered);
 
         Assert.DoesNotContain(offered, name => name.Contains("31", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheDialogHoldsNoPopupAndNoFlyout()
+    {
+        var dialog = Dialog(out _, Noon.AddHours(-1));
+        var window = dialog.Show();
+
+        var parts = dialog.GetVisualDescendants().ToList();
+
+        Assert.DoesNotContain(parts, part => part is Avalonia.Controls.Primitives.Popup);
+        Assert.DoesNotContain(parts, part => part is Button { Flyout: not null });
+        Assert.DoesNotContain(parts, part => part is MenuItem);
+        Assert.DoesNotContain(parts, part => part is Button { Name: "SpendReset" });
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PickingAWindowAsksAboutThatWindowAndConfirmingResetsIt()
+    {
+        var dialog = Dialog(out var ledger, Noon.AddHours(-1));
+        var window = dialog.Show();
+
+        Assert.Contains("1.4180", Words(dialog), StringComparison.Ordinal);
+
+        var picker = Reset(dialog)!;
+        picker.IsOpen = true;
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var today = picker.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Classes.Contains(InlinePicker.OptionClass)
+                && Avalonia.Automation.AutomationProperties.GetName(button) == "Today");
+
+        today.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var ask = Assert.Single(window.Modals().OfType<ConfirmDialog>());
+
+        Assert.Contains("today", Words(ask), StringComparison.Ordinal);
+
+        ask.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Reset")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain("1.4180", Words(dialog), StringComparison.Ordinal);
 
         window.Close();
     }
