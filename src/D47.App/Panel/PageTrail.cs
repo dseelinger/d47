@@ -18,6 +18,16 @@ public static class PageTrail
                     entry.IsOwned && (entry.Stored?.ShipId == page.Id || entry.Build?.ShipId == page.Id)) is { } ship
                 => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
             PageKind.System => (StarSystemPage.RootKey, new NavCrumb(StarSystemPage.RootKey, "System")),
+            PageKind.Search => SearchRoot((GalaxySearchKind)page.Id) is { } root ? (root, new NavCrumb(root, "Search")) : null,
+            _ => null,
+        };
+
+    private static string? SearchRoot(GalaxySearchKind kind) =>
+        kind switch
+        {
+            GalaxySearchKind.Systems => SystemSearchPage.RootKey,
+            GalaxySearchKind.Stations => StationSearchPage.RootKey,
+            GalaxySearchKind.Bodies => BodySearchPage.RootKey,
             _ => null,
         };
 

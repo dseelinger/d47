@@ -1,3 +1,5 @@
+using D47.Core.Knowledge;
+
 namespace D47.Core.Capabilities;
 
 public enum PageKind
@@ -5,6 +7,7 @@ public enum PageKind
     Engineer,
     Ship,
     System,
+    Search,
 }
 
 /// <summary>What a tool's answer is about, for the panel to open; the App decides how it is drawn.</summary>
@@ -18,4 +21,7 @@ public sealed record PageRef(PageKind Kind, long Id)
 
     /// <summary>One star system, by the journal's system address.</summary>
     public static PageRef System(long systemAddress) => new(PageKind.System, systemAddress);
+
+    /// <summary>The search page of one kind, which draws that kind's last answer.</summary>
+    public static PageRef Search(GalaxySearchKind kind) => new(PageKind.Search, (long)kind);
 }

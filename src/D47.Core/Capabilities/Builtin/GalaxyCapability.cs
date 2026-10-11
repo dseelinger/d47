@@ -762,7 +762,7 @@ public static class GalaxyCapability
                 said,
                 now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd() });
 
-            return ToolResult.Ok(said);
+            return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Systems) };
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -886,7 +886,7 @@ public static class GalaxyCapability
                 said,
                 now?.Invoke() ?? DateTimeOffset.UtcNow));
 
-            return ToolResult.Ok(said);
+            return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Stations) };
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1933,7 +1933,7 @@ public static class GalaxyCapability
                 said,
                 now?.Invoke() ?? DateTimeOffset.UtcNow));
 
-            return ToolResult.Ok(said);
+            return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Bodies) };
         }
         catch (GalaxyUnavailableException ex)
         {
