@@ -57,7 +57,8 @@ internal sealed class SettingsHost
         D47.Core.Persona.OwnPersonaStore? ownPersonas = null,
 
         // At the end, by the same rule.
-        D47.Core.Input.BindingProfiles? bindingProfiles = null)
+        D47.Core.Input.BindingProfiles? bindingProfiles = null,
+        bool headset = false)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -68,6 +69,11 @@ internal sealed class SettingsHost
 
         var view = new SettingsView();
         var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        if (headset)
+        {
+            panel.Classes.Add("headset");
+        }
 
         // Handed a builder rather than a control, exactly as the window does it, so the deferred build is on
         // the path this exercises too.

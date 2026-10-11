@@ -88,6 +88,7 @@ internal sealed class JournalReadingPane : Border
         _drawn = true;
         _shown = entry;
         _layouts.Clear();
+        _closeMeaning = null;
         _content.Children.Clear();
         _age = null;
 
@@ -199,10 +200,11 @@ internal sealed class JournalReadingPane : Border
 
     // ---- Rows ----------------------------------------------------------------------------------------
 
-    private Border Row(ReadingRow row, string kind)
+    private StackPanel Row(ReadingRow row, string kind)
     {
         var values = Values(row.Values);
-        Control? label = row.Label.Length == 0 ? null : Label(row, kind);
+        var below = new StackPanel();
+        Control? label = row.Label.Length == 0 ? null : Label(row, kind, below);
 
         var grid = new Grid();
 
@@ -240,10 +242,28 @@ internal sealed class JournalReadingPane : Border
         var strip = new Border { Padding = new Thickness(14, 10), Child = grid };
         LoadoutPages.Themed(strip, BackgroundProperty, ThemeManager.SlabKey);
 
-        return strip;
+        return new StackPanel { Children = { strip, below } };
     }
 
-    private Control Label(ReadingRow row, string kind)
+    /// <summary>Closes the meaning a press has opened on the headset, if any.</summary>
+    private Action? _closeMeaning;
+
+    private Border MeaningBox(string name, string meaning)
+    {
+        var named = new Run(name) { FontFamily = Mono, FontSize = TypeScale.Meta };
+        LoadoutPages.Themed(named, TextElement.ForegroundProperty, ThemeManager.AKey);
+
+        var tip = Text(string.Empty, Prose, TypeScale.Small, FontWeight.Normal, ThemeManager.WhiteKey);
+        tip.LineHeight = TypeScale.Small * 1.45;
+        tip.Inlines = [named, new Run(" — "), new Run(meaning)];
+
+        var box = Box(tip, new Thickness(10, 8));
+        box.Width = 300;
+
+        return box;
+    }
+
+    private Control Label(ReadingRow row, string kind, Avalonia.Controls.Panel below)
     {
         var label = Text(row.Label.ToUpperInvariant(), Chrome, TypeScale.Caption, FontWeight.Medium, ThemeManager.GreyKey);
         label.LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking;
@@ -258,15 +278,46 @@ internal sealed class JournalReadingPane : Border
         label.Cursor = new Cursor(StandardCursorType.Help);
         label.Focusable = true;
 
-        var named = new Run(name) { FontFamily = Mono, FontSize = TypeScale.Meta };
-        LoadoutPages.Themed(named, TextElement.ForegroundProperty, ThemeManager.AKey);
+        var box = MeaningBox(name, field.Meaning);
 
-        var tip = Text(string.Empty, Prose, TypeScale.Small, FontWeight.Normal, ThemeManager.WhiteKey);
-        tip.LineHeight = TypeScale.Small * 1.45;
-        tip.Inlines = [named, new Run(" — "), new Run(field.Meaning)];
+        // The headset draws no hover card, so a press opens the same box under the row; a second press
+        // closes it. One is open at a time.
+        var line = MeaningBox(name, field.Meaning);
+        line.HorizontalAlignment = HorizontalAlignment.Left;
+        line.Margin = new Thickness(0, 2, 0, 0);
+        line.IsVisible = false;
+        below.Children.Add(line);
 
-        var box = Box(tip, new Thickness(10, 8));
-        box.Width = 300;
+        label.AttachedToVisualTree += (_, _) =>
+        {
+            if (PanelView.OnHeadset(label))
+            {
+                label.MinHeight = 44;
+                label.Padding = new Thickness(0, 13, 0, 0);
+            }
+        };
+
+        label.PointerPressed += (_, _) =>
+        {
+            if (!PanelView.OnHeadset(label))
+            {
+                return;
+            }
+
+            var wasOpen = line.IsVisible;
+            _closeMeaning?.Invoke();
+
+            if (!wasOpen)
+            {
+                line.IsVisible = true;
+
+                _closeMeaning = () =>
+                {
+                    line.IsVisible = false;
+                    _closeMeaning = null;
+                };
+            }
+        };
 
         return Hover(
             label,

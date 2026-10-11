@@ -10,6 +10,8 @@
 
 The headset panel now has four things the window already had: Settings › Phrases, the draft actions on a story, Fleet › Crew seats, and the talk section on a ship build.
 
+On the headset, pressing a setting's label shows its help in a line under the label, and pressing it again hides it. Pressing a field name on the Raw Journal page shows what it means in a box under the row. One such line is open at a time. The transcript also has a Scroll what is shown above the fold tile, which the window keeps in the right-click menu.
+
 The headset panel now has the SPEND row under the transcript, and pressing it opens the spend figures on the headset.
 
 The headset panel now has the search field with its previous and next buttons, Copy page, and the filter field on every page that has one. A ray press on a field opens the drawn keyboard, and Done runs the search or filter on what you typed. The buttons are 44 pixels tall.

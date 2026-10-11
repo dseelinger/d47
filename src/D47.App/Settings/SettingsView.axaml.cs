@@ -1475,9 +1475,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         };
         Themed(spoken, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
+        TextBlock? helpLine = null;
+
         if (!string.IsNullOrWhiteSpace(row.Help))
         {
             AttachHelp(label, spoken);
+            helpLine = HeadsetHelpLine(label, header, row.Help);
         }
 
         // A square glyph button at the end of the row rather than beside the label, so it stays put
@@ -1525,6 +1528,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
 
         caption.Children.Add(header);
+
+        if (helpLine is not null)
+        {
+            caption.Children.Add(helpLine);
+        }
+
         caption.Children.Add(help);
         caption.Children.Add(keyLine);
 
@@ -1644,6 +1653,62 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Spoken = spoken,
             KeyLine = keyLine,
         };
+    }
+
+    /// <summary>Closes the help line a press has opened on the headset, if any.</summary>
+    private Action? _closeHelpLine;
+
+    /// <summary>
+    /// The headset draws no tooltip, so a press on the label opens the help as a line under it and a second
+    /// press closes it. One line is open at a time. The window ignores the press.
+    /// </summary>
+    private TextBlock HeadsetHelpLine(TextBlock label, Control header, string help)
+    {
+        var line = new TextBlock
+        {
+            Text = help,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 420,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 4, 0, 0),
+            IsVisible = false,
+        };
+        Themed(line, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        label.AttachedToVisualTree += (_, _) =>
+        {
+            if (D47.App.Panel.PanelView.OnHeadset(label))
+            {
+                header.MinHeight = 44;
+                label.VerticalAlignment = VerticalAlignment.Stretch;
+                label.Padding = new Thickness(0, 11, 0, 0);
+            }
+        };
+
+        label.PointerPressed += (_, _) =>
+        {
+            if (!D47.App.Panel.PanelView.OnHeadset(label))
+            {
+                return;
+            }
+
+            var wasOpen = line.IsVisible;
+            _closeHelpLine?.Invoke();
+
+            if (!wasOpen)
+            {
+                line.IsVisible = true;
+
+                _closeHelpLine = () =>
+                {
+                    line.IsVisible = false;
+                    _closeHelpLine = null;
+                };
+            }
+        };
+
+        return line;
     }
 
     /// <summary>

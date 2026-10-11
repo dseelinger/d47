@@ -70,7 +70,7 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
-    <Style Selector="panel|PanelView.headset Button#SearchPrevious, panel|PanelView.headset Button#SearchNext, panel|PanelView.headset Button#CopyButton">
+    <Style Selector="panel|PanelView.headset Button#SearchPrevious, panel|PanelView.headset Button#SearchNext, panel|PanelView.headset Button#CopyButton, panel|PanelView.headset Button#ScrollPastReadingButton">
       <Setter Property="MinHeight" Value="44" />
     </Style>
 
@@ -542,6 +542,14 @@
                             DockPanel.Dock="Left"
                             VerticalAlignment="Center"
                             IsVisible="False" />
+            <!-- The headset's form of the transcript menu's item. -->
+            <Button x:Name="ScrollPastReadingButton"
+                    DockPanel.Dock="Left"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    IsVisible="False"
+                    Content="Scroll what is shown above the fold"
+                    Click="OnScrollPastReadingClick" />
             <!-- Copies the whole page as it is shown, not the selection. -->
             <Button x:Name="CopyButton"
                     DockPanel.Dock="Left"

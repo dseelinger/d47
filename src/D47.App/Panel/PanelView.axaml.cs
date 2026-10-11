@@ -377,6 +377,10 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     bool IPanelTabHost.Headset => Classes.Contains("headset");
 
+    /// <summary>Whether <paramref name="control"/> is drawn on the headset's panel.</summary>
+    internal static bool OnHeadset(Visual control) =>
+        control.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;
+
     Func<string, Task<bool>>? IPanelTabHost.Copy => _copy;
 
     SpeakerPortraits? IPanelTabHost.Portraits => _portraits;
@@ -3622,6 +3626,10 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         // On all four readings now (#413).
         ScrollPastReadingItem.IsEnabled = transcript;
+
+        // The headset has no right-click menu, so the same act is a tile there.
+        ScrollPastReadingButton.IsVisible = _searchable && transcript && Classes.Contains("headset");
+        ScrollPastReadingButton.IsEnabled = ScrollPastReadingItem.IsEnabled;
 
         ShowTitleLine();
         ShowPageBar();
