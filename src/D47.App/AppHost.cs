@@ -3209,6 +3209,7 @@ public sealed class AppHost : IDisposable
         // tool call, an arc's own tick, the Checklist page's card, or a spoken "accept" (#277).
         checklists.Proposals.Added += proposal => host.Panel.AppendProposal(proposal.Id, proposal.Summary);
         checklists.ProposalSettled += (id, accepted, outcome) => host.Panel.SettleProposal(id, accepted, outcome);
+        checklists.Typed += host.AskForWatch;
         host.Ships = shipPlans;
         host.BuildTalk = buildTalk;
         host.ShipBuilds = shipBuilds;
@@ -5410,6 +5411,32 @@ public sealed class AppHost : IDisposable
             Spend,
             PriceTable.Default,
             _logger));
+    }
+
+    /// <summary>
+    /// Asks the model once, on the pool, whether a journal condition would tick a line typed into an Add
+    /// box, and records any it names as a proposal (#1058).
+    /// </summary>
+    public void AskForWatch(string fid, ChecklistItem line)
+    {
+        if (!LlmAvailability.CanAttemptModelTurn || Turns.Provider is not { } provider)
+        {
+            return;
+        }
+
+        var ask = TypedLineWatch.Asker(provider, Turns.Model, Spend, PriceTable.Default);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await TypedLineWatch.RunAsync(Checklists, fid, line, ask, _logger, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(ex, "Could not record a watch proposal for a typed checklist line");
+            }
+        });
     }
 
     /// <summary>Position 3, with this core's overlay behind it (#162).</summary>

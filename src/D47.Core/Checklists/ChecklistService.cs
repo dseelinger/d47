@@ -56,6 +56,9 @@ public sealed class ChecklistService(
     /// </summary>
     public event Action<string, bool, string>? ProposalSettled;
 
+    /// <summary>The Commander typed a line into a surface's Add box, with the Commander it was filed under.</summary>
+    public event Action<string, ChecklistItem>? Typed;
+
     private CommanderGameState? State => commander();
 
     private string Fid => State?.Identity.FrontierId ?? string.Empty;
@@ -1171,6 +1174,19 @@ public sealed class ChecklistService(
         // The new line becomes the selected one (reported 2026-08-21).
         Selecting(list.Apply(Fid, Name, document => document.AddNote(scope, text, goal, watch)));
 
+    /// <summary>Adds a line the Commander typed into an Add box, and raises <see cref="Typed"/> when it lands.</summary>
+    public ChecklistChange AddTyped(ChecklistScope scope, string text)
+    {
+        var change = AddNote(scope, text);
+
+        if (change.Changed && change.Subject is { } id && change.Document.Find(id) is { } added)
+        {
+            Typed?.Invoke(change.Document.CommanderFid, added);
+        }
+
+        return change;
+    }
+
     public ChecklistChange Complete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Complete(id));
 
@@ -1703,6 +1719,40 @@ public sealed class ChecklistService(
             Summary = Trim(said),
             Watch = change == ProposalKind.Watch ? watch! with { Since = Now } : null,
         });
+    }
+
+    /// <summary>
+    /// Records a watch proposal for one line, only while the line is as it was asked about: the same
+    /// Commander, open, the same text and no watch. Returns whether it was recorded.
+    /// </summary>
+    public bool ProposeWatch(string fid, ChecklistItemId id, string text, ChecklistWatch watch)
+    {
+        var document = Document;
+
+        if (!string.Equals(document.CommanderFid, fid, StringComparison.Ordinal)
+            || document.Find(id) is not { Kind: ChecklistItemKind.Authored, State: ChecklistState.Open, Watch: null } item
+            || !string.Equals(item.Text, text, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var armed = watch with { Since = Now };
+
+        if (ChecklistValidation.WatchProblem(item.Text, item.Kind, armed) is not null)
+        {
+            return false;
+        }
+
+        return proposals.Add(new ChecklistProposal
+        {
+            Id = "pending",
+            CommanderFid = fid,
+            Kind = ProposalKind.Watch,
+            Scope = item.Scope,
+            TargetKey = item.Key,
+            Summary = Trim($"Tick \"{item.Text}\" when {ChecklistWatching.Condition(watch)}"),
+            Watch = armed,
+        }) is null;
     }
 
     /// <summary>

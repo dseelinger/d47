@@ -21,6 +21,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // The debrief's proposed wording.
         "Turns.Model,",
 
+        // Whether a journal condition would tick a line typed into the checklist's Add box (#1058).
+        "var ask = TypedLineWatch.Asker(provider, Turns.Model, Spend, PriceTable.Default);",
+
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;",

@@ -1777,7 +1777,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                     ? list.Scope
                     : _checklists.ScopeFor(null, null);
 
-                var change = _checklists.AddNote(scope, value);
+                var change = _checklists.AddTyped(scope, value);
 
                 if (!change.Changed)
                 {

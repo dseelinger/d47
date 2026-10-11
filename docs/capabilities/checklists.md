@@ -222,6 +222,12 @@ far*. A watch never unticks a line. Unticking one by hand starts the count again
 An event written while D47 was closed and before the newest journal file began is never seen; the
 checkbox is there for that.
 
+A line you type into the Checklist tab's Add box is added at once. D47 then sends the line, once
+and on its own, to the language model to ask whether one of these conditions would tick it. If the
+model names one, a proposal to set that watch waits under **Suggestions** for you to accept or
+decline. If it names none, no model is set up, or the request fails, the line stays one you tick
+yourself. A line you edit, tick or delete before the answer arrives is left alone.
+
 ### Three groups
 
 Universal, this ship, this system. Derived items belong to whatever produced them; your own lines

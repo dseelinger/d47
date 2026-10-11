@@ -856,6 +856,7 @@ public static class EgressDisclosure
                 + "key is involved. "
                 + JournalEventSent
                 + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
+                + " " + TypedChecklistLineSent
                 + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
                 + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty),
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
@@ -878,6 +879,7 @@ public static class EgressDisclosure
             + StoryCastSent
             + " " + JournalEventSent
             + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
+            + " " + TypedChecklistLineSent
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),
@@ -952,6 +954,11 @@ public static class EgressDisclosure
     internal const string DebriefRewordingSent =
         "With the debrief on, each correction of yours that it drafts a proposal from is sent once more at the next "
         + "launch, on its own, to be reworded as one instruction.";
+
+    /// <summary>What adding a line in the checklist's Add box sends.</summary>
+    internal const string TypedChecklistLineSent =
+        "A line typed into the checklist's Add box is sent once, on its own, to ask whether D47 can tick it from "
+        + "the journal.";
 
     private const string JournalName = "your Commander name from the journal";
 
