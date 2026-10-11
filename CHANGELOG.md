@@ -14,6 +14,8 @@ Every control you press in the panel is now 44 pixels tall, the size a ray hits 
 
 Station search offers every service Elite has, not only 19 of them. `services` now also accepts Contacts, Missions, Missions Generated, On Dock Mission, Tuning, Workshop, Refinery Contact, Powerplay, Shop, Livery, Social Space, Squadron Bank, System Colonisation, Construction Services, Fleet Carrier Administration, Fleet Carrier Fuel, Fleet Carrier Management and Fleet Carrier Vendor, so "find a station with a workshop near Sol" works. The earlier 19 keep their names.
 
+A story character's Change voice picker now works like the Settings voice picker. It has the Gender filter where the provider's voices carry a gender, plays ElevenLabs' free sample for a voice that has one and keeps the speech button for the line, and words the cost the way the Settings Voice row does. The provider list shows each provider's key status, such as PAID · NEEDS KEY. A provider with no stored key stays on the list, and playing one of its voices says it needs an API key instead of failing.
+
 The setup wizard skips the Listening and Talk button steps on a machine with no microphone, and its Ready step shows Listening as "No microphone found". The listening settings are saved as they were. Set listening and push-to-talk in Settings once a microphone is plugged in.
 
 A test drive no longer opens with the unknown-settings-keys message or the "is available" update band. The unknown-keys message is also no longer spoken at startup. A settings file d47 refuses still shows its error, and the update check from the Version row still works. An installed build behaves as before.

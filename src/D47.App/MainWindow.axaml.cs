@@ -213,7 +213,11 @@ public partial class MainWindow : Window
                         host.ChooseCastVoice,
                         host.Speech.CastVoicesAsync,
                         host.PlayCastSample,
-                        host.Speech.CastVoiceFailure),
+                        host.Speech.CastVoiceFailure,
+                        () => host.Settings.Current,
+                        host.Settings.HoldsSecret,
+                        (providerId, voiceId, token) => host.Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
+                            ?? Task.CompletedTask),
                     host.StoryRatings);
 
                 Panel.EnableAdventures(

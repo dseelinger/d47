@@ -259,6 +259,9 @@ public sealed class AppHost : IDisposable
 
     public VoicePairer Pairing { get; }
 
+    /// <summary>Plays voices before they are chosen; set once composition has built it.</summary>
+    internal VoiceAuditions? Auditions { get; set; }
+
     public SerilogVerbosityControl Verbosity { get; }
 
     /// <summary>The settings surface.</summary>
@@ -3066,6 +3069,8 @@ public sealed class AppHost : IDisposable
             fight,
             scenes,
             () => status.Current);
+
+        host.Auditions = services.Auditions;
 
         // Before ApplyLlmSettings, which reads the persona block it points the loop at.
         personas.Changed += host.OnPersonaChanged;

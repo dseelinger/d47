@@ -910,9 +910,7 @@ public sealed class SpeechClients : IDisposable
     public SpeechSpend Spend { get; } = new();
 
     /// <summary>Whether one voice in a slot's list has a free sample.</summary>
-    internal bool HasPreviewFor(VoiceGroup group, string id) =>
-        VoicesFor(group).Voices.Any(voice =>
-            string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase) && voice.PreviewUrl is not null);
+    internal bool HasPreviewFor(VoiceGroup group, string id) => VoicesFor(group).HasPreview(id);
 
     /// <summary>
     /// Tries the stored speech key for real, against the provider's own voice list — which is the call

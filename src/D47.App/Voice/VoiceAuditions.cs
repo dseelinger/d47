@@ -111,6 +111,36 @@ internal sealed class VoiceAuditions
         });
     }
 
+    /// <summary>Plays a voice's free sample from <paramref name="providerId"/>, for a story character's picker. Bills nothing.</summary>
+    internal async Task AuditionCastPreviewAsync(string providerId, string voiceId, CancellationToken cancellationToken)
+    {
+        if (_speech.CastClient(providerId) is not { } provider)
+        {
+            throw new InvalidOperationException("No voice provider is selected.");
+        }
+
+        _audio.DropGroup(Group);
+
+        var key = (provider.Id, $"sample:{voiceId}");
+
+        if (!_auditions.TryGetValue(key, out var clip))
+        {
+            clip = await provider.PreviewAsync(voiceId, cancellationToken).ConfigureAwait(false)
+                   ?? throw new InvalidOperationException($"{provider.Name} has no free sample of that voice.");
+
+            _auditions[key] = clip;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = clip,
+            Group = Group,
+        });
+    }
+
     /// <summary>
     /// Plays the Guardian voice treatments currently toggled, on a clip chosen so nothing is billed
     /// (<see cref="GuardianVoiceTest.SourceFor"/>). Returns what the row says when a stand-in played.

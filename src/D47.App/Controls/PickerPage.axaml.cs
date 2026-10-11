@@ -55,6 +55,9 @@ public sealed record PickerRequest
 
     /// <summary>The values ticked when a <see cref="Several"/> picker opens.</summary>
     public IReadOnlyCollection<string>? CurrentSeveral { get; init; }
+
+    /// <summary>The status line shown beside a choice, or null for none.</summary>
+    public Func<string, ChoiceStatus?>? Status { get; init; }
 }
 
 /// <summary>Hearing a value before choosing it.</summary>
@@ -128,6 +131,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     /// <summary>What the second glyph's press costs, or why it cannot be pressed.</summary>
     public string? LineWhy { get; init; }
+
+    /// <summary>The status text beside the label, or null.</summary>
+    public string? Status { get; init; }
+
+    /// <summary>Whether <see cref="Status"/> is drawn in the highlight ink.</summary>
+    public bool StatusIsYellow { get; init; }
 
     /// <summary>The tooltip: the unavailable reason while shut, the action and its cost while live (#383).</summary>
     public string? Tip => Playable ? Why is { Length: > 0 } cost ? $"{ActionName}. {cost}" : ActionName : Why;
@@ -316,6 +325,8 @@ public partial class PickerPage : UserControl
             {
                 Value = value,
                 Text = Label(value),
+                Status = _request.Status?.Invoke(value)?.Text.ToUpperInvariant(),
+                StatusIsYellow = _request.Status?.Invoke(value)?.Tone == ChoiceTone.Yellow,
                 CanPlay = auditioned is not null,
                 Playable = auditioned is { Unavailable: null },
                 HasSample = sample,

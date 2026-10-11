@@ -117,19 +117,33 @@ public static class SpeechCapability
     /// The gender filter the three voice rows offer, or null where this provider's voices carry no
     /// gender to filter on (#146).
     /// </summary>
-    private static SettingFacet? GenderFacet(SpeechSurface surface, VoiceGroup group)
+    private static SettingFacet? GenderFacet(SpeechSurface surface, VoiceGroup group) =>
+        surface.Voices?.Invoke(group) is not { Count: > 0 } voices || surface.VoiceGender is not { } tag
+            ? null
+            : GenderFacet(voices, id => tag(group, id), id => surface.VoiceCustom?.Invoke(group, id) == true);
+
+    /// <summary>The gender filter for a listed catalogue, or null where its voices carry nothing to filter on.</summary>
+    public static SettingFacet? GenderFacet(VoiceCatalogue catalogue)
     {
-        if (surface.Voices?.Invoke(group) is not { Count: > 0 } voices || surface.VoiceGender is not { } tag)
+        ArgumentNullException.ThrowIfNull(catalogue);
+
+        return GenderFacet(
+            [.. catalogue.Voices.Select(voice => voice.Id)],
+            id => catalogue.Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))?.Gender,
+            id => catalogue.Voices.Any(voice => voice.Custom && string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static SettingFacet? GenderFacet(IReadOnlyList<string> voices, Func<string, string?> tag, Func<string, bool> custom)
+    {
+        if (voices.Count == 0)
         {
             return null;
         }
 
-        VoiceGender Of(string id) => VoicePool.GenderOf(tag(group, id));
-
-        bool Custom(string id) => surface.VoiceCustom?.Invoke(group, id) == true;
+        VoiceGender Of(string id) => VoicePool.GenderOf(tag(id));
 
         // Nothing to filter on.
-        if (!voices.Any(id => Of(id) != VoiceGender.Unlabelled || Custom(id)))
+        if (!voices.Any(id => Of(id) != VoiceGender.Unlabelled || custom(id)))
         {
             return null;
         }
@@ -144,7 +158,7 @@ public static class SpeechCapability
                 new SettingFacetOption("Female", id => Of(id) == VoiceGender.Feminine),
                 new SettingFacetOption("Male", id => Of(id) == VoiceGender.Masculine),
                 new SettingFacetOption("Unlabelled", id => Of(id) == VoiceGender.Unlabelled),
-                .. voices.Any(Custom) ? [new SettingFacetOption("Custom", Custom)] : Array.Empty<SettingFacetOption>(),
+                .. voices.Any(custom) ? [new SettingFacetOption("Custom", custom)] : Array.Empty<SettingFacetOption>(),
             ],
         };
     }
@@ -168,8 +182,12 @@ public static class SpeechCapability
 
     /// <summary>What auditioning a voice costs, said once above the list.</summary>
     private static Func<D47Settings, string> AuditionCost(VoiceGroup group) => settings =>
+        AuditionCost(settings, VoiceGroups.ProviderFor(settings.Speech, group));
+
+    /// <summary>What auditioning a voice costs on one provider, said once above the list.</summary>
+    public static string AuditionCost(D47Settings settings, string providerId)
     {
-        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
+        var provider = TtsProviderCatalog.Selected(providerId);
 
         if (!provider.Billed)
         {
@@ -184,12 +202,16 @@ public static class SpeechCapability
             : price is null
                 ? "Play a voice to hear it. This provider charges for each one."
                 : $"Play a voice to hear it. Each one costs about {price}.";
-    };
+    }
 
     /// <summary>What hearing a voice say its own line costs, on the control that does it.</summary>
     private static Func<D47Settings, string> LineCost(VoiceGroup group) => settings =>
+        LineCost(settings, VoiceGroups.ProviderFor(settings.Speech, group));
+
+    /// <summary>What hearing a voice say its own line costs on one provider.</summary>
+    public static string LineCost(D47Settings settings, string providerId)
     {
-        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
+        var provider = TtsProviderCatalog.Selected(providerId);
 
         if (!provider.Billed)
         {
@@ -199,7 +221,7 @@ public static class SpeechCapability
         return PriceOfALine(settings, provider) is { } price
             ? $"Hear it say its own line. Costs about {price}."
             : "Hear it say its own line. This provider charges for it.";
-    };
+    }
 
     /// <summary>
     /// The first synthesis of one audition line, formatted, or null where no rate is known. Replays are
@@ -212,19 +234,22 @@ public static class SpeechCapability
 
     /// <summary>Why the button cannot be pressed.</summary>
     private static Func<D47Settings, string?> AuditionUnavailable(SpeechSurface surface, VoiceGroup group) =>
-        settings =>
+        settings => AuditionUnavailable(VoiceGroups.ProviderFor(settings.Speech, group), surface.HasKey?.Invoke(group));
+
+    /// <summary>Why one provider cannot be auditioned, or null. <paramref name="hasKey"/> is false only where a key is needed and missing.</summary>
+    public static string? AuditionUnavailable(string providerId, bool? hasKey)
     {
-        var provider = TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(settings.Speech, group));
+        var provider = TtsProviderCatalog.Selected(providerId);
 
         if (!provider.Speaks)
         {
             return "No voice provider is selected, so there is nothing to hear it with.";
         }
 
-        return provider.NeedsKey && surface.HasKey?.Invoke(group) == false
+        return provider.NeedsKey && hasKey == false
             ? $"{provider.Name} needs an API key before it will speak."
             : null;
-    };
+    }
 
     private static ChoiceStatus? KeyStatus(SpeechSurface surface, string id) =>
         ProviderStatus.Of(TtsProviderCatalog.Selected(id), name => surface.KeyStored?.Invoke(name) ?? false);

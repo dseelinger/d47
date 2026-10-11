@@ -86,6 +86,10 @@ public sealed record VoiceCatalogue(IReadOnlyList<VoiceInfo> Voices, VoiceListin
             : $"(a voice not in {provider.Name}'s list)";
     }
 
+    /// <summary>Whether the listed voice <paramref name="id"/> has a free sample.</summary>
+    public bool HasPreview(string id) =>
+        Voices.Any(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase) && voice.PreviewUrl is not null);
+
     /// <summary>What a picker with nothing in it should say, or null when there is something in it.</summary>
     public string? WhyEmpty(string providerName) => Voices.Count > 0 ? null : Listing switch
     {

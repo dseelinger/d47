@@ -1,5 +1,8 @@
 using D47.App.Controls;
 using D47.Core.Audio;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Stories;
 
 namespace D47.App.Panel;
@@ -10,7 +13,10 @@ public sealed record CastVoiceSurface(
     Action<string, string?, string?, string?> Choose,
     Func<string, CancellationToken, Task<VoiceCatalogue>> Voices,
     Action<string, PinnedVoice> PlaySample,
-    Func<string, string?> Failure);
+    Func<string, string?> Failure,
+    Func<D47Settings>? Settings = null,
+    Func<string, bool>? KeyStored = null,
+    Func<string, string, CancellationToken, Task>? Preview = null);
 
 /// <summary>Change voice: a provider, then one of the voices it lists, for one story character.</summary>
 public static class CastVoiceChooser
@@ -55,6 +61,9 @@ public static class CastVoiceChooser
                     : TtsProviderCatalog.Selected(id).Name,
                 Current = member.Speaks.ProviderId,
                 DefaultDisplay = $"{TtsProviderCatalog.Selected(member.Pinned.ProviderId).Name} · {member.Pinned.VoiceId}",
+                Status = id => surface.KeyStored is { } stored
+                    ? ProviderStatus.Of(TtsProviderCatalog.Selected(id), stored)
+                    : null,
             },
             result =>
             {
@@ -97,7 +106,6 @@ public static class CastVoiceChooser
             new PickerRequest
             {
                 Prompt = $"{member.Shown.Name}'s {provider.Name} voice",
-                Help = "Every voice the provider lists, of either gender.",
                 Choices = ids,
                 Describe = id =>
                 {
@@ -109,17 +117,8 @@ public static class CastVoiceChooser
                 Current = string.Equals(member.Speaks.ProviderId, providerId, StringComparison.OrdinalIgnoreCase) ? member.Speaks.VoiceId : null,
                 DefaultDisplay = $"{TtsProviderCatalog.Selected(member.Pinned.ProviderId).Name} · {member.Pinned.VoiceId}",
                 WhyEmpty = listed.WhyEmpty(provider.Name),
-                Audition = new PickerAudition
-                {
-                    Play = (id, _) =>
-                    {
-                        surface.PlaySample(member.Shown.Name, member.Pinned with { ProviderId = providerId, VoiceId = id });
-                        return Task.CompletedTask;
-                    },
-                    Cost = provider.Billed
-                        ? $"A sample is spoken by {provider.Name} and billed like any line."
-                        : "A sample costs nothing.",
-                },
+                Facet = SpeechCapability.GenderFacet(listed),
+                Audition = AuditionOf(surface, member, provider, providerId, listed),
             },
             result =>
             {
@@ -136,5 +135,26 @@ public static class CastVoiceChooser
 
                 done();
             });
+    }
+
+    private static PickerAudition AuditionOf(
+        CastVoiceSurface surface, StoryCastMember member, TtsProviderInfo provider, string providerId, VoiceCatalogue listed)
+    {
+        var settings = surface.Settings?.Invoke();
+        var hasKey = provider.KeySecretName is not { } secret || surface.KeyStored?.Invoke(secret) != false;
+
+        return new PickerAudition
+        {
+            Play = (id, _) =>
+            {
+                surface.PlaySample(member.Shown.Name, member.Pinned with { ProviderId = providerId, VoiceId = id });
+                return Task.CompletedTask;
+            },
+            Preview = surface.Preview is { } preview ? (id, token) => preview(providerId, id, token) : null,
+            HasPreview = listed.HasPreview,
+            Cost = settings is null ? "A sample costs nothing." : SpeechCapability.AuditionCost(settings, providerId),
+            LineCost = settings is null ? null : SpeechCapability.LineCost(settings, providerId),
+            Unavailable = SpeechCapability.AuditionUnavailable(providerId, hasKey),
+        };
     }
 }
