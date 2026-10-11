@@ -519,11 +519,11 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <summary>A line in the Commander's recorded voice, encoded from the recording decrypted into memory.</summary>
     private AudioClip SpeakOwn(string text, string spoken, CancellationToken cancellationToken)
     {
-        const string none = "No recording of your voice is saved. Record one in Settings, under Your voice.";
+        const string none = "No recording of your voice is saved. Record one in Settings, under Custom voices.";
 
         if (_own is null || !_own.Exists)
         {
-            throw new TtsException(none, settingKey: SpeechCapability.OwnVoiceKey);
+            throw new TtsException(none, settingKey: SpeechCapability.CustomVoicesKey);
         }
 
         var ids = Tokeniser().Encode(spoken);
@@ -540,7 +540,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 _ownEncoded?.Dispose();
                 _ownEncoded = null;
 
-                var reference = _own.Load() ?? throw new TtsException(none, settingKey: SpeechCapability.OwnVoiceKey);
+                var reference = _own.Load() ?? throw new TtsException(none, settingKey: SpeechCapability.CustomVoicesKey);
 
                 try
                 {

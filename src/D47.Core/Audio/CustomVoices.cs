@@ -116,35 +116,16 @@ public sealed class CustomVoices
             return nameProblem;
         }
 
-        var start = FirstSound(samples);
-
-        if (start >= samples.Length)
-        {
-            return OwnVoice.Refuse(samples, sampleRate);
-        }
-
-        var trimmed = samples.AsSpan(start);
-
-        if (OwnVoice.Refuse(trimmed, sampleRate) is { } reason)
+        if (Refuse(samples, sampleRate) is { } reason)
         {
             return reason;
         }
 
-        var resampled = PcmResample.To(trimmed, sampleRate, SampleRate);
-        var kept = Math.Min(resampled.Length, (int)(ChatterboxVoices.MaxLength.TotalSeconds * SampleRate));
-        var pcm = new byte[kept * 2];
-
-        for (var i = 0; i < kept; i++)
-        {
-            var value = (short)(Math.Clamp(resampled[i], -1f, 1f) * short.MaxValue);
-
-            pcm[i * 2] = (byte)value;
-            pcm[(i * 2) + 1] = (byte)(value >> 8);
-        }
+        var (start, length) = Kept(samples, sampleRate);
+        var pcm = Pcm24(samples.AsSpan(start, length), sampleRate);
 
         var sealedBytes = _protector.Protect(pcm);
         Array.Clear(pcm);
-        Array.Clear(resampled);
 
         lock (_gate)
         {
@@ -171,6 +152,48 @@ public sealed class CustomVoices
 
         Changed?.Invoke();
         return null;
+    }
+
+    /// <summary>Why <see cref="Save(string, string?, string?, string?, float[], int)"/> would refuse <paramref name="samples"/> for their sound, or null.</summary>
+    public static string? Refuse(float[] samples, int sampleRate)
+    {
+        ArgumentNullException.ThrowIfNull(samples);
+
+        var start = FirstSound(samples);
+
+        return start >= samples.Length
+            ? OwnVoice.Refuse(samples, sampleRate)
+            : OwnVoice.Refuse(samples.AsSpan(start), sampleRate);
+    }
+
+    /// <summary>The samples a save keeps: from the first sound, at most <see cref="ChatterboxVoices.MaxLength"/>.</summary>
+    public static (int Start, int Length) Kept(float[] samples, int sampleRate)
+    {
+        ArgumentNullException.ThrowIfNull(samples);
+
+        var start = Math.Min(FirstSound(samples), samples.Length);
+        var most = (int)(ChatterboxVoices.MaxLength.TotalSeconds * sampleRate);
+
+        return (start, Math.Min(samples.Length - start, most));
+    }
+
+    /// <summary>The audio a save of <paramref name="samples"/> would keep, as a clip to play back.</summary>
+    public static AudioClip Preview(string name, float[] samples, int sampleRate)
+    {
+        var (start, length) = Kept(samples, sampleRate);
+
+        return new AudioClip(name, Pcm24(samples.AsSpan(start, length), sampleRate), new AudioFormat(SampleRate, 1));
+    }
+
+    /// <summary>Why <paramref name="name"/> cannot name a voice, or null; <paramref name="except"/> is the voice being renamed.</summary>
+    public string? NameProblem(string name, string? except = null)
+    {
+        name = name?.Trim() ?? string.Empty;
+
+        lock (_gate)
+        {
+            return NameProblem(name, ReadIndex(), except);
+        }
     }
 
     /// <summary>Returns why <paramref name="name"/> cannot be used, or null when the voice was renamed.</summary>
@@ -242,6 +265,25 @@ public sealed class CustomVoices
         List().FirstOrDefault(voice => voice.Id == id) is { } voice && Pcm(id) is { } pcm
             ? new AudioClip(voice.Name, pcm, new AudioFormat(SampleRate, 1))
             : null;
+
+    /// <summary>16-bit PCM at 24 kHz.</summary>
+    private static byte[] Pcm24(ReadOnlySpan<float> samples, int sampleRate)
+    {
+        var resampled = PcmResample.To(samples, sampleRate, SampleRate);
+        var kept = Math.Min(resampled.Length, (int)(ChatterboxVoices.MaxLength.TotalSeconds * SampleRate));
+        var pcm = new byte[kept * 2];
+
+        for (var i = 0; i < kept; i++)
+        {
+            var value = (short)(Math.Clamp(resampled[i], -1f, 1f) * short.MaxValue);
+
+            pcm[i * 2] = (byte)value;
+            pcm[(i * 2) + 1] = (byte)(value >> 8);
+        }
+
+        Array.Clear(resampled);
+        return pcm;
+    }
 
     private static int FirstSound(float[] samples)
     {

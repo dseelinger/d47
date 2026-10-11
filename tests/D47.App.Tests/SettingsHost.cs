@@ -58,7 +58,8 @@ internal sealed class SettingsHost
 
         // At the end, by the same rule.
         D47.Core.Input.BindingProfiles? bindingProfiles = null,
-        bool headset = false)
+        bool headset = false,
+        D47.App.Settings.CustomVoicesEditing? customVoices = null)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -90,7 +91,8 @@ internal sealed class SettingsHost
                 downloadModel,
                 ownPersonas: ownPersonas,
                 recording: recording,
-                bindingProfiles: bindingProfiles);
+                bindingProfiles: bindingProfiles,
+                customVoices: customVoices);
             return view;
         });
 

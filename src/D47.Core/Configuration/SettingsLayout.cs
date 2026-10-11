@@ -237,17 +237,17 @@ public static class SettingsLayout
                             ]),
                     ]),
                 new SettingsPlace(
-                    "your-voice",
-                    "Your voice",
-                    "One recording of you, kept on this PC, for story lines cast in your own voice.",
+                    "custom-voices",
+                    "Custom voices",
+                    "Your voice and other voices you record or import, kept on this PC, for Chatterbox to speak in.",
                     "speech",
-                    ["record", "my voice", "own voice"],
+                    ["record", "my voice", "own voice", "your voice", "import", "clone"],
                     false,
                     [
                         G(
-                            "Your voice",
-                            "Record, hear and delete the recording.",
-                            [E("speech.ownVoice"), E("speech.ownVoice.play"), E("speech.ownVoice.delete")]),
+                            "Custom voices",
+                            "Record, import, hear, rename and delete voices.",
+                            [E("speech.customVoices")]),
                     ]),
                 new SettingsPlace(
                     "sounds",

@@ -230,6 +230,19 @@ public sealed class AppHost : IDisposable
             Listener.ResumeListening,
             PlayOwnVoice,
             loggerFactory.CreateLogger<OwnVoiceRecording>());
+        _customVoiceDraft = new CustomVoiceDraft(
+            customVoices,
+            _ownVoiceRecording,
+            new MediaFoundationFileDecoder(),
+            PlayOwnVoice,
+            loggerFactory.CreateLogger<CustomVoiceDraft>());
+        CustomVoiceEditing = new Settings.CustomVoicesEditing(
+            customVoices,
+            _ownVoiceRecording,
+            _customVoiceDraft,
+            PlayOwnVoice,
+            () => D47.Core.Speech.ChatterboxAssets.IsInstalled(Files, speech.ChatterboxFolder()),
+            speech.DownloadChatterbox);
         Absences = new CoreAbsences(viewState, () => DateTimeOffset.Now, loggerFactory.CreateLogger<CoreAbsences>());
         Narration = new StoryNarration(Announcer, Writer, Records, pairing, stories, messages, personas, gameState, settings, SpeakerPictures, _logger);
     }
@@ -682,6 +695,11 @@ public sealed class AppHost : IDisposable
     private readonly BindsWatch _binds;
 
     private readonly OwnVoiceRecording _ownVoiceRecording;
+
+    private readonly CustomVoiceDraft _customVoiceDraft;
+
+    /// <summary>What the Custom voices page reads and drives.</summary>
+    internal Settings.CustomVoicesEditing CustomVoiceEditing { get; }
 
     /// <summary>The Commander's own recorded voice, which Chatterbox speaks as <see cref="OwnVoice.VoiceId"/>.</summary>
     internal OwnVoice OwnVoice { get; }
@@ -2190,21 +2208,7 @@ public sealed class AppHost : IDisposable
                     SwitchLocalVoiceBuild = build => (progress, cancellationToken) =>
                         speech.SwitchLocalVoiceBuild(build, progress, cancellationToken),
                     ChatterboxState = speech.ChatterboxState,
-                    OwnVoiceState = () => late.Host?._ownVoiceRecording.State() ?? "Not available.",
-                    OwnVoiceRecording = () => late.Host?._ownVoiceRecording.Recording ?? false,
-                    RecordOwnVoice = () => late.Host?._ownVoiceRecording.Toggle(),
-                    PlayOwnVoice = () => late.Host?._ownVoiceRecording.Play(),
-                    DeleteOwnVoice = () => late.Host?._ownVoiceRecording.Delete(),
-                    WatchOwnVoice = refresh =>
-                    {
-                        if (late.Host is not { } host)
-                        {
-                            return () => { };
-                        }
-
-                        host._ownVoiceRecording.Changed += refresh;
-                        return () => host._ownVoiceRecording.Changed -= refresh;
-                    },
+                    CustomVoicesState = () => late.Host?.CustomVoiceEditing.Summary() ?? "Not available.",
                     DownloadChatterbox = () => speech.DownloadChatterbox,
                     ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(files, speech.ChatterboxFolder()),
                     StoryCastUses = providerId => late.Host?.Stories?.CastUses(providerId) == true,
@@ -5867,6 +5871,7 @@ public sealed class AppHost : IDisposable
         Announcer.Dispose();
 
         // After the tick has stopped, so a poll cannot land on a disposed capture device.
+        _customVoiceDraft.Dispose();
         _ownVoiceRecording.Dispose();
         Listener.Dispose();
         (Models as IDisposable)?.Dispose();

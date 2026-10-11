@@ -83,7 +83,7 @@ public class AFailureThatSaysSettingsNamesItsRowTests
         ["chatterbox no recording"] = (
             () => Chatterbox(installed: true),
             new VoiceSelection(OwnVoice.VoiceId),
-            SpeechCapability.OwnVoiceKey),
+            SpeechCapability.CustomVoicesKey),
     };
 
     private static ChatterboxTtsProvider Chatterbox(bool installed)

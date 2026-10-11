@@ -50,7 +50,8 @@ internal sealed record SettingServices(
     D47.Core.Input.BindingProfiles? BindingProfiles,
     IReadOnlyList<string> Reserved,
     Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? DownloadModel,
-    SystemNameLookup? SystemNames = null);
+    SystemNameLookup? SystemNames = null,
+    CustomVoicesEditing? CustomVoices = null);
 
 /// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
 public sealed record SystemNameLookup(
@@ -118,6 +119,10 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             // The persona editor page.
             case SettingKind.Info when row.Key == PersonaCapability.OwnKey && services.OwnPersonas is not null:
                 return BuildOwnPersonas(row);
+
+            // The Custom voices page.
+            case SettingKind.Info when row.Key == SpeechCapability.CustomVoicesKey && services.CustomVoices is not null:
+                return BuildCustomVoices(row);
 
             // The third row that offers a window.
             case SettingKind.Info when row.Key == ChecklistCapability.SummaryKey && services.Checklists is not null:
@@ -777,6 +782,32 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.
+            refresh();
+        };
+
+        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh);
+    }
+
+    /// <summary>What Custom voices holds, plus the way into the page.</summary>
+    private (Control, Action) BuildCustomVoices(SettingRow row)
+    {
+        var (inset, refresh) = BuildInfo(row);
+
+        var open = new Button
+        {
+            Name = "OpenCustomVoices",
+            Content = "Custom voices",
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        open.Click += async (_, _) =>
+        {
+            if (services.CustomVoices is not { } editing || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
+            {
+                return;
+            }
+
+            await panel.Open(new Controls.CustomVoicesPage(editing));
             refresh();
         };
 

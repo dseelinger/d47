@@ -554,7 +554,7 @@ Kokoro download.
 
 - the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
 - the Kokoro download and its size, when a member speaks through Kokoro and it is not downloaded;
-- a recording under **Settings**, **Your voice**, when a member speaks in your own voice;
+- a recording of Your voice under **Settings**, **Custom voices**, when a member speaks in your own voice;
 - the provider's API key under **Settings**, **Its voice**, when you chose a provider that needs a key and
   none is stored.
 

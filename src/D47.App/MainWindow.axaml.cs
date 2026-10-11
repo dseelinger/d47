@@ -827,7 +827,8 @@ public partial class MainWindow : Window
             _host.BindingProfiles,
             _host.StarSystems is { } systems
                 ? new SystemNameLookup(systems.PrefixNamesAsync, () => _host.Settings.Current.Knowledge.GalaxySearch)
-                : null);
+                : null,
+            _host.CustomVoiceEditing);
     }
 
     public Control BuildSettingsPage()

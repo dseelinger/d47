@@ -1157,7 +1157,7 @@ The clips are utterances from LibriTTS-R, which is licensed CC BY 4.0 (https://w
 
 Chatterbox lists every row of `catalog.tsv`, shipped voices first, each with its gender, pitch and pace. A shipped voice is spoken from its clip beside the exe and never fetched. Any other is fetched from `https://github.com/dseelinger/d47/releases/download/chatterbox-voices-1/<id>.wav` into `data\voices\chatterbox\` when it is picked, when **Play** is pressed on it, or when a line is due in it, and is kept.
 
-**A clip in `data\voices\chatterbox\` is used only when its size and SHA-256 match its `catalog.tsv` row.** A file with no row is never loaded, and a file that does not match is deleted and fetched again, so a Commander cannot add a voice by dropping a file there. Only a recording of your own voice is allowed, below.
+**A clip in `data\voices\chatterbox\` is used only when its size and SHA-256 match its `catalog.tsv` row.** A file with no row is never loaded, and a file that does not match is deleted and fetched again, so a Commander cannot add a voice by dropping a file there. Voices of your own are added on the [Custom voices](#custom-voices) page.
 
 A line due in a voice that is not here yet waits up to 3 seconds for the fetch. If the clip has not arrived by then, or the fetch failed earlier this session, the line is spoken in a shipped voice of the same gender, the one cast in that role where there is one, and otherwise the nearest in pitch and pace. The log names both voices. A failed fetch is logged once per session, and is tried again the next time the voice is picked or played.
 
@@ -1179,22 +1179,23 @@ A line due in a voice that is not here yet waits up to 3 seconds for the fetch. 
 #### Your voice {#your-voice}
 
 A story can cast a line in your own voice. Chatterbox speaks it from one recording of you, made in
-**Settings**, under **Voice and hearing**, in **Your voice**.
+**Settings**, under **Voice and hearing**, on the [Custom voices](#custom-voices) page, where
+**Your voice** is the first row.
 
-- **Record** records from the microphone chosen under **Voice Input**, and you read this sentence
-  aloud:
-
-  ```text
-  This is my voice, and d47 may use it for my stories on this PC.
-  ```
-
-  Press **Stop** when you finish, or it stops by itself after 7 seconds. While it records, D47 is
-  not listening for commands, and nothing you say reaches speech recognition.
+- **Record** records from the microphone chosen under **Voice Input**. Any words will do. Press
+  **Stop** when you finish, or it stops by itself after 7 seconds. While it records, D47 is not
+  listening for commands, and nothing you say reaches speech recognition. The take is saved when it
+  stops.
 - **A take shorter than 5 seconds, or with nothing louder than -40 dBFS, is refused**, and the row
   says which.
-- **Play** plays the recording back. **Delete** removes it from this PC; press it twice to confirm.
-- **There is no way to import a clip.** The only voice D47 copies is the one speaking into the
-  microphone.
+- **Play** plays the recording back, and **Record again** replaces it. **Delete** removes it from
+  this PC; press it twice to confirm.
+
+The row says this while nothing is recorded:
+
+```text
+Not recorded. Story lines in your voice need a recording.
+```
 
 The recording is resampled to 24 kHz mono and kept in `data\voice\own.bin`, encrypted with Windows
 data protection for your Windows user, so it cannot be read by another account or on another PC.
@@ -1203,9 +1204,49 @@ It is decrypted into memory only, and no WAV of it is written. It is never sent 
 recorder either. A message spoken in your voice keeps its clip encrypted the same way; see
 [Spoken messages keep their clip](#kept-clips).
 
-No voice picker offers your voice; only a story's cast names it, as the voice `own`. A line cast in
-it with no recording saved is not spoken. Like every Chatterbox line, each one spoken in your voice
-carries Resemble's Perth watermark.
+A story's cast names your voice as the voice `own`. A line cast in it with no recording saved is
+not spoken. Like every Chatterbox line, each one spoken in your voice carries Resemble's Perth
+watermark.
+
+#### Custom voices {#custom-voices}
+
+**Settings**, **Voice and hearing**, **Custom voices** opens a page holding [Your voice](#your-voice)
+and every other voice you have recorded or imported for Chatterbox to speak in.
+
+**Your custom voices** lists them, Your voice first. Each other voice shows its gender, pitch and
+pace, with **Play**, **Rename** and **Delete**; press **Delete** twice to confirm.
+
+**Add a voice** makes a new one:
+
+- **Name** is 1 to 40 characters and must differ from every other custom voice's name.
+- **Gender** is Female, Male or Unlabelled. **Pitch** (Low, Mid, High) and **Pace** (Slow, Even,
+  Brisk) are optional, and start at Mid and Even.
+- **Record** takes up to 7 seconds from the microphone chosen under **Voice Input**, with speech
+  recognition paused, as Your voice does. The page suggests a sentence to read; any words will do.
+- **Choose a file** takes a WAV, MP3, M4A, WMA or FLAC file. A file longer than 10 minutes is
+  refused before it is read.
+- D47 skips the silence at the start of the take and keeps the next 7 seconds. **Take** shows the
+  span kept, such as `0:02 – 0:09`; **Play** plays exactly that, and **Save** keeps it.
+- A take shorter than 5 seconds once the silence at its start is skipped, or with nothing louder
+  than -40 dBFS, is refused under **Not kept** with the reason, such as:
+
+  ```text
+  Nothing in the recording was louder than -40 dBFS, so the microphone heard silence.
+  ```
+
+Custom and recorded voices appear under the voice picker's **Custom** filter, so you can choose one
+as a core's voice. They are never chosen for strangers: D47 does not draw them for an incoming
+message's sender or any other character it casts by itself.
+
+Custom voices stay on this PC. Each is resampled to 24 kHz mono and kept in
+`data\voices\custom\`, encrypted with Windows data protection, so only the Windows user who made it
+can read it. They are never sent anywhere and are not included in a donation; the
+**Your custom voices** entry under **Privacy and egress** says so.
+
+While Chatterbox is not downloaded, the page says so at the top, with **Download**. You can still
+add, play and keep voices; D47 speaks in them once Chatterbox is downloaded.
+
+Nothing on the page is a tool: D47's model cannot record, import, rename or delete a voice.
 
 #### Spoken messages keep their clip {#kept-clips}
 

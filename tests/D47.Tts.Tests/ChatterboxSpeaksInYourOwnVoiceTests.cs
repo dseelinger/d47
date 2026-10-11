@@ -88,7 +88,7 @@ public class ChatterboxSpeaksInYourOwnVoiceTests
             () => provider.SynthesizeAsync("hi", Own, TestContext.Current.CancellationToken));
 
         Assert.Equal(
-            "No recording of your voice is saved. Record one in Settings, under Your voice.",
+            "No recording of your voice is saved. Record one in Settings, under Custom voices.",
             thrown.Message);
     }
 
