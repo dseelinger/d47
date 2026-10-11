@@ -180,13 +180,13 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void SearchOffersStationsAfterSystems()
+    public void SearchOffersStationsAfterSystemsAndBodiesAfterThem()
     {
         var world = new World(lookups: true);
         var (panel, window) = Shown(world);
 
         Assert.Equal(
-            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey],
+            [StarSystemPage.RootKey, SystemSearchPage.RootKey, StationSearchPage.RootKey, BodySearchPage.RootKey],
             panel.Nav.Roots(PanelTab.Search).Select(root => root.Key));
 
         window.Close();

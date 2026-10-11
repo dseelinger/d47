@@ -371,17 +371,17 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
             ? store.For(fid).Where(search => search.Tool == Tool).ToList()
             : [];
 
-        if (quick.Count == 0 && yours.Count == 0)
-        {
-            return new Avalonia.Controls.Panel();
-        }
-
         var block = new StackPanel { Spacing = 8 };
 
         if (_headset)
         {
             var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
             row.Children.Add(Label("Saved", width: null));
+
+            if (quick.Count == 0)
+            {
+                row.Children.Add(NoQuick());
+            }
 
             foreach (var search in quick)
             {
@@ -399,7 +399,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
 
         block.Children.Add(ListRow.Head("Saved"));
 
-        if (quick.Count > 0)
+        if (quick.Count == 0)
+        {
+            block.Children.Add(NoQuick());
+        }
+        else
         {
             var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
             row.Children.Add(Label("Quick", width: 56));
@@ -444,6 +448,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary
         }
 
         return block;
+    }
+
+    private TextBlock NoQuick()
+    {
+        var line = Prose($"No quick searches for {Noun.ToLowerInvariant()}.", TypeScale.Tip, ThemeManager.GreyKey);
+        line.VerticalAlignment = VerticalAlignment.Center;
+        return line;
     }
 
     private Button SavedTile(string name, IReadOnlyDictionary<string, string> arguments)
