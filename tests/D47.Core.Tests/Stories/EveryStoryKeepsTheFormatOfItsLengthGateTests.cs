@@ -113,6 +113,35 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Link = 0.05, Effects = [new("glitch", 20)] }] }]).Faults());
 
     [Fact]
+    public void APinnedSpeakerKeepsTheFormat() =>
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Pinned = true }] }]).Faults());
+
+    [Fact]
+    public void PinnedOnAVersionIsRefused()
+    {
+        var pinned = System.Text.Json.JsonDocument.Parse("true").RootElement;
+        var cray = StoryFixtures.Versioned.Cast.Single(member => member.Versions is not null);
+        var version = cray.Versions!.ForMan! with { Extra = new() { ["pinned"] = pinned } };
+        var secret = StoryFixtures.Versioned with
+        {
+            Cast = [.. StoryFixtures.Versioned.Cast.Select(member => member == cray
+                ? cray with { Versions = new StorySpeakerVersions { ForMan = version, ForWoman = cray.Versions!.ForWoman } }
+                : member)],
+        };
+
+        using var packed = new MemoryStream();
+
+        using (var deflate = new System.IO.Compression.DeflateStream(packed, System.IO.Compression.CompressionLevel.Optimal, leaveOpen: true))
+        {
+            System.Text.Json.JsonSerializer.Serialize(deflate, new[] { secret }, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+        }
+
+        var loaded = StoryCatalog.Unseal(Convert.ToBase64String(packed.ToArray()));
+
+        Assert.Contains(new StoryCatalog([Card], () => loaded).Faults(), fault => fault.Contains("has pinned; put it on the member", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void AChatterboxSpeakerMayUseTheCommandersOwnVoice() =>
         Assert.Empty(new StoryCatalog(
             [Card],

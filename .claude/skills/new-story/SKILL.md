@@ -171,7 +171,8 @@ add.
   with `id`, `label`, `after` and `add` (persona ids, possibly none), and `cast`.
 - **Lines** (clues, finale and `scan`) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
 - **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
-  when the story needs it, #41) and `voice`. Voice `own` is the Commander's recording (#713).
+  when the story needs it, #41) and `voice`; write them as before, and add `pinned: true` only when the story
+  asks for a particular voice (a member on `own` is pinned already). Voice `own` is the Commander's recording (#713).
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
   `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
   and every cast member gets a picture, `<story-id>.<cast-id>.png`, a square

@@ -392,8 +392,10 @@ beside the level's guideline, the tone, the story in your words and why it sends
 
 Each story also has a hidden layer: its secret, a beat sheet of Save the Cat beats, a clue for each of its
 length's clue days, a line for each finale chapter, one to four ways it can end, and up to four
-speakers who exist only in the story. Each of those speakers has a local voice, Kokoro or Chatterbox,
-so a story never needs a paid key or sends its lines off your PC to be spoken. Every clue and finale
+speakers who exist only in the story. Each of those speakers has a local voice, Kokoro or Chatterbox, and a
+story may mark a speaker `pinned: true` so that it always speaks in that voice. A speaker that is not pinned
+speaks through the provider you set for the ship, so a story never sends its lines to a provider you did not
+choose. A speaker whose voice is `own` is pinned. Every clue and finale
 line names who says it: one of those speakers, the ship's AI or the narrator. D47 keeps that layer
 sealed, never shows it, and sends it to the language model so the chapters can hint at it.
 
@@ -523,8 +525,10 @@ line to anyone else is sent back once with the reason, and refused if it comes b
   the chapter writer is told so, so it writes those lines as narration. With a Guardian core or a core you
   wrote aboard, that core speaks them. This is decided when the line is spoken.
 - **`narrator`** is the narrator voice set under **Narrator Voice**.
-- **A cast member** speaks in the provider and voice the story pinned to it, Kokoro or Chatterbox, whatever
-  **Where each voice comes from** says, unless you chose another for it (see [Cast voices](#cast-voices)). A speaker in two versions speaks in your version's voice, and
+- **A cast member** the story marked `pinned: true` speaks in the provider and voice the story gave it,
+  Kokoro or Chatterbox, whatever **Where each voice comes from** says. Any other cast member speaks through the
+  provider you set for the ship, in the voice paired with it for that provider, or in the crew voice while none
+  is paired. Either kind speaks in the voice you chose for it, if any (see [Cast voices](#cast-voices)). A speaker in two versions speaks in your version's voice, and
   changing **Your Commander is** takes effect from the next line. The line goes through that speaker's
   own sound, a comms link at the story's strength and any Guardian effects the story lists, and nothing
   else: no radio for its role and none of the **Guardian Voice Effects** you set for the ship. The model
@@ -537,12 +541,15 @@ as written and the ship then says where you go next. A line may open with a soun
 
 ```csharp
 public static StoryLineVoice Of(
-    string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null)
+    string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null,
+    ShipSpeech? ship = null)
 ```
 
 #### A story needs its voices first
 
-A story cannot be picked until every voice its cast speaks in is ready, the voices you chose included.
+A story cannot be picked until every voice its cast speaks in is ready, the voices you chose included. A
+member that is not pinned needs only the ship's provider, so a story with no pinned member starts without the
+Kokoro download.
 **Pick** and **Switch** are disabled, and the story's page lists what is missing:
 
 - the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
@@ -564,7 +571,8 @@ refused, with the same list, until the voice is back.
 A story's card page has a **Cast** section listing its primary characters, and no one else, before you
 pick the story and while it runs. A character in two versions is listed once **Your Commander is** is set,
 as your version. Each row shows the character's picture, name, and the provider and voice it speaks in,
-with "(the story's voice)" while it is the one the story pinned. **Play sample** speaks the character's name
+with "(the story's voice)" while it is the one it speaks in without your choice: the story's pinned voice, or
+the voice paired with it for the ship's provider. **Play sample** speaks the character's name
 and one fixed sentence in that voice. **Change picture** and **Use the default** work as they do on a
 message.
 
@@ -572,21 +580,24 @@ message.
 of every provider that speaks, then of every voice that provider lists, of either gender. The story's own
 voice is marked in the list. The story's text is not rewritten for the voice you choose. Each voice in the
 list can be played first; on a paid provider each sample is billed like any line. **Use the default**
-returns the character to the story's voice. A character that is not primary is listed nowhere until its
+returns the character to the story's voice, or to the ship's provider for a character that is not pinned. A character that is not primary is listed nowhere until its
 first message arrives.
 
 The choice is kept in `settings.json` under `storyVoices`, keyed `<story-id>.<cast-id>`, with
 `.for-man` or `.for-woman` for a character in two versions. Lines spoken through a paid provider count in
 the speech spend with every other line. If the chosen provider fails a sentence, that sentence is spoken
-in the story's own voice, and the character's row on the card page says why.
+in the character's own voice, which for a character that is not pinned is its voice on the ship's provider,
+and the character's row on the card page says why.
 
-A character on a hosted provider sends its lines, which are the story's sealed text, to that provider.
+A character you put on a hosted provider sends its lines, which are the story's sealed text, to that provider.
 **Privacy and egress**, under text to speech, names each such character, its story and its provider, with
-that provider's own disclosure, and `get_data_egress` answers from the same entry. A character on Kokoro or
-Chatterbox adds nothing. Only the panel changes these voices; the model has no tool for them.
+that provider's own disclosure, and `get_data_egress` answers from the same entry. A character that is not
+pinned sends its lines to the ship's provider, and the same entry says so whenever that provider is hosted. A
+character on Kokoro or Chatterbox adds nothing. Only the panel changes these voices; the model has no tool for them.
 
 ```csharp
-public static PinnedVoice Voice(StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices)
+public static PinnedVoice Voice(
+    StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices, ShipSpeech? ship = null)
 ```
 
 ### How a chapter is fitted to you

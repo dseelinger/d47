@@ -25,6 +25,8 @@ the "length" on its card, one of the keys of LENGTHS.
            A speaker may carry "link", a number from 0 to 1: the signal strength of the comms link it is heard
            through. It may carry "effects", a list of {"id", "level"}: Guardian effect ids (GuardianVoice.Table),
            each at a level from 1 to 20, applied in order before the link. An id may be listed once.
+           A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
+           Voice "own" is pinned whether or not it says so. A version never carries "pinned"; it covers both.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
            a primary speaker must have a picture when the story is published, is named in the card's blurb
            or inYourWords unless it has versions, and never speaks in the voice "own".
@@ -180,6 +182,10 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         found += sound_fault(f"cast {at + 1} ({sid})", speaker)
         if "primary" in speaker and not isinstance(speaker["primary"], bool):
             found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")
+        if "pinned" in speaker and not isinstance(speaker["pinned"], bool):
+            found.append(f"cast {at + 1} ({sid}) has a pinned that is not true or false")
+        if isinstance(speaker.get("versions"), dict) and any(isinstance(version, dict) and "pinned" in version for version in speaker["versions"].values()):
+            found.append(f"cast member {sid} has pinned on a version; put it on the member")
         if versions is None:
             found += voice_fault(f"cast {at + 1} ({sid})", speaker.get("provider"), speaker.get("voice"))
             continue

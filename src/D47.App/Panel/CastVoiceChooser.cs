@@ -21,6 +21,11 @@ public sealed record CastVoiceSurface(
 /// <summary>Change voice: a provider, then one of the voices it lists, for one story character.</summary>
 public static class CastVoiceChooser
 {
+    private const string CrewVoice = "the crew voice";
+
+    private static string DefaultDisplay(StoryCastMember member) =>
+        $"{TtsProviderCatalog.Selected(member.Pinned.ProviderId).Name} · {(member.Pinned.IsCrewVoice ? CrewVoice : member.Pinned.VoiceId)}";
+
     /// <summary>The words a row and a message show for the voice a member speaks in.</summary>
     public static string Describe(StoryCastMember member)
     {
@@ -28,7 +33,8 @@ public static class CastVoiceChooser
 
         var provider = TtsProviderCatalog.Selected(member.Speaks.ProviderId);
         var voice = member.SpeaksName
-                    ?? (provider.VoiceIdsAreOpaque ? $"a {provider.Name} voice" : member.Speaks.VoiceId);
+                    ?? (member.Speaks.IsCrewVoice ? CrewVoice
+                        : provider.VoiceIdsAreOpaque ? $"a {provider.Name} voice" : member.Speaks.VoiceId);
 
         return member.Speaks.Key is null
             ? $"{provider.Name} · {voice} (the story's voice)"
@@ -60,7 +66,7 @@ public static class CastVoiceChooser
                     ? $"{provider.Name} (the story's provider)"
                     : TtsProviderCatalog.Selected(id).Name,
                 Current = member.Speaks.ProviderId,
-                DefaultDisplay = $"{TtsProviderCatalog.Selected(member.Pinned.ProviderId).Name} · {member.Pinned.VoiceId}",
+                DefaultDisplay = DefaultDisplay(member),
                 Status = id => surface.KeyStored is { } stored
                     ? ProviderStatus.Of(TtsProviderCatalog.Selected(id), stored)
                     : null,
@@ -95,7 +101,7 @@ public static class CastVoiceChooser
         var pinnedHere = string.Equals(providerId, member.Pinned.ProviderId, StringComparison.OrdinalIgnoreCase);
         var ids = listed.Voices.Select(voice => voice.Id).ToList();
 
-        if (pinnedHere && !ids.Contains(member.Pinned.VoiceId, StringComparer.OrdinalIgnoreCase))
+        if (pinnedHere && !member.Pinned.IsCrewVoice && !ids.Contains(member.Pinned.VoiceId, StringComparer.OrdinalIgnoreCase))
         {
             ids.Insert(0, member.Pinned.VoiceId);
         }
@@ -115,7 +121,7 @@ public static class CastVoiceChooser
                         : label;
                 },
                 Current = string.Equals(member.Speaks.ProviderId, providerId, StringComparison.OrdinalIgnoreCase) ? member.Speaks.VoiceId : null,
-                DefaultDisplay = $"{TtsProviderCatalog.Selected(member.Pinned.ProviderId).Name} · {member.Pinned.VoiceId}",
+                DefaultDisplay = DefaultDisplay(member),
                 WhyEmpty = listed.WhyEmpty(provider.Name),
                 Facet = SpeechCapability.GenderFacet(listed),
                 Audition = AuditionOf(surface, member, provider, providerId, listed),

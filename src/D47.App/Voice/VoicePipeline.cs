@@ -237,7 +237,8 @@ public sealed class VoicePipeline(
         VoiceGroup slot = VoiceGroup.Aboard,
         string? captionSpeaker = null,
         VoiceRole role = VoiceRole.ShipAi,
-        bool overheard = false)
+        bool overheard = false,
+        Func<IPcmFilter>? runningColour = null)
     {
         if (_held || Speaker(slot) is not { } provider)
         {
@@ -245,7 +246,7 @@ public sealed class VoicePipeline(
         }
 
         var applied = colour ?? Colour(role, overheard: overheard);
-        var running = colour is null ? Running(role, applied, overheard: overheard) : null;
+        var running = runningColour ?? (colour is null ? Running(role, applied, overheard: overheard) : null);
 
         return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false)
             .ConfigureAwait(false);
@@ -264,6 +265,8 @@ public sealed class VoicePipeline(
             return client;
         }
 
+        var fallbackVoice = fallback.IsCrewVoice ? Voice.VoiceId ?? string.Empty : fallback.VoiceId;
+
         void Failed(string reason)
         {
             _logger.LogWarning("A story character's chosen {Provider} voice failed; its pinned voice speaks instead. {Reason}", pinned.ProviderId, reason);
@@ -277,10 +280,10 @@ public sealed class VoicePipeline(
         if (client is null)
         {
             Failed($"d47 has no {pinned.ProviderId} voice.");
-            return new D47.Core.Stories.FallingBackTtsProvider(story, story, fallback.VoiceId, _ => { }) { AlwaysFallBack = true };
+            return new D47.Core.Stories.FallingBackTtsProvider(story, story, fallbackVoice, _ => { }) { AlwaysFallBack = true };
         }
 
-        return new D47.Core.Stories.FallingBackTtsProvider(client, story, fallback.VoiceId, Failed);
+        return new D47.Core.Stories.FallingBackTtsProvider(client, story, fallbackVoice, Failed);
     }
 
     /// <summary>Speaks through <paramref name="provider"/> with the treatment already chosen, and returns what was queued.</summary>
@@ -377,6 +380,23 @@ public sealed class VoicePipeline(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
         // A story's cast member, in the voice the story pinned and with the treatment the story gave them.
+        if (announcement.Pinned is { IsCrewVoice: true, Fallback: null } crew)
+        {
+            return await AnnounceAsync(
+                    announcement.Text,
+                    announcement.Channel,
+                    voice,
+                    announcement.Group,
+                    D47.Core.Stories.CastVoice.Treatment(crew),
+                    announcement.Speaker is { Length: > 0 } member ? member : announcement.Voice.ToString(),
+                    announcement.Transcript is null,
+                    VoiceGroup.Aboard,
+                    announcement.Speaker,
+                    announcement.Voice,
+                    runningColour: D47.Core.Stories.CastVoice.Running(crew))
+                .ConfigureAwait(false);
+        }
+
         if (announcement.Pinned is { } pinned)
         {
             if (CastSpeaker(pinned) is not { } client)

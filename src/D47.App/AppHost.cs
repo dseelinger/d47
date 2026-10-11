@@ -2887,6 +2887,7 @@ public sealed class AppHost : IDisposable
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
         storyDirector.Choices = () => settings.Current.StoryVoices;
+        storyDirector.Ship = () => new D47.Core.Stories.ShipSpeech(VoiceGroups.ProviderFor(settings.Current.Speech, VoiceGroup.Aboard));
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);

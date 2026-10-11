@@ -667,6 +667,11 @@ public static class EgressDisclosure
             what.Append(". ");
         }
 
+        if (speaking.Any(pair => pair.Slot.Group == Audio.VoiceGroup.Aboard && !Audio.TtsProviderCatalog.IsLocal(pair.Provider.Id)))
+        {
+            what.Append("Cast members the story did not pin are spoken by the ship's provider, so their lines, the story's sealed text, go there too. ");
+        }
+
         var providers = speaking.Select(pair => pair.Provider).Concat(cast.Select(line => line.Provider)).ToList();
 
         // Each service's own disclosure, once, whichever slots and characters reached it.

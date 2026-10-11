@@ -31,6 +31,19 @@ public sealed record StoryCastMember(string StoryId, string Title, StorySpeakerS
     public string Key => Shown.Picture;
 }
 
+/// <summary>
+/// The provider the ship speaks through, and the voices paired with the cast on it, keyed as
+/// <see cref="D47Settings.StoryVoices"/>; a pairing for another provider is ignored.
+/// </summary>
+public sealed record ShipSpeech(string Provider, IReadOnlyDictionary<string, StoryVoiceChoice>? Pairings = null)
+{
+    /// <summary>The voice paired with <paramref name="picture"/> on <see cref="Provider"/>; empty for the crew voice.</summary>
+    public string VoiceFor(string picture) =>
+        Pairings?.GetValueOrDefault(picture) is { } pairing && string.Equals(pairing.Provider, Provider, StringComparison.OrdinalIgnoreCase)
+            ? pairing.Voice
+            : string.Empty;
+}
+
 /// <summary>What is on this PC for a story's cast to speak with.</summary>
 public sealed record CastVoicesHere(bool Kokoro, bool Chatterbox, bool OwnRecording)
 {
@@ -50,7 +63,8 @@ public static class StoryVoices
     /// <paramref name="gender"/> meets, or else its pinned voice. A speaker the story does not cast is the ship's.
     /// </summary>
     public static StoryLineVoice Of(
-        string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null)
+        string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null,
+        ShipSpeech? ship = null)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
@@ -70,26 +84,43 @@ public static class StoryVoices
             VoiceRole.Crew,
             shown.Name,
             shown,
-            Voice(member, shown, choices))
+            Voice(member, shown, choices, ship))
         {
             Who = member.Who,
         };
     }
 
     /// <summary>
-    /// The voice a member speaks in: the Commander's choice for the version shown, falling back to the pinned voice, or
-    /// the pinned voice alone.
+    /// The voice a member speaks in: the Commander's choice for the version shown, falling back to the member's own
+    /// voice (see <see cref="Own"/>), or the member's own voice alone.
     /// </summary>
-    public static PinnedVoice Voice(StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices)
+    public static PinnedVoice Voice(
+        StorySpeaker member, StorySpeakerShown shown, IReadOnlyDictionary<string, StoryVoiceChoice>? choices, ShipSpeech? ship = null)
     {
         ArgumentNullException.ThrowIfNull(member);
         ArgumentNullException.ThrowIfNull(shown);
 
-        var pinned = new PinnedVoice(shown.Provider, shown.Voice) { Link = member.Link, Effects = member.Effects };
+        var pinned = Own(member, shown, ship);
 
         return choices?.GetValueOrDefault(shown.Picture) is { } choice
             ? new PinnedVoice(choice.Provider, choice.Voice) { Link = member.Link, Effects = member.Effects, Key = shown.Picture, Fallback = pinned }
             : pinned;
+    }
+
+    /// <summary>
+    /// The voice a member speaks in without a choice: the story's voice for a pinned member, else the voice paired with
+    /// it on the ship's provider, or that provider's crew voice. Without a <paramref name="ship"/> every member keeps the
+    /// story's voice.
+    /// </summary>
+    public static PinnedVoice Own(StorySpeaker member, StorySpeakerShown shown, ShipSpeech? ship)
+    {
+        ArgumentNullException.ThrowIfNull(member);
+        ArgumentNullException.ThrowIfNull(shown);
+
+        return (shown.Pinned || ship is null
+                ? new PinnedVoice(shown.Provider, shown.Voice)
+                : new PinnedVoice(ship.Provider, ship.VoiceFor(shown.Picture)))
+            with { Link = member.Link, Effects = member.Effects };
     }
 
     /// <summary>Whether a line by <paramref name="speaker"/> is the ship's: named so, or naming nobody the story casts.</summary>
@@ -105,12 +136,12 @@ public static class StoryVoices
     /// not have here, one sentence each; empty when every voice is ready.
     /// </summary>
     public static IReadOnlyList<string> Missing(
-        StorySecret secret, string? gender, CastVoicesHere here, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null)
+        StorySecret secret, string? gender, CastVoicesHere here, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null, ShipSpeech? ship = null)
     {
         ArgumentNullException.ThrowIfNull(secret);
         ArgumentNullException.ThrowIfNull(here);
 
-        var voices = Voices(secret, gender, choices);
+        var voices = Voices(secret, gender, choices, ship);
         var missing = new List<string>();
 
         foreach (var provider in voices
@@ -148,17 +179,20 @@ public static class StoryVoices
         $"{title} is paused because a voice it needs is not ready. {string.Join(" ", missing)} Then resume it on the Stories page.";
 
     /// <summary>Whether a story line by any member of the cast would be spoken by the given provider.</summary>
-    public static bool Uses(StorySecret secret, string? gender, string providerId, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null)
+    public static bool Uses(StorySecret secret, string? gender, string providerId, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null, ShipSpeech? ship = null)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
-        return Voices(secret, gender, choices).Any(voice => string.Equals(voice.Provider, providerId, StringComparison.OrdinalIgnoreCase));
+        return Voices(secret, gender, choices, ship).Any(voice => string.Equals(voice.Provider, providerId, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>The provider and voice each member speaks in, as a Commander of <paramref name="gender"/> meets it.</summary>
-    private static List<(string Provider, string Voice)> Voices(StorySecret secret, string? gender, IReadOnlyDictionary<string, StoryVoiceChoice>? choices) =>
+    private static List<(string Provider, string Voice)> Voices(
+        StorySecret secret, string? gender, IReadOnlyDictionary<string, StoryVoiceChoice>? choices, ShipSpeech? ship) =>
         [.. secret.Cast.Select(member => member.Shown(secret.Id, gender))
-            .Select(shown => choices?.GetValueOrDefault(shown.Picture) is { } choice ? (choice.Provider, choice.Voice) : (shown.Provider, shown.Voice))];
+            .Select(shown => choices?.GetValueOrDefault(shown.Picture) is { } choice
+                ? (choice.Provider, choice.Voice)
+                : shown.Pinned || ship is null ? (shown.Provider, shown.Voice) : (ship.Provider, ship.VoiceFor(shown.Picture)))];
 
     private static StorySpeaker? Member(StorySecret secret, string? speaker) =>
         speaker is null ? null : secret.Cast.FirstOrDefault(member => string.Equals(member.Id, speaker, StringComparison.Ordinal));

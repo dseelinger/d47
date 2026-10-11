@@ -90,7 +90,10 @@ public sealed class StoryDirector(
 
     /// <summary>What the cast of story <paramref name="id"/> needs and does not have here; empty when ready or when its hidden layer is not on disk.</summary>
     public IReadOnlyList<string> VoicesMissing(string id) =>
-        catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere(), Choices()) : [];
+        catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere(), Choices(), Ship()) : [];
+
+    /// <summary>The provider the ship speaks through and the voices paired with the cast on it; null leaves every member in the story's voice.</summary>
+    public Func<ShipSpeech?> Ship { get; set; } = () => null;
 
     /// <summary>The voices the Commander chose for story characters, keyed as <see cref="Configuration.D47Settings.StoryVoices"/>.</summary>
     public Func<IReadOnlyDictionary<string, Configuration.StoryVoiceChoice>> Choices { get; set; } =
@@ -148,8 +151,9 @@ public sealed class StoryDirector(
         var shown = member.Shown(secret.Id, gender);
 
         var choices = Choices();
+        var ship = Ship();
 
-        return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null), StoryVoices.Voice(member, shown, choices))
+        return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null, ship), StoryVoices.Voice(member, shown, choices, ship))
         {
             SpeaksName = choices.GetValueOrDefault(shown.Picture)?.VoiceName,
         };
@@ -160,13 +164,13 @@ public sealed class StoryDirector(
     {
         var stories = catalog();
 
-        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId, Choices()));
+        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId, Choices(), Ship()));
     }
 
     /// <summary>Who speaks a line by <paramref name="speaker"/> in the current story, decided now; null when no story is current.</summary>
     public StoryLineVoice? LineVoice(string? frontierId, string? speaker) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices())
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship())
             : null;
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
@@ -971,7 +975,7 @@ public sealed class StoryDirector(
                && stories.Current(frontierId) is { } story
                && Hidden(story.Id) is { } secret
                && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
-            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices())
+            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship())
             : null;
     }
 

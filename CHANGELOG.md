@@ -12,6 +12,8 @@ The logbook's date range is chosen on a full page instead of a pop-up calendar, 
 
 The spend dialog's reset windows open in the page instead of a pop-up menu, so they work in the headset. The Reset list is a section at the end of the dialog, and the footer keeps the help mark and Close.
 
+A story's cast now speaks through the provider you set for the ship, unless the story marks a character `pinned`. A pinned character, and one on your own recorded voice, keeps the voice the story gave it. Any other character speaks in the crew voice for now, and if a voice you chose for it fails, in the ship's provider rather than Kokoro. A story with no pinned character starts without the Kokoro download.
+
 Station search can filter by the station's own state. `station_state` takes Construction, Damaged, DamagedHuman, UnderAttack and UnderRepairs, one or more, so "find the nearest damaged station" and "which stations near me are under attack" work. Each result says whether the station is under construction, damaged, under attack or under repairs.
 
 Every control you press in the panel is now 44 pixels tall, the size a ray hits in the headset. That covers the breadcrumb above a picker page, the session figures button, dropdown pickers and their options, the Phrases page's Say box, Add and ✕, engineer names, the level cells in Transcript › Log File, the checklist's "completed" box, the rows on a choice page, Powerplay system rows, and "Change filters" and "Plot" on Best Cargo. Dropdown pickers are 4 pixels taller when closed.

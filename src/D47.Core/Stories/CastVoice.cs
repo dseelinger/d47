@@ -10,6 +10,9 @@ namespace D47.Core.Stories;
 /// </summary>
 public sealed record PinnedVoice(string ProviderId, string VoiceId)
 {
+    /// <summary>Whether <see cref="VoiceId"/> is empty: the provider's crew voice rather than a named one.</summary>
+    public bool IsCrewVoice => VoiceId.Length == 0;
+
     /// <summary>Signal strength, 0 to 1, of the comms link the speaker is heard through; null for none.</summary>
     public double? Link { get; init; }
 

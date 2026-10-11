@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using D47.Core.Persona;
 using D47.Core.Speech;
@@ -247,6 +248,9 @@ public sealed record StorySpeaker
     /// <summary>Null when the member has <see cref="Versions"/>.</summary>
     public string? Voice { get; init; }
 
+    /// <summary>Whether the member speaks in its <see cref="Provider"/> and voice rather than the ship's provider; covers both versions.</summary>
+    public bool Pinned { get; init; }
+
     /// <summary>The member as a Commander who is a man, and one who is a woman, meets them; null for one version.</summary>
     public StorySpeakerVersions? Versions { get; init; }
 
@@ -269,11 +273,19 @@ public sealed record StorySpeaker
 
         if (Versions is not { } versions || (woman ? versions.ForWoman ?? versions.ForMan : versions.ForMan ?? versions.ForWoman) is not { } version)
         {
-            return new StorySpeakerShown(Id, Name ?? string.Empty, Provider, Voice ?? string.Empty, $"{storyId}.{Id}") { Primary = Primary };
+            return new StorySpeakerShown(Id, Name ?? string.Empty, Provider, Voice ?? string.Empty, $"{storyId}.{Id}")
+            {
+                Primary = Primary,
+                Pinned = Pinned || Voice == Own,
+            };
         }
 
         var key = woman && versions.ForWoman is not null ? StorySpeakerVersions.ForWomanKey : StorySpeakerVersions.ForManKey;
-        return new StorySpeakerShown(Id, version.Name, version.Provider ?? Provider, version.Voice, $"{storyId}.{Id}.{key}") { Primary = Primary };
+        return new StorySpeakerShown(Id, version.Name, version.Provider ?? Provider, version.Voice, $"{storyId}.{Id}.{key}")
+        {
+            Primary = Primary,
+            Pinned = Pinned || version.Voice == Own,
+        };
     }
 }
 
@@ -297,6 +309,10 @@ public sealed record StorySpeakerVersion
     public string? Provider { get; init; }
 
     public required string Voice { get; init; }
+
+    /// <summary>Properties this build does not read; <c>pinned</c> here is a fault, as it belongs on the member.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
 }
 
 /// <summary>One Guardian effect on a cast member's voice: a <see cref="Audio.GuardianEffect.Id"/> and a level, 1 to 20.</summary>
@@ -340,6 +356,9 @@ public sealed record StorySpeakerShown(string Id, string Name, string Provider, 
 {
     /// <summary>Whether the member is primary, so has a picture.</summary>
     public bool Primary { get; init; }
+
+    /// <summary>Whether the member speaks in <see cref="Provider"/> and <see cref="Voice"/> whatever the ship's provider is.</summary>
+    public bool Pinned { get; init; }
 }
 
 /// <summary>The fifteen Save the Cat beats of one story. A line may be general; the chapter writer fills it in.</summary>
@@ -844,6 +863,10 @@ public sealed class StoryCatalog
                 if (string.IsNullOrWhiteSpace(version.Name) || string.IsNullOrWhiteSpace(version.Voice))
                 {
                     yield return $"{name}.{key} needs a name and a voice.";
+                }
+                else if (version.Extra?.ContainsKey("pinned") == true)
+                {
+                    yield return $"{name}.{key} has pinned; put it on the member.";
                 }
                 else if (VoiceFault($"{name}.{key}", version.Provider ?? speaker.Provider, version.Voice) is { } fault)
                 {
