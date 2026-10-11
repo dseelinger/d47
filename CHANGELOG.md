@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Ask "what kinds of missions are there" to hear the board's groups with their mission types, or "where would I find a disable mission" to hear the faction states, governments and economies that type's names were recorded under, whether it needs a Federation or Empire navy rank and whether you hold one, and whether it comes from engineer bases. The answer gives the likeliest circumstances, not what a board offers. An unknown type is answered with the nearest names.
+
 The logbook's date range is chosen on a full page instead of a pop-up calendar, so it works in the headset. The FROM and TO tiles open a list of the days you have journals for, newest first, and a day can also be typed as year-month-day.
 
 The spend dialog's reset windows open in the page instead of a pop-up menu, so they work in the headset. The Reset list is a section at the end of the dialog, and the footer keeps the help mark and Close.

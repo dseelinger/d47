@@ -11,6 +11,8 @@ public static class MissionsCapability
 
     public const string Tool = "get_mission_board";
 
+    public const string TypesTool = "get_mission_types";
+
     private const int MaxNamed = 3;
 
     private static readonly IReadOnlyDictionary<string, string> Nothing =
@@ -29,11 +31,11 @@ public static class MissionsCapability
         Display = new CapabilityDisplay { PanelTitle = "Missions", Order = 28, ShowOnPanel = false },
         Keywords =
         [
-            "mission board",
-            "what missions do i have",
-            "read my missions",
-            "what am i hauling",
-            "what's on the slate",
+            new CapabilityKeyword("mission board", Tool),
+            new CapabilityKeyword("what missions do i have", Tool),
+            new CapabilityKeyword("read my missions", Tool),
+            new CapabilityKeyword("what am i hauling", Tool),
+            new CapabilityKeyword("what's on the slate", Tool),
         ],
         Tools =
         [
@@ -77,6 +79,37 @@ public static class MissionsCapability
                         now(),
                         arguments.TryGetBoolean("offered", out var offered) && offered,
                         arguments.TryGetBoolean("all", out var all) && all))),
+            },
+            new ToolDefinition
+            {
+                Name = TypesTool,
+                Description =
+                    "Say which mission types the board has, group by group, or where one type is likeliest to turn up: "
+                    + "the faction states, governments and economies its names were recorded under, whether it needs a navy "
+                    + "rank and whether the Commander holds one, and whether it comes from engineer bases. "
+                    + "These are likely circumstances, never a statement that a board offers the mission.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "mission_type",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "One mission type as spoken, such as disable or planetary scan, or its internal name such as "
+                            + "Mission_Disable. Leave out to list every group with its types.",
+                    },
+                ],
+                Commands =
+                [
+                    new ToolCommandPhrase("what kinds of missions are there", Nothing),
+                    new ToolCommandPhrase("what mission types are there", Nothing),
+                ],
+                Handler = (arguments, _) =>
+                {
+                    arguments.TryGetString("mission_type", out var type);
+
+                    return Task.FromResult(ToolResult.Ok(MissionTypes.Describe(type, state()?.Ranks)));
+                },
             },
         ],
     };

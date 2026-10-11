@@ -122,6 +122,15 @@ instead of the ship AI, in its own voice and under its name, with the same words
 the board is asked for directly, as above. When the model reads the board as part of a longer answer,
 the ship AI gives it.
 
+> "what kinds of missions are there"
+> "where would I find a disable mission"
+
+The first lists the board's groups with their mission types. The second says the circumstances the
+type's names were recorded under: faction states, governments, economies, whether it needs a navy rank
+and whether you hold one, and whether it comes from engineer bases. These are the likeliest
+circumstances, never a statement that a board offers it. A type D47 does not know is answered with the
+nearest names.
+
 > "what missions should I take"
 
 The missions a station offers are not in the journal, so the answer begins "I only see missions
@@ -138,6 +147,14 @@ mission, one line each, with its faction, cargo, destination, progress, time lef
 
 ```json
 {"type":"object","properties":{"all":{"type":"boolean","description":"Set when the Commander asks about a particular mission, or about more than the three most urgent; lists every mission, one line each, in the same order."},"offered":{"type":"boolean","description":"Set when the Commander asks which missions to take; the answer then says that missions on offer at a station are not in the journal."}},"required":[],"additionalProperties":false}
+```
+
+#### `get_mission_types`
+
+Says which mission types the board has, group by group, or where one type is likeliest to turn up: the faction states, governments and economies its names were recorded under, whether it needs a navy rank and whether the Commander holds one, and whether it comes from engineer bases.
+
+```json
+{"type":"object","properties":{"mission_type":{"type":"string","description":"One mission type as spoken, such as disable or planetary scan, or its internal name such as Mission_Disable. Leave out to list every group with its types."}},"required":[],"additionalProperties":false}
 ```
 
 </details>
