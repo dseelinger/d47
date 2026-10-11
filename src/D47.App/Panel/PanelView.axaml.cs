@@ -129,6 +129,8 @@ public partial class PanelView : UserControl, IPanelTabHost
     {
         _searchFurnishing = new SearchFurnishing(this);
         _stories = new StoriesFurnishing(this);
+        _settings = new SettingsFurnishing(this);
+        _commander = new CommanderFurnishing(this);
         InitializeComponent();
         _selecting = new TranscriptSelection(
             Bubbles,
@@ -260,7 +262,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         // The words the tab bar draws are the words a message names a tab by (#951).
         var tabWords = _tabs.ToDictionary(pair => pair.Key, pair => pair.Value.Content as string ?? pair.Key.ToString());
 
-        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace, SettingsRoot);
+        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace, SettingsFurnishing.Root);
         Controls.PlaceLinks.SetLinker(this, _places);
 
         foreach (var (tab, button) in _tabs)
@@ -525,59 +527,15 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// Gives this surface a settings page, built by <paramref name="build"/> the first time it is
     /// selected.
     /// </summary>
-    /// <param name="build">The settings page itself.</param>
-    /// <param name="reveal">Jumps the settings page to one capability's card.</param>
-    /// <param name="phrases">Settings › Phrases as a second root on this tab, or null for a surface that does not get one.</param>
     public void EnableSettings(
         Func<Control> build,
         Action<string>? reveal = null,
-        Func<PhrasesPage>? phrases = null)
-    {
-        _revealSetting = reveal;
-
-        var roots = new List<NavCrumb>
-        {
-            new(SettingsRoot, "Settings")
-            {
-                Help = D47.Core.Capabilities.Builtin.SettingsCapability.Id,
-            },
-        };
-
-        if (phrases is not null)
-        {
-            roots.Add(new NavCrumb(PhrasesPage.RootKey, PhrasesPage.Word)
-            {
-                Help = D47.Core.Capabilities.Builtin.LearnedPhrasesCapability.Id,
-            });
-        }
-
-        Furnish(
-            PanelTab.Settings,
-            crumb => crumb.Key switch
-            {
-                PhrasesPage.RootKey when phrases is not null => _phrases ??= phrases(),
-                _ => _settingsPage = build(),
-            },
-            [.. roots]);
-    }
-
-    private PhrasesPage? _phrases;
-
-    /// <summary>The Settings tab's root holding the settings page.</summary>
-    private const string SettingsRoot = "settings";
-
-    /// <summary>The settings page this surface built, which a link naming a setting's row opens.</summary>
-    private Control? _settingsPage;
+        Func<PhrasesPage>? phrases = null) => _settings.EnableSettings(build, reveal, phrases);
 
     /// <summary>Moves the Phrases footer on when the journal has.</summary>
-    public bool TickSettings() =>
-        Tab == PanelTab.Settings
-        && _phrases is { } phrases
-        && Nav.RootKeyOf(PanelTab.Settings) == PhrasesPage.RootKey
-        && phrases.Tick();
+    public bool TickSettings() => _settings.Tick();
 
-    /// <summary>How this surface shows one settings section, or null where it has no settings.</summary>
-    private Action<string>? _revealSetting;
+    private readonly SettingsFurnishing _settings;
 
     /// <summary>
     /// What a help card naming a settings section does when pressed, or null when this surface cannot
@@ -585,7 +543,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// about the same subject.
     /// </summary>
     private Action<string>? SettingsJump() =>
-        _revealSetting is null || !Nav.Has(PanelTab.Settings)
+        _settings.Reveal is not { } reveal || !Nav.Has(PanelTab.Settings)
             ? null
             : capabilityId =>
             {
@@ -594,221 +552,44 @@ public partial class PanelView : UserControl, IPanelTabHost
                 }
 
                 Tab = PanelTab.Settings;
-                _revealSetting(capabilityId);
+                reveal(capabilityId);
             };
 
     /// <summary>Gives this surface the checklist (Phase 25, "The checklist leaves its window").</summary>
-    /// <param name="goals">The Commander's long arcs (Phase 34).</param>
-    /// <param name="backfill">What "read my journals" does.</param>
-    /// <param name="activities">When each activity was last done, for the Activities page (#587).</param>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
         Action? backfill = null,
         D47.Core.Activities.ActivityLedger? activities = null)
     {
-        // Held for the thread's own proposal cards: whether one is still pending is looked up here rather
-        // than trusted from what drew it last (#277).
+        // Read by the conversation's proposal cards.
         _checklists = checklists;
-
-        ChecklistPage? page = null;
-
-        _checklistBuild = crumb => crumb.Key switch
-        {
-            ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
-                                            ?? new TextBlock { Text = "Nothing waiting." },
-            ChecklistPage.ActivitiesKey => activities is null
-                ? new TextBlock { Text = "No activity dates yet." }
-                : new ActivitiesPage(activities, () => checklists.Document.CommanderFid),
-            _ => page = new ChecklistPage(checklists, Nav, Prompts, goals, backfill, crumb: crumb, ask: question => Model?.AskNow(question)),
-        };
-
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb("checklist", "Checklist")
-            {
-                // The suggestions level drilled from here inherits it: a proposal is still the checklist's
-                // subject.
-                Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
-            });
-
-        // How many are still open, on the tab itself (asked for 2026-08-20). **Open rather than every line**:
-        // a checklist's whole question is how much is left, and a count that never falls as the Commander
-        // works is a number they learn to ignore.
-        void Count()
-        {
-            var open = checklists.Document.Items.Count(item => !item.IsComplete);
-
-            // The number is gone from the tab (#234).
-            _ = open;
-        }
-
-        // The store's event, which is the one the page itself listens to — so the tab and the page cannot
-        // come to disagree about how many there are.
-        checklists.List.Changed += () => Dispatcher.UIThread.Post(Count);
-        Count();
+        _commander.EnableChecklist(checklists, goals, backfill, activities);
     }
 
-    /// <summary>
-    /// Gives this surface Commander › Missions. Called right after <see cref="EnableChecklist"/>, so the root
-    /// lands second.
-    /// </summary>
+    /// <summary>Gives this surface Commander › Missions, after the checklist.</summary>
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<DateTimeOffset> now,
         D47.Core.Capabilities.CapabilityRegistry? registry = null,
-        Func<string, Task<bool>>? copy = null)
-    {
-        var headset = Classes.Contains("headset");
+        Func<string, Task<bool>>? copy = null) => _commander.EnableMissions(state, now, registry, copy);
 
-        _missionsBuild = _ => _missions = new MissionsPage(state, now, registry, copy, headset);
+    /// <summary>Gives this surface Commander › Standing, after the checklist.</summary>
+    public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableStanding(state);
 
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(MissionsPage.RootKey, "Missions")
-            {
-                Help = D47.Core.Capabilities.Builtin.MissionsCapability.Id,
-            });
-    }
+    /// <summary>Gives this surface Commander › Statistics, after Standing.</summary>
+    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableStatistics(state);
 
-    /// <summary>
-    /// Gives this surface Commander › Standing (#552). Called after <see cref="EnableChecklist"/>, so the
-    /// root lands second.
-    /// </summary>
-    public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state)
-    {
-        _commanderClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
+    /// <summary>Gives this surface Commander › This session, after Statistics.</summary>
+    public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 
-        _standingBuild = _ => _standing = new StandingPage(state, () => _commanderName?.Invoke(), _commanderClock, _portraits?.Pictures, () => Model?.CommanderPictureSource?.Invoke());
-
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(StandingPage.RootKey, "Standing")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
-    }
-
-    /// <summary>
-    /// Gives this surface Commander › Statistics (#553). Called after <see cref="EnableStanding"/>, so the
-    /// root lands third.
-    /// </summary>
-    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state)
-    {
-        _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
-        var clock = _commanderClock;
-
-        _statisticsBuild = _ => _statistics = new StatisticsPage(state, clock, () => ClearSearch());
-
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(StatisticsPage.RootKey, "Statistics")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
-    }
-
-    /// <summary>
-    /// Gives this surface Commander › This session (#554). Called after <see cref="EnableStatistics"/>, so the
-    /// root lands fourth.
-    /// </summary>
-    public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state)
-    {
-        _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
-        var clock = _commanderClock;
-
-        _sessionBuild = _ => _session = new SessionPage(state, clock);
-
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(SessionPage.RootKey, "This session")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
-    }
-
-    /// <summary>
-    /// Gives this surface Commander › Commanders. Called after <see cref="EnableSession"/>, so the root lands
-    /// last.
-    /// </summary>
-    public void EnableCommanders(CommanderRoster roster)
-    {
-        _commandersBuild = _ => _commanders = new CommandersPage(roster);
-
-        Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(CommandersPage.RootKey, "Commanders")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
-    }
+    /// <summary>Gives this surface Commander › Commanders, after This session.</summary>
+    public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);
 
     /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>
-    public bool TickCommander()
-    {
-        if (Tab != PanelTab.Commander)
-        {
-            return false;
-        }
+    public bool TickCommander() => _commander.Tick();
 
-        var changed = _commanderClock?.Tick() ?? false;
-
-        if (_missions is { } missions && Nav.RootKeyOf(PanelTab.Commander) == MissionsPage.RootKey)
-        {
-            changed |= missions.Tick();
-        }
-
-        if (_standing is { } standing && Nav.RootKeyOf(PanelTab.Commander) == StandingPage.RootKey)
-        {
-            changed |= standing.Tick();
-        }
-
-        if (_statistics is { } statistics && Nav.RootKeyOf(PanelTab.Commander) == StatisticsPage.RootKey)
-        {
-            changed |= statistics.Tick();
-        }
-
-        if (_session is { } session && Nav.RootKeyOf(PanelTab.Commander) == SessionPage.RootKey)
-        {
-            changed |= session.Tick();
-        }
-
-        if (_commanders is { } commanders && Nav.RootKeyOf(PanelTab.Commander) == CommandersPage.RootKey)
-        {
-            changed |= commanders.Tick();
-        }
-
-        return changed;
-    }
-
-    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, Commanders, or whatever the checklist roots draw.</summary>
-    private Control BuildCommander(NavCrumb crumb) =>
-        crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
-        : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
-        : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
-        : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
-        : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
-        : _checklistBuild is { } checklist ? checklist(crumb)
-        : new TextBlock { Text = "Nothing here." };
-
-    private Func<NavCrumb, Control>? _missionsBuild;
-    private MissionsPage? _missions;
-    private Func<NavCrumb, Control>? _standingBuild;
-    private Func<NavCrumb, Control>? _checklistBuild;
-    private StandingPage? _standing;
-    private Func<NavCrumb, Control>? _statisticsBuild;
-    private StatisticsPage? _statistics;
-    private Func<NavCrumb, Control>? _sessionBuild;
-    private SessionPage? _session;
-    private Func<NavCrumb, Control>? _commandersBuild;
-    private CommandersPage? _commanders;
-    private D47.App.Controls.JournalClock? _commanderClock;
+    private readonly CommanderFurnishing _commander;
 
     /// <summary>
     /// Gives this surface a clipboard, so every system name the panel draws can carry a copy glyph
@@ -1542,11 +1323,11 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         if (place.SettingKey is { } key)
         {
-            Nav.Show(SettingsRoot);
+            Nav.Show(SettingsFurnishing.Root);
 
             // Posted, because the page is built when the tab first opens and has no rows until it has loaded.
             Dispatcher.UIThread.Post(
-                () => (_settingsPage as D47.App.Settings.SettingsView)?.RevealRow(key),
+                () => (_settings.Page as D47.App.Settings.SettingsView)?.RevealRow(key),
                 DispatcherPriority.Loaded);
         }
         else if (place.RootKey is { } root)
