@@ -122,7 +122,11 @@ public partial class App(AppHost? host) : Application
                 starSystem: window?.StarSystem,
                 activities: host.Activities,
                 construction: window?.Construction,
-                commanders: host.Commanders);
+                commanders: host.Commanders,
+                learnedPhrases: host.LearnedPhrases,
+                adventureDesk: host.AdventureDesk,
+                crewSeats: host.CrewSeatsHost,
+                buildTalk: host.BuildTalk);
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

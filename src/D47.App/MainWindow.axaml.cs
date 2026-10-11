@@ -247,11 +247,7 @@ public partial class MainWindow : Window
                 settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot),
                 carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
-                crewSeats: new CrewSeatsHost(
-                    () => host.CrewSeats,
-                    () => [.. host.Speech.VoiceIds().Select(id => (id, host.Speech.VoiceLabelFor(id)))],
-                    () => D47.Core.Audio.VoiceGroups.ProviderFor(host.Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
-                    () => [host.Personas.ShipName, .. new[] { host.Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]),
+                crewSeats: host.CrewSeatsHost,
                 talk: host.BuildTalk,
                 status: () => host.LiveStatus,
                 construction: Construction);

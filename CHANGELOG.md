@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The headset panel now has four things the window already had: Settings › Phrases, the draft actions on a story, Fleet › Crew seats, and the talk section on a ship build.
+
 On docking at a station that is under attack, damaged, under repairs or abandoned, your core says so once: "Galileo is under repairs." A station under construction is not mentioned. Callouts has a Station damage toggle, on by default.
 
 D47 keeps the last 25 galaxy searches you asked, for each Commander, in `search-history.json`, with the answer each one gave. That covers system, station and body searches, whether asked by voice or on the search pages, and a system you name by voice or by typing on the System page. Asking the same search again keeps the newer one. Nothing in the app lists them yet.

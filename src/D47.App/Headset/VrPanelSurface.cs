@@ -125,7 +125,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Activities.ActivityLedger? activities = null,
         Panel.ConstructionSurface? construction = null,
         Panel.CommanderRoster? commanders = null,
-        Panel.SpeakerPortraits? portraits = null)
+        Panel.SpeakerPortraits? portraits = null,
+        D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
+        Panel.CrewSeatsHost? crewSeats = null,
+        D47.Core.Ships.BuildTalk? buildTalk = null)
     {
         _dumpTo = dumpTo;
 
@@ -174,6 +177,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             StarSystem = starSystem,
             Commanders = commanders,
             Portraits = portraits,
+            AdventureDesk = adventureDesk,
+            CrewSeats = crewSeats,
+            BuildTalk = buildTalk,
         }.Furnish(_view);
 
         if (routing?.Plans is { } plans)

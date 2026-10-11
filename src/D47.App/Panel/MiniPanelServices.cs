@@ -36,6 +36,12 @@ public sealed record MiniPanelServices
 
     public AdventureSurface? Adventures { get; init; }
 
+    public D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? AdventureDesk { get; init; }
+
+    public CrewSeatsHost? CrewSeats { get; init; }
+
+    public D47.Core.Ships.BuildTalk? BuildTalk { get; init; }
+
     public RoutingSurface? Routing { get; init; }
 
     public Func<D47.Core.Journal.ModulePower>? ModulePower { get; init; }
@@ -127,7 +133,8 @@ public sealed record MiniPanelServices
                 Adventures,
                 settingsStrip: BuildSettingsStrip is null
                     ? null
-                    : () => BuildSettingsStrip(AdventuresPage.RootKey));
+                    : () => BuildSettingsStrip(AdventuresPage.RootKey),
+                desk: AdventureDesk);
         }
 
         if (Ships is not null && Checklists is not null && gameState is not null)
@@ -146,6 +153,8 @@ public sealed record MiniPanelServices
                     ? null
                     : () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: Galaxy,
+                crewSeats: CrewSeats,
+                talk: BuildTalk,
                 status: Routing?.Status,
                 construction: Construction);
         }

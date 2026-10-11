@@ -506,6 +506,8 @@ public sealed class AppHost : IDisposable
 
     public AdventureCapability.AdventureDesk? AdventureDesk { get; private set; }
 
+    public D47.Core.Conversation.LearnedPhrasesStore? LearnedPhrases { get; private set; }
+
     /// <summary>Fetches stock stories from the stories release.</summary>
     public StoryDownloader? StoryDownloads { get; private set; }
 
@@ -2991,6 +2993,7 @@ public sealed class AppHost : IDisposable
         var history = stores.History;
         var journal = stores.Journal;
         var journalDirectory = stores.JournalDirectory;
+        var learnedPhrases = stores.LearnedPhrases;
         var loadouts = stores.Loadouts;
         var lore = stores.Lore;
         var memoryBook = stores.MemoryBook;
@@ -3261,6 +3264,7 @@ public sealed class AppHost : IDisposable
         host.StoryRatings = storyRatings;
         endingAnswer.Answer = host.Narration.AnswerEnding;
         host.AdventureDesk = adventureDesk;
+        host.LearnedPhrases = learnedPhrases;
         host.Messages = messageStore;
 
         // A story's cast speaks through the local voices; a pick waits, and a running story pauses, until they are ready.
@@ -5065,6 +5069,15 @@ public sealed class AppHost : IDisposable
             return _crewSeats;
         }
     }
+
+    private D47.App.Panel.CrewSeatsHost? _crewSeatsHost;
+
+    /// <summary>What Fleet › Crew reads, shared by the window and the headset.</summary>
+    public D47.App.Panel.CrewSeatsHost CrewSeatsHost => _crewSeatsHost ??= new D47.App.Panel.CrewSeatsHost(
+        () => CrewSeats,
+        () => [.. Speech.VoiceIds().Select(id => (id, Speech.VoiceLabelFor(id)))],
+        () => D47.Core.Audio.VoiceGroups.ProviderFor(Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
+        () => [Personas.ShipName, .. new[] { Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]);
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
     internal const string CastSampleSentence = "This is the voice you will hear me speak in.";
