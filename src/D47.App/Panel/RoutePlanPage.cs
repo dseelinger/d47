@@ -62,8 +62,12 @@ public sealed class RoutePlanPage : UserControl
         Func<string?>? here = null,
         Func<double?>? jumpRange = null,
         Func<string?>? carrierHere = null,
-        CarrierRouteRequest? carrierRoute = null)
+        CarrierRouteRequest? carrierRoute = null,
+        Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
+        TimeSpan? suggestionPause = null)
     {
+        _prefixNames = prefixNames;
+        _suggestionPause = suggestionPause;
         _registry = registry;
         _plans = plans;
         _nav = nav;
@@ -122,7 +126,7 @@ public sealed class RoutePlanPage : UserControl
             return;
         }
 
-        _carrierFrom.Box.Text = from;
+        _carrierFrom.SetText(from);
         _carrierCard?.BringIntoView();
         _carrierTo?.Box.Focus();
     }
@@ -186,11 +190,11 @@ public sealed class RoutePlanPage : UserControl
     {
         // Destination was "Colonia" — an example, drawn in the same grey and the same slot as the 60 below
         // it, where the grey text genuinely is what happens if you type nothing.
-        var to = Field("Destination", "a system", FieldNeed.Required);
+        var to = Names(Field("Destination", "a system", FieldNeed.Required));
 
         // The two d47 answers for itself, quoting the figure the tool call will actually use —
         // RouteCapability resolves `from` and `jump_range` from exactly these.
-        var from = Field("From", "where you are now", FieldNeed.Supplied, () => _here?.Invoke(), width: 300);
+        var from = Names(Field("From", "where you are now", FieldNeed.Supplied, () => _here?.Invoke(), width: 300));
         var range = Field(
             "Jump range (ly)",
             "this ship's",
@@ -307,8 +311,8 @@ public sealed class RoutePlanPage : UserControl
     /// <summary>The Commander's own fleet carrier, plotted with the tank and hold it last reported.</summary>
     private Control CarrierCard()
     {
-        var to = Field("To", "a system", FieldNeed.Required);
-        var from = Field("From", "the carrier's system", FieldNeed.Supplied, () => _carrierHere?.Invoke(), width: 300);
+        var to = Names(Field("To", "a system", FieldNeed.Required));
+        var from = Names(Field("From", "the carrier's system", FieldNeed.Supplied, () => _carrierHere?.Invoke(), width: 300));
         var back = RoutingKit.Switch("Come back to the start");
         back.IsChecked = true;
 
@@ -459,6 +463,12 @@ public sealed class RoutePlanPage : UserControl
 
     private static WrapPanel Row(FormField left, FormField? right) =>
         right is null ? RoutingKit.Fields(left.Control) : RoutingKit.Fields(left.Control, right.Control);
+
+    private readonly Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? _prefixNames;
+    private readonly TimeSpan? _suggestionPause;
+
+    private FormField Names(FormField field) =>
+        _prefixNames is null ? field : field.Suggest(_prefixNames, _lookupsEnabled, _suggestionPause);
 
     private FormField Field(
         string label,

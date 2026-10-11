@@ -310,7 +310,10 @@ public partial class MainWindow : Window
                 Cartography: () => host.History.Cartography,
 
                 // Best cargo (#849).
-                Cargo: host.Cargo);
+                Cargo: host.Cargo)
+            {
+                PrefixNames = host.StarSystems is { } names ? names.PrefixNamesAsync : null,
+            };
 
             Panel.EnableRouting(Routing);
 
@@ -347,6 +350,7 @@ public partial class MainWindow : Window
                         () => host.BookmarkPhrasesTaken())
                     {
                         History = host.SearchHistory,
+                        PrefixNames = systems.PrefixNamesAsync,
                     },
                 };
 

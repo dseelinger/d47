@@ -71,6 +71,7 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly Action? _changeFilters;
 
     private readonly TextBox _sellIn;
+    private readonly SystemNameSuggestions? _suggestions;
     private readonly Button _find = new() { Content = "Find cargo", Height = TypeScale.MinimumTarget };
     private readonly StatusLine _status = RoutingKit.Status();
 
@@ -85,7 +86,9 @@ public sealed class RouteBestCargoPage : UserControl
         Func<bool> lookupsEnabled,
         SettingsService? settings = null,
         Action? openSettings = null,
-        Action? changeFilters = null)
+        Action? changeFilters = null,
+        Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
+        TimeSpan? suggestionPause = null)
     {
         _registry = registry;
         _board = board;
@@ -109,6 +112,16 @@ public sealed class RouteBestCargoPage : UserControl
         Themed(_sellIn, TextBox.ForegroundProperty, ThemeManager.AKey);
         Avalonia.Automation.AutomationProperties.SetName(_sellIn, "Sell in");
 
+        if (prefixNames is not null)
+        {
+            _suggestions = new SystemNameSuggestions(
+                _sellIn,
+                prefixNames,
+                lookupsEnabled,
+                match => _suggestions!.SetText(match.Name),
+                suggestionPause);
+        }
+
         _sellIn.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter)
@@ -122,7 +135,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (_board.Last is { } last)
         {
-            _sellIn.Text = last.Search.Destination;
+            SetSellIn(last.Search.Destination);
         }
 
         Draw();
@@ -144,7 +157,7 @@ public sealed class RouteBestCargoPage : UserControl
     public string SellIn
     {
         get => _sellIn.Text ?? string.Empty;
-        set => _sellIn.Text = value;
+        set => SetSellIn(value);
     }
 
     /// <summary>The last system of a plotted route, or null when nothing is plotted.</summary>
@@ -176,7 +189,7 @@ public sealed class RouteBestCargoPage : UserControl
     {
         if (RouteEnd is { } end)
         {
-            _sellIn.Text = end;
+            SetSellIn(end);
         }
     }
 
@@ -243,7 +256,7 @@ public sealed class RouteBestCargoPage : UserControl
     {
         if (_board.Last is { } last)
         {
-            _sellIn.Text = last.Search.Destination;
+            SetSellIn(last.Search.Destination);
         }
 
         Draw();
@@ -281,6 +294,12 @@ public sealed class RouteBestCargoPage : UserControl
         _find.IsEnabled = docked && lookups && _inFlight is null;
 
         Detach(_sellIn);
+
+        if (_suggestions is not null)
+        {
+            Detach(_suggestions.List);
+        }
+
         Detach(_find);
         Detach(_status);
 
@@ -291,6 +310,11 @@ public sealed class RouteBestCargoPage : UserControl
         var sellRow = SellRow();
         sellRow.Margin = new Thickness(0, 24, 0, 0);
         body.Children.Add(sellRow);
+
+        if (_suggestions is not null)
+        {
+            body.Children.Add(_suggestions.List);
+        }
 
         if (docked && lookups && _settings is { } settings)
         {
@@ -391,6 +415,18 @@ public sealed class RouteBestCargoPage : UserControl
         Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
         return new StackPanel { Margin = new Thickness(0, 16, 0, 0), Children = { row, rule } };
+    }
+
+    private void SetSellIn(string? text)
+    {
+        if (_suggestions is not null)
+        {
+            _suggestions.SetText(text ?? string.Empty);
+        }
+        else
+        {
+            _sellIn.Text = text;
+        }
     }
 
     private Grid SellRow()

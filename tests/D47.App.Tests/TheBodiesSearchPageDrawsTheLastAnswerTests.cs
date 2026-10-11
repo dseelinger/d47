@@ -118,7 +118,11 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
             () => Settings.Current.Knowledge.GalaxySearch,
             () => { })
         {
-            Searches = new GalaxySearchSurface(Registry, Board, Store, () => Fid, () => []),
+            Searches = new GalaxySearchSurface(Registry, Board, Store, () => Fid, () => [])
+            {
+                PrefixNames = new Systems().PrefixNamesAsync,
+                SuggestionPause = TimeSpan.Zero,
+            },
         };
     }
 

@@ -32,6 +32,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private readonly Action<SystemSummary>? _open;
 
     private readonly TextBox _near = Field("near");
+    private readonly SystemNameSuggestions? _nearNames;
     private readonly TextBox _distanceFrom = Field("distance from", mono: true);
     private readonly TextBox _distanceTo = Field("distance to", mono: true);
     private readonly Amount _limit = new() { Value = DefaultLimit, Minimum = 1, Maximum = 20, Step = 1, Width = 132 };
@@ -56,6 +57,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         : base(searches, lookupsEnabled, openSettings, headset)
     {
         _here = here;
+        _nearNames = SuggestNames(_near);
         _open = open;
 
         _powerState = new Stepper
@@ -192,7 +194,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         string? Get(string key) => arguments.TryGetValue(key, out var value) ? value : null;
 
-        _near.Text = Get("near") ?? string.Empty;
+        Fill(_near, _nearNames, Get("near") ?? string.Empty);
         (_distanceFrom.Text, _distanceTo.Text) = Split(Get("distance"));
         (_populationFrom.Text, _populationTo.Text) = Split(Get("population"));
         _controllingFaction.Text = Get("controlling_faction") ?? string.Empty;
@@ -309,7 +311,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         form.Children.Add(Group(
             "Search out from",
-            Labelled("Near", _near),
+            Labelled("Near", Beneath(_near, _nearNames)),
             Columns2(
                 "*,132",
                 Labelled("Distance", Span(_distanceFrom, _distanceTo, "LY")),

@@ -30,6 +30,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly Stepper _order = new() { ItemsSource = new[] { Nearest, Richest }, Wraps = false, MaxWidth = double.PositiveInfinity };
     private readonly TextBox _near = Field("near");
+    private readonly SystemNameSuggestions? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Width = 132 };
     private readonly Amount _limit = new() { Value = DefaultLimit, Minimum = 1, Maximum = 20, Step = 1, Width = 132 };
     private readonly CheckBox _landable = Tile("Landable");
@@ -57,6 +58,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         : base(searches, lookupsEnabled, openSettings, headset)
     {
         _here = here;
+        _nearNames = SuggestNames(_near);
 
         _fromStar.PlaceholderText = Any;
         _fromStar.InnerRightContent = Label("LS", width: null);
@@ -215,7 +217,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         string? Get(string key) => arguments.TryGetValue(key, out var value) ? value : null;
 
-        _near.Text = Get("near") ?? string.Empty;
+        Fill(_near, _nearNames, Get("near") ?? string.Empty);
         _volcanism.Text = Get("volcanism") ?? string.Empty;
         _atmosphere.Text = Get("atmosphere") ?? string.Empty;
         _signalCount.Text = Get("signal_count") ?? string.Empty;
@@ -394,7 +396,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         form.Children.Add(Group(
             "Search out from",
-            Labelled("Near", _near),
+            Labelled("Near", Beneath(_near, _nearNames)),
             Columns2("*,132", Labelled("Distance in LY", _distance), Labelled("How many", _limit))));
 
         var flags = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _landable, _terraformable, _tidallyLocked } };

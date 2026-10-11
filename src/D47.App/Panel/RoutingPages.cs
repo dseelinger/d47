@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D47.App.Controls;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -59,7 +60,14 @@ public sealed record RoutingSurface(
     CarrierRouteRequest? CarrierRoute = null,
 
     // Best cargo (#849): the last search, by voice or from the page.
-    BestCargoBoard? Cargo = null);
+    BestCargoBoard? Cargo = null)
+{
+    /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
+    public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
+
+    /// <summary>How long typing has to stop before names are suggested.</summary>
+    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
+}
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>
 public sealed class CarrierRouteRequest
@@ -175,7 +183,9 @@ public static class RoutingPages
                 surface.Here,
                 surface.JumpRange,
                 () => surface.Commander?.Invoke()?.Carrier.StarSystem,
-                surface.CarrierRoute)
+                surface.CarrierRoute,
+                surface.PrefixNames,
+                surface.SuggestionPause)
             : Missing("Plotting is not available on this surface.");
 
     private static Control Market(RoutingSurface surface) =>
@@ -200,7 +210,9 @@ public static class RoutingPages
                 surface.OpenSettings,
                 nav.Roots(PanelTab.Navigation).Any(root => root.Key == TradeRoot)
                     ? () => nav.SelectRoot(PanelTab.Navigation, TradeRoot)
-                    : null)
+                    : null,
+                surface.PrefixNames,
+                surface.SuggestionPause)
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>

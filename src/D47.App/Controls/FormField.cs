@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Theming;
+using D47.Core.Knowledge;
 
 namespace D47.App.Controls;
 
@@ -77,6 +78,33 @@ public sealed class FormField
     /// <summary>The box itself, for a caller that wants to name it or focus it.</summary>
     public TextBox Box => _box;
 
+    /// <summary>The system names listed under the box, or null when none are suggested.</summary>
+    public SystemNameSuggestions? Suggestions { get; private set; }
+
+    /// <summary>Lists system names under the box as it is typed into; a pick only fills the box.</summary>
+    public FormField Suggest(
+        Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>> lookup,
+        Func<bool> enabled,
+        TimeSpan? pause = null)
+    {
+        Suggestions = new SystemNameSuggestions(_box, lookup, enabled, match => Suggestions!.SetText(match.Name), pause);
+
+        return this;
+    }
+
+    /// <summary>Sets the text without listing names for it.</summary>
+    public void SetText(string? text)
+    {
+        if (Suggestions is { } suggestions)
+        {
+            suggestions.SetText(text ?? string.Empty);
+        }
+        else
+        {
+            _box.Text = text;
+        }
+    }
+
     /// <summary>The label and the box, drawn.</summary>
     public Control Control => Draw();
 
@@ -88,8 +116,17 @@ public sealed class FormField
             : _placeholder;
     }
 
-    private Control Draw() =>
-        new StackPanel { Spacing = 3, Children = { Label(_label, Need), _box } };
+    private Control Draw()
+    {
+        var column = new StackPanel { Spacing = 3, Children = { Label(_label, Need), _box } };
+
+        if (Suggestions is { } suggestions)
+        {
+            column.Children.Add(suggestions.List);
+        }
+
+        return column;
+    }
 
     /// <summary>
     /// A field's label, carrying its mark — for the pages that build their own boxes and only want the

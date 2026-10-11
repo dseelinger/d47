@@ -26,6 +26,12 @@ public sealed record GalaxySearchSurface(
 
     /// <summary>Opens the history picker; set by the panel that hosts the pages.</summary>
     public Action? OpenHistory { get; init; }
+
+    /// <summary>The system names that start with the given letters, for the Near fields; null for no suggestions.</summary>
+    public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
+
+    /// <summary>How long typing has to stop before names are suggested.</summary>
+    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>
@@ -249,6 +255,37 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>The form, built once.</summary>
     protected abstract Control BuildForm();
+
+    /// <summary>Lists system names under <paramref name="field"/> as it is typed into; null when the surface offers none.</summary>
+    protected SystemNameSuggestions? SuggestNames(TextBox field)
+    {
+        if (_searches.PrefixNames is not { } lookup)
+        {
+            return null;
+        }
+
+        SystemNameSuggestions? names = null;
+        names = new SystemNameSuggestions(field, lookup, _lookupsEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
+
+        return names;
+    }
+
+    /// <summary>The field with its suggestions listed under it.</summary>
+    protected static Control Beneath(TextBox field, SystemNameSuggestions? names) =>
+        names is null ? field : new StackPanel { Spacing = 2, Children = { field, names.List } };
+
+    /// <summary>Sets the field's text without listing names for it.</summary>
+    protected static void Fill(TextBox field, SystemNameSuggestions? names, string text)
+    {
+        if (names is null)
+        {
+            field.Text = text;
+        }
+        else
+        {
+            names.SetText(text);
+        }
+    }
 
     /// <summary>The tool arguments the form holds, as given; a field left empty is left out.</summary>
     public abstract IReadOnlyDictionary<string, string> FormArguments();
