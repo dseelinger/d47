@@ -46,6 +46,15 @@ public sealed record PickerRequest
     /// worth filtering on (#146).
     /// </summary>
     public SettingFacet? Facet { get; init; }
+
+    /// <summary>
+    /// Ticks any number of rows and returns them in <see cref="PickerResult.Values"/>.
+    /// <see cref="AllowsFreeText"/> and <see cref="Audition"/> are ignored.
+    /// </summary>
+    public bool Several { get; init; }
+
+    /// <summary>The values ticked when a <see cref="Several"/> picker opens.</summary>
+    public IReadOnlyCollection<string>? CurrentSeveral { get; init; }
 }
 
 /// <summary>Hearing a value before choosing it.</summary>
@@ -70,8 +79,11 @@ public sealed record PickerAudition
     public string? LineCost { get; init; }
 }
 
-/// <summary>The chosen value, where null means "clear this and use the default".</summary>
-public sealed record PickerResult(string? Value);
+/// <summary>
+/// The chosen value, where null means "clear this and use the default". A <see cref="PickerRequest.Several"/>
+/// picker answers in <paramref name="Values"/>, in <see cref="PickerRequest.Choices"/> order, empty for the default.
+/// </summary>
+public sealed record PickerResult(string? Value, IReadOnlyList<string>? Values = null);
 
 /// <summary>
 /// One line of the list: what it is called, what it really is, and — where the row offers an audition —
@@ -90,6 +102,8 @@ public sealed class PickerChoice : INotifyPropertyChanged
     private bool _playing;
 
     private bool _playingLine;
+
+    private bool _ticked;
 
     /// <summary>What choosing this row writes to settings — an id, not the words above it.</summary>
     public required string Value { get; init; }
@@ -121,6 +135,22 @@ public sealed class PickerChoice : INotifyPropertyChanged
     /// <summary>The second glyph's tooltip, on the same terms as <see cref="Tip"/>.</summary>
     public string? LineTip =>
         Playable ? LineWhy is { Length: > 0 } cost ? $"{LineActionName}. {cost}" : LineActionName : LineWhy;
+
+    /// <summary>Whether a several-at-once picker has this row ticked.</summary>
+    public bool Ticked
+    {
+        get => _ticked;
+        set
+        {
+            if (_ticked == value)
+            {
+                return;
+            }
+
+            _ticked = value;
+            Raise(nameof(Ticked));
+        }
+    }
 
     public bool PlayingLine
     {
@@ -262,13 +292,17 @@ public partial class PickerPage : UserControl
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
 
         // Bracketed here because the row hands over the bare phrase (SettingRow.BareDefaultFor).
-        var useDefault = $"Use the default ({_request.DefaultDisplay})";
+        var useDefault = _request.Several
+            ? _request.DefaultDisplay
+            : $"Use the default ({_request.DefaultDisplay})";
 
         DefaultButtonText.Text = useDefault;
         ToolTip.SetTip(DefaultButton, useDefault);
 
         // Shut, it says why nothing can be played; live, what a press costs.
-        if (_request.Audition is { } audition)
+        var auditioned = _request.Several ? null : _request.Audition;
+
+        if (auditioned is { } audition)
         {
             AuditionNote.IsVisible = true;
             AuditionNote.Text = audition.Unavailable ?? audition.Cost;
@@ -276,26 +310,31 @@ public partial class PickerPage : UserControl
 
         _all = [.. _request.Choices.Select(value =>
         {
-            var sample = _request.Audition is { Preview: not null, HasPreview: { } has } && has(value);
+            var sample = auditioned is { Preview: not null, HasPreview: { } has } && has(value);
 
             return new PickerChoice
             {
                 Value = value,
                 Text = Label(value),
-                CanPlay = _request.Audition is not null,
-                Playable = _request.Audition is { Unavailable: null },
+                CanPlay = auditioned is not null,
+                Playable = auditioned is { Unavailable: null },
                 HasSample = sample,
-                Why = _request.Audition is { } offered
+                Why = auditioned is { } offered
                     ? offered.Unavailable ?? (sample ? null : offered.LineCost ?? offered.Cost)
                     : null,
-                LineWhy = _request.Audition is { } paid ? paid.Unavailable ?? paid.LineCost ?? paid.Cost : null,
+                LineWhy = auditioned is { } paid ? paid.Unavailable ?? paid.LineCost ?? paid.Cost : null,
             };
         })];
+
+        if (_request.Several)
+        {
+            BindSeveral();
+        }
 
         ApplyFilter();
 
         // The current value is highlighted, so Enter with no typing keeps it.
-        Choices.SelectedIndex = _request.Current is null
+        Choices.SelectedIndex = _request.Several || _request.Current is null
             ? -1
             : Array.FindIndex(
                 [.. _visible],
@@ -336,6 +375,43 @@ public partial class PickerPage : UserControl
         DetachedFromVisualTree += (_, _) => _auditioning?.Cancel();
     }
 
+    /// <summary>Rows become tick boxes; ticking chooses nothing until USE THESE.</summary>
+    private void BindSeveral()
+    {
+        var current = new HashSet<string>(_request.CurrentSeveral ?? [], StringComparer.OrdinalIgnoreCase);
+
+        foreach (var row in _all)
+        {
+            row.Ticked = current.Contains(row.Value);
+            row.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PickerChoice.Ticked))
+                {
+                    ShowWhetherAnythingCanBeTaken();
+                }
+            };
+        }
+
+        Choices.SelectionMode = SelectionMode.Single;
+        Choices.ItemTemplate = new FuncDataTemplate<PickerChoice>((row, _) =>
+        {
+            var (box, _) = LabeledCheckBox.Build(row?.Text ?? string.Empty);
+
+            box.MinHeight = 44;
+            box.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+            box.IsChecked = row?.Ticked;
+            box.IsCheckedChanged += (_, _) =>
+            {
+                if (row is not null)
+                {
+                    row.Ticked = box.IsChecked == true;
+                }
+            };
+
+            return box;
+        });
+    }
+
     private string Label(string choice) => _request.Describe?.Invoke(choice) ?? choice;
 
     private void ApplyFilter()
@@ -371,10 +447,19 @@ public partial class PickerPage : UserControl
     }
 
     /// <summary>Use this is enabled exactly when <see cref="Accept"/> would take something (#190).</summary>
-    private void ShowWhetherAnythingCanBeTaken() =>
+    private void ShowWhetherAnythingCanBeTaken()
+    {
+        if (_request.Several)
+        {
+            AcceptButton.Content = $"Use these · {_all.Count(choice => choice.Ticked)}";
+            AcceptButton.IsEnabled = true;
+            return;
+        }
+
         AcceptButton.IsEnabled =
             Choices.SelectedIndex >= 0
             || (_request.AllowsFreeText && !string.IsNullOrWhiteSpace(FilterBox.Text));
+    }
 
     /// <summary>The chosen facet option's predicate, or null for no facet or the option that takes everything.</summary>
     private Func<string, bool>? SelectedFacet() =>
@@ -404,7 +489,7 @@ public partial class PickerPage : UserControl
     /// <summary>Puts the highlight on the top match when the last one has been filtered away.</summary>
     private void HighlightSomethingVisible()
     {
-        if (Choices.SelectedIndex < 0 && _visible.Count > 0)
+        if (!_request.Several && Choices.SelectedIndex < 0 && _visible.Count > 0)
         {
             Choices.SelectedIndex = 0;
             Choices.ScrollIntoView(0);
@@ -452,6 +537,12 @@ public partial class PickerPage : UserControl
 
     private void Accept()
     {
+        if (_request.Several)
+        {
+            Answer(new PickerResult(null, [.. _all.Where(choice => choice.Ticked).Select(choice => choice.Value)]));
+            return;
+        }
+
         // A selection wins over typed text.
         if (Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count)
         {
@@ -493,11 +584,17 @@ public partial class PickerPage : UserControl
 
     private void OnAcceptClick(object? sender, RoutedEventArgs e) => Accept();
 
-    private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e) => Accept();
+    private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (!_request.Several)
+        {
+            Accept();
+        }
+    }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Cancel();
 
-    private void OnUseDefaultClick(object? sender, RoutedEventArgs e) => Answer(new PickerResult(null));
+    private void OnUseDefaultClick(object? sender, RoutedEventArgs e) => Answer(new PickerResult(null, _request.Several ? [] : null));
 
     /// <summary>
     /// Plays the row the glyph is on, not the selection, and commits nothing: the free sample where the row
