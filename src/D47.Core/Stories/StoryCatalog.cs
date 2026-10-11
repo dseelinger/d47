@@ -996,10 +996,14 @@ public sealed class StoryCatalog
             return $"{name} has the provider {provider}, which is not a speaking voice provider.";
         }
 
+        if (info.Billed)
+        {
+            return $"{name} has the provider {provider}, which is billed; a story may pin only a free one.";
+        }
+
         var voiceFits = provider switch
         {
             StorySpeaker.Kokoro => voice is not null && KokoroAssets.VoiceIds.Contains(voice, StringComparer.Ordinal),
-            TtsProviderCatalog.OpenAiId => voice is not null && TtsProviderCatalog.OpenAiVoiceIds.Contains(voice, StringComparer.Ordinal),
             _ => !string.IsNullOrWhiteSpace(voice),
         };
 

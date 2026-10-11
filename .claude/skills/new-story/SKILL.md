@@ -170,11 +170,12 @@ add.
   1 week or 2 weeks (#758) and none for a longer one, `end`, 1 to 4 `options`, each
   with `id`, `label`, `after` and `add` (persona ids, possibly none), and `cast`.
 - **Lines** (clues, finale and `scan`) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
-- **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, or `chatterbox` only
+- **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, `edge`, or `chatterbox` only
   when the story needs it, #41) and `voice`; write them as before, and add `pinned: true` only when the story
   asks for a particular voice (a member on `own` is pinned already). Voice `own` is the Commander's recording (#713).
-  A pin to any other provider (`elevenlabs`, `openai`, `cartesia`, `edge`) costs the Commander money and needs their
-  key, and the story cannot start without it. Use one only when the story asks for it, and say so in the pitch (#1072).
+  A pin may use `edge`, `kokoro` or `chatterbox` only; `elevenlabs`, `openai` and `cartesia` are billed and are refused.
+  An `edge` pin is free and needs no key, but sends the member's lines to Microsoft and needs the network, and an
+  older install (before #1072) does not load a story with an `edge` pin. Use one only when the story asks for it, and say so in the pitch.
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
   `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
   and every cast member gets a picture, `<story-id>.<cast-id>.png`, a square

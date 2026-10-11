@@ -12,7 +12,7 @@ Search has a Systems page beside System. The form on the left takes every filter
 
 A recording that is too short is refused with its length and the 5 s minimum, without the advice to read the whole sentence, since a voice can come from a file and the sentence is only a suggestion.
 
-A story can pin a cast member to any speaking voice provider, not only Kokoro and Chatterbox. A story pinned to a provider whose API key is not stored cannot start, and the ship says to add the key. While such a story runs, Privacy and egress names the character and the story under that provider.
+A story can pin a cast member to Edge Neural as well as Kokoro and Chatterbox. A story may not pin a billed provider (ElevenLabs, OpenAI or Cartesia); one that does is not loaded. While a story with an Edge pin runs, Privacy and egress names the character and the story under Edge Neural.
 
 Ask "what kinds of missions are there" to hear the board's groups with their mission types, or "where would I find a disable mission" to hear the faction states, governments and economies that type's names were recorded under, whether it needs a Federation or Empire navy rank and whether you hold one, and whether it comes from engineer bases. The answer gives the likeliest circumstances, not what a board offers. An unknown type is answered with the nearest names.
 

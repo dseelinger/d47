@@ -16,9 +16,9 @@ the "length" on its card, one of the keys of LENGTHS.
   clues    exactly one line for each of the length's clue days.
   finale   exactly one line for each of the length's finale chapters.
   options  1 to 4 endings, each {"id", "label", "after", "add"}; "add" is a list of persona ids.
-  cast     0 to 4 speakers, each {"id", "name", "who", "provider", "voice"}; provider is any speaking id in
-           PROVIDERS, and voice "own" is chatterbox only. A provider other than kokoro and chatterbox costs
-           the Commander money and needs their key: use one only when the story asks for it.
+  cast     0 to 4 speakers, each {"id", "name", "who", "provider", "voice"}; provider is a free speaking id in
+           PROVIDERS (edge, kokoro or chatterbox), and voice "own" is chatterbox only. A billed provider
+           (elevenlabs, openai, cartesia) is refused.
            A speaker may instead carry "versions": {"forMan": {...}, "forWoman": {...}}, each
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
@@ -57,9 +57,9 @@ LENGTHS = {
 }
 # The lengths whose beacon scan is narrated at the pick, as StoryPacing.NarratedScan.
 NARRATED = ("3-days", "1-week", "2-weeks")
-# Speaking ids in TtsProviderCatalog.
-PROVIDERS = ("edge", "elevenlabs", "openai", "cartesia", "kokoro", "chatterbox")
-OPENAI_VOICES = ("alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer", "verse", "marin", "cedar")
+# Speaking ids in TtsProviderCatalog whose Billed is false.
+PROVIDERS = ("edge", "kokoro", "chatterbox")
+BILLED = ("elevenlabs", "openai", "cartesia")
 SPEAKERS = ("ship", "narrator")
 VERSIONS = ("forMan", "forWoman")
 CARD_FIELDS = ("blurb", "inYourWords", "beacon")
@@ -126,12 +126,12 @@ def hidden_texts(entry: dict):
 
 
 def voice_fault(name: str, provider, voice) -> list:
+    if provider in BILLED:
+        return [f"{name} has the provider {provider}, which is billed; a story may pin only a free one ({', '.join(PROVIDERS)})"]
     if provider not in PROVIDERS:
         return [f"{name} has the provider {provider}, not one of {', '.join(PROVIDERS)}"]
     if not text(voice):
         return [f"{name} has no voice"]
-    if provider == "openai" and voice not in OPENAI_VOICES:
-        return [f"{name} has a voice that openai does not have"]
     if voice == "own" and provider != "chatterbox":
         return [f"{name} has the voice own with a provider other than chatterbox"]
     return []
