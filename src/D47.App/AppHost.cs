@@ -2229,6 +2229,8 @@ public sealed class AppHost : IDisposable
                     },
                     FetchVoice = (group, id) => speech.FetchVoice(group, id),
                     SuggestedVoice = role => speech.SuggestedVoiceFor(role),
+                    VoiceName = (group, id) => speech.VoiceInfoFor(group, id)?.Name,
+                    ChatterboxCatalogue = group => speech.ChatterboxCatalogueFor(group),
                     WhyNoVoices = group => speech.WhyNoVoices(group),
                     SpeechSpend = () => speech.Spend,
 

@@ -170,7 +170,10 @@ public partial class SettingsView
     }
 
     /// <summary>A dropdown's tile: the value with its status line under it, and the chevron at the right.</summary>
-    internal static (Button Tile, TextBlock Value, TextBlock Status) DropdownTile(string says)
+    internal static (Button Tile, TextBlock Value, TextBlock Status) DropdownTile(string says) => DropdownTile(says, out _);
+
+    /// <summary>A dropdown's tile, with a state word left of the chevron, hidden until it is given text.</summary>
+    internal static (Button Tile, TextBlock Value, TextBlock Status) DropdownTile(string says, out TextBlock state)
     {
         var value = new TextBlock
         {
@@ -195,13 +198,32 @@ public partial class SettingsView
         };
         Ink(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-        var layout = new DockPanel();
-        DockPanel.SetDock(chevron, Dock.Right);
-        layout.Children.Add(chevron);
-        layout.Children.Add(new StackPanel
+        state = new TextBlock
+        {
+            Name = "DropdownState",
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0),
+            IsVisible = false,
+        };
+
+        var words = new StackPanel
         {
             VerticalAlignment = VerticalAlignment.Center,
             Children = { value, status },
+        };
+        Grid.SetColumn(state, 1);
+
+        var layout = new DockPanel();
+        DockPanel.SetDock(chevron, Dock.Right);
+        layout.Children.Add(chevron);
+        layout.Children.Add(new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            Children = { words, state },
         });
 
         var button = new Button

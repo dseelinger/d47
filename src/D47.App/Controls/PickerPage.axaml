@@ -79,6 +79,15 @@
       </Button>
     </DockPanel>
 
+    <!-- Under a Chatterbox list, what choosing the highlighted voice fetches and who speaks meanwhile. -->
+    <TextBlock x:Name="ChoosingLine"
+               DockPanel.Dock="Bottom"
+               IsVisible="False"
+               Margin="0,8,0,0"
+               FontSize="{StaticResource D47.Type.Secondary}"
+               TextWrapping="Wrap"
+               Foreground="{DynamicResource D47.Grey}" />
+
     <TextBlock x:Name="EmptyHint"
                DockPanel.Dock="Bottom"
                IsVisible="False"

@@ -58,7 +58,11 @@ public sealed record SystemNameLookup(
     Func<bool> Enabled,
     TimeSpan? Pause = null);
 
-internal readonly record struct SettingControl(Control Control, Action Refresh, (Control Block, string Words)? Under = null);
+internal readonly record struct SettingControl(Control Control, Action Refresh, (Control Block, string Words)? Under = null)
+{
+    /// <summary>A line drawn under the row, which keeps its reset and its layout; null for none.</summary>
+    public Control? Below { get; init; }
+}
 
 /// <summary>Builds the control for each settings row.</summary>
 internal sealed partial class SettingControls(SettingRowHost host, SettingServices services)
@@ -84,6 +88,14 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         if (row is { Kind: SettingKind.Choice } && row.Key == SpeechCapability.GuardianPresetKey)
         {
             return BuildGuardianVoice(row, message);
+        }
+
+        // A voice row that may speak through Chatterbox, with its line under the row.
+        if (row is { Kind: SettingKind.Choice, ChoiceClips: not null } && (row.AllowsFreeText || IsLongList(row)))
+        {
+            var (tile, refreshTile) = BuildDropdownTile(row, message, out var below);
+
+            return new SettingControl(tile, refreshTile) { Below = below };
         }
 
         var (control, refresh) = BuildControl(row, message);

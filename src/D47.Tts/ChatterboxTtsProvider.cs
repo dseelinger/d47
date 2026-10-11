@@ -177,7 +177,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     public IReadOnlyList<ChatterboxVoice> Catalogue() => Voices();
 
     /// <summary>How long a line waits for a clip being fetched before it is spoken in a stand-in.</summary>
-    internal TimeSpan FirstLineWait { get; init; } = TimeSpan.FromSeconds(3);
+    internal TimeSpan FirstLineWait { get; init; } = ChatterboxCatalog.FirstLineWait;
 
     public Task<AudioClip> SynthesizeAsync(
         string text,
@@ -345,8 +345,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         }
 
         var standIn = ChatterboxCatalog.StandIn(chosen, voice.Role, Voices())
-            ?? throw new TtsException(
-                $"The Chatterbox voice {chosen.Voice.Name} is not on this PC yet, and no shipped voice can stand in.");
+            ?? throw new TtsException(ChatterboxCatalog.NoStandIn(chosen.Voice.Name));
 
         bool first;
 

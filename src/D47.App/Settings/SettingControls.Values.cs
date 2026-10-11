@@ -350,9 +350,16 @@ internal sealed partial class SettingControls
         && !string.Equals(row.Key, ListeningCapability.ModelKey, StringComparison.Ordinal)
         && row.ChoicesFor(host.Settings.Current).Count > SettingsView.LongListThreshold;
 
-    private (Control, Action) BuildDropdownTile(SettingRow row, StatusLine message)
+    private (Control, Action) BuildDropdownTile(SettingRow row, StatusLine message) => BuildDropdownTile(row, message, out _);
+
+    /// <summary>
+    /// The tile that opens the picker page. On a row with <see cref="SettingRow.ChoiceClips"/>, while its slot is on
+    /// Chatterbox, it shows the voice's name, bands and clip state, and <paramref name="below"/> says who speaks while
+    /// the chosen voice is not on this PC.
+    /// </summary>
+    private (Control, Action) BuildDropdownTile(SettingRow row, StatusLine message, out Control? below)
     {
-        var (button, value, status) = SettingsView.DropdownTile(row.Label);
+        var (button, value, status) = SettingsView.DropdownTile(row.Label, out var state);
 
         var busy = new BusyGlyph
         {
@@ -372,30 +379,235 @@ internal sealed partial class SettingControls
         withBusy.Children.Add(button);
 
         IDisposable? statusInk = null;
+        IDisposable? stateInk = null;
 
-        return (withBusy, () =>
+        var away = row.ChoiceClips is null ? null : new VoiceAwayLine(this, () => ChooseAsync(row, button, busy, message));
+        below = away?.View;
+
+        void Refresh()
         {
             var current = host.Settings.Read(row.Key);
+            var clips = current is null ? null : row.ChoiceClips?.Invoke(host.Settings.Current);
+            var clip = current is null ? null : clips?.Clip(current);
+
             value.Text = current is null
                 ? $"({row.BareDefaultFor(host.Settings.Current) ?? "not set"})"
-                : row.LabelForChoice(current, host.Settings.Current);
+                : clip is not null && clips!.Name?.Invoke(current) is { } name
+                    ? name
+                    : row.LabelForChoice(current, host.Settings.Current);
 
             Themed(value, TextBlock.ForegroundProperty, current is null ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
 
             statusInk?.Dispose();
             statusInk = null;
+            stateInk?.Dispose();
+            stateInk = null;
 
-            if (current is not null && row.StatusFor(current, host.Settings.Current) is { } line)
+            if (clip is not null)
+            {
+                var bands = clips!.Detail?.Invoke(current!);
+
+                status.Text = bands?.ToUpperInvariant();
+                status.IsVisible = bands is not null;
+                statusInk = Themed(status, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+                state.Text = clip.State.Text.ToUpperInvariant();
+                state.IsVisible = true;
+                stateInk = state.Bind(TextBlock.ForegroundProperty, Stepper.Ink(clip.State.Tone));
+            }
+            else if (current is not null && row.StatusFor(current, host.Settings.Current) is { } line)
             {
                 status.Text = line.Text;
                 status.IsVisible = true;
                 statusInk = status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(line.Tone));
+                state.IsVisible = false;
             }
             else
             {
                 status.IsVisible = false;
+                state.IsVisible = false;
             }
-        });
+
+            away?.Show(clip is null ? null : clips, current);
+        }
+
+        away?.Watching(Refresh);
+
+        return (withBusy, Refresh);
+    }
+
+    /// <summary>
+    /// The line under a Chatterbox voice row while the chosen voice is not on this PC: fetching or not fetched with
+    /// the stand-in named, or a notice when the fetch failed. Its tiles are built once and shown by state.
+    /// </summary>
+    private sealed class VoiceAwayLine
+    {
+        private readonly Border _line;
+        private readonly DockPanel _words;
+        private readonly TextBlock _head;
+        private readonly TextBlock _mono;
+        private readonly TextBlock _text;
+        private readonly Button _fetchNow;
+        private readonly Notice _failed;
+        private IDisposable? _headInk;
+
+        private SettingChoiceClips? _clips;
+        private string? _id;
+        private Action? _unwatch;
+        private Action? _refresh;
+
+        public VoiceAwayLine(SettingControls owner, Func<Task> chooseAnother)
+        {
+            _head = new TextBlock
+            {
+                Name = "VoiceAwayHead",
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Meta,
+                FontWeight = FontWeight.SemiBold,
+                LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 12, 0),
+            };
+
+            _mono = new TextBlock
+            {
+                Name = "VoiceAwayMono",
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.Meta,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 12, 0),
+            };
+            owner.Themed(_mono, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+            _text = new TextBlock
+            {
+                Name = "VoiceAwayText",
+                FontFamily = new FontFamily(Fonts.ProseFamily),
+                FontSize = TypeScale.Tip,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            owner.Themed(_text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+            _fetchNow = new Button { Content = "Fetch now", Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            _fetchNow.Click += (_, _) => Fetch();
+
+            _words = new DockPanel();
+            DockPanel.SetDock(_head, Dock.Left);
+            DockPanel.SetDock(_mono, Dock.Left);
+            DockPanel.SetDock(_fetchNow, Dock.Right);
+            _words.Children.Add(_head);
+            _words.Children.Add(_mono);
+            _words.Children.Add(_fetchNow);
+            _words.Children.Add(_text);
+
+            var retry = new Button { Content = "Retry" };
+            retry.Click += (_, _) => Fetch();
+
+            var another = new Button { Content = "Choose another" };
+            another.Click += async (_, _) => await chooseAnother();
+
+            _failed = new Notice(NoticeLevel.Error, inline: true) { Name = "VoiceAwayNotice" };
+            _failed.Actions.Add(retry);
+            _failed.Actions.Add(another);
+
+            _line = new Border
+            {
+                Name = "VoiceAway",
+                Padding = new Thickness(15, 10, 60, 10),
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Child = new Avalonia.Controls.Panel { Children = { _words, _failed } },
+                IsVisible = false,
+            };
+            owner.Themed(_line, Border.BorderBrushProperty, ThemeManager.Line2Key);
+
+            // The provider outlives the settings view, so a row off screen stops listening.
+            _line.AttachedToVisualTree += (_, _) => Watch();
+            _line.DetachedFromVisualTree += (_, _) => Unwatch();
+        }
+
+        public Control View => _line;
+
+        /// <summary>The row's refresh, run on the UI thread when the shown voice's clip changes.</summary>
+        public void Watching(Action refresh) => _refresh = refresh;
+
+        /// <summary>Shows the line for <paramref name="id"/>; hidden while it is on this PC or the slot is not on Chatterbox.</summary>
+        public void Show(SettingChoiceClips? clips, string? id)
+        {
+            _clips = clips;
+            _id = id;
+
+            if (clips is null)
+            {
+                Unwatch();
+            }
+            else if (_line.IsAttachedToVisualTree())
+            {
+                Watch();
+            }
+
+            _headInk?.Dispose();
+            _headInk = null;
+
+            if (id is null || clips?.Away(id) is not { } away)
+            {
+                _line.IsVisible = false;
+                return;
+            }
+
+            _line.IsVisible = true;
+
+            var failed = away.Clip == ChatterboxClip.Failed;
+            _failed.IsVisible = failed;
+            _words.IsVisible = !failed;
+
+            if (failed)
+            {
+                _failed.Label = away.Label;
+                _failed.Text = away.Text;
+                _failed.Detail = away.Reason;
+                return;
+            }
+
+            _head.Text = away.Head;
+            _headInk = _head.Bind(
+                TextBlock.ForegroundProperty,
+                Stepper.Ink(away.Clip == ChatterboxClip.Fetching ? ChoiceTone.White : ChoiceTone.Grey));
+            _mono.Text = away.Mono;
+            _mono.IsVisible = away.Mono is not null;
+            _text.Text = away.Text;
+            _fetchNow.IsVisible = away.Clip == ChatterboxClip.NotFetched;
+        }
+
+        private void Fetch()
+        {
+            if (_id is { } id)
+            {
+                _clips?.Fetch?.Invoke(id);
+            }
+        }
+
+        private void Watch()
+        {
+            if (_unwatch is not null || _clips?.Watch is not { } watch)
+            {
+                return;
+            }
+
+            _unwatch = watch(id => Dispatcher.UIThread.Post(() =>
+            {
+                if (string.Equals(id, _id, StringComparison.OrdinalIgnoreCase))
+                {
+                    _refresh?.Invoke();
+                }
+            }));
+        }
+
+        private void Unwatch()
+        {
+            _unwatch?.Invoke();
+            _unwatch = null;
+        }
     }
 
     private (Control, Action) BuildNumber(SettingRow row, StatusLine message)

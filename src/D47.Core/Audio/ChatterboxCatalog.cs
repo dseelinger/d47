@@ -18,6 +18,9 @@ public static partial class ChatterboxCatalog
     /// <summary>Where a clip is fetched from.</summary>
     public const string Host = "github.com";
 
+    /// <summary>How long a line waits for a clip being fetched before it is spoken in a stand-in.</summary>
+    public static readonly TimeSpan FirstLineWait = TimeSpan.FromSeconds(3);
+
     /// <summary>The largest clip a row may name; a 7 s clip at 24 kHz mono 16-bit is about 336 KB.</summary>
     private const long MaxBytes = 1024 * 1024;
 
@@ -145,6 +148,10 @@ public static partial class ChatterboxCatalog
                              + Distance(Band(voice.Pace, Paces), Band(wanted.Pace, Paces)))
             .FirstOrDefault();
     }
+
+    /// <summary>What is said of a voice not on this PC when <see cref="StandIn"/> finds nothing to speak for it.</summary>
+    public static string NoStandIn(string name) =>
+        $"The Chatterbox voice {name} is not on this PC yet, and no shipped voice can stand in.";
 
     private static int Band(string? value, string[] bands) =>
         Array.IndexOf(bands, value) is var index and >= 0 ? index : 1;

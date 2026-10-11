@@ -106,7 +106,8 @@ public static class TestSurface
         Action? forgetCorrections = null,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
         Func<CancellationToken, Task<string?>>? guardianTest = null,
-        string? root = null)
+        string? root = null,
+        Func<SpeechCapability.SpeechSurface, SpeechCapability.SpeechSurface>? speech = null)
     {
         var paths = new AppPaths(root ?? Path.Combine(FakeRoot, Guid.NewGuid().ToString("N")));
 
@@ -124,7 +125,7 @@ public static class TestSurface
             new LlmAvailabilityState(providerConfigured: false),
             new SpendTracker(),
             "1.0.0-uitest",
-            new SpeechCapability.SpeechSurface
+            (speech ?? (surface => surface))(new SpeechCapability.SpeechSurface
             {
                 Silence = () => { },
                 Voices = _ => [.. (voices ?? []).Select(voice => voice.Id)],
@@ -145,7 +146,7 @@ public static class TestSurface
                 SpeechSpend = speechSpend is null ? null : () => speechSpend,
                 VerifyKey = verifyKey,
                 GuardianTest = guardianTest,
-            },
+            }),
             new ShipsCapability.ShipsSurface
             {
                 // Both supplied, for the reason the speech surface above records: a null host delegate makes

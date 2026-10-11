@@ -225,6 +225,9 @@ public sealed class SpeechClients : IDisposable
     internal string? SuggestedVoiceFor(VoiceRole role) =>
         ChatterboxFor(VoiceGroups.Of(role))?.Catalogue().FirstOrDefault(voice => voice.Shipped && voice.Role == role)?.Voice.Id;
 
+    /// <summary>Every Chatterbox voice, shipped or not, or none where the slot is not on Chatterbox.</summary>
+    internal IReadOnlyList<ChatterboxVoice> ChatterboxCatalogueFor(VoiceGroup group) => ChatterboxFor(group)?.Catalogue() ?? [];
+
     private ChatterboxTtsProvider? ChatterboxFor(VoiceGroup group) =>
         string.Equals(
             VoiceGroups.ProviderFor(_settings.Current.Speech, group),

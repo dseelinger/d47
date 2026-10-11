@@ -693,6 +693,7 @@ public partial class PickerPage : UserControl
 
             if (row.OnThisPc == was)
             {
+                ShowWhatChoosingDoes();
                 return;
             }
 
@@ -706,7 +707,21 @@ public partial class PickerPage : UserControl
             {
                 Choices.SelectedIndex = Array.FindIndex([.. _visible], visible => visible.Value == selected);
             }
+
+            ShowWhatChoosingDoes();
         });
+
+    /// <summary>Under a Chatterbox list, what choosing the highlighted voice would fetch and who speaks until it arrives.</summary>
+    private void ShowWhatChoosingDoes()
+    {
+        var line = _request.Clips is { } clips && !_request.Several
+            && Choices.SelectedIndex >= 0 && Choices.SelectedIndex < _visible.Count
+                ? clips.Choosing(_visible[Choices.SelectedIndex].Value)
+                : null;
+
+        ChoosingLine.Text = line;
+        ChoosingLine.IsVisible = line is not null;
+    }
 
     private void OnRetryClick(object? sender, RoutedEventArgs e)
     {
@@ -788,8 +803,11 @@ public partial class PickerPage : UserControl
         }
     }
 
-    private void OnChoiceChanged(object? sender, SelectionChangedEventArgs e) =>
+    private void OnChoiceChanged(object? sender, SelectionChangedEventArgs e)
+    {
         ShowWhetherAnythingCanBeTaken();
+        ShowWhatChoosingDoes();
+    }
 
     private void OnFilterKeyDown(object? sender, KeyEventArgs e)
     {

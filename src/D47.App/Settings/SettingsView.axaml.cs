@@ -1454,7 +1454,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var message = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
 
-        var (control, refresh, underRow) = _controls.Build(row, message);
+        var built = _controls.Build(row, message);
+        var (control, refresh, underRow) = built;
 
         // The settings key, shown only when it is the reason this row survived a filter.
         var keyLine = new TextBlock
@@ -1641,6 +1642,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         if (underRow is { Block: { } block })
         {
             container.Children.Add(block);
+        }
+
+        if (built.Below is { } below)
+        {
+            container.Children.Add(below);
         }
 
         container.Children.Add(message);

@@ -194,8 +194,17 @@ public static class SpeechCapability
             Watch = surface.WatchVoiceClips,
             Fetch = surface.FetchVoice is { } fetch ? id => fetch(group, id) : null,
             Suggested = surface.SuggestedVoice?.Invoke(role) is { } voice ? (voice, role == VoiceRole.ShipAi ? "Ship AI" : VoiceRoles.Called(role) ?? role.ToString()) : null,
+            Name = id => surface.VoiceName?.Invoke(group, id),
+            StandIn = surface.ChatterboxCatalogue is { } catalogue ? id => StandInName(catalogue(group), id, role) : null,
+            Installed = surface.ChatterboxInstalled,
         };
     };
+
+    /// <summary>The name of the voice <see cref="Audio.ChatterboxCatalog.StandIn"/> speaks in for one voice of a role, or null where none can.</summary>
+    private static string? StandInName(IReadOnlyList<Audio.ChatterboxVoice> voices, string id, VoiceRole role) =>
+        voices.FirstOrDefault(voice => string.Equals(voice.Voice.Id, id, StringComparison.Ordinal)) is { } wanted
+            ? Audio.ChatterboxCatalog.StandIn(wanted, role, voices)?.Voice.Name
+            : null;
 
     /// <summary>A voice's gender, pitch and pace as one line, <c>Female · mid pitch · even pace</c>, or null where it has none.</summary>
     public static string? VoiceDetail(string? gender, string? pitch, string? pace)
@@ -490,6 +499,12 @@ public static class SpeechCapability
 
         /// <summary>The shipped Chatterbox voice suggested for a role, or null where none is.</summary>
         public Func<VoiceRole, string?>? SuggestedVoice { get; init; }
+
+        /// <summary>One voice's name alone, without its gender or locale, or null where it is not listed.</summary>
+        public Func<VoiceGroup, string, string?>? VoiceName { get; init; }
+
+        /// <summary>Every Chatterbox voice of a slot, shipped or not, or none where the slot is not on Chatterbox.</summary>
+        public Func<VoiceGroup, IReadOnlyList<Audio.ChatterboxVoice>>? ChatterboxCatalogue { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()
