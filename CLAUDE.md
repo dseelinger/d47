@@ -154,15 +154,21 @@ hand when Frontier changes game data. Edit the generator, not the table.
 no page, when a page quotes no real code block, or when a page does not quote the capability's
 current tool schema.
 
-### The design comes from Claude Design
+### The design comes from the design system
 
-The source of truth for the look is the Claude Design project **D47 Design System**
-(https://claude.ai/design/p/33498e27-9fc4-425e-b580-0425d82e4597). The direction is design →
-code: the app is built to match it, and where the two disagree on look, the design is right.
-Behaviour, strings and data come from the code.
+The source of truth for the look is the **Directive 47** design system artifact
+(https://claude.ai/code/artifact/60936446-dcb6-48f4-81b0-b33dea16afa0). The app is built to match
+it, and where the two disagree on look, the design system is right. Behaviour, strings and data
+come from the code.
 
-`design/system/` is a read-only snapshot of that project; refresh it by pulling the project again,
-never by editing it. The original D47 project (`29844a40…`) is archived: do not read from it, and
+The design system is canonical the way a written specification is. When something in it does not
+work in practice during implementation, make the change in the code and then work it back into the
+design system; do not stop to amend the design system first.
+
+The Claude Design project **D47 Design System**
+(https://claude.ai/design/p/33498e27-9fc4-425e-b580-0425d82e4597) and `design/system/`, a
+read-only snapshot of it pulled on 2026-09-26, are older than the artifact. Do not edit the
+snapshot. The original D47 project (`29844a40…`) is archived: do not read from it, and
 do not run `/design-sync`. `.design-sync/NOTES.md` has the details.
 
 ### Vendored code is not edited
