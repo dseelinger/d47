@@ -6,13 +6,17 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Persona;
 using D47.Core.Storage;
+using D47.Core.Stories;
 using D47.Tts;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A voice list arriving for the ship's provider gives the core aboard a voice; one for any other provider gives nothing.</summary>
+/// <summary>
+/// A voice list arriving for the ship's provider gives the core aboard and the current story's unpinned cast a voice; one
+/// for any other provider gives nothing.
+/// </summary>
 [Trait("Category", "Integration")]
 public class AListArrivingPairsTheShipsProviderTests : IDisposable
 {
@@ -87,6 +91,36 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
 
         await WaitForAsync(() => _settings.Current.Persona.Voices.ContainsKey(_personas.Current.Id));
     }
+
+    [Fact]
+    public async Task AListForTheShipsProviderPairsTheCurrentStorysUnpinnedCast()
+    {
+        var secret = new StorySecret
+        {
+            Id = "a-story",
+            Secret = "Hidden.",
+            End = "An end.",
+            Cast =
+            [
+                new StorySpeaker { Id = "hand", Name = "Ren", Who = "A dock hand.", Provider = StorySpeaker.Kokoro, Voice = "bm_george" },
+                new StorySpeaker { Id = "kept", Name = "Ada", Who = "A pilot.", Provider = StorySpeaker.Kokoro, Voice = "af_heart", Pinned = true },
+            ],
+        };
+
+        _pairer.CurrentStory = () => (secret, "A Story");
+        _speech.HoldVoicesForTest(TtsProviderCatalog.KokoroId, Offering());
+
+        _speech.AnnounceVoicesForTest(TtsProviderCatalog.KokoroId);
+
+        await WaitForAsync(() => StoryCastPairing.On(_settings.Current, TtsProviderCatalog.KokoroId)?.ContainsKey("a-story.hand") == true);
+        Assert.False(StoryCastPairing.On(_settings.Current, TtsProviderCatalog.KokoroId)!.ContainsKey("a-story.kept"));
+    }
+
+    [Fact]
+    public void AChatterboxVoicesGenderIsReadFromTheShippedCatalogue() =>
+        Assert.Equal(
+            D47.Core.Persona.VoiceGender.Female,
+            StoryCastPairing.GenderOf(StorySpeaker.Chatterbox, "isolde", _speech.ChatterboxCatalogue()));
 
     private static VoiceCatalogue Offering() =>
         VoiceCatalogue.Of([.. Enumerable.Range(1, 40).Select(number => new VoiceInfo($"voice{number}", $"Voice {number}", "en-US"))]);

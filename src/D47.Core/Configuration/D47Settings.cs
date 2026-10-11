@@ -29,6 +29,13 @@ public sealed record D47Settings
     public IReadOnlyDictionary<string, StoryVoiceChoice> StoryVoices { get; init; } =
         new Dictionary<string, StoryVoiceChoice>(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The voice paired with each story character the story did not pin, by voice provider, then keyed as
+    /// <see cref="StoryVoices"/>. A choice in <see cref="StoryVoices"/> wins over a pairing.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, StoryVoiceChoice>> StoryVoicePairings { get; init; } =
+        new Dictionary<string, IReadOnlyDictionary<string, StoryVoiceChoice>>(StringComparer.OrdinalIgnoreCase);
+
     public LoggingSettings Logging { get; init; } = new();
 
     public LlmSettings Llm { get; init; } = new();

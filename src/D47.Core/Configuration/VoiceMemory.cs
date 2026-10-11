@@ -221,7 +221,8 @@ public static class VoiceMemory
 
     /// <summary>
     /// Every voice assignment on every provider forgotten: each core's voice and recorded pairing, the
-    /// ship AI's, the narrator's, the carrier captain's and the tower's, and the flag saying the pairing has run. The
+    /// ship AI's, the narrator's, the carrier captain's and the tower's, the voices paired with story characters, and the
+    /// flag saying the pairing has run. The Commander's own story voices are kept. The
     /// selected provider is paired again by the caller; a stashed one when it is next selected.
     /// </summary>
     /// <returns>The settings, and how many providers' voices were forgotten.</returns>
@@ -246,6 +247,7 @@ public static class VoiceMemory
 
         var forgotten = settings with
         {
+            StoryVoicePairings = new Dictionary<string, IReadOnlyDictionary<string, StoryVoiceChoice>>(StringComparer.OrdinalIgnoreCase),
             Persona = settings.Persona with
             {
                 Voices = new Dictionary<string, string>(StringComparer.Ordinal),

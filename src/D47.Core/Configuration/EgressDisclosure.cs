@@ -796,6 +796,11 @@ public static class EgressDisclosure
         return report.ToString().TrimEnd();
     }
 
+    /// <summary>What choosing voices for a stock story's cast sends to the language model.</summary>
+    private const string StoryCastSent =
+        "When a stock story starts, the names and one-line descriptions of its cast, and the list of voices the ship's "
+        + "voice provider offers, are sent to choose a voice for each character the story does not give a voice of its own.";
+
     private static EgressEntry LanguageModelEntry(D47Settings settings, bool keyPresent)
     {
         var provider = LlmProviderCatalog.Selected(settings.Llm.Provider);
@@ -831,6 +836,7 @@ public static class EgressDisclosure
                 + "the reply, the persona, what D47 remembers about you, "
                 + (commander is null ? string.Empty : $"{commander}, ")
                 + "a hidden story while a stock story runs, "
+                + "a stock story's cast and the ship's voice list when the story starts, "
                 + "and the game state D47 assembled from your "
                 + "journal all go to that address and no further — nothing leaves this machine, and no account or "
                 + "key is involved. "
@@ -854,7 +860,8 @@ public static class EgressDisclosure
             + "chapter of one also sends the adventure it follows — its spine, its objectives and what was said as you flew it — "
             + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
             + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
-            + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows."
+            + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows. "
+            + StoryCastSent
             + " " + JournalEventSent
             + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")

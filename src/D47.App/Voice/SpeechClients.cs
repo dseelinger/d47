@@ -161,6 +161,25 @@ public sealed class SpeechClients : IDisposable
     /// <summary>The shipped reference clips, copied beside the executable.</summary>
     private static string ChatterboxVoicesFolder() => Path.Combine(AppContext.BaseDirectory, "voices", "chatterbox");
 
+    /// <summary>The voices the ship and the Narrator speak in on <paramref name="providerId"/>.</summary>
+    internal IReadOnlyList<string> ShipAndNarratorVoices(string providerId)
+    {
+        lock (_speechGate)
+        {
+            var cast = Casting.Of(providerId);
+
+            return [.. new[] { cast.For(VoiceRole.ShipAi).VoiceId, cast.For(VoiceRole.Narrator).VoiceId }.OfType<string>()];
+        }
+    }
+
+    private IReadOnlyList<VoiceInfo>? _chatterboxCatalogue;
+
+    /// <summary>Every row of Chatterbox's catalogue beside the executable, with its gender; read once, and no clip or model is needed.</summary>
+    internal IReadOnlyList<VoiceInfo> ChatterboxCatalogue() =>
+        _chatterboxCatalogue ??= [.. ChatterboxCatalog.Load(
+                _files, ChatterboxVoicesFolder(), Path.Combine(_paths.Data, "voices", "chatterbox"), [], _logger)
+            .Select(voice => voice.Voice)];
+
     /// <summary>Starts fetching the Chatterbox clip a voice row picked, when it is not on this PC. Never waits.</summary>
     internal void FetchPickedVoice(string key)
     {

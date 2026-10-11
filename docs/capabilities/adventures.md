@@ -589,6 +589,21 @@ the speech spend with every other line. If the chosen provider fails a sentence,
 in the character's own voice, which for a character that is not pinned is its voice on the ship's provider,
 and the character's row on the card page says why.
 
+A character that is not pinned is given a voice from the ship's provider's list when the story starts or
+resumes, and again when you change the ship's provider while the story runs. The language model chooses it
+from the character's name and who they are, told the gender of the voice the story wrote the character for;
+with no language model, a voice of that gender is picked from the list. While the list has enough voices, no
+two characters of one story share one, and none shares the ship's or the Narrator's. The pairing is kept in
+`settings.json` under `storyVoicePairings`, by provider, so changing back to a provider reuses its
+pairing. Your choice wins over it, and **Reset voices** forgets every pairing. Until a character is paired,
+it speaks in the crew voice. The request sends the cast's names and descriptions and the provider's voice
+list to the language model, which the **Language model** entry under **Privacy and egress** says, and its
+cost counts in the spend as the cores' pairing does.
+
+```csharp
+public static IReadOnlyList<(StorySpeaker Member, StorySpeakerShown Shown)> Unpinned(StorySecret secret, string? gender)
+```
+
 A character you put on a hosted provider sends its lines, which are the story's sealed text, to that provider.
 **Privacy and egress**, under text to speech, names each such character, its story and its provider, with
 that provider's own disclosure, and `get_data_egress` answers from the same entry. A character that is not

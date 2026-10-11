@@ -4,12 +4,16 @@ using D47.Core.Catalog;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Persona;
+using D47.Core.Stories;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
 
 namespace D47.App.Voice;
 
-/// <summary>Gives every core, the carrier captain and the tower a voice from the lists the providers return.</summary>
+/// <summary>
+/// Gives every core, the carrier captain, the tower and the current story's unpinned cast a voice from the lists the
+/// providers return.
+/// </summary>
 public sealed class VoicePairer
 {
     private readonly SpeechClients _speech;
@@ -38,9 +42,74 @@ public sealed class VoicePairer
         {
             if (IsAboardOrCarrier(provider))
             {
-                _ = Task.Run(() => PairVoicesAsync());
+                _ = Task.Run(async () =>
+                {
+                    await PairVoicesAsync().ConfigureAwait(false);
+                    await PairStoryCastAsync().ConfigureAwait(false);
+                });
             }
         };
+    }
+
+    /// <summary>The current story's hidden layer and title, or null when no story is current.</summary>
+    internal Func<(StorySecret Secret, string Title)?> CurrentStory { get; set; } = () => null;
+
+    /// <summary>
+    /// A voice from the ship provider's list for each member of the current story that the story did not pin and that has
+    /// none on that provider. Does nothing until the list has arrived.
+    /// </summary>
+    public async Task PairStoryCastAsync(CancellationToken cancellationToken = default)
+    {
+        await _pairing.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (CurrentStory() is not { } story)
+            {
+                return;
+            }
+
+            var provider = VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Aboard);
+            var list = _speech.VoicesFor(VoiceGroup.Aboard);
+
+            if (list.Count == 0)
+            {
+                return;
+            }
+
+            var pairings = await StoryCastPairing.ChooseAsync(
+                story.Secret,
+                story.Title,
+                _settings.Current.CommanderGender,
+                provider,
+                _settings.Current,
+                _speech.ShipAndNarratorVoices(provider),
+                list.Voices,
+                _speech.ChatterboxCatalogue(),
+                Turns.Provider,
+                Turns.BackgroundModel,
+                _spend,
+                PriceTable.Default,
+                _logger,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (pairings.Count == 0)
+            {
+                return;
+            }
+
+            _settings.Replace("storyVoicePairings", current => StoryCastPairing.WithPairings(current, provider, pairings));
+            _logger.LogInformation("Paired {Count} of {Title}'s cast on {Provider}", pairings.Count, story.Title, provider);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Until a pairing exists, the member speaks in the crew voice.
+            _logger.LogWarning(ex, "Could not pair the story's cast");
+        }
+        finally
+        {
+            _pairing.Release();
+        }
     }
 
     private TurnLoop Turns => _turns;
@@ -380,6 +449,7 @@ public sealed class VoicePairer
     {
         var (_, providers) = VoiceMemory.Forgotten(_settings.Current);
         var pass = await PairVoicesAsync(forgetFirst: true, cancellationToken).ConfigureAwait(false);
+        await PairStoryCastAsync(cancellationToken).ConfigureAwait(false);
 
         return VoiceMemory.ForgottenSaid(
             pass.Cores,

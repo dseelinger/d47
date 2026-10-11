@@ -60,6 +60,21 @@ public class AResetForgetsEveryVoiceTests
     }
 
     [Fact]
+    public void AStoryCharactersPairingIsForgottenAndTheCommandersChoiceKept()
+    {
+        var choice = new StoryVoiceChoice(Eleven, "chosen-voice");
+        var settings = D47.Core.Stories.StoryCastPairing.WithPairings(
+            Settings() with { StoryVoices = new Dictionary<string, StoryVoiceChoice> { ["story.member"] = choice } },
+            Eleven,
+            new Dictionary<string, StoryVoiceChoice> { ["story.member"] = new(Eleven, "paired-voice") });
+
+        var (after, _) = VoiceMemory.Forgotten(settings);
+
+        Assert.Empty(after.StoryVoicePairings);
+        Assert.Equal(choice, after.StoryVoices["story.member"]);
+    }
+
+    [Fact]
     public void TheShipTheCarrierCaptainAndTheTowerAreForgottenToo()
     {
         var (after, _) = VoiceMemory.Forgotten(Settings());

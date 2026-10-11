@@ -24,7 +24,7 @@ public sealed record StoryLineVoice(VoiceRole Role, string From, StorySpeakerSho
 /// </summary>
 public sealed record StoryCastMember(string StoryId, string Title, StorySpeakerShown Shown, PinnedVoice Pinned, PinnedVoice Speaks)
 {
-    /// <summary>What the provider calls the voice the member speaks in, where the Commander's choice recorded it.</summary>
+    /// <summary>What the provider calls the voice the member speaks in, where the Commander's choice or the pairing recorded it.</summary>
     public string? SpeaksName { get; init; }
 
     /// <summary>The <see cref="D47Settings.StoryVoices"/> key.</summary>

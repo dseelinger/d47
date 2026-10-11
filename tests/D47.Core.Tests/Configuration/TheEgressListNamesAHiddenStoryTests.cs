@@ -26,6 +26,17 @@ public class TheEgressListNamesAHiddenStoryTests
     public void ALoopbackModelIsSaidToReceiveAHiddenStory() =>
         Assert.Contains("a hidden story while a stock story runs", What("http://localhost:11434"), StringComparison.Ordinal);
 
+    [Fact]
+    public void AHostedModelIsSaidToReceiveAStorysCastToChooseItsVoices() =>
+        Assert.Contains(
+            "When a stock story starts, the names and one-line descriptions of its cast, and the list of voices the ship's voice provider offers",
+            What(),
+            StringComparison.Ordinal);
+
+    [Fact]
+    public void ALoopbackModelIsSaidToReceiveAStorysCast() =>
+        Assert.Contains("a stock story's cast and the ship's voice list when the story starts", What("http://localhost:11434"), StringComparison.Ordinal);
+
     [Trait("Category", "Integration")]
     [Fact]
     public void NoHiddenTextIsQuoted()

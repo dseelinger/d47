@@ -88,6 +88,13 @@ public sealed class StoryDirector(
     /// </summary>
     public event Action<string, string>? VoicesNotReady;
 
+    /// <summary>Raised when a story starts, resumes or is switched on. A handler runs on the caller's thread and must not block.</summary>
+    public event Action? Began;
+
+    /// <summary>The current story's hidden layer and title, or null when no story is current or its hidden layer is not on disk.</summary>
+    public (StorySecret Secret, string Title)? CurrentCast(string? frontierId) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? (secret, story.Title) : null;
+
     /// <summary>What the cast of story <paramref name="id"/> needs and does not have here; empty when ready or when its hidden layer is not on disk.</summary>
     public IReadOnlyList<string> VoicesMissing(string id) =>
         catalog().Secret(id) is { } secret ? StoryVoices.Missing(secret, Gender(), VoicesHere(), Choices(), Ship()) : [];
@@ -155,7 +162,9 @@ public sealed class StoryDirector(
 
         return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null, ship), StoryVoices.Voice(member, shown, choices, ship))
         {
-            SpeaksName = choices.GetValueOrDefault(shown.Picture)?.VoiceName,
+            SpeaksName = choices.GetValueOrDefault(shown.Picture) is { } choice
+                ? choice.VoiceName
+                : shown.Pinned ? null : ship?.Pairings?.GetValueOrDefault(shown.Picture)?.VoiceName,
         };
     }
 
@@ -291,6 +300,7 @@ public sealed class StoryDirector(
 
         stories.Save(frontierId, story);
         logger.LogInformation("Picked the story {Title}", card.Title);
+        Began?.Invoke();
 
         var hidden = Hidden(card.Id);
 
@@ -380,10 +390,12 @@ public sealed class StoryDirector(
             }
 
             stories.Save(frontierId, paused.Resumed(now));
+            Began?.Invoke();
             return null;
         }
 
         stories.Save(frontierId, paused.Resumed(now) with { Chapters = [.. paused.Chapters.SkipLast(1)] });
+        Began?.Invoke();
         return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
     }
 
@@ -736,6 +748,7 @@ public sealed class StoryDirector(
         if (story.State == StoryState.Paused && standing is { Adventure.IsActive: true })
         {
             stories.Save(frontierId, story.Resumed(now));
+            Began?.Invoke();
             return null;
         }
 
@@ -921,6 +934,12 @@ public sealed class StoryDirector(
 
         stories.Update(frontierId, current.Id, story => on ? story.SwitchedOn(now) : story.SwitchedOff(now));
         logger.LogInformation("{Title} is switched {State}", current.Title, on ? "on" : "off");
+
+        if (on)
+        {
+            Began?.Invoke();
+        }
+
         return null;
     }
 

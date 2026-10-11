@@ -2887,7 +2887,13 @@ public sealed class AppHost : IDisposable
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
         storyDirector.Choices = () => settings.Current.StoryVoices;
-        storyDirector.Ship = () => new D47.Core.Stories.ShipSpeech(VoiceGroups.ProviderFor(settings.Current.Speech, VoiceGroup.Aboard));
+        storyDirector.Ship = () =>
+        {
+            var current = settings.Current;
+            var provider = VoiceGroups.ProviderFor(current.Speech, VoiceGroup.Aboard);
+
+            return new D47.Core.Stories.ShipSpeech(provider, D47.Core.Stories.StoryCastPairing.On(current, provider));
+        };
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
@@ -2911,7 +2917,12 @@ public sealed class AppHost : IDisposable
         });
 
         var pairing = new VoicePairer(
-            speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>());
+            speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>())
+        {
+            CurrentStory = () => storyDirector.CurrentCast(gameState.Active?.Identity.FrontierId),
+        };
+
+        storyDirector.Began += () => _ = Task.Run(() => pairing.PairStoryCastAsync());
 
         return new CrewParts
         {
