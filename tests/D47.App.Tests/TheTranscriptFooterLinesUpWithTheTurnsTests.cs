@@ -129,7 +129,7 @@ public class TheTranscriptFooterLinesUpWithTheTurnsTests
 
         Assert.Equal(0.0231m.ToString("C4", System.Globalization.CultureInfo.CurrentCulture), figure.Text);
         Assert.True(LeftOf(figure, panel) < LeftOf(spend, panel), "the figure is not left of SPEND");
-        Assert.Equal(28, spend.Bounds.Height, 0.5);
+        Assert.Equal(D47.App.Theming.TypeScale.MinimumTarget, spend.Bounds.Height, 0.5);
 
         spent = 0.0415m;
         model.TurnStatus = "routed: Model";
