@@ -158,10 +158,15 @@ public class ScancodeInjectorTests
             new(InputStepKind.KeyUp, 0x4C),
         };
 
-        var sending = injector.SendAsync(steps, TestContext.Current.CancellationToken);
-        elite.IsForeground = false;
+        using var alt = new OnStep(report =>
+        {
+            if (report.Index == 0)
+            {
+                elite.IsForeground = false;
+            }
+        });
 
-        var result = await sending;
+        var result = await injector.SendAsync(steps, alt, TestContext.Current.CancellationToken);
 
         Assert.Equal(InjectionOutcome.NotForeground, result.Outcome);
     }
