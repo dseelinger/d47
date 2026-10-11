@@ -25,6 +25,9 @@ public sealed record StarSystemSurface(
 {
     /// <summary>What the Systems search page runs its searches through, or null for no Systems page.</summary>
     public GalaxySearchSurface? Searches { get; init; }
+
+    /// <summary>Records a system opened by typing its name, as (name, address).</summary>
+    public Action<string, long>? Remember { get; init; }
 }
 
 /// <summary>
@@ -380,6 +383,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         }
 
         _name.Text = match.Name;
+        _surface.Remember?.Invoke(match.Name, match.SystemAddress);
         Open(match.SystemAddress, match.Name, following: false);
     }
 

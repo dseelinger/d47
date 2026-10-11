@@ -10,6 +10,8 @@
 
 On docking at a station that is under attack, damaged, under repairs or abandoned, your core says so once: "Galileo is under repairs." A station under construction is not mentioned. Callouts has a Station damage toggle, on by default.
 
+D47 keeps the last 25 galaxy searches you asked, for each Commander, in `search-history.json`, with the answer each one gave. That covers system, station and body searches, whether asked by voice or on the search pages, and a system you name by voice or by typing on the System page. Asking the same search again keeps the newer one. Nothing in the app lists them yet.
+
 A line you wrote on the checklist can carry a watch in `checklist.json`: docking at a station, arriving in a system, buying or selling a commodity, or your carrier's buy order for one. When the journal records a matching event after the watch was set, the line ticks itself and D47 says so under Checklist changes ("Ticked "Buy 5 Hydrogen Fuel": you bought 5 Hydrogen Fuel."). The line keeps its checkbox, Remove fulfilled items never removes it, and unticking it by hand starts the count again. The Checklist page and `get_checklist` show what the line is waiting for, with the count so far for a buy or a sale. Nothing in the app sets a watch yet.
 
 A search you ask for opens its page on the window and in the headset, with the answer drawn: "find anarchy systems in boom" opens Search › Systems, a station search opens Stations, and a body search opens Bodies. Quick searches and your saved searches, run by their names, do the same. A search that is refused moves nothing, and a window or headset that has a chooser open stays where it is.

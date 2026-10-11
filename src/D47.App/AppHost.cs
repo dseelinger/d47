@@ -648,6 +648,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The galaxy searches each Commander has named, saved and forgotten on the search pages.</summary>
     public D47.Core.Knowledge.SavedSearchStore? SavedSearches { get; private set; }
 
+    /// <summary>The last 25 galaxy searches each Commander has asked.</summary>
+    public D47.Core.Knowledge.SearchHistory? SearchHistory { get; private set; }
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -922,6 +925,13 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Knowledge.SavedSearchStore>());
 
         savedSearches.Load();
+
+        var searchHistory = new D47.Core.Knowledge.SearchHistory(
+            Path.Combine(paths.Data, "search-history.json"),
+            files,
+            loggerFactory.CreateLogger<D47.Core.Knowledge.SearchHistory>());
+
+        searchHistory.Load();
 
         // Every run, not only behind the timers switch (#90).
         var journalReminders = new D47.Core.Reminders.JournalReminderStore(
@@ -1355,6 +1365,7 @@ public sealed class AppHost : IDisposable
             BackfillGoals = BackfillGoals,
             Bookmarks = bookmarks,
             SavedSearches = savedSearches,
+            SearchHistory = searchHistory,
             Callouts = callouts,
             CargoBoard = cargoBoard,
             Cartography = cartography,
@@ -2070,6 +2081,7 @@ public sealed class AppHost : IDisposable
         var backfillGoals = stores.BackfillGoals;
         var bookmarks = stores.Bookmarks;
         var savedSearches = stores.SavedSearches;
+        var searchHistory = stores.SearchHistory;
         var callouts = stores.Callouts;
         var cargoBoard = stores.CargoBoard;
         var cartography = stores.Cartography;
@@ -2591,6 +2603,7 @@ public sealed class AppHost : IDisposable
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
+                searchHistory: searchHistory,
                 pickCommander: feed.Picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
@@ -3378,6 +3391,7 @@ public sealed class AppHost : IDisposable
         host.Cargo = cargoBoard;
         host.GalaxySearches = galaxySearchBoard;
         host.SavedSearches = stores.SavedSearches;
+        host.SearchHistory = stores.SearchHistory;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
 
@@ -3831,6 +3845,8 @@ public sealed class AppHost : IDisposable
         public required BookmarkStore Bookmarks { get; init; }
 
         public required D47.Core.Knowledge.SavedSearchStore SavedSearches { get; init; }
+
+        public required D47.Core.Knowledge.SearchHistory SearchHistory { get; init; }
 
         public required CalloutEngine Callouts { get; init; }
 

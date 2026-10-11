@@ -327,6 +327,22 @@ public partial class MainWindow : Window
                     () => host.Settings.Current.Knowledge.GalaxySearch,
                     OpenSettings)
                 {
+                    Remember = (name, address) =>
+                    {
+                        if (host.SearchHistory is { } history
+                            && host.GameState.Active?.Identity.FrontierId is { Length: > 0 } frontierId)
+                        {
+                            history.Add(
+                                frontierId,
+                                D47.Core.Knowledge.SearchHistoryEntry.Of(
+                                    "describe_system",
+                                    new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = name },
+                                    name,
+                                    address,
+                                    null,
+                                    DateTimeOffset.UtcNow));
+                        }
+                    },
                     Searches = new GalaxySearchSurface(
                         host.Capabilities,
                         host.GalaxySearches,

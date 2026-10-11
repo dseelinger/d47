@@ -109,7 +109,10 @@ public static class GalaxyCapability
         Func<long?>? currentAddress = null,
 
         // Elite's own list of the systems this Commander has visited.
-        Journal.VisitedStarsBook? visits = null) => new()
+        Journal.VisitedStarsBook? visits = null,
+
+        // The last 25 searches per Commander.
+        SearchHistory? history = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -152,7 +155,9 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    SearchAsync(galaxy, currentSystem, settings, factions, searches, now, arguments, cancellationToken),
+                    SearchAsync(
+                        galaxy, currentSystem, settings, factions, searches, Remember(history, gameState), now, arguments,
+                        cancellationToken),
             },
             new ToolDefinition
             {
@@ -255,7 +260,8 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
-                        galaxy, currentSystem, settings, factions, searches, now, arguments, cancellationToken),
+                        galaxy, currentSystem, settings, factions, searches, Remember(history, gameState), now, arguments,
+                        cancellationToken),
             },
             new ToolDefinition
             {
@@ -307,6 +313,8 @@ public static class GalaxyCapability
                         settings,
                         heard,
                         Visits(visits, gameState),
+                        Remember(history, gameState),
+                        now,
                         arguments,
                         cancellationToken),
             },
@@ -614,7 +622,9 @@ public static class GalaxyCapability
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    FindBodyAsync(galaxy, currentSystem, settings, searches, now, arguments, cancellationToken),
+                    FindBodyAsync(
+                        galaxy, currentSystem, settings, searches, Remember(history, gameState), now, arguments,
+                        cancellationToken),
             },
             new ToolDefinition
             {
@@ -713,6 +723,7 @@ public static class GalaxyCapability
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
         GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -754,13 +765,16 @@ public static class GalaxyCapability
             var notes = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known);
             var said = notes + Describe(result, query);
 
-            searches?.Post(new GalaxySearchPosting(
+            var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Systems,
                 new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd() });
+                now?.Invoke() ?? DateTimeOffset.UtcNow) { Notes = notes.TrimEnd() };
+
+            searches?.Post(posting);
+            Remember(remember, "search_systems", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Systems) };
         }
@@ -821,6 +835,7 @@ public static class GalaxyCapability
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
         GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -878,13 +893,16 @@ public static class GalaxyCapability
                        + DescribeStations(result, query)
                        + LimitRefused(askedLimit);
 
-            searches?.Post(new GalaxySearchPosting(
+            var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Stations,
                 new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow));
+                now?.Invoke() ?? DateTimeOffset.UtcNow);
+
+            searches?.Post(posting);
+            Remember(remember, "search_stations", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Stations) };
         }
@@ -1090,6 +1108,22 @@ public static class GalaxyCapability
         + visits.LastVisit.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)
         + ".";
 
+    private static Action<SearchHistoryEntry>? Remember(
+        SearchHistory? history, Func<Journal.CommanderGameState?>? gameState) =>
+        history is null
+            ? null
+            : entry =>
+            {
+                if (gameState?.Invoke()?.Identity.FrontierId is { Length: > 0 } frontierId)
+                {
+                    history.Add(frontierId, entry);
+                }
+            };
+
+    private static void Remember(Action<SearchHistoryEntry>? remember, string tool, GalaxySearchPosting posting) =>
+        remember?.Invoke(SearchHistoryEntry.Of(
+            tool, posting.Arguments, posting.Reference, null, posting.Result, posting.AskedAt));
+
     private static async Task<ToolResult> DescribeSystemAsync(
         IStarSystemService? systems,
         Func<string?> currentSystem,
@@ -1097,6 +1131,8 @@ public static class GalaxyCapability
         Configuration.SettingsService settings,
         SpokenNamesSurface? heard,
         Func<long, Journal.VisitLookup> visits,
+        Action<SearchHistoryEntry>? remember,
+        Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1162,6 +1198,17 @@ public static class GalaxyCapability
             var said = lookup.State == Journal.VisitState.Visited
                 ? $"{DescribeProfile(profile)} The Commander has been here {VisitSentence(lookup.Visits)}"
                 : DescribeProfile(profile);
+
+            if (named is not null)
+            {
+                remember?.Invoke(SearchHistoryEntry.Of(
+                    "describe_system",
+                    new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = profile.Name },
+                    profile.Name,
+                    address,
+                    null,
+                    now?.Invoke() ?? DateTimeOffset.UtcNow));
+            }
 
             return ToolResult.Ok(said) with { Page = PageRef.System(address) };
         }
@@ -1860,6 +1907,7 @@ public static class GalaxyCapability
         Func<string?> currentSystem,
         Configuration.SettingsService settings,
         GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -1925,13 +1973,16 @@ public static class GalaxyCapability
 
             var said = Describe(result, query);
 
-            searches?.Post(new GalaxySearchPosting(
+            var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Bodies,
                 new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
                 result.Reference,
                 result,
                 said,
-                now?.Invoke() ?? DateTimeOffset.UtcNow));
+                now?.Invoke() ?? DateTimeOffset.UtcNow);
+
+            searches?.Post(posting);
+            Remember(remember, "find_body", posting);
 
             return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Bodies) };
         }

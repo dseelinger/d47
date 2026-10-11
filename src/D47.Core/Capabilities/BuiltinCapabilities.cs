@@ -246,6 +246,9 @@ public static class BuiltinCapabilities
         // Elite's own list of the systems this Commander has visited.
         Journal.VisitedStarsBook? visitedStars = null,
 
+        // The last 25 galaxy searches per Commander.
+        Knowledge.SearchHistory? searchHistory = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -296,7 +299,8 @@ public static class BuiltinCapabilities
             searches,
             starSystems,
             () => gameState.Active?.Location.SystemAddress,
-            visitedStars),
+            visitedStars,
+            searchHistory),
         RouteCapability.Create(
             routes,
             trade,
