@@ -108,22 +108,22 @@ public class TheRowsHelpLivesOnItsLabelTests
     {
         var host = Open();
 
-        // One in the visual tree — the inline copy, hidden.
-        var inline = Assert.Single(
-            host.View.GetVisualDescendants().OfType<TextBlock>(),
-            block => (block.Text ?? string.Empty).Contains("Held, D47 listens", StringComparison.Ordinal));
+        // The inline copy and the headset's help line (#1095), both hidden.
+        TextBlock[] copies = [.. host.View.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Where(block => (block.Text ?? string.Empty).Contains("Held, D47 listens", StringComparison.Ordinal))];
 
-        Assert.False(inline.IsVisible);
+        Assert.DoesNotContain(copies, block => block.IsVisible);
 
         host.View.Filter("Held, D47 listens");
 
-        // The same block, now drawn.
-        Assert.True(inline.IsVisible);
+        // One of them, now drawn.
+        Assert.Single(copies, block => block.IsVisible);
 
         // And it goes away again when the query does.
         host.View.Filter(string.Empty);
 
-        Assert.False(inline.IsVisible);
+        Assert.DoesNotContain(copies, block => block.IsVisible);
 
         host.Close();
     }

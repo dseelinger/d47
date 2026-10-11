@@ -71,8 +71,8 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "option-adds-a-stranger" => ("not a persona", Card, Secret with { Options = [Secret.Options[0] with { Add = ["nobody"] }] }),
         "unknown-provider" => ("the provider", Card, Secret with { Cast = [Speaker with { Provider = "nobody" }] }),
         "silent-provider" => ("the provider", Card, Secret with { Cast = [Speaker with { Provider = "none" }] }),
-        "openai-voice-it-lacks" => ("a voice that openai does not have", Card, Secret with { Cast = [Speaker with { Provider = "openai", Voice = "af_river" }] }),
-        "hosted-provider-without-a-voice" => ("a voice that elevenlabs does not have", Card, Secret with { Cast = [Speaker with { Provider = "elevenlabs", Voice = " " }] }),
+        "billed-provider" => ("which is billed", Card, Secret with { Cast = [Speaker with { Provider = "openai", Voice = "onyx" }] }),
+        "hosted-provider-without-a-voice" => ("a voice that edge does not have", Card, Secret with { Cast = [Speaker with { Provider = "edge", Voice = " " }] }),
         "own-voice-on-kokoro" => ("a voice that kokoro does not have", Card, Secret with { Cast = [Speaker with { Voice = StorySpeaker.Own }] }),
         "cast-named-ship" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Ship }] }),
         "cast-named-narrator" => ("taken", Card, Secret with { Cast = [Speaker with { Id = StorySpeaker.Narrator }] }),
@@ -177,7 +177,7 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("option-adds-a-stranger")]
     [InlineData("unknown-provider")]
     [InlineData("silent-provider")]
-    [InlineData("openai-voice-it-lacks")]
+    [InlineData("billed-provider")]
     [InlineData("hosted-provider-without-a-voice")]
     [InlineData("own-voice-on-kokoro")]
     [InlineData("cast-named-ship")]

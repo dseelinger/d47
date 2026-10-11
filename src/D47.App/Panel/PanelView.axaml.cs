@@ -3628,7 +3628,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         ScrollPastReadingItem.IsEnabled = transcript;
 
         // The headset has no right-click menu, so the same act is a tile there.
-        ScrollPastReadingButton.IsVisible = _searchable && transcript && Classes.Contains("headset");
+        ScrollPastReadingButton.IsVisible = _searchable && transcript && !OutputOnly && Classes.Contains("headset");
         ScrollPastReadingButton.IsEnabled = ScrollPastReadingItem.IsEnabled;
 
         ShowTitleLine();
