@@ -194,13 +194,33 @@ never something you pick.
 | | Authored | Derived |
 |---|---|---|
 | What it is | A sentence — *buy limpets* | A structured intent — *grade 5 dirty drives, MainEngines* |
-| How it completes | You say so | Computed from your journal |
+| How it completes | You say so, or the journal event it watches for | Computed from your journal |
 | Tick it by hand | Yes | **No — it refuses, and says why** |
 | Can un-complete itself | No | Yes, and it says so once |
 
 A derived item refuses a manual tick because the next journal read would either undo it or, worse,
 leave it standing and lying. In the panel there is no switch on one at all — a greyed-out switch
 would still assert that ticking is the mechanism, and it is not.
+
+### Watched lines
+
+One of your own lines can carry a **watch**: one journal condition. When a matching event arrives
+after the watch was set, D47 ticks the line. It stays your line: it keeps its checkbox, you can
+still tick or untick it, and **Remove fulfilled items** never removes it.
+
+| Watch | Ticks on |
+|---|---|
+| `dock` | Docking at the station, in the system if one is named |
+| `arrive` | Jumping into the system, or your carrier jumping there with you aboard |
+| `buy` | Buying the commodity, at the station if one is named, until the quantity is reached |
+| `sell` | Selling the commodity, on the same terms |
+| `buyOrder` | Your carrier's buy order for the commodity reaching the quantity |
+
+Names are compared without case, spaces or punctuation, and only an exact match counts. The line
+says what it is waiting for — *Ticks when you buy 5 Hydrogen Fuel at Jameson Memorial · 2 of 5 so
+far*. A watch never unticks a line. Unticking one by hand starts the count again from that moment.
+An event written while D47 was closed and before the newest journal file began is never seen; the
+checkbox is there for that.
 
 ### Three groups
 
@@ -402,6 +422,22 @@ place, `ChecklistScope.Word`.
           "state": "open"
         },
         {
+          "key": "note-2",
+          "scope": { "group": "universal" },
+          "kind": "authored",
+          "text": "Buy 5 Hydrogen Fuel",
+          "state": "open",
+          "watch": {
+            "kind": "buy",
+            "subject": "Hydrogen Fuel",
+            "place": "Jameson Memorial",
+            "quantity": 5,
+            "since": "2026-10-07T19:00:00+00:00",
+            "progress": 2,
+            "countedTo": "2026-10-07T19:08:25+00:00"
+          }
+        },
+        {
           "key": "bp/mainengines/dirty-drive-tuning/g5",
           "scope": { "group": "ship", "key": "12" },
           "kind": "derived",
@@ -507,17 +543,19 @@ servers, so no crowd-fed index holds it.
 
 ### Speaking up
 
-Two moments, both switchable under Callouts → **Checklist changes**:
+Three moments, all switchable under Callouts → **Checklist changes**:
 
 - A plan item the journal has just changed its mind about — said once, in either direction.
 - Picking up the **last unit** a plan needed.
+- A watched line ticked by its event — *Ticked "Buy 5 Hydrogen Fuel": you bought 5 Hydrogen Fuel.*
 
 ### The tools
 
 #### `get_checklist`
 
 Reads the list. Open items by group, then what is done with its count, then anything waiting for
-you. Derived items carry the journal's verdict as of right now.
+you. Derived items carry the journal's verdict as of right now, and a watched line says what it is
+waiting for.
 
 `here` narrows it to what an engineer in this system could craft today — the blueprint is theirs,
 you have unlocked them, and your grade with them reaches the grade you asked for. Anything they

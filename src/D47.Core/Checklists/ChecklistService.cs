@@ -32,13 +32,17 @@ public sealed record ChecklistView(
 /// How the host writes the view down, or null where nothing should be remembered — a test, or a surface
 /// with no view state behind it.
 /// </param>
+/// <param name="now">The time an unticked watched line starts counting from; without it, it never counts again.</param>
 public sealed class ChecklistService(
     ChecklistStore list,
     ChecklistProposalStore proposals,
     Func<CommanderGameState?> commander,
     Action<ChecklistView>? remember = null,
-    Func<bool>? removeFulfilled = null)
+    Func<bool>? removeFulfilled = null,
+    Func<DateTimeOffset>? now = null)
 {
+    private DateTimeOffset Now => now?.Invoke() ?? DateTimeOffset.MaxValue;
+
     /// <summary>Whether a fulfilled derived item removes itself rather than staying ticked (#255).</summary>
     private bool RemoveFulfilled => removeFulfilled?.Invoke() ?? false;
 
@@ -365,6 +369,24 @@ public sealed class ChecklistService(
 
         foreach (var item in document.Items)
         {
+            if (Watched(item, events, state) is { } outcome)
+            {
+                moved.Add(item with
+                {
+                    State = outcome.Done ? ChecklistState.Done : item.State,
+                    Watch = outcome.Watch,
+                });
+
+                if (outcome.Done)
+                {
+                    news.Add(new ChecklistNews(
+                        $"checklist.done.{item.Id}",
+                        $"Ticked \"{item.Text}\": {outcome.Happened}."));
+                }
+
+                continue;
+            }
+
             if (ChecklistEvaluator.Evaluate(item, state) is not { } verdict)
             {
                 continue;
@@ -443,9 +465,24 @@ public sealed class ChecklistService(
 
                 foreach (var item in moved)
                 {
-                    if (updated.Find(item.Id) is not null)
+                    if (updated.Find(item.Id) is not { } held)
+                    {
+                        continue;
+                    }
+
+                    if (item.Watch is null)
                     {
                         updated = updated.WithState(item);
+                    }
+                    else if (held.Watch == document.Find(item.Id)?.Watch)
+                    {
+                        // A watch only ticks, and writes only its own count, over whatever the Commander did
+                        // to the line since this tick read it.
+                        updated = updated.WithState(held with
+                        {
+                            State = item.IsComplete ? ChecklistState.Done : held.State,
+                            Watch = item.Watch,
+                        });
                     }
                 }
 
@@ -465,6 +502,15 @@ public sealed class ChecklistService(
 
         return news;
     }
+
+    /// <summary>What this tick's events did to an open watched line, or null when they did nothing.</summary>
+    private static ChecklistWatchOutcome? Watched(
+        ChecklistItem item,
+        IReadOnlyCollection<JournalEvent>? events,
+        CommanderGameState state) =>
+        item is { Kind: ChecklistItemKind.Authored, State: ChecklistState.Open, Watch: { } watch } && events is { Count: > 0 }
+            ? ChecklistWatching.Count(watch, events, state.Location)
+            : null;
 
     /// <summary>Removes any mission lines the store holds; missions are no longer checklist lines.</summary>
     private void DropMissionLines(CommanderGameState state)
@@ -1101,7 +1147,7 @@ public sealed class ChecklistService(
 
         if (item.Kind == ChecklistItemKind.Authored)
         {
-            return text;
+            return item.Watch is { } watch ? $"{text} — {ChecklistWatching.Describe(watch, !item.IsComplete)}" : text;
         }
 
         var verdict = ChecklistEvaluator.Evaluate(item, State);
@@ -1128,8 +1174,9 @@ public sealed class ChecklistService(
     public ChecklistChange Complete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Complete(id));
 
+    /// <summary>Un-ticks a line; a watched one starts counting again from now.</summary>
     public ChecklistChange Uncomplete(ChecklistItemId id) =>
-        list.Apply(Fid, Name, document => document.Uncomplete(id));
+        list.Apply(Fid, Name, document => document.Uncomplete(id, Now));
 
     /// <summary>
     /// Removes the derived lines about one ship that <paramref name="which"/> selects, and any waiting plan

@@ -180,7 +180,8 @@ public sealed class TestSurface
     public static D47.Core.Checklists.ChecklistService Checklists(
         AppPaths paths,
         GameStateStore? gameState = null,
-        D47.Core.Storage.IFileSystem? files = null)
+        D47.Core.Storage.IFileSystem? files = null,
+        Func<DateTimeOffset>? now = null)
     {
         var state = gameState ?? new GameStateStore();
 
@@ -195,7 +196,8 @@ public sealed class TestSurface
                 Path.Combine(paths.Data, "checklist-proposals.json"),
                 files,
                 NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
-            () => state.Active);
+            () => state.Active,
+            now: now);
     }
 
     /// <summary>

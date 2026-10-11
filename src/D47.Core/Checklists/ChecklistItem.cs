@@ -272,6 +272,9 @@ public sealed record ChecklistItem
     /// </summary>
     public string? Goal { get; init; }
 
+    /// <summary>The journal condition that ticks an authored line, where one is set.</summary>
+    public ChecklistWatch? Watch { get; init; }
+
     public ChecklistItemId Id => new(Scope, Key);
 
     public bool IsComplete => State == ChecklistState.Done;

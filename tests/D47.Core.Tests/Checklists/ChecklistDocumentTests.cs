@@ -52,7 +52,7 @@ public class ChecklistDocumentTests
         document = document.Complete(id).Document;
         Assert.True(document.Find(id)!.IsComplete);
 
-        document = document.Uncomplete(id).Document;
+        document = document.Uncomplete(id, DateTimeOffset.UnixEpoch).Document;
         Assert.False(document.Find(id)!.IsComplete);
     }
 

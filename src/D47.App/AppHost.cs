@@ -1135,7 +1135,8 @@ public sealed class AppHost : IDisposable
                 ChecklistPartialGrades = view.IncludePartialGrades,
                 PinnedEngineers = view.PinnedEngineers ?? [],
             }),
-            () => settings.Current.Checklists.RemoveFulfilled);
+            () => settings.Current.Checklists.RemoveFulfilled,
+            () => DateTimeOffset.Now);
 
         // The engineer filter is a question about where the ship is, so the list is re-read when it moves
         // (#93).

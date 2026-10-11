@@ -158,10 +158,10 @@ public sealed record ChecklistDocument
     /// <summary>Ticks an item.</summary>
     public ChecklistChange Complete(ChecklistItemId id) => SetTicked(id, ticked: true);
 
-    /// <summary>Un-ticks an item.</summary>
-    public ChecklistChange Uncomplete(ChecklistItemId id) => SetTicked(id, ticked: false);
+    /// <summary>Un-ticks an item; a watched line starts counting again from <paramref name="now"/>.</summary>
+    public ChecklistChange Uncomplete(ChecklistItemId id, DateTimeOffset now) => SetTicked(id, ticked: false, now);
 
-    private ChecklistChange SetTicked(ChecklistItemId id, bool ticked)
+    private ChecklistChange SetTicked(ChecklistItemId id, bool ticked, DateTimeOffset? now = null)
     {
         if (Find(id) is not { } item)
         {
@@ -182,7 +182,11 @@ public sealed record ChecklistDocument
                 this, $"\"{item.Text}\" is already {(ticked ? "done" : "open")}.");
         }
 
-        var updated = item with { State = ticked ? ChecklistState.Done : ChecklistState.Open };
+        var updated = item with
+        {
+            State = ticked ? ChecklistState.Done : ChecklistState.Open,
+            Watch = !ticked && now is { } rearmed ? item.Watch?.Rearmed(rearmed) : item.Watch,
+        };
 
         return new ChecklistChange(
             Replace(updated),

@@ -485,7 +485,7 @@ public static class CalloutCapability
             Toggle(
                 ChecklistKey,
                 "Checklist changes",
-                "A plan item the journal has just changed its mind about, and the last unit a plan needed.",
+                "A plan item the journal has just changed its mind about, the last unit a plan needed, and a line ticked by the event it watches for.",
                 "checklist",
                 "checklist changes",
                 s => s.Callouts.Checklist,

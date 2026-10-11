@@ -1452,6 +1452,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             verdict = read;
             aside.Add(read.Says);
         }
+        else if (item.Watch is { } watch)
+        {
+            aside.Add(ChecklistWatching.Describe(watch, !item.IsComplete));
+        }
 
         var says = string.Join(" · ", aside);
 

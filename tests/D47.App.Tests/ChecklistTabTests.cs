@@ -497,6 +497,46 @@ public class ChecklistTabTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    /// <summary>A watched line says what it is waiting for where a derived line shows its verdict (#1056).</summary>
+    [AvaloniaFact]
+    public void AWatchedLineSaysWhatItIsWaitingFor()
+    {
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
+
+        checklists.List.Save(
+        [
+            ChecklistDocument.For(string.Empty) with
+            {
+                Items =
+                [
+                    new ChecklistItem
+                    {
+                        Key = "note-1",
+                        Scope = ChecklistScope.Universal,
+                        Kind = ChecklistItemKind.Authored,
+                        Text = "Buy 5 Hydrogen Fuel",
+                        Watch = new ChecklistWatch(ChecklistWatchKind.Buy, "Hydrogen Fuel")
+                        {
+                            Quantity = 5,
+                            Place = "Jameson Memorial",
+                            Progress = 2,
+                            Since = DateTimeOffset.UnixEpoch,
+                        },
+                    },
+                ],
+            },
+        ]);
+
+        var (window, panel) = Open(checklists);
+
+        Assert.Contains(
+            Lines(panel),
+            line => line.Contains(
+                "Ticks when you buy 5 Hydrogen Fuel at Jameson Memorial · 2 of 5 so far", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
     /// <summary>Every line of text the checklist page is drawing right now.</summary>
     private static IReadOnlyList<string> Lines(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<TextBlock>()

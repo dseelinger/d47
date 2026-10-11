@@ -510,8 +510,8 @@ public sealed record CalloutSettings
     public bool PowerplayCycle { get; init; } = true;
 
     /// <summary>
-    /// A checklist item the journal has just changed its mind about, and the last unit a plan needed
-    /// (Phase 17).
+    /// A checklist item the journal has just changed its mind about, the last unit a plan needed, and a
+    /// watched line ticked by its event.
     /// </summary>
     public bool Checklist { get; init; } = true;
 
