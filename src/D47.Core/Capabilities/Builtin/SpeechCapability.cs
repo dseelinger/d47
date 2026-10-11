@@ -381,6 +381,15 @@ public static class SpeechCapability
 
         /// <summary>Whether one voice is the Commander's own or a custom voice.</summary>
         public Func<VoiceGroup, string, bool>? VoiceCustom { get; init; }
+
+        /// <summary>Where one voice's Chatterbox clip is, or null where the slot is not on Chatterbox.</summary>
+        public Func<VoiceGroup, string, Audio.ChatterboxClipState?>? VoiceClip { get; init; }
+
+        /// <summary>
+        /// Subscribes a refresh, given the voice id, to Chatterbox clip state, returning the unsubscribe. Raised on any
+        /// thread, so the refresh marshals to the UI itself.
+        /// </summary>
+        public Func<Action<string>, Action>? WatchVoiceClips { get; init; }
     }
 
     public static CapabilityDescriptor Create(SpeechSurface surface) => new()

@@ -196,6 +196,19 @@ public sealed class SpeechClients : IDisposable
         _ = Task.Run(() => chatterbox.FetchAsync(picked.Voice));
     }
 
+    /// <summary>A Chatterbox voice's clip state changed. Raised with the voice id, on any thread.</summary>
+    public event Action<string>? ChatterboxClipChanged;
+
+    /// <summary>Where one voice's Chatterbox clip is, or null where the slot is not on Chatterbox or the voice is not listed.</summary>
+    internal ChatterboxClipState? ChatterboxClipFor(VoiceGroup group, string id) =>
+        string.Equals(
+            VoiceGroups.ProviderFor(_settings.Current.Speech, group),
+            TtsProviderCatalog.ChatterboxId,
+            StringComparison.OrdinalIgnoreCase)
+        && LocalVoiceWithEdgeStandIn.Unwrapped(ClientFor(TtsProviderCatalog.ChatterboxId)) is ChatterboxTtsProvider chatterbox
+            ? chatterbox.ClipState(id)
+            : null;
+
     internal string ChatterboxState() =>
         D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())
             ? "Installed. Nothing D47 speaks through this provider leaves this machine."
@@ -493,7 +506,7 @@ public sealed class SpeechClients : IDisposable
 
         TtsProviderCatalog.ChatterboxId => WithEdgeStandIn(
             TtsProviderCatalog.ChatterboxId,
-            new ChatterboxTtsProvider(
+            Watched(new ChatterboxTtsProvider(
             _files,
             ChatterboxFolder(),
             ChatterboxVoicesFolder(),
@@ -501,11 +514,17 @@ public sealed class SpeechClients : IDisposable
             _loggers.CreateLogger<ChatterboxTtsProvider>(),
             _ownVoice,
             _customVoices,
-            _paths.PronunciationsFile),
+            _paths.PronunciationsFile)),
             () => D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())),
 
         _ => null,
     };
+
+    private ChatterboxTtsProvider Watched(ChatterboxTtsProvider chatterbox)
+    {
+        chatterbox.ClipStateChanged += id => ChatterboxClipChanged?.Invoke(id);
+        return chatterbox;
+    }
 
     private LocalVoiceWithEdgeStandIn WithEdgeStandIn(string providerId, ITtsProvider local, Func<bool> installed) =>
         new(

@@ -5,9 +5,12 @@ internal static class ChatterboxClipDownload
 {
     private static readonly HttpClient Http = CreateClient();
 
-    public static async Task<byte[]> GetAsync(Uri url, long bytes, CancellationToken cancellationToken)
+    public static Task<byte[]> GetAsync(Uri url, long bytes, CancellationToken cancellationToken) =>
+        GetAsync(Http, url, bytes, cancellationToken);
+
+    internal static async Task<byte[]> GetAsync(HttpClient http, Uri url, long bytes, CancellationToken cancellationToken)
     {
-        using var response = await Http
+        using var response = await http
             .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
 

@@ -34,8 +34,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly HashSet<string> _verified = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Task<bool>> _fetching = new(StringComparer.Ordinal);
 
-    /// <summary>Voices whose fetch failed this session; a line does not ask again, a pick or a preview does.</summary>
-    private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
+    /// <summary>Voices whose fetch failed this session, with the reason; a line does not ask again, a pick or a preview does.</summary>
+    private readonly Dictionary<string, string> _failed = new(StringComparer.Ordinal);
     private readonly HashSet<string> _failureLogged = new(StringComparer.Ordinal);
     private readonly HashSet<string> _standInLogged = new(StringComparer.Ordinal);
     private readonly Dictionary<string, CustomVoice> _customKnown = new(StringComparer.Ordinal);
@@ -219,6 +219,59 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         return Fetching(voice).WaitAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// A voice's clip state changed: a fetch started or ended. Raised with the voice id on the thread that started or
+    /// ran the fetch, which may be the UI thread.
+    /// </summary>
+    public event Action<string>? ClipStateChanged;
+
+    /// <summary>Where a voice's clip is, or null for a voice not listed. A fetched clip is read and hashed once a session.</summary>
+    public ChatterboxClipState? ClipState(string voiceId)
+    {
+        if (string.Equals(voiceId, OwnVoice.VoiceId, StringComparison.Ordinal))
+        {
+            return _own is { Exists: true } ? new ChatterboxClipState(ChatterboxClip.Custom, 0) : null;
+        }
+
+        if (CustomVoices.IsId(voiceId))
+        {
+            return _custom?.List().Any(voice => voice.Id == voiceId) == true
+                ? new ChatterboxClipState(ChatterboxClip.Custom, 0)
+                : null;
+        }
+
+        if (Find(voiceId) is not { } voice)
+        {
+            return null;
+        }
+
+        if (voice.Shipped)
+        {
+            return new ChatterboxClipState(ChatterboxClip.Shipped, voice.Bytes);
+        }
+
+        string? reason;
+
+        lock (_clips)
+        {
+            if (_fetching.ContainsKey(voiceId))
+            {
+                return new ChatterboxClipState(ChatterboxClip.Fetching, voice.Bytes);
+            }
+
+            _failed.TryGetValue(voiceId, out reason);
+        }
+
+        if (IsHere(voice))
+        {
+            return new ChatterboxClipState(ChatterboxClip.Fetched, voice.Bytes);
+        }
+
+        return reason is null
+            ? new ChatterboxClipState(ChatterboxClip.NotFetched, voice.Bytes)
+            : new ChatterboxClipState(ChatterboxClip.Failed, voice.Bytes) { Reason = reason };
+    }
+
     /// <summary>The paralinguistic tags in <c>tokenizer.json</c>'s <c>added_tokens</c>; none before the download.</summary>
     public bool Performs(string tag)
     {
@@ -273,7 +326,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
         lock (_clips)
         {
-            failed = _failed.Contains(chosen.Voice.Id);
+            failed = _failed.ContainsKey(chosen.Voice.Id);
         }
 
         if (!failed)
@@ -639,6 +692,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <summary>The fetch of a voice's clip under way, started when there is none. Never faults.</summary>
     private Task<bool> Fetching(ChatterboxVoice voice)
     {
+        Task<bool> started;
+
         lock (_clips)
         {
             if (_fetching.TryGetValue(voice.Voice.Id, out var running))
@@ -646,10 +701,12 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 return running;
             }
 
-            var started = Task.Run(() => FetchClipAsync(voice));
+            started = Task.Run(() => FetchClipAsync(voice));
             _fetching[voice.Voice.Id] = started;
-            return started;
         }
+
+        ClipChanged(voice.Voice.Id);
+        return started;
     }
 
     private async Task<bool> FetchClipAsync(ChatterboxVoice voice)
@@ -688,7 +745,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 
             lock (_clips)
             {
-                _failed.Add(id);
+                _failed[id] = ex.Message;
                 first = _failureLogged.Add(id);
             }
 
@@ -705,6 +762,21 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             {
                 _fetching.Remove(id);
             }
+
+            ClipChanged(id);
+        }
+    }
+
+    /// <summary>Raises <see cref="ClipStateChanged"/>; a handler that throws is logged and does not fault the fetch.</summary>
+    private void ClipChanged(string id)
+    {
+        try
+        {
+            ClipStateChanged?.Invoke(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "A handler of Chatterbox voice {Id}'s clip state threw", id);
         }
     }
 
