@@ -33,6 +33,17 @@ public class AStationSearchWritesEachFilterInItsShapeTests
     }
 
     [Fact]
+    public void ServicesBeyondTheFirstNineteenAreWrittenAsSpanshSpellsThem()
+    {
+        var services = Filters(new StationSearch { Services = "Workshop, System Colonisation" })
+            .GetProperty("services");
+
+        Assert.Equal(
+            ["Workshop", "System Colonisation"],
+            services.EnumerateArray().Select(service => Assert.Single(Values(service.GetProperty("name")))));
+    }
+
+    [Fact]
     public void TheDefaultTypeListIsEveryTypeButTheCarrier()
     {
         var types = Values(Filters(new StationSearch { Services = "Refuel" }).GetProperty("type"));

@@ -88,6 +88,33 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             new ToolArguments(values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal)),
             TestContext.Current.CancellationToken);
 
+    [Fact]
+    public void EveryOfferedServiceParsesAndAnUnknownOneIsRefusedWithTheWholeList()
+    {
+        Assert.Equal(37, StationQuery.ServiceNames.Count);
+
+        foreach (var service in StationQuery.ServiceNames)
+        {
+            Assert.True(
+                StationQuery.TryParse(
+                    new StationSearch { ReferenceSystem = "Sol", Services = service.Name },
+                    out var query,
+                    out var failure),
+                failure);
+            Assert.Equal([service.Field], query.Services);
+        }
+
+        Assert.False(StationQuery.TryParse(
+            new StationSearch { ReferenceSystem = "Sol", Services = "Dock" },
+            out _,
+            out var refusal));
+        Assert.Equal(
+            "'Dock' is not a station service I know. It has to be one of: "
+            + $"{string.Join(", ", StationQuery.ServiceNames.Select(known => known.Name))}.",
+            refusal);
+        Assert.Equal(37, refusal.Split(", ").Length);
+    }
+
     [Theory]
     [InlineData("security", "High")]
     [InlineData("faction", "Mother Gaia")]

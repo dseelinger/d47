@@ -10,6 +10,8 @@
 
 Every control you press in the panel is now 44 pixels tall, the size a ray hits in the headset. That covers the breadcrumb above a picker page, the session figures button, dropdown pickers and their options, the Phrases page's Say box, Add and ✕, engineer names, the level cells in Transcript › Log File, the checklist's "completed" box, the rows on a choice page, Powerplay system rows, and "Change filters" and "Plot" on Best Cargo. Dropdown pickers are 4 pixels taller when closed.
 
+Station search offers every service Elite has, not only 19 of them. `services` now also accepts Contacts, Missions, Missions Generated, On Dock Mission, Tuning, Workshop, Refinery Contact, Powerplay, Shop, Livery, Social Space, Squadron Bank, System Colonisation, Construction Services, Fleet Carrier Administration, Fleet Carrier Fuel, Fleet Carrier Management and Fleet Carrier Vendor, so "find a station with a workshop near Sol" works. The earlier 19 keep their names.
+
 The setup wizard skips the Listening and Talk button steps on a machine with no microphone, and its Ready step shows Listening as "No microphone found". The listening settings are saved as they were. Set listening and push-to-talk in Settings once a microphone is plugged in.
 
 A test drive no longer opens with the unknown-settings-keys message or the "is available" update band. The unknown-keys message is also no longer spoken at startup. A settings file d47 refuses still shows its error, and the update check from the Version row still works. An installed build behaves as before.
