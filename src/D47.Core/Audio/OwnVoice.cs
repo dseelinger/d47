@@ -55,8 +55,7 @@ public sealed class OwnVoice
 
         if (seconds < MinLength.TotalSeconds)
         {
-            return $"The recording is {seconds:0.0} s long and needs at least {MinLength.TotalSeconds:0} s. "
-                + "Read the whole sentence at an easy pace.";
+            return $"The recording is {seconds:0.0} s long and needs at least {MinLength.TotalSeconds:0} s.";
         }
 
         var peak = 0f;
