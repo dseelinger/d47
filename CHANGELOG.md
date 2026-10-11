@@ -26,6 +26,8 @@ Typing three or more letters into the System page's field lists, under it, up to
 
 The same list appears under the Near field on Search › Systems, Stations and Bodies, under Destination, From and the carrier route's To and From on Navigation › Plan, and under Sell in on Navigation › Best cargo. Picking a name only fills the field; it does not run the search or plot the route. A field filled by a spoken or saved search, or from Fleet › Carrier, does not open the list.
 
+The Home system box in Settings › Callouts lists the same system names as you type. Picking one fills the box and saves it as your home system. With "Look things up in the galaxy" off the box lists nothing, sends nothing, and can still be typed into and saved.
+
 HISTORY on the System, Systems, Stations and Bodies pages opens your last 25 searches in a full-page list, newest first, with a Kind filter. Open shows a galaxy search's stored answer and how long ago you asked it, with no new request, or a system's page fetched again. REFRESH asks the same question again from the system the search measured from.
 
 A line you type into the Checklist page's Add box is still added at once. D47 then sends that line, once and on its own, to the AI to ask whether docking, arriving, buying, selling or a carrier buy order would tick it. If the AI names one, a proposal such as "Tick \"Buy 5 Hydrogen Fuel\" when you buy 5 Hydrogen Fuel" waits under Suggestions for you to accept or decline. If the AI names none, no AI is set up, or the request fails, the line stays one you tick yourself. A line you edit, tick or delete before the answer arrives is left alone. Settings › Privacy and egress lists the request.

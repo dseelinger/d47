@@ -198,7 +198,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         D47.App.Headset.VrHost? vrHost = null,
 
         // At the end, by the same rule (#80).
-        D47.Core.Input.BindingProfiles? bindingProfiles = null)
+        D47.Core.Input.BindingProfiles? bindingProfiles = null,
+        SystemNameLookup? systemNames = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
@@ -221,7 +222,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 recording,
                 bindingProfiles,
                 reservedPhrases ?? [],
-                downloadModel));
+                downloadModel,
+                systemNames));
 
         Build();
 

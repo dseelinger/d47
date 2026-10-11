@@ -511,12 +511,41 @@ internal sealed partial class SettingControls
             }
         };
 
-        return (box, () =>
+        SystemNameSuggestions? names = null;
+
+        if (row.NamesASystem && services.SystemNames is { } lookup)
+        {
+            names = new SystemNameSuggestions(
+                box,
+                lookup.Lookup,
+                lookup.Enabled,
+                match =>
+                {
+                    names!.SetText(match.Name);
+                    host.Apply(row.Key, match.Name, message);
+                },
+                lookup.Pause);
+        }
+
+        Control control = names is null
+            ? box
+            : new StackPanel { Spacing = 3, HorizontalAlignment = HorizontalAlignment.Left, Children = { box, names.List } };
+
+        return (control, () =>
         {
             // Not while the Commander is typing in it: leaving the box saves what they typed.
             if (!box.IsFocused)
             {
-                box.Text = host.Settings.Read(row.Key) ?? string.Empty;
+                var stored = host.Settings.Read(row.Key) ?? string.Empty;
+
+                if (names is null)
+                {
+                    box.Text = stored;
+                }
+                else
+                {
+                    names.SetText(stored);
+                }
             }
 
             // The default is a placeholder, never a value, so "I have not chosen" stays distinguishable from

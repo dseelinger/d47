@@ -824,7 +824,10 @@ public partial class MainWindow : Window
 
             tabPlaceId,
             _host.Vr,
-            _host.BindingProfiles);
+            _host.BindingProfiles,
+            _host.StarSystems is { } systems
+                ? new SystemNameLookup(systems.PrefixNamesAsync, () => _host.Settings.Current.Knowledge.GalaxySearch)
+                : null);
     }
 
     public Control BuildSettingsPage()

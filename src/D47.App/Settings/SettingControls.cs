@@ -49,7 +49,14 @@ internal sealed record SettingServices(
     (D47.Core.Diagnostics.Recording.RecordingLog Log, Func<DateTimeOffset> Now)? Recording,
     D47.Core.Input.BindingProfiles? BindingProfiles,
     IReadOnlyList<string> Reserved,
-    Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? DownloadModel);
+    Func<WhisperModel, IProgress<ModelProgress>, Task<ModelInstallResult>>? DownloadModel,
+    SystemNameLookup? SystemNames = null);
+
+/// <summary>What a system-name box needs: the lookup, whether galaxy search is on, and the pause before asking.</summary>
+public sealed record SystemNameLookup(
+    Func<string, CancellationToken, Task<IReadOnlyList<D47.Core.Knowledge.SystemNameMatch>>> Lookup,
+    Func<bool> Enabled,
+    TimeSpan? Pause = null);
 
 internal readonly record struct SettingControl(Control Control, Action Refresh, (Control Block, string Words)? Under = null);
 

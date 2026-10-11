@@ -355,6 +355,9 @@ public sealed record SettingRow
     /// <summary>Whether the value is a paragraph rather than a line.</summary>
     public bool Multiline { get; init; }
 
+    /// <summary>Whether a <see cref="SettingKind.Text"/> row's value is a star system name, which its box suggests.</summary>
+    public bool NamesASystem { get; init; }
+
     /// <summary>An optional subheading these rows sit under.</summary>
     public string? Group { get; init; }
 

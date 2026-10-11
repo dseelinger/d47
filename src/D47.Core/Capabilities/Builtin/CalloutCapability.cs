@@ -1087,6 +1087,7 @@ public static class CalloutCapability
             Label = "Home system",
             Help = "Named for the arrival callout. There is no default — no journal event reports where you call home.",
             Kind = SettingKind.Text,
+            NamesASystem = true,
             DefaultDisplay = "(none)",
             DocsAnchor = "home-system",
             Scope = SettingScope.Commander,
