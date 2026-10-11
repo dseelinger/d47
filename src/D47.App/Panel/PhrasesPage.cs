@@ -102,7 +102,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             PlaceholderText = SayPlaceholder,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Control,
-            MinHeight = 40,
+            MinHeight = TypeScale.MinimumTarget,
             VerticalContentAlignment = VerticalAlignment.Center,
             InnerLeftContent = Prefix("Say"),
         };
@@ -127,8 +127,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         var add = new Button
         {
             Content = "Add",
-            Height = 40,
-            MinHeight = 40,
+            Height = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Top,
@@ -479,8 +479,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         {
             Width = 44,
             MinWidth = 44,
-            Height = 40,
-            MinHeight = 40,
+            Height = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(0),
             HorizontalContentAlignment = HorizontalAlignment.Center,
             Content = Glyphs.Text("✕", TypeScale.Glyph),

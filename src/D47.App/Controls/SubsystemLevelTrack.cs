@@ -253,7 +253,7 @@ public sealed class SubsystemLevelTrack : ContentControl
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 Padding = new Thickness(0),
-                MinHeight = 30,
+                MinHeight = TypeScale.MinimumTarget,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Stretch,

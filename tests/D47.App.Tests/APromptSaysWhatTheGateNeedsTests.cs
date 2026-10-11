@@ -65,4 +65,34 @@ public class APromptSaysWhatTheGateNeedsTests
 
         Assert.True(Says(panel, PanelPrompts.WaitingFallback));
     }
+
+    [AvaloniaFact]
+    public void AChoiceRowIsFortyFourTall()
+    {
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Prompts.Choose(
+            new ChoiceRequest(
+                "choose:weapon3",
+                "Weapon 3",
+                "Weapon 3",
+                "Medium hardpoint.",
+                [new ChoiceOption("beam", "Beam Laser"), new ChoiceOption("multi", "Multi-Cannon")],
+                "beam",
+                ChoiceSurface.Page),
+            _ => { });
+        Dispatcher.UIThread.RunJobs();
+
+        var rows = panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "Multi-Cannon"))
+            .ToList();
+
+        Assert.NotEmpty(rows);
+        Assert.All(rows, row => Assert.True(row.Bounds.Height >= D47.App.Theming.TypeScale.MinimumTarget, $"a choice row is {row.Bounds.Height}px tall"));
+
+        window.Close();
+    }
 }

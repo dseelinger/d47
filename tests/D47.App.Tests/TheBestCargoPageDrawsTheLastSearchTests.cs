@@ -281,6 +281,22 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Equal("Diaguandri", opened.Page.SellIn);
     }
 
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void ChangeFiltersAndPlotAreTheHeightOfAFingerTip()
+    {
+        using var opened = Open();
+        Search(opened.Page, "Diaguandri");
+
+        var buttons = opened.Page.GetVisualDescendants().OfType<Button>().ToList();
+
+        foreach (var label in new[] { "Change filters", "Plot Diaguandri" })
+        {
+            var button = Assert.Single(buttons, candidate => candidate.Content as string == label);
+            Assert.True(button.Bounds.Height >= D47.App.Theming.TypeScale.MinimumTarget, $"{label} is {button.Bounds.Height}px tall");
+        }
+    }
+
     [AvaloniaFact]
     public void TheFiltersLineNamesTheSavedTradeFilters()
     {

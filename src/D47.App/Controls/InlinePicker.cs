@@ -82,8 +82,8 @@ public sealed class InlinePicker : ContentControl
         {
             Name = ButtonName,
             Content = layout,
-            Height = 40,
-            MinHeight = 40,
+            Height = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -232,7 +232,7 @@ public sealed class InlinePicker : ContentControl
         {
             Content = content,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            MinHeight = 36,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,

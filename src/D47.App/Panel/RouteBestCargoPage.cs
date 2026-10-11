@@ -455,7 +455,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (_changeFilters is { } change)
         {
-            var tile = new Button { Content = "Change filters", MinHeight = 36, Height = 36, VerticalAlignment = VerticalAlignment.Center };
+            var tile = new Button { Content = "Change filters", MinHeight = TypeScale.MinimumTarget, Height = TypeScale.MinimumTarget, VerticalAlignment = VerticalAlignment.Center };
             tile.Click += (_, _) => change();
             Grid.SetColumn(tile, 1);
             grid.Children.Add(tile);
@@ -492,7 +492,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (plot)
         {
-            var tile = new Button { Content = $"Plot {destination}", MinHeight = 32, Height = 32 };
+            var tile = new Button { Content = $"Plot {destination}", MinHeight = TypeScale.MinimumTarget, Height = TypeScale.MinimumTarget };
             tile.Click += async (_, _) => await _registry
                 .InvokeAsync(
                     PlotTool,

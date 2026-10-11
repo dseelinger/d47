@@ -415,4 +415,18 @@ public class ThePhrasesPageAddsWhatTheVoiceWouldTests
         Assert.True(result.IsError);
         Assert.NotEmpty(surface.Store.For("F1"));
     }
+
+    [AvaloniaFact]
+    public void TheBoxAddAndForgetAreFortyFourTall()
+    {
+        using var surface = Open();
+
+        var forget = surface.Page.GetVisualDescendants().OfType<Button>()
+            .First(button => AutomationProperties.GetName(button) == PhrasesPage.Forget);
+        var add = surface.Page.GetVisualDescendants().OfType<Button>().First(button => button.Content as string == "Add");
+
+        Assert.True(Say(surface).Bounds.Height >= TypeScale.MinimumTarget, "the Say box");
+        Assert.True(add.Bounds.Height >= TypeScale.MinimumTarget, "Add");
+        Assert.True(forget.Bounds.Height >= TypeScale.MinimumTarget, "the forget glyph");
+    }
 }

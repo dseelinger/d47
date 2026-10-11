@@ -457,8 +457,7 @@ public sealed class PanelPrompts : IHearsText
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
 
-            // Tall enough to be pressed by a ray at a metre.
-            MinHeight = 34,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 6),
         };
 

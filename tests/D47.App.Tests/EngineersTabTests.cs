@@ -682,4 +682,27 @@ public class EngineersTabTests
             .OfType<TextBlock>()
             .Select(block => block.Text)
             .Where(text => text is "✓ MET" or "IN PROGRESS" or "NOT MET" or "? UNKNOWN")];
+
+    [AvaloniaFact]
+    public void AnEngineerLinkAndTheBreadcrumbAreFortyFourTall()
+    {
+        var surface = Open();
+
+        Press(surface.Panel, "FELICITY FARSEER").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var link = (Button)EngineersPages.Name(
+            new D47.Core.Knowledge.Engineer { Id = 300100, Name = "Felicity Farseer" }, surface.Panel.Nav, 14);
+        link.Measure(new Avalonia.Size(400, double.PositiveInfinity));
+
+        Assert.True(link.DesiredSize.Height >= D47.App.Theming.TypeScale.MinimumTarget, "the engineer link");
+
+        var crumbs = surface.Panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Theme == surface.Panel.FindResource("D47.Crumb")).ToList();
+
+        Assert.NotEmpty(crumbs);
+        Assert.All(crumbs, crumb => Assert.True(crumb.Bounds.Height >= D47.App.Theming.TypeScale.MinimumTarget, "a breadcrumb"));
+
+        surface.Window.Close();
+    }
 }

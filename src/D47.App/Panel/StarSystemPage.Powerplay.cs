@@ -315,7 +315,7 @@ public sealed partial class StarSystemPage
 
         var row = new Border
         {
-            MinHeight = 40,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
             Child = grid,
         };

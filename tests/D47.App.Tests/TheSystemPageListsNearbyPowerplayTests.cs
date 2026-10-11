@@ -303,4 +303,18 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void EverySystemRowIsFortyFourTall()
+    {
+        var (panel, window, _) = Shown();
+        OpenPowerplay(panel);
+
+        var rows = Rows(panel);
+
+        Assert.NotEmpty(rows);
+        Assert.All(rows, row => Assert.True(row.Bounds.Height >= D47.App.Theming.TypeScale.MinimumTarget, $"a row is {row.Bounds.Height}px tall"));
+
+        window.Close();
+    }
 }

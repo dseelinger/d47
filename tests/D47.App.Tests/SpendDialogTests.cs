@@ -358,4 +358,18 @@ public class SpendDialogTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void TheSessionFiguresButtonIsFortyFourTall()
+    {
+        var headset = new D47.App.Panel.PanelView { DataContext = new D47.App.Panel.PanelViewModel() };
+        var window = new Window { Content = headset, Width = 900, Height = 700 };
+        window.Show();
+        headset.EnableTurnDetails(() => Task.CompletedTask, () => 0m);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.True(headset.FindControl<Control>("TurnDetails")!.Bounds.Height >= TypeScale.MinimumTarget);
+
+        window.Close();
+    }
 }

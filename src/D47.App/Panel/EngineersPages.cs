@@ -84,7 +84,7 @@ public static class EngineersPages
             Background = Brushes.Transparent,
             Padding = new Thickness(0, 2),
             HorizontalAlignment = HorizontalAlignment.Left,
-            MinHeight = 30,
+            MinHeight = TypeScale.MinimumTarget,
         };
 
         button.Click += (_, _) => nav.Drill(Crumb(engineer));

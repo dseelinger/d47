@@ -176,7 +176,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     private bool _showArcs;
 
     /// <summary>The floor under anything on this page a ray has to hit, in pixels.</summary>
-    private const double TouchTarget = 30;
+    private const double TouchTarget = TypeScale.MinimumTarget;
 
     /// <summary>Which arc is open, by key.</summary>
     private string? _openArc;

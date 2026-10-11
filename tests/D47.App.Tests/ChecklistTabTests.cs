@@ -655,4 +655,20 @@ public class ChecklistTabTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void ALineTickIsFortyFourTall()
+    {
+        var checklists = Checklists(TestSurface.MemoryFolder("d47-checklist-tests"));
+
+        checklists.AddNote(ChecklistScope.Universal, "buy limpets");
+
+        var (window, panel) = Open(checklists);
+
+        var tick = Assert.Single(Ticks.On(panel));
+
+        Assert.True(tick.Bounds.Height >= D47.App.Theming.TypeScale.MinimumTarget, $"the tick is {tick.Bounds.Height}px tall");
+
+        window.Close();
+    }
 }
