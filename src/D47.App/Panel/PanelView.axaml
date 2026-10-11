@@ -107,15 +107,10 @@
     -->
     <DockPanel x:Name="Header" DockPanel.Dock="Top" LastChildFill="False">
       <!--
-        Hidden until the host hands this surface a way to open the site (EnableHelp). The headset
-        copy is never handed one: the button opened a browser on the desktop, which a Commander in
-        the headset cannot see (change-requests.md 24).
-      -->
-      <!--
         The pre-release mark (#92). Docked right so it sits immediately left of the help mark, and
         hidden by default for the same reason the help button is: a local IsVisible outranks a
-        style setter, so this one is furnished by hand and is off on the headset's copy along with
-        the button it sits beside. A Commander in a headset is flying, and a badge about which
+        style setter, so this one is furnished by hand and is off on the headset's copy.
+        A Commander in a headset is flying, and a badge about which
         build they are on is chrome they cannot dismiss and did not ask for.
       -->
 
@@ -203,8 +198,8 @@
 
     <!--
       The footer: the microphone's state over the ask box, with one rule above both.
-      The footer shows whenever the transcript tab does, so the microphone state survives mini and the
-      headset; the ask band goes with them.
+      The footer shows whenever the transcript tab does, so the microphone state survives mini; the
+      ask band goes with it.
     -->
     <Border x:Name="Footer"
             DockPanel.Dock="Bottom"
@@ -387,8 +382,7 @@
             tab highlighted until it was clicked. Nameless, they group by their parent panel, which
             is one strip per surface - which is what a tab strip is.
 
-            Six tabs, and five in the headset: Settings stays hidden there for the reason recorded
-            below. Every tab but Transcript is hidden until a host furnishes it, which is what lets
+            Every tab but Transcript is hidden until a host furnishes it, which is what lets
             the phases that fill them land one at a time without a dead tab in between - the same
             rule Settings has followed since Phase 12, generalised.
 
@@ -442,10 +436,7 @@
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <!--
-              Hidden until a host says otherwise, and only the desktop window ever does. The headset
-              renders this same view, and a 1180-pixel nav column at a metre is not a settings surface
-              so much as a wall - so the tab is absent there rather than present and asking to be
-              remembered about (list.md Phase 12).
+              Hidden until a host furnishes Settings (EnableSettings).
             -->
             <RadioButton x:Name="SettingsTab"
                          Theme="{StaticResource D47.Tab}"

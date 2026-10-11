@@ -109,8 +109,7 @@ public partial class MainWindow : Window
         Panel.Avatar.Library = host?.Avatars;
         _model.AskRequested += () => _ = AskAsync();
 
-        // The desktop window is the one surface with a browser to open the site in; the headset copy is not
-        // handed this and so shows no help button (change-requests.md 24).
+        // Only the desktop window can open the site in a browser; the headset shows help pages in the panel.
         Panel.EnableHelp(url => Process.Start(
             new ProcessStartInfo(url) { UseShellExecute = true }));
         _model.UpdateAccepted += OnUpdateAccepted;
@@ -128,8 +127,7 @@ public partial class MainWindow : Window
             _model.JournalSource = noise => host.JournalLog.Read(noise);
             _model.JournalDocumentSource = noise => host.JournalLog.Document(noise);
 
-            // And the JSON behind them, which is this window's alone: a wall of fields is there to be
-            // selected and pasted into a bug report, which is an act with no meaning in mid-air.
+            // And the JSON behind them.
             Panel.EnableRawJournal();
 
             // And it keeps the switch where the Commander left it (#267).
@@ -138,8 +136,7 @@ public partial class MainWindow : Window
             // The sharper half of that same act (#160).
             Panel.EnableDonation(() => _ = ShowDonationAsync(host));
 
-            // The window that can show settings says so; the headset's copy of this same view is handed
-            // nothing and therefore has no Settings tab (Phase 12).
+            // Furnishes the Settings tab.
             Panel.EnableSettings(
                 BuildSettingsPage,
                 RevealSetting,

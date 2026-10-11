@@ -1809,8 +1809,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         // saying nothing about a page with no turns on it.
         AskRow.IsVisible = full && transcript;
 
-        // The footer shares that rule but not the ask row's: mini and the headset take the ask box away and
-        // keep the microphone's state, since continuous capture with no visible state is the thing a
+        // The footer shares that rule but not the ask row's: mini takes the ask box away and keeps the
+        // microphone's state, since continuous capture with no visible state is the thing a
         // Commander is right to distrust.
         Footer.IsVisible = transcript;
 
