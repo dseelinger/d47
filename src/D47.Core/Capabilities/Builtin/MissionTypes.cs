@@ -18,12 +18,22 @@ internal static class MissionTypes
             return DescribeGroups();
         }
 
-        var key = Fold(type);
-        var names = MissionCatalogue.All
-            .Where(name => Fold(name.Family) == key || Fold(name.Family) == "mission" + key || Fold(name.Words) == key)
-            .ToList();
+        var names = Resolve(type);
 
-        return names.Count == 0 ? DescribeUnknown(type, key) : DescribeType(names, ranks);
+        return names.Count == 0 ? DescribeUnknown(type) : DescribeType(names, ranks);
+    }
+
+    /// <summary>The names a spoken or internal mission type covers: by family, by spoken words, or by one exact name.</summary>
+    public static List<MissionName> Resolve(string type)
+    {
+        var key = Fold(type);
+
+        return MissionCatalogue.All
+            .Where(name => Fold(name.Family) == key
+                           || Fold(name.Family) == "mission" + key
+                           || Fold(name.Words) == key
+                           || Fold(name.Name) == key)
+            .ToList();
     }
 
     private static string DescribeGroups()
@@ -96,8 +106,10 @@ internal static class MissionTypes
             : $"You hold no {navy} rank.";
     }
 
-    private static string DescribeUnknown(string type, string key)
+    /// <summary>That no mission type has this name, with the nearest that do.</summary>
+    public static string DescribeUnknown(string type)
     {
+        var key = Fold(type);
         var nearest = MissionCatalogue.All
             .Select(name => name.Words)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -117,7 +129,7 @@ internal static class MissionTypes
 
     private static string Capitalise(string text) => char.ToUpperInvariant(text[0]) + text[1..];
 
-    private static string JoinAnd(IReadOnlyList<string> items) => items.Count switch
+    public static string JoinAnd(IReadOnlyList<string> items) => items.Count switch
     {
         0 => string.Empty,
         1 => items[0],

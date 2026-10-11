@@ -178,6 +178,9 @@ public class AnAnswerOffersTheClipboardTests
             ColonisationQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Sol", 0, []));
 
+        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }

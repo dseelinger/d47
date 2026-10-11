@@ -642,6 +642,7 @@ public static class GalaxyCapability
                 Handler = (arguments, cancellationToken) =>
                     HowToGetAsync(galaxy, trade, currentSystem, settings, gameState, arguments, cancellationToken),
             },
+            MissionStations.Definition(galaxy, currentSystem, settings, gameState),
         ],
         Settings =
         [
@@ -2599,7 +2600,7 @@ public static class GalaxyCapability
         return $"a {size}{query.Module}".Replace("  ", " ", StringComparison.Ordinal);
     }
 
-    private const string Unavailable =
+    internal const string Unavailable =
         "Galaxy search is switched off, so I can't look that up. The Commander can turn it on in settings.";
 
     /// <summary>The result as prose.</summary>

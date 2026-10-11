@@ -54,4 +54,25 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
 
     public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
         inner.SystemBiologyAsync(systemAddress, cancellationToken);
+
+    public async Task<MissionStationScan> FindMissionStationsAsync(
+        MissionStationQuery query, CancellationToken cancellationToken)
+    {
+        var scan = await inner.FindMissionStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+        lock (_gate)
+        {
+            if (!string.IsNullOrWhiteSpace(scan.Reference))
+            {
+                _names.Add(scan.Reference);
+            }
+
+            foreach (var system in scan.Systems)
+            {
+                _names.Add(system.System.Name);
+            }
+        }
+
+        return scan;
+    }
 }

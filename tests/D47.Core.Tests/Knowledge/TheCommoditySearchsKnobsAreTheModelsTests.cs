@@ -60,6 +60,9 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             CancellationToken cancellationToken) =>
             Task.FromResult(new ColonisationScan("Eurybia", 0, []));
 
+        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }

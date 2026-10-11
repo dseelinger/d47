@@ -360,6 +360,50 @@ internal static class SpanshResponse
             bodies);
     }
 
+    /// <summary>The systems of a mission station search, each with its factions and its stations.</summary>
+    public static MissionStationScan ReadMissionStations(JsonDocument document)
+    {
+        var root = document.RootElement;
+
+        var systems = new List<MissionSystem>();
+
+        if (root.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var result in results.EnumerateArray())
+            {
+                var system = ReadSystem(result);
+
+                systems.Add(new MissionSystem(
+                    system,
+                    [.. result.Items("stations")
+                        .Where(station => station.ValueKind == JsonValueKind.Object)
+                        .Select(station => ReadStation(station) with
+                        {
+                            SystemName = system.Name,
+                            SystemAddress = system.SystemAddress,
+                            Distance = system.Distance,
+                            Services = ReadServiceNames(station),
+                        })]));
+            }
+        }
+
+        return new MissionStationScan(
+            ReadReference(root),
+            root.TryGetProperty("count", out var count) && count.TryGetInt32(out var total) ? total : systems.Count,
+            systems);
+    }
+
+    /// <summary>A systems search writes a station's services as plain names, where a station search writes objects.</summary>
+    private static IReadOnlyList<string> ReadServiceNames(JsonElement station) =>
+        [.. station.Items("services")
+            .Select(service => service.ValueKind switch
+            {
+                JsonValueKind.String => service.GetString(),
+                JsonValueKind.Object => String(service, "name"),
+                _ => null,
+            })
+            .OfType<string>()];
+
     /// <summary>The colonisation candidate scan (Phase 18, "Find somewhere worth colonising").</summary>
     public static ColonisationScan ReadColonisation(JsonDocument document)
     {

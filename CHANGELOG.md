@@ -14,6 +14,8 @@ A story can pin a cast member to any speaking voice provider, not only Kokoro an
 
 Ask "what kinds of missions are there" to hear the board's groups with their mission types, or "where would I find a disable mission" to hear the faction states, governments and economies that type's names were recorded under, whether it needs a Federation or Empire navy rank and whether you hold one, and whether it comes from engineer bases. The answer gives the likeliest circumstances, not what a board offers. An unknown type is answered with the nearest names.
 
+Ask "find me somewhere to get a disable mission" to hear the five stations likeliest to have one, within 50 light years unless you say otherwise. Each comes with its system, how far it is and how many factions there are in a matching state. Every faction present in a system counts, not only the controlling one. Fleet carriers and other stations without a mission board are left out, and for an on-foot type so is any station without a social space, unless it is a settlement. A type that needs a navy rank you do not hold says so first, and an engineer's courier mission names the nearest engineer bases instead of searching. The Galaxy search entry in Privacy and egress names the faction states or governments the search sends.
+
 The logbook's date range is chosen on a full page instead of a pop-up calendar, so it works in the headset. The FROM and TO tiles open a list of the days you have journals for, newest first, and a day can also be typed as year-month-day.
 
 The spend dialog's reset windows open in the page instead of a pop-up menu, so they work in the headset. The Reset list is a section at the end of the dialog, and the footer keeps the help mark and Close.

@@ -103,6 +103,9 @@ public interface IGalaxyService
 
     /// <summary>The reported biology in a system, by id64. Empty when the service does not know the system.</summary>
     Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken);
+
+    /// <summary>The nearest systems whose factions match a mission type's states or governments, with their stations.</summary>
+    Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken);
 }
 
 /// <summary>The service could not answer.</summary>

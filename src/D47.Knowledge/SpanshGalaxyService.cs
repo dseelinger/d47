@@ -101,6 +101,21 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         return SpanshResponse.ReadColonisation(document!);
     }
 
+    public async Task<MissionStationScan> FindMissionStationsAsync(
+        MissionStationQuery query,
+        CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(SpanshRequest.MissionStations(query), Encoding.UTF8, "application/json");
+        using var document = await SendAsync(
+            _logger,
+            token => _http.PostAsync("api/systems/search", content, token),
+            "the galaxy search",
+            cancellationToken,
+            budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
+
+        return SpanshResponse.ReadMissionStations(document!);
+    }
+
     public async Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
     {
         using var document = await SendAsync(

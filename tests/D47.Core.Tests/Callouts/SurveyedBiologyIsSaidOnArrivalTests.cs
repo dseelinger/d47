@@ -20,6 +20,9 @@ public class SurveyedBiologyIsSaidOnArrivalTests
 
         public Exception? Throws { get; init; }
 
+        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
         {
             Asked.Add(systemAddress);

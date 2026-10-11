@@ -380,6 +380,62 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>
+    /// The nearest systems with a faction in one of a mission type's states, or under one of its governments,
+    /// within a distance. A presence filter matches any faction present, not only the controlling one.
+    /// </summary>
+    public static string MissionStations(MissionStationQuery query)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("distance");
+            writer.WriteString("min", "0");
+            writer.WriteString("max", Number(query.MaxDistance));
+            writer.WriteEndObject();
+
+            if (query.FactionFilter.Count > 0)
+            {
+                writer.WriteStartArray("minor_faction_presences");
+                writer.WriteStartObject();
+                writer.WriteStartObject(query.FiltersOnStates ? "state" : "government");
+                writer.WriteStartArray("value");
+
+                foreach (var value in query.FactionFilter)
+                {
+                    writer.WriteStringValue(value);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+                writer.WriteEndArray();
+            }
+
+            writer.WriteEndObject();
+
+            writer.WriteStartArray("sort");
+            writer.WriteStartObject();
+            writer.WriteStartObject("distance");
+            writer.WriteString("direction", "asc");
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+
+            writer.WriteNumber("size", MissionStationQuery.ScanSize);
+            writer.WriteNumber("page", 0);
+            writer.WriteString("reference_system", query.ReferenceSystem);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     /// <summary>The systems an Exploited, Fortified or Stronghold state covers within a distance, nearest first.</summary>
     public static string PowerplayNear(string referenceSystem, double lightYears)
     {

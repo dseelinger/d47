@@ -803,6 +803,38 @@ result — this tool asks where to go first, not for a ranked list.
 With no web access, or a search that fails, the method is still the answer; only the "nearest"
 half is missing. A name nothing here recognises gets the nearest names instead of a guess.
 
+#### `find_mission_stations`
+
+The five stations likeliest to have one mission type on their boards, near a system.
+
+```json
+{"type":"object","properties":{"max_distance":{"type":"number","description":"How far to look, in light years. Default 50, at most 500."},"mission_type":{"type":"string","description":"One mission type as spoken, such as disable or courier, or its internal name such as Mission_Disable."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."}},"required":["mission_type"],"additionalProperties":false}
+```
+
+No source publishes what a mission board holds, so this ranks stations by likelihood. The mission
+type is resolved as `get_mission_types` resolves it, by family, spoken words or one exact internal
+name, and the search uses the faction states its names were recorded under. A type with no states
+uses its governments instead, and a type with neither searches with no faction filter. The filter
+goes on `minor_faction_presences`, which matches every faction present in a system rather than only
+the controlling one, because every faction present puts missions on the board:
+
+```text
+"minor_faction_presences":[{"state":{"value":["Civil Unrest","Civil War","Expansion","Lockdown","Retreat","War"]}}]
+```
+
+The search returns the 30 nearest matching systems, each with its factions and stations, and the
+ranking happens here. A station without `Missions` in its services is dropped, which drops every
+fleet carrier. For an on-foot type, a station without `Social Space` is dropped as well, unless it
+is a settlement. Each remaining station scores one for each faction present in a matching state,
+one for each under a matching government, and one when the system's primary economy matches. The
+answer names the five highest scores, nearest first among equals, each with its system, distance
+and how many factions there are in a matching state. When more systems matched than were returned,
+it says how many it ranked over.
+
+When some of the type's names need a navy rank the Commander does not hold, the answer says so
+before the stations. A type whose every name comes from engineer bases searches nothing and names the three engineer bases nearest the
+Commander instead. Every answer says "likeliest".
+
 ### Notes for anyone reading the code
 
 There is no published API for this service; the endpoints are reverse-engineered by every third

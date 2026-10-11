@@ -95,6 +95,9 @@ public sealed class NoDockBeatAtASettlementInAWarTests
         public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
+        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
