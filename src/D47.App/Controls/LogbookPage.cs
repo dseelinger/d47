@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Logbook;
@@ -19,8 +20,10 @@ public sealed class LogbookPage : DialogPage
 
     private readonly LogbookBook _book;
     private readonly Segment _span;
-    private readonly DatePicker _from;
-    private readonly DatePicker _to;
+    private readonly Button _from;
+    private readonly Button _to;
+    private DateOnly? _fromDay;
+    private DateOnly? _toDay;
     private readonly CheckBox _exact;
     private readonly Button _estimate;
     private readonly Button _write;
@@ -50,8 +53,10 @@ public sealed class LogbookPage : DialogPage
 
         (_exact, _) = LabeledCheckBox.Build("Between two dates instead");
         _exact.Name = "LogExactDates";
-        _from = new DatePicker { IsEnabled = false, MinWidth = 200 };
-        _to = new DatePicker { IsEnabled = false, MinWidth = 200 };
+        _from = new Button { Name = "LogFrom", Content = "FROM", IsEnabled = false, MinWidth = 200, MinHeight = 44 };
+        _to = new Button { Name = "LogTo", Content = "TO", IsEnabled = false, MinWidth = 200, MinHeight = 44 };
+        _from.Click += (_, _) => ChooseDay(from: true);
+        _to.Click += (_, _) => ChooseDay(from: false);
 
         _exact.IsCheckedChanged += (_, _) =>
         {
@@ -125,8 +130,9 @@ public sealed class LogbookPage : DialogPage
 
         var exact = _exact.IsChecked == true;
         var span = LogRanges.Ids[Math.Max(0, _span.SelectedIndex)];
-        var from = exact ? _from.SelectedDate : null;
-        var to = exact ? _to.SelectedDate : null;
+        var from = exact ? _fromDay : null;
+        var to = exact ? _toDay : null;
+        var zone = TimeZoneInfo.Local;
 
         // Off the UI thread, because a month of journals is a real read and Core is synchronous by design —
         // the App is what decides where a long fold runs, exactly as habit mining does.
@@ -136,8 +142,8 @@ public sealed class LogbookPage : DialogPage
             {
                 _book.Estimate(
                     exact ? null : span,
-                    from is { } start ? new DateTimeOffset(start.Date, start.Offset) : null,
-                    to is { } end ? new DateTimeOffset(end.Date.AddDays(1).AddSeconds(-1), end.Offset) : null,
+                    from is { } start ? LogDays.Start(start, zone) : null,
+                    to is { } end ? LogDays.End(end, zone) : null,
                     out var described);
 
                 return described;
@@ -151,6 +157,60 @@ public sealed class LogbookPage : DialogPage
         _quote.Text = message;
         _estimate.IsEnabled = true;
         Refresh();
+    }
+
+    private void ChooseDay(bool from)
+    {
+        if (this.FindAncestorOfType<Panel.PanelView>()?.Prompts is not { } prompts)
+        {
+            return;
+        }
+
+        var word = from ? "From" : "To";
+        var current = from ? _fromDay : _toDay;
+        var button = from ? _from : _to;
+
+        prompts.Pick(
+            $"logbook-day:{word}",
+            word,
+            new PickerRequest
+            {
+                Prompt = word,
+                Choices = [.. _book.JournalDays().Select(LogDays.Write)],
+                Describe = value => LogDays.Parse(value) is { } day ? LogDays.Weekday(day) : value,
+                Current = current is { } c ? LogDays.Write(c) : null,
+                AllowsFreeText = true,
+                WhyEmpty = "There are no journals on this machine to take a day from. You can still type one, like 2026-09-14.",
+            },
+            result => TakeDay(from, result.Value));
+
+        button.Focus();
+    }
+
+    /// <summary>Sets one end of the range from a chosen or typed day, or says the form when it is not one.</summary>
+    private void TakeDay(bool from, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (LogDays.Parse(value) is not { } day)
+        {
+            _quote.Text = LogDays.NotADay;
+            return;
+        }
+
+        if (from)
+        {
+            _fromDay = day;
+            _from.Content = $"FROM {LogDays.Write(day)}";
+        }
+        else
+        {
+            _toDay = day;
+            _to.Content = $"TO {LogDays.Write(day)}";
+        }
     }
 
     private async Task WriteAsync()

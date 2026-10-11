@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The logbook's date range is chosen on a full page instead of a pop-up calendar, so it works in the headset. The FROM and TO tiles open a list of the days you have journals for, newest first, and a day can also be typed as year-month-day.
+
 The spend dialog's reset windows open in the page instead of a pop-up menu, so they work in the headset. The Reset list is a section at the end of the dialog, and the footer keeps the help mark and Close.
 
 Station search can filter by the station's own state. `station_state` takes Construction, Damaged, DamagedHuman, UnderAttack and UnderRepairs, one or more, so "find the nearest damaged station" and "which stations near me are under attack" work. Each result says whether the station is under construction, damaged, under attack or under repairs.

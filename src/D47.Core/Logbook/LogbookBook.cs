@@ -64,6 +64,9 @@ public sealed class LogbookBook(
         }
     }
 
+    /// <summary>The days with journals, newest first.</summary>
+    public IReadOnlyList<DateOnly> JournalDays() => LogDays.FromFileNames(journals());
+
     /// <summary>Raised when the arming or the folder changed.</summary>
     public event Action? Changed;
 
