@@ -353,7 +353,7 @@ public partial class MainWindow : Window
                 Panel.EnableStarSystem(StarSystem);
             }
 
-            // And the same window is the one with a keyboard, so it is the one that gets a search box.
+            // The window gets a search box and Copy page.
             Panel.EnableSearch();
 
             // The Log file page's own settings — log levels — on the tab they only affect (#283).

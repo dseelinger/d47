@@ -182,6 +182,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             BuildTalk = buildTalk,
         }.Furnish(_view);
 
+        _view.EnableSearch();
+
         if (routing?.Plans is { } plans)
         {
             // A plot lands off this surface's own tick, so the frame is marked dirty on its own account (#212).

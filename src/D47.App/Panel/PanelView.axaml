@@ -70,6 +70,10 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
+    <Style Selector="panel|PanelView.headset Button#SearchPrevious, panel|PanelView.headset Button#SearchNext, panel|PanelView.headset Button#CopyButton">
+      <Setter Property="MinHeight" Value="44" />
+    </Style>
+
   </UserControl.Styles>
 
   <UserControl.Resources>

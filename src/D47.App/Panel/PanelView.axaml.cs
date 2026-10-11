@@ -174,6 +174,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             _scroll.ShowFollowButton();
             ShowResizeButton();
+            ShowSearch();
         };
 
         // A drag that crosses from one bubble into another keeps both ends: no single SelectableTextBlock
@@ -3544,12 +3545,25 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Goes to the newest line while following.</summary>
     public void KeepUp() => _scroll.KeepUp();
 
+    private static async Task<bool> SetText(Avalonia.Input.Platform.IClipboard clipboard, string text)
+    {
+        await clipboard.SetTextAsync(text);
+        return true;
+    }
+
     /// <summary>Copies the whole of the page being read (Phase 19, "Copy log").</summary>
     private async void OnCopyClick(object? sender, RoutedEventArgs e)
     {
         // Its own visual root's clipboard, which is a thing a control may ask for — unlike a window, a dialog
         // or a browser, none of which this view knows about.
-        if (_bound is null || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+        if (_bound is null)
+        {
+            return;
+        }
+
+        var topLevel = _copy is null ? TopLevel.GetTopLevel(this)?.Clipboard : null;
+
+        if (topLevel is null && _copy is null)
         {
             return;
         }
@@ -3561,8 +3575,9 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         try
         {
-            await clipboard.SetTextAsync(text);
-            worked = true;
+            worked = topLevel is not null
+                ? await SetText(topLevel, text)
+                : await _copy!(text);
         }
         catch (Exception)
         {
@@ -3577,7 +3592,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     {
         var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
 
-        CopyButton.IsVisible = _searchable && transcript;
+        CopyButton.IsVisible = _searchable && transcript && !OutputOnly;
 
         // Only where there is something to cut and somewhere to put it (#160).
         DonateButton.IsVisible = transcript
