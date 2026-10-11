@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+On the headset, the Systems, Stations and Bodies search pages now draw their form. Each page has two full-width views: the form, with the saved searches, the filters, RUN SEARCH and CLEAR; and the answer, with EDIT SEARCH, REFRESH, SAVE THIS SEARCH and the table. RUN SEARCH, a saved search and REFRESH show the answer; EDIT SEARCH returns to the form with the values that were run. A search asked by voice fills the form and shows the answer. SAVE THIS SEARCH and the forget tile work on the headset. The desktop window is unchanged.
+
 On the headset, the drawn keyboard for a system-name box shows up to eight matching system names as tiles above the keys once you have typed three characters, and refreshes after each key, delete, clear or spoken word. Pressing a tile fills the box, closes the keyboard and does what picking the name does in the window; on the System page it opens that system. Nothing is shown or sent while galaxy search is off.
 
 The headset panel now has four things the window already had: Settings › Phrases, the draft actions on a story, Fleet › Crew seats, and the talk section on a ship build.

@@ -479,26 +479,84 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void TheHeadsetShowsTheAnswerAndSavedAndNoForm()
+    public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
     {
         var world = new World(lookups: true);
         world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems));
         var (panel, window) = Shown(world, headset: true);
+        var page = Page(panel);
 
-        var buttons = panel.GetVisualDescendants().OfType<Button>().ToList();
-
+        Assert.True(page.ShowsAnswer);
         Assert.Equal(2, Rows(panel).Count);
-        Assert.Contains(buttons, button => button.Classes.Contains(GalaxySearchPage.SavedClass));
-        Assert.Contains(buttons, button => button.Name == GalaxySearchPage.RefreshName);
-        Assert.DoesNotContain(buttons, button => button.Name is GalaxySearchPage.RunName or GalaxySearchPage.SaveName);
-        Assert.DoesNotContain(buttons, button => button.Classes.Contains(GalaxySearchPage.ForgetClass));
-        Assert.Empty(Page(panel).GetVisualDescendants().OfType<TextBox>());
+        Assert.All(
+            [GalaxySearchPage.EditName, GalaxySearchPage.RefreshName, GalaxySearchPage.SaveName],
+            name => Assert.True(Named(panel, name).IsEffectivelyVisible));
+        Assert.False(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
         Assert.DoesNotContain("REPORTED", TextOf(panel));
 
-        world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Empire" }, TwoSystems with { Systems = [TwoSystems.Systems[1]] }));
+        Press(Named(panel, GalaxySearchPage.EditName));
+
+        Assert.False(page.ShowsAnswer);
+        Assert.True(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+        Assert.True(Named(panel, GalaxySearchPage.ClearName).IsEffectivelyVisible);
+        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => button.IsEffectivelyVisible && button.Classes.Contains(GalaxySearchPage.SavedClass));
+        Assert.Equal("Independent", page.FormArguments()["allegiance"]);
+        Assert.DoesNotContain(Rows(panel), row => row.IsEffectivelyVisible);
+
+        Press(Named(panel, GalaxySearchPage.RunName));
+
+        Assert.True(page.ShowsAnswer);
+        Assert.Equal(new Dictionary<string, string> { ["allegiance"] = "Independent" }, Assert.Single(world.Asked));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetOpensOnTheFormWhenNothingWasAsked()
+    {
+        var world = new World(lookups: true);
+        var (panel, window) = Shown(world, headset: true);
+
+        Assert.False(Page(panel).ShowsAnswer);
+        Assert.True(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+
+        world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Empire" }, TwoSystems));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Single(Rows(panel));
+        Assert.True(Page(panel).ShowsAnswer);
+        Assert.Equal("Empire", Page(panel).FormArguments()["allegiance"]);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetFormRunsASavedSearchAndShowsTheAnswer()
+    {
+        var world = new World(lookups: true);
+        var (panel, window) = Shown(world, headset: true);
+
+        Press(panel.GetVisualDescendants().OfType<Button>().Single(button =>
+            button.Classes.Contains(GalaxySearchPage.SavedClass) && (string?)button.Tag == "anarchy outbreak"));
+
+        Assert.True(Page(panel).ShowsAnswer);
+        Assert.Equal(2, Rows(panel).Count);
+
+        Press(Named(panel, GalaxySearchPage.EditName));
+
+        Assert.Equal("Anarchy", Page(panel).FormArguments()["government"]);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetFormDrawsRunDisabledWhenLookupsAreOff()
+    {
+        var world = new World(lookups: false);
+        var (panel, window) = Shown(world, headset: true);
+
+        Assert.False(Page(panel).ShowsAnswer);
+        Assert.False(Named(panel, GalaxySearchPage.RunName).IsEnabled);
+        Assert.Equal("Turn on “Look things up in the galaxy” in Settings to search.", ToolTip.GetTip(Named(panel, GalaxySearchPage.RunName)));
 
         window.Close();
     }
@@ -642,13 +700,31 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         }
 
         Assert.Equal(2, Rows(view).Count);
-        Assert.DoesNotContain(view.GetVisualDescendants().OfType<Button>(), button => button.Name == GalaxySearchPage.RunName);
         Assert.All(
             view.GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible && button.FindAncestorOfType<SystemSearchPage>() is not null),
             button => Assert.True(button.Bounds.Height >= 44 - 0.5, $"{button.Name ?? button.Content?.ToString()} is {button.Bounds.Height} tall"));
 
-        using var frame = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(width, height));
-        frame.Render(view);
-        frame.SaveCapture("search-systems-headset.png");
+        using (var answer = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(width, height)))
+        {
+            answer.Render(view);
+            answer.SaveCapture("search-systems-headset.png");
+        }
+
+        Press(Named(view, GalaxySearchPage.EditName));
+
+        fixed (byte* pixels = buffer)
+        {
+            headset.Draw((IntPtr)pixels, width * 4);
+            headset.Draw((IntPtr)pixels, width * 4);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Assert.All(
+            view.GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible && button.FindAncestorOfType<SystemSearchPage>() is not null),
+            button => Assert.True(button.Bounds.Height >= 44 - 0.5, $"{button.Name ?? button.Content?.ToString()} is {button.Bounds.Height} tall"));
+
+        using var form = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(width, height));
+        form.Render(view);
+        form.SaveCapture("search-systems-headset-form.png");
     }
 }

@@ -135,9 +135,14 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
             "Bodies matched.",
             AskedAt);
 
-    private static (PanelView Panel, Window Window) Shown(World world)
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        if (headset)
+        {
+            panel.Classes.Add("headset");
+        }
 
         panel.EnableStarSystem(world.Surface);
 
@@ -169,6 +174,34 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
     private static List<string> TextOf(Control root) =>
         [.. root.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text ?? string.Empty)];
+
+    [AvaloniaFact]
+    public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies));
+        var (panel, window) = Shown(world, headset: true);
+        var page = Page(panel);
+
+        Assert.True(page.ShowsAnswer);
+        Assert.Equal(2, Rows(panel).Count(row => row.IsEffectivelyVisible));
+        Assert.True(Named(panel, GalaxySearchPage.EditName).IsEffectivelyVisible);
+        Assert.False(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+
+        Press(Named(panel, GalaxySearchPage.EditName));
+
+        Assert.False(page.ShowsAnswer);
+        Assert.True(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+        Assert.Equal("true", page.FormArguments()["landable"]);
+        Assert.DoesNotContain(Rows(panel), row => row.IsEffectivelyVisible);
+
+        Press(Named(panel, GalaxySearchPage.RunName));
+
+        Assert.True(page.ShowsAnswer);
+        Assert.Single(world.Galaxy.Asked);
+
+        window.Close();
+    }
 
     [AvaloniaFact]
     public void SearchOffersBodiesAfterStations()

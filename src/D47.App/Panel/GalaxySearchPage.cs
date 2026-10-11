@@ -62,7 +62,7 @@ public enum GalaxySearchView
 /// <summary>
 /// One search kind's page on the Search tab: the form on the left and, on the right, the kind's saved
 /// searches and its last answer on <see cref="GalaxySearchBoard"/>, however it was asked. The headset draws
-/// the answer and the saved searches only.
+/// the form and the answer as two full-width views.
 /// </summary>
 public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 {
@@ -76,6 +76,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     public const string RefreshName = "RefreshSearch";
 
     public const string SaveName = "SaveSearch";
+
+    public const string EditName = "EditSearch";
 
     public const string RetryName = "RetrySearch";
 
@@ -107,6 +109,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private readonly TextBlock _stamp = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0) };
 
     private Control? _form;
+    private Control? _formView;
+    private Control? _answerView;
+    private bool? _showingAnswer;
     private CancellationTokenSource? _inFlight;
     private IReadOnlyDictionary<string, string>? _running;
     private (GalaxySearchView View, string Text, DateTimeOffset At, IReadOnlyDictionary<string, string> Arguments)? _failure;
@@ -155,11 +160,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _fromHistory = posting;
         _failure = null;
 
-        if (!_headset)
-        {
-            FillForm(posting.Arguments);
-        }
-
+        FillForm(posting.Arguments);
+        _showingAnswer = true;
         Draw();
     }
 
@@ -176,6 +178,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>The sentence drawn for the current state, where it has one.</summary>
     public string? Sentence { get; private set; }
+
+    /// <summary>Whether the headset draws the answer view rather than the form view.</summary>
+    public bool ShowsAnswer => _showingAnswer ?? false;
 
     /// <summary>The answer drawn, or null while none is.</summary>
     public GalaxySearchPosting? Shown { get; private set; }
@@ -219,6 +224,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         var inFlight = _inFlight = new CancellationTokenSource(Budget);
         _running = arguments;
         _failure = null;
+        _showingAnswer = true;
         Draw();
 
         try
@@ -348,6 +354,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _failure = null;
             _fromHistory = null;
             HistoryId = null;
+            _showingAnswer = true;
             FillFromLast();
             Draw();
         });
@@ -358,7 +365,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Sets the form to a posting it has not shown yet, so typing survives the page being re-attached.</summary>
     private void FillFromLast()
     {
-        if (_headset || _fromHistory is not null || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last, _filledFrom))
+        if (_fromHistory is not null || _searches.Board.Last(Kind) is not { } last || ReferenceEquals(last, _filledFrom))
         {
             return;
         }
@@ -371,10 +378,25 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private object Stamp() => (_lookupsEnabled(), Latest, _searches.FrontierId(), Followed);
 
+    /// <summary>Shows the form with the values the shown answer was asked with.</summary>
+    private void Edit()
+    {
+        var asked = _failure?.Arguments ?? (Latest is { } last ? Rerun(last) : null);
+
+        if (asked is not null)
+        {
+            FillForm(asked);
+        }
+
+        _showingAnswer = false;
+        Draw();
+    }
+
     private void Draw()
     {
         _seen = Stamp();
         Follow();
+        _showingAnswer ??= Latest is not null;
 
         var lookups = _lookupsEnabled();
         var last = Latest;
@@ -402,9 +424,52 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         DrawStamp(last);
         _answer.Content = AnswerBlock(last);
 
-        Content ??= _headset
-            ? LoadoutPages.Scrolling(new StackPanel { Spacing = 14, Children = { _saved, _answer } })
-            : Layout();
+        if (Content is null)
+        {
+            Content = _headset ? HeadsetLayout() : Layout();
+        }
+
+        if (_formView is not null && _answerView is not null)
+        {
+            _formView.IsVisible = !_showingAnswer!.Value;
+            _answerView.IsVisible = _showingAnswer.Value;
+        }
+    }
+
+    private Grid HeadsetLayout()
+    {
+        _form = BuildForm();
+
+        var buttons = Buttons();
+        var form = new DockPanel();
+        DockPanel.SetDock(buttons, Dock.Bottom);
+        form.Children.Add(buttons);
+        form.Children.Add(LoadoutPages.Scrolling(new StackPanel { Spacing = 14, Children = { _saved, _form } }));
+
+        var answer = new DockPanel();
+        var footer = Footer();
+        DockPanel.SetDock(footer, Dock.Bottom);
+        answer.Children.Add(footer);
+        answer.Children.Add(LoadoutPages.Scrolling(_answer));
+
+        _formView = form;
+        _answerView = answer;
+
+        return new Grid { Margin = new Thickness(0, 16, 0, 0), Children = { form, answer } };
+    }
+
+    private Grid Buttons()
+    {
+        var buttons = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            ColumnSpacing = Gaps.Tile,
+            Margin = new Thickness(0, 12, 0, 0),
+            Children = { _run, _clear },
+        };
+        Grid.SetColumn(_clear, 1);
+
+        return buttons;
     }
 
     private Grid Layout()
@@ -418,14 +483,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
         };
 
-        var buttons = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            ColumnSpacing = Gaps.Tile,
-            Margin = new Thickness(0, 12, 0, 0),
-            Children = { _run, _clear },
-        };
-        Grid.SetColumn(_clear, 1);
+        var buttons = Buttons();
 
         var left = new DockPanel();
         DockPanel.SetDock(buttons, Dock.Bottom);
@@ -461,30 +519,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             : [];
 
         var block = new StackPanel { Spacing = 8 };
-
-        if (_headset)
-        {
-            var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
-            row.Children.Add(Label("Saved", width: null));
-
-            if (quick.Count == 0)
-            {
-                row.Children.Add(NoQuick());
-            }
-
-            foreach (var search in quick)
-            {
-                row.Children.Add(SavedTile(search.Name, search.Arguments));
-            }
-
-            foreach (var search in yours)
-            {
-                row.Children.Add(SavedTile(search.Name, search.Arguments));
-            }
-
-            block.Children.Add(row);
-            return block;
-        }
 
         block.Children.Add(ListRow.Head("Saved"));
 
@@ -609,6 +643,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
 
             case GalaxySearchView.Refused:
+                if (_headset)
+                {
+                    block.Children.Add(Head(Noun, null, refresh: null, save: false));
+                }
+
                 block.Children.Add(new Notice(NoticeLevel.Error) { Label = "FILTER REFUSED", Text = Sentence });
                 break;
 
@@ -698,6 +737,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, HorizontalAlignment = HorizontalAlignment.Right };
 
+        if (_headset && !disabled)
+        {
+            var edit = new Button { Name = EditName, Content = "EDIT SEARCH", Height = TypeScale.MinimumTarget };
+            edit.Click += (_, _) => Edit();
+            tiles.Children.Add(edit);
+        }
+
         if (refresh is not null || disabled)
         {
             var again = refresh;
@@ -712,7 +758,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             tiles.Children.Add(button);
         }
 
-        if (!_headset && (save || disabled))
+        if (save || disabled)
         {
             var fid = _searches.FrontierId();
             var posting = saved ?? refresh;

@@ -137,9 +137,14 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
             "Stations matched.",
             AskedAt);
 
-    private static (PanelView Panel, Window Window) Shown(World world)
+    private static (PanelView Panel, Window Window) Shown(World world, bool headset = false)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        if (headset)
+        {
+            panel.Classes.Add("headset");
+        }
 
         panel.EnableStarSystem(world.Surface);
 
@@ -184,6 +189,39 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         Dispatcher.UIThread.RunJobs();
         Press(panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "AcceptButton"));
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetDrawsTheAnswerViewAndTheFormViewFullWidth()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations));
+        var (panel, window) = Shown(world, headset: true);
+        var page = Page(panel);
+
+        Assert.True(page.ShowsAnswer);
+        Assert.Equal(2, Rows(panel).Count(row => row.IsEffectivelyVisible));
+        Assert.True(Named(panel, GalaxySearchPage.EditName).IsEffectivelyVisible);
+        Assert.False(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+
+        Press(Named(panel, GalaxySearchPage.EditName));
+
+        Assert.False(page.ShowsAnswer);
+        Assert.True(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
+        Assert.Equal("Raw", page.FormArguments()["material_trader"]);
+        Assert.DoesNotContain(Rows(panel), row => row.IsEffectivelyVisible);
+
+        Press(Named(panel, StationSearchPage.ChooseServicesName));
+
+        Assert.Single(panel.GetVisualDescendants().OfType<PickerPage>());
+        TakeServices(panel, "Black Market");
+
+        Press(Named(panel, GalaxySearchPage.RunName));
+
+        Assert.True(page.ShowsAnswer);
+        Assert.Single(world.Galaxy.Asked);
+
+        window.Close();
     }
 
     [AvaloniaFact]
