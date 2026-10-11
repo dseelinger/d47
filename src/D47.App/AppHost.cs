@@ -2923,6 +2923,7 @@ public sealed class AppHost : IDisposable
         };
 
         storyDirector.Began += () => _ = Task.Run(() => pairing.PairStoryCastAsync());
+        gameState.CommanderChanged += change => _ = Task.Run(() => pairing.PairStoryCastAsync());
 
         return new CrewParts
         {
