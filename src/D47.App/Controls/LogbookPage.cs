@@ -177,7 +177,7 @@ public sealed class LogbookPage : DialogPage
             {
                 Prompt = word,
                 Choices = [.. _book.JournalDays().Select(LogDays.Write)],
-                Describe = value => LogDays.Parse(value) is { } day ? LogDays.Weekday(day) : value,
+                Describe = value => LogDays.Parse(value) is { } day ? $"{value}, {LogDays.Weekday(day)}" : value,
                 Current = current is { } c ? LogDays.Write(c) : null,
                 AllowsFreeText = true,
                 WhyEmpty = "There are no journals on this machine to take a day from. You can still type one, like 2026-09-14.",
