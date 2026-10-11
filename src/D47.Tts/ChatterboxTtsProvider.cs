@@ -169,6 +169,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         {
             Custom = true,
             Description = $"{voice.Pitch} pitch, {voice.Pace} pace",
+            Pitch = voice.Pitch,
+            Pace = voice.Pace,
         };
 
     /// <summary>Every voice with its pitch and pace bands, whether or not its clip is on this machine.</summary>

@@ -12,6 +12,12 @@ public sealed record VoiceInfo(string Id, string Name, string Locale, string? Ge
     /// <summary>What the provider says the voice sounds like, where it says anything.</summary>
     public string? Description { get; init; }
 
+    /// <summary><c>low</c>, <c>mid</c> or <c>high</c> within its gender, where the provider says.</summary>
+    public string? Pitch { get; init; }
+
+    /// <summary><c>slow</c>, <c>even</c> or <c>brisk</c> within its gender, where the provider says.</summary>
+    public string? Pace { get; init; }
+
     /// <summary>A voice the Commander made or recorded; offered in pickers and never drawn for anyone else.</summary>
     public bool Custom { get; init; }
 }

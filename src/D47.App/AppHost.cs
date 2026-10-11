@@ -2204,6 +2204,8 @@ public sealed class AppHost : IDisposable
                     VoiceLabel = (group, id) => speech.VoiceLabelFor(group, id),
                     VoiceGender = (group, id) => speech.VoiceGenderFor(group, id),
                     VoiceCustom = (group, id) => speech.VoiceIsCustom(group, id),
+                    VoicePitch = (group, id) => speech.VoiceInfoFor(group, id)?.Pitch,
+                    VoicePace = (group, id) => speech.VoiceInfoFor(group, id)?.Pace,
                     VoiceClip = (group, id) => speech.ChatterboxClipFor(group, id),
                     WatchVoiceClips = refresh =>
                     {

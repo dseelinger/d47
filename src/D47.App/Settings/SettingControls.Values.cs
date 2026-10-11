@@ -654,6 +654,8 @@ internal sealed partial class SettingControls
                 // Read at open like the choices themselves, and for the same reason: which properties the
                 // list has depends on the provider serving it right now (#146).
                 Facet = row.Facet?.Invoke(host.Settings.Current),
+                Facets = row.Facets?.Invoke(host.Settings.Current),
+                ChoiceNoun = row.ChoiceNoun ?? "choices",
 
                 // Read at open rather than captured once, because both the price and the reason it might be
                 // unavailable follow the selected provider.

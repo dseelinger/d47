@@ -51,7 +51,7 @@ public static partial class ChatterboxCatalog
             voices.Add(byId.TryGetValue(voice.Voice.Id, out var row)
                 ? voice with
                 {
-                    Voice = voice.Voice with { Description = row.Voice.Description },
+                    Voice = voice.Voice with { Description = row.Voice.Description, Pitch = row.Pitch, Pace = row.Pace },
                     Pitch = row.Pitch,
                     Pace = row.Pace,
                     Sha256 = row.Sha256,
@@ -191,7 +191,7 @@ public static partial class ChatterboxCatalog
             var (id, name, gender, locale, pitch, pace) = (fields[0], fields[1], fields[2], fields[3], fields[4], fields[5]);
 
             rows.Add(new ChatterboxVoice(
-                new VoiceInfo(id, name, locale, gender) { Description = $"{pitch} pitch, {pace} pace" },
+                new VoiceInfo(id, name, locale, gender) { Description = $"{pitch} pitch, {pace} pace", Pitch = pitch, Pace = pace },
                 role,
                 fields[7],
                 Path.Combine(fetched, id + ".wav"))

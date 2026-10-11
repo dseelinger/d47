@@ -160,6 +160,12 @@ public sealed record SettingRow
     /// </summary>
     public Func<D47Settings, SettingFacet?>? Facet { get; init; }
 
+    /// <summary>Facets that combine; the picker uses them in place of <see cref="Facet"/> when this returns more than one.</summary>
+    public Func<D47Settings, IReadOnlyList<SettingFacet>?>? Facets { get; init; }
+
+    /// <summary>What the picker counts under several facets, in upper case after the number. "voices".</summary>
+    public string? ChoiceNoun { get; init; }
+
     /// <summary>
     /// Why there is nothing to choose from, when there is nothing to choose from — or null when the row
     /// has no better answer than the picker's own generic one.

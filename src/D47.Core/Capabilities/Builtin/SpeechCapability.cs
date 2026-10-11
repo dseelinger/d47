@@ -122,6 +122,54 @@ public static class SpeechCapability
             ? null
             : GenderFacet(voices, id => tag(group, id), id => surface.VoiceCustom?.Invoke(group, id) == true);
 
+    /// <summary>
+    /// The gender, pitch, pace and show filters a Chatterbox slot's voice rows offer, or null where the slot
+    /// speaks through another provider or lists no voices.
+    /// </summary>
+    private static IReadOnlyList<SettingFacet>? ChatterboxFacets(SpeechSurface surface, VoiceGroup group, D47Settings settings)
+    {
+        if (!string.Equals(VoiceGroups.ProviderFor(settings.Speech, group), TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
+            || surface.Voices?.Invoke(group) is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        bool Tagged(Func<VoiceGroup, string, string?>? read, string id, string value) =>
+            string.Equals(read?.Invoke(group, id), value, StringComparison.OrdinalIgnoreCase);
+
+        SettingFacet Bands(string label, string any, Func<VoiceGroup, string, string?>? read, params string[] bands) => new()
+        {
+            Label = label,
+            Options =
+            [
+                new SettingFacetOption(any, null),
+                .. bands.Select(band => new SettingFacetOption(
+                    char.ToUpperInvariant(band[0]) + band[1..],
+                    id => Tagged(read, id, band))),
+            ],
+        };
+
+        bool OnThisPc(string id) =>
+            surface.VoiceClip?.Invoke(group, id)?.Clip is ChatterboxClip.Shipped or ChatterboxClip.Fetched or ChatterboxClip.Custom;
+
+        return
+        [
+            Bands("Gender", "Any", surface.VoiceGender, "female", "male"),
+            Bands("Pitch", "Any", surface.VoicePitch, "low", "mid", "high"),
+            Bands("Pace", "Any", surface.VoicePace, "slow", "even", "brisk"),
+            new SettingFacet
+            {
+                Label = "Show",
+                Options =
+                [
+                    new SettingFacetOption("All", null),
+                    new SettingFacetOption("On this PC", OnThisPc),
+                    new SettingFacetOption("Custom", id => surface.VoiceCustom?.Invoke(group, id) == true),
+                ],
+            },
+        ];
+    }
+
     /// <summary>The gender filter for a listed catalogue, or null where its voices carry nothing to filter on.</summary>
     public static SettingFacet? GenderFacet(VoiceCatalogue catalogue)
     {
@@ -382,6 +430,12 @@ public static class SpeechCapability
         /// <summary>Whether one voice is the Commander's own or a custom voice.</summary>
         public Func<VoiceGroup, string, bool>? VoiceCustom { get; init; }
 
+        /// <summary>The pitch band one voice is tagged with, or null where the provider says none.</summary>
+        public Func<VoiceGroup, string, string?>? VoicePitch { get; init; }
+
+        /// <summary>The pace band one voice is tagged with, or null where the provider says none.</summary>
+        public Func<VoiceGroup, string, string?>? VoicePace { get; init; }
+
         /// <summary>Where one voice's Chatterbox clip is, or null where the slot is not on Chatterbox.</summary>
         public Func<VoiceGroup, string, Audio.ChatterboxClipState?>? VoiceClip { get; init; }
 
@@ -505,6 +559,8 @@ public static class SpeechCapability
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
                 Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
+                Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
+                ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.ShipAi),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 DocsAnchor = "voice",
@@ -804,6 +860,8 @@ public static class SpeechCapability
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
                 Facet = _ => GenderFacet(surface, VoiceGroup.Carrier),
+                Facets = s => ChatterboxFacets(surface, VoiceGroup.Carrier, s),
+                ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.CarrierCaptain),
 
                 // Only on offer to a Commander who has one.
@@ -849,6 +907,8 @@ public static class SpeechCapability
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Carrier, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Carrier),
                 Facet = _ => GenderFacet(surface, VoiceGroup.Carrier),
+                Facets = s => ChatterboxFacets(surface, VoiceGroup.Carrier, s),
+                ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.TowerControl),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
@@ -873,6 +933,8 @@ public static class SpeechCapability
                 ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
                 WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
                 Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
+                Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
+                ChoiceNoun = "voices",
                 Audition = AuditionOf(surface, VoiceRole.Narrator),
                 AppliesWhen = s => s.Speech.Provider != NoneId,
                 Group = "Other voices",
@@ -1734,6 +1796,8 @@ public static class SpeechCapability
             ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Aboard, id) ?? id,
             WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Aboard),
             Facet = _ => GenderFacet(surface, VoiceGroup.Aboard),
+            Facets = s => ChatterboxFacets(surface, VoiceGroup.Aboard, s),
+            ChoiceNoun = "voices",
             Audition = AuditionOf(surface, VoiceRole.Crew),
             AppliesWhen = s => s.Speech.Provider != NoneId,
             Group = "Other voices",

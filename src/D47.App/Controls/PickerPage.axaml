@@ -21,7 +21,22 @@
                  Foreground="{DynamicResource D47.Grey}" />
     </StackPanel>
 
+    <!-- Several facets, each a labelled control; they wrap on a narrow window. Absent under one facet. -->
+    <WrapPanel x:Name="FacetGrid"
+               ItemWidth="370"
+               DockPanel.Dock="Top"
+               IsVisible="False"
+               Margin="0,0,0,4" />
+
     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+      <TextBlock x:Name="MatchCount"
+                 DockPanel.Dock="Right"
+                 IsVisible="False"
+                 VerticalAlignment="Center"
+                 Margin="12,0,0,0"
+                 FontFamily="{StaticResource D47.Font.Mono}"
+                 FontSize="{StaticResource D47.Type.Secondary}"
+                 Foreground="{DynamicResource D47.Grey}" />
       <!-- The structured half of the filter (#146), absent where the choices carry no such field. -->
       <StackPanel x:Name="FacetPanel"
                   DockPanel.Dock="Right"

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Controls.Templates;
@@ -46,6 +47,12 @@ public sealed record PickerRequest
     /// worth filtering on (#146).
     /// </summary>
     public SettingFacet? Facet { get; init; }
+
+    /// <summary>Facets that combine; used in place of <see cref="Facet"/> when there is more than one.</summary>
+    public IReadOnlyList<SettingFacet>? Facets { get; init; }
+
+    /// <summary>What the count under several facets counts. "voices".</summary>
+    public string ChoiceNoun { get; init; } = "choices";
 
     /// <summary>
     /// Ticks any number of rows and returns them in <see cref="PickerResult.Values"/>.
@@ -286,17 +293,7 @@ public partial class PickerPage : UserControl
             ? "Type to filter, or type a value of your own"
             : "Type to filter";
 
-        FacetPanel.IsVisible = _request.Facet is not null;
-
-        if (_request.Facet is { } facet)
-        {
-            FacetLabel.Text = facet.Label;
-            FacetBox.ItemsSource = facet.Options.Select(option => option.Label).ToArray();
-            AutomationProperties.SetName(FacetBox, facet.Label);
-
-            // The option that hides nothing, so the list does not open pre-narrowed.
-            FacetBox.SelectedIndex = 0;
-        }
+        BindFacets();
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
 
@@ -423,6 +420,67 @@ public partial class PickerPage : UserControl
         });
     }
 
+    private readonly List<(SettingFacet Facet, Segment Box)> _facets = [];
+
+    private void BindFacets()
+    {
+        _facets.Clear();
+        FacetGrid.Children.Clear();
+
+        var several = _request.Facets is { Count: > 1 };
+        IReadOnlyList<SettingFacet> facets = several ? _request.Facets! : _request.Facet is { } one ? [one] : [];
+
+        FacetPanel.IsVisible = !several && facets.Count == 1;
+        FacetGrid.IsVisible = several;
+        MatchCount.IsVisible = several;
+
+        foreach (var facet in facets)
+        {
+            var box = several ? new Segment { VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center } : FacetBox;
+
+            box.ItemsSource = facet.Options.Select(option => option.Label).ToArray();
+            AutomationProperties.SetName(box, facet.Label);
+
+            // The option that hides nothing, so the list does not open pre-narrowed.
+            box.SelectedIndex = 0;
+
+            if (several)
+            {
+                box.SelectionChanged += OnFacetChanged;
+                var label = Grey(new TextBlock
+                {
+                    Text = facet.Label.ToUpperInvariant(),
+                    Width = 64,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    FontSize = FacetLabel.FontSize,
+                    FontWeight = FontWeight.SemiBold,
+                });
+
+                DockPanel.SetDock(label, Dock.Left);
+                box.Margin = new Thickness(10, 0, 0, 0);
+                FacetGrid.Children.Add(new DockPanel
+                {
+                    Width = 342,
+                    Margin = new Thickness(0, 0, 28, 10),
+                    Children = { label, box },
+                });
+            }
+            else
+            {
+                FacetLabel.Text = facet.Label;
+            }
+
+            _facets.Add((facet, box));
+        }
+    }
+
+    private TextBlock Grey(TextBlock text)
+    {
+        text.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable("D47.Grey"));
+
+        return text;
+    }
+
     private string Label(string choice) => _request.Describe?.Invoke(choice) ?? choice;
 
     private void ApplyFilter()
@@ -431,6 +489,7 @@ public partial class PickerPage : UserControl
 
         // The facet first, then the text search within it.
         var facet = SelectedFacet();
+        var narrowed = _facets.Where(pair => ChosenMatches(pair) is not null).ToArray();
 
         // Matches on the label or the id.
         var matches = _all
@@ -447,9 +506,17 @@ public partial class PickerPage : UserControl
 
         EmptyHint.IsVisible = matches.Length == 0;
 
+        MatchCount.Inlines!.Clear();
+        var number = new Run(matches.Length.ToString());
+        number.Bind(TextElement.ForegroundProperty, this.GetResourceObservable("D47.White"));
+        MatchCount.Inlines.Add(number);
+        MatchCount.Inlines.Add(new Run($" OF {_all.Count} {_request.ChoiceNoun.ToUpperInvariant()}"));
+
         EmptyHint.Text = _request.Choices.Count == 0
             ? _request.WhyEmpty
               ?? "There is nothing to offer here — D47 does not know this endpoint's vocabulary. Type the value you want, or keep the current one."
+            : _facets.Count > 1 && narrowed.Length > 0
+                ? $"Nothing matches. Set {FacetToReset(narrowed, filter).Facet.Label} back to {FacetToReset(narrowed, filter).Facet.Options[0].Label}."
             : facet is not null && filter.Length == 0
                 ? $"No {FacetBox.SelectedItem} choices here. Choose {_request.Facet!.Options[0].Label} to see everything."
                 : $"Nothing matches \"{filter}\"{(facet is null ? string.Empty : $" under {FacetBox.SelectedItem}")}. {(_request.AllowsFreeText ? "Use it anyway, or clear the box to see everything." : "Clear the box to see everything.")}";
@@ -473,11 +540,33 @@ public partial class PickerPage : UserControl
     }
 
     /// <summary>The chosen facet option's predicate, or null for no facet or the option that takes everything.</summary>
-    private Func<string, bool>? SelectedFacet() =>
-        _request.Facet is { } facet
-        && FacetBox.SelectedIndex >= 0
-        && FacetBox.SelectedIndex < facet.Options.Count
-            ? facet.Options[FacetBox.SelectedIndex].Matches
+    private Func<string, bool>? SelectedFacet()
+    {
+        var chosen = _facets.Select(ChosenMatches).OfType<Func<string, bool>>().ToArray();
+
+        return chosen.Length == 0 ? null : id => chosen.All(matches => matches(id));
+    }
+
+    /// <summary>The first chosen facet that, set back to its first option, lists something; the first chosen one when none does.</summary>
+    private (SettingFacet Facet, Segment Box) FacetToReset((SettingFacet Facet, Segment Box)[] narrowed, string filter)
+    {
+        foreach (var pair in narrowed)
+        {
+            var others = _facets.Where(other => other != pair).Select(ChosenMatches).OfType<Func<string, bool>>().ToArray();
+
+            if (_all.Any(choice => others.All(matches => matches(choice.Value))
+                                   && (ChoiceMatch.Matches(choice.Value, filter) || ChoiceMatch.Matches(choice.Text, filter))))
+            {
+                return pair;
+            }
+        }
+
+        return narrowed[0];
+    }
+
+    private static Func<string, bool>? ChosenMatches((SettingFacet Facet, Segment Box) pair) =>
+        pair.Box.SelectedIndex >= 0 && pair.Box.SelectedIndex < pair.Facet.Options.Count
+            ? pair.Facet.Options[pair.Box.SelectedIndex].Matches
             : null;
 
     /// <summary>Typing re-filters and then puts the highlight back on something visible (#190).</summary>

@@ -89,6 +89,9 @@ public sealed class SpeechClients : IDisposable
             .FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase))
             ?.Gender;
 
+    internal VoiceInfo? VoiceInfoFor(VoiceGroup group, string id) =>
+        VoicesFor(group).Voices.FirstOrDefault(voice => string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
+
     internal bool VoiceIsCustom(VoiceGroup group, string id) =>
         VoicesFor(group).Voices.Any(voice => voice.Custom && string.Equals(voice.Id, id, StringComparison.OrdinalIgnoreCase));
 
