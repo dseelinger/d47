@@ -48,6 +48,9 @@ public sealed class HaveIBeenThereIsAnsweredFromElitesOwnListTests
         public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>(Matches);
 
+        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
+
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(
             string system,
             double lightYears,

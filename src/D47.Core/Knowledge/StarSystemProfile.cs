@@ -11,6 +11,9 @@ public interface IStarSystemService
     /// <summary>Systems named like what was typed, the exact match first, at most five.</summary>
     Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken);
 
+    /// <summary>Systems whose names start with what was typed, for suggesting names while the Commander types.</summary>
+    Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken);
+
     /// <summary>Powerplay systems near a system, nearest first, the system itself left out.</summary>
     Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken);
 }

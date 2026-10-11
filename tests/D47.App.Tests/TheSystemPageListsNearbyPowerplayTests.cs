@@ -45,6 +45,9 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
             Task.FromResult<IReadOnlyList<SystemNameMatch>>(
                 typed == near.Systems[0].Name ? [new SystemNameMatch(typed, Neighbour, new StarPosition(0, 0, 0))] : []);
 
+        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
+
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken)
         {
             lock (Asked)

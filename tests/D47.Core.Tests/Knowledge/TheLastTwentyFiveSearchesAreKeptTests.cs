@@ -174,6 +174,9 @@ public class TheLastTwentyFiveSearchesAreKeptTests
         public Task<IReadOnlyList<SystemNameMatch>> MatchNamesAsync(string typed, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<SystemNameMatch>>([new SystemNameMatch("Sol", Sol, new StarPosition(0, 0, 0))]);
 
+        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
+
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(
             string system, double lightYears, CancellationToken cancellationToken) =>
             throw new NotSupportedException();

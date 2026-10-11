@@ -28,6 +28,9 @@ public sealed record StarSystemSurface(
 
     /// <summary>Records a system opened by typing its name, as (name, address).</summary>
     public Action<string, long>? Remember { get; init; }
+
+    /// <summary>How long typing has to stop before names are suggested.</summary>
+    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
 }
 
 /// <summary>
@@ -61,6 +64,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private readonly StarSystemSurface _surface;
     private readonly StackPanel _body = new() { Spacing = 18 };
     private readonly TextBox _name;
+    private readonly SystemNameSuggestions _suggestions;
     private readonly HistoryTile _history;
 
     private bool _following = true;
@@ -93,6 +97,14 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             InnerLeftContent = Prefix("System"),
         };
         Avalonia.Automation.AutomationProperties.SetName(_name, "System name");
+
+        _suggestions = new SystemNameSuggestions(
+            _name,
+            surface.Systems.PrefixNamesAsync,
+            surface.LookupsEnabled,
+            Choose,
+            surface.SuggestionPause);
+        _suggestions.Changed += (_, _) => _redrawn = true;
         _name.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter)
@@ -209,6 +221,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         if (!enabled)
         {
             Cancel();
+            _suggestions.Close();
             _view = View.Off;
         }
         else if (switchedOn && !_following && _opened is { } opened)
@@ -237,7 +250,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             return false;
         }
 
-        _name.Text = string.Empty;
+        _suggestions.SetText(string.Empty);
         Open(address, address.ToString(CultureInfo.InvariantCulture), following: false);
 
         return true;
@@ -245,7 +258,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private void BackToMySystem()
     {
-        _name.Text = string.Empty;
+        _suggestions.SetText(string.Empty);
         _following = true;
         Follow();
     }
@@ -407,7 +420,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             return;
         }
 
-        _name.Text = match.Name;
+        _suggestions.SetText(match.Name);
         _surface.Remember?.Invoke(match.Name, match.SystemAddress);
         Open(match.SystemAddress, match.Name, following: false);
     }
@@ -523,13 +536,17 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private Control FieldRow()
     {
-        if (_name.Parent is Avalonia.Controls.Panel holder)
+        foreach (var kept in new Control[] { _name, _suggestions.List })
         {
-            holder.Children.Remove(_name);
+            if (kept.Parent is Avalonia.Controls.Panel holder)
+            {
+                holder.Children.Remove(kept);
+            }
         }
 
         var column = new StackPanel { Spacing = Gaps.Tile, Width = FieldWidth, HorizontalAlignment = HorizontalAlignment.Left };
         column.Children.Add(_name);
+        column.Children.Add(_suggestions.List);
 
         if (_view == View.Suggest)
         {

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -26,6 +27,8 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
     private readonly ILogger<SpanshStarSystemService> _logger;
 
     private readonly bool _ownsClient;
+
+    private readonly ConcurrentDictionary<string, IReadOnlyList<SystemNameMatch>> _prefixes = new(StringComparer.Ordinal);
 
     public SpanshStarSystemService(ILogger<SpanshStarSystemService> logger, HttpClient? http = null)
     {
@@ -91,6 +94,49 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         }
 
         return matches;
+    }
+
+    /// <summary>Answers come from <c>field_values/system_names</c> and are kept for the session, keyed by the lowercased text.</summary>
+    public async Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(
+        string typed,
+        CancellationToken cancellationToken)
+    {
+        var prefix = typed.Trim();
+
+        if (prefix.Length == 0)
+        {
+            return [];
+        }
+
+        var key = prefix.ToLowerInvariant();
+
+        if (_prefixes.TryGetValue(key, out var known))
+        {
+            return known;
+        }
+
+        using var document = await SpanshGalaxyService.SendAsync(
+            _logger,
+            token => _http.GetAsync($"api/systems/field_values/system_names?q={Uri.EscapeDataString(prefix)}", token),
+            "the system name suggestions",
+            cancellationToken,
+            budget: SearchBudget).ConfigureAwait(false);
+
+        var matches = new List<SystemNameMatch>();
+
+        foreach (var entry in document!.RootElement.Items("min_max"))
+        {
+            if (entry.String("name") is { } name
+                && entry.Long("id64") is { } id64
+                && entry.Double("x") is { } x
+                && entry.Double("y") is { } y
+                && entry.Double("z") is { } z)
+            {
+                matches.Add(new SystemNameMatch(name, id64, new StarPosition(x, y, z)));
+            }
+        }
+
+        return _prefixes.GetOrAdd(key, matches);
     }
 
     public async Task<PowerplayNeighbourhood> PowerplayNearAsync(

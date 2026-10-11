@@ -54,6 +54,9 @@ public class DescribeSystemAnswersAndOpensItsPageTests
             return Task.FromResult<IReadOnlyList<SystemNameMatch>>(Matches);
         }
 
+        public Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<SystemNameMatch>>([]);
+
         public Task<PowerplayNeighbourhood> PowerplayNearAsync(
             string system,
             double lightYears,

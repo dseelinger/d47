@@ -138,11 +138,13 @@ The one setting. Off by default.
 
 When it is off, asking about a system gets you "Galaxy search is switched off, so I can't look
 that up" — a capability that is off, not an error, so the conversation carries on. When it is
-on, two things leave this machine:
+on, three things leave this machine:
 
 - the system name you asked about, and any filters — an allegiance, a distance, an economy
 - **where you are**, whenever the question is relative to you, because "the nearest high tech
   system" cannot be asked without saying where from
+- the letters you type into a field that suggests system names, such as the one on
+  **Search › System**, sent as you type once there are three of them
 
 No key, no identifier, nothing else from your journal. The Privacy section computes this same
 list rather than repeating it by hand, so it cannot go stale.
