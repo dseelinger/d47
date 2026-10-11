@@ -25,7 +25,16 @@ public sealed class SystemNameSuggestions
     /// <summary>Marks the list, for a test to find it.</summary>
     public const string ListName = "SystemNameSuggestions";
 
+    /// <summary>The suggestions attached to a text box, for the drawn keyboard to offer the same names.</summary>
+    public static readonly AttachedProperty<SystemNameSuggestions?> OfProperty =
+        AvaloniaProperty.RegisterAttached<SystemNameSuggestions, TextBox, SystemNameSuggestions?>("Of");
+
+    public static SystemNameSuggestions? GetOf(TextBox box) => box.GetValue(OfProperty);
+
     private readonly TextBox _field;
+    private readonly Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>> _lookup;
+    private readonly Func<bool> _enabled;
+    private readonly TimeSpan _pause;
     private readonly SystemNameSuggester _suggester;
     private readonly Action<SystemNameMatch> _picked;
     private readonly StackPanel _rows = new() { Spacing = 2 };
@@ -43,14 +52,14 @@ public sealed class SystemNameSuggestions
         TimeSpan? pause = null)
     {
         _field = field;
+        _lookup = lookup;
+        _enabled = enabled;
+        _pause = pause ?? SystemNameSuggester.DefaultPause;
         _picked = picked;
 
-        _suggester = new SystemNameSuggester(
-            (typed, token) => Task.Run(() => lookup(typed, token), token),
-            enabled,
-            action => Dispatcher.UIThread.Post(action),
-            pause ?? SystemNameSuggester.DefaultPause);
+        _suggester = NewSuggester();
         _suggester.Answered += Show;
+        field.SetValue(OfProperty, this);
 
         List = new Border
         {
@@ -101,6 +110,17 @@ public sealed class SystemNameSuggestions
 
         Close();
     }
+
+    /// <summary>A suggester with this list's lookup, setting and pause, for a surface that draws its own names.</summary>
+    public SystemNameSuggester NewSuggester() =>
+        new(
+            (typed, token) => Task.Run(() => _lookup(typed, token), token),
+            _enabled,
+            action => Dispatcher.UIThread.Post(action),
+            _pause);
+
+    /// <summary>Does what picking <paramref name="match"/> in the list does.</summary>
+    public void Choose(SystemNameMatch match) => Pick(match);
 
     /// <summary>Drops any pending request and closes the list.</summary>
     public void Close()

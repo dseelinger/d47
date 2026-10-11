@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
@@ -10,6 +11,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -329,6 +331,49 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
+        // System-name tiles between the status line and the keys, when the box carries suggestions.
+        var attached = SystemNameSuggestions.GetOf(box);
+        var suggester = attached?.NewSuggester();
+        var tiles = new WrapPanel { Margin = new Thickness(0, 0, 0, 12), IsVisible = false };
+
+        void Refresh()
+        {
+            if (suggester is not null)
+            {
+                _ = suggester.Typed(typed);
+            }
+        }
+
+        void Stop() => suggester?.Cancel();
+
+        if (suggester is not null)
+        {
+            suggester.Answered += matches =>
+            {
+                tiles.Children.Clear();
+
+                foreach (var match in matches.Take(SystemNameSuggestions.Most))
+                {
+                    var tile = Pressable(match.Name);
+                    tile.Height = 52;
+                    tile.Padding = new Thickness(18, 0);
+                    tile.Margin = new Thickness(0, 0, Theming.Gaps.Tile, Theming.Gaps.Tile);
+                    AutomationProperties.SetName(tile, match.Name);
+
+                    tile.Click += (_, _) =>
+                    {
+                        Stop();
+                        Dismiss();
+                        attached!.Choose(match);
+                    };
+
+                    tiles.Children.Add(tile);
+                }
+
+                tiles.IsVisible = tiles.Children.Count > 0;
+            };
+        }
+
         var board = new StackPanel { Spacing = Theming.Gaps.Tile };
         var characters = new Dictionary<char, Button>();
 
@@ -348,6 +393,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
                 {
                     typed += character;
                     shown.Text = typed;
+                    Refresh();
                 };
 
                 characters[character] = pressed;
@@ -365,6 +411,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         {
             typed = typed.Length > 0 ? typed[..^1] : typed;
             shown.Text = typed;
+            Refresh();
         };
 
         var clear = Pressable("clear");
@@ -375,6 +422,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         {
             typed = string.Empty;
             shown.Text = typed;
+            Refresh();
         };
 
         var done = Pressable("Done", marked: true);
@@ -383,6 +431,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         done.Click += (_, _) =>
         {
+            Stop();
             Dismiss();
 
             // Written once, at the end.
@@ -392,7 +441,11 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         var cancel = Pressable("Cancel");
         cancel.Height = 52;
         cancel.Padding = new Thickness(18, 0);
-        cancel.Click += (_, _) => Dismiss();
+        cancel.Click += (_, _) =>
+        {
+            Stop();
+            Dismiss();
+        };
 
         var actions = new StackPanel
         {
@@ -403,7 +456,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             Children = { back, clear, cancel, done },
         };
 
-        var body = new StackPanel { Children = { shown, state, board, actions } };
+        var body = new StackPanel { Children = { shown, state, tiles, board, actions } };
 
         Overlay(Card(body));
 
@@ -417,6 +470,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
             {
                 typed = dictated;
                 shown.Text = typed;
+                Refresh();
             });
     }
 

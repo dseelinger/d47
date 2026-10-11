@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+On the headset, the drawn keyboard for a system-name box shows up to eight matching system names as tiles above the keys once you have typed three characters, and refreshes after each key, delete, clear or spoken word. Pressing a tile fills the box, closes the keyboard and does what picking the name does in the window; on the System page it opens that system. Nothing is shown or sent while galaxy search is off.
+
 The headset panel now has four things the window already had: Settings › Phrases, the draft actions on a story, Fleet › Crew seats, and the talk section on a ship build.
 
 On the headset, pressing a setting's label shows its help in a line under the label, and pressing it again hides it. Pressing a field name on the Raw Journal page shows what it means in a box under the row. One such line is open at a time. The transcript also has a Scroll what is shown above the fold tile, which the window keeps in the right-click menu.
