@@ -88,27 +88,7 @@ nav_order: 105
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> What actually leaves, when it is on.</h2>
-<svg viewBox="0 0 880 260" role="img" aria-label="The system name, any filters, and where you are — and nothing else">
- <rect x="30" y="24" width="380" height="196" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
- <text x="54" y="52" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
- <rect x="66" y="70" width="310" height="40" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="221" y="96" text-anchor="middle" font-size="16" fill="var(--text)">the system you asked about</text>
- <rect x="66" y="122" width="310" height="40" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="221" y="148" text-anchor="middle" font-size="16" fill="var(--text)">your filters — allegiance, distance</text>
- <rect x="66" y="174" width="310" height="40" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="221" y="200" text-anchor="middle" font-size="16" fill="var(--text)">where you are</text>
- <line x1="420" y1="122" x2="466" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="480,122 464,114 464,130" fill="var(--accent-muted)"/>
- <rect x="494" y="86" width="356" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="672" y="118" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">spansh.co.uk</text>
- <text x="672" y="142" text-anchor="middle" font-size="15" fill="var(--text-muted)">no key, no identifier, nothing else</text>
- <text x="440" y="240" text-anchor="middle" font-size="16" fill="var(--text-muted)">Where you are goes only when the question is relative to you — “the nearest high tech system”</text>
- <text x="440" y="258" text-anchor="middle" font-size="16" fill="var(--text-muted)">cannot be asked without saying where from.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">3</span> The other one runs the other way.</h2>
+<h2><span class="num">2</span> The other one runs the other way.</h2>
 <svg viewBox="0 0 880 232" role="img" aria-label="The catalogue is downloaded whole and the choosing happens on your machine">
  <rect x="30" y="30" width="330" height="88" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="195" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">edastro.com</text>

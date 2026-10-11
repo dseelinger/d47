@@ -126,30 +126,6 @@ public class TheSetupWizardSavesOnlyOnStartTests
     }
 
     [AvaloniaFact]
-    public void TheKeyLinesComeFromTheDisclosure()
-    {
-        var (wizard, host, settings, _) = Open();
-
-        Go(wizard, SetupWizard.Step.Voice);
-        Press(wizard, $"SetupOption-{TtsProviderCatalog.ElevenLabsId}");
-        Go(wizard, SetupWizard.Step.Keys);
-
-        var lines = wizard.GetVisualDescendants().OfType<TextBlock>()
-            .Where(block => block.Name == "SetupKeyEgress")
-            .Select(block => block.Text)
-            .ToList();
-
-        var anthropic = FirstRun.Egress(SetupSlot.Conversation, FirstRun.Draft(settings, wizard.Choices));
-        var voice = EgressDisclosure.TextToSpeechFor(TtsProviderCatalog.ElevenLabs);
-
-        Assert.Equal(
-            [$"{anthropic.Destination} · {anthropic.Summary}", $"{voice.Destination} · {voice.Summary}"],
-            lines);
-
-        host.Close();
-    }
-
-    [AvaloniaFact]
     public void TheKeysStepIsPassedOverWhenNothingNeedsAKey()
     {
         var (wizard, host, _, _) = Open();

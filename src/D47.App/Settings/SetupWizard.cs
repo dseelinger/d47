@@ -57,7 +57,6 @@ public sealed class SetupWizard : ModalDialog
     private readonly SettingsService _settings;
     private readonly Func<EliteBinds> _binds;
     private readonly SwitchEditing? _switches;
-    private readonly Action? _openPrivacy;
     private readonly Func<string, LocalVoiceDownload?>? _localVoice;
     private readonly bool _microphone;
 
@@ -82,7 +81,6 @@ public sealed class SetupWizard : ModalDialog
         SettingsService settings,
         Func<EliteBinds>? binds = null,
         SwitchEditing? switches = null,
-        Action? openPrivacy = null,
         Func<string, LocalVoiceDownload?>? localVoice = null,
         ILogger? logger = null,
         Func<bool>? hasMicrophone = null)
@@ -91,7 +89,6 @@ public sealed class SetupWizard : ModalDialog
         _settings = settings;
         _binds = binds ?? (() => EliteBinds.None);
         _switches = switches;
-        _openPrivacy = openPrivacy;
         _localVoice = localVoice;
         _microphone = hasMicrophone?.Invoke() ?? true;
 
@@ -615,9 +612,6 @@ public sealed class SetupWizard : ModalDialog
             group.Children.Add(Head(key.Row.Label, $"For {Serves(key.Serves)}"));
             group.Children.Add(new SecretEditor(key.Row, _settings));
 
-            var egress = Mono(Egress(key.Egress));
-            egress.Name = "SetupKeyEgress";
-
             var line = new DockPanel();
 
             if (key.KeyPage is { } page)
@@ -627,7 +621,6 @@ public sealed class SetupWizard : ModalDialog
                 line.Children.Add(get);
             }
 
-            line.Children.Add(egress);
             group.Children.Add(line);
 
             stack.Children.Add(group);
@@ -640,15 +633,6 @@ public sealed class SetupWizard : ModalDialog
     }
 
     private static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : url;
-
-    /// <summary>One line for a key: where it sends, then what, from the disclosure of each slot it serves.</summary>
-    private static string Egress(IReadOnlyList<EgressEntry> entries)
-    {
-        var destinations = string.Join(", ", entries.Select(entry => entry.Destination).Distinct(StringComparer.OrdinalIgnoreCase));
-        var summaries = string.Join(" ", entries.Select(entry => entry.Summary).Distinct(StringComparer.Ordinal));
-
-        return $"{destinations} · {summaries}";
-    }
 
     private static string Serves(IReadOnlyList<SetupSlot> slots)
     {
@@ -932,7 +916,7 @@ public sealed class SetupWizard : ModalDialog
         var hasSecret = (string name) => _settings.HasSecret(name);
         var effective = FirstRun.Effective(Choices, hasSecret, _microphone);
 
-        stack.Children.Add(Lead("Check your choices and what they send. Select one to change it."));
+        stack.Children.Add(Lead("Check your choices. Select one to change it."));
 
         if (_localVoice?.Invoke(Choices.Voice) is { } voice)
         {
@@ -985,66 +969,10 @@ public sealed class SetupWizard : ModalDialog
 
         stack.Children.Add(grid);
 
-        var egress = new StackPanel { Name = "SetupEgress" };
-        egress.Children.Add(Head("What leaves this machine", null));
-
-        foreach (var entry in FirstRun.Destinations(_settings, Choices, microphone: _microphone))
-        {
-            var name = Chrome(DestinationName(entry), ThemeManager.WhiteKey);
-            var where = Mono(entry.Destination);
-            where.Margin = new Thickness(12, 0, 0, 0);
-            DockPanel.SetDock(where, Dock.Right);
-
-            var top = new DockPanel { Children = { where, name } };
-
-            var what = Help(entry.Summary);
-            what.Margin = new Thickness(0, 4, 0, 0);
-
-            var row = new Border
-            {
-                Padding = new Thickness(0, 10),
-                BorderThickness = new Thickness(0, 0, 0, 1),
-                Child = new StackPanel { Children = { top, what } },
-            };
-            Themed(row, Border.BorderBrushProperty, ThemeManager.Line2Key);
-
-            egress.Children.Add(row);
-        }
-
-        if (_openPrivacy is { } open)
-        {
-            var privacy = new Button
-            {
-                Name = "SetupPrivacy",
-                Content = "START, THEN OPEN PRIVACY AND EGRESS ›",
-                Margin = new Thickness(0, 12, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
-
-            AutomationProperties.SetName(privacy, "Start, then open Settings, Privacy and egress");
-
-            privacy.Click += (_, _) =>
-            {
-                Start();
-
-                if (Started && !IsDownloading)
-                {
-                    open();
-                }
-            };
-
-            egress.Children.Add(privacy);
-        }
-
-        stack.Children.Add(egress);
         stack.Children.Add(Help("Change any of this in Settings. Reopen this guide from About › Set up keys."));
 
         return stack;
     }
-
-    /// <summary>The disclosure's own name, except where it would say "language model".</summary>
-    private static string DestinationName(EgressEntry entry) =>
-        entry.Id == EgressDisclosure.LanguageModel ? "Conversation AI" : entry.Name;
 
     private string TalkSummary()
     {

@@ -104,31 +104,6 @@ nav_order: 1
  <text x="440" y="212" text-anchor="middle" font-size="14" fill="var(--text-muted)">You never end up with half an update.</text>
 </svg>
 </section>
-<section>
-<h2><span class="num">5</span> What leaves your PC.</h2>
-<svg viewBox="0 0 880 316" role="img" aria-label="Only a version check and a one-off model download leave the machine">
- <rect x="30" y="40" width="510" height="212" fill="none" stroke="var(--accent-muted)" stroke-width="2.5" stroke-dasharray="9 7"/>
- <text x="54" y="70" font-size="14" font-weight="700" fill="var(--text-muted)">YOUR PC</text>
- <rect x="110" y="86" width="350" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="285" y="113" text-anchor="middle" font-size="16" fill="var(--text)">your voice</text>
- <rect x="110" y="140" width="350" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="285" y="167" text-anchor="middle" font-size="16" fill="var(--text)">your journal</text>
- <rect x="110" y="194" width="350" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="285" y="221" text-anchor="middle" font-size="16" fill="var(--text)">your keys</text>
- <line x1="548" y1="122" x2="592" y2="122" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="606,122 590,114 590,130" fill="var(--accent-muted)"/>
- <rect x="618" y="88" width="242" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="739" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A VERSION NUMBER</text>
- <text x="739" y="140" text-anchor="middle" font-size="14" fill="var(--text-muted)">the update check — switchable off</text>
- <line x1="548" y1="200" x2="592" y2="200" stroke="var(--accent-muted)" stroke-width="3" stroke-linecap="butt"/>
- <polygon points="606,200 590,192 590,208" fill="var(--accent-muted)"/>
- <rect x="618" y="166" width="242" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="739" y="196" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">A SPEECH MODEL</text>
- <text x="739" y="218" text-anchor="middle" font-size="14" fill="var(--text-muted)">once, ~75 MB, coming in</text>
- <text x="440" y="288" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">Nothing else is sent out of the box.</text>
- <text x="440" y="310" text-anchor="middle" font-size="14" fill="var(--text-muted)">Nothing in the dashed box ever crosses the line.</text>
-</svg>
-</section>
 </div></div>
 
 ## The details
@@ -251,29 +226,17 @@ asset on a release of this repository.
 Offline or GitHub unreachable is treated as "no update" — startup never waits on the check and
 never fails because of it.
 
-### What leaves the machine
+### Downloads and stored keys
 
-Nothing about you or your game.
+Out of the box D47 makes two kinds of outbound request of its own:
 
-Out of the box D47 makes two kinds of outbound request, and neither carries anything about
-you:
-
-- **The update check** described above — a GET with no Commander data, no journal data and
-  nothing identifying. Switch it off in Settings and D47 makes no network call of its own.
-  Pressing **Update now** on the banner it raises adds one more: downloading that release from
-  GitHub. That is a download rather than an upload, and it happens only when you press it.
-- **A speech model download** — once. D47 ships with the smallest English model selected and
+- **The update check** described above. Switch it off in Settings and D47 makes no network call of
+  its own. Pressing **Update now** on the banner adds one more: downloading that release from
+  GitHub, which happens only when you press it.
+- **A speech model download**, once. D47 ships with the smallest English model selected and
   fetches it from `huggingface.co` on first run, about 75 MB; choosing a different one fetches
-  that instead. Only the model file is transferred, nothing about you goes with the request, and
-  once it is on disk transcription runs entirely on this machine — no audio and no transcript
-  leaves it. Set the speech model to `none` if you would rather it fetched nothing.
-
-Providers that send game-derived data off the machine — a cloud LLM, a paid voice, INARA, web
-search — are each enabled individually and each states what it transmits.
-
-You never have to take this page's word for any of it. D47 computes the answer from your
-current settings: ask it *"what are you sending"*, or open the **Privacy and egress** section
-of Settings. A page can go stale; that report cannot.
+  that instead. Once it is on disk, transcription runs on this machine. Set the speech model to
+  `none` if you would rather it fetched nothing.
 
 `secrets.json` is encrypted with Windows DPAPI scoped to your user account. Copying it to
 another machine or another account leaves it undecryptable, and D47 treats an unreadable

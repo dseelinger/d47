@@ -26,7 +26,6 @@ public class TheSetupWizardAsksForEachKeyOnceTests
         var key = Assert.Single(keys);
         Assert.Equal("openai.apiKey", key.SecretName);
         Assert.Equal([SetupSlot.Conversation, SetupSlot.Voice, SetupSlot.Listening], key.Serves);
-        Assert.Equal(3, key.Egress.Count);
     }
 
     [Fact]
@@ -86,40 +85,6 @@ public class TheSetupWizardAsksForEachKeyOnceTests
 
         Assert.Equal(3, keys.Count);
         Assert.All(keys, key => Assert.Same(registered[key.Row.Key], key.Row));
-    }
-
-    [Fact]
-    public void AKeyDisclosesItsOwnProviderRatherThanTheSelectedOne()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        Assert.Equal(TtsProviderCatalog.EdgeId, surface.Settings.Current.Speech.Provider);
-
-        var voice = FirstRun.Keys(
-                surface.Settings,
-                Choose(LlmProviderCatalog.NoneId, TtsProviderCatalog.ElevenLabsId, SttProviderCatalog.LocalId))
-            .Single();
-
-        var egress = Assert.Single(voice.Egress);
-        Assert.Equal(TtsProviderCatalog.ElevenLabs.Destination, egress.Destination);
-        Assert.Equal(EgressDisclosure.TextToSpeechFor(TtsProviderCatalog.ElevenLabs).Summary, egress.Summary);
-    }
-
-    [Fact]
-    public void TheConversationKeyDisclosesTheChosenProvidersEndpoint()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        var key = FirstRun.Keys(
-                surface.Settings,
-                Choose(LlmProviderCatalog.OpenAiId, TtsProviderCatalog.EdgeId, SttProviderCatalog.LocalId))
-            .Single();
-
-        var egress = Assert.Single(key.Egress);
-        Assert.True(egress.Active);
-        Assert.Equal(LlmProviderCatalog.Find(LlmProviderCatalog.OpenAiId)!.DefaultEndpoint, egress.Destination);
     }
 
     [Fact]

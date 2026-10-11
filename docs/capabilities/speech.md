@@ -211,8 +211,8 @@ and still costing.
 | Value | Meaning |
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
-| `kokoro` | Kokoro, **running on this computer**. Free, no key, and nothing sent anywhere. |
-| `chatterbox` | Chatterbox Turbo, **running on this computer's processor**. Free, no key, and nothing sent anywhere. |
+| `kokoro` | Kokoro, **running on this computer**. Free, no key. |
+| `chatterbox` | Chatterbox Turbo, **running on this computer's processor**. Free, no key. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key, and generally the better voices. |
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `cartesia` | Cartesia. Paid, needs an API key. **924 voices**, far the largest library here. |

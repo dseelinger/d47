@@ -50,13 +50,11 @@ public sealed record SetupChoices(
 /// <summary>One secret the choices need, asked for once however many of them use it.</summary>
 /// <param name="Row">The registry's key row for the first slot that uses the secret.</param>
 /// <param name="Serves">The slots that use it, in wizard order.</param>
-/// <param name="Egress">What each of those slots sends, computed from <see cref="EgressDisclosure"/>.</param>
 /// <param name="KeyPage">Where the provider issues the key, or null where there is no such page.</param>
 public sealed record SetupKey(
     string SecretName,
     SettingRow Row,
     IReadOnlyList<SetupSlot> Serves,
-    IReadOnlyList<EgressEntry> Egress,
     string? KeyPage);
 
 /// <summary>The first-run setup: the providers to choose from, the keys they need, and what is saved.</summary>
@@ -144,7 +142,6 @@ public static class FirstRun
                 keys[index] = known with
                 {
                     Serves = [.. known.Serves, slot],
-                    Egress = [.. known.Egress, Egress(slot, draft)],
                 };
 
                 continue;
@@ -155,7 +152,7 @@ public static class FirstRun
                 continue;
             }
 
-            keys.Add(new SetupKey(secret, row, [slot], [Egress(slot, draft)], KeyPages.GetValueOrDefault(secret)));
+            keys.Add(new SetupKey(secret, row, [slot], KeyPages.GetValueOrDefault(secret)));
         }
 
         return keys;
@@ -214,32 +211,6 @@ public static class FirstRun
         (ListeningCapability.PushToTalkButtonKey, choices.TalkButton),
         (ListeningCapability.ModeKey, choices.TalkMode),
     ];
-
-    /// <summary>What one slot's chosen provider sends, as if its key were stored.</summary>
-    public static EgressEntry Egress(SetupSlot slot, D47Settings draft) => slot switch
-    {
-        SetupSlot.Conversation => EgressDisclosure.Entry(EgressDisclosure.LanguageModel, draft, llmKeyPresent: true),
-        SetupSlot.Voice => EgressDisclosure.TextToSpeechFor(TtsProviderCatalog.Selected(draft.Speech.Provider)),
-        _ => EgressDisclosure.SpeechRecognitionFor(SttProviderCatalog.Selected(draft.Listening.Provider)),
-    };
-
-    /// <summary>Every destination that would be active once the choices are saved.</summary>
-    public static IReadOnlyList<EgressEntry> Destinations(
-        SettingsService settings,
-        SetupChoices choices,
-        Func<string, bool>? hasSecret = null,
-        bool microphone = true)
-    {
-        hasSecret ??= name => settings.HasSecret(name);
-
-        var effective = Effective(choices, hasSecret, microphone);
-        var draft = Draft(settings, effective);
-        var llmKey = SecretFor(SetupSlot.Conversation, effective) is { } secret && hasSecret(secret);
-
-        return [.. EgressDisclosure
-            .For(draft, llmKey, hasSecret(CommunityGoalCapability.KeySecretName))
-            .Where(entry => entry.Active)];
-    }
 
     /// <summary>Saves the effective choices, providers first, and returns any setting that refused. Without a microphone the listening settings are left as they are.</summary>
     public static IReadOnlyList<SettingApplyResult> Apply(SettingsService settings, SetupChoices choices, bool microphone = true)

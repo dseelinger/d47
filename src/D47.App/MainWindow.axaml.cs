@@ -642,11 +642,6 @@ public partial class MainWindow : Window
             host.Settings,
             () => host.Binds,
             host.SwitchEditing,
-            openPrivacy: () =>
-            {
-                OpenSettings();
-                RevealSetting(PrivacyCapability.Id);
-            },
             localVoice: host.Speech.LocalVoiceToFetch,
             logger: host.Loggers.CreateLogger<SetupWizard>(),
             hasMicrophone: () => host.Microphone.Devices().Count > 0).Over(this);

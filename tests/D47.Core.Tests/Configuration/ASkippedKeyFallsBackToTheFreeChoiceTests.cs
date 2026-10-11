@@ -73,20 +73,4 @@ public class ASkippedKeyFallsBackToTheFreeChoiceTests
             LlmProviderCatalog.Selected(surface.Settings.Current.Llm.Provider), surface.Secrets.Has));
     }
 
-    [Fact]
-    public void TheReadyStepDisclosesWhatWillBeSavedRatherThanWhatWasPicked()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        var without = FirstRun.Destinations(surface.Settings, AllPaid, _ => false);
-        Assert.DoesNotContain(without, entry => entry.Id == EgressDisclosure.LanguageModel);
-        Assert.Contains(without, entry => entry.Id == EgressDisclosure.TextToSpeech
-            && entry.Destination == TtsProviderCatalog.Edge.Destination);
-
-        var with = FirstRun.Destinations(surface.Settings, AllPaid, _ => true);
-        Assert.Contains(with, entry => entry.Id == EgressDisclosure.LanguageModel);
-        Assert.Contains(with, entry => entry.Id == EgressDisclosure.SpeechRecognition
-            && entry.Destination == SttProviderCatalog.Deepgram.Destination);
-    }
 }

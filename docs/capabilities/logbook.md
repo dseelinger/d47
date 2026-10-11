@@ -157,12 +157,6 @@ the executable so you can keep it, edit it, and post it wherever you like.
 
 Elite's community has been writing Commander's logs by hand since 3300. This writes the first draft.
 
-### The one thing that leaves this machine
-
-Everything else d47 does stays here. This does not — **because you chose to take it.** That is a
-different thing from telemetry, and it is worth saying plainly: d47 sends nothing anywhere on its
-own, and a log leaves only when you pick up the file and put it somewhere.
-
 ### Every sentence traces to an event
 
 This is the whole quality bar, and it is why the feature is not simply a prompt.
