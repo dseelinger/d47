@@ -170,8 +170,8 @@ public static class ChecklistWatching
         }
     }
 
-    /// <summary>The condition as the Commander reads it — "Ticks when you buy 5 Hydrogen Fuel at Jameson Memorial".</summary>
-    public static string Describe(ChecklistWatch watch, bool open = true)
+    /// <summary>The condition as a clause — "you buy 5 Hydrogen Fuel at Jameson Memorial".</summary>
+    public static string Condition(ChecklistWatch watch)
     {
         ArgumentNullException.ThrowIfNull(watch);
 
@@ -179,24 +179,30 @@ public static class ChecklistWatching
             ? $"{quantity.ToString(CultureInfo.InvariantCulture)} {watch.Subject}"
             : watch.Subject;
 
-        var said = watch.Kind switch
+        return watch.Kind switch
         {
-            ChecklistWatchKind.Dock => $"Ticks when you dock at {watch.Subject}{In(watch.Place)}",
-            ChecklistWatchKind.Arrive => $"Ticks when you arrive in {watch.Subject}",
-            ChecklistWatchKind.Buy => $"Ticks when you buy {what}{At(watch.Place)}",
-            ChecklistWatchKind.Sell => $"Ticks when you sell {what}{At(watch.Place)}",
-            _ => $"Ticks when your carrier has a buy order for {what}",
+            ChecklistWatchKind.Dock => $"you dock at {watch.Subject}{In(watch.Place)}",
+            ChecklistWatchKind.Arrive => $"you arrive in {watch.Subject}",
+            ChecklistWatchKind.Buy => $"you buy {what}{At(watch.Place)}",
+            ChecklistWatchKind.Sell => $"you sell {what}{At(watch.Place)}",
+            _ => $"your carrier has a buy order for {what}",
         };
+
+        static string In(string? place) => place is { Length: > 0 } ? $" in {place}" : string.Empty;
+
+        static string At(string? place) => place is { Length: > 0 } ? $" at {place}" : string.Empty;
+    }
+
+    /// <summary>The condition as the Commander reads it — "Ticks when you buy 5 Hydrogen Fuel at Jameson Memorial".</summary>
+    public static string Describe(ChecklistWatch watch, bool open = true)
+    {
+        var said = $"Ticks when {Condition(watch)}";
 
         return open && watch.Progress > 0 && watch.Quantity is { } wanted
                && watch.Kind is ChecklistWatchKind.Buy or ChecklistWatchKind.Sell
             ? $"{said} · {watch.Progress.ToString(CultureInfo.InvariantCulture)} of "
               + $"{wanted.ToString(CultureInfo.InvariantCulture)} so far"
             : said;
-
-        static string In(string? place) => place is { Length: > 0 } ? $" in {place}" : string.Empty;
-
-        static string At(string? place) => place is { Length: > 0 } ? $" at {place}" : string.Empty;
     }
 
     private static bool Same(string? journal, string? wanted) =>

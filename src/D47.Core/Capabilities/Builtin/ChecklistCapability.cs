@@ -147,19 +147,24 @@ public static class ChecklistCapability
                         Type = ToolParameterType.String,
                         Description = "A specific ship id or star system, when it is not the current one.",
                     },
+                    .. WatchParameters,
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                    checklists.ProposeAdd(
-                        Scope(checklists, arguments),
-                        [arguments.TryGetString("text", out var text) ? text : string.Empty]))),
+                    WatchFrom(arguments, out var watch) is { } refused
+                        ? refused
+                        : checklists.ProposeAdd(
+                            Scope(checklists, arguments),
+                            [arguments.TryGetString("text", out var text) ? text : string.Empty],
+                            watch: watch))),
             },
 
             new ToolDefinition
             {
                 Name = "propose_checklist_change",
                 Description =
-                    "Propose that one of the Commander's own lines is finished, is open again, or should "
-                    + "go. Only their own lines: a computed item's state is read out of the journal and "
+                    "Propose that one of the Commander's own lines is finished, is open again, should "
+                    + "go, or should tick itself when a journal condition is met (change \"watch\", with "
+                    + "tick_when). Only their own lines: a computed item's state is read out of the journal and "
                     + "simply stated, so there is nothing there to agree to.",
                 Parameters =
                 [
@@ -175,18 +180,23 @@ public static class ChecklistCapability
                         Name = "change",
                         Type = ToolParameterType.String,
                         Description = "What to propose.",
-                        AllowedValues = ["done", "open", "remove"],
+                        AllowedValues = ["done", "open", "remove", "watch"],
                     },
+                    .. WatchParameters,
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                    checklists.ProposeChange(
-                        arguments.TryGetString("item", out var item) ? item : string.Empty,
-                        arguments.TryGetString("change", out var change) ? change?.ToLowerInvariant() switch
-                        {
-                            "open" => ProposalKind.Reopen,
-                            "remove" => ProposalKind.Remove,
-                            _ => ProposalKind.Complete,
-                        } : ProposalKind.Complete))),
+                    WatchFrom(arguments, out var watch) is { } refused
+                        ? refused
+                        : checklists.ProposeChange(
+                            arguments.TryGetString("item", out var item) ? item : string.Empty,
+                            arguments.TryGetString("change", out var change) ? change?.ToLowerInvariant() switch
+                            {
+                                "open" => ProposalKind.Reopen,
+                                "remove" => ProposalKind.Remove,
+                                "watch" => ProposalKind.Watch,
+                                _ => ProposalKind.Complete,
+                            } : ProposalKind.Complete,
+                            watch))),
             },
 
             new ToolDefinition
@@ -540,6 +550,82 @@ public static class ChecklistCapability
             ? said
             : said + $" {waiting} proposal{(waiting == 1 ? " is" : "s are")} waiting for them to accept or decline; "
                    + "D47 cannot accept on their behalf.";
+    }
+
+    private static readonly ToolParameter[] WatchParameters =
+    [
+        new ToolParameter
+        {
+            Name = "tick_when",
+            Type = ToolParameterType.String,
+            Description =
+                "A journal condition that ticks the line itself once the Commander agrees: dock at a station, "
+                + "arrive in a system, buy or sell a commodity, or set a carrier buy order. Needs subject.",
+            AllowedValues = ["dock", "arrive", "buy", "sell", "buy_order"],
+        },
+        new ToolParameter
+        {
+            Name = "subject",
+            Type = ToolParameterType.String,
+            Description =
+                "What tick_when waits for, as Elite names it: a station for dock, a system for arrive, "
+                + "a commodity for buy, sell and buy_order.",
+        },
+        new ToolParameter
+        {
+            Name = "place",
+            Type = ToolParameterType.String,
+            Description = "The system for dock, the station for buy and sell. Not used by arrive or buy_order.",
+        },
+        new ToolParameter
+        {
+            Name = "quantity",
+            Type = ToolParameterType.Integer,
+            Description = "How many, for buy, sell and buy_order. At least 1.",
+        },
+    ];
+
+    /// <summary>Reads the watch arguments; returns a refusal sentence when they cannot make a watch.</summary>
+    private static string? WatchFrom(ToolArguments arguments, out ChecklistWatch? watch)
+    {
+        watch = null;
+
+        var named = arguments.TryGetString("subject", out var subject);
+        var placed = arguments.TryGetString("place", out var place);
+        var counted = arguments.TryGetInt32("quantity", out var quantity);
+
+        if (!counted && arguments.TryGetString("quantity", out var raw))
+        {
+            return $"'{raw}' is not a whole number, so I cannot watch for that quantity.";
+        }
+
+        if (!arguments.TryGetString("tick_when", out var when))
+        {
+            return named || placed || counted
+                ? "A subject, place or quantity needs tick_when to say which condition they belong to."
+                : null;
+        }
+
+        if (!Enum.TryParse<ChecklistWatchKind>(when.Replace("_", string.Empty), ignoreCase: true, out var kind))
+        {
+            return $"'{when}' is not a condition I can watch for.";
+        }
+
+        if (!named)
+        {
+            return "A watch needs a subject: the station, system or commodity to wait for.";
+        }
+
+        watch = new ChecklistWatch(kind, subject!)
+        {
+            Place = placed ? place : null,
+            Quantity = counted ? quantity : null,
+            Since = DateTimeOffset.UnixEpoch,
+        };
+
+        return ChecklistValidation.WatchProblem("The line", ChecklistItemKind.Authored, watch) is { } reason
+            ? reason
+            : null;
     }
 
     private static ChecklistScope Scope(ChecklistService checklists, ToolArguments arguments) =>

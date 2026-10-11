@@ -22,6 +22,9 @@ public enum ProposalKind
 
     /// <summary>Replace one plan's items in one scope — a revision, applied as a diff.</summary>
     Plan,
+
+    /// <summary>Set the watch on a line the Commander wrote.</summary>
+    Watch,
 }
 
 /// <summary>Something d47 would like to do to the Commander's checklist, waiting for them to agree.</summary>
@@ -45,6 +48,9 @@ public sealed record ChecklistProposal
 
     /// <summary>Which item a <see cref="ProposalKind.Complete"/> is about.</summary>
     public string? TargetKey { get; init; }
+
+    /// <summary>The watch a <see cref="ProposalKind.Watch"/> would set; its <c>Since</c> is reset when accepted.</summary>
+    public ChecklistWatch? Watch { get; init; }
 }
 
 /// <summary>
@@ -215,7 +221,18 @@ public sealed class ChecklistProposalStore(string path, IFileSystem files, ILogg
         && string.Equals(waiting.TargetKey ?? string.Empty, wanted.TargetKey ?? string.Empty, StringComparison.OrdinalIgnoreCase)
         && waiting.Items.Select(item => item.Text).SequenceEqual(
             wanted.Items.Select(item => item.Text),
-            StringComparer.OrdinalIgnoreCase);
+            StringComparer.OrdinalIgnoreCase)
+        && SameCondition(waiting.Watch, wanted.Watch)
+        && waiting.Items.Select(item => item.Watch).Zip(wanted.Items.Select(item => item.Watch))
+            .All(pair => SameCondition(pair.First, pair.Second));
+
+    private static bool SameCondition(ChecklistWatch? one, ChecklistWatch? other) =>
+        one is null || other is null
+            ? one is null && other is null
+            : one.Kind == other.Kind
+              && string.Equals(ChecklistKeys.Compact(one.Subject), ChecklistKeys.Compact(other.Subject), StringComparison.Ordinal)
+              && string.Equals(ChecklistKeys.Compact(one.Place), ChecklistKeys.Compact(other.Place), StringComparison.Ordinal)
+              && one.Quantity == other.Quantity;
 
     private static int Next(IEnumerable<ChecklistProposal> pending)
     {
@@ -314,11 +331,24 @@ public sealed class ChecklistProposalStore(string path, IFileSystem files, ILogg
         }
 
         var aboutOneItem = proposal.Kind
-            is ProposalKind.Complete or ProposalKind.Reopen or ProposalKind.Remove;
+            is ProposalKind.Complete or ProposalKind.Reopen or ProposalKind.Remove or ProposalKind.Watch;
 
         if (aboutOneItem && string.IsNullOrWhiteSpace(proposal.TargetKey))
         {
             return "It proposes changing something and does not say what.";
+        }
+
+        if (proposal.Kind == ProposalKind.Watch)
+        {
+            if (proposal.Watch is not { } watch)
+            {
+                return "It proposes a watch and does not say what for.";
+            }
+
+            if (ChecklistValidation.WatchProblem(proposal.Summary, ChecklistItemKind.Authored, watch) is { } bad)
+            {
+                return bad;
+            }
         }
 
         if (!aboutOneItem && proposal.Items.Count == 0)

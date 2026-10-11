@@ -352,49 +352,50 @@ public static class ChecklistValidation
             return $"\"{item.Text}\" asks for grade {grade}, and grades run 1 to 5.";
         }
 
-        return item.Watch is { } watch ? WatchProblem(item, watch) : null;
+        return item.Watch is { } watch ? WatchProblem(item.Text, item.Kind, watch) : null;
     }
 
-    private static string? WatchProblem(ChecklistItem item, ChecklistWatch watch)
+    /// <summary>Why a watch on the line called <paramref name="text"/> would be refused, or null.</summary>
+    public static string? WatchProblem(string text, ChecklistItemKind kind, ChecklistWatch watch)
     {
-        if (item.Kind == ChecklistItemKind.Derived)
+        if (kind == ChecklistItemKind.Derived)
         {
-            return $"\"{item.Text}\" is worked out from the journal already and cannot carry a watch as well.";
+            return $"\"{text}\" is worked out from the journal already and cannot carry a watch as well.";
         }
 
         if (ChecklistKeys.Compact(watch.Subject).Length == 0)
         {
-            return $"\"{item.Text}\" watches for something without saying what.";
+            return $"\"{text}\" watches for something without saying what.";
         }
 
         if (watch.Place is not null && ChecklistKeys.Compact(watch.Place).Length == 0)
         {
-            return $"\"{item.Text}\" names a place with no name in it.";
+            return $"\"{text}\" names a place with no name in it.";
         }
 
         if (watch.Quantity is < 1)
         {
-            return $"\"{item.Text}\" watches for {watch.Quantity} of something, and the least is 1.";
+            return $"\"{text}\" watches for {watch.Quantity} of something, and the least is 1.";
         }
 
         if (watch.Quantity is not null && watch.Kind is ChecklistWatchKind.Dock or ChecklistWatchKind.Arrive)
         {
-            return $"\"{item.Text}\" gives a quantity to a docking or an arrival, which has none.";
+            return $"\"{text}\" gives a quantity to a docking or an arrival, which has none.";
         }
 
         if (watch.Place is not null && watch.Kind is ChecklistWatchKind.Arrive or ChecklistWatchKind.BuyOrder)
         {
-            return $"\"{item.Text}\" gives a place to an arrival or a buy order, which takes none.";
+            return $"\"{text}\" gives a place to an arrival or a buy order, which takes none.";
         }
 
         if (watch.Since == default)
         {
-            return $"\"{item.Text}\" watches for something without saying since when.";
+            return $"\"{text}\" watches for something without saying since when.";
         }
 
         if (watch.Progress < 0)
         {
-            return $"\"{item.Text}\" has counted {watch.Progress}, and a count starts at 0.";
+            return $"\"{text}\" has counted {watch.Progress}, and a count starts at 0.";
         }
 
         return null;

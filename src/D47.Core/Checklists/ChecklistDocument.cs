@@ -93,7 +93,7 @@ public sealed record ChecklistDocument
 
     /// <summary>Adds an authored line.</summary>
     /// <param name="goal">The arc that asked for it, where one did (Phase 34).</param>
-    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null)
+    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null, ChecklistWatch? watch = null)
     {
         var trimmed = text.Trim();
 
@@ -124,6 +124,7 @@ public sealed record ChecklistDocument
             Text = trimmed,
             Provenance = ChecklistProvenance.Attributed,
             Goal = goal,
+            Watch = watch,
         };
 
         return new ChecklistChange(
@@ -153,6 +154,25 @@ public sealed record ChecklistDocument
         var incoming = taken ? item with { Key = ChecklistKeys.Note(scoped) } : item;
 
         return this with { Items = [.. Items, incoming] };
+    }
+
+    /// <summary>Sets the watch on a line the Commander wrote, counting from <paramref name="now"/>.</summary>
+    public ChecklistChange SetWatch(ChecklistItemId id, ChecklistWatch watch, DateTimeOffset now)
+    {
+        if (Find(id) is not { } item)
+        {
+            return ChecklistChange.Refused(this, "There is no such item on your checklist.");
+        }
+
+        if (item.Kind != ChecklistItemKind.Authored)
+        {
+            return ChecklistChange.Refused(this, $"\"{item.Text}\" is worked out from your journal and cannot carry a watch.");
+        }
+
+        return new ChecklistChange(
+            Replace(item with { Watch = watch.Rearmed(now) }),
+            Changed: true,
+            $"\"{item.Text}\" will tick when {ChecklistWatching.Condition(watch)}.");
     }
 
     /// <summary>Ticks an item.</summary>

@@ -1167,9 +1167,9 @@ public sealed class ChecklistService(
 
     /// <summary>Adds the Commander's own line.</summary>
     /// <param name="goal">The arc that asked for the line, where one did (Phase 34).</param>
-    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null) =>
+    public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null, ChecklistWatch? watch = null) =>
         // The new line becomes the selected one (reported 2026-08-21).
-        Selecting(list.Apply(Fid, Name, document => document.AddNote(scope, text, goal)));
+        Selecting(list.Apply(Fid, Name, document => document.AddNote(scope, text, goal, watch)));
 
     public ChecklistChange Complete(ChecklistItemId id) =>
         list.Apply(Fid, Name, document => document.Complete(id));
@@ -1529,6 +1529,9 @@ public sealed class ChecklistService(
             ProposalKind.Complete => Complete(target),
             ProposalKind.Reopen => Uncomplete(target),
             ProposalKind.Remove => Delete(target),
+            ProposalKind.Watch when proposal.Watch is { } watch =>
+                list.Apply(Fid, Name, document => document.SetWatch(target, watch, Now)),
+            ProposalKind.Watch => ChecklistChange.Refused(Document, "There was no watch to set."),
             _ => AddAll(proposal),
         };
     }
@@ -1549,7 +1552,7 @@ public sealed class ChecklistService(
 
         foreach (var item in proposal.Items)
         {
-            var change = AddNote(proposal.Scope, item.Text, item.Goal);
+            var change = AddNote(proposal.Scope, item.Text, item.Goal, item.Watch?.Rearmed(Now));
             moved |= change.Changed;
             said.Add(change.Report);
         }
@@ -1561,7 +1564,7 @@ public sealed class ChecklistService(
 
     /// <summary>Records a proposal to add lines.</summary>
     /// <param name="goal">The arc that asked for these lines, where one did (Phase 34).</param>
-    public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines, string? goal = null)
+    public string ProposeAdd(ChecklistScope scope, IReadOnlyList<string> lines, string? goal = null, ChecklistWatch? watch = null)
     {
         var wanted = lines
             .Select(line => line.Trim())
@@ -1582,11 +1585,22 @@ public sealed class ChecklistService(
             Text = line,
             Provenance = ChecklistProvenance.Quoted,
             Goal = goal,
+            Watch = watch is null ? null : watch with { Since = Now },
         }).ToList();
+
+        if (items.Select(ChecklistValidation.Problem).FirstOrDefault(reason => reason is not null) is { } refused)
+        {
+            return refused;
+        }
 
         var summary = wanted.Count == 1
             ? $"Add \"{wanted[0]}\" to the {scope} list"
             : $"Add {wanted.Count} lines to the {scope} list";
+
+        if (watch is not null)
+        {
+            summary += $", ticked when {ChecklistWatching.Condition(watch)}";
+        }
 
         return Record(new ChecklistProposal
         {
@@ -1641,7 +1655,7 @@ public sealed class ChecklistService(
     }
 
     /// <summary>Proposes that a line is finished, re-opened or gone.</summary>
-    public string ProposeChange(string phrase, ProposalKind change)
+    public string ProposeChange(string phrase, ProposalKind change, ChecklistWatch? watch = null)
     {
         if (Document.Match(phrase) is not { } item)
         {
@@ -1658,8 +1672,22 @@ public sealed class ChecklistService(
                 : $"\"{item.Text}\" is worked out from your journal, and I cannot see it from here.";
         }
 
+        if (change == ProposalKind.Watch)
+        {
+            if (watch is null)
+            {
+                return "A watch needs a condition: say what to tick it on.";
+            }
+
+            if (ChecklistValidation.WatchProblem(item.Text, item.Kind, watch with { Since = Now }) is { } reason)
+            {
+                return reason;
+            }
+        }
+
         var said = change switch
         {
+            ProposalKind.Watch => $"Tick \"{item.Text}\" when {ChecklistWatching.Condition(watch!)}",
             ProposalKind.Reopen => $"Re-open \"{item.Text}\"",
             ProposalKind.Remove => $"Remove \"{item.Text}\" from the list",
             _ => $"Mark \"{item.Text}\" done",
@@ -1673,6 +1701,7 @@ public sealed class ChecklistService(
             Scope = item.Scope,
             TargetKey = item.Key,
             Summary = Trim(said),
+            Watch = change == ProposalKind.Watch ? watch! with { Since = Now } : null,
         });
     }
 
