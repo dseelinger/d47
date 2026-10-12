@@ -60,7 +60,10 @@ public sealed record RoutingSurface(
     CarrierRouteRequest? CarrierRoute = null,
 
     // Best cargo (#849): the last search, by voice or from the page.
-    BestCargoBoard? Cargo = null)
+    BestCargoBoard? Cargo = null,
+
+    // The line for game-live data while another Commander shows, given what the data is; null on duty.
+    Func<string, string?>? OffDuty = null)
 {
     /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
@@ -163,7 +166,7 @@ public static class RoutingPages
         return crumb.Key switch
         {
             PlanRoot => Plan(surface, nav),
-            ProgressKey => new RouteProgressPage(surface.Route, surface.Here, Copy(surface)),
+            ProgressKey => new RouteProgressPage(surface.Route, surface.Here, Copy(surface), surface.OffDuty),
             MarketRoot => Market(surface),
             BestCargoRoot => BestCargo(surface, nav),
             TradeRoot => Trade(surface, nav),
@@ -212,7 +215,8 @@ public static class RoutingPages
                     ? () => nav.SelectRoot(PanelTab.Navigation, TradeRoot)
                     : null,
                 surface.PrefixNames,
-                surface.SuggestionPause)
+                surface.SuggestionPause,
+                surface.OffDuty)
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
@@ -242,7 +246,7 @@ public static class RoutingPages
             return Missing("That plan is no longer here. Plot it again.");
         }
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here);
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>

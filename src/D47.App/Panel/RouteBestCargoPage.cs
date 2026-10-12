@@ -65,6 +65,7 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly BestCargoBoard _board;
     private readonly Func<CommanderGameState?> _commander;
     private readonly Func<NavRoute> _route;
+    private readonly Func<string, string?>? _offDuty;
     private readonly Func<bool> _lookupsEnabled;
     private readonly SettingsService? _settings;
     private readonly Action? _openSettings;
@@ -88,8 +89,10 @@ public sealed class RouteBestCargoPage : UserControl
         Action? openSettings = null,
         Action? changeFilters = null,
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
-        TimeSpan? suggestionPause = null)
+        TimeSpan? suggestionPause = null,
+        Func<string, string?>? offDuty = null)
     {
+        _offDuty = offDuty;
         _registry = registry;
         _board = board;
         _commander = commander;
@@ -161,6 +164,8 @@ public sealed class RouteBestCargoPage : UserControl
     }
 
     /// <summary>The last system of a plotted route, or null when nothing is plotted.</summary>
+    private string? RouteEndNow() => _offDuty?.Invoke(OffDutyNote.Route) is null ? EndOf(_route()) : null;
+
     public static string? EndOf(NavRoute route) => route.IsPlotted ? route.Hops[^1].StarSystem : null;
 
     /// <summary>The saved trade filters the search uses, as the filters line names them.</summary>
@@ -266,7 +271,7 @@ public sealed class RouteBestCargoPage : UserControl
     {
         var location = _commander()?.Location;
 
-        return (location?.Docked, location?.StationName, location?.StarSystem, EndOf(_route()), _lookupsEnabled(), _board.Last);
+        return (location?.Docked, location?.StationName, location?.StarSystem, RouteEndNow(), _lookupsEnabled(), _board.Last);
     }
 
     private void Draw()
@@ -278,7 +283,7 @@ public sealed class RouteBestCargoPage : UserControl
         var docked = location is { Docked: true, StationName: { Length: > 0 }, StarSystem: { Length: > 0 } };
         var lookups = _lookupsEnabled();
 
-        RouteEnd = EndOf(_route());
+        RouteEnd = RouteEndNow();
 
         var posting = docked && _board.Last is { } last && Same(last.Search, location!) ? last : null;
 

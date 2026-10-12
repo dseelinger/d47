@@ -15,6 +15,7 @@ public sealed class RouteProgressPage : UserControl
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<string, string?>? _offDuty;
 
     private readonly SelectableTextBlock _headline;
 
@@ -33,8 +34,10 @@ public sealed class RouteProgressPage : UserControl
     public RouteProgressPage(
         Func<NavRoute> route,
         Func<string?> here,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        Func<string, string?>? offDuty = null)
     {
+        _offDuty = offDuty;
         _route = route;
         _here = here;
         _copy = copy;
@@ -97,8 +100,9 @@ public sealed class RouteProgressPage : UserControl
     /// <summary>Redraws from the current route and position.</summary>
     public void Refresh()
     {
-        var route = _route();
-        var here = _here();
+        var offDuty = _offDuty?.Invoke(OffDutyNote.Route);
+        var route = offDuty is null ? _route() : NavRoute.None;
+        var here = offDuty is null ? _here() : null;
         var progress = RouteProgress.For(route, here);
 
         _hops.Children.Clear();
@@ -107,10 +111,10 @@ public sealed class RouteProgressPage : UserControl
         if (!route.IsPlotted)
         {
             _headline.Inlines = null;
-            TitleText.Show(_headline, "No route plotted.", sentence: true);
+            TitleText.Show(_headline, offDuty is null ? "No route plotted." : "No route shown.", sentence: true);
             _toGoBlock.IsVisible = false;
             _totals.Inlines = null;
-            _totals.Text = "Plot one in the galaxy map, or on the Plan page, and it appears here.";
+            _totals.Text = offDuty ?? "Plot one in the galaxy map, or on the Plan page, and it appears here.";
             _aside.IsVisible = false;
             return;
         }

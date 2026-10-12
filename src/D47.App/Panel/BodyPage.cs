@@ -35,6 +35,7 @@ public sealed class BodyPage : UserControl
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<GameStatus>? _status;
     private readonly Func<long, int, long?>? _worthIfMapped;
+    private readonly Func<string, string?>? _offDuty;
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly Border _distance = new();
@@ -42,8 +43,9 @@ public sealed class BodyPage : UserControl
     private Snapshot? _seen;
     private Distance? _distanceSeen;
 
-    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped)
+    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null)
     {
+        _offDuty = offDuty;
         _state = state;
         _status = status;
         _worthIfMapped = worthIfMapped;
@@ -102,7 +104,7 @@ public sealed class BodyPage : UserControl
     private readonly record struct Target(long System, int Body, string? Name);
 
     /// <summary>What the distance block shows: the rounded metres, or null with no position.</summary>
-    private readonly record struct Distance(long? Metres, int? Colony, bool Sampling);
+    private readonly record struct Distance(long? Metres, int? Colony, bool Sampling, string? OffDuty = null);
 
     private Snapshot Take()
     {
@@ -156,6 +158,12 @@ public sealed class BodyPage : UserControl
         }
 
         var colony = ExobiologyCatalogue.ColonyDistance(genus.Genus);
+
+        if (_offDuty?.Invoke(OffDutyNote.Position) is { } offDuty)
+        {
+            return new Distance(null, colony, true, offDuty);
+        }
+
         var live = _status?.Invoke();
         var name = BodyName(snapshot);
 
@@ -247,6 +255,7 @@ public sealed class BodyPage : UserControl
 
         var (stateText, stateKey) = distance switch
         {
+            { OffDuty: { } line } => (line, ThemeManager.GreyKey),
             { Colony: null } => ("Colony distance not known", ThemeManager.GreyKey),
             { Metres: null } => ("No position", ThemeManager.GreyKey),
             _ when far => ($"✓ Far enough · take the {Ordinal(genus.Taken + 1)} sample", ThemeManager.BlueKey),
@@ -306,7 +315,7 @@ public sealed class BodyPage : UserControl
                 block.Children.Add(Gauge.Track((double)shown / needed, far ? ThemeManager.BlueKey : ThemeManager.AKey));
             }
         }
-        else
+        else if (distance.OffDuty is null)
         {
             var none = new TextBlock { Text = NoPosition, FontSize = TypeScale.Secondary, TextWrapping = TextWrapping.Wrap };
             Themed(none, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);

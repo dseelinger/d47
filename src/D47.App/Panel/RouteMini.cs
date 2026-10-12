@@ -14,10 +14,12 @@ public sealed class RouteMini : UserControl
     private readonly RoutePlanBook _plans;
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
+    private readonly Func<string, string?>? _offDuty;
     private readonly StackPanel _body = new() { Spacing = 2 };
 
-    public RouteMini(RoutePlanBook plans, Func<NavRoute> route, Func<string?> here)
+    public RouteMini(RoutePlanBook plans, Func<NavRoute> route, Func<string?> here, Func<string, string?>? offDuty = null)
     {
+        _offDuty = offDuty;
         _plans = plans;
         _route = route;
         _here = here;
@@ -46,6 +48,12 @@ public sealed class RouteMini : UserControl
     private void Fill()
     {
         _body.Children.Clear();
+
+        if (_offDuty?.Invoke(OffDutyNote.Route) is { } offDuty)
+        {
+            _body.Children.Add(Muted(offDuty));
+            return;
+        }
 
         if (_plans.Last(RoutePlanKind.Jump) is not { Jump: { } jump })
         {

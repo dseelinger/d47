@@ -312,7 +312,10 @@ public partial class MainWindow : Window
                 Cartography: () => host.History.Cartography,
 
                 // Best cargo (#849).
-                Cargo: host.Cargo)
+                Cargo: host.Cargo,
+
+                // Game-live data is not shown for another Commander (#1105).
+                OffDuty: OffDutyNote.For(host.GameState))
             {
                 PrefixNames = host.StarSystems is { } names ? names.PrefixNamesAsync : null,
             };

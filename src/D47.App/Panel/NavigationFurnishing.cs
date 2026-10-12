@@ -16,9 +16,11 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
+    private Func<string, string?>? _routeOffDuty;
     private Func<double?>? _routeRange;
     private D47.Core.Journal.NavRoute? _routeSeen;
     private string? _routeWhere;
+    private string? _routeOffDutySeen;
     private double? _routeRangeSeen;
 
     /// <summary>Mini's reading of the Plan root; null until a host furnishes a plan book.</summary>
@@ -114,12 +116,13 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
 
         _routeState = surface.Route;
         _routeHere = surface.Here;
+        _routeOffDuty = surface.OffDuty;
         _routeRange = surface.JumpRange;
 
         // Mini's own reading of the Plan root, wherever there is a book to read it from (#197).
         if (surface.Plans is { } miniPlans)
         {
-            Mini = new RouteMini(miniPlans, surface.Route, surface.Here);
+            Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty);
         }
 
         host.Furnish(
@@ -128,7 +131,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             {
                 if (crumb.Key == BodyPage.RootKey && surface.Commander is { } commander)
                 {
-                    return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped);
+                    return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped, surface.OffDuty);
                 }
 
                 if (crumb.Key == UnsoldPage.RootKey && surface.Commander is { } carrying)
@@ -195,12 +198,14 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();
+        var offDuty = _routeOffDuty?.Invoke(OffDutyNote.Route);
 
         // And the ship's range, which the plan forms quote (#253).
         var range = _routeRange?.Invoke();
 
         if (ReferenceEquals(route, _routeSeen)
             && string.Equals(here, _routeWhere, StringComparison.Ordinal)
+            && string.Equals(offDuty, _routeOffDutySeen, StringComparison.Ordinal)
             && Nullable.Equals(range, _routeRangeSeen))
         {
             return body;
@@ -208,6 +213,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
 
         _routeSeen = route;
         _routeWhere = here;
+        _routeOffDutySeen = offDuty;
         _routeRangeSeen = range;
 
         // The progress page only where a host furnished one — the plan forms are furnished separately, and a

@@ -4918,7 +4918,7 @@ public sealed class AppHost : IDisposable
     private Func<ModulePower>? _modulePower;
 
     /// <summary>What Elite says each module in the ship being flown draws (Phase 38).</summary>
-    public ModulePower ModulePower => _modulePower?.Invoke() ?? ModulePower.None;
+    public ModulePower ModulePower => GameState.IsOffDuty ? ModulePower.None : _modulePower?.Invoke() ?? ModulePower.None;
 
     private void PlayOwnVoice(AudioClip clip)
     {

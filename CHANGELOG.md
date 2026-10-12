@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+While you view a Commander other than the one in the game, the Progress and plan pages, the mini route, Best cargo and On this body no longer draw the game's live route or position against them. They show one line instead: "CMDR Kestrel Vane is in the game; their route shows when they are the Commander shown." Best cargo offers no Route end tile, On this body shows no distance, and the Power page shows no measured draw. Picking the Commander in the game brings it all back.
+
 Picking another Commander now redraws the pages you have open, on the window, the headset panel and the overlay, so Bookmarks, Activities, Phrases, Checklist, Suits, Galaxy search, Missions, Construction and Engineers show the new Commander. A mission, construction site or search answer chosen for the previous Commander is cleared.
 
 The Commander name in the title bar no longer stays an orange block with unreadable text after its menu closes, for example after a theme change.

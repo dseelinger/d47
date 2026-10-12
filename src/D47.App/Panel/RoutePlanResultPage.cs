@@ -15,17 +15,21 @@ public sealed class RoutePlanResultPage : UserControl
     private readonly Func<string, Task<bool>>? _copy;
     private readonly RoutePlanBook? _plans;
     private readonly Func<string?>? _here;
+    private readonly Func<string, string?>? _offDuty;
     private readonly RoutePlanKind _kind;
     private readonly StackPanel _stack = new() { Spacing = 2 };
 
     private StoredRoutePlan? _planSeen;
+    private string? _offDutySeen;
 
     public RoutePlanResultPage(
         StoredRoutePlan plan,
         Func<string, Task<bool>>? copy = null,
         RoutePlanBook? plans = null,
-        Func<string?>? here = null)
+        Func<string?>? here = null,
+        Func<string, string?>? offDuty = null)
     {
+        _offDuty = offDuty;
         _copy = copy;
         _plans = plans;
         _here = here;
@@ -51,7 +55,8 @@ public sealed class RoutePlanResultPage : UserControl
     /// </summary>
     public bool Refresh()
     {
-        if (_plans?.Last(_kind) is not { } plan || ReferenceEquals(plan, _planSeen))
+        if (_plans?.Last(_kind) is not { } plan
+            || (ReferenceEquals(plan, _planSeen) && _offDuty?.Invoke(OffDutyNote.Route) == _offDutySeen))
         {
             return false;
         }
@@ -65,7 +70,9 @@ public sealed class RoutePlanResultPage : UserControl
     {
         _planSeen = plan;
 
-        var here = _here?.Invoke();
+        var offDuty = _offDuty?.Invoke(OffDutyNote.Route);
+        _offDutySeen = offDuty;
+        var here = offDuty is null ? _here?.Invoke() : null;
 
         _stack.Children.Clear();
         _stack.Children.Add(RoutingKit.Title(Heading(plan), sentence: true).Row);
@@ -73,6 +80,13 @@ public sealed class RoutePlanResultPage : UserControl
         var provenance = RoutingKit.Prose(Provenance(plan));
         provenance.Margin = new Thickness(0, 0, 0, 10);
         _stack.Children.Add(provenance);
+
+        if (offDuty is not null)
+        {
+            var note = RoutingKit.Prose(offDuty);
+            note.Margin = new Thickness(0, 0, 0, 10);
+            _stack.Children.Add(note);
+        }
 
         foreach (var row in Rows(plan, here))
         {
