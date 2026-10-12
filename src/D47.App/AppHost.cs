@@ -1178,6 +1178,7 @@ public sealed class AppHost : IDisposable
                 ChecklistFilter = view.Filter,
                 ChecklistPartialGrades = view.IncludePartialGrades,
                 PinnedEngineers = view.PinnedEngineers ?? [],
+                PinsByCommander = view.PinsByCommander ?? new Dictionary<string, IReadOnlyList<int>>(),
             }),
             () => settings.Current.Checklists.RemoveFulfilled,
             () => DateTimeOffset.Now);
@@ -1190,7 +1191,8 @@ public sealed class AppHost : IDisposable
             new ChecklistView(
                 viewState.Load().ChecklistFilter ?? ChecklistService.Everything,
                 viewState.Load().ChecklistPartialGrades,
-                viewState.Load().PinnedEngineers));
+                viewState.Load().PinnedEngineers,
+                viewState.Load().PinsByCommander));
 
         // What d47 remembers about the Commander (Phase 31).
         var memories = new MemoryStore(

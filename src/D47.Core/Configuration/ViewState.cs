@@ -56,11 +56,12 @@ public sealed record ViewState
     /// <summary>Whether the Engineers tab has taken the on-foot engineers off its lists (#132).</summary>
     public bool EngineersOnFootHidden { get; init; }
 
-    /// <summary>
-    /// Which engineers the Commander has told d47 a blueprint is pinned with — entered on the engineer's
-    /// own page, since d47 has no journal event for a pin (#113).
-    /// </summary>
+    /// <summary>Engineers pinned before pins were per Commander; the first Commander shown takes them (#113).</summary>
     public IReadOnlyList<int> PinnedEngineers { get; init; } = [];
+
+    /// <summary>The engineers each Commander has pinned a blueprint with, by Frontier ID.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<int>> PinsByCommander { get; init; } =
+        new Dictionary<string, IReadOnlyList<int>>(StringComparer.Ordinal);
 
     /// <summary>
     /// Which reading each tab was left on, by tab name and root key (#268) — the Transcript on the log

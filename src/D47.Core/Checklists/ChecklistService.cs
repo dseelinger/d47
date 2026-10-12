@@ -20,9 +20,13 @@ public sealed record ChecklistNews(string Key, string Text);
 /// Whether the engineer filter also shows work an engineer here can only take part of the way
 /// (change-requests.md 35).
 /// </param>
-/// <param name="PinnedEngineers">Which engineers a blueprint is pinned with, or null for none (#113).</param>
+/// <param name="PinnedEngineers">Engineers pinned before pins were per Commander, or null for none (#113).</param>
+/// <param name="PinsByCommander">The engineers each Commander has pinned, by Frontier ID.</param>
 public sealed record ChecklistView(
-    string Filter, bool IncludePartialGrades, IReadOnlyList<int>? PinnedEngineers = null);
+    string Filter,
+    bool IncludePartialGrades,
+    IReadOnlyList<int>? PinnedEngineers = null,
+    IReadOnlyDictionary<string, IReadOnlyList<int>>? PinsByCommander = null);
 
 /// <summary>
 /// The one place the checklist is read from and written to (Phase 17, "TheApp keeps 'The Ultimate'
@@ -112,6 +116,7 @@ public sealed class ChecklistService(
         ArgumentNullException.ThrowIfNull(states);
 
         states.SystemChanged += () => HereChanged?.Invoke();
+        states.CommanderChanged += _ => PinnedChanged?.Invoke();
     }
 
     /// <summary>Puts the list under a filter, or back under <see cref="Everything"/>.</summary>
@@ -148,16 +153,41 @@ public sealed class ChecklistService(
         FilterChanged?.Invoke();
     }
 
-    /// <summary>
-    /// Which engineers the Commander has told d47 a blueprint is pinned with — entered on the engineer's
-    /// own page, since d47 has no journal event for a pin (#113).
-    /// </summary>
-    public IReadOnlyList<int> PinnedEngineers { get; private set; } = [];
+    private IReadOnlyList<int> _unkeyedPins = [];
 
-    /// <summary>Raised when a blueprint is pinned or unpinned, so a surface under the pinned filter can redraw.</summary>
+    private readonly Dictionary<string, IReadOnlyList<int>> _pins = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Which engineers the shown Commander has told d47 a blueprint is pinned with — entered on the
+    /// engineer's own page, since d47 has no journal event for a pin (#113). Pins saved before pins were
+    /// per Commander go to the first Commander shown.
+    /// </summary>
+    public IReadOnlyList<int> PinnedEngineers
+    {
+        get
+        {
+            var owner = commander()?.Identity.FrontierId;
+
+            if (owner is null)
+            {
+                return _unkeyedPins;
+            }
+
+            if (_unkeyedPins.Count > 0)
+            {
+                _pins.TryAdd(owner, _unkeyedPins);
+                _unkeyedPins = [];
+                Remember();
+            }
+
+            return _pins.GetValueOrDefault(owner) ?? [];
+        }
+    }
+
+    /// <summary>Raised when a blueprint is pinned or unpinned or another Commander is picked, so a surface under the pinned filter can redraw.</summary>
     public event Action? PinnedChanged;
 
-    /// <summary>Whether the Commander has told d47 a blueprint is pinned with this engineer.</summary>
+    /// <summary>Whether the shown Commander has told d47 a blueprint is pinned with this engineer.</summary>
     public bool IsPinned(int engineerId) => PinnedEngineers.Contains(engineerId);
 
     /// <summary>Records or clears a pin (#113).</summary>
@@ -168,16 +198,31 @@ public sealed class ChecklistService(
             return;
         }
 
-        PinnedEngineers = pinned
-            ? [.. PinnedEngineers, engineerId]
-            : [.. PinnedEngineers.Where(id => id != engineerId)];
+        var current = PinnedEngineers;
+
+        IReadOnlyList<int> next = pinned
+            ? [.. current, engineerId]
+            : [.. current.Where(id => id != engineerId)];
+
+        if (commander()?.Identity.FrontierId is { } owner)
+        {
+            _pins[owner] = next;
+        }
+        else
+        {
+            _unkeyedPins = next;
+        }
 
         Remember();
         PinnedChanged?.Invoke();
     }
 
     private void Remember() =>
-        remember?.Invoke(new ChecklistView(Filter, IncludePartialGrades, PinnedEngineers));
+        remember?.Invoke(new ChecklistView(
+            Filter,
+            IncludePartialGrades,
+            _unkeyedPins.Count > 0 ? _unkeyedPins : null,
+            new Dictionary<string, IReadOnlyList<int>>(_pins, StringComparer.Ordinal)));
 
     /// <summary>Narrows the list to what a Commander typed, or clears it.</summary>
     public void Search(string? query)
@@ -203,7 +248,14 @@ public sealed class ChecklistService(
 
         Filter = string.IsNullOrWhiteSpace(view.Filter) ? Everything : view.Filter.Trim();
         IncludePartialGrades = view.IncludePartialGrades;
-        PinnedEngineers = view.PinnedEngineers ?? [];
+        _unkeyedPins = view.PinnedEngineers ?? [];
+
+        _pins.Clear();
+
+        foreach (var (frontierId, engineers) in view.PinsByCommander ?? new Dictionary<string, IReadOnlyList<int>>())
+        {
+            _pins[frontierId] = engineers;
+        }
     }
 
     /// <summary>Points the selection at a line, or clears it.</summary>

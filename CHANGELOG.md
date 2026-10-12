@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Each Commander now has their own pinned engineers. Picking a Commander shows that Commander's pins on the Engineers tab and under the checklist's pinned filter. The checklist filter and the partial-grades switch stay shared. Pins saved before this go to the first Commander shown.
+
 Each Commander now has their own last route plan per planner. Picking a Commander shows that Commander's plans on the route pages and in route answers, and an arrival moves forward only the plans of the Commander who flew it. Plans saved before this go to the first Commander shown.
 
 A Commander's log now covers only the Commander shown. It holds the events between that Commander's Commander or LoadGame entry and the next one naming somebody else, so a day two Commanders flew no longer mixes them. "The last session" is that Commander's last session, and the day list in the Logbook offers only days they flew. New logs go to `commander-log\<Frontier ID>\`; logs already in `commander-log\` stay where they are and still show.
