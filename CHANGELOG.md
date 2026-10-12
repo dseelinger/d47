@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The tech broker's Corrosion Resistant Cargo Rack is now listed as 4E, the one size the broker unlocks, instead of "2D and 4D", which are not sizes the module comes in. The recipe is unchanged.
+
 The first time a new version of D47 starts, it zips your data folder into `data\backups` before it reads anything, and keeps the newest 25 zips. The zip holds your settings, keys, stories, checklists and the other files D47 writes for you. It leaves out the large folders that D47 downloads or records: speech models, music, ship art, avatar clips, story downloads, recordings and logs. Starting the same version again takes no new zip.
 
 The ship collection goal no longer needs the Cobra MkIV. Only Commanders who bought Horizons before February 2016 can own one, so the goal counts it only when you own it: without one the goal is 47 hulls, with one it is 48. D47 never suggests buying it, and a hull missing from the ship table no longer counts toward the total.

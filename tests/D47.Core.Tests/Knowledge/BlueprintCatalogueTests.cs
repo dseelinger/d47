@@ -21,6 +21,16 @@ public class BlueprintCatalogueTests
     }
 
     [Fact]
+    public void TheCorrosionRackBrokerRowNamesTheRackItUnlocks()
+    {
+        var rows = BlueprintCatalogue.All
+            .Where(b => b.Kind == BlueprintKind.TechBroker && b.Name.StartsWith("Corrosion Resistant Cargo Rack", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.Equal("Corrosion Resistant Cargo Rack (4E)", Assert.Single(rows).Name);
+    }
+
+    [Fact]
     public void EveryIngredientResolvesToAMaterialTheTableKnows()
     {
         // A blueprint asking for something no id list names cannot be totalled, and a short total is worse

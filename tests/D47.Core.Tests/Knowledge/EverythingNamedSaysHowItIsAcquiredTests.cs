@@ -42,6 +42,16 @@ public class EverythingNamedSaysHowItIsAcquiredTests
     }
 
     [Fact]
+    public void TheCorrosionRackStillCarriesTheBrokerIngredients()
+    {
+        var rack = AcquisitionGuide.For("Corrosion Resistant Cargo Rack");
+
+        Assert.NotNull(rack);
+        Assert.Contains(AcquisitionMethod.TechBroker, rack.Methods);
+        Assert.False(string.IsNullOrWhiteSpace(rack.Detail));
+    }
+
+    [Fact]
     public void ABasicDiscoveryScannerCanNoLongerBeBought()
     {
         var scanner = AcquisitionGuide.For("Basic Discovery Scanner");

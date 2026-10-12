@@ -9,7 +9,7 @@
 # its figures are pre-patch and are restated here to what the game charges, measured over
 # 16 upgrade events and four locker deltas — see docs/spikes/journal-corpus-on-foot.md §3.
 # Game data is Frontier's, used under their media usage rules; see NOTICE.
-# Rows: 1172 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-09-24.
+# Rows: 1172 (bartender 4, experimental 154, merchant 56, modification 786, suit 14, synthesis 65, tech-broker 51, unlock 22, weapon 20). Built: 2026-10-12.
 kind	module	name	grade	engineers	ingredients	effects	guid	symbol	mtypes
 bartender	Unlock	Kit Fowler		Domino Green	push*5,opinionpolls*40				
 bartender	Unlock	Oden Geiger		Terra Velasquez	financialprojections*15,geneticsample*20,employeegeneticdata*20,geneticresearch*20				
@@ -1120,7 +1120,7 @@ tech-broker	Guardian	Modified Shard Cannon (Fixed, Medium)			guardian_techcompon
 tech-broker	Guardian	Modified Shard Cannon (Fixed, Small)			guardian_weaponblueprint*1,guardian_powerconduit*3,guardian_sentinel_wreckagecomponents*3,guardian_sentinel_weaponparts*4,germanium*2				
 tech-broker	Guardian	Trident (Fighter)			guardian_powercell*25,guardian_vesselblueprint*1,ancienttechnologicaldata*26,ancientculturaldata*18,guardian_techcomponent*25				
 tech-broker	Heat Sink Launcher	Modified Heat Sink Launcher			mechanicalscrap*8,niobium*6,vanadium*6,mechanicalcomponents*4	Capacity|+100%|good			
-tech-broker	Human	Corrosion Resistant Cargo Rack (2D and 4D)			metaalloys*16,iron*26,chemicalmanipulators*18,neofabricinsulation*12,radiationbaffle*22				
+tech-broker	Human	Corrosion Resistant Cargo Rack (4E)			metaalloys*16,iron*26,chemicalmanipulators*18,neofabricinsulation*12,radiationbaffle*22				
 tech-broker	Human	Engineered Detailed Surface Scanner V1			mechanicalscrap*26,germanium*22,mechanicalcomponents*28,niobium*24				
 tech-broker	Human	Engineered FSD V1			tellurium*26,electrochemicalarrays*26,chemicalprocessors*28,dataminedwake*18				
 tech-broker	Human	Engineered Missile Rack V1			protoradiolicalloys*16,phosphorus*28,osmium*10,conductiveceramics*24,hybridcapacitors*26				

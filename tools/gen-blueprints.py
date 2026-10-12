@@ -218,6 +218,14 @@ PSEUDO = {
 
 ON_FOOT = {"Suit": "suit", "Weapon": "weapon"}
 
+# Tech-broker rows whose EDEngineer name is not the module the broker unlocks. The Corrosion
+# Resistant Cargo Rack exists only at sizes 1, 4, 5 and 6 (EDCD FDevIDs outfitting.csv); the
+# entitlement ELITE_HORIZONS_V_CORROSIONCARGO_SIZE4 on int_corrosionproofcargorack_size4_class1
+# makes the unlocked module 4E.
+BROKER_NAMES = {
+    "Corrosion Resistant Cargo Rack (2D and 4D)": "Corrosion Resistant Cargo Rack (4E)",
+}
+
 # What the game charges, against what EDEngineer publishes. See the module docstring: measured,
 # complete over the sizes that occur, and a stop rather than a guess for anything else.
 MODIFICATION_SIZES = {5: 3, 10: 5, 15: 8}
@@ -664,6 +672,9 @@ def main() -> None:
         if name in MISSPELLED:
             respelled.append(f"{entry['Type']} / {name} G{entry.get('Grade')}")
             name = MISSPELLED[name]
+
+        if kind == "tech-broker":
+            name = BROKER_NAMES.get(name, name)
 
         built.append([
             kind,
