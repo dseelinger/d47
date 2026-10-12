@@ -111,6 +111,15 @@ public class StructuredUnlockTestsTests
     }
 
     [Fact]
+    public void HeroFerrarisUnlockIsFiveSettlementDefencePlans()
+    {
+        var hero = EngineerDirectory.ByName("Hero Ferrari");
+
+        Assert.NotNull(hero);
+        Assert.Equal(new UnlockTest.Locker("settlementdefenceplans", 5), hero.UnlockTest);
+    }
+
+    [Fact]
     public void EveryContributionSymbolIsAMaterialsTableSymbol()
     {
         var symbols = MaterialCatalogue.All.Select(material => material.Symbol).ToHashSet(StringComparer.Ordinal);

@@ -610,6 +610,13 @@ MEETING_OVERRIDES = {
         "bartenders.",
 }
 
+# The same update cut Hero Ferrari's hand-over from 15 Settlement Defence Plans to 5
+# (https://www.elitedangerous.com/update-notes/4-0-18-08); EDDiscovery's `unlock` prose still
+# says 15, and unlock_test is derived from that prose.
+UNLOCK_OVERRIDES = {
+    "heroferrari": "Provide 5 Settlement Defence Plans.",
+}
+
 
 def resolve(who: str, graph: dict[str, dict]) -> str:
     """A referrer's name as the directory spells it.
@@ -651,6 +658,9 @@ def chain() -> dict[str, dict]:
 
         if relax(name) in MEETING_OVERRIDES:
             meeting = MEETING_OVERRIDES[relax(name)]
+
+        if relax(name) in UNLOCK_OVERRIDES:
+            unlock = UNLOCK_OVERRIDES[relax(name)]
 
         graph[relax(name)] = {
             "name": name,
