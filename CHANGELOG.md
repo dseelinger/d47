@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Commander name in the title bar no longer stays an orange block with unreadable text after its menu closes, for example after a theme change.
+
 A Commander you pick in place of the one in the game now has their own credits, taken from their newest LoadGame in the journals. A story chapter that boards a ship checks the ship against their fleet by hull, so a ship they own, such as an Alliance Chieftain, is no longer treated as one they must buy. A Caspian Explorer in the fleet now allows a long haul.
 
 On the Stories tab, opening the catalogue no longer keeps the Stories page as a column beside it; the breadcrumb is the way back. The catalogue is now named Catalogue on its button, its breadcrumb and its heading, and each row shows at most two lines of the story's blurb. The story page still shows the whole blurb.

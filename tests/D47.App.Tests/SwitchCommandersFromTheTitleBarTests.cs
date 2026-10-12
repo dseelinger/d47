@@ -94,6 +94,24 @@ public class SwitchCommandersFromTheTitleBarTests
     }
 
     [AvaloniaFact]
+    public void AClosedMenuLeavesTheSwitcherReadableWhenTheThemeChanges()
+    {
+        var (window, switcher, _) = Window(Journals.Of(John, Kestrel));
+        var button = In<Button>(switcher).First(b => b.Name == "CommanderSwitcher");
+
+        MenuOf(switcher);
+        switcher.Menu.IsOpen = false;
+        Dispatcher.UIThread.RunJobs();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Dark);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEqual(Published(ThemeManager.AKey), Ink(button.Background));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void OneCommanderShowsNoSwitcher()
     {
         var (window, switcher, _) = Window(Journals.Of(John));

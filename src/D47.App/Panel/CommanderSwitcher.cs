@@ -27,6 +27,8 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
     private readonly StackPanel _items = new() { Spacing = 2 };
     private readonly Popup _menu;
     private (object? Sightings, string? Shown, int Files) _seen;
+    private IDisposable? _buttonBackgroundInk;
+    private IDisposable? _buttonForegroundInk;
 
     /// <param name="manage">Opens the COMMANDERS page.</param>
     /// <param name="height">The title bar's height.</param>
@@ -59,7 +61,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
             },
         };
         AutomationProperties.SetName(_button, "Switch Commander");
-        Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
+        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
         _name.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
         chevron.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
 
@@ -145,15 +147,19 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
 
     private void Opened(bool open)
     {
+        _buttonBackgroundInk?.Dispose();
+        _buttonBackgroundInk = null;
+        _buttonForegroundInk?.Dispose();
+
         if (open)
         {
-            Ink(_button, Button.BackgroundProperty, ThemeManager.AKey);
-            Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.KnockKey);
+            _buttonBackgroundInk = Ink(_button, Button.BackgroundProperty, ThemeManager.AKey);
+            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.KnockKey);
         }
         else
         {
             _button.ClearValue(Button.BackgroundProperty);
-            Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
+            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
         }
     }
 
@@ -252,6 +258,6 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         return block;
     }
 
-    private static void Ink(StyledElement target, AvaloniaProperty property, string key) =>
+    private static IDisposable Ink(StyledElement target, AvaloniaProperty property, string key) =>
         target.Bind(property, target.GetResourceObservable(key));
 }
