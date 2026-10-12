@@ -180,6 +180,31 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
     }
 
     [AvaloniaFact]
+    public void TheStateFilterKeepsTheChosenNeighbourSort()
+    {
+        var (panel, window, _) = Shown();
+        OpenPowerplay(panel);
+
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "DISTANCE ▲");
+        var nearest = Rows(panel).Select(row => AutomationProperties.GetName(row)!).ToList();
+
+        panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "NeighbourHead.System")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var named = Rows(panel).Select(row => AutomationProperties.GetName(row)!).ToList();
+        Assert.Equal(nearest.OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase), named);
+
+        Filter(panel, "Fortified");
+        var fortified = Rows(panel).Select(row => AutomationProperties.GetName(row)!).ToList();
+        Assert.NotEmpty(fortified);
+        Assert.Equal(fortified.OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase), fortified);
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "SYSTEM ▲");
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void AStrongholdReachesThirtyLightYears()
     {
         var (panel, window, systems) = Shown(profile => profile with { Powerplay = profile.Powerplay! with { State = "Stronghold" } });
@@ -187,7 +212,7 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
         OpenPowerplay(panel);
 
         Assert.Equal([("LTT 7786", 30d)], systems.Asked);
-        Assert.True(Shows(panel, "Within 30 ly, nearest first. Choose one to open it here."));
+        Assert.True(Shows(panel, "Within 30 ly. Choose one to open it here."));
 
         window.Close();
     }

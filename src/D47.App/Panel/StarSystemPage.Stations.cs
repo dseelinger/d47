@@ -93,6 +93,22 @@ public sealed partial class StarSystemPage
 
     private const string StationColumns = "1.5*,132,1.2*,96,92,34,72";
 
+    /// <summary>The stations table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<StationProfile>> StationHeads =
+    [
+        SortColumn<StationProfile>.Text("Station", station => station.Name),
+        SortColumn<StationProfile>.Text("Type", StationType),
+        SortColumn<StationProfile>.Text("Controlling faction", station => station.ControllingFaction is null ? null : Faction(station)),
+        SortColumn<StationProfile>.Text("Government", station => station.Government),
+        SortColumn<StationProfile>.Text("Economy", station => station.PrimaryEconomy),
+        SortColumn<StationProfile>.Figure("Pad", station => (int?)station.LargestPad, SortDirection.Descending),
+        SortColumn<StationProfile>.Figure("Arrival", StationFilter.Arrival, SortDirection.Ascending),
+    ];
+
+    /// <summary>The default order: nearest first.</summary>
+    public static readonly SortOrder ByArrival = new(6, SortDirection.Ascending);
+
+    private readonly SortHeader<StationProfile> _stationHead = new("StationHead", StationHeads, ByArrival);
     private StationFilter _stationFilter = new();
     private Border? _stationTable;
 
@@ -331,7 +347,7 @@ public sealed partial class StarSystemPage
 
     private StackPanel StationTable(StarSystemProfile profile)
     {
-        var shown = _stationFilter.Apply(profile.Stations);
+        var shown = _stationHead.Sort(_stationFilter.Apply(profile.Stations));
 
         var table = new StackPanel { Spacing = Gaps.Tile };
 
@@ -346,30 +362,20 @@ public sealed partial class StarSystemPage
                 Figure(shown.Count, ThemeManager.WhiteKey),
                 Caption("of", ThemeManager.GreyKey),
                 Figure(profile.Stations.Count, ThemeManager.GreyKey),
-                Caption("· nearest first", ThemeManager.GreyKey),
             },
         };
         Avalonia.Automation.AutomationProperties.SetName(showing, $"Showing {shown.Count} of {profile.Stations.Count}");
         table.Children.Add(showing);
 
         var header = StationGrid();
-        header.Height = 28;
+        header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
-        string[] titles = ["Station", "Type", "Controlling faction", "Government", "Economy", "Pad", "Arrival"];
 
-        for (var i = 0; i < titles.Length; i++)
+        for (var i = 0; i < StationHeads.Count; i++)
         {
-            var title = Caption(titles[i], ThemeManager.GreyKey);
-            title.VerticalAlignment = VerticalAlignment.Center;
-            title.TextTrimming = TextTrimming.CharacterEllipsis;
-
-            if (i == titles.Length - 1)
-            {
-                title.HorizontalAlignment = HorizontalAlignment.Right;
-            }
-
-            Grid.SetColumn(title, i);
-            header.Children.Add(title);
+            var cell = _stationHead.Cell(i, i == StationHeads.Count - 1 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
+            Grid.SetColumn(cell, i);
+            header.Children.Add(cell);
         }
 
         table.Children.Add(header);

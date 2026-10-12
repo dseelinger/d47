@@ -40,6 +40,20 @@ public sealed partial class StarSystemPage
         Failed,
     }
 
+    /// <summary>The neighbours table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<PowerplayNeighbour>> NeighbourHeads =
+    [
+        SortColumn<PowerplayNeighbour>.Text("System", system => system.Name),
+        SortColumn<PowerplayNeighbour>.Figure("Distance", system => (double?)system.Distance, SortDirection.Ascending),
+        SortColumn<PowerplayNeighbour>.Text("State", system => system.State),
+        SortColumn<PowerplayNeighbour>.Text("Controlling power", system => system.ControllingPower),
+        SortColumn<PowerplayNeighbour>.Figure("Control progress", system => system.ControlProgress, SortDirection.Descending),
+    ];
+
+    /// <summary>The default order: nearest first, as Spansh returns it.</summary>
+    public static readonly SortOrder ByDistance = new(1, SortDirection.Ascending);
+
+    private readonly SortHeader<PowerplayNeighbour> _neighbourHead = new("NeighbourHead", NeighbourHeads, ByDistance);
     private Nearby _nearby;
     private PowerplayNeighbourhood? _neighbours;
     private string? _neighbourFailure;
@@ -193,7 +207,7 @@ public sealed partial class StarSystemPage
         var total = _neighbours?.Total;
         var head = GroupHead(
             "Nearby Powerplay systems",
-            $"Within {_reach.ToString("0", CultureInfo.InvariantCulture)} ly, nearest first. Choose one to open it here.",
+            $"Within {_reach.ToString("0", CultureInfo.InvariantCulture)} ly. Choose one to open it here.",
             total?.ToString(CultureInfo.InvariantCulture));
         var group = new StackPanel { Spacing = 10, Children = { head } };
 
@@ -244,33 +258,43 @@ public sealed partial class StarSystemPage
         {
             _stateFilter = segment.SelectedIndex;
 
-            if (_neighbourList is not null)
-            {
-                _neighbourList.Child = NeighbourTable(near);
-                _redrawn = true;
-            }
+            ShowNeighbours();
         };
 
         return segment;
     }
 
+    /// <summary>Redraws the neighbours table alone, when the state filter or the sort changes.</summary>
+    private void ShowNeighbours()
+    {
+        if (_neighbourList is not null && _neighbours is { } near)
+        {
+            _neighbourList.Child = NeighbourTable(near);
+            _redrawn = true;
+        }
+    }
+
+    private void ResetSorts()
+    {
+        _factionHead.Reset();
+        _stationHead.Reset();
+        _neighbourHead.Reset();
+    }
+
     private StackPanel NeighbourTable(PowerplayNeighbourhood near)
     {
-        var shown = near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds).ToList();
+        var shown = _neighbourHead.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
         var header = NeighbourGrid();
-        header.Height = 28;
+        header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
-        string[] titles = ["System", "Distance", "State", "Controlling power", "Control progress"];
 
-        for (var i = 0; i < titles.Length; i++)
+        for (var i = 0; i < NeighbourHeads.Count; i++)
         {
-            var title = Caption(titles[i], ThemeManager.GreyKey);
-            title.VerticalAlignment = VerticalAlignment.Center;
-            title.TextTrimming = TextTrimming.CharacterEllipsis;
-            Grid.SetColumn(title, i);
-            header.Children.Add(title);
+            var cell = _neighbourHead.Cell(i, HorizontalAlignment.Left);
+            Grid.SetColumn(cell, i);
+            header.Children.Add(cell);
         }
 
         table.Children.Add(header);

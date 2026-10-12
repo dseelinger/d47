@@ -89,6 +89,17 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         _surface = surface;
         _history = new HistoryTile(surface.Searches);
 
+        _factionHead.Changed += () =>
+        {
+            if (_factionTable is not null && _profile is { } profile)
+            {
+                _factionTable.Child = FactionRows(profile);
+                _redrawn = true;
+            }
+        };
+        _stationHead.Changed += ShowStations;
+        _neighbourHead.Changed += ShowNeighbours;
+
         _name = new TextBox
         {
             PlaceholderText = "Type any system name",
@@ -163,6 +174,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        ResetSorts();
         _history.Attach();
     }
 
@@ -301,6 +313,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             _section = Section.Overview;
             _stationFilter = new StationFilter { Query = _stationFilter.Query };
             ResetNearby();
+            ResetSorts();
         }
 
         _following = following;
@@ -772,32 +785,26 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private const string FactionColumns = "*,130,120,200,150,150";
 
-    private static StackPanel Factions(StarSystemProfile profile)
+    /// <summary>The factions table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<FactionStanding>> FactionHeads =
+    [
+        SortColumn<FactionStanding>.Text("Faction", faction => faction.Name),
+        SortColumn<FactionStanding>.Text("Government", faction => faction.Government),
+        SortColumn<FactionStanding>.Text("Allegiance", faction => faction.Allegiance),
+        SortColumn<FactionStanding>.Figure("Influence", faction => faction.Influence, SortDirection.Descending),
+        SortColumn<FactionStanding>.Figure("Active", faction => (int?)faction.ActiveStates.Count, SortDirection.Descending),
+        SortColumn<FactionStanding>.Figure("Pending", faction => (int?)faction.PendingStates.Count, SortDirection.Descending),
+    ];
+
+    /// <summary>The default order: most influence first, as Spansh returns it.</summary>
+    public static readonly SortOrder ByInfluence = new(3, SortDirection.Descending);
+
+    private readonly SortHeader<FactionStanding> _factionHead = new("FactionHead", FactionHeads, ByInfluence);
+    private Border? _factionTable;
+
+    private StackPanel Factions(StarSystemProfile profile)
     {
-        var rows = new StackPanel { Spacing = Gaps.Tile };
-
-        var header = FactionGrid();
-        header.Height = 28;
-        header.Margin = new Thickness(14, 0);
-        string[] titles = ["Faction", "Government", "Allegiance", "Influence", "Active", "Pending"];
-
-        for (var i = 0; i < titles.Length; i++)
-        {
-            var title = Caption(titles[i], ThemeManager.GreyKey);
-            title.VerticalAlignment = VerticalAlignment.Center;
-            Grid.SetColumn(title, i);
-            header.Children.Add(title);
-        }
-
-        rows.Children.Add(header);
-
-        foreach (var faction in profile.Factions)
-        {
-            rows.Children.Add(FactionRow(
-                faction,
-                string.Equals(faction.Name, profile.ControllingFaction, StringComparison.OrdinalIgnoreCase)));
-        }
-
+        _factionTable = new Border { Child = FactionRows(profile) };
         var count = profile.Factions.Count;
 
         return new StackPanel
@@ -805,10 +812,37 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             Spacing = 10,
             Children =
             {
-                GroupHead("Minor factions", "Most influence first.", $"{count} {(count == 1 ? "faction" : "factions")}"),
-                rows,
+                GroupHead("Minor factions", "Press a heading to sort.", $"{count} {(count == 1 ? "faction" : "factions")}"),
+                _factionTable,
             },
         };
+    }
+
+    private StackPanel FactionRows(StarSystemProfile profile)
+    {
+        var rows = new StackPanel { Spacing = Gaps.Tile };
+
+        var header = FactionGrid();
+        header.MinHeight = TypeScale.MinimumTarget;
+        header.Margin = new Thickness(14, 0);
+
+        for (var i = 0; i < FactionHeads.Count; i++)
+        {
+            var cell = _factionHead.Cell(i, HorizontalAlignment.Left);
+            Grid.SetColumn(cell, i);
+            header.Children.Add(cell);
+        }
+
+        rows.Children.Add(header);
+
+        foreach (var faction in _factionHead.Sort(profile.Factions))
+        {
+            rows.Children.Add(FactionRow(
+                faction,
+                string.Equals(faction.Name, profile.ControllingFaction, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return rows;
     }
 
     private static Grid FactionGrid() => new()
