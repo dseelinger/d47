@@ -1115,7 +1115,8 @@ public sealed class AppHost : IDisposable
         var planBook = new D47.Core.Knowledge.RoutePlanBook(
             Path.Combine(paths.Data, "route-plans.json"),
             files,
-            loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>());
+            loggerFactory.CreateLogger<D47.Core.Knowledge.RoutePlanBook>(),
+            () => gameState.Active?.Identity.FrontierId);
 
         planBook.Load();
 
@@ -1542,7 +1543,7 @@ public sealed class AppHost : IDisposable
             }
 
             // Moves a stored plan's reached stop forward on arrival, replay included (#199).
-            planBook.Apply(shown);
+            planBook.Apply(events, inGame);
 
             // Outside the callouts, so the fight is followed while they or chatter are switched off.
             foreach (var journalEvent in shown)

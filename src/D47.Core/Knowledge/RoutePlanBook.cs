@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Journal;
 using D47.Core.Storage;
@@ -29,6 +29,9 @@ public enum RoutePlanKind
 public sealed record StoredRoutePlan
 {
     public RoutePlanKind Kind { get; init; }
+
+    /// <summary>The Commander the plan belongs to; null on a plan saved before plans were per Commander.</summary>
+    public string? FrontierId { get; init; }
 
     /// <summary>When it was worked out.</summary>
     public DateTimeOffset PlottedAt { get; init; }
@@ -71,10 +74,15 @@ public sealed record StoredRoutePlan
 }
 
 /// <summary>
-/// The last plan each planner produced, shared by every path that can ask for one (Phase 37, "One last
-/// plan, shared by the voice and the panel").
+/// The last plan each planner produced for each Commander, shared by every path that can ask for one
+/// (Phase 37, "One last plan, shared by the voice and the panel").
 /// </summary>
-public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RoutePlanBook> logger)
+/// <param name="shown">The shown Commander's Frontier ID; used where a caller names no Commander.</param>
+public sealed class RoutePlanBook(
+    string path,
+    IFileSystem files,
+    ILogger<RoutePlanBook> logger,
+    Func<string?>? shown = null)
 {
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -90,7 +98,7 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
     /// <summary>Held for the file write; never taken while holding <see cref="_gate"/>.</summary>
     private readonly Lock _writeGate = new();
 
-    private readonly Dictionary<RoutePlanKind, StoredRoutePlan> _plans = [];
+    private readonly Dictionary<(string? FrontierId, RoutePlanKind Kind), StoredRoutePlan> _plans = [];
 
     /// <summary>Bumped under <see cref="_gate"/> for each change that needs saving.</summary>
     private long _version;
@@ -101,37 +109,86 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
     /// <summary>Raised when a plan is recorded, whoever recorded it — the model's path or a panel.</summary>
     public event Action? Changed;
 
-    /// <summary>The last plan of a kind, or null if none has been made.</summary>
-    public StoredRoutePlan? Last(RoutePlanKind kind)
+    /// <summary>The last plan of a kind for a Commander (the shown one by default), or null if none has been made.</summary>
+    public StoredRoutePlan? Last(RoutePlanKind kind, string? frontierId = null)
     {
+        var owner = frontierId ?? shown?.Invoke();
+        StoredRoutePlan? plan;
+        StoredRoutePlan[] snapshot = [];
+        long version = 0;
+        var claimed = false;
+
         lock (_gate)
         {
-            return _plans.GetValueOrDefault(kind);
+            if (Claim(owner))
+            {
+                snapshot = [.. _plans.Values];
+                version = ++_version;
+                claimed = true;
+            }
+
+            plan = _plans.GetValueOrDefault((owner, kind));
         }
+
+        if (claimed)
+        {
+            Save(snapshot, version);
+        }
+
+        return plan;
     }
 
-    public void Record(PlottedRoute route, string headline, DateTimeOffset at) =>
+    /// <summary>
+    /// Gives plans saved without a Frontier ID to <paramref name="owner"/>, the first Commander to ask.
+    /// Call under <see cref="_gate"/>; true when anything moved.
+    /// </summary>
+    private bool Claim(string? owner)
+    {
+        if (owner is null)
+        {
+            return false;
+        }
+
+        var moved = false;
+
+        foreach (var key in _plans.Keys.Where(key => key.FrontierId is null).ToArray())
+        {
+            var plan = _plans[key];
+
+            _plans.Remove(key);
+            moved = true;
+
+            _plans.TryAdd((owner, key.Kind), plan with { FrontierId = owner });
+        }
+
+        return moved;
+    }
+
+    public void Record(PlottedRoute route, string headline, DateTimeOffset at, string? frontierId = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Jump,
+            FrontierId = frontierId,
             PlottedAt = at,
             Headline = headline,
             Jump = route,
         });
 
-    public void Record(RichesRoute route, string headline, DateTimeOffset at) =>
+    public void Record(RichesRoute route, string headline, DateTimeOffset at, string? frontierId = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Riches,
+            FrontierId = frontierId,
             PlottedAt = at,
             Headline = headline,
             Riches = route,
         });
 
-    public void Record(ExobiologyRoute route, string headline, DateTimeOffset at) =>
+    public void Record(ExobiologyRoute route, string headline, DateTimeOffset at, string? frontierId = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Exobiology,
+            FrontierId = frontierId,
             PlottedAt = at,
             Headline = headline,
             Exobiology = route,
@@ -142,10 +199,12 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
         long? carrierId,
         string headline,
         DateTimeOffset at,
-        DateTimeOffset? statsSeenAt = null) =>
+        DateTimeOffset? statsSeenAt = null,
+        string? frontierId = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Carrier,
+            FrontierId = frontierId,
             PlottedAt = at,
             Headline = headline,
             Carrier = route,
@@ -157,10 +216,12 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
     /// <paramref name="currentSystem"/> is the Commander's system as the plan was made: the first stop of a
     /// trade route is the station they were already standing on, so no arrival event follows it (#199).
     /// </summary>
-    public void Record(TradeRoute route, string headline, DateTimeOffset at, string? currentSystem = null) =>
+    public void Record(TradeRoute route, string headline, DateTimeOffset at, string? currentSystem = null,
+        string? frontierId = null) =>
         Keep(new StoredRoutePlan
         {
             Kind = RoutePlanKind.Trade,
+            FrontierId = frontierId,
             PlottedAt = at,
             Headline = headline,
             Trade = route,
@@ -172,8 +233,9 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
 
     /// <summary>
     /// Moves a stored plan's reached stop forward on arrival, one plan and one kind at a time (#199).
+    /// Only the plans of <paramref name="frontierId"/>, the Commander who wrote the events, move.
     /// </summary>
-    public void Apply(IReadOnlyList<JournalEvent> events)
+    public void Apply(IReadOnlyList<JournalEvent> events, string? frontierId = null)
     {
         var moved = false;
         StoredRoutePlan[] snapshot = [];
@@ -181,6 +243,10 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
 
         lock (_gate)
         {
+            var claimed = Claim(shown?.Invoke());
+
+            moved = claimed;
+
             foreach (var journalEvent in events)
             {
                 if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location" or "CarrierLocation"))
@@ -193,9 +259,9 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
                     continue;
                 }
 
-                foreach (var kind in _plans.Keys.ToArray())
+                foreach (var key in _plans.Keys.Where(key => key.FrontierId == frontierId).ToArray())
                 {
-                    var plan = _plans[kind];
+                    var plan = _plans[key];
 
                     if (journalEvent.Timestamp < plan.PlottedAt)
                     {
@@ -234,7 +300,7 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
                         continue;
                     }
 
-                    _plans[kind] = plan with { Reached = found };
+                    _plans[key] = plan with { Reached = found };
                     moved = true;
                 }
             }
@@ -280,7 +346,10 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
 
         lock (_gate)
         {
-            _plans[plan.Kind] = plan;
+            var owned = plan with { FrontierId = plan.FrontierId ?? shown?.Invoke() };
+
+            Claim(owned.FrontierId);
+            _plans[(owned.FrontierId, owned.Kind)] = owned;
             snapshot = [.. _plans.Values];
             version = ++_version;
         }
@@ -309,7 +378,7 @@ public sealed class RoutePlanBook(string path, IFileSystem files, ILogger<RouteP
 
                 foreach (var plan in stored)
                 {
-                    _plans[plan.Kind] = plan;
+                    _plans[(plan.FrontierId, plan.Kind)] = plan;
                 }
             }
             catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
