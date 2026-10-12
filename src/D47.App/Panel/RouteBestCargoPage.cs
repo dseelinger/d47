@@ -56,6 +56,19 @@ public sealed class RouteBestCargoPage : UserControl
     /// <summary>The results table's columns: rank, commodity, sell at, profit, tonnes, total, bar.</summary>
     private const string Columns = "22,1.3*,1.1*,100,96,130,150";
 
+    /// <summary>The table's columns; the picks arrive ordered by total.</summary>
+    public static readonly IReadOnlyList<SortColumn<CargoPick>> Headings =
+    [
+        SortColumn<CargoPick>.Plain("#"),
+        SortColumn<CargoPick>.Text("Commodity", pick => pick.Commodity),
+        SortColumn<CargoPick>.Text("Sell at", pick => pick.Station),
+        SortColumn<CargoPick>.Figure("Profit / t", pick => (long?)pick.ProfitPerTonne, SortDirection.Descending),
+        SortColumn<CargoPick>.Figure("Tonnes", pick => (long?)pick.Tonnes, SortDirection.Descending),
+        SortColumn<CargoPick>.Figure("Total", pick => (long?)pick.Total, SortDirection.Descending),
+    ];
+
+    private readonly SortHeader<CargoPick> _head = new("BestCargoHead", Headings, new SortOrder(5, SortDirection.Descending));
+
     private const double ColumnGap = 16;
 
     /// <summary>How long a search may run.</summary>
@@ -93,6 +106,7 @@ public sealed class RouteBestCargoPage : UserControl
         Func<string, string?>? offDuty = null)
     {
         _offDuty = offDuty;
+        _head.Changed += Draw;
         _registry = registry;
         _board = board;
         _commander = commander;
@@ -249,6 +263,7 @@ public sealed class RouteBestCargoPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _head.Reset();
         _board.Posted += OnPosted;
     }
 
@@ -295,7 +310,7 @@ public sealed class RouteBestCargoPage : UserControl
             : posting.Answer.Picks.Count == 0 ? BestCargoView.NoProfit
             : BestCargoView.Picks;
 
-        Rows = View == BestCargoView.Picks ? posting!.Answer!.Picks : [];
+        Rows = View == BestCargoView.Picks ? _head.Sort(posting!.Answer!.Picks) : [];
 
         _find.IsEnabled = docked && lookups && _inFlight is null;
 
@@ -365,7 +380,7 @@ public sealed class RouteBestCargoPage : UserControl
 
             case BestCargoView.Picks:
                 body.Children.Add(GroupHead(posting!.Search.Destination, plot: true));
-                body.Children.Add(Table(posting.Answer!.Picks));
+                body.Children.Add(Table(Rows));
                 break;
         }
 
@@ -552,22 +567,13 @@ public sealed class RouteBestCargoPage : UserControl
         return new StackPanel { Margin = new Thickness(0, 24, 0, 6), Children = { row, rule } };
     }
 
-    private static StackPanel Table(IReadOnlyList<CargoPick> picks)
+    private StackPanel Table(IReadOnlyList<CargoPick> picks)
     {
         var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap, Margin = new Thickness(14, 8, 14, 8) };
 
-        foreach (var (text, column, right, key) in new[]
-                 {
-                     ("#", 0, false, ThemeManager.GreyKey),
-                     ("Commodity", 1, false, ThemeManager.GreyKey),
-                     ("Sell at", 2, false, ThemeManager.GreyKey),
-                     ("Profit / t", 3, true, ThemeManager.GreyKey),
-                     ("Tonnes", 4, true, ThemeManager.GreyKey),
-                     ("Total ▼", 5, true, ThemeManager.AKey),
-                 })
+        for (var column = 0; column < Headings.Count; column++)
         {
-            var head = Chrome(text, TypeScale.Meta, key);
-            head.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            var head = _head.Cell(column, column is 3 or 4 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
             Grid.SetColumn(head, column);
             heads.Children.Add(head);
         }
@@ -576,7 +582,7 @@ public sealed class RouteBestCargoPage : UserControl
         Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         var rows = new StackPanel { Spacing = Gaps.Tile };
-        var best = picks.Count > 0 ? Math.Max(1, picks[0].Total) : 1;
+        var best = picks.Count > 0 ? Math.Max(1, picks.Max(pick => pick.Total)) : 1;
 
         for (var index = 0; index < picks.Count; index++)
         {

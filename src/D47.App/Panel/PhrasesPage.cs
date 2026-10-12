@@ -82,6 +82,20 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
     private readonly Notice _notice = new() { IsVisible = false, Margin = new Thickness(0, 2, 0, 0) };
     private readonly StackPanel _lists = new();
 
+    private readonly SortHeader<LearnedPhrase> _ownHead = new(
+        "OwnPhrasesHead",
+        [
+            SortColumn<LearnedPhrase>.Text("Phrase", phrase => phrase.Said),
+            SortColumn<LearnedPhrase>.Text("Meaning", phrase => phrase.Phrase),
+        ]);
+
+    private readonly SortHeader<BuiltIn> _builtInHead = new(
+        "BuiltInPhrasesHead",
+        [
+            SortColumn<BuiltIn>.Text("Phrase", phrase => phrase.Phrase),
+            SortColumn<BuiltIn>.Text("Does", phrase => phrase.Sentence),
+        ]);
+
     private string? _picked;
     private string _query = string.Empty;
 
@@ -91,6 +105,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         Func<CommanderGameState?> commander,
         Func<PhraseBook>? book = null)
     {
+        _ownHead.Changed += Build;
+        _builtInHead.Changed += Build;
         _registry = registry;
         _store = store;
         _commander = commander;
@@ -430,7 +446,12 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         {
             var rows = new StackPanel { Spacing = 2 };
 
-            foreach (var phrase in own)
+            if (own.Count > 0)
+            {
+                rows.Children.Add(Heads(_ownHead, "*,28,*,44", [0, 2], new Thickness(14, 0, 2, 0)));
+            }
+
+            foreach (var phrase in _ownHead.Sort(own))
             {
                 rows.Children.Add(OwnRow(phrase));
             }
@@ -443,17 +464,38 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             _lists.Children.Add(Section("Your phrases", own.Count, rows));
         }
 
+        if (groups.Count > 0)
+        {
+            var heads = Heads(_builtInHead, BuiltInColumns, [0, 1], new Thickness(14, 0));
+            heads.Margin = new Thickness(0, 28, 0, 0);
+            _lists.Children.Add(heads);
+        }
+
         foreach (var group in groups)
         {
             var rows = new StackPanel { Spacing = 2 };
 
-            foreach (var phrase in group.Phrases)
+            foreach (var phrase in _builtInHead.Sort(group.Phrases))
             {
                 rows.Children.Add(BuiltInRow(phrase));
             }
 
             _lists.Children.Add(Section(group.Title, group.Phrases.Count, rows));
         }
+    }
+
+    private static Control Heads<TRow>(SortHeader<TRow> head, string columns, int[] gridColumns, Thickness padding)
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = columns == BuiltInColumns ? 12 : 0 };
+
+        for (var column = 0; column < gridColumns.Length; column++)
+        {
+            var cell = head.Cell(column, HorizontalAlignment.Left);
+            Grid.SetColumn(cell, gridColumns[column]);
+            grid.Children.Add(cell);
+        }
+
+        return new Border { MinHeight = TypeScale.MinimumTarget, Padding = padding, Child = grid };
     }
 
     private Border OwnRow(LearnedPhrase phrase)

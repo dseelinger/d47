@@ -159,6 +159,29 @@ public class TheBestCargoPageDrawsTheLastSearchTests
 
     [Trait("Category", "Integration")]
     [AvaloniaFact]
+    public void PressingProfitPerTonneTwiceListsTheLeastProfitableFirst()
+    {
+        using var opened = Open();
+        Search(opened.Page, "Ray");
+
+        Assert.Equal("Superconductors", opened.Page.Rows[0].Commodity);
+
+        Press(opened, "BestCargoHead.Profit/t");
+        Press(opened, "BestCargoHead.Profit/t");
+
+        Assert.Equal(6, opened.Page.Rows.Count);
+        Assert.Equal("Aluminium", opened.Page.Rows[0].Commodity);
+    }
+
+    private static void Press(Opened opened, string name)
+    {
+        var button = opened.Page.GetVisualDescendants().OfType<Button>().Single(candidate => candidate.Name == name);
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
     public void BestCargoSitsBetweenMarketAndTradeRoute()
     {
         using var opened = Open();

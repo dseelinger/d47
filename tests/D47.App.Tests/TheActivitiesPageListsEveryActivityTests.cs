@@ -130,6 +130,41 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     }
 
     [AvaloniaFact]
+    public void PressingLastDoneTwiceListsTheMostRecentFirst()
+    {
+        using var look = AppLook.Put();
+        var window = Open(Ledger(), 1280);
+
+        Press(window, "ActivitiesHead.Lastdone");
+        Press(window, "ActivitiesHead.Lastdone");
+
+        Assert.Equal(["TRADING", "MINING", "EXPLORATION", "BOUNTY HUNTING"], Rows(window).Select(RowName).Take(4));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheNarrowCombinedHeaderSortsByActivity()
+    {
+        using var look = AppLook.Put();
+        var window = Open(Ledger(), 640);
+
+        Press(window, "ActivitiesHead.Activity·Lastdone");
+
+        Assert.Equal("BOUNTY HUNTING", RowName(Rows(window)[0]));
+        Assert.Equal(ActivityCatalogue.All.Select(entry => entry.Name.ToUpperInvariant()).Order().First(), RowName(Rows(window)[0]));
+
+        window.Close();
+    }
+
+    private static void Press(Window window, string name)
+    {
+        window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
     public void UntickingSuggestKeepsTheRowAndItsDate()
     {
         using var look = AppLook.Put();

@@ -34,6 +34,23 @@ public sealed class ActivitiesPage : UserControl
 
     private readonly StackPanel _page = new() { Spacing = 2, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Stretch };
 
+    private static readonly IReadOnlyList<SortColumn<ActivityRow>> WideHeadings =
+    [
+        SortColumn<ActivityRow>.Text("Activity", row => row.Entry.Name),
+        SortColumn<ActivityRow>.Figure("Last done", row => row.At, SortDirection.Ascending),
+        SortColumn<ActivityRow>.Plain("Suggest"),
+    ];
+
+    private static readonly IReadOnlyList<SortColumn<ActivityRow>> NarrowHeadings =
+    [
+        SortColumn<ActivityRow>.Text("Activity · Last done", row => row.Entry.Name),
+        SortColumn<ActivityRow>.Plain("Suggest"),
+    ];
+
+    private readonly SortHeader<ActivityRow> _wideHead = new("ActivitiesHead", WideHeadings, new SortOrder(1, SortDirection.Ascending));
+
+    private readonly SortHeader<ActivityRow> _narrowHead = new("ActivitiesHead", NarrowHeadings);
+
     private bool _narrow;
 
     private bool _writing;
@@ -43,6 +60,8 @@ public sealed class ActivitiesPage : UserControl
         _ledger = ledger;
         _commander = commander;
         _now = now ?? (() => DateTimeOffset.Now);
+        _wideHead.Changed += Fill;
+        _narrowHead.Changed += Fill;
 
         Content = new ScrollViewer
         {
@@ -57,6 +76,8 @@ public sealed class ActivitiesPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _wideHead.Reset();
+        _narrowHead.Reset();
         _ledger.Changed += Follow;
         Fill();
     }
@@ -74,6 +95,8 @@ public sealed class ActivitiesPage : UserControl
         if (narrow != _narrow)
         {
             _narrow = narrow;
+            _wideHead.Reset();
+            _narrowHead.Reset();
             Dispatcher.UIThread.Post(Fill);
         }
 
@@ -123,12 +146,12 @@ public sealed class ActivitiesPage : UserControl
         _page.Children.Add(Head());
 
         var rows = ActivityCatalogue.All
-            .Select(entry => (Entry: entry, At: _ledger.LastDone(entry.Key, commander)))
-            .OrderBy(pair => pair.At is null)
-            .ThenBy(pair => pair.At)
+            .Select(entry => new ActivityRow(entry, _ledger.LastDone(entry.Key, commander)))
+            .OrderBy(row => row.At is null)
+            .ThenBy(row => row.At)
             .ToList();
 
-        foreach (var (entry, at) in rows)
+        foreach (var (entry, at) in (_narrow ? _narrowHead : _wideHead).Sort(rows))
         {
             _page.Children.Add(Row(entry, at, corpus, now, commander));
         }
@@ -136,31 +159,23 @@ public sealed class ActivitiesPage : UserControl
 
     private Control Head()
     {
-        var head = ListRow.Head(_narrow ? "Activity · Last done" : "Activity");
-        var activity = (Control)head.Child!;
+        var head = ListRow.Head(string.Empty);
         var grid = new Grid { ColumnDefinitions = Columns(), ColumnSpacing = _narrow ? 0 : 16 };
+        var sorting = _narrow ? _narrowHead : _wideHead;
 
+        head.Padding = new Thickness(0);
         head.Child = grid;
-        grid.Children.Add(activity);
+        AddCell(grid, sorting.Cell(0, HorizontalAlignment.Left), 0);
 
         if (!_narrow)
         {
-            AddCell(grid, HeadText("Last done"), 1);
+            AddCell(grid, sorting.Cell(1, HorizontalAlignment.Left), 1);
         }
 
-        var suggest = HeadText("Suggest");
-        suggest.HorizontalAlignment = HorizontalAlignment.Center;
+        var suggest = sorting.Cell(_narrow ? 1 : 2, HorizontalAlignment.Center);
         AddCell(grid, suggest, _narrow ? 1 : 3);
 
         return head;
-    }
-
-    private static Control HeadText(string text)
-    {
-        var holder = ListRow.Head(text);
-        var label = (Control)holder.Child!;
-        holder.Child = null;
-        return label;
     }
 
     private ColumnDefinitions Columns() => _narrow
@@ -344,3 +359,6 @@ public sealed class ActivitiesPage : UserControl
     private static void Themed(AvaloniaObject target, AvaloniaProperty property, string key) =>
         target.Bind(property, Application.Current!.Resources.GetResourceObservable(key));
 }
+
+/// <summary>One catalogue activity and when it was last done.</summary>
+internal readonly record struct ActivityRow(ActivityEntry Entry, DateTimeOffset? At);

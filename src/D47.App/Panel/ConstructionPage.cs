@@ -38,6 +38,19 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     public const string OrderOpen = "ORDER OPEN";
 
+    /// <summary>The needs table's columns; the needs arrive in source order.</summary>
+    public static readonly IReadOnlyList<SortColumn<ConstructionNeeds>> NeedHeadings =
+    [
+        SortColumn<ConstructionNeeds>.Text("Commodity", need => need.Resource.Name),
+        SortColumn<ConstructionNeeds>.Figure("Remaining", need => (int?)need.Remaining, SortDirection.Descending),
+        SortColumn<ConstructionNeeds>.Figure("In hold", need => (int?)need.InHold, SortDirection.Descending),
+        SortColumn<ConstructionNeeds>.Figure("On carrier", need => need.OnCarrier, SortDirection.Descending),
+        SortColumn<ConstructionNeeds>.Figure("To buy", need => (int?)need.ToBuy, SortDirection.Descending),
+        SortColumn<ConstructionNeeds>.Plain("Order"),
+    ];
+
+    private readonly SortHeader<ConstructionNeeds> _head = new("NeedsHead", NeedHeadings);
+
     public const string NoSites =
         "D47 hasn't seen a construction site in your journals. Dock at one and it appears here, with what it still needs.";
 
@@ -81,6 +94,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         Margin = new Thickness(14);
 
+        _head.Changed += Draw;
         _search.Click += (_, _) => _ = SearchAsync();
         _cancel.Click += (_, _) => _inFlight?.Cancel();
 
@@ -188,6 +202,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _head.Reset();
 
         if (_surface.Sourcing is { } board)
         {
@@ -553,18 +568,9 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(NeedsColumns), ColumnSpacing = 12, Margin = new Thickness(14, 0, 14, 4) };
 
-        foreach (var (text, column, right) in new[]
-                 {
-                     ("Commodity", 0, false),
-                     ("Remaining", 1, true),
-                     ("In hold", 2, true),
-                     ("On carrier", 3, true),
-                     ("To buy", 4, true),
-                     ("Order", 5, false),
-                 })
+        for (var column = 0; column < NeedHeadings.Count; column++)
         {
-            var head = MaterialsPage.Chrome(text, ThemeManager.GreyKey);
-            head.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            var head = _head.Cell(column, column is >= 1 and <= 4 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
             Grid.SetColumn(head, column);
             heads.Children.Add(head);
         }
@@ -573,7 +579,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         var rows = new StackPanel { Spacing = Gaps.Tile };
 
-        foreach (var need in needs)
+        foreach (var need in _head.Sort(needs))
         {
             rows.Children.Add(NeedRow(need, carrier.Owned));
         }
