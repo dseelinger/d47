@@ -546,7 +546,7 @@ public sealed class StoryDirector(
 
             if (outcome.Draft is not { } draft)
             {
-                return outcome.Refusal ?? "Nothing came back.";
+                return outcome.Message ?? "Nothing came back.";
             }
 
             if (book.ReplaceBeats(frontierId, adventure.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
@@ -641,7 +641,7 @@ public sealed class StoryDirector(
         catch (Exception ex)
         {
             logger.LogError(ex, "Writing a replacement beat failed");
-            return "The objective could not be written. Try again in a moment.";
+            return "The objective could not be written. Write it again and I will try a new draft.";
         }
         finally
         {
@@ -708,7 +708,7 @@ public sealed class StoryDirector(
 
         if (outcome.Draft is not { } draft)
         {
-            return outcome.Refusal ?? "Nothing came back.";
+            return outcome.Message ?? "Nothing came back.";
         }
 
         if (stories.Current(frontierId) is not { State: StoryState.Running } still
@@ -1194,7 +1194,7 @@ public sealed class StoryDirector(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Writing a story chapter failed");
-                refusal = "The chapter could not be written. Try again in a moment.";
+                refusal = AdventureOutcome.NotWritten;
             }
 
             if (refusal is not null)
@@ -1281,7 +1281,7 @@ public sealed class StoryDirector(
 
         if (outcome.Draft is not { } draft)
         {
-            return outcome.Refusal ?? "Nothing came back.";
+            return outcome.Message ?? "Nothing came back.";
         }
 
         // The story may have been switched or abandoned while the model wrote.

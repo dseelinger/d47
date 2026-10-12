@@ -32,6 +32,23 @@ public sealed class AChapterIsMostlyActivityTests
     }
 
     [Fact]
+    public async Task ARefusedChapterTellsTheCommanderOnlyThatItCouldNotBeWritten()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(ThreeTravelBeats));
+
+        var outcome = await Generate(provider, chapter: 2);
+
+        Assert.Equal(AdventureOutcome.NotWritten, outcome.Message);
+        Assert.DoesNotContain("cannot stand", outcome.Message);
+        Assert.DoesNotContain("Objective 1", outcome.Message);
+        Assert.DoesNotContain("credits at the last load", outcome.Message);
+        Assert.DoesNotContain("Try again in a moment", outcome.Message);
+        Assert.Contains("travel objectives", outcome.Refusal);
+        Assert.Contains("travel objectives", provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
     public async Task ChapterOneMayTravel()
     {
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats));

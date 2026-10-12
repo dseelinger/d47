@@ -720,8 +720,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (outcome.Draft is not { } draft)
         {
-            status.Fail(outcome.Refusal ?? "Nothing came back.");
-            _surface.Say(outcome.Refusal ?? "I could not write that one.");
+            status.Fail(outcome.Message ?? "Nothing came back.");
+            _surface.Say(outcome.Message ?? "I could not write that one.");
             return;
         }
 
@@ -924,7 +924,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
                     if (outcome.Draft is not { } revised)
                     {
-                        _surface.Say(outcome.Refusal ?? "I could not change it that way.");
+                        _surface.Say(outcome.Message ?? "I could not change it that way.");
                         return;
                     }
 

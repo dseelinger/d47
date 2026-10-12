@@ -66,7 +66,8 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", refusal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
         Assert.Empty(fixtures.Stories.Current("F1")!.Chapters);
         Assert.True(fixtures.Director.WriteFailed("F1"));
@@ -86,7 +87,8 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains("The last objective must be \"beacon\"", refusal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Contains("The last objective must be \"beacon\"", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
 
@@ -101,8 +103,9 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", refusal);
-        Assert.DoesNotContain("Beat 3", refusal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", fixtures.LastRefusal);
+        Assert.DoesNotContain("Beat 3", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
 
@@ -122,7 +125,8 @@ public sealed class ChapterOneEndsAtABeaconTests
 
         var refusal = await fixtures.Director.WriteNextAsync("F1", Now.AddDays(1), CancellationToken.None);
 
-        Assert.Contains("Objective 2 (The Beacon Again) is a \"beacon\" objective", refusal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Contains("Objective 2 (The Beacon Again) is a \"beacon\" objective", fixtures.LastRefusal);
         Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
         Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[2].Prompt.History[0].Text);
     }

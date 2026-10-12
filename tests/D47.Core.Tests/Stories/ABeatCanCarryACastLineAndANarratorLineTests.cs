@@ -127,8 +127,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.NotNull(refusal);
-        Assert.Contains("\"stranger\"", refusal, StringComparison.Ordinal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
     }
 
     [Fact]

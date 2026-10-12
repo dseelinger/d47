@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+When a story chapter or short story cannot be written, the Stories and Short Story pages now show and say one plain sentence: "The chapter could not be written. Write it again and I will try a new draft." They no longer read out the checker's reasons, such as the cost of a ship the chapter wanted you to board, which were written for the model. The reasons are in the log.
+
 The tech broker's Corrosion Resistant Cargo Rack is now listed as 4E, the one size the broker unlocks, instead of "2D and 4D", which are not sizes the module comes in. The recipe is unchanged.
 
 The first time a new version of D47 starts, it zips your data folder into `data\backups` before it reads anything, and keeps the newest 25 zips. The zip holds your settings, keys, stories, checklists and the other files D47 writes for you. It leaves out the large folders that D47 downloads or records: speech models, music, ship art, avatar clips, story downloads, recordings and logs. Starting the same version again takes no new zip.

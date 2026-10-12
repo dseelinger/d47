@@ -195,9 +195,12 @@ internal sealed class StoryFixtures : IDisposable
             {
                 Asks.Add(ask);
 
-                return Throws
-                    ? throw new HttpRequestException("The provider went away.")
-                    : generator.GenerateAsync(ask, now, cancellationToken);
+                if (Throws)
+                {
+                    throw new HttpRequestException("The provider went away.");
+                }
+
+                return Written(generator.GenerateAsync(ask, now, cancellationToken));
             },
             () => Here,
             backstory => Backstory = backstory,
@@ -222,6 +225,17 @@ internal sealed class StoryFixtures : IDisposable
 
     /// <summary>Every chapter the director asked to have written, oldest first.</summary>
     public List<AdventureAsk> Asks { get; } = [];
+
+    /// <summary>The detail of the last refusal the generator gave, which the Commander is not shown.</summary>
+    public string? LastRefusal { get; private set; }
+
+    private async Task<AdventureOutcome> Written(Task<AdventureOutcome> writing)
+    {
+        var outcome = await writing.ConfigureAwait(false);
+        LastRefusal = outcome.Refusal;
+
+        return outcome;
+    }
 
     /// <summary>Whether the next write throws rather than reaching the model.</summary>
     public bool Throws { get; set; }

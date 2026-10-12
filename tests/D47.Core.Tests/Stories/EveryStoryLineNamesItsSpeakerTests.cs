@@ -196,8 +196,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.NotNull(refusal);
-        Assert.Contains("\"stranger\"", refusal, StringComparison.Ordinal);
+        Assert.Equal(AdventureOutcome.NotWritten, refusal);
     }
 
     private const string BeatsWhereHarrowNamesHimself = """

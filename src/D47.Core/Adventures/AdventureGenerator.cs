@@ -154,7 +154,15 @@ public sealed record AdventureRemark(string Remark, string? Reply);
 /// </summary>
 public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? Refusal, IReadOnlyList<string> Notes)
 {
+    public const string NotWritten = "The chapter could not be written. Write it again and I will try a new draft.";
+
     public bool Succeeded => Draft is not null;
+
+    /// <summary>True when <see cref="Refusal"/> is written for the model and the log, not the Commander.</summary>
+    public bool Internal { get; init; }
+
+    /// <summary>What the Commander is shown and told; the detail stays in <see cref="Refusal"/>.</summary>
+    public string? Message => Refusal is null ? null : Internal ? NotWritten : Refusal;
 
     /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
     public AdventureDestination? Destination { get; init; }
@@ -233,14 +241,14 @@ public sealed class AdventureGenerator(
 
         if (spineJson is null)
         {
-            return new AdventureOutcome(null, null, "The model did not write a story. Try again in a moment.", notes);
+            return Failed(null, "The model did not write a story.", notes);
         }
 
         var spine = ReadSpine(spineJson, out var name);
 
         if (spine is null || name is null)
         {
-            return new AdventureOutcome(null, null, "The model's answer was not a story I could read. Try again.", notes);
+            return Failed(null, "The model's answer was not a story I could read.", notes);
         }
 
         var beatsJson = await AskJsonAsync(
@@ -302,14 +310,14 @@ public sealed class AdventureGenerator(
     {
         if (beatsJson is null)
         {
-            return new AdventureOutcome(null, null, "The model did not write the objectives. Try again in a moment.", notes);
+            return Failed(null, "The model did not write the objectives.", notes);
         }
 
         var read = ReadBeats(beatsJson);
 
         if (read is null || read.Beats.Count == 0)
         {
-            return new AdventureOutcome(null, null, "The model's objectives were not something I could read. Try again.", notes);
+            return Failed(null, "The model's objectives were not something I could read.", notes);
         }
 
         var resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
@@ -338,8 +346,7 @@ public sealed class AdventureGenerator(
 
         if (resolved.Refusals.Count > 0)
         {
-            return new AdventureOutcome(
-                null,
+            return Failed(
                 read.Reply,
                 (resolved.Refusals.Any(refusal => refusal.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
                     ? "The story cannot stand: "
@@ -367,13 +374,20 @@ public sealed class AdventureGenerator(
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
         {
-            return new AdventureOutcome(null, read.Reply, string.Join(" ", problems), notes);
+            return Failed(read.Reply, string.Join(" ", problems), notes);
         }
 
         return new AdventureOutcome(adventure, read.Reply, null, notes)
         {
             Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
         };
+    }
+
+    private AdventureOutcome Failed(string? reply, string detail, IReadOnlyList<string> notes)
+    {
+        logger.LogWarning("A story was not written: {Refusal}", detail);
+
+        return new AdventureOutcome(null, reply, detail, notes) { Internal = true };
     }
 
     private const string UnknownSpeaker = "A line is given to ";
