@@ -787,6 +787,15 @@ public sealed class AppHost : IDisposable
         // build that is not running (bugs.md, 2026-08-23).
         StaleBuildCheck.Report(logger, Environment.ProcessPath ?? string.Empty);
 
+        // Before any store opens the data folder, so a build that damages it leaves a copy to restore.
+        DataBackup.RunOnNewBuild(
+            paths,
+            BuildInfo.Identity(files),
+            paths.IsTestDrive ? $"{version}-debug" : version,
+            DateTime.Now,
+            files,
+            logger);
+
         var loadingStores = StartupTimer.Step("settings and stores");
 
         var store = new SettingsStore(paths, files, loggerFactory.CreateLogger<SettingsStore>());

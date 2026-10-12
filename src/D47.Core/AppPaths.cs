@@ -43,27 +43,28 @@ public sealed class AppPaths
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
         BindingProfiles = Path.Combine(Data, "binding-profiles");
+        Backups = Path.Combine(Data, "backups");
+        LastBuildFile = Path.Combine(Data, "last-build.txt");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
     }
 
     /// <summary>Where this build writes.</summary>
     public static AppPaths ForRunningBuild() =>
-        DevInstallRoot() is { } root
+        BuildMetadata("DevInstallRoot") is { } root
             ? new(root, AppContext.BaseDirectory) { IsTestDrive = true }
             : new(AppContext.BaseDirectory, AppContext.BaseDirectory);
 
-    /// <summary>Whether this is a Debug build writing to the dev-install folder rather than an install.</summary>
+    /// <summary>Whether this is a Debug build writing to the installed app's data folder from outside the install.</summary>
     public bool IsTestDrive { get; init; }
 
-    /// <summary>The Debug-only redirect, or null.</summary>
-    private static string? DevInstallRoot() =>
+    /// <summary>A Debug-only value compiled into the entry assembly, or null.</summary>
+    private static string? BuildMetadata(string key) =>
         System.Reflection.Assembly.GetEntryAssembly()
             ?.GetCustomAttributes<AssemblyMetadataAttribute>()
-            .FirstOrDefault(attribute =>
-                string.Equals(attribute.Key, "DevInstallRoot", StringComparison.Ordinal))
-            ?.Value is { Length: > 0 } root
-            ? root
+            .FirstOrDefault(attribute => string.Equals(attribute.Key, key, StringComparison.Ordinal))
+            ?.Value is { Length: > 0 } value
+            ? value
             : null;
 
     public string InstallRoot { get; }
@@ -125,6 +126,12 @@ public sealed class AppPaths
 
     /// <summary>The Commander's saved copies of Elite's bindings, one folder per profile name.</summary>
     public string BindingProfiles { get; }
+
+    /// <summary>The zips of the data folder taken when a different build first opens it.</summary>
+    public string Backups { get; }
+
+    /// <summary>The build that last opened the data folder.</summary>
+    public string LastBuildFile { get; }
 
     /// <summary>The card stills that came with the build, read-only, beside the executable.</summary>
     public string ShippedShips { get; }

@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using D47.Core.Storage;
 using D47.Core.Updates;
 
 namespace D47.App;
@@ -28,6 +29,19 @@ public static class BuildInfo
 
     /// <summary>Whether this build came from a working tree rather than a published release.</summary>
     public static bool IsLocal => Label is not null;
+
+    /// <summary>The stamp and the newest write time of the build's own files, so a rebuild at the same commit is a different build.</summary>
+    public static string Identity(IFileSystem files)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+
+        var written = files.Enumerate(AppContext.BaseDirectory, "D47*.dll")
+            .Append(Environment.ProcessPath ?? string.Empty)
+            .Select(path => files.Stat(path)?.Written)
+            .Max();
+
+        return $"{Full} {written:o}";
+    }
 
     /// <summary>
     /// The label between the version and the commit — <c>0.84.3-local+8b21b3d</c> gives <c>local</c>.

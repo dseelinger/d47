@@ -24,7 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <AssemblyMetadata Include="DevInstallRoot" Value="$(MSBuildThisFileDirectory)..\..\dev-install" />
+    <AssemblyMetadata Include="DevInstallRoot" Value="$(LOCALAPPDATA)\Programs\d47" />
   </ItemGroup>
 
   <PropertyGroup>
