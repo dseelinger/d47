@@ -324,7 +324,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         form.Children.Add(Group(
             "Search out from",
-            Labelled("Near", Beneath(_near, _nearNames)),
+            Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in light years", Span(_distanceFrom, _distanceTo, _distanceReadout)),
             _limit.Field("Systems")));
 
@@ -363,7 +363,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     protected override void Follow()
     {
-        _near.PlaceholderText = _here() is { } system ? $"Your system · {system}" : "Your system";
+        ShowHere(_near, _here());
         _distanceReadout.Update();
     }
 

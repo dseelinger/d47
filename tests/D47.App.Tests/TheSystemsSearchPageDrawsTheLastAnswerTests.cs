@@ -580,12 +580,14 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
         var near = Page(panel).GetLogicalDescendants().OfType<TextBox>().First();
 
-        Assert.Equal("Your system · LTT 7786", near.PlaceholderText);
+        Assert.Equal("YOUR SYSTEM · LTT 7786", near.PlaceholderText);
+        Assert.Contains("here", near.Classes);
+        Assert.Contains(Page(panel).GetLogicalDescendants().OfType<TextBlock>(), t => t.Text == "Follows you as you jump. Type a system name to search from there instead.");
 
         world.Here = "Sol";
         Assert.True(panel.TickSearch());
 
-        Assert.Equal("Your system · Sol", near.PlaceholderText);
+        Assert.Equal("YOUR SYSTEM · SOL", near.PlaceholderText);
 
         window.Close();
     }

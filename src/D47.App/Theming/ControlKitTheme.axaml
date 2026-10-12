@@ -714,6 +714,12 @@
         <Setter Property="BorderBrush" Value="{DynamicResource D47.A}" />
       </Style>
 
+      <Style Selector="^.here /template/ TextBlock#PART_Placeholder">
+        <Setter Property="FontFamily" Value="{StaticResource D47.Font.Chrome}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource D47.Cyan}" />
+      </Style>
+
       <Style Selector="^.error">
         <Setter Property="BorderBrush" Value="{DynamicResource D47.Red}" />
       </Style>

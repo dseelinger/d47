@@ -280,6 +280,23 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected static Control Beneath(TextBox field, SystemNameSuggestions? names) =>
         names is null ? field : new StackPanel { Spacing = 2, Children = { field, names.List } };
 
+    /// <summary>The Near field with its help line and suggestions listed under it.</summary>
+    protected static Control NearField(TextBox near, SystemNameSuggestions? names)
+    {
+        near.Classes.Add("here");
+        var stack = new StackPanel { Spacing = 4, Children = { near, Prose("Follows you as you jump. Type a system name to search from there instead.", TypeScale.Tip, ThemeManager.GreyKey) } };
+        if (names is not null)
+        {
+            stack.Children.Add(names.List);
+        }
+
+        return stack;
+    }
+
+    /// <summary>Shows the Commander's current system as the empty Near box's value.</summary>
+    protected static void ShowHere(TextBox near, string? system) =>
+        near.PlaceholderText = (system is null ? "Your system" : $"Your system · {system}").ToUpperInvariant();
+
     /// <summary>Sets the field's text without listing names for it.</summary>
     protected static void Fill(TextBox field, SystemNameSuggestions? names, string text)
     {

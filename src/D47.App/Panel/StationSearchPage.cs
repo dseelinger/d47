@@ -403,7 +403,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         form.Children.Add(Group(
             "Search out from",
-            Labelled("Near", Beneath(_near, _nearNames)),
+            Labelled("Near", NearField(_near, _nearNames)),
             Columns2("*,*", Labelled("Distance in LY", _distance), _limit.Field("Stations"))));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
@@ -455,7 +455,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     protected override object? Followed => _here();
 
     protected override void Follow() =>
-        _near.PlaceholderText = _here() is { } system ? $"Your system · {system}" : "Your system";
+        ShowHere(_near, _here());
 
     private void DrawServices()
     {

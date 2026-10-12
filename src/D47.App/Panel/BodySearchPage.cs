@@ -403,7 +403,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         form.Children.Add(Group(
             "Search out from",
-            Labelled("Near", Beneath(_near, _nearNames)),
+            Labelled("Near", NearField(_near, _nearNames)),
             Columns2("*,*", Labelled("Distance in LY", _distance), _limit.Field("Bodies"))));
 
         var flags = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _landable, _terraformable, _tidallyLocked } };
@@ -438,7 +438,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     protected override object? Followed => _here();
 
     protected override void Follow() =>
-        _near.PlaceholderText = _here() is { } system ? $"Your system · {system}" : "Your system";
+        ShowHere(_near, _here());
 
     private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked"];
 
