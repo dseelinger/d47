@@ -442,7 +442,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
         Assert.Empty(window.GetVisualDescendants().OfType<SaveSearchDialog>());
 
-        var saved = Assert.Single(world.Store.For(Fid));
+        var saved = Assert.Single(world.Store.All());
         Assert.Equal("Frogs in boom", saved.Name);
         Assert.Equal("search_systems", saved.Tool);
         Assert.Equal("Boom", saved.Arguments["state"]);
@@ -456,7 +456,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Press(forgets.Single());
         Press(Named(window.GetVisualDescendants().OfType<ForgetSearchDialog>().Single(), ForgetSearchDialog.ConfirmName));
 
-        Assert.Empty(world.Store.For(Fid));
+        Assert.Empty(world.Store.All());
         Assert.DoesNotContain(
             panel.GetVisualDescendants().OfType<Button>(),
             button => button.Classes.Contains(GalaxySearchPage.SavedClass) && (string?)button.Tag == "Frogs in boom");
@@ -638,7 +638,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
         var world = new World(lookups: true);
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction"] = "Diamond Frogs", ["distance"] = "50" }, TwoSystems) with { Notes = "Read as Diamond Frogs." });
-        world.Store.Add(Fid, "Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
+        world.Store.Add("Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
         var (panel, window) = Shown(world);
 
         using (var frame = window.CaptureRenderedFrame()!)
@@ -678,7 +678,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         var world = new World(lookups: true);
         world.Settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
         world.Board.Post(Posting(new Dictionary<string, string> { ["faction"] = "Diamond Frogs", ["distance"] = "50" }, TwoSystems));
-        world.Store.Add(Fid, "Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
+        world.Store.Add("Frogs in boom", "search_systems", new Dictionary<string, string> { ["state"] = "Boom" }, AskedAt, []);
 
         var headset = new VrPanelSurface(new PanelViewModel(), world.Settings, _ => null, starSystem: world.Surface);
         var view = (PanelView)typeof(VrPanelSurface)

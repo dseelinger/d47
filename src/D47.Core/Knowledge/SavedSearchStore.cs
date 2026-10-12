@@ -14,7 +14,7 @@ public sealed record SavedSearch(
 /// <summary>Whether a search was saved; when not, <see cref="Message"/> says why in a sentence for the page.</summary>
 public sealed record SavedSearchOutcome(bool Saved, string Message);
 
-/// <summary>Per Commander Frontier id, the galaxy searches they have named, kept at <c>data/saved-searches.json</c>.</summary>
+/// <summary>The galaxy searches named on this machine, shared by every Commander, kept at <c>data/saved-searches.json</c>.</summary>
 public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<SavedSearchStore> logger)
 {
     public static IReadOnlyList<string> Tools { get; } = ["search_systems", "search_stations", "find_body"];
@@ -30,11 +30,12 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
 
     private readonly Lock _writeGate = new();
 
-    private Dictionary<string, Dictionary<string, SavedSearch>> _byCommander = new(StringComparer.Ordinal);
+    private Dictionary<string, SavedSearch> _searches = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Raised when a search is saved or forgotten.</summary>
     public event Action? Changed;
 
+    /// <summary>Loads the file. A file of per-Commander records is merged, newest <c>SavedAt</c> per name, and rewritten.</summary>
     public void Load()
     {
         try
@@ -45,41 +46,37 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
             }
 
             var document = JsonSerializer.Deserialize<Document>(text, Json);
-            var loaded = new Dictionary<string, Dictionary<string, SavedSearch>>(StringComparer.Ordinal);
+            var loaded = new Dictionary<string, SavedSearch>(StringComparer.OrdinalIgnoreCase);
+            var records = (document?.Searches ?? []).Concat((document?.Commanders ?? []).SelectMany(commander => commander.Searches ?? []));
 
-            foreach (var commander in document?.Commanders ?? [])
+            foreach (var record in records)
             {
-                if (string.IsNullOrWhiteSpace(commander.FrontierId))
+                if (record is { Name.Length: > 0 } && Tools.Contains(record.Tool))
                 {
-                    continue;
-                }
+                    var search = new SavedSearch(
+                        record.Name.Trim(),
+                        record.Tool,
+                        new Dictionary<string, string>(record.Arguments ?? [], StringComparer.Ordinal),
+                        record.SavedAt);
 
-                var forCommander = new Dictionary<string, SavedSearch>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var record in commander.Searches ?? [])
-                {
-                    if (record is { Name.Length: > 0 } && Tools.Contains(record.Tool))
+                    if (!loaded.TryGetValue(search.Name, out var kept) || search.SavedAt > kept.SavedAt)
                     {
-                        forCommander[record.Name.Trim()] = new SavedSearch(
-                            record.Name.Trim(),
-                            record.Tool,
-                            new Dictionary<string, string>(record.Arguments ?? [], StringComparer.Ordinal),
-                            record.SavedAt);
+                        loaded[search.Name] = search;
                     }
                 }
-
-                loaded[commander.FrontierId] = forCommander;
             }
 
             lock (_gate)
             {
-                _byCommander = loaded;
+                _searches = loaded;
             }
 
-            logger.LogInformation(
-                "Loaded {Searches} saved search(es) for {Count} Commanders",
-                loaded.Values.Sum(commander => commander.Count),
-                loaded.Count);
+            logger.LogInformation("Loaded {Searches} saved search(es)", loaded.Count);
+
+            if (document?.Commanders is { Count: > 0 })
+            {
+                Write(loaded);
+            }
         }
         catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
         {
@@ -87,23 +84,19 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
         }
     }
 
-    /// <summary>This Commander's saved searches, newest first.</summary>
-    public IReadOnlyList<SavedSearch> For(string frontierId)
+    /// <summary>The saved searches, newest first.</summary>
+    public IReadOnlyList<SavedSearch> All()
     {
         lock (_gate)
         {
-            return _byCommander.TryGetValue(frontierId, out var searches)
-                ? [.. searches.Values.OrderByDescending(search => search.SavedAt)]
-                : [];
+            return [.. _searches.Values.OrderByDescending(search => search.SavedAt)];
         }
     }
 
     /// <summary>
-    /// Saves a search. <paramref name="phrasesTaken"/> is every phrase already routed, including this
-    /// Commander's saved searches.
+    /// Saves a search. <paramref name="phrasesTaken"/> is every phrase already routed, including the saved searches.
     /// </summary>
     public SavedSearchOutcome Add(
-        string frontierId,
         string name,
         string tool,
         IReadOnlyDictionary<string, string> arguments,
@@ -129,9 +122,9 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
 
         lock (_writeGate)
         {
-            var merged = CloneReplacing(frontierId, out var forCommander);
+            var merged = new Dictionary<string, SavedSearch>(_searches, StringComparer.OrdinalIgnoreCase);
 
-            if (forCommander.ContainsKey(trimmed))
+            if (merged.ContainsKey(trimmed))
             {
                 return Refused($"You already have a search named \"{trimmed}\".");
             }
@@ -143,7 +136,7 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
                 return Refused($"\"{phrase}\" already means something else. Choose another name.");
             }
 
-            forCommander[trimmed] = new SavedSearch(
+            merged[trimmed] = new SavedSearch(
                 trimmed, tool, new Dictionary<string, string>(arguments, StringComparer.Ordinal), at);
 
             if (!Write(merged))
@@ -158,18 +151,18 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
     }
 
     /// <summary>Forgets a search. False when there is no such search.</summary>
-    public bool Forget(string frontierId, string name)
+    public bool Forget(string name)
     {
         lock (_writeGate)
         {
-            if (!_byCommander.TryGetValue(frontierId, out var searches) || !searches.ContainsKey(name.Trim()))
+            if (!_searches.ContainsKey(name.Trim()))
             {
                 return false;
             }
 
-            var merged = CloneReplacing(frontierId, out var forCommander);
+            var merged = new Dictionary<string, SavedSearch>(_searches, StringComparer.OrdinalIgnoreCase);
 
-            forCommander.Remove(name.Trim());
+            merged.Remove(name.Trim());
 
             if (!Write(merged))
             {
@@ -184,39 +177,18 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
 
     private static SavedSearchOutcome Refused(string message) => new(false, message);
 
-    private Dictionary<string, Dictionary<string, SavedSearch>> CloneReplacing(
-        string frontierId, out Dictionary<string, SavedSearch> forCommander)
-    {
-        var merged = new Dictionary<string, Dictionary<string, SavedSearch>>(_byCommander, StringComparer.Ordinal);
-
-        forCommander = merged.TryGetValue(frontierId, out var existing)
-            ? new Dictionary<string, SavedSearch>(existing, StringComparer.OrdinalIgnoreCase)
-            : new Dictionary<string, SavedSearch>(StringComparer.OrdinalIgnoreCase);
-
-        merged[frontierId] = forCommander;
-
-        return merged;
-    }
-
-    private bool Write(Dictionary<string, Dictionary<string, SavedSearch>> merged)
+    private bool Write(Dictionary<string, SavedSearch> merged)
     {
         var document = new Document
         {
-            Commanders =
+            Searches =
             [
-                .. merged.Select(entry => new CommanderRecord
+                .. merged.Values.Select(search => new SearchRecord
                 {
-                    FrontierId = entry.Key,
-                    Searches =
-                    [
-                        .. entry.Value.Values.Select(search => new SearchRecord
-                        {
-                            Name = search.Name,
-                            Tool = search.Tool,
-                            Arguments = new Dictionary<string, string>(search.Arguments),
-                            SavedAt = search.SavedAt,
-                        }),
-                    ],
+                    Name = search.Name,
+                    Tool = search.Tool,
+                    Arguments = new Dictionary<string, string>(search.Arguments),
+                    SavedAt = search.SavedAt,
                 }),
             ],
         };
@@ -233,7 +205,7 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
 
         lock (_gate)
         {
-            _byCommander = merged;
+            _searches = merged;
         }
 
         Changed?.Invoke();
@@ -243,13 +215,13 @@ public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<Sav
 
     private sealed class Document
     {
-        public IReadOnlyList<CommanderRecord> Commanders { get; set; } = [];
+        public IReadOnlyList<SearchRecord>? Searches { get; set; }
+
+        public IReadOnlyList<CommanderRecord>? Commanders { get; set; }
     }
 
     private sealed class CommanderRecord
     {
-        public string FrontierId { get; set; } = string.Empty;
-
         public IReadOnlyList<SearchRecord>? Searches { get; set; }
     }
 
@@ -270,17 +242,15 @@ public static class SavedSearchPhrases
 {
     public static IEnumerable<string> Of(string name) => [$"{name} search", $"run the {name} search"];
 
-    /// <summary>Two commands per search the flying Commander has saved.</summary>
-    public static IEnumerable<DynamicCommand> Commands(SavedSearchStore? store, Func<string> frontierId)
+    /// <summary>Two commands per saved search.</summary>
+    public static IEnumerable<DynamicCommand> Commands(SavedSearchStore? store)
     {
-        var fid = frontierId();
-
-        if (store is null || fid.Length == 0)
+        if (store is null)
         {
             return [];
         }
 
-        return store.For(fid).SelectMany(search => Of(search.Name).Select(phrase =>
+        return store.All().SelectMany(search => Of(search.Name).Select(phrase =>
             new DynamicCommand(phrase, GalaxyCapability.Id, search.Tool, search.Arguments)));
     }
 }

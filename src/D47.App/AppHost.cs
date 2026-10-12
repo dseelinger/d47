@@ -2687,8 +2687,7 @@ public sealed class AppHost : IDisposable
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases())
 
                 // And the Commander's own saved searches, such as "large pad repairs search" (#1078).
-                .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(
-                    savedSearches, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+                .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(savedSearches))
 
                 // And "set a course" (#325): plot_course pointed at whatever a nearest-first commodity search
                 // last found. "Set a course and take us out" is not here — it is a fixed phrase on

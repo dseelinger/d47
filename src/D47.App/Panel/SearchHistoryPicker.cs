@@ -135,11 +135,8 @@ public sealed class HistoryTile
     public bool Refresh()
     {
         var was = Button.IsEnabled;
-        var fid = _searches?.FrontierId() ?? string.Empty;
-
         Button.IsEnabled = _searches is { History: { } history, OpenHistory: not null }
-            && fid.Length > 0
-            && history.For(fid).Count > 0;
+            && history.All().Count > 0;
 
         return Button.IsEnabled != was;
     }

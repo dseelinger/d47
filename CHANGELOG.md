@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Saved searches and the search history are now shared by every Commander on the machine. A search saved or run while one Commander is shown is listed for every Commander, and your saved searches run by name whoever is shown. A saved search keeps its arguments, so one with no "near" runs from the shown Commander's current system. Files that hold a list per Commander are merged on the next start: a saved search with the same name keeps its newest save, and the history keeps the 25 most recent searches.
+
 Each Commander now has their own pinned engineers. Picking a Commander shows that Commander's pins on the Engineers tab and under the checklist's pinned filter. The checklist filter and the partial-grades switch stay shared. Pins saved before this go to the first Commander shown.
 
 Each Commander now has their own last route plan per planner. Picking a Commander shows that Commander's plans on the route pages and in route answers, and an arrival moves forward only the plans of the Commander who flew it. Plans saved before this go to the first Commander shown.

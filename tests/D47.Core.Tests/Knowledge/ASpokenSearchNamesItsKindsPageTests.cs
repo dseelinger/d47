@@ -165,11 +165,11 @@ public class ASpokenSearchNamesItsKindsPageTests
             Path.Combine(@"C:\d47-test", "saved-searches.json"),
             new MemoryFileSystem(),
             NullLogger<SavedSearchStore>.Instance);
-        store.Add("F1", "black markets", "search_stations", new Dictionary<string, string> { ["services"] = "Black Market" }, At, []);
+        store.Add("black markets", "search_stations", new Dictionary<string, string> { ["services"] = "Black Market" }, At, []);
         var registry = Build(new GalaxySearchBoard());
 
         var result = await RunAsync(
-            Loop(registry, new KeywordRouter(registry, () => SavedSearchPhrases.Commands(store, () => "F1"))),
+            Loop(registry, new KeywordRouter(registry, () => SavedSearchPhrases.Commands(store))),
             "run the black markets search");
 
         Assert.Equal(TurnRoute.ActionCommand, result.Route);

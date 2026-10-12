@@ -156,7 +156,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history, gameState), now, arguments,
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -260,7 +260,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history, gameState), now, arguments,
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -313,7 +313,7 @@ public static class GalaxyCapability
                         settings,
                         heard,
                         Visits(visits, gameState),
-                        Remember(history, gameState),
+                        Remember(history),
                         now,
                         arguments,
                         cancellationToken),
@@ -623,7 +623,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(
-                        galaxy, currentSystem, settings, searches, Remember(history, gameState), now, arguments,
+                        galaxy, currentSystem, settings, searches, Remember(history), now, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -1109,16 +1109,8 @@ public static class GalaxyCapability
         + ".";
 
     private static Action<SearchHistoryEntry>? Remember(
-        SearchHistory? history, Func<Journal.CommanderGameState?>? gameState) =>
-        history is null
-            ? null
-            : entry =>
-            {
-                if (gameState?.Invoke()?.Identity.FrontierId is { Length: > 0 } frontierId)
-                {
-                    history.Add(frontierId, entry);
-                }
-            };
+        SearchHistory? history) =>
+        history is null ? null : history.Add;
 
     private static void Remember(Action<SearchHistoryEntry>? remember, string tool, GalaxySearchPosting posting) =>
         remember?.Invoke(SearchHistoryEntry.Of(

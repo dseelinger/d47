@@ -128,9 +128,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
     private void OpenHistory()
     {
-        if (_surface?.Searches is not { History: { } history } searches
-            || searches.FrontierId() is not { Length: > 0 } frontierId
-            || history.For(frontierId) is not { Count: > 0 } entries)
+        if (_surface?.Searches is not { History: { } history }
+            || history.All() is not { Count: > 0 } entries)
         {
             return;
         }
@@ -155,8 +154,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             SystemSearchPage.RootKey => _systems?.HistoryId,
             StationSearchPage.RootKey => _stations?.HistoryId,
             BodySearchPage.RootKey => _bodies?.HistoryId,
-            _ => _pendingSystem is null && _systemEntry is not null && _surface?.Searches is { History: { } history } searches
-                && history.For(searches.FrontierId()).FirstOrDefault(entry => entry.Id == _systemEntry)?.SystemAddress == _starSystem?.ShownAddress
+            _ => _pendingSystem is null && _systemEntry is not null && _surface?.Searches is { History: { } history }
+                && history.All().FirstOrDefault(entry => entry.Id == _systemEntry)?.SystemAddress == _starSystem?.ShownAddress
                     ? _systemEntry
                     : null,
         };

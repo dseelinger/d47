@@ -513,9 +513,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private Control SavedBlock()
     {
         var quick = QuickSearches.All.Where(search => search.Tool == Tool).ToList();
-        var fid = _searches.FrontierId();
-        var yours = _searches.Saved is { } store && fid.Length > 0
-            ? store.For(fid).Where(search => search.Tool == Tool).ToList()
+        var yours = _searches.Saved is { } store
+            ? store.All().Where(search => search.Tool == Tool).ToList()
             : [];
 
         var block = new StackPanel { Spacing = 8 };
@@ -557,7 +556,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                     Tag = search.Name,
                 };
                 Avalonia.Automation.AutomationProperties.SetName(forget, $"Forget the {search.Name} search");
-                forget.Click += (_, _) => Forget(fid, search.Name);
+                forget.Click += (_, _) => Forget(search.Name);
 
                 row.Children.Add(new StackPanel
                 {
@@ -760,20 +759,19 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         if (save || disabled)
         {
-            var fid = _searches.FrontierId();
             var posting = saved ?? refresh;
             var button = new Button
             {
                 Name = SaveName,
                 Content = "SAVE THIS SEARCH",
                 Height = TypeScale.MinimumTarget,
-                IsEnabled = !disabled && posting is not null && _searches.Saved is not null && fid.Length > 0,
+                IsEnabled = !disabled && posting is not null && _searches.Saved is not null,
             };
             button.Click += (_, _) =>
             {
                 if (posting is not null)
                 {
-                    Save(fid, posting);
+                    Save(posting);
                 }
             };
             tiles.Children.Add(button);
@@ -833,7 +831,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _stamp.Inlines.Add(time);
     }
 
-    private void Save(string frontierId, IReadOnlyDictionary<string, string> arguments)
+    private void Save(IReadOnlyDictionary<string, string> arguments)
     {
         if (_searches.Saved is not { } store || TopLevel.GetTopLevel(this) is not Window owner)
         {
@@ -844,19 +842,19 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             Noun,
             Tool,
             arguments,
-            name => store.Add(frontierId, name, Tool, arguments, DateTimeOffset.UtcNow, _searches.PhrasesTaken()));
+            name => store.Add(name, Tool, arguments, DateTimeOffset.UtcNow, _searches.PhrasesTaken()));
 
         _ = dialog.Over(owner);
     }
 
-    private void Forget(string frontierId, string name)
+    private void Forget(string name)
     {
         if (_searches.Saved is not { } store || TopLevel.GetTopLevel(this) is not Window owner)
         {
             return;
         }
 
-        var dialog = new ForgetSearchDialog(Noun, name, () => store.Forget(frontierId, name));
+        var dialog = new ForgetSearchDialog(Noun, name, () => store.Forget(name));
 
         _ = dialog.Over(owner);
     }

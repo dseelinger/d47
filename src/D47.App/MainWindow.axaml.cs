@@ -333,11 +333,9 @@ public partial class MainWindow : Window
                 {
                     Remember = (name, address) =>
                     {
-                        if (host.SearchHistory is { } history
-                            && host.GameState.Active?.Identity.FrontierId is { Length: > 0 } frontierId)
+                        if (host.SearchHistory is { } history)
                         {
                             history.Add(
-                                frontierId,
                                 D47.Core.Knowledge.SearchHistoryEntry.Of(
                                     "describe_system",
                                     new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = name },

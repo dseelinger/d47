@@ -31,7 +31,7 @@ public sealed record SearchHistoryEntry(
         new(Guid.NewGuid().ToString("N"), tool, arguments, reference, systemAddress, result, askedAt);
 }
 
-/// <summary>Per Commander Frontier id, the last <see cref="Capacity"/> searches, kept at <c>data/search-history.json</c>.</summary>
+/// <summary>The last <see cref="Capacity"/> searches on this machine, shared by every Commander, kept at <c>data/search-history.json</c>.</summary>
 public sealed class SearchHistory(string path, IFileSystem files, ILogger<SearchHistory> logger)
 {
     public const int Capacity = 25;
@@ -45,7 +45,7 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
 
     private readonly Lock _gate = new();
 
-    private Dictionary<string, List<SearchHistoryEntry>> _byCommander = new(StringComparer.Ordinal);
+    private List<SearchHistoryEntry> _entries = [];
 
     /// <summary>Raised when an entry is added.</summary>
     public event Action? Changed;
@@ -60,36 +60,32 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
             }
 
             var document = JsonSerializer.Deserialize<Document>(text, Json);
-            var loaded = new Dictionary<string, List<SearchHistoryEntry>>(StringComparer.Ordinal);
             var dropped = 0;
+            var read = new List<SearchHistoryEntry>();
+            var records = (document?.Entries ?? []).Concat((document?.Commanders ?? []).SelectMany(commander => commander.Entries ?? []));
 
-            foreach (var commander in document?.Commanders ?? [])
+            foreach (var record in records)
             {
-                if (string.IsNullOrWhiteSpace(commander.FrontierId))
+                if (Read(record) is { } entry)
                 {
-                    continue;
+                    read.Add(entry);
                 }
-
-                var entries = new List<SearchHistoryEntry>();
-
-                foreach (var record in commander.Entries ?? [])
+                else
                 {
-                    if (Read(record) is { } entry)
-                    {
-                        entries.Add(entry);
-                    }
-                    else
-                    {
-                        dropped++;
-                    }
+                    dropped++;
                 }
-
-                loaded[commander.FrontierId] = [.. entries.Take(Capacity)];
             }
+
+            var loaded = Newest(read);
 
             lock (_gate)
             {
-                _byCommander = loaded;
+                _entries = loaded;
+            }
+
+            if (document?.Commanders is { Count: > 0 })
+            {
+                Write(loaded);
             }
 
             if (dropped > 0)
@@ -103,12 +99,12 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
         }
     }
 
-    /// <summary>This Commander's searches, newest first.</summary>
-    public IReadOnlyList<SearchHistoryEntry> For(string frontierId)
+    /// <summary>The searches, newest first.</summary>
+    public IReadOnlyList<SearchHistoryEntry> All()
     {
         lock (_gate)
         {
-            return _byCommander.TryGetValue(frontierId, out var entries) ? [.. entries] : [];
+            return [.. _entries];
         }
     }
 
@@ -116,13 +112,11 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
     /// Keeps <paramref name="entry"/> first, dropping an earlier entry with the same tool and arguments and the
     /// oldest beyond <see cref="Capacity"/>.
     /// </summary>
-    public void Add(string frontierId, SearchHistoryEntry entry)
+    public void Add(SearchHistoryEntry entry)
     {
         lock (_gate)
         {
-            var entries = _byCommander.TryGetValue(frontierId, out var existing)
-                ? [.. existing]
-                : new List<SearchHistoryEntry>();
+            var entries = new List<SearchHistoryEntry>(_entries);
 
             entries.RemoveAll(kept => Same(kept, entry));
             entries.Insert(0, entry);
@@ -132,21 +126,19 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
                 entries.RemoveRange(Capacity, entries.Count - Capacity);
             }
 
-            var merged = new Dictionary<string, List<SearchHistoryEntry>>(_byCommander, StringComparer.Ordinal)
-            {
-                [frontierId] = entries,
-            };
-
-            if (!Write(merged))
+            if (!Write(entries))
             {
                 return;
             }
 
-            _byCommander = merged;
+            _entries = entries;
         }
 
         Changed?.Invoke();
     }
+
+    private static List<SearchHistoryEntry> Newest(IEnumerable<SearchHistoryEntry> entries) =>
+        [.. entries.DistinctBy(entry => entry.Id).OrderByDescending(entry => entry.AskedAt).Take(Capacity)];
 
     private static bool Same(SearchHistoryEntry a, SearchHistoryEntry b) =>
         a.Tool == b.Tool
@@ -187,30 +179,23 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
         }
     }
 
-    private bool Write(Dictionary<string, List<SearchHistoryEntry>> merged)
+    private bool Write(List<SearchHistoryEntry> entries)
     {
         try
         {
             var document = new Document
             {
-                Commanders =
+                Entries =
                 [
-                    .. merged.Select(commander => new CommanderRecord
+                    .. entries.Select(entry => new EntryRecord
                     {
-                        FrontierId = commander.Key,
-                        Entries =
-                        [
-                            .. commander.Value.Select(entry => new EntryRecord
-                            {
-                                Id = entry.Id,
-                                Tool = entry.Tool,
-                                Arguments = new Dictionary<string, string>(entry.Arguments),
-                                Reference = entry.Reference,
-                                SystemAddress = entry.SystemAddress,
-                                Result = ToElement(entry),
-                                AskedAt = entry.AskedAt,
-                            }),
-                        ],
+                        Id = entry.Id,
+                        Tool = entry.Tool,
+                        Arguments = new Dictionary<string, string>(entry.Arguments),
+                        Reference = entry.Reference,
+                        SystemAddress = entry.SystemAddress,
+                        Result = ToElement(entry),
+                        AskedAt = entry.AskedAt,
                     }),
                 ],
             };
@@ -237,13 +222,13 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
 
     private sealed class Document
     {
-        public IReadOnlyList<CommanderRecord> Commanders { get; set; } = [];
+        public IReadOnlyList<EntryRecord>? Entries { get; set; }
+
+        public IReadOnlyList<CommanderRecord>? Commanders { get; set; }
     }
 
     private sealed class CommanderRecord
     {
-        public string FrontierId { get; set; } = string.Empty;
-
         public IReadOnlyList<EntryRecord>? Entries { get; set; }
     }
 

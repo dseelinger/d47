@@ -128,7 +128,7 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
             string tool, Dictionary<string, string> arguments, string reference, long? address, object? result, DateTimeOffset at)
         {
             var entry = SearchHistoryEntry.Of(tool, arguments, reference, address, result, at);
-            History.Add(Fid, entry);
+            History.Add(entry);
 
             return entry;
         }
@@ -295,7 +295,7 @@ public sealed class PastSearchesOpenFromTheHistoryPickerTests
 
         Assert.False(Named(panel, HistoryTile.Name).IsEnabled);
 
-        world.History.Add(Fid, SearchHistoryEntry.Of("describe_system", new Dictionary<string, string>(), "LTT 7786", Ltt7786, null, DateTimeOffset.UtcNow));
+        world.History.Add(SearchHistoryEntry.Of("describe_system", new Dictionary<string, string>(), "LTT 7786", Ltt7786, null, DateTimeOffset.UtcNow));
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Named(panel, HistoryTile.Name).IsEnabled);
