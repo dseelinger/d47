@@ -1,6 +1,7 @@
 using System.Text.Json;
 using D47.Core.Goals;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using Xunit;
 
 namespace D47.Core.Tests.Goals;
@@ -163,6 +164,51 @@ public class GoalEvaluatorTests
         Assert.False(standing.IsDone);
         Assert.Equal(Long, standing.Started);
     }
+
+    [Fact]
+    public void ACommanderWithoutACobraMkIvNeedsTheOtherHulls()
+    {
+        var standing = Evaluate(GoalCatalogue.Ships, FleetOf(Obtainable()), null);
+
+        Assert.Equal(EliteSpecifications.Ships.Count - 1, standing.Need);
+        Assert.Equal(standing.Need, standing.Have);
+        Assert.True(standing.IsDone);
+    }
+
+    [Fact]
+    public void ACobraMkIvCountsWhenTheCommanderOwnsOne()
+    {
+        var standing = Evaluate(GoalCatalogue.Ships, FleetOf([.. Obtainable(), "cobramkiv"]), null);
+
+        Assert.Equal(EliteSpecifications.Ships.Count, standing.Need);
+        Assert.Equal(standing.Need, standing.Have);
+        Assert.True(standing.IsDone);
+    }
+
+    [Fact]
+    public void AHullOutsideTheShipTableDoesNotCountTowardsTheCollection()
+    {
+        var standing = Evaluate(GoalCatalogue.Ships, FleetOf(["adder", "anacondamkii"]), null);
+
+        Assert.Equal(1, standing.Have);
+    }
+
+    [Fact]
+    public void TheMinedCollectionNeedsOnlyTheHullsACommanderCanObtain()
+    {
+        var standing = Evaluate(GoalCatalogue.Ships, null, Mine(new GoalMark { Key = GoalCatalogue.Ships, Have = 12 }));
+
+        Assert.Equal(EliteSpecifications.Ships.Count - 1, standing.Need);
+    }
+
+    private static string[] Obtainable() =>
+        [.. EliteSpecifications.Ships.Where(ship => ship.Requirement != "early-adoption").Select(ship => ship.Symbol)];
+
+    private static CommanderGameState FleetOf(IEnumerable<string> hulls) =>
+        State(Event(
+            "StoredShips",
+            "\"ShipsHere\":[" + string.Join(",", hulls.Select((hull, id) =>
+                $"{{\"ShipID\":{id},\"ShipType\":\"{hull}\",\"StarSystem\":\"Sol\"}}")) + "],\"ShipsRemote\":[]"));
 
     private static GoalStanding Evaluate(string key, CommanderGameState? state, GoalMine? mine) =>
         GoalEvaluator.Evaluate(GoalCatalogue.Find(key)!, state, mine);

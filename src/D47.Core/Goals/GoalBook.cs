@@ -421,7 +421,7 @@ public sealed class GoalBook(
         }
 
         var next = EliteSpecifications.Ships
-            .Where(ship => !owned.Contains(ship.Symbol) && ship.Cost is > 0)
+            .Where(ship => !owned.Contains(ship.Symbol) && !GoalEvaluator.IsUnobtainable(ship) && ship.Cost is > 0)
             .OrderBy(ship => ship.Cost)
             .FirstOrDefault();
 

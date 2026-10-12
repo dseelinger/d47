@@ -192,7 +192,7 @@ Where the journal cannot say, d47 says so rather than guessing:
 | Federal Navy | Federation rank 14 — Admiral | Live journal state |
 | Powerplay rank | Powerplay rank 100 | Your live pledge |
 | Every engineer unlocked | Every engineer in the directory | Live journal state |
-| The ship collection | One of every hull, owned at once | Your fleet, plus what you are flying |
+| The ship collection | One of every hull, owned at once; the Cobra MkIV counts only when owned | Your fleet, plus what you are flying |
 
 **Each rank says its name**, from Harmless up through Elite V — so d47 says *Trailblazer, 12% into
 it* rather than *rank 5 of 8, 12% into it*. A career arc is done at Elite V, not at Elite. The two
@@ -238,7 +238,7 @@ Imperial Navy: Serf, 4% into it. Running 8 months.
 Federal Navy: Cadet, 61% into it. Running 8 months.
 Powerplay rank: rank 8 of 100 with Li Yong-Rui. Running 8 months.
 Every engineer unlocked: 19 of 53 unlocked, 2 invited. Running 12 months.
-The ship collection: 11 of 45 hulls owned. Running 13 months.
+The ship collection: 11 of 47 hulls owned. Running 13 months.
 Ages come from 914 journals on this disk, the oldest from 4 Jul 2025.
 ```
 

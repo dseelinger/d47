@@ -10,6 +10,8 @@
 
 The first time a new version of D47 starts, it zips your data folder into `data\backups` before it reads anything, and keeps the newest 25 zips. The zip holds your settings, keys, stories, checklists and the other files D47 writes for you. It leaves out the large folders that D47 downloads or records: speech models, music, ship art, avatar clips, story downloads, recordings and logs. Starting the same version again takes no new zip.
 
+The ship collection goal no longer needs the Cobra MkIV. Only Commanders who bought Horizons before February 2016 can own one, so the goal counts it only when you own it: without one the goal is 47 hulls, with one it is 48. D47 never suggests buying it, and a hull missing from the ship table no longer counts toward the total.
+
 The headset avatar now animates. On the big panel and on the mini panel the core's clip plays at its true speed over the panel's avatar, instead of a still frame. It steps aside for a modal, a chooser or the resize handles, and the still frame shows while it does.
 
 The Stories tab's **Ask for one** button is now **Short Story** and sits after **Stories**: the bar reads Stories, Short Story, Story log. What a Commander reads or hears no longer says "adventure": a story D47 writes for you is a short story, and anything that covers a stock-story chapter too is a story. The voice commands are "ask for a short story", "change the short story", "accept the short story" and "reject the short story"; the old "adventure" phrases still work. The capability is now called Stories, the callout toggle Story objectives, and the setting Notable places for short stories.

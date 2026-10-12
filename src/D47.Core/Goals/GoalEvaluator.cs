@@ -184,8 +184,6 @@ public static class GoalEvaluator
     /// <summary>The collection.</summary>
     private static GoalStanding Ships(GoalArc arc, CommanderGameState? state, GoalMark? mark)
     {
-        var total = EliteSpecifications.Ships.Count;
-
         if (state?.Fleet is { IsKnown: true } fleet)
         {
             var hulls = new HashSet<string>(
@@ -196,6 +194,10 @@ public static class GoalEvaluator
             {
                 hulls.Add(flying);
             }
+
+            hulls.IntersectWith(EliteSpecifications.Ships.Select(ship => ship.Symbol));
+
+            var total = EliteSpecifications.Ships.Count(ship => !IsUnobtainable(ship) || hulls.Contains(ship.Symbol));
 
             return new GoalStanding
             {
@@ -210,6 +212,8 @@ public static class GoalEvaluator
             };
         }
 
+        var obtainable = EliteSpecifications.Ships.Count(ship => !IsUnobtainable(ship));
+
         // The mined figure counts every hull ever flown rather than every hull owned, so it is a floor and is
         // only ever reached for when the live fleet has said nothing at all.
         return mark?.Have is { } mined
@@ -217,13 +221,17 @@ public static class GoalEvaluator
             {
                 Arc = arc,
                 Have = mined,
-                Need = total,
+                Need = obtainable,
                 Source = GoalSource.Mined,
                 AsOf = mark.AsOf,
                 Started = mark.Started,
-                Note = $"{mined} of {total} hulls flown, from your journals",
+                Note = $"{mined} of {obtainable} hulls flown, from your journals",
                 IsDone = false,
             }
-            : new GoalStanding { Arc = arc, Need = total, Source = GoalSource.Unknown, Started = mark?.Started };
+            : new GoalStanding { Arc = arc, Need = obtainable, Source = GoalSource.Unknown, Started = mark?.Started };
     }
+
+    /// <summary>A hull only some Commanders can own, so the collection counts it only when owned.</summary>
+    internal static bool IsUnobtainable(ShipSpecification ship) =>
+        string.Equals(ship.Requirement, "early-adoption", StringComparison.Ordinal);
 }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using D47.Core.Checklists;
 using D47.Core.Goals;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -213,6 +214,46 @@ public class GoalBookTests : IDisposable
         Assert.False(step.CanPropose);
         Assert.Contains("merits", step.Say, StringComparison.Ordinal);
         Assert.Contains("92 ranks to go.", step.Say, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheShipCollectionNeverProposesTheCobraMkIv()
+    {
+        var cobra = EliteSpecifications.Ships.Single(ship => ship.Symbol == "cobramkiv");
+        var owned = EliteSpecifications.Ships
+            .Where(ship => ship.Symbol != cobra.Symbol && ship.Cost is > 0 && ship.Cost <= cobra.Cost)
+            .Select(ship => ship.Symbol);
+
+        var step = Book(new MemoryInstall(), state: () => FleetOf(owned)).Next(GoalCatalogue.Ships);
+
+        Assert.NotNull(step);
+        Assert.DoesNotContain(cobra.Name, step.Say, StringComparison.Ordinal);
+        Assert.DoesNotContain(cobra.Name, string.Concat(step.Lines), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheShipCollectionIsDoneWhenOnlyTheCobraMkIvIsMissing()
+    {
+        var owned = EliteSpecifications.Ships
+            .Where(ship => ship.Requirement != "early-adoption")
+            .Select(ship => ship.Symbol);
+
+        var step = Book(new MemoryInstall(), state: () => FleetOf(owned)).Next(GoalCatalogue.Ships);
+
+        Assert.NotNull(step);
+        Assert.False(step.CanPropose);
+        Assert.Contains("The ship collection is done.", step.Say, StringComparison.Ordinal);
+    }
+
+    private static CommanderGameState FleetOf(IEnumerable<string> hulls)
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
+        state.Apply(Event(
+            "StoredShips",
+            "\"ShipsHere\":[" + string.Join(",", hulls.Select((hull, id) =>
+                $"{{\"ShipID\":{id},\"ShipType\":\"{hull}\",\"StarSystem\":\"Sol\"}}")) + "],\"ShipsRemote\":[]"));
+
+        return state;
     }
 
     private static JournalEvent Event(string kind, string fields)
