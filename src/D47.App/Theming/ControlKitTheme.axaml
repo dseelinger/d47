@@ -259,7 +259,39 @@
     </ControlTheme>
 
     <!--
-      A stepper's arrow: a Tile cell with an A glyph; Tile2 on hover; solid A with a Knock glyph on
+      A sortable column header (SortHeader): no ground at rest, a Tile ground on hover, keyboard focus or
+      press. The label carries its own ink. No outline, corner or glow.
+    -->
+    <ControlTheme x:Key="D47.SortHeader" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FocusAdorner" Value="{x:Null}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}">
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              Padding="{TemplateBinding Padding}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+
+      <Style Selector="^:pointerover">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      </Style>
+      <Style Selector="^:focus-visible">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
+      </Style>
+    </ControlTheme>
+
+    <!--
+      A stepper's arrow:a Tile cell with an A glyph; Tile2 on hover; solid A with a Knock glyph on
       focus or press; a Grey2 glyph when disabled. No glow. Applies to RepeatButton, which derives from Button.
     -->
     <ControlTheme x:Key="D47.StepperArrow" TargetType="Button">

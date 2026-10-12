@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -6,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Checklists;
@@ -19,8 +21,8 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Fleet › Ships › Compare: every ship as last seen, ordered by jump or cargo and filtered by cargo (#562).</summary>
-public class TheFleetComparesByJumpOrCargoTests
+/// <summary>Fleet › Ships › Compare: every ship as last seen, sorted from any column header and filtered by cargo (#562, #1112).</summary>
+public class TheFleetComparesByAnyColumnTests
 {
     private sealed record Surface(Window Window, PanelView Panel, GameStateStore Store);
 
@@ -35,7 +37,6 @@ public class TheFleetComparesByJumpOrCargoTests
 
     private static Surface Open(IEnumerable<string> journal, bool drill = true)
     {
-        var root = TestSurface.MemoryFolder("d47-fleet-compare-tests");
         var store = new GameStateStore();
 
         foreach (var line in journal)
@@ -43,6 +44,26 @@ public class TheFleetComparesByJumpOrCargoTests
             Apply(store, line);
         }
 
+        var panel = Panel(store, TestSurface.MemoryFolder("d47-fleet-compare-tests"));
+
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+        window.Show();
+
+        panel.Tab = PanelTab.Assets;
+        Dispatcher.UIThread.RunJobs();
+        panel.Nav.SelectRoot(LoadoutPages.FleetRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        if (drill)
+        {
+            Drill(panel);
+        }
+
+        return new Surface(window, panel, store);
+    }
+
+    private static PanelView Panel(GameStateStore store, string root)
+    {
         CommanderGameState? State() => store.Active;
 
         var checklists = new ChecklistService(
@@ -56,26 +77,28 @@ public class TheFleetComparesByJumpOrCargoTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableLoadout(ships, checklists, State, kit);
+        return panel;
+    }
 
-        var window = new Window { Content = panel, Width = 1280, Height = 900 };
-        window.Show();
-
-        panel.Tab = PanelTab.Assets;
-        Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(LoadoutPages.FleetRoot);
-        Dispatcher.UIThread.RunJobs();
-
-        if (!drill)
-        {
-            return new Surface(window, panel, store);
-        }
-
+    private static void Drill(PanelView panel)
+    {
         var tile = panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "CompareShips");
         tile.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
-
-        return new Surface(window, panel, store);
     }
+
+    /// <summary>The header cell for <paramref name="label"/>, as last drawn.</summary>
+    private static Button Head(ComparePage page, string label) =>
+        page.GetVisualDescendants().OfType<Button>().Single(button => button.Name == $"CompareHead.{label}");
+
+    private static void Press(PanelView panel, string label)
+    {
+        Head(Page(panel), label).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static Point Centre(Control control, Visual within) =>
+        control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), within)!.Value;
 
     private static void Apply(GameStateStore store, string line)
     {
@@ -122,8 +145,7 @@ public class TheFleetComparesByJumpOrCargoTests
         var surface = Open(Journal);
         var page = Page(surface.Panel);
 
-        page.Order(1);
-        Dispatcher.UIThread.RunJobs();
+        Press(surface.Panel, "Cargo");
 
         Assert.Equal(["DEEP HOLD", "FAR WALKER", "SPARE"], Order(page));
         Assert.Contains("CARGO ▼", Text(page));
@@ -142,6 +164,122 @@ public class TheFleetComparesByJumpOrCargoTests
         Assert.Contains("0 OF 3", Text(page));
 
         surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ValueSortsMostValuableFirstThenCheapestThenBackToJump()
+    {
+        var surface = Open(Journal);
+        var page = Page(surface.Panel);
+
+        Assert.DoesNotContain("ORDER BY", Text(page));
+        Assert.Empty(page.GetVisualDescendants().OfType<Segment>());
+
+        Press(surface.Panel, "Value");
+
+        Assert.Equal(["DEEP HOLD", "FAR WALKER", "SPARE"], Order(page));
+        Assert.Contains("VALUE ▼", Text(page));
+        Assert.Contains("JUMP", Text(page));
+        Assert.DoesNotContain("JUMP ▼", Text(page));
+
+        Press(surface.Panel, "Value");
+
+        // Spare has no Value figure, so it stays last.
+        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(page));
+        Assert.Contains("VALUE ▲", Text(page));
+
+        Press(surface.Panel, "Value");
+
+        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(page));
+        Assert.Contains("JUMP ▼", Text(page));
+        Assert.Contains("VALUE", Text(page));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingJumpFromTheDefaultSortsItInItsFirstDirection()
+    {
+        var surface = Open(Journal);
+        var page = Page(surface.Panel);
+
+        Press(surface.Panel, "Jump");
+
+        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(page));
+        Assert.Contains("JUMP ▼", Text(page));
+
+        Press(surface.Panel, "Jump");
+
+        Assert.Equal(["DEEP HOLD", "FAR WALKER", "SPARE"], Order(page));
+        Assert.Contains("JUMP ▲", Text(page));
+
+        Press(surface.Panel, "Jump");
+
+        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(page));
+        Assert.Contains("JUMP ▼", Text(page));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheSortLastsUntilThePageIsOpenedAgain()
+    {
+        var surface = Open(Journal);
+
+        Press(surface.Panel, "Value");
+        Assert.Contains("VALUE ▼", Text(Page(surface.Panel)));
+
+        Assert.True(surface.Panel.Nav.Back());
+        Dispatcher.UIThread.RunJobs();
+        Drill(surface.Panel);
+
+        Assert.Contains("JUMP ▼", Text(Page(surface.Panel)));
+        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(Page(surface.Panel)));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void InTheHeadsetTheHeadersAreFortyFourTallAndPressToSort()
+    {
+        var store = new GameStateStore();
+
+        foreach (var line in Journal)
+        {
+            Apply(store, line);
+        }
+
+        var panel = Panel(store, TestSurface.MemoryFolder("d47-fleet-compare-headset"));
+        panel.Classes.Add("headset");
+
+        using var surface = new OffscreenSurface(panel, new PixelSize(1280, 900));
+
+        panel.Tab = PanelTab.Assets;
+        surface.Render();
+        Dispatcher.UIThread.RunJobs();
+        panel.Nav.SelectRoot(LoadoutPages.FleetRoot);
+        Dispatcher.UIThread.RunJobs();
+        surface.Render();
+
+        var tile = panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "CompareShips");
+        Assert.True(surface.Click(Centre(tile, panel)), "the ray's press on the Compare tile was refused.");
+        Dispatcher.UIThread.RunJobs();
+        surface.Render();
+
+        var page = Page(panel);
+
+        foreach (var head in ComparePage.Heads)
+        {
+            var height = Head(page, head.Label).Bounds.Height;
+            Assert.True(height >= TypeScale.MinimumTarget, $"the {head.Label} header is {height} tall.");
+        }
+
+        Assert.True(surface.Click(Centre(Head(page, "Value"), panel)), "the ray's press on the Value header was refused.");
+        Dispatcher.UIThread.RunJobs();
+        surface.Render();
+
+        Assert.Equal(["DEEP HOLD", "FAR WALKER", "SPARE"], Order(page));
+        Assert.Contains("VALUE ▼", Text(page));
     }
 
     [AvaloniaFact]
@@ -197,15 +335,19 @@ public class TheFleetComparesByJumpOrCargoTests
     }
 
     [AvaloniaFact]
-    public void TheCompareShipsPageIsCapturedByJumpAndByCargo()
+    public void TheCompareShipsPageIsCapturedByJumpByCargoAndByValue()
     {
         using var look = AppLook.Put();
 
         var surface = Open(Journal);
 
-        foreach (var (order, minimum, name) in new[] { (0, 0, "by-jump"), (1, 3, "by-cargo-min64") })
+        foreach (var (press, minimum, name) in new[] { ((string?)null, 0, "by-jump"), ("Cargo", 3, "by-cargo-min64"), ("Value", 0, "by-value") })
         {
-            Page(surface.Panel).Order(order);
+            if (press is not null)
+            {
+                Press(surface.Panel, press);
+            }
+
             Page(surface.Panel).Minimum(minimum);
             Dispatcher.UIThread.RunJobs();
 

@@ -11,7 +11,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Fleet › Ships › Compare: every ship as last seen fitted, ordered and filtered by cargo (#562).</summary>
+/// <summary>Fleet › Ships › Compare: every ship as last seen fitted, sorted by any column and filtered by cargo (#562).</summary>
 public sealed class ComparePage : UserControl
 {
     public const string Key = "loadout.compare";
@@ -25,9 +25,6 @@ public sealed class ComparePage : UserControl
 
     public const string Unseen =
         "I have not seen any of your ships yet. A loadout is written each time you board a ship.";
-
-    /// <summary>ORDER BY, in the order the Segmented control shows it.</summary>
-    public static readonly IReadOnlyList<string> Orders = ["Jump range", "Cargo"];
 
     /// <summary>MINIMUM CARGO in tonnes, parallel to <see cref="Minimums"/>; zero is no minimum.</summary>
     public static readonly IReadOnlyList<int> Tonnes = [0, 16, 32, 64, 128, 256, 512];
@@ -51,13 +48,32 @@ public sealed class ComparePage : UserControl
         string Where,
         bool InCurrentSystem);
 
+    /// <summary>The table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<Ship>> Heads =
+    [
+        SortColumn<Ship>.Text("Ship", ship => ship.Name),
+        SortColumn<Ship>.Figure("Cargo", ship => ship.Cargo, SortDirection.Descending),
+        SortColumn<Ship>.Figure("Jump", ship => ship.Jump, SortDirection.Descending),
+        SortColumn<Ship>.Figure("Unladen", ship => ship.Unladen, SortDirection.Descending),
+        SortColumn<Ship>.Figure("Fuel", ship => ship.Fuel, SortDirection.Descending),
+        SortColumn<Ship>.Figure("Value", ship => ship.Value, SortDirection.Descending),
+        SortColumn<Ship>.Figure("Rebuy", ship => ship.Rebuy, SortDirection.Ascending),
+        SortColumn<Ship>.Text("Where", ship => ship.Where == Nowhere ? null : ship.Where),
+    ];
+
+    /// <summary>The default order: furthest jump first.</summary>
+    public static readonly SortOrder ByJump = new(2, SortDirection.Descending);
+
+    /// <summary>The Where cell of a ship whose location is not known.</summary>
+    private const string Nowhere = "—";
+
     public static NavCrumb Crumb => new(Key, "Compare") { Level = Key, Whole = true };
 
     private readonly Func<CommanderGameState?> _state;
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly StackPanel _table = new() { Spacing = IndexPage.ListGap };
-    private readonly Segment _order;
+    private readonly SortHeader<Ship> _head = new("CompareHead", Heads, ByJump);
     private readonly Stepper _minimum;
     private object? _seen;
 
@@ -66,16 +82,7 @@ public sealed class ComparePage : UserControl
         _state = state;
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
 
-        _order = new Segment
-        {
-            Name = "CompareOrder",
-            ItemsSource = Orders,
-            SelectedIndex = 0,
-            Height = TypeScale.MinimumTarget,
-            Width = 300,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        _order.SelectionChanged += (_, _) => Draw();
+        _head.Changed += Draw;
 
         _minimum = new Stepper
         {
@@ -98,11 +105,11 @@ public sealed class ComparePage : UserControl
         Draw();
     }
 
-    /// <summary>Orders the list by <see cref="Orders"/>[<paramref name="index"/>].</summary>
-    internal void Order(int index)
+    /// <summary>The panel keeps a drilled page; opening it again returns the table to its default order.</summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _order.SelectedIndex = Math.Clamp(index, 0, Orders.Count - 1);
-        Draw();
+        base.OnAttachedToVisualTree(e);
+        _head.Reset();
     }
 
     /// <summary>Filters the list by <see cref="Tonnes"/>[<paramref name="index"/>].</summary>
@@ -168,7 +175,7 @@ public sealed class ComparePage : UserControl
                 var (where, system) = aboard ? Aboard(state)
                     : parked is { InTransit: true } ? ("In transit", null)
                     : parked is { HasSystem: true } ? (Join(parked.StarSystem, parked.StationName), parked.StarSystem)
-                    : ("—", null);
+                    : (Nowhere, null);
 
                 return new Ship(
                     name,
@@ -186,16 +193,21 @@ public sealed class ComparePage : UserControl
     }
 
     /// <summary>
-    /// The ships at or above <paramref name="minimum"/> tonnes of cargo, largest first by jump range or
-    /// by cargo; a ship with no figure goes last, and a minimum drops a ship with no cargo figure.
+    /// The ships at or above <paramref name="minimum"/> tonnes of cargo, sorted by <paramref name="order"/>
+    /// or, when it is null, furthest jump first, then by name. A ship missing the sorted figure goes last,
+    /// and a minimum drops a ship with no cargo figure.
     /// </summary>
-    public static IReadOnlyList<Ship> Listed(IReadOnlyList<Ship> ships, bool byCargo, int minimum) =>
-    [
-        .. ships
-            .Where(ship => minimum <= 0 || ship.Cargo >= minimum)
-            .OrderByDescending(ship => byCargo ? ship.Cargo : ship.Jump)
-            .ThenBy(ship => ship.Name, StringComparer.CurrentCultureIgnoreCase),
-    ];
+    public static IReadOnlyList<Ship> Listed(IReadOnlyList<Ship> ships, SortOrder? order, int minimum) =>
+        ColumnSort.Sorted(
+            [
+                .. ships
+                    .Where(ship => minimum <= 0 || ship.Cargo >= minimum)
+                    .OrderBy(ship => ship.Jump is null)
+                    .ThenByDescending(ship => ship.Jump)
+                    .ThenBy(ship => ship.Name, StringComparer.CurrentCultureIgnoreCase),
+            ],
+            Heads,
+            order);
 
     /// <summary>The title figure.</summary>
     public static string Showing(int shown, int of) =>
@@ -216,8 +228,7 @@ public sealed class ComparePage : UserControl
         _seen = Stamp();
 
         var all = Ships(_state());
-        var byCargo = _order.SelectedIndex == 1;
-        var listed = Listed(all, byCargo, Tonnes[Math.Max(0, _minimum.SelectedIndex)]);
+        var listed = Listed(all, _head.Order, Tonnes[Math.Max(0, _minimum.SelectedIndex)]);
 
         _body.Children.Clear();
         _body.Children.Add(TitleText.Block(
@@ -236,7 +247,7 @@ public sealed class ComparePage : UserControl
             return;
         }
 
-        _table.Children.Add(Head(byCargo));
+        _table.Children.Add(Head());
 
         if (listed.Count == 0)
         {
@@ -254,20 +265,15 @@ public sealed class ComparePage : UserControl
 
     private Control Controls()
     {
-        // The controls outlive a redraw, so they leave the last row before joining this one.
-        (_order.Parent as Avalonia.Controls.Panel)?.Children.Remove(_order);
+        // The stepper outlives a redraw, so it leaves the last row before joining this one.
         (_minimum.Parent as Avalonia.Controls.Panel)?.Children.Remove(_minimum);
-
-        var order = Label("Order by");
-        var minimum = Label("Minimum cargo");
-        minimum.Margin = new Thickness(40, 0, 0, 0);
 
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 24,
             Margin = new Thickness(0, 20, 0, 16),
-            Children = { order, _order, minimum, _minimum },
+            Children = { Label("Minimum cargo"), _minimum },
         };
     }
 
@@ -280,18 +286,16 @@ public sealed class ComparePage : UserControl
         return block;
     }
 
-    private static Control Head(bool byCargo)
+    private Control Head()
     {
-        var grid = Table(new Thickness(14, 0, 14, 8));
+        var grid = Table(new Thickness(14, 0));
 
-        Cell(grid, 0, Heading("Ship", false), left: true);
-        Cell(grid, 1, Heading("Cargo", byCargo));
-        Cell(grid, 2, Heading("Jump", !byCargo));
-        Cell(grid, 3, Heading("Unladen", false));
-        Cell(grid, 4, Heading("Fuel", false));
-        Cell(grid, 5, Heading("Value", false));
-        Cell(grid, 6, Heading("Rebuy", false));
-        Cell(grid, 7, Heading("Where", false), left: true);
+        for (var column = 0; column < Heads.Count; column++)
+        {
+            var cell = _head.Cell(column, column is 0 or 7 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
+            Grid.SetColumn(cell, column);
+            grid.Children.Add(cell);
+        }
 
         var head = new Border
         {
@@ -302,15 +306,6 @@ public sealed class ComparePage : UserControl
         LoadoutPages.Themed(head, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return head;
-    }
-
-    private static TextBlock Heading(string text, bool sorted)
-    {
-        var block = TitleText.Build(sorted ? $"{text} ▼" : text, TypeScale.Meta, TitleRank.Subgroup);
-        block.FontFamily = Fonts.ChromeFamily;
-        block.FontWeight = FontWeight.Medium;
-        LoadoutPages.Themed(block, TextBlock.ForegroundProperty, sorted ? ThemeManager.AKey : ThemeManager.GreyKey);
-        return block;
     }
 
     private static Control Row(Ship ship)

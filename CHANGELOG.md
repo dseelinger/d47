@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Compare ships page sorts from its column headers. Press a header to sort by that column, press it again to reverse the order, and press it a third time to go back to the default order, furthest jump first. The sorted column shows ▲ or ▼ after its name. Ships with no figure for that column stay at the bottom either way. The Order by control is gone, and Minimum cargo still filters. The headers are 44 pixels tall, so they can be pressed on the headset panel. The sort resets each time you open the page.
+
 The faction fields on the Systems and Stations search pages now suggest names as you type. After you pause, with three letters typed, a list of matching faction names appears under Controlling faction and A faction present on Systems, and under Controlling faction on Stations. Up and Down move through it, Enter or a click picks a name, and Escape closes it. The headset keyboard offers the same names as tiles. Nothing is sent while Galaxy search is off, and the search still matches the exact name.
 
 Asset Mgmt shows the Carrier sub-tab only when d47 knows you own a carrier. It appears, between Suits and Construction, once the journal names your carrier and goes if you switch to a Commander without one. A squadron carrier alone does not show it. The same holds on the main window, the mini panel and the headset panel.
