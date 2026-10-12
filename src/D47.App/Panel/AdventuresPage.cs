@@ -52,7 +52,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     private readonly Button _ask = new() { Content = "Short Story" };
     private readonly Button _messages = new() { Name = "OpenMessages", Content = MessagesView.PageName };
-    private readonly Button _stories = new() { Name = "OpenStories", Content = "Stories" };
+    private readonly Button _stories = new() { Name = "OpenStories", Content = StoriesView.PageName };
     private MessagesView? _inbox;
     private StoriesView? _storiesView;
 
@@ -80,7 +80,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, MessagesView.PageName));
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Short Story"));
         _messages.IsVisible = surface.Messages is not null;
-        _stories.Click += (_, _) => _nav.Drill(new NavCrumb(StoriesView.RootKey, "Stories"));
+        _stories.Click += (_, _) => _nav.Drill(StoriesView.Crumb);
         _stories.IsVisible = surface.Stories is not null;
 
         var bar = new StackPanel

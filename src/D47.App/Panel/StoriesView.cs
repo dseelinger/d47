@@ -15,6 +15,9 @@ namespace D47.App.Panel;
 public sealed class StoriesView : UserControl
 {
     public const string RootKey = "stories";
+    public const string PageName = "Catalogue";
+
+    public static NavCrumb Crumb => new(RootKey, PageName) { Leads = true };
 
     public const string ReadPrefix = "story.read.";
 
@@ -94,7 +97,7 @@ public sealed class StoriesView : UserControl
         _filterBar.Children.Add(_count);
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var (title, _) = RoutingKit.Title("Stories");
+        var (title, _) = RoutingKit.Title(PageName);
         var intro = AdventuresPage.Muted(
             "Stock stories that run from three days to a year, a chapter at a time. Picking one makes its words your Backstory and "
             + "has the ship's AI write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
@@ -272,7 +275,10 @@ public sealed class StoriesView : UserControl
                 parts.Add(cast);
             }
 
-            parts.Add(AdventuresPage.Text(card.Blurb, TypeScale.Body));
+            var blurb = AdventuresPage.Text(card.Blurb, TypeScale.Body);
+            blurb.MaxLines = 2;
+            blurb.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+            parts.Add(blurb);
 
             var row = Row([.. parts]);
 

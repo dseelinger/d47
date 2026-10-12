@@ -79,7 +79,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         window.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(new NavCrumb(StoriesView.RootKey, "Stories"));
+        panel.Nav.GoTo(StoriesView.Crumb);
         Dispatcher.UIThread.RunJobs();
 
         tab.Window = window;
@@ -104,7 +104,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
 
     [AvaloniaFact]
-    public void TheRootBarReadsStoriesShortStoryStoryLog()
+    public void TheRootBarReadsCatalogueShortStoryStoryLog()
     {
         var tab = Open();
 
@@ -114,11 +114,11 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         var bar = tab.Panel.GetVisualDescendants().OfType<Button>()
             .Where(button => button.IsEffectivelyVisible)
             .Select(button => button.Content as string ?? string.Empty)
-            .Where(label => label is "Stories" or "Short Story" || label.StartsWith("Story log", StringComparison.Ordinal))
+            .Where(label => label is "Catalogue" or "Short Story" || label.StartsWith("Story log", StringComparison.Ordinal))
             .ToList();
 
         Assert.Equal(3, bar.Count);
-        Assert.Equal(["Stories", "Short Story"], bar.Take(2));
+        Assert.Equal(["Catalogue", "Short Story"], bar.Take(2));
         Assert.Equal("Story log", bar[2]);
 
         tab.Window.Close();

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+On the Stories tab, opening the catalogue no longer keeps the Stories page as a column beside it; the breadcrumb is the way back. The catalogue is now named Catalogue on its button, its breadcrumb and its heading, and each row shows at most two lines of the story's blurb. The story page still shows the whole blurb.
+
 When a story chapter or short story cannot be written, the Stories and Short Story pages now show and say one plain sentence: "The chapter could not be written. Write it again and I will try a new draft." They no longer read out the checker's reasons, such as the cost of a ship the chapter wanted you to board, which were written for the model. The reasons are in the log.
 
 The tech broker's Corrosion Resistant Cargo Rack is now listed as 4E, the one size the broker unlocks, instead of "2D and 4D", which are not sizes the module comes in. The recipe is unchanged.
