@@ -7,63 +7,53 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
-using D47.Core.Knowledge;
 
 namespace D47.App.Controls;
 
 /// <summary>
-/// Lists the system names that start with what is typed into a field, inline in <see cref="List"/>, which the
+/// Lists the names that start with what is typed into a field, inline in <see cref="List"/>, which the
 /// host places under the field. Up and Down move through the list, Enter picks the highlighted name, Escape
 /// closes it, and clicking a name picks it. Enter with nothing highlighted is left to the field's own handler.
 /// The host sets the field's text through <see cref="SetText"/>, so its own text asks for nothing.
 /// </summary>
-public sealed class SystemNameSuggestions
+public sealed class SystemNameSuggestions<T> : INameSuggestions
 {
-    /// <summary>The most names listed.</summary>
-    public const int Most = 8;
-
-    /// <summary>Marks the list, for a test to find it.</summary>
-    public const string ListName = "SystemNameSuggestions";
-
-    /// <summary>The suggestions attached to a text box, for the drawn keyboard to offer the same names.</summary>
-    public static readonly AttachedProperty<SystemNameSuggestions?> OfProperty =
-        AvaloniaProperty.RegisterAttached<SystemNameSuggestions, TextBox, SystemNameSuggestions?>("Of");
-
-    public static SystemNameSuggestions? GetOf(TextBox box) => box.GetValue(OfProperty);
-
     private readonly TextBox _field;
-    private readonly Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>> _lookup;
+    private readonly Func<string, CancellationToken, Task<IReadOnlyList<T>>> _lookup;
+    private readonly Func<T, string> _nameOf;
     private readonly Func<bool> _enabled;
     private readonly TimeSpan _pause;
-    private readonly SystemNameSuggester _suggester;
-    private readonly Action<SystemNameMatch> _picked;
+    private readonly SystemNameSuggester<T> _suggester;
+    private readonly Action<T> _picked;
     private readonly StackPanel _rows = new() { Spacing = 2 };
     private readonly List<IDisposable> _inks = [];
 
-    private IReadOnlyList<SystemNameMatch> _shown = [];
+    private IReadOnlyList<T> _shown = [];
     private int _highlighted = -1;
     private bool _quiet;
 
     public SystemNameSuggestions(
         TextBox field,
-        Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>> lookup,
+        Func<string, CancellationToken, Task<IReadOnlyList<T>>> lookup,
+        Func<T, string> nameOf,
         Func<bool> enabled,
-        Action<SystemNameMatch> picked,
+        Action<T> picked,
         TimeSpan? pause = null)
     {
         _field = field;
         _lookup = lookup;
+        _nameOf = nameOf;
         _enabled = enabled;
-        _pause = pause ?? SystemNameSuggester.DefaultPause;
+        _pause = pause ?? NameSuggestions.DefaultPause;
         _picked = picked;
 
         _suggester = NewSuggester();
         _suggester.Answered += Show;
-        field.SetValue(OfProperty, this);
+        field.SetValue(NameSuggestions.OfProperty, this);
 
         List = new Border
         {
-            Name = ListName,
+            Name = NameSuggestions.ListName,
             BorderThickness = new Thickness(1),
             Padding = new Thickness(2),
             IsVisible = false,
@@ -89,7 +79,7 @@ public sealed class SystemNameSuggestions
     public Border List { get; }
 
     /// <summary>The names listed, none while the list is closed.</summary>
-    public IReadOnlyList<SystemNameMatch> Shown => _shown;
+    public IReadOnlyList<T> Shown => _shown;
 
     /// <summary>The highlighted name's place in <see cref="Shown"/>, or -1 for none.</summary>
     public int Highlighted => _highlighted;
@@ -112,7 +102,7 @@ public sealed class SystemNameSuggestions
     }
 
     /// <summary>A suggester with this list's lookup, setting and pause, for a surface that draws its own names.</summary>
-    public SystemNameSuggester NewSuggester() =>
+    public SystemNameSuggester<T> NewSuggester() =>
         new(
             (typed, token) => Task.Run(() => _lookup(typed, token), token),
             _enabled,
@@ -120,7 +110,24 @@ public sealed class SystemNameSuggestions
             _pause);
 
     /// <summary>Does what picking <paramref name="match"/> in the list does.</summary>
-    public void Choose(SystemNameMatch match) => Pick(match);
+    public void Choose(T match) => Pick(match);
+
+    /// <inheritdoc />
+    public NameTiles NewTiles()
+    {
+        var suggester = NewSuggester();
+        IReadOnlyList<T> last = [];
+
+        return new NameTiles(
+            suggester.Typed,
+            suggester.Cancel,
+            index => Choose(last[index]),
+            raise => suggester.Answered += matches =>
+            {
+                last = [.. matches.Take(NameSuggestions.Most)];
+                raise([.. last.Select(_nameOf)]);
+            });
+    }
 
     /// <summary>Drops any pending request and closes the list.</summary>
     public void Close()
@@ -167,20 +174,20 @@ public sealed class SystemNameSuggestions
         e.Handled = true;
     }
 
-    private void Pick(SystemNameMatch match)
+    private void Pick(T match)
     {
         Close();
         _picked(match);
     }
 
-    private void Show(IReadOnlyList<SystemNameMatch> matches)
+    private void Show(IReadOnlyList<T> matches)
     {
         if (matches.Count == 0 && _shown.Count == 0)
         {
             return;
         }
 
-        _shown = [.. matches.Take(Most)];
+        _shown = [.. matches.Take(NameSuggestions.Most)];
         _highlighted = -1;
         Draw();
     }
@@ -211,11 +218,11 @@ public sealed class SystemNameSuggestions
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    private Button Row(SystemNameMatch match, bool highlighted)
+    private Button Row(T match, bool highlighted)
     {
         var name = new TextBlock
         {
-            Text = match.Name,
+            Text = _nameOf(match),
             FontFamily = new FontFamily(Fonts.ChromeFamily),
             FontSize = TypeScale.ControlLarge,
             FontWeight = FontWeight.Medium,
@@ -239,7 +246,7 @@ public sealed class SystemNameSuggestions
             VerticalContentAlignment = VerticalAlignment.Center,
         };
         ListRow.Dress(row, highlighted);
-        AutomationProperties.SetName(row, match.Name);
+        AutomationProperties.SetName(row, _nameOf(match));
         row.Click += (_, _) => Pick(match);
 
         return row;

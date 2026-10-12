@@ -30,8 +30,11 @@ public sealed record GalaxySearchSurface(
     /// <summary>The system names that start with the given letters, for the Near fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
 
+    /// <summary>The minor faction names that start with the given letters, for the faction fields; null for no suggestions.</summary>
+    public Func<string, CancellationToken, Task<IReadOnlyList<string>>>? FactionNames { get; init; }
+
     /// <summary>How long typing has to stop before names are suggested.</summary>
-    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
+    public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>
@@ -263,25 +266,39 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected abstract Control BuildForm();
 
     /// <summary>Lists system names under <paramref name="field"/> as it is typed into; null when the surface offers none.</summary>
-    protected SystemNameSuggestions? SuggestNames(TextBox field)
+    protected SystemNameSuggestions<SystemNameMatch>? SuggestNames(TextBox field)
     {
         if (_searches.PrefixNames is not { } lookup)
         {
             return null;
         }
 
-        SystemNameSuggestions? names = null;
-        names = new SystemNameSuggestions(field, lookup, _lookupsEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
+        SystemNameSuggestions<SystemNameMatch>? names = null;
+        names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, _lookupsEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
+
+        return names;
+    }
+
+    /// <summary>Lists faction names under <paramref name="field"/> as it is typed into; null when the surface offers none.</summary>
+    protected SystemNameSuggestions<string>? SuggestFactions(TextBox field)
+    {
+        if (_searches.FactionNames is not { } lookup)
+        {
+            return null;
+        }
+
+        SystemNameSuggestions<string>? names = null;
+        names = new SystemNameSuggestions<string>(field, lookup, name => name, _lookupsEnabled, name => names!.SetText(name), _searches.SuggestionPause);
 
         return names;
     }
 
     /// <summary>The field with its suggestions listed under it.</summary>
-    protected static Control Beneath(TextBox field, SystemNameSuggestions? names) =>
+    protected static Control Beneath<T>(TextBox field, SystemNameSuggestions<T>? names) =>
         names is null ? field : new StackPanel { Spacing = 2, Children = { field, names.List } };
 
     /// <summary>The Near field with its help line and suggestions listed under it.</summary>
-    protected static Control NearField(TextBox near, SystemNameSuggestions? names)
+    protected static Control NearField(TextBox near, SystemNameSuggestions<SystemNameMatch>? names)
     {
         near.Classes.Add("here");
         var stack = new StackPanel { Spacing = 4, Children = { near, Prose("Follows you as you jump. Type a system name to search from there instead.", TypeScale.Tip, ThemeManager.GreyKey) } };
@@ -298,7 +315,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         near.PlaceholderText = (system is null ? "Your system" : $"Your system · {system}").ToUpperInvariant();
 
     /// <summary>Sets the field's text without listing names for it.</summary>
-    protected static void Fill(TextBox field, SystemNameSuggestions? names, string text)
+    protected static void Fill<T>(TextBox field, SystemNameSuggestions<T>? names, string text)
     {
         if (names is null)
         {

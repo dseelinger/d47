@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The faction fields on the Systems and Stations search pages now suggest names as you type. After you pause, with three letters typed, a list of matching faction names appears under Controlling faction and A faction present on Systems, and under Controlling faction on Stations. Up and Down move through it, Enter or a click picks a name, and Escape closes it. The headset keyboard offers the same names as tiles. Nothing is sent while Galaxy search is off, and the search still matches the exact name.
+
 Asset Mgmt shows the Carrier sub-tab only when d47 knows you own a carrier. It appears, between Suits and Construction, once the journal names your carrier and goes if you switch to a Commander without one. A squadron carrier alone does not show it. The same holds on the main window, the mini panel and the headset panel.
 
 The Near box on the Systems, Stations and Bodies search pages now shows your current system as a value, such as YOUR SYSTEM · SOL, in cyan, instead of grey hint text. A line under the box says it follows you as you jump and that typing a system name searches from there instead. An empty box still searches from your current system.

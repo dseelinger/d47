@@ -32,11 +32,11 @@ public sealed class SuggestionsFollowOnlyTheLatestTypingTests
 
         public List<IReadOnlyList<SystemNameMatch>> Answers { get; } = [];
 
-        public SystemNameSuggester Suggester { get; }
+        public SystemNameSuggester<SystemNameMatch> Suggester { get; }
 
         public Rig()
         {
-            Suggester = new SystemNameSuggester(Lookup.Ask, () => Enabled, action => action(), TimeSpan.Zero);
+            Suggester = new SystemNameSuggester<SystemNameMatch>(Lookup.Ask, () => Enabled, action => action(), TimeSpan.Zero);
             Suggester.Answered += Answers.Add;
         }
     }

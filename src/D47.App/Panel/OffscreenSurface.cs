@@ -332,8 +332,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         Painted(state, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         // System-name tiles between the status line and the keys, when the box carries suggestions.
-        var attached = SystemNameSuggestions.GetOf(box);
-        var suggester = attached?.NewSuggester();
+        var suggester = NameSuggestions.GetOf(box)?.NewTiles();
         var tiles = new WrapPanel { Margin = new Thickness(0, 0, 0, 12), IsVisible = false };
 
         void Refresh()
@@ -348,23 +347,24 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         if (suggester is not null)
         {
-            suggester.Answered += matches =>
+            suggester.Answered += names =>
             {
                 tiles.Children.Clear();
 
-                foreach (var match in matches.Take(SystemNameSuggestions.Most))
+                for (var i = 0; i < names.Count; i++)
                 {
-                    var tile = Pressable(match.Name);
+                    var (index, name) = (i, names[i]);
+                    var tile = Pressable(name);
                     tile.Height = 52;
                     tile.Padding = new Thickness(18, 0);
                     tile.Margin = new Thickness(0, 0, Theming.Gaps.Tile, Theming.Gaps.Tile);
-                    AutomationProperties.SetName(tile, match.Name);
+                    AutomationProperties.SetName(tile, name);
 
                     tile.Click += (_, _) =>
                     {
                         Stop();
                         Dismiss();
-                        attached!.Choose(match);
+                        suggester.Choose(index);
                     };
 
                     tiles.Children.Add(tile);

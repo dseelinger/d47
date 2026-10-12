@@ -79,7 +79,7 @@ public sealed class FormField
     public TextBox Box => _box;
 
     /// <summary>The system names listed under the box, or null when none are suggested.</summary>
-    public SystemNameSuggestions? Suggestions { get; private set; }
+    public SystemNameSuggestions<SystemNameMatch>? Suggestions { get; private set; }
 
     /// <summary>Lists system names under the box as it is typed into; a pick only fills the box.</summary>
     public FormField Suggest(
@@ -87,7 +87,7 @@ public sealed class FormField
         Func<bool> enabled,
         TimeSpan? pause = null)
     {
-        Suggestions = new SystemNameSuggestions(_box, lookup, enabled, match => Suggestions!.SetText(match.Name), pause);
+        Suggestions = new SystemNameSuggestions<SystemNameMatch>(_box, lookup, match => match.Name, enabled, match => Suggestions!.SetText(match.Name), pause);
 
         return this;
     }

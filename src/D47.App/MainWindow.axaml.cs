@@ -354,6 +354,7 @@ public partial class MainWindow : Window
                     {
                         History = host.SearchHistory,
                         PrefixNames = systems.PrefixNamesAsync,
+                        FactionNames = systems.FactionNamesAsync,
                     },
                 };
 

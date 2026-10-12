@@ -70,7 +70,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         [
             .. Panel.GetVisualDescendants()
                 .OfType<Border>()
-                .Where(border => border.Name == SystemNameSuggestions.ListName && border.IsEffectivelyVisible)
+                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
                 .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
                 .Select(button => AutomationProperties.GetName(button) ?? string.Empty),
         ];
@@ -78,7 +78,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         public void Pick(string name) =>
             Panel.GetVisualDescendants()
                 .OfType<Border>()
-                .Where(border => border.Name == SystemNameSuggestions.ListName && border.IsEffectivelyVisible)
+                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
                 .SelectMany(border => border.GetVisualDescendants().OfType<Button>())
                 .Single(button => AutomationProperties.GetName(button) == name)
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

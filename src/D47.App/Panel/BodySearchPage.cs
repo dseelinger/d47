@@ -30,7 +30,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly Stepper _order = new() { ItemsSource = new[] { Nearest, Richest }, Wraps = false, MaxWidth = double.PositiveInfinity };
     private readonly TextBox _near = Field("near");
-    private readonly SystemNameSuggestions? _nearNames;
+    private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Width = 132 };
     private readonly ShowUpTo _limit = new();
     private readonly CheckBox _landable = Tile("Landable");

@@ -37,7 +37,8 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> _chooseServices;
 
     private readonly TextBox _near = Field("near");
-    private readonly SystemNameSuggestions? _nearNames;
+    private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
+    private readonly SystemNameSuggestions<string>? _controllingFactionNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 500, Step = 10, Width = 132 };
     private readonly ShowUpTo _limit = new();
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
@@ -69,6 +70,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     {
         _here = here;
         _nearNames = SuggestNames(_near);
+        _controllingFactionNames = SuggestFactions(_controllingFaction);
         _chooseServices = chooseServices;
 
         _colonised.MinHeight = TypeScale.MinimumTarget;
@@ -249,7 +251,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
         _fromStar.Text = Get("max_station_distance") ?? string.Empty;
-        _controllingFaction.Text = Get("controlling_faction") ?? string.Empty;
+        Fill(_controllingFaction, _controllingFactionNames, Get("controlling_faction") ?? string.Empty);
         _module.Text = Get("module") ?? string.Empty;
         _ship.Text = Get("ship") ?? string.Empty;
         _population.Set(Get("population"));
@@ -430,7 +432,7 @@ public sealed class StationSearchPage : GalaxySearchPage
                 Labelled("Allegiance", _pickers["allegiance"].Picker),
                 Labelled("Government", _pickers["government"].Picker)),
             Labelled("Controlling faction's state", _pickers["state"].Picker),
-            Labelled("Controlling faction", _controllingFaction)));
+            Labelled("Controlling faction", Beneath(_controllingFaction, _controllingFactionNames))));
 
         form.Children.Add(Group(
             "Sold there",

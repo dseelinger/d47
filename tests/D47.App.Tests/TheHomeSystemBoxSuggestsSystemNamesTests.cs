@@ -33,7 +33,7 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
         public IEnumerable<Button> Listed(string key) =>
             View.ControlFor(key)!.GetVisualDescendants()
                 .OfType<Border>()
-                .Where(border => border.Name == SystemNameSuggestions.ListName && border.IsEffectivelyVisible)
+                .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
                 .SelectMany(border => border.GetVisualDescendants().OfType<Button>());
     }
 

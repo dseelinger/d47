@@ -72,7 +72,7 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly Action? _changeFilters;
 
     private readonly TextBox _sellIn;
-    private readonly SystemNameSuggestions? _suggestions;
+    private readonly SystemNameSuggestions<SystemNameMatch>? _suggestions;
     private readonly Button _find = new() { Content = "Find cargo", Height = TypeScale.MinimumTarget };
     private readonly StatusLine _status = RoutingKit.Status();
 
@@ -117,9 +117,10 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (prefixNames is not null)
         {
-            _suggestions = new SystemNameSuggestions(
+            _suggestions = new SystemNameSuggestions<SystemNameMatch>(
                 _sellIn,
                 prefixNames,
+                match => match.Name,
                 lookupsEnabled,
                 match => _suggestions!.SetText(match.Name),
                 suggestionPause);

@@ -32,7 +32,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private readonly Action<SystemSummary>? _open;
 
     private readonly TextBox _near = Field("near");
-    private readonly SystemNameSuggestions? _nearNames;
+    private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
+    private readonly SystemNameSuggestions<string>? _controllingFactionNames;
+    private readonly SystemNameSuggestions<string>? _factionNames;
     private readonly TextBox _distanceFrom = Field("distance from", mono: true);
     private readonly TextBox _distanceTo = Field("distance to", mono: true);
     private readonly ShowUpTo _limit = new();
@@ -58,6 +60,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
     {
         _here = here;
         _nearNames = SuggestNames(_near);
+        _controllingFactionNames = SuggestFactions(_controllingFaction);
+        _factionNames = SuggestFactions(_faction);
         _open = open;
 
         _powerState = new Stepper
@@ -210,8 +214,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
         (_distanceFrom.Text, _distanceTo.Text) = Split(Get("distance"));
         _population.Set(Get("population"));
-        _controllingFaction.Text = Get("controlling_faction") ?? string.Empty;
-        _faction.Text = Get("faction") ?? string.Empty;
+        Fill(_controllingFaction, _controllingFactionNames, Get("controlling_faction") ?? string.Empty);
+        Fill(_faction, _factionNames, Get("faction") ?? string.Empty);
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
         _powerState.SelectedIndex = Index(_powerState.ItemsSource, Get("power_state"));
 
@@ -344,8 +348,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Factions",
             Labelled("Controlling faction's state", _pickers["state"].Picker),
-            Labelled("Controlling faction", _controllingFaction),
-            Labelled("A faction present", _faction),
+            Labelled("Controlling faction", Beneath(_controllingFaction, _controllingFactionNames)),
+            Labelled("A faction present", Beneath(_faction, _factionNames)),
             Columns2(
                 "*,*",
                 Labelled("Its state", _pickers["faction_state"].Picker),

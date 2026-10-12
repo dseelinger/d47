@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
+using D47.Core.Knowledge;
 using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Automation;
@@ -723,13 +724,14 @@ internal sealed partial class SettingControls
             }
         };
 
-        SystemNameSuggestions? names = null;
+        SystemNameSuggestions<SystemNameMatch>? names = null;
 
         if (row.NamesASystem && services.SystemNames is { } lookup)
         {
-            names = new SystemNameSuggestions(
+            names = new SystemNameSuggestions<SystemNameMatch>(
                 box,
                 lookup.Lookup,
+                match => match.Name,
                 lookup.Enabled,
                 match =>
                 {

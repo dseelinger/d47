@@ -69,7 +69,7 @@ public sealed record RoutingSurface(
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
-    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
+    public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
 }
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>

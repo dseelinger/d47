@@ -110,7 +110,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
     {
         public TextBox Field => Panel.GetVisualDescendants().OfType<TextBox>().Single(box => AutomationProperties.GetName(box) == "System name");
 
-        public Border List => Panel.GetVisualDescendants().OfType<Border>().Single(border => border.Name == SystemNameSuggestions.ListName);
+        public Border List => Panel.GetVisualDescendants().OfType<Border>().Single(border => border.Name == NameSuggestions.ListName);
 
         public string[] Listed =>
             List.IsEffectivelyVisible
@@ -175,7 +175,7 @@ public sealed class TheSystemPageSuggestsNamesAsYouTypeTests
         Typed(shown, "Dia");
 
         Assert.Equal(["Dia"], shown.Systems.Prefixes());
-        Assert.Equal(SystemNameSuggestions.Most, shown.Listed.Length);
+        Assert.Equal(NameSuggestions.Most, shown.Listed.Length);
         Assert.Equal("Diaguandri", shown.Listed[0]);
         Assert.Contains("Dian", shown.Listed);
 

@@ -63,7 +63,7 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
 
         if (suggest)
         {
-            _ = new SystemNameSuggestions(
+            _ = new SystemNameSuggestions<SystemNameMatch>(
                 box,
                 (typed, _) =>
                 {
@@ -77,6 +77,7 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
                             .Where(n => n.StartsWith(typed, StringComparison.OrdinalIgnoreCase))
                             .Select(n => new SystemNameMatch(n, n.Length, new StarPosition(0, 0, 0)))]);
                 },
+                match => match.Name,
                 () => on[0],
                 match =>
                 {

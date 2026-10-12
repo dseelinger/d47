@@ -30,7 +30,7 @@ public sealed record StarSystemSurface(
     public Action<string, long>? Remember { get; init; }
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
-    public TimeSpan SuggestionPause { get; init; } = SystemNameSuggester.DefaultPause;
+    public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
 }
 
 /// <summary>
@@ -64,7 +64,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private readonly StarSystemSurface _surface;
     private readonly StackPanel _body = new() { Spacing = 18 };
     private readonly TextBox _name;
-    private readonly SystemNameSuggestions _suggestions;
+    private readonly SystemNameSuggestions<SystemNameMatch> _suggestions;
     private readonly HistoryTile _history;
 
     private bool _following = true;
@@ -98,9 +98,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         };
         Avalonia.Automation.AutomationProperties.SetName(_name, "System name");
 
-        _suggestions = new SystemNameSuggestions(
+        _suggestions = new SystemNameSuggestions<SystemNameMatch>(
             _name,
             surface.Systems.PrefixNamesAsync,
+            match => match.Name,
             surface.LookupsEnabled,
             Choose,
             surface.SuggestionPause);
