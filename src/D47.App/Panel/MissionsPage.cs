@@ -45,6 +45,11 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
     private long? _selected;
     private string _query = string.Empty;
 
+    /// <summary>The sort choices, in the order the Segmented shows them; the first is the board's own order.</summary>
+    public static readonly IReadOnlyList<string> Sorts = ["Board", "Expiry", "Reward"];
+
+    private readonly Segment _sort = SortBar.Choice("MissionSort", [.. Sorts]);
+
     public MissionsPage(
         Func<CommanderGameState?> state,
         Func<DateTimeOffset> now,
@@ -60,8 +65,45 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
         _gap = headset ? 20 : 24;
 
         Margin = new Thickness(14);
+        _sort.SelectionChanged += (_, _) => Draw();
         Draw();
     }
+
+    /// <summary>The panel keeps a drilled page; opening it again returns the list to the board's order.</summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_sort.SelectedIndex != 0)
+        {
+            _sort.SelectedIndex = 0;
+            Draw();
+        }
+    }
+
+    /// <summary>Orders the list by <see cref="Sorts"/>[<paramref name="index"/>].</summary>
+    internal void Sort(int index)
+    {
+        _sort.SelectedIndex = Math.Clamp(index, 0, Sorts.Count - 1);
+        Draw();
+    }
+
+    /// <summary>
+    /// <paramref name="ranked"/> with each band's missions in the order of <see cref="Sorts"/>[<paramref name="sort"/>]:
+    /// soonest expiry or highest reward first, those without a figure last, ties in board order. The bands stay as they came.
+    /// </summary>
+    public static IReadOnlyList<Mission> Sorted(
+        IReadOnlyList<Mission> ranked, int sort, DateTimeOffset now, JournalLocation location) =>
+    [
+        .. ranked
+            .GroupBy(mission => MissionBoard.BandOf(mission, now, location))
+            .SelectMany(band => sort switch
+            {
+                1 => band.OrderBy(mission => mission.Expiry is null).ThenBy(mission => mission.Expiry),
+                2 => band.OrderBy(mission => mission.Reward is null).ThenByDescending(mission => mission.Reward),
+                _ => band.AsEnumerable(),
+            }),
+    ];
 
     public string Summary { get; private set; } = string.Empty;
 
@@ -176,7 +218,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        var shown = board.Ranked(now, location).Where(Matches).ToList();
+        var shown = Sorted([.. board.Ranked(now, location).Where(Matches)], _sort.SelectedIndex, now, location);
 
         if (_selected is not { } id || shown.All(mission => mission.Id != id))
         {
@@ -261,13 +303,13 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
 
     private StackPanel List(IReadOnlyList<Mission> shown, DateTimeOffset now, JournalLocation location)
     {
-        var list = new StackPanel();
+        var list = new StackPanel { Children = { SortBar.Bar(_sort, new Thickness(0, 0, 0, 8)) } };
 
         foreach (var group in shown.GroupBy(mission => MissionBoard.BandOf(mission, now, location)))
         {
             var head = ListRow.Head(BandName(group.Key));
 
-            if (list.Children.Count > 0)
+            if (list.Children.Count > 1)
             {
                 head.Margin = new Thickness(0, 12, 0, 2);
             }

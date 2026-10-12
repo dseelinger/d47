@@ -901,6 +901,7 @@ internal sealed partial class SettingControls
                 Facet = row.Facet?.Invoke(host.Settings.Current),
                 Facets = row.Facets?.Invoke(host.Settings.Current),
                 ChoiceNoun = row.ChoiceNoun ?? "choices",
+                Sorts = row.Audition is null ? null : [PickerSort.Name],
 
                 // Read at open rather than captured once, because both the price and the reason it might be
                 // unavailable follow the selected provider.

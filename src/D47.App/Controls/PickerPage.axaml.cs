@@ -72,8 +72,21 @@ public sealed record PickerRequest
     /// </summary>
     public SettingChoiceClips? Clips { get; init; }
 
+    /// <summary>
+    /// Orderings offered beside the filter, after the caller's own order; null or empty shows no control. Chatterbox
+    /// sections stay as they are and the order applies within each.
+    /// </summary>
+    public IReadOnlyList<PickerSort>? Sorts { get; init; }
+
     /// <summary>What the accept button says.</summary>
     public string AcceptText { get; init; } = "Use this";
+}
+
+/// <summary>An ordering of a picker's choices, A–Z by <paramref name="Key"/>.</summary>
+public sealed record PickerSort(string Label, Func<PickerChoice, string> Key)
+{
+    /// <summary>By the text a choice is shown with.</summary>
+    public static readonly PickerSort Name = new("Name", choice => choice.Text);
 }
 
 /// <summary>Hearing a value before choosing it.</summary>
@@ -394,6 +407,7 @@ public partial class PickerPage : UserControl
             : "Type to filter";
 
         BindFacets();
+        BindSorts();
 
         DefaultButton.IsVisible = _request.DefaultDisplay is not null;
         AcceptButton.Content = _request.AcceptText;
@@ -536,6 +550,31 @@ public partial class PickerPage : UserControl
         });
     }
 
+    /// <summary>The caller's order, which the first option of <see cref="SortBox"/> keeps.</summary>
+    public const string ListedOrder = "Listed";
+
+    private PickerSort? SelectedSort =>
+        _request.Sorts is { Count: > 0 } sorts && SortBox.SelectedIndex > 0 && SortBox.SelectedIndex <= sorts.Count
+            ? sorts[SortBox.SelectedIndex - 1]
+            : null;
+
+    private void BindSorts()
+    {
+        var sorts = _request.Sorts ?? [];
+
+        SortBox.IsVisible = sorts.Count > 0;
+
+        if (sorts.Count == 0)
+        {
+            return;
+        }
+
+        SortBox.ItemsSource = new[] { ListedOrder }.Concat(sorts.Select(sort => sort.Label)).ToArray();
+        SortBox.SelectedIndex = 0;
+        SortBox.Width = 110.0 * (sorts.Count + 1);
+        AutomationProperties.SetName(SortBox, "Sort");
+    }
+
     private readonly List<(SettingFacet Facet, Segment Box)> _facets = [];
 
     private void BindFacets()
@@ -614,6 +653,11 @@ public partial class PickerPage : UserControl
                                  || ChoiceMatch.Matches(choice.Text, filter)))
             .ToArray();
 
+        if (SelectedSort is { } sort)
+        {
+            matches = [.. matches.OrderBy(sort.Key, StringComparer.CurrentCultureIgnoreCase)];
+        }
+
         matches = Grouped(matches);
         _visible = matches;
 
@@ -657,7 +701,7 @@ public partial class PickerPage : UserControl
             return rows;
         }
 
-        var here = rows.Where(row => row.OnThisPc).OrderBy(row => row.SuggestedFor is null).ToArray();
+        var here = rows.Where(row => row.OnThisPc).OrderBy(row => SelectedSort is null && row.SuggestedFor is null).ToArray();
         var elsewhere = rows.Where(row => !row.OnThisPc).ToArray();
 
         Head(here, "ON THIS PC");

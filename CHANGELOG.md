@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Missions, the Engineers directory and Custom voices have a Sort control above the list. Missions sorts by Board (the default), Expiry (soonest first) or Reward (highest first) within each band. The Engineers directory sorts by Needed (the default order), Name or Distance (nearest first, engineers with no distance last) within each group. Custom voices sorts by Added (the default) or Name. Voice pickers have a Sort control beside the filter, Listed or Name, and a Chatterbox picker sorts within each of its sections. Each control is 44 pixels tall for the headset panel, and the sort resets when you open the page again.
+
 The Compare ships page sorts from its column headers. Press a header to sort by that column, press it again to reverse the order, and press it a third time to go back to the default order, furthest jump first. The sorted column shows ▲ or ▼ after its name. Ships with no figure for that column stay at the bottom either way. The Order by control is gone, and Minimum cargo still filters. The headers are 44 pixels tall, so they can be pressed on the headset panel. The sort resets each time you open the page.
 
 The faction fields on the Systems and Stations search pages now suggest names as you type. After you pause, with three letters typed, a list of matching faction names appears under Controlling faction and A faction present on Systems, and under Controlling faction on Stations. Up and Down move through it, Enter or a click picks a name, and Escape closes it. The headset keyboard offers the same names as tiles. Nothing is sent while Galaxy search is off, and the search still matches the exact name.

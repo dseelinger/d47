@@ -39,6 +39,11 @@ public sealed class CustomVoicesPage : DialogPage
     private readonly Button _download = new() { Name = "DownloadChatterbox", Content = "Download" };
     private readonly StackPanel _list = new();
 
+    /// <summary>The sort choices, in the order the Segmented shows them; the first is the order the voices were added in.</summary>
+    public static readonly IReadOnlyList<string> Sorts = ["Added", "Name"];
+
+    private readonly Segment _sort = SortBar.Choice("CustomVoiceSort", [.. Sorts]);
+
     private readonly Notice _refused = new(NoticeLevel.Error) { Name = "NotKept", Label = "Not kept", Margin = new Thickness(0, 12, 0, 4) };
     private readonly TextBox _name = new() { Name = "VoiceName", PlaceholderText = "A name for this voice" };
     private readonly Segment _gender = Choice("Gender", "Female", "Male", "Unlabelled");
@@ -83,6 +88,7 @@ public sealed class CustomVoicesPage : DialogPage
         _name.MaxLength = CustomVoices.MaxNameLength;
         AutomationProperties.SetName(_name, "Name");
 
+        _sort.SelectionChanged += (_, _) => ShowList();
         _record.Click += (_, _) => Record();
         _choose.Click += async (_, _) => await ChooseAsync();
         _play.Click += (_, _) => editing.Draft.Play();
@@ -139,6 +145,7 @@ public sealed class CustomVoicesPage : DialogPage
     {
         base.OnAttachedToVisualTree(e);
 
+        _sort.SelectedIndex = 0;
         _editing.Store.Changed += OnListChanged;
         _editing.Own.Changed += OnOwnChanged;
         _editing.Draft.Changed += OnTakeChanged;
@@ -204,11 +211,19 @@ public sealed class CustomVoicesPage : DialogPage
             return;
         }
 
-        foreach (var voice in voices)
+        _list.Children.Add(SortBar.Bar(_sort, new Thickness(0, 8, 0, 4)));
+
+        foreach (var voice in Sorted(voices, _sort.SelectedIndex))
         {
             _list.Children.Add(voice.Id == _renaming ? Renaming(voice) : Listed(voice));
         }
     }
+
+    /// <summary><paramref name="voices"/> A–Z by name under <see cref="Sorts"/>[1], otherwise in the order added.</summary>
+    public static IReadOnlyList<CustomVoice> Sorted(IReadOnlyList<CustomVoice> voices, int sort) =>
+        sort == 1
+            ? [.. voices.OrderBy(voice => voice.Name, StringComparer.CurrentCultureIgnoreCase)]
+            : voices;
 
     private Control YourVoice()
     {

@@ -323,6 +323,11 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     private readonly CheckBox _colonia;
     private readonly CheckBox _onFoot;
 
+    /// <summary>The sort choices, in the order the Segmented shows them; the first is the directory's own order.</summary>
+    public static readonly IReadOnlyList<string> Sorts = ["Needed", "Name", "Distance"];
+
+    private readonly Segment _sort = SortBar.Choice("EngineerSort", [.. Sorts]);
+
     private string? _query;
 
     public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
@@ -359,13 +364,18 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             Children = { _colonia, _onFoot, LoadoutPages.Press("Route", () => nav.Drill(EngineersPages.RouteCrumb)) },
         };
 
+        _sort.SelectionChanged += (_, _) => Refresh();
+
+        var sort = SortBar.Bar(_sort, new Thickness(0, 0, 0, 10));
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(checks, Dock.Top);
+        DockPanel.SetDock(sort, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(checks);
+        root.Children.Add(sort);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
@@ -373,6 +383,37 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
 
         Refresh();
     }
+
+    /// <summary>The panel keeps a drilled page; opening it again returns the list to the directory's order.</summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        _sort.SelectedIndex = 0;
+        base.OnAttachedToVisualTree(e);
+    }
+
+    /// <summary>Orders the list by <see cref="Sorts"/>[<paramref name="index"/>].</summary>
+    internal void Sort(int index)
+    {
+        _sort.SelectedIndex = Math.Clamp(index, 0, Sorts.Count - 1);
+        Refresh();
+    }
+
+    /// <summary>
+    /// <paramref name="entries"/> with each reach group in the order of <see cref="Sorts"/>[<paramref name="sort"/>]:
+    /// by name, or nearest first with those at no known distance last; ties keep the directory's order.
+    /// The groups stay as they came.
+    /// </summary>
+    public static IReadOnlyList<EngineerEntry> Sorted(IReadOnlyList<EngineerEntry> entries, int sort) =>
+    [
+        .. entries
+            .GroupBy(entry => entry.Reach)
+            .SelectMany(group => sort switch
+            {
+                1 => group.OrderBy(entry => entry.Engineer.Name, StringComparer.CurrentCultureIgnoreCase),
+                2 => group.OrderBy(entry => entry.LightYears is null).ThenBy(entry => entry.LightYears),
+                _ => group.AsEnumerable(),
+            }),
+    ];
 
     /// <summary>
     /// Thirty-eight people with ten specialities each is a scroll hunt, so the query takes rows away
@@ -393,7 +434,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         Summarise(report.Summary());
         _list.Children.Clear();
 
-        var shown = report.Directory.Where(Matches).Where(NotHidden).ToList();
+        var shown = Sorted([.. report.Directory.Where(Matches).Where(NotHidden)], _sort.SelectedIndex);
 
         if (shown.Count == 0)
         {

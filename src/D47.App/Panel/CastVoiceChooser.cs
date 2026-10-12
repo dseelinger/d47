@@ -124,6 +124,7 @@ public static class CastVoiceChooser
                 DefaultDisplay = DefaultDisplay(member),
                 WhyEmpty = listed.WhyEmpty(provider.Name),
                 Facet = SpeechCapability.GenderFacet(listed),
+                Sorts = [PickerSort.Name],
                 Audition = AuditionOf(surface, member, provider, providerId, listed),
             },
             result =>
