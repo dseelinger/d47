@@ -66,7 +66,7 @@ public class ADraftIsActedOnByVoiceFromThePageTests
 
         foreach (var act in new[] { desk.Accept, desk.Reject, desk.Change })
         {
-            Assert.Equal("There is more than one draft adventure. Open the one you mean.", act());
+            Assert.Equal("There is more than one draft short story. Open the one you mean.", act());
         }
 
         Assert.True(book.Standing("F1", "one")!.Adventure.IsDraft);

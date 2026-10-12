@@ -109,7 +109,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
         Assert.Equal(Lantern, adventure.Beats[0].Trigger.SystemAddress);
         Assert.Equal(LanternDock, adventure.Beats[1].Trigger.MarketId);
         Assert.DoesNotContain(adventure.Beats, beat => beat.Trigger.Station == "Maren Anchorage");
-        Assert.Contains("You wrote an adventure the Commander is flying", prompt);
+        Assert.Contains("You wrote a short story the Commander is flying", prompt);
         Assert.Contains("Maren Anchorage's docks are offline", prompt);
         Assert.Equal(2, fixtures.Provider.CallCount);
         Assert.Equal(["The docks at Maren Anchorage are offline.", "Next: dock at Lantern Dock in Ossen's Lantern. Someone there knows about the burst."], said);
