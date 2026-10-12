@@ -283,6 +283,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// </summary>
     public void TickEngineers() => _dirty |= _view.TickEngineers();
 
+    /// <summary>Rebuilds every drawn page for a newly picked Commander.</summary>
+    public void CommanderPicked()
+    {
+        _view.CommanderPicked();
+        _dirty = true;
+    }
+
     /// <summary>Redraws the Commander pages when the journal moves them on, from the headset's own tick.</summary>
     public void TickCommander() => _dirty |= _view.TickCommander();
 

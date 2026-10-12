@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Picking another Commander now redraws the pages you have open, on the window, the headset panel and the overlay, so Bookmarks, Activities, Phrases, Checklist, Suits, Galaxy search, Missions, Construction and Engineers show the new Commander. A mission, construction site or search answer chosen for the previous Commander is cleared.
+
 The Commander name in the title bar no longer stays an orange block with unreadable text after its menu closes, for example after a theme change.
 
 A Commander you pick in place of the one in the game now has their own credits, taken from their newest LoadGame in the journals. A story chapter that boards a ship checks the ship against their fleet by hull, so a ship they own, such as an Alliance Chieftain, is no longer treated as one they must buy. A Caspian Explorer in the fleet now allows a long haul.

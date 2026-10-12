@@ -217,6 +217,7 @@ public static class UnlockPlanner
             ? string.Empty
             : string.Join(
                 '|',
+                state.Identity.FrontierId,
                 state.Location.StarSystem ?? string.Empty,
                 state.Location.StarPos?.ToString() ?? string.Empty,
                 state.Ship.MaxJumpRange?.ToString("R", CultureInfo.InvariantCulture) ?? string.Empty,

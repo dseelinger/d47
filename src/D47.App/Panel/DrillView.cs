@@ -337,6 +337,9 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         Draw();
     }
 
+    /// <summary>Forgets every level's page and redraws the ones showing.</summary>
+    public void ForgetAll() => ForgetWhere(_ => true);
+
     /// <summary>Forgets a level's page, so the next visit rebuilds it.</summary>
     public void Forget(string key)
     {

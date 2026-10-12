@@ -763,6 +763,15 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly StoriesFurnishing _stories;
     private readonly NavigationFurnishing _navigation;
 
+    /// <summary>Rebuilds every page already drawn, so none keeps the previous Commander's data or selection.</summary>
+    public void CommanderPicked()
+    {
+        foreach (var strip in _pages.Values)
+        {
+            strip.ForgetAll();
+        }
+    }
+
     public void Forget(PanelTab tab, Func<string, bool> match)
     {
         if (_pages.TryGetValue(tab, out var strip))

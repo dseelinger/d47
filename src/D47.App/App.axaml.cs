@@ -201,6 +201,20 @@ public partial class App(AppHost? host) : Application
             // so the wheel does too (#34).
             host.PanelRouting.RouteScrolling(host.Overlay.Scroll);
 
+            // A pick leaves cached pages drawn for the previous Commander: every surface rebuilds them.
+            host.GameState.CommanderChanged += change =>
+            {
+                if (change.Cause == D47.Core.Journal.CommanderSwitchCause.Picked)
+                {
+                    ui.Post(() =>
+                    {
+                        window?.Panel.CommanderPicked();
+                        host.Vr.CommanderPicked();
+                        host.Overlay?.CommanderPicked();
+                    });
+                }
+            };
+
             // Last, because it reports the headset and the headset is brought up above.
             host.RecordStartup();
         }

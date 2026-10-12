@@ -129,6 +129,9 @@ public sealed class VrHost : IDisposable
     /// <summary>Where the headset panel is, so a spoken phrase can move it (Phase 25).</summary>
     public D47.Core.Interface.PanelNavigator Nav => _panel.Nav;
 
+    /// <summary>Rebuilds every drawn page for a newly picked Commander.</summary>
+    public void CommanderPicked() => _panel.CommanderPicked();
+
     /// <summary>How far down the headset panel is, so a spoken scroll can move it (#34).</summary>
     public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step) =>
         _panel.Scroll(step);

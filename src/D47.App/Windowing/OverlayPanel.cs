@@ -170,6 +170,9 @@ public sealed class OverlayPanel : Window
     /// </summary>
     public PanelNavigator Nav => _view.Nav;
 
+    /// <summary>Rebuilds every drawn page for a newly picked Commander.</summary>
+    public void CommanderPicked() => _view.CommanderPicked();
+
     /// <summary>Moves the page the strip is showing, for a spoken scroll (#34).</summary>
     public PanelScrollOutcome Scroll(PanelScrollStep step) =>
         // A strip nobody can see has nothing to scroll, which is a different answer from being at the end of
