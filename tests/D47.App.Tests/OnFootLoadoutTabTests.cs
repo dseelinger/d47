@@ -105,8 +105,8 @@ public class OnFootLoadoutTabTests
     }
 
     /// <summary>
-    /// A Commander on foot in a grade 3 Maverick carrying one weapon, rank 5 with Farseer, with a ship
-    /// and some materials — enough for both ledgers to have something in them.
+    /// A Commander on foot in a grade 3 Maverick carrying one weapon, rank 5 with Farseer, with a ship,
+    /// some materials and an owned carrier — enough for both ledgers to have something in them.
     /// </summary>
     private static CommanderGameState OnFoot()
     {
@@ -115,6 +115,7 @@ public class OnFootLoadoutTabTests
         foreach (var line in new[]
                  {
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+                     """{"timestamp":"2026-08-18T09:00:00Z","event":"CarrierStats","CarrierID":3715429376,"CarrierType":"FleetCarrier","Callsign":"BNH-T2F","Name":"Sacred Fire","FuelLevel":792}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"SuitLoadout","SuitID":7,"SuitName":"utilitysuit_class3","LoadoutName":"Ground","SuitMods":[],"Modules":[{"SlotName":"PrimaryWeapon1","SuitModuleID":9,"ModuleName":"wpn_m_assaultrifle_kinetic_fauto","Class":2,"WeaponMods":[]}]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":5}]}""",
                      """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":20}],"Manufactured":[],"Encoded":[]}""",
@@ -761,11 +762,9 @@ public class OnFootLoadoutTabTests
 
         panel.EnableLoadout(ships, checklists, () => null);
 
-        // Suits and Gap are the on-foot half and are absent; Carrier is not gated on owning one, because "d47
-        // has not seen a carrier" is a thing the page can say and "you have none" is not something it can
- // know.
+        // Suits and Gap are the on-foot half, and Carrier shows only while a carrier is owned (#1123).
         Assert.Equal(
-            ["Ships", "Stored modules", "Crew", "Carrier"],
+            ["Ships", "Stored modules", "Crew"],
             panel.Nav.Roots(PanelTab.Assets).Select(item => item.Word));
     }
 }
