@@ -34,13 +34,21 @@ public interface IVrSurfaceSource
 
     /// <summary>Told where the head is, so a head-locked surface can work out where it goes.</summary>
     void Observe(VrPose head);
+
+    /// <summary>
+    /// Whether the pixels go up as a Direct3D 11 texture through <c>SetOverlayTexture</c> rather than through
+    /// <c>SetOverlayRaw</c>.
+    /// </summary>
+    bool UploadsAsTexture => false;
 }
 
 /// <summary>The headset, for real.</summary>
+/// <param name="textures">The device a surface that uploads as a texture uses. Without one, it goes up as raw pixels.</param>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
     ILogger<SteamVrRuntime> logger,
-    IOpenVrSession openVr) : IVrRuntime
+    IOpenVrSession openVr,
+    IVrTextureDevice? textures = null) : IVrRuntime
 {
     /// <summary>Reverse-domain, one per quad.</summary>
     private static readonly IReadOnlyDictionary<VrSurface, (string Key, string Name)> Keys =
@@ -72,6 +80,17 @@ public sealed class SteamVrRuntime(
 
     private DateTimeOffset _now;
     private readonly Dictionary<VrSurface, VrPixels> _buffers = [];
+
+    /// <summary>The two textures each surface on the texture route alternates between.</summary>
+    private readonly Dictionary<VrSurface, TexturePair> _textures = [];
+
+    /// <summary>Surfaces on raw pixels for the rest of the session, because a device or texture could not be made.</summary>
+    private readonly HashSet<VrSurface> _rawInstead = [];
+
+    private bool _deviceOpen;
+
+    /// <summary>Why the device could not be made this session, so it is tried once.</summary>
+    private string? _deviceRefused;
 
     /// <summary>
     /// The grip-to-tip correction per device, which is a property of the controller model rather than
@@ -214,6 +233,22 @@ public sealed class SteamVrRuntime(
         }
 
         _overlays.Clear();
+
+        // After the quads are cleared, so the compositor is not left showing a texture that has gone.
+        foreach (var pair in _textures.Values)
+        {
+            pair.Release(textures!);
+        }
+
+        _textures.Clear();
+        _rawInstead.Clear();
+        _deviceRefused = null;
+
+        if (_deviceOpen)
+        {
+            textures!.Close();
+            _deviceOpen = false;
+        }
 
         // A rebuilt session is a new session, and it has to be able to say so — otherwise the one that
         // recovered looks exactly like the one that never reported anything.
@@ -813,6 +848,8 @@ public sealed class SteamVrRuntime(
             pixels.Resize(width, height);
         }
 
+        var pair = TexturesFor(source, width, height);
+
         var held = _frames.TryGetValue(source.Surface, out var carried) ? carried : default;
 
         // A held frame lives in the buffer it was drawn into, so a reallocation throws it away along with the
@@ -832,14 +869,25 @@ public sealed class SteamVrRuntime(
         if (plan.Draw)
         {
             source.Draw(pixels.Address, pixels.RowBytes);
-            pixels.ToRgba();
+
+            // The texture takes BGRA as drawn.
+            if (pair is null)
+            {
+                pixels.ToRgba();
+            }
+            else
+            {
+                textures!.Write(pair.Current, pixels.Address, pixels.RowBytes);
+            }
         }
 
         if (plan.Submit)
         {
-            var outcome = FrameDelivery.Took(
-                held,
-                overlay.Submit(pixels.Address, pixels.Width, pixels.Height));
+            var accepted = pair is null
+                ? overlay.Submit(pixels.Address, pixels.Width, pixels.Height)
+                : overlay.SubmitTexture(pair.Current);
+
+            var outcome = FrameDelivery.Took(held, accepted);
 
             if (outcome.Recovered)
             {
@@ -848,9 +896,16 @@ public sealed class SteamVrRuntime(
 
             if (outcome.Rotate)
             {
-                // Onto the next buffer of the ring, so the one the runtime was just handed is not the one the
+                // Onto the next buffer or texture, so the one the runtime was just handed is not the one the
                 // next frame is drawn into.
-                pixels.Rotate();
+                if (pair is null)
+                {
+                    pixels.Rotate();
+                }
+                else
+                {
+                    pair.Rotate();
+                }
             }
 
             held = outcome.Held;
@@ -916,6 +971,118 @@ public sealed class SteamVrRuntime(
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The two textures a surface on the texture route goes up in, made on its first serve and remade when
+    /// its size changes. Null when it goes up as raw pixels.
+    /// </summary>
+    private TexturePair? TexturesFor(IVrSurfaceSource source, int width, int height)
+    {
+        if (!source.UploadsAsTexture || _rawInstead.Contains(source.Surface))
+        {
+            return null;
+        }
+
+        if (_textures.TryGetValue(source.Surface, out var pair) && pair.Width == width && pair.Height == height)
+        {
+            return pair;
+        }
+
+        // A held frame is in a texture this replaces or a buffer the texture route does not read.
+        _frames.Remove(source.Surface);
+
+        if (pair is not null)
+        {
+            pair.Release(textures!);
+            _textures.Remove(source.Surface);
+        }
+
+        var refused = OpenDevice() ?? TexturePair.Make(textures!, width, height, out pair);
+
+        if (refused is null)
+        {
+            _textures[source.Surface] = pair!;
+            return pair;
+        }
+
+        _rawInstead.Add(source.Surface);
+        logger.LogWarning("{Surface} goes up as raw pixels for this session: {Reason}", source.Surface, refused);
+        return null;
+    }
+
+    /// <summary>Makes the device on the headset's adapter, once a session. Null when it is open, otherwise why not.</summary>
+    private string? OpenDevice()
+    {
+        if (_deviceOpen)
+        {
+            return null;
+        }
+
+        if (_deviceRefused is null)
+        {
+            _deviceRefused = textures is null
+                ? "no Direct3D 11 device was given"
+                : textures.Open(HeadsetAdapter() ?? 0);
+            _deviceOpen = _deviceRefused is null;
+        }
+
+        return _deviceRefused;
+    }
+
+    /// <summary>Two textures written alternately, so the one the compositor was last handed is not written into.</summary>
+    private sealed class TexturePair
+    {
+        private readonly IntPtr[] _handles;
+        private int _next;
+
+        private TexturePair(IntPtr[] handles, int width, int height)
+        {
+            _handles = handles;
+            Width = width;
+            Height = height;
+        }
+
+        public int Width { get; }
+
+        public int Height { get; }
+
+        /// <summary>The texture the next frame is written into and submitted from.</summary>
+        public IntPtr Current => _handles[_next];
+
+        public void Rotate() => _next = 1 - _next;
+
+        /// <summary>Null when both were made, otherwise why not; nothing is left held on a refusal.</summary>
+        public static string? Make(IVrTextureDevice device, int width, int height, out TexturePair? pair)
+        {
+            pair = null;
+
+            var first = device.Create(width, height, out var refused);
+
+            if (refused is not null)
+            {
+                return refused;
+            }
+
+            var second = device.Create(width, height, out refused);
+
+            if (refused is not null)
+            {
+                device.Release(first);
+                return refused;
+            }
+
+            pair = new TexturePair([first, second], width, height);
+            return null;
+        }
+
+        public void Release(IVrTextureDevice device)
+        {
+            foreach (var handle in _handles)
+            {
+                device.Release(handle);
+            }
+        }
     }
 
     /// <summary>Whether a SteamVR session already exists to attach to.</summary>

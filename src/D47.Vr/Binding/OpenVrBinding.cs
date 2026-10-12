@@ -90,6 +90,9 @@ public sealed class OpenVrBinding : IOpenVrSession
             uint bytesPerPixel) =>
             OpenVR.Overlay.SetOverlayRaw(handle, pixels, width, height, bytesPerPixel);
 
+        public EVROverlayError SetOverlayTexture(ulong handle, ref Texture_t texture) =>
+            OpenVR.Overlay.SetOverlayTexture(handle, ref texture);
+
         public EVROverlayError ClearOverlayTexture(ulong handle) =>
             OpenVR.Overlay.ClearOverlayTexture(handle);
 

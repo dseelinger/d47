@@ -300,6 +300,19 @@ public sealed class FakeOpenVr :
         return RawRefused ? EVROverlayError.RequestFailed : EVROverlayError.None;
     }
 
+    /// <summary>Whether the compositor turns textures down.</summary>
+    public bool TextureRefused { get; set; }
+
+    /// <summary>Every texture handle passed to <c>SetOverlayTexture</c>, in order.</summary>
+    public List<IntPtr> TexturesSubmitted { get; } = [];
+
+    public EVROverlayError SetOverlayTexture(ulong handle, ref Texture_t texture)
+    {
+        Record(nameof(SetOverlayTexture), handle);
+        TexturesSubmitted.Add(texture.handle);
+        return TextureRefused ? EVROverlayError.RequestFailed : EVROverlayError.None;
+    }
+
     public EVROverlayError ClearOverlayTexture(ulong handle)
     {
         Record(nameof(ClearOverlayTexture), handle);

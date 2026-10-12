@@ -209,7 +209,8 @@ public sealed class VrHost : IDisposable
         var runtime = new SteamVrRuntime(
             [panel, captions],
             loggers.CreateLogger<SteamVrRuntime>(),
-            OpenVrBinding.Instance);
+            OpenVrBinding.Instance,
+            new D3D11TextureDevice());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(

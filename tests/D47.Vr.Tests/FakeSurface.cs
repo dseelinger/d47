@@ -17,6 +17,8 @@ public sealed class FakeSurface : IVrSurfaceSource
 
     public bool IsDirty { get; set; } = true;
 
+    public bool UploadsAsTexture { get; init; }
+
     /// <summary>How many times the runtime asked for pixels.</summary>
     public int Draws { get; private set; }
 

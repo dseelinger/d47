@@ -80,6 +80,8 @@ public interface IOpenVrOverlay
 
     EVROverlayError SetOverlayRaw(ulong handle, IntPtr pixels, uint width, uint height, uint bytesPerPixel);
 
+    EVROverlayError SetOverlayTexture(ulong handle, ref Texture_t texture);
+
     EVROverlayError ClearOverlayTexture(ulong handle);
 
     EVROverlayError SetOverlayFlag(ulong handle, VROverlayFlags flag, bool enabled);

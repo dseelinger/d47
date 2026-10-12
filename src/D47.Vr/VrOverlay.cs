@@ -122,6 +122,20 @@ public sealed class VrOverlay : IDisposable
             _api.SetOverlayRaw(_handle, pixels, (uint)width, (uint)height, 4),
             "Setting the pixels");
 
+    /// <summary>Puts a Direct3D 11 texture on the quad.</summary>
+    /// <returns>Whether the runtime took it.</returns>
+    public bool SubmitTexture(IntPtr texture)
+    {
+        var described = new Texture_t
+        {
+            handle = texture,
+            eType = ETextureType.DirectX,
+            eColorSpace = EColorSpace.Auto,
+        };
+
+        return Went(_api.SetOverlayTexture(_handle, ref described), "Setting the texture");
+    }
+
     /// <summary>Whether SteamVR is drawing this quad right now.</summary>
     public bool Visible => _api.IsOverlayVisible(_handle);
 
