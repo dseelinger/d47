@@ -118,7 +118,6 @@ public class ASpokenSearchNamesItsKindsPageTests
 
     [Theory]
     [InlineData("search_systems", "government", "Pirate Kingdom")]
-    [InlineData("search_systems", "near", "Sol")]
     [InlineData("search_stations", "min_pad", "Enormous")]
     [InlineData("find_body", "body_type", "Cheese moon")]
     public async Task ARefusedFilterNamesNoPage(string tool, string filter, string value)

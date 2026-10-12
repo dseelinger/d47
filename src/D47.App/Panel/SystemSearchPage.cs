@@ -238,7 +238,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             .Where(pair => pair.Key is not ("near" or "limit" or "order_by" or "order"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
 
-        return !GalaxyCriteria.TryParse(GalaxySearchKind.Systems, requested, out var criteria, out _) || criteria.Count == 0
+        return !GalaxyCriteria.TryParse(GalaxySearchKind.Systems, requested, out _, out _)
                || !SearchSorts.TryParse(GalaxySearchKind.Systems, arguments.GetValueOrDefault("order_by"), arguments.GetValueOrDefault("order"), out _, out _);
     }
 

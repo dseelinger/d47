@@ -112,16 +112,17 @@ public class GalaxyCapabilityTests
     }
 
     [Fact]
-    public async Task ASearchWithNoFiltersIsRefusedRatherThanMatchingTheGalaxy()
+    public async Task ASystemSearchWithNoFiltersAsksForTheNearestSystems()
     {
         var install = new MemoryInstall();
         var (registry, galaxy) = Build(install);
 
         var result = await registry.InvokeAsync("search_systems", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
-        Assert.True(result.IsError);
-        Assert.Contains("whole galaxy", result.Content, StringComparison.Ordinal);
-        Assert.Null(galaxy.LastQuery);
+        Assert.False(result.IsError, result.Content);
+        Assert.NotNull(galaxy.LastQuery);
+        Assert.Empty(galaxy.LastQuery!.Criteria);
+        Assert.Null(galaxy.LastQuery.Sort);
     }
 
     [Fact]

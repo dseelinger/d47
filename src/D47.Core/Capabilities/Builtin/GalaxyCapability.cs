@@ -781,13 +781,6 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
-        if (query.Criteria.Count == 0)
-        {
-            return ToolResult.Error(
-                "That search has no filters, so it would match the whole galaxy. "
-                + $"Narrow it with one of: {GalaxyFilters.Describe()}.");
-        }
-
         try
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
