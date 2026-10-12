@@ -22,6 +22,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
     public const int DefaultLimit = ShowUpTo.Default;
 
     /// <summary>The table's columns: system, light years, allegiance, economy, population, power, reported.</summary>
+    public const string HeadName = "SystemHead";
+
     private const string Columns = "1.5*,64,*,*,104,*,76";
 
     private const string HeadsetColumns = "1.5*,64,*,*,104,*";
@@ -233,10 +235,11 @@ public sealed class SystemSearchPage : GalaxySearchPage
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
     {
         var requested = arguments
-            .Where(pair => pair.Key is not ("near" or "limit"))
+            .Where(pair => pair.Key is not ("near" or "limit" or "order_by" or "order"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
 
-        return !GalaxyCriteria.TryParse(GalaxySearchKind.Systems, requested, out var criteria, out _) || criteria.Count == 0;
+        return !GalaxyCriteria.TryParse(GalaxySearchKind.Systems, requested, out var criteria, out _) || criteria.Count == 0
+               || !SearchSorts.TryParse(GalaxySearchKind.Systems, arguments.GetValueOrDefault("order_by"), arguments.GetValueOrDefault("order"), out _, out _);
     }
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
@@ -274,42 +277,22 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         var columns = headset ? HeadsetColumns : Columns;
 
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 12, Margin = new Thickness(12, 0, 12, 6) };
+        List<SearchColumn> heads =
+        [
+            new("System", "Controlled by", "name", false),
+            new("LY", null, SearchSorts.Distance, true),
+            new("Allegiance", "Government", "allegiance", false),
+            new("Economy", "Security", "economy", false),
+            new("Population", null, "population", true),
+            new("Power", "State", "power", false),
+        ];
 
-        foreach (var (top, sub, column, right) in new (string, string?, int, bool)[]
-                 {
-                     ("System", "Controlled by", 0, false),
-                     ("LY", null, 1, true),
-                     ("Allegiance", "Government", 2, false),
-                     ("Economy", "Security", 3, false),
-                     ("Population", null, 4, true),
-                     ("Power", "State", 5, false),
-                     ("Reported", null, 6, true),
-                 })
+        if (!headset)
         {
-            if (headset && column == 6)
-            {
-                continue;
-            }
-
-            var head = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom, Children = { Chrome(top, TypeScale.Caption, ThemeManager.AKey) } };
-
-            if (sub is not null)
-            {
-                head.Children.Add(Chrome(sub, TypeScale.Caption, ThemeManager.GreyKey));
-            }
-
-            if (right)
-            {
-                head.HorizontalAlignment = HorizontalAlignment.Right;
-            }
-
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
+            heads.Add(new("Reported", null, "updated", true));
         }
 
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+        var rule = SearchHead(posting, HeadName, columns, heads);
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
         var here = _here();

@@ -190,7 +190,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             .Single(tool => tool.Name == "search_systems");
 
         Assert.Equal(
-            ["near", .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name), "limit"],
+            ["near", .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(filter => filter.Name), "order_by", "order", "limit"],
             tool.Parameters.Select(parameter => parameter.Name));
 
         Assert.Equal(

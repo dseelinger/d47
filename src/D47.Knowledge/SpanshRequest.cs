@@ -23,13 +23,7 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
+            WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", 0);
@@ -222,13 +216,7 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
+            WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", 0);
@@ -315,13 +303,7 @@ internal static class SpanshRequest
 
             writer.WriteEndObject();
 
-            writer.WriteStartArray("sort");
-            writer.WriteStartObject();
-            writer.WriteStartObject("distance");
-            writer.WriteString("direction", "asc");
-            writer.WriteEndObject();
-            writer.WriteEndObject();
-            writer.WriteEndArray();
+            WriteSort(writer, query.Sort);
 
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", 0);
@@ -477,6 +459,20 @@ internal static class SpanshRequest
         }
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
+    /// <summary>The sort array: <paramref name="sort"/>, or nearest first when it is null.</summary>
+    private static void WriteSort(Utf8JsonWriter writer, SearchSort? sort)
+    {
+        var (field, direction) = SearchSorts.Wire(sort);
+
+        writer.WriteStartArray("sort");
+        writer.WriteStartObject();
+        writer.WriteStartObject(field);
+        writer.WriteString("direction", direction);
+        writer.WriteEndObject();
+        writer.WriteEndObject();
+        writer.WriteEndArray();
     }
 
     private static void WriteChoice(Utf8JsonWriter writer, string name, string? value)

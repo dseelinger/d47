@@ -364,7 +364,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_stations");
 
         Assert.Equal(
-            tool.Parameters.Select(parameter => parameter.Name).Order(StringComparer.Ordinal),
+            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order"]).Order(StringComparer.Ordinal),
             page.FormArguments().Keys.Order(StringComparer.Ordinal));
 
         Press(Named(panel, GalaxySearchPage.ClearName));

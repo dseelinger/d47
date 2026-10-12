@@ -110,8 +110,11 @@ public sealed record BodyRequest
 
     public string? Material { get; init; }
 
-    /// <summary>"distance" or "material"; null is distance.</summary>
+    /// <summary>A name from <see cref="SearchSorts.For"/>; null is distance.</summary>
     public string? OrderBy { get; init; }
+
+    /// <summary><c>asc</c> or <c>desc</c>; null is the field's first direction.</summary>
+    public string? Order { get; init; }
 
     /// <summary>Vocabulary filters by name, validated against <see cref="GalaxySearchKind.Bodies"/>.</summary>
     public IReadOnlyDictionary<string, string> Filters { get; init; } = new Dictionary<string, string>();
@@ -191,6 +194,9 @@ public sealed record BodyQuery
     /// </summary>
     public bool OrderByMaterial { get; init; }
 
+    /// <summary>What the results are sorted by; null is nearest first, which an order by material also is.</summary>
+    public SearchSort? Sort { get; init; }
+
     /// <summary>How many bodies the request asks for.</summary>
     public int Size { get; init; } = 5;
 
@@ -254,14 +260,12 @@ public sealed record BodyQuery
             return false;
         }
 
-        var orderBy = string.IsNullOrWhiteSpace(request.OrderBy) ? "distance" : request.OrderBy.Trim();
-        var orderByMaterial = string.Equals(orderBy, "material", StringComparison.OrdinalIgnoreCase);
-
-        if (!orderByMaterial && !string.Equals(orderBy, "distance", StringComparison.OrdinalIgnoreCase))
+        if (!SearchSorts.TryParse(GalaxySearchKind.Bodies, request.OrderBy, request.Order, out var sort, out failure))
         {
-            failure = $"Bodies can be ordered by distance or by material, not by '{orderBy}'.";
             return false;
         }
+
+        var orderByMaterial = sort?.Field.Name == SearchSorts.Material;
 
         if (orderByMaterial && matchedMaterial is null)
         {
@@ -319,6 +323,7 @@ public sealed record BodyQuery
             Material = matchedMaterial,
             Criteria = criteria,
             OrderByMaterial = orderByMaterial,
+            Sort = orderByMaterial ? null : sort,
 
             // Wider than the station search allows, because a body search is often the one a Commander makes
             // from deep space where the nearest anything is a long way off, and still bounded because

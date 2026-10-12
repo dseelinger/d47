@@ -217,29 +217,32 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void RichestInPoloniumSendsTheMaterialAndTheOrderAndTheShareColumnReadsPolonium()
+    public void PressingTheShareColumnAsksForTheRichestAndTheShareColumnReadsPolonium()
     {
         var world = new World(lookups: true);
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
         page.Pick("material", "Polonium");
-        page.OrderByMaterial(true);
         Press(Named(panel, GalaxySearchPage.RunName));
+
+        Assert.False(Assert.Single(world.Galaxy.Asked).OrderByMaterial);
+
+        Press(Named(panel, "BodyHead.Polonium"));
+
+        var asked = world.Galaxy.Asked[^1];
+        Assert.Equal("Polonium", asked.Material);
+        Assert.True(asked.OrderByMaterial);
 
         var arguments = page.FormArguments();
         Assert.Equal("Polonium", arguments["material"]);
-        Assert.Equal("material", arguments["order_by"]);
-
-        var asked = Assert.Single(world.Galaxy.Asked);
-        Assert.Equal("Polonium", asked.Material);
-        Assert.True(asked.OrderByMaterial);
+        Assert.False(arguments.ContainsKey("order_by"));
 
         var rows = Rows(panel);
         Assert.Equal(2, rows.Count);
         Assert.Contains("2.35%", TextOf(rows[0]));
         Assert.Contains("1.10%", TextOf(rows[1]));
-        Assert.Contains("POLONIUM", TextOf(panel));
+        Assert.Contains(TextOf(panel), text => text.StartsWith("POLONIUM ▼", StringComparison.Ordinal));
         Assert.Contains(TextOf(panel), text => text.StartsWith("The richest in Polonium among the nearest 50", StringComparison.Ordinal));
 
         window.Close();
@@ -296,7 +299,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var page = Page(panel);
         Assert.Equal(2, Rows(panel).Count);
         Assert.Equal("Polonium", page.FormArguments()["material"]);
-        Assert.Equal("material", page.FormArguments()["order_by"]);
+        Assert.DoesNotContain("order_by", page.FormArguments().Keys);
         Assert.Equal("Water Geysers", page.FormArguments()["volcanism"]);
 
         window.Close();
@@ -329,7 +332,6 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         page.Type("max_arrival_distance", "500");
         page.Type("gravity from", "0.1");
         page.Type("temperature to", "300");
-        page.OrderByMaterial(true);
 
         foreach (var name in (string[])["landable", "terraformable", "tidally_locked"])
         {
@@ -357,7 +359,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "find_body");
 
         Assert.Equal(
-            tool.Parameters.Select(parameter => parameter.Name).Order(StringComparer.Ordinal),
+            tool.Parameters.Select(parameter => parameter.Name).Except(["order_by", "order"]).Order(StringComparer.Ordinal),
             page.FormArguments().Keys.Order(StringComparer.Ordinal));
 
         Press(Named(panel, GalaxySearchPage.ClearName));

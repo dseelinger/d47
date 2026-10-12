@@ -135,7 +135,7 @@ public static class GalaxyCapability
             {
                 Name = "search_systems",
                 Description =
-                    "Find star systems matching some criteria, nearest first. Filters: "
+                    "Find star systems matching some criteria, nearest first unless order_by says otherwise. Filters: "
                     + $"{GalaxyFilters.Names(GalaxySearchKind.Systems)}, and no others. Ranges take one number for an upper "
                     + "bound (\"20\") or two separated by a dash (\"10-50\").",
                 Parameters =
@@ -147,6 +147,7 @@ public static class GalaxyCapability
                         Description = "Measure from this system. Defaults to theirs.",
                     },
                     .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(Parameter),
+                    .. SortParameters(GalaxySearchKind.Systems),
                     new ToolParameter
                     {
                         Name = "limit",
@@ -164,7 +165,7 @@ public static class GalaxyCapability
                 Name = "search_stations",
                 Description =
                     "Find stations by type, landing pad, distance from arrival, services, material trader, "
-                    + "technology broker, a module or ship sold there, or their system's filters, nearest first. "
+                    + "technology broker, a module or ship sold there, or their system's filters, nearest first unless order_by says otherwise. "
                     + "Leaves out fleet carriers unless station_type names them. For where to buy a commodity, "
                     + "use find_nearest_station.",
                 Parameters =
@@ -251,6 +252,7 @@ public static class GalaxyCapability
                         Description = "A ship sold there, by name.",
                     },
                     .. GalaxyFilters.For(GalaxySearchKind.Stations).Select(Parameter),
+                    .. SortParameters(GalaxySearchKind.Stations),
                     new ToolParameter
                     {
                         Name = "limit",
@@ -465,6 +467,15 @@ public static class GalaxyCapability
                         Description = "Nearest first, or best price first. Default price.",
                         AllowedValues = ["distance", "price"],
                     },
+                    new ToolParameter
+                    {
+                        Name = "order",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "asc or desc, over the whole answer rather than the rows shown. Default is nearest "
+                            + "first for distance and best price first for price: desc for a seller, asc for a buyer.",
+                        AllowedValues = ["asc", "desc"],
+                    },
                     // Carried onto the posting so a page reading the shared CommodityBoard can tell its own
                     // baked question apart from any other (#303).
                     new ToolParameter
@@ -593,14 +604,7 @@ public static class GalaxyCapability
                         Type = ToolParameterType.String,
                         Description = "A raw surface material the body carries — \"Polonium\".",
                     },
-                    new ToolParameter
-                    {
-                        Name = "order_by",
-                        Type = ToolParameterType.String,
-                        Description =
-                            "\"material\" keeps the richest in that material among the 50 nearest carrying it.",
-                        AllowedValues = ["distance", "material"],
-                    },
+                    .. SortParameters(GalaxySearchKind.Bodies),
                     .. GalaxyFilters.For(GalaxySearchKind.Bodies).Select(Parameter),
                     new ToolParameter
                     {
@@ -706,6 +710,31 @@ public static class GalaxyCapability
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
 
+    /// <summary>The <c>order_by</c> and <c>order</c> parameters of a search of <paramref name="kind"/>.</summary>
+    private static IEnumerable<ToolParameter> SortParameters(GalaxySearchKind kind) =>
+    [
+        new ToolParameter
+        {
+            Name = "order_by",
+            Type = ToolParameterType.String,
+            Description = kind == GalaxySearchKind.Bodies
+                ? "What to sort by. Default distance, nearest first. \"material\" keeps the richest in the "
+                  + $"material among the {BodyQuery.RichestOf} nearest carrying it, and needs material."
+                : "What to sort by across the whole search, not only the rows shown. Default distance, "
+                  + "nearest first.",
+            AllowedValues = [.. SearchSorts.For(kind).Select(field => field.Name)],
+        },
+        new ToolParameter
+        {
+            Name = "order",
+            Type = ToolParameterType.String,
+            Description = "asc or desc. Default is the usual direction for order_by: desc for "
+                          + $"{string.Join(", ", SearchSorts.For(kind).Where(field => field.FirstDescending).Select(field => field.Name))}"
+                          + ", asc for the rest.",
+            AllowedValues = ["asc", "desc"],
+        },
+    ];
+
     /// <summary>A filter as a tool parameter.</summary>
     private static ToolParameter Parameter(GalaxyFilter filter) => new()
     {
@@ -746,7 +775,8 @@ public static class GalaxyCapability
             limit = DefaultLimit;
         }
 
-        if (!GalaxyQuery.TryParse(near, requested, limit, out var query, out var failure))
+        if (!GalaxyQuery.TryParse(
+                near, requested, limit, out var query, out var failure, Text(arguments, "order_by"), Text(arguments, "order")))
         {
             return ToolResult.Error(failure);
         }
@@ -870,6 +900,8 @@ public static class GalaxyCapability
             MinPad = Text(arguments, "min_pad"),
             MaxStationDistance =
                 arguments.TryGetDouble("max_station_distance", out var furthest) ? furthest : null,
+            OrderBy = Text(arguments, "order_by"),
+            Order = Text(arguments, "order"),
             Services = Text(arguments, "services"),
             MaterialTrader = Text(arguments, "material_trader"),
             TechnologyBroker = Text(arguments, "technology_broker"),
@@ -1467,6 +1499,24 @@ public static class GalaxyCapability
             ? CommodityOrder.Distance
             : CommodityOrder.Price;
 
+        bool? descending = null;
+
+        if (arguments.TryGetString("order", out var direction) && !string.IsNullOrWhiteSpace(direction))
+        {
+            if (string.Equals(direction.Trim(), "asc", StringComparison.OrdinalIgnoreCase))
+            {
+                descending = false;
+            }
+            else if (string.Equals(direction.Trim(), "desc", StringComparison.OrdinalIgnoreCase))
+            {
+                descending = true;
+            }
+            else
+            {
+                return ToolResult.Error($"order is asc or desc, not '{direction.Trim()}'.");
+            }
+        }
+
         // Carried straight through to the posting (#303): a caller who baked this question — the Community
         // Goal search is the one that does — can tag it, so a page reading the shared board back knows this
         // answer is its own kind rather than whichever search ran last.
@@ -1484,7 +1534,8 @@ public static class GalaxyCapability
             minAvailable,
             surfaceStations,
             orderBy,
-            tag);
+            tag,
+            descending);
 
         try
         {
@@ -1534,7 +1585,7 @@ public static class GalaxyCapability
             // winning system goes on the clipboard unconditionally, the same way plot_course puts one there,
             // and is remembered for "set a course" and "set a course and take us out" to act on without the
             // Commander repeating it.
-            if (query.OrderBy == CommodityOrder.Distance)
+            if (query.NearestFirst)
             {
                 var winner = answer.Offers.Count > 0 ? answer.Offers[0].Market.System : null;
 
@@ -1614,7 +1665,7 @@ public static class GalaxyCapability
             return nothing + AsAsked(query, maxPriceAge, askedPriceAge, askedLimit);
         }
 
-        if (query.OrderBy == CommodityOrder.Distance)
+        if (query.NearestFirst)
         {
             // Nearest first means the nearest is the answer (#296), and the ear now gets just enough of it to
             // go: what was searched for, the winning station, its system, and the distance to it (#325).
@@ -1773,9 +1824,14 @@ public static class GalaxyCapability
             turned.Add("surface stations included");
         }
 
-        if (query.OrderBy == CommodityOrder.Distance)
+        if (query.NearestFirst)
         {
             turned.Add("nearest first");
+        }
+
+        if (query.Reversed)
+        {
+            turned.Add(query.OrderBy == CommodityOrder.Distance ? "farthest first" : "worst price first");
         }
 
         var said = turned.Count > 0 ? $" Searched {string.Join(", ", turned)}." : string.Empty;
@@ -1949,6 +2005,7 @@ public static class GalaxyCapability
             MaxArrivalDistance = Distance(arguments, "max_arrival_distance"),
             Material = Text(arguments, "material"),
             OrderBy = Text(arguments, "order_by"),
+            Order = Text(arguments, "order"),
             Filters = filters,
             MaxDistance = Distance(arguments, "max_distance"),
             Size = arguments.TryGetInt32("limit", out var limit) ? limit : DefaultLimit,
@@ -2355,7 +2412,7 @@ public static class GalaxyCapability
         {
             report.Append(result.Total == result.Bodies.Count
                 ? $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched"
-                : $"{result.Total} bodies matched; here are the nearest {result.Bodies.Count}");
+                : $"{result.Total} bodies matched; {Ranked(query.Sort, result.Bodies.Count)}");
         }
 
         if (result.Reference is not null)
@@ -2495,6 +2552,12 @@ public static class GalaxyCapability
         }
     }
 
+    /// <summary>"here are the nearest 5", or the order the results were sorted in.</summary>
+    private static string Ranked(SearchSort? sort, int count) =>
+        sort?.Words is { } words
+            ? $"here are {count}, ordered {words.ToLowerInvariant()}"
+            : $"here are the nearest {count}";
+
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
     private static string Describe(StationSearchResult result, StationQuery query)
     {
@@ -2562,7 +2625,7 @@ public static class GalaxyCapability
 
         report.Append(result.Total == result.Stations.Count
             ? $"{result.Total} station{(result.Total == 1 ? "" : "s")} matched"
-            : $"{result.Total} stations matched; here are the nearest {result.Stations.Count}");
+            : $"{result.Total} stations matched; {Ranked(query.Sort, result.Stations.Count)}");
 
         if (result.Reference is not null)
         {
@@ -2671,7 +2734,7 @@ public static class GalaxyCapability
 
         report.Append(result.Total == result.Systems.Count
             ? $"{result.Total} system{(result.Total == 1 ? "" : "s")} matched"
-            : $"{result.Total} systems matched; here are the nearest {result.Systems.Count}");
+            : $"{result.Total} systems matched; {Ranked(query.Sort, result.Systems.Count)}");
 
         if (result.Reference is not null)
         {

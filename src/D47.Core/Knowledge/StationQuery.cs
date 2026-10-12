@@ -98,6 +98,12 @@ public sealed record StationSearch
 
     public string? MaterialTrader { get; init; }
 
+    /// <summary>A name from <see cref="SearchSorts.For"/>; null is distance.</summary>
+    public string? OrderBy { get; init; }
+
+    /// <summary><c>asc</c> or <c>desc</c>; null is the field's first direction.</summary>
+    public string? Order { get; init; }
+
     public string? TechnologyBroker { get; init; }
 
     public string? Module { get; init; }
@@ -155,6 +161,9 @@ public sealed record StationQuery
     public string? TraderType { get; init; }
 
     public int Size { get; init; } = 5;
+
+    /// <summary>What the results are sorted by; null is nearest first.</summary>
+    public SearchSort? Sort { get; init; }
 
     /// <summary>The kinds of station to include; null sends no type filter.</summary>
     public IReadOnlyList<StationKind>? Kinds { get; init; }
@@ -366,6 +375,11 @@ public sealed record StationQuery
             return false;
         }
 
+        if (!SearchSorts.TryParse(GalaxySearchKind.Stations, search.OrderBy, search.Order, out var sort, out failure))
+        {
+            return false;
+        }
+
         var furthest = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null;
 
         if (kinds is null && pad is null && furthest is null && services.Count == 0 && trader is null
@@ -393,6 +407,7 @@ public sealed record StationQuery
             TraderType = trader,
             TechnologyBroker = broker,
             Criteria = criteria,
+            Sort = sort,
             MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };

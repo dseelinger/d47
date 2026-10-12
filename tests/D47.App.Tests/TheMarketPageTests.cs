@@ -136,9 +136,9 @@ public class TheMarketPageTests
         Assert.Contains(drawn, text => text.Contains("Near and dear", StringComparison.Ordinal));
 
         // The columns, and the load total the tonnage bought.
-        Assert.Contains("Price", drawn);
-        Assert.Contains("Stock", drawn);
-        Assert.Contains("The load", drawn);
+        Assert.Contains("PRICE ▲", drawn);
+        Assert.Contains("STOCK", drawn);
+        Assert.Contains("THE LOAD", drawn);
         Assert.Contains("210,000", drawn);
     }
 
@@ -159,7 +159,7 @@ public class TheMarketPageTests
         window.Arrange(new Avalonia.Rect(0, 0, 900, 700));
         Dispatcher.UIThread.RunJobs();
 
-        ResultsTableBounds.RowsStayInsideTheCard(panel, "WHAT CAME BACK", "Station");
+        ResultsTableBounds.RowsStayInsideTheCard(panel, "WHAT CAME BACK", "STATION");
     }
 
     /// <summary>The date is the part this feature is wrong without.</summary>

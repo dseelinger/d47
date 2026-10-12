@@ -86,6 +86,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public const string AskedName = "AskedAgo";
 
+    public const string SortedName = "SortedBy";
+
     public const string OpenSettingName = "OpenTheSetting";
 
     /// <summary>Marks a saved or quick search tile, for a test to find it by its name.</summary>
@@ -347,6 +349,71 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>How many the answer holds.</summary>
     protected abstract int Count(GalaxySearchPosting posting);
+
+    /// <summary>One column of an answer table: its labels, the <c>order_by</c> name the service sorts it on (null for none), and which side its figures sit on.</summary>
+    protected sealed record SearchColumn(string Label, string? Second, string? Sort, bool Right);
+
+    /// <summary>
+    /// The header row of an answer table. A column the service sorts on is pressed to re-run the search
+    /// sorted by it; the sort is carried as <c>order_by</c> and <c>order</c> in the search's arguments.
+    /// </summary>
+    protected Control SearchHead(GalaxySearchPosting posting, string name, string gridColumns, IReadOnlyList<SearchColumn> columns)
+    {
+        var fields = SearchSorts.For(Kind);
+
+        var specs = columns
+            .Select(column => fields.FirstOrDefault(field => field.Name == column.Sort) is { } field
+                ? SortColumn<object>.Remote(column.Label, field.FirstDescending ? SortDirection.Descending : SortDirection.Ascending)
+                  with { Second = column.Second, OneWay = field.OneWay }
+                : SortColumn<object>.Plain(column.Label) with { Second = column.Second })
+            .ToList();
+
+        var nearest = columns.ToList().FindIndex(column => column.Sort == SearchSorts.Distance);
+        var head = new SortHeader<object>(name, specs);
+
+        // A search with no sort is nearest first, so the first press of the distance column reverses it.
+        var current = nearest < 0 ? (SortOrder?)null : new SortOrder(nearest, SortDirection.Ascending);
+
+        if (SearchSorts.Read(Kind, posting.Arguments) is { } asked
+            && columns.ToList().FindIndex(column => column.Sort == asked.Field.Name) is var shown and >= 0)
+        {
+            current = new SortOrder(shown, asked.Descending ? SortDirection.Descending : SortDirection.Ascending);
+        }
+
+        head.Show(current);
+
+        head.Changed += () => SortBy(posting, columns, head.Order);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(gridColumns), ColumnSpacing = 12, Margin = new Thickness(12, 0, 12, 6) };
+
+        for (var index = 0; index < columns.Count; index++)
+        {
+            var cell = head.Cell(index, columns[index].Right ? HorizontalAlignment.Right : HorizontalAlignment.Left);
+            Grid.SetColumn(cell, index);
+            grid.Children.Add(cell);
+        }
+
+        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
+        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+
+        return rule;
+    }
+
+    /// <summary>Runs <paramref name="posting"/>'s search again sorted by <paramref name="order"/>; null is nearest first.</summary>
+    private void SortBy(GalaxySearchPosting posting, IReadOnlyList<SearchColumn> columns, SortOrder? order)
+    {
+        var arguments = new Dictionary<string, string>(Rerun(posting), StringComparer.Ordinal);
+        arguments.Remove("order_by");
+        arguments.Remove("order");
+
+        if (order is { } sort && columns[sort.Column].Sort is { } field)
+        {
+            arguments["order_by"] = field;
+            arguments["order"] = sort.Direction == SortDirection.Ascending ? "asc" : "desc";
+        }
+
+        _ = RunAsync(arguments);
+    }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -685,13 +752,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
 
             case GalaxySearchView.NoResults:
-                block.Children.Add(Head($"0 {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments));
+                block.Children.Add(Head($"0 {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
                 AddNotes(block, last);
                 block.Children.Add(Prose(Sentence!, TypeScale.Secondary, ThemeManager.WhiteKey));
                 break;
 
             case GalaxySearchView.Answer:
-                block.Children.Add(Head($"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments));
+                block.Children.Add(Head($"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
                 AddNotes(block, last);
 
                 if (Table(last, _headset) is { } table)
@@ -725,6 +792,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             ? SearchHistoryPicker.Rerun(posting.Arguments, posting.Reference)
             : posting.Arguments;
 
+    /// <summary>The words for the order the answer was sorted in, or null for nearest first.</summary>
+    private string? Sorted(GalaxySearchPosting posting) => SearchSorts.Read(Kind, posting.Arguments)?.Words;
+
     /// <summary>"Asked 6 hours ago" while a history entry is drawn, or null.</summary>
     private string? Asked(GalaxySearchPosting posting) =>
         ReferenceEquals(posting, _fromHistory) ? $"Asked {MissionsPage.Ago(DateTimeOffset.UtcNow - posting.AskedAt)}" : null;
@@ -736,7 +806,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         bool save,
         bool disabled = false,
         string? asked = null,
-        IReadOnlyDictionary<string, string>? saved = null)
+        IReadOnlyDictionary<string, string>? saved = null,
+        string? sorted = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Bottom, Children = { name } };
@@ -758,6 +829,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             reference.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
             line.Inlines.Add(reference);
             left.Children.Add(line);
+        }
+
+        if (sorted is not null)
+        {
+            var order = Chrome($"· {sorted}", TypeScale.Small, ThemeManager.AKey);
+            order.Name = SortedName;
+            order.VerticalAlignment = VerticalAlignment.Bottom;
+            left.Children.Add(order);
         }
 
         if (asked is not null)

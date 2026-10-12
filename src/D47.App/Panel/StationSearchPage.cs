@@ -29,6 +29,8 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const int DefaultLimit = ShowUpTo.Default;
 
+    public const string HeadName = "StationHead";
+
     private const string Columns = "1.5*,*,64,84,92,1.5*,76";
 
     private const string HeadsetColumns = "1.5*,*,64,84,92,1.5*";
@@ -309,6 +311,8 @@ public sealed class StationSearchPage : GalaxySearchPage
             ModuleClass = Get("module_class"),
             ModuleRating = Get("module_rating"),
             Ship = Get("ship"),
+            OrderBy = Get("order_by"),
+            Order = Get("order"),
             Filters = filters,
         };
 
@@ -352,42 +356,22 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         var columns = headset ? HeadsetColumns : Columns;
 
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 12, Margin = new Thickness(12, 0, 12, 6) };
+        List<SearchColumn> heads =
+        [
+            new("Station", "Type", "name", false),
+            new("System", "Controlled by", "system", false),
+            new("LY", null, SearchSorts.Distance, true),
+            new("Pad", "Largest", null, false),
+            new("From star", null, "from_star", true),
+            new("Asked for", null, null, false),
+        ];
 
-        foreach (var (top, sub, column, right) in new (string, string?, int, bool)[]
-                 {
-                     ("Station", "Type", 0, false),
-                     ("System", "Controlled by", 1, false),
-                     ("LY", null, 2, true),
-                     ("Pad", "Largest", 3, false),
-                     ("From star", null, 4, true),
-                     ("Asked for", null, 5, false),
-                     ("Updated", null, 6, true),
-                 })
+        if (!headset)
         {
-            if (headset && column == 6)
-            {
-                continue;
-            }
-
-            var head = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom, Children = { Chrome(top, TypeScale.Caption, ThemeManager.AKey) } };
-
-            if (sub is not null)
-            {
-                head.Children.Add(Chrome(sub, TypeScale.Caption, ThemeManager.GreyKey));
-            }
-
-            if (right)
-            {
-                head.HorizontalAlignment = HorizontalAlignment.Right;
-            }
-
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
+            heads.Add(new("Updated", null, "updated", true));
         }
 
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+        var rule = SearchHead(posting, HeadName, columns, heads);
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
 

@@ -9,26 +9,23 @@ using static D47.App.Panel.SystemSearchPage;
 
 namespace D47.App.Panel;
 
-/// <summary>Search › Bodies: bodies that match, nearest or richest, through <c>find_body</c>.</summary>
+/// <summary>Search › Bodies: bodies that match, sorted from the column headers, through <c>find_body</c>.</summary>
 public sealed class BodySearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.bodies";
 
-    public const string SummaryText = "Bodies that match, nearest or richest.";
+    public const string SummaryText = "Bodies that match, sorted by column.";
 
     public const int DefaultDistance = 50;
 
     public const int DefaultLimit = ShowUpTo.Default;
 
-    private const string Nearest = "Nearest";
-
-    private const string Richest = "Richest";
+    public const string HeadName = "BodyHead";
 
     private const string Dash = "—";
 
     private readonly Func<string?> _here;
 
-    private readonly Stepper _order = new() { ItemsSource = new[] { Nearest, Richest }, Wraps = false, MaxWidth = double.PositiveInfinity };
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Width = 132 };
@@ -70,7 +67,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         _hotspotCount.PlaceholderText = Any;
         _volcanism.PlaceholderText = Any;
         _atmosphere.PlaceholderText = Any;
-        _order.SelectedIndex = 0;
 
         foreach (var (name, choices) in PickerChoices)
         {
@@ -140,9 +136,6 @@ public sealed class BodySearchPage : GalaxySearchPage
     /// <summary>Ticks or clears a flag by its tool argument name.</summary>
     public void TickFlag(string name, bool ticked) => FlagField(name).IsChecked = ticked;
 
-    /// <summary>Orders the answer by material when true, by distance otherwise.</summary>
-    public void OrderByMaterial(bool byMaterial) => _order.SelectedIndex = byMaterial ? 1 : 0;
-
     public override IReadOnlyDictionary<string, string> FormArguments()
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -160,11 +153,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         if (_distance.Value is { } distance && distance != DefaultDistance)
         {
             arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
-        }
-
-        if (_order.SelectedIndex == 1)
-        {
-            arguments["order_by"] = "material";
         }
 
         foreach (var (name, value) in _picked)
@@ -208,7 +196,6 @@ public sealed class BodySearchPage : GalaxySearchPage
             FlagField(name).IsChecked = false;
         }
 
-        _order.SelectedIndex = 0;
         _distance.Value = DefaultDistance;
         _limit.Value = DefaultLimit;
 
@@ -232,7 +219,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         _fromStar.Text = Get("max_arrival_distance") ?? string.Empty;
         (_gravityFrom.Text, _gravityTo.Text) = Split(Get("gravity"));
         (_temperatureFrom.Text, _temperatureTo.Text) = Split(Get("temperature"));
-        _order.SelectedIndex = string.Equals(Get("order_by"), "material", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
 
         foreach (var name in Flags)
         {
@@ -285,6 +271,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             MaxArrivalDistance = double.TryParse(Get("max_arrival_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var furthest) ? furthest : null,
             Material = Get("material"),
             OrderBy = Get("order_by"),
+            Order = Get("order"),
             Filters = filters,
         };
 
@@ -331,47 +318,26 @@ public sealed class BodySearchPage : GalaxySearchPage
         var shareColumn = material is null ? -1 : 5;
         var gravityColumn = headset ? -1 : shareColumn < 0 ? 5 : 6;
 
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 12, Margin = new Thickness(12, 0, 12, 6) };
-
-        var titles = new List<(string Top, string? Sub, int Column, bool Right)>
-        {
-            ("Body", "Type", 0, false),
-            ("System", null, 1, false),
-            ("LY", null, 2, true),
-            ("From star", null, 3, true),
-            ("Landable", null, 4, false),
-        };
+        List<SearchColumn> heads =
+        [
+            new("Body", "Type", "name", false),
+            new("System", null, "system", false),
+            new("LY", null, SearchSorts.Distance, true),
+            new("From star", null, "from_star", true),
+            new("Landable", null, null, false),
+        ];
 
         if (shareColumn >= 0)
         {
-            titles.Add((material!, "Share", shareColumn, true));
+            heads.Add(new(material!, "Share", SearchSorts.Material, true));
         }
 
         if (gravityColumn >= 0)
         {
-            titles.Add(("Gravity", null, gravityColumn, true));
+            heads.Add(new("Gravity", null, "gravity", true));
         }
 
-        foreach (var (top, sub, column, right) in titles)
-        {
-            var head = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom, Children = { Chrome(top, TypeScale.Caption, ThemeManager.AKey) } };
-
-            if (sub is not null)
-            {
-                head.Children.Add(Chrome(sub, TypeScale.Caption, ThemeManager.GreyKey));
-            }
-
-            if (right)
-            {
-                head.HorizontalAlignment = HorizontalAlignment.Right;
-            }
-
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
-        }
-
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads };
-        Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
+        var rule = SearchHead(posting, HeadName, columns, heads);
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
 
@@ -398,8 +364,6 @@ public sealed class BodySearchPage : GalaxySearchPage
     protected override Control BuildForm()
     {
         var form = new StackPanel { Spacing = 22 };
-
-        form.Children.Add(Group("Order", Labelled("Show the", _order)));
 
         form.Children.Add(Group(
             "Search out from",

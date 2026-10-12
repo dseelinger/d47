@@ -443,15 +443,25 @@ public sealed record GalaxyQuery
 
     public int Size { get; init; } = 5;
 
+    /// <summary>What the results are sorted by; null is nearest first.</summary>
+    public SearchSort? Sort { get; init; }
+
     /// <summary>Builds a query, or explains what was wrong with it in words the model can act on.</summary>
     public static bool TryParse(
         string? referenceSystem,
         IReadOnlyDictionary<string, string> requested,
         int size,
         out GalaxyQuery query,
-        out string failure)
+        out string failure,
+        string? orderBy = null,
+        string? order = null)
     {
         query = new GalaxyQuery();
+
+        if (!SearchSorts.TryParse(GalaxySearchKind.Systems, orderBy, order, out var sort, out failure))
+        {
+            return false;
+        }
 
         if (!GalaxyCriteria.TryParse(GalaxySearchKind.Systems, requested, out var criteria, out failure))
         {
@@ -462,6 +472,7 @@ public sealed record GalaxyQuery
         {
             ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             Criteria = criteria,
+            Sort = sort,
 
             // Clamped rather than rejected.
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),

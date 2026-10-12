@@ -33,6 +33,10 @@ public enum TradeSide
 /// </param>
 /// <param name="OrderBy">Nearest first, or best price first.</param>
 /// <param name="Tag">Who baked this question, or null for an ordinary one (#303).</param>
+/// <param name="Descending">
+/// Whether the order is reversed: highest figure first when true, lowest when false, and the order's usual
+/// direction when null — nearest first for distance, best price first for price.
+/// </param>
 public sealed record CommodityQuery(
     string Commodity,
     TradeSide Side = TradeSide.Buying,
@@ -45,7 +49,17 @@ public sealed record CommodityQuery(
     int? MinAvailable = null,
     bool SurfaceStations = false,
     CommodityOrder OrderBy = CommodityOrder.Price,
-    string? Tag = null);
+    string? Tag = null,
+    bool? Descending = null)
+{
+    /// <summary>Ranked nearest first, so the winner is a place to go.</summary>
+    public bool NearestFirst => OrderBy == CommodityOrder.Distance && Descending != true;
+
+    /// <summary>Whether the ranking is turned round from the order's usual direction.</summary>
+    public bool Reversed => OrderBy == CommodityOrder.Distance
+        ? Descending == true
+        : Descending is { } descending && descending != (Side == TradeSide.Selling);
+}
 
 /// <summary>Which way a commodity answer is ranked (#296).</summary>
 public enum CommodityOrder
@@ -169,7 +183,14 @@ public static class CommodityMarketSearch
             ? offers.OrderBy(offer => offer.Distance).ThenBy(offer => Score(query, offer))
             : offers.OrderBy(offer => Score(query, offer));
 
-        return [.. ranked.Take(Math.Max(1, query.Limit))];
+        var order = ranked.ToList();
+
+        if (query.Reversed)
+        {
+            order.Reverse();
+        }
+
+        return [.. order.Take(Math.Max(1, query.Limit))];
     }
 
     /// <summary>Lower is better, both ways round.</summary>

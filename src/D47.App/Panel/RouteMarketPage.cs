@@ -16,6 +16,8 @@ namespace D47.App.Panel;
 /// </summary>
 public sealed class RouteMarketPage : UserControl
 {
+    public const string HeadName = "MarketHead";
+
     /// <summary>How long a search may run.</summary>
     private static readonly TimeSpan Budget = TimeSpan.FromSeconds(70);
 
@@ -60,6 +62,8 @@ public sealed class RouteMarketPage : UserControl
     private readonly CheckBox _surfaceStations;
 
     private readonly StatusLine _status;
+
+    private bool _sorting;
 
     private readonly StackPanel _results = new() { Spacing = 6 };
 
@@ -247,7 +251,7 @@ public sealed class RouteMarketPage : UserControl
 
         var rows = new StackPanel { Spacing = 2 };
 
-        rows.Children.Add(HeaderRow(buying, posting.Query.Tonnes is not null, posting.Answer.OriginKnown));
+        rows.Children.Add(HeaderRow(posting));
 
         foreach (var offer in posting.Answer.Offers)
         {
@@ -276,29 +280,144 @@ public sealed class RouteMarketPage : UserControl
         _results.Children.Add(stack);
     }
 
-    private static Control HeaderRow(bool buying, bool hasLoad, bool distances)
+    /// <summary>The distance and price columns sort the whole answer, so a press asks again; the rest are plain labels.</summary>
+    private Control HeaderRow(CommodityPosting posting)
     {
+        var buying = posting.Query.Side == TradeSide.Buying;
+        var best = buying ? SortDirection.Ascending : SortDirection.Descending;
+
+        List<(string Label, double Width, SortColumn<object> Column)> heads =
+        [
+            ("Station", StationColumnWidth, SortColumn<object>.Plain("Station")),
+        ];
+
+        if (posting.Answer.OriginKnown)
+        {
+            heads.Add(("Distance", 80, SortColumn<object>.Remote("Distance", SortDirection.Ascending)));
+        }
+
+        heads.Add((buying ? "Price" : "Pays", 90, SortColumn<object>.Remote(buying ? "Price" : "Pays", best)));
+        heads.Add((buying ? "Stock" : "Demand", 90, SortColumn<object>.Plain(buying ? "Stock" : "Demand")));
+
+        if (posting.Query.Tonnes is not null)
+        {
+            heads.Add(("The load", 110, SortColumn<object>.Plain("The load")));
+        }
+
+        heads.Add(("Priced", 130, SortColumn<object>.Plain("Priced")));
+
+        var columns = heads.Select(head => head.Column).ToList();
+        var header = new SortHeader<object>(HeadName, columns);
+        var distance = heads.FindIndex(head => head.Label == "Distance");
+        var price = heads.FindIndex(head => head.Label is "Price" or "Pays");
+
+        // Ranked by the usual order until a column is pressed, so a first press reverses it.
+        var current = posting.Query.OrderBy == CommodityOrder.Distance && distance >= 0
+            ? new SortOrder(distance, posting.Query.Descending == true ? SortDirection.Descending : SortDirection.Ascending)
+            : new SortOrder(price, posting.Query.Descending is { } descending
+                ? descending ? SortDirection.Descending : SortDirection.Ascending
+                : best);
+
+        header.Show(current);
+        header.Changed += () => SortBy(posting, header.Order, distance, price);
+
         // Inset by a list row's padding, so each header sits over its column.
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(12, 0) };
 
-        row.Children.Add(Cell("Station", StationColumnWidth, muted: true));
-
-        if (distances)
+        for (var index = 0; index < heads.Count; index++)
         {
-            row.Children.Add(Cell("Distance", 80, muted: true));
+            var cell = header.Cell(index, HorizontalAlignment.Left);
+
+            // A pressable cell bleeds six either side of its column.
+            cell.Width = heads[index].Width + (columns[index].Sortable ? 12 : 0);
+            row.Children.Add(cell);
         }
-
-        row.Children.Add(Cell(buying ? "Price" : "Pays", 90, muted: true));
-        row.Children.Add(Cell(buying ? "Stock" : "Demand", 90, muted: true));
-
-        if (hasLoad)
-        {
-            row.Children.Add(Cell("The load", 110, muted: true));
-        }
-
-        row.Children.Add(Cell("Priced", 130, muted: true));
 
         return row;
+    }
+
+    /// <summary>Asks the same question again, ranked by the pressed column; null is the usual order.</summary>
+    private void SortBy(CommodityPosting posting, SortOrder? order, int distance, int price)
+    {
+        var query = posting.Query;
+
+        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["commodity"] = query.Commodity,
+            ["near"] = posting.Near,
+            ["max_distance"] = query.MaxDistance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture),
+            ["limit"] = query.Limit.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+
+        foreach (var (key, on) in new (string, bool)[]
+                 {
+                     ("selling", query.Side == TradeSide.Selling),
+                     ("large_pad", query.LargePadOnly),
+                     ("include_carriers", query.IncludeCarriers),
+                     ("surface_stations", query.SurfaceStations),
+                 })
+        {
+            if (on)
+            {
+                values[key] = "true";
+            }
+        }
+
+        if (query.Tonnes is { } tonnes)
+        {
+            values["tonnes"] = tonnes.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (query.MaxStationDistance is { } lightSeconds)
+        {
+            values["max_station_distance"] = lightSeconds.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (query.MinAvailable is { } least)
+        {
+            values["min_supply"] = least.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (query.Tag is { } tag)
+        {
+            values["tag"] = tag;
+        }
+
+        if (order is { } sort)
+        {
+            values["order_by"] = sort.Column == distance ? "distance" : "price";
+            values["order"] = sort.Direction == SortDirection.Ascending ? "asc" : "desc";
+        }
+
+        _ = AskAsync(new ToolArguments(values));
+    }
+
+    private async Task AskAsync(ToolArguments arguments)
+    {
+        if (!_lookupsEnabled() || _sorting)
+        {
+            return;
+        }
+
+        _sorting = true;
+        RoutingKit.Say(_status, "Reading the markets nearby…");
+
+        try
+        {
+            using var inFlight = new CancellationTokenSource(Budget);
+            var result = await _registry.InvokeAsync("find_nearest_station", arguments, inFlight.Token).ConfigureAwait(true);
+
+            RoutingKit.Say(_status, result.Content, result.IsError);
+            Refresh();
+        }
+        catch (OperationCanceledException)
+        {
+            RoutingKit.Say(_status, "Stopped.");
+        }
+        finally
+        {
+            _sorting = false;
+        }
     }
 
     private Control OfferRow(CommodityOffer offer, CommodityPosting posting)
