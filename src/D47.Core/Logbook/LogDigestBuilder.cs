@@ -35,7 +35,15 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         LogFactKind.Travel,
     ];
 
-    public LogDigest Build(IReadOnlyList<string> files, LogRange range, IReadOnlyList<LogStoryBeat>? storyBeats = null)
+    /// <summary>
+    /// With <paramref name="frontierId"/>, only events between a <c>Commander</c> or <c>LoadGame</c> naming that
+    /// Frontier ID and the next one naming anybody else are folded.
+    /// </summary>
+    public LogDigest Build(
+        IReadOnlyList<string> files,
+        LogRange range,
+        IReadOnlyList<LogStoryBeat>? storyBeats = null,
+        string? frontierId = null)
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(range);
@@ -61,10 +69,21 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
             }
 
             using var reader = new StreamReader(stream);
+            var wanted = frontierId is null;
 
             while (reader.ReadLine() is { } line)
             {
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
+                {
+                    continue;
+                }
+
+                if (frontierId is not null && parsed.Kind is "Commander" or "LoadGame")
+                {
+                    wanted = string.Equals(parsed.String("FID"), frontierId, StringComparison.Ordinal);
+                }
+
+                if (!wanted)
                 {
                     continue;
                 }

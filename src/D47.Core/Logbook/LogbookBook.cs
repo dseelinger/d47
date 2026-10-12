@@ -1,6 +1,7 @@
 using System.Globalization;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Logbook;
@@ -22,6 +23,9 @@ public sealed record LogbookContext
     public string? Persona { get; init; }
 
     public string? AboutMe { get; init; }
+
+    /// <summary>The shown Commander's Frontier ID; null reads every Commander's journals.</summary>
+    public string? FrontierId { get; init; }
 
     /// <summary>Where the charge goes afterwards.</summary>
     public SpendLedger? Ledger { get; init; }
@@ -64,8 +68,46 @@ public sealed class LogbookBook(
         }
     }
 
-    /// <summary>The days with journals, newest first.</summary>
-    public IReadOnlyList<DateOnly> JournalDays() => LogDays.FromFileNames(journals());
+    /// <summary>The days the shown Commander has journals on, newest first.</summary>
+    public IReadOnlyList<DateOnly> JournalDays()
+    {
+        var wanted = context().FrontierId;
+
+        return LogDays.FromFileNames(wanted is null ? journals() : journals().Where(file => Names(file, wanted)));
+    }
+
+    private bool Names(string file, string frontierId)
+    {
+        try
+        {
+            using var stream = folder.Files.OpenRead(file);
+
+            if (stream is null)
+            {
+                return false;
+            }
+
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
+            {
+                if ((line.Contains("\"Commander\"", StringComparison.Ordinal) ||
+                        line.Contains("\"LoadGame\"", StringComparison.Ordinal)) &&
+                    JournalEvent.TryParse(line, logger, out var parsed) &&
+                    parsed is { Kind: "Commander" or "LoadGame" } &&
+                    string.Equals(parsed.String("FID"), frontierId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogDebug(ex, "Could not read {File} for the Commander's days", file);
+        }
+
+        return false;
+    }
 
     /// <summary>Raised when the arming or the folder changed.</summary>
     public event Action? Changed;
@@ -83,13 +125,14 @@ public sealed class LogbookBook(
     {
         var current = settings();
         var files = journals();
+        var host = context();
 
         var range = from is { } start && to is { } end
             ? LogRanges.Between(start, end)
-            : LogRanges.Resolve(folder.Files, LogRanges.Parse(spanId ?? current.Range), now(), files, logger);
+            : LogRanges.Resolve(
+                folder.Files, LogRanges.Parse(spanId ?? current.Range), now(), files, logger, host.FrontierId);
 
-        var digest = digests.Build(files, range, storyBeats?.Invoke());
-        var host = context();
+        var digest = digests.Build(files, range, storyBeats?.Invoke(), host.FrontierId);
 
         if (NotReady(host) is { } why)
         {

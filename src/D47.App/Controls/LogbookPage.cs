@@ -180,7 +180,7 @@ public sealed class LogbookPage : DialogPage
                 Describe = value => LogDays.Parse(value) is { } day ? $"{value}, {LogDays.Weekday(day)}" : value,
                 Current = current is { } c ? LogDays.Write(c) : null,
                 AllowsFreeText = true,
-                WhyEmpty = "There are no journals on this machine to take a day from. You can still type one, like 2026-09-14.",
+                WhyEmpty = "There are no journals for this Commander to take a day from. You can still type one, like 2026-09-14.",
             },
             result => TakeDay(from, result.Value));
 
@@ -272,7 +272,7 @@ public sealed class LogbookPage : DialogPage
         if (entries.Count == 0)
         {
             _entries.Children.Add(Muted(
-                $"Nothing written yet. Logs go to {_book.Folder.Folder} as plain markdown, and D47 never "
+                $"Nothing written yet. Logs go to {_book.Folder.WriteFolder} as plain markdown, and D47 never "
                 + "overwrites one."));
 
             return;

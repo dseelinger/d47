@@ -11,8 +11,8 @@ public sealed record LogEntry(string Path, DateTimeOffset Written, long Bytes)
     public string Name => System.IO.Path.GetFileName(Path);
 }
 
-/// <summary>The folder the logs live in (Phase 33, item 1).</summary>
-public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolder> logger)
+/// <summary>The folder the logs live in (Phase 33, item 1). Logs for a Commander go in a subfolder named by their Frontier ID.</summary>
+public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolder> logger, Func<string?>? commander = null)
 {
     public const string FolderName = "commander-log";
 
@@ -20,18 +20,29 @@ public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolde
 
     public IFileSystem Files => files;
 
+    /// <summary>Where the next log is written: the shown Commander's subfolder, or <see cref="Folder"/> when none is known.</summary>
+    public string WriteFolder => CommanderFolder() ?? folder;
+
+    private string? CommanderFolder()
+    {
+        var id = new string([.. (commander?.Invoke() ?? string.Empty).Where(char.IsAsciiLetterOrDigit)]);
+
+        return id.Length == 0 ? null : System.IO.Path.Combine(folder, id);
+    }
+
     /// <summary>Writes one log and answers where it went.</summary>
     public string Write(string content, LogRange range, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(range);
 
         var stem = $"{now:yyyy-MM-dd}-{LogRanges.IdOf(range.Span)}";
-        var path = System.IO.Path.Combine(folder, $"{stem}.md");
+        var target = WriteFolder;
+        var path = System.IO.Path.Combine(target, $"{stem}.md");
 
         // Never overwrite.
         for (var suffix = 2; files.Stat(path) is not null && suffix < 1000; suffix++)
         {
-            path = System.IO.Path.Combine(folder, $"{stem}-{suffix.ToString(CultureInfo.InvariantCulture)}.md");
+            path = System.IO.Path.Combine(target, $"{stem}-{suffix.ToString(CultureInfo.InvariantCulture)}.md");
         }
 
         files.WriteText(path, content);
@@ -48,6 +59,7 @@ public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolde
             return
             [
                 .. files.Enumerate(folder, "*.md")
+                    .Concat(CommanderFolder() is { } own ? files.Enumerate(own, "*.md") : [])
                     .Select(path => (Path: path, State: files.Stat(path)))
                     .Where(file => file.State is not null)
                     .Select(file => new LogEntry(file.Path, new DateTimeOffset(file.State!.Value.Written, TimeSpan.Zero), file.State.Value.Length))
@@ -68,7 +80,7 @@ public sealed class LogFolder(string folder, IFileSystem files, ILogger<LogFolde
 
         if (entries.Count == 0)
         {
-            return $"No logs written yet. They will go to {folder}.";
+            return $"No logs written yet. They will go to {WriteFolder}.";
         }
 
         var text = new StringBuilder();

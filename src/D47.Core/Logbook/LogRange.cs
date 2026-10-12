@@ -104,7 +104,8 @@ public static class LogRanges
         LogSpan span,
         DateTimeOffset now,
         IReadOnlyList<string> files,
-        ILogger logger)
+        ILogger logger,
+        string? frontierId = null)
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -134,12 +135,17 @@ public static class LogRanges
                 Label = "the last thirty days",
             },
 
-            _ => Session(fileSystem, now, files, logger),
+            _ => Session(fileSystem, now, files, logger, frontierId),
         };
     }
 
     /// <summary>Walks the newest journals backwards for the most recent <c>LoadGame</c>.</summary>
-    private static LogRange Session(IFileSystem fileSystem, DateTimeOffset now, IReadOnlyList<string> files, ILogger logger)
+    private static LogRange Session(
+        IFileSystem fileSystem,
+        DateTimeOffset now,
+        IReadOnlyList<string> files,
+        ILogger logger,
+        string? frontierId)
     {
         const int LookBack = 8;
 
@@ -156,7 +162,8 @@ public static class LogRanges
                 {
                     if (!line.Contains("\"LoadGame\"", StringComparison.Ordinal) ||
                         !JournalEvent.TryParse(line, logger, out var parsed) ||
-                        parsed is not { Kind: "LoadGame" })
+                        parsed is not { Kind: "LoadGame" } ||
+                        (frontierId is not null && !string.Equals(parsed.String("FID"), frontierId, StringComparison.Ordinal)))
                     {
                         continue;
                     }

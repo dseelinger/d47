@@ -1754,7 +1754,8 @@ public sealed class AppHost : IDisposable
             new D47.Core.Logbook.LogFolder(
                 Path.Combine(paths.Data, D47.Core.Logbook.LogFolder.FolderName),
                 files,
-                loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>()),
+                loggerFactory.CreateLogger<D47.Core.Logbook.LogFolder>(),
+                () => gameState.Active?.Identity.FrontierId),
             new D47.Core.Logbook.LogDigestBuilder(files, loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
             new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
             () => settings.Current.Logbook,
@@ -1777,6 +1778,7 @@ public sealed class AppHost : IDisposable
                     settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: true),
                 Ledger = spendLedger,
                 Version = version,
+                FrontierId = gameState.Active?.Identity.FrontierId,
             },
             loggerFactory.CreateLogger<D47.Core.Logbook.LogbookBook>(),
             () =>
