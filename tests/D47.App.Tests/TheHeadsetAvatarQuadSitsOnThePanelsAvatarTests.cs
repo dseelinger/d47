@@ -14,8 +14,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The avatar quad covers the panel's avatar as drawn, zoom included, plays the panel's clip, and hands the
-/// still frame back when something covers it (#1130).
+/// The avatar quad covers the panel's avatar as drawn, zoom included, plays the panel's clip over the panel's
+/// still frame of it, and steps aside when something covers it (#1130).
 /// </summary>
 [Trait("Category", "Integration")]
 public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
@@ -121,7 +121,7 @@ public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void TheQuadPlaysThePanelsClipAndBlanksItsStill()
+    public void TheQuadPlaysThePanelsClipOverItsStill()
     {
         var (panel, avatar) = Headset("full");
 
@@ -129,8 +129,7 @@ public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
 
         Assert.True(avatar.Visible);
         Assert.True(avatar.IsDirty);
-        Assert.True(panel.AvatarOverlaid);
-        Assert.True(panel.IsDirty, "the panel redraws without its still");
+        Assert.False(panel.IsDirty, "the panel keeps its still under the quad");
 
         Draw(avatar);
         avatar.Advance(Start.AddMilliseconds(10));
@@ -145,7 +144,7 @@ public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void TheResizeHandlesTakeTheQuadDownAndBringTheStillBack()
+    public void TheResizeHandlesTakeTheQuadDown()
     {
         var (panel, avatar) = Headset("full");
 
@@ -157,8 +156,6 @@ public class TheHeadsetAvatarQuadSitsOnThePanelsAvatarTests : IDisposable
 
         Assert.True(panel.AvatarCovered);
         Assert.False(avatar.Visible);
-        Assert.False(panel.AvatarOverlaid);
-        Assert.True(panel.IsDirty, "the panel redraws with its still");
     }
 }
 

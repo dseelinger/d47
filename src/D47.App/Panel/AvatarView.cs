@@ -115,19 +115,6 @@ public sealed class AvatarView : UserControl
     /// <summary>What the clip or picture is drawn in.</summary>
     internal Image Picture => _custom;
 
-    /// <summary>Draws the clip transparent, keeping its place, while something else plays it over this one.</summary>
-    public bool ClipHidden
-    {
-        get => _clipHidden;
-        set
-        {
-            _clipHidden = value;
-            _custom.Opacity = value && _clipFrame is not null ? 0 : 1;
-        }
-    }
-
-    private bool _clipHidden;
-
     /// <summary>Show a clip's first frame only, with no timer.</summary>
     public bool Still
     {
@@ -414,7 +401,6 @@ public sealed class AvatarView : UserControl
         _clipIndex = 0;
         _clipDirection = 1;
         _custom.Source = frame;
-        _custom.Opacity = _clipHidden ? 0 : 1;
         _custom.IsVisible = true;
         _ring.IsVisible = false;
         _core.IsVisible = false;
@@ -519,7 +505,6 @@ public sealed class AvatarView : UserControl
             _custom.Source = null;
         }
 
-        _custom.Opacity = 1;
         _clipFrame?.Dispose();
         _clip?.Dispose();
         _clipFrame = null;

@@ -276,22 +276,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Whether a modal, a chooser or the resize handles may be drawn over the avatar.</summary>
     public bool AvatarCovered => Modal is not null || _handlesShown || _offscreen.IsChoosing;
 
-    /// <summary>Blanks the avatar's still frame while the avatar overlay plays the clip over it.</summary>
-    public bool AvatarOverlaid
-    {
-        get => _view.Avatar.ClipHidden;
-        set
-        {
-            if (_view.Avatar.ClipHidden == value)
-            {
-                return;
-            }
-
-            _view.Avatar.ClipHidden = value;
-            _dirty = true;
-        }
-    }
-
     /// <summary>Redraws the clocks, from the headset's own tick.</summary>
     /// <summary>
     /// Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody (Phase

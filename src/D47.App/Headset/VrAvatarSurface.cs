@@ -62,7 +62,6 @@ public sealed class VrAvatarSurface(VrPanelSurface panel) : IVrSurfaceSource, ID
         }
 
         Visible = Shows(panel.Visible, _frames.Count > 0, panel.AvatarArea is not null, panel.AvatarCovered);
-        panel.AvatarOverlaid = Visible;
     }
 
     public void Draw(IntPtr destination, int rowBytes)
@@ -78,11 +77,7 @@ public sealed class VrAvatarSurface(VrPanelSurface panel) : IVrSurfaceSource, ID
         _drawn = _showing;
     }
 
-    public void Dispose()
-    {
-        Close();
-        panel.AvatarOverlaid = false;
-    }
+    public void Dispose() => Close();
 
     /// <summary>Whether the quad goes up: the panel is, a clip is decoded, it was drawn, and nothing covers it.</summary>
     internal static bool Shows(bool panelVisible, bool hasFrames, bool drawnOnPanel, bool covered) =>
