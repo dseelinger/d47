@@ -126,6 +126,11 @@ public sealed class GameStateStore
     public Func<string, PowerplayCycleMerits?>? RestoreCycleMerits { get; init; }
 
     /// <summary>
+    /// The credits this Commander's newest LoadGame reported, on the same terms as <see cref="RestoreFleet"/>.
+    /// </summary>
+    public Func<string, long?>? RestoreCredits { get; init; }
+
+    /// <summary>
     /// Raised when <see cref="Active"/> changes (Phase 44, "One switch signal").
     /// </summary>
     public event Action<CommanderSwitch>? CommanderChanged;
@@ -207,6 +212,11 @@ public sealed class GameStateStore
             if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
             {
                 state.CycleMerits = merits.With(state.CycleMerits);
+            }
+
+            if (RestoreCredits?.Invoke(fid) is { } credits)
+            {
+                state.RestoreBalance(credits);
             }
         }
     }
@@ -364,6 +374,11 @@ public sealed class GameStateStore
             state.Reputation = evidence.Reputation;
             state.Contributions = evidence.Contributions;
             state.Tallies = evidence.Tallies;
+        }
+
+        if (RestoreCredits?.Invoke(identity.FrontierId) is { } credits)
+        {
+            state.RestoreBalance(credits);
         }
 
         _byFrontierId[identity.FrontierId] = state;

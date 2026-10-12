@@ -2256,7 +2256,7 @@ public sealed class AdventureGenerator(
                 state?.Ranks ?? RankState.Empty,
                 state?.Session.Balance,
                 state?.Squadron.IsMember == true,
-                OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>()],
+                OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>().Select(type => EliteSpecifications.HullSymbol(type) ?? type)],
                 Standings: state?.Standings,
                 Missions: state?.Missions.Missions,
                 ClosedMarketId: ask.Rewrite?.ClosedMarketId);

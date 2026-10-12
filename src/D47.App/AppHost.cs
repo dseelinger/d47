@@ -1084,6 +1084,10 @@ public sealed class AppHost : IDisposable
 
             // And the merits earned for the Commander's Power earlier this cycle.
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
+
+            // And the credits the Commander's newest LoadGame reported, which a Commander picked while someone
+            // else is in the game never folds.
+            RestoreCredits = fid => history.Credits is { } credits && credits.TryGetValue(fid, out var held) ? held : null,
         };
 
         // The settings follow the shown Commander, picked or logged in.

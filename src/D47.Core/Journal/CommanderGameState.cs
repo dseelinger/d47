@@ -97,6 +97,15 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Since they entered the game.</summary>
     public SessionSummary Session { get; private set; } = SessionSummary.Empty;
 
+    /// <summary>Takes credits recovered from an older journal as the balance, unless a LoadGame has set one.</summary>
+    internal void RestoreBalance(long credits)
+    {
+        if (Session.Balance is null)
+        {
+            Session = Session with { Balance = credits };
+        }
+    }
+
     /// <summary>The hired NPC pilots on the books (Phase 11, "Ship Crew").</summary>
     public ShipCrew Crew { get; private set; } = ShipCrew.Empty;
 

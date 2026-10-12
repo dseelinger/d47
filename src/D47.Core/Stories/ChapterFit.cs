@@ -67,6 +67,11 @@ public static class ChapterFit
             return $"d47 has no price for a {name}, which the Commander does not own";
         }
 
+        if (credits is null)
+        {
+            return $"d47 does not know the Commander's credits, and a {name} costs {price.ToString("N0", CultureInfo.InvariantCulture)}";
+        }
+
         var needed = Needed(price);
 
         return credits >= needed
@@ -102,9 +107,12 @@ public static class ChapterFit
         return pacing.FinaleDay >= LongHaulFrom.FinaleDay
                && state is not null
                && (state.Session.Balance >= LongHaulCredits
-                   || string.Equals(state.Ship.Type, LongHaulHull, StringComparison.OrdinalIgnoreCase)
-                   || state.Fleet.Ships.Any(ship => string.Equals(ship.Type, LongHaulHull, StringComparison.OrdinalIgnoreCase)));
+                   || IsLongHaulHull(state.Ship.Type)
+                   || state.Fleet.Ships.Any(ship => IsLongHaulHull(ship.Type)));
     }
+
+    private static bool IsLongHaulHull(string? type) =>
+        string.Equals(Knowledge.EliteSpecifications.HullSymbol(type) ?? type, LongHaulHull, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The chapter size the writer is given for a story this long.</summary>
     public static string Size(StoryPacing pacing)

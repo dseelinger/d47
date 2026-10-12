@@ -120,6 +120,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's merits for their Power over the last week.</summary>
     public IReadOnlyDictionary<string, PowerplayCycleMerits>? CycleMerits { get; private set; }
 
+    /// <summary>The credits each Commander's newest LoadGame reported.</summary>
+    public IReadOnlyDictionary<string, long>? Credits { get; private set; }
+
     /// <summary>
     /// Walks the five, in order, on the calling thread. A second call does nothing: the answer is wanted
     /// once. Cancelling stops it at the next journal file and leaves it <see cref="HistoryState.Stopped"/>,
@@ -230,6 +233,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(PowerplayCycleBackfill)),
+                    cancellation));
+
+            Credits = Timed(
+                "credits backfill",
+                () => CreditsBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(CreditsBackfill)),
                     cancellation));
 
             if (Exobiology is { } exobiology)
