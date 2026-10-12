@@ -324,6 +324,18 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             .LastOrDefault()
             ?.Summary ?? string.Empty;
 
+    /// <summary>Forgets every level whose key matches.</summary>
+    public void ForgetWhere(Func<string, bool> match)
+    {
+        foreach (var key in _built.Keys.Where(match).ToList())
+        {
+            _built.Remove(key);
+        }
+
+        _showing = [];
+        Draw();
+    }
+
     /// <summary>Forgets a level's page, so the next visit rebuilds it.</summary>
     public void Forget(string key)
     {

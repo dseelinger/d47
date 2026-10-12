@@ -763,6 +763,14 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly StoriesFurnishing _stories;
     private readonly NavigationFurnishing _navigation;
 
+    public void Forget(PanelTab tab, Func<string, bool> match)
+    {
+        if (_pages.TryGetValue(tab, out var strip))
+        {
+            strip.ForgetWhere(match);
+        }
+    }
+
     /// <summary>
     /// Gives this surface a tab, built by <paramref name="build"/> the first time it is selected, with
     /// the roots it offers (Phase 25).

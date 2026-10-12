@@ -128,6 +128,11 @@ public sealed class StoriesView : UserControl
         _director.WritingChanged += OnChanged;
         _director.OdysseyChanged += OnChanged;
 
+        if (_surface.Switched is { } switched)
+        {
+            switched.Changed += OnSwitched;
+        }
+
         if (_downloads is not null)
         {
             _downloads.Landed += OnChanged;
@@ -149,6 +154,11 @@ public sealed class StoriesView : UserControl
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
         _director.OdysseyChanged -= OnChanged;
+
+        if (_surface.Switched is { } switched)
+        {
+            switched.Changed -= OnSwitched;
+        }
 
         if (_downloads is not null)
         {
@@ -180,6 +190,27 @@ public sealed class StoriesView : UserControl
             : null;
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void OnSwitched() => Dispatcher.UIThread.Post(() =>
+    {
+        _status.Clear();
+        Rebuild();
+    });
+
+    internal const string CommanderChangedRefusal = "The Commander changed. Nothing was done.";
+
+    /// <summary>Runs <paramref name="act"/> if <paramref name="drawnFor"/> is still the shown Commander; otherwise says nothing was done.</summary>
+    private bool IfShown(string? drawnFor, StatusLine status, Action act)
+    {
+        if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+        {
+            status.Fail(CommanderChangedRefusal);
+            return false;
+        }
+
+        act();
+        return true;
+    }
 
     private void Rebuild()
     {
@@ -276,11 +307,21 @@ public sealed class StoriesView : UserControl
     }
 
     /// <summary>The Story on checkbox for the Commander's current story.</summary>
-    internal static Control StoryOnBox(AdventureSurface surface, StoryDirector director, Story story)
+    internal static Control StoryOnBox(AdventureSurface surface, StoryDirector director, Story story, string? commander, StatusLine? status = null)
     {
         var (box, _) = LabeledCheckBox.Build("Story on");
         box.IsChecked = !story.IsOff;
-        box.IsCheckedChanged += (_, _) => director.SetOn(surface.Commander(), box.IsChecked == true, surface.Now());
+        box.IsCheckedChanged += (_, _) =>
+        {
+            if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+            {
+                box.IsChecked = !story.IsOff;
+                status?.Fail(CommanderChangedRefusal);
+                return;
+            }
+
+            director.SetOn(commander, box.IsChecked == true, surface.Now());
+        };
         return box;
     }
 
@@ -288,9 +329,15 @@ public sealed class StoriesView : UserControl
     /// Asks whether to replace the beat the current story's chapter is waiting on, and on yes has a different one written.
     /// <paramref name="doing"/> runs when the write starts; <paramref name="done"/> gets its refusal, or null.
     /// </summary>
-    internal static void NotForMe(AdventureSurface surface, PanelPrompts prompts, Action doing, Action<string?> done)
+    internal static void NotForMe(AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done)
     {
-        if (surface.Stories is not { } director || director.RefusableBeat(surface.Commander()) is not { } beat)
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            done(CommanderChangedRefusal);
+            return;
+        }
+
+        if (surface.Stories is not { } director || director.RefusableBeat(commander) is not { } beat)
         {
             done("The story is not waiting on an objective.");
             return;
@@ -314,6 +361,12 @@ public sealed class StoriesView : UserControl
                     return;
                 }
 
+                if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+                {
+                    done(CommanderChangedRefusal);
+                    return;
+                }
+
                 if (!surface.ModelAvailable() || !surface.GalaxySearchOn())
                 {
                     done(!surface.ModelAvailable()
@@ -326,7 +379,7 @@ public sealed class StoriesView : UserControl
 
                 _ = Task.Run(async () =>
                 {
-                    var refusal = await director.RefuseBeatAsync(surface.Commander(), CancellationToken.None).ConfigureAwait(false);
+                    var refusal = await director.RefuseBeatAsync(commander, CancellationToken.None).ConfigureAwait(false);
 
                     Dispatcher.UIThread.Post(() => done(refusal));
                 });
@@ -341,7 +394,7 @@ public sealed class StoriesView : UserControl
 
         if (story.CurrentChapter is { } key && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
-            buttons.Children.Add(Act("Read the chapter", () => _nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name))));
+            buttons.Children.Add(Act("Read the chapter", () => IfShown(commander, _status, () => _nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name)))));
         }
 
         if (_director.RefusableBeat(commander) is not null && !_director.IsRewriting(commander))
@@ -349,6 +402,7 @@ public sealed class StoriesView : UserControl
             buttons.Children.Add(Act("Not for me", () => NotForMe(
                 _surface,
                 _prompts,
+                commander,
                 () => _status.Say("Writing a different objective…"),
                 refusal =>
                 {
@@ -365,18 +419,20 @@ public sealed class StoriesView : UserControl
 
         if (story.State == StoryState.Paused)
         {
-            buttons.Children.Add(Act("Resume", () => Run(
-                "Resuming…", () => _director.ResumeAsync(commander, _surface.Now(), CancellationToken.None))));
+            buttons.Children.Add(Act("Resume", () => IfShown(commander, _status, () => Run(
+                "Resuming…", () => _director.ResumeAsync(commander, _surface.Now(), CancellationToken.None)))));
         }
         else if (_director.WriteFailed(commander) && !_director.IsWriting(commander))
         {
-            buttons.Children.Add(Act("Write it again", () => Run(
-                "Writing…", () => _director.WriteNextAsync(commander, _surface.Now(), CancellationToken.None))));
+            buttons.Children.Add(Act("Write it again", () => IfShown(commander, _status, () => Run(
+                "Writing…", () => _director.WriteNextAsync(commander, _surface.Now(), CancellationToken.None)))));
         }
 
-        buttons.Children.Add(StoryOnBox(_surface, _director, story));
+        buttons.Children.Add(StoryOnBox(_surface, _director, story, commander, _status));
 
         buttons.Children.Add(Act("Abandon", () => Confirm(
+            commander,
+            _status,
             "story.abandon",
             "Abandon",
             $"Abandon {story.Title}?",
@@ -448,13 +504,47 @@ public sealed class StoriesView : UserControl
         }
 
         var status = new StatusLine();
-        var body = new ContentControl { Content = ReadingBody(card, status) };
+        var drawnFor = _surface.Commander();
+        var body = new ContentControl { Content = ReadingBody(card, status, drawnFor) };
+
+        void Redraw()
+        {
+            if (string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            drawnFor = _surface.Commander();
+            status.Clear();
+            body.Content = ReadingBody(_director.Catalog.Find(card.Id) ?? card, status, drawnFor);
+        }
+
+        void OnSwitched() => Dispatcher.UIThread.Post(Redraw);
 
         page.Children.Add(body);
         page.Children.Add(status);
         FetchOnView(card, body, status);
 
-        return new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var view = new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+
+        view.AttachedToVisualTree += (_, _) =>
+        {
+            if (_surface.Switched is { } switched)
+            {
+                switched.Changed += OnSwitched;
+            }
+
+            Redraw();
+        };
+        view.DetachedFromVisualTree += (_, _) =>
+        {
+            if (_surface.Switched is { } switched)
+            {
+                switched.Changed -= OnSwitched;
+            }
+        };
+
+        return view;
     }
 
     /// <summary>Fetches the hidden layer of a story whose page is open, then redraws the page if it is still the one shown.</summary>
@@ -478,14 +568,14 @@ public sealed class StoriesView : UserControl
             {
                 if (_nav.TrailOf(PanelTab.Stories) is [.., var open] && open.Key == key)
                 {
-                    body.Content = ReadingBody(_director.Catalog.Find(card.Id) ?? card, status);
+                    body.Content = ReadingBody(_director.Catalog.Find(card.Id) ?? card, status, _surface.Commander());
                 }
             });
         });
     }
 
     /// <summary>Everything on a story's page above its status line.</summary>
-    private StackPanel ReadingBody(StoryCard card, StatusLine status)
+    private StackPanel ReadingBody(StoryCard card, StatusLine status, string? commander)
     {
         var page = new StackPanel { Spacing = 8 };
 
@@ -493,7 +583,7 @@ public sealed class StoriesView : UserControl
 
         if (_ratings is { Enabled: true } client)
         {
-            page.Children.Add(RatingSection(client, card.Id, status));
+            page.Children.Add(RatingSection(client, card.Id, status, commander));
         }
 
         page.Children.Add(AdventuresPage.Muted($"{card.Pacing.Name} · {card.LevelGuideline}"));
@@ -512,7 +602,6 @@ public sealed class StoriesView : UserControl
         ShowCast(cast, card.Id);
         page.Children.Add(cast);
 
-        var commander = _surface.Commander();
         var current = _director.Stories.Current(commander);
         var bar = AdventuresPage.Buttons();
         bar.Margin = new Thickness(0, 10, 0, 0);
@@ -549,20 +638,22 @@ public sealed class StoriesView : UserControl
 
         if (current is null)
         {
-            var pick = Act("Pick", () => Start(card, switching: false, status, gated));
+            var pick = Act("Pick", () => Start(card, switching: false, status, gated, commander));
             pick.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
             bar.Children.Add(gated = pick);
         }
         else if (!string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
             var switchTo = Act("Switch", () => Confirm(
+                commander,
+                status,
                 "story.switch",
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
                 $"{current.Title} is abandoned and its chapters leave the Adventures page. Your Backstory becomes this "
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
-                () => Start(card, switching: true, status, gated)));
+                () => Start(card, switching: true, status, gated, commander)));
             switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
             bar.Children.Add(gated = switchTo);
         }
@@ -582,7 +673,7 @@ public sealed class StoriesView : UserControl
     /// A story's average, and the Commander's own stars once they have picked it; redrawn in place while shown, so the
     /// stars keep keyboard focus across a vote.
     /// </summary>
-    private StackPanel RatingSection(StoryRatingClient client, string id, StatusLine status)
+    private StackPanel RatingSection(StoryRatingClient client, string id, StatusLine status, string? commander)
     {
         var section = new StackPanel { Spacing = 4 };
         var average = new ContentControl();
@@ -600,7 +691,7 @@ public sealed class StoriesView : UserControl
 
         void Refresh()
         {
-            var story = _director.Stories.Find(_surface.Commander(), id);
+            var story = _director.Stories.Find(commander, id);
 
             average.Content = Average(client.Ratings.Get(id));
             label.IsVisible = mine.IsVisible = story is not null;
@@ -611,20 +702,15 @@ public sealed class StoriesView : UserControl
 
         void Changed() => Dispatcher.UIThread.Post(Refresh);
 
-        mine.Rated += stars =>
+        mine.Rated += stars => IfShown(commander, status, () => _ = Task.Run(async () =>
         {
-            var commander = _surface.Commander();
+            var sent = await (stars is { } given ? client.Rate(commander, id, given) : client.Clear(commander, id)).ConfigureAwait(false);
 
-            _ = Task.Run(async () =>
+            if (!sent)
             {
-                var sent = await (stars is { } given ? client.Rate(commander, id, given) : client.Clear(commander, id)).ConfigureAwait(false);
-
-                if (!sent)
-                {
-                    Dispatcher.UIThread.Post(() => status.Fail(StoryRatingClient.SendFailed));
-                }
-            });
-        };
+                Dispatcher.UIThread.Post(() => status.Fail(StoryRatingClient.SendFailed));
+            }
+        }));
 
         section.AttachedToVisualTree += (_, _) =>
         {
@@ -729,8 +815,14 @@ public sealed class StoriesView : UserControl
         return stack;
     }
 
-    private void Start(StoryCard card, bool switching, StatusLine status, Button? button)
+    private void Start(StoryCard card, bool switching, StatusLine status, Button? button, string? commander)
     {
+        if (!string.Equals(commander, _surface.Commander(), StringComparison.Ordinal))
+        {
+            status.Fail(CommanderChangedRefusal);
+            return;
+        }
+
         if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
         {
             status.Fail(!_surface.ModelAvailable()
@@ -741,11 +833,11 @@ public sealed class StoriesView : UserControl
 
         if (_downloads is not null && _director.Catalog.Secret(card.Id) is null)
         {
-            Download(card, status, button, () => Begin(card, switching, status));
+            Download(card, status, button, () => Begin(card, switching, status, commander));
             return;
         }
 
-        Begin(card, switching, status);
+        Begin(card, switching, status, commander);
     }
 
     /// <summary>Fetches the story's files with the button reading Downloading, then runs <paramref name="then"/>; on a failure nothing starts.</summary>
@@ -787,9 +879,14 @@ public sealed class StoriesView : UserControl
 
     internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
 
-    private void Begin(StoryCard card, bool switching, StatusLine status)
+    private void Begin(StoryCard card, bool switching, StatusLine status, string? commander)
     {
-        var commander = _surface.Commander();
+        if (!string.Equals(commander, _surface.Commander(), StringComparison.Ordinal))
+        {
+            status.Fail(CommanderChangedRefusal);
+            return;
+        }
+
         var now = _surface.Now();
 
         status.Say("Writing chapter one…");
@@ -811,7 +908,8 @@ public sealed class StoriesView : UserControl
 
                 status.Say("Chapter one has begun.");
 
-                if (_director.Stories.Current(commander)?.CurrentChapter is { } key
+                if (string.Equals(commander, _surface.Commander(), StringComparison.Ordinal)
+                    && _director.Stories.Current(commander)?.CurrentChapter is { } key
                     && _surface.Book.Store.Find(commander, key) is { } chapter)
                 {
                     _nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
@@ -842,22 +940,31 @@ public sealed class StoriesView : UserControl
         });
     }
 
-    private void Confirm(string key, string word, string title, string context, string yes, Action act) => _prompts.Choose(
-        new ChoiceRequest(
-            key,
-            word,
-            title,
-            context,
-            [new ChoiceOption("keep", "Keep going"), new ChoiceOption("yes", yes)],
-            null,
-            ChoiceSurface.Layer),
-        option =>
+    private void Confirm(string? drawnFor, StatusLine status, string key, string word, string title, string context, string yes, Action act)
+    {
+        if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
         {
-            if (option.Key == "yes")
+            status.Fail(CommanderChangedRefusal);
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                key,
+                word,
+                title,
+                context,
+                [new ChoiceOption("keep", "Keep going"), new ChoiceOption("yes", yes)],
+                null,
+                ChoiceSurface.Layer),
+            option =>
             {
-                act();
-            }
-        });
+                if (option.Key == "yes")
+                {
+                    IfShown(drawnFor, status, act);
+                }
+            });
+    }
 
     private static Border Row(params Control[] children)
     {

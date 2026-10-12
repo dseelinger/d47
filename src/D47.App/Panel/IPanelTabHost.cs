@@ -24,6 +24,8 @@ internal interface IPanelTabHost
 
     void Furnish(PanelTab tab, Func<NavCrumb, Control> build, params NavCrumb[] roots);
 
+    void Forget(PanelTab tab, Func<string, bool> match);
+
     bool ClearSearch();
 
     void ShowSearch();

@@ -291,6 +291,21 @@ public sealed class PanelNavigator
         return true;
     }
 
+    /// <summary>Cuts a tab's trail back to its root when any level below the root matches, unless the tab is waiting on a chooser.</summary>
+    public bool ToRootIfAny(PanelTab tab, Func<NavCrumb, bool> match)
+    {
+        var trail = Mutable(tab);
+
+        if (trail is null || trail[^1].Modal || trail.FindIndex(1, crumb => match(crumb)) < 0)
+        {
+            return false;
+        }
+
+        trail.RemoveRange(1, trail.Count - 1);
+        Raise();
+        return true;
+    }
+
     /// <summary>Back to the crumb at this position in the trail - what pressing a breadcrumb does.</summary>
     public bool JumpTo(int index)
     {

@@ -185,6 +185,10 @@ public partial class MainWindow : Window
             // the prompts have taken a spoken value since Phase 25.
             if (host.Adventures is { } adventures)
             {
+                var commanderSwitched = new CommanderSignal();
+
+                host.GameState.CommanderChanged += _ => commanderSwitched.Raise();
+
                 Adventures = new AdventureSurface(
                     adventures.Book,
                     adventures.Generator,
@@ -215,7 +219,8 @@ public partial class MainWindow : Window
                         host.Settings.HoldsSecret,
                         (providerId, voiceId, token) => host.Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
                             ?? Task.CompletedTask),
-                    host.StoryRatings);
+                    host.StoryRatings,
+                    commanderSwitched);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

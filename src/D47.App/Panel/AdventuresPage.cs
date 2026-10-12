@@ -38,6 +38,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The ask form for the next chapter of the finished adventure keyed after it.</summary>
     public const string NextPrefix = "adventure.next.";
 
+    /// <summary>Whether a Stories-tab level is one Commander's page: a chapter or its next-chapter form.</summary>
+    internal static bool BelongsToACommander(string key) =>
+        key.StartsWith(ReadPrefix, StringComparison.Ordinal) || key.StartsWith(NextPrefix, StringComparison.Ordinal);
+
     private readonly AdventureSurface _surface;
     private readonly PanelNavigator _nav;
     private readonly PanelPrompts _prompts;
@@ -119,6 +123,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         // waiting indicator needs the book's own event as well as the store's.
         _surface.Book.StirringChanged += OnChanged;
 
+        if (_surface.Switched is { } switched)
+        {
+            switched.Changed += OnChanged;
+        }
+
         if (_surface.Messages is { } messages)
         {
             messages.Changed += OnChanged;
@@ -132,6 +141,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         base.OnDetachedFromVisualTree(e);
         _surface.Book.Store.Changed -= OnChanged;
         _surface.Book.StirringChanged -= OnChanged;
+
+        if (_surface.Switched is { } switched)
+        {
+            switched.Changed -= OnChanged;
+        }
 
         if (_surface.Messages is { } messages)
         {
@@ -315,7 +329,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         change.Click += (_, _) => Revise(adventure);
 
         var decline = new Button { Content = "Decline", Classes = { "destructive" } };
-        decline.Click += (_, _) => Remove(adventure, confirm: false);
+        decline.Click += (_, _) => Remove(adventure, confirm: false, _surface.Commander());
 
         buttons.Children.Add(accept);
         buttons.Children.Add(change);
@@ -455,6 +469,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private Control ReadingBar(AdventureStanding standing)
     {
         var adventure = standing.Adventure;
+        var drawnFor = _surface.Commander();
         var bar = Buttons();
         bar.Margin = new Thickness(0, 10, 0, 0);
 
@@ -462,12 +477,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             bar.Children.Add(label switch
             {
-                "Accept" or "Begin" or "Begin again" => Action(label, () => Begin(adventure.Key)),
-                "Change something" => Action(label, () => Revise(adventure)),
-                "Decline" => Action(label, () => Remove(adventure, confirm: false), destructive: true),
-                "Abandon" => Action(label, () => Abandon(adventure)),
+                "Accept" or "Begin" or "Begin again" => Action(label, () => IfShown(drawnFor, () => Begin(adventure.Key))),
+                "Change something" => Action(label, () => IfShown(drawnFor, () => Revise(adventure))),
+                "Decline" => Action(label, () => IfShown(drawnFor, () => Remove(adventure, confirm: false, drawnFor)), destructive: true),
+                "Abandon" => Action(label, () => IfShown(drawnFor, () => Abandon(adventure, drawnFor))),
                 "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
-                _ => Action(label, () => Remove(adventure, confirm: true), destructive: true),
+                _ => Action(label, () => IfShown(drawnFor, () => Remove(adventure, confirm: true, drawnFor)), destructive: true),
             });
         }
 
@@ -476,6 +491,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             bar.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
                 _surface,
                 _prompts,
+                drawnFor,
                 () => _surface.Say("Writing a different objective…"),
                 refusal =>
                 {
@@ -602,6 +618,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
+            var drawnFor = _surface.Commander();
+
             writing = true;
             go.IsEnabled = false;
             status.Say("Writing…");
@@ -616,7 +634,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 {
                     writing = false;
                     go.IsEnabled = true;
-                    Offer(outcome, ask, status);
+                    Offer(outcome, ask, status, drawnFor);
                 });
             });
         }
@@ -692,8 +710,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private bool OnAsk() => _nav.Tab == PanelTab.Stories && _nav.Trail is [.., { Key: AskKey }];
 
     /// <summary>A draft arrives: stored as a draft, the core's reply spoken, the reading level opened.</summary>
-    private void Offer(AdventureOutcome outcome, AdventureAsk ask, StatusLine status)
+    private void Offer(AdventureOutcome outcome, AdventureAsk ask, StatusLine status, string? drawnFor)
     {
+        if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+        {
+            status.Fail(StoriesView.CommanderChangedRefusal);
+            return;
+        }
+
         if (outcome.Draft is not { } draft)
         {
             status.Fail(outcome.Refusal ?? "Nothing came back.");
@@ -751,7 +775,20 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     // The opening itself is said by the callout on the next tick, in the core's voice.
     }
 
-    private void Abandon(Adventure adventure) => _prompts.Choose(
+    /// <summary>Runs <paramref name="act"/> if <paramref name="drawnFor"/> is still the shown Commander; otherwise says nothing was done.</summary>
+    private void IfShown(string? drawnFor, Action act)
+    {
+        if (string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+        {
+            act();
+        }
+        else
+        {
+            _surface.Say(StoriesView.CommanderChangedRefusal);
+        }
+    }
+
+    private void Abandon(Adventure adventure, string? drawnFor) => _prompts.Choose(
         new ChoiceRequest(
             "adventure.abandon",
             "Abandon",
@@ -767,19 +804,22 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
-            var refusal = _surface.Book.Abandon(_surface.Commander(), adventure.Key, _surface.Now());
-
-            if (refusal is not null)
+            IfShown(drawnFor, () =>
             {
-                _surface.Say(refusal);
-            }
+                var refusal = _surface.Book.Abandon(drawnFor, adventure.Key, _surface.Now());
+
+                if (refusal is not null)
+                {
+                    _surface.Say(refusal);
+                }
+            });
         });
 
-    private void Remove(Adventure adventure, bool confirm)
+    private void Remove(Adventure adventure, bool confirm, string? drawnFor)
     {
         if (!confirm)
         {
-            _surface.Book.Remove(_surface.Commander(), adventure.Key);
+            _surface.Book.Remove(drawnFor, adventure.Key);
             _nav.ToRoot();
             return;
         }
@@ -800,8 +840,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                     return;
                 }
 
-                _surface.Book.Remove(_surface.Commander(), adventure.Key);
-                _nav.ToRoot();
+                IfShown(drawnFor, () =>
+                {
+                    _surface.Book.Remove(drawnFor, adventure.Key);
+                    _nav.ToRoot();
+                });
             });
     }
 
@@ -844,7 +887,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     internal string? AcceptDraft() => OnVoiceDraft(draft => Begin(draft.Key));
 
-    internal string? RejectDraft() => OnVoiceDraft(draft => Remove(draft, confirm: false));
+    internal string? RejectDraft() => OnVoiceDraft(draft => Remove(draft, confirm: false, _surface.Commander()));
 
     /// <summary>Reasoning with the AI about a draft (Phase 47, "Revision before acceptance").</summary>
     private void Revise(Adventure draft) => _prompts.Enter(
@@ -861,6 +904,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             var ask = _asks.GetValueOrDefault(draft.Key) ?? new AdventureAsk();
             var exchange = _exchanges.GetValueOrDefault(draft.Key) ?? [];
 
+            var drawnFor = _surface.Commander();
+
             _surface.Say("Let me think about that.");
 
             _ = Task.Run(async () =>
@@ -871,6 +916,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
                 Dispatcher.UIThread.Post(() =>
                 {
+                    if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+                    {
+                        _surface.Say(StoriesView.CommanderChangedRefusal);
+                        return;
+                    }
+
                     if (outcome.Draft is not { } revised)
                     {
                         _surface.Say(outcome.Refusal ?? "I could not change it that way.");

@@ -24,4 +24,13 @@ public sealed record AdventureSurface(
     D47.Core.Interface.SpeakerPictures? Pictures = null,
     Func<D47Message, string?>? PlayMessage = null,
     CastVoiceSurface? CastVoices = null,
-    StoryRatingClient? Ratings = null);
+    StoryRatingClient? Ratings = null,
+    CommanderSignal? Switched = null);
+
+/// <summary>Raised when the shown Commander changes, on whichever thread the journal ticks; subscribers post to the UI thread.</summary>
+public sealed class CommanderSignal
+{
+    public event Action? Changed;
+
+    public void Raise() => Changed?.Invoke();
+}

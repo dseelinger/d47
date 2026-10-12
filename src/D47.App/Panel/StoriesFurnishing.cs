@@ -36,6 +36,15 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
                 Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
             });
 
+        if (surface.Switched is { } switched)
+        {
+            switched.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                host.Nav.ToRootIfAny(PanelTab.Stories, crumb => AdventuresPage.BelongsToACommander(crumb.Key));
+                host.Forget(PanelTab.Stories, AdventuresPage.BelongsToACommander);
+            });
+        }
+
         Mini = new AdventureMini(surface);
     }
 }
