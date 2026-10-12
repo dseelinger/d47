@@ -29,9 +29,50 @@ public readonly record struct VrPose(Vector3 Position, Quaternion Orientation)
     private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 }
 
+/// <summary>A rectangle on a surface's texture, in its pixels, from the top left.</summary>
+public readonly record struct VrPixelRect(float X, float Y, float Width, float Height);
+
 /// <summary>The arithmetic of putting a surface somewhere and keeping it there.</summary>
 public static class VrPlacementMath
 {
+    /// <summary>How far in front of a surface a quad laid over it sits.</summary>
+    public const float OverLiftMetres = 0.001f;
+
+    /// <summary>
+    /// A flat quad covering <paramref name="rect"/> of a surface drawn at <paramref name="pixels"/>, a
+    /// little in front of it, following the surface's lock, placement and opacity.
+    /// </summary>
+    public static SurfacePlacement Over(SurfacePlacement surface, (int Width, int Height) pixels, VrPixelRect rect)
+    {
+        var metresPerPixel = surface.WidthMetres / pixels.Width;
+        var across = ((rect.X + (rect.Width / 2f)) - (pixels.Width / 2f)) * metresPerPixel;
+        var up = ((pixels.Height / 2f) - (rect.Y + (rect.Height / 2f))) * metresPerPixel;
+
+        VrPose offset;
+
+        if (surface.Curvature < VrRay.Flat)
+        {
+            offset = new VrPose(new Vector3(across, up, OverLiftMetres), Quaternion.Identity);
+        }
+        else
+        {
+            // On the cylinder VrRay draws, at that arc length from the centre line, turned to face its axis.
+            var radius = VrRay.RadiusFor(surface.WidthMetres, surface.Curvature);
+            var angle = across / radius;
+            var inward = new Vector3(-MathF.Sin(angle), 0f, MathF.Cos(angle));
+            var onSurface = new Vector3(radius * MathF.Sin(angle), up, radius * (1f - MathF.Cos(angle)));
+
+            offset = new VrPose(onSurface + (inward * OverLiftMetres), Quaternion.CreateFromAxisAngle(Vector3.UnitY, -angle));
+        }
+
+        return surface with
+        {
+            WidthMetres = rect.Width * metresPerPixel,
+            Curvature = 0f,
+            Offset = offset,
+        };
+    }
+
     /// <summary>Where a head-locked surface sits, given where the head is.</summary>
     public static VrPose HeadLocked(
         VrPose head,

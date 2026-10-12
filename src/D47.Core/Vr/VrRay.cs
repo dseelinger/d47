@@ -22,7 +22,7 @@ public readonly record struct VrHit(float U, float V, float DistanceMetres);
 public static class VrRay
 {
     /// <summary>Below this a panel is treated as flat.</summary>
-    private const float Flat = 1e-3f;
+    internal const float Flat = 1e-3f;
 
     /// <summary>OpenVR does not document what <c>fCurvature</c> actually draws and no call will say.</summary>
     private const float ArcPerCurvature = MathF.Tau;

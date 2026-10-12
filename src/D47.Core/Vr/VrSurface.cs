@@ -63,13 +63,21 @@ public sealed record SurfacePlacement
 
     public VrPose? PlacedAgainst { get; init; }
 
+    /// <summary>
+    /// Where the quad sits in the frame of the surface this placement would otherwise put it on, for a quad
+    /// laid over part of another (<see cref="VrPlacementMath.Over"/>).
+    /// </summary>
+    public VrPose? Offset { get; init; }
+
     /// <summary>Clamped to what SteamVR and a human will actually accept.</summary>
     public SurfacePlacement Sane() => this with
     {
         DistanceMetres = Math.Clamp(DistanceMetres, 0.3f, 5f),
         DropMetres = Math.Clamp(DropMetres, -2f, 2f),
         PitchDegrees = Math.Clamp(PitchDegrees, -60f, 60f),
-        WidthMetres = Math.Clamp(WidthMetres, 0.15f, 4f),
+
+        // A laid-over quad takes its width from the part of the surface it covers.
+        WidthMetres = Math.Clamp(WidthMetres, Offset is null ? 0.15f : 0.01f, 4f),
         Curvature = Math.Clamp(Curvature, 0f, 1f),
         Opacity = Math.Clamp(Opacity, 0.1f, 1f),
         ZoomPercent = Interface.ZoomLadder.Snap(ZoomPercent),
@@ -98,6 +106,15 @@ public sealed record SurfacePlacement
 
     /// <summary>Where this surface goes, given where the head is now.</summary>
     public VrPose Where(VrPose head)
+    {
+        var surface = Unoffset(head);
+
+        return Offset is { } offset
+            ? VrPose.FromMatrix(offset.ToMatrix() * surface.ToMatrix())
+            : surface;
+    }
+
+    private VrPose Unoffset(VrPose head)
     {
         if (Lock == SurfaceLock.WorldLocked && Placed is { } placed)
         {
