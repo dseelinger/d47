@@ -59,7 +59,8 @@ public sealed class ShipPlanAdvisor(
     /// <summary>The most modules a reply names.</summary>
     public const int MostModulesNamed = 3;
 
-    private const int Budget = 3000;
+    /// <summary>Output ceiling; adaptive thinking spends from it too.</summary>
+    public const int OutputCeiling = 16000;
 
     public async Task<BuildAdvice> AdviseAsync(
         ShipBuild build,
@@ -161,7 +162,7 @@ public sealed class ShipPlanAdvisor(
             prices,
             logger,
             cancellationToken,
-            maxOutputTokens: Budget,
+            maxOutputTokens: OutputCeiling,
             effort: ThinkingEffort.Medium,
             sampling: LlmSampling.Lore).ConfigureAwait(false);
 

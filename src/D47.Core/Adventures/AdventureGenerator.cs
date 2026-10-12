@@ -185,6 +185,12 @@ public sealed class AdventureGenerator(
     PriceTable? prices,
     ILogger logger)
 {
+    /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
+    public const int SpineOutputCeiling = 16000;
+
+    /// <summary>Output ceiling for each beats turn.</summary>
+    public const int BeatsOutputCeiling = 16000;
+
     /// <summary>Beats per structure.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
@@ -231,13 +237,13 @@ public sealed class AdventureGenerator(
             var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
             var tail = await AskJsonAsync(
                 BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
-                4000,
+                BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
             return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
         }
 
-        var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable, candidates), 1500, cancellationToken).ConfigureAwait(false);
+        var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, cancellationToken).ConfigureAwait(false);
 
         if (spineJson is null)
         {
@@ -253,7 +259,7 @@ public sealed class AdventureGenerator(
 
         var beatsJson = await AskJsonAsync(
             BeatsInstruction(ask, facts, notable, candidates, name, spine, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
-            4000,
+            BeatsOutputCeiling,
             cancellationToken).ConfigureAwait(false);
 
         return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsJson, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
@@ -284,7 +290,7 @@ public sealed class AdventureGenerator(
 
         var json = await AskJsonAsync(
             BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
-            4500,
+            BeatsOutputCeiling,
             cancellationToken).ConfigureAwait(false);
 
         // A revision may rename and respine; the beats turn's answer carries the whole draft.
@@ -330,7 +336,7 @@ public sealed class AdventureGenerator(
 
             var again = await AskJsonAsync(
                 BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, exchange: null, remark: null),
-                4000,
+                BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
             var reread = again is null ? null : ReadBeats(again);

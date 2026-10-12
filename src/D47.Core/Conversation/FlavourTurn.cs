@@ -25,7 +25,7 @@ public static class FlavourTurn
     /// <param name="maxOutputTokens">
     /// The ceiling on the whole completion, which is <see cref="AnswerBudget"/> plus <see
     /// cref="ReasoningHeadroom"/> by default and is raised only by the adventure generator, whose
-    /// answer is a whole story in JSON.
+    /// answer is a whole story in JSON, and by <c>ShipPlanAdvisor</c>.
     /// </param>
     /// <param name="effort">
     /// Low for a remark; the generator asks for more, because a story is a reasoning problem.
