@@ -143,9 +143,51 @@ public sealed class PanelNavigator
         _current.TryAdd(tab, root.Key);
     }
 
-    /// <summary>The roots a tab offers.</summary>
+    /// <summary>Root keys withheld from <see cref="Roots"/> until shown again.</summary>
+    private readonly HashSet<string> _hidden = new(StringComparer.Ordinal);
+
+    /// <summary>The roots a tab offers, without the hidden ones.</summary>
     public IReadOnlyList<NavCrumb> Roots(PanelTab tab) =>
-        _roots.TryGetValue(tab, out var roots) ? roots : [];
+        _roots.TryGetValue(tab, out var roots) ? [.. roots.Where(root => !_hidden.Contains(root.Key))] : [];
+
+    /// <summary>
+    /// Hides or shows a root, keeping its place in the order. A hidden root that was showing gives way to
+    /// the tab's first visible root.
+    /// </summary>
+    public bool SetVisible(PanelTab tab, string rootKey, bool visible)
+    {
+        if (!_roots.TryGetValue(tab, out var all) || !all.Any(root => root.Key == rootKey))
+        {
+            return false;
+        }
+
+        if (visible ? !_hidden.Remove(rootKey) : !_hidden.Add(rootKey))
+        {
+            return false;
+        }
+
+        if (!visible)
+        {
+            _trails[rootKey] = [all.First(root => root.Key == rootKey)];
+
+            if (_current.TryGetValue(tab, out var showing) && showing == rootKey)
+            {
+                var next = Roots(tab);
+
+                if (next.Count > 0)
+                {
+                    _current[tab] = next[0].Key;
+                }
+                else
+                {
+                    _current.Remove(tab);
+                }
+            }
+        }
+
+        Raise();
+        return true;
+    }
 
     /// <summary>Whether a tab has anything behind it.</summary>
     public bool Has(PanelTab tab) => Roots(tab).Count > 0;

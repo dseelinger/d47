@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Asset Mgmt shows the Carrier sub-tab only when d47 knows you own a carrier. It appears, between Suits and Construction, once the journal names your carrier and goes if you switch to a Commander without one. A squadron carrier alone does not show it. The same holds on the main window, the mini panel and the headset panel.
+
 The Near box on the Systems, Stations and Bodies search pages now shows your current system as a value, such as YOUR SYSTEM · SOL, in cyan, instead of grey hint text. A line under the box says it follows you as you jump and that typing a system name searches from there instead. An empty box still searches from your current system.
 
 The Systems, Stations and Bodies search pages now label their ranges. Each range box shows FROM or UP TO inside it, the unit is in the field label (Distance in light years, Gravity in G, Temperature in K), and a grey line under the pair says what the range will do, such as "Systems within 50 LY of SOL, nearest first." Population on Systems and Stations is now Minimum population: UNPOPULATED, POPULATED and HIGH tiles and a box, with a line saying what it asks for. How many is now Show up to, a dropdown of 1, 5, 10, 25, 50 and 100 that works on the headset panel.

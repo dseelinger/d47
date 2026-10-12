@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -128,6 +128,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             planCarrierRoute);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
+        ShowCarrierRoot();
 
         if (construction is not null)
         {
@@ -241,6 +242,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     {
         var changed = TickConstruction();
 
+        changed |= ShowCarrierRoot();
+
         if (_loadoutMode is not { } mode || host.Tab != PanelTab.Assets)
         {
             return changed;
@@ -334,6 +337,10 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
 
         return changed;
     }
+
+    /// <summary>Shows the Carrier root only while the Commander owns a carrier.</summary>
+    private bool ShowCarrierRoot() =>
+        _carrier is { } carrier && host.Nav.SetVisible(PanelTab.Assets, LoadoutPages.CarrierRoot, carrier.Now.Owned);
 
     /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>
     public void InvalidateLoadout() => _loadoutMode?.Invalidate();

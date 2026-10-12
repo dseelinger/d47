@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -140,18 +140,6 @@ public sealed class CarrierPage : UserControl, IPageChrome
     private void Own()
     {
         var carrier = _carrier.Now;
-
-        if (!carrier.Owned)
-        {
-            // Said rather than left blank, and it says which of the two it means: d47 has not seen one is a
-            // different claim from the Commander not having one, and only the first is something d47 can
-            // know.
-            _body.Children.Add(LoadoutPages.Muted(
-                "No carrier has turned up in the journal yet. If you own one, open its management "
-                + "panel in the game and it will appear here."));
-
-            return;
-        }
 
         var upkept = CarrierUpkeep.Now(carrier, _now());
 

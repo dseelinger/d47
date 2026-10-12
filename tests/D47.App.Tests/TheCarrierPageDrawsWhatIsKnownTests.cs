@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -182,17 +182,60 @@ public class TheCarrierPageDrawsWhatIsKnownTests
         Assert.DoesNotContain("squadron", Shown(Stats), StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// "d47 has not seen one" is a different claim from "you have none", and only the first is
-    /// something d47 can know before the management panel has ever been opened.
-    /// </summary>
+    /// <summary>The Carrier sub-tab exists only for a Commander who owns a carrier.</summary>
     [AvaloniaFact]
-    public void ACommanderWithNoCarrierIsToldWhichItIs()
+    public void TheCarrierTabAppearsOnlyOnceACarrierIsOwned()
     {
-        var text = Shown();
+        var root = TestSurface.MemoryFolder("d47-carrier-tab-tests");
 
-        Assert.Contains("No carrier has turned up in the journal yet", text, StringComparison.Ordinal);
-        Assert.Contains("open its management panel", text, StringComparison.Ordinal);
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(root, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(root, "checklist-proposals.json"),
+                new MemoryFileSystem(),
+                NullLogger<ChecklistProposalStore>.Instance),
+            () => null);
+
+        var ships = new ShipPlanService(
+            new ShipBuildStore(Path.Combine(root, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
+            checklists,
+            () => null);
+
+        var state = new CommanderGameState(new CommanderIdentity("F735466", "TEST"));
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableLoadout(ships, checklists, () => state);
+
+        bool Offered() => panel.Nav.Roots(PanelTab.Assets).Any(r => r.Key == LoadoutPages.CarrierRoot);
+
+        Assert.False(Offered());
+        Assert.DoesNotContain(panel.Nav.Destinations, d => d.Root.Key == LoadoutPages.CarrierRoot);
+
+        state.Apply(Event(Stats));
+        panel.TickLoadout();
+
+        Assert.True(Offered());
+
+        var keys = panel.Nav.Roots(PanelTab.Assets).Select(r => r.Key).ToList();
+
+        Assert.Equal(CrewPage.RootKey, keys[keys.IndexOf(LoadoutPages.CarrierRoot) - 1]);
+    }
+
+    /// <summary>A squadron's carrier alone does not give a Commander the tab.</summary>
+    [AvaloniaFact]
+    public void ASquadronCarrierAloneLeavesTheTabHidden()
+    {
+        var (window, panel) = Open(
+            clipboard: null,
+            """
+            {"event":"CarrierStats","CarrierID":3713474048,"CarrierType":"SquadronCarrier",
+             "Callsign":"QRS-11X","Name":"Wandering Home","DockingAccess":"squadronfriends",
+             "FuelLevel":140,"Finance":{"CarrierBalance":9999}}
+            """);
+
+        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Assets), r => r.Key == LoadoutPages.CarrierRoot);
+
+        window.Close();
     }
 
     /// <summary>The carrier's system carries a copy glyph, wired to the surface's clipboard (#157).</summary>
