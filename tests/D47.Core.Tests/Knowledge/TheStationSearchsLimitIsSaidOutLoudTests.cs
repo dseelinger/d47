@@ -145,16 +145,16 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
 
     /// <summary>The defect, on the commodity half.</summary>
     [Fact]
-    public async Task FiftyIsRefusedAtTwentyRatherThanResetToFive()
+    public async Task AHundredAndFiftyIsRefusedAtOneHundredRatherThanReset()
     {
         var install = new MemoryInstall();
 
-        var (said, search) = await ForACommodityAsync(install, ("limit", "50"));
+        var (said, search) = await ForACommodityAsync(install, ("limit", "150"));
 
-        Assert.Equal(20, search.Query.Limit);
-        Assert.Contains("You asked for 50", said, StringComparison.Ordinal);
-        Assert.Contains("limit stops at 20", said, StringComparison.Ordinal);
-        Assert.DoesNotContain("up to 20 results", said, StringComparison.Ordinal);
+        Assert.Equal(100, search.Query.Limit);
+        Assert.Contains("You asked for 150", said, StringComparison.Ordinal);
+        Assert.Contains("limit stops at 100", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("up to 100 results", said, StringComparison.Ordinal);
     }
 
     /// <summary>And on the module half, which is the same argument through a different fork.</summary>
@@ -163,11 +163,11 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
     {
         var install = new MemoryInstall();
 
-        var (said, query) = await ForAModuleAsync(install, ("limit", "50"));
+        var (said, query) = await ForAModuleAsync(install, ("limit", "150"));
 
-        Assert.Equal(20, query.Size);
-        Assert.Contains("You asked for 50", said, StringComparison.Ordinal);
-        Assert.Contains("limit stops at 20", said, StringComparison.Ordinal);
+        Assert.Equal(100, query.Size);
+        Assert.Contains("You asked for 150", said, StringComparison.Ordinal);
+        Assert.Contains("limit stops at 100", said, StringComparison.Ordinal);
     }
 
     /// <summary>The other end of the bound.</summary>
@@ -204,12 +204,12 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
 
         var (commodity, search) = await ForACommodityAsync(install);
 
-        Assert.Equal(5, search.Query.Limit);
+        Assert.Equal(25, search.Query.Limit);
         Assert.Equal("Nothing within 50 light years of Eurybia is buying Landmines.", commodity);
 
         var (module, query) = await ForAModuleAsync(install);
 
-        Assert.Equal(5, query.Size);
+        Assert.Equal(25, query.Size);
         Assert.DoesNotContain("limit", module, StringComparison.OrdinalIgnoreCase);
     }
 }

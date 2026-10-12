@@ -294,7 +294,7 @@ public sealed record BodyQuery
             return false;
         }
 
-        var limit = Math.Clamp(request.Size <= 0 ? 5 : request.Size, 1, 20);
+        var limit = Math.Clamp(request.Size <= 0 ? GalaxyQuery.DefaultSize : request.Size, 1, GalaxyQuery.MaxSize);
 
         query = new BodyQuery
         {
@@ -359,7 +359,7 @@ public sealed record BodyQuery
             Material = material,
             Landable = true,
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 1000),
-            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+            Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
     /// <summary>

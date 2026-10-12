@@ -140,6 +140,9 @@ public sealed class InlinePicker : ContentControl
         set => _scroll.MaxHeight = value;
     }
 
+    /// <summary>Draws the value and the options in the mono face, for numbers.</summary>
+    public bool Mono { get; set; }
+
     /// <summary>The name the button is announced by.</summary>
     public string Label
     {
@@ -154,6 +157,8 @@ public sealed class InlinePicker : ContentControl
     {
         _inks.ForEach(ink => ink.Dispose());
         _inks.Clear();
+
+        _value.FontFamily = new FontFamily(Mono ? Fonts.MonoFamily : Fonts.ChromeFamily);
 
         var shown = new Run(value);
         _inks.Add(shown.Bind(TextElement.ForegroundProperty, Resource(valueInk)));
@@ -188,7 +193,7 @@ public sealed class InlinePicker : ContentControl
         var text = new TextBlock
         {
             Text = option.Label,
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontFamily = new FontFamily(Mono ? Fonts.MonoFamily : Fonts.ChromeFamily),
             FontSize = TypeScale.Tip,
             FontWeight = FontWeight.Medium,
             VerticalAlignment = VerticalAlignment.Center,

@@ -56,10 +56,10 @@ public static class GalaxyCapability
     private const int MaxPriceAgeHours = 8_760;
 
     /// <summary>How many results the station search returns when nobody said.</summary>
-    private const int DefaultLimit = 5;
+    private const int DefaultLimit = 25;
 
     /// <summary>The most <c>limit</c> will return, and the fewest.</summary>
-    private const int MaxLimit = 20;
+    private const int MaxLimit = 100;
 
     /// <summary>The other end of the same bound.</summary>
     private const int MinLimit = 1;
@@ -151,7 +151,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Default 5.",
+                        Description = "How many to return, 1 to 100. Default 25.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -255,7 +255,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Default 5.",
+                        Description = "How many to return, 1 to 100. Default 25.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -437,7 +437,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Default 5.",
+                        Description = "How many to return, 1 to 100. Default 25.",
                     },
                     // The four INARA has and this did not (#296).
                     new ToolParameter
@@ -618,7 +618,7 @@ public static class GalaxyCapability
                     {
                         Name = "limit",
                         Type = ToolParameterType.Integer,
-                        Description = "How many to return, 1 to 20. Default 5.",
+                        Description = "How many to return, 1 to 100. Default 25.",
                     },
                 ],
                 Handler = (arguments, cancellationToken) =>
@@ -743,7 +743,7 @@ public static class GalaxyCapability
 
         if (!arguments.TryGetInt32("limit", out var limit))
         {
-            limit = 5;
+            limit = DefaultLimit;
         }
 
         if (!GalaxyQuery.TryParse(near, requested, limit, out var query, out var failure))
@@ -1951,7 +1951,7 @@ public static class GalaxyCapability
             OrderBy = Text(arguments, "order_by"),
             Filters = filters,
             MaxDistance = Distance(arguments, "max_distance"),
-            Size = arguments.TryGetInt32("limit", out var limit) ? limit : 5,
+            Size = arguments.TryGetInt32("limit", out var limit) ? limit : DefaultLimit,
         };
 
         if (!BodyQuery.TryParse(request, out var query, out var failure))

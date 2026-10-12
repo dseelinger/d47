@@ -122,7 +122,7 @@ public class GalaxyQueryTests
         GalaxyQuery.TryParse("Sol", new Dictionary<string, string>(), size: 500, out var big, out _);
         GalaxyQuery.TryParse("Sol", new Dictionary<string, string>(), size: 0, out var none, out _);
 
-        Assert.Equal(20, big.Size);
-        Assert.Equal(5, none.Size);
+        Assert.Equal(100, big.Size);
+        Assert.Equal(25, none.Size);
     }
 }

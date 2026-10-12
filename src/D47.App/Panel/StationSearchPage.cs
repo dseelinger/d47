@@ -27,7 +27,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const int DefaultDistance = 50;
 
-    public const int DefaultLimit = 5;
+    public const int DefaultLimit = ShowUpTo.Default;
 
     private const string Columns = "1.5*,*,64,84,92,1.5*,76";
 
@@ -39,7 +39,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 500, Step = 10, Width = 132 };
-    private readonly Amount _limit = new() { Value = DefaultLimit, Minimum = 1, Maximum = 20, Step = 1, Width = 132 };
+    private readonly ShowUpTo _limit = new();
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
@@ -50,8 +50,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly TextBox _module = Field("module");
     private readonly TextBox _ship = Field("ship");
     private readonly Stepper _powerState = Choice(GalaxyFilters.Find("power_state")?.Choices ?? []);
-    private readonly TextBox _populationFrom = Field("population from", mono: true);
-    private readonly TextBox _populationTo = Field("population to", mono: true);
+    private readonly MinimumPopulation _population = new(Field("minimum population", mono: true));
     private readonly CheckBox _colonised = LabeledCheckBox.Caps("Only colonised systems");
 
     private readonly Dictionary<string, (InlinePicker Picker, IReadOnlyList<string> Choices)> _pickers = new(StringComparer.Ordinal);
@@ -76,8 +75,6 @@ public sealed class StationSearchPage : GalaxySearchPage
         _controllingFaction.PlaceholderText = "Exact name";
         _fromStar.PlaceholderText = Any;
         _fromStar.InnerRightContent = Label("LS", width: null);
-        _populationFrom.PlaceholderText = "0";
-        _populationTo.PlaceholderText = Any;
 
         foreach (var (name, choices) in PickerChoices)
         {
@@ -146,6 +143,13 @@ public sealed class StationSearchPage : GalaxySearchPage
             null);
     }
 
+    /// <summary>The count SHOW UP TO shows.</summary>
+    public int Limit
+    {
+        get => _limit.Value;
+        set => _limit.Value = value;
+    }
+
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 
@@ -188,7 +192,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         Put("ship", _ship.Text);
         Put("controlling_faction", _controllingFaction.Text);
         Put("power_state", Selected(_powerState));
-        Put("population", Range(_populationFrom.Text, _populationTo.Text));
+        Put("population", _population.Asked);
 
         foreach (var (name, value) in _picked)
         {
@@ -210,7 +214,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public override void ClearForm()
     {
-        foreach (var box in (TextBox[])[_near, _fromStar, _controllingFaction, _module, _ship, _populationFrom, _populationTo])
+        foreach (var box in (TextBox[])[_near, _fromStar, _controllingFaction, _module, _ship])
         {
             box.Text = string.Empty;
         }
@@ -227,6 +231,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         _distance.Value = DefaultDistance;
         _limit.Value = DefaultLimit;
+        _population.Set(null);
         _colonised.IsChecked = false;
         ChooseServices([]);
 
@@ -247,7 +252,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         _controllingFaction.Text = Get("controlling_faction") ?? string.Empty;
         _module.Text = Get("module") ?? string.Empty;
         _ship.Text = Get("ship") ?? string.Empty;
-        (_populationFrom.Text, _populationTo.Text) = Split(Get("population"));
+        _population.Set(Get("population"));
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
 
         _pad.SelectedIndex = Index(_pad.ItemsSource, Get("min_pad"));
@@ -272,7 +277,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
         {
-            _limit.Value = Math.Clamp(limit, 1, 20);
+            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
         }
 
         foreach (var name in _pickers.Keys)
@@ -399,7 +404,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", Beneath(_near, _nearNames)),
-            Columns2("*,132", Labelled("Distance in LY", _distance), Labelled("How many", _limit))));
+            Columns2("*,*", Labelled("Distance in LY", _distance), _limit.Field("Stations"))));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
@@ -441,7 +446,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             Labelled("Economy", _pickers["primary_economy"].Picker),
             Labelled("Power", _pickers["power"].Picker),
             Labelled("Powerplay state", _powerState),
-            Labelled("Population", Span(_populationFrom, _populationTo, null)),
+            Labelled("Minimum population", _population),
             _colonised));
 
         return form;
@@ -530,8 +535,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         "module" => _module,
         "ship" => _ship,
         "max_station_distance" => _fromStar,
-        "population from" => _populationFrom,
-        "population to" => _populationTo,
+        "minimum population" => _population.Box,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "No such text field."),
     };
 

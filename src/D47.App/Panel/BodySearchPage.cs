@@ -18,7 +18,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public const int DefaultDistance = 50;
 
-    public const int DefaultLimit = 5;
+    public const int DefaultLimit = ShowUpTo.Default;
 
     private const string Nearest = "Nearest";
 
@@ -32,7 +32,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Width = 132 };
-    private readonly Amount _limit = new() { Value = DefaultLimit, Minimum = 1, Maximum = 20, Step = 1, Width = 132 };
+    private readonly ShowUpTo _limit = new();
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");
@@ -42,6 +42,8 @@ public sealed class BodySearchPage : GalaxySearchPage
     private readonly TextBox _gravityTo = Field("gravity to", mono: true);
     private readonly TextBox _temperatureFrom = Field("temperature from", mono: true);
     private readonly TextBox _temperatureTo = Field("temperature to", mono: true);
+    private readonly RangeReadout _gravityReadout;
+    private readonly RangeReadout _temperatureReadout;
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly TextBox _signalCount = Field("surface signal count", mono: true);
     private readonly TextBox _hotspotCount = Field("hotspot count", mono: true);
@@ -62,10 +64,8 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         _fromStar.PlaceholderText = Any;
         _fromStar.InnerRightContent = Label("LS", width: null);
-        _gravityFrom.PlaceholderText = "0";
-        _gravityTo.PlaceholderText = Any;
-        _temperatureFrom.PlaceholderText = "0";
-        _temperatureTo.PlaceholderText = Any;
+        _gravityReadout = new RangeReadout(_gravityFrom, _gravityTo, (min, max) => RangeReadout.Measure(min, max, "Gravity", "G"));
+        _temperatureReadout = new RangeReadout(_temperatureFrom, _temperatureTo, (min, max) => RangeReadout.Measure(min, max, "Temperature", "K"));
         _signalCount.PlaceholderText = Any;
         _hotspotCount.PlaceholderText = Any;
         _volcanism.PlaceholderText = Any;
@@ -125,6 +125,13 @@ public sealed class BodySearchPage : GalaxySearchPage
             chosen ?? Any,
             chosen is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
             null);
+    }
+
+    /// <summary>The count SHOW UP TO shows.</summary>
+    public int Limit
+    {
+        get => _limit.Value;
+        set => _limit.Value = value;
     }
 
     /// <summary>Sets a text field by its tool argument name.</summary>
@@ -239,7 +246,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
         {
-            _limit.Value = Math.Clamp(limit, 1, 20);
+            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
         }
 
         foreach (var name in _pickers.Keys)
@@ -397,7 +404,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", Beneath(_near, _nearNames)),
-            Columns2("*,132", Labelled("Distance in LY", _distance), Labelled("How many", _limit))));
+            Columns2("*,*", Labelled("Distance in LY", _distance), _limit.Field("Bodies"))));
 
         var flags = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _landable, _terraformable, _tidallyLocked } };
 
@@ -407,8 +414,8 @@ public sealed class BodySearchPage : GalaxySearchPage
             Labelled("Surface material", _pickers["material"].Picker),
             flags,
             Columns2("*,*", Labelled("Volcanism", _volcanism), Labelled("Atmosphere", _atmosphere)),
-            Labelled("Gravity in g", Span(_gravityFrom, _gravityTo, "G")),
-            Labelled("Temperature in K", Span(_temperatureFrom, _temperatureTo, "K")),
+            Labelled("Gravity in G", Span(_gravityFrom, _gravityTo, _gravityReadout)),
+            Labelled("Temperature in K", Span(_temperatureFrom, _temperatureTo, _temperatureReadout)),
             Labelled("From the star at most", _fromStar)));
 
         form.Children.Add(Group(

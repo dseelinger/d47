@@ -352,7 +352,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
         amounts[0].Value = 80;
-        amounts[1].Value = 8;
+        page.Limit = 8;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "find_body");
 

@@ -266,7 +266,7 @@ public sealed record StationQuery
 
             // Bounded on both ends.
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
-            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+            Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
         return true;
@@ -394,7 +394,7 @@ public sealed record StationQuery
             TechnologyBroker = broker,
             Criteria = criteria,
             MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
-            Size = Math.Clamp(search.Size <= 0 ? 5 : search.Size, 1, 20),
+            Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 
         return true;
@@ -507,7 +507,7 @@ public sealed record StationQuery
             TraderType = matched,
             IsAboutTraders = true,
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
-            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+            Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
     }
 

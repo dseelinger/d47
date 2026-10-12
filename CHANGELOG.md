@@ -8,6 +8,10 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Systems, Stations and Bodies search pages now label their ranges. Each range box shows FROM or UP TO inside it, the unit is in the field label (Distance in light years, Gravity in G, Temperature in K), and a grey line under the pair says what the range will do, such as "Systems within 50 LY of SOL, nearest first." Population on Systems and Stations is now Minimum population: UNPOPULATED, POPULATED and HIGH tiles and a box, with a line saying what it asks for. How many is now Show up to, a dropdown of 1, 5, 10, 25, 50 and 100 that works on the headset panel.
+
+Galaxy searches now return up to 100 results, and 25 when no count is given, up from 20 and 5. This covers the search pages and voice searches. Asking for more than 100 returns 100 and says "limit stops at 100".
+
 A form's boxes now line up when one label has a mark and its neighbour does not. On the Market page the Commodity and Tonnes boxes start at the same height, as do "Credits to trade with" and "Hops" on the Trade route card.
 
 Each Commander now has their own conversation with d47. When you pick a Commander from the title bar, the Commanders page or by saying "switch to" a Commander, d47 answers from that Commander's conversation, which is empty if they have not spoken since d47 started, and picking back resumes the first one. The model is no longer sent the previous Commander's messages under the picked Commander's settings and About me. The transcript on screen shows "Showing Commander <name>" where the switch happened. An answer still being written when you switch goes into the conversation it was asked in.

@@ -426,6 +426,12 @@ public static class GalaxyCriteria
 /// <summary>A validated galaxy search.</summary>
 public sealed record GalaxyQuery
 {
+    /// <summary>The result count when none is asked for.</summary>
+    public const int DefaultSize = 25;
+
+    /// <summary>The most results one search returns.</summary>
+    public const int MaxSize = 100;
+
     private GalaxyQuery()
     {
     }
@@ -458,7 +464,7 @@ public sealed record GalaxyQuery
             Criteria = criteria,
 
             // Clamped rather than rejected.
-            Size = Math.Clamp(size <= 0 ? 5 : size, 1, 20),
+            Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
         return true;

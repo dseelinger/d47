@@ -281,7 +281,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         page.Type("near", "Sol");
         page.Type("distance from", "10");
         page.Type("distance to", "50");
-        page.Type("population from", "1000");
+        page.Type("minimum population", "1000");
         page.Type("controlling_faction", "Diamond Frogs");
         page.Type("faction", "Diamond Frogs");
 
@@ -295,8 +295,8 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
             stepper.SelectedIndex = 1;
         }
 
-        page.GetLogicalDescendants().OfType<CheckBox>().Single().IsChecked = true;
-        page.GetLogicalDescendants().OfType<D47.App.Controls.Amount>().Single().Value = 8;
+        page.GetLogicalDescendants().OfType<CheckBox>().Single(box => box.Content as string == "Only colonised systems").IsChecked = true;
+        page.Limit = 8;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_systems");
 

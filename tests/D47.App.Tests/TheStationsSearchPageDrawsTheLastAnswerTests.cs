@@ -341,7 +341,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         page.Type("module", "Frame Shift Drive");
         page.Type("ship", "Cobra Mk III");
         page.Type("controlling_faction", "Diamond Frogs");
-        page.Type("population from", "1000");
+        page.Type("minimum population", "1000");
         page.TickType("Starport", true);
         page.ChooseServices(["Market"]);
 
@@ -359,7 +359,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
         amounts[0].Value = 80;
-        amounts[1].Value = 8;
+        page.Limit = 8;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_stations");
 

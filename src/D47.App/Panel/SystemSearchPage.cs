@@ -19,7 +19,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     public const string Any = "Any";
 
     /// <summary>The tool's own default for how many to return.</summary>
-    public const int DefaultLimit = 5;
+    public const int DefaultLimit = ShowUpTo.Default;
 
     /// <summary>The table's columns: system, light years, allegiance, economy, population, power, reported.</summary>
     private const string Columns = "1.5*,64,*,*,104,*,76";
@@ -35,10 +35,10 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions? _nearNames;
     private readonly TextBox _distanceFrom = Field("distance from", mono: true);
     private readonly TextBox _distanceTo = Field("distance to", mono: true);
-    private readonly Amount _limit = new() { Value = DefaultLimit, Minimum = 1, Maximum = 20, Step = 1, Width = 132 };
+    private readonly ShowUpTo _limit = new();
+    private readonly RangeReadout _distanceReadout;
 
-    private readonly TextBox _populationFrom = Field("population from", mono: true);
-    private readonly TextBox _populationTo = Field("population to", mono: true);
+    private readonly MinimumPopulation _population = new(Field("minimum population", mono: true));
     private readonly CheckBox _colonised = LabeledCheckBox.Caps("Only colonised systems");
     private readonly TextBox _controllingFaction = Field("controlling faction");
     private readonly TextBox _faction = Field("a faction present");
@@ -69,9 +69,14 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         _colonised.MinHeight = TypeScale.MinimumTarget;
         _controllingFaction.PlaceholderText = "Exact name";
-        _distanceFrom.PlaceholderText = "0";
-        _populationFrom.PlaceholderText = "0";
-        _populationTo.PlaceholderText = Any;
+        _distanceReadout = new RangeReadout(_distanceFrom, _distanceTo, (min, max) => RangeReadout.Distance(min, max, Reference()));
+        _near.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TextBox.TextProperty)
+            {
+                _distanceReadout.Update();
+            }
+        };
 
         foreach (var name in (string[])["allegiance", "government", "primary_economy", "security", "state", "faction_state", "faction_government", "power"])
         {
@@ -131,6 +136,13 @@ public sealed class SystemSearchPage : GalaxySearchPage
             null);
     }
 
+    /// <summary>The count SHOW UP TO shows.</summary>
+    public int Limit
+    {
+        get => _limit.Value;
+        set => _limit.Value = value;
+    }
+
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 
@@ -148,7 +160,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         Put("near", _near.Text);
         Put("distance", Range(_distanceFrom.Text, _distanceTo.Text));
-        Put("population", Range(_populationFrom.Text, _populationTo.Text));
+        Put("population", _population.Asked);
         Put("controlling_faction", _controllingFaction.Text);
         Put("faction", _faction.Text);
         Put("power_state", _powerState.SelectedIndex > 0 ? _powerState.SelectedItem : null);
@@ -173,11 +185,12 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public override void ClearForm()
     {
-        foreach (var box in (TextBox[])[_near, _distanceFrom, _distanceTo, _populationFrom, _populationTo, _controllingFaction, _faction])
+        foreach (var box in (TextBox[])[_near, _distanceFrom, _distanceTo, _controllingFaction, _faction])
         {
             box.Text = string.Empty;
         }
 
+        _population.Set(null);
         _limit.Value = DefaultLimit;
         _powerState.SelectedIndex = 0;
         _colonised.IsChecked = false;
@@ -196,7 +209,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
         (_distanceFrom.Text, _distanceTo.Text) = Split(Get("distance"));
-        (_populationFrom.Text, _populationTo.Text) = Split(Get("population"));
+        _population.Set(Get("population"));
         _controllingFaction.Text = Get("controlling_faction") ?? string.Empty;
         _faction.Text = Get("faction") ?? string.Empty;
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
@@ -204,7 +217,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))
         {
-            _limit.Value = Math.Clamp(limit, 1, 20);
+            _limit.Value = Math.Clamp(limit, 1, ShowUpTo.Max);
         }
 
         foreach (var name in _pickers.Keys)
@@ -312,10 +325,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", Beneath(_near, _nearNames)),
-            Columns2(
-                "*,132",
-                Labelled("Distance", Span(_distanceFrom, _distanceTo, "LY")),
-                Labelled("How many", _limit))));
+            Labelled("Distance in light years", Span(_distanceFrom, _distanceTo, _distanceReadout)),
+            _limit.Field("Systems")));
 
         form.Children.Add(Group(
             "The system",
@@ -327,7 +338,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
                 "*,*",
                 Labelled("Economy", _pickers["primary_economy"].Picker),
                 Labelled("Security", _pickers["security"].Picker)),
-            Labelled("Population", Span(_populationFrom, _populationTo, null)),
+            Labelled("Minimum population", _population),
             _colonised));
 
         form.Children.Add(Group(
@@ -350,8 +361,14 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     protected override object? Followed => _here();
 
-    protected override void Follow() =>
+    protected override void Follow()
+    {
         _near.PlaceholderText = _here() is { } system ? $"Your system · {system}" : "Your system";
+        _distanceReadout.Update();
+    }
+
+    private string Reference() =>
+        _near.Text is { } near && near.Trim().Length > 0 ? near.Trim() : _here() ?? "your system";
 
     private Control Row(SystemSummary system, string columns, bool headset, bool here)
     {
@@ -421,8 +438,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         "faction" => _faction,
         "distance from" => _distanceFrom,
         "distance to" => _distanceTo,
-        "population from" => _populationFrom,
-        "population to" => _populationTo,
+        "minimum population" => _population.Box,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "No such text field."),
     };
 
@@ -512,21 +528,14 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return grid;
     }
 
-    internal static Grid Span(TextBox from, TextBox to, string? unit)
+    internal static StackPanel Span(TextBox from, TextBox to, RangeReadout readout)
     {
-        var dash = Mono("–", TypeScale.Small, ThemeManager.GreyKey);
-        dash.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(dash, 1);
-        Grid.SetColumn(to, 2);
+        from.InnerLeftContent = SearchText.Prefix("From");
+        to.InnerLeftContent = SearchText.Prefix("Up to");
+        Grid.SetColumn(to, 1);
 
-        if (unit is not null)
-        {
-            var suffix = Label(unit, width: null);
-            suffix.Margin = new Thickness(0, 0, 10, 0);
-            to.InnerRightContent = suffix;
-        }
-
-        return new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,*"), ColumnSpacing = 6, Children = { from, dash, to } };
+        var boxes = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 12, Children = { from, to } };
+        return new StackPanel { Spacing = 6, Children = { boxes, readout.Line } };
     }
 
     internal static StackPanel Pair(TextBlock top, TextBlock bottom) =>
