@@ -40,9 +40,44 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     public static NavCrumb Crumb => new(RootKey, "Stored modules");
 
+    /// <summary>One module in a table row, with whether its group is the snapshot's system.</summary>
+    public readonly record struct Held(StoredModule Module, bool Here);
+
+    /// <summary>The table's columns, each sortable from its header; the sort orders rows within each group.</summary>
+    public static readonly IReadOnlyList<SortColumn<Held>> ColumnHeadings =
+    [
+        SortColumn<Held>.Text("Module", row => row.Module.Name),
+        SortColumn<Held>.Figure("Class", row => ClassRank(row.Module.Class), SortDirection.Descending),
+        SortColumn<Held>.Figure(
+            "Transfer cost",
+            row => row.Module.TransferCost is > 0 and var cost ? cost : row.Here ? 0L : (long?)null,
+            SortDirection.Ascending),
+        SortColumn<Held>.Figure(
+            "Transfer time",
+            row => row.Module.TransferTime is > 0 and var seconds ? seconds : (int?)null,
+            SortDirection.Ascending),
+    ];
+
+    /// <summary>The default order: by module name.</summary>
+    public static readonly SortOrder ByName = new(0, SortDirection.Ascending);
+
+    /// <summary>Size and rating as one number, so 5A outranks 5B and 6E outranks 5A; null where there is no class.</summary>
+    public static int? ClassRank(string? moduleClass)
+    {
+        if (moduleClass is not { Length: > 1 } || !int.TryParse(moduleClass[..^1], NumberStyles.None, CultureInfo.InvariantCulture, out var size))
+        {
+            return null;
+        }
+
+        var rating = "EDCBA".IndexOf(char.ToUpperInvariant(moduleClass[^1]), StringComparison.Ordinal);
+
+        return rating < 0 ? null : (size * 10) + rating + 1;
+    }
+
     private readonly Func<CommanderGameState?> _state;
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
+    private readonly SortHeader<Held> _head = new("StoredHead", ColumnHeadings, ByName);
     private object? _seen;
     private string _query = string.Empty;
 
@@ -50,6 +85,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     {
         _state = state;
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
+        _head.Changed += Draw;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, _clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -63,6 +99,12 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         Content = root;
         Draw();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _head.Reset();
     }
 
     public bool Filters => Store is { IsKnown: true, Modules.Count: > 0 };
@@ -234,7 +276,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         }
     }
 
-    private static Control Section(Group group)
+    private Control Section(Group group)
     {
         var name = TitleText.Build(group.System, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -257,9 +299,9 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var module in group.Modules)
+        foreach (var row in _head.Sort([.. group.Modules.Select(module => new Held(module, group.Here))]))
         {
-            rows.Children.Add(Row(module, group.Here));
+            rows.Children.Add(Row(row.Module, row.Here));
         }
 
         return new StackPanel
@@ -269,20 +311,13 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         };
     }
 
-    private static Control ColumnHeads()
+    private Control ColumnHeads()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), Height = 32 };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
 
-        foreach (var (text, column, right) in new[]
-                 {
-                     ("Module", 0, false),
-                     ("Class", 1, false),
-                     ("Transfer cost", 2, true),
-                     ("Transfer time", 3, true),
-                 })
+        for (var column = 0; column < ColumnHeadings.Count; column++)
         {
-            var head = MaterialsPage.Chrome(text, ThemeManager.GreyKey);
-            head.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            var head = _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
             Grid.SetColumn(head, column);
             grid.Children.Add(head);
         }

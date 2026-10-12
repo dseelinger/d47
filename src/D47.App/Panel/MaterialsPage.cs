@@ -75,6 +75,16 @@ public sealed class MaterialsPage : UserControl
     /// <summary>The order a Guardian or Thargoid ledger lists its journal categories in.</summary>
     private static readonly string[] Categories = ["Raw", "Manufactured", "Encoded"];
 
+    /// <summary>The Needed by plans table's columns, each sortable from its header; the sort orders rows within each plan.</summary>
+    public static readonly IReadOnlyList<SortColumn<GapBuildLine>> ColumnHeadings =
+    [
+        SortColumn<GapBuildLine>.Text("Material", line => line.Material.Name),
+        SortColumn<GapBuildLine>.Text("Ledger", line => LedgerOf(line.Material)),
+        SortColumn<GapBuildLine>.Figure("Held / need", line => (int?)line.Held, SortDirection.Descending),
+        SortColumn<GapBuildLine>.Figure("Short", line => (int?)line.Short, SortDirection.Descending),
+    ];
+
+    private readonly SortHeader<GapBuildLine> _head = new("MaterialsHead", ColumnHeadings);
     private readonly GapSource _gap;
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
@@ -97,6 +107,7 @@ public sealed class MaterialsPage : UserControl
         _engineers = engineers;
         _nav = nav;
         _copy = copy;
+        _head.Changed += Refresh;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -303,6 +314,7 @@ public sealed class MaterialsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _head.Reset();
         _gap.Changed -= OnChanged;
         _gap.Changed += OnChanged;
         Refresh();
@@ -790,7 +802,7 @@ public sealed class MaterialsPage : UserControl
 
     internal static string Count(int n) => n.ToString(CultureInfo.InvariantCulture);
 
-    private static Control Group(GapBuild build, Action<MaterialEntry> open)
+    private Control Group(GapBuild build, Action<MaterialEntry> open)
     {
         var name = TitleText.Build(build.Name, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -807,7 +819,7 @@ public sealed class MaterialsPage : UserControl
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var line in build.Lines)
+        foreach (var line in _head.Sort(build.Lines))
         {
             rows.Children.Add(Row(line, open));
         }
@@ -819,20 +831,13 @@ public sealed class MaterialsPage : UserControl
         };
     }
 
-    private static Control ColumnHeads()
+    private Control ColumnHeads()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), Height = 32 };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
 
-        foreach (var (text, column, right) in new[]
-                 {
-                     ("Material", 0, false),
-                     ("Ledger", 1, false),
-                     ("Held / need", 2, true),
-                     ("Short", 3, true),
-                 })
+        for (var column = 0; column < ColumnHeadings.Count; column++)
         {
-            var head = Chrome(text, ThemeManager.GreyKey);
-            head.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            var head = _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
             Grid.SetColumn(head, column);
             grid.Children.Add(head);
         }

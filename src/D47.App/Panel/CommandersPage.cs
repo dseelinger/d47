@@ -21,6 +21,19 @@ public sealed class CommandersPage : UserControl
 
     private const string Columns = "1.4*,*,*,170,140";
 
+    /// <summary>The table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<CommanderSighting>> Heads =
+    [
+        SortColumn<CommanderSighting>.Text("NAME", sighting => CommanderRoster.Called(sighting.Name)),
+        SortColumn<CommanderSighting>.Text("SHIP", sighting => sighting.Ship),
+        SortColumn<CommanderSighting>.Text("LAST LOCATION", sighting => sighting.StarSystem),
+        SortColumn<CommanderSighting>.Figure("LAST DETECTED", sighting => (DateTimeOffset?)sighting.LastSeen, SortDirection.Descending),
+    ];
+
+    /// <summary>The default order: last detected first.</summary>
+    public static readonly SortOrder ByLastDetected = new(3, SortDirection.Descending);
+
+    private readonly SortHeader<CommanderSighting> _head = new("CommandersHead", Heads, ByLastDetected);
     private readonly CommanderRoster _roster;
     private readonly StackPanel _body = new();
     private (object? Sightings, string? Shown, int Files) _seen;
@@ -28,6 +41,7 @@ public sealed class CommandersPage : UserControl
     public CommandersPage(CommanderRoster roster)
     {
         _roster = roster;
+        _head.Changed += Draw;
 
         Content = new DockPanel
         {
@@ -43,6 +57,12 @@ public sealed class CommandersPage : UserControl
         };
 
         Draw();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _head.Reset();
     }
 
     /// <summary>Redraws when the list or the shown Commander has changed since the last draw.</summary>
@@ -85,7 +105,7 @@ public sealed class CommandersPage : UserControl
         var rows = new StackPanel { Spacing = 2 };
         rows.Children.Add(Header());
 
-        foreach (var sighting in commanders)
+        foreach (var sighting in _head.Sort(commanders))
         {
             rows.Children.Add(Row(sighting, string.Equals(sighting.FrontierId, _roster.ShownFrontierId, StringComparison.Ordinal)));
         }
@@ -97,7 +117,7 @@ public sealed class CommandersPage : UserControl
         _body.Children.Add(tally);
     }
 
-    private static Grid Header()
+    private Grid Header()
     {
         var grid = new Grid
         {
@@ -106,15 +126,11 @@ public sealed class CommandersPage : UserControl
             Margin = new Thickness(14, 0, 4, 6),
         };
 
-        string[] names = ["NAME", "SHIP", "LAST LOCATION", "LAST DETECTED"];
-
-        for (var i = 0; i < names.Length; i++)
+        for (var column = 0; column < Heads.Count; column++)
         {
-            var label = Text(names[i], Fonts.ChromeFamily, TypeScale.MetaSmall, ThemeManager.GreyKey);
-            label.FontWeight = FontWeight.SemiBold;
-            label.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
-            Grid.SetColumn(label, i);
-            grid.Children.Add(label);
+            var cell = _head.Cell(column, HorizontalAlignment.Left);
+            Grid.SetColumn(cell, column);
+            grid.Children.Add(cell);
         }
 
         return grid;

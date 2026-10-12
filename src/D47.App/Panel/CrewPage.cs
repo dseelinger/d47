@@ -32,7 +32,33 @@ public sealed class CrewPage : UserControl
     /// <summary>The table's columns: pilot, combat rank, fighter bay, posted to.</summary>
     private const string Columns = "*,160,170,*";
 
+    private static readonly string[] CombatLadder =
+        ["Harmless", "Mostly Harmless", "Novice", "Competent", "Expert", "Master", "Dangerous", "Deadly", "Elite"];
+
+    /// <summary>The table's columns, each sortable from its header.</summary>
+    public static readonly IReadOnlyList<SortColumn<CrewMember>> ColumnHeadings =
+    [
+        SortColumn<CrewMember>.Text("Pilot", member => member.Name),
+        SortColumn<CrewMember>.Figure("Combat rank", member => RankOf(member.CombatRank), SortDirection.Descending),
+        SortColumn<CrewMember>.Figure("Fighter bay", member => (int?)(member.Active ? 1 : 0), SortDirection.Descending),
+        SortColumn<CrewMember>.Text("Posted to", member => member.PostedTo),
+    ];
+
+    /// <summary>The combat rank's place on the ladder, Harmless lowest; null where it is unrecorded or unknown.</summary>
+    public static int? RankOf(string? combatRank)
+    {
+        if (combatRank is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        var place = Array.FindIndex(CombatLadder, name => combatRank.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+
+        return place < 0 ? null : place;
+    }
+
     private readonly Func<CommanderGameState?> _state;
+    private readonly SortHeader<CrewMember> _head = new("CrewHead", ColumnHeadings);
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly CrewSeatsSection? _seats;
@@ -46,6 +72,7 @@ public sealed class CrewPage : UserControl
         _pictures = pictures;
         _seats = seats is null ? null : new CrewSeatsSection(seats, state, () => Draw());
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
+        _head.Changed += Draw;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var footer = new PageFooter(Phrase, _clock) { Margin = new Thickness(0, 12, 0, 0) };
@@ -59,6 +86,12 @@ public sealed class CrewPage : UserControl
 
         Content = root;
         Draw();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _head.Reset();
     }
 
     /// <summary>Redraws when the crew changes.</summary>
@@ -123,7 +156,7 @@ public sealed class CrewPage : UserControl
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var member in crew.Members)
+        foreach (var member in _head.Sort(crew.Members))
         {
             rows.Children.Add(Row(member, _pictures));
         }
@@ -131,14 +164,13 @@ public sealed class CrewPage : UserControl
         _body.Children.Add(new StackPanel { Margin = new Thickness(0, _seats is null ? 28 : 12, 0, 0), Children = { ColumnHeads(), rows } });
     }
 
-    private static Control ColumnHeads()
+    private Control ColumnHeads()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), Height = 32 };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
 
-        foreach (var (text, column) in new[] { ("Pilot", 0), ("Combat rank", 1), ("Fighter bay", 2), ("Posted to", 3) })
+        for (var column = 0; column < ColumnHeadings.Count; column++)
         {
-            var head = MaterialsPage.Chrome(text, ThemeManager.GreyKey);
-            head.HorizontalAlignment = HorizontalAlignment.Left;
+            var head = _head.Cell(column, HorizontalAlignment.Left);
             Grid.SetColumn(head, column);
             grid.Children.Add(head);
         }
