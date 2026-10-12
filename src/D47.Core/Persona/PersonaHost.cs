@@ -39,7 +39,11 @@ public sealed record PersonaChanged(Persona? Previous, Persona Current, PersonaA
 /// <summary>Which core is aboard, what it sounds like, and what it remembers.</summary>
 public sealed class PersonaHost
 {
-    private readonly Dictionary<string, List<ConversationMessage>> _transcripts = new(StringComparer.Ordinal);
+    /// <summary>Each conversation, keyed by Frontier ID and core id; a null Frontier ID is a conversation held before any Commander was shown.</summary>
+    private readonly Dictionary<(string? Commander, string Core), List<ConversationMessage>> _transcripts = [];
+
+    /// <summary>The Frontier ID of the Commander shown, or null before any has been.</summary>
+    private readonly Func<string?> _commander;
 
     /// <summary>
     /// Which cores have already introduced themselves, so a second selection gets a gap reaction rather
@@ -58,8 +62,13 @@ public sealed class PersonaHost
     /// <summary>Which Guardian cores may be aboard; a core still asleep is stood in for by the stock core.</summary>
     private readonly GuardianCores _cores;
 
-    public PersonaHost(Persona? current = null, IIntroductionMemory? memory = null, GuardianCores? cores = null)
+    public PersonaHost(
+        Persona? current = null,
+        IIntroductionMemory? memory = null,
+        GuardianCores? cores = null,
+        Func<string?>? commander = null)
     {
+        _commander = commander ?? (() => null);
         _cores = cores ?? GuardianCores.AllAwake();
         Current = _cores.Admit(current ?? PersonaCatalog.Resolve(null));
         _memory = memory;
@@ -102,12 +111,15 @@ public sealed class PersonaHost
     public string ShipName =>
         string.IsNullOrWhiteSpace(_shipNameOverride) ? Current.Name : _shipNameOverride.Trim();
 
-    /// <summary>The current core's transcript.</summary>
+    /// <summary>
+    /// The shown Commander's transcript with the current core. Conversations held before any Commander was
+    /// shown go to the first Commander shown, as the same lists.
+    /// </summary>
     public List<ConversationMessage> Transcript => TranscriptFor(Current.Id);
 
     /// <summary>
-    /// Drops every core's transcript, so the next turn with any of them starts from nothing (Phase 44:
-    /// "The old transcript goes away, a new one is created.").
+    /// Drops every Commander's transcript with every core, so the next turn with any of them starts from
+    /// nothing (Phase 44: "The old transcript goes away, a new one is created.").
     /// </summary>
     public void ForgetTranscripts() => _transcripts.Clear();
 
@@ -172,13 +184,30 @@ public sealed class PersonaHost
 
     private List<ConversationMessage> TranscriptFor(string id)
     {
-        if (!_transcripts.TryGetValue(id, out var transcript))
+        var commander = _commander();
+
+        if (commander is not null)
+        {
+            Claim(commander);
+        }
+
+        if (!_transcripts.TryGetValue((commander, id), out var transcript))
         {
             transcript = [];
-            _transcripts[id] = transcript;
+            _transcripts[(commander, id)] = transcript;
         }
 
         return transcript;
+    }
+
+    /// <summary>Moves the conversations held before any Commander was shown to <paramref name="commander"/>.</summary>
+    private void Claim(string commander)
+    {
+        foreach (var (key, transcript) in _transcripts.Where(entry => entry.Key.Commander is null).ToList())
+        {
+            _transcripts.Remove(key);
+            _transcripts.TryAdd((commander, key.Core), transcript);
+        }
     }
 }
 

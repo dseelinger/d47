@@ -1966,7 +1966,8 @@ public sealed class AppHost : IDisposable
         var personas = new PersonaHost(
             PersonaCatalog.Resolve(settings.Current.Persona.Id),
             new ViewStateIntroductions(viewState),
-            guardianCores);
+            guardianCores,
+            () => gameState.Active?.Identity.FrontierId);
 
         // When the Commander was last understood.
         var heardAt = new StrongBox<DateTimeOffset?>(null);
@@ -4497,20 +4498,34 @@ public sealed class AppHost : IDisposable
                 change.Current.FrontierId,
                 change.Priming ? "met in the backlog" : "adopted");
 
+            // An adoption hands over the conversation held before anybody was shown, as the same list.
+            lock (_personaGate)
+            {
+                Turns.UseTranscript(Personas.Transcript);
+            }
+
             return;
         }
 
-        // A pick keeps the conversation and the session: only what belongs to the shown Commander follows.
+        // A pick keeps the session; the conversation is the picked Commander's, and the one they left is kept.
         if (change.Cause == CommanderSwitchCause.Picked)
         {
             _logger.LogInformation(
-                "Commander {Current} picked in place of {Previous}: core re-resolved, conversation kept",
+                "Commander {Current} picked in place of {Previous}: core re-resolved, their conversation resumed",
                 change.Current.Name,
                 change.Previous!.Name);
+
+            // Hands the loop the picked Commander's transcript; a turn already running keeps the one it started with.
+            lock (_personaGate)
+            {
+                Turns.UseTranscript(Personas.Transcript);
+            }
 
             ShipCores.Reset();
             Drift?.Reset();
             BeginDirections();
+
+            Noted?.Invoke($"Showing Commander {change.Current.Name}");
             return;
         }
 

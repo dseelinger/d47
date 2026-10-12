@@ -78,6 +78,14 @@ Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch ag
 Every Commander except the one d47 is showing has these two phrases. Until the journals list two or
 more Commanders there is nothing to switch to.
 
+### The conversation follows the switch
+
+Each Commander has their own conversation with d47 until d47 closes. After a switch, d47 answers from
+the picked Commander's conversation, which is empty if they have not spoken since d47 started.
+Switching back resumes the first Commander's conversation. The transcript on screen keeps its lines
+and adds "Showing Commander Kestrel Vane" where the switch happened. A Commander logging in to the
+game starts every conversation from nothing.
+
 ### The model cannot do this
 
 Only the spoken phrases, the title bar and the Commanders page switch Commanders. `switch_commander`
