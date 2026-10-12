@@ -25,6 +25,7 @@ public sealed class VrHost : IDisposable
     private readonly VrLifecycle _lifecycle;
     private readonly SteamVrRuntime _runtime;
     private readonly VrPanelSurface _panel;
+    private readonly VrAvatarSurface _avatar;
     private readonly VrCaptionSurface _captions;
     private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
@@ -83,6 +84,7 @@ public sealed class VrHost : IDisposable
         SettingsService settings,
         ViewStateStore viewState,
         VrPanelSurface panel,
+        VrAvatarSurface avatar,
         VrCaptionSurface captions,
         CaptionLayer layer,
         SteamVrRuntime runtime,
@@ -95,6 +97,7 @@ public sealed class VrHost : IDisposable
         _viewState = viewState;
         _anchors = new Dictionary<string, SurfaceAnchor>(viewState.Load().VrAnchors, StringComparer.Ordinal);
         _panel = panel;
+        _avatar = avatar;
         _captions = captions;
         _layer = layer;
         _runtime = runtime;
@@ -206,15 +209,18 @@ public sealed class VrHost : IDisposable
         var layer = new CaptionLayer { Settings = settings.Current.Vr.Captions };
         var captions = new VrCaptionSurface(layer);
 
+        // After the panel, so it reads the avatar's place from the panel's draw in the same serve.
+        var avatar = new VrAvatarSurface(panel);
+
         var runtime = new SteamVrRuntime(
-            [panel, captions],
+            [panel, avatar, captions],
             loggers.CreateLogger<SteamVrRuntime>(),
             OpenVrBinding.Instance,
             new D3D11TextureDevice());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
-            settings, viewState, panel, captions, layer, runtime, lifecycle, paths, files,
+            settings, viewState, panel, avatar, captions, layer, runtime, lifecycle, paths, files,
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
@@ -388,6 +394,7 @@ public sealed class VrHost : IDisposable
         _lifecycle.Stop();
         _runtime.Stop();
         _captions.Dispose();
+        _avatar.Dispose();
         _panel.Dispose();
     }
 
@@ -482,6 +489,7 @@ public sealed class VrHost : IDisposable
         _panel.Enabled = true;
         _captions.Enabled = _settings.Current.Vr.Captions.Enabled;
         _layer.Tick(now);
+        _avatar.Advance(now);
 
         try
         {

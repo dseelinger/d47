@@ -57,7 +57,11 @@ public sealed class SteamVrRuntime(
             [VrSurface.PanelFull] = ("com.dseelinger.D47.panel", "D47"),
             [VrSurface.PanelMini] = ("com.dseelinger.D47.panel", "D47"),
             [VrSurface.Captions] = ("com.dseelinger.D47.captions", "D47 captions"),
+            [VrSurface.Avatar] = ("com.dseelinger.D47.avatar", "D47 avatar"),
         };
+
+    /// <summary>Above the panel; the beam and cursor sit above this.</summary>
+    private const uint AvatarAbove = 1;
 
     /// <summary>One process, one session.</summary>
     private static int _sessionClaimed;
@@ -663,6 +667,11 @@ public sealed class SteamVrRuntime(
                 return failure;
             }
 
+            if (source.Surface == VrSurface.Avatar)
+            {
+                overlay.Above(AvatarAbove);
+            }
+
             _overlays[key] = overlay;
         }
 
@@ -707,10 +716,10 @@ public sealed class SteamVrRuntime(
 
             // Both fail soft.
             _beam = Sprite("com.dseelinger.D47.beam", "D47 aim", VrSprites.Beam(),
-                VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: 1);
+                VrAim.BeamPixelsWide, VrAim.BeamPixelsTall, VrAim.BeamWidthFor(1f), sortOrder: AvatarAbove + 1);
 
             _cursor = Sprite("com.dseelinger.D47.cursor", "D47 cursor", VrSprites.Cursor(VrCursor.Ring),
-                VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: 2);
+                VrSprites.CursorSize, VrSprites.CursorSize, VrAim.CursorSizeMetres, sortOrder: AvatarAbove + 2);
         }
     }
 

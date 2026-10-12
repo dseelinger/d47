@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -262,6 +263,34 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     /// <summary>The modal on top of this surface, if one is open.</summary>
     public Controls.ModalDialog? Modal => _modals.Top;
+
+    /// <summary>The avatar clip this surface shows a still of, or null.</summary>
+    public string? ShowingClip => _view.Avatar.ShowingClip;
+
+    /// <summary>Where the last draw put the avatar's picture, in <see cref="DrawnSize"/> pixels, or null.</summary>
+    public VrPixelRect? AvatarArea { get; private set; }
+
+    /// <summary>The pixel size of the last draw.</summary>
+    public (int Width, int Height) DrawnSize { get; private set; } = PanelResolution.Default;
+
+    /// <summary>Whether a modal, a chooser or the resize handles may be drawn over the avatar.</summary>
+    public bool AvatarCovered => Modal is not null || _handlesShown || _offscreen.IsChoosing;
+
+    /// <summary>Blanks the avatar's still frame while the avatar overlay plays the clip over it.</summary>
+    public bool AvatarOverlaid
+    {
+        get => _view.Avatar.ClipHidden;
+        set
+        {
+            if (_view.Avatar.ClipHidden == value)
+            {
+                return;
+            }
+
+            _view.Avatar.ClipHidden = value;
+            _dirty = true;
+        }
+    }
 
     /// <summary>Redraws the clocks, from the headset's own tick.</summary>
     /// <summary>
@@ -525,7 +554,58 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _offscreen.CopyInto(destination, rowBytes);
         _dirty = false;
 
+        DrawnSize = (width, height);
+        AvatarArea = MeasureAvatar();
+
         Keep(rendered);
+    }
+
+    /// <summary>The avatar picture's drawn square, through the zoom, or null when no clip is on show.</summary>
+    private VrPixelRect? MeasureAvatar()
+    {
+        var picture = _view.Avatar.Picture;
+
+        if (_view.Avatar.ShowingClip is null
+            || !ShownWithin(picture, _offscreen.View)
+            || picture.Source is not { } source
+            || picture.TransformToVisual(_offscreen.View) is not { } toSurface)
+        {
+            return null;
+        }
+
+        var box = new Rect(picture.Bounds.Size).TransformToAABB(toSurface);
+
+        // Stretch.Uniform: the largest copy of the source that fits, centred.
+        var fit = Math.Min(box.Width / source.Size.Width, box.Height / source.Size.Height);
+        var width = source.Size.Width * fit;
+        var height = source.Size.Height * fit;
+
+        return width <= 0 || height <= 0
+            ? null
+            : new VrPixelRect(
+                (float)(box.X + ((box.Width - width) / 2)),
+                (float)(box.Y + ((box.Height - height) / 2)),
+                (float)width,
+                (float)height);
+    }
+
+    /// <summary>Whether the control and every parent up to <paramref name="root"/> is visible; the offscreen window never is.</summary>
+    private static bool ShownWithin(Visual control, Visual root)
+    {
+        for (Visual? at = control; at is not null; at = at.GetVisualParent())
+        {
+            if (!at.IsVisible)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(at, root))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

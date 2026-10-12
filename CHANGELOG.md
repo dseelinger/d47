@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The headset avatar now animates. On the big panel and on the mini panel the core's clip plays at its true speed over the panel's avatar, instead of a still frame. It steps aside for a modal, a chooser or the resize handles, and the still frame shows while it does.
+
 The Stories tab's **Ask for one** button is now **Short Story** and sits after **Stories**: the bar reads Stories, Short Story, Story log. What a Commander reads or hears no longer says "adventure": a story D47 writes for you is a short story, and anything that covers a stock-story chapter too is a story. The voice commands are "ask for a short story", "change the short story", "accept the short story" and "reject the short story"; the old "adventure" phrases still work. The capability is now called Stories, the callout toggle Story objectives, and the setting Notable places for short stories.
 
 The Stories tab's **Messages** button and page are now **Story log**, and the bar reads Stories, Short Story, Story log. The button shows "Story log (2 new)" while lines are unread. The page groups what was said during stories: lines waiting for your answer first, then one group per story headed with its name, the story with the newest line first, then Earlier stories for a story that no longer exists and Not tied to a story. Narrator lines now show the Narrator's name and a core's lines show the core's name as the sender. The page was renamed because "messages" also means Elite's in-game inbox.

@@ -10,6 +10,9 @@ public enum VrSurface
 
     /// <summary>Flat, output only, and not reachable from Overlay Positioning.</summary>
     Captions,
+
+    /// <summary>The avatar clip, laid over the panel's still frame of it.</summary>
+    Avatar,
 }
 
 /// <summary>Head-locked or world-locked, per surface (Phase 9, "VR Panel locking").</summary>
