@@ -14,6 +14,10 @@ public interface IStarSystemService
     /// <summary>Systems whose names start with what was typed, for suggesting names while the Commander types.</summary>
     Task<IReadOnlyList<SystemNameMatch>> PrefixNamesAsync(string typed, CancellationToken cancellationToken);
 
+    /// <summary>Minor faction names matching what was typed, at most eight, for suggesting names while the Commander types.</summary>
+    Task<IReadOnlyList<string>> FactionNamesAsync(string typed, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<string>>([]);
+
     /// <summary>Powerplay systems near a system, nearest first, the system itself left out.</summary>
     Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken);
 }

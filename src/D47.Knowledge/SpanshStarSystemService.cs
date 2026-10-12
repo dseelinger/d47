@@ -30,6 +30,8 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
 
     private readonly ConcurrentDictionary<string, IReadOnlyList<SystemNameMatch>> _prefixes = new(StringComparer.Ordinal);
 
+    private readonly ConcurrentDictionary<string, IReadOnlyList<string>> _factionWords = new(StringComparer.Ordinal);
+
     public SpanshStarSystemService(ILogger<SpanshStarSystemService> logger, HttpClient? http = null)
     {
         _logger = logger;
@@ -138,6 +140,42 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
 
         return _prefixes.GetOrAdd(key, matches);
     }
+
+    /// <summary>Asks <c>field_values/minor_faction_presences</c> for the longest typed word and filters the answer here; answers are kept for the session by that word.</summary>
+    public async Task<IReadOnlyList<string>> FactionNamesAsync(
+        string typed,
+        CancellationToken cancellationToken)
+    {
+        var word = FactionNameSuggestions.WordToSend(typed);
+
+        if (word.Length == 0)
+        {
+            return [];
+        }
+
+        var key = word.ToLowerInvariant();
+
+        if (!_factionWords.TryGetValue(key, out var names))
+        {
+            using var document = await SpanshGalaxyService.SendAsync(
+                _logger,
+                token => _http.GetAsync($"api/systems/field_values/minor_faction_presences?q={Uri.EscapeDataString(word)}", token),
+                "the faction name suggestions",
+                cancellationToken,
+                budget: SearchBudget).ConfigureAwait(false);
+
+            names = _factionWords.GetOrAdd(key, ReadFactionNames(document!.RootElement));
+        }
+
+        return FactionNameSuggestions.Filter(typed, names);
+    }
+
+    private static IReadOnlyList<string> ReadFactionNames(JsonElement root) =>
+        root.Object("values") is { } values
+            ? [.. values.Items("name")
+                .Where(name => name.ValueKind == JsonValueKind.String)
+                .Select(name => name.GetString()!)]
+            : [];
 
     public async Task<PowerplayNeighbourhood> PowerplayNearAsync(
         string system,

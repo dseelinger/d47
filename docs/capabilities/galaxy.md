@@ -143,7 +143,7 @@ on, three things leave this machine:
 - the system name you asked about, and any filters — an allegiance, a distance, an economy
 - **where you are**, whenever the question is relative to you, because "the nearest high tech
   system" cannot be asked without saying where from
-- the letters you type into a field that suggests system names, such as the one on
+- the letters you type into a field that suggests system or faction names, such as the one on
   **Search › System**, sent as you type once there are three of them
 
 No key, no identifier, nothing else from your journal. The Privacy section computes this same

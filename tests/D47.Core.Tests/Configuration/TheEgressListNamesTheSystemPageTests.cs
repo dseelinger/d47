@@ -5,7 +5,7 @@ namespace D47.Core.Tests.Configuration;
 
 /// <summary>
 /// The galaxy entry says that following the Commander on the System page sends each arrival (#824), and that
-/// typing into a field that suggests system names sends the letters (#1087).
+/// typing into a field that suggests system or faction names sends the letters (#1087).
 /// </summary>
 public class TheEgressListNamesTheSystemPageTests
 {
@@ -14,7 +14,7 @@ public class TheEgressListNamesTheSystemPageTests
         + "address to spansh.co.uk, to read its record.";
 
     private const string Typing =
-        "Typing three or more letters into a field that suggests system names sends those letters to "
+        "Typing three or more letters into a field that suggests system or faction names sends those letters to "
         + "spansh.co.uk as you type.";
 
     private static string What(D47Settings settings) =>

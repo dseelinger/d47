@@ -209,7 +209,7 @@ public static class EgressDisclosure
                     : string.Empty)
                 + "While the Search tab's System page is open and following you, arriving in a system sends "
                 + "that system's address to spansh.co.uk, to read its record. "
-                + "Typing three or more letters into a field that suggests system names sends those letters "
+                + "Typing three or more letters into a field that suggests system or faction names sends those letters "
                 + "to spansh.co.uk as you type. "
                 + "No key, no identifier, and nothing else from your journal.",
                 Active: true,
