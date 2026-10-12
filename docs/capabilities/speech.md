@@ -1250,7 +1250,7 @@ Nothing on the page is a tool: D47's model cannot record, import, rename or dele
 
 #### Spoken messages keep their clip {#kept-clips}
 
-A line that is posted to **Messages** as it is said, such as a story beat, a clue, a nudge, a beacon
+A line that is posted to the **Story log** as it is said, such as a story beat, a clue, a nudge, a beacon
 scan or an ending, keeps the audio that was played. Open the message and press **Play** to hear it
 again, on the speech channel and captioned with the message's text. Pressing **Play** on another
 message stops the first. A message that was not spoken has no **Play** button.
@@ -1261,7 +1261,7 @@ voice that spoke it.
 
 The clips are kept in `data\messages\`, one file per message. A message spoken in your own voice
 keeps its clip encrypted for your Windows user, like the recording; every other clip is a WAV. When a
-message leaves Messages, at the 200 limit or with its story, its clip is deleted. Deleting your
+message leaves the Story log, at the 200 limit or with its story, its clip is deleted. Deleting your
 recording deletes every clip spoken in it and keeps those messages' text.
 
 #### What the voice providers receive {#egress}

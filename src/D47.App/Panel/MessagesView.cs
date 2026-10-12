@@ -6,16 +6,25 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using D47.App.Theming;
+using D47.Core.Audio;
+using D47.Core.Goals;
 using D47.Core.Interface;
 using D47.Core.Messages;
+using D47.Core.Persona;
 using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>The Messages page: the list, newest first, and one message read.</summary>
+/// <summary>The Story log page: what is said during a story, grouped by story, and one line read.</summary>
 public sealed class MessagesView : UserControl
 {
     public const string RootKey = "messages";
+
+    public const string PageName = "Story log";
+
+    public const string Empty = "Nothing said yet. Lines from your stories are written here as they are spoken.";
+
+    public const string WaitingHeading = "Waiting for your answer";
 
     public const string ReadPrefix = "message.read.";
 
@@ -33,7 +42,7 @@ public sealed class MessagesView : UserControl
         _surface = surface;
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var (title, _) = RoutingKit.Title("Messages");
+        var (title, _) = RoutingKit.Title(PageName);
         DockPanel.SetDock(title, Dock.Top);
         root.Children.Add(title);
         root.Children.Add(new ScrollViewer
@@ -50,8 +59,8 @@ public sealed class MessagesView : UserControl
     /// <summary>The button label on the Stories tab, carrying the unread count.</summary>
     public static string ButtonLabel(MessageStore store) =>
         store.UnreadCount is > 0 and var unread
-            ? $"Messages ({unread.ToString(CultureInfo.InvariantCulture)})"
-            : "Messages";
+            ? $"{PageName} ({unread.ToString(CultureInfo.InvariantCulture)} new)"
+            : PageName;
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -79,7 +88,7 @@ public sealed class MessagesView : UserControl
 
         if (message is null)
         {
-            return AdventuresPage.Muted("That message is gone.");
+            return AdventuresPage.Muted("That line is gone.");
         }
 
         _store.MarkRead(key);
@@ -142,10 +151,7 @@ public sealed class MessagesView : UserControl
     private Control Answering(D47Message message)
     {
         var holder = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
-        var storyId = message.AdventureKey is { } key && key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal)
-            ? key[StoryEnding.KeyPrefix.Length..]
-            : null;
-        var chosen = storyId is null ? null : _surface?.Stories?.Stories.Find(_surface.Commander(), storyId)?.EndingChoice;
+        var chosen = Chosen(message);
 
         if (chosen is not null)
         {
@@ -186,8 +192,50 @@ public sealed class MessagesView : UserControl
         return holder;
     }
 
+    private string? Chosen(D47Message message)
+    {
+        var storyId = message.AdventureKey is { } key && key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal)
+            ? key[StoryEnding.KeyPrefix.Length..]
+            : null;
+
+        return storyId is null ? null : _surface?.Stories?.Stories.Find(_surface.Commander(), storyId)?.EndingChoice;
+    }
+
+    private bool IsWaiting(D47Message message) => message.Answers.Count > 0 && Chosen(message) is null;
+
+    private string? StoryName(string key)
+    {
+        if (_surface is null)
+        {
+            return null;
+        }
+
+        if (key.StartsWith(StoryGoal.KeyPrefix, StringComparison.Ordinal))
+        {
+            var id = key[StoryGoal.KeyPrefix.Length..];
+
+            return _surface.Stories?.Catalog.Find(id)?.Title ?? _surface.Stories?.Stories.Find(_surface.Commander(), id)?.Title;
+        }
+
+        var store = _surface.Book.Store;
+        var adventure = store.Find(_surface.Commander(), key)
+            ?? store.Commanders.Select(commander => store.Find(commander, key)).FirstOrDefault(found => found is not null);
+
+        if (adventure is null)
+        {
+            return null;
+        }
+
+        return adventure.StoryId is { } story ? StoryName(StoryGoal.KeyPrefix + story) ?? adventure.Name : adventure.Name;
+    }
+
+    private static string Sender(string from) =>
+        from == MessageStore.Narrator
+            ? VoiceRoles.Called(VoiceRole.Narrator) ?? from
+            : PersonaCatalog.Knows(from) ? PersonaCatalog.Resolve(from).Name : from;
+
     private static string Caption(D47Message message) =>
-        $"{message.From} — {message.Sent.ToLocalTime().ToString("d MMM HH:mm", CultureInfo.CurrentCulture)}";
+        $"{Sender(message.From)} — {message.Sent.ToLocalTime().ToString("d MMM HH:mm", CultureInfo.CurrentCulture)}";
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
 
@@ -199,9 +247,26 @@ public sealed class MessagesView : UserControl
 
         if (messages.Count == 0)
         {
-            _list.Children.Add(AdventuresPage.Muted("No messages yet. Story objectives arrive here as they are said."));
+            _list.Children.Add(AdventuresPage.Muted(Empty));
             return;
         }
+
+        var log = StoryLog.Of(messages, StoryName, IsWaiting);
+
+        if (log.Waiting.Count > 0)
+        {
+            AddGroup(WaitingHeading, log.Waiting);
+        }
+
+        foreach (var group in log.Groups)
+        {
+            AddGroup(group.Name, group.Messages);
+        }
+    }
+
+    private void AddGroup(string heading, IReadOnlyList<D47Message> messages)
+    {
+        _list.Children.Add(RoutingKit.Section(heading));
 
         foreach (var message in messages)
         {

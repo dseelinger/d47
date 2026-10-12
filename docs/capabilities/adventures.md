@@ -357,11 +357,13 @@ Reject the Commander's draft short story and remove it, as the Decline button do
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-### Messages
+### Story log
 
 Every objective said is also kept as a written message, from whoever said it, so a line said during a fight
-is not lost. Open **Messages** on the Stories tab: newest first, unread in bold, and the button carries the
-unread count. Opening a message marks it read. A message that was spoken has a **Play** button that
+is not lost. Open **Story log** on the Stories tab. Lines waiting for your answer come first, then one group
+per story, the story with the newest line first and each group newest first. Lines from a story that no
+longer exists are under Earlier stories, and lines tied to no story are under Not tied to a story. Unread
+lines are bold, and the button reads "Story log (2 new)" while any are unread. Opening a line marks it read. A message that was spoken has a **Play** button that
 plays the clip it was spoken in; see [Spoken messages keep their clip](speech.md#kept-clips).
 
 The messages live in `data/messages.json`. The file holds the most recent 200; past that the oldest read
@@ -375,7 +377,7 @@ when you abandon it.
 
 When the next objective has waited through three play sessions and seven days since the last objective or nudge,
 the Narrator's next narration leans toward it. It may hint at where the objective waits; it never quotes the
-objective's line. It is posted to Messages from the narrator, and each story is nudged at most once each
+objective's line. It is posted to the Story log from the narrator, and each story is nudged at most once each
 time D47 runs.
 
 ### Stock stories
@@ -422,7 +424,7 @@ the core wakes, in the voice that was aboard. Each chapter is a story on this ta
 and begins. **Switch** abandons the running story and picks another.
 
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
-**Pick**, the scan is narrated in the words the story was written with, posted to Messages from its
+**Pick**, the scan is narrated in the words the story was written with, posted to the Story log from its
 speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
 chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
 month or longer keeps the real scan.
@@ -431,7 +433,7 @@ pauses the story, and **Resume** on the Stories page begins that chapter again.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
 you scan the story's first Guardian beacon, or at the pick of a story shorter than a month, that core comes aboard in place of the core you had, says
-the waking line, and Messages says it came aboard and that you can choose another core in Settings. A
+the waking line, and the Story log says it came aboard and that you can choose another core in Settings. A
 core you choose afterwards stays; the story does not bring its own back. Pausing, abandoning or finishing
 the story leaves the core aboard as it is.
 
@@ -495,7 +497,7 @@ Stories page shows no ratings.
 A speaker may have a picture, downloaded with the story as `<story-id>.<cast-id>.jpg` into
 `data\stories`; a speaker in two versions has one for each, ending `.for-man.jpg` and `.for-woman.jpg`. A
 speaker marked `primary` is a recurring character named on the story's card, and always has one. A line
-that speaker says is posted to Messages with the picture, which the message page shows above the text, at
+that speaker says is posted to the Story log with the picture, which the message page shows above the text, at
 most 240 px wide. A line from the ship's AI or the narrator has none.
 
 Under the picture, **Change picture** opens a file picker for a PNG, JPEG, BMP or WebP file under 10 MB.
@@ -534,7 +536,7 @@ line to anyone else is sent back once with the reason, and refused if it comes b
   else: no radio for its role and none of the **Guardian Voice Effects** you set for the ship. The model
   writes a cast member's clue as that member, from their name and who they are.
 
-Each line is posted to Messages from its speaker's name, with the speaker's picture and the clip it was
+Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line
 as written and the ship then says where you go next. A line may open with a sound such as
 `[static crackle]`: a voice that performs sounds performs it, and every other voice has it taken out.
@@ -560,7 +562,7 @@ Kokoro download.
 
 The **Local voice** and **Chatterbox voice** download rows under **Its voice** appear while a downloaded
 story's cast needs them, even when no slot uses that provider. A pick tried anyway is refused, and the ship
-posts one message to Messages listing the same things.
+posts one message to the Story log listing the same things.
 
 If a voice a running story needs stops being ready, for example because the recording was deleted, the
 story is paused within a few seconds, its chapter stops, and the message is posted again. **Resume** is
@@ -705,7 +707,7 @@ Refuse the objective the Commander's story chapter is waiting on and write a dif
 
 Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the
 running stock story goes quiet until you switch it on again. While it is off no objective is said, no
-nudge or clue is owed, nothing from the story is posted to Messages, missions get no story aside, and the
+nudge or clue is owed, nothing from the story is posted to the Story log, missions get no story aside, and the
 hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
 Narration and chatter work as they always do, and your Backstory, cores and persona are unchanged.
 
@@ -734,7 +736,7 @@ Resume the Commander's running story after a pause.
 ### Ending a story
 
 When a stock story's last finale chapter is done, the story is finished and d47 posts its ending to
-Messages, said by the Narrator while stock COVAS is aboard or narration is on and otherwise by the core
+the Story log, said by the Narrator while stock COVAS is aboard or narration is on and otherwise by the core
 aboard, with the story's options listed under it. Open the
 message and press an option, or say "choose ending two". A story with one option takes "accept the ending".
 The answer is kept on the story, and the option's closing line is said and posted. An option can also bring
@@ -800,7 +802,7 @@ core. A story keeps the length it was picked with.
 A clue is spoken by the speaker the story names for it, as [Who speaks a story line](#story-speakers)
 describes: a `ship` clue by the core aboard in its own words, or by the Narrator while stock COVAS is
 aboard; a `narrator` clue by the Narrator; a cast member's clue by that member. The narration setting
-does not change who speaks a clue. A clue is also posted to Messages, from whoever spoke it. A clue needs
+does not change who speaks a clue. A clue is also posted to the Story log, from whoever spoke it. A clue needs
 a language model and personality; without them it waits.
 
 The Narrator, invented chatter, scene chatter and the chapter writer all read the same hidden layer:

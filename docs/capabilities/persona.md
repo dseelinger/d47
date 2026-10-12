@@ -207,7 +207,7 @@ counts.
 | NGC 2451A Sector LX-U d2-25 | 869621795163 |
 
 The story's first beacon brings back every core but the Heretic. A beacon in a second, different
-system brings back the Heretic. Each is said once per story, aloud and in Messages. A scan made
+system brings back the Heretic. Each is said once per story, aloud and in the Story log. A scan made
 before the story was picked does not count toward it. In a story shorter than a month, the scan narrated
 at the pick is the first beacon, and a real beacon scan in any system brings back the Heretic.
 

@@ -1567,7 +1567,7 @@ what you said as what your Commander said or did. Each reply restarts the ninety
 narration takes at most four replies. Two things still go to the ship: a command d47 runs or offers
 without the model, such as "gear down", and anything that starts with your ship AI's name, which also
 ends the exchange. The Narrator is offered no tools, so nothing it says can act on the ship. A reply
-that addresses you as "you" is not said, and ends the exchange. Each reply is posted to Messages from
+that addresses you as "you" is not said, and ends the exchange. Each reply is posted to the Story log from
 the Narrator, and goes to the same model as the narration. Outside those ninety seconds, saying
 "Narrator" starts no conversation with it.
 
