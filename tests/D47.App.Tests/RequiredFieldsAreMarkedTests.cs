@@ -38,6 +38,25 @@ public sealed class RequiredFieldsAreMarkedTests
         window.Close();
     }
 
+    /// <summary>Boxes side by side start at the same height whether or not their labels are marked.</summary>
+    [AvaloniaFact]
+    public void MarkedAndUnmarkedLabelsAreTheSameHeight()
+    {
+        var window = new Window { Width = 400, Height = 200 };
+        var required = FormField.Label("Commodity", FieldNeed.Required);
+        var supplied = FormField.Label("Ship", FieldNeed.Supplied);
+        var optional = FormField.Label("Tonnes", FieldNeed.Optional);
+
+        window.Content = new StackPanel { Children = { required, supplied, optional } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(required.Bounds.Height, optional.Bounds.Height);
+        Assert.Equal(required.Bounds.Height, supplied.Bounds.Height);
+
+        window.Close();
+    }
+
     /// <summary>Optional fields are unmarked, because required is the minority by a distance.</summary>
     [AvaloniaFact]
     public void AnOptionalFieldCarriesNoMark()

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+A form's boxes now line up when one label has a mark and its neighbour does not. On the Market page the Commodity and Tonnes boxes start at the same height, as do "Credits to trade with" and "Hops" on the Trade route card.
+
 Each Commander now has their own conversation with d47. When you pick a Commander from the title bar, the Commanders page or by saying "switch to" a Commander, d47 answers from that Commander's conversation, which is empty if they have not spoken since d47 started, and picking back resumes the first one. The model is no longer sent the previous Commander's messages under the picked Commander's settings and About me. The transcript on screen shows "Showing Commander <name>" where the switch happened. An answer still being written when you switch goes into the conversation it was asked in.
 
 Saved searches and the search history are now shared by every Commander on the machine. A search saved or run while one Commander is shown is listed for every Commander, and your saved searches run by name whoever is shown. A saved search keeps its arguments, so one with no "near" runs from the shown Commander's current system. Files that hold a list per Commander are merged on the next start: a saved search with the same name keeps its newest save, and the history keeps the 25 most recent searches.

@@ -141,16 +141,24 @@ public sealed class FormField
             Children = { Caption(label, TypeScale.Small, ThemeManager.GreyKey) },
         };
 
-        if (Mark(need) is { } mark)
-        {
-            row.Children.Add(mark);
-        }
+        // An unmarked label carries a hidden mark so every label row is as tall as a marked one.
+        row.Children.Add(Mark(need) ?? Spacer());
 
         // Not read by a screen reader, which would otherwise say the label twice — once here and once from
         // the box's own name, which already carries the state.
         AutomationProperties.SetAccessibilityView(row, AccessibilityView.Raw);
 
         return row;
+    }
+
+    /// <summary>An invisible stand-in for a mark, so an unmarked label row is as tall as a marked one.</summary>
+    private static Control Spacer()
+    {
+        var spacer = Caption(" ", TypeScale.Body, ThemeManager.GreyKey);
+
+        spacer.FontWeight = FontWeight.Bold;
+
+        return spacer;
     }
 
     /// <summary>Tells a screen reader what this box needs (#253).</summary>
