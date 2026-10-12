@@ -5,7 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Adventures;
 
-/// <summary>"ask for an adventure" reaches its tool with or without a draft, and only the Commander can call it.</summary>
+/// <summary>"ask for a short story" and the older "ask for an adventure" reach its tool with or without a draft, and only the Commander can call it.</summary>
 public sealed class AskingForAnAdventureIsTheCommandersTests
 {
     private static CapabilityRegistry Registry(AdventureCapability.AdventureDesk desk) =>
@@ -16,6 +16,7 @@ public sealed class AskingForAnAdventureIsTheCommandersTests
     {
         var router = new KeywordRouter(Registry(new AdventureCapability.AdventureDesk()));
 
+        Assert.Equal(AdventureCapability.AskTool, router.MatchToolCommand("ask for a short story")?.ToolName);
         Assert.Equal(AdventureCapability.AskTool, router.MatchToolCommand("ask for an adventure")?.ToolName);
     }
 

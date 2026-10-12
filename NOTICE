@@ -125,7 +125,7 @@ Catalogues read at runtime, never shipped
 
     EDAstro Galactic        CC BY-NC-SA 3.0, (c) CMDR Orvidius. https://edastro.com/gec/
     Exploration Catalog     Read over the network, on request and behind a setting that is
-                            off by default, when the ship's AI writes an adventure (list.md
+                            off by default, when the ship's AI writes a short story (list.md
                             Phase 47). Nothing from it is stored in a table of d47's own:
                             the catalogue suggests places, the generated story names them,
                             and the descriptions are read as information. Directive 47 is

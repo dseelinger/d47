@@ -680,14 +680,14 @@ public static class GalaxyCapability
             new SettingRow
             {
                 Key = NotablePlacesKey,
-                Label = "Notable places for adventures",
+                Label = "Notable places for short stories",
                 Help =
-                    "Lets a generated adventure pick its stops from the Galactic Exploration Catalog at "
+                    "Lets a generated short story pick its stops from the Galactic Exploration Catalog at "
                     + "edastro.com. One request fetches the whole catalogue and the choosing happens here, so "
                     + "where you are never leaves this machine. Off by default; see [Privacy](privacy).",
                 Kind = SettingKind.Toggle,
                 DefaultDisplay = "off",
-                DocsAnchor = "notable-places-for-adventures",
+                DocsAnchor = "notable-places-for-short-stories",
                 Binding = new SettingBinding
                 {
                     Read = s => s.Knowledge.NotablePlaces ? "true" : "false",

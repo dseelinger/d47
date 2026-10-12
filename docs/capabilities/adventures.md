@@ -1,5 +1,5 @@
 ---
-title: Adventures
+title: Stories
 group: Knowledge
 nav_order: 115
 ---
@@ -21,12 +21,12 @@ nav_order: 115
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a story that runs while you fly.</p>
 <section>
-<h2><span class="num">1</span> Ask for one, in the Stories tab or out loud.</h2>
-<p class="say">Say "ask for an adventure" and say what it should be about, or pick one in the Stories tab.</p>
+<h2><span class="num">1</span> Ask for a short story, in the Stories tab or out loud.</h2>
+<p class="say">Say "ask for a short story" and say what it should be about, or pick one in the Stories tab.</p>
 <p class="expect">D47 writes a draft and waits for your yes. Accept it and you hear the first objective.</p>
-<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for an adventure typed into it">
+<svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a request for a short story typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="57" font-size="17" fill="var(--text)">ask for an adventure</text>
+ <text x="44" y="57" font-size="17" fill="var(--text)">ask for a short story</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">Or press Stories in the tab strip and pick one there.</text>
  <text x="20" y="152" font-size="16" fill="var(--text-muted)">Either way D47 writes a draft and waits for your yes.</text>
@@ -146,7 +146,7 @@ nav_order: 115
 
 ## The details
 
-An adventure is a story: someone wants something, there is a belief the events exist to test, a
+A short story is a story: someone wants something, there is a belief the events exist to test, a
 turn where it stops being what it looked like, and an ending that means something. It is told by
 the ship's AI, anchored to the galaxy by objectives, accepted by you, and advanced by your own journal.
 
@@ -155,7 +155,7 @@ The drive behind it is to add story to a sandbox, which sandboxes deeply lack. I
 
 ### How to have one
 
-**Ask for one** — a short form and D47 writes it, in the voice of whichever core is aboard. Three
+**Short Story** — a form and D47 writes it, in the voice of whichever core is aboard. Three
 choosers, each with a default, so pressing *Go* on an untouched form is a complete ask:
 
 - **Reach** — how far the story may go: *near here*, *a session's flying*, *anywhere*. Turned into
@@ -168,7 +168,7 @@ choosers, each with a default, so pressing *Go* on an untouched form is a comple
 
 And one optional thing said: a brief — a theme, a mood, a place it must include. Empty is fine.
 
-Say "ask for an adventure" and D47 opens this form and the entry for the brief. Say the brief, or
+Say "ask for a short story" and D47 opens this form and the entry for the brief. Say the brief, or
 press **Done** with it empty, and it asks with the form as it stands, as *Go* does. When a language model or galaxy
 search is missing, the form opens and D47 says which instead.
 
@@ -176,15 +176,15 @@ search is missing, the form opens and D47 says which instead.
 ships: your fleet and what each hull can do, whether you have a carrier and where it is, where you
 are, who is aboard, and your ranks.
 
-**Write the next chapter** — on a finished adventure's page, the same form for the story that
+**Write the next chapter** — on a finished story's page, the same form for the story that
 follows it. The AI reads the finished one in full — its spine, its objectives and what was said as you
 flew it — and each chapter before that by name and premise only. The new story's want follows from
 how the last one turned and ended, and its stake is the belief the last one left open. The draft
-card says which adventure it follows, and it is accepted, flown and checked like any other.
+card says which story it follows, and it is accepted, flown and checked like any other.
 
 #### `ask_for_adventure`
 
-Open the Ask page and the entry for a brief; committing the brief asks for the adventure, as Go does. The Commander's choice alone.
+Open the Short Story page and the entry for a brief; committing the brief asks for the short story, as Go does. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -298,19 +298,19 @@ current objective's title, or *finished*. *Objective 3 of 7* is checklist langua
 
 ### Stopping, and starting again
 
-**Abandon** a begun adventure and it stops telling you: no objective fires, the AI drops it from what it
+**Abandon** a begun story and it stops telling you: no objective fires, the AI drops it from what it
 knows, and an objective waiting out its settle window is discarded. The record stays, folded away at the
 foot of the list with what it reached. **Begin again** on an abandoned one starts from the opening
 with a fresh stamp — nothing that happened in the gap counts, because a start is a start.
 
-**Remove** deletes the record. For a begun one it asks first, because an adventure three objectives in
+**Remove** deletes the record. For a begun one it asks first, because a story three objectives in
 is work you did.
 
 Both are yours alone, reachable from the panel and nowhere else.
 
 ### Nothing here is callable by the model
 
-Generation, beginning, abandoning and removing are all your acts, on the panel. Asking for an adventure,
+Generation, beginning, abandoning and removing are all your acts, on the panel. Asking for a short story,
 and accepting, changing and rejecting a draft, are yours too, by voice or by their buttons, and so are pausing and resuming
 a stock story, by voice or by the **Story on** checkbox. The ship's AI can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
@@ -320,13 +320,13 @@ It also costs nothing: none of this is on the advertised tool surface.
 
 ### Accepting, changing or rejecting a draft by voice
 
-While a generated adventure waits for your yes, three phrases act on it as its buttons do:
+While a generated short story waits for your yes, three phrases act on it as its buttons do:
 
 | Say | Does |
 | --- | --- |
-| "accept the adventure" | The same as **Accept**. |
-| "change the adventure" | Opens the voice entry for what should change, as **Change something** does. |
-| "reject the adventure" | Removes the draft, as **Decline** does. |
+| "accept the short story" | The same as **Accept**. |
+| "change the short story" | Opens the voice entry for what should change, as **Change something** does. |
+| "reject the short story" | Removes the draft, as **Decline** does. |
 
 They act on the draft whose page is open on the Stories tab. With no draft page open and exactly one draft,
 they act on that one. With two or more drafts and none open, d47 says there is more than one draft and to open the one
@@ -335,7 +335,7 @@ draft aloud. The model is refused all three.
 
 #### `change_adventure`
 
-Open the entry for a remark that changes the Commander's draft adventure. The Commander's choice alone.
+Open the entry for a remark that changes the Commander's draft short story. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -343,7 +343,7 @@ Open the entry for a remark that changes the Commander's draft adventure. The Co
 
 #### `accept_adventure`
 
-Accept the Commander's draft adventure, as the Accept button does. The Commander's choice alone.
+Accept the Commander's draft short story, as the Accept button does. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -351,7 +351,7 @@ Accept the Commander's draft adventure, as the Accept button does. The Commander
 
 #### `reject_adventure`
 
-Reject the Commander's draft adventure and remove it, as the Decline button does. The Commander's choice alone.
+Reject the Commander's draft short story and remove it, as the Decline button does. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -368,14 +368,14 @@ The messages live in `data/messages.json`. The file holds the most recent 200; p
 message goes first.
 
 Abandoning a story, or switching to another, removes the messages it posted: its objectives, nudges, clues,
-beacon scan and ending. A finished story keeps them. The messages of an adventure you wrote yourself stay
+beacon scan and ending. A finished story keeps them. The messages of a short story you asked for stay
 when you abandon it.
 
 ### A nudge when a story stalls
 
 When the next objective has waited through three play sessions and seven days since the last objective or nudge,
 the Narrator's next narration leans toward it. It may hint at where the objective waits; it never quotes the
-objective's line. It is posted to Messages from the narrator, and each adventure is nudged at most once each
+objective's line. It is posted to Messages from the narrator, and each story is nudged at most once each
 time D47 runs.
 
 ### Stock stories
@@ -418,7 +418,7 @@ most 20 jumps away at the ship's maximum jump range and a fuel scoop is fitted. 
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
 distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before
-the core wakes, in the voice that was aboard. Each chapter is an adventure on this tab. When one finishes, the next is written from it
+the core wakes, in the voice that was aboard. Each chapter is a story on this tab. When one finishes, the next is written from it
 and begins. **Switch** abandons the running story and picks another.
 
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
@@ -436,7 +436,7 @@ core you choose afterwards stays; the story does not bring its own back. Pausing
 the story leaves the core aboard as it is.
 
 One story runs at a time, kept in `data/story.json`. A story needs a language model and galaxy search,
-the same as asking for an adventure.
+the same as asking for a short story.
 
 Stories need Elite Dangerous: Odyssey, because most chapters use it: on-foot missions, settlements,
 exobiology and suits. D47 reads the `Odyssey` flag on each `LoadGame`. When the last one says
@@ -460,7 +460,7 @@ connection and pick it again." and nothing starts. At startup, a story that is r
 has no hidden file on disk is fetched, and one that has fetches any cast picture the release has and
 `data\stories` does not.
 
-**Download stock stories**, on by default, is in the Adventures settings. Off, nothing is fetched and
+**Download stock stories**, on by default, is in the Stories settings. Off, nothing is fetched and
 the Stories page lists only stories already on disk.
 
 ### Story ratings {#story-ratings}
@@ -487,7 +487,7 @@ Right and Delete once the stars have focus. A vote that could not be sent says s
 the next time the Stories page opens. When the averages cannot be fetched, every story shows as unrated,
 with no error, and they are asked for again the next time the page opens.
 
-**Story ratings**, on by default, is in the Adventures settings. Off, nothing is fetched or sent and the
+**Story ratings**, on by default, is in the Stories settings. Off, nothing is fetched or sent and the
 Stories page shows no ratings.
 
 ### Cast pictures
@@ -846,13 +846,13 @@ be up to date the moment you open it.
 A stock story keeps only its current chapter and the one before it in `data/adventures.json`. When a
 chapter begins, every earlier chapter of the story moves to `data/story-chapters.jsonl`, one chapter
 per line, with when each of its objectives fired; when a story is abandoned, switched or finished, all of
-its chapters move there. Archived chapters leave the Adventures page, the chapter writer still reads
+its chapters move there. Archived chapters leave the list on the Stories tab, the chapter writer still reads
 the last ten of them by name and premise, and your log still lists their objectives. Story chapters do not
-count toward the 40 adventures of your own that the file holds.
+count toward the 40 stories of your own that the file holds.
 
 ### What it does not do yet
 
 - **Branching.** One current objective, and only it can match; an objective that would match out of order is
   ignored rather than banked.
-- **Importing** somebody else's adventure. The store file is already the format, so this is a copy
+- **Importing** somebody else's story. The store file is already the format, so this is a copy
   and a validate when it comes.

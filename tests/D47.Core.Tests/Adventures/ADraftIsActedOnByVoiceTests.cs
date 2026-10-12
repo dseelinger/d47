@@ -10,6 +10,9 @@ public sealed class ADraftIsActedOnByVoiceTests
 {
     private static readonly (string Said, string Tool)[] Commands =
     [
+        ("change the short story", AdventureCapability.ChangeDraftTool),
+        ("accept the short story", AdventureCapability.AcceptDraftTool),
+        ("reject the short story", AdventureCapability.RejectDraftTool),
         ("change the adventure", AdventureCapability.ChangeDraftTool),
         ("accept the adventure", AdventureCapability.AcceptDraftTool),
         ("reject the adventure", AdventureCapability.RejectDraftTool),
@@ -74,7 +77,7 @@ public sealed class ADraftIsActedOnByVoiceTests
 
         Assert.Empty(acted);
 
-        foreach (var (_, tool) in Commands)
+        foreach (var tool in Commands.Select(command => command.Tool).Distinct())
         {
             var result = await registry.InvokeAsync(tool, ToolArguments.Empty, caller: ToolCaller.Commander, cancellationToken: TestContext.Current.CancellationToken);
             Assert.False(result.IsError);

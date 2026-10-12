@@ -50,7 +50,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
 
-    private readonly Button _ask = new() { Content = "Ask for one" };
+    private readonly Button _ask = new() { Content = "Short Story" };
     private readonly Button _messages = new() { Name = "OpenMessages", Content = "Messages" };
     private readonly Button _stories = new() { Name = "OpenStories", Content = "Stories" };
     private MessagesView? _inbox;
@@ -78,7 +78,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _prompts = prompts;
 
         _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, "Messages"));
-        _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Ask"));
+        _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Short Story"));
         _messages.IsVisible = surface.Messages is not null;
         _stories.Click += (_, _) => _nav.Drill(new NavCrumb(StoriesView.RootKey, "Stories"));
         _stories.IsVisible = surface.Stories is not null;
@@ -87,7 +87,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             Spacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
-            Children = { Buttons(_ask, _stories, _messages) },
+            Children = { Buttons(_stories, _ask, _messages) },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -212,7 +212,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (standings.Count == 0)
         {
             _list.Children.Add(Muted(
-                "No adventures yet. Ask D47 for one — it will propose a story and wait for your yes."));
+                "No stories yet. Pick one under Stories, or ask for a short story — D47 proposes one and waits for your yes."));
 
             if (!_ask.IsEnabled)
             {
@@ -267,8 +267,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     }
 
     private string AskShutBecause() => !_surface.ModelAvailable()
-        ? "Asking for one needs a language model, and none is configured."
-        : "Asking for one needs galaxy search, so the story's places can be checked. It is off in Settings.";
+        ? "A short story needs a language model, and none is configured."
+        : "A short story needs galaxy search, so the story's places can be checked. It is off in Settings.";
 
     private Control Card(AdventureStanding standing)
     {
@@ -372,7 +372,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
             if (_surface.Book.Standing(_surface.Commander(), key) is not { } standing)
             {
-                page.Children.Add(Muted("That adventure is no longer on file."));
+                page.Children.Add(Muted("That story is no longer on file."));
                 return;
             }
 
@@ -523,7 +523,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (follows is null)
         {
-            page.Children.Add(RoutingKit.Title("Ask for an adventure").Row);
+            page.Children.Add(RoutingKit.Title("Ask for a short story").Row);
             page.Children.Add(Muted(
                 "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
                 + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
@@ -532,7 +532,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             page.Children.Add(RoutingKit.Title("Write the next chapter").Row);
             page.Children.Add(Muted(
-                $"The ship's AI writes the story that follows {after?.Name ?? "that adventure"}, from how it ended, "
+                $"The ship's AI writes the story that follows {after?.Name ?? "that story"}, from how it ended, "
                 + "and waits for your yes. The same three choices, and a brief if you want one."));
         }
 
@@ -614,7 +614,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             if (follows is not null
                 && (chapter = _surface.Book.ChapterOf(_surface.Commander(), follows)) is null)
             {
-                status.Fail("That adventure is no longer on file.");
+                status.Fail("That story is no longer on file.");
                 return;
             }
 
@@ -681,7 +681,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     {
         _prompts.Abandon();
         _nav.Show(RootKey);
-        _nav.GoTo(new NavCrumb(AskKey, "Ask"));
+        _nav.GoTo(new NavCrumb(AskKey, "Short Story"));
 
         if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
         {
@@ -690,7 +690,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (!OnAsk())
         {
-            return "The Ask page could not be opened.";
+            return "The Short Story page could not be opened.";
         }
 
         // At background priority, so the panel has laid out the navigation and the form is on screen.
@@ -865,9 +865,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         return drafts.Count switch
         {
-            0 => (null, "There is no draft adventure."),
+            0 => (null, "There is no draft short story."),
             1 => (drafts[0].Adventure, null),
-            _ => (null, "There is more than one draft adventure. Open the one you mean."),
+            _ => (null, "There is more than one draft short story. Open the one you mean."),
         };
     }
 

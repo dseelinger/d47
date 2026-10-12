@@ -150,7 +150,7 @@ section's rows, and its **?** opens the page for the part of Directive 47 it is 
 
 A few rows are on the tab they concern instead, under **Page settings**: Rescan my
 journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices on Asset Mgmt ›
-Carrier, and Notable places for adventures on Stories.
+Carrier, and Notable places for short stories on Stories.
 
 ### Ask for it
 

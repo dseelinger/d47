@@ -158,8 +158,8 @@ public static class HelpTaxonomy
                     "Set the material you are mining for, so prospector results say whether a rock is worth it.",
                     "mining"),
                 HelpNode.Leaf(
-                    "Adventures",
-                    "Follow stories you fly, written by you or by the ship's AI, and moved forward by your own journal.",
+                    "Stories",
+                    "Follow stories you fly, moved forward by your own journal.",
                     "adventures"))),
 
         HelpNode.Category(

@@ -78,7 +78,7 @@ public sealed class AReachedBeatIsALogFactTests
     {
         var digest = Digest(Chapter(null));
 
-        Assert.Contains(digest.Facts, fact => fact.Statement == "Reached \"The Anchorage\" in the adventure The Marker, three.");
+        Assert.Contains(digest.Facts, fact => fact.Statement == "Reached \"The Anchorage\" in the story The Marker, three.");
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class AReachedBeatIsALogFactTests
         var digest = new LogDigestBuilder(new MemoryFileSystem(), NullLogger<LogDigestBuilder>.Instance).Build([], narrow, beats);
 
         Assert.Equal(
-            "Reached \"The Count\" in the adventure The Marker, three.",
+            "Reached \"The Count\" in the story The Marker, three.",
             Assert.Single(digest.Facts, fact => fact.Kind == LogFactKind.Story).Statement);
     }
 
@@ -122,7 +122,7 @@ public sealed class AReachedBeatIsALogFactTests
 
         var beats = LogStoryBeat.From([], id => id == story.Id ? story : null, [archived]);
 
-        Assert.All(beats, beat => Assert.EndsWith("in the adventure The Marker, three.", beat.Statement, StringComparison.Ordinal));
+        Assert.All(beats, beat => Assert.EndsWith("in the story The Marker, three.", beat.Statement, StringComparison.Ordinal));
     }
 
     [Trait("Category", "Integration")]

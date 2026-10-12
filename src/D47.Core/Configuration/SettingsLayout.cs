@@ -512,14 +512,14 @@ public static class SettingsLayout
                 new SettingsPlace(
                     "plans-and-stories",
                     "Plans and stories",
-                    "Checklist changes, reminders, session length, continuity, adventures, community goals, your core's subject, what to buy and the Narrator.",
+                    "Checklist changes, reminders, session length, continuity, stories, community goals, your core's subject, what to buy and the Narrator.",
                     "callouts",
                     [],
                     false,
                     [
                         G(
                             "Plan and story callouts",
-                            "What D47 says about your checklist and reminders, adventures, community goals, trades and what your core pays attention to, and the Narrator telling your story.",
+                            "What D47 says about your checklist and reminders, stories, community goals, trades and what your core pays attention to, and the Narrator telling your story.",
                             [
                                 E("callouts.checklist"),
                                 E("callouts.continuity"),

@@ -448,7 +448,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         if (store.Find(commander, key) is not { } adventure)
         {
-            return "There is no adventure by that name.";
+            return "There is no story by that name.";
         }
 
         if (adventure.IsActive)
@@ -556,7 +556,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         if (store.Find(commander, key) is not { } adventure)
         {
-            return "There is no adventure by that name.";
+            return "There is no story by that name.";
         }
 
         if (!adventure.IsActive)

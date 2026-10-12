@@ -533,12 +533,12 @@ public sealed class AdventureGenerator(
     {
         if (provider() is null)
         {
-            return "No language model is configured, and an adventure has to be written by one.";
+            return "No language model is configured, and a short story has to be written by one.";
         }
 
         if (galaxy() is null)
         {
-            return "Galaxy search is off. A generated adventure needs it to check that its places are real.";
+            return "Galaxy search is off. A generated short story needs it to check that its places are real.";
         }
 
         return null;
@@ -790,7 +790,7 @@ public sealed class AdventureGenerator(
         var text = new StringBuilder();
 
         text.AppendLine(
-            "The Commander has asked you to write them a story to fly — an adventure they will progress "
+            "The Commander has asked you to write them a story to fly — a short story they will progress "
             + "through in their own ship, in Elite Dangerous, told by you as their companion. Before any "
             + "scene, write the story's spine. This is not a route and not a list of places to visit: it is "
             + "a story in the sense of the craft of fiction — someone wants something, holds a belief the "
@@ -1028,7 +1028,7 @@ public sealed class AdventureGenerator(
     {
         text.AppendLine();
         text.AppendLine(
-            $"This adventure is chapter {story.Chapter.ToString(CultureInfo.InvariantCulture)} of \"{story.Title}\", a stock story the "
+            $"This story is chapter {story.Chapter.ToString(CultureInfo.InvariantCulture)} of \"{story.Title}\", a stock story the "
             + $"Commander chose. It runs for {story.Length} or more, one chapter at a time, as they play, and follows the Save the Cat beats.");
 
         if (story.Stage is { Length: > 0 } stage)
@@ -1292,7 +1292,7 @@ public sealed class AdventureGenerator(
         if (rewrite is not null)
         {
             text.AppendLine(
-                (ask.Story is null ? "You wrote an adventure" : "You wrote a chapter of a story")
+                (ask.Story is null ? "You wrote a short story" : "You wrote a chapter of a story")
                 + " the Commander is flying, and they are partway through it. "
                 + (rewrite.ClosedMarketId is null
                     ? "They have refused the objective they were on"

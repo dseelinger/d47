@@ -975,16 +975,16 @@ Directive 47 writes that line from the journals of the session before the one in
 `LoadGame` to its last event — and never from the session you are starting. With a language model
 and personality on, the core aboard always says it again in its own voice, keeping every name and
 figure; that is one priced call per launch, counted in spend. With no model, or personality off, the
-line is said as written. Your Backstory and the active adventure are not sent with it.
+line is said as written. Your Backstory and the active story are not sent with it.
 
 It is not said when there is no earlier session in the last eight journals, when that session holds
 nothing beyond where it started and ended, or with a stock core aboard. Turn it off with the `recap`
 row; the **Last session recap** entry under **Privacy and egress** goes silent with it.
 
-#### Adventure objectives {#adventure}
+#### Story objectives {#adventure}
 
 An objective of the story you are following, said when you reach the place it waits for
-(list.md Phase 47). An adventure is a story the ship's AI tells you across a flight — a spine,
+(list.md Phase 47). A short story is one the ship's AI tells you across a flight — a spine,
 a handful of objectives, each anchored to a real place by the one thing the journal can prove: you
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
 Stories tab is where you ask for one; this is the voice it reaches you by.

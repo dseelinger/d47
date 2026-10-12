@@ -425,7 +425,7 @@ the opposite case: none of them carry the conversation, every one of them alread
 sending them somewhere cheaper costs nothing at all and saves most of what Directive 47 spends
 while you are not talking to it.
 
-**Four calls deliberately ignore this row.** Writing an adventure, writing your Commander's log,
+**Four calls deliberately ignore this row.** Writing a short story, writing your Commander's log,
 advising on a ship's build and rewording the directions a debrief proposes all stay on the model
 above. For the first three you pressed a button and are waiting, the output has to name real
 systems exactly, and the log is quoted at a price before it is written. The debrief's wording

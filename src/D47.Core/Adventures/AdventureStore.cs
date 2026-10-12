@@ -153,7 +153,7 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
             // Story chapters are not counted: a story archives its finished chapters itself.
             if (!replacing && adventure.StoryId is null && existing.Count(other => other.StoryId is null) >= AdventureLimits.MaxAdventures)
             {
-                return $"You already have {AdventureLimits.MaxAdventures} adventures, which is the most I hold.";
+                return $"You already have {AdventureLimits.MaxAdventures} stories, which is the most I hold.";
             }
 
             _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(_byCommander, StringComparer.Ordinal)
@@ -274,7 +274,7 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
 
                     if (kept.Any(other => string.Equals(other.Key, adventure.Key, StringComparison.OrdinalIgnoreCase)))
                     {
-                        problems.Add(new AdventureProblem(adventure.Key, "a second adventure with the same key"));
+                        problems.Add(new AdventureProblem(adventure.Key, "a second story with the same key"));
                         continue;
                     }
 
@@ -310,7 +310,7 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
 
     private static Adventure? FromRecord(AdventureRecord record, List<AdventureProblem> problems)
     {
-        var where = record.Name ?? record.Key ?? "(an adventure)";
+        var where = record.Name ?? record.Key ?? "(a story)";
 
         if (string.IsNullOrWhiteSpace(record.Key) || string.IsNullOrWhiteSpace(record.Name))
         {

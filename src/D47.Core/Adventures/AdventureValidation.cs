@@ -93,12 +93,12 @@ public static class AdventureValidation
 
         if (string.IsNullOrWhiteSpace(adventure.Key))
         {
-            problems.Add("An adventure needs a key.");
+            problems.Add("A story needs a key.");
         }
 
         if (string.IsNullOrWhiteSpace(adventure.Name))
         {
-            problems.Add("An adventure needs a name.");
+            problems.Add("A story needs a name.");
         }
         else if (adventure.Name.Trim().Length > AdventureLimits.MaxNameLength)
         {
@@ -128,7 +128,7 @@ public static class AdventureValidation
 
         if (adventure.Beats.Count == 0)
         {
-            problems.Add("An adventure needs at least one beat.");
+            problems.Add("A story needs at least one beat.");
         }
         else if (adventure.Beats.Count > AdventureLimits.MaxBeats)
         {

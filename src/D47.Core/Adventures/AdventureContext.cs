@@ -12,7 +12,7 @@ public static class AdventureContext
     // the clerk who countersigns", and asked "now what?" the core sent the Commander to find a person — which
     // Elite has no act for.
     public const string Label =
-        "Adventure — a story the Commander agreed to hear, told by you. The places in it are real and "
+        "Story — one the Commander agreed to hear, told by you. The places in it are real and "
         + "the people in it may not be, and nobody in it can be met, spoken to or watched: the game has "
         + "no act for that, and the only thing the Commander can do in the story is fly to the next "
         + "objective. Speak from inside it between objectives: wonder, foreshadow, apply pressure, notice where "

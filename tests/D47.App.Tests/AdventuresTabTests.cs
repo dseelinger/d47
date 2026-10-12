@@ -260,12 +260,12 @@ public class AdventuresTabTests
     {
         var (panel, _, _) = Open();
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Ask"));
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Short Story"));
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("ASK FOR AN ADVENTURE", StringComparison.Ordinal));
+        Assert.Contains(drawn, text => text.Contains("ASK FOR A SHORT STORY", StringComparison.Ordinal));
         Assert.Contains(drawn, text => text.Contains("needs a language model"));
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
@@ -300,7 +300,7 @@ public class AdventuresTabTests
 
         Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Ask"));
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Short Story"));
         Dispatcher.UIThread.RunJobs();
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
@@ -541,6 +541,6 @@ public class AdventuresTabTests
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains(Visible(panel), text => text.Contains("No adventure under way."));
+        Assert.Contains(Visible(panel), text => text.Contains("No story under way."));
     }
 }

@@ -606,10 +606,10 @@ public static class FlavourBriefs
     {
         Instruction =
             Narration.Instruction
-            + " The Commander's adventure has waited a long time at its next objective. Let this narration lean "
+            + " The Commander's story has waited a long time at its next objective. Let this narration lean "
             + "toward it: you may hint at where it waits, but do not order the Commander there and do not say "
             + "what happens there. Mention fuel, jump range, cargo, credits, danger or rank only as the game "
-            + $"state gives them. What you know of the adventure: {facts}",
+            + $"state gives them. What you know of the story: {facts}",
     };
 
     /// <summary>

@@ -69,7 +69,8 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         var tab = new Tab { Stories = stories, Signal = signal };
         var surface = new AdventureSurface(
             book, generator, () => null, () => tab.Shown, () => Now, _ => { }, () => true, () => true, () => null, () => { },
-            Stories: director, Switched: signal);
+            Stories: director, Switched: signal,
+            Messages: new D47.Core.Messages.MessageStore(Path.Combine(paths.Data, "messages.json"), new MemoryFileSystem(), NullLogger<D47.Core.Messages.MessageStore>.Instance));
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
@@ -101,6 +102,27 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
 
     private static List<string> Drawn(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
+
+    [AvaloniaFact]
+    public void TheRootBarReadsStoriesShortStoryMessages()
+    {
+        var tab = Open();
+
+        tab.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.RootKey, "Stories"));
+        Dispatcher.UIThread.RunJobs();
+
+        var bar = tab.Panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.IsEffectivelyVisible)
+            .Select(button => button.Content as string ?? string.Empty)
+            .Where(label => label is "Stories" or "Short Story" || label.StartsWith("Messages", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Equal(3, bar.Count);
+        Assert.Equal(["Stories", "Short Story"], bar.Take(2));
+        Assert.StartsWith("Messages", bar[2], StringComparison.Ordinal);
+
+        tab.Window.Close();
+    }
 
     [AvaloniaFact]
     public void ASwitchConfirmedAfterTheCommanderChangedDoesNothing()

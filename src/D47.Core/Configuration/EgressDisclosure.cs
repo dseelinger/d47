@@ -225,20 +225,20 @@ public static class EgressDisclosure
                 NameOf(NotablePlaces),
                 "edastro.com",
                 "One request for the whole Galactic Exploration Catalog — about two megabytes, every point "
-                + "of interest it lists — made when you ask for an adventure to be written. Nothing about you "
+                + "of interest it lists — made when you ask for a short story to be written. Nothing about you "
                 + "goes with it: no position, no key, no identifier and nothing from your journal. The "
                 + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
                 + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
                 + "acknowledged in NOTICE.",
                 Active: true,
                 Summary: "One ~2 MB request for the whole exploration catalogue, made when you ask for "
-                    + "an adventure. Nothing about you goes with it.")
+                    + "a short story. Nothing about you goes with it.")
             : EgressEntry.Silent(
                 NotablePlaces,
                 NameOf(NotablePlaces),
-                "Notable places are off, so no catalogue is fetched and a generated adventure chooses its "
+                "Notable places are off, so no catalogue is fetched and a generated short story chooses its "
                 + "stops from the galaxy search alone.",
-                summary: "Notable places are off, so no catalogue is fetched; an adventure's stops come "
+                summary: "Notable places are off, so no catalogue is fetched; a short story's stops come "
                     + "from galaxy search alone."),
 
         // The key is the switch, and deliberately the only one.
@@ -873,8 +873,8 @@ public static class EgressDisclosure
             + "startup and whenever the provider, its endpoint or its key changes. The names of characters in in-game messages are "
             + "also sent to it, one short request at a time, to choose which accent and "
             + "which sex a voice should have for them; each name is asked about once and the answer is kept on this machine."
-            + " Asking for an adventure sends where you are, the ships you own and your ranks; asking for the next "
-            + "chapter of one also sends the adventure it follows — its spine, its objectives and what was said as you flew it — "
+            + " Asking for a short story sends where you are, the ships you own and your ranks; asking for the next "
+            + "chapter of one also sends the story it follows — its spine, its objectives and what was said as you flew it — "
             + "and the name and premise of each chapter before that. A chapter of a stock story also sends the story's "
             + "card. While a stock story runs, every line the model writes in character, and each chapter, also carries "
             + "a hidden story, sent to the language model: the twists d47 keeps from you and never shows. "
@@ -932,7 +932,7 @@ public static class EgressDisclosure
             "Once per launch, one line recapping your last session, to be said in your core's voice: the "
             + "system and station it ended at, the ship, and at most one rank, engineer, death, rebuy or "
             + "interdiction from it, with any names and counts that carries. Your Backstory and the active "
-            + "adventure are not sent with it. Switching off the last session recap stops it.",
+            + "story are not sent with it. Switching off the last session recap stops it.",
             Active: true,
             Summary: "Once per launch, system, station and ship names and counts from your last session.");
     }

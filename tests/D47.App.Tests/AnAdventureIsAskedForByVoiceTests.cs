@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>"ask for an adventure" opens the Ask page and its brief entry, and committing the brief presses Go with the form as it stands.</summary>
+/// <summary>"ask for a short story" opens the Short Story page and its brief entry, and committing the brief presses Go with the form as it stands.</summary>
 [Trait("Category", "Integration")]
 public class AnAdventureIsAskedForByVoiceTests
 {
@@ -75,7 +75,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var (panel, book, desk, model) = Open(canAsk: true);
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Ask"));
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Short Story"));
         Dispatcher.UIThread.RunJobs();
 
         Choose(panel, "Reach: a session's flying");
@@ -125,7 +125,7 @@ public class AnAdventureIsAskedForByVoiceTests
     {
         var (panel, _, desk, _) = Open(canAsk: false);
 
-        Assert.Equal("Asking for one needs a language model, and none is configured.", desk.Ask());
+        Assert.Equal("A short story needs a language model, and none is configured.", desk.Ask());
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Stories, panel.Nav.Tab);

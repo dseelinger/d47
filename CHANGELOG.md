@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Stories tab's **Ask for one** button is now **Short Story** and sits after **Stories**: the bar reads Stories, Short Story, Messages. What a Commander reads or hears no longer says "adventure": a story D47 writes for you is a short story, and anything that covers a stock-story chapter too is a story. The voice commands are "ask for a short story", "change the short story", "accept the short story" and "reject the short story"; the old "adventure" phrases still work. The capability is now called Stories, the callout toggle Story objectives, and the setting Notable places for short stories.
+
 Each Commander now keeps their own answer to "Your Commander is" on a story page. Before, one answer was shared by every Commander on the installation, so a second Commander could be shown the other version of a two-version speaker. A Commander who has not answered yet uses the installation's existing answer.
 
 Picking another Commander now redraws the Stories tab for them, in the window and on the headset: the Stories list, the story pages, the Stories tab's own page and the mini panel's story. A chapter page or next-chapter form that belonged to the last Commander is closed. A button, a confirm prompt or a star vote left from before the switch does nothing and the status line says "The Commander changed. Nothing was done." This fixes Switch on a story page abandoning the newly picked Commander's story, and Story on, Not for me and ratings acting on a different Commander from Resume, Abandon and Write it again.

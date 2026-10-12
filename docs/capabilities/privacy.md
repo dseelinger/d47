@@ -173,7 +173,7 @@ release. D47 asks for the list of stock stories and the cast pictures it shows t
 Stories page opens in a session, and for a story's hidden layer and every cast picture when you pick
 it, and keeps them in `data\stories`.
 Nothing about you goes with it: no key, no Commander name, no position and nothing from your journal.
-**Download stock stories** in the Adventures settings turns it off, and the Stories page then lists
+**Download stock stories** in the Stories settings turns it off, and the Stories page then lists
 only stories already on disk.
 
 **Chatterbox voices** — `github.com`, which redirects to GitHub's asset storage, from the
@@ -188,7 +188,7 @@ rating the first time the Stories page opens in a session, and sends a vote when
 have picked or take your rating back. A vote carries the story, your stars and a random number made on
 this PC for your Commander, which is not your donation identifier. Nothing else goes with it: no
 Frontier ID, no Commander name, no key, no position and nothing from your journal. **Story ratings** in
-the Adventures settings turns it off, and nothing is then fetched or sent.
+the Stories settings turns it off, and nothing is then fetched or sent.
 
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
 computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,

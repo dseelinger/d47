@@ -34,7 +34,7 @@ public sealed record LogStoryBeat(string Statement, LogSource Source)
                 var title = adventure.Beats[index].Title;
                 var statement = chapterOf is { } owner && owner.Chapters.ToList().FindIndex(key => string.Equals(key, adventure.Key, StringComparison.OrdinalIgnoreCase)) is >= 0 and var at
                     ? $"Reached \"{title}\", chapter {(at + 1).ToString(CultureInfo.InvariantCulture)} of {owner.Title}."
-                    : $"Reached \"{title}\" in the adventure {adventure.Name}.";
+                    : $"Reached \"{title}\" in the story {adventure.Name}.";
 
                 beats.Add(new LogStoryBeat(statement, new LogSource(standing.FiredBy[index], standing.Fired[index])));
             }

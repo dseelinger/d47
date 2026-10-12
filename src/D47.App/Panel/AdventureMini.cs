@@ -81,7 +81,7 @@ public sealed class AdventureMini : UserControl
 
         if (active.Count == 0)
         {
-            _body.Children.Add(AdventuresPage.Muted("No adventure under way."));
+            _body.Children.Add(AdventuresPage.Muted("No story under way."));
             return;
         }
 

@@ -30,7 +30,7 @@ public static class AdventureCapability
 
     private const string NoStory = "No story is running.";
 
-    private const string NoDraft = "There is no draft adventure.";
+    private const string NoDraft = "There is no draft short story.";
 
     /// <summary>Switches the Commander's story on or off, returning a refusal or null. The app sets it once the story exists.</summary>
     public sealed class StorySwitch
@@ -61,8 +61,8 @@ public static class AdventureCapability
 
         public Func<string?> Reject { get; set; } = () => NoDraft;
 
-        /// <summary>Opens the Ask page and the brief entry whose commit presses Go.</summary>
-        public Func<string?> Ask { get; set; } = () => "The Adventures page is not available.";
+        /// <summary>Opens the Short Story page and the brief entry whose commit presses Go.</summary>
+        public Func<string?> Ask { get; set; } = () => "The Short Story page is not available.";
     }
 
     public static CapabilityDescriptor Create(
@@ -70,31 +70,31 @@ public static class AdventureCapability
     {
         Id = Id,
         Group = "Knowledge",
-        Name = "Adventures",
+        Name = "Stories",
         Summary =
-            "Stories the Commander flies, written by them or by the ship's AI, and advanced by "
+            "Stories the Commander flies, advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
             + "model. The Commander can pause and resume a running story by voice, and refuse the objective it is waiting on.",
 
         // The phrases that genuinely work.
         Examples =
         [
-            "show me the adventures",
-            "open the adventures tab",
+            "show me the stories",
+            "open the stories tab",
             "pause the story",
             "resume the story",
             "accept the ending",
             "choose ending two",
             "this objective is not for me",
-            "change the adventure",
-            "accept the adventure",
-            "reject the adventure",
-            "ask for an adventure",
+            "ask for a short story",
+            "change the short story",
+            "accept the short story",
+            "reject the short story",
         ],
 
         // None.
         Keywords = [],
-        Display = new CapabilityDisplay { PanelTitle = "Adventures", Order = 59, ShowOnPanel = false },
+        Display = new CapabilityDisplay { PanelTitle = "Stories", Order = 59, ShowOnPanel = false },
 
         Settings =
         [
@@ -148,10 +148,10 @@ public static class AdventureCapability
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
-            Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft adventure.", "change the adventure", "What should change?", desk, d => d.Change),
-            Draft(AcceptDraftTool, "Accept the Commander's draft adventure, as the Accept button does.", "accept the adventure", "The adventure is accepted.", desk, d => d.Accept),
-            Draft(RejectDraftTool, "Reject the Commander's draft adventure and remove it, as the Decline button does.", "reject the adventure", "The draft is removed.", desk, d => d.Reject),
-            Desk(AskTool, "Open the Ask page and the entry for a brief; committing the brief asks for the adventure, as Go does.", "ask for an adventure", "What should it be about?", desk, d => d.Ask, _ => null),
+            Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
+            Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
+            Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject),
+            Desk(AskTool, "Open the Short Story page and the entry for a brief; committing the brief asks for the short story, as Go does.", ["ask for a short story", "ask for an adventure"], "What should it be about?", desk, d => d.Ask, _ => null),
         ],
     };
 
@@ -211,11 +211,11 @@ public static class AdventureCapability
     };
 
     private static ToolDefinition Draft(
-        string name, string description, string phrase, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act) =>
-        Desk(name, description, phrase, done, desk, act, d => d.HasDraft);
+        string name, string description, string[] phrases, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act) =>
+        Desk(name, description, phrases, done, desk, act, d => d.HasDraft);
 
     private static ToolDefinition Desk(
-        string name, string description, string phrase, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act,
+        string name, string description, string[] phrases, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act,
         Func<AdventureDesk, Func<bool>?> when)
     {
         desk ??= new AdventureDesk();
@@ -224,9 +224,9 @@ public static class AdventureCapability
         {
             Name = name,
             Description = description + " The Commander's choice alone.",
-            Commands = [new ToolCommandPhrase(phrase, new Dictionary<string, string>(StringComparer.Ordinal)) { When = when(desk) }],
+            Commands = [.. phrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string>(StringComparer.Ordinal)) { When = when(desk) })],
 
-            // Adventures are the Commander's to ask for and decide; the model is refused.
+            // Short stories are the Commander's to ask for and decide; the model is refused.
             Protected = true,
             Handler = (_, _) => Task.FromResult(
                 act(desk)() is { } refusal ? ToolResult.Error(refusal) : ToolResult.Ok(done)),

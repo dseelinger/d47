@@ -82,7 +82,7 @@ nav_order: 105
  <rect x="482" y="52" width="66" height="32" fill="var(--background)" stroke="var(--border)" stroke-width="2"/>
  <circle cx="499" cy="68" r="10" fill="var(--text-muted)"/>
  <text x="566" y="76" font-size="19" font-weight="800" fill="var(--text)">NOTABLE PLACES</text>
- <text x="482" y="118" font-size="16" fill="var(--text-muted)">the catalogue an adventure picks stops from</text>
+ <text x="482" y="118" font-size="16" fill="var(--text-muted)">the catalogue a short story picks stops from</text>
  <text x="440" y="184" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">Two switches, both off out of the box, and neither turns the other on.</text>
  <text x="440" y="214" text-anchor="middle" font-size="16" fill="var(--text-muted)">Switched off, asking gets you “I can't look that up” — a capability that is off, not an error.</text>
 </svg>
@@ -151,10 +151,10 @@ list rather than repeating it by hand, so it cannot go stale.
 
 Turning it on takes effect immediately. There is no restart.
 
-### Notable places for adventures {#notable-places-for-adventures}
+### Notable places for short stories {#notable-places-for-short-stories}
 
 A second setting, added with list.md Phase 47 and off by default, and a second host. When the
-ship's AI writes you an adventure it may pick the story's stops from the
+ship's AI writes you a short story it may pick the story's stops from the
 [Galactic Exploration Catalog](https://edastro.com/gec/) on edastro.com — the community
 catalogue of nebulae, notable bodies, wrecks, memorials and tourist sites that the Galactic
 Mapping Project was migrated into. One request fetches the whole catalogue, about two megabytes,
@@ -168,8 +168,8 @@ place it suggests is still checked against spansh's id for the system before a s
 offered — two sources, and a disagreement refuses the place. Its content is CC BY-NC-SA 3.0,
 acknowledged in `NOTICE`; d47 is non-commercial.
 
-With this off, a generated adventure still works, choosing its stops from the galaxy search and
-the model's own knowledge. With galaxy search off, no adventure can be generated at all, because
+With this off, a generated short story still works, choosing its stops from the galaxy search and
+the model's own knowledge. With galaxy search off, no short story can be generated at all, because
 the places in a story have to be real and this is the thing that checks.
 
 ### Why the filters are checked here rather than there
