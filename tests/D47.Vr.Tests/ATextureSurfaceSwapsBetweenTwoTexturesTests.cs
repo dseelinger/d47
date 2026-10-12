@@ -76,6 +76,35 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
     }
 
     [Fact]
+    public void EachFrameIsFlushedBeforeItIsSubmitted()
+    {
+        var openVr = new FakeOpenVr();
+        var device = new FakeTextureDevice(openVr);
+        var runtime = new SteamVrRuntime(
+            [new FakeSurface { UploadsAsTexture = true }],
+            NullLogger<SteamVrRuntime>.Instance,
+            openVr,
+            device);
+
+        try
+        {
+            Assert.Equal(VrStartOutcome.Started, runtime.Start().Outcome);
+
+            for (var n = 0; n < 3; n++)
+            {
+                Assert.True(runtime.Serve(Tick(n)));
+            }
+
+            // The nth flush comes after n - 1 submits: each frame reaches the GPU before SteamVR is handed it.
+            Assert.Equal([0, 1, 2], device.FlushedAfterSubmits);
+        }
+        finally
+        {
+            runtime.Stop();
+        }
+    }
+
+    [Fact]
     public void ARefusedTextureGoesAgainWithoutBeingRewritten()
     {
         var openVr = new FakeOpenVr { TextureRefused = true };

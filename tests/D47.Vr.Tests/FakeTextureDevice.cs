@@ -1,7 +1,7 @@
 namespace D47.Vr.Tests;
 
 /// <summary>A Direct3D 11 device that hands out numbered textures and remembers what it was asked.</summary>
-public sealed class FakeTextureDevice : IVrTextureDevice
+public sealed class FakeTextureDevice(FakeOpenVr? openVr = null) : IVrTextureDevice
 {
     private IntPtr _nextTexture = 0x1000;
 
@@ -50,7 +50,12 @@ public sealed class FakeTextureDevice : IVrTextureDevice
         return texture;
     }
 
+    /// <summary>How many textures <see cref="FakeOpenVr"/> had been handed at each <c>Flush</c>, in order.</summary>
+    public List<int> FlushedAfterSubmits { get; } = [];
+
     public void Write(IntPtr texture, IntPtr pixels, int rowBytes) => Writes.Add(texture);
+
+    public void Flush() => FlushedAfterSubmits.Add(openVr?.TexturesSubmitted.Count ?? -1);
 
     public void Release(IntPtr texture) => Live.Remove(texture);
 

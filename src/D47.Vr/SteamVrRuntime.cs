@@ -887,6 +887,7 @@ public sealed class SteamVrRuntime(
             else
             {
                 textures!.Write(pair.Current, pixels.Address, pixels.RowBytes);
+                textures.Flush();
             }
         }
 

@@ -17,6 +17,9 @@ public interface IVrTextureDevice
     /// <summary>Queues a copy of BGRA rows into <paramref name="texture"/>. Does not flush.</summary>
     void Write(IntPtr texture, IntPtr pixels, int rowBytes);
 
+    /// <summary>Sends the queued writes to the GPU. Without it the compositor keeps showing an older frame.</summary>
+    void Flush();
+
     void Release(IntPtr texture);
 
     /// <summary>Releases the context and the device. Issues no context call, so it is safe from another thread.</summary>
@@ -29,6 +32,7 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
     private nint _device;
     private nint _context;
     private UpdateSubresourceFn? _update;
+    private FlushFn? _flush;
 
     public string? Open(int adapter)
     {
@@ -69,6 +73,7 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
             }
 
             _update = Slot<UpdateSubresourceFn>(_context, ContextUpdateSubresource);
+            _flush = Slot<FlushFn>(_context, ContextFlush);
             return null;
         }
         catch (Exception ex)
@@ -108,6 +113,8 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
     public void Write(IntPtr texture, IntPtr pixels, int rowBytes) =>
         _update!(_context, texture, 0, 0, pixels, (uint)rowBytes, 0);
 
+    public void Flush() => _flush!(_context);
+
     public void Release(IntPtr texture)
     {
         if (texture != 0)
@@ -119,6 +126,7 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
     public void Close()
     {
         _update = null;
+        _flush = null;
         Release(ref _context);
         Release(ref _device);
     }
@@ -155,6 +163,8 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
 
     private delegate int CreateTexture2DFn(nint device, ref TextureDesc desc, nint initial, out nint texture);
 
+    private delegate void FlushFn(nint context);
+
     private delegate void UpdateSubresourceFn(
         nint context,
         nint resource,
@@ -167,6 +177,7 @@ public sealed class D3D11TextureDevice : IVrTextureDevice
     private const int FactoryEnumAdapters1 = 12;
     private const int DeviceCreateTexture2D = 5;
     private const int ContextUpdateSubresource = 48;
+    private const int ContextFlush = 111;
 
     /// <summary>Required with an explicit adapter.</summary>
     private const uint DriverTypeUnknown = 0;
