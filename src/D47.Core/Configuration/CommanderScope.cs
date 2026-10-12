@@ -19,6 +19,7 @@ public static class CommanderScope
 
         return stored with
         {
+            CommanderGender = Read(overlay.CommanderGender, stored.CommanderGender),
             Llm = stored.Llm with
             {
                 AboutMe = Read(overlay.AboutMe, stored.Llm.AboutMe),
@@ -54,6 +55,7 @@ public static class CommanderScope
         // row did to them is moved into the overlay below.
         var install = next with
         {
+            CommanderGender = stored.CommanderGender,
             Llm = next.Llm with
             {
                 AboutMe = stored.Llm.AboutMe,
@@ -104,6 +106,11 @@ public static class CommanderScope
             updated = updated with { HomeSystem = Written(next.Callouts.HomeSystem) };
         }
 
+        if (!string.Equals(next.CommanderGender, effective.CommanderGender, StringComparison.Ordinal))
+        {
+            updated = updated with { CommanderGender = Written(next.CommanderGender) };
+        }
+
         if (updated == overlay)
         {
             // Nothing of this Commander's moved.
@@ -144,6 +151,7 @@ public static class CommanderScope
             Without(stored, fid, overlay with { ScenarioAudience = null }),
             Without(stored, fid, overlay with { ShipCoreShip = null }),
             Without(stored, fid, overlay with { HomeSystem = null }),
+            Without(stored, fid, overlay with { CommanderGender = null }),
         ];
     }
 
@@ -161,7 +169,8 @@ public static class CommanderScope
                     && updated.Scenario is null
                     && updated.ScenarioAudience is null
                     && updated.ShipCoreShip is null
-                    && updated.HomeSystem is null;
+                    && updated.HomeSystem is null
+                    && updated.CommanderGender is null;
 
         return stored with { Commanders = empty ? [.. others] : [.. others, updated] };
     }

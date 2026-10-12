@@ -406,8 +406,8 @@ layer names them as `{name:<cast-id>}`, and D47 puts in the version's name befor
 spoken or sent to the chapter writer.
 
 For such a story, the story's page asks **Your Commander is**: **A man** or **A woman**, above **Pick**.
-**Pick** and **Switch** stay disabled until you choose, and the page says why. The choice is kept in
-`settings.json` as `commanderGender` and is asked only by a story that needs it. The same control is on
+**Pick** and **Switch** stay disabled until you choose, and the page says why. The choice is kept per
+Commander and is asked only by a story that needs it. The same control is on
 the page of your running story; changing it there takes effect from the story's next line.
 
 **Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then

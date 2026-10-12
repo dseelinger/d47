@@ -122,6 +122,9 @@ public sealed record CommanderSettings
 
     /// <summary>This Commander's <see cref="CalloutSettings.HomeSystem"/>.</summary>
     public string? HomeSystem { get; init; }
+
+    /// <summary>This Commander's <see cref="D47Settings.CommanderGender"/>.</summary>
+    public string? CommanderGender { get; init; }
 }
 
 /// <summary>The Commander's log (Phase 33).</summary>

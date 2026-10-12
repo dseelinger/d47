@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+Each Commander now keeps their own answer to "Your Commander is" on a story page. Before, one answer was shared by every Commander on the installation, so a second Commander could be shown the other version of a two-version speaker. A Commander who has not answered yet uses the installation's existing answer.
+
 Picking another Commander now redraws the Stories tab for them, in the window and on the headset: the Stories list, the story pages, the Stories tab's own page and the mini panel's story. A chapter page or next-chapter form that belonged to the last Commander is closed. A button, a confirm prompt or a star vote left from before the switch does nothing and the status line says "The Commander changed. Nothing was done." This fixes Switch on a story page abandoning the newly picked Commander's story, and Story on, Not for me and ratings acting on a different Commander from Resume, Abandon and Write it again.
 
 On the headset, the Systems, Stations and Bodies search pages now draw their form. Each page has two full-width views: the form, with the saved searches, the filters, RUN SEARCH and CLEAR; and the answer, with EDIT SEARCH, REFRESH, SAVE THIS SEARCH and the table. RUN SEARCH, a saved search and REFRESH show the answer; EDIT SEARCH returns to the form with the values that were run. A search asked by voice fills the form and shows the answer. SAVE THIS SEARCH and the forget tile work on the headset. The desktop window is unchanged.

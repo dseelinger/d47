@@ -2,6 +2,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
+using D47.Core.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Configuration;
@@ -107,6 +108,35 @@ public class CommanderScopeTests
 
         reloaded.Settings.UseCommander("F1", "Alice");
         Assert.Equal("Alice's story", reloaded.Settings.Current.Llm.AboutMe);
+    }
+
+    [Fact]
+    public void EachCommanderKeepsTheirOwnStoryGender()
+    {
+        var install = new MemoryInstall();
+        var surface = TestSurface.For(install);
+
+        surface.Settings.UseCommander("F1", "Alice");
+        surface.Settings.Replace("test", current => current with { CommanderGender = CommanderGender.Woman });
+
+        surface.Settings.UseCommander("F2", "Bob");
+        surface.Settings.Replace("test", current => current with { CommanderGender = CommanderGender.Man });
+
+        Assert.Equal(CommanderGender.Man, surface.Settings.Current.CommanderGender);
+
+        surface.Settings.UseCommander("F1", "Alice");
+        Assert.Equal(CommanderGender.Woman, surface.Settings.Current.CommanderGender);
+    }
+
+    [Fact]
+    public void ACommanderWithNoAnswerReadsTheInstallationsStoryGender()
+    {
+        var install = new MemoryInstall();
+        var surface = TestSurface.For(install);
+        surface.Settings.Replace("test", current => current with { CommanderGender = CommanderGender.Woman });
+
+        surface.Settings.UseCommander("F1", "Alice");
+        Assert.Equal(CommanderGender.Woman, surface.Settings.Current.CommanderGender);
     }
 
     [Fact]
