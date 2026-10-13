@@ -2970,6 +2970,21 @@ public sealed class AppHost : IDisposable
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
 
+        // A story's cast member, answered by whatever the Commander says shortly after their line, except what the
+        // ship would run or offer without the model.
+        turns.Lines.Add(new CastLine(
+            () => SystemWallClock.Instance.UtcNow,
+            () => personas.ShipName,
+            input => router.MatchSetting(input) is not null
+                     || router.MatchToolCommand(input) is not null
+                     || router.Match(input, InputSource.Spoken) is not null
+                     || router.Book.Candidates(input, InputSource.Spoken).Count > 0
+                     || wording.LearnedPhraseFor(input) is not null,
+            castId => storyDirector.Answering(gameState.Active?.Identity.FrontierId, castId),
+            () => storyDirector.HiddenBrief(gameState.Active?.Identity.FrontierId),
+            () => ShipFacts.Of(gameState.Active),
+            loggerFactory.CreateLogger<CastLine>()));
+
         ShippedCallouts.Connect(callouts, new ShippedCallouts.Services
         {
             Settings = settings,
@@ -5343,6 +5358,7 @@ public sealed class AppHost : IDisposable
         public void Dispose()
         {
             host.Voice.Voice = voice;
+            host.Voice.Pinned = null;
             host.Voice.CaptionSpeaker = captionSpeaker;
             host.Voice.SpeakingAs = VoiceRole.ShipAi;
         }
@@ -5352,6 +5368,24 @@ public sealed class AppHost : IDisposable
     public AddressedVoice SpeakAs(TurnEvent.Addressed addressed)
     {
         var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
+
+        // A story's cast member speaks in the voice the story gave them, as their lines are spoken.
+        if (CastVoice(addressed) is { Pinned: { } pinned })
+        {
+            var line = new Announcement(D47.Core.Stories.StoryLines.KeyPrefix, string.Empty)
+            {
+                Voice = VoiceRole.Crew,
+                Speaker = addressed.Name,
+                Pinned = pinned,
+            };
+
+            Voice.Voice = SpeakerAccent.VoiceOf(CastFor(line), line);
+            Voice.Pinned = pinned;
+            Voice.SpeakingAs = VoiceRole.Crew;
+            Voice.CaptionSpeaker = addressed.Name;
+
+            return restore;
+        }
 
         // An invented speaker keeps the voice their exchange was heard in.
         Voice.Voice = addressed.Role switch
@@ -5420,7 +5454,9 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>The picture name the Conversation page shows an addressed turn's reply with, or null.</summary>
-    public string? AddressedPicture(TurnEvent.Addressed addressed) => addressed.Role switch
+    public string? AddressedPicture(TurnEvent.Addressed addressed) => CastVoice(addressed) is { Cast: { } cast }
+        ? SpeakerPictures.For(cast)
+        : addressed.Role switch
     {
         VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
             D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role)),
@@ -5428,6 +5464,21 @@ public sealed class AppHost : IDisposable
         VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
         _ => null,
     };
+
+    /// <summary>The voice of the running story's cast member answering a turn, or null for any other speaker.</summary>
+    private D47.Core.Stories.StoryLineVoice? CastVoice(TurnEvent.Addressed addressed) =>
+        addressed.Cast is { } castId && Stories?.LineVoice(GameState.Active?.Identity.FrontierId, castId) is { Cast: not null } voice
+            ? voice
+            : null;
+
+    /// <summary>A cast member's answer, posted to the Story log with the clip it was spoken in, once the turn has been spoken.</summary>
+    public void NoteCastReply(TurnEvent.Addressed addressed, string asked, TurnResult? result)
+    {
+        if (addressed.Cast is { } castId && result is { Outcome: TurnOutcome.Answered, Text.Length: > 0 })
+        {
+            Records.RecordCastReply(castId, asked, result.Text, Voice.KeptTurn);
+        }
+    }
 
     /// <summary>The picture name of the core aboard.</summary>
     public string ShipPicture => D47.Core.Interface.SpeakerPictures.Core(Personas.Current.Id);

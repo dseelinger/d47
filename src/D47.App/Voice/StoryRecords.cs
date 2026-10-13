@@ -77,6 +77,29 @@ internal sealed class StoryRecords(
             cast: voice?.Cast?.Picture);
     }
 
+    /// <summary>A cast member's answer to the Commander, posted to Messages from the member with what the Commander said above it.</summary>
+    internal void RecordCastReply(string castId, string asked, string answer, SpokenClip? spoken)
+    {
+        var commander = gameState.Active?.Identity.FrontierId;
+
+        if (string.IsNullOrWhiteSpace(answer)
+            || stories.CurrentCast(commander) is not var (secret, title)
+            || stories.LineVoice(commander, castId) is not { Cast: { } cast } voice)
+        {
+            return;
+        }
+
+        messages.Post(
+            voice.From,
+            title,
+            CastLine.Logged(asked, answer),
+            DateTimeOffset.Now,
+            StoryLines.Key(secret.Id),
+            picture: pictureOf(cast),
+            spoken: spoken,
+            cast: cast.Picture);
+    }
+
     /// <summary>A beat, as it was said, onto the story's own feed (asked for 2026-08-22).</summary>
     internal void RecordAdventure(Announcement announcement, SpokenClip? spoken)
     {

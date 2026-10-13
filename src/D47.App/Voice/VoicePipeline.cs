@@ -74,6 +74,12 @@ public sealed class VoicePipeline(
 
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
+    /// <summary>The story cast member's voice the next turn is spoken in, or null for <see cref="Voice"/>.</summary>
+    public D47.Core.Stories.PinnedVoice? Pinned { get; set; }
+
+    /// <summary>What the last turn spoken in a <see cref="Pinned"/> voice queued to play, or null.</summary>
+    public SpokenClip? KeptTurn { get; private set; }
+
     /// <summary>Who to name on the captions of the next turn, or null for the ship's AI (#201).</summary>
     public string? CaptionSpeaker { get; set; }
 
@@ -123,6 +129,8 @@ public sealed class VoicePipeline(
         TurnResult? result = null;
         var signal = 1.0;
 
+        KeptTurn = null;
+
         try
         {
             _spoke = false;
@@ -142,7 +150,12 @@ public sealed class VoicePipeline(
                         // Created on the first delta rather than up front, so a turn that never speaks never
                         // opens a pipeline — and, more to the point, the bed stops the moment there are words
                         // rather than when the turn ends.
-                        if (speech is null && !_held && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
+                        if (speech is null && !_held && Pinned is { } pinned)
+                        {
+                            speech = CastTurnSpeech(pinned, group);
+                            _spoke = speech is not null;
+                        }
+                        else if (speech is null && !_held && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
                         {
                             _spoke = true;
 
@@ -189,6 +202,8 @@ public sealed class VoicePipeline(
             if (speech is not null)
             {
                 await speech.CompleteAsync().ConfigureAwait(false);
+
+                KeptTurn = speech.Kept;
             }
         }
         finally
@@ -250,6 +265,48 @@ public sealed class VoicePipeline(
 
         return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// A turn's speech in a story cast member's voice, with the member's own treatment and kept for the Story log, as
+    /// <see cref="AnnounceAsync(Announcement, VoiceSelection?)"/> speaks the member's lines; null when nothing can speak it.
+    /// </summary>
+    private SpeechPipeline? CastTurnSpeech(D47.Core.Stories.PinnedVoice pinned, string group)
+    {
+        var crew = pinned is { IsCrewVoice: true, Fallback: null };
+
+        if ((crew ? Speaker(VoiceGroup.Aboard) : CastSpeaker(pinned)) is not { } provider)
+        {
+            _logger.LogWarning("No {Provider} client to speak a reply in its pinned voice", pinned.ProviderId);
+            return null;
+        }
+
+        var colour = D47.Core.Stories.CastVoice.Treatment(pinned);
+
+        var speech = new SpeechPipeline(
+            arbiter,
+            provider,
+            Introduce(crew ? Voice : new VoiceSelection(pinned.VoiceId)),
+            group,
+            loggers.CreateLogger<SpeechPipeline>(),
+            colour: colour,
+            speaker: CaptionSpeaker ?? SpeakingAs.ToString(),
+            noted: Synthesised,
+            captionSpeaker: CaptionSpeaker,
+            address: _address,
+            guardianTreated: IsGuardianTreated(SpeakingAs, colour),
+            keep: true,
+            running: D47.Core.Stories.CastVoice.Running(pinned),
+            voiceRow: SpeechCapability.VoiceRowFor(SpeakingAs));
+
+        // A member in the crew voice speaks through the slot, so its failures count against the slot; a pinned voice's do not.
+        if (crew)
+        {
+            speech.SynthesisFailed += OnSynthesisFailed;
+            speech.VoiceRejected += OnVoiceRejected;
+        }
+
+        return speech;
     }
 
     /// <summary>

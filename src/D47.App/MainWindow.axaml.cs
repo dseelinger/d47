@@ -1038,12 +1038,13 @@ public partial class MainWindow : Window
 
         // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
         AppHost.AddressedVoice? addressedVoice = null;
+        TurnEvent.Addressed? addressedTo = null;
 
         try
         {
             // Through the voice pipeline rather than straight off the turn loop, so the panel and the speaker
             // are fed from one traversal of one stream.
-            await _host.Voice.RunAsync(
+            var result = await _host.Voice.RunAsync(
                 _host.Turns.RunAsync(input, source, cancelling.Token),
                 turnEvent =>
                 {
@@ -1053,6 +1054,7 @@ public partial class MainWindow : Window
                     {
                         case TurnEvent.Addressed addressed:
                             addressedVoice ??= _host.SpeakAs(addressed);
+                            addressedTo ??= addressed;
                             break;
 
                         case TurnEvent.Completed completed:
@@ -1067,6 +1069,11 @@ public partial class MainWindow : Window
                             break;
                     }
                 });
+
+            if (addressedTo is not null)
+            {
+                _host.NoteCastReply(addressedTo, input, result);
+            }
         }
         catch (Exception ex)
         {

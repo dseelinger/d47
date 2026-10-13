@@ -274,9 +274,21 @@ offered it, and a miss refuses the whole draft by name.
 **No stop needs a permit.** Your journal does not say which permits you hold, so a generated story
 never sends you to a permit-locked system such as Shinrarta Dezhra or Sol, unless you are already in it.
 
-**Invented people are told about, never met.** The game has no act for meeting anyone, and the only
-thing you can actually do in a story is fly to the next objective. Ask the core whether one of them was
-real and it says they are someone in the story.
+**A stock story's cast can be answered.** For ninety seconds after a cast member of the running stock
+story speaks, whether in an opening, an objective, a clue, a finale line or a reaction, whatever you say
+goes to that member. They answer in the first person, in their own voice. Each reply restarts the ninety
+seconds, and one line takes at most four replies; the window opens again the next time that member
+speaks. Two things still go to the ship: a command d47 runs or offers without the model, such as "gear
+down", and anything that starts with your ship AI's name, which also ends the exchange. The member reads
+the hidden story as every speaker does, so they may hint at the secret but never state it, and never
+mislead you about fuel, cargo, credits, routes, rank or danger. A reply that contradicts your ship, such
+as one counting on a fuel scoop you have not fitted, is not said, and ends the exchange. The member is
+offered no tools, so nothing they say can act on the ship. Each reply is one model call, counted in your
+spend like conversation, and is posted to the Story log from the member, with their picture and the clip
+it was spoken in, below what you said. Nothing opens while the story is paused or switched off, or while
+the game runs without Odyssey, and the line that finishes the story opens nothing, because the story has
+ended. You cannot call a cast member up: only their own lines open the window. Ask the core whether one
+of them was real and it says they are someone in the story.
 
 ### Where you are in it, and what it says
 

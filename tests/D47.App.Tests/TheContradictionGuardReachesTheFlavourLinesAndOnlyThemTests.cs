@@ -6,8 +6,8 @@ namespace D47.App.Tests;
 /// <summary>
 /// The guard between composition and speech runs on the five flavour paths and on nothing else. Four
 /// are in <c>AppHost.cs</c>; the announcement rewrite is in Core's <c>Rewording.cs</c>. An invented
-/// speaker's reply and the Narrator's reply are screened by Core's <c>ChatterLine.cs</c> and
-/// <c>NarratorLine.cs</c>, each with a ship reader from the app.
+/// speaker's reply, the Narrator's reply and a story cast member's reply are screened by Core's
+/// <c>ChatterLine.cs</c>, <c>NarratorLine.cs</c> and <c>CastLine.cs</c>, each with a ship reader from the app.
 /// </summary>
 [Trait("Category", "Gate")]
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
@@ -41,7 +41,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         Assert.Equal(FlavourCallSites - 2, checkedFallbacks.Count);
     }
 
-    /// <summary>And nowhere else: outside the app only the four Core files, inside it only three methods.</summary>
+    /// <summary>And nowhere else: outside the app only the five Core files, inside it only three methods.</summary>
     [Fact]
     public void NothingOutsideTheCompositionRootReachesTheGuard()
     {
@@ -58,7 +58,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
             .Order()
             .ToList();
 
-        Assert.Equal(["ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
+        Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
 
         string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "ComposeStoryLineAsync"];
         var stray = AppSource.Files
@@ -83,8 +83,8 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         var read = CodeLinesContaining("ShipFacts.Of(");
 
         // Four for the five paths — the two persona paths are branches of one switch and share a
-        // snapshot — and the readers ChatterLine and NarratorLine screen each reply against.
-        Assert.Equal(FlavourCallSites + 1, read.Count);
+        // snapshot — and the readers ChatterLine, NarratorLine and CastLine screen each reply against.
+        Assert.Equal(FlavourCallSites + 2, read.Count);
         Assert.All(read, line => Assert.Contains(
             line,
             new[]

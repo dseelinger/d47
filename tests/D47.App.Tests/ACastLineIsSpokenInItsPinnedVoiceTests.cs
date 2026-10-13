@@ -102,6 +102,42 @@ public sealed class ACastLineIsSpokenInItsPinnedVoiceTests
         Assert.Empty(built.Aboard.Asked);
     }
 
+    [Fact]
+    public async Task AMembersAnswerToTheCommanderIsSpokenInTheirPinnedVoiceAndKept()
+    {
+        var built = Build();
+        built.Voice.Pinned = new PinnedVoice(StorySpeaker.Kokoro, "am_michael");
+        built.Voice.SpeakingAs = VoiceRole.Crew;
+
+        await built.Voice.RunAsync(Turn("Only to listen."), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal([("Only to listen.", "am_michael")], built.Kokoro.Asked);
+        Assert.Empty(built.Aboard.Asked);
+        Assert.Empty(built.Npcs.Asked);
+        Assert.Equal(TtsProviderCatalog.KokoroId, built.Voice.KeptTurn!.Provider);
+    }
+
+    [Fact]
+    public async Task AShipTurnIsSpokenAboardAndKeepsNoClip()
+    {
+        var built = Build();
+
+        await built.Voice.RunAsync(Turn("Standing by."), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal([("Standing by.", "the-persona's-voice")], built.Aboard.Asked);
+        Assert.Empty(built.Kokoro.Asked);
+        Assert.Null(built.Voice.KeptTurn);
+    }
+
+    private static async IAsyncEnumerable<D47.Core.Conversation.TurnEvent> Turn(string text)
+    {
+        await Task.CompletedTask;
+
+        yield return new D47.Core.Conversation.TurnEvent.TextDelta(text);
+        yield return new D47.Core.Conversation.TurnEvent.Completed(new D47.Core.Conversation.TurnResult(
+            D47.Core.Conversation.TurnOutcome.Answered, D47.Core.Conversation.TurnRoute.KeywordRouter, text, Effort: null, Cost: null));
+    }
+
     /// <summary>Synthesis with the network taken out, keeping what it was asked to say and in which voice.</summary>
     private sealed class Recording(string id) : ITtsProvider
     {

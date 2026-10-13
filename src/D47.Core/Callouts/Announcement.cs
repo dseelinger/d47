@@ -85,6 +85,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public Stories.PinnedVoice? Pinned { get; init; }
 
+    /// <summary>The id of the running story's cast member who says this, or null.</summary>
+    public string? Cast { get; init; }
+
     /// <summary>The picture name a story's cast line is shown with, or null; read through <see cref="Interface.SpeakerPictures"/>.</summary>
     public string? Picture { get; init; }
 

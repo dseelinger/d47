@@ -179,8 +179,9 @@ they will say so.
 
 Once you address a pilot, the line stays open — an intercom does not fade the way the carrier's
 captain does over distance. The next thing you say reaches the same pilot with no name needed,
-until you end it with "that's all" and its kin, name your ship AI, or name a different pilot. The
-ship AI is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
+until you end it with "that's all" and its kin, name your ship AI, or name a different pilot. If the
+Narrator or a story's cast member speaks while the line is open, what you say next goes to them
+instead, and the pilot's line ends. The ship AI is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
 answers are never added to the ship AI's own conversation.
 
 ### What Directive 47 actually knows about your crew

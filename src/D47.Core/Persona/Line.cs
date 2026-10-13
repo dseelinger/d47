@@ -12,6 +12,7 @@ namespace D47.Core.Persona;
 /// Given the whole reply, returns what may be said instead; the reply is held back until it has run.
 /// </param>
 /// <param name="HiddenStory">This speaker's reading of the running story's hidden layer, in place of the ship AI's.</param>
+/// <param name="Cast">The id of the running story's cast member speaking, or null.</param>
 public sealed record Speaker(
     VoiceRole Role,
     string Name,
@@ -21,7 +22,8 @@ public sealed record Speaker(
     double Signal,
     string? Model = null,
     Func<string, string>? Screen = null,
-    Func<string?>? HiddenStory = null);
+    Func<string?>? HiddenStory = null,
+    string? Cast = null);
 
 /// <summary>What a line makes of one utterance.</summary>
 public abstract record LineDecision

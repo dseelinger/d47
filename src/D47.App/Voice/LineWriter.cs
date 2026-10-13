@@ -380,6 +380,7 @@ internal sealed class LineWriter
     {
         Voice = voice.Role,
         Speaker = voice.Cast?.Name,
+        Cast = voice.Cast?.Id,
         Pinned = voice.Pinned,
         Picture = PictureOf(voice.Cast),
     };

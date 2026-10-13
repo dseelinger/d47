@@ -199,6 +199,18 @@ public sealed class StoryDirector(
             ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship())
             : null;
 
+    /// <summary>
+    /// The current story's cast member <paramref name="castId"/> as this Commander meets them, for the Commander to answer;
+    /// null when there is none, or the story is not running, is switched off or is without Odyssey.
+    /// </summary>
+    public AdventureSpeaker? Answering(string? frontierId, string castId) =>
+        stories.Current(frontierId) is { State: StoryState.Running, IsOff: false } story
+        && !WithoutOdyssey(frontierId)
+        && Hidden(story.Id) is { } secret
+        && secret.Cast.FirstOrDefault(member => string.Equals(member.Id, castId, StringComparison.Ordinal)) is { } member
+            ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who)
+            : null;
+
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
     public bool NeedsGenderFor(string id) => catalog().Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
 

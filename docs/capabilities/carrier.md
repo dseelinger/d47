@@ -174,7 +174,8 @@ public static readonly IReadOnlyList<string> Dismissals =
     ["that's all", "that'll be all", "thank you captain", "dismissed", "carry on"];
 ```
 
-Starting a question with the ship AI's name also ends it. The ship AI is told each exchange as one it
+Starting a question with the ship AI's name also ends it, and so does answering the Narrator or a
+story's cast member who spoke after the captain. The ship AI is told each exchange as one it
 overheard, so it can refer to it, but the captain's answers are not added to the ship AI's own
 conversation.
 

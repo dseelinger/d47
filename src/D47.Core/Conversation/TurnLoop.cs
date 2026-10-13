@@ -62,7 +62,8 @@ public abstract record TurnEvent
     }
 
     /// <summary>The turn is answered by someone other than the ship's AI. Emitted before any text.</summary>
-    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal) : TurnEvent;
+    /// <param name="Cast">The id of the running story's cast member answering, or null.</param>
+    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal, string? Cast = null) : TurnEvent;
 
     /// <summary>Emitted as soon as routing is decided, before any work.</summary>
     public sealed record Routed(TurnRoute Route, ThinkingEffort? Effort) : TurnEvent;
@@ -441,10 +442,48 @@ public sealed class TurnLoop(
     public Func<Journal.JournalEntry?>? SelectedJournalEvent { get; set; }
 
     /// <summary>
-    /// Speakers other than the ship's AI, asked before any other route: an open line first, then each in
-    /// order. At most one is open at a time.
+    /// Speakers other than the ship's AI, asked before any other route: the open lines first, the one heard most
+    /// recently ahead, then the rest in order.
     /// </summary>
     public List<Persona.ILine> Lines { get; } = [];
+
+    private readonly Lock _heardGate = new();
+
+    /// <summary>When each line was last heard, as a count of lines heard; a later line is offered first.</summary>
+    private readonly Dictionary<Persona.ILine, long> _heardAt = [];
+
+    private long _heardCount;
+
+    /// <summary>Tells the first line of type <typeparamref name="T"/> it was heard, which offers it ahead of any line heard before it.</summary>
+    public void LineHeard<T>(Action<T> heard)
+        where T : class, Persona.ILine
+    {
+        ArgumentNullException.ThrowIfNull(heard);
+
+        if (Lines.OfType<T>().FirstOrDefault() is not { } line)
+        {
+            return;
+        }
+
+        heard(line);
+        Stamp(line);
+    }
+
+    private void Stamp(Persona.ILine line)
+    {
+        lock (_heardGate)
+        {
+            _heardAt[line] = ++_heardCount;
+        }
+    }
+
+    private long HeardAt(Persona.ILine line)
+    {
+        lock (_heardGate)
+        {
+            return _heardAt.GetValueOrDefault(line);
+        }
+    }
 
     /// <summary>Who answered the last model turn, or null for the ship's AI.</summary>
     private string? _lastSpeaker;
@@ -776,9 +815,9 @@ public sealed class TurnLoop(
     /// <summary>The decision of the first line that claims the input; taking a turn closes every other line.</summary>
     private async Task<Persona.LineDecision> AddressedAsync(string input, CancellationToken cancellationToken)
     {
-        var open = Lines.FirstOrDefault(line => line.IsOpen);
+        var open = Lines.Where(line => line.IsOpen).OrderByDescending(HeardAt).ToList();
 
-        List<Persona.ILine> order = open is null ? [.. Lines] : [open, .. Lines.Where(line => line != open)];
+        List<Persona.ILine> order = [.. open, .. Lines.Where(line => !open.Contains(line))];
 
         foreach (var line in order)
         {
@@ -791,6 +830,8 @@ public sealed class TurnLoop(
 
             if (decision is Persona.LineDecision.Taken)
             {
+                Stamp(line);
+
                 foreach (var other in Lines.Where(other => other != line))
                 {
                     other.Close();
@@ -816,7 +857,7 @@ public sealed class TurnLoop(
 
         logger.LogInformation("Turn addressed to {Name}", speaker.Name);
 
-        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal);
+        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal, speaker.Cast);
 
         var activeProvider = Provider;
 

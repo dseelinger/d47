@@ -214,13 +214,18 @@ public sealed class Announcer : IDisposable
                         // Only a line actually spoken can be answered.
                         if (announcement.Invented is { } chatter)
                         {
-                            Turns.Lines.OfType<D47.Core.Persona.ChatterLine>().FirstOrDefault()
-                                ?.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex);
+                            Turns.LineHeard<D47.Core.Persona.ChatterLine>(
+                                line => line.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex));
                         }
 
                         if (announcement.Voice == VoiceRole.Narrator)
                         {
-                            Turns.Lines.OfType<D47.Core.Persona.NarratorLine>().FirstOrDefault()?.Heard(announcement.Text);
+                            Turns.LineHeard<D47.Core.Persona.NarratorLine>(line => line.Heard(announcement.Text));
+                        }
+
+                        if (announcement.Cast is { } castId)
+                        {
+                            Turns.LineHeard<D47.Core.Persona.CastLine>(line => line.Heard(castId, announcement.Text));
                         }
 
                         // What the Commander actually heard about a story, kept (asked for 2026-08-22).
