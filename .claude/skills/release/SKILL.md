@@ -46,7 +46,8 @@ git rev-list --left-right --count origin/main...HEAD
 ## Run it under Monitor
 
 Run the script with Monitor, not a background Bash, so each line it prints reaches you as it is
-printed. Substitute `-Patch` or `-Minor`:
+printed. Monitor is a deferred tool: load it with `ToolSearch` (`select:Monitor`) first. Substitute
+`-Patch` or `-Minor`:
 
 ```bash
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch 2>&1 | gawk -f .claude/skills/release/progress.awk; echo "release.ps1 exited ${PIPESTATUS[0]}"
