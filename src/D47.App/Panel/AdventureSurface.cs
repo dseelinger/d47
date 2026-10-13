@@ -29,7 +29,8 @@ public sealed record AdventureSurface(
     CastVoiceSurface? CastVoices = null,
     StoryRatingClient? Ratings = null,
     CommanderSignal? Switched = null,
-    Func<string?, string?>? Recap = null);
+    Func<string?, string?>? Recap = null,
+    D47.Core.Stories.StoryBench? Bench = null);
 
 /// <summary>Raised when the shown Commander changes, on whichever thread the journal ticks; subscribers post to the UI thread.</summary>
 public sealed class CommanderSignal

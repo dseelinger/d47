@@ -53,6 +53,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private readonly Button _ask = new() { Content = "Short Story" };
     private readonly Button _messages = new() { Name = "OpenMessages", Content = MessagesView.PageName };
     private readonly Button _stories = new() { Name = "OpenStories", Content = StoriesView.PageName };
+    private readonly Button _bench = new() { Name = "OpenStoryBench", Content = StoryBenchPage.PageName };
+    private StoryBenchPage? _benchPage;
     private MessagesView? _inbox;
     private StoriesView? _storiesView;
 
@@ -81,12 +83,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Short Story"));
         _stories.Click += (_, _) => _nav.Drill(StoriesView.Crumb);
         _stories.IsVisible = surface.Stories is not null;
+        _bench.Click += (_, _) => _nav.Drill(StoryBenchPage.Crumb);
+        _bench.IsVisible = surface.Stories is not null && surface.Bench is not null;
 
         var bar = new StackPanel
         {
             Spacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
-            Children = { Buttons(_stories, _ask, _messages) },
+            Children = { Buttons(_stories, _ask, _messages, _bench) },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -180,6 +184,13 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             _inbox ??= new MessagesView(inbox, _nav, _surface, _prompts);
             return crumb.Key == MessagesView.RootKey ? _inbox : _inbox.Build(crumb);
+        }
+
+        if (crumb.Key == StoryBenchPage.RootKey)
+        {
+            return _surface.Stories is { } stories && _surface.Bench is { } bench
+                ? _benchPage ??= new StoryBenchPage(_surface, bench, stories, _prompts)
+                : null;
         }
 
         if (_surface.Stories is { } director

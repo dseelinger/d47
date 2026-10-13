@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using D47.Core.Adventures;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Stories;
 
@@ -16,6 +17,9 @@ public sealed record StorySlotFiles(string Stories, string Adventures, string Ch
         Path.Combine(folder, "adventures.json"),
         Path.Combine(folder, "story-chapters.jsonl"));
 }
+
+/// <summary>One slot as the bench page lists it; <see cref="Title"/> is null when the slot has no current story.</summary>
+public sealed record BenchSlotSummary(string Name, bool Active, string? Title, string? Length, int CluesGiven, int Clues);
 
 /// <summary>
 /// A maintainer's slots for testing stories, each holding its own story state, switched live. My story is the files in
@@ -204,6 +208,31 @@ public sealed partial class StoryBench
         _logger.LogInformation("Switched the story bench to {Slot}", slot ?? MyStory);
         Switched?.Invoke();
         return null;
+    }
+
+    /// <summary>My story and then each bench slot, with the current story <paramref name="frontierId"/> has in it.</summary>
+    public IReadOnlyList<BenchSlotSummary> Summaries(string? frontierId)
+    {
+        var state = _state;
+        var summaries = new List<BenchSlotSummary> { Summarise(MyStory, state.Active is null, _data, frontierId) };
+
+        foreach (var slot in state.Slots)
+        {
+            summaries.Add(Summarise(slot, string.Equals(slot, state.Active, StringComparison.Ordinal), SlotFolder(_data, slot), frontierId));
+        }
+
+        return summaries;
+    }
+
+    private BenchSlotSummary Summarise(string name, bool active, string folder, string? frontierId)
+    {
+        var story = active
+            ? _stories.Current(frontierId)
+            : StoryStore.Open(StorySlotFiles.In(folder).Stories, _files, NullLogger<StoryStore>.Instance).Current(frontierId);
+
+        return story is null
+            ? new BenchSlotSummary(name, active, null, null, 0, 0)
+            : new BenchSlotSummary(name, active, story.Title, story.Pacing.Name, story.CluesGiven, story.Pacing.ClueDays.Count);
     }
 
     private static string SlotFolder(string data, string name) => Path.Combine(data, Folder, name);

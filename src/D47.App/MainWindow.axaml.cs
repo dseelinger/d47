@@ -221,7 +221,8 @@ public partial class MainWindow : Window
                             ?? Task.CompletedTask),
                     host.StoryRatings,
                     commanderSwitched,
-                    host.Narration.Recap);
+                    host.Narration.Recap,
+                    host.StoryBench);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);
