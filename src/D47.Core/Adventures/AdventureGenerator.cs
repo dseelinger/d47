@@ -355,7 +355,7 @@ public sealed class AdventureGenerator(
             }
         }
 
-        resolved = KeepNarratorAsItself(NarrateSelfNaming(resolved, ask));
+        resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
 
         if (resolved.Refusals.Count > 0)
         {
@@ -434,10 +434,51 @@ public sealed class AdventureGenerator(
                 + "the narrator tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", never speaks to the Commander, "
                 + "and never offers, asks or waits for anything. Rewrite it as narration.");
 
-        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson] };
+        var unplayed = UnplayedRecordings(spoken, story)
+            .Select(where => $"{Unplayed}{where} says a recording, call or message is played or heard, and nobody in it says that person's words. "
+                + "Give the person's words a line of their own, given to them, in the same place, or leave the recording out.");
+
+        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson, .. unplayed] };
     }
 
     private const string NarratorAsItself = "The narrator speaks as itself: ";
+
+    private const string Unplayed = "A recording is mentioned and not played: ";
+
+    private static readonly Regex Sentences = new(@"[^.!?]+", RegexOptions.CultureInvariant);
+
+    private static readonly Regex Playing = new(
+        @"\b(?:play|plays|played|playing|replay|replays|replayed|replaying|hear|hears|heard|hearing|listen|listens|listened|listening)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static readonly Regex Recorded = new(
+        @"\b(?:recordings?|messages?|calls?|voices?|tapes?|logs?)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>Whether one sentence of the text says a recording, call or message is played or heard.</summary>
+    private static bool PlaysARecording(string? text) =>
+        !string.IsNullOrEmpty(text)
+        && Sentences.Matches(text).Any(sentence => Playing.IsMatch(sentence.Value) && Recorded.IsMatch(sentence.Value));
+
+    /// <summary>The opening and the beats where a line not given to the cast plays a recording and no cast member speaks.</summary>
+    private static IEnumerable<string> UnplayedRecordings(Resolved spoken, AdventureStory story)
+    {
+        var cast = (story.Cast ?? []).Select(member => member.Id).ToHashSet(StringComparer.Ordinal);
+
+        if (cast.Count == 0)
+        {
+            yield break;
+        }
+
+        foreach (var (lines, index) in Said(spoken))
+        {
+            if (!lines.Any(line => line.Speaker is { } speaker && cast.Contains(speaker))
+                && lines.Any(line => PlaysARecording(line.Text)))
+            {
+                yield return index < 0 ? "The opening" : $"Objective {index + 1}";
+            }
+        }
+    }
 
     private static readonly Regex Words = new(@"[A-Za-z]+(?:['’][A-Za-z]+)*", RegexOptions.CultureInvariant);
 
@@ -480,9 +521,16 @@ public sealed class AdventureGenerator(
     /// <summary>"the opening" or "objective N", for a refusal.</summary>
     private static string Where(int index) => index < 0 ? "the opening" : $"objective {index + 1}";
 
-    /// <summary>Drops the narrator first-person refusals, so a line that is still in the first person after the rewrite stands.</summary>
-    private static Resolved KeepNarratorAsItself(Resolved resolved) =>
-        resolved with { Refusals = [.. resolved.Refusals.Where(refusal => !refusal.StartsWith(NarratorAsItself, StringComparison.Ordinal))] };
+    /// <summary>Drops the narrator first-person and unplayed-recording refusals, so a line still refused after the rewrite stands.</summary>
+    private static Resolved KeepWhatTheRewriteKept(Resolved resolved) =>
+        resolved with
+        {
+            Refusals =
+            [
+                .. resolved.Refusals.Where(refusal =>
+                    !refusal.StartsWith(NarratorAsItself, StringComparison.Ordinal) && !refusal.StartsWith(Unplayed, StringComparison.Ordinal)),
+            ],
+        };
 
     private const string SelfNamed = "A line names its own speaker: ";
 
@@ -1168,6 +1216,8 @@ public sealed class AdventureGenerator(
             + "is given to \"narrator\". When the Commander hears a cast member — a recording plays, a call comes in, a message is read out — "
             + "that person's words are a line of their own, given to them; never report what they say in another speaker's line "
             + "(\"a woman's voice reads out coordinates and gives her name\"). "
+            + "A line that says a recording, call or message is played or heard has that person's words beside it, in the same "
+            + "place, as their own line; never say one was played, or played before the story began, without them. "
             + "The opening and each objective have one to three lines, spoken in the order given. Most have one; give a second "
             + "or third only where a cast member speaks and the scene also needs narrating.");
 

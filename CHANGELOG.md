@@ -12,6 +12,8 @@ When a story chapter's draft cannot be used, d47 now writes it again, up to thre
 
 A story chapter's opening can now have up to three lines, each with its own speaker, the same as an objective. When the opening has you hear a cast member, such as a recording that plays every time the drive starts, that person says the words in their own voice and the narrator describes the scene. Before, the opening had one line, so the narrator had to report what the recording said. A cast member may now say their own name when introducing themselves ("This is Ines Harrow"). Any other line in which a cast member names themselves is still given to the narrator. Chapters already written keep their openings.
 
+A story chapter no longer says a recording, call or message was played without playing it. When a line says you hear one, the person's own words are now spoken beside it, in their voice. Before, the narrator could say "The first recording has been played twice" and the recording was never heard.
+
 A story chapter no longer sends you to a permit-locked system, such as HIP 97950, when you are already in it. You may leave and not hold the permit to return, so a chapter written while you are there now picks a place without one.
 
 With Elite closed, a story started for a Commander other than the one you last played now speaks its opening. Before, d47 treated that Commander as off duty because the last journal named someone else, so the opening was dropped and the story card showed "Composing" until d47 was restarted. While Elite is running as another Commander, a story chapter's opening is still said as soon as the chapter is written. Other callouts and story lines are not said, and a line dropped then no longer leaves "Composing" on the card.
