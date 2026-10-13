@@ -165,6 +165,9 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>True when <see cref="Refusal"/> is written for the model and the log, not the Commander.</summary>
     public bool Internal { get; init; }
 
+    /// <summary>True when no answer came back to read, so <see cref="Refusal"/> says nothing about a draft.</summary>
+    public bool Unanswered { get; init; }
+
     /// <summary>What the Commander is shown and told; the detail stays in <see cref="Refusal"/>.</summary>
     public string? Message => Refusal is null ? null : Internal ? NotWritten : Refusal;
 
@@ -251,7 +254,7 @@ public sealed class AdventureGenerator(
 
         if (spineJson is null)
         {
-            return Failed(null, "The model did not write a story.", notes);
+            return Failed(null, "The model did not write a story.", notes) with { Unanswered = true };
         }
 
         var spine = ReadSpine(spineJson, out var name);
@@ -320,7 +323,7 @@ public sealed class AdventureGenerator(
     {
         if (beatsJson is null)
         {
-            return Failed(null, "The model did not write the objectives.", notes);
+            return Failed(null, "The model did not write the objectives.", notes) with { Unanswered = true };
         }
 
         var read = ReadBeats(beatsJson);

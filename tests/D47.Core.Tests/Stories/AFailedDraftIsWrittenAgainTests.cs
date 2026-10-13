@@ -70,11 +70,25 @@ public sealed class AFailedDraftIsWrittenAgainTests
     {
         Assert.Equal(
             "The first draft of the chapter could not be used, so I am writing another. "
-            + "The new draft is told what was wrong with the last one, so it can avoid the same mistake.",
+            + "The new draft is told what was wrong with the one before, so it can avoid the same mistake.",
             StoryDirector.WritingAgainLine(2, told: true));
         Assert.Equal(
-            "The second draft could not be used either, so I am writing a last one. "
-            + "The last attempt failed before a draft came back, and a fault like that does not usually repeat.",
+            "The second draft could not be used either, so I am writing a final one. "
+            + "No draft came back that time, and a fault like that does not usually repeat.",
             StoryDirector.WritingAgainLine(3, told: false));
+    }
+
+    [Fact]
+    public async Task ADraftThatNeverCameBackIsNotPassedOnAsAMistake()
+    {
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying("No JSON here."),
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        Assert.Equal([StoryDirector.WritingAgainLine(2, told: false)], fixtures.WritingAgain);
+        Assert.Null(fixtures.Asks[1].LastDraftRefused);
     }
 }

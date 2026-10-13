@@ -1255,11 +1255,11 @@ public sealed class StoryDirector(
         var failed = Ordinals[Math.Clamp(draft - 2, 0, Ordinals.Length - 1)];
         var opening = draft == 2
             ? $"The {failed} draft of the chapter could not be used, so I am writing another."
-            : $"The {failed} draft could not be used either, so I am writing {(draft == Drafts ? "a last one" : "another")}.";
+            : $"The {failed} draft could not be used either, so I am writing {(draft == Drafts ? "a final one" : "another")}.";
 
         return opening + (told
-            ? " The new draft is told what was wrong with the last one, so it can avoid the same mistake."
-            : " The last attempt failed before a draft came back, and a fault like that does not usually repeat.");
+            ? " The new draft is told what was wrong with the one before, so it can avoid the same mistake."
+            : " No draft came back that time, and a fault like that does not usually repeat.");
     }
 
     /// <summary>One draft's result: the refusal or null, whether another draft may succeed, and what to tell it.</summary>
@@ -1328,7 +1328,7 @@ public sealed class StoryDirector(
         if (outcome.Draft is not { } draft)
         {
             return outcome.Internal
-                ? new(outcome.Message, Retry: true, Detail: outcome.Refusal)
+                ? new(outcome.Message, Retry: true, Detail: outcome.Unanswered ? null : outcome.Refusal)
                 : new(outcome.Message ?? "Nothing came back.");
         }
 

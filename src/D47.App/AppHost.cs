@@ -3727,8 +3727,21 @@ public sealed class AppHost : IDisposable
             // A change of Commander changes whose story holds the cores.
             host.ReadmitIfTheHoldChanged();
 
-            // A finished chapter's successor is written on the pool; the tick only starts it.
-            _ = storyDirector.Tick(commander, context.Now);
+            // A finished chapter's successor is written on the pool; the tick only starts it. A refusal is said.
+            if (storyDirector.Tick(commander, context.Now) is { } writing)
+            {
+                _ = writing.ContinueWith(
+                    written =>
+                    {
+                        if (written.Result is { } refusal)
+                        {
+                            host.Announcer.SayAside(refusal);
+                        }
+                    },
+                    CancellationToken.None,
+                    TaskContinuationOptions.OnlyOnRanToCompletion,
+                    TaskScheduler.Default);
+            }
             host.Narration.PostEndingIfDue(commander);
         });
 
