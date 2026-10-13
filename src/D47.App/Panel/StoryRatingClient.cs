@@ -19,6 +19,7 @@ public sealed class StoryRatingClient
 
     private readonly StoryStore _stories;
     private readonly Func<bool> _allowed;
+    private readonly Func<bool> _onBench;
     private readonly ILogger _logger;
     private readonly HttpClient _http;
     private readonly string _address;
@@ -27,10 +28,18 @@ public sealed class StoryRatingClient
     private int _averagesAsked;
 
     /// <param name="allowed">Read at each request, so turning the setting off stops the next one.</param>
-    public StoryRatingClient(StoryStore stories, Func<bool> allowed, ILogger logger, HttpMessageHandler? handler = null, string address = StoryRatingSettings.Address)
+    /// <param name="onBench">Whether a story bench slot is active; read at each request, and while it is true nothing is sent and no voter token is minted.</param>
+    public StoryRatingClient(
+        StoryStore stories,
+        Func<bool> allowed,
+        ILogger logger,
+        HttpMessageHandler? handler = null,
+        string address = StoryRatingSettings.Address,
+        Func<bool>? onBench = null)
     {
         _stories = stories;
         _allowed = allowed;
+        _onBench = onBench ?? (() => false);
         _logger = logger;
         _address = address.TrimEnd('/');
         _http = handler is null ? new HttpClient() : new HttpClient(handler);
@@ -54,7 +63,7 @@ public sealed class StoryRatingClient
     /// </summary>
     public Task<string?> Open()
     {
-        if (!_allowed())
+        if (!_allowed() || _onBench())
         {
             return Task.FromResult<string?>(null);
         }
@@ -86,7 +95,7 @@ public sealed class StoryRatingClient
 
     private Task<bool> Cast(string? commander, string id, int? stars)
     {
-        if (!_allowed() || _stories.Find(commander, id) is null)
+        if (!_allowed() || _onBench() || _stories.Find(commander, id) is null)
         {
             return Task.FromResult(false);
         }
@@ -118,7 +127,7 @@ public sealed class StoryRatingClient
 
         try
         {
-            if (!_allowed())
+            if (!_allowed() || _onBench())
             {
                 return false;
             }

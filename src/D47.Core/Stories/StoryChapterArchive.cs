@@ -38,7 +38,7 @@ public sealed class StoryChapterArchive
     };
 
     private readonly IFileSystem? _files;
-    private readonly string? _path;
+    private string? _path;
     private readonly ILogger? _logger;
     private readonly Lock _gate = new();
     private readonly List<ArchivedChapter> _chapters;
@@ -61,6 +61,32 @@ public sealed class StoryChapterArchive
 
     public static StoryChapterArchive Open(IFileSystem files, string path, ILogger<StoryChapterArchive> logger) =>
         new(files, path, logger, Read(files, path, logger), EndsMidLine(files, path));
+
+    /// <summary>Raised after <see cref="Reopen"/> has read another file.</summary>
+    public event Action? Changed;
+
+    /// <summary>Reads <paramref name="path"/> in place of the file it held, appends there from now on, and raises <see cref="Changed"/>.</summary>
+    public void Reopen(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        if (_files is null || _logger is null)
+        {
+            throw new InvalidOperationException("An archive held in memory has no file to reopen.");
+        }
+
+        lock (_gate)
+        {
+            var chapters = Read(_files, path, _logger);
+
+            _chapters.Clear();
+            _chapters.AddRange(chapters);
+            _danglingLine = EndsMidLine(_files, path);
+            _path = path;
+        }
+
+        Changed?.Invoke();
+    }
 
     /// <summary>This Commander's archived chapters, oldest first.</summary>
     public IReadOnlyList<ArchivedChapter> For(string? frontierId)

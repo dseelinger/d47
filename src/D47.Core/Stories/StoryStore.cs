@@ -4,6 +4,7 @@ using D47.Core.Adventures;
 using D47.Core.Diagnostics.Donation;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Stories;
 
@@ -20,7 +21,7 @@ public sealed class StoryStore
         AllowTrailingCommas = true,
     };
 
-    private readonly string? _path;
+    private string? _path;
     private readonly ILogger? _logger;
     private readonly Lock _gate = new();
 
@@ -56,6 +57,26 @@ public sealed class StoryStore
     }
 
     public event Action? Changed;
+
+    /// <summary>Reads <paramref name="path"/> in place of the file it held, writes there from now on, and raises <see cref="Changed"/>.</summary>
+    public void Reopen(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        lock (_writeGate)
+        {
+            var (byCommander, voters) = Read(path, _files, _logger ?? NullLogger.Instance);
+
+            lock (_gate)
+            {
+                _path = path;
+                _byCommander = byCommander;
+                _voters = voters;
+            }
+        }
+
+        Changed?.Invoke();
+    }
 
     /// <summary>This Commander's stories, in the order they were first picked.</summary>
     public IReadOnlyList<Story> For(string? frontierId)

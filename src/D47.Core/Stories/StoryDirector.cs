@@ -47,6 +47,9 @@ public sealed class StoryDirector(
     /// <summary>Openings picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryOpeningDue> _openings = new(StringComparer.Ordinal);
 
+    /// <summary>Whether the story files are being swapped; the tick and journal events are skipped and every write is refused.</summary>
+    private bool _switching;
+
     private JournalLocation _where = JournalLocation.Unknown;
 
     private bool? _odyssey;
@@ -56,6 +59,9 @@ public sealed class StoryDirector(
         "Stories need Elite Dangerous: Odyssey. Most chapters use it: on-foot missions, settlements, exobiology and suits. "
         + "Your last session ran without it, so stories are off. Odyssey is a low-cost expansion from the Frontier Store, "
         + "Steam or Epic, and stories start working at the next session after it is installed.";
+
+    /// <summary>Why no chapter is written while the story files are swapped.</summary>
+    public const string Swapping = "The story files are being swapped. Try again in a moment.";
 
     /// <summary>Why a story with a member in two versions cannot be picked yet.</summary>
     public const string NeedsGender = "Choose whether your Commander is a man or a woman first. This story has a character written for each.";
@@ -272,6 +278,49 @@ public sealed class StoryDirector(
         }
 
         return stories.Current(frontierId) is { IsWithoutOdyssey: true };
+    }
+
+    /// <summary>
+    /// While the story files are swapped, skips the tick and journal events and refuses every chapter or beat write.
+    /// False, and nothing held, while a chapter or a beat is being written for any Commander or another swap holds it.
+    /// </summary>
+    public bool HoldForSwitch()
+    {
+        lock (_gate)
+        {
+            if (_switching || _writing.Count > 0 || _rewriting.Count > 0 || _rewritingAdventures.Count > 0)
+            {
+                return false;
+            }
+
+            _switching = true;
+            return true;
+        }
+    }
+
+    /// <summary>Forgets the failed writes, narrated scans, openings and standings of the files swapped out, and ends the hold.</summary>
+    public void ReleaseSwitch()
+    {
+        book.WalkAgain();
+
+        lock (_gate)
+        {
+            _failed.Clear();
+            _scans.Clear();
+            _openings.Clear();
+            _switching = false;
+        }
+    }
+
+    private bool Switching
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _switching;
+            }
+        }
     }
 
     /// <summary>Whether the last chapter could not be written and waits for <see cref="WriteNextAsync"/>.</summary>
@@ -566,7 +615,7 @@ public sealed class StoryDirector(
     {
         lock (_gate)
         {
-            return _rewritingAdventures.Add(AdventureClaim(frontierId, key));
+            return !_switching && _rewritingAdventures.Add(AdventureClaim(frontierId, key));
         }
     }
 
@@ -664,7 +713,7 @@ public sealed class StoryDirector(
     {
         lock (_gate)
         {
-            if (!_rewriting.Add(frontierId ?? AdventureStore.NoCommander))
+            if (_switching || !_rewriting.Add(frontierId ?? AdventureStore.NoCommander))
             {
                 return false;
             }
@@ -784,7 +833,7 @@ public sealed class StoryDirector(
     /// </summary>
     public Task<string?>? Tick(string? frontierId, DateTimeOffset now)
     {
-        if (stories.Current(frontierId) is not { } story || story.CurrentChapter is not { } key)
+        if (Switching || stories.Current(frontierId) is not { } story || story.CurrentChapter is not { } key)
         {
             return null;
         }
@@ -846,6 +895,11 @@ public sealed class StoryDirector(
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         _where = _where.Apply(journalEvent);
+
+        if (Switching)
+        {
+            return null;
+        }
 
         bool? odyssey = null;
 
@@ -1339,6 +1393,11 @@ public sealed class StoryDirector(
 
         lock (_gate)
         {
+            if (_switching)
+            {
+                return Swapping;
+            }
+
             if (!_writing.Add(commander))
             {
                 return "A chapter is already being written.";

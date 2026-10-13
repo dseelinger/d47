@@ -27,8 +27,8 @@ internal sealed class RatingsWorker : HttpMessageHandler
 
     public IReadOnlyList<Asked> Requests => [.. _asked];
 
-    public StoryRatingClient Client(StoryStore stories, bool allowed = true) =>
-        new(stories, () => allowed, NullLogger.Instance, this, "https://ratings.test");
+    public StoryRatingClient Client(StoryStore stories, bool allowed = true, bool onBench = false) =>
+        new(stories, () => allowed, NullLogger.Instance, this, "https://ratings.test", () => onBench);
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {

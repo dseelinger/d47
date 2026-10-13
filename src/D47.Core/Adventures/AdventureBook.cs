@@ -210,6 +210,16 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         _stirring.Add(StandingKey(commander, key));
     }
 
+    /// <summary>Owes a fresh walk over the journal files and discards any walk already running, for a store that now reads another file.</summary>
+    public void WalkAgain()
+    {
+        lock (_gate)
+        {
+            _generation++;
+            _needsCatchUp = true;
+        }
+    }
+
     /// <summary>Whether a walk over the journal files is owed — at startup, and after a stamp moved.</summary>
     public bool NeedsCatchUp
     {

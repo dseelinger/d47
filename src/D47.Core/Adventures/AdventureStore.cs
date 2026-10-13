@@ -10,7 +10,7 @@ namespace D47.Core.Adventures;
 public sealed record AdventureProblem(string Where, string Reason);
 
 /// <summary>The adventures on disk — <c>data/adventures.json</c> (Phase 47).</summary>
-public sealed class AdventureStore(string path, IFileSystem files, ILogger<AdventureStore> logger)
+public sealed class AdventureStore(string initialPath, IFileSystem files, ILogger<AdventureStore> logger)
 {
     /// <summary>The key used where the journals never said who was flying.</summary>
     public const string NoCommander = "";
@@ -27,12 +27,25 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
 
     private readonly Lock _gate = new();
 
+    /// <summary>Held across each read and write of the file, so a <see cref="Repoint"/> never interleaves with one.</summary>
+    private readonly Lock _fileGate = new();
+
+    private string _path = initialPath;
     private Dictionary<string, IReadOnlyList<Adventure>> _byCommander = new(StringComparer.Ordinal);
     private IReadOnlyList<AdventureProblem> _problems = [];
     private string? _seen;
     private readonly FileStamp _stamp = new();
 
-    public string Path => path;
+    public string Path
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _path;
+            }
+        }
+    }
 
     public IFileSystem Files => files;
 
@@ -75,6 +88,47 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
 
     public bool Poll()
     {
+        bool changed;
+
+        lock (_fileGate)
+        {
+            changed = Read();
+        }
+
+        if (changed)
+        {
+            Changed?.Invoke();
+        }
+
+        return changed;
+    }
+
+    /// <summary>Reads adventures from <paramref name="path"/> from now on, dropping everything read from the old file, and raises <see cref="Changed"/>.</summary>
+    public void Repoint(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        lock (_fileGate)
+        {
+            lock (_gate)
+            {
+                _path = path;
+                _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
+                _problems = [];
+                _seen = null;
+            }
+
+            _stamp.Record(null);
+            Read();
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Rereads the file when its stamp moved; true when what it holds changed. Called holding <see cref="_fileGate"/>.</summary>
+    private bool Read()
+    {
+        var path = _path;
         var stamp = files.Stat(path);
 
         if (_stamp.Matches(stamp))
@@ -101,7 +155,6 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
                     _stamp.Record(null);
                 }
 
-                Changed?.Invoke();
                 return true;
             }
 
@@ -126,8 +179,7 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
             return false;
         }
 
-        Reload(text);
-        Changed?.Invoke();
+        Reload(path, text);
         return true;
     }
 
@@ -214,44 +266,47 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
 
     private void Write()
     {
-        Document document;
-
-        lock (_gate)
+        lock (_fileGate)
         {
-            document = new Document
-            {
-                Commanders =
-                [
-                    .. _byCommander
-                        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                        .Where(pair => pair.Value.Count > 0)
-                        .Select(pair => new CommanderRecord
-                        {
-                            FrontierId = pair.Key,
-                            Adventures = [.. pair.Value.Select(ToRecord)],
-                        }),
-                ],
-            };
-        }
-
-        var text = JsonSerializer.Serialize(document, Json);
-
-        try
-        {
-            files.WriteText(path, text);
+            Document document;
 
             lock (_gate)
             {
-                _seen = text;
+                document = new Document
+                {
+                    Commanders =
+                    [
+                        .. _byCommander
+                            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                            .Where(pair => pair.Value.Count > 0)
+                            .Select(pair => new CommanderRecord
+                            {
+                                FrontierId = pair.Key,
+                                Adventures = [.. pair.Value.Select(ToRecord)],
+                            }),
+                    ],
+                };
             }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not write {Path}", path);
+
+            var text = JsonSerializer.Serialize(document, Json);
+
+            try
+            {
+                files.WriteText(_path, text);
+
+                lock (_gate)
+                {
+                    _seen = text;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
+            {
+                logger.LogWarning(ex, "Could not write {Path}", _path);
+            }
         }
     }
 
-    private void Reload(string text)
+    private void Reload(string path, string text)
     {
         var loaded = new Dictionary<string, IReadOnlyList<Adventure>>(StringComparer.Ordinal);
         var problems = new List<AdventureProblem>();
