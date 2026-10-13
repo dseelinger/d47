@@ -49,13 +49,16 @@ public sealed class PictureChooser : StackPanel
             try
             {
                 using var bytes = new MemoryStream(pictures.Files.ReadBytes(file) ?? throw new FileNotFoundException("The picture is gone.", file));
-                holder.Children.Add(new Image
+                var image = new Image
                 {
                     Source = new Bitmap(bytes),
                     MaxWidth = _size,
                     Stretch = Stretch.Uniform,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                });
+                };
+
+                SpeakerPictureViewer.Enlarges(image, pictures, picture);
+                holder.Children.Add(image);
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {

@@ -2979,6 +2979,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         row.MaxWidth = PicturedWidth();
 
+        SpeakerPictureViewer.Enlarges(picture, _portraits.Pictures, turn.Picture);
+
         return new PicturedTurn
         {
             Row = row,

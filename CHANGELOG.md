@@ -869,6 +869,8 @@ Stories and adventures now call each step the Commander flies to an objective, n
 
 When a generated story or adventure sends you to arrive in a system, dock, land or scan, it now says why, in one sentence after where to go: "Next: dock at Sellings Holdings in HIP 97950. A comms specialist there reads signals like the burst." Asked why you are going there, d47 answers from that sentence rather than saying it has no reason. The person a reason names is someone you hear about, not someone you meet. Objectives written before this change have no reason and are said as before.
 
+Click any speaker picture to see it full size over the window. This works on the Transcript's turns and on the pictures in the Story log, the Stories cast list, the Crew page and Standing, in the main window and on the headset big panel. **Close** or Escape puts it away; on the headset **Close** is the way out. A picture is never drawn larger than its own size and is shrunk to fit a small window.
+
 ## 1.26.0 — Adventures run in chapters
 
 A finished adventure has a **Write the next chapter** button on its page in the Adventures tab. It

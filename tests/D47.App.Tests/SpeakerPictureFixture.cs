@@ -33,12 +33,12 @@ internal sealed class SpeakerPictureFixture
     public PanelViewModel Model { get; } = new();
 
     /// <summary>Writes a shipped portrait, <c>portraits\&lt;picture&gt;.jpg</c>.</summary>
-    public void Ship(string picture, Color colour) =>
-        Files.WriteBytes(Path.Combine(Paths.ShippedPortraits, picture + ".jpg"), Encoded(colour, jpeg: true));
+    public void Ship(string picture, Color colour, int size = 64) =>
+        Files.WriteBytes(Path.Combine(Paths.ShippedPortraits, picture + ".jpg"), Encoded(colour, jpeg: true, size));
 
     /// <summary>Writes the Commander's own file, <c>data\pictures\&lt;picture&gt;.png</c>.</summary>
     public void Choose(string picture, Color colour) =>
-        Files.WriteBytes(Path.Combine(Paths.Pictures, picture + ".png"), Encoded(colour, jpeg: false));
+        Files.WriteBytes(Path.Combine(Paths.Pictures, picture + ".png"), Encoded(colour, jpeg: false, 64));
 
     public (Window Window, PanelView Panel) Open(double width = 900, double height = 700)
     {
@@ -60,10 +60,8 @@ internal sealed class SpeakerPictureFixture
     public static IReadOnlyList<Image> Pictures(PanelView panel) =>
         [.. panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<Image>().Where(image => image.Name == "SpeakerPicture")];
 
-    private static byte[] Encoded(Color colour, bool jpeg)
+    private static byte[] Encoded(Color colour, bool jpeg, int size)
     {
-        const int size = 64;
-
         using var bitmap = new WriteableBitmap(new PixelSize(size, size), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Premul);
 
         using (var buffer = bitmap.Lock())
