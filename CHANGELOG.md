@@ -10,6 +10,8 @@
 
 A story chapter no longer sends you to a permit-locked system, such as HIP 97950, when you are already in it. You may leave and not hold the permit to return, so a chapter written while you are there now picks a place without one.
 
+With Elite closed, a story started for a Commander other than the one you last played now speaks its opening. Before, d47 treated that Commander as off duty because the last journal named someone else, so the opening was dropped and the story card showed "Composing" until d47 was restarted. While Elite is running as another Commander, story lines and callouts are still not said, and a line dropped then no longer leaves "Composing" on the card.
+
 A story chapter no longer fails when it asks you to board one of your own ships by the name you gave it. The objective now waits for that ship's hull type, such as an Anaconda. Before, the chapter was refused with "The chapter could not be written", and writing it again failed the same way.
 
 A system search with no filters now runs and returns the nearest systems, instead of being refused. Press a column header on it to rank the whole galaxy, such as the most populous systems.

@@ -70,6 +70,23 @@ public class AdventureTellingTests
         Assert.Empty(book.Store.Find("F1", "the-lantern-route")!.Told);
     }
 
+    /// <summary>A beat that is never said because the callouts are priming stops its wait.</summary>
+    [Fact]
+    public void ABeatDroppedWhilePrimingStopsTheWait()
+    {
+        var book = Wired();
+        var callout = new AdventureCallout(book);
+
+        book.Observe(Jump(Lantern, Accepted.AddMinutes(1)), "F1");
+        Assert.True(book.IsStirring("F1", "the-lantern-route"));
+
+        var context = new D47.Core.Callouts.CalloutContext(
+            Accepted.AddMinutes(1), IsPriming: true, null, D47.Core.Journal.GameStatus.Unknown, new D47.Core.Journal.NavRoute(), []);
+
+        Assert.Empty(callout.Examine(context).ToList());
+        Assert.False(book.IsStirring("F1", "the-lantern-route"));
+    }
+
     /// <summary>Abandoning a story stops its wait, exactly as it drops the beat that was settling.</summary>
     [Fact]
     public void AbandoningStopsTheWait()

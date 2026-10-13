@@ -3743,7 +3743,9 @@ public sealed class AppHost : IDisposable
             if (context.Now - eliteCheckedAt >= TimeSpan.FromSeconds(2))
             {
                 eliteCheckedAt = context.Now;
-                host.Music.GameRunning(host.Elite.IsRunning);
+                var running = host.Elite.IsRunning;
+                gameState.GameRunning(running);
+                host.Music.GameRunning(running);
             }
 
             host.Music.Follow(status.Current, feed.EliteMusic.Track);

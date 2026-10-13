@@ -23,7 +23,7 @@ public readonly record struct CalloutContext(
     IReadOnlyList<JournalEvent> Events,
     ChatterSaid? LastChatter = null)
 {
-    /// <summary>The journal tick's context for the shown Commander, silent as priming is while off duty.</summary>
+    /// <summary>The journal tick's context for the shown Commander, silent as priming is while another flies.</summary>
     public static CalloutContext For(
         DateTimeOffset now,
         bool isFirst,
@@ -34,7 +34,7 @@ public readonly record struct CalloutContext(
     {
         ArgumentNullException.ThrowIfNull(commanders);
 
-        return new(now, IsPriming: isFirst || commanders.IsOffDuty, commanders.Active, status, route, events);
+        return new(now, IsPriming: isFirst || commanders.IsAnotherFlying, commanders.Active, status, route, events);
     }
 }
 

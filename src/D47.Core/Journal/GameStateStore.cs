@@ -42,6 +42,12 @@ public sealed class GameStateStore
 
     private bool _picked;
 
+    /// <summary>The journal's last word was a <c>Shutdown</c>.</summary>
+    private bool _shutDown;
+
+    /// <summary>The Elite process was running when last checked; assumed until <see cref="GameRunning"/> says otherwise.</summary>
+    private bool _running = true;
+
     /// <summary>
     /// The Commander d47 shows, or null before any identity has been seen. Follows the journal until
     /// the first <see cref="Pick"/>, and only a later pick changes it after that.
@@ -60,6 +66,15 @@ public sealed class GameStateStore
     /// </summary>
     public bool IsOffDuty =>
         _activeFrontierId is not null && !string.Equals(_activeFrontierId, _inGameFrontierId, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Off duty with Elite open. With Elite closed nobody is flying, so the shown Commander is spoken to; the
+    /// game's live files still belong to <see cref="InGame"/>.
+    /// </summary>
+    public bool IsAnotherFlying => IsOffDuty && _running && !_shutDown;
+
+    /// <summary>Records whether the Elite process is running, which a crash leaves no <c>Shutdown</c> to say.</summary>
+    public void GameRunning(bool running) => _running = running;
 
     public IReadOnlyCollection<CommanderGameState> All => _byFrontierId.Values;
 
@@ -290,6 +305,7 @@ public sealed class GameStateStore
             var state = Admit(identity);
 
             _inGameFrontierId = identity.FrontierId;
+            _shutDown = false;
 
             if (!_picked)
             {
@@ -304,6 +320,11 @@ public sealed class GameStateStore
             }
 
             return state.Apply(journalEvent, at);
+        }
+
+        if (journalEvent.Kind == "Shutdown")
+        {
+            _shutDown = true;
         }
 
         // Every other event belongs to whoever is in the game, never to a picked Commander.

@@ -178,9 +178,14 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
         var reached = book.Drain();
 
         // Priming folds the backlog into the standings and announces none of it — a beat that fired two hours
-        // ago is in the past, and the context block already says so.
+        // ago is in the past, and the context block already says so. Each dropped beat stops its wait.
         if (context.IsPriming)
         {
+            foreach (var moment in reached)
+            {
+                book.Quiet(moment.FrontierId, moment.Adventure.Key);
+            }
+
             yield break;
         }
 
