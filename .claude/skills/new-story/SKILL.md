@@ -1,16 +1,18 @@
 ---
 name: new-story
-description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers — on a draft page of its own, revise it until he approves, then publish it to the stories release. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
+description: Develop one d47 stock story with the maintainer — a pitch of premise, secret and twist to accept or reject, then both layers — on a draft page of its own, revise it until he approves, then publish it to the stories release; or, for surprise stories he does not read, encoded premises reviewed by other AIs and then written and published unseen. Use when the user invokes /new-story, /new-story <premise or title>, or says "new story", "write a stock story", "let's work on the next story", "continue the story".
 ---
 
 # New story
 
 You develop one stock story with the maintainer, from premise to a story published to the stories release.
 He reads both layers, the card and the hidden layer, before anything ships. Nothing is hidden from
-him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight.
+him; the sealing keeps the hidden layer out of the tree's plain text, not out of his sight. A
+surprise story (Surprise stories, below) is the exception: he asked not to read it.
 
 `/new-story <anything>` has named the work, so start on it in that same turn: a pitch (below),
-built from whatever the argument fixes. A bare `/new-story` looks for draft pages first (below): if
+built from whatever the argument fixes. `/new-story` with a surprise id such as `N-3D-A`, or with
+"surprise" or "premises", is surprise work (below). A bare `/new-story` looks for draft pages first (below): if
 there are any, ask whether to continue one or start another; if there are none, pitch one.
 
 ## Turn the voice on first
@@ -127,7 +129,9 @@ The pitch gives:
   them, with the clues that support it on a second reading;
 - the three closest published stories, named from the `index.json` blurbs and tones, with one line
   each on what this story does differently. A pitch that differs from one of them only in setting or
-  cast is pitched again;
+  cast is pitched again. Never name a surprise story here (Surprise stories, below): decode the
+  final packet from the packet page to learn which published titles are surprise ones, and leave
+  them out;
 - a title not already used.
 
 Check the pitch against all twelve rules before showing it. The pitch fixes the premise, secret and
@@ -266,6 +270,74 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
 
 Publishing changes nothing in the checkout. A story that seems to need a code change is a gap:
 record it on the draft page and name the issue (step 3).
+
+## Surprise stories
+
+The maintainer can ask for stories he does not read: premises written without being shown to him,
+reviewed by ChatGPT, Gemini and Grok, then written and published unseen. The rest of this skill
+applies except where this section says otherwise.
+
+### Keep them from him
+
+- No premise, title, name, secret, twist, cast picture or image prompt appears in chat, in a
+  `/claude-voice` sentence, in a report, on an artifact or in the repository. A story is named
+  only by its id: level letter (`N`, `M`, `E`), length (`3D`, `1W`, `2W`, `1M`, `3M`, `6M`, `1Y`)
+  and slot (`A`, `B`), as in `N-3D-A`.
+- Plain text exists only in the scratchpad and in the inputs and outputs of tool calls. Tell him
+  once per session, in one line, that those calls hold it.
+- A report gives ids, counts, verdicts, scores, rule numbers and issue numbers, nothing more.
+
+### The premise rounds
+
+1. Write the premises in this session, as JSON lists in `<scratchpad>/premises/`, against the
+   twelve rules and the catalog counts the pitch uses. Spread genres and cores across the batch, mix
+   the two twist kinds, and keep the two premises in a slot apart in genre and core. Each premise
+   has `id`, `level`, `length`, `genre`, `core`, `romance`, `title`, `tone`, `beacon`, `situation`,
+   `fills`, `stakes`, `hook`, `secret`, `twist`, `twistKind`, `guesses` (the three of rule 11) and
+   `places`. ASCII only.
+2. Encode the round:
+
+   ```bash
+   python .claude/skills/new-story/premise-packet.py encode <scratchpad>/premises --round N --out <scratchpad>/d47-premises-roundN.txt
+   ```
+
+   From round 2, pass `--changes` (a JSON object of id to what changed and why) and `--settled`
+   (a JSON list of ids).
+3. Publish the packet page: an artifact whose publish `description` starts `d47 surprise premises`,
+   holding the steps for the maintainer, `reviewer-prompt.md` with a copy button, and the packet
+   with copy and save buttons. It holds base64 and the prompt only. Republish it each round; it is
+   where a later session reads the packet from. Send the packet file with `SendUserFile` too, so he
+   can attach it.
+4. He gives the prompt and the packet to each reviewer and brings back the replies. Save each to
+   the scratchpad and tally them:
+
+   ```bash
+   python .claude/skills/new-story/premise-packet.py tally <reply>... --round N --out <scratchpad>/reviews-roundN.json
+   ```
+
+   A reply that does not decode is reported by reviewer name, and he asks that reviewer again.
+5. Read the decoded reviews, revise or replace the premises, and encode the next round.
+
+A premise is settled when at least two of the three say `keep` and none says `replace`. The rounds
+end when every premise is settled, or after round 4. The last packet is then final, and the packet
+page says so. Premises still unsettled after round 4 are revised once more on the reviewers' notes
+and go into the final packet.
+
+### Writing one
+
+`/new-story <id>` writes that premise's story:
+
+- Read the packet page and decode the final packet. No pitch and no stop for an accept: the
+  reviewers' agreement stands in for it.
+- No draft page. The layers live only in `<scratchpad>/<story-id>/`.
+- Before step 6, check the draft against all twelve rules and every place name, and fix what
+  fails. Nobody else reads it.
+- Before generating the cast pictures, ask one content-free question: the id, the number of
+  pictures, their cost on the OpenAI key, and whether to publish to `stories-1` when done. His yes
+  covers the pictures and the GitHub write. Generate the pictures and look at each one, and show
+  none of them.
+- After publishing, mark the id published on the packet page and delete the scratch files.
+- The report gives the id, published or not, any fault by id and field, and any gap by issue number.
 
 ## Finishing
 
