@@ -183,6 +183,16 @@ def g_semver(d, cx, cy, r, col, lit):
                             radius=r * 0.08, fill=c)
 
 
+def g_release(d, cx, cy, r, col):
+    """Three version fields with minor and patch lit: the session asks which to bump."""
+    step = r * 0.72
+    for i in range(3):
+        x = cx + (i - 1) * step
+        c = col if i else DIM
+        d.rounded_rectangle([x - r * 0.24, cy - r * 0.24, x + r * 0.24, cy + r * 0.24],
+                            radius=r * 0.08, fill=c)
+
+
 def g_gate(d, cx, cy, r, col):
     """A checked box: the suite passed."""
     w = max(2, int(r * 0.15))
@@ -241,6 +251,7 @@ KEYS = {
     'issue':      (g_issue, VIOLET, 'Issue'),
     'review':     (g_magnifier, VIOLET, 'Review'),
     'prerelease': (g_gate, VIOLET, 'Pre-release'),
+    'release':    (g_release, VIOLET, 'Release'),
     'launcher':   (g_phone, VIOLET, 'Launcher'),
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),

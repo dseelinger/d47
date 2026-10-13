@@ -169,13 +169,13 @@ profile with that name and picks the layout by device model. Mobile is the free 
 stored as columns 0-2 and rows 0-1, with its own layout in `MOBILE_PAGE_1`: a plain Opus session,
 Desktop, Push, Pre-release, Patch, Minor.
 
-One page, 13 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
+One page, 15 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
 the app and cuts releases.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
 | **0** | Triage | Coord | Architect | Issue | Review |
-| **1** | Desktop | Push | Wrap up | | |
+| **1** | Desktop | Push | Wrap up | Release | Launcher |
 | **2** | Test drive | Restart | Pre-release | Patch | Minor |
 
 The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
@@ -190,7 +190,9 @@ issue worker commits and does not push, so the working diff is empty by the time
 **Pre-release** sits in the release row but is violet, because it opens a session rather than
 running a script to the end: it runs the suite, fixes what fails and pushes `main`, and Patch or
 Minor comes after it.
-The release keys start at once, with no confirmation prompt, and `release.ps1` follows the run to the end on its
+**Release** is violet in the typing row: it opens a session running `/release`, which asks patch
+or minor, relays the run, and fixes a failing build or test and runs the release again.
+The Patch and Minor keys start at once, with no confirmation prompt, and `release.ps1` follows the run to the end on its
 own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
 `tools\release.ps1 -Major`.
 

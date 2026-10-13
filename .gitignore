@@ -4,6 +4,8 @@ obj/
 [Dd]ebug/
 [Rr]elease/
 publish/
+# The /release skill, which the line above would otherwise catch
+!.claude/skills/release/
 
 # The Debug build's data root — settings, secrets and a 325 MB model, none of it source
 dev-install/data/
