@@ -121,6 +121,9 @@ public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventur
     /// <summary>The wars and elections the Commander took part in for the chapter, and how each ended once seen to.</summary>
     public IReadOnlyList<ConflictPart> Conflicts { get; init; } = [];
 
+    /// <summary>The notable things the Commander did while the chapter ran.</summary>
+    public IReadOnlyList<Notable> Notables { get; init; } = [];
+
     /// <summary>The chain ending at <paramref name="key"/>, walked back through <see cref="Adventure.Follows"/>; null when the key is not on file.</summary>
     public static AdventureChapter? Of(IReadOnlyList<Adventure> adventures, string key)
     {
@@ -1037,6 +1040,7 @@ public sealed class AdventureGenerator(
             }
         }
 
+        AppendNotables(text, chapter);
         AppendStandings(text, chapter, facts.Standings);
 
         text.AppendLine();
@@ -1044,6 +1048,29 @@ public sealed class AdventureGenerator(
             "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
             + "stake is the belief that chapter left open. People, places and things it established may return; "
             + "what it settled stays settled.");
+    }
+
+    /// <summary>What the Commander did while the chapter ran, newest first.</summary>
+    private static void AppendNotables(StringBuilder text, AdventureChapter chapter)
+    {
+        var told = ChapterNotables.Told(chapter.Notables);
+
+        if (told.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("What the Commander did while they flew that chapter, newest first:");
+
+        foreach (var notable in told)
+        {
+            text.Append("- ").AppendLine(notable.Text);
+        }
+
+        text.AppendLine(
+            "Refer to at least one of these where it fits the story, in a line said by a cast member, the narrator or the ship. "
+            + "Do not name anyone who is not in the story.");
     }
 
     /// <summary>How the Commander's conflicts ended, and whether each faction they worked for gained influence between visits.</summary>

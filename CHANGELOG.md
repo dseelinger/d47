@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The next chapter of a stock story or short story now mentions what you did while the last chapter ran. The writer is given up to twelve things from your journal, newest first: a death and its rebuy, an interdiction and whether you submitted, an escape, a promotion, an engineer invited or unlocked, a ship bought, a hull you brought home below a quarter, your largest sale, bounty and exploration data sale, and how many bodies you were first to discover. It is told to refer to at least one in a line from a cast member, the narrator or the ship. It is given no other Commander's name and no pilot name. With nothing notable, the writer is told nothing.
+
 The Adventures page of the docs no longer tells you to say "next" to move a story on, because there is no such command. It now says a story waits for the game, the Narrator nudges after three play sessions and seven days, and a stock story chapter takes "not for me" for a different objective.
 
 Say "where am I up to", "recap the story" or "what's happened in the story so far", or press Story so far, and the Narrator now says where your story stands in two to four sentences: what has happened so far and where it waits now. The button is on your stock story's page on the Stories tab, under "This is your story.", and on the page of a short story under way, in the window and on the VR big panel. The phrases recap your stock story, or with none the short story whose objective fired last. With no story under way, d47 says "No story is under way." The recap names no objective still to come and nothing of the hidden story beyond the clues you have had, and it is said only when you ask. Before, "where am I up to" answered with your location.

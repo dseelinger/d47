@@ -248,13 +248,13 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
-    /// <summary>The chapter ending at <paramref name="key"/> with the conflicts its standing shows the Commander took part in; null when the key is not on file.</summary>
+    /// <summary>The chapter ending at <paramref name="key"/> with the conflicts and notable events its standing shows; null when the key is not on file.</summary>
     public AdventureChapter? ChapterOf(string? frontierId, string key)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
 
         return AdventureChapter.Of(store.For(commander), key) is { } chapter
-            ? chapter with { Conflicts = Standing(frontierId, key)?.Parts ?? [] }
+            ? chapter with { Conflicts = Standing(frontierId, key)?.Parts ?? [], Notables = Standing(frontierId, key)?.Notables ?? [] }
             : null;
     }
 

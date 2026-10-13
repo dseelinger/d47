@@ -37,6 +37,9 @@ public sealed record AdventureStanding
     /// <summary>The conflicts the Commander contributed to for a conflict beat, with how each ended once an arrival showed it had.</summary>
     public IReadOnlyList<ConflictPart> Parts { get; init; } = [];
 
+    /// <summary>The notable things the journal shows the Commander did after acceptance, oldest first.</summary>
+    public IReadOnlyList<Notable> Notables { get; init; } = [];
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
@@ -470,6 +473,13 @@ public static class AdventureFold
         if (adventure.AbandonedAt is { } abandoned && journalEvent.Timestamp >= abandoned)
         {
             return standing;
+        }
+
+        var notables = ChapterNotables.Fold(standing.Notables, journalEvent);
+
+        if (!ReferenceEquals(notables, standing.Notables))
+        {
+            standing = standing with { Notables = notables };
         }
 
         if (journalEvent.Kind is "LoadGame")
