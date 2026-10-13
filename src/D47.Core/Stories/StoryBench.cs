@@ -54,6 +54,7 @@ public sealed partial class StoryBench
     /// <summary>Held across a change of the slots; <see cref="_state"/> is read without it.</summary>
     private readonly Lock _gate = new();
     private volatile State _state;
+    private StoryDirector? _director;
 
     public StoryBench(
         string data, IFileSystem files, StoryStore stories, AdventureStore adventures, StoryChapterArchive archive, ILogger<StoryBench> logger)
@@ -65,10 +66,28 @@ public sealed partial class StoryBench
         _archive = archive;
         _logger = logger;
         _state = Load(data, files);
+        _stories.Changed += Evaluate;
     }
 
     /// <summary>Holds off the director's tick and writes during a switch, and forgets what it held of the old slot.</summary>
-    public StoryDirector? Director { get; set; }
+    public StoryDirector? Director
+    {
+        get => _director;
+        set
+        {
+            if (_director is not null)
+            {
+                _director.WritingChanged -= Evaluate;
+            }
+
+            _director = value;
+
+            if (value is not null)
+            {
+                value.WritingChanged += Evaluate;
+            }
+        }
+    }
 
     /// <summary>Stores the Backstory setting.</summary>
     public Action<string> SetBackstory { get; set; } = _ => { };
@@ -101,9 +120,11 @@ public sealed partial class StoryBench
     {
         var trimmed = name?.Trim() ?? string.Empty;
 
-        if (!IsSlotName(trimmed) || string.Equals(trimmed, MyStory, StringComparison.OrdinalIgnoreCase))
+        if (!IsSlotName(trimmed)
+            || string.Equals(trimmed, MyStory, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(trimmed, MyStoryFolder, StringComparison.OrdinalIgnoreCase))
         {
-            return "A slot name is 1 to 40 letters, digits, spaces, hyphens or underscores, is not a Windows device name, and is not \"My story\".";
+            return "A slot name is 1 to 40 letters, digits, spaces, hyphens or underscores, is not a Windows device name, and is not \"My story\" or \"mine\".";
         }
 
         lock (_gate)
@@ -206,6 +227,7 @@ public sealed partial class StoryBench
         }
 
         _logger.LogInformation("Switched the story bench to {Slot}", slot ?? MyStory);
+        Evaluate();
         Switched?.Invoke();
         return null;
     }

@@ -197,6 +197,7 @@ public sealed class SwitchingBenchSlotsLeavesMyStoryAsItWasTests
     [InlineData("..")]
     [InlineData("a\\b")]
     [InlineData("My story")]
+    [InlineData("Mine")]
     [InlineData("con")]
     [InlineData("test")]
     public void ASlotNameThatIsNotAPlainNewFolderIsRefused(string name)

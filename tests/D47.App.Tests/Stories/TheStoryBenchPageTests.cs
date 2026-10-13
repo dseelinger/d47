@@ -151,6 +151,27 @@ public sealed class TheStoryBenchPageTests
         Assert.Equal($"Clue 3 — day {StoryPacing.OneMonth.ClueDays[2]}", StoryBenchPage.JumpChoices(rig.Stories.Current("F1")!)[0].Label);
     }
 
+    [AvaloniaFact]
+    public void TheRewindButtonRestoresACheckpointAndPausesTheStory()
+    {
+        var rig = Build(benchOn: true);
+        var id = StoryFixture.Story.Id;
+
+        rig.Stories.Update("F1", id, story => story with { CluesGiven = 1 });
+        Settle(() => rig.Bench!.Checkpoints("F1").Count == 1);
+        rig.Stories.Update("F1", id, story => story with { CluesGiven = 2 });
+
+        Press(Find(rig.Panel, "OpenStoryBench")!);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains(Drawn(rig.Panel), text => text.StartsWith("Chapter 1 — ", StringComparison.OrdinalIgnoreCase));
+
+        Press(Find(rig.Panel, "Rewind")!);
+        Settle(() => rig.Stories.Current("F1")!.State == StoryState.Paused);
+
+        Assert.Equal(StoryState.Paused, rig.Stories.Current("F1")!.State);
+        Assert.Equal(1, rig.Stories.Current("F1")!.CluesGiven);
+    }
+
     [Fact]
     public void CluesAlreadyGivenAreNotOffered()
     {

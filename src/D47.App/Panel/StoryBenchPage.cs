@@ -57,6 +57,7 @@ public sealed class StoryBenchPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _bench.Switched += OnChanged;
+        _bench.CheckpointsChanged += OnChanged;
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
         Rebuild();
@@ -66,6 +67,7 @@ public sealed class StoryBenchPage : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _bench.Switched -= OnChanged;
+        _bench.CheckpointsChanged -= OnChanged;
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
     }
@@ -99,6 +101,39 @@ public sealed class StoryBenchPage : UserControl
 
         _body.Children.Add(AdventuresPage.Text("Jump", TypeScale.Small, ThemeManager.GreyKey));
         _body.Children.Add(JumpSection(commander, busy));
+
+        _body.Children.Add(AdventuresPage.Text("Checkpoints", TypeScale.Small, ThemeManager.GreyKey));
+        _body.Children.Add(CheckpointSection(commander, busy));
+    }
+
+    internal static string Describe(BenchCheckpoint checkpoint) =>
+        $"Chapter {checkpoint.Chapter.ToString(CultureInfo.InvariantCulture)} — {checkpoint.Stage} — {checkpoint.At.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}";
+
+    private StackPanel CheckpointSection(string? commander, bool busy)
+    {
+        var holder = new StackPanel { Spacing = 6 };
+
+        if (_bench.Checkpoints(commander) is not { Count: > 0 } checkpoints)
+        {
+            holder.Children.Add(AdventuresPage.Muted("No checkpoints yet."));
+            return holder;
+        }
+
+        foreach (var checkpoint in checkpoints)
+        {
+            var row = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 6) };
+            row.Children.Add(AdventuresPage.RowName(Describe(checkpoint)));
+
+            var rewind = new Button { Name = "Rewind", Content = "Rewind", HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = !busy };
+            rewind.Click += (_, _) => Act(
+                $"Rewinding to chapter {checkpoint.Chapter.ToString(CultureInfo.InvariantCulture)}…",
+                () => Task.FromResult(_bench.Rewind(checkpoint.Chapter, _surface.Now())),
+                $"Rewound to chapter {checkpoint.Chapter.ToString(CultureInfo.InvariantCulture)}. The story is paused; Resume begins the chapter again.");
+            row.Children.Add(rewind);
+            holder.Children.Add(row);
+        }
+
+        return holder;
     }
 
     private Control SlotRow(BenchSlotSummary slot, string? commander, bool busy)
