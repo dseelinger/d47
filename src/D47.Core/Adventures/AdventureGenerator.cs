@@ -452,7 +452,7 @@ public sealed class AdventureGenerator(
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static readonly Regex Recorded = new(
-        @"\b(?:recordings?|messages?|calls?|voices?|tapes?|logs?)\b",
+        @"\b(?:recordings?|messages?|calls?|tapes?|logs?)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>Whether one sentence of the text says a recording, call or message is played or heard.</summary>

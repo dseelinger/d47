@@ -103,6 +103,16 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     }
 
     [Fact]
+    public async Task HearingTheShipsVoiceIsNotRefused()
+    {
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(alone: "The Commander hears the ship's voice confirm the jump.")));
+        using var _ = fixtures;
+
+        Assert.Null(refusal);
+        Assert.Equal(2, fixtures.Provider.Requests.Count);
+    }
+
+    [Fact]
     public async Task ARecordingStillUnplayedAfterTheRewriteStillYieldsAChapter()
     {
         var stubborn = Written(alone: "A message is heard over comms.");
