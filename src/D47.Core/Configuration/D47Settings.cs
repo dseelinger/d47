@@ -624,6 +624,9 @@ public sealed record CalloutSettings
     /// <summary>The longest gap between two narrations, in seconds.</summary>
     public int NarratorMaxSeconds { get; init; } = 3600;
 
+    /// <summary>A stock story's primary cast reacting, once a play session, to something the Commander did.</summary>
+    public bool CastReactions { get; init; } = true;
+
     /// <summary>The running session total after every sale of the Community Goal commodity (#296).</summary>
     public bool CommunityGoalSales { get; init; } = true;
 

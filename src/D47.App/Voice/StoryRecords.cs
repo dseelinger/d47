@@ -14,7 +14,8 @@ internal sealed class StoryRecords(
     D47.Core.Adventures.AdventureBook adventures,
     PersonaHost personas,
     GameStateStore gameState,
-    Func<StorySpeakerShown?, string?> pictureOf)
+    Func<StorySpeakerShown?, string?> pictureOf,
+    StoryReactionCallout reactions)
 {
     /// <summary>Keeps a spoken clip on the message posted for it. Called on the pool once synthesis has finished.</summary>
     internal void Keep(D47Message? posted, SpokenClip? spoken)
@@ -41,6 +42,32 @@ internal sealed class StoryRecords(
 
         messages.Post(
             voice?.From ?? (announcement.Voice == VoiceRole.Narrator ? MessageStore.Narrator : personas.Current.Id),
+            title,
+            announcement.Text,
+            DateTimeOffset.Now,
+            announcement.Key,
+            picture: pictureOf(voice?.Cast),
+            spoken: spoken,
+            cast: voice?.Cast?.Picture);
+    }
+
+    /// <summary>A spoken reaction, marking the session's reaction given and posted to Messages from the member who said it.</summary>
+    internal void RecordReaction(Announcement announcement, SpokenClip? spoken)
+    {
+        if (StoryReactionCallout.Parse(announcement.Key) is not var (due, castId) || castId is null)
+        {
+            return;
+        }
+
+        var commander = gameState.Active?.Identity.FrontierId;
+        var title = stories.CurrentCast(commander)?.Title ?? due.StoryId;
+        var voice = stories.LineVoice(commander, castId);
+
+        stories.ReactionGiven(commander, due);
+        reactions.Reacted(commander, due);
+
+        messages.Post(
+            voice?.From ?? announcement.Speaker ?? personas.Current.Id,
             title,
             announcement.Text,
             DateTimeOffset.Now,

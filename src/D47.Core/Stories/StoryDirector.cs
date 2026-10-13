@@ -1094,6 +1094,61 @@ public sealed class StoryDirector(
             : story);
     }
 
+    /// <summary>
+    /// The current story's window for cast reactions, or null unless it is running, switched on and played with Odyssey,
+    /// its chapter one has begun, and it has a primary cast member this Commander meets.
+    /// </summary>
+    public StoryReactionWindow? ReactionWindow(string? frontierId)
+    {
+        if (stories.Current(frontierId) is not { State: StoryState.Running, IsOff: false, IsWithoutOdyssey: false, CurrentChapter: not null } story
+            || Hidden(story.Id) is not { } secret
+            || !secret.Cast.Any(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(Gender()))))
+        {
+            return null;
+        }
+
+        lock (_gate)
+        {
+            var who = frontierId ?? AdventureStore.NoCommander;
+
+            if (_openings.ContainsKey(who) || _scans.ContainsKey(who))
+            {
+                return null;
+            }
+        }
+
+        return new StoryReactionWindow(frontierId, story.Id, story.Sessions, story.ReactionSession == story.Sessions);
+    }
+
+    /// <summary>The primary cast, as this Commander meets them, who may give a reaction still owed; empty once it is not.</summary>
+    public IReadOnlyList<StoryReactor> ReactionCast(string? frontierId, StoryReactionDue due)
+    {
+        ArgumentNullException.ThrowIfNull(due);
+
+        return ReactionWindow(frontierId) is { Reacted: false } window && window.Due == due && Hidden(due.StoryId) is { } secret
+            ? Reactors(secret)
+            : [];
+    }
+
+    private List<StoryReactor> Reactors(StorySecret secret)
+    {
+        var gender = Gender();
+
+        return [.. secret.Cast
+            .Where(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(gender)))
+            .Select(member => new StoryReactor(member.Id, member.Shown(secret.Id, gender).Name, member.Who))];
+    }
+
+    /// <summary>Records that a reaction was spoken, so the story gives no other this session.</summary>
+    public void ReactionGiven(string? frontierId, StoryReactionDue due)
+    {
+        ArgumentNullException.ThrowIfNull(due);
+
+        stories.Update(frontierId, due.StoryId, story => story.IsCurrent && story.Sessions == due.Session
+            ? story with { ReactionSession = due.Session }
+            : story);
+    }
+
     /// <summary>The most recently finished story the Commander has not answered, or null.</summary>
     private Story? Unanswered(string? frontierId) => stories.For(frontierId)
         .Where(story => story is { State: StoryState.Finished, EndingChoice: null })

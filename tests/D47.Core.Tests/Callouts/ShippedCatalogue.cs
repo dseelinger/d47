@@ -47,6 +47,7 @@ public static class ShippedCatalogue
                 MarketBook = new MarketBook(Path.Combine(data, "markets.json"), files, NullLogger<MarketBook>.Instance),
                 PlanBook = new RoutePlanBook(Path.Combine(data, "route-plans.json"), files, NullLogger<RoutePlanBook>.Instance),
                 StoryClue = new StoryClueCallout(fight),
+                StoryReaction = new StoryReactionCallout(fight),
                 JournalReminders = new JournalReminderStore(
                     Path.Combine(data, "journal-reminders.json"), files, NullLogger<JournalReminderStore>.Instance),
                 StandingWarnings = new StandingWarnings(),

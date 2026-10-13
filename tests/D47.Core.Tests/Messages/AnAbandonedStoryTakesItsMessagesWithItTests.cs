@@ -60,6 +60,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
         _messages.Post("narrator", "clue", "x", Noon, $"{StoryClueCallout.KeyPrefix}{Id}.0");
         _messages.Post("narrator", "end", "x", Noon, StoryEnding.Key(Id));
         _messages.Post("narrator", "scan", "x", Noon, StoryLines.Key(Id));
+        _messages.Post("Ren", "reaction", "x", Noon, StoryReactionCallout.Key(new StoryReactionDue(Id, 1), "dock-hand"));
     }
 
     private void SaveChapter(string key) =>
@@ -81,7 +82,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
 
         Pick(state, "chapter-1");
 
-        Assert.Equal(4, Sweep());
+        Assert.Equal(5, Sweep());
         Assert.Equal(["own", "unkeyed"], _messages.All.Select(message => message.Subject).Order());
     }
 
@@ -93,7 +94,7 @@ public class AnAbandonedStoryTakesItsMessagesWithItTests : IDisposable
         PostEverything("chapter-1");
 
         Assert.Equal(0, Sweep());
-        Assert.Equal(4, _messages.All.Count);
+        Assert.Equal(5, _messages.All.Count);
     }
 
     [Fact]

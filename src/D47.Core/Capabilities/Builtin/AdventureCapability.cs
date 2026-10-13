@@ -30,6 +30,8 @@ public static class AdventureCapability
 
     public const string StoryRatingsKey = "adventures.storyRatings";
 
+    public const string CastReactionsKey = "adventures.castReactions";
+
     private const string NoStory = "No story is running.";
 
     private const string NoDraft = "There is no draft short story.";
@@ -153,6 +155,26 @@ public static class AdventureCapability
                     Write = (s, v) => s with
                     {
                         Ui = s.Ui with { StoryRatings = bool.TryParse(v, out var on) && on },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = CastReactionsKey,
+                Label = "Cast reactions",
+                Help =
+                    "While a stock story runs, one of its main characters says one line about something you did, such as "
+                    + "a death, an interdiction, a promotion or your largest sale, the next time you are docked in your ship. "
+                    + "At most one a play session. Written by the model; with no model, or personality off, there are none. "
+                    + "Off, no story's cast reacts. Clues and chapter lines are unchanged.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "cast-reactions",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Callouts.CastReactions ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Callouts = s.Callouts with { CastReactions = bool.TryParse(v, out var on) && on },
                     },
                 },
             },

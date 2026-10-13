@@ -67,6 +67,7 @@ public static class CrewDomains
         "session-length",
         "adventure",
         "story-clue",
+        "story-reaction",
         "carrier",
         "narrator",
         "npc-chatter",

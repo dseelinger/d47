@@ -133,6 +133,19 @@ public sealed class EveryLateServiceReachesItsCalloutTests
     }
 
     [Fact]
+    public void CastReactionsFollowTheirSwitch()
+    {
+        var wired = Connected();
+        var reaction = wired.Shipped<StoryReactionCallout>();
+
+        Assert.True(reaction.Enabled());
+
+        wired.Settings.Replace("test", current => current with { Callouts = current.Callouts with { CastReactions = false } });
+
+        Assert.False(reaction.Enabled());
+    }
+
+    [Fact]
     public void TheNarratorAndMissionsAreGivenTheStory()
     {
         var wired = Connected();

@@ -51,6 +51,8 @@ internal sealed class LineWriter
 
     private Func<D47.Core.Stories.StorySpeakerShown?, string?> PictureOf { get; }
 
+    private D47.Core.Stories.StoryReactionCallout Reactions { get; }
+
     internal LineWriter(
         SettingsService settings,
         PersonaHost personas,
@@ -68,7 +70,8 @@ internal sealed class LineWriter
         Func<string, ITtsProvider?> castClient,
         Func<Announcement, VoiceCast> castFor,
         Func<bool> canSearch,
-        Func<D47.Core.Stories.StorySpeakerShown?, string?> pictureOf)
+        Func<D47.Core.Stories.StorySpeakerShown?, string?> pictureOf,
+        D47.Core.Stories.StoryReactionCallout reactions)
     {
         Settings = settings;
         Personas = personas;
@@ -87,6 +90,7 @@ internal sealed class LineWriter
         CastFor = castFor;
         CanSearch = canSearch;
         PictureOf = pictureOf;
+        Reactions = reactions;
         _rewording = new Rewording(new RewordChance(), logger);
     }
 
@@ -342,6 +346,35 @@ internal sealed class LineWriter
             : null;
     }
 
+    /// <summary>
+    /// A cast member's reaction to the newest notable thing the Commander did, written by the model as the member it
+    /// chose, or null when no line came back or it named someone outside the primary cast. The key gains the member's id.
+    /// </summary>
+    internal async Task<Announcement?> ComposeReactionAsync(Announcement marker, D47.Core.Stories.StoryReactionDue due)
+    {
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        if (Reactions.Newest(commander, due) is not { } notable || Stories.ReactionCast(commander, due) is not { Count: > 0 } cast)
+        {
+            return null;
+        }
+
+        var voices = cast.Select(member => Stories.LineVoice(commander, member.Id)).ToList();
+        var directed = voices.All(voice => voice?.Pinned is { } pinned
+            ? CastClient(pinned.ProviderId)?.ReadsAudioTags == true
+            : DirectableIn(VoiceGroups.Of(VoiceRole.Crew, marker.CommsChannel)));
+
+        if (await ComposeStoryLineAsync(D47.Core.Stories.StoryReactions.Asking(notable, cast), VoiceRole.Crew, marker.CommsChannel, marker.Key, directed)
+                .ConfigureAwait(false) is not { } reply
+            || D47.Core.Stories.StoryReactions.Parse(reply, cast) is not var (castId, line)
+            || Stories.LineVoice(commander, castId) is not { Cast: not null } chosen)
+        {
+            return null;
+        }
+
+        return Voiced(marker with { Key = D47.Core.Stories.StoryReactionCallout.Key(due, castId), Text = line }, chosen);
+    }
+
     /// <summary>A story line as its speaker says it: the role, and for a cast member the name and the pinned voice.</summary>
     internal Announcement Voiced(Announcement line, D47.Core.Stories.StoryLineVoice voice) => line with
     {
@@ -392,7 +425,7 @@ internal sealed class LineWriter
             ship ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
             StoryFor(brief, voice),
             ask,
-            Turns.LiveGameState?.Invoke(),
+            brief.NeedsGameState ? Turns.LiveGameState?.Invoke() : null,
             Spend,
             PriceTable.Default,
             _logger,
@@ -476,6 +509,12 @@ internal sealed class LineWriter
         if (D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is { } clue)
         {
             return await ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told ? [told] : [];
+        }
+
+        // A reaction is written from the notable event the callout kept, which the marker never carries.
+        if (D47.Core.Stories.StoryReactionCallout.Parse(announcement.Key) is ({ } reaction, null))
+        {
+            return await ComposeReactionAsync(announcement, reaction).ConfigureAwait(false) is { } said ? [said] : [];
         }
 
         // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.

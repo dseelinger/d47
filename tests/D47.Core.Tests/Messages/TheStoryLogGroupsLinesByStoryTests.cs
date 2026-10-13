@@ -23,16 +23,17 @@ public class TheStoryLogGroupsLinesByStoryTests
         StoryLog.Of(messages, key => Names.GetValueOrDefault(key), waiting ?? (_ => false));
 
     [Fact]
-    public void AStoryLineEndingAndClueKeyAllLandInTheStockStory()
+    public void AStoryLineEndingClueAndReactionKeyAllLandInTheStockStory()
     {
         var log = Log([
             Line(1, StoryLines.Key("tide")),
             Line(2, StoryEnding.Key("tide")),
-            Line(3, "story.clue.tide.4")]);
+            Line(3, "story.clue.tide.4"),
+            Line(4, StoryReactionCallout.Key(new StoryReactionDue("tide", 2), "ren"))]);
 
         var group = Assert.Single(log.Groups);
         Assert.Equal("The Long Tide", group.Name);
-        Assert.Equal(3, group.Messages.Count);
+        Assert.Equal(4, group.Messages.Count);
     }
 
     [Fact]

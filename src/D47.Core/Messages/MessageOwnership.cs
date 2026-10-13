@@ -34,6 +34,11 @@ public static class MessageOwnership
             return IsLive(live, key[StoryLines.KeyPrefix.Length..]);
         }
 
+        if (key.StartsWith(StoryReactionCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return StoryReactionCallout.Parse(key) is var (reaction, _) && IsLive(live, reaction.StoryId);
+        }
+
         if (key.StartsWith(StoryClueCallout.KeyPrefix, StringComparison.Ordinal))
         {
             return StoryClueCallout.Parse(key) is { } clue && IsLive(live, clue.StoryId);

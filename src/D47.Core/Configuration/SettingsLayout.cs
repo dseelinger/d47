@@ -789,7 +789,7 @@ public static class SettingsLayout
         new SettingsTabPlace(
             "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art"), E("ships.hullgpu")]),
         new SettingsTabPlace(
-            "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads"), E("adventures.storyRatings")]),
+            "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads"), E("adventures.storyRatings"), E("adventures.castReactions")]),
         new SettingsTabPlace(
             "fleet-carrier",
             "loadout.carrier",

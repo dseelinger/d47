@@ -57,6 +57,8 @@ public static class ShippedCallouts
 
         public required StoryClueCallout StoryClue { get; init; }
 
+        public required StoryReactionCallout StoryReaction { get; init; }
+
         public required JournalReminderStore JournalReminders { get; init; }
 
         public required StandingWarnings StandingWarnings { get; init; }
@@ -224,6 +226,9 @@ public static class ShippedCallouts
 
             // A clue the running stock story owes: the marker only, written by the model from the hidden layer or not said.
             .Add(sources.StoryClue)
+
+            // A cast member's line about what the Commander did, after the clue so a clue owed now is said first.
+            .Add(sources.StoryReaction)
             .Add(new IncomingMessages
             {
                 Enabled = () => settings.Current.Speech.SpeakIncomingMessages,
@@ -462,6 +467,10 @@ public static class ShippedCallouts
 
                 case D47.Core.Stories.StoryClueCallout clue:
                     clue.Enabled = () => settings.Current.Llm.PersonalityEnabled;
+                    break;
+
+                case D47.Core.Stories.StoryReactionCallout reaction:
+                    reaction.Enabled = () => settings.Current.Callouts.CastReactions && settings.Current.Llm.PersonalityEnabled;
                     break;
 
                 case NarratorCallout narrator:

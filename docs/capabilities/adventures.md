@@ -554,6 +554,29 @@ public static StoryLineVoice Of(
     ShipSpeech? ship = null)
 ```
 
+#### Reactions between chapters {#cast-reactions}
+
+While a stock story runs and is switched on, one of its primary cast may say one line about something you did.
+The things that count are the ones the chapter writer is told: a death and its rebuy, an interdiction or an
+escape, a promotion, an engineer invited or unlocked, a ship bought, a hull you brought home below a quarter,
+your largest sale, bounty or exploration data sale, and a first discovery. The newest since the last reaction
+is the one reacted to.
+
+- There is at most one reaction a play session, counted by the game's `LoadGame`. The line is said the next
+  time you are docked and in your ship, outside a fight, two minutes after the last unprompted line, and after
+  a clue owed at the same time. On foot on the station it waits until you are back in the cockpit.
+- The model picks the member from the primary cast, given each one's name and who they are, and writes the
+  line as them. A reply naming anyone else is not spoken. The model is given the event as the journal
+  recorded it, with no other Commander's or pilot's name, and the hidden story as every speaker reads it, and
+  is told to state no new fact about the story.
+- The line is spoken in that member's voice and posted to the Story log from them, with their picture and the
+  clip it was spoken in.
+- Nothing is noted while d47 catches up on the journal at start-up, while the story is paused, switched off or
+  without Odyssey, or before chapter one begins. Without a language model, or with personality off, no
+  reaction is spoken, and the next session tries again.
+- **Cast reactions**, on the Stories tab, switches reactions off for every story. Clues and chapter lines
+  are unchanged.
+
 #### A story needs its voices first
 
 A story cannot be picked until every voice its cast speaks in is ready, the voices you chose included. A

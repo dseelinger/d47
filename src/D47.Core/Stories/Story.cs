@@ -83,6 +83,9 @@ public sealed record Story
     /// <summary>The count of <see cref="Chapters"/> when the last clue was spoken.</summary>
     public int? ClueChapter { get; init; }
 
+    /// <summary>The value of <see cref="Sessions"/> when a cast member last reacted to what the Commander did.</summary>
+    public int? ReactionSession { get; init; }
+
     /// <summary>When the ending message was posted, once it has been.</summary>
     public DateTimeOffset? EndingPostedAt { get; init; }
 

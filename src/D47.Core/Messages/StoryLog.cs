@@ -75,6 +75,11 @@ public sealed record StoryLog(IReadOnlyList<D47Message> Waiting, IReadOnlyList<S
             return StoryGoal.KeyPrefix + key[StoryLines.KeyPrefix.Length..];
         }
 
+        if (StoryReactionCallout.Parse(key) is var (reaction, _))
+        {
+            return StoryGoal.KeyPrefix + reaction.StoryId;
+        }
+
         return StoryClueCallout.Parse(key) is { } clue ? StoryGoal.KeyPrefix + clue.StoryId : key;
     }
 }

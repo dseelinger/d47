@@ -102,6 +102,7 @@ public sealed class AppHost : IDisposable
         D47.Core.Messages.MessageStore messages,
         NearbyFight fight,
         SceneTracker scenes,
+        D47.Core.Stories.StoryReactionCallout storyReaction,
         Func<Core.Journal.GameStatus> liveStatus)
     {
         Paths = paths;
@@ -128,8 +129,9 @@ public sealed class AppHost : IDisposable
             speech.CastClient,
             CastFor,
             () => CanSearch,
-            cast => SpeakerPictures.For(cast));
-        Records = new StoryRecords(messages, stories, adventures, personas, gameState, cast => SpeakerPictures.For(cast));
+            cast => SpeakerPictures.For(cast),
+            storyReaction);
+        Records = new StoryRecords(messages, stories, adventures, personas, gameState, cast => SpeakerPictures.For(cast), storyReaction);
         Verbosity = verbosity;
         Settings = settings;
         Secrets = secrets;
@@ -1354,6 +1356,7 @@ public sealed class AppHost : IDisposable
         var scenes = new SceneTracker();
         var handInOffer = new D47.Core.Conversation.HandInOffer();
         var storyClue = new D47.Core.Stories.StoryClueCallout(fight);
+        var storyReaction = new D47.Core.Stories.StoryReactionCallout(fight);
 
         var callouts = ShippedCallouts.Build(
             new ShippedCallouts.Sources
@@ -1377,6 +1380,7 @@ public sealed class AppHost : IDisposable
                 MarketBook = marketBook,
                 PlanBook = planBook,
                 StoryClue = storyClue,
+                StoryReaction = storyReaction,
                 JournalReminders = journalReminders,
                 StandingWarnings = standingWarnings,
                 MiningTargets = miningTargets,
@@ -1450,6 +1454,7 @@ public sealed class AppHost : IDisposable
             StoryCatalog = () => storyCatalog,
             StoryClue = storyClue,
             StoryDownloads = storyDownloads,
+            StoryReaction = storyReaction,
             StoryRatings = storyRatings,
             StoryStore = storyStore,
         };
@@ -2754,6 +2759,7 @@ public sealed class AppHost : IDisposable
         var status = stores.Status;
         var storyArchive = stores.StoryArchive;
         var storyClue = stores.StoryClue;
+        var storyReaction = stores.StoryReaction;
         var storyStore = stores.StoryStore;
         var adventureDesk = services.AdventureDesk;
         var beatRefusal = services.BeatRefusal;
@@ -2959,6 +2965,7 @@ public sealed class AppHost : IDisposable
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
         storyClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
+        storyReaction.Window = () => storyDirector.ReactionWindow(gameState.Active?.Identity.FrontierId);
         storyDirector.Aboard = () => personas.Current;
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
@@ -3154,6 +3161,7 @@ public sealed class AppHost : IDisposable
             messageStore,
             fight,
             scenes,
+            stores.StoryReaction,
             () => status.Current);
 
         host.Auditions = services.Auditions;
@@ -3996,6 +4004,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Stories.StoryClueCallout StoryClue { get; init; }
 
         public required StoryDownloader StoryDownloads { get; init; }
+
+        public required D47.Core.Stories.StoryReactionCallout StoryReaction { get; init; }
 
         public required StoryRatingClient StoryRatings { get; init; }
 
