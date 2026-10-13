@@ -514,7 +514,7 @@ public sealed class AdventureGenerator(
 
         return Regex.Replace(
             text,
-            $@"\b(?:(?:this is|my name is|I am|I['’]m|it['’]s)\s+{named}\b|{named}\s+here\b)",
+            $@"\b(?:(?:this is|my name is|I am|I['’]m|it['’]s)\s+{named}\b(?!['’])|{named}\s+here\b)",
             " ",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }

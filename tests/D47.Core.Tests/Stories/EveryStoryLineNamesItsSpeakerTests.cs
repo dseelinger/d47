@@ -391,6 +391,24 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     }
 
     [Fact]
+    public async Task ANameAfterAnIntroductionThatIsPossessiveIsStillSelfNaming()
+    {
+        var possessive = BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "This is Harrow's last log.", StringComparison.Ordinal);
+        using var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(
+                RoundScriptedLlmProvider.Saying(Spine),
+                RoundScriptedLlmProvider.Saying(possessive),
+                RoundScriptedLlmProvider.Saying(possessive)),
+            Cast);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
+
+        Assert.Equal(StorySpeaker.Narrator, chapter.Beats[0].Speaker);
+    }
+
+    [Fact]
     public async Task TheChapterWriterIsToldToPlayWhatACastMemberSaysRatherThanReportIt()
     {
         using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon));
