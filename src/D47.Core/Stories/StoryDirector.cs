@@ -428,6 +428,36 @@ public sealed class StoryDirector(
         return await WriteChapterAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Moves the current story forward so the target is due now: drops the current chapter and has the next one written
+    /// at the new stage. Refused while a chapter is being written.
+    /// </summary>
+    public Task<string?> JumpAsync(string? frontierId, StoryJumpTarget target, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (IsWriting(frontierId))
+        {
+            return Task.FromResult<string?>("A chapter is being written.");
+        }
+
+        if (stories.Current(frontierId) is not { } current)
+        {
+            return Task.FromResult<string?>("No story is running.");
+        }
+
+        if (StoryJump.Jump(current, target, now) is not { } jumped)
+        {
+            return Task.FromResult(StoryJump.Refusal(current, target));
+        }
+
+        if (jumped.CurrentChapter is { } key)
+        {
+            book.Remove(frontierId, key);
+        }
+
+        stories.Save(frontierId, jumped.State == StoryState.Paused ? jumped : jumped.Paused(now));
+        return ResumeAsync(frontierId, now, cancellationToken);
+    }
+
     /// <summary>Writes the chapter the running story is owed, after a failure.</summary>
     public Task<string?> WriteNextAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken) =>
         stories.Current(frontierId) is { State: StoryState.Running }
