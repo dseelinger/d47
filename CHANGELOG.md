@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Adventures page of the docs no longer tells you to say "next" to move a story on, because there is no such command. It now says a story waits for the game, the Narrator nudges after three play sessions and seven days, and a stock story chapter takes "not for me" for a different objective.
+
 The Adventures page of the docs no longer tells you to say "where am I up to" to hear the story so far, which answered with your location. It now says to open the story on the Stories tab and read what has been said.
 
 When a story chapter's draft cannot be used, d47 now writes it again, up to three drafts, and tells the next draft what was wrong with the last. Before each new draft, D47 says the last one could not be used and why the next can succeed, and the Stories page shows the same line. Only after the third draft fails does it stop with "The chapter could not be written in 3 drafts", which D47 now says for a later chapter as well as for chapter one. Write it again then appears on the story's own page as well as on the list. A story's page no longer shows Pick once you have picked it, including while chapter one is being written. Before, one failed draft stopped the write and Pick stayed on the page.
