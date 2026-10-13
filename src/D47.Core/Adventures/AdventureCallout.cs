@@ -177,9 +177,13 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         var reached = book.Drain();
 
+        // While another Commander flies, a chapter's opening is still said when the chapter is written; nothing in
+        // the game caused it. Every other beat is dropped.
+        var openingsOnly = context.IsPriming && context.AnotherFlying;
+
         // Priming folds the backlog into the standings and announces none of it — a beat that fired two hours
         // ago is in the past, and the context block already says so. Each dropped beat stops its wait.
-        if (context.IsPriming)
+        if (context.IsPriming && !openingsOnly)
         {
             foreach (var moment in reached)
             {
@@ -191,7 +195,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         foreach (var moment in reached)
         {
-            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now) || (openingsOnly && !moment.IsOpening))
             {
                 book.Quiet(moment.FrontierId, moment.Adventure.Key);
                 continue;
@@ -212,7 +216,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             }
         }
 
-        foreach (var warning in CrimeWarnings(context, commander))
+        foreach (var warning in openingsOnly ? Enumerable.Empty<Announcement>() : CrimeWarnings(context, commander))
         {
             yield return warning;
         }
@@ -233,7 +237,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
         {
             _waiting.Remove(moment);
 
-            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now))
+            if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now) || (openingsOnly && !moment.IsOpening))
             {
                 book.Quiet(moment.FrontierId, moment.Adventure.Key);
                 continue;
@@ -262,6 +266,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                     // The beat index rides along so the brief can say which this is without parsing the key; the
                     // opening is -1.
                     Variant = moment.Beat,
+                    WhileAnotherFlies = moment.IsOpening,
                 };
             }
 
@@ -270,6 +275,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", handOff)
                 {
                     Urgency = CalloutUrgency.Routine,
+                    WhileAnotherFlies = moment.IsOpening,
                 };
             }
 

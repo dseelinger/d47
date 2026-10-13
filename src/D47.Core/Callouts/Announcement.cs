@@ -37,6 +37,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>A line not addressed to the Commander, heard as traffic further off.</summary>
     public bool Overheard { get; init; }
 
+    /// <summary>Said to the shown Commander while Elite runs another, because nothing in the game caused it.</summary>
+    public bool WhileAnotherFlies { get; init; }
+
     public AudioChannel Channel =>
         Urgency == CalloutUrgency.Urgent ? AudioChannel.Alert
         : Overheard ? AudioChannel.Overheard

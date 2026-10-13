@@ -153,7 +153,12 @@ public sealed class Announcer : IDisposable
         var pending = Callouts.Drain();
 
         // A line queued before a pick is about the Commander no longer shown.
-        if (pending.Count == 0 || GameState.IsAnotherFlying)
+        if (GameState.IsAnotherFlying)
+        {
+            pending = [.. pending.Where(announcement => announcement.WhileAnotherFlies)];
+        }
+
+        if (pending.Count == 0)
         {
             return;
         }

@@ -14,6 +14,9 @@ namespace D47.Core.Callouts;
 /// The last thing d47 said because nothing had happened, or null if it has said nothing this session
 /// (#257).
 /// </param>
+/// <param name="AnotherFlying">
+/// Priming only because Elite runs a Commander other than the shown one, not because of the startup replay.
+/// </param>
 public readonly record struct CalloutContext(
     DateTimeOffset Now,
     bool IsPriming,
@@ -21,7 +24,8 @@ public readonly record struct CalloutContext(
     GameStatus Status,
     NavRoute Route,
     IReadOnlyList<JournalEvent> Events,
-    ChatterSaid? LastChatter = null)
+    ChatterSaid? LastChatter = null,
+    bool AnotherFlying = false)
 {
     /// <summary>The journal tick's context for the shown Commander, silent as priming is while another flies.</summary>
     public static CalloutContext For(
@@ -34,7 +38,10 @@ public readonly record struct CalloutContext(
     {
         ArgumentNullException.ThrowIfNull(commanders);
 
-        return new(now, IsPriming: isFirst || commanders.IsAnotherFlying, commanders.Active, status, route, events);
+        return new(now, IsPriming: isFirst || commanders.IsAnotherFlying, commanders.Active, status, route, events)
+        {
+            AnotherFlying = !isFirst && commanders.IsAnotherFlying,
+        };
     }
 }
 
@@ -217,8 +224,8 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// </summary>
     private bool Offer(Announcement announcement, CalloutContext context)
     {
-        // Never during priming, whatever a callout returns.
-        if (context.IsPriming || !Enabled)
+        // Never during priming, whatever a callout returns, except a line that is said while another Commander flies.
+        if ((context.IsPriming && !(context.AnotherFlying && announcement.WhileAnotherFlies)) || !Enabled)
         {
             return false;
         }

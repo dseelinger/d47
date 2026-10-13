@@ -87,6 +87,41 @@ public class AdventureTellingTests
         Assert.False(book.IsStirring("F1", "the-lantern-route"));
     }
 
+    private static D47.Core.Callouts.CalloutContext WhileAnotherFlies(DateTimeOffset now) =>
+        new(now, IsPriming: true, null, D47.Core.Journal.GameStatus.Unknown, new D47.Core.Journal.NavRoute(), [])
+        {
+            AnotherFlying = true,
+        };
+
+    /// <summary>A chapter's opening is said when the chapter is written, even while Elite runs another Commander.</summary>
+    [Fact]
+    public void AnOpeningIsSaidWhileAnotherCommanderFlies()
+    {
+        var book = Wired(begun: false);
+        var engine = new D47.Core.Callouts.CalloutEngine(NullLogger<D47.Core.Callouts.CalloutEngine>.Instance);
+        engine.Add(new AdventureCallout(book));
+
+        Assert.Null(book.Begin("F1", "the-lantern-route", Accepted));
+        engine.Tick(WhileAnotherFlies(Accepted));
+
+        var said = Assert.Single(engine.Drain());
+        Assert.Equal("adventure.the-lantern-route.opening", said.Key);
+        Assert.True(said.WhileAnotherFlies);
+    }
+
+    /// <summary>A beat reached while another Commander flies is dropped, and stops its wait.</summary>
+    [Fact]
+    public void ABeatIsDroppedWhileAnotherCommanderFlies()
+    {
+        var book = Wired();
+        var callout = new AdventureCallout(book);
+
+        book.Observe(Jump(Lantern, Accepted.AddMinutes(1)), "F1");
+
+        Assert.Empty(callout.Examine(WhileAnotherFlies(Accepted.AddMinutes(1))).ToList());
+        Assert.False(book.IsStirring("F1", "the-lantern-route"));
+    }
+
     /// <summary>Abandoning a story stops its wait, exactly as it drops the beat that was settling.</summary>
     [Fact]
     public void AbandoningStopsTheWait()
