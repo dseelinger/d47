@@ -45,7 +45,7 @@ nav_order: 115
  <rect x="334" y="24" width="526" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT OBJECTIVE IS SPOKEN</text>
  <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your ship AI's own voice</text>
- <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Say "where am I up to" to hear the story so far.</text>
+ <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Open the story on the Stories tab to read what has been said so far.</text>
 </svg>
 </section>
 <section>
