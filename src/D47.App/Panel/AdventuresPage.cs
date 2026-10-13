@@ -525,6 +525,17 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 })));
         }
 
+        if (adventure is { StoryId: null, IsActive: true } && !standing.IsDone && _surface.Recap is { } recap)
+        {
+            bar.Children.Add(Action("Story so far", () => IfShown(drawnFor, () =>
+            {
+                if (recap(adventure.Key) is { } refusal)
+                {
+                    _surface.Say(refusal);
+                }
+            })));
+        }
+
         if (_surface.Stories is { } stories
             && stories.Stories.Current(drawnFor) is { } story
             && string.Equals(story.CurrentChapter, adventure.Key, StringComparison.Ordinal))

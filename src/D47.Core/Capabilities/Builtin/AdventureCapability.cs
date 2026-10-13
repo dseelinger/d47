@@ -24,6 +24,8 @@ public static class AdventureCapability
 
     public const string AskTool = "ask_for_adventure";
 
+    public const string RecapTool = "recap_story";
+
     public const string StoryDownloadsKey = "adventures.storyDownloads";
 
     public const string StoryRatingsKey = "adventures.storyRatings";
@@ -65,8 +67,18 @@ public static class AdventureCapability
         public Func<string?> Ask { get; set; } = () => "The Short Story page is not available.";
     }
 
+    /// <summary>Writes the Narrator's recap of the story under way, or null when no story is under way. The app sets it once the story exists.</summary>
+    public sealed class StoryRecapper
+    {
+        public Func<CancellationToken, Task<string?>> Write { get; set; } = _ => Task.FromResult<string?>(null);
+    }
+
     public static CapabilityDescriptor Create(
-        StorySwitch? storySwitch = null, EndingAnswer? endingAnswer = null, BeatRefusal? beatRefusal = null, AdventureDesk? desk = null) => new()
+        StorySwitch? storySwitch = null,
+        EndingAnswer? endingAnswer = null,
+        BeatRefusal? beatRefusal = null,
+        AdventureDesk? desk = null,
+        StoryRecapper? recapper = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -74,7 +86,8 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice, and refuse the objective it is waiting on.",
+            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on, and "
+            + "ask the Narrator for the story so far.",
 
         // The phrases that genuinely work.
         Examples =
@@ -83,6 +96,9 @@ public static class AdventureCapability
             "open the stories tab",
             "pause the story",
             "resume the story",
+            "where am I up to",
+            "recap the story",
+            "what's happened in the story so far",
             "accept the ending",
             "choose ending two",
             "this objective is not for me",
@@ -148,6 +164,7 @@ public static class AdventureCapability
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
+            Recap(recapper),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
             Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject),
@@ -208,6 +225,26 @@ public static class AdventureCapability
             await (beatRefusal?.Refuse(cancellationToken) ?? Task.FromResult<string?>(NoStory)).ConfigureAwait(false) is { } refusal
                 ? ToolResult.Error(refusal)
                 : ToolResult.Ok("That objective is replaced, and the story will not ask for it again."),
+    };
+
+    private static ToolDefinition Recap(StoryRecapper? recapper) => new()
+    {
+        Name = RecapTool,
+        Description =
+            "Have the Narrator recap the story under way: what has happened so far and where it waits now. The Commander's choice alone.",
+        Commands =
+        [
+            new ToolCommandPhrase("where am I up to", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("recap the story", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("what's happened in the story so far", new Dictionary<string, string>(StringComparer.Ordinal)),
+        ],
+
+        // The recap is the Commander's request alone; the model is refused, so the core cannot start the Narrator talking.
+        Protected = true,
+        Handler = async (_, cancellationToken) =>
+            recapper is not null && await recapper.Write(cancellationToken).ConfigureAwait(false) is { } said
+                ? ToolResult.Ok(said) with { SpokenBy = new ToolSpeaker(Audio.VoiceRole.Narrator, Persona.NarratorLine.Name) }
+                : ToolResult.Error(StoryRecap.NoStory),
     };
 
     private static ToolDefinition Draft(

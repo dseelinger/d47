@@ -23,6 +23,9 @@ public sealed record ToolParameter
     public IReadOnlyList<string> AllowedValues { get; init; } = [];
 }
 
+/// <summary>Who says a tool's result when it is not the ship's AI.</summary>
+public sealed record ToolSpeaker(Audio.VoiceRole Role, string Name);
+
 public sealed record ToolResult
 {
     public required bool IsError { get; init; }
@@ -40,6 +43,9 @@ public sealed record ToolResult
 
     /// <summary>What the Commander hears — the short form where a tool set one, the content otherwise.</summary>
     public string Spoken => ShortForm is { Length: > 0 } form ? form : Content;
+
+    /// <summary>Who the Commander hears say the result, or null for the ship's AI. Honoured on the tool-command route.</summary>
+    public ToolSpeaker? SpokenBy { get; init; }
 
     /// <summary>The one engineer, ship or system the answer is about, or null.</summary>
     public PageRef? Page { get; init; }

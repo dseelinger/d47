@@ -45,7 +45,7 @@ nav_order: 115
  <rect x="334" y="24" width="526" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT OBJECTIVE IS SPOKEN</text>
  <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your ship AI's own voice</text>
- <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Open the story on the Stories tab to read what has been said so far.</text>
+ <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Say "where am I up to" to hear the story so far.</text>
 </svg>
 </section>
 <section>
@@ -313,7 +313,7 @@ Both are yours alone, reachable from the panel and nowhere else.
 
 Generation, beginning, abandoning and removing are all your acts, on the panel. Asking for a short story,
 and accepting, changing and rejecting a draft, are yours too, by voice or by their buttons, and so are pausing and resuming
-a stock story, by voice or by the **Story on** checkbox. The ship's AI can
+a stock story, by voice or by the **Story on** checkbox, and asking for the story so far. The ship's AI can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.
 
@@ -735,6 +735,31 @@ Pause the Commander's running story: no objectives, nudges, clues or story chatt
 #### `resume_story`
 
 Resume the Commander's running story after a pause.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### The story so far
+
+Say "where am I up to", "recap the story" or "what's happened in the story so far", or press **Story so far**, and the
+Narrator says where the story stands in two to four sentences. The button is on your stock story's page on the Stories
+tab, under "This is your story.", and on the page of a short story under way, in the window and on the VR big panel.
+The phrases recap your stock story while it is running or paused, and otherwise the short story whose objective fired
+last. The button on a short story's page recaps that short story. With no story under way, d47 says "No story is under way."
+
+The recap is made only from what has happened. For a stock story that is your backstory, the objectives reached in
+every chapter and the clues given so far; for a short story, its premise and the objectives reached. It ends on where
+the story waits, as the place and the act, the way a hand-off names them. It never names an objective still to come,
+never says the current objective's line, and says nothing of the hidden layer beyond the clues you have had.
+
+It is one model call, counted in spend like a narration. Without a model, or when the model writes the recap in the
+first person, the Narrator says the last objective's line as written and then where the story waits. The recap is not
+posted to the Story log, and nothing says it unless you ask. The model is refused this tool.
+
+#### `recap_story`
+
+Have the Narrator recap the story under way: what has happened so far and where it waits now. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

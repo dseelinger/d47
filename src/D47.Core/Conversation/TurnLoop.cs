@@ -1362,6 +1362,11 @@ public sealed class TurnLoop(
                 yield return new TurnEvent.Addressed(Audio.VoiceRole.Crew, commandSeat.Name, 1);
                 Record(actioned.Spoken, input, commandSeat.Name);
             }
+            else if (!actioned.IsError && actioned.SpokenBy is { } speaker)
+            {
+                yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, 1);
+                Record(actioned.Spoken, input, speaker.Name);
+            }
             else
             {
                 Said(actioned.Spoken, input);

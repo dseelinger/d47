@@ -218,6 +218,9 @@ public static class BuiltinCapabilities
         // Acts on the draft adventure by voice.
         AdventureCapability.AdventureDesk? adventureDesk = null,
 
+        // Starts the Narrator's recap of the story under way.
+        AdventureCapability.StoryRecapper? storyRecapper = null,
+
         // The Commander's journal reminders (#643).
         Reminders.JournalReminderStore? journalReminders = null,
 
@@ -330,7 +333,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(

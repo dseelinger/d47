@@ -21,6 +21,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // The debrief's proposed wording.
         "Turns.Model,",
 
+        // The Narrator's recap, which the Commander asked for and waits on.
+        "Turns.Model,",
+
         // Whether a journal condition would tick a line typed into the checklist's Add box (#1058).
         "var ask = TypedLineWatch.Asker(provider, Turns.Model, Spend, PriceTable.Default);",
 

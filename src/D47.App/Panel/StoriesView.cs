@@ -715,6 +715,18 @@ public sealed class StoriesView : UserControl
         {
             stack.Children.Add(AdventuresPage.Muted("This is your story."));
 
+            if (_surface.Recap is { } recap)
+            {
+                bar.Children.Add(Act("Story so far", () => IfShown(commander, status, () =>
+                {
+                    if (recap(null) is { } refusal)
+                    {
+                        status.Fail(refusal);
+                        _surface.Say(refusal);
+                    }
+                })));
+            }
+
             if (_director.WriteFailed(commander) && !_director.IsWriting(commander))
             {
                 bar.Children.Add(Act("Write it again", () => IfShown(commander, status, () => WriteAgain(status, commander))));

@@ -4,7 +4,10 @@ using D47.Core.Messages;
 
 namespace D47.App.Panel;
 
-/// <summary>Everything the Stories tab reads and the few things it may do (Phase 47).</summary>
+/// <summary>
+/// Everything the Stories tab reads and the few things it may do (Phase 47). <see cref="Recap"/> has the Narrator say the story
+/// so far, of the short story with the key given or else the story under way, returning a refusal or null.
+/// </summary>
 public sealed record AdventureSurface(
     AdventureBook Book,
     AdventureGenerator Generator,
@@ -25,7 +28,8 @@ public sealed record AdventureSurface(
     Func<D47Message, string?>? PlayMessage = null,
     CastVoiceSurface? CastVoices = null,
     StoryRatingClient? Ratings = null,
-    CommanderSignal? Switched = null);
+    CommanderSignal? Switched = null,
+    Func<string?, string?>? Recap = null);
 
 /// <summary>Raised when the shown Commander changes, on whichever thread the journal ticks; subscribers post to the UI thread.</summary>
 public sealed class CommanderSignal

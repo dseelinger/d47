@@ -2033,6 +2033,7 @@ public sealed class AppHost : IDisposable
 
         var storySwitch = new AdventureCapability.StorySwitch();
         var endingAnswer = new AdventureCapability.EndingAnswer();
+        var storyRecapper = new AdventureCapability.StoryRecapper();
         var beatRefusal = new AdventureCapability.BeatRefusal();
         var adventureDesk = new AdventureCapability.AdventureDesk();
 
@@ -2061,6 +2062,7 @@ public sealed class AppHost : IDisposable
             Echo = echo,
             EliteWindow = eliteWindow,
             EndingAnswer = endingAnswer,
+            StoryRecapper = storyRecapper,
             Galaxy = galaxy,
             GameInput = gameInput,
             Gate = gate,
@@ -2169,6 +2171,7 @@ public sealed class AppHost : IDisposable
         var echo = services.Echo;
         var eliteWindow = services.EliteWindow;
         var endingAnswer = services.EndingAnswer;
+        var storyRecapper = services.StoryRecapper;
         var galaxy = services.Galaxy;
         var gameInput = services.GameInput;
         var gate = services.Gate;
@@ -2622,6 +2625,7 @@ public sealed class AppHost : IDisposable
                 endingAnswer: endingAnswer,
                 beatRefusal: beatRefusal,
                 adventureDesk: adventureDesk,
+                storyRecapper: storyRecapper,
                 journalReminders: journalReminders,
                 miningTargets: miningTargets,
                 crimes: crimes,
@@ -3055,6 +3059,7 @@ public sealed class AppHost : IDisposable
         var echo = services.Echo;
         var eliteWindow = services.EliteWindow;
         var endingAnswer = services.EndingAnswer;
+        var storyRecapper = services.StoryRecapper;
         var galaxy = services.Galaxy;
         var gate = services.Gate;
         var heardAt = services.HeardAt;
@@ -3290,6 +3295,7 @@ public sealed class AppHost : IDisposable
         host.StoryDownloads = storyDownloads;
         host.StoryRatings = storyRatings;
         endingAnswer.Answer = host.Narration.AnswerEnding;
+        storyRecapper.Write = cancellationToken => host.Narration.WriteRecapAsync(null, cancellationToken);
         host.AdventureDesk = adventureDesk;
         host.LearnedPhrases = learnedPhrases;
         host.Messages = messageStore;
@@ -4050,6 +4056,8 @@ public sealed class AppHost : IDisposable
         public required EliteWindow EliteWindow { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.EndingAnswer EndingAnswer { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.StoryRecapper StoryRecapper { get; init; }
 
         public required D47.Core.Knowledge.GalaxySearchNames Galaxy { get; init; }
 

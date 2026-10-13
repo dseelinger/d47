@@ -970,6 +970,75 @@ public sealed class StoryDirector(
     public string? HiddenBrief(string? frontierId, VoiceRole speaker, Persona.Persona core) =>
         StoryClues.ReadsHiddenStory(speaker, core) ? HiddenBrief(frontierId) : null;
 
+    /// <summary>
+    /// What a recap may say: of the active short story at <paramref name="adventureKey"/> when one is given; otherwise of the
+    /// current stock story, or else of the active short story whose objective fired last. Null when there is none.
+    /// </summary>
+    public RecapFacts? Recap(string? frontierId, string? adventureKey = null)
+    {
+        if (adventureKey is not null)
+        {
+            return book.Standing(frontierId, adventureKey) is { Adventure: { StoryId: null, IsActive: true }, IsDone: false } standing
+                ? StoryRecap.Of(standing)
+                : null;
+        }
+
+        if (stories.Current(frontierId) is { } story)
+        {
+            return Recap(frontierId, story);
+        }
+
+        return book.Active(frontierId)
+            .Where(standing => standing.Adventure.StoryId is null)
+            .MaxBy(standing => standing.LastFiredAt ?? standing.Adventure.AcceptedAt) is { } shortStory
+            ? StoryRecap.Of(shortStory)
+            : null;
+    }
+
+    private RecapFacts Recap(string? frontierId, Story story)
+    {
+        var secret = Hidden(story.Id);
+        var commander = Game()?.Identity.Name;
+
+        string? Named(string? speaker) => speaker switch
+        {
+            StorySpeaker.Narrator => null,
+            null or StorySpeaker.Ship => Aboard()?.Name ?? "The ship's AI",
+            _ => secret?.Cast.FirstOrDefault(member => string.Equals(member.Id, speaker, StringComparison.Ordinal))?.Shown(secret.Id, Gender()).Name,
+        };
+
+        var fired = new List<RecapObjective>();
+
+        foreach (var key in story.Chapters)
+        {
+            if (book.Store.Find(frontierId, key) is { } chapter)
+            {
+                fired.AddRange(StoryRecap.Fired(chapter, book.Standing(frontierId, key)?.Fired.Count ?? 0, Named));
+            }
+            else if (Archive.Find(frontierId, story, key) is { } archived)
+            {
+                fired.AddRange(StoryRecap.Fired(archived.Adventure, archived.Fired.Count, Named));
+            }
+        }
+
+        var current = story.CurrentChapter is { } at ? book.Standing(frontierId, at) : null;
+
+        return new RecapFacts
+        {
+            Title = story.Title,
+            Backstory = catalog().Find(story.Id)?.InYourWords,
+            Fired = fired,
+            Clues = secret is null
+                ? []
+                : [.. Enumerable.Range(0, Math.Min(story.CluesGiven, story.Pacing.Lines))
+                    .Select(index => StoryClues.Text(secret, story.Pacing, index))
+                    .Where(clue => !string.IsNullOrWhiteSpace(clue))
+                    .Select(clue => StorySecret.ForCommander(clue!, commander, Gender()))],
+            HandOff = current is { Adventure.IsAbandoned: false, CurrentBeat: { } beat } ? StoryRecap.HandOff(beat.Trigger, current.Counted) : null,
+            Paused = story.State == StoryState.Paused,
+        };
+    }
+
     /// <summary>Whether the current story is running and switched on.</summary>
     public bool IsRunning(string? frontierId) => stories.Current(frontierId) is { State: StoryState.Running, IsOff: false };
 

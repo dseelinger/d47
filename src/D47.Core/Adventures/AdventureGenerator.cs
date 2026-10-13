@@ -490,7 +490,7 @@ public sealed class AdventureGenerator(
     private static readonly HashSet<string> FirstPersonI = new(StringComparer.Ordinal) { "I", "I'm", "I'll", "I've", "I'd" };
 
     /// <summary>Whether the text holds a first-person word as a whole word; "I" only in capitals.</summary>
-    private static bool FirstPerson(string? text) =>
+    internal static bool FirstPerson(string? text) =>
         !string.IsNullOrEmpty(text)
         && Words.Matches(text).Any(word =>
         {

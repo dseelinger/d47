@@ -27,6 +27,7 @@ public sealed class StoryNarration
     private int _endingBusy;
     private int _narratingScans;
     private int _sayingOpenings;
+    private int _recapBusy;
 
     internal StoryNarration(
         Announcer announcer,
@@ -58,6 +59,8 @@ public sealed class StoryNarration
     internal const string NarratedScanKey = "story.scan";
 
     private const string OpeningKey = "story.opening";
+
+    private const string RecapKey = "story.recap";
 
     /// <summary>Whether a narrated scan line is waiting to be said.</summary>
     internal bool IsNarratingScan => Volatile.Read(ref _narratingScans) > 0;
@@ -237,6 +240,57 @@ public sealed class StoryNarration
 
         _ = Task.Run(() => SpeakStoryLinesAsync("story.end.answer", VoiceRole.ShipAi, posted));
         return answer;
+    }
+
+    /// <summary>
+    /// The Narrator's recap of the story under way, or of the active short story at <paramref name="adventureKey"/>: the
+    /// model's, or the fixed text. Null when there is no such story.
+    /// </summary>
+    public async Task<string?> WriteRecapAsync(string? adventureKey, CancellationToken cancellationToken) =>
+        _stories.Recap(_gameState.Active?.Identity.FrontierId, adventureKey) is { } facts
+            ? await WriteRecapAsync(facts, cancellationToken).ConfigureAwait(false)
+            : null;
+
+    private async Task<string> WriteRecapAsync(RecapFacts facts, CancellationToken cancellationToken) =>
+        StoryRecap.Sayable(await _writer.ComposeRecapAsync(facts, cancellationToken).ConfigureAwait(false), facts);
+
+    /// <summary>
+    /// Has the Narrator say the recap <see cref="WriteRecapAsync(string?, CancellationToken)"/> writes, and returns null; returns
+    /// the refusal when there is no such story. Starts on the pool, and posts nothing to Messages. A press while a recap is
+    /// still being written or said does nothing.
+    /// </summary>
+    public string? Recap(string? adventureKey = null)
+    {
+        if (_stories.Recap(_gameState.Active?.Identity.FrontierId, adventureKey) is not { } facts)
+        {
+            return StoryRecap.NoStory;
+        }
+
+        if (Interlocked.CompareExchange(ref _recapBusy, 1, 0) != 0)
+        {
+            return null;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var said = await WriteRecapAsync(facts, CancellationToken.None).ConfigureAwait(false);
+
+                await _announcer.InTurnAsync(async () =>
+                    await _announcer.SayAsync(new Announcement(RecapKey, said) { Voice = VoiceRole.Narrator }).ConfigureAwait(false)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "The story recap could not be spoken");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _recapBusy, 0);
+            }
+        });
+
+        return null;
     }
 
     /// <summary>Says each line in the given voice, keeping each clip on the message posted for it.</summary>

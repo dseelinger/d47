@@ -411,6 +411,33 @@ internal sealed class LineWriter
             key).ConfigureAwait(false);
     }
 
+    /// <summary>The Narrator's recap, written in one model call that carries no hidden layer; null when no line came back.</summary>
+    internal async Task<string?> ComposeRecapAsync(D47.Core.Stories.RecapFacts facts, CancellationToken cancellationToken)
+    {
+        if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
+        {
+            return null;
+        }
+
+        var ask = D47.Core.Stories.StoryRecap.Ask(facts, CommanderStory.SheetOrName(Settings.Current.Llm.CharacterSheet, GameState.Active?.Identity.Name));
+
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(TimeSpan.FromSeconds(15));
+
+        return await FlavourTurn.AskAsync(
+            Turns.Provider,
+            Turns.Model,
+            ask.Speaker,
+            ask.AboutMe,
+            ask.Instruction,
+            null,
+            Spend,
+            PriceTable.Default,
+            _logger,
+            budget.Token,
+            canBeDirected: DirectableIn(VoiceGroups.Of(VoiceRole.Narrator, null))).ConfigureAwait(false);
+    }
+
     /// <summary>
     /// Position 4 for a flavour line, to the depth the brief asked for (Phase 43). The Narrator, given no
     /// character sheet, names the Commander from the journal.

@@ -220,7 +220,8 @@ public partial class MainWindow : Window
                         (providerId, voiceId, token) => host.Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
                             ?? Task.CompletedTask),
                     host.StoryRatings,
-                    commanderSwitched);
+                    commanderSwitched,
+                    host.Narration.Recap);
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);
