@@ -1391,8 +1391,8 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
         text.AppendLine(ask.Story is null
-            ? "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
-            : "- \"board\": the Commander buys or swaps into a named ship, given as \"ship\". Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
+            ? "- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, such as Anaconda, never the ship's own name. Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
+            : "- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, such as Anaconda, never the ship's own name. Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
         text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
         text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
         text.AppendLine(
@@ -1913,9 +1913,9 @@ public sealed class AdventureGenerator(
             }
             else if (beat.Kind == TriggerKind.Board)
             {
-                if (EliteSpecifications.HullSymbol(beat.Ship) is not { } symbol)
+                if ((EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship)) is not { } symbol)
                 {
-                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; name a ship or use another kind of objective.");
+                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; give \"ship\" as a hull type such as Anaconda, or use another kind of objective.");
                 }
                 else if (ask.Story is null && !BriefNames(ask.Brief, symbol))
                 {
@@ -2231,7 +2231,8 @@ public sealed class AdventureGenerator(
         IReadOnlyList<string>? OwnedHulls = null,
         SystemStandings? Standings = null,
         IReadOnlyList<Mission>? Missions = null,
-        long? ClosedMarketId = null)
+        long? ClosedMarketId = null,
+        IReadOnlyList<(string Name, string Type)>? NamedShips = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -2265,11 +2266,23 @@ public sealed class AdventureGenerator(
                 OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>().Select(type => EliteSpecifications.HullSymbol(type) ?? type)],
                 Standings: state?.Standings,
                 Missions: state?.Missions.Missions,
-                ClosedMarketId: ask.Rewrite?.ClosedMarketId);
+                ClosedMarketId: ask.Rewrite?.ClosedMarketId,
+                NamedShips: [.. new[] { (Name: ship.Name, Type: ship.Type) }
+                    .Concat((state?.Fleet.Ships ?? []).Select(stored => (Name: stored.Name, Type: (string?)stored.Type)))
+                    .Where(named => named is { Name.Length: > 0, Type.Length: > 0 })
+                    .Select(named => (named.Name!, named.Type!))]);
         }
 
         public bool Owns(string symbol) =>
             OwnedHulls?.Any(hull => string.Equals(hull, symbol, StringComparison.OrdinalIgnoreCase)) == true;
+
+        /// <summary>The hull symbol of the Commander's ship with this name, or null.</summary>
+        public string? HullNamed(string? name) =>
+            name is { Length: > 0 }
+                ? (NamedShips ?? []).Where(named => string.Equals(named.Name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .Select(named => EliteSpecifications.HullSymbol(named.Type))
+                    .FirstOrDefault(symbol => symbol is not null)
+                : null;
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
 
