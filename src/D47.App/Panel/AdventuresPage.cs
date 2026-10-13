@@ -79,7 +79,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, MessagesView.PageName));
         _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Short Story"));
-        _messages.IsVisible = surface.Messages is not null;
         _stories.Click += (_, _) => _nav.Drill(StoriesView.Crumb);
         _stories.IsVisible = surface.Stories is not null;
 
@@ -133,6 +132,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             messages.Changed += OnChanged;
         }
 
+        if (_surface.Stories is { } director)
+        {
+            director.Stories.Changed += OnChanged;
+        }
+
         Rebuild();
     }
 
@@ -150,6 +154,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         if (_surface.Messages is { } messages)
         {
             messages.Changed -= OnChanged;
+        }
+
+        if (_surface.Stories is { } director)
+        {
+            director.Stories.Changed -= OnChanged;
         }
     }
 
@@ -200,8 +209,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _problems.IsVisible = problems.Count > 0;
         _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
 
-        if (_surface.Messages is { } store)
+        _messages.IsVisible = false;
+
+        if (_surface.Messages is { } store && InAStory(store))
         {
+            _messages.IsVisible = true;
             _messages.Content = MessagesView.ButtonLabel(store);
         }
 
@@ -264,6 +276,17 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 }
             }
         }
+    }
+
+    /// <summary>Whether the shown Commander has a story or short story under way, or a story ending waiting for an answer.</summary>
+    private bool InAStory(D47.Core.Messages.MessageStore store)
+    {
+        var commander = _surface.Commander();
+
+        return _surface.Stories?.Stories.Current(commander) is not null
+            || _surface.Book.Standings(commander).Any(standing =>
+                !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone)
+            || store.All.Any(message => MessagesView.IsWaiting(message, _surface));
     }
 
     private string AskShutBecause() => !_surface.ModelAvailable()

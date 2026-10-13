@@ -192,16 +192,22 @@ public sealed class MessagesView : UserControl
         return holder;
     }
 
-    private string? Chosen(D47Message message)
+    private string? Chosen(D47Message message) => Chosen(message, _surface);
+
+    private static string? Chosen(D47Message message, AdventureSurface? surface)
     {
         var storyId = message.AdventureKey is { } key && key.StartsWith(StoryEnding.KeyPrefix, StringComparison.Ordinal)
             ? key[StoryEnding.KeyPrefix.Length..]
             : null;
 
-        return storyId is null ? null : _surface?.Stories?.Stories.Find(_surface.Commander(), storyId)?.EndingChoice;
+        return storyId is null ? null : surface?.Stories?.Stories.Find(surface.Commander(), storyId)?.EndingChoice;
     }
 
-    private bool IsWaiting(D47Message message) => message.Answers.Count > 0 && Chosen(message) is null;
+    private bool IsWaiting(D47Message message) => IsWaiting(message, _surface);
+
+    /// <summary>Whether a message offers answers and the shown Commander has not chosen one.</summary>
+    internal static bool IsWaiting(D47Message message, AdventureSurface? surface) =>
+        message.Answers.Count > 0 && Chosen(message, surface) is null;
 
     private string? StoryName(string key)
     {

@@ -360,7 +360,8 @@ Reject the Commander's draft short story and remove it, as the Decline button do
 ### Story log
 
 Every objective said is also kept as a written message, from whoever said it, so a line said during a fight
-is not lost. Open **Story log** on the Stories tab. Lines waiting for your answer come first, then one group
+is not lost. Open **Story log** on the Stories tab. The button is there while a story or short story is under
+way, or while a story's ending is waiting for your answer, and not otherwise. Lines waiting for your answer come first, then one group
 per story, the story with the newest line first and each group newest first. Lines from a story that no
 longer exists are under Earlier stories, and lines tied to no story are under Not tied to a story. Unread
 lines are bold, and the button reads "Story log (2 new)" while any are unread. Opening a line marks it read. A message that was spoken has a **Play** button that
