@@ -516,8 +516,8 @@ public class GameKnowledgeTests
     {
         var session = Fold(
             """{"timestamp":"3311-01-01T00:00:00Z","event":"LoadGame","FID":"F1","Commander":"Jameson"}""",
-            """{"timestamp":"3311-01-01T00:10:00Z","event":"Interdicted","Submitted":false,"Succeeded":false,"Interdictor":"Someone"}""",
-            """{"timestamp":"3311-01-01T00:20:00Z","event":"Interdicted","Submitted":false,"Succeeded":true,"Interdictor":"Someone"}""");
+            """{"timestamp":"3311-01-01T00:10:00Z","event":"EscapeInterdiction","Interdictor":"Someone","IsPlayer":false}""",
+            """{"timestamp":"3311-01-01T00:20:00Z","event":"Interdicted","Submitted":false,"Interdictor":"Someone","IsPlayer":false}""");
 
         Assert.Equal(1, session.Session.Interdictions);
     }

@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+The Interdictions count on the Session page, in the session report and in your ship AI's session remarks now counts every time you were pulled out of supercruise, whether you submitted or fought. Before, it always showed zero.
+
 While a stock story's cast member speaks, the avatar now shows their picture in place of your ship AI's core, in the main window, on the mini panel and on both VR panels. It is the picture the Story log shows, or your own from **Change picture**, drawn whole and not cropped. When the line ends, the core shows again. This includes a cast member's answer to you and a cast message you play again from the Story log. A line from the ship AI or the Narrator, or from a cast member with no picture on disk, leaves the avatar as it is. Before, the core stayed in the avatar while the cast spoke.
 
 The Narrator now has a picture. It shows on the Narrator's turns in the Transcript and on the read page of the Narrator's messages in the Story log, where **Change picture** works for it as it does for the captain and the tower. Narrator messages already in your log show it too. The avatar does not change while the Narrator speaks.

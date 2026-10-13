@@ -156,10 +156,8 @@ public sealed record SessionSummary
 
             "Died" => updated with { Deaths = Deaths + 1 },
 
-            // Only the ones that succeeded against the Commander.
-            "Interdicted" => journalEvent.Bool("Submitted") || !journalEvent.Bool("Succeeded")
-                ? updated
-                : updated with { Interdictions = Interdictions + 1 },
+            // Every time the Commander was pulled out of supercruise, submitted or not.
+            "Interdicted" => updated with { Interdictions = Interdictions + 1 },
 
             _ => updated,
         };
