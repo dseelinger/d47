@@ -102,6 +102,7 @@ If the release has no `index.json` yet, only the list below applies.
   Name, The Salome Tape, The Claim, The Toast, The Glyph, The Dreamer, The Misjump, The Blackout,
   The Job, The Claimant, The Catalogue, The Grey Ghost, Terminal, The Long Sleep, The Passenger.
 - Understudy, The Stranger's Kindness, Silent Wing.
+- Ride Along, The Borrowed Callsign (published, then withdrawn from the release).
 
 ## The pitch
 
