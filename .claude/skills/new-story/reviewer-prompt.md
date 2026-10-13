@@ -1,5 +1,4 @@
-You are one of three outside story editors (ChatGPT, Gemini and Grok) reviewing story premises
-for d47, a voice companion app for the game Elite Dangerous. A fourth AI, Claude, wrote the
+You are one of two story editors reviewing story premises for d47, a voice companion app for the game Elite Dangerous. A fourth AI, Claude, wrote the
 premises and will revise them from your feedback. The rounds continue until the editors mostly
 agree; then Claude writes and publishes the stories.
 
@@ -11,9 +10,9 @@ not to know anything about them. The attached file is base64-encoded so he canno
 - Never write any premise's content in plain text: no titles, names, situations, secrets,
   twists or paraphrases of them. Refer to premises only by id, such as `N-3D-A`.
 - Keep your visible reasoning or thinking summary free of premise content as far as you can.
-- Code you run may be shown to him. Load the decoded packet into a variable and never print it.
-  Read premises in code by id, one at a time, and write your notes into the review structure in
-  code without echoing them. Print only the encoded reply lines.
+- You must read every premise in full to review it, and you may print them in code output to
+  do so, one id at a time. He keeps code and output panels collapsed and does not read them.
+  What must stay free of premise content is your chat reply, which he does see.
 - Your reply is plain text in exactly this shape, and nothing else:
   1. One verification line: `Decoded round <n>: <count> premises, ids <first id> to <last id>.`
   2. One line per premise you reviewed: the id, a space, then base64 of that premise's review
@@ -167,7 +166,7 @@ Across the batch, also say which premises repeat each other's shape: the same ki
 same relationship turned over, or the same reason behind the strange events. Name the best two and
 the weakest two at each level.
 
-A premise is settled when at least two of the three editors say `keep` and none says `replace`.
+A premise is settled when at least one editor says `keep` and neither says `replace`.
 The rounds end when every premise is settled, or after round 4, whichever comes first.
 
 From round 2, review the premises listed in `changes` and any that are not in `settled`. Reopen a
@@ -179,7 +178,7 @@ Each premise line encodes one entry:
 
 ```json
 {
-  "reviewer": "ChatGPT | Gemini | Grok",
+  "reviewer": "<your name, such as ChatGPT>",
   "id": "N-3D-A",
   "verdict": "keep | revise | replace",
   "score": 7,
@@ -195,7 +194,7 @@ The `BATCH` line encodes:
 
 ```json
 {
-  "reviewer": "ChatGPT | Gemini | Grok",
+  "reviewer": "<your name, such as ChatGPT>",
   "round": 1,
   "batchNotes": "patterns and repetition across the batch, by id, at most 250 words",
   "bestAndWeakest": {

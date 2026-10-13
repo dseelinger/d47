@@ -2,6 +2,7 @@
 
     python premise-packet.py encode <premise-dir> --round N --out <packet.txt> [--changes changes.json] [--settled ids.json]
     python premise-packet.py decode <packet.txt> --out <packet.json>
+    python premise-packet.py lint <premise-dir>
     python premise-packet.py tally <reply.txt>... --round N --out <reviews.json>
 
 encode reads every *.json list of premises in <premise-dir>, adds the published cards and used titles,
@@ -44,8 +45,8 @@ def published_index():
 
 def used_titles(cards):
     section = re.search(r"## Titles already used(.*?)## The pitch", SKILL.read_text(encoding="utf-8"), re.S).group(1)
-    listed = section.split("```")[-1].replace("\n", " ").replace("- ", "").split(",")
-    return sorted({t.strip().rstrip(".") for t in listed if t.strip()} | {c["title"] for c in cards})
+    items = " ".join(line.strip().removeprefix("- ") for line in section.splitlines() if line.startswith(("- ", "  ")))
+    return sorted({t.strip().rstrip(".") for t in items.replace(". ", ", ").split(",") if t.strip()} | {c["title"] for c in cards})
 
 
 def encode(args):
@@ -74,6 +75,67 @@ def encode(args):
         sys.exit("round trip failed")
     pathlib.Path(args.out).write_text(encoded, encoding="ascii")
     print(f"round {args.round}: {len(premises)} premises, {len(encoded)} characters, {args.out}")
+
+
+GENRES = ["Monster in the House", "Golden Fleece", "Dude with a Problem", "Whydunit", "Buddy Love", "Rites of Passage",
+          "Fool Triumphant", "Institutionalized", "Out of the Bottle", "Superhero"]
+CORES = ["warden", "cora", "analyst-prime", "llamo", "sentinel", "kex", "mender", "cartographer", "quartermaster", "archivist"]
+LENGTHS = ["3-days", "1-week", "2-weeks", "1-month", "3-months", "6-months", "1-year"]
+STOP = set("""the a an and or but of to in on at for with from by as is are was were be been it its this that these those
+their there they them then than who whom whose what when where why how which not no nor all any each every one two three
+your you commander commander's ship ships story days week weeks month months year years has have had will would can could
+into out over under after before about only also more most much many some such own same other another just even still""".split())
+
+
+def distinctive(text):
+    return {w for w in re.findall(r"[a-z][a-z'-]{3,}", text.lower()) if w not in STOP}
+
+
+def lint(args):
+    """Check the batch and print ids and check names only."""
+    premises = []
+    for path in sorted(pathlib.Path(args.premise_dir).glob("*.json")):
+        premises += json.loads(path.read_text(encoding="utf-8"))
+    cards = published_index()
+    used = {t.lower() for t in used_titles(cards)}
+    published = {(c.get("genre"), c.get("core"), c.get("length")) for c in cards}
+    faults = []
+    for p in premises:
+        i = p["id"]
+        if any(ord(ch) > 127 for ch in json.dumps(p, ensure_ascii=False)):
+            faults.append(f"{i}: non-ASCII")
+        if p.get("genre") not in GENRES or p.get("core") not in CORES or p.get("length") not in LENGTHS:
+            faults.append(f"{i}: genre, core or length not recognised")
+        if p.get("title", "").lower() in used:
+            faults.append(f"{i}: title already used")
+        if re.search(r"\bwant(s|ed)?\b", json.dumps(p), re.I):
+            faults.append(f"{i}: says want")
+        if (p.get("genre"), p.get("core"), p.get("length")) in published:
+            faults.append(f"{i}: same genre, core and length as a published card")
+        if len(p.get("guesses", [])) != 3:
+            faults.append(f"{i}: guesses is not three")
+        shared = distinctive(p.get("stakes", "") + " " + p.get("hook", "")) & distinctive(p.get("secret", "") + " " + p.get("twist", ""))
+        names = {w for w in re.findall(r"\b[A-Z][a-z]+\b", p.get("stakes", "") + " " + p.get("hook", ""))}
+        shared -= {n.lower() for n in names}
+        if len(shared) >= 3:
+            faults.append(f"{i}: stakes or hook shares {len(shared)} words with the secret or twist")
+    titles = [p.get("title", "").lower() for p in premises]
+    if len(set(titles)) != len(titles):
+        faults.append("batch: a title repeats")
+    slots = {}
+    for p in premises:
+        slots.setdefault((p["level"], p["length"]), []).append(p)
+    for key, pair in slots.items():
+        if len(pair) == 2 and (pair[0]["genre"] == pair[1]["genre"] or pair[0]["core"] == pair[1]["core"]):
+            faults.append(f"{pair[0]['id']}/{pair[1]['id']}: slot pair shares a genre or core")
+    for level in ("new", "midrange", "endgame"):
+        group = [p for p in premises if p["level"] == level]
+        kinds = [p.get("twistKind") for p in group]
+        if group and abs(kinds.count("hidden deception") - kinds.count("reversal of the goal")) > 4:
+            faults.append(f"{level}: twist kinds {kinds.count('hidden deception')} deception, {kinds.count('reversal of the goal')} reversal")
+    for fault in faults:
+        print(fault)
+    print(f"{len(premises)} premises, {len(faults)} faults")
 
 
 def decode_text(text):
@@ -145,7 +207,9 @@ def tally(args):
             verdicts.append(entry.get("verdict"))
             rules = ",".join(str(r.get("rule")) for r in entry.get("rules", []))
             cells.append(f"{entry.get('verdict', '?')[:3]} {entry.get('score', '?')}{' r' + rules if rules else ''}".ljust(14))
-        done = verdicts.count("keep") >= 2 and "replace" not in verdicts
+        entries = [review["premises"][premise_id] for review in reviews if premise_id in review["premises"]]
+        flagged = any(e.get("specificMatch") or any(r.get("rule") != 11 for r in e.get("rules", [])) for e in entries)
+        done = verdicts.count("keep") >= max(1, len(reviews) - 1) and "replace" not in verdicts and not flagged
         if done:
             settled.append(premise_id)
         print(premise_id.ljust(10) + "  ".join(cells) + ("  yes" if done else ""))
@@ -165,12 +229,14 @@ def main():
     d = sub.add_parser("decode")
     d.add_argument("packet")
     d.add_argument("--out", required=True)
+    lt = sub.add_parser("lint")
+    lt.add_argument("premise_dir")
     t = sub.add_parser("tally")
     t.add_argument("replies", nargs="+")
     t.add_argument("--round", type=int, required=True)
     t.add_argument("--out", required=True)
     args = parser.parse_args()
-    {"encode": encode, "decode": decode, "tally": tally}[args.command](args)
+    {"encode": encode, "decode": decode, "lint": lint, "tally": tally}[args.command](args)
 
 
 if __name__ == "__main__":

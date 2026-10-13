@@ -274,7 +274,7 @@ record it on the draft page and name the issue (step 3).
 ## Surprise stories
 
 The maintainer can ask for stories he does not read: premises written without being shown to him,
-reviewed by ChatGPT, Gemini and Grok, then written and published unseen. The rest of this skill
+reviewed by ChatGPT and a Sonnet subagent, then written and published unseen. The rest of this skill
 applies except where this section says otherwise.
 
 ### Keep them from him
@@ -316,9 +316,27 @@ applies except where this section says otherwise.
    ```
 
    A reply that does not decode is reported by reviewer name, and he asks that reviewer again.
-5. Read the decoded reviews, revise or replace the premises, and encode the next round.
+   The second reviewer is a Sonnet subagent run in this session. It works from plain files in the scratchpad, in two phases, briefed by
+   `sonnet-reviewer.md` beside this file. In the first it sees only what a card would show (title,
+   genre, tone, level, length, beacon, situation, hook and stakes) and records three guesses per
+   id. In the second, sent as a message once the guesses are on disk, it gets the full premises
+   and reviews them against its guesses, reporting a specific match (it named the secret) apart
+   from a shape match (only the kind of reveal). Start a fresh one each round. Convert its JSON to
+   reply lines and tally it with ChatGPT's.
+5. Before encoding a round, the `stakes` and `hook` of every premise are written as card text a
+   player could read at the pick: they share no distinctive noun with the premise's own secret or
+   twist. Each premise's `guesses` are the three the last Sonnet blind pass recorded for it, and
+   its twist is none of them, nor a specific match to any of them. No premise has the same genre,
+   core and length as a published card. Twist kinds stay near half and half at each level.
+6. Freeze what is settled. A premise kept by at least one reviewer, with no replace, rule
+   violation or specific twist match against it, is left untouched and listed in `--settled`.
+   Change only the rest.
+7. Read the decoded reviews, revise or replace the premises, and encode the next round.
 
-A premise is settled when at least two of the three say `keep` and none says `replace`. The rounds
+A premise is settled when at least one reviewer says `keep`, neither says `replace`, and no entry
+cites a rule other than 11 or reports a specific match; the tally applies all four. A settled
+premise is reopened only for a rule violation or a specific match, and every reopened id goes
+in `changes`, since a reviewer skips what is in `settled`. The rounds
 end when every premise is settled, or after round 4. The last packet is then final, and the packet
 page says so. Premises still unsettled after round 4 are revised once more on the reviewers' notes
 and go into the final packet.
