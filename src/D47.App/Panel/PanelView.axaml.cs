@@ -324,6 +324,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                 _bound.PropertyChanged += OnModelChanged;
                 Avatar.Core = _bound.CoreId;
                 Avatar.Show(_bound.LoopState);
+                ApplySpeaker();
                 ApplyMicrophone();
                 ApplyAskHint();
             }
@@ -420,6 +421,16 @@ public partial class PanelView : UserControl, IPanelTabHost
 
                 var core = _bound.CoreId;
                 Dispatcher.UIThread.Post(() => Avatar.Core = core);
+                return;
+
+            case nameof(PanelViewModel.SpeakingPicture):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    ApplySpeaker();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(ApplySpeaker);
                 return;
 
             case nameof(PanelViewModel.Microphone):
@@ -625,7 +636,18 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableCommanderName(Func<string?> name) => _commanderName = name;
 
     /// <summary>Draws each Conversation turn with its speaker's picture, where it has one on disk.</summary>
-    public void EnableSpeakerPictures(SpeakerPortraits portraits) => _portraits = portraits;
+    public void EnableSpeakerPictures(SpeakerPortraits portraits)
+    {
+        _portraits = portraits;
+        ApplySpeaker();
+    }
+
+    /// <summary>The width a speaking cast member's picture is decoded to for the avatar: twice the header avatar, for high-DPI displays.</summary>
+    private const int SpeakerAvatarWidth = (int)(HeaderAvatarExtent * 2);
+
+    /// <summary>Shows the speaking cast member's picture in the avatar, or the core when there is none or it has no file.</summary>
+    private void ApplySpeaker() =>
+        Avatar.Speaker = _bound?.SpeakingPicture is { } picture ? _portraits?.For(picture, SpeakerAvatarWidth) : null;
 
     private SpeakerPortraits? _portraits;
 

@@ -106,6 +106,9 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>The row this pipeline's voice was cast in where it is not the provider's own, or null.</summary>
     private readonly string? _voiceRow;
 
+    /// <summary>The picture name of the story cast member speaking, carried on every request, or null.</summary>
+    private readonly string? _picture;
+
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
     /// <param name="Text">The written form: no delivery direction in it, ever.</param>
     /// <param name="Directed">
@@ -138,7 +141,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         bool guardianTreated = false,
         bool keep = false,
         Func<IPcmFilter>? running = null,
-        string? voiceRow = null)
+        string? voiceRow = null,
+        string? picture = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -156,6 +160,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _address = address;
         _kept = keep ? [] : null;
         _voiceRow = voiceRow;
+        _picture = picture;
 
         // Shut up has to reach synthesis, not just the queue.
         _arbiter.Silenced += Abandon;
@@ -543,6 +548,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     Arriving = spoken.Arriving,
                     Group = _group,
                     Caption = _captioned ? Attributed(spoken.Text) : null,
+                    Picture = _picture,
                 });
 
                 var whole = spoken.Arriving?.Whole ?? Task.FromResult(spoken.Clip!);

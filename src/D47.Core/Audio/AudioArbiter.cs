@@ -43,6 +43,9 @@ public sealed record AudioRequest
 
     /// <summary>The text this is speaking, if any.</summary>
     public string? Caption { get; init; }
+
+    /// <summary>The picture name of the story cast member speaking this, or null.</summary>
+    public string? Picture { get; init; }
 }
 
 /// <summary>What the arbiter is doing right now.</summary>
@@ -52,12 +55,14 @@ public sealed record AudioRequest
 /// <param name="Utterance">
 /// Which clip <paramref name="Caption"/> belongs to, or null when nothing is playing.
 /// </param>
+/// <param name="Picture">The picture name of the story cast member whose line is playing, or null.</param>
 public sealed record AudioActivity(
     AudioChannel? Channel,
     string? Caption,
     bool BedPlaying,
     bool MusicPlaying = false,
-    long? Utterance = null);
+    long? Utterance = null,
+    string? Picture = null);
 
 /// <summary>The one queue in front of every audible thing.</summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
@@ -611,7 +616,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _current?.Request.Caption,
             _bed is not null,
             _music is not null,
-            _current?.Id);
+            _current?.Id,
+            _current?.Request.Picture);
 
     public void Dispose()
     {

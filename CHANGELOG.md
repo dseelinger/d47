@@ -8,6 +8,8 @@
 
 ## 1.27.0 — Stock stories begin
 
+While a stock story's cast member speaks, the avatar now shows their picture in place of your ship AI's core, in the main window, on the mini panel and on both VR panels. It is the picture the Story log shows, or your own from **Change picture**, drawn whole and not cropped. When the line ends, the core shows again. This includes a cast member's answer to you and a cast message you play again from the Story log. A line from the ship AI or the Narrator, or from a cast member with no picture on disk, leaves the avatar as it is. Before, the core stayed in the avatar while the cast spoke.
+
 You can now answer a stock story's cast member out loud. For ninety seconds after a cast member speaks, whether in an opening, an objective, a clue, a finale line or a reaction, whatever you say goes to them, and they answer in the first person, in their own voice. Each reply restarts the ninety seconds, and one line takes at most four replies. A command d47 runs without the model, such as "gear down", and anything that starts with your ship AI's name still go to the ship. Each answer is posted to the Story log from the member, with their picture and its clip, below what you said. Nothing opens while the story is paused or switched off, or while the game runs without Odyssey. Before, the cast spoke to you and you could not answer them.
 
 When a hired pilot or crew seat is still in conversation and then the Narrator or a cast member speaks, what you say next now goes to whoever spoke last. Before, it went to the crew.

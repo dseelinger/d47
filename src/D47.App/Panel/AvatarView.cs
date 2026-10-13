@@ -35,6 +35,7 @@ public sealed class AvatarView : UserControl
     private LoopState _state = LoopState.Idle;
 
     private string? _coreId;
+    private Bitmap? _speaker;
     private bool _still;
     private bool _detached;
     private string? _clipPath;
@@ -105,6 +106,22 @@ public sealed class AvatarView : UserControl
             }
 
             _coreId = value;
+            Apply(_state);
+        }
+    }
+
+    /// <summary>A story cast member's picture, shown whole in place of the core while they speak; null for the core.</summary>
+    public Bitmap? Speaker
+    {
+        get => _speaker;
+        set
+        {
+            if (ReferenceEquals(_speaker, value))
+            {
+                return;
+            }
+
+            _speaker = value;
             Apply(_state);
         }
     }
@@ -197,6 +214,17 @@ public sealed class AvatarView : UserControl
         _state = state;
 
         StopSequence();
+
+        // Owned by the caller's cache, so never put in the sequence, which is disposed.
+        if (_speaker is not null)
+        {
+            _custom.Source = _speaker;
+            _custom.IsVisible = true;
+            _ring.IsVisible = false;
+            _core.IsVisible = false;
+
+            return;
+        }
 
         if (LoadCustom(state) is { Count: > 0 } custom)
         {

@@ -192,6 +192,7 @@ public partial class App(AppHost? host) : Application
                     Galaxy = () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
                     StarSystem = window?.StarSystem,
                     Commanders = host.Commanders,
+                    Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
                 });
 
             // Through the same route as the other two (Phase 45).

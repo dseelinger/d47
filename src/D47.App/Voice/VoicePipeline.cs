@@ -77,6 +77,9 @@ public sealed class VoicePipeline(
     /// <summary>The story cast member's voice the next turn is spoken in, or null for <see cref="Voice"/>.</summary>
     public D47.Core.Stories.PinnedVoice? Pinned { get; set; }
 
+    /// <summary>The picture name of the story cast member speaking the next turn, or null.</summary>
+    public string? Picture { get; set; }
+
     /// <summary>What the last turn spoken in a <see cref="Pinned"/> voice queued to play, or null.</summary>
     public SpokenClip? KeptTurn { get; private set; }
 
@@ -253,7 +256,8 @@ public sealed class VoicePipeline(
         string? captionSpeaker = null,
         VoiceRole role = VoiceRole.ShipAi,
         bool overheard = false,
-        Func<IPcmFilter>? runningColour = null)
+        Func<IPcmFilter>? runningColour = null,
+        string? picture = null)
     {
         if (_held || Speaker(slot) is not { } provider)
         {
@@ -263,7 +267,7 @@ public sealed class VoicePipeline(
         var applied = colour ?? Colour(role, overheard: overheard);
         var running = runningColour ?? (colour is null ? Running(role, applied, overheard: overheard) : null);
 
-        return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false)
+        return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false, picture)
             .ConfigureAwait(false);
     }
 
@@ -297,7 +301,8 @@ public sealed class VoicePipeline(
             guardianTreated: IsGuardianTreated(SpeakingAs, colour),
             keep: true,
             running: D47.Core.Stories.CastVoice.Running(pinned),
-            voiceRow: SpeechCapability.VoiceRowFor(SpeakingAs));
+            voiceRow: SpeechCapability.VoiceRowFor(SpeakingAs),
+            picture: Picture);
 
         // A member in the crew voice speaks through the slot, so its failures count against the slot; a pinned voice's do not.
         if (crew)
@@ -360,7 +365,8 @@ public sealed class VoicePipeline(
         bool captioned,
         string? captionSpeaker,
         VoiceRole role,
-        bool pinned)
+        bool pinned,
+        string? picture = null)
     {
         // The voice is a parameter rather than always the ship AI's, because Phase 11 has several things to
         // say that are not the ship AI speaking — a re-voiced in-game message, a carrier's tower, a crew
@@ -381,7 +387,8 @@ public sealed class VoicePipeline(
             IsGuardianTreated(role, applied),
             keep: true,
             running: running,
-            voiceRow: SpeechCapability.VoiceRowFor(role));
+            voiceRow: SpeechCapability.VoiceRowFor(role),
+            picture: picture);
 
         if (!pinned)
         {
@@ -450,7 +457,8 @@ public sealed class VoicePipeline(
                     VoiceGroup.Aboard,
                     announcement.Speaker,
                     announcement.Voice,
-                    runningColour: D47.Core.Stories.CastVoice.Running(crew))
+                    runningColour: D47.Core.Stories.CastVoice.Running(crew),
+                    picture: announcement.Picture)
                 .ConfigureAwait(false);
         }
 
@@ -474,7 +482,8 @@ public sealed class VoicePipeline(
                     announcement.Transcript is null,
                     announcement.Speaker,
                     announcement.Voice,
-                    pinned: true)
+                    pinned: true,
+                    announcement.Picture)
                 .ConfigureAwait(false);
         }
 
@@ -503,7 +512,10 @@ public sealed class VoicePipeline(
                 slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel),
 
                 // And who to name on the caption when this is not d47 talking (#201).
-                captionSpeaker: announcement.Seat is not null ? announcement.Speaker : VoiceRoles.Called(announcement.Voice))
+                captionSpeaker: announcement.Seat is not null ? announcement.Speaker : VoiceRoles.Called(announcement.Voice),
+
+                // A story cast member's picture, shown in the avatar while the line plays.
+                picture: announcement.Picture)
             .ConfigureAwait(false);
     }
 

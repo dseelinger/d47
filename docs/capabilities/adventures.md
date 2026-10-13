@@ -514,6 +514,11 @@ speaker marked `primary` is a recurring character named on the story's card, and
 that speaker says is posted to the Story log with the picture, which the message page shows above the text, at
 most 240 px wide. A line from the ship's AI or the narrator has none.
 
+While the speaker's line plays, including an answer to you and a message played again from the Story log, the
+avatar shows the picture whole in place of the core aboard: in the main window, on the mini panel, and on both
+VR panels. When the line ends, the core shows again. A speaker whose picture is not on disk leaves the avatar
+showing the core.
+
 Under the picture, **Change picture** opens a file picker for a PNG, JPEG, BMP or WebP file under 10 MB.
 D47 reads it, scales it to at most 1024 px on the longer side and keeps it as
 `data\pictures\<story-id>.<cast-id>.png` (with the version suffix for a speaker in two versions). A file

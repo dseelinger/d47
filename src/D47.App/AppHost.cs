@@ -3212,6 +3212,10 @@ public sealed class AppHost : IDisposable
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
 
+        // And shows a story cast member while their line plays. Read when the post runs, because two changes raised on
+        // different threads can be posted out of order.
+        audio.ActivityChanged += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => host.Panel.SpeakingPicture = audio.Activity.Picture);
+
         // That the microphone is open, on both surfaces, as a property of the gate policy rather than of any
         // one capability (Phase 13).
         gate.StateChanged += state => host.Listener.ShowMicrophone(state);
@@ -5019,6 +5023,7 @@ public sealed class AppHost : IDisposable
             Clip = PcmConverter.ToStandard(clip),
             Group = MessagePlaybackGroup,
             Caption = message.Body,
+            Picture = message.Picture,
         });
 
         return null;
@@ -5359,6 +5364,7 @@ public sealed class AppHost : IDisposable
         {
             host.Voice.Voice = voice;
             host.Voice.Pinned = null;
+            host.Voice.Picture = null;
             host.Voice.CaptionSpeaker = captionSpeaker;
             host.Voice.SpeakingAs = VoiceRole.ShipAi;
         }
@@ -5370,7 +5376,7 @@ public sealed class AppHost : IDisposable
         var restore = new AddressedVoice(this, Voice.Voice, Voice.CaptionSpeaker);
 
         // A story's cast member speaks in the voice the story gave them, as their lines are spoken.
-        if (CastVoice(addressed) is { Pinned: { } pinned })
+        if (CastVoice(addressed) is { Pinned: { } pinned } cast)
         {
             var line = new Announcement(D47.Core.Stories.StoryLines.KeyPrefix, string.Empty)
             {
@@ -5381,6 +5387,7 @@ public sealed class AppHost : IDisposable
 
             Voice.Voice = SpeakerAccent.VoiceOf(CastFor(line), line);
             Voice.Pinned = pinned;
+            Voice.Picture = SpeakerPictures.For(cast.Cast);
             Voice.SpeakingAs = VoiceRole.Crew;
             Voice.CaptionSpeaker = addressed.Name;
 

@@ -5,15 +5,15 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Conversation page's speaker pictures, each file decoded once at <see cref="Size"/> and kept by path and
-/// last-write time. A file that fails to decode yields null and is logged once.
+/// Speaker pictures, each file decoded once per width and kept by path and last-write time. A file that fails to
+/// decode yields null and is logged once.
 /// </summary>
 public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger = null)
 {
-    /// <summary>The side of the square a picture is drawn in.</summary>
+    /// <summary>The side of the square a Conversation picture is drawn in.</summary>
     public const int Size = 44;
 
-    private readonly Dictionary<(string Path, DateTime Written), Bitmap?> _decoded = [];
+    private readonly Dictionary<(string Path, DateTime Written, int Width), Bitmap?> _decoded = [];
 
     /// <summary>The pictures these bitmaps are read from.</summary>
     public SpeakerPictures Pictures => pictures;
@@ -21,8 +21,11 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
     /// <summary>How many files have been decoded.</summary>
     public int Decodes { get; private set; }
 
-    /// <summary>The bitmap for <paramref name="picture"/>, or null when it has no file or the file does not decode.</summary>
-    public Bitmap? For(string? picture)
+    /// <summary>The bitmap for <paramref name="picture"/> at <see cref="Size"/>, or null when it has no file or the file does not decode.</summary>
+    public Bitmap? For(string? picture) => For(picture, Size);
+
+    /// <summary>The bitmap for <paramref name="picture"/> decoded to <paramref name="width"/>, or null when it has no file or the file does not decode.</summary>
+    public Bitmap? For(string? picture, int width)
     {
         if (pictures.Find(picture) is not { } file)
         {
@@ -34,7 +37,7 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
             return null;
         }
 
-        var key = (file, state.Written);
+        var key = (file, state.Written, width);
 
         if (_decoded.TryGetValue(key, out var cached))
         {
@@ -46,7 +49,7 @@ public sealed class SpeakerPortraits(SpeakerPictures pictures, ILogger? logger =
         try
         {
             using var stream = pictures.Files.OpenRead(file) ?? throw new FileNotFoundException("The picture is gone.", file);
-            return _decoded[key] = Bitmap.DecodeToWidth(stream, Size, BitmapInterpolationMode.HighQuality);
+            return _decoded[key] = Bitmap.DecodeToWidth(stream, width, BitmapInterpolationMode.HighQuality);
         }
         catch (Exception ex)
         {
