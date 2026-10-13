@@ -484,6 +484,20 @@ public class PanelNavigationTests
         Assert.Equal(["fleet", "ship:1"], nav.TrailOf(PanelTab.Assets).Select(crumb => crumb.Key));
     }
 
+    /// <summary>A trail put on a tab that is not showing lands on that tab, and the tab showing is left as it was.</summary>
+    [Fact]
+    public void ATrailGoesToItsOwnTabNotTheOneShowing()
+    {
+        var nav = Furnished();
+
+        Assert.True(nav.Select(PanelTab.Commander));
+        Assert.True(nav.GoTo(PanelTab.Assets, new NavCrumb("ship:1", "Cobra")));
+
+        Assert.Equal(PanelTab.Commander, nav.Tab);
+        Assert.Equal(["checklist"], nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(["fleet", "ship:1"], nav.TrailOf(PanelTab.Assets).Select(crumb => crumb.Key));
+    }
+
     /// <summary>Two crumbs of one level take turns in it rather than stacking.</summary>
     [Fact]
     public void TwoCrumbsOfOneLevelTakeTurns()

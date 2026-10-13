@@ -388,11 +388,17 @@ public sealed class PanelNavigator
     public bool GoTo(params NavCrumb[] crumbs) => GoTo((IReadOnlyList<NavCrumb>)crumbs);
 
     /// <inheritdoc cref="GoTo(NavCrumb[])"/>
-    public bool GoTo(IReadOnlyList<NavCrumb> crumbs)
-    {
-        var trail = Mutable();
+    public bool GoTo(IReadOnlyList<NavCrumb> crumbs) => GoTo(Tab, crumbs);
 
-        if (trail is null || Modal)
+    /// <summary>Puts a tab's current root at the end of a trail, whether or not that tab is showing.</summary>
+    public bool GoTo(PanelTab tab, params NavCrumb[] crumbs) => GoTo(tab, (IReadOnlyList<NavCrumb>)crumbs);
+
+    /// <inheritdoc cref="GoTo(PanelTab, NavCrumb[])"/>
+    public bool GoTo(PanelTab tab, IReadOnlyList<NavCrumb> crumbs)
+    {
+        var trail = Mutable(tab);
+
+        if (trail is null || trail[^1].Modal)
         {
             return false;
         }

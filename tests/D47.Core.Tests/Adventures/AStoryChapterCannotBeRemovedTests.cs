@@ -17,8 +17,8 @@ public class AStoryChapterCannotBeRemovedTests
         new() { Adventure = adventure, Fired = [.. Enumerable.Repeat(Accepted, fired)] };
 
     [Fact]
-    public void AStoryChapterUnderWayShowsAbandonAndNothingElse() =>
-        Assert.Equal(["Abandon"], Standing(Chapter(story: true, begun: true)).ReadingButtons());
+    public void AStoryChapterUnderWayShowsNoButtons() =>
+        Assert.Empty(Standing(Chapter(story: true, begun: true)).ReadingButtons());
 
     [Fact]
     public void AnAbandonedStoryChapterShowsBeginAgainAndNothingElse() =>

@@ -29,7 +29,7 @@ public class AStoryChapterShowsNoPremiseTests
 
     private const string OwnPremise = "A courier run that goes wrong at the last dock.";
 
-    private sealed record Surface(Window Window, PanelView Panel, AdventureBook Book);
+    private sealed record Surface(Window Window, PanelView Panel, AdventureBook Book, StoryDirector Director);
 
     private static Adventure Chapter(string key, string name, string premise, string? storyId) => new()
     {
@@ -94,7 +94,7 @@ public class AStoryChapterShowsNoPremiseTests
         panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel, book);
+        return new Surface(window, panel, book, director);
     }
 
     private static void Read(PanelView panel, string key, string name)
@@ -140,6 +140,33 @@ public class AStoryChapterShowsNoPremiseTests
 
         Read(surface.Panel, "the-last-dock", "The Last Dock");
         Assert.Contains(OwnPremise, Drawn(surface.Panel), StringComparison.OrdinalIgnoreCase);
+
+        surface.Window.Close();
+    }
+
+    private static List<CheckBox> StoryOn(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<CheckBox>().Where(box => box.Content is TextBlock { Text: "Story on" })];
+
+    [AvaloniaFact]
+    public void AChapterUnderWayPausesTheStoryAndCannotBeAbandoned()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var surface = Open();
+
+        Read(surface.Panel, "the-first-light", "The First Light");
+        Assert.DoesNotContain("Abandon", Buttons(surface.Panel));
+
+        var box = Assert.Single(StoryOn(surface.Panel));
+        Assert.True(box.IsChecked);
+
+        box.IsChecked = false;
+        Assert.True(surface.Director.IsOff("F1"));
+        Assert.True(surface.Book.Standing("F1", "the-first-light")?.Adventure.IsActive);
+
+        Read(surface.Panel, "the-last-dock", "The Last Dock");
+        Assert.Contains("Abandon", Buttons(surface.Panel));
+        Assert.Empty(StoryOn(surface.Panel));
 
         surface.Window.Close();
     }

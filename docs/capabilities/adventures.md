@@ -428,8 +428,8 @@ A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after yo
 speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
 chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
 month or longer keeps the real scan.
-**Abandon** ends the story. Neither changes your Guardian cores. Abandoning a chapter on its own page
-pauses the story, and **Resume** on the Stories page begins that chapter again.
+**Abandon** ends the story. Neither changes your Guardian cores. A chapter's own page has no Abandon;
+it has **Story on**, which pauses the story.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
 you scan the story's first Guardian beacon, or at the pick of a story shorter than a month, that core comes aboard in place of the core you had, says
@@ -710,7 +710,7 @@ Refuse the objective the Commander's story chapter is waiting on and write a dif
 
 ### Pausing the story
 
-Clear **Story on**, on the Stories page or on the mini panel, or say "pause the story", and the
+Clear **Story on**, on the Stories page, on the chapter's page or on the mini panel, or say "pause the story", and the
 running stock story goes quiet until you switch it on again. While it is off no objective is said, no
 nudge or clue is owed, nothing from the story is posted to the Story log, missions get no story aside, and the
 hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.

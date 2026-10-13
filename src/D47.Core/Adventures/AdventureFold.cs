@@ -57,7 +57,7 @@ public sealed record AdventureStanding
 
     public bool EndingReached => IsDone;
 
-    /// <summary>The labels of the buttons on the reading page, in order. A stock story's chapter has no Remove or Write the next chapter.</summary>
+    /// <summary>The labels of the buttons on the reading page, in order. A stock story's chapter has no Abandon, Remove or Write the next chapter.</summary>
     public IReadOnlyList<string> ReadingButtons()
     {
         var adventure = Adventure;
@@ -80,7 +80,10 @@ public sealed record AdventureStanding
         }
         else if (!IsDone)
         {
-            buttons.Add("Abandon");
+            if (!story)
+            {
+                buttons.Add("Abandon");
+            }
         }
         else if (!story)
         {

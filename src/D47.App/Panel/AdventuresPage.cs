@@ -502,6 +502,13 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 })));
         }
 
+        if (_surface.Stories is { } stories
+            && stories.Stories.Current(drawnFor) is { } story
+            && string.Equals(story.CurrentChapter, adventure.Key, StringComparison.Ordinal))
+        {
+            bar.Children.Add(StoriesView.StoryOnBox(_surface, stories, story, drawnFor));
+        }
+
         return bar;
     }
 
@@ -740,8 +747,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
 
-        // Below the root only: the root is the tab's own and GoTo keeps it.
-        _nav.GoTo(new NavCrumb(ReadPrefix + key, stored.Name));
+        // Below the root only: the root is the tab's own and GoTo keeps it. The Stories tab rather than the one
+        // showing, which the Commander may have changed while the story was written.
+        _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, stored.Name));
     }
 
     private string UniqueKey(string wanted, string? keep)

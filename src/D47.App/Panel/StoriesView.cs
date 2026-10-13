@@ -758,7 +758,7 @@ public sealed class StoriesView : UserControl
             && _director.Stories.Current(commander)?.CurrentChapter is { } key
             && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
-            _nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
+            _nav.GoTo(PanelTab.Stories, new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
         }
     }
 
