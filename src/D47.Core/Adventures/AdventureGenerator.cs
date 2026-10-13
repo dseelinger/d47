@@ -615,7 +615,7 @@ public sealed class AdventureGenerator(
             var open = new List<StationSummary>();
 
             foreach (var station in stations.Stations.Where(station =>
-                         !facts.NeedsPermit(station.SystemName)
+                         !PermitSystemTable.Locked(station.SystemName)
                          && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
                          && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
             {
@@ -627,7 +627,7 @@ public sealed class AdventureGenerator(
 
             return new Candidates(
                 open,
-                [.. bodies.Bodies.Where(body => !facts.NeedsPermit(body.SystemName))])
+                [.. bodies.Bodies.Where(body => !PermitSystemTable.Locked(body.SystemName))])
             {
                 Anarchy = anarchy,
             };
@@ -657,7 +657,7 @@ public sealed class AdventureGenerator(
         {
             var found = await search.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return [.. found.Systems.Where(system => IsAnarchy(system.Government) && !facts.NeedsPermit(system.Name)).Take(5)];
+            return [.. found.Systems.Where(system => IsAnarchy(system.Government) && !PermitSystemTable.Locked(system.Name)).Take(5)];
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1999,7 +1999,7 @@ public sealed class AdventureGenerator(
                         // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
                         refusals.Add($"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
                     }
-                    else if (facts.NeedsPermit(place.System))
+                    else if (PermitSystemTable.Locked(place.System))
                     {
                         refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
                     }
@@ -2117,7 +2117,7 @@ public sealed class AdventureGenerator(
             return (null, resolution.Refusal ?? $"{Where} could not be resolved.");
         }
 
-        if (facts.NeedsPermit(found))
+        if (PermitSystemTable.Locked(found))
         {
             return (null, $"{Where} is in {found}, which needs a permit the Commander may not hold; use a system without one.");
         }
@@ -2285,13 +2285,6 @@ public sealed class AdventureGenerator(
                 : null;
 
         private static string? PadOf(string? type) => EliteSpecifications.Ship(type)?.Pad;
-
-        /// <summary>
-        /// Whether a system needs a permit. The journal does not say which permits are held, so every locked
-        /// system counts except the one the Commander is already in.
-        /// </summary>
-        public bool NeedsPermit(string? system) =>
-            PermitSystemTable.Locked(system) && !string.Equals(system, System, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// The smallest pad a dock beat's station must have: the current ship's when the story stays in it,

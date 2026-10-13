@@ -5,9 +5,9 @@ using Xunit;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A generated adventure never sends the Commander to a permit-locked system, because the journal does not say
-/// which permits they hold: such a system is left out of the places offered, and a beat that names one is sent
-/// back through the turn.
+/// A generated adventure never sends the Commander to a permit-locked system, the one they are in included,
+/// because the journal does not say which permits they hold: such a system is left out of the places offered, and
+/// a beat that names one is sent back through the turn.
 /// </summary>
 public sealed class APermitSystemIsNeverAStopTests
 {
@@ -50,6 +50,29 @@ public sealed class APermitSystemIsNeverAStopTests
         Assert.Contains(
             "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
             provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task APermitSystemTheCommanderIsInIsNoStopEither()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(ToShinrarta),
+            RoundScriptedLlmProvider.Saying(Elsewhere));
+
+        var outcome = await AdventureGeneratorTests.Generator(
+                provider,
+                new AdventureGeneratorTests.Galaxy(),
+                1,
+                """{ "timestamp":"2026-08-22T11:02:00Z", "event":"Location", "StarSystem":"Shinrarta Dezhra", "SystemAddress":3932277478106, "StarPos":[55.71875,17.59375,27.15625], "Docked":false }""")
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.DoesNotContain(outcome.Draft!.Beats, beat => beat.Trigger.System == "Shinrarta Dezhra");
+        Assert.Contains(
+            "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold",
+            provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain("Jameson Memorial", provider.Requests[0].Prompt.History[0].Text);
     }
 
     [Fact]
