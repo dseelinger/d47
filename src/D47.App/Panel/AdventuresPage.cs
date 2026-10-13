@@ -1168,9 +1168,18 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     {
         var adventure = standing.Adventure;
 
-        if (!string.IsNullOrWhiteSpace(adventure.Opening))
+        if (adventure.OpeningLines.Count == 1 && named(adventure.OpeningSpeaker) is null)
         {
             page.Children.Add(Labelled("Opening", adventure.Opening));
+        }
+        else if (adventure.OpeningLines.Count > 0)
+        {
+            page.Children.Add(Labelled("Opening", null));
+
+            foreach (var line in adventure.OpeningLines)
+            {
+                page.Children.Add(named(line.Speaker) is { } name ? Labelled(name, line.Text) : Text(line.Text, TypeScale.Body));
+            }
         }
 
         var shown = adventure.IsBegun ? standing.Fired.Count : 0;

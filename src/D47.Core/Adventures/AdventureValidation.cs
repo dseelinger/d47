@@ -106,9 +106,14 @@ public static class AdventureValidation
                 $"The name is {adventure.Name.Trim().Length} characters; at most {AdventureLimits.MaxNameLength}.");
         }
 
-        if (adventure.Opening is { } opening && opening.Trim().Length > AdventureLimits.MaxLineLength)
+        if (adventure.OpeningLines.Count > AdventureLimits.MaxLinesPerBeat)
         {
-            problems.Add($"The opening is {opening.Trim().Length} characters; at most {AdventureLimits.MaxLineLength}.");
+            problems.Add($"The opening has {adventure.OpeningLines.Count} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
+        }
+
+        foreach (var opening in adventure.OpeningLines.Where(line => line.Text.Trim().Length > AdventureLimits.MaxLineLength))
+        {
+            problems.Add($"The opening's line is {opening.Text.Trim().Length} characters; at most {AdventureLimits.MaxLineLength}.");
         }
 
         if (adventure.Spine is { } spine)

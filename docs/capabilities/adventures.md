@@ -522,6 +522,11 @@ each chapter the opening and every objective's line. The chapter writer is told 
 member's name and who they are, and returns a speaker for every line it writes. A chapter that gives a
 line to anyone else is sent back once with the reason, and refused if it comes back the same way.
 
+The opening and each objective have one to three lines, spoken in order. When you hear a cast member in a
+chapter (a recording plays or a call comes in), their words are a line in their own voice, not a
+description of what they said. A cast member may give their own name only when introducing themselves:
+"This is …", "My name is …" or "… here".
+
 - **`ship`** is the core aboard, in the ship's voice as you set it under **Its voice**. While the core
   aboard is stock COVAS, a `ship` line is spoken in the narrator voice and posted from the Narrator, and
   the chapter writer is told so, so it writes those lines as narration. With a Guardian core or a core you

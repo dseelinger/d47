@@ -382,8 +382,11 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
                     Ending = spine.Ending?.Trim(),
                 }
                 : null,
-            Opening = record.Opening?.Trim(),
-            OpeningSpeaker = record.OpeningSpeaker,
+            OpeningLines = record.OpeningLines is { Count: > 0 } opening
+                ? [.. opening.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker })]
+                : record.Opening is { } first
+                    ? [new AdventureLine { Text = first.Trim(), Speaker = record.OpeningSpeaker }]
+                    : [],
             Beats = beats,
             AcceptedAt = record.AcceptedAt,
             AbandonedAt = record.AbandonedAt,
@@ -424,6 +427,9 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
             : null,
         Opening = adventure.Opening,
         OpeningSpeaker = adventure.OpeningSpeaker,
+        OpeningLines = adventure.OpeningLines.Count > 1
+            ? [.. adventure.OpeningLines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker })]
+            : null,
         Beats =
         [
             .. adventure.Beats.Select(beat => new BeatRecord
@@ -495,6 +501,9 @@ public sealed class AdventureStore(string path, IFileSystem files, ILogger<Adven
         public string? Opening { get; set; }
 
         public string? OpeningSpeaker { get; set; }
+
+        /// <summary>Written beside <see cref="Opening"/> and <see cref="OpeningSpeaker"/>, which hold its first line, when the opening has more than one line.</summary>
+        public List<LineRecord>? OpeningLines { get; set; }
 
         public IReadOnlyList<BeatRecord>? Beats { get; set; }
 

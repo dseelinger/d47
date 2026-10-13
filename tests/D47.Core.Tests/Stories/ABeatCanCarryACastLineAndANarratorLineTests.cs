@@ -140,7 +140,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
         var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
 
         Assert.Contains("\"lines\": [{\"text\": string, \"speaker\": string}]", prompt, StringComparison.Ordinal);
-        Assert.Contains("An objective's lines are spoken in the order given.", prompt, StringComparison.Ordinal);
+        Assert.Contains("The opening and each objective have one to three lines, spoken in the order given.", prompt, StringComparison.Ordinal);
         Assert.Contains("only where a cast member speaks and the scene also needs narrating", prompt, StringComparison.Ordinal);
     }
 

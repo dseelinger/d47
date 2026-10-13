@@ -13,9 +13,9 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
 {
     public bool IsOpening => Beat < 0;
 
-    /// <summary>What is said, in order: the opening's one line, or the beat's lines.</summary>
+    /// <summary>What is said, in order: the opening's lines, or the beat's.</summary>
     public IReadOnlyList<AdventureLine> Lines => IsOpening
-        ? [new AdventureLine { Text = Adventure.Opening ?? $"{Adventure.Name} begins.", Speaker = Adventure.OpeningSpeaker }]
+        ? Adventure.OpeningLines.Count > 0 ? Adventure.OpeningLines : [new AdventureLine { Text = $"{Adventure.Name} begins." }]
         : Adventure.Beats[Beat].Lines;
 
     /// <summary>The first line.</summary>

@@ -78,9 +78,9 @@ public static class AdventureContext
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(adventure.Opening))
+            foreach (var opening in adventure.OpeningLines.Where(line => !string.IsNullOrWhiteSpace(line.Text)))
             {
-                Line(block, "Opening", adventure.Opening);
+                Line(block, "Opening", opening.Text);
             }
 
             if (standing.Fired.Count > 0)

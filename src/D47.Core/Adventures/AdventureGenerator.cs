@@ -370,8 +370,7 @@ public sealed class AdventureGenerator(
                 Written = now,
                 WrittenBy = personaId(),
                 Spine = spine,
-                Opening = read.Opening,
-                OpeningSpeaker = Speaker(read.OpeningSpeaker, ask.Story),
+                OpeningLines = resolved.Opening,
                 Beats = resolved.Beats,
                 Previous = previous is null ? null : previous with { Previous = null },
                 Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
@@ -403,11 +402,12 @@ public sealed class AdventureGenerator(
     {
         if (ask.Story is not { } story)
         {
-            return resolved;
+            return resolved with { Opening = [.. read.Opening.Select(line => line with { Speaker = null })] };
         }
 
+        var opening = ask.Rewrite is null ? read.Opening : [];
         var unknown = read.Beats.SelectMany(beat => beat.Lines.Select(line => line.Speaker))
-            .Prepend(ask.Rewrite is null ? read.OpeningSpeaker : null)
+            .Concat(opening.Select(line => line.Speaker))
             .Where(speaker => speaker is not null && Speaker(speaker, story) is null)
             .Distinct(StringComparer.Ordinal)
             .Select(speaker => $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.")
@@ -416,12 +416,13 @@ public sealed class AdventureGenerator(
         var spoken = resolved with
         {
             Beats = [.. resolved.Beats.Select(beat => beat with { Lines = [.. beat.Lines.Select(line => line with { Speaker = Speaker(line.Speaker, story) })] })],
+            Opening = [.. opening.Select(line => line with { Speaker = Speaker(line.Speaker, story) })],
         };
-        var selfNamed = SelfNaming(spoken.Beats, story)
-            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in objective {found.Index + 1}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
+        var selfNamed = SelfNaming(spoken, story)
+            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in {Where(found.Index)}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
                 + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
 
-        var firstPerson = NarratedFirstPerson(spoken.Beats, read, story, ask.Rewrite is null)
+        var firstPerson = NarratedFirstPerson(spoken, story)
             .Select(where => $"{NarratorAsItself}{where} is read by the narrator and speaks in the first person or to the Commander; "
                 + "the narrator tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", never speaks to the Commander, "
                 + "and never offers, asks or waits for anything. Rewrite it as narration.");
@@ -451,24 +452,26 @@ public sealed class AdventureGenerator(
         });
 
     /// <summary>The opening and the beats whose narrator-read lines are in the first person; a stock core's ship lines, and a line with no speaker, are the narrator's.</summary>
-    private static IEnumerable<string> NarratedFirstPerson(IReadOnlyList<AdventureBeat> beats, ReadAnswer read, AdventureStory story, bool opening)
+    private static IEnumerable<string> NarratedFirstPerson(Resolved spoken, AdventureStory story)
     {
         bool Narrated(string? speaker) =>
             speaker == Stories.StorySpeaker.Narrator || (story.CoreIsStock && (speaker is null || speaker == Stories.StorySpeaker.Ship));
 
-        if (opening && Narrated(Speaker(read.OpeningSpeaker, story)) && FirstPerson(read.Opening))
+        foreach (var (lines, index) in Said(spoken))
         {
-            yield return "The opening";
-        }
-
-        for (var index = 0; index < beats.Count; index++)
-        {
-            if (beats[index].Lines.Any(line => Narrated(line.Speaker) && FirstPerson(line.Text)))
+            if (lines.Any(line => Narrated(line.Speaker) && FirstPerson(line.Text)))
             {
-                yield return $"Objective {index + 1}";
+                yield return index < 0 ? "The opening" : $"Objective {index + 1}";
             }
         }
     }
+
+    /// <summary>The opening's lines at index -1, then each beat's at its own index.</summary>
+    private static IEnumerable<(IReadOnlyList<AdventureLine> Lines, int Index)> Said(Resolved resolved) =>
+        resolved.Beats.Select((beat, index) => (beat.Lines, index)).Prepend((resolved.Opening, -1));
+
+    /// <summary>"the opening" or "objective N", for a refusal.</summary>
+    private static string Where(int index) => index < 0 ? "the opening" : $"objective {index + 1}";
 
     /// <summary>Drops the narrator first-person refusals, so a line that is still in the first person after the rewrite stands.</summary>
     private static Resolved KeepNarratorAsItself(Resolved resolved) =>
@@ -476,21 +479,44 @@ public sealed class AdventureGenerator(
 
     private const string SelfNamed = "A line names its own speaker: ";
 
-    /// <summary>The lines given to a cast member that name that member by their shown name, by beat and line.</summary>
-    private static IEnumerable<(int Index, int Line, AdventureSpeaker Member)> SelfNaming(IReadOnlyList<AdventureBeat> beats, AdventureStory story)
+    /// <summary>
+    /// The lines given to a cast member that name that member by their shown name other than to introduce
+    /// themselves, by beat and line; the opening is beat -1.
+    /// </summary>
+    private static IEnumerable<(int Index, int Line, AdventureSpeaker Member)> SelfNaming(Resolved resolved, AdventureStory story)
     {
-        for (var index = 0; index < beats.Count; index++)
+        foreach (var (lines, index) in Said(resolved))
         {
-            for (var line = 0; line < beats[index].Lines.Count; line++)
+            for (var line = 0; line < lines.Count; line++)
             {
-                var said = beats[index].Lines[line];
+                var said = lines[line];
 
-                if ((story.Cast ?? []).FirstOrDefault(member => member.Id == said.Speaker) is { } member && AdventureMention.Holds(said.Text, member.Name))
+                if ((story.Cast ?? []).FirstOrDefault(member => member.Id == said.Speaker) is { } member
+                    && AdventureMention.Holds(WithoutIntroductions(said.Text, member.Name), member.Name))
                 {
                     yield return (index, line, member);
                 }
             }
         }
+    }
+
+    /// <summary>The text with each self-introduction by this name taken out: "This is Ines Harrow", "my name is …", "Harrow here".</summary>
+    private static string WithoutIntroductions(string text, string name)
+    {
+        var shown = name.Trim();
+
+        if (shown.StartsWith("The ", StringComparison.OrdinalIgnoreCase))
+        {
+            shown = shown[4..];
+        }
+
+        var named = Regex.Escape(shown);
+
+        return Regex.Replace(
+            text,
+            $@"\b(?:(?:this is|my name is|I am|I['’]m|it['’]s)\s+{named}\b|{named}\s+here\b)",
+            " ",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
     /// <summary>Gives each line that still names its own speaker to the narrator and drops that refusal.</summary>
@@ -501,10 +527,11 @@ public sealed class AdventureGenerator(
             return resolved;
         }
 
-        var named = SelfNaming(resolved.Beats, story).Select(found => (found.Index, found.Line)).ToHashSet();
+        var named = SelfNaming(resolved, story).Select(found => (found.Index, found.Line)).ToHashSet();
 
         return resolved with
         {
+            Opening = [.. resolved.Opening.Select((line, at) => named.Contains((-1, at)) ? line with { Speaker = Stories.StorySpeaker.Narrator } : line)],
             Beats =
             [
                 .. resolved.Beats.Select((beat, index) => beat with
@@ -949,12 +976,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine("What was written to be said as they flew it:");
 
-            if (!string.IsNullOrWhiteSpace(previous.Opening))
-            {
-                text.Append("- ").AppendLine(previous.Opening);
-            }
-
-            foreach (var line in previous.Beats.SelectMany(beat => beat.Lines))
+            foreach (var line in previous.OpeningLines.Concat(previous.Beats.SelectMany(beat => beat.Lines)))
             {
                 text.Append("- ").AppendLine(line.Text);
             }
@@ -1134,8 +1156,12 @@ public sealed class AdventureGenerator(
             + "never speaks to the Commander, and never offers, asks or waits for anything; or one of the story's cast, over comms, in a recording "
             + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
             + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
-            + "never describes them. Narration, including any line that describes a cast member, what they did or what they left behind, "
-            + "is given to \"narrator\". An objective's lines are spoken in the order given. Most objectives have one line; give an objective a second "
+            + "never describes them, except that they may give their own name as a person does when introducing themselves "
+            + "(\"This is …\", \"My name is …\"). Narration, including any line that describes a cast member, what they did or what they left behind, "
+            + "is given to \"narrator\". When the Commander hears a cast member — a recording plays, a call comes in, a message is read out — "
+            + "that person's words are a line of their own, given to them; never report what they say in another speaker's line "
+            + "(\"a woman's voice reads out coordinates and gives her name\"). "
+            + "The opening and each objective have one to three lines, spoken in the order given. Most have one; give a second "
             + "or third only where a cast member speaks and the scene also needs narrating.");
 
         if (story.CoreIsStock)
@@ -1505,7 +1531,8 @@ public sealed class AdventureGenerator(
         text.AppendLine();
         text.AppendLine(
             "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
-            + "\"stake\": string, \"turn\": string, \"ending\": string, \"opening\": string, \"reply\": string, "
+            + "\"stake\": string, \"turn\": string, \"ending\": string, "
+            + (speakers ? "\"opening\": [{\"text\": string, \"speaker\": string}]" : "\"opening\": string") + ", \"reply\": string, "
             + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
             + string.Concat(team.Select(kind => $"|\"{kind.ToString().ToLowerInvariant()}\""))
             + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
@@ -1514,7 +1541,6 @@ public sealed class AdventureGenerator(
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
             + "\"engineer\": string|null, \"stage\": string|null, "
             + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
-            + (speakers ? ", \"openingSpeaker\": string" : string.Empty)
             + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
             + "}. \"reply\" is what you say to the Commander, in your own "
             + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
@@ -1604,7 +1630,7 @@ public sealed class AdventureGenerator(
             text.AppendLine($"Ending: {spine.Ending}");
         }
 
-        text.AppendLine($"Opening: {draft.Opening}");
+        text.AppendLine($"Opening: {Quoted(draft.OpeningLines)}");
 
         foreach (var (beat, index) in draft.Beats.Select((beat, index) => (beat, index)))
         {
@@ -1690,10 +1716,7 @@ public sealed class AdventureGenerator(
         };
     }
 
-    private sealed record ReadAnswer(string? Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination)
-    {
-        public string? OpeningSpeaker { get; init; }
-    }
+    private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination);
 
     /// <summary>A place as the model named it.</summary>
     private sealed record ReadPlace(string? System, string? Body);
@@ -1744,7 +1767,7 @@ public sealed class AdventureGenerator(
 
             var destination = Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
 
-            return new ReadAnswer(Text(root, "opening"), Text(root, "reply"), beats, destination) { OpeningSpeaker = Text(root, "openingSpeaker") };
+            return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, destination);
         }
         catch (JsonException)
         {
@@ -1752,12 +1775,32 @@ public sealed class AdventureGenerator(
         }
     }
 
+    /// <summary>The opening's lines: the <c>opening</c> list a story chapter is asked for, or the single <c>opening</c> and <c>openingSpeaker</c>.</summary>
+    private static IReadOnlyList<AdventureLine> ReadOpening(JsonElement root)
+    {
+        if (root.TryGetProperty("opening", out var opening) && opening.ValueKind == JsonValueKind.Array && LinesOf(opening) is { Count: > 0 } read)
+        {
+            return read;
+        }
+
+        return Text(root, "opening") is { } text ? [new AdventureLine { Text = text, Speaker = Text(root, "openingSpeaker") }] : [];
+    }
+
     /// <summary>A beat's lines: the <c>lines</c> list a story chapter is asked for, or the single <c>line</c> and <c>speaker</c>.</summary>
     private static IReadOnlyList<AdventureLine> ReadLines(JsonElement beat)
     {
-        if (beat.TryGetProperty("lines", out var lines) && lines.ValueKind == JsonValueKind.Array)
+        if (beat.TryGetProperty("lines", out var lines) && lines.ValueKind == JsonValueKind.Array && LinesOf(lines) is { Count: > 0 } read)
         {
-            var read = lines.EnumerateArray()
+            return read;
+        }
+
+        return [new AdventureLine { Text = Text(beat, "line") ?? string.Empty, Speaker = Text(beat, "speaker") }];
+    }
+
+    /// <summary>A list of lines, each a string or a text and speaker, blank ones dropped, at most <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
+    private static List<AdventureLine> LinesOf(JsonElement lines) =>
+        [
+            .. lines.EnumerateArray()
                 .Select(line => line.ValueKind == JsonValueKind.String
                     ? new AdventureLine { Text = line.GetString() ?? string.Empty }
                     : line.ValueKind == JsonValueKind.Object
@@ -1765,17 +1808,8 @@ public sealed class AdventureGenerator(
                         : null)
                 .OfType<AdventureLine>()
                 .Where(line => !string.IsNullOrWhiteSpace(line.Text))
-                .Take(AdventureLimits.MaxLinesPerBeat)
-                .ToList();
-
-            if (read.Count > 0)
-            {
-                return read;
-            }
-        }
-
-        return [new AdventureLine { Text = Text(beat, "line") ?? string.Empty, Speaker = Text(beat, "speaker") }];
-    }
+                .Take(AdventureLimits.MaxLinesPerBeat),
+        ];
 
     private static string? Text(JsonElement element, string property) =>
         element.ValueKind == JsonValueKind.Object
@@ -1815,7 +1849,11 @@ public sealed class AdventureGenerator(
 
     // ---- the dry run -----------------------------------------------------------------------
 
-    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals, AdventureDestination? Destination);
+    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals, AdventureDestination? Destination)
+    {
+        /// <summary>The opening's lines with their speakers resolved; set after the dry run.</summary>
+        public IReadOnlyList<AdventureLine> Opening { get; init; } = [];
+    }
 
     private async Task<Resolved> DryRunAsync(
         IReadOnlyList<ReadBeat> beats,

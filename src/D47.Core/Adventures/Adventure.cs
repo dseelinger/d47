@@ -481,17 +481,26 @@ public sealed record Adventure
 
     public AdventureSpine? Spine { get; init; }
 
-    /// <summary>The line spoken when it begins — the beat before the first beat.</summary>
-    public string? Opening { get; init; }
+    /// <summary>What is said when it begins, in order — the beat before the first beat: none, one line, or up to <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
+    public IReadOnlyList<AdventureLine> OpeningLines { get; init; } = [];
 
-    /// <summary>Who says <see cref="Opening"/> in a story chapter: a speaker id of the story, or null for the ship.</summary>
-    public string? OpeningSpeaker { get; init; }
+    /// <summary>The opening's first line, or null when it has none; setting it replaces that text and keeps the rest.</summary>
+    public string? Opening
+    {
+        get => OpeningLines.Count > 0 ? OpeningLines[0].Text : null;
+        init => OpeningLines = value is null
+            ? []
+            : [(OpeningLines.Count > 0 ? OpeningLines[0] : new AdventureLine { Text = value }) with { Text = value }, .. OpeningLines.Skip(1)];
+    }
+
+    /// <summary>Who says the opening's first line in a story chapter: a speaker id of the story, or null for the ship.</summary>
+    public string? OpeningSpeaker => OpeningLines.Count > 0 ? OpeningLines[0].Speaker : null;
 
     public IReadOnlyList<AdventureBeat> Beats { get; init; } = [];
 
     /// <summary>The speaker id of one line of a beat, or of the opening at beat -1; null for the ship.</summary>
     public string? SpeakerOf(int beat, int line) =>
-        beat < 0 ? OpeningSpeaker : Beats.ElementAtOrDefault(beat)?.Lines.ElementAtOrDefault(line)?.Speaker;
+        (beat < 0 ? OpeningLines : Beats.ElementAtOrDefault(beat)?.Lines)?.ElementAtOrDefault(line)?.Speaker;
 
     /// <summary>When the Commander pressed Begin.</summary>
     public DateTimeOffset? AcceptedAt { get; init; }
