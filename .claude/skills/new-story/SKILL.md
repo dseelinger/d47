@@ -58,7 +58,9 @@ Every story keeps all twelve. Check the draft against each before showing it.
     station, settlement, body, beacon site or wreck a beat or a clue sends them to. Check each name
     on spansh.co.uk, the source d47's `AdventureResolver` looks it up in; a name it does not know
     cannot fire. Where any place of a kind will do, name the kind instead of a place. A place
-    mentioned only as flavour, which no beat or clue sends them to, may be invented.
+    mentioned only as flavour, which no beat or clue sends them to, may be invented. No beat or clue
+    sends them to a system that needs a permit (`src/D47.Core/Knowledge/PermitSystems.tsv`): the
+    chapter writer refuses one, even the system the Commander is in.
 11. The story has a secret and a twist, and the twist is not predictable. The secret is what is
     really going on. The twist is the reveal that shows it is not what the clues so far suggested.
     The twist is fair: the earlier clues support it on a second reading. To test it, before showing
