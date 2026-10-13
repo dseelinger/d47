@@ -5023,7 +5023,7 @@ public sealed class AppHost : IDisposable
             Clip = PcmConverter.ToStandard(clip),
             Group = MessagePlaybackGroup,
             Caption = message.Body,
-            Picture = message.Picture,
+            Picture = D47.Core.Interface.SpeakerPictures.OfMessage(message),
         });
 
         return null;

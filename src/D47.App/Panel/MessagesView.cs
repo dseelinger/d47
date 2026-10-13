@@ -99,7 +99,7 @@ public sealed class MessagesView : UserControl
 
         var changeVoice = ChangeVoice(message);
 
-        if (_surface?.Pictures is { } pictures && message.Picture is { } picture && pictures.Find(picture) is not null)
+        if (_surface?.Pictures is { } pictures && SpeakerPictures.OfMessage(message) is { } picture && pictures.Find(picture) is not null)
         {
             page.Children.Add(new PictureChooser(pictures, picture, 240, null, changeVoice is null ? [] : [changeVoice]));
         }

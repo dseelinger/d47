@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using D47.Core.Audio;
+using D47.Core.Messages;
 using D47.Core.Storage;
 using D47.Core.Stories;
 
@@ -94,12 +95,17 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
 
     /// <summary>
     /// The picture a line from <paramref name="speaker"/> carries: a primary member's always, another member's
-    /// when its picture is on disk, and none for the ship, the narrator or a member without one.
+    /// when its picture is on disk, and none for the ship or a member without one. The narrator's lines carry none
+    /// here; <see cref="OfMessage"/> gives the Narrator's messages <see cref="Narrator"/>.
     /// </summary>
     public string? For(StorySpeakerShown? speaker) =>
         speaker is { } shown && IsName(shown.Picture) && (shown.Primary || Find(shown.Picture) is not null)
             ? shown.Picture
             : null;
+
+    /// <summary>The picture of <paramref name="message"/>: its own, else <see cref="Narrator"/> for a Narrator message.</summary>
+    public static string? OfMessage(D47Message message) =>
+        message.Picture ?? (message.From == MessageStore.Narrator ? Narrator : null);
 
     /// <summary>Deletes the Commander's file, so the shipped or story's own shows again.</summary>
     public void UseDefault(string picture)
