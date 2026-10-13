@@ -189,14 +189,12 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task AChapterLineNamingASpeakerTheStoryDoesNotHaveIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsWithAStranger),
-            RoundScriptedLlmProvider.Saying(BeatsWithAStranger)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAStranger, BeatsWithAStranger)));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Equal(StoryDirector.NoDraftStood, refusal);
+        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
     private const string BeatsWhereHarrowNamesHimself = """

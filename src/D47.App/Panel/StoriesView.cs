@@ -129,6 +129,7 @@ public sealed class StoriesView : UserControl
         base.OnAttachedToVisualTree(e);
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
+        _director.WritingAgain += OnWritingAgain;
         _director.OdysseyChanged += OnChanged;
 
         if (_surface.Switched is { } switched)
@@ -156,6 +157,7 @@ public sealed class StoriesView : UserControl
         base.OnDetachedFromVisualTree(e);
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
+        _director.WritingAgain -= OnWritingAgain;
         _director.OdysseyChanged -= OnChanged;
 
         if (_surface.Switched is { } switched)
@@ -193,6 +195,8 @@ public sealed class StoriesView : UserControl
             : null;
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void OnWritingAgain(string line) => Dispatcher.UIThread.Post(() => _status.Say(line));
 
     private void OnSwitched() => Dispatcher.UIThread.Post(() =>
     {
@@ -608,10 +612,6 @@ public sealed class StoriesView : UserControl
         ShowCast(cast, card.Id);
         page.Children.Add(cast);
 
-        var current = _director.Stories.Current(commander);
-        var bar = AdventuresPage.Buttons();
-        bar.Margin = new Thickness(0, 10, 0, 0);
-
         var withoutOdyssey = _director.WithoutOdyssey(commander);
 
         if (withoutOdyssey)
@@ -642,15 +642,63 @@ public sealed class StoriesView : UserControl
             }
         }
 
+        var actions = new ContentControl();
+
+        void Draw()
+        {
+            if (string.Equals(commander, _surface.Commander(), StringComparison.Ordinal))
+            {
+                actions.Content = ReadingActions(card, status, commander, withoutOdyssey, missing.Count, out gated);
+            }
+        }
+
+        void Changed() => Dispatcher.UIThread.Post(Draw);
+
+        void Again(string line) => Dispatcher.UIThread.Post(() => status.Say(line));
+
+        actions.AttachedToVisualTree += (_, _) =>
+        {
+            _director.Stories.Changed += Changed;
+            _director.WritingChanged += Changed;
+            _director.WritingAgain += Again;
+            Draw();
+        };
+        actions.DetachedFromVisualTree += (_, _) =>
+        {
+            _director.Stories.Changed -= Changed;
+            _director.WritingChanged -= Changed;
+            _director.WritingAgain -= Again;
+        };
+
+        Draw();
+        page.Children.Add(actions);
+
+        return page;
+    }
+
+    /// <summary>
+    /// The story page's buttons: Pick or Switch while the story is not the Commander's, otherwise "This is your story." with
+    /// Write it again once its chapter could not be written. <paramref name="gated"/> is the button the gender choice enables.
+    /// </summary>
+    private StackPanel ReadingActions(StoryCard card, StatusLine status, string? commander, bool withoutOdyssey, int missing, out Button? gated)
+    {
+        var current = _director.Stories.Current(commander);
+        var stack = new StackPanel { Spacing = 8 };
+        var bar = AdventuresPage.Buttons();
+        bar.Margin = new Thickness(0, 10, 0, 0);
+        gated = null;
+
         if (current is null)
         {
-            var pick = Act("Pick", () => Start(card, switching: false, status, gated, commander));
-            pick.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
+            Button? pick = null;
+            pick = Act("Pick", () => Start(card, switching: false, status, pick, commander));
+            pick.IsEnabled = !withoutOdyssey && GenderReady(card) && missing == 0;
             bar.Children.Add(gated = pick);
         }
         else if (!string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
-            var switchTo = Act("Switch", () => Confirm(
+            Button? switchTo = null;
+            switchTo = Act("Switch", () => Confirm(
                 commander,
                 status,
                 "story.switch",
@@ -659,18 +707,59 @@ public sealed class StoriesView : UserControl
                 $"{current.Title} is abandoned and its chapters leave the list on the Stories tab. Your Backstory becomes this "
                 + "story's words, and the Guardian cores wait for its own beacon scan.",
                 "Switch",
-                () => Start(card, switching: true, status, gated, commander)));
-            switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing.Count == 0;
+                () => Start(card, switching: true, status, switchTo, commander)));
+            switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing == 0;
             bar.Children.Add(gated = switchTo);
         }
         else
         {
-            page.Children.Add(AdventuresPage.Muted("This is your story."));
+            stack.Children.Add(AdventuresPage.Muted("This is your story."));
+
+            if (_director.WriteFailed(commander) && !_director.IsWriting(commander))
+            {
+                bar.Children.Add(Act("Write it again", () => IfShown(commander, status, () => WriteAgain(status, commander))));
+            }
         }
 
-        page.Children.Add(bar);
+        if (bar.Children.Count > 0)
+        {
+            stack.Children.Add(bar);
+        }
 
-        return page;
+        return stack;
+    }
+
+    /// <summary>Writes the running story's owed chapter again from its page, saying the refusal if every draft fails.</summary>
+    private void WriteAgain(StatusLine status, string? commander)
+    {
+        status.Say("Writing…");
+
+        _ = Task.Run(async () =>
+        {
+            var refusal = await _director.WriteNextAsync(commander, _surface.Now(), CancellationToken.None).ConfigureAwait(false);
+
+            Dispatcher.UIThread.Post(() => Written(refusal, status, commander, "The chapter has begun."));
+        });
+    }
+
+    /// <summary>Shows and says a refusal, or shows <paramref name="begun"/> and opens the chapter.</summary>
+    private void Written(string? refusal, StatusLine status, string? commander, string begun)
+    {
+        if (refusal is not null)
+        {
+            status.Fail(refusal);
+            _surface.Say(refusal);
+            return;
+        }
+
+        status.Say(begun);
+
+        if (string.Equals(commander, _surface.Commander(), StringComparison.Ordinal)
+            && _director.Stories.Current(commander)?.CurrentChapter is { } key
+            && _surface.Book.Store.Find(commander, key) is { } chapter)
+        {
+            _nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
+        }
     }
 
     private static Control Average(StoryRating? rating) => StarRating.Summary(rating);
@@ -903,24 +992,7 @@ public sealed class StoriesView : UserControl
                 ? await _director.SwitchAsync(commander, card.Id, now, CancellationToken.None).ConfigureAwait(false)
                 : await _director.PickAsync(commander, card.Id, now, CancellationToken.None).ConfigureAwait(false);
 
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (refusal is not null)
-                {
-                    status.Fail(refusal);
-                    _surface.Say(refusal);
-                    return;
-                }
-
-                status.Say("Chapter one has begun.");
-
-                if (string.Equals(commander, _surface.Commander(), StringComparison.Ordinal)
-                    && _director.Stories.Current(commander)?.CurrentChapter is { } key
-                    && _surface.Book.Store.Find(commander, key) is { } chapter)
-                {
-                    _nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
-                }
-            });
+            Dispatcher.UIThread.Post(() => Written(refusal, status, commander, "Chapter one has begun."));
         });
     }
 

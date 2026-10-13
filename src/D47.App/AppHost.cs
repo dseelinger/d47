@@ -3298,6 +3298,7 @@ public sealed class AppHost : IDisposable
         storyDirector.VoicesHere = speech.CastVoicesHere;
         storyDirector.VoicesNotReady += host.PostVoicesNotReady;
         storyDirector.Says += host.Announcer.SayAside;
+        storyDirector.WritingAgain += host.Announcer.SayAside;
 
         // A story's opening is said before any beat of its chapter one.
         late.StoryOpening = commander => storyDirector.OpeningWaits(commander) || host.Narration.IsSayingOpening;

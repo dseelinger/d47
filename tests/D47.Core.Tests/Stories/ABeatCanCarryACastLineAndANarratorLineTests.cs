@@ -119,15 +119,13 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     {
         var stranger = BeatsWithTwoLines.Replace("\"speaker\": \"narrator\"}", "\"speaker\": \"stranger\"}", StringComparison.Ordinal);
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(Spine),
-                RoundScriptedLlmProvider.Saying(stranger),
-                RoundScriptedLlmProvider.Saying(stranger)),
+            new RoundScriptedLlmProvider(EveryDraft(Spine, stranger, stranger)),
             Cast);
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Equal(AdventureOutcome.NotWritten, refusal);
+        Assert.Equal(StoryDirector.NoDraftStood, refusal);
+        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
     [Fact]

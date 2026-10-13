@@ -31,7 +31,10 @@ public enum AdventureLength
     Long,
 }
 
-/// <summary>What the Commander decided on the form, and the brief they spoke (Phase 47).</summary>
+/// <summary>
+/// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
+/// the draft before this one could not be used, for the writer to avoid.
+/// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
     AdventureLength Length = AdventureLength.Evening,
@@ -39,7 +42,8 @@ public sealed record AdventureAsk(
     string? Brief = null,
     AdventureChapter? Chapter = null,
     AdventureStory? Story = null,
-    AdventureRewrite? Rewrite = null);
+    AdventureRewrite? Rewrite = null,
+    string? LastDraftRefused = null);
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
@@ -1500,6 +1504,12 @@ public sealed class AdventureGenerator(
             {
                 text.Append("- ").AppendLine(refusal);
             }
+        }
+        else if (ask.LastDraftRefused is { Length: > 0 } refused)
+        {
+            text.AppendLine();
+            text.AppendLine("An earlier draft of this chapter could not be used, for this reason. Write this draft so that it does not happen again:");
+            text.Append("- ").AppendLine(refused);
         }
 
         if (draft is not null)

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
@@ -1184,18 +1185,34 @@ public sealed class StoryDirector(
 
         try
         {
-            string? refusal;
+            var attempt = new Attempt(null);
 
-            // A throw counts as a failure, so the tick does not start another paid write on every pass.
-            try
+            for (var draft = 1; draft <= Drafts; draft++)
             {
-                refusal = await WriteAsync(frontierId, now, cancellationToken).ConfigureAwait(false);
+                if (draft > 1)
+                {
+                    logger.LogInformation("Writing draft {Draft} of {Drafts} of a story chapter", draft, Drafts);
+                    WritingAgain?.Invoke(WritingAgainLine(draft, attempt.Detail is not null));
+                }
+
+                // A throw counts as a failure, so the tick does not start another paid write on every pass.
+                try
+                {
+                    attempt = await WriteAsync(frontierId, now, attempt.Detail, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Writing a story chapter failed");
+                    attempt = new Attempt(AdventureOutcome.NotWritten, Retry: !cancellationToken.IsCancellationRequested);
+                }
+
+                if (!attempt.Retry)
+                {
+                    break;
+                }
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Writing a story chapter failed");
-                refusal = AdventureOutcome.NotWritten;
-            }
+
+            var refusal = attempt.Retry ? NoDraftStood : attempt.Refusal;
 
             if (refusal is not null)
             {
@@ -1220,21 +1237,49 @@ public sealed class StoryDirector(
         }
     }
 
-    private async Task<string?> WriteAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken)
+    /// <summary>How many drafts a chapter gets before the write stops and waits for the Commander.</summary>
+    public const int Drafts = 3;
+
+    /// <summary>The refusal once every draft has failed.</summary>
+    public static readonly string NoDraftStood =
+        $"The chapter could not be written in {Drafts.ToString(CultureInfo.InvariantCulture)} drafts. Write it again and I will try {Drafts.ToString(CultureInfo.InvariantCulture)} more.";
+
+    /// <summary>Raised with the line to say before each draft after the first, on the thread doing the write.</summary>
+    public event Action<string>? WritingAgain;
+
+    private static readonly string[] Ordinals = ["first", "second", "third", "fourth", "fifth"];
+
+    /// <summary>What is said before <paramref name="draft"/>; <paramref name="told"/> is whether that draft is told what went wrong.</summary>
+    internal static string WritingAgainLine(int draft, bool told)
+    {
+        var failed = Ordinals[Math.Clamp(draft - 2, 0, Ordinals.Length - 1)];
+        var opening = draft == 2
+            ? $"The {failed} draft of the chapter could not be used, so I am writing another."
+            : $"The {failed} draft could not be used either, so I am writing {(draft == Drafts ? "a last one" : "another")}.";
+
+        return opening + (told
+            ? " The new draft is told what was wrong with the last one, so it can avoid the same mistake."
+            : " The last attempt failed before a draft came back, and a fault like that does not usually repeat.");
+    }
+
+    /// <summary>One draft's result: the refusal or null, whether another draft may succeed, and what to tell it.</summary>
+    private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null);
+
+    private async Task<Attempt> WriteAsync(string? frontierId, DateTimeOffset now, string? lastDraftRefused, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
-            return "No story is running.";
+            return new("No story is running.");
         }
 
         if (Hidden(story.Id) is not { } secret)
         {
-            return $"The hidden layer of {story.Title} is missing from this build.";
+            return new($"The hidden layer of {story.Title} is missing from this build.");
         }
 
         if (story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
-            return $"{story.Title} has had its last chapter.";
+            return new($"{story.Title} has had its last chapter.");
         }
 
         var number = story.Chapters.Count + 1;
@@ -1243,7 +1288,7 @@ public sealed class StoryDirector(
         if (story.CurrentChapter is not null
             && (previous = ChapterAt(frontierId, story, story.Chapters.Count - 1)) is null)
         {
-            return "The chapter before is no longer on file.";
+            return new("The chapter before is no longer on file.");
         }
 
         var finaleFrom = story.FinaleFrom ?? (StoryClues.FinaleDue(story, now) ? number : null);
@@ -1275,26 +1320,29 @@ public sealed class StoryDirector(
                 reach?.InReach != false,
                 longHaul,
                 comfort,
-                finaleChapter > 1 ? story.FinaleDestination : null));
+                finaleChapter > 1 ? story.FinaleDestination : null),
+            LastDraftRefused: lastDraftRefused);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
         if (outcome.Draft is not { } draft)
         {
-            return outcome.Message ?? "Nothing came back.";
+            return outcome.Internal
+                ? new(outcome.Message, Retry: true, Detail: outcome.Refusal)
+                : new(outcome.Message ?? "Nothing came back.");
         }
 
         // The story may have been switched or abandoned while the model wrote.
         if (stories.Current(frontierId) is not { State: StoryState.Running } still || still.PickedAt != story.PickedAt || still.Chapters.Count != story.Chapters.Count)
         {
-            return "The story changed while its chapter was being written.";
+            return new("The story changed while its chapter was being written.");
         }
 
         var key = UniqueKey(frontierId, still, draft.Key);
 
         if ((book.Write(frontierId, draft with { Key = key, StoryId = story.Id }) ?? book.Begin(frontierId, key, now)) is { } refusal)
         {
-            return refusal;
+            return new(refusal);
         }
 
         stories.Save(frontierId, still with
@@ -1305,7 +1353,7 @@ public sealed class StoryDirector(
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         ArchiveChapters(frontierId);
-        return null;
+        return new(null);
     }
 
     private AdventureStory Asked(

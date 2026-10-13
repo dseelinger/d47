@@ -384,4 +384,30 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         surface.Window.Close();
     }
+
+    [AvaloniaFact]
+    public void APickedStoryLosesPickAndOffersWriteItAgainOnceItsChapterFails()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        // The generator has no model, so chapter one is refused.
+        var surface = Open(running: false, gender: () => CommanderGender.Woman);
+        var panel = surface.Panel;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Pick", Buttons(panel));
+        Assert.DoesNotContain("Write it again", Buttons(panel));
+
+        panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Pick")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.True(Until(() => surface.Director.WriteFailed("F1") && Buttons(panel).Contains("Write it again")));
+        Assert.DoesNotContain("Pick", Buttons(panel));
+        Assert.True(Shows(panel, "This is your story."));
+        Save(surface.Window, "stories-card-write-again.png");
+
+        surface.Window.Close();
+    }
 }

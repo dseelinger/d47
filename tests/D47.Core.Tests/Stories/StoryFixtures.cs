@@ -1,5 +1,6 @@
 using D47.Core.Storage;
 using D47.Core.Adventures;
+using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
 using D47.Core.Stories;
@@ -208,7 +209,16 @@ internal sealed class StoryFixtures : IDisposable
         {
             Archive = StoryChapterArchive.Open(Files, ArchivePath, NullLogger<StoryChapterArchive>.Instance),
         };
+
+        Director.WritingAgain += WritingAgain.Add;
     }
+
+    /// <summary>The same rounds once for every draft a chapter gets, for a chapter whose every draft fails.</summary>
+    public static IReadOnlyList<LlmStreamEvent>[] EveryDraft(params string[] rounds) =>
+        [.. Enumerable.Repeat(rounds, StoryDirector.Drafts).SelectMany(draft => draft).Select(round => RoundScriptedLlmProvider.Saying(round))];
+
+    /// <summary>What the director said before each draft after the first, oldest first.</summary>
+    public List<string> WritingAgain { get; } = [];
 
     public RoundScriptedLlmProvider Provider { get; }
 
