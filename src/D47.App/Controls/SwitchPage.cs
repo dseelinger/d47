@@ -1,7 +1,9 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Automation;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Avalonia.Threading;
 using D47.App.Theming;
 using D47.Core.Hotas;
@@ -18,18 +20,43 @@ public sealed class SwitchPage : DialogPage
     /// <summary>Fast enough that a flip is never missed between polls.</summary>
     private static readonly TimeSpan Period = TimeSpan.FromMilliseconds(50);
 
-    private static readonly string[] States = ["on", "off"];
+    private static readonly string[] States = ["On", "Off"];
 
-    /// <summary>Only the actions Elite reports the state of.</summary>
-    private static readonly string[] Assignable =
-        ["(nothing)", .. SwitchValidation.Assignable.Select(action => action.Id)];
+    /// <summary>Marks the cyan bar on the row for the position the switch is in.</summary>
+    public const string HeldBarName = "SwitchHeldBar";
+
+    /// <summary>Marks the word beside the button label of the position the switch is in.</summary>
+    public const string HeldWordName = "SwitchHeldWord";
+
+    /// <summary>Marks the ON / OFF control of a position.</summary>
+    public const string StateName = "SwitchPositionState";
+
+    /// <summary>Marks the button that opens the page picker of a position.</summary>
+    public const string PageButtonName = "SwitchPositionPage";
+
+    /// <summary>The picker value for no page.</summary>
+    private const string NoPage = "(nothing)";
+
+    private const string NoAction = "";
+
+    private const string NothingWord = "Nothing";
+
+    private const double ColumnGap = 8;
+
+    /// <summary>The columns of the column heads and of every position row: bar, button, action, state, page.</summary>
+    private const string Columns = "3,140,*,150,*";
+
+    /// <summary>Only the actions Elite reports the state of, by the name a list shows.</summary>
+    private static readonly IReadOnlyList<(string Id, string Name)> Assignable =
+        [.. SwitchValidation.Assignable.Select(action => (action.Id, action.DisplayName ?? action.Label))];
 
     /// <summary>
     /// The pages a position may name instead (Phase 46): every root any surface registered, as the host
     /// collected them, so the list here and the spoken route read one vocabulary.
     /// </summary>
-    private readonly List<string> _pageKeys = [string.Empty];
-    private readonly List<string> _pageWords = ["(nothing)"];
+    private readonly List<string> _pageKeys = [];
+    private readonly Dictionary<string, string> _pageWords = [];
+    private int _pickSerial;
 
     private readonly SwitchStore _store;
     private readonly IHotasReader _reader;
@@ -68,7 +95,7 @@ public sealed class SwitchPage : DialogPage
         foreach (var page in destinations)
         {
             _pageKeys.Add(page.Key);
-            _pageWords.Add(page.Describe());
+            _pageWords[page.Key] = page.Describe();
         }
 
         // A saved destination no surface offers right now is shown as its key rather than silently reset to
@@ -79,7 +106,7 @@ public sealed class SwitchPage : DialogPage
             if (key.Length > 0 && !_pageKeys.Contains(key))
             {
                 _pageKeys.Add(key);
-                _pageWords.Add(key);
+                _pageWords[key] = key;
             }
         }
 
@@ -226,7 +253,7 @@ public sealed class SwitchPage : DialogPage
     }
 
     /// <summary>One poll of the hardware.</summary>
-    private void Sample()
+    internal void Sample()
     {
         var readings = _reader.Poll();
 
@@ -344,11 +371,14 @@ public sealed class SwitchPage : DialogPage
 
         var collided = false;
 
-        var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
+        var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { BuildHeads() } };
+        var holds = new List<Action<SwitchPosition?>>();
 
         foreach (var position in mapping.Positions)
         {
-            positions.Children.Add(BuildPosition(position));
+            var (row, held) = BuildPosition(position);
+            positions.Children.Add(row);
+            holds.Add(held);
         }
 
         // Ruled rather than a list row: the box and the choices are Tile, and vanish on a Tile row.
@@ -380,6 +410,11 @@ public sealed class SwitchPage : DialogPage
 
             resume.IsVisible = state?.Health == SwitchHealth.Paused;
 
+            foreach (var held in holds)
+            {
+                held(state?.Position);
+            }
+
             // The collision first, because it is the one line that explains a switch doing the opposite of
             // what it was asked — and unlike the other two it is a fault in the setup rather than a state of
             // the flight (#147).
@@ -404,66 +439,236 @@ public sealed class SwitchPage : DialogPage
         return card;
     }
 
-    private Control BuildPosition(MutablePosition position)
+    /// <summary>The column heads over a switch's position rows.</summary>
+    private static Control BuildHeads()
     {
+        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
+
+        string[] words = ["", "Position", "In Elite", "Means", "Or opens a D47 page"];
+
+        for (var column = 1; column < words.Length; column++)
+        {
+            var head = new TextBlock
+            {
+                Text = words[column].ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Caption,
+                FontWeight = FontWeight.SemiBold,
+                LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            Themed(head, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            Grid.SetColumn(head, column);
+            heads.Children.Add(head);
+        }
+
+        return heads;
+    }
+
+    /// <summary>One position: the button, what it means, ON or OFF, or the page it opens.</summary>
+    private (Control Row, Action<SwitchPosition?> Held) BuildPosition(MutablePosition position)
+    {
+        var bar = new Border
+        {
+            Name = HeldBarName,
+            Height = TypeScale.MinimumTarget,
+            VerticalAlignment = VerticalAlignment.Top,
+            IsVisible = false,
+        };
+        Themed(bar, Border.BackgroundProperty, ThemeManager.CyanKey);
+
         var label = new TextBlock
         {
-            Text = position.Button is { } button ? $"button {button}" : "nothing held",
-            Width = 110,
+            Text = (position.Button is { } button ? $"button {button}" : "nothing held").ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Control,
             VerticalAlignment = VerticalAlignment.Center,
-            FontSize = TypeScale.Body,
         };
 
-        Themed(label, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var actionIndex = position.Action.Length == 0 ? 0 : Array.IndexOf(Assignable, position.Action);
-        var (actionView, action) = Choice.Build(Assignable, actionIndex < 0 ? 0 : actionIndex);
-        actionView.Width = 200;
-
-        var (stateView, state) = Choice.Build(States, Array.IndexOf(States, position.State));
-        stateView.Width = 90;
-
-        // Or a page of D47's own panel (Phase 46).
-        var pageIndex = Math.Max(0, _pageKeys.IndexOf(position.Destination));
-        var (pageView, page) = Choice.Build(_pageWords, pageIndex);
-        pageView.Width = 200;
-
-        // A position that means nothing has no state to mean, and offering one would suggest it does.
-        stateView.IsEnabled = position.Action.Length > 0;
-
-        action.SelectionChanged += (_, _) =>
+        var heldWord = new TextBlock
         {
-            var chosen = action.SelectedItem ?? Assignable[0];
-            position.Action = chosen == Assignable[0] ? string.Empty : chosen;
-            stateView.IsEnabled = position.Action.Length > 0;
+            Name = HeldWordName,
+            Text = "HELD",
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Caption,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsVisible = false,
+        };
 
-            if (position.Action.Length > 0)
+        Themed(heldWord, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+
+        var buttonCell = new Grid
+        {
+            Height = TypeScale.MinimumTarget,
+            VerticalAlignment = VerticalAlignment.Top,
+            Children =
+            {
+                new WrapPanel
+                {
+                    ItemSpacing = 8,
+                    LineSpacing = 2,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children = { label, heldWord },
+                },
+            },
+        };
+
+        var action = new InlinePicker { Label = "Action", VerticalAlignment = VerticalAlignment.Top };
+        var state = new Segment
+        {
+            Name = StateName,
+            ItemsSource = States,
+            SelectedIndex = position.State == "off" ? 1 : 0,
+            Height = TypeScale.MinimumTarget,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+
+        var pageWord = new TextBlock
+        {
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Tip,
+            FontWeight = FontWeight.Medium,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var chevron = new TextBlock
+        {
+            Text = "›",
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+        };
+
+        Themed(chevron, TextBlock.ForegroundProperty, ThemeManager.AKey);
+        DockPanel.SetDock(chevron, Dock.Right);
+
+        var pageButton = new Button
+        {
+            Name = PageButtonName,
+            Content = new DockPanel { Children = { chevron, pageWord } },
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(12, 4),
+            VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        pageButton.Classes.Add(ListRow.Class);
+        AutomationProperties.SetName(pageButton, "Page");
+
+        void Draw()
+        {
+            var named = Assignable.FirstOrDefault(known => known.Id == position.Action);
+            var entries = new List<InlinePickerEntry> { new InlinePickerOption(NoAction, NothingWord, ThemeManager.GreyKey) };
+            entries.AddRange(Assignable.Select(known => new InlinePickerOption(known.Id, known.Name, ThemeManager.WhiteKey)));
+
+            action.Show(
+                entries,
+                position.Action,
+                named.Name ?? NothingWord,
+                named.Name is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+                null);
+
+            state.IsEnabled = position.Action.Length > 0;
+            state.SelectedIndex = position.State == "off" ? 1 : 0;
+
+            pageWord.Text = position.Destination.Length > 0
+                ? _pageWords.GetValueOrDefault(position.Destination, position.Destination)
+                : NothingWord;
+
+            Themed(pageWord, TextBlock.ForegroundProperty, position.Destination.Length > 0 ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        }
+
+        action.Picked += (_, id) =>
+        {
+            position.Action = id;
+
+            if (id.Length > 0)
             {
                 position.Destination = string.Empty;
-                page.SelectedIndex = 0;
             }
+
+            Draw();
         };
 
-        page.SelectionChanged += (_, _) =>
-        {
-            position.Destination = page.SelectedIndex > 0 ? _pageKeys[page.SelectedIndex] : string.Empty;
+        state.SelectionChanged += (_, _) => position.State = state.SelectedIndex == 1 ? "off" : "on";
 
-            if (position.Destination.Length > 0)
+        var key = $"switch-page:{++_pickSerial}";
+
+        pageButton.Click += (_, _) =>
+        {
+            if (this.FindAncestorOfType<Panel.PanelView>()?.Prompts is not { } prompts)
             {
-                position.Action = string.Empty;
-                action.SelectedIndex = 0;
-                stateView.IsEnabled = false;
+                return;
             }
+
+            prompts.Pick(
+                key,
+                "Page",
+                new PickerRequest
+                {
+                    Prompt = "Page",
+                    Choices = [NoPage, .. _pageKeys],
+                    Describe = value => value == NoPage ? NothingWord : _pageWords.GetValueOrDefault(value, value),
+                    Current = position.Destination.Length > 0 ? position.Destination : NoPage,
+                    ChoiceNoun = "pages",
+                },
+                result => TakePage(position, result.Value, Draw));
         };
 
-        state.SelectionChanged += (_, _) => position.State = state.SelectedItem ?? position.State;
+        Draw();
 
-        return new WrapPanel
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
+
+        foreach (var (cell, column) in new (Control, int)[] { (bar, 0), (buttonCell, 1), (action, 2), (state, 3), (pageButton, 4) })
         {
-            ItemSpacing = 6,
-            LineSpacing = 6,
-            Children = { label, actionView, stateView, pageView },
-        };
+            Grid.SetColumn(cell, column);
+            row.Children.Add(cell);
+        }
+
+        bool? wasHeld = null;
+
+        void Held(SwitchPosition? at)
+        {
+            var held = at is not null && at.Button == position.Button;
+
+            if (held == wasHeld)
+            {
+                return;
+            }
+
+            wasHeld = held;
+            bar.IsVisible = held;
+            heldWord.IsVisible = held;
+            Themed(label, TextBlock.ForegroundProperty, held ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+        }
+
+        Held(null);
+
+        return (row, Held);
+    }
+
+    /// <summary>Applies a page chosen in the picker; naming a page clears the action.</summary>
+    private static void TakePage(MutablePosition position, string? chosen, Action redraw)
+    {
+        if (chosen is null)
+        {
+            return;
+        }
+
+        position.Destination = chosen == NoPage ? string.Empty : chosen;
+
+        if (position.Destination.Length > 0)
+        {
+            position.Action = string.Empty;
+        }
+
+        redraw();
     }
 
     /// <summary>A name nothing else has, so a second capture does not collide with the first.</summary>

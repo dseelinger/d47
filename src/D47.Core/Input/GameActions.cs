@@ -28,6 +28,9 @@ public sealed record GameAction
     /// <summary>How a Commander hears it named, mid-sentence: "the landing gear".</summary>
     public required string Label { get; init; }
 
+    /// <summary>How a list names it: "Landing gear". Set on the actions a switch position may name.</summary>
+    public string? DisplayName { get; init; }
+
     public required string Group { get; init; }
 
     public required IReadOnlyList<ActionVariant> Variants { get; init; }
@@ -133,6 +136,7 @@ public static class GameActions
         {
             Id = "landing_gear",
             Label = "the landing gear",
+            DisplayName = "Landing gear",
             Group = Flight,
 
             // Deliberately not supercruise.
@@ -150,6 +154,7 @@ public static class GameActions
         {
             Id = "lights",
             Label = "the lights",
+            DisplayName = "Lights",
             Group = Flight,
             Variants =
             [
@@ -169,6 +174,7 @@ public static class GameActions
         {
             Id = "night_vision",
             Label = "night vision",
+            DisplayName = "Night vision",
             Group = Flight,
             Variants =
             [
@@ -189,6 +195,7 @@ public static class GameActions
         {
             Id = "cargo_scoop",
             Label = "the cargo scoop",
+            DisplayName = "Cargo scoop",
             Group = Flight,
             Variants =
             [
@@ -208,6 +215,7 @@ public static class GameActions
         {
             Id = "hardpoints",
             Label = "the hardpoints",
+            DisplayName = "Hardpoints",
             Group = Flight,
             Variants = [new ActionVariant("DeployHardpointToggle", ControlContext.NormalSpace)],
             Reports = StatusFlags.HardpointsDeployed,
@@ -233,6 +241,7 @@ public static class GameActions
         {
             Id = "supercruise",
             Label = "supercruise",
+            DisplayName = "Supercruise",
             Group = Flight,
             Variants = [new ActionVariant("Supercruise", ControlContext.Flying)],
             Reports = StatusFlags.Supercruise,
@@ -256,6 +265,7 @@ public static class GameActions
         {
             Id = "flight_assist",
             Label = "flight assist",
+            DisplayName = "Flight assist",
             Group = Flight,
             Variants = [new ActionVariant("ToggleFlightAssist", ControlContext.Flying | ControlContext.Fighter)],
 
@@ -443,6 +453,7 @@ public static class GameActions
         {
             Id = "silent_running",
             Label = "silent running",
+            DisplayName = "Silent running",
             Group = Systems,
             Variants = [new ActionVariant("ToggleButtonUpInput", ControlContext.NormalSpace)],
             Reports = StatusFlags.SilentRunning,
@@ -499,6 +510,7 @@ public static class GameActions
         {
             Id = "analysis_mode",
             Label = "the HUD mode",
+            DisplayName = "Analysis mode",
             Group = Systems,
             Variants =
             [
@@ -763,6 +775,7 @@ public static class GameActions
         {
             Id = "srv_turret",
             Label = "the SRV turret",
+            DisplayName = "SRV turret",
             Group = SrvGroup,
             Variants = [new ActionVariant("ToggleBuggyTurretButton", ControlContext.Srv)],
             Reports = StatusFlags.SrvTurretView,
@@ -774,6 +787,7 @@ public static class GameActions
         {
             Id = "srv_handbrake",
             Label = "the handbrake",
+            DisplayName = "SRV handbrake",
             Group = SrvGroup,
             Variants = [new ActionVariant("AutoBreakBuggyButton", ControlContext.Srv)],
             Reports = StatusFlags.SrvHandbrake,
@@ -785,6 +799,7 @@ public static class GameActions
         {
             Id = "srv_drive_assist",
             Label = "drive assist",
+            DisplayName = "SRV drive assist",
             Group = SrvGroup,
             Variants = [new ActionVariant("ToggleDriveAssist", ControlContext.Srv)],
             Reports = StatusFlags.SrvDriveAssist,
