@@ -1,3 +1,5 @@
+using D47.Core.Configuration;
+
 namespace D47.Core.Hotas;
 
 /// <summary>A lost device found again by flipping one of its switches.</summary>
@@ -27,9 +29,57 @@ public sealed record FoundDevice(string OldId, string NewId, string Device, stri
     public int Count(IReadOnlyList<SwitchMapping> stored) =>
         stored.Count(mapping => Covers(mapping.DeviceId, mapping.Device, mapping.Name));
 
-    /// <summary>What the card says once the switches have moved.</summary>
-    public string Says(int moved) =>
-        $"Found on {Device} — {moved} {(moved == 1 ? "switch" : "switches")} re-pointed.";
+    /// <summary>
+    /// The settings with push-to-talk and cancel moved to the new id, keeping their button numbers. Only a
+    /// found device whose text matched the stored one moves them; a switch that took its text from this flip
+    /// has not shown the old and new ids to be the same interface.
+    /// </summary>
+    public D47Settings RepointButtons(D47Settings settings, out IReadOnlyList<string> moved)
+    {
+        var names = new List<string>();
+
+        if (Fills)
+        {
+            moved = names;
+            return settings;
+        }
+
+        var talk = Repoint(settings.Listening.PushToTalkButton);
+        var cancel = Repoint(settings.Speech.CancelButton);
+
+        if (talk is not null)
+        {
+            names.Add("push-to-talk");
+            settings = settings with { Listening = settings.Listening with { PushToTalkButton = talk } };
+        }
+
+        if (cancel is not null)
+        {
+            names.Add("cancel");
+            settings = settings with { Speech = settings.Speech with { CancelButton = cancel } };
+        }
+
+        moved = names;
+        return settings;
+    }
+
+    private string? Repoint(string? stored) =>
+        HotasButton.Parse(stored) is { } button && string.Equals(button.DeviceId, OldId, StringComparison.Ordinal)
+            ? (button with { DeviceId = NewId }).ToString()
+            : null;
+
+    /// <summary>What the card says once the switches, and any buttons in <paramref name="buttons"/>, have moved.</summary>
+    public string Says(int moved, IReadOnlyList<string>? buttons = null)
+    {
+        var things = new List<string> { $"{moved} {(moved == 1 ? "switch" : "switches")}" };
+        things.AddRange(buttons ?? []);
+
+        var list = things.Count == 1
+            ? things[0]
+            : $"{string.Join(", ", things[..^1])} and {things[^1]}";
+
+        return $"Found on {Device} — {list} re-pointed.";
+    }
 }
 
 /// <summary>What one poll of <see cref="LostDeviceFinder"/> decided.</summary>

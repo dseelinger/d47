@@ -908,7 +908,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 editing.Reconciler,
                 editing.Now,
                 editing.ExportPath,
-                editing.Destinations()));
+                editing.Destinations(),
+                editing.Settings));
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.

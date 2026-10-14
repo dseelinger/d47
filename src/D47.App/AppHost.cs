@@ -3313,7 +3313,8 @@ public sealed class AppHost : IDisposable
             reconciler,
             () => DateTimeOffset.Now,
             Path.Combine(paths.Data, "switch-capture.txt"),
-            () => host.PanelRouting.Snapshot.Destinations);
+            () => host.PanelRouting.Snapshot.Destinations,
+            settings);
         // Whether a lookup is possible is asked at the moment the window opens rather than captured now: the
         // Commander can change the setting or the provider between launching d47 and writing a note, and the
         // window's own first sentence depends on the answer.

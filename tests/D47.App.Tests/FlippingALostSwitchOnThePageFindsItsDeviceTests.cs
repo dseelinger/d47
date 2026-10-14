@@ -117,4 +117,50 @@ public class FlippingALostSwitchOnThePageFindsItsDeviceTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void PushToTalkAndCancelOnTheOldIdMoveWithTheSwitches()
+    {
+        using var look = AppLook.Put();
+
+        var (settings, _, _) = TestSurface.Create();
+        settings.Replace("test", current => current with
+        {
+            Listening = current.Listening with { PushToTalkButton = "old-block#4" },
+            Speech = current.Speech with { CancelButton = "old-block#5" },
+        });
+
+        var changed = new List<string>();
+        settings.Changed += change => changed.Add(change.Key);
+
+        var store = new SwitchStore("switches.json", new MemoryFileSystem(), NullLogger<SwitchStore>.Instance);
+        store.Save([Switch("LDG GEAR", 8, 9), Switch("LIGHTS", 10, 11)]);
+        store.Poll();
+
+        var reader = new FakeHotasReader();
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+        var page = new SwitchPage(store, reader, reconciler, () => Instant, "capture.txt", [], settings);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 820, Height = 640 };
+
+        window.Show();
+        _ = panel.Open(page);
+        Dispatcher.UIThread.RunJobs();
+
+        Sample(page, reader, reconciler, store, Holding(8, 10));
+        Sample(page, reader, reconciler, store, Holding(9, 10));
+
+        Assert.Equal("new-block#4", settings.Current.Listening.PushToTalkButton);
+        Assert.Equal("new-block#5", settings.Current.Speech.CancelButton);
+
+        // The change reaches the listener's rebind through the listening fan-out.
+        Assert.Contains(changed, key => Core.Configuration.SettingsFanout.For(key).Subsystem == Core.Configuration.SettingsSubsystem.Listening);
+
+        Assert.Contains(
+            page.GetVisualDescendants().OfType<TextBlock>(),
+            block => block.IsVisible && block.Text == $"Found on {Device} — 2 switches, push-to-talk and cancel re-pointed.");
+
+        window.Close();
+    }
 }

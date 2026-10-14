@@ -6,6 +6,8 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
 using D47.App.Theming;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Interface;
@@ -94,6 +96,7 @@ public sealed class SwitchPage : DialogPage
     private SwitchCapture? _capture;
 
     private readonly LostDeviceFinder _finder = new();
+    private readonly SettingsService? _settings;
 
     public SwitchPage(
         SwitchStore store,
@@ -101,8 +104,10 @@ public sealed class SwitchPage : DialogPage
         SwitchReconciler reconciler,
         Func<DateTimeOffset> now,
         string exportPath,
-        IReadOnlyList<PanelDestination> destinations)
+        IReadOnlyList<PanelDestination> destinations,
+        SettingsService? settings = null)
     {
+        _settings = settings;
         _store = store;
         _reader = reader;
         _reconciler = reconciler;
@@ -338,7 +343,27 @@ public sealed class SwitchPage : DialogPage
         _store.Save(found.Apply(stored));
         _store.Poll();
 
-        var says = found.Says(moved);
+        IReadOnlyList<string> buttons = [];
+
+        if (_settings is not null)
+        {
+            var next = found.RepointButtons(_settings.Current, out var repointed);
+
+            if (repointed.Count > 0)
+            {
+                _settings.Replace(
+                    repointed[0] == "push-to-talk" ? ListeningCapability.PushToTalkButtonKey : ListeningCapability.CancelButtonKey,
+                    _ => next);
+
+                // Replace does not report a write that failed.
+                if (_settings.Current == next)
+                {
+                    buttons = repointed;
+                }
+            }
+        }
+
+        var says = found.Says(moved, buttons);
 
         foreach (var mapping in _switches.Where(mapping => found.Covers(mapping.DeviceId, mapping.Device, mapping.StoredName)))
         {

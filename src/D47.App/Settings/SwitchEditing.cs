@@ -1,3 +1,4 @@
+using D47.Core.Configuration;
 using D47.Core.Hotas;
 using D47.Core.Interface;
 
@@ -14,10 +15,12 @@ namespace D47.App.Settings;
 /// <param name="Destinations">
 /// Every page a surface has registered, for the position editor's list (Phase 46).
 /// </param>
+/// <param name="Settings">Where push-to-talk and cancel are stored, re-pointed with a found device.</param>
 public sealed record SwitchEditing(
     SwitchStore Store,
     IHotasReader Reader,
     SwitchReconciler Reconciler,
     Func<DateTimeOffset> Now,
     string ExportPath,
-    Func<IReadOnlyList<PanelDestination>> Destinations);
+    Func<IReadOnlyList<PanelDestination>> Destinations,
+    SettingsService Settings);

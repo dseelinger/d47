@@ -165,7 +165,7 @@ public class OneRowForPushToTalkTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(
-            settings, viewState, paths, switches: controllers ? Editing(paths) : null);
+            settings, viewState, paths, switches: controllers ? Editing(paths, settings) : null);
 
         var row = Row(host, "Push-to-talk")!;
         var bind = Bind(row);
@@ -184,7 +184,7 @@ public class OneRowForPushToTalkTests
     }
 
     /// <summary>A controller seam with nothing plugged in — enough to be composed, and it is.</summary>
-    private static SwitchEditing Editing(D47.Core.AppPaths paths) => new(
+    private static SwitchEditing Editing(D47.Core.AppPaths paths, D47.Core.Configuration.SettingsService settings) => new(
         new D47.Core.Hotas.SwitchStore(
             Path.Combine(paths.Data, "switches.json"), new DiskFileSystem(),
             NullLogger<D47.Core.Hotas.SwitchStore>.Instance),
@@ -192,7 +192,8 @@ public class OneRowForPushToTalkTests
         new D47.Core.Hotas.SwitchReconciler(NullLogger<D47.Core.Hotas.SwitchReconciler>.Instance),
         () => DateTimeOffset.UnixEpoch,
         Path.Combine(paths.Data, "switch-capture.txt"),
-        () => []);
+        () => [],
+        settings);
 
     /// <summary>
     /// Both halves stay <see cref="SettingRow.Protected"/> — rebinding or clearing push-to-talk is
@@ -248,7 +249,7 @@ public class OneRowForPushToTalkTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths));
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
         var row = Row(host, "Push-to-talk")!;
 
         Unbind(row).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
@@ -373,7 +374,7 @@ public class OneRowForPushToTalkTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
-        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths));
+        var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
         var row = Row(host, "Push-to-talk")!;
 
         settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
