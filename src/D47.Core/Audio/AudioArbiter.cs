@@ -44,7 +44,7 @@ public sealed record AudioRequest
     /// <summary>The text this is speaking, if any.</summary>
     public string? Caption { get; init; }
 
-    /// <summary>The picture name of the story cast member speaking this, or null.</summary>
+    /// <summary>The picture name of the speaker, or null for the ship's AI.</summary>
     public string? Picture { get; init; }
 }
 
@@ -55,7 +55,7 @@ public sealed record AudioRequest
 /// <param name="Utterance">
 /// Which clip <paramref name="Caption"/> belongs to, or null when nothing is playing.
 /// </param>
-/// <param name="Picture">The picture name of the story cast member whose line is playing, or null.</param>
+/// <param name="Picture">The picture name of the speaker whose line is playing, or null.</param>
 public sealed record AudioActivity(
     AudioChannel? Channel,
     string? Caption,

@@ -302,7 +302,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _coreId, value);
     }
 
-    /// <summary>The picture name of the story cast member whose line is playing, shown in the avatar in place of the core; or null.</summary>
+    /// <summary>The picture name of the speaker whose line is playing, shown in the avatar in place of the core; or null.</summary>
     public string? SpeakingPicture
     {
         get => _speakingPicture;

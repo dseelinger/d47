@@ -77,7 +77,7 @@ public sealed class VoicePipeline(
     /// <summary>The story cast member's voice the next turn is spoken in, or null for <see cref="Voice"/>.</summary>
     public D47.Core.Stories.PinnedVoice? Pinned { get; set; }
 
-    /// <summary>The picture name of the story cast member speaking the next turn, or null.</summary>
+    /// <summary>The picture name of the speaker answering the next turn, or null for the ship's AI.</summary>
     public string? Picture { get; set; }
 
     /// <summary>What the last turn spoken in a <see cref="Pinned"/> voice queued to play, or null.</summary>
@@ -178,7 +178,8 @@ public sealed class VoicePipeline(
                                 address: _address,
                                 guardianTreated: IsGuardianTreated(role, colour),
                                 running: Running(role, colour, signal),
-                                voiceRow: SpeechCapability.VoiceRowFor(role));
+                                voiceRow: SpeechCapability.VoiceRowFor(role),
+                                picture: Picture);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -514,7 +515,7 @@ public sealed class VoicePipeline(
                 // And who to name on the caption when this is not d47 talking (#201).
                 captionSpeaker: announcement.Seat is not null ? announcement.Speaker : VoiceRoles.Called(announcement.Voice),
 
-                // A story cast member's picture, shown in the avatar while the line plays.
+                // The speaker's picture, shown in the avatar while the line plays.
                 picture: announcement.Picture)
             .ConfigureAwait(false);
     }

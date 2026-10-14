@@ -3236,7 +3236,7 @@ public sealed class AppHost : IDisposable
         // The face follows the loop.
         voice.StateEntered += state => host.Panel.LoopState = state;
 
-        // And shows a story cast member while their line plays. Read when the post runs, because two changes raised on
+        // And shows the speaker while their line plays. Read when the post runs, because two changes raised on
         // different threads can be posted out of order.
         audio.ActivityChanged += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => host.Panel.SpeakingPicture = audio.Activity.Picture);
 
@@ -5430,6 +5430,7 @@ public sealed class AppHost : IDisposable
                 .For(VoiceRole.Narrator),
             _ => Speech.Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
         };
+        Voice.Picture = AddressedPicture(addressed);
         Voice.SpeakingAs = addressed.Role;
         Voice.CaptionSpeaker = addressed.Name;
 

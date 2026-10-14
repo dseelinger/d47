@@ -110,7 +110,7 @@ public sealed class AvatarView : UserControl
         }
     }
 
-    /// <summary>A story cast member's picture, shown whole in place of the core while they speak; null for the core.</summary>
+    /// <summary>A speaker's picture, shown whole in place of the core while they speak; null for the core.</summary>
     public Bitmap? Speaker
     {
         get => _speaker;

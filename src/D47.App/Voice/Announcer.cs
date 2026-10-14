@@ -138,12 +138,16 @@ public sealed class Announcer : IDisposable
             Turns.Said(spoken);
         }
 
+        var picture = ConversationPicture(written);
+
         // Joined only now, so the conversation feed above never carries it.
-        var clip = await Voice.AnnounceAsync(announcement with { Text = announcement.Heard, Verbatim = null }, voice)
+        var clip = await Voice.AnnounceAsync(
+                announcement with { Text = announcement.Heard, Verbatim = null, Picture = AvatarPicture(picture, Personas.Current.Id) },
+                voice)
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, ConversationPicture(written));
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, picture);
         return clip;
     }
 
@@ -434,6 +438,10 @@ public sealed class Announcer : IDisposable
             _ => null,
         };
     }
+
+    /// <summary>The picture name the avatar shows while a line plays: the Conversation page's, or null for the core aboard, which the avatar already shows.</summary>
+    internal static string? AvatarPicture(string? conversationPicture, string coreAboard) =>
+        conversationPicture == D47.Core.Interface.SpeakerPictures.Core(coreAboard) ? null : conversationPicture;
 
     /// <summary>The picture name of the hired pilot called <paramref name="name"/>, or null when none on the roster is.</summary>
     internal static string? CrewPicture(string? name, ShipCrew? crew) =>

@@ -705,6 +705,12 @@ signal. Colour comes from your theme, so switching theme repaints the face with 
 Each one breathes: a slow opacity cycle, faster while a turn is running and very slow at rest.
 Nothing here jitters, because a companion's face that jitters is a companion that looks anxious.
 
+While someone other than the ship AI speaks, and they have a picture, the face shows their picture
+instead: the Narrator, the carrier captain, the tower, a hired pilot or a story's cast member. It is
+the picture the Transcript shows beside their line, drawn whole, in the main window, on the mini
+panel and on both VR panels. This includes their answer when you speak to them. When the line ends,
+the ship AI's face comes back. A speaker with no picture on disk leaves the face as it is.
+
 #### Using your own
 
 Drop image files into `data/avatar/<state>/` beside the executable — the same shape the audio

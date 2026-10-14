@@ -642,10 +642,10 @@ public partial class PanelView : UserControl, IPanelTabHost
         ApplySpeaker();
     }
 
-    /// <summary>The width a speaking cast member's picture is decoded to for the avatar: twice the header avatar, for high-DPI displays.</summary>
+    /// <summary>The width a speaker's picture is decoded to for the avatar: twice the header avatar, for high-DPI displays.</summary>
     private const int SpeakerAvatarWidth = (int)(HeaderAvatarExtent * 2);
 
-    /// <summary>Shows the speaking cast member's picture in the avatar, or the core when there is none or it has no file.</summary>
+    /// <summary>Shows the speaker's picture in the avatar, or the core when there is none or it has no file.</summary>
     private void ApplySpeaker() =>
         Avatar.Speaker = _bound?.SpeakingPicture is { } picture ? _portraits?.For(picture, SpeakerAvatarWidth) : null;
 

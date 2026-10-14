@@ -106,7 +106,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// <summary>The row this pipeline's voice was cast in where it is not the provider's own, or null.</summary>
     private readonly string? _voiceRow;
 
-    /// <summary>The picture name of the story cast member speaking, carried on every request, or null.</summary>
+    /// <summary>The picture name of the speaker, carried on every request, or null.</summary>
     private readonly string? _picture;
 
     /// <summary><param name="Text"> The written form: no delivery direction in it, ever.</summary>
