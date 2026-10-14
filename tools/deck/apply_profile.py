@@ -68,6 +68,23 @@ def send(text, image):
                     'isSendingEnter': True, 'isTypingMode': False, 'pastedText': text}, image)
 
 
+def page(direction, image):
+    """Next or previous page: 'next' or 'previous'."""
+    return _action('com.elgato.streamdeck.page.' + direction, direction.capitalize() + ' Page', 'Pages',
+                   'com.elgato.streamdeck.page', {}, image)
+
+
+def fkey(n, image):
+    """Presses F13-F24. Qt numbers F1 as 0x01000030; Windows numbers it 0x70."""
+    vk = 0x70 + n - 1
+    unused = {'KeyCmd': False, 'KeyCtrl': False, 'KeyModifiers': 0, 'KeyOption': False,
+              'KeyShift': False, 'NativeCode': 146, 'QTKeyCode': 33554431, 'VKeyCode': -1}
+    key = dict(unused, NativeCode=vk, QTKeyCode=0x01000030 + n - 1, VKeyCode=vk)
+    return _action('com.elgato.streamdeck.system.hotkey', 'Hotkey', 'Activate a Key Command',
+                   'com.elgato.streamdeck.system.hotkey',
+                   {'Coalesce': True, 'Hotkeys': [key, unused, unused, unused]}, image)
+
+
 # Row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
 # cuts releases. Both release scripts follow the run to the end on their own.
 PAGE_1 = {
@@ -79,13 +96,14 @@ PAGE_1 = {
 
     '0,1': send('/desktop', 'desktop'),
     '1,1': send('push', 'push'),
-    '2,1': send('/wrap-up', 'wrapup'),
+    '2,1': run('test-drive.cmd', 'testdrive'),
     # Violet in the typing row because it opens a session: /release asks patch or minor.
     '3,1': run('release.cmd', 'release'),
     # Violet in the typing row because it opens the session the phone app reaches.
     '4,1': run('launcher.cmd', 'launcher'),
 
-    '0,2': run('test-drive.cmd', 'testdrive'),
+    # Bottom left changes page on every page.
+    '0,2': page('next', 'page-obs'),
     '1,2': run('restart-test-drive.cmd', 'restart'),
     # Violet in a row of scripts because it opens a session rather than running one to the end.
     '2,2': run('pre-release.cmd', 'prerelease'),
@@ -93,8 +111,21 @@ PAGE_1 = {
     '4,2': run('release-minor.cmd', 'minor'),
 }
 
-# Nothing navigates here. A major release is deliberate: tools\release.ps1 -Major.
-PAGE_2 = {}
+# OBS. Each key sends a function key that the d47 OBS profile and the d47 Capture scene collection
+# bind globally: F13 record, F14 pause, F15 chapter marker, F16 mic, F17-F19 scenes.
+PAGE_2 = {
+    '0,0': fkey(17, 'scene-elite'),
+    '1,0': fkey(19, 'scene-vr'),
+    '2,0': fkey(18, 'scene-desk'),
+    '4,0': run('obs.cmd', 'obs'),
+
+    '0,1': fkey(13, 'record'),
+    '1,1': fkey(14, 'pause'),
+    '2,1': fkey(15, 'marker'),
+    '3,1': fkey(16, 'mic'),
+
+    '0,2': page('previous', 'page-back'),
+}
 
 MOBILE_MODEL = 'VSD2/WiFi'
 

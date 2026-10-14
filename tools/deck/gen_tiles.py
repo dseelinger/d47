@@ -30,6 +30,8 @@ CYAN = (79, 209, 245)       # types into the focused terminal
 GREEN = (91, 228, 155)      # runs a script
 BLUE = (77, 140, 255)       # runs the app
 AMBER = (255, 176, 32)      # release
+RED = (255, 92, 92)         # controls OBS
+GREY = (150, 160, 175)      # changes page
 
 FONT_PATH = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts', 'arialbd.ttf')
 
@@ -202,20 +204,78 @@ def g_gate(d, cx, cy, r, col):
            fill=col, width=int(w * 1.4), joint='curve')
 
 
-def g_flag(d, cx, cy, r, col):
-    """Wrap up."""
-    w = max(2, int(r * 0.14))
-    d.line([cx - r * 0.66, cy - r * 0.86, cx - r * 0.66, cy + r * 0.92], fill=col, width=w)
-    cell = r * 0.42
-    for row in range(2):
-        for column in range(3):
-            if (row + column) % 2:
-                continue
-            x0 = cx - r * 0.54 + column * cell
-            y0 = cy - r * 0.74 + row * cell
-            d.rectangle([x0, y0, x0 + cell, y0 + cell], fill=col)
-    d.rectangle([cx - r * 0.54, cy - r * 0.74, cx - r * 0.54 + 3 * cell, cy - r * 0.74 + 2 * cell],
-                outline=col, width=max(2, int(w * 0.6)))
+def g_record(d, cx, cy, r, col):
+    """A filled dot inside a ring: start or stop recording."""
+    _ring(d, cx, cy, r * 0.86, col, max(2, int(r * 0.12)))
+    _dot(d, cx, cy, r * 0.56, col)
+
+
+def g_pause(d, cx, cy, r, col):
+    """Two bars: pause or resume recording."""
+    for dx in (-0.34, 0.34):
+        d.rounded_rectangle([cx + r * dx - r * 0.18, cy - r * 0.78, cx + r * dx + r * 0.18, cy + r * 0.78],
+                            radius=r * 0.08, fill=col)
+
+
+def g_marker(d, cx, cy, r, col):
+    """A bookmark: add a chapter marker to the recording."""
+    d.polygon([(cx - r * 0.56, cy - r * 0.88), (cx + r * 0.56, cy - r * 0.88),
+               (cx + r * 0.56, cy + r * 0.88), (cx, cy + r * 0.40), (cx - r * 0.56, cy + r * 0.88)], fill=col)
+
+
+def g_mic(d, cx, cy, r, col):
+    """A microphone: mute or unmute the mic track."""
+    w = max(2, int(r * 0.13))
+    d.rounded_rectangle([cx - r * 0.32, cy - r * 0.92, cx + r * 0.32, cy + r * 0.24],
+                        radius=r * 0.32, fill=col)
+    d.arc([cx - r * 0.60, cy - r * 0.46, cx + r * 0.60, cy + r * 0.50], start=0, end=180, fill=col, width=w)
+    d.line([cx, cy + r * 0.50, cx, cy + r * 0.84], fill=col, width=w)
+    d.line([cx - r * 0.36, cy + r * 0.86, cx + r * 0.36, cy + r * 0.86], fill=col, width=w)
+
+
+def g_ship(d, cx, cy, r, col):
+    """A ship seen from above: the Elite scene."""
+    w = max(2, int(r * 0.13))
+    d.polygon([(cx, cy - r * 0.92), (cx + r * 0.86, cy + r * 0.70), (cx, cy + r * 0.34),
+               (cx - r * 0.86, cy + r * 0.70)], outline=col, width=w)
+    _dot(d, cx, cy - r * 0.06, r * 0.16, col)
+
+
+def g_headset(d, cx, cy, r, col):
+    """A VR headset: the VR Mirror scene."""
+    w = max(2, int(r * 0.13))
+    d.rounded_rectangle([cx - r * 0.92, cy - r * 0.50, cx + r * 0.92, cy + r * 0.50],
+                        radius=r * 0.26, outline=col, width=w)
+    for dx in (-0.42, 0.42):
+        _ring(d, cx + r * dx, cy, r * 0.22, col, w)
+    d.line([cx - r * 0.92, cy - r * 0.10, cx - r * 1.0, cy - r * 0.10], fill=col, width=w)
+    d.line([cx + r * 0.92, cy - r * 0.10, cx + r * 1.0, cy - r * 0.10], fill=col, width=w)
+
+
+def g_monitor(d, cx, cy, r, col):
+    """A desktop monitor: the Desk scene."""
+    w = max(2, int(r * 0.13))
+    d.rounded_rectangle([cx - r * 0.92, cy - r * 0.78, cx + r * 0.92, cy + r * 0.38],
+                        radius=r * 0.12, outline=col, width=w)
+    d.line([cx, cy + r * 0.38, cx, cy + r * 0.72], fill=col, width=w)
+    d.line([cx - r * 0.40, cy + r * 0.74, cx + r * 0.40, cy + r * 0.74], fill=col, width=w)
+
+
+def g_camera(d, cx, cy, r, col):
+    """A video camera: open OBS."""
+    w = max(2, int(r * 0.13))
+    d.rounded_rectangle([cx - r * 0.92, cy - r * 0.50, cx + r * 0.36, cy + r * 0.50],
+                        radius=r * 0.14, outline=col, width=w)
+    d.polygon([(cx + r * 0.46, cy - r * 0.10), (cx + r * 0.94, cy - r * 0.44),
+               (cx + r * 0.94, cy + r * 0.44), (cx + r * 0.46, cy + r * 0.10)], fill=col)
+
+
+def g_arrow(d, cx, cy, r, col, sign):
+    """An arrow pointing right (sign 1) or left (sign -1): change page."""
+    w = max(2, int(r * 0.17))
+    d.line([cx - sign * r * 0.80, cy, cx + sign * r * 0.30, cy], fill=col, width=w)
+    d.polygon([(cx + sign * r * 0.86, cy), (cx + sign * r * 0.20, cy - r * 0.52),
+               (cx + sign * r * 0.20, cy + r * 0.52)], fill=col)
 
 
 # ---------------------------------------------------------------- tile assembly
@@ -256,7 +316,6 @@ KEYS = {
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),
     'push':       (g_push, CYAN, 'Push'),
-    'wrapup':     (g_flag, CYAN, 'Wrap up'),
 
     'testdrive':  (g_wheel, GREEN, 'Test drive'),
     'status':     (g_branch, GREEN, 'Status'),
@@ -265,6 +324,18 @@ KEYS = {
 
     'patch':      (lambda *a: g_semver(*a, lit=2), GREEN, 'Patch'),
     'minor':      (lambda *a: g_semver(*a, lit=1), AMBER, 'Minor'),
+
+    'scene-elite': (g_ship, RED, 'Elite'),
+    'scene-vr':   (g_headset, RED, 'VR'),
+    'scene-desk': (g_monitor, RED, 'Desk'),
+    'obs':        (g_camera, RED, 'OBS'),
+    'record':     (g_record, RED, 'Record'),
+    'pause':      (g_pause, RED, 'Pause'),
+    'marker':     (g_marker, RED, 'Marker'),
+    'mic':        (g_mic, RED, 'Mic'),
+
+    'page-obs':   (lambda *a: g_arrow(*a, sign=1), GREY, 'OBS'),
+    'page-back':  (lambda *a: g_arrow(*a, sign=-1), GREY, 'Back'),
 }
 
 

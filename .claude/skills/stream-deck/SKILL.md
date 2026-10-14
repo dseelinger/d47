@@ -169,14 +169,33 @@ profile with that name and picks the layout by device model. Mobile is the free 
 stored as columns 0-2 and rows 0-1, with its own layout in `MOBILE_PAGE_1`: a plain Opus session,
 Desktop, Push, Pre-release, Patch, Minor.
 
-One page, 15 keys. Row 0 opens a session, row 1 types into the session that has focus, row 2 runs
-the app and cuts releases.
+Two pages. The bottom-left key changes page on both: `page.next` on page 1, `page.previous` on
+page 2. Grey is page navigation.
+
+Page 1: row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
+cuts releases.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
 | **0** | Triage | Coord | Architect | Issue | Review |
-| **1** | Desktop | Push | Wrap up | Release | Launcher |
-| **2** | Test drive | Restart | Pre-release | Patch | Minor |
+| **1** | Desktop | Push | Test drive | Release | Launcher |
+| **2** | → OBS | Restart | Pre-release | Patch | Minor |
+
+Page 2 controls OBS, in red. Each key sends F13–F19 through `system.hotkey`; OBS binds them
+globally (`HotkeyFocusType=NeverDisableHotkeys`): F13 start/stop recording, F14 pause/resume and
+F15 chapter marker in the `[Hotkeys]` section of the OBS `d47` profile, F16 mic mute, F17 Elite,
+F18 Desk and F19 VR Mirror in the `d47 Capture` scene collection. A start/stop pair bound to one
+key toggles. OBS opens through `obs.cmd`, because it needs its own folder as the working
+directory. Elite binds none of F13–F19.
+
+| | 0 | 1 | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- | --- |
+| **0** | Elite | VR | Desk | | OBS |
+| **1** | Record | Pause | Marker | Mic | |
+| **2** | ← Back | | | | |
+
+The keys do not show whether OBS is recording. Showing that would need Elgato's OBS Studio plugin
+and the obs-websocket server, which is turned off.
 
 The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
 **Issue** is the one that asks a question first: it reads an issue number from the terminal and
@@ -195,8 +214,6 @@ or minor, relays the run, and fixes a failing build or test and runs the release
 The Patch and Minor keys start at once, with no confirmation prompt, and `release.ps1` follows the run to the end on its
 own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
 `tools\release.ps1 -Major`.
-
-The profile keeps its second page in the manifest, empty, with nothing navigating to it.
 
 A claude-voice key was tried and dropped. If one is asked for again: the state lives in the session
 and nowhere on disk, and sessions run in parallel with different settings, so **a key cannot detect
