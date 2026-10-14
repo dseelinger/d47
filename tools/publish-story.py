@@ -13,14 +13,17 @@ it unless --replace is given, checks the card and hidden entry with `faults` fro
 picture for every primary cast member (any other member with no picture file is published without one), numbers the card,
 lists the primary members' picture names in its `castPictures`, and builds in the work directory: `<id>.sealed`, a 1024 px
 JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and the new `index.json`. It then
-uploads them with `gh release upload`, `index.json` last. --dry-run stops before the upload and lists each
-file with its size. The release is created with --latest=false when missing: UpdateChecker reads the latest
-release to find updates.
+uploads them through `gh api`, replacing any asset of the same name, `index.json` last. --dry-run stops before
+the upload and lists each file with its size. The release is created with make_latest false when missing:
+UpdateChecker reads the latest release to find updates.
+
+Only REST endpoints are called, because cloud sessions refuse GitHub's GraphQL API, which `gh release` uses.
 """
 import argparse
 import base64
 import importlib.util
 import json
+import mimetypes
 import pathlib
 import shutil
 import subprocess
@@ -34,6 +37,7 @@ except ImportError:
     sys.exit("Pillow is needed to convert the pictures: python -m pip install pillow")
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
+SLUG = "dseelinger/d47"
 RELEASE = "stories-1"
 INDEX = "index.json"
 SIZE = 1024
@@ -54,23 +58,52 @@ def outside_repository(path: pathlib.Path, what: str) -> pathlib.Path:
     return path
 
 
-def gh(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["gh", *args], capture_output=True, text=True, encoding="utf-8")
+def gh_api(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["gh", "api", *args], capture_output=True, text=True, encoding="utf-8")
 
 
-def download_index(work: pathlib.Path) -> list:
-    """The release's story list; empty when the release or its index.json is missing."""
-    view = gh("release", "view", RELEASE, "--json", "assets")
+def find_release() -> dict | None:
+    """The release with its assets; None when it does not exist."""
+    view = gh_api(f"repos/{SLUG}/releases/tags/{RELEASE}")
     if view.returncode != 0:
-        if "not found" in view.stderr.lower():
-            return []
+        if "HTTP 404" in view.stderr:
+            return None
         sys.exit(f"Could not read the release {RELEASE}: {view.stderr.strip()}")
-    if INDEX not in [asset["name"] for asset in json.loads(view.stdout)["assets"]]:
+    return json.loads(view.stdout)
+
+
+def download_index(release: dict | None) -> list:
+    """The release's story list; empty when the release or its index.json is missing."""
+    asset = next((a for a in (release or {}).get("assets", []) if a["name"] == INDEX), None)
+    if asset is None:
         return []
-    fetched = gh("release", "download", RELEASE, "--pattern", INDEX, "--dir", str(work), "--clobber")
+    fetched = gh_api("-H", "Accept: application/octet-stream", f"repos/{SLUG}/releases/assets/{asset['id']}")
     if fetched.returncode != 0:
         sys.exit(f"Could not download {INDEX}: {fetched.stderr.strip()}")
-    return json.loads((work / INDEX).read_text(encoding="utf-8"))
+    return json.loads(fetched.stdout)
+
+
+def create_release() -> dict:
+    created = gh_api("--method", "POST", f"repos/{SLUG}/releases", "-f", f"tag_name={RELEASE}",
+                     "-f", "name=Stock stories", "-f", "body=Stock story files downloaded by d47. Not an app version.",
+                     "-f", "make_latest=false")
+    if created.returncode != 0:
+        sys.exit(f"Could not create the release {RELEASE}: {created.stderr.strip()}")
+    return json.loads(created.stdout)
+
+
+def upload(release: dict, file: pathlib.Path) -> None:
+    """Upload one asset, deleting any asset of the same name first."""
+    for asset in release.get("assets", []):
+        if asset["name"] == file.name:
+            deleted = gh_api("--method", "DELETE", f"repos/{SLUG}/releases/assets/{asset['id']}")
+            if deleted.returncode != 0:
+                sys.exit(f"Could not replace {file.name}: {deleted.stderr.strip()}")
+    content_type = mimetypes.guess_type(file.name)[0] or "application/octet-stream"
+    uploaded = gh_api("--method", "POST", "-H", f"Content-Type: {content_type}", "--input", str(file),
+                      f"https://uploads.github.com/repos/{SLUG}/releases/{release['id']}/assets?name={file.name}")
+    if uploaded.returncode != 0:
+        sys.exit(f"Upload of {file.name} failed: {uploaded.stderr.strip()}")
 
 
 def picture_names(entry: dict) -> list:
@@ -121,7 +154,8 @@ def main() -> None:
     if not story or entry.get("id") != story:
         sys.exit(f"card.json has the id {story} and hidden.json has {entry.get('id')}; they must match")
 
-    index = download_index(work)
+    release = find_release()
+    index = download_index(release)
     known = next((at for at, existing in enumerate(index) if existing.get("id") == story), None)
     if known is not None and not args.replace:
         sys.exit(f"{story} is already in the release; pass --replace to publish it again")
@@ -161,15 +195,10 @@ def main() -> None:
         print(f"Dry run: nothing uploaded. Files are in {work}")
         return
 
-    if gh("release", "view", RELEASE).returncode != 0:
-        created = gh("release", "create", RELEASE, "--latest=false", "--title", "Stock stories",
-                     "--notes", "Stock story files downloaded by d47. Not an app version.")
-        if created.returncode != 0:
-            sys.exit(f"Could not create the release {RELEASE}: {created.stderr.strip()}")
-    for batch in (files[:-1], files[-1:]):
-        uploaded = gh("release", "upload", RELEASE, *map(str, batch), "--clobber")
-        if uploaded.returncode != 0:
-            sys.exit(f"Upload failed: {uploaded.stderr.strip()}")
+    if release is None:
+        release = create_release()
+    for file in files:
+        upload(release, file)
     print(f"Published {story} as number {card['number']} to {RELEASE}.")
 
 
