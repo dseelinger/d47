@@ -6,11 +6,13 @@ namespace D47.App.Panel;
 /// <summary>The Commanders found in the journals, which one d47 shows, and a way to pick another.</summary>
 /// <param name="sightings">Null until the history walk has listed them.</param>
 /// <param name="shown">The Frontier id of the Commander d47 shows.</param>
+/// <param name="offDuty">Whether the shown Commander is not the one in the game.</param>
 /// <param name="pick">Must hand the pick to the tick thread; game state is written nowhere else.</param>
 public sealed class CommanderRoster(
     Func<IReadOnlyDictionary<string, CommanderSighting>?> sightings,
     Func<int> filesExamined,
     Func<string?> shown,
+    Func<bool> offDuty,
     Action<CommanderIdentity> pick)
 {
     /// <summary>Every Commander found, most recently detected first.</summary>
@@ -23,16 +25,20 @@ public sealed class CommanderRoster(
 
     public string? ShownFrontierId => shown();
 
+    public bool IsOffDuty => offDuty();
+
     /// <summary>Whether there is anyone to switch to.</summary>
     public bool CanSwitch => (sightings()?.Count ?? 0) >= 2;
 
     /// <summary>Changes whenever what a page draws from this would change.</summary>
-    public (object? Sightings, string? Shown, int Files) Stamp => (sightings(), shown(), filesExamined());
+    public (object? Sightings, string? Shown, int Files, bool OffDuty) Stamp => (sightings(), shown(), filesExamined(), offDuty());
 
     public void Pick(CommanderSighting sighting) => pick(new CommanderIdentity(sighting.FrontierId, sighting.Name));
 
     /// <summary>The name as the switcher and the list print it: <c>CMDR JOHN DEPARAGON</c>.</summary>
     public static string Called(string name) => "CMDR " + name.ToUpperInvariant();
+
+    public const string NotLoggedIn = " · NOT LOGGED IN";
 
     /// <summary>A last-detected time, in local time: <c>2026-10-05 · 19:40</c>.</summary>
     public static string Detected(DateTimeOffset at) =>

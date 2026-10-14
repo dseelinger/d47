@@ -38,9 +38,11 @@ public class SwitchCommandersFromTheTitleBarTests
 
         public string? Shown { get; set; } = John.FrontierId;
 
+        public bool OffDuty { get; set; }
+
         public List<CommanderIdentity> Picked { get; } = [];
 
-        public CommanderRoster Roster => new(() => Found, () => 41, () => Shown, Picked.Add);
+        public CommanderRoster Roster => new(() => Found, () => 41, () => Shown, () => OffDuty, Picked.Add);
 
         public static Journals Of(params CommanderSighting[] sightings) =>
             new() { Found = sightings.ToDictionary(sighting => sighting.FrontierId) };
@@ -107,6 +109,69 @@ public class SwitchCommandersFromTheTitleBarTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotEqual(Published(ThemeManager.AKey), Ink(button.Background));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ANotLoggedInCommanderIsGreyAndSaysSoUntilTheyLogIn()
+    {
+        using var look = AppLook.Put();
+        var journals = Journals.Of(John, Kestrel);
+        var (window, switcher, _) = Window(journals);
+        var button = In<Button>(switcher).First(b => b.Name == "CommanderSwitcher");
+
+        Assert.Equal("CMDR JOHN DEPARAGON", switcher.Label);
+        Assert.Equal(Published(ThemeManager.AKey), Ink(button.Foreground));
+
+        using (var inGame = window.CaptureRenderedFrame()!)
+        {
+            inGame.SaveCapture("commander-switcher-in-game.png");
+        }
+
+        journals.OffDuty = true;
+        switcher.Tick();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("CMDR JOHN DEPARAGON · NOT LOGGED IN", switcher.Label);
+        Assert.Equal(Published(ThemeManager.GreyKey), Ink(button.Foreground));
+
+        using (var offDuty = window.CaptureRenderedFrame()!)
+        {
+            offDuty.SaveCapture("commander-switcher-off-duty.png");
+        }
+
+        MenuOf(switcher);
+        switcher.Menu.IsOpen = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(Published(ThemeManager.GreyKey), Ink(button.Foreground));
+
+        journals.OffDuty = false;
+        switcher.Tick();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("CMDR JOHN DEPARAGON", switcher.Label);
+        Assert.Equal(Published(ThemeManager.AKey), Ink(button.Foreground));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheLongerLabelStillLeavesTheWindowControlsOnScreenAtTheDefaultWidth()
+    {
+        using var look = AppLook.Put();
+        var journals = Journals.Of(John, Kestrel);
+        journals.OffDuty = true;
+        var (window, switcher, _) = Window(journals);
+        window.Width = 820;
+        Dispatcher.UIThread.RunJobs();
+
+        var edge = switcher.TranslatePoint(new Point(switcher.Bounds.Width, 0), window)!.Value.X;
+
+        Assert.True(edge < 820 - 3 * CaptionStrip.StripHeight);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("commander-switcher-off-duty-narrow.png");
 
         window.Close();
     }

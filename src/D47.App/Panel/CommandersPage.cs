@@ -36,7 +36,7 @@ public sealed class CommandersPage : UserControl
     private readonly SortHeader<CommanderSighting> _head = new("CommandersHead", Heads, ByLastDetected);
     private readonly CommanderRoster _roster;
     private readonly StackPanel _body = new();
-    private (object? Sightings, string? Shown, int Files) _seen;
+    private (object? Sightings, string? Shown, int Files, bool OffDuty) _seen;
 
     public CommandersPage(CommanderRoster roster)
     {

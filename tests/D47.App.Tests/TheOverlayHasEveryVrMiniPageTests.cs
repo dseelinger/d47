@@ -40,7 +40,7 @@ public class TheOverlayHasEveryVrMiniPageTests
         var onFoot = new OnFootPlanService(kit, checklists, () => state);
         var unlocks = new EngineerPlanService(builds, kit, checklists, () => state);
         var adventures = AdventureFixture.Surface(paths);
-        var commanders = new CommanderRoster(() => null, () => 0, () => null, _ => { });
+        var commanders = new CommanderRoster(() => null, () => 0, () => null, () => false, _ => { });
 
         var headset = new VrPanelSurface(
             new PanelViewModel(),

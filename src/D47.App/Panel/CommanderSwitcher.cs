@@ -26,7 +26,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
     private readonly TextBlock _name;
     private readonly StackPanel _items = new() { Spacing = 2 };
     private readonly Popup _menu;
-    private (object? Sightings, string? Shown, int Files) _seen;
+    private (object? Sightings, string? Shown, int Files, bool OffDuty) _seen;
     private IDisposable? _buttonBackgroundInk;
     private IDisposable? _buttonForegroundInk;
 
@@ -61,7 +61,7 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
             },
         };
         AutomationProperties.SetName(_button, "Switch Commander");
-        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
+        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, RestingInk());
         _name.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
         chevron.Bind(TextBlock.ForegroundProperty, _button.GetObservable(TemplatedControl.ForegroundProperty));
 
@@ -132,7 +132,10 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         var shown = _roster.Commanders.FirstOrDefault(sighting =>
             string.Equals(sighting.FrontierId, _roster.ShownFrontierId, StringComparison.Ordinal));
 
-        _name.Text = shown is null ? "CMDR" : CommanderRoster.Called(shown.Name);
+        var called = shown is null ? "CMDR" : CommanderRoster.Called(shown.Name);
+        _name.Text = _roster.IsOffDuty ? called + CommanderRoster.NotLoggedIn : called;
+        _buttonForegroundInk?.Dispose();
+        _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, _menu.IsOpen ? ThemeManager.KnockKey : RestingInk());
         IsVisible = _roster.CanSwitch;
 
         if (!IsVisible)
@@ -159,9 +162,11 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         else
         {
             _button.ClearValue(Button.BackgroundProperty);
-            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, ThemeManager.AKey);
+            _buttonForegroundInk = Ink(_button, TemplatedControl.ForegroundProperty, RestingInk());
         }
     }
+
+    private string RestingInk() => _roster.IsOffDuty ? ThemeManager.GreyKey : ThemeManager.AKey;
 
     private void Fill()
     {

@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -3400,6 +3400,7 @@ public sealed class AppHost : IDisposable
             () => history.Commanders,
             () => history.CommanderFilesExamined,
             () => gameState.Active?.Identity.FrontierId,
+            () => gameState.IsOffDuty,
             feed.Picks.Enqueue);
         host._startedLogging = startedLogging;
 
