@@ -243,6 +243,9 @@ public sealed record StorySpeaker
     /// <summary>One line for the writer: who they are and how they speak.</summary>
     public required string Who { get; init; }
 
+    /// <summary>The longest <see cref="Role"/> a story may be published with.</summary>
+    public const int MostRoleLength = 160;
+
     /// <summary>Who the member is to the Commander, public and in lower case; null for a story published without one.</summary>
     public string? Role { get; init; }
 
@@ -750,6 +753,52 @@ public sealed class StoryCatalog
 
         faults.AddRange(Faults(secret, Personas()).Select(fault => $"{card.Id}: {fault}"));
         return faults;
+    }
+
+    /// <summary>
+    /// Every cast member with no role, or with a role that breaks the format, named by story id and cast index. A
+    /// publishing rule only: the load path does not apply it, so a story published without roles still loads.
+    /// </summary>
+    public IReadOnlyList<string> RoleFaults() =>
+        [.. Secrets.SelectMany(secret => RoleFaults(secret).Select(fault => $"{secret.Id}: {fault}"))];
+
+    private static IEnumerable<string> RoleFaults(StorySecret secret)
+    {
+        foreach (var (speaker, at) in secret.Cast.Select((speaker, at) => (speaker, at)))
+        {
+            var name = $"cast[{at.ToString(CultureInfo.InvariantCulture)}]";
+
+            if (string.IsNullOrWhiteSpace(speaker.Role))
+            {
+                yield return $"{name} has no role.";
+                continue;
+            }
+
+            var role = speaker.Role;
+
+            if (char.IsUpper(role[0]))
+            {
+                yield return $"{name} has a role that starts with a capital letter.";
+            }
+
+            if (role.TrimEnd().EndsWith('.'))
+            {
+                yield return $"{name} has a role that ends with a full stop.";
+            }
+
+            if (role.Length > StorySpeaker.MostRoleLength)
+            {
+                yield return $"{name} has a role of {role.Length.ToString(CultureInfo.InvariantCulture)} characters, more than {StorySpeaker.MostRoleLength.ToString(CultureInfo.InvariantCulture)}.";
+            }
+
+            var names = (speaker.Versions?.All().Select(version => version.Version.Name) ?? [speaker.Name]).Where(member => !string.IsNullOrWhiteSpace(member));
+
+            if (role.Contains("{name:", StringComparison.Ordinal)
+                || names.Any(member => Regex.IsMatch(role, $@"\b{Regex.Escape(member!)}\b", RegexOptions.CultureInvariant)))
+            {
+                yield return $"{name} has a role that holds a name or a {{name:}} token.";
+            }
+        }
     }
 
     private static HashSet<string> Personas() =>

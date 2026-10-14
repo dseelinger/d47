@@ -204,6 +204,48 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     }
 
     [Fact]
+    public void EveryCastMemberOfAPublishedStoryHasARole() =>
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Role = "the dock hand at the Commander's first station" }] }]).RoleFaults());
+
+    [Fact]
+    public void AMemberWithNoRoleCannotBePublishedAndStillLoads()
+    {
+        Assert.Contains(new StoryCatalog([Card], () => [Secret]).RoleFaults(), fault => fault.Contains("cast[0] has no role", StringComparison.Ordinal));
+        Assert.Empty(StoryCatalog.Faults(Card, Secret));
+    }
+
+    [Theory]
+    [InlineData("The dock hand", "starts with a capital letter")]
+    [InlineData("the dock hand.", "ends with a full stop")]
+    [InlineData("too-long", "more than 160")]
+    [InlineData("the dock hand called Ren", "holds a name")]
+    [InlineData("the dock hand who knows {name:cray}", "holds a name")]
+    public void ARoleThatBreaksTheFormatIsAFault(string role, string named)
+    {
+        var given = role == "too-long" ? "the " + new string('x', StorySpeaker.MostRoleLength - 3) : role;
+
+        Assert.Contains(
+            new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Role = given }] }]).RoleFaults(),
+            fault => fault.Contains(named, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ARoleNamingEitherVersionIsAFault()
+    {
+        var cray = StoryFixtures.Versioned.Cast.Single(member => member.Versions is not null);
+
+        foreach (var version in cray.Versions!.All())
+        {
+            var secret = StoryFixtures.Versioned with
+            {
+                Cast = [.. StoryFixtures.Versioned.Cast.Select(member => member with { Role = member == cray ? $"the engineer {version.Version.Name}" : "the dock hand" })],
+            };
+
+            Assert.Contains(new StoryCatalog([Card], () => [secret]).RoleFaults(), fault => fault.Contains("holds a name", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
     public void AFaultQuotesNoHiddenText()
     {
         var broken = Secret with
