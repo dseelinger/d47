@@ -446,6 +446,9 @@ public sealed record AdventureLine
 
     /// <summary>A speaker id of the story, or null for the ship.</summary>
     public string? Speaker { get; init; }
+
+    /// <summary>The cast id this narrator line introduces; such a line is not counted against <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
+    public string? Introduces { get; init; }
 }
 
 /// <summary>

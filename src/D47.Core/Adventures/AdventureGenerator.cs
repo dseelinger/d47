@@ -113,7 +113,11 @@ public sealed record AdventureStory(
     bool CoreIsStock = false);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
-public sealed record AdventureSpeaker(string Id, string Name, string Who);
+public sealed record AdventureSpeaker(string Id, string Name, string Who)
+{
+    /// <summary>Who the member is to the Commander, public; null when the story has none.</summary>
+    public string? Role { get; init; }
+}
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
 public sealed record AdventureChapter(Adventure Previous, IReadOnlyList<Adventure> Earlier)
@@ -1256,9 +1260,18 @@ public sealed class AdventureGenerator(
                 + "never \"I\", \"me\" or \"we\", and never an offer, a question or a wait.");
         }
 
-        foreach (var member in story.Cast ?? [])
+        if (story.Cast is { Count: > 0 } cast)
         {
-            text.AppendLine($"- \"{member.Id}\": {member.Name} — {member.Who}");
+            text.AppendLine(
+                "The narrator says who each cast member is just before their first line, from the role given beside their name, "
+                + "so never write that introduction.");
+
+            foreach (var member in cast)
+            {
+                text.AppendLine(member.Role is { Length: > 0 } role
+                    ? $"- \"{member.Id}\": {member.Name}, {role} — {member.Who}"
+                    : $"- \"{member.Id}\": {member.Name} — {member.Who}");
+            }
         }
     }
 

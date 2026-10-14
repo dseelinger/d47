@@ -208,15 +208,29 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// The current story's cast member <paramref name="castId"/> as this Commander meets them, for the Commander to answer;
-    /// null when there is none, or the story is not running, is switched off or is without Odyssey.
+    /// null when there is none, or the member has not been introduced, or the story is not running, is switched off or is
+    /// without Odyssey.
     /// </summary>
     public AdventureSpeaker? Answering(string? frontierId, string castId) =>
         stories.Current(frontierId) is { State: StoryState.Running, IsOff: false } story
         && !WithoutOdyssey(frontierId)
         && Hidden(story.Id) is { } secret
         && secret.Cast.FirstOrDefault(member => string.Equals(member.Id, castId, StringComparison.Ordinal)) is { } member
-            ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who)
+        && StoryIntroductions.Met(story, secret, member.Id)
+            ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role }
             : null;
+
+    /// <summary>The narrator's introduction owed before cast member <paramref name="castId"/> speaks in the current story, or null.</summary>
+    public string? Introduction(string? frontierId, string? castId) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
+            ? StoryIntroductions.Line(story, secret, Gender(), castId)
+            : null;
+
+    /// <summary>Records that the narrator said or posted the introduction of cast member <paramref name="castId"/> in story <paramref name="storyId"/>.</summary>
+    public void Introduced(string? frontierId, string storyId, string castId) =>
+        stories.Update(frontierId, storyId, story => story.IsCurrent && !story.Introduced.Contains(castId, StringComparer.Ordinal)
+            ? story with { Introduced = [.. story.Introduced, castId] }
+            : story);
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
     public bool NeedsGenderFor(string id) => catalog().Secret(id)?.Cast.Any(speaker => speaker.Versions is not null) == true;
@@ -811,6 +825,8 @@ public sealed class StoryDirector(
             return "The story changed while the objective was being written.";
         }
 
+        draft = StoryIntroductions.Introduce(draft, still, secret, Gender(), from);
+
         if (book.ReplaceBeats(frontierId, chapter.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
         {
             return refusal;
@@ -1199,7 +1215,7 @@ public sealed class StoryDirector(
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running, IsOff: false, IsWithoutOdyssey: false, CurrentChapter: not null } story
             || Hidden(story.Id) is not { } secret
-            || !secret.Cast.Any(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(Gender()))))
+            || Reactors(story, secret).Count == 0)
         {
             return null;
         }
@@ -1222,17 +1238,21 @@ public sealed class StoryDirector(
     {
         ArgumentNullException.ThrowIfNull(due);
 
-        return ReactionWindow(frontierId) is { Reacted: false } window && window.Due == due && Hidden(due.StoryId) is { } secret
-            ? Reactors(secret)
+        return ReactionWindow(frontierId) is { Reacted: false } window
+               && window.Due == due
+               && stories.Current(frontierId) is { } story
+               && Hidden(due.StoryId) is { } secret
+            ? Reactors(story, secret)
             : [];
     }
 
-    private List<StoryReactor> Reactors(StorySecret secret)
+    /// <summary>The primary cast this Commander meets who have been introduced or need no introduction.</summary>
+    private List<StoryReactor> Reactors(Story story, StorySecret secret)
     {
         var gender = Gender();
 
         return [.. secret.Cast
-            .Where(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(gender)))
+            .Where(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(gender)) && StoryIntroductions.Met(story, secret, member.Id))
             .Select(member => new StoryReactor(member.Id, member.Shown(secret.Id, gender).Name, member.Who))];
     }
 
@@ -1566,6 +1586,10 @@ public sealed class StoryDirector(
 
         var key = UniqueKey(frontierId, still, draft.Key);
 
+        // The opening and the narrated scan are said before chapter one, introducing whoever speaks in them.
+        var saidFirst = number == 1 ? (secret.Opening ?? []).Append(secret.Scan).OfType<StoryLine>().Select(line => line.Speaker) : [];
+        draft = StoryIntroductions.Introduce(draft, still with { Introduced = [.. still.Introduced, .. saidFirst] }, secret, Gender());
+
         if ((book.Write(frontierId, draft with { Key = key, StoryId = story.Id }) ?? book.Begin(frontierId, key, now)) is { } refusal)
         {
             return new(refusal);
@@ -1621,7 +1645,7 @@ public sealed class StoryDirector(
             comfort,
             destination,
             story.Refused,
-            [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who))],
+            [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role })],
             Aboard()?.Name,
             Aboard()?.Stock == true);
     }

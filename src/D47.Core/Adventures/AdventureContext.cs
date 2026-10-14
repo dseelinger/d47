@@ -90,7 +90,7 @@ public static class AdventureContext
 
                 if (standing.LastBeat is { } last && standing.LastFiredAt is { } at)
                 {
-                    Line(block, $"Last objective, {last.Title}, {Ago(now - at)}", last.Line);
+                    Line(block, $"Last objective, {last.Title}, {Ago(now - at)}", last.Lines.FirstOrDefault(line => line.Introduces is null)?.Text);
                 }
             }
 

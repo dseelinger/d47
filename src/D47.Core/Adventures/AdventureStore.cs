@@ -392,7 +392,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 Function = beat.Function?.Trim(),
                 Reason = string.IsNullOrWhiteSpace(beat.Reason) ? null : beat.Reason.Trim(),
                 Lines = beat.Lines is { Count: > 0 } lines
-                    ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker })]
+                    ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
                     : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
                 Trigger = new AdventureTrigger
                 {
@@ -439,7 +439,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 }
                 : null,
             OpeningLines = record.OpeningLines is { Count: > 0 } opening
-                ? [.. opening.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker })]
+                ? [.. opening.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
                 : record.Opening is { } first
                     ? [new AdventureLine { Text = first.Trim(), Speaker = record.OpeningSpeaker }]
                     : [],
@@ -484,7 +484,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Opening = adventure.Opening,
         OpeningSpeaker = adventure.OpeningSpeaker,
         OpeningLines = adventure.OpeningLines.Count > 1
-            ? [.. adventure.OpeningLines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker })]
+            ? [.. adventure.OpeningLines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker, Introduces = line.Introduces })]
             : null,
         Beats =
         [
@@ -517,7 +517,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 },
                 Line = beat.Lines.Count == 1 ? beat.Line : null,
                 Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
-                Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker })],
+                Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker, Introduces = line.Introduces })],
             }),
         ],
         AcceptedAt = adventure.AcceptedAt,
@@ -615,6 +615,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Text { get; set; }
 
         public string? Speaker { get; set; }
+
+        public string? Introduces { get; set; }
     }
 
     private sealed class TriggerRecord

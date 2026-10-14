@@ -237,6 +237,7 @@ public sealed class Announcer : IDisposable
                         Records.RecordNudge(announcement, spoken);
                         Records.RecordClue(announcement, spoken);
                         Records.RecordReaction(announcement, spoken);
+                        Records.RecordIntroduction(announcement, spoken);
 
                         // After the fact has been spoken, and not awaited: the search is a round trip through
                         // somebody else's index, and the rest of this batch is where a danger callout would be

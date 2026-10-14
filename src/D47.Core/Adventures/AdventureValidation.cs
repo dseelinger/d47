@@ -106,9 +106,9 @@ public static class AdventureValidation
                 $"The name is {adventure.Name.Trim().Length} characters; at most {AdventureLimits.MaxNameLength}.");
         }
 
-        if (adventure.OpeningLines.Count > AdventureLimits.MaxLinesPerBeat)
+        if (Written(adventure.OpeningLines) > AdventureLimits.MaxLinesPerBeat)
         {
-            problems.Add($"The opening has {adventure.OpeningLines.Count} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
+            problems.Add($"The opening has {Written(adventure.OpeningLines)} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
         }
 
         foreach (var opening in adventure.OpeningLines.Where(line => line.Text.Trim().Length > AdventureLimits.MaxLineLength))
@@ -156,9 +156,9 @@ public static class AdventureValidation
                 problems.Add($"{where}'s title is {beat.Title.Trim().Length} characters; at most {AdventureLimits.MaxTitleLength}.");
             }
 
-            if (beat.Lines.Count > AdventureLimits.MaxLinesPerBeat)
+            if (Written(beat.Lines) > AdventureLimits.MaxLinesPerBeat)
             {
-                problems.Add($"{where} has {beat.Lines.Count} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
+                problems.Add($"{where} has {Written(beat.Lines)} lines; at most {AdventureLimits.MaxLinesPerBeat}.");
             }
 
             if (beat.Lines.Count == 0 || beat.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
@@ -421,6 +421,9 @@ public static class AdventureValidation
 
         return key.ToString().TrimEnd('-');
     }
+
+    /// <summary>The lines the writer wrote, leaving out the narrator's introductions.</summary>
+    private static int Written(IReadOnlyList<AdventureLine> lines) => lines.Count(line => line.Introduces is null);
 
     private static string Where(int index, AdventureBeat beat) =>
         string.IsNullOrWhiteSpace(beat.Title)

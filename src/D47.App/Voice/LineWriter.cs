@@ -405,6 +405,44 @@ internal sealed class LineWriter
     }
 
     /// <summary>
+    /// The narrator's introduction to say before a story line by a cast member not yet introduced; empty for any other line.
+    /// The member is marked introduced once it is said.
+    /// </summary>
+    internal IReadOnlyList<Announcement> Introducing(Announcement line)
+    {
+        var commander = GameState.Active?.Identity.FrontierId;
+
+        if (line.Cast is not { } castId
+            || Stories.CurrentCast(commander) is not var (secret, _)
+            || Stories.Introduction(commander, castId) is not { } introduction
+            || Stories.LineVoice(commander, D47.Core.Stories.StorySpeaker.Narrator) is not { } narrator)
+        {
+            return [];
+        }
+
+        return [Voiced(line with { Key = D47.Core.Stories.StoryIntroductions.Key(secret.Id, castId), Text = introduction }, narrator)];
+    }
+
+    /// <summary>
+    /// Whether a chapter line leaves its speaker's introduction to the chapter: the chapter holds one for them, or they
+    /// spoke earlier in the same beat. A chapter written before introductions were stored holds none.
+    /// </summary>
+    private bool IntroducedInChapter(Announcement announcement)
+    {
+        if (D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line)
+            || Adventures.Store.Find(GameState.Active?.Identity.FrontierId, key) is not { } chapter
+            || chapter.SpeakerOf(beat, line) is not { } speaker)
+        {
+            return true;
+        }
+
+        var lines = (beat < 0 ? chapter.OpeningLines : chapter.Beats.ElementAtOrDefault(beat)?.Lines) ?? [];
+
+        return chapter.OpeningLines.Concat(chapter.Beats.SelectMany(each => each.Lines)).Any(each => each.Introduces == speaker)
+               || lines.Take(line).Any(each => each.Speaker == speaker);
+    }
+
+    /// <summary>
     /// A story line the model writes from the brief in the given voice, or null when no line came back. The ship's lines
     /// are written by the core aboard; every other speaker's by the brief's own speaker.
     /// </summary>
@@ -509,7 +547,7 @@ internal sealed class LineWriter
         // A clue is written from the hidden layer, which never rides on the marker.
         if (D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is { } clue)
         {
-            return await ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told ? [told] : [];
+            return await ComposeClueAsync(announcement, clue).ConfigureAwait(false) is { } told ? [.. Introducing(told), told] : [];
         }
 
         // A reaction is written from the notable event the callout kept, which the marker never carries.
@@ -521,7 +559,7 @@ internal sealed class LineWriter
         // A story chapter's line for the narrator or a cast member is said as written, in that speaker's voice.
         if (StoryVoiced(announcement) is { } voiced)
         {
-            return [voiced];
+            return IntroducedInChapter(announcement) ? [voiced] : [.. Introducing(voiced), voiced];
         }
 
         var varied = await VaryAsync(await RoutedAsync(announcement).ConfigureAwait(false)).ConfigureAwait(false);

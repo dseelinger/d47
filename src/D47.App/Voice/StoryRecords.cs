@@ -77,6 +77,30 @@ internal sealed class StoryRecords(
             cast: voice?.Cast?.Picture);
     }
 
+    /// <summary>A spoken introduction, marking the cast member introduced and posted to Messages from the narrator.</summary>
+    internal void RecordIntroduction(Announcement announcement, SpokenClip? spoken)
+    {
+        if (StoryIntroductions.Parse(announcement.Key) is not { } introduced)
+        {
+            return;
+        }
+
+        var commander = gameState.Active?.Identity.FrontierId;
+        var voice = stories.LineVoice(commander, StorySpeaker.Narrator);
+
+        stories.Introduced(commander, introduced.StoryId, introduced.CastId);
+
+        messages.Post(
+            voice?.From ?? MessageStore.Narrator,
+            stories.CurrentCast(commander)?.Title ?? introduced.StoryId,
+            announcement.Text,
+            DateTimeOffset.Now,
+            StoryLines.Key(introduced.StoryId),
+            picture: pictureOf(voice?.Cast),
+            spoken: spoken,
+            cast: voice?.Cast?.Picture);
+    }
+
     /// <summary>A cast member's answer to the Commander, posted to Messages from the member with what the Commander said above it.</summary>
     internal void RecordCastReply(string castId, string asked, string answer, SpokenClip? spoken)
     {
@@ -115,6 +139,12 @@ internal sealed class StoryRecords(
 
         D47.Core.Adventures.AdventureMessages.Post(
             messages, voice?.From ?? personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, pictureOf(voice?.Cast), voice?.Cast?.Picture);
+
+        if (story?.StoryId is { } storyId
+            && (beat < 0 ? story.OpeningLines : reached?.Lines)?.ElementAtOrDefault(line)?.Introduces is { } introduced)
+        {
+            stories.Introduced(commander, storyId, introduced);
+        }
 
         adventures.Told(commander, key, new D47.Core.Adventures.AdventureTold
         {

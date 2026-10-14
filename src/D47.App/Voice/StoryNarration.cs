@@ -140,6 +140,13 @@ public sealed class StoryNarration
     {
         var voice = _stories.LineVoice(commander, line.Speaker)
             ?? new StoryLineVoice(VoiceRole.Narrator, MessageStore.Narrator);
+
+        if (voice.Cast is { } cast && _stories.Introduction(commander, cast.Id) is { } introduction)
+        {
+            await NarrateLineAsync(key, storyId, title, new StoryLine(introduction, StorySpeaker.Narrator), commander).ConfigureAwait(false);
+            _stories.Introduced(commander, storyId, cast.Id);
+        }
+
         var text = StorySecret.ForCommander(line.Text, _gameState.Active?.Identity.Name, _stories.Gender());
 
         var posted = _messages.Post(
