@@ -242,6 +242,55 @@ public sealed class AdventureGeneratorTests
         Assert.Contains("which the Commander's brief does not name", provider.Requests[2].Prompt.History[0].Text);
     }
 
+    private static string EngineerBeats(string engineer) => $$"""
+        {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+          {"title": "The Workshop", "function": "resolution", "kind": "engineer", "engineer": "{{engineer}}", "stage": "Unlocked", "line": "She lets you in."}
+        ]}
+        """;
+
+    [Fact]
+    public async Task AnEngineerObjectiveNamingNobodyIsRefusedWithTheEngineersListed()
+    {
+        var unknown = EngineerBeats("Felicity Farsier-Jones");
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(unknown),
+            RoundScriptedLlmProvider.Saying(unknown));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("names the engineer \"Felicity Farsier-Jones\"; the engineers are", outcome.Refusal);
+        Assert.Contains("Felicity Farseer", outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task AnEngineerObjectiveIsStoredUnderTheCataloguesName()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(EngineerBeats("Farseer")));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Equal("Felicity Farseer", Assert.Single(outcome.Draft!.Beats, beat => beat.Trigger.Kind == TriggerKind.Engineer).Trigger.Engineer);
+    }
+
+    [Fact]
+    public async Task AnOnFootEngineerObjectivePasses()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(EngineerBeats("Domino Green")));
+
+        var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+    }
+
     [Fact]
     public async Task ARankBeatWithNoCareerIsRefusedInWordsTheModelCanActOn()
     {

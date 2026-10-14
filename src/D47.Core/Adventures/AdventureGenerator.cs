@@ -2029,7 +2029,7 @@ public sealed class AdventureGenerator(
                 }
                 else
                 {
-                    trigger = written;
+                    trigger = written with { Engineer = EngineerDirectory.ByName(written.Engineer)!.Name };
                 }
             }
             else if (AdventureTrigger.IsOnceKind(beat.Kind))

@@ -140,6 +140,18 @@ public class ActivityBeatsCountTheirOwnEventsTests
     }
 
     [Fact]
+    public void AnEngineerNamedByItsSurnameIsRefusedUntilStoredAsTheCataloguesName()
+    {
+        Assert.NotEmpty(AdventureValidation.EngineerProblems("Beat one", new AdventureTrigger { Kind = TriggerKind.Engineer, Engineer = "Nobody Fixturesson", Stage = "Unlocked" }));
+
+        var stored = new AdventureTrigger { Kind = TriggerKind.Engineer, Engineer = D47.Core.Knowledge.EngineerDirectory.ByName("Farseer")!.Name, Stage = "Unlocked" };
+
+        Assert.Equal("Felicity Farseer", stored.Engineer);
+        Assert.Equal(2, Fold(stored, """{ "timestamp":"@", "event":"EngineerProgress", "Engineer":"Felicity Farseer", "EngineerID":300100, "Progress":"Unlocked" }""").Current);
+        Assert.Equal(2, Fold(stored, """{ "timestamp":"@", "event":"EngineerProgress", "Engineers":[{ "Engineer":"Felicity Farseer", "EngineerID":300100, "Progress":"Unlocked" }] }""").Current);
+    }
+
+    [Fact]
     public void AnEngineerBeatMayNameAnyEngineerInTheDirectory()
     {
         foreach (var engineer in D47.Core.Knowledge.EngineerDirectory.All)

@@ -308,7 +308,7 @@ public static class AdventureValidation
         }
     }
 
-    /// <summary>What is wrong with an engineer trigger: no engineer, or a stage that is not <c>Invited</c> or <c>Unlocked</c>.</summary>
+    /// <summary>What is wrong with an engineer trigger: no engineer, an engineer the directory does not know, or a stage that is not <c>Invited</c> or <c>Unlocked</c>.</summary>
     public static IEnumerable<string> EngineerProblems(string where, AdventureTrigger trigger)
     {
         ArgumentNullException.ThrowIfNull(trigger);
@@ -316,6 +316,11 @@ public static class AdventureValidation
         if (string.IsNullOrWhiteSpace(trigger.Engineer))
         {
             yield return $"{where} names no engineer.";
+        }
+        else if (EngineerDirectory.ByName(trigger.Engineer) is null)
+        {
+            yield return $"{where} names the engineer \"{trigger.Engineer.Trim()}\"; the engineers are "
+                + string.Join(", ", EngineerDirectory.All.Select(engineer => engineer.Name)) + ".";
         }
 
         if (EngineerStages.Rank(trigger.Stage) == 0)

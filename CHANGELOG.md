@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story objective that waits on an engineer is now checked against the engineer list when the story is written. A name that is not an engineer is sent back to the writer with the list, and a surname or a near spelling is saved as the engineer's full name, so "Farseer" becomes "Felicity Farseer". Before, a misspelt name passed and the chapter waited on it until it was refused.
+
 A HOTAS switch whose controller has moved to another USB port can now be found again without walking it. When Windows gives the controller a new id, the switch's card says d47 can no longer find its device. Open the HOTAS switches page and flip that switch: d47 finds the controller it moved on, points every switch learned on it at the new id, saves the switch file straight away and says, for example, "Found the device — 4 switches re-pointed." Unsaved changes on the page stay unsaved. A throttle in 4x32 mode needs one flip per block that had switches on it. If the throttle's 4x32 mode was turned on or off, the card says so and the switch still has to be assigned again. Before, every switch on a moved controller had to be walked and set up again.
 
 When that happens, push-to-talk and cancel buttons set on the old controller id move with the switches, keeping their button numbers, and the card says so, for example "4 switches and push-to-talk re-pointed." Before, push-to-talk on the stick stopped working after the move with nothing on screen. A button on a controller no switch was found on is left alone.
