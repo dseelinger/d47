@@ -456,15 +456,6 @@ public sealed class SwitchPage : DialogPage
 
         resume.Click += (_, _) => _reconciler.Resume(mapping.Name);
 
-        var device = new TextBlock
-        {
-            Text = mapping.Device.Length == 0 ? mapping.DeviceId : mapping.Device,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        Themed(device, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
         var health = new TextBlock
         {
             FontSize = TypeScale.Secondary,
@@ -505,7 +496,6 @@ public sealed class SwitchPage : DialogPage
                 Children =
                 {
                     new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { name, remove, resume } },
-                    device,
                     positions,
                     health,
                     found,
@@ -533,7 +523,6 @@ public sealed class SwitchPage : DialogPage
 
             found.Text = mapping.Note;
             found.IsVisible = mapping.Note.Length > 0;
-            device.Text = mapping.Device.Length == 0 ? mapping.DeviceId : mapping.Device;
 
             foreach (var held in holds)
             {

@@ -102,10 +102,13 @@ public class FlippingALostSwitchOnThePageFindsItsDeviceTests
         Assert.Equal(["LDG GEAR", "LIGHTS"], store.Switches.Select(mapping => mapping.Name));
 
         var found = page.GetVisualDescendants().OfType<TextBlock>()
-            .Where(block => block.IsVisible && block.Text == $"Found on {Device} — 2 switches re-pointed.")
+            .Where(block => block.IsVisible && block.Text == "Found the device — 2 switches re-pointed.")
             .ToList();
 
         Assert.Equal(2, found.Count);
+        Assert.DoesNotContain(
+            page.GetVisualDescendants().OfType<TextBlock>(),
+            block => block.IsVisible && block.Text?.Contains("VID 0x", StringComparison.Ordinal) == true);
 
         // The working copy took the new id, so saving the rename does not write the old one back.
         page.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Save")
@@ -159,7 +162,7 @@ public class FlippingALostSwitchOnThePageFindsItsDeviceTests
 
         Assert.Contains(
             page.GetVisualDescendants().OfType<TextBlock>(),
-            block => block.IsVisible && block.Text == $"Found on {Device} — 2 switches, push-to-talk and cancel re-pointed.");
+            block => block.IsVisible && block.Text == "Found the device — 2 switches, push-to-talk and cancel re-pointed.");
 
         window.Close();
     }

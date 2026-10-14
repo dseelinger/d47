@@ -78,7 +78,7 @@ public sealed record FoundDevice(string OldId, string NewId, string Device, stri
             ? things[0]
             : $"{string.Join(", ", things[..^1])} and {things[^1]}";
 
-        return $"Found on {Device} — {list} re-pointed.";
+        return $"Found the device — {list} re-pointed.";
     }
 }
 
@@ -231,7 +231,7 @@ public sealed class LostDeviceFinder
 
         if (mapping.Device.Length > 0 && !string.Equals(mapping.Device, reading.Describe(), StringComparison.Ordinal))
         {
-            return $"That flip came from {reading.Describe()}, but this switch was learned on {mapping.Device}. "
+            return "That flip came from a device that does not match the one this switch was learned on. "
                    + "If the throttle's 4x32 mode was turned on or off, assign it again.";
         }
 

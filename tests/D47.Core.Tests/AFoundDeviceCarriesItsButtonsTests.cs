@@ -48,14 +48,14 @@ public class AFoundDeviceCarriesItsButtonsTests
     }
 
     [Theory]
-    [InlineData(4, "Found on stick — 4 switches re-pointed.")]
-    [InlineData(1, "Found on stick — 1 switch re-pointed.")]
+    [InlineData(4, "Found the device — 4 switches re-pointed.")]
+    [InlineData(1, "Found the device — 1 switch re-pointed.")]
     public void TheCardCountsSwitchesAlone(int count, string says) =>
         Assert.Equal(says, Found.Says(count));
 
     [Fact]
     public void TheCardNamesTheButtonsItMoved() =>
         Assert.Equal(
-            "Found on stick — 4 switches and push-to-talk re-pointed.",
+            "Found the device — 4 switches and push-to-talk re-pointed.",
             Found.Says(4, ["push-to-talk"]));
 }

@@ -266,7 +266,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
                     : "This switch was learned on a device D47 can no longer find, so it is doing nothing. "
                       + "Flip it on the HOTAS switches page and D47 will find the device again. Assign it again "
                       + "if the throttle's 4x32 mode was turned on or off: that renumbers every button on the "
-                      + $"throttle, so the mapping is retired rather than pointed at the wrong one ({mapping.Device}).",
+                      + "throttle, so the mapping is retired rather than pointed at the wrong one.",
             };
         }
 

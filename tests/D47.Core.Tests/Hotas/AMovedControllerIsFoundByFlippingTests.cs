@@ -71,7 +71,7 @@ public class AMovedControllerIsFoundByFlippingTests
 
         Assert.Equal(["B", "B", "C"], moved.Select(mapping => mapping.DeviceId));
         Assert.Equal(2, found.Count(stored));
-        Assert.Equal($"Found on {Throttle} — 2 switches re-pointed.", found.Says(2));
+        Assert.Equal("Found the device — 2 switches re-pointed.", found.Says(2));
     }
 
     [Fact]
