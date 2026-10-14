@@ -15,6 +15,28 @@ public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line)
 public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines);
 
 /// <summary>
+/// The current objective and the ones after it written again from the Commander's words, with the model's
+/// <see cref="Reply"/>; <see cref="Exchange"/> is every round so far, this one last.
+/// </summary>
+public sealed record ObjectiveProposal(
+    string StoryId,
+    DateTimeOffset PickedAt,
+    int Chapters,
+    string ChapterKey,
+    int From,
+    AdventureBeat Current,
+    Adventure Draft,
+    string Reply,
+    IReadOnlyList<AdventureRemark> Exchange)
+{
+    /// <summary>The objectives that would replace the current one and those after it.</summary>
+    public IReadOnlyList<AdventureBeat> Beats => [.. Draft.Beats.Skip(From)];
+}
+
+/// <summary>A proposal, or the refusal saying why none was written.</summary>
+public sealed record ObjectiveProposalOutcome(ObjectiveProposal? Proposal, string? Refusal);
+
+/// <summary>
 /// Runs a stock story as a chain of adventures: Pick writes and begins chapter one, and a finished chapter has
 /// the next written and begun.
 /// </summary>
@@ -37,6 +59,9 @@ public sealed class StoryDirector(
 
     /// <summary>Commanders with a replacement beat being written.</summary>
     private readonly HashSet<string> _rewriting = new(StringComparer.Ordinal);
+
+    /// <summary>Proposed objective changes held for a Commander, by Commander.</summary>
+    private readonly Dictionary<string, ObjectiveProposal> _proposals = new(StringComparer.Ordinal);
 
     /// <summary>Adventures outside a story with a replacement beat being written, by Commander and key.</summary>
     private readonly HashSet<string> _rewritingAdventures = new(StringComparer.Ordinal);
@@ -547,6 +572,177 @@ public sealed class StoryDirector(
         return await RewriteAsync(frontierId, at, closedMarketId: null, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>The proposal held for this Commander, or null.</summary>
+    public ObjectiveProposal? Proposal(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _proposals.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>
+    /// Has the current objective and the ones after it written again from the Commander's remark, and holds the result as
+    /// the Commander's proposal, replacing any held one. <paramref name="exchange"/> is the earlier rounds, which
+    /// <see cref="ObjectiveProposal.Exchange"/> of the held proposal carries. Changes nothing in the chapter.
+    /// </summary>
+    public async Task<ObjectiveProposalOutcome> ReviseObjectiveAsync(
+        string? frontierId, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (string.IsNullOrWhiteSpace(remark))
+        {
+            return new ObjectiveProposalOutcome(null, "Say what you would rather do.");
+        }
+
+        if (!TryRewritable(frontierId, out var at, out var refusal))
+        {
+            return new ObjectiveProposalOutcome(null, refusal);
+        }
+
+        if (!Claim(frontierId))
+        {
+            return new ObjectiveProposalOutcome(null, "A different objective is already being written.");
+        }
+
+        try
+        {
+            return await ProposeAsync(frontierId, at, remark.Trim(), exchange, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Writing a proposed objective failed");
+            return new ObjectiveProposalOutcome(null, "The objective could not be written. Say it again and I will try a new draft.");
+        }
+        finally
+        {
+            Release(frontierId);
+        }
+    }
+
+    /// <summary>Replaces the current objective and the ones after it with the held proposal. Returns a refusal or null; the refused proposal is dropped.</summary>
+    public string? ApplyObjective(string? frontierId)
+    {
+        if (Proposal(frontierId) is not { } proposal)
+        {
+            return "There is no change to apply.";
+        }
+
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (IsWriting(frontierId) || IsRewriting(frontierId))
+        {
+            return "An objective is being written.";
+        }
+
+        var refusal = ApplyHeld(frontierId, proposal);
+
+        if (refusal is not null)
+        {
+            DiscardObjective(frontierId);
+        }
+
+        return refusal;
+    }
+
+    /// <summary>Drops the held proposal.</summary>
+    public void DiscardObjective(string? frontierId)
+    {
+        lock (_gate)
+        {
+            _proposals.Remove(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    private async Task<ObjectiveProposalOutcome> ProposeAsync(
+        string? frontierId, BeatAt at, string remark, IReadOnlyList<AdventureRemark> exchange, CancellationToken cancellationToken)
+    {
+        if (Hidden(at.Story.Id) is not { } secret)
+        {
+            return new ObjectiveProposalOutcome(null, $"The hidden layer of {at.Story.Title} is missing from this build.");
+        }
+
+        var chapter = at.Standing.Adventure;
+        var from = at.Standing.Current;
+        var now = Clock();
+        var ask = RewriteAsk(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange), now);
+        var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
+
+        if (outcome.Draft is not { } draft)
+        {
+            return new ObjectiveProposalOutcome(null, outcome.Message ?? "Nothing came back.");
+        }
+
+        if (!Unchanged(frontierId, at.Story))
+        {
+            return new ObjectiveProposalOutcome(null, "The story changed while the objective was being written.");
+        }
+
+        var proposal = new ObjectiveProposal(
+            at.Story.Id,
+            at.Story.PickedAt,
+            at.Story.Chapters.Count,
+            chapter.Key,
+            from,
+            at.Beat,
+            draft,
+            outcome.Reply ?? string.Empty,
+            [.. exchange, new AdventureRemark(remark, outcome.Reply)]);
+
+        lock (_gate)
+        {
+            _proposals[frontierId ?? AdventureStore.NoCommander] = proposal;
+        }
+
+        return new ObjectiveProposalOutcome(proposal, null);
+    }
+
+    private string? ApplyHeld(string? frontierId, ObjectiveProposal proposal)
+    {
+        if (stories.Current(frontierId) is not { State: StoryState.Running } still
+            || still.Id != proposal.StoryId
+            || still.PickedAt != proposal.PickedAt
+            || still.Chapters.Count != proposal.Chapters
+            || still.CurrentChapter != proposal.ChapterKey)
+        {
+            return "The story changed while the objective was being written.";
+        }
+
+        if (book.Standing(frontierId, proposal.ChapterKey) is not { IsDone: false } standing
+            || standing.Current != proposal.From
+            || standing.CurrentBeat is not { } beat
+            || beat.Title != proposal.Current.Title
+            || beat.Trigger.Describe() != proposal.Current.Trigger.Describe())
+        {
+            return "The story has moved on from that objective.";
+        }
+
+        if (Hidden(still.Id) is not { } secret)
+        {
+            return $"The hidden layer of {still.Title} is missing from this build.";
+        }
+
+        var draft = StoryIntroductions.Introduce(proposal.Draft, still, secret, Gender(), proposal.From);
+
+        if (book.ReplaceBeats(frontierId, proposal.ChapterKey, proposal.From, [.. draft.Beats.Skip(proposal.From)], Clock()) is { } refusal)
+        {
+            return refusal;
+        }
+
+        DiscardObjective(frontierId);
+        logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", still.Title, proposal.From + 1, proposal.Draft.Name);
+        return null;
+    }
+
+    private bool Unchanged(string? frontierId, Story story) =>
+        stories.Current(frontierId) is { State: StoryState.Running } still
+        && still.PickedAt == story.PickedAt
+        && still.Chapters.Count == story.Chapters.Count;
+
     /// <summary>
     /// When the journal says the station the current beat docks at has its docks offline, says so through
     /// <see cref="Says"/> and has the beat written again on the pool, then says the new beat's hand-off. Covers the running
@@ -752,13 +948,18 @@ public sealed class StoryDirector(
         }
         finally
         {
-            lock (_gate)
-            {
-                _rewriting.Remove(frontierId ?? AdventureStore.NoCommander);
-            }
-
-            WritingChanged?.Invoke();
+            Release(frontierId);
         }
+    }
+
+    private void Release(string? frontierId)
+    {
+        lock (_gate)
+        {
+            _rewriting.Remove(frontierId ?? AdventureStore.NoCommander);
+        }
+
+        WritingChanged?.Invoke();
     }
 
     private async Task<string?> RefuseAsync(
@@ -773,43 +974,8 @@ public sealed class StoryDirector(
         var from = standing.Current;
         var refusedKey = closedMarketId is null ? RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily) : null;
         var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
-
-        // The Story as it stood when this chapter was written: before the chapter itself was counted.
-        var before = story with { Chapters = [.. story.Chapters.SkipLast(1)] };
-        var number = story.Chapters.Count;
-        var finaleChapter = story.FinaleChapter;
-        var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
-        var beaconBeat = chapter.Beats[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
-            ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty)
-            : null;
-        var reach = story.BeaconScanAt is null && beaconBeat is null
-            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
-            : null;
-        var game = Game();
-        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
-        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story))
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused)
-            : null;
         var now = Clock();
-
-        var ask = new AdventureAsk(
-            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
-            AdventureLength.Evening,
-            Chapter: ChapterAt(frontierId, story, story.Chapters.Count - 2),
-            Story: Asked(
-                story with { Refused = refused },
-                secret,
-                number,
-                now,
-                stage,
-                finaleChapter,
-                beaconBeat,
-                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
-                reach?.InReach != false,
-                longHaul,
-                comfort,
-                finaleChapter is null ? null : story.FinaleDestination),
-            Rewrite: new AdventureRewrite(chapter, from, closedMarketId));
+        var ask = RewriteAsk(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId), now);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -842,6 +1008,48 @@ public sealed class StoryDirector(
             chapter.Name,
             closedMarketId is null ? "refused" : "its docks offline");
         return null;
+    }
+
+    /// <summary>The ask that writes the beats of the story's chapter from <paramref name="rewrite"/>'s index on again.</summary>
+    private AdventureAsk RewriteAsk(string? frontierId, Story story, StorySecret secret, Adventure chapter, AdventureRewrite rewrite, DateTimeOffset now)
+    {
+        var refused = story.Refused;
+
+        // The Story as it stood when this chapter was written: before the chapter itself was counted.
+        var before = story with { Chapters = [.. story.Chapters.SkipLast(1)] };
+        var number = story.Chapters.Count;
+        var finaleChapter = story.FinaleChapter;
+        var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
+        var beaconBeat = chapter.Beats[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
+            ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty)
+            : null;
+        var reach = story.BeaconScanAt is null && beaconBeat is null
+            ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
+            : null;
+        var game = Game();
+        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
+        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story))
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused)
+            : null;
+
+        return new AdventureAsk(
+            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
+            AdventureLength.Evening,
+            Chapter: ChapterAt(frontierId, story, story.Chapters.Count - 2),
+            Story: Asked(
+                story,
+                secret,
+                number,
+                now,
+                stage,
+                finaleChapter,
+                beaconBeat,
+                reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
+                reach?.InReach != false,
+                longHaul,
+                comfort,
+                finaleChapter is null ? null : story.FinaleDestination),
+            Rewrite: rewrite);
     }
 
     /// <summary>

@@ -47,9 +47,15 @@ public sealed record AdventureAsk(
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
-/// <see cref="ClosedMarketId"/> is a station whose docks are offline, which no new beat may dock at.
+/// <see cref="ClosedMarketId"/> is a station whose docks are offline, which no new beat may dock at. A <see cref="Remark"/>
+/// is what the Commander would rather do instead of the beat, after the <see cref="Exchange"/> so far; without one the beat was refused.
 /// </summary>
-public sealed record AdventureRewrite(Adventure Chapter, int From, long? ClosedMarketId = null);
+public sealed record AdventureRewrite(
+    Adventure Chapter,
+    int From,
+    long? ClosedMarketId = null,
+    string? Remark = null,
+    IReadOnlyList<AdventureRemark>? Exchange = null);
 
 /// <summary>The Guardian beacon system an act-one chapter ends at.</summary>
 public sealed record AdventureBeacon(long SystemAddress, string System);
@@ -250,7 +256,7 @@ public sealed class AdventureGenerator(
         {
             var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
             var tail = await AskJsonAsync(
-                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
+                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, rewrite.Exchange, rewrite.Remark),
                 BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
@@ -349,7 +355,7 @@ public sealed class AdventureGenerator(
             notes.Add($"Rewrote {resolved.Refusals.Count} objective(s) the first draft could not stand on.");
 
             var again = await AskJsonAsync(
-                BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, exchange: null, remark: null),
+                BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
                 BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
@@ -1426,6 +1432,7 @@ public sealed class AdventureGenerator(
         string? remark)
     {
         var rewrite = ask.Rewrite;
+        var changing = rewrite is not null && !string.IsNullOrWhiteSpace(remark);
         var (count, sheet) = rewrite is null
             ? Structure(ask.Length)
             : (Math.Max(1, rewrite.Chapter.Beats.Count - rewrite.From),
@@ -1437,10 +1444,12 @@ public sealed class AdventureGenerator(
             text.AppendLine(
                 (ask.Story is null ? "You wrote a short story" : "You wrote a chapter of a story")
                 + " the Commander is flying, and they are partway through it. "
-                + (rewrite.ClosedMarketId is null
-                    ? "They have refused the objective they were on"
-                    : "The station the objective they were on docks at has its docks offline")
-                + ", so write new objectives to take its place and the place of every objective after it. The objectives already done stay "
+                + (changing
+                    ? "They want to change the objective they were on, and have told you what they would rather do"
+                    : rewrite.ClosedMarketId is null
+                        ? "They have refused the objective they were on"
+                        : "The station the objective they were on docks at has its docks offline")
+                + (changing ? ". Write" : ", so write") + " new objectives to take its place and the place of every objective after it. The objectives already done stay "
                 + "as they are.");
         }
         else if (draft is null)
@@ -1468,7 +1477,7 @@ public sealed class AdventureGenerator(
 
         if (rewrite is not null)
         {
-            AppendDone(text, rewrite);
+            AppendDone(text, rewrite, changing);
         }
 
         text.AppendLine();
@@ -1618,25 +1627,11 @@ public sealed class AdventureGenerator(
             text.AppendLine();
             text.AppendLine("The current draft:");
             text.AppendLine(Render(draft));
-
-            if (exchange is { Count: > 0 })
-            {
-                text.AppendLine();
-                text.AppendLine("The conversation about it so far:");
-
-                foreach (var round in exchange)
-                {
-                    text.Append("Commander: ").AppendLine(round.Remark);
-
-                    if (!string.IsNullOrWhiteSpace(round.Reply))
-                    {
-                        text.Append("You: ").AppendLine(round.Reply);
-                    }
-                }
-            }
-
-            text.AppendLine();
-            text.AppendLine($"The Commander now says: \"{remark}\"");
+            AppendExchange(text, exchange, remark);
+        }
+        else if (changing)
+        {
+            AppendExchange(text, exchange, remark);
         }
 
         text.AppendLine();
@@ -1653,10 +1648,36 @@ public sealed class AdventureGenerator(
             + "\"engineer\": string|null, \"stage\": string|null, "
             + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
             + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
-            + "}. \"reply\" is what you say to the Commander, in your own "
-            + "voice, as you hand them the story — one or two sentences, no summary of the plot.");
+            + (changing
+                ? "}. \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
+                  + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
+                  + "or that they should keep the objective. If you recommend keeping it, write it again unchanged. Your reply never states the hidden story."
+                : "}. \"reply\" is what you say to the Commander, in your own "
+                  + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
         return text.ToString();
+    }
+
+    private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)
+    {
+        if (exchange is { Count: > 0 })
+        {
+            text.AppendLine();
+            text.AppendLine("The conversation about it so far:");
+
+            foreach (var round in exchange)
+            {
+                text.Append("Commander: ").AppendLine(round.Remark);
+
+                if (!string.IsNullOrWhiteSpace(round.Reply))
+                {
+                    text.Append("You: ").AppendLine(round.Reply);
+                }
+            }
+        }
+
+        text.AppendLine();
+        text.AppendLine($"The Commander now says: \"{remark}\"");
     }
 
     private static string Number(int count) => count switch
@@ -1682,7 +1703,7 @@ public sealed class AdventureGenerator(
     };
 
     /// <summary>The beats already done and the one the Commander refused, so the new beats continue the chapter.</summary>
-    private static void AppendDone(StringBuilder text, AdventureRewrite rewrite)
+    private static void AppendDone(StringBuilder text, AdventureRewrite rewrite, bool changing)
     {
         text.AppendLine();
 
@@ -1702,7 +1723,12 @@ public sealed class AdventureGenerator(
 
         var refused = rewrite.Chapter.Beats[rewrite.From];
 
-        if (rewrite.ClosedMarketId is null)
+        if (changing)
+        {
+            text.AppendLine($"The objective the Commander wants to change: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
+            text.AppendLine("Write the objective that best serves the chapter and the Commander's idea in its place, or this one again if keeping it is better.");
+        }
+        else if (rewrite.ClosedMarketId is null)
         {
             text.AppendLine($"The objective the Commander refused: {refused.Title} ({refused.Function}) — {refused.Trigger.Describe()} — {Quoted(refused.Lines)}");
             text.AppendLine("Write a different objective in its place, not the same thing to do and not the same place.");
