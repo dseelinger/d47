@@ -85,6 +85,15 @@ def fkey(n, image):
                    {'Coalesce': True, 'Hotkeys': [key, unused, unused, unused]}, image)
 
 
+def obs(action, name, settings, on, off):
+    """An action of Elgato's OBS Studio plugin, which sets state 0 when OBS reports on, 1 when off."""
+    a = _action('com.elgato.obsstudio.' + action, name, 'OBS Studio', 'com.elgato.obsstudio',
+                dict(settings, isInMultiAction=False), on)
+    a['Plugin']['Version'] = '3.0.3.31'
+    a['States'].append(dict(a['States'][0], Image='Images/' + off + '.png'))
+    return a
+
+
 # Row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
 # cuts releases. Both release scripts follow the run to the end on their own.
 PAGE_1 = {
@@ -111,18 +120,22 @@ PAGE_1 = {
     '4,2': run('release-minor.cmd', 'minor'),
 }
 
-# OBS. Each key sends a function key that the d47 OBS profile and the d47 Capture scene collection
-# bind globally: F13 record, F14 pause, F15 chapter marker, F16 mic, F17-F19 scenes.
+# OBS. Record, Pause and Mic go through the OBS Studio plugin and obs-websocket, so they show what
+# OBS reports. The rest send a function key that the d47 OBS profile and the d47 Capture scene
+# collection bind globally: F15 chapter marker, F17-F19 scenes.
 PAGE_2 = {
     '0,0': fkey(17, 'scene-elite'),
     '1,0': fkey(19, 'scene-vr'),
     '2,0': fkey(18, 'scene-desk'),
     '4,0': run('obs.cmd', 'obs'),
 
-    '0,1': fkey(13, 'record'),
-    '1,1': fkey(14, 'pause'),
+    '0,1': obs('record', 'Record', {}, 'record-on', 'record'),
+    '1,1': obs('record.pause', 'Record Pause', {}, 'pause-on', 'pause'),
     '2,1': fkey(15, 'marker'),
-    '3,1': fkey(16, 'mic'),
+    '3,1': obs('mixeraudio', 'Audio Mixer',
+               {'mode': 'toggle', 'source': 'Mic', 'step': 1, 'style': 'static', 'type': 'mute',
+                'volume': 0.5},
+               'mic', 'mic-muted'),
 
     '0,2': page('previous', 'page-back'),
 }
@@ -187,9 +200,9 @@ def apply(profile, top, tiles):
             path = action['Settings'].get('path')
             if path and not os.path.isfile(path):
                 sys.exit('Missing launcher for {0}: {1}'.format(coord, path))
-            image = action['States'][0]['Image']
-            if not os.path.isfile(os.path.join(page_dir, image)):
-                sys.exit('Missing image for {0}: {1}'.format(coord, image))
+            for state in action['States']:
+                if not os.path.isfile(os.path.join(page_dir, state['Image'])):
+                    sys.exit('Missing image for {0}: {1}'.format(coord, state['Image']))
         print('{0}: {1} keys'.format(folder_for(page_uuid), len(actions)))
 
 

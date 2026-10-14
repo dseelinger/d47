@@ -42,7 +42,10 @@ to export a profile, take it.
 
 Importing a hand-built `.streamDeckProfile` fails. Write `ProfilesV2` directly:
 
-1. **Quit Stream Deck.** It holds profiles in memory; an edit made while it runs is lost.
+1. **Quit Stream Deck.** It holds profiles in memory; an edit made while it runs is lost. Have the
+   maintainer quit it from the tray, or ask him to. Do not `Stop-Process` it: the next start then
+   logs `Detected data loss` and offers to restore the day's backup, and **Restore** undoes the
+   edit. If that dialog appears after an edit, the answer is Cancel.
 2. Create the profile in the app first if it does not exist — that gets a correct skeleton, a UUID
    and a registry entry for free. Then quit again.
 3. Write the page manifests and key images.
@@ -181,21 +184,25 @@ cuts releases.
 | **1** | Desktop | Push | Test drive | Release | Launcher |
 | **2** | → OBS | Restart | Pre-release | Patch | Minor |
 
-Page 2 controls OBS, in red. Each key sends F13–F19 through `system.hotkey`; OBS binds them
-globally (`HotkeyFocusType=NeverDisableHotkeys`): F13 start/stop recording, F14 pause/resume and
-F15 chapter marker in the `[Hotkeys]` section of the OBS `d47` profile, F16 mic mute, F17 Elite,
-F18 Desk and F19 VR Mirror in the `d47 Capture` scene collection. A start/stop pair bound to one
-key toggles. OBS opens through `obs.cmd`, because it needs its own folder as the working
-directory. Elite binds none of F13–F19.
+Page 2 controls OBS, in red. **Record, Pause and Mic** use Elgato's OBS Studio plugin
+(`com.elgato.obsstudio`), which talks to obs-websocket and sets the key's state from what OBS
+reports: **state 0 is on** (recording, paused, mic live) and **state 1 is off** — `iaction.js` in
+the plugin defines `EActionStateOn = 0`. Each needs two `States` with an image apiece. Mic is the
+`mixeraudio` action with `type: mute`, `mode: toggle`, `source: Mic`, copied from a key the
+maintainer set up in the app. The plugin keeps its connection and password in its own global
+settings, not in the profile.
+
+The other keys send F15–F19 through `system.hotkey`; OBS binds them globally
+(`HotkeyFocusType=NeverDisableHotkeys`): F15 chapter marker in the `[Hotkeys]` section of the OBS
+`d47` profile, F17 Elite, F18 Desk and F19 VR Mirror in the `d47 Capture` scene collection. F13
+record, F14 pause and F16 mic are still bound in OBS but no key sends them. OBS opens through
+`obs.cmd`, because it needs its own folder as the working directory. Elite binds none of F13–F19.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
 | **0** | Elite | VR | Desk | | OBS |
 | **1** | Record | Pause | Marker | Mic | |
 | **2** | ← Back | | | | |
-
-The keys do not show whether OBS is recording. Showing that would need Elgato's OBS Studio plugin
-and the obs-websocket server, which is turned off.
 
 The launchers open `claude` in the repo with a name, model, effort and an opening slash command.
 **Issue** is the one that asks a question first: it reads an issue number from the terminal and

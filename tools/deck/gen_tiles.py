@@ -233,6 +233,14 @@ def g_mic(d, cx, cy, r, col):
     d.line([cx - r * 0.36, cy + r * 0.86, cx + r * 0.36, cy + r * 0.86], fill=col, width=w)
 
 
+def g_mic_muted(d, cx, cy, r, col):
+    """A microphone struck through: the mic track is muted."""
+    g_mic(d, cx, cy, r, col)
+    w = max(2, int(r * 0.15))
+    d.line([cx - r * 0.82, cy - r * 0.86, cx + r * 0.82, cy + r * 0.86], fill=BG, width=int(w * 2.4))
+    d.line([cx - r * 0.82, cy - r * 0.86, cx + r * 0.82, cy + r * 0.86], fill=col, width=w)
+
+
 def g_ship(d, cx, cy, r, col):
     """A ship seen from above: the Elite scene."""
     w = max(2, int(r * 0.13))
@@ -280,11 +288,11 @@ def g_arrow(d, cx, cy, r, col, sign):
 
 # ---------------------------------------------------------------- tile assembly
 
-def tile(path, glyph, accent, label, bar=None):
-    img = Image.new('RGB', (S, S), BG)
+def tile(path, glyph, accent, label, ground=BG):
+    img = Image.new('RGB', (S, S), ground)
     d = ImageDraw.Draw(img)
 
-    d.rectangle([0, 0, S, int(11 * SS)], fill=bar or accent)
+    d.rectangle([0, 0, S, int(11 * SS)], fill=accent)
 
     glyph(d, S // 2, int(60 * SS), int(30 * SS), accent)
 
@@ -334,6 +342,11 @@ KEYS = {
     'marker':     (g_marker, RED, 'Marker'),
     'mic':        (g_mic, RED, 'Mic'),
 
+    # The state OBS reports back through the OBS Studio plugin, on a tinted ground.
+    'record-on':  (g_record, RED, 'Recording', (78, 16, 16)),
+    'pause-on':   (g_pause, AMBER, 'Paused', (66, 42, 6)),
+    'mic-muted':  (g_mic_muted, AMBER, 'Muted', (66, 42, 6)),
+
     'page-obs':   (lambda *a: g_arrow(*a, sign=1), GREY, 'OBS'),
     'page-back':  (lambda *a: g_arrow(*a, sign=-1), GREY, 'Back'),
 }
@@ -342,8 +355,8 @@ KEYS = {
 def main(out_dirs):
     for out in out_dirs:
         os.makedirs(out, exist_ok=True)
-        for name, (glyph, accent, label) in KEYS.items():
-            tile(os.path.join(out, name + '.png'), glyph, accent, label)
+        for name, spec in KEYS.items():
+            tile(os.path.join(out, name + '.png'), *spec)
     print('wrote {0} tiles to {1} directories'.format(len(KEYS), len(out_dirs)))
 
 
