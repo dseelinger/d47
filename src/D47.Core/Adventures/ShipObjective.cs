@@ -9,17 +9,31 @@ public enum ShipObjectiveKind
     ShowPlan,
     ShowShips,
     Plan,
+    ShowEngineer,
+    ShowUnsold,
+    ShowSuits,
 }
 
-/// <summary>A button under a <see cref="TriggerKind.Board"/> objective: its label, and the fleet entry or hull it opens.</summary>
-public sealed record ShipObjectiveButton(ShipObjectiveKind Kind, string Label, FleetEntry? Entry, string HullName);
+/// <summary>A button under an objective: its label, and the fleet entry, hull or engineer it opens.</summary>
+public sealed record ShipObjectiveButton(ShipObjectiveKind Kind, string Label, FleetEntry? Entry, string HullName, Engineer? Engineer = null);
 
 public static class ShipObjective
 {
-    /// <summary>The button for a board objective given the fleet, or null for any other objective or a hull with no name.</summary>
-    public static ShipObjectiveButton? For(AdventureTrigger trigger, IReadOnlyList<FleetEntry> fleet)
+    /// <summary>The button for a board, engineer, data sale or suit mod objective, or null for any other, a hull with no name or an unknown engineer.</summary>
+    public static ShipObjectiveButton? For(AdventureTrigger trigger, IReadOnlyList<FleetEntry> fleet) =>
+        trigger.Kind switch
+        {
+            TriggerKind.Board => Board(trigger, fleet),
+            TriggerKind.Engineer when EngineerDirectory.ByName(trigger.Engineer) is { } engineer
+                => new(ShipObjectiveKind.ShowEngineer, $"Show {engineer.Name}", null, string.Empty, engineer),
+            TriggerKind.DataSale => new(ShipObjectiveKind.ShowUnsold, "Show unsold data", null, string.Empty),
+            TriggerKind.SuitMod => new(ShipObjectiveKind.ShowSuits, "Show suits", null, string.Empty),
+            _ => null,
+        };
+
+    private static ShipObjectiveButton? Board(AdventureTrigger trigger, IReadOnlyList<FleetEntry> fleet)
     {
-        if (trigger.Kind != TriggerKind.Board || EliteSpecifications.HullName(trigger.ShipType) is not { } name)
+        if (EliteSpecifications.HullName(trigger.ShipType) is not { } name)
         {
             return null;
         }

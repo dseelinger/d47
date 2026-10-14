@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Three more story objectives now have a button next to **Not for me**, on the chapter page and the Stories tab strip, on the desktop window and in the headset. An engineer objective reads **Show Felicity Farseer** and opens that engineer's page. A sell-data objective reads **Show unsold data** and a suit-mod objective reads **Show suits**. A button is left out when its page is not switched on. Nothing is spoken.
+
 A story objective to board a ship now has a button next to **Not for me**, on the chapter page and on the Stories tab strip, on the desktop window and in the headset. It reads **Plan a Cobra MkIII** when you have no such ship and no plan; it opens the ship picker with that hull filled in, and committing it plans the hull and opens the new build. Once you own or have planned the ship it reads **Show my Cobra MkIII** or **Show the Cobra MkIII plan** and opens that page, or **Show my ships** when you have more than one. Nothing is spoken.
 
 On a stock story's chapter page, **Not for me** now sits directly under the objective it refuses, inside a NEXT section, and Story on is in a separate row below. On the Stories tab, the current-story strip shows the objective with **Not for me** under it, above Read the chapter, Story on and Abandon. When the story is not waiting on an objective you can refuse, no objective is shown there. Before, the button sat beside Story on and nothing said it refused the objective rather than the story.

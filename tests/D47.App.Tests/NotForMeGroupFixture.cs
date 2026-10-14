@@ -28,7 +28,8 @@ internal static class NotForMeGroupFixture
     internal sealed record Surface(Window Window, PanelView Panel);
 
     /// <summary>The ships a story's objective can show or plan.</summary>
-    internal sealed record Ships(ShipPlanService Plans, ChecklistService Checklists);
+    internal sealed record Ships(
+        ShipPlanService Plans, ChecklistService Checklists, D47.Core.Engineers.EngineerPlanService Unlocks, D47.Core.Loadout.OnFootPlanService OnFoot);
 
     internal static Ships Fleet(string folder)
     {
@@ -40,17 +41,20 @@ internal static class NotForMeGroupFixture
                 Path.Combine(paths.Data, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
             () => null);
 
+        var builds = new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance);
+        var kit = new D47.Core.Loadout.OnFootBuildStore(
+            Path.Combine(paths.Data, "on-foot.json"), new MemoryFileSystem(), NullLogger<D47.Core.Loadout.OnFootBuildStore>.Instance);
+
         return new Ships(
-            new ShipPlanService(
-                new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
-                checklists,
-                () => null),
-            checklists);
+            new ShipPlanService(builds, checklists, () => null),
+            checklists,
+            new D47.Core.Engineers.EngineerPlanService(builds, kit, checklists, () => null),
+            new D47.Core.Loadout.OnFootPlanService(kit, checklists, () => null));
     }
 
     /// <summary>The Stories surface for a one-chapter story; a ship objective reads <paramref name="fleet"/> or else the plans.</summary>
     internal static AdventureSurface Build(
-        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null)
+        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-not-for-me-group"));
         paths.EnsureCreated();
@@ -72,7 +76,7 @@ internal static class NotForMeGroupFixture
                 new AdventureBeat
                 {
                     Title = "The Signal",
-                    Trigger = new AdventureTrigger { Kind = kind, ShipType = shipType, SystemAddress = 13872878396833, System = "IC 2391 Sector MX-T b3-6" },
+                    Trigger = new AdventureTrigger { Kind = kind, ShipType = shipType, Engineer = engineer, Stage = engineer is null ? null : "Unlocked", SystemAddress = 13872878396833, System = "IC 2391 Sector MX-T b3-6" },
                     Line = "Go and look.",
                 },
             ],
@@ -103,9 +107,10 @@ internal static class NotForMeGroupFixture
             Intend: ships is null ? null : hull => ships.Plans.Intend(hull));
     }
 
-    internal static Surface Open(TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null)
+    internal static Surface Open(
+        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null, bool engineers = false)
     {
-        var surface = Build(kind, ships, shipType, fleet);
+        var surface = Build(kind, ships, shipType, fleet, engineer);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
@@ -113,6 +118,11 @@ internal static class NotForMeGroupFixture
         if (ships is not null)
         {
             panel.EnableLoadout(ships.Plans, ships.Checklists, () => null, null);
+
+            if (engineers)
+            {
+                panel.EnableEngineers(ships.Unlocks, ships.Plans, () => null, ships.OnFoot);
+            }
         }
 
         var window = new Window { Content = panel, Width = 1280, Height = 860 };

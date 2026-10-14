@@ -264,6 +264,11 @@ public sealed class PanelNavigator
         }
     }
 
+    /// <summary>Whether <see cref="Show(string)"/> would find this key: a visible root, or a sub-page that can open.</summary>
+    public bool CanShow(string key) =>
+        _roots.Keys.Any(tab => Roots(tab).Any(root =>
+            root.Key == key || SubPagesOf(root.Key).Any(sub => sub.Page.Key == key && sub.CanOpen?.Invoke() != false)));
+
     /// <summary>
     /// Puts this surface on the destination with this key, whichever tab it belongs to — the tab's mode
     /// first and then the tab, so a destination on another tab arrives without a visible flick through that
