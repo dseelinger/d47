@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -220,6 +220,47 @@ public class TheHotasSwitchPageShowsOneRowPerPositionTests
         Assert.Equal("Landing gear", ValueOf(picker));
         Assert.True(state.IsEnabled);
         Assert.Contains("Nothing", Text(page), StringComparison.Ordinal);
+
+        shown.Window.Close();
+    }
+
+    private static List<string> Labels(Segment segment) =>
+        [.. segment.GetVisualDescendants().OfType<RadioButton>().Select(radio => radio.Content?.ToString() ?? string.Empty)];
+
+    [AvaloniaFact]
+    public void TheHeadsetEntryTurnsOnAndOffIntoVrAndDesktopAndSavesTheView()
+    {
+        using var look = AppLook.Put();
+        var shown = Open();
+
+        var picker = Actions(shown.Page)[4];
+        var state = States(shown.Page)[4];
+
+        Press(picker.GetVisualDescendants().OfType<Button>().Single(button => button.Name == InlinePicker.ButtonName));
+        var headings = picker.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).ToList();
+        Assert.Contains("HEADSET", headings);
+        picker.IsOpen = false;
+
+        PickAction(picker, "Headset view (Virtual Desktop)");
+
+        Assert.Equal("Headset view (Virtual Desktop)", ValueOf(picker));
+        Assert.True(state.IsEnabled);
+        Assert.Equal(["VR", "Desktop"], Labels(state));
+        Assert.Equal(0, state.SelectedIndex);
+
+        state.GetVisualDescendants().OfType<RadioButton>().Last().IsChecked = true;
+        Jobs();
+
+        Press(shown.Panel.GetVisualDescendants().OfType<Button>().First(button => button.Content as string == "Save"));
+
+        var saved = shown.Page.GetVisualDescendants().OfType<InlinePicker>().ToList();
+        Assert.Equal("Headset view (Virtual Desktop)", ValueOf(saved[4]));
+        Assert.Equal(1, States(shown.Page)[4].SelectedIndex);
+        Assert.Equal(["VR", "Desktop"], Labels(States(shown.Page)[4]));
+
+        PickAction(saved[4], "Landing gear");
+
+        Assert.Equal(["On", "Off"], Labels(States(shown.Page)[4]));
 
         shown.Window.Close();
     }

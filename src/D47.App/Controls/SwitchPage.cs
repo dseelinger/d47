@@ -22,13 +22,20 @@ public sealed class SwitchPage : DialogPage
 
     private static readonly string[] States = ["On", "Off"];
 
+    private static readonly string[] Views = ["VR", "Desktop"];
+
+    /// <summary>The action picker's value for the headset view entry.</summary>
+    private const string HeadsetId = "headset";
+
+    private const string HeadsetWord = "Headset view (Virtual Desktop)";
+
     /// <summary>Marks the cyan bar on the row for the position the switch is in.</summary>
     public const string HeldBarName = "SwitchHeldBar";
 
     /// <summary>Marks the word beside the button label of the position the switch is in.</summary>
     public const string HeldWordName = "SwitchHeldWord";
 
-    /// <summary>Marks the ON / OFF control of a position.</summary>
+    /// <summary>Marks the ON / OFF control of a position, VR / DESKTOP while it means a headset view.</summary>
     public const string StateName = "SwitchPositionState";
 
     /// <summary>Marks the button that opens the page picker of a position.</summary>
@@ -454,7 +461,7 @@ public sealed class SwitchPage : DialogPage
     {
         var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
 
-        string[] words = ["", "Position", "In Elite", "Means", "Or opens a D47 page"];
+        string[] words = ["", "Position", "Action", "Means", "Or opens a D47 page"];
 
         for (var column = 1; column < words.Length; column++)
         {
@@ -530,7 +537,7 @@ public sealed class SwitchPage : DialogPage
         var state = new Segment
         {
             Name = StateName,
-            ItemsSource = States,
+            ItemsSource = position.View is null ? States : Views,
             SelectedIndex = position.State == "off" ? 1 : 0,
             Height = TypeScale.MinimumTarget,
             VerticalAlignment = VerticalAlignment.Top,
@@ -576,16 +583,30 @@ public sealed class SwitchPage : DialogPage
             var named = Assignable.FirstOrDefault(known => known.Id == position.Action);
             var entries = new List<InlinePickerEntry> { new InlinePickerOption(NoAction, NothingWord, ThemeManager.GreyKey) };
             entries.AddRange(Assignable.Select(known => new InlinePickerOption(known.Id, known.Name, ThemeManager.WhiteKey)));
+            entries.Add(new InlinePickerHeading("Headset"));
+            entries.Add(new InlinePickerOption(HeadsetId, HeadsetWord, ThemeManager.WhiteKey));
+
+            var headset = position.View is not null;
 
             action.Show(
                 entries,
-                position.Action,
-                named.Name ?? NothingWord,
-                named.Name is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+                headset ? HeadsetId : position.Action,
+                headset ? HeadsetWord : named.Name ?? NothingWord,
+                headset || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
                 null);
 
-            state.IsEnabled = position.Action.Length > 0;
-            state.SelectedIndex = position.State == "off" ? 1 : 0;
+            state.IsEnabled = headset || position.Action.Length > 0;
+
+            var choices = headset ? Views : States;
+
+            if (!ReferenceEquals(state.ItemsSource, choices))
+            {
+                state.ItemsSource = choices;
+            }
+
+            state.SelectedIndex = headset
+                ? (position.View == D47.Core.Vr.HeadsetView.Desktop ? 1 : 0)
+                : position.State == "off" ? 1 : 0;
 
             pageWord.Text = position.Destination.Length > 0
                 ? _pageWords.GetValueOrDefault(position.Destination, position.Destination)
@@ -596,18 +617,37 @@ public sealed class SwitchPage : DialogPage
 
         action.Picked += (_, id) =>
         {
-            position.Action = id;
-
-            if (id.Length > 0)
+            if (id == HeadsetId)
             {
+                position.Action = string.Empty;
                 position.Destination = string.Empty;
+                position.View ??= D47.Core.Vr.HeadsetView.Vr;
+            }
+            else
+            {
+                position.Action = id;
                 position.View = null;
+
+                if (id.Length > 0)
+                {
+                    position.Destination = string.Empty;
+                }
             }
 
             Draw();
         };
 
-        state.SelectionChanged += (_, _) => position.State = state.SelectedIndex == 1 ? "off" : "on";
+        state.SelectionChanged += (_, _) =>
+        {
+            if (position.View is not null)
+            {
+                position.View = state.SelectedIndex == 1 ? D47.Core.Vr.HeadsetView.Desktop : D47.Core.Vr.HeadsetView.Vr;
+            }
+            else
+            {
+                position.State = state.SelectedIndex == 1 ? "off" : "on";
+            }
+        };
 
         var key = $"switch-page:{++_pickSerial}";
 
