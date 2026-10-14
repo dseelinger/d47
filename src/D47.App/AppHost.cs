@@ -5205,17 +5205,18 @@ public sealed class AppHost : IDisposable
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
     internal const string CastSampleSentence = "This is the voice you will hear me speak in.";
 
-    /// <summary>Speaks the character's name and <see cref="CastSampleSentence"/> in <paramref name="voice"/>, on the pool.</summary>
-    internal void PlayCastSample(string name, D47.Core.Stories.PinnedVoice voice) =>
+    /// <summary>Speaks the character's name and <see cref="CastSampleSentence"/> in <paramref name="voice"/>, with their picture, on the pool.</summary>
+    internal void PlayCastSample(D47.Core.Stories.StorySpeakerShown shown, D47.Core.Stories.PinnedVoice voice) =>
         _ = Task.Run(async () =>
         {
             try
             {
-                await Voice.AnnounceAsync(new Announcement("story-cast-sample", $"{name}. {CastSampleSentence}")
+                await Voice.AnnounceAsync(new Announcement("story-cast-sample", $"{shown.Name}. {CastSampleSentence}")
                 {
                     Voice = VoiceRole.Crew,
-                    Speaker = name,
+                    Speaker = shown.Name,
                     Pinned = voice,
+                    Picture = SpeakerPictures.For(shown),
                 }).ConfigureAwait(false);
             }
             catch (Exception ex)

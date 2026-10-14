@@ -12,7 +12,7 @@ public sealed record CastVoiceSurface(
     Func<string, StoryCastMember?> Member,
     Action<string, string?, string?, string?> Choose,
     Func<string, CancellationToken, Task<VoiceCatalogue>> Voices,
-    Action<string, PinnedVoice> PlaySample,
+    Action<StorySpeakerShown, PinnedVoice> PlaySample,
     Func<string, string?> Failure,
     Func<D47Settings>? Settings = null,
     Func<string, bool>? KeyStored = null,
@@ -154,7 +154,7 @@ public static class CastVoiceChooser
         {
             Play = (id, _) =>
             {
-                surface.PlaySample(member.Shown.Name, member.Pinned with { ProviderId = providerId, VoiceId = id });
+                surface.PlaySample(member.Shown, member.Pinned with { ProviderId = providerId, VoiceId = id });
                 return Task.CompletedTask;
             },
             Preview = surface.Preview is { } preview ? (id, token) => preview(providerId, id, token) : null,

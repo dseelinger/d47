@@ -864,7 +864,7 @@ public sealed class StoriesView : UserControl
 
             if (_surface.CastVoices is { } voices)
             {
-                buttons.Add(Act("Play sample", () => voices.PlaySample(member.Shown.Name, member.Speaks)));
+                buttons.Add(Act("Play sample", () => voices.PlaySample(member.Shown, member.Speaks)));
                 buttons.Add(Act("Change voice", () => CastVoiceChooser.Open(_prompts, voices, member.Key, () => ShowCast(holder, storyId))));
             }
 

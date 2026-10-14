@@ -10,7 +10,7 @@
 
 A story's progress now survives a restart of the game when you are west of UTC. On startup d47 rereads the journals since you accepted the story, but it compared the acceptance time in UTC against journal file names that Elite writes in local time. The session in which you accepted the story could be skipped, along with any objective you met in it. An arrival you had already made had to be made again, and a mission handed in before that second arrival did not count.
 
-While the Narrator, the carrier captain, the tower or a hired pilot speaks, the avatar now shows their picture in place of your ship AI's core, as it already did for a story's cast member. This works in the main window, on the mini panel and on both VR panels, and includes their answer when you speak to them and the Narrator's recap of a story. It is the picture the Transcript shows beside their line, or your own from **Change picture**. When the line ends, the core shows again. A speaker with no picture on disk leaves the avatar as it is. Before, only a cast member's picture replaced the core.
+While the Narrator, the carrier captain, the tower or a hired pilot speaks, the avatar now shows their picture in place of your ship AI's core, as it already did for a story's cast member. This works in the main window, on the mini panel and on both VR panels, and includes their answer when you speak to them, the Narrator's recap of a story, and a cast member's voice sample played from the Stories page. It is the picture the Transcript shows beside their line, or your own from **Change picture**. When the line ends, the core shows again. A speaker with no picture on disk leaves the avatar as it is. Before, only a cast member's picture replaced the core.
 
 ## 1.27.0 — Stock stories begin
 

@@ -708,7 +708,8 @@ Nothing here jitters, because a companion's face that jitters is a companion tha
 While someone other than the ship AI speaks, and they have a picture, the face shows their picture
 instead: the Narrator, the carrier captain, the tower, a hired pilot or a story's cast member. It is
 the picture the Transcript shows beside their line, drawn whole, in the main window, on the mini
-panel and on both VR panels. This includes their answer when you speak to them. When the line ends,
+panel and on both VR panels. This includes their answer when you speak to them and a cast
+member's voice sample played from the Stories page. When the line ends,
 the ship AI's face comes back. A speaker with no picture on disk leaves the face as it is.
 
 #### Using your own
