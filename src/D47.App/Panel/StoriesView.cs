@@ -856,6 +856,12 @@ public sealed class StoriesView : UserControl
         {
             var row = new StackPanel { Spacing = 4 };
             row.Children.Add(AdventuresPage.Text(member.Shown.Name, TypeScale.Body));
+
+            if (member.Role is { Length: > 0 } role)
+            {
+                row.Children.Add(AdventuresPage.Text(char.ToUpperInvariant(role[0]) + role[1..], TypeScale.Body));
+            }
+
             row.Children.Add(AdventuresPage.Text(CastVoiceChooser.Describe(member), TypeScale.Small, ThemeManager.GreyKey));
 
             if (member.Speaks.Key is { } chosen && _surface.CastVoices?.Failure(chosen) is { } failed)

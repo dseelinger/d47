@@ -243,6 +243,9 @@ public sealed record StorySpeaker
     /// <summary>One line for the writer: who they are and how they speak.</summary>
     public required string Who { get; init; }
 
+    /// <summary>Who the member is to the Commander, public and in lower case; null for a story published without one.</summary>
+    public string? Role { get; init; }
+
     /// <summary>The id of a speaking provider in <see cref="TtsProviderCatalog"/>.</summary>
     public required string Provider { get; init; }
 

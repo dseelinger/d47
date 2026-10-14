@@ -16,9 +16,11 @@ the "length" on its card, one of the keys of LENGTHS.
   clues    exactly one line for each of the length's clue days.
   finale   exactly one line for each of the length's finale chapters.
   options  1 to 4 endings, each {"id", "label", "after", "add"}; "add" is a list of persona ids.
-  cast     0 to 4 speakers, each {"id", "name", "who", "provider", "voice"}; provider is a free speaking id in
+  cast     0 to 4 speakers, each {"id", "name", "who", "role", "provider", "voice"}; provider is a free speaking id in
            PROVIDERS (edge, kokoro or chatterbox), and voice "own" is chatterbox only. A billed provider
            (elevenlabs, openai, cartesia) is refused.
+           "role" is who the speaker is to the Commander: a lower-case noun phrase of at most 160 characters,
+           no closing full stop, naming neither version's name and holding no {name:} token.
            A speaker may instead carry "versions": {"forMan": {...}, "forWoman": {...}}, each
            {"name", "voice", "provider"?}, and then no "name" or "voice" of its own. forMan is the
            version a Commander who is a man meets; forWoman, one who is a woman. Hidden text names
@@ -97,6 +99,24 @@ def sound_fault(who: str, speaker: dict) -> list:
         seen.add(eid)
         if isinstance(level, bool) or not isinstance(level, int) or not 1 <= level <= 20:
             found.append(f"{who} has the effect {eid} at a level outside 1 to 20")
+    return found
+
+
+def role_fault(sid, speaker: dict) -> list:
+    role = speaker.get("role")
+    if not text(role):
+        return [f"cast member {sid} has no role"]
+    found = []
+    if role[0].isupper():
+        found.append(f"cast member {sid} has a role that starts with a capital letter")
+    if role.rstrip().endswith("."):
+        found.append(f"cast member {sid} has a role that ends with a full stop")
+    if len(role) > 160:
+        found.append(f"cast member {sid} has a role of {len(role)} characters, more than 160")
+    versions = speaker.get("versions") if isinstance(speaker.get("versions"), dict) else {}
+    names = [speaker.get("name")] + [(v or {}).get("name") for v in versions.values() if isinstance(v, dict)]
+    if "{name:" in role or any(text(n) and re.search(rf"\b{re.escape(n)}\b", role) for n in names):
+        found.append(f"cast member {sid} has a role that holds a name or a {{name:}} token")
     return found
 
 
@@ -187,6 +207,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
         found += sound_fault(f"cast {at + 1} ({sid})", speaker)
+        found += role_fault(sid, speaker)
         if "primary" in speaker and not isinstance(speaker["primary"], bool):
             found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")
         if "pinned" in speaker and not isinstance(speaker["pinned"], bool):

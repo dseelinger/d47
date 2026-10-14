@@ -177,7 +177,7 @@ add.
   1 week or 2 weeks (#758) and none for a longer one, `end`, 1 to 4 `options`, each
   with `id`, `label`, `after` and `add` (persona ids, possibly none), and `cast`.
 - **Lines** (clues, finale and `scan`) each have `text` and `speaker`: `ship`, `narrator` or a cast `id`.
-- **The cast**: each member has `id`, `name`, `who`, `provider` (`kokoro`, `edge`, or `chatterbox` only
+- **The cast**: each member has `id`, `name`, `who`, `role`, `provider` (`kokoro`, `edge`, or `chatterbox` only
   when the story needs it, #41) and `voice`; write them as before, and add `pinned: true` only when the story
   asks for a particular voice (a member on `own` is pinned already). Voice `own` is the Commander's recording (#713).
   A pin may use `edge`, `kokoro` or `chatterbox` only; `elevenlabs`, `openai` and `cartesia` are billed and are refused.
@@ -199,6 +199,13 @@ add.
   sealed entry the member carries `versions` (`forMan`, `forWoman`, each `name`, `voice` and an
   optional `provider`) and no `name` or `voice` of its own; its pictures are
   `<story-id>.<cast-id>.for-man.png` and `.for-woman.png`.
+- **A cast member's `role`** is shown to the Commander under the member's name, so it is public: a
+  lower-case noun phrase with no closing full stop, at most 160 characters, saying who the member is
+  to the Commander in the story and writing about the Commander in the third person ("the
+  search-and-rescue coordinator at Ebbrells Watch, who sends the Commander the names nobody else will
+  look for"). It holds no `{name:...}` token and neither version's name. One role covers both versions
+  of a member. It states nothing from the hidden layer: no secret, twist or turn of the plot. It is the
+  role the card already uses for the member. `tools/seal-stories.py` refuses a member without one.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

@@ -325,6 +325,32 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     }
 
     [AvaloniaFact]
+    public void ACastMembersRoleShowsUnderTheirNameWithACapital()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var withRole = PrimaryRen with
+        {
+            Cast = [.. PrimaryRen.Cast.Select(member => member.Id == "ren" ? member with { Role = "the dock hand who knows the old address" } : member)],
+        };
+        var catalog = new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [withRole]);
+        var surface = Open(running: false, catalogs: () => catalog, gender: () => CommanderGender.Woman);
+        var panel = surface.Panel;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryReleaseFixture.Id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(panel);
+        var name = drawn.IndexOf("Ren");
+
+        Assert.True(name >= 0);
+        Assert.Equal("The dock hand who knows the old address", drawn[name + 1]);
+        Save(surface.Window, "stories-cast-role.png");
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
     public void WithDownloadsOffOpeningAStorysPageFetchesNothing()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);

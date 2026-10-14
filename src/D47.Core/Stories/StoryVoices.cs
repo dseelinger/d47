@@ -27,6 +27,9 @@ public sealed record StoryCastMember(string StoryId, string Title, StorySpeakerS
     /// <summary>What the provider calls the voice the member speaks in, where the Commander's choice or the pairing recorded it.</summary>
     public string? SpeaksName { get; init; }
 
+    /// <summary>Who the member is to the Commander, from <see cref="StorySpeaker.Role"/>; null when the story has none.</summary>
+    public string? Role { get; init; }
+
     /// <summary>The <see cref="D47Settings.StoryVoices"/> key.</summary>
     public string Key => Shown.Picture;
 }
