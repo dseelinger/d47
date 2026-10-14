@@ -252,6 +252,12 @@ public static class AdventureFold
                 journalEvent.Kind is "ShipyardNew" or "ShipyardSwap"
                 && string.Equals(raw.String("ShipType"), trigger.ShipType, StringComparison.OrdinalIgnoreCase),
 
+            TriggerKind.Reach =>
+                journalEvent.Kind is "CarrierBuy"
+                || (journalEvent.Kind is "Loadout"
+                    && trigger.JumpRange is { } needed
+                    && Stories.BeaconReach.CanMakeTrip(new Journal.ShipLoadout().Apply(journalEvent), needed)),
+
             TriggerKind.Beacon =>
                 systemAddress == trigger.SystemAddress
                 && GuardianCores.IsBeaconScan(journalEvent, systemAddress),

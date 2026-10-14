@@ -414,6 +414,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     Organic = beat.Trigger.Organic,
                     Engineer = beat.Trigger.Engineer?.Trim(),
                     Stage = beat.Trigger.Stage?.Trim(),
+                    JumpRange = beat.Trigger.JumpRange,
                 },
             });
         }
@@ -512,6 +513,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     Organic = beat.Trigger.Organic,
                     Engineer = beat.Trigger.Engineer,
                     Stage = beat.Trigger.Stage,
+                    JumpRange = beat.Trigger.JumpRange,
                 },
                 Line = beat.Lines.Count == 1 ? beat.Line : null,
                 Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
@@ -648,6 +650,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Filter { get; set; }
 
         public bool? Organic { get; set; }
+
+        public double? JumpRange { get; set; }
 
         public string? Engineer { get; set; }
 

@@ -1210,7 +1210,7 @@ public sealed class AdventureGenerator(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
                 + "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
-                + "the trip: credits, a better ship, a fuel scoop or a longer jump range.");
+                + "the trip: credits, a better ship, a fuel scoop or a longer jump range. Its last objective may be \"reach\", which any ship that can make the trip meets.");
         }
 
         if (story.Beacon is { } beacon)
@@ -1492,9 +1492,10 @@ public sealed class AdventureGenerator(
             ? $"Structure: exactly {count} objectives, in this order of function: {sheet}."
             : $"Structure: exactly {count} objectives, which replace objective {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
+        var reachAway = ask.Story?.BeaconAway;
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        text.AppendLine($"Each objective waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1))} things, and nothing else exists:");
+        text.AppendLine($"Each objective waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1) + (reachAway is null ? 0 : 1))} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -1538,6 +1539,13 @@ public sealed class AdventureGenerator(
         AppendConflicts(text, facts.Standings);
         text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
         text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the objective before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
+
+        if (reachAway is not null)
+        {
+            text.AppendLine(
+                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with the jump range and a fuel scoop, bought or refitted. "
+                + "Use it to end this chapter on the ship instead of naming a hull with \"board\". Leave the place to d47.");
+        }
 
         if (beacon is not null)
         {
@@ -1625,7 +1633,7 @@ public sealed class AdventureGenerator(
             + (speakers ? "\"opening\": [{\"text\": string, \"speaker\": string}]" : "\"opening\": string") + ", \"reply\": string, "
             + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
             + string.Concat(team.Select(kind => $"|\"{kind.ToString().ToLowerInvariant()}\""))
-            + (beacon is null ? string.Empty : "|\"beacon\"") + ", "
+            + (beacon is null ? string.Empty : "|\"beacon\"") + (reachAway is null ? string.Empty : "|\"reach\"") + ", "
             + "\"reason\": string|null, \"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
             + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
             + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
@@ -1802,6 +1810,7 @@ public sealed class AdventureGenerator(
             TriggerKind.Scan => $"scan: {Body ?? "?"} in {System ?? "?"}",
             TriggerKind.Board => $"board: {Ship ?? "?"}",
             TriggerKind.Beacon => "beacon",
+            TriggerKind.Reach => "reach",
             _ => $"arrive: {System ?? "?"}",
         };
     }
@@ -1996,6 +2005,17 @@ public sealed class AdventureGenerator(
                 else
                 {
                     refusals.Add($"{where} is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.");
+                }
+            }
+            else if (beat.Kind == TriggerKind.Reach)
+            {
+                if (ask.Story?.BeaconAway is { } away)
+                {
+                    trigger = new AdventureTrigger { Kind = TriggerKind.Reach, System = away.System, JumpRange = BeaconReach.RangeNeeded(away.LightYears) };
+                }
+                else
+                {
+                    refusals.Add($"{where} is a \"reach\" objective; only a chapter whose Guardian beacon is out of reach may have one.");
                 }
             }
             else if (beat.Kind == TriggerKind.Engineer)

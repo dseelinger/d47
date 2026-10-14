@@ -129,6 +129,9 @@ public enum TriggerKind
 
     /// <summary><c>+</c> influence marks in the <c>FactionEffects</c> of <c>MissionCompleted</c> for one <see cref="AdventureTrigger.Faction"/>, optionally in one <see cref="AdventureTrigger.SystemAddress"/>.</summary>
     Faction,
+
+    /// <summary>A <c>Loadout</c> whose ship has the jump range and a fuel scoop for the trip to a Guardian beacon, or a <c>CarrierBuy</c>. Not counted.</summary>
+    Reach,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -175,6 +178,9 @@ public sealed record AdventureTrigger
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
     public bool? Organic { get; init; }
 
+    /// <summary>For <see cref="TriggerKind.Reach"/>: the jump range, in light years, the ship needs for the trip.</summary>
+    public double? JumpRange { get; init; }
+
     /// <summary>The engineer an <see cref="TriggerKind.Engineer"/> beat waits on.</summary>
     public string? Engineer { get; init; }
 
@@ -185,7 +191,7 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind != TriggerKind.Engineer && !IsOnceKind(kind);
+        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach) && !IsOnceKind(kind);
 
     /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
     public static bool IsOnceKind(TriggerKind kind) =>
@@ -203,6 +209,7 @@ public sealed record AdventureTrigger
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
         TriggerKind.Rank => Career is not null && Rank is not null,
         TriggerKind.Board => ShipType is not null,
+        TriggerKind.Reach => JumpRange > 0,
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
         TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound => true,
         _ => false,
@@ -217,6 +224,7 @@ public sealed record AdventureTrigger
         TriggerKind.Scan => $"scan {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Rank => $"reach {Careers.Word(Career)} rank {Rank}",
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
+        TriggerKind.Reach => $"fit out a ship that can reach the beacon in {System?.Trim() ?? "the Guardian beacon's system"}",
         TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
         TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
         TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",

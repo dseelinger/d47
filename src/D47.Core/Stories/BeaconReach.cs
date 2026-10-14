@@ -26,7 +26,8 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
             return new BeaconReach(address, system, lightYears, true, null);
         }
 
-        var tooFar = ship.MaxJumpRange is { } range && (range <= 0 || Math.Ceiling(lightYears / range) > MostJumps);
+        var needed = RangeNeeded(lightYears);
+        var tooFar = ship.MaxJumpRange is { } range && !RangeEnough(range, needed);
         var noScoop = ship.Fitted(ShipLoadout.FuelScoop) is false;
 
         var why = (tooFar, noScoop) switch
@@ -38,6 +39,19 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
         };
 
         return new BeaconReach(address, system, lightYears, why is null, why);
+    }
+
+    /// <summary>The jump range, in light years, that makes a trip of <paramref name="lightYears"/> take at most <see cref="MostJumps"/> jumps.</summary>
+    public static double RangeNeeded(double lightYears) => lightYears / MostJumps;
+
+    public static bool RangeEnough(double range, double needed) => range > 0 && range >= needed;
+
+    /// <summary>Whether the ship has a known jump range of at least <paramref name="needed"/> and a fuel scoop fitted; what the journal has not said counts against it.</summary>
+    public static bool CanMakeTrip(ShipLoadout ship, double needed)
+    {
+        ArgumentNullException.ThrowIfNull(ship);
+
+        return ship.MaxJumpRange is { } range && RangeEnough(range, needed) && ship.Fitted(ShipLoadout.FuelScoop) is true;
     }
 
     private static string Range(ShipLoadout ship) =>

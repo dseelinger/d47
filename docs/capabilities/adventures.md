@@ -193,7 +193,7 @@ Open the Short Story page and the entry for a brief; committing the brief asks f
 
 ### What an objective can be
 
-Thirty-four triggers, and every one is a comparison on a structured field rather than on a name:
+Thirty-six triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -204,6 +204,7 @@ Thirty-four triggers, and every one is a comparison on a structured field rather
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |
 | Scan a Guardian beacon | a data-link scan while in a Guardian beacon system's id | the scan's type, or any name |
+| Fit out a ship that can reach the beacon | a `Loadout` whose `MaxJumpRange` is at least the range written into the objective and whose modules include a fuel scoop, or a `CarrierBuy`; a `Loadout` with no `MaxJumpRange` does not count. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
 | Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
@@ -237,7 +238,7 @@ Thirty-four triggers, and every one is a comparison on a structured field rather
 Only a stock story's chapter one uses the beacon trigger, as its last objective, and you cannot add one on the
 form.
 
-Every trigger after the seventh is counted except the engineer stage, which fires once. A counted objective fires when its total reaches its count, and only what happens
+Every trigger after the seventh is counted except the engineer stage and the beacon-reach objective, which each fire once. A counted objective fires when its total reaches its count, and only what happens
 after the objective before it has fired counts. It has no place of its own; a chapter that needs it done
 somewhere puts an arrive or dock objective there first. The card shows the running total, such as "Kill bonds
 for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These

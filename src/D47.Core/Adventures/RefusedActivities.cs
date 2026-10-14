@@ -96,6 +96,7 @@ public static class RefusedActivities
         TriggerKind.SquadronFound => "found a squadron",
         TriggerKind.Conflict => "take part in wars and elections",
         TriggerKind.Faction => "work for a faction",
+        TriggerKind.Reach => "fit out a ship that can reach the beacon",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }
