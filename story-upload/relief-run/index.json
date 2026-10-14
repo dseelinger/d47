@@ -992,6 +992,97 @@
     "number": 61
   },
   {
+    "id": "the-survey-office",
+    "title": "The Survey Office",
+    "genre": "Institutionalized",
+    "tone": "Quiet bureaucratic thriller, dry",
+    "level": "endgame",
+    "length": "3-months",
+    "core": "cartographer",
+    "blurb": "The Pilots Federation's survey board has asked you, the most decorated explorer it has, to take over its oldest survey office, at Bradshaw Survey in Lalande 37120. Eleven staff keep the register there by hand, and Chief Surveyor Wilhelmina Oyelaran has corrected the galaxy's charts for forty years. In twelve places her register disagrees with every other chart in human space, and the board will not certify a register that disagrees with itself. Corentin Mayhew of Marchbank Instruments has offered to survey all twelve this quarter at no cost and automate the rest of the office after. Oyelaran says nothing, signs the register every evening, and did not ask for a director. Fail, and the office closes, and her forty years of work are wiped from the charts. Why does her register disagree with everyone else's?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and I earned most of it going where the charts ran out. The Pilots Federation has given me every exploration honour it has, and I have not flown past the edge of the bubble in two years. Last month its survey board asked me to take the directorship of the Survey Office at Bradshaw Survey, the oldest it keeps: eleven staff, a register older than most stations, and Chief Surveyor Wilhelmina Oyelaran, who has corrected the galaxy's charts by hand for forty years. The board gave me three months to put the register right or close the doors. Corentin Mayhew of Marchbank Instruments called the same afternoon to say he could make it easier.",
+    "beacon": "The office's register has listed the Guardian beacons as unvisited for a hundred years, under a standing survey order that nobody ever flew. On my first morning Oyelaran handed me the order, still sealed, and said a new director should start with the oldest open file.",
+    "castPictures": [
+      "the-survey-office.oyelaran",
+      "the-survey-office.mayhew"
+    ],
+    "number": 62
+  },
+  {
+    "id": "the-portrait",
+    "title": "The Portrait",
+    "genre": "Whydunit",
+    "tone": "Elegant art-crime mystery, wry",
+    "level": "endgame",
+    "length": "1-month",
+    "core": "archivist",
+    "blurb": "Nine years ago you flew a painter called Clio Arnaud out to a Guardian beacon, took a portrait of yourself instead of a fare, and forgot it existed. Last week it sold at auction at Shifnalport for the price of a frigate, to a buyer nobody will name, because almost nobody has ever seen your face. Seven days later Clio was found dead in her studio and the portrait was gone, and every art newsfeed in the bubble printed your face beside the word suspect. Then the police arrested Matthias Brecht, the restorer who has loved her for forty years, and everyone who knows him says he could not hurt anyone. Get it wrong, and whatever Clio hid is lost for good, and so is the reason she died. Why would anyone kill for a picture of you?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and for twenty years I have kept my face off every newsfeed in the bubble. My carrier works as a repair yard for explorers on the edge of the black, and the people aboard it know what I look like. Almost nobody else does. Nine years ago a painter called Clio Arnaud asked for passage to a Guardian beacon and offered to paint me instead of paying. I said yes because I was sure nobody would ever see it. I sat for her three afternoons in the observation lounge and never went back for the picture. This morning my face was on every art feed in the bubble, under the word suspect.",
+    "beacon": "Clio painted the background from life: the Guardian beacon in HIP 36823, lit, as we saw it from my observation lounge, and the auction catalogue names the system. She never told me why she needed to go there. If somebody killed her for that picture, I am going to start with the part of it that is not my face.",
+    "castPictures": [
+      "the-portrait.brecht",
+      "the-portrait.clio"
+    ],
+    "number": 63
+  },
+  {
+    "id": "the-wedding-promise",
+    "title": "The Wedding Promise",
+    "genre": "Out of the Bottle",
+    "tone": "Screwball wedding comedy, warm",
+    "level": "endgame",
+    "length": "1-month",
+    "core": "mender",
+    "blurb": "Saskia Holm has been your best friend since you were nine, and in a month she marries Rafe Mercer aboard your fleet carrier, beside a Guardian beacon. You told her, 'I promise you the wedding you deserve,' and you meant every credit of it. Since the beacon scan, every promise you make out loud comes true by the next morning, and never the way you meant it. The planner Saskia hired has a schedule for every hour of the month, and every arrangement either of you makes falls apart by breakfast. The bride laughs at every disaster, which is not like her. Get this wrong, and Saskia's wedding, and the oldest friendship you have, fall apart in front of everyone she knows. What wedding does Saskia deserve?",
+    "inYourWords": "I spent twenty years alone in a mining ship, cracking asteroids for void opals, and it paid for a fleet carrier, a hangar of engineered ships and more credits than I will ever spend. I am good with rock and bad with people. I have one friend from before the money: Saskia Holm, who grew up two doors down from me and talks ships in to land at a starport for a living. Last week she called and said she needed to tell me something about her wedding to Rafe Mercer. Before she finished the sentence I had offered her my carrier and said, 'I promise you the wedding you deserve.' I have never broken a promise. I have also never been to a wedding.",
+    "beacon": "When we were eleven, Saskia saw a picture of a lit Guardian beacon and told me she would be married beside one. The beacon in Synuefe RL-C b46-6 stays dark until somebody scans it. Before the guests, the flowers or anything else, I am flying out there to scan it while she watches over the link, so that she can see it lit.",
+    "castPictures": [
+      "the-wedding-promise.saskia",
+      "the-wedding-promise.planner.for-man",
+      "the-wedding-promise.planner.for-woman",
+      "the-wedding-promise.rafe"
+    ],
+    "number": 64
+  },
+  {
+    "id": "the-second-act",
+    "title": "The Second Act",
+    "genre": "Rites of Passage",
+    "tone": "Gentle midlife romance, wry",
+    "level": "endgame",
+    "length": "6-months",
+    "core": "analyst-prime",
+    "blurb": "You have a fleet carrier, a hangar of ships and more credits than you can spend, and you have stopped enjoying any of it. So you signed on as a hired pilot for the Bluebell Line: one passenger route, two old ships, and an owner who had never heard of you. The Bluebell is failing. It loses bids it should win, its licence review is six months away, and Felix Haddow of Orrery Lines has an offer on the table and all the patience in the world. The harder you fly for the line, the more work it loses, and the owner is better company than anyone you have met in years. Fail, and in six months the Bluebell is sold for what is left of it, and the owner who spent twenty years building it is left with nothing. Why does the Bluebell keep losing work it should win?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend. Last month I finished the last thing on a list I made twenty years ago, and I sat in the cockpit afterwards waiting to feel something, and nothing came. My carrier crew run the carrier without me. So when I saw a notice on a starport board, pilot needed, one route, poor pay, kind passengers, I signed on under my own name. The Bluebell Line has two old ships, a mechanic called Dorrie Fane who read my logbook and did not believe a word of it, and an owner who had never heard of me and did not ask. The trial is a month. I have not told anybody who I am.",
+    "beacon": "The first charter I flew for the Bluebell was a party of sightseers who had paid to watch a Guardian beacon light up. The owner had promised them a data-link scan of it and had nobody else to fly them, so I flew them out and made the scan.",
+    "castPictures": [
+      "the-second-act.owner.for-man",
+      "the-second-act.owner.for-woman",
+      "the-second-act.dorrie",
+      "the-second-act.haddow"
+    ],
+    "number": 65
+  },
+  {
+    "id": "mutiny",
+    "title": "Mutiny",
+    "genre": "Buddy Love",
+    "tone": "Sparky rivals romance, salty",
+    "level": "endgame",
+    "length": "1-year",
+    "core": "cora",
+    "blurb": "Every spring your carrier's crew elect a first officer under the old articles, and every spring they have chosen someone you could work with. This year they chose the one crew member who has never agreed with you about anything, and who is right far more often than you would like. You argue about jump plots, about crew pay, and most of all about the Vantor Directorate's supply contract, the best work your carrier has ever had, which Severin Lark pays on time and in full. Somewhere along the way you start looking forward to the arguments. Then the ship's new voice reports that someone aboard is organising a mutiny, one deck at a time, and Hadley Crane, who has kept your books since the carrier was new, starts watching the crew for you. Get it wrong, and the crew who have followed you across the galaxy split apart for good. Who is organising the mutiny?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend. What matters more to me is the crew: two hundred people who have followed me through four wars and more jumps than anyone has counted, and who are the nearest thing I have to family. We run under the old carrier articles. Every spring the crew elect a first officer to speak for them, and the articles give the crew a say in what the carrier carries, which nobody has used in my time. Hadley Crane has been my purser since the day I bought the carrier. He keeps the books, drafts the contracts and tells me the truth when nobody else will. This spring I needed a steady first officer, because Severin Lark has offered us a year of supply runs for the Vantor Directorate, and the pay is the best we have ever seen. The crew elected the deck boss of hold four instead, who has argued with every order I have given for six years.",
+    "beacon": "My new first officer and I were arguing again, this time about whether anything a million years old can still be keeping watch. The first officer said there was one way to settle it, plotted the course to a Guardian beacon before I could object, and bet a month of night watches that it would still answer a data-link scan.",
+    "castPictures": [
+      "mutiny.exec.for-man",
+      "mutiny.exec.for-woman",
+      "mutiny.crane",
+      "mutiny.lark"
+    ],
+    "number": 66
+  },
+  {
     "id": "relief-run",
     "title": "Relief Run",
     "genre": "Dude with a Problem",
@@ -1006,6 +1097,6 @@
       "relief-run.venn",
       "relief-run.ottilie"
     ],
-    "number": 62
+    "number": 67
   }
 ]
