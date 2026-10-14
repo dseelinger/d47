@@ -34,6 +34,14 @@ public sealed class SwitchPage : DialogPage
     /// <summary>Marks the button that opens the page picker of a position.</summary>
     public const string PageButtonName = "SwitchPositionPage";
 
+    /// <summary>The grey line under a sub-page that is not always there, by the sub-page's key.</summary>
+    private static readonly IReadOnlyDictionary<string, string> Availability = new Dictionary<string, string>
+    {
+        [Panel.MessagesView.Crumb.Key] = "Only while a story is running",
+        [Panel.ChecklistPage.Suggestions.Key] = "Only while there are suggestions",
+        [Panel.AdventuresPage.AskCrumb.Key] = "Only while D47's model and galaxy search are on",
+    };
+
     /// <summary>The picker value for no page.</summary>
     private const string NoPage = "(nothing)";
 
@@ -56,6 +64,7 @@ public sealed class SwitchPage : DialogPage
     /// </summary>
     private readonly List<string> _pageKeys = [];
     private readonly Dictionary<string, string> _pageWords = [];
+    private readonly Dictionary<string, PanelDestination> _destinations = [];
     private int _pickSerial;
 
     private readonly SwitchStore _store;
@@ -95,7 +104,8 @@ public sealed class SwitchPage : DialogPage
         foreach (var page in destinations)
         {
             _pageKeys.Add(page.Key);
-            _pageWords[page.Key] = page.Describe();
+            _destinations[page.Key] = page;
+            _pageWords[page.Key] = page.SubPage is null ? page.Describe() : $"{page.Root.Word} › {page.Word}";
         }
 
         // A saved destination no surface offers right now is shown as its key rather than silently reset to
@@ -376,7 +386,7 @@ public sealed class SwitchPage : DialogPage
 
         foreach (var position in mapping.Positions)
         {
-            var (row, held) = BuildPosition(position);
+            var (row, held) = BuildPosition(mapping, position);
             positions.Children.Add(row);
             holds.Add(held);
         }
@@ -467,7 +477,7 @@ public sealed class SwitchPage : DialogPage
     }
 
     /// <summary>One position: the button, what it means, ON or OFF, or the page it opens.</summary>
-    private (Control Row, Action<SwitchPosition?> Held) BuildPosition(MutablePosition position)
+    private (Control Row, Action<SwitchPosition?> Held) BuildPosition(MutableSwitch mapping, MutablePosition position)
     {
         var bar = new Border
         {
@@ -609,12 +619,16 @@ public sealed class SwitchPage : DialogPage
 
             prompts.Pick(
                 key,
-                "Page",
+                PickerWord(mapping, position),
                 new PickerRequest
                 {
-                    Prompt = "Page",
+                    Prompt = PickerWord(mapping, position),
+                    Help = "Flipping the switch to this position opens the page on D47's panel.",
                     Choices = [NoPage, .. _pageKeys],
-                    Describe = value => value == NoPage ? NothingWord : _pageWords.GetValueOrDefault(value, value),
+                    Describe = PickedWord,
+                    GroupOf = GroupOf,
+                    IsNested = value => _destinations.TryGetValue(value, out var page) && page.SubPage is not null,
+                    DetailOf = value => Availability.GetValueOrDefault(value),
                     Current = position.Destination.Length > 0 ? position.Destination : NoPage,
                     ChoiceNoun = "pages",
                 },
@@ -652,6 +666,25 @@ public sealed class SwitchPage : DialogPage
 
         return (row, Held);
     }
+
+    private static string PickerWord(MutableSwitch mapping, MutablePosition position) =>
+        $"{mapping.Name} · {(position.Button is { } button ? $"Button {button}" : "Position")} D47 page";
+
+    /// <summary>A page's word alone; its group head names the tab.</summary>
+    private string PickedWord(string value) =>
+        value == NoPage ? NothingWord
+        : _destinations.TryGetValue(value, out var page) ? page.Word
+        : value;
+
+    /// <summary>The tab a page sits under, as the bar draws it; null for nothing and for a key no surface offers.</summary>
+    private string? GroupOf(string value) =>
+        _destinations.TryGetValue(value, out var page) ? TabWord(page.Tab) : null;
+
+    private static string TabWord(PanelTab tab) => tab switch
+    {
+        PanelTab.Assets => "ASSET MGMT",
+        _ => tab.ToString().ToUpperInvariant(),
+    };
 
     /// <summary>Applies a page chosen in the picker; naming a page clears the action.</summary>
     private static void TakePage(MutablePosition position, string? chosen, Action redraw)

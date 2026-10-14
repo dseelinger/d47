@@ -78,6 +78,19 @@ public sealed record PickerRequest
     /// </summary>
     public IReadOnlyList<PickerSort>? Sorts { get; init; }
 
+    /// <summary>
+    /// The group head a value is listed under, or null for rows with no head. A group's rows are gathered where its
+    /// first row is, in the caller's order, and all headless rows gather first; the picker also shows the count.
+    /// Ignored under <see cref="Clips"/>.
+    /// </summary>
+    public Func<string, string?>? GroupOf { get; init; }
+
+    /// <summary>Whether a value is drawn indented and marked as belonging to the row above it.</summary>
+    public Func<string, bool>? IsNested { get; init; }
+
+    /// <summary>The grey second line under a value, or null for none; ignored under <see cref="Clips"/>.</summary>
+    public Func<string, string?>? DetailOf { get; init; }
+
     /// <summary>What the accept button says.</summary>
     public string AcceptText { get; init; } = "Use this";
 }
@@ -175,6 +188,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     /// <summary>The second line under the label, or null.</summary>
     public string? Detail { get; init; }
+
+    /// <summary>Whether the row belongs to the row above it.</summary>
+    public bool Nested { get; init; }
+
+    /// <summary>The left margin of a row that is <see cref="Nested"/>.</summary>
+    public Thickness Indent => Nested ? new Thickness(20, 0, 0, 0) : default;
 
     /// <summary>The clip line of a Chatterbox voice, or null on a list that has none.</summary>
     public ChoiceClip? Clip
@@ -439,7 +458,8 @@ public partial class PickerPage : UserControl
                 Text = Label(value),
                 StatusText = _request.Status?.Invoke(value)?.Text.ToUpperInvariant(),
                 StatusTone = _request.Status?.Invoke(value)?.Tone ?? ChoiceTone.Grey,
-                Detail = _request.Clips?.Detail?.Invoke(value),
+                Detail = _request.Clips?.Detail?.Invoke(value) ?? _request.DetailOf?.Invoke(value),
+                Nested = _request.IsNested?.Invoke(value) == true,
                 Clip = _request.Clips?.Clip(value),
                 InUse = !_request.Several && string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase),
                 SuggestedFor = _request.Clips?.Suggested is { } suggested
@@ -587,7 +607,7 @@ public partial class PickerPage : UserControl
 
         FacetPanel.IsVisible = !several && facets.Count == 1;
         FacetGrid.IsVisible = several;
-        MatchCount.IsVisible = several;
+        MatchCount.IsVisible = several || _request.GroupOf is not null;
 
         foreach (var facet in facets)
         {
@@ -687,7 +707,8 @@ public partial class PickerPage : UserControl
 
     /// <summary>
     /// Under a Chatterbox list, the rows on this PC first with the suggested voice leading them, then the rest,
-    /// each group headed by its first row. Other lists pass through.
+    /// each group headed by its first row. A list with <see cref="PickerRequest.GroupOf"/> is grouped by that. Other
+    /// lists pass through.
     /// </summary>
     private PickerChoice[] Grouped(PickerChoice[] rows)
     {
@@ -698,7 +719,7 @@ public partial class PickerPage : UserControl
 
         if (_request.Clips is null)
         {
-            return rows;
+            return _request.GroupOf is { } groupOf ? GroupedBy(rows, groupOf) : rows;
         }
 
         var here = rows.Where(row => row.OnThisPc).OrderBy(row => SelectedSort is null && row.SuggestedFor is null).ToArray();
@@ -708,6 +729,18 @@ public partial class PickerPage : UserControl
         Head(elsewhere, "FETCHED WHEN PLAYED OR CHOSEN");
 
         return [.. here, .. elsewhere];
+    }
+
+    private static PickerChoice[] GroupedBy(PickerChoice[] rows, Func<string, string?> groupOf)
+    {
+        var groups = rows.GroupBy(row => groupOf(row.Value)).ToArray();
+
+        foreach (var group in groups.Where(group => group.Key is not null))
+        {
+            Head([.. group], group.Key!);
+        }
+
+        return [.. groups.SelectMany(group => group)];
     }
 
     private static void Head(PickerChoice[] group, string head)

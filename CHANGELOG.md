@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The D47 page picker on the HOTAS switches page now groups pages under their tab: Nothing first, then TRANSCRIPT, SEARCH, STORIES, COMMANDER, ASSET MGMT, NAVIGATION and SETTINGS, each with its count. Rows show the page's word only, a page inside another sits indented under it with a `›`, and a page that is not always there says so in grey ("Only while a story is running"). A position that opens a page inside another reads, for example, `Stories › Catalogue`. Before, the picker was one flat list with the tab in brackets after each page.
+
 d47 now starts on the Commander who last logged in, even while Elite is at its main menu, so the title bar names them and their Commander pages are filled. Before, until someone logged in the button read `CMDR` and the Commander pages were empty. A Commander you pick on the title bar or the Commanders page stays shown until you pick another or a different Commander logs in to the game, when d47 switches to that Commander. Before, a pick stayed shown whoever logged in. While nobody is logged in, the Route and Position pages say "No Commander is logged in yet" in place of naming another Commander.
 
 When the Commander d47 shows is not the one Elite is running, including before anyone has logged in, the Commander button in the title bar turns grey and reads, for example, `CMDR TALYN MERIDAN · NOT LOGGED IN`. It returns to the accent colour and the plain name once that Commander logs in, or once a different Commander logs in and d47 switches to them. The menu is unchanged. Before, the button looked the same whether or not that Commander was in the game, and only the Route and Position pages said so.
