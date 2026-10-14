@@ -1,6 +1,6 @@
 name: release
 
-# The only workflow. Nothing here triggers on push — a commit to any branch, main included,
+# Nothing here triggers on push — a commit to any branch, main included,
 # fires no run at all. A release happens when you ask for one:
 #
 #   tools\release.ps1 -Patch

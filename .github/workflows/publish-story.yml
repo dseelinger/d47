@@ -1,0 +1,71 @@
+name: publish-story
+
+# Uploads one stock story's built files to the stories-1 release, for sessions that cannot upload
+# release assets themselves. Started by tools/publish-story.py --via-actions:
+#
+#   python tools/publish-story.py <folder> --via-actions --branch <branch>
+#
+# The script checks and builds the story, commits the files to story-upload/<story>/ on <branch>,
+# and dispatches this workflow. index.json goes up last, as in the script's own upload.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch holding story-upload/<story>/"
+        required: true
+        type: string
+      story:
+        description: "Story id"
+        required: true
+        type: string
+
+concurrency:
+  group: publish-story
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check the story id
+        env:
+          STORY: ${{ inputs.story }}
+        run: |
+          if ! [[ "$STORY" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            echo "Story id must be lower-case words joined by hyphens. Got '$STORY'." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Upload to stories-1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STORY: ${{ inputs.story }}
+        run: |
+          dir="story-upload/$STORY"
+          test -f "$dir/$STORY.sealed" || { echo "No $dir/$STORY.sealed on the branch." >&2; exit 1; }
+          test -f "$dir/index.json" || { echo "No $dir/index.json on the branch." >&2; exit 1; }
+          for file in "$dir"/*; do
+            [ "$(basename "$file")" = index.json ] && continue
+            gh release upload stories-1 "$file" --clobber --repo "$GITHUB_REPOSITORY"
+          done
+          gh release upload stories-1 "$dir/index.json" --clobber --repo "$GITHUB_REPOSITORY"
+          echo "Published $STORY to stories-1."
+
+      - name: Remove the uploaded files from the branch
+        env:
+          BRANCH: ${{ inputs.branch }}
+          STORY: ${{ inputs.story }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -r --quiet "story-upload/$STORY"
+          git commit --quiet -m "Remove story-upload/$STORY after publishing"
+          git push origin "HEAD:refs/heads/$BRANCH"

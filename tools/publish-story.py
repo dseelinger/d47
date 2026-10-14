@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Publish one approved stock story to the GitHub release `stories-1`.
 
-Not part of the build. Writes nothing inside the repository.
+Not part of the build. Writes no file in the checkout.
 
     python tools/publish-story.py <folder> [--replace] [--dry-run] [--work <dir outside the repository>]
+                                  [--via-actions --branch <branch>]
 
 <folder> holds `card.json`, `hidden.json` and the picked pictures: `<story-id>.<cast-id>.png`, or
 `<story-id>.<cast-id>.for-man.png` and `.for-woman.png` for a cast member with `versions`.
@@ -18,17 +19,23 @@ the upload and lists each file with its size. The release is created with make_l
 UpdateChecker reads the latest release to find updates.
 
 Only REST endpoints are called, because cloud sessions refuse GitHub's GraphQL API, which `gh release` uses.
+
+--via-actions is for sessions whose GitHub access accepts only JSON request bodies, which cannot upload release
+assets. It commits the built files to `story-upload/<id>/` on <branch> without touching the checkout, pushes the
+branch, dispatches .github/workflows/publish-story.yml to upload them from the runner, and waits for that run.
 """
 import argparse
 import base64
 import importlib.util
 import json
 import mimetypes
+import os
 import pathlib
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import zlib
 
 try:
@@ -42,6 +49,10 @@ RELEASE = "stories-1"
 INDEX = "index.json"
 SIZE = 1024
 QUALITY = 85
+WORKFLOW = "publish-story.yml"
+WORKFLOW_REF = "main"
+STAGING = "story-upload"
+WAIT = 15 * 60
 
 
 def load_sealer():
@@ -58,8 +69,66 @@ def outside_repository(path: pathlib.Path, what: str) -> pathlib.Path:
     return path
 
 
-def gh_api(*args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["gh", "api", *args], capture_output=True, text=True, encoding="utf-8")
+def gh_api(*args: str, body: str | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run(["gh", "api", *args], input=body, capture_output=True, text=True, encoding="utf-8")
+
+
+def git(*args: str, env: dict | None = None) -> str:
+    done = subprocess.run(["git", *args], cwd=REPO, env=env, capture_output=True, text=True, encoding="utf-8")
+    if done.returncode != 0:
+        sys.exit(f"git {args[0]} failed: {done.stderr.strip()}")
+    return done.stdout.strip()
+
+
+def stage(files: list, story: str, branch: str, work: pathlib.Path) -> None:
+    """Commit the files to story-upload/<story>/ on the branch through a separate index, then push the branch."""
+    env = {**os.environ, "GIT_INDEX_FILE": str(work / "staging.index")}
+    parent = None
+    if git("ls-remote", "--heads", "origin", branch):
+        git("fetch", "--quiet", "origin", branch)
+        parent = git("rev-parse", "FETCH_HEAD")
+        git("read-tree", parent, env=env)
+    else:
+        git("read-tree", "--empty", env=env)
+    git("rm", "-r", "--cached", "--quiet", "--ignore-unmatch", f"{STAGING}/{story}", env=env)
+    for file in files:
+        blob = git("hash-object", "-w", str(file))
+        git("update-index", "--add", "--cacheinfo", f"100644,{blob},{STAGING}/{story}/{file.name}", env=env)
+    tree = git("write-tree", env=env)
+    commit = git("commit-tree", tree, *(["-p", parent] if parent else []), "-m", f"Stage {story} for the {RELEASE} release")
+    git("push", "--quiet", "origin", f"{commit}:refs/heads/{branch}")
+    (work / "staging.index").unlink(missing_ok=True)
+
+
+def run_workflow(story: str, branch: str) -> None:
+    """Dispatch the upload workflow and wait for its run to finish."""
+    runs = f"repos/{SLUG}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&per_page=10"
+    listed = gh_api(runs)
+    if listed.returncode != 0:
+        sys.exit(f"Could not list the runs of {WORKFLOW}: {listed.stderr.strip()}")
+    seen = {run["id"] for run in json.loads(listed.stdout)["workflow_runs"]}
+    body = json.dumps({"ref": WORKFLOW_REF, "inputs": {"branch": branch, "story": story}})
+    started = gh_api("--method", "POST", f"repos/{SLUG}/actions/workflows/{WORKFLOW}/dispatches", "--input", "-", body=body)
+    if started.returncode != 0:
+        sys.exit(f"Could not dispatch {WORKFLOW}: {started.stderr.strip()}")
+
+    deadline = time.monotonic() + WAIT
+    run = None
+    while time.monotonic() < deadline:
+        time.sleep(10)
+        listed = gh_api(runs)
+        if listed.returncode != 0:
+            continue
+        fresh = [r for r in json.loads(listed.stdout)["workflow_runs"] if r["id"] not in seen]
+        run = fresh[0] if fresh else None
+        if run is not None and run["status"] == "completed":
+            break
+    if run is None:
+        sys.exit(f"{WORKFLOW} was dispatched but no run appeared within {WAIT // 60} minutes.")
+    if run["status"] != "completed":
+        sys.exit(f"{WORKFLOW} is still running after {WAIT // 60} minutes: {run['html_url']}")
+    if run["conclusion"] != "success":
+        sys.exit(f"{WORKFLOW} ended {run['conclusion']}: {run['html_url']}")
 
 
 def find_release() -> dict | None:
@@ -137,7 +206,11 @@ def main() -> None:
     parser.add_argument("--replace", action="store_true", help="replace a story already in the release")
     parser.add_argument("--dry-run", action="store_true", help="check and build, list the files, upload nothing")
     parser.add_argument("--work", type=pathlib.Path, help="working directory outside the repository")
+    parser.add_argument("--via-actions", action="store_true", help="upload through the publish-story workflow")
+    parser.add_argument("--branch", help="with --via-actions, the branch the built files are pushed to")
     args = parser.parse_args()
+    if args.via_actions and not args.branch:
+        parser.error("--via-actions needs --branch")
 
     folder = outside_repository(args.folder, "story folder")
     work = outside_repository(args.work, "working directory") if args.work else None
@@ -197,8 +270,12 @@ def main() -> None:
 
     if release is None:
         release = create_release()
-    for file in files:
-        upload(release, file)
+    if args.via_actions:
+        stage(files, story, args.branch, work)
+        run_workflow(story, args.branch)
+    else:
+        for file in files:
+            upload(release, file)
     print(f"Published {story} as number {card['number']} to {RELEASE}.")
 
 
