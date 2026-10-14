@@ -266,12 +266,35 @@ public class AdventureBookTests : IDisposable
             File.WriteAllText(Path.Combine(_folder, name), string.Empty);
         }
 
-        var files = AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, new DateTimeOffset(2026, 8, 22, 12, 0, 0, TimeSpan.Zero));
+        var files = AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, new DateTimeOffset(2026, 8, 22, 12, 0, 0, TimeSpan.Zero), zone: TimeZoneInfo.Utc);
 
         Assert.Equal(
             ["Journal.2026-08-22T100000.01.log", "Journal.2026-08-23T100000.01.log"],
             files.Select(Path.GetFileName));
 
         Assert.Empty(AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, null));
+    }
+
+    [Fact]
+    public void FilesToWalkReadsJournalNamesInLocalTime()
+    {
+        // Elite names the file by the session's local start: 18:40 in UTC-4 is 22:40 UTC.
+        foreach (var name in new[]
+                 {
+                     "Journal.2026-10-13T184027.01.log",
+                     "Journal.2026-10-13T203726.01.log",
+                 })
+        {
+            File.WriteAllText(Path.Combine(_folder, name), string.Empty);
+        }
+
+        var minusFour = TimeZoneInfo.CreateCustomTimeZone("UTC-4", TimeSpan.FromHours(-4), "UTC-4", "UTC-4");
+
+        // Accepted at 18:50 local, during the first session.
+        var files = AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, new DateTimeOffset(2026, 10, 13, 22, 50, 38, TimeSpan.Zero), zone: minusFour);
+
+        Assert.Equal(
+            ["Journal.2026-10-13T184027.01.log", "Journal.2026-10-13T203726.01.log"],
+            files.Select(Path.GetFileName));
     }
 }

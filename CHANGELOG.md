@@ -6,6 +6,10 @@
   file as the `D47.Core.Changelog` resource for the About dialog; nothing else parses it.
 -->
 
+## 1.34.1 — Story progress survives a restart
+
+A story's progress now survives a restart of the game when you are west of UTC. On startup d47 rereads the journals since you accepted the story, but it compared the acceptance time in UTC against journal file names that Elite writes in local time. The session in which you accepted the story could be skipped, along with any objective you met in it. An arrival you had already made had to be made again, and a mission handed in before that second arrival did not count.
+
 ## 1.27.0 — Stock stories begin
 
 The Interdictions count on the Session page, in the session report and in your ship AI's session remarks now counts every time you were pulled out of supercruise, whether you submitted or fought. Before, it always showed zero.

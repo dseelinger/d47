@@ -132,8 +132,8 @@ public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
         // Accepted after both sessions started: without the mark, only the newest file is walked.
         var acceptance = new DateTimeOffset(2026, 8, 22, 21, 0, 0, TimeSpan.Zero);
 
-        Assert.Equal([newer], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance));
-        Assert.Equal([_file], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance, Tail()));
+        Assert.Equal([newer], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance, zone: TimeZoneInfo.Utc));
+        Assert.Equal([_file], AdventureBook.FilesToWalk(new DiskFileSystem(), _folder, acceptance, Tail(), TimeZoneInfo.Utc));
     }
 
     [Fact]

@@ -775,9 +775,10 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// <summary>
     /// Which journal files a catch-up has to read: every file whose session started at or after the
     /// earliest acceptance on record, and the one before it — the session that was running when Begin
-    /// was pressed. No file sorting after <paramref name="until"/>'s is considered.
+    /// was pressed. No file sorting after <paramref name="until"/>'s is considered. File names are read in
+    /// <paramref name="zone"/>, the local zone when null.
     /// </summary>
-    public static IReadOnlyList<string> FilesToWalk(IFileSystem files, string directory, DateTimeOffset? earliestAcceptance, JournalMark? until = null)
+    public static IReadOnlyList<string> FilesToWalk(IFileSystem files, string directory, DateTimeOffset? earliestAcceptance, JournalMark? until = null, TimeZoneInfo? zone = null)
     {
         var last = until is { } mark ? System.IO.Path.GetFileName(mark.Path) : null;
 
@@ -791,8 +792,8 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             return [];
         }
 
-        // Elite's file names carry the session start as Journal.2026-08-22T190000.01.log.
-        var cutoff = $"Journal.{since.ToUniversalTime():yyyy-MM-dd'T'HHmmss}";
+        // Elite's file names carry the session start in local time as Journal.2026-08-22T190000.01.log.
+        var cutoff = $"Journal.{TimeZoneInfo.ConvertTime(since, zone ?? TimeZoneInfo.Local):yyyy-MM-dd'T'HHmmss}";
         var first = names.FindIndex(file => string.CompareOrdinal(System.IO.Path.GetFileName(file), cutoff) >= 0);
 
         return first switch
