@@ -601,6 +601,7 @@ public sealed class SwitchPage : DialogPage
             if (id.Length > 0)
             {
                 position.Destination = string.Empty;
+                position.View = null;
             }
 
             Draw();
@@ -699,6 +700,7 @@ public sealed class SwitchPage : DialogPage
         if (position.Destination.Length > 0)
         {
             position.Action = string.Empty;
+            position.View = null;
         }
 
         redraw();
@@ -752,6 +754,7 @@ public sealed class SwitchPage : DialogPage
                     Action = position.Action ?? string.Empty,
                     State = position.State == DesiredState.Off ? "off" : "on",
                     Destination = position.Destination ?? string.Empty,
+                    View = position.View,
                 }),
             ],
         };
@@ -767,7 +770,8 @@ public sealed class SwitchPage : DialogPage
                     position.Button,
                     position.Action.Length == 0 ? null : position.Action,
                     position.State == "off" ? DesiredState.Off : DesiredState.On,
-                    position.Destination.Length == 0 ? null : position.Destination)),
+                    position.Destination.Length == 0 ? null : position.Destination,
+                    position.View)),
             ],
         };
     }
@@ -782,5 +786,7 @@ public sealed class SwitchPage : DialogPage
 
         /// <summary>The root key of a page, or empty.</summary>
         public string Destination { get; set; } = string.Empty;
+
+        public D47.Core.Vr.HeadsetView? View { get; set; }
     }
 }

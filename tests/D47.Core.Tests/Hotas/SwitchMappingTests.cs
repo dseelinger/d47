@@ -1,6 +1,7 @@
 using D47.Core.Storage;
 using D47.Core.Hotas;
 using D47.Core.Input;
+using D47.Core.Vr;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -164,8 +165,42 @@ public class SwitchMappingTests
                 new SwitchPosition(8, "landing_gear", Destination: "transcript.log"),
                 new SwitchPosition(9)));
 
-        Assert.NotNull(problem);
-        Assert.Contains("not both", problem, StringComparison.Ordinal);
+        Assert.Equal(SwitchValidation.OneMeaning, problem);
+    }
+
+    [Theory]
+    [InlineData("landing_gear", null)]
+    [InlineData(null, "transcript.log")]
+    public void APositionThatNamesAViewAndAnythingElseIsRefused(string? action, string? destination)
+    {
+        var problem = SwitchValidation.Problem(
+            Mapping(
+                new SwitchPosition(8, action, Destination: destination, View: HeadsetView.Vr),
+                new SwitchPosition(9)));
+
+        Assert.Equal(
+            "A position means one thing: an action in Elite, a page of D47's panel, or a headset view.", problem);
+    }
+
+    [Fact]
+    public void AViewPositionIsAssignedAndAccepted()
+    {
+        var mapping = Mapping(new SwitchPosition(8, View: HeadsetView.Vr), new SwitchPosition(9, View: HeadsetView.Desktop));
+
+        Assert.Null(SwitchValidation.Problem(mapping));
+        Assert.True(mapping.IsAssigned);
+        Assert.True(mapping.Positions[0].ReachesTheHeadset);
+        Assert.False(mapping.Positions[0].ReachesTheGame);
+        Assert.False(mapping.Positions[0].ReachesThePanel);
+    }
+
+    [Fact]
+    public void AnUnknownViewIsRefused()
+    {
+        var problem = SwitchValidation.Problem(
+            Mapping(new SwitchPosition(8, View: HeadsetView.Unknown), new SwitchPosition(9)));
+
+        Assert.Equal("A position's headset view has to be vr or desktop.", problem);
     }
 }
 
@@ -245,6 +280,54 @@ public class SwitchStoreTests
         var problem = Assert.Single(store.Problems);
         Assert.Equal("bad", problem.Name);
         Assert.Contains("does not report the state", problem.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AViewPositionIsSavedAsItsOwnFieldAndReadBack()
+    {
+        var store = Store();
+
+        store.Save([
+            new SwitchMapping
+            {
+                Name = "view switch",
+                DeviceId = "{wgi/nrid/throttle}",
+                Positions = [new SwitchPosition(4, View: HeadsetView.Vr), new SwitchPosition(5, View: HeadsetView.Desktop)],
+            },
+        ]);
+
+        var text = _files.ReadText(Path_)!;
+        Assert.Contains("\"view\": \"vr\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"view\": \"desktop\"", text, StringComparison.Ordinal);
+
+        Assert.True(store.Poll());
+
+        var mapping = Assert.Single(store.Switches);
+        Assert.Equal([HeadsetView.Vr, HeadsetView.Desktop], mapping.Positions.Select(position => position.View));
+        Assert.All(mapping.Positions, position => Assert.Null(position.Action));
+    }
+
+    [Fact]
+    public void AViewPositionThatAlsoNamesAnActionIsRefusedByName()
+    {
+        _files.WriteText(Path_, """
+            {
+              "switches": [
+                { "name": "muddled", "deviceId": "d", "positions": [
+                    { "button": 4, "action": "landing_gear", "view": "vr" },
+                    { "button": 5, "view": "desktop" } ] }
+              ]
+            }
+            """);
+
+        var store = Store();
+
+        Assert.True(store.Poll());
+        Assert.Empty(store.Switches);
+
+        var problem = Assert.Single(store.Problems);
+        Assert.Equal("muddled", problem.Name);
+        Assert.Equal(SwitchValidation.OneMeaning, problem.Reason);
     }
 
     [Fact]

@@ -329,6 +329,9 @@ public sealed record ActionSettings
     /// <summary>Whether a mapped HOTAS switch may operate the ship (Phase 21).</summary>
     public bool Switches { get; init; }
 
+    /// <summary>Whether a mapped HOTAS switch may change the headset view.</summary>
+    public bool HeadsetView { get; init; }
+
     /// <summary>Whether "take us out" may walk the left panel to the launch button (Phase 52).</summary>
     public bool TakeUsOut { get; init; } = true;
 

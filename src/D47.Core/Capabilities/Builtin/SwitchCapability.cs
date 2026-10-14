@@ -34,6 +34,8 @@ public static class SwitchCapability
 
     public const string EnabledKey = "actions.switches";
 
+    public const string HeadsetViewKey = "actions.headsetView";
+
     public const string ListKey = "switches.list";
 
     public static CapabilityDescriptor Create(SwitchSurface surface, Func<bool> keyboardEnabled) => new()
@@ -46,7 +48,7 @@ public static class SwitchCapability
         Examples = ["which switches disagree", "check my switches"],
         Keywords = ["which switches disagree", "check my switches", "switch state"],
         Display = new CapabilityDisplay { PanelTitle = "HOTAS switches", Order = 64 },
-        Settings = [EnabledRow(keyboardEnabled), ListRow(surface)],
+        Settings = [EnabledRow(keyboardEnabled), HeadsetViewRow(), ListRow(surface)],
         Tools =
         [
             // Argument-free, so the model-free keyword router reaches it with nothing in the path — which is
@@ -175,6 +177,31 @@ public static class SwitchCapability
         {
             Read = s => s.Actions.Switches ? "true" : "false",
             Write = (s, v) => s with { Actions = s.Actions with { Switches = v is "true" } },
+        },
+    };
+
+    /// <summary>Protected for the same reason, and not behind key injection: its one key goes to Virtual Desktop.</summary>
+    private static SettingRow HeadsetViewRow() => new()
+    {
+        Key = HeadsetViewKey,
+        Advanced = true,
+        Label = "Let a HOTAS switch change the headset view",
+        Help = "When you flip a switch position that names a headset view, D47 reads which view Virtual "
+               + "Desktop is showing and presses Shift+Win+D only if it is the other one. It is the one key "
+               + "D47 sends while Elite is not the window in front. Off until you turn it on.",
+        Kind = SettingKind.Toggle,
+        DefaultDisplay = "off",
+        DocsAnchor = "switching-the-headset-view",
+        Protected = true,
+        Commands =
+        [
+            new SettingCommandPhrase("let my switches change the headset view", "true"),
+            new SettingCommandPhrase("stop my switches changing the headset view", "false"),
+        ],
+        Binding = new SettingBinding
+        {
+            Read = s => s.Actions.HeadsetView ? "true" : "false",
+            Write = (s, v) => s with { Actions = s.Actions with { HeadsetView = v is "true" } },
         },
     };
 

@@ -1960,7 +1960,9 @@ public sealed class AppHost : IDisposable
         // callbacks after it has returned.
         var controllers = StartupTimer.Time(
             "controllers", () => new HotasControllers(loggerFactory.CreateLogger<HotasControllers>()));
-        var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>());
+        var headsetView = new D47.Vr.VirtualDesktopView();
+        var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>(), headsetView);
+        var headsetKey = new HeadsetViewKey(headsetView, loggerFactory.CreateLogger<HeadsetViewKey>());
 
         // What the tick reads the controllers through, so no tick calls into Windows.Gaming.Input.
         var sampledControllers = new ControllerSampler(
@@ -2089,6 +2091,7 @@ public sealed class AppHost : IDisposable
             Galaxy = galaxy,
             GameInput = gameInput,
             Gate = gate,
+            HeadsetKey = headsetKey,
             HeardAt = heardAt,
             Injector = injector,
             InputTrace = inputTrace,
@@ -3623,6 +3626,9 @@ public sealed class AppHost : IDisposable
 
                     // Gated by key injection as well as by its own row.
                     Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
+
+                    // Its own row alone: the one key it sends goes to Virtual Desktop.
+                    HeadsetEnabled = settings.Current.Actions.HeadsetView,
                     Destinations = panel.Destinations,
                     Showing = panel.Showing,
                 },
@@ -3833,7 +3839,7 @@ public sealed class AppHost : IDisposable
 
         // After the autonomous drain and for the same reason it exists: the tick is synchronous and a key
         // press is not.
-        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput));
+        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput, services.HeadsetKey));
     }
 
     private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)
@@ -4122,6 +4128,8 @@ public sealed class AppHost : IDisposable
         public required OffDutyGameInput GameInput { get; init; }
 
         public required ListenGate Gate { get; init; }
+
+        public required HeadsetViewKey HeadsetKey { get; init; }
 
         public required System.Runtime.CompilerServices.StrongBox<DateTimeOffset?> HeardAt { get; init; }
 
@@ -5062,26 +5070,32 @@ public sealed class AppHost : IDisposable
     private void ShowSwitches(string? against) => Panel.SwitchesText = against;
 
     /// <summary>Carries out whatever the reconciler decided this tick.</summary>
-    private void CarryOutReconciles(SwitchReconciler reconciler, IGameInput input)
+    private void CarryOutReconciles(SwitchReconciler reconciler, IGameInput input, HeadsetViewKey headsetKey)
     {
-        var pending = reconciler.Drain();
+        var drained = reconciler.Drain();
 
-        if (pending.Count == 0)
+        if (drained.Count == 0)
         {
             return;
         }
 
+        var route = ReconcileRoute.Of(drained, GameState.IsOffDuty);
+
         // The ones that move the panel rather than the ship go elsewhere: to each surface on its own thread,
         // and outside _acting, because a page move holds no keys for a honk to collide with (Phase 46).
-        foreach (var page in pending.Where(reconcile => reconcile.Destination is not null))
+        foreach (var page in route.Pages)
         {
             PanelRouting.Show(page.Destination!);
         }
 
-        pending = [.. pending.Where(reconcile => reconcile.Destination is null)];
+        if (route.Headset.Count > 0)
+        {
+            CarryOutHeadsetViews(route.Headset, headsetKey, reconciler);
+        }
 
-        // Dropped rather than held off duty, so nothing decided then is carried out on return.
-        if (pending.Count == 0 || GameState.IsOffDuty)
+        var pending = route.Game;
+
+        if (pending.Count == 0)
         {
             return;
         }
@@ -5129,6 +5143,38 @@ public sealed class AppHost : IDisposable
             {
                 // Unconditional, like everywhere else that presses a key.
                 input.ReleaseAll();
+                _acting.Release();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Presses Shift+Win+D for the headset views decided this tick, off duty as well, under <c>_acting</c> so a
+    /// held Shift is not combined with keys sent to Elite.
+    /// </summary>
+    private void CarryOutHeadsetViews(
+        IReadOnlyList<PendingReconcile> pending, HeadsetViewKey headsetKey, SwitchReconciler reconciler)
+    {
+        _ = Task.Run(async () =>
+        {
+            await _acting.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var reconcile in pending)
+                {
+                    if (headsetKey.CarryOut(reconcile, reconciler) is { } say)
+                    {
+                        await Voice.AnnounceAsync(new Announcement(reconcile.Switch, say)).ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "A headset view could not be set");
+            }
+            finally
+            {
                 _acting.Release();
             }
         });

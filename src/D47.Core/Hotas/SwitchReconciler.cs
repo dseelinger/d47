@@ -2,6 +2,7 @@
 using D47.Core.Input;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Vr;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Hotas;
@@ -65,12 +66,17 @@ public sealed record SwitchState
 /// The destination key the host is to put the panel on, for a position that names a page rather than an
 /// action (Phase 46).
 /// </param>
+/// <param name="View">
+/// The headset view, for a position that names one. Carried out off duty as well: with no <paramref name="Say"/>
+/// it is one press of Shift+Win+D, with one it is only something to say.
+/// </param>
 public readonly record struct PendingReconcile(
     string Switch,
     string Label,
     IReadOnlyList<InputStep> Steps,
     string? Say = null,
-    string? Destination = null);
+    string? Destination = null,
+    HeadsetView? View = null);
 
 /// <summary>Everything the reconciler needs from outside, per poll.</summary>
 public readonly record struct SwitchTick
@@ -85,6 +91,9 @@ public readonly record struct SwitchTick
 
     /// <summary>Whether the Commander has switched switch reconciling on, and key injection with it.</summary>
     public required bool Enabled { get; init; }
+
+    /// <summary>Whether the Commander has let a switch change the headset view.</summary>
+    public bool HeadsetEnabled { get; init; }
 
     /// <summary>
     /// Every page a surface has registered, in bar order — the vocabulary a <see
@@ -110,7 +119,8 @@ public readonly record struct SwitchTick
 }
 
 /// <summary>The reconciler (Phase 21, "A switch position means a state, not a press").</summary>
-public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
+/// <param name="headset">Which view the headset shows, or null when nothing can say.</param>
+public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetViewSource? headset = null)
 {
     /// <summary>
     /// How long after a reconcile an unexplained change back counts as something else driving the same
@@ -120,7 +130,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
 
     private readonly ConcurrentQueue<PendingReconcile> _pending = new();
 
-    /// <summary>Guards the three dictionaries below.</summary>
+    /// <summary>Guards the dictionaries and the view below.</summary>
     private readonly Lock _gate = new();
 
     /// <summary>Where each switch was on the last poll that named a position.</summary>
@@ -130,6 +140,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     private readonly Dictionary<string, string> _paused = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly Dictionary<string, Watch> _watching = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<string, ViewWatch> _viewWatching = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The headset view as read on this poll, or null until something asks.</summary>
+    private HeadsetView? _view;
 
     private IReadOnlyList<SwitchState> _states = [];
 
@@ -147,9 +162,35 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         {
             _paused.Remove(name);
             _watching.Remove(name);
+            _viewWatching.Remove(name);
 
             // The switch is wherever it is; the next flip is the next question.
             _last.Remove(name);
+        }
+    }
+
+    /// <summary>
+    /// What became of a headset press: the watch on it starts with the next poll once it was sent, and ends when
+    /// it was not.
+    /// </summary>
+    public void HeadsetPressed(string name, HeadsetView view, bool sent)
+    {
+        lock (_gate)
+        {
+            // A report for an earlier flip's press leaves the newer watch alone.
+            if (!_viewWatching.TryGetValue(name, out var watch) || watch.View != view)
+            {
+                return;
+            }
+
+            if (sent)
+            {
+                _viewWatching[name] = watch with { Sent = true };
+            }
+            else
+            {
+                _viewWatching.Remove(name);
+            }
         }
     }
 
@@ -168,6 +209,9 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
 
         lock (_gate)
         {
+            // Read at most once a poll, and only when a position or a watch asks.
+            _view = null;
+
             foreach (var mapping in mappings)
             {
                 try
@@ -211,6 +255,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         {
             _last.Remove(mapping.Name);
             _watching.Remove(mapping.Name);
+            _viewWatching.Remove(mapping.Name);
 
             return new SwitchState
             {
@@ -231,6 +276,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         // being blamed for what the first one started — and before the pause is read below, so a switch
         // paused on this poll reports it on this poll.
         Watching(tick, mapping, flipped);
+        WatchingTheHeadset(tick, mapping, flipped);
 
         if (_paused.TryGetValue(mapping.Name, out var why))
         {
@@ -299,6 +345,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         if (position.Destination is { Length: > 0 } destination)
         {
             return ReconcilePanel(tick, mapping, position, destination, flipped, ready);
+        }
+
+        if (position.View is { } view)
+        {
+            return ReconcileHeadset(tick, mapping, position, view, flipped, ready);
         }
 
         if (!tick.Enabled)
@@ -405,6 +456,123 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         return ready;
     }
 
+    /// <summary>A position that names a headset view.</summary>
+    private SwitchState ReconcileHeadset(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        HeadsetView view,
+        bool flipped,
+        SwitchState ready)
+    {
+        if (!tick.HeadsetEnabled)
+        {
+            return ready with
+            {
+                Health = SwitchHealth.Off,
+                Note = "Changing the headset view is off. Turn on Let a HOTAS switch change the headset view "
+                       + "to let this switch do it.",
+            };
+        }
+
+        var showing = Headset();
+
+        if (showing == HeadsetView.Unknown)
+        {
+            return ready with { Note = "Virtual Desktop is not streaming, so the headset view was left alone." };
+        }
+
+        if (!flipped)
+        {
+            return ready;
+        }
+
+        if (showing == view)
+        {
+            logger.LogInformation(
+                "Switch {Name} moved to {Position}; the headset is already showing {View}, so nothing was pressed",
+                mapping.Name,
+                position.Describe(),
+                view);
+
+            return ready;
+        }
+
+        logger.LogInformation(
+            "Switch {Name} moved to {Position}; the headset is showing {Showing}, so pressing Shift+Win+D for {View}",
+            mapping.Name,
+            position.Describe(),
+            showing,
+            view);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, Word(view), [], View: view));
+        _viewWatching[mapping.Name] = new ViewWatch(view, showing);
+
+        return ready;
+    }
+
+    /// <summary>Which view the headset shows on this poll.</summary>
+    private HeadsetView Headset() => _view ??= headset?.Read() ?? HeadsetView.Unknown;
+
+    /// <summary>How a view is named mid-sentence.</summary>
+    private static string Word(HeadsetView view) => view == HeadsetView.Vr ? "SteamVR" : "the desktop view";
+
+    /// <summary>A press of Shift+Win+D that did not change the view pauses the switch.</summary>
+    private void WatchingTheHeadset(SwitchTick tick, SwitchMapping mapping, bool flipped)
+    {
+        if (!_viewWatching.TryGetValue(mapping.Name, out var watch))
+        {
+            return;
+        }
+
+        if (flipped)
+        {
+            _viewWatching.Remove(mapping.Name);
+            return;
+        }
+
+        var showing = Headset();
+
+        if (showing == watch.View)
+        {
+            _viewWatching.Remove(mapping.Name);
+            return;
+        }
+
+        if (!watch.Sent)
+        {
+            return;
+        }
+
+        if (watch.Until is not { } until)
+        {
+            _viewWatching[mapping.Name] = watch with { Until = tick.Now + ContestWindow };
+            return;
+        }
+
+        if (tick.Now <= until)
+        {
+            return;
+        }
+
+        _viewWatching.Remove(mapping.Name);
+
+        // A reading lost since the press says nothing about the shortcut.
+        if (showing != watch.From)
+        {
+            return;
+        }
+
+        const string why = "Shift+Win+D did not change the headset view. If you changed Virtual Desktop's "
+                           + "shortcut, set it back, then press Resume.";
+
+        _paused[mapping.Name] = why;
+
+        logger.LogWarning("Switch {Name} pressed Shift+Win+D and the headset view did not change; paused", mapping.Name);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, Word(watch.View), [], why, View: watch.View));
+    }
+
     private static PanelDestination? Page(SwitchTick tick, string key) =>
         tick.Destinations.FirstOrDefault(page => string.Equals(page.Key, key, StringComparison.Ordinal));
 
@@ -506,8 +674,24 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
     }
 
     /// <summary>Whether the position the switch is sitting in asks for a state the game is not in.</summary>
-    private static string? Disagreement(SwitchTick tick, SwitchPosition position)
+    private string? Disagreement(SwitchTick tick, SwitchPosition position)
     {
+        if (position.View is { } view)
+        {
+            if (!tick.HeadsetEnabled)
+            {
+                return null;
+            }
+
+            return Headset() switch
+            {
+                var showing when showing == view => null,
+                HeadsetView.Desktop => "the headset is showing the desktop",
+                HeadsetView.Vr => "the headset is showing SteamVR",
+                _ => null,
+            };
+        }
+
         if (position.Destination is { Length: > 0 } destination)
         {
             // Only when d47 can say what the panel is showing, and only against a page that exists — a key
@@ -543,4 +727,14 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
         DateTimeOffset Until,
         ControlContext Context,
         bool Arrived = false);
+
+    /// <summary>
+    /// A press of Shift+Win+D waiting for the view to change from <c>From</c> to <c>View</c>, timed from the first
+    /// poll after it was sent.
+    /// </summary>
+    private readonly record struct ViewWatch(
+        HeadsetView View,
+        HeadsetView From,
+        bool Sent = false,
+        DateTimeOffset? Until = null);
 }

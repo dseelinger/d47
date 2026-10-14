@@ -256,8 +256,9 @@ from the settings panel, from the settings hotkey, and by saying one of the fixe
 > "let my switches operate the ship"
 > "stop reading my switches"
 
-Keys are only ever sent while Elite is the window in front — and only while you are actually in
-the game: at the main menu a reconcile is refused and says so, and it runs when you load in.
+Keys for the ship are only ever sent while Elite is the window in front — and only while you are
+actually in the game: at the main menu a reconcile is refused and says so, and it runs when you
+load in.
 
 ### Assigning a switch
 
@@ -337,7 +338,7 @@ Suggestions open only while their buttons would: a story under way, a model and 
 suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
 beside it.
 
-A position names an action *or* a page, never both. A page the panel does not have — a key
+A position means one thing: an action, a page or a headset view. A page the panel does not have — a key
 mistyped in the file, say — is reported on the row by name and never moved to. And a switch
 sitting on a page the panel is not showing is annunciated like any other stale switch:
 
@@ -346,6 +347,43 @@ sitting on a page the panel is not showing is annunciated like any other stale s
 **Spring-return controls and hats are still declined**, even for a page. The walk cannot know
 what a switch will be assigned to, a momentary control can only ever mean a press, and saying a
 page out loud already covers the press.
+
+### Switching the headset view
+
+A position may also name a headset view: **VR** or **Desktop**, for a Virtual Desktop headset.
+Virtual Desktop switches between its own desktop view and SteamVR on Shift+Win+D, and Directive 47
+uses the same rule here as everywhere else:
+
+- **What it reads.** Which view Virtual Desktop is showing, from the shared memory its driver
+  writes while the headset is streaming.
+- **What it presses.** Shift+Win+D, once, and only when the headset is showing the other view.
+  Flip to VR while the headset is already in SteamVR and nothing happens. Between flips nothing is
+  touched.
+- **What it needs.** **Let a HOTAS switch change the headset view** turned on, and Virtual Desktop
+  streaming. It is off until you turn it on, and the AI cannot turn it on. It is not behind
+  *Let D47 press keys in Elite* or *Let a HOTAS switch operate the ship*, and it works at the main
+  menu and in SteamVR Home: Virtual Desktop hears its shortcut whatever window is in front, so this
+  is the one key Directive 47 sends while Elite is not the window in front. It sends no other key.
+  It can also be set by saying:
+
+> "let my switches change the headset view"
+> "stop my switches changing the headset view"
+
+When Virtual Desktop is not streaming, the view cannot be read, so nothing is pressed and the
+switch's row on the HOTAS switches page reads:
+
+> Virtual Desktop is not streaming, so the headset view was left alone.
+
+If the view has not changed four seconds after the press, the switch pauses. Virtual Desktop's
+shortcut can be changed in its settings, and Directive 47 always sends Shift+Win+D:
+
+> Shift+Win+D did not change the headset view. If you changed Virtual Desktop's shortcut, set it
+> back, then press Resume.
+
+While the row is on, a switch sitting in a view the headset is not showing is annunciated like any
+other:
+
+> view switch: the headset is showing the desktop
 
 ### When a mapping stops fitting
 
@@ -452,6 +490,15 @@ reason**, and the rest of the file still loads.
         { "button": 5, "destination": "transcript.technical" },
         { "button": 6, "destination": "transcript.log" }
       ]
+    },
+    {
+      "name": "view switch",
+      "deviceId": "{wgi/nrid/X8QoL-2>1[]-...-mA7IX7-Ac}",
+      "device": "VID 0x4098 PID 0xBD65, 32 buttons, 0 hats, 7 axes",
+      "positions": [
+        { "button": 10, "view": "vr" },
+        { "button": 11, "view": "desktop" }
+      ]
     }
   ]
 }
@@ -461,6 +508,7 @@ A page is its own `destination` field, never a prefix on `action` — a statemen
 position means rather than a naming rule a rename would silently break. The keys are the ones the
 panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, the
 roots of every other tab, and the fixed pages below them, such as `stories` for the Catalogue.
+A headset view is its own `view` field too, `vr` or `desktop`.
 
 ### What it does not do
 

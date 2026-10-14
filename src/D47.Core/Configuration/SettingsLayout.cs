@@ -608,6 +608,7 @@ public static class SettingsLayout
                                 E("actions.chat"),
                                 E("actions.autoPlot"),
                                 E("actions.switches"),
+                                E("actions.headsetView"),
                                 E("actions.honkOnArrival"),
                                 E("actions.takeUsOut"),
                                 E("actions.separateAndEngage"),

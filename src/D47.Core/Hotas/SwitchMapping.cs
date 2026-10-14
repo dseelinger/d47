@@ -1,4 +1,5 @@
 using D47.Core.Input;
+using D47.Core.Vr;
 
 namespace D47.Core.Hotas;
 
@@ -13,22 +14,27 @@ namespace D47.Core.Hotas;
 /// The page of d47's own panel this position asks for, as the key of a root some surface registered —
 /// <c>transcript.technical</c> — or null (Phase 46).
 /// </param>
+/// <param name="View">The headset view this position asks for, or null.</param>
 public sealed record SwitchPosition(
     int? Button,
     string? Action = null,
     DesiredState State = DesiredState.On,
-    string? Destination = null)
+    string? Destination = null,
+    HeadsetView? View = null)
 {
     /// <summary>How the position reads in a report or on the panel.</summary>
     public string Describe() => Button is { } button ? $"button {button}" : "nothing held";
 
-    public bool IsAssigned => ReachesTheGame || ReachesThePanel;
+    public bool IsAssigned => ReachesTheGame || ReachesThePanel || ReachesTheHeadset;
 
     /// <summary>Whether this position can end in a key press.</summary>
     public bool ReachesTheGame => Action is { Length: > 0 };
 
     /// <summary>Whether this position moves d47's own panel.</summary>
     public bool ReachesThePanel => Destination is { Length: > 0 };
+
+    /// <summary>Whether this position sets the headset view.</summary>
+    public bool ReachesTheHeadset => View is HeadsetView.Vr or HeadsetView.Desktop;
 }
 
 /// <summary>
@@ -98,6 +104,10 @@ public static class SwitchValidation
     /// <summary>The longest root key a destination may carry.</summary>
     public const int MaxDestinationLength = 80;
 
+    /// <summary>The refusal for a position that names more than one of an action, a page and a view.</summary>
+    public const string OneMeaning =
+        "A position means one thing: an action in Elite, a page of D47's panel, or a headset view.";
+
     /// <summary>
     /// Every action a switch position may name: the ones Elite reports the state of, and no others.
     /// </summary>
@@ -153,14 +163,24 @@ public static class SwitchValidation
                 return "A position cannot name a negative button.";
             }
 
-            if (position.ReachesThePanel)
+            // One meaning per position.
+            if ((position.ReachesTheGame ? 1 : 0) + (position.ReachesThePanel ? 1 : 0) + (position.View is null ? 0 : 1) > 1)
             {
-                // One meaning per position.
-                if (position.ReachesTheGame)
+                return OneMeaning;
+            }
+
+            if (position.View is not null)
+            {
+                if (!position.ReachesTheHeadset)
                 {
-                    return "A position means one thing: an action in Elite or a page of D47's panel, not both.";
+                    return "A position's headset view has to be vr or desktop.";
                 }
 
+                continue;
+            }
+
+            if (position.ReachesThePanel)
+            {
                 if (position.Destination!.Length > MaxDestinationLength)
                 {
                     return $"That destination is longer than {MaxDestinationLength} characters.";
