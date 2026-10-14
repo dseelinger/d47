@@ -349,20 +349,21 @@ and go into the final packet.
 
 `/new-story <id>` writes that premise's story:
 
-- Read the packet page and decode the final packet. No pitch and no stop for an accept: the
-  reviewers' agreement stands in for it.
+- Read the packet page with the Artifact tool's `read` action and decode the final packet. No
+  pitch and no stop for an accept: the reviewers' agreement stands in for it. An id is already
+  published when its premise's title is in the published `index.json`.
 - No draft page. The layers live only in `<scratchpad>/<story-id>/`.
 - Before step 6, check the draft against all twelve rules and every place name, and fix what
   fails. Nobody else reads it.
-- Before generating the cast pictures, ask one content-free question: the id, the number of
-  pictures, their cost on the OpenAI key, and whether to publish to `stories-1` when done. His yes
-  covers the pictures and the GitHub write. Generate the pictures and look at each one, and show
-  none of them.
-- After publishing, mark the id published on the packet page and delete the scratch files.
+- `/new-story <id>` is his permission to generate the cast pictures and to publish to
+  `stories-1`. Ask nothing: generate the pictures, look at each one and show none of them, then
+  run the dry run and publish (`--via-actions` in a cloud session).
+- Never open, republish or `SendUserFile` the packet page or any other artifact or file for a
+  surprise story. After publishing, delete the scratch files.
 - The report gives the id, published or not, any fault by id and field, and any gap by issue number.
 
 ## Finishing
 
 A turn that hands the story back for review, or publishes it, ends with the `/claude-voice` sentence
 as its last tool call, then the written report: the draft page link, what changed this round, and
-any gap found.
+any gap found. A surprise story's report is the one in Writing one, with no link.
