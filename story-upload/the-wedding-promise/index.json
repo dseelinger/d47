@@ -992,6 +992,40 @@
     "number": 61
   },
   {
+    "id": "the-survey-office",
+    "title": "The Survey Office",
+    "genre": "Institutionalized",
+    "tone": "Quiet bureaucratic thriller, dry",
+    "level": "endgame",
+    "length": "3-months",
+    "core": "cartographer",
+    "blurb": "The Pilots Federation's survey board has asked you, the most decorated explorer it has, to take over its oldest survey office, at Bradshaw Survey in Lalande 37120. Eleven staff keep the register there by hand, and Chief Surveyor Wilhelmina Oyelaran has corrected the galaxy's charts for forty years. In twelve places her register disagrees with every other chart in human space, and the board will not certify a register that disagrees with itself. Corentin Mayhew of Marchbank Instruments has offered to survey all twelve this quarter at no cost and automate the rest of the office after. Oyelaran says nothing, signs the register every evening, and did not ask for a director. Fail, and the office closes, and her forty years of work are wiped from the charts. Why does her register disagree with everyone else's?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and I earned most of it going where the charts ran out. The Pilots Federation has given me every exploration honour it has, and I have not flown past the edge of the bubble in two years. Last month its survey board asked me to take the directorship of the Survey Office at Bradshaw Survey, the oldest it keeps: eleven staff, a register older than most stations, and Chief Surveyor Wilhelmina Oyelaran, who has corrected the galaxy's charts by hand for forty years. The board gave me three months to put the register right or close the doors. Corentin Mayhew of Marchbank Instruments called the same afternoon to say he could make it easier.",
+    "beacon": "The office's register has listed the Guardian beacons as unvisited for a hundred years, under a standing survey order that nobody ever flew. On my first morning Oyelaran handed me the order, still sealed, and said a new director should start with the oldest open file.",
+    "castPictures": [
+      "the-survey-office.oyelaran",
+      "the-survey-office.mayhew"
+    ],
+    "number": 62
+  },
+  {
+    "id": "the-portrait",
+    "title": "The Portrait",
+    "genre": "Whydunit",
+    "tone": "Elegant art-crime mystery, wry",
+    "level": "endgame",
+    "length": "1-month",
+    "core": "archivist",
+    "blurb": "Nine years ago you flew a painter called Clio Arnaud out to a Guardian beacon, took a portrait of yourself instead of a fare, and forgot it existed. Last week it sold at auction at Shifnalport for the price of a frigate, to a buyer nobody will name, because almost nobody has ever seen your face. Seven days later Clio was found dead in her studio and the portrait was gone, and every art newsfeed in the bubble printed your face beside the word suspect. Then the police arrested Matthias Brecht, the restorer who has loved her for forty years, and everyone who knows him says he could not hurt anyone. Get it wrong, and whatever Clio hid is lost for good, and so is the reason she died. Why would anyone kill for a picture of you?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and for twenty years I have kept my face off every newsfeed in the bubble. My carrier works as a repair yard for explorers on the edge of the black, and the people aboard it know what I look like. Almost nobody else does. Nine years ago a painter called Clio Arnaud asked for passage to a Guardian beacon and offered to paint me instead of paying. I said yes because I was sure nobody would ever see it. I sat for her three afternoons in the observation lounge and never went back for the picture. This morning my face was on every art feed in the bubble, under the word suspect.",
+    "beacon": "Clio painted the background from life: the Guardian beacon in HIP 36823, lit, as we saw it from my observation lounge, and the auction catalogue names the system. She never told me why she needed to go there. If somebody killed her for that picture, I am going to start with the part of it that is not my face.",
+    "castPictures": [
+      "the-portrait.brecht",
+      "the-portrait.clio"
+    ],
+    "number": 63
+  },
+  {
     "id": "the-wedding-promise",
     "title": "The Wedding Promise",
     "genre": "Out of the Bottle",
@@ -1008,6 +1042,6 @@
       "the-wedding-promise.planner.for-woman",
       "the-wedding-promise.rafe"
     ],
-    "number": 62
+    "number": 64
   }
 ]
