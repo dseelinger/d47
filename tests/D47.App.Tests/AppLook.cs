@@ -81,6 +81,7 @@ public static class AppLook
     /// own <c>ships</c> folder beside the test binary — and restores what it pointed at on Dispose. Callers
     /// belong to <see cref="ShipArtCollection"/>.
     /// </summary>
+    [Xunit.Trait("Category", "Integration")]
     public static IDisposable HullArt()
     {
         var files = ShipArt.Files;
