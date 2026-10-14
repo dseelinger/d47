@@ -21,6 +21,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>The Loadout tab: Fleet, then a ship, then a slot.</summary>
+[Collection(nameof(ShipArtCollection))]
 public class LoadoutTabTests
 {
     private sealed record Surface(
@@ -424,8 +425,11 @@ public class LoadoutTabTests
 
     /// <summary>The page at the size the headset renders it, for a human to look at.</summary>
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void TheLoadoutTabRendersToACapture()
     {
+        using var art = AppLook.HullArt();
+
         var surface = Open();
 
         var build = surface.Ships.BuildFor(12, "python", "Bad Idea");

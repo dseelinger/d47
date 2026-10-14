@@ -24,6 +24,7 @@ namespace D47.App.Tests;
 /// sizes and saved to <see cref="TestSurface.CaptureDirectory"/> for comparison with brief 03 (#399).
 /// </summary>
 [Trait("Category", "Integration")]
+[Collection(nameof(ShipArtCollection))]
 public class TheFleetPagesAreDrawnOnTheKitTests
 {
     private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
@@ -117,6 +118,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
     public void TheFleetPagesAreCaptured(string themeId, double width, double height)
     {
         using var look = AppLook.Put(themeId, themeId == ThemeCatalog.ElitePaletteId ? Blue : null);
+        using var art = AppLook.HullArt();
 
         var (window, panel) = Open(width, height);
 

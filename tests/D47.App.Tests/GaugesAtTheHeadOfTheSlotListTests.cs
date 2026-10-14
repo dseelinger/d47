@@ -23,6 +23,7 @@ namespace D47.App.Tests;
 /// Power and jump range at the head of a ship's slot list, and the coin on a module a pledge is needed
 /// to buy.
 /// </summary>
+[Collection(nameof(ShipArtCollection))]
 public class GaugesAtTheHeadOfTheSlotListTests
 {
     private sealed record Surface(
@@ -345,8 +346,11 @@ public class GaugesAtTheHeadOfTheSlotListTests
 
     /// <summary>The gauges at the size the headset renders the panel, for a human to look at.</summary>
     [AvaloniaFact]
+    [Trait("Category", "Integration")]
     public void TheGaugesRenderToACapture()
     {
+        using var art = AppLook.HullArt();
+
         var surface = Open();
 
         OpenTheShip(surface);

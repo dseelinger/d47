@@ -5,8 +5,11 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Panel;
 using D47.App.Theming;
+using D47.Core;
 using D47.Core.Interface;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.App.Tests;
@@ -70,6 +73,31 @@ public static class AppLook
             }
 
             application.RequestedThemeVariant = variant;
+        });
+    }
+
+    /// <summary>
+    /// Points <see cref="ShipArt"/> as MainWindow does — the data folder of an empty install and the build's
+    /// own <c>ships</c> folder beside the test binary — and restores what it pointed at on Dispose. Callers
+    /// belong to <see cref="ShipArtCollection"/>.
+    /// </summary>
+    public static IDisposable HullArt()
+    {
+        var files = ShipArt.Files;
+        var folder = ShipArt.Folder;
+        var shipped = ShipArt.Shipped;
+
+        var paths = new AppPaths(TempFolders.Create("d47-hull-art"), AppContext.BaseDirectory);
+
+        ShipArt.Files = new DiskFileSystem();
+        ShipArt.Folder = paths.Ships;
+        ShipArt.Shipped = paths.ShippedShips;
+
+        return new Undo(() =>
+        {
+            ShipArt.Files = files;
+            ShipArt.Folder = folder;
+            ShipArt.Shipped = shipped;
         });
     }
 
