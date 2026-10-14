@@ -202,10 +202,11 @@ public partial class App(AppHost? host) : Application
             // so the wheel does too (#34).
             host.PanelRouting.RouteScrolling(host.Overlay.Scroll);
 
-            // A pick leaves cached pages drawn for the previous Commander: every surface rebuilds them.
+            // A switch, picked or logged in, leaves cached pages drawn for the previous Commander: every surface
+            // rebuilds them.
             host.GameState.CommanderChanged += change =>
             {
-                if (change.Cause == D47.Core.Journal.CommanderSwitchCause.Picked)
+                if (!change.IsAdoption)
                 {
                     ui.Post(() =>
                     {

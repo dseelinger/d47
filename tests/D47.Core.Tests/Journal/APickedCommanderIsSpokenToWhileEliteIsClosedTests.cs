@@ -5,7 +5,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-/// <summary>With Elite closed nobody is flying, so a picked Commander is spoken to; the game's live files stay the last Commander's.</summary>
+/// <summary>With Elite closed or nobody logged in nobody is flying, so a picked Commander is spoken to; the game's live files stay the last Commander's.</summary>
 public class APickedCommanderIsSpokenToWhileEliteIsClosedTests
 {
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -82,13 +82,26 @@ public class APickedCommanderIsSpokenToWhileEliteIsClosedTests
     }
 
     [Fact]
-    public void AnotherCommanderLoggingInSilencesThePickAgain()
+    public void AnotherCommanderLoggingInIsShownInPlaceOfThePick()
     {
         var store = Played(AliceLogsIn, GameCloses);
         store.Pick(new CommanderIdentity("F1", "Alice"));
 
         store.Apply(BobLogsIn);
 
-        Assert.True(store.IsAnotherFlying);
+        Assert.Equal("F2", store.Active!.Identity.FrontierId);
+        Assert.False(store.IsAnotherFlying);
+    }
+
+    [Fact]
+    public void APickBeforeAnybodyLogsInIsNotSilenced()
+    {
+        var store = new GameStateStore();
+
+        store.Pick(new CommanderIdentity("F2", "Bob"));
+
+        Assert.True(store.IsOffDuty);
+        Assert.False(store.IsAnotherFlying);
+        Assert.False(CalloutContext.For(Start, false, store, GameStatus.Unknown, new NavRoute(), []).IsPriming);
     }
 }

@@ -15,7 +15,7 @@ public sealed class CommandersPage : UserControl
     public const string RootKey = "commanders";
 
     public const string Helper =
-        "D47 starts with the commander it last detected in the journal. Switch to another and D47 stays with them until you switch again.";
+        "D47 starts with the commander who last logged in. Switch to another and D47 stays with them until you switch again or another commander logs in.";
 
     public const string NoneYet = "No commander has been found in the journals yet.";
 

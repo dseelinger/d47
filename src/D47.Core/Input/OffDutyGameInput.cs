@@ -34,6 +34,6 @@ public sealed class OffDutyGameInput(IGameInput inner, GameStateStore commanders
             InjectionOutcome.OffDuty,
             commanders.InGame is { } inGame
                 ? $"Elite is running Commander {inGame.Identity.Name}, not the Commander shown here, so I will not press keys in it."
-                : "Elite has not named the Commander it is running, and it is not the one shown here, so I will not press keys in it.");
+                : "No Commander is logged in to Elite yet, so I will not press keys in it.");
     }
 }

@@ -11,7 +11,7 @@ nav_order: 155
 <section>
 <h2><span class="num">1</span> Say who to switch to.</h2>
 <p class="say">Say "switch to Kestrel Vane".</p>
-<p class="expect">D47 says "Switched to CMDR Kestrel Vane" and stays with that Commander until you switch again.</p>
+<p class="expect">D47 says "Switched to CMDR Kestrel Vane" and stays with that Commander until you switch again or another Commander logs in.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a switch command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">switch to commander Kestrel Vane</text>
@@ -72,11 +72,16 @@ the title bar menu and the Commanders page show.
 > "switch to Kestrel Vane"
 
 ```text
-Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again.
+Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again or another commander logs in.
 ```
 
 Every Commander except the one d47 is showing has these two phrases. Until the journals list two or
 more Commanders there is nothing to switch to.
+
+### Who d47 shows
+
+D47 starts with the Commander who last logged in, even while Elite is still at its menu. A different
+Commander logging in to the game is shown in place of the one you picked.
 
 ### The conversation follows the switch
 

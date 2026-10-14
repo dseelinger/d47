@@ -172,6 +172,16 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
         Assert.Equal(Line, line(OffDutyNote.Route));
     }
 
+    [Fact]
+    public void TheLineSaysNobodyIsLoggedInWhileNobodyIs()
+    {
+        var store = new GameStateStore();
+
+        store.Seed(new CommanderIdentity("F1", "Kestrel Vane"));
+
+        Assert.Equal("No Commander is logged in yet; the route shows when one is.", OffDutyNote.For(store)(OffDutyNote.Route));
+    }
+
     private static JournalEvent Journal(int minute, string json) => Event(minute, json);
 
     private static JournalEvent Event(int minute, string json)

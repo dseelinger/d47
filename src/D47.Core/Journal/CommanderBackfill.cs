@@ -50,6 +50,56 @@ public static class CommanderBackfill
         return (found, files.Count - floor);
     }
 
+    /// <summary>
+    /// The Commander the newest of these files to name one logs in as, looking at no more files than <see
+    /// cref="FleetBackfill"/> does, or null when none of them names one. Each file is read only as far as its
+    /// first login.
+    /// </summary>
+    /// <param name="files">Oldest first.</param>
+    public static CommanderIdentity? LastLogin(IFileSystem fileSystem, IReadOnlyList<string> files, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        var floor = Math.Max(0, files.Count - FleetBackfill.MaxLookback);
+
+        for (var i = files.Count - 1; i >= floor; i--)
+        {
+            if (FirstLogin(fileSystem, files[i], logger) is { } identity)
+            {
+                return identity;
+            }
+        }
+
+        return null;
+    }
+
+    private static CommanderIdentity? FirstLogin(IFileSystem fileSystem, string file, ILogger logger)
+    {
+        try
+        {
+            using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
+
+            using var reader = new StreamReader(stream);
+
+            while (reader.ReadLine() is { } line)
+            {
+                if (line.Contains(FidKey, StringComparison.Ordinal)
+                    && JournalEvent.TryParse(line, logger, out var journalEvent)
+                    && CommanderIdentity.From(journalEvent!) is { } identity)
+                {
+                    return identity;
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not read {File} for its Commander", file);
+        }
+
+        return null;
+    }
+
     private static CommanderSighting? Read(IFileSystem fileSystem, string file, string fid, ILogger logger)
     {
         string? name = null;

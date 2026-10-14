@@ -3,7 +3,7 @@
 /// <summary>What moved the shown Commander to another.</summary>
 public enum CommanderSwitchCause
 {
-    /// <summary>A <c>Commander</c> or <c>LoadGame</c> in the journal, before any pick.</summary>
+    /// <summary>A <c>Commander</c> or <c>LoadGame</c> in the journal, or an older journal's login at startup.</summary>
     Journal,
 
     /// <summary><see cref="GameStateStore.Pick"/>.</summary>
@@ -40,8 +40,6 @@ public sealed class GameStateStore
 
     private string? _inGameFrontierId;
 
-    private bool _picked;
-
     /// <summary>The journal's last word was a <c>Shutdown</c>.</summary>
     private bool _shutDown;
 
@@ -49,8 +47,8 @@ public sealed class GameStateStore
     private bool _running = true;
 
     /// <summary>
-    /// The Commander d47 shows, or null before any identity has been seen. Follows the journal until
-    /// the first <see cref="Pick"/>, and only a later pick changes it after that.
+    /// The Commander d47 shows, or null before any identity has been seen. A <see cref="Pick"/> holds
+    /// until the next pick or a login by a different Commander.
     /// </summary>
     public CommanderGameState? Active => _activeFrontierId is { } fid ? _byFrontierId[fid] : null;
 
@@ -61,17 +59,17 @@ public sealed class GameStateStore
     public CommanderGameState? InGame => _inGameFrontierId is { } fid ? _byFrontierId[fid] : null;
 
     /// <summary>
-    /// The shown Commander is not the one in the game, including a pick made before the journal has
-    /// named anybody.
+    /// The shown Commander is not the one in the game, including one picked or seeded before the journal
+    /// has named anybody.
     /// </summary>
     public bool IsOffDuty =>
         _activeFrontierId is not null && !string.Equals(_activeFrontierId, _inGameFrontierId, StringComparison.Ordinal);
 
     /// <summary>
-    /// Off duty with Elite open. With Elite closed nobody is flying, so the shown Commander is spoken to; the
-    /// game's live files still belong to <see cref="InGame"/>.
+    /// Off duty with a Commander logged in and Elite open. With Elite closed, or nobody logged in yet, nobody
+    /// is flying, so the shown Commander is spoken to; the game's live files still belong to <see cref="InGame"/>.
     /// </summary>
-    public bool IsAnotherFlying => IsOffDuty && _running && !_shutDown;
+    public bool IsAnotherFlying => IsOffDuty && _inGameFrontierId is not null && _running && !_shutDown;
 
     /// <summary>Records whether the Elite process is running, which a crash leaves no <c>Shutdown</c> to say.</summary>
     public void GameRunning(bool running) => _running = running;
@@ -237,8 +235,8 @@ public sealed class GameStateStore
     }
 
     /// <summary>
-    /// Shows this Commander from now on, whoever the journal logs in as, until the next pick. Admits
-    /// them first if they are not yet known.
+    /// Shows this Commander until the next pick or a login by a different Commander. Admits them first if
+    /// they are not yet known.
     /// </summary>
     public void Pick(CommanderIdentity identity)
     {
@@ -247,7 +245,6 @@ public sealed class GameStateStore
         var previous = Active;
 
         Admit(identity);
-        _picked = true;
 
         if (string.Equals(previous?.Identity.FrontierId, identity.FrontierId, StringComparison.Ordinal))
         {
@@ -259,6 +256,30 @@ public sealed class GameStateStore
         CommanderChanged?.Invoke(new CommanderSwitch(previous?.Identity, identity, Priming: false, CommanderSwitchCause.Picked));
 
         if (!string.Equals(previous?.Location.StarSystem, Active!.Location.StarSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            SystemChanged?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Shows this Commander, the last one an older journal logged in as, while nobody is shown yet. Leaves
+    /// <see cref="InGame"/> alone: nobody has logged in.
+    /// </summary>
+    public void Seed(CommanderIdentity identity)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+
+        if (_activeFrontierId is not null)
+        {
+            return;
+        }
+
+        Admit(identity);
+        _activeFrontierId = identity.FrontierId;
+
+        CommanderChanged?.Invoke(new CommanderSwitch(null, identity, Priming: true));
+
+        if (Active!.Location.StarSystem is not null)
         {
             SystemChanged?.Invoke();
         }
@@ -307,16 +328,14 @@ public sealed class GameStateStore
             _inGameFrontierId = identity.FrontierId;
             _shutDown = false;
 
-            if (!_picked)
+            // A login by anybody but the shown Commander shows them, replacing a pick.
+            if (!string.Equals(_activeFrontierId, identity.FrontierId, StringComparison.Ordinal))
             {
                 var previous = Active?.Identity;
 
                 _activeFrontierId = identity.FrontierId;
 
-                if (!string.Equals(previous?.FrontierId, identity.FrontierId, StringComparison.Ordinal))
-                {
-                    CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
-                }
+                CommanderChanged?.Invoke(new CommanderSwitch(previous, identity, priming));
             }
 
             return state.Apply(journalEvent, at);
@@ -327,7 +346,7 @@ public sealed class GameStateStore
             _shutDown = true;
         }
 
-        // Every other event belongs to whoever is in the game, never to a picked Commander.
+        // Every other event belongs to whoever is in the game, never to a picked or seeded one.
         return InGame?.Apply(journalEvent, at) ?? FoldReceipt.Nothing;
     }
 

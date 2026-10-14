@@ -17,8 +17,11 @@ public static class OffDutyNote
             return null;
         }
 
-        var who = store.InGame is { } inGame ? $"CMDR {inGame.Identity.Name}" : "Another Commander";
+        if (store.InGame is not { } inGame)
+        {
+            return $"No Commander is logged in yet; the {what} shows when one is.";
+        }
 
-        return $"{who} is in the game; their {what} shows when they are the Commander shown.";
+        return $"CMDR {inGame.Identity.Name} is in the game; their {what} shows when they are the Commander shown.";
     };
 }

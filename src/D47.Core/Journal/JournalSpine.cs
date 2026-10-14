@@ -34,6 +34,8 @@ public sealed class JournalSpine(
 
     private string? _latest;
 
+    private bool _seedSought;
+
     public string Directory { get; } = directory;
 
     /// <summary>The currently-tailed file, or null if none has been found yet.</summary>
@@ -69,6 +71,17 @@ public sealed class JournalSpine(
 
         Receipts = [.. events.Select(journalEvent => gameState.Apply(journalEvent, FixFor(journalEvent), priming))];
 
+        // Once, on the first file found: Elite at its menu has written a file that names nobody yet.
+        if (!_seedSought)
+        {
+            _seedSought = true;
+
+            if (gameState.Active is null && LastLogin(latest) is { } last)
+            {
+                gameState.Seed(last);
+            }
+        }
+
         // After the events, so the Commander whose locker this is has been established by them on the very
         // first poll.
         if (_suit.Poll() && gameState.Active is { } active)
@@ -103,6 +116,17 @@ public sealed class JournalSpine(
         _listedAt = writtenAt;
         _latest = JournalFolder.LatestFile(files, Directory);
         return _latest;
+    }
+
+    /// <summary>The Commander the newest older file to name one logs in as.</summary>
+    private CommanderIdentity? LastLogin(string latest)
+    {
+        var older = files.Enumerate(Directory, JournalFolder.FilePattern)
+            .Where(file => !string.Equals(file, latest, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
+            .ToList();
+
+        return CommanderBackfill.LastLogin(files, older, _logger);
     }
 
     /// <summary>

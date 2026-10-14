@@ -12,7 +12,7 @@ public static class CommandersCapability
 
     /// <summary>The spoken reply to a switch; the same words as the Commander's own confirmation.</summary>
     public static string Switched(string name) =>
-        $"Switched to CMDR {name}. I'll stay with this commander until you switch again.";
+        $"Switched to CMDR {name}. I'll stay with this commander until you switch again or another commander logs in.";
 
     /// <param name="commanders">Null until the history walk has listed them.</param>
     /// <param name="pick">Must hand the pick to the tick thread; game state is written nowhere else.</param>

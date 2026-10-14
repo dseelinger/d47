@@ -50,7 +50,7 @@ public sealed class SwitchingCommandersByVoiceTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
-        Assert.Equal("Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again.", result.Content);
+        Assert.Equal("Switched to CMDR Kestrel Vane. I'll stay with this commander until you switch again or another commander logs in.", result.Content);
         Assert.Equal("F2", Assert.Single(picked).FrontierId);
     }
 
