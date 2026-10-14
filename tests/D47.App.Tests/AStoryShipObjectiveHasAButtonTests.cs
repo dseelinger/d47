@@ -103,7 +103,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
 
         var show = Assert.IsAssignableFrom<Button>(Ship(surface.Panel, "Show my Cobra MkIII"));
         Assert.True(show.Bounds.Height >= 44);
-        Assert.NotNull(Pressable(surface.Panel, "Not for me"));
+        Assert.NotNull(Pressable(surface.Panel, "Never ask this"));
 
         surface.Window.Close();
     }

@@ -131,6 +131,7 @@ public sealed class StoriesView : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _director.Stories.Changed += OnChanged;
+        _surface.Book.Store.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
         _director.WritingAgain += OnWritingAgain;
         _director.OdysseyChanged += OnChanged;
@@ -159,6 +160,7 @@ public sealed class StoriesView : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _director.Stories.Changed -= OnChanged;
+        _surface.Book.Store.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
         _director.WritingAgain -= OnWritingAgain;
         _director.OdysseyChanged -= OnChanged;
@@ -361,7 +363,7 @@ public sealed class StoriesView : UserControl
         prompts.Choose(
             new ChoiceRequest(
                 "story.refuse",
-                "Not for me",
+                "Never ask this",
                 "Write a different objective?",
                 activity is null ? string.Empty : $"This story won't ask you to {activity} again.",
                 [new ChoiceOption("keep", "Keep it"), new ChoiceOption("yes", "Write a different one")],
@@ -399,6 +401,133 @@ public sealed class StoriesView : UserControl
             });
     }
 
+    /// <summary>
+    /// Takes the Commander's remark about the current objective, has a replacement written, and offers it to apply, keep or
+    /// reword. Returns a refusal when none can be started; <paramref name="done"/> gets the refusal of a later step, or null.
+    /// </summary>
+    internal static string? ChangeObjective(
+        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done,
+        IReadOnlyList<D47.Core.Adventures.AdventureRemark>? exchange = null)
+    {
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            return CommanderChangedRefusal;
+        }
+
+        if (surface.Stories is not { } director || director.RefusableBeat(commander) is null)
+        {
+            return "The story is not waiting on an objective.";
+        }
+
+        if (director.IsRewriting(commander))
+        {
+            return "An objective is already being written.";
+        }
+
+        if (!surface.ModelAvailable())
+        {
+            return "A different objective needs a language model to write it, and none is configured.";
+        }
+
+        if (!surface.GalaxySearchOn())
+        {
+            return "A different objective needs galaxy search, so its places can be checked. It is off in Settings.";
+        }
+
+        var earlier = exchange ?? [];
+
+        prompts.Enter(
+            new EntryRequest(
+                "story.objective",
+                "Change objective",
+                "What would you rather do?",
+                "Say it as you would to the ship's AI — \"a bounty instead\", \"something closer to home\".",
+                string.Empty,
+                EntrySurface.Voice,
+                value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("Say what you would rather do.") : EntryVerdict.Ok),
+            remark =>
+            {
+                if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+                {
+                    done(CommanderChangedRefusal);
+                    return;
+                }
+
+                doing();
+
+                _ = Task.Run(async () =>
+                {
+                    var outcome = await director.ReviseObjectiveAsync(commander, remark, earlier, CancellationToken.None).ConfigureAwait(false);
+
+                    Dispatcher.UIThread.Post(() => Propose(surface, prompts, commander, doing, done, outcome));
+                });
+            });
+
+        return null;
+    }
+
+    internal static void Propose(
+        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, ObjectiveProposalOutcome outcome)
+    {
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            surface.Stories?.DiscardObjective(commander);
+            done(CommanderChangedRefusal);
+            return;
+        }
+
+        if (outcome.Proposal is not { } proposal || surface.Stories is not { } director)
+        {
+            done(outcome.Refusal ?? "Nothing came back.");
+            return;
+        }
+
+        done(null);
+
+        if (!string.IsNullOrWhiteSpace(proposal.Reply))
+        {
+            surface.Say(proposal.Reply);
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "story.objective.proposal",
+                "Change objective",
+                "Use this objective?",
+                string.IsNullOrWhiteSpace(proposal.Reply) ? proposal.Beats.FirstOrDefault()?.Trigger.Describe() : proposal.Reply,
+                [new ChoiceOption("use", "Use this"), new ChoiceOption("keep", "Keep the current one"), new ChoiceOption("again", "Say something else")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+                {
+                    director.DiscardObjective(commander);
+                    done(CommanderChangedRefusal);
+                    return;
+                }
+
+                switch (option.Key)
+                {
+                    case "use":
+                        done(director.ApplyObjective(commander));
+                        break;
+
+                    case "again":
+                        if (ChangeObjective(surface, prompts, commander, doing, done, proposal.Exchange) is { } refusal)
+                        {
+                            done(refusal);
+                        }
+
+                        break;
+
+                    default:
+                        director.DiscardObjective(commander);
+                        break;
+                }
+            });
+    }
+
     private Control? ObjectiveGroup(string? commander, string chapterKey)
     {
         if (_director.RefusableBeat(commander) is null
@@ -408,7 +537,27 @@ public sealed class StoriesView : UserControl
             return null;
         }
 
-        var refuse = Act("Not for me", () => NotForMe(
+        var change = Act("Change objective", () =>
+        {
+            if (ChangeObjective(_surface, _prompts, commander, () => _status.Say("Writing a different objective…"), Finish) is { } refusal)
+            {
+                _status.Fail(refusal);
+            }
+        });
+
+        void Finish(string? refusal)
+        {
+            if (refusal is null)
+            {
+                _status.Clear();
+            }
+            else
+            {
+                _status.Fail(refusal);
+            }
+        }
+
+        var refuse = Act("Never ask this", () => NotForMe(
             _surface,
             _prompts,
             commander,
@@ -431,7 +580,7 @@ public sealed class StoriesView : UserControl
         var ship = ShipObjectiveButtons.For(
             _surface, _surface.Book.Standing(commander, chapterKey)?.CurrentBeat?.Trigger, _nav, _prompts);
 
-        group.Children.Add(ship is null ? AdventuresPage.Buttons(refuse) : AdventuresPage.Buttons(ship, refuse));
+        group.Children.Add(ship is null ? AdventuresPage.Buttons(change, refuse) : AdventuresPage.Buttons(ship, change, refuse));
         return group;
     }
 

@@ -25,7 +25,7 @@ internal static class NotForMeGroupFixture
 
     internal const string ChapterKey = "the-first-light";
 
-    internal sealed record Surface(Window Window, PanelView Panel);
+    internal sealed record Surface(Window Window, PanelView Panel, AdventureSurface? Stories = null);
 
     /// <summary>The ships a story's objective can show or plan.</summary>
     internal sealed record Ships(
@@ -54,7 +54,9 @@ internal static class NotForMeGroupFixture
 
     /// <summary>The Stories surface for a one-chapter story; a ship objective reads <paramref name="fleet"/> or else the plans.</summary>
     internal static AdventureSurface Build(
-        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null)
+        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null,
+        Func<AdventureAsk, DateTimeOffset, CancellationToken, Task<AdventureOutcome>>? write = null,
+        Func<string?>? commander = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-not-for-me-group"));
         paths.EnsureCreated();
@@ -98,22 +100,24 @@ internal static class NotForMeGroupFixture
             () => null, () => null, null, null, NullLogger.Instance);
 
         var director = new StoryDirector(
-            stories, book, () => StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
+            stories, book, () => StoryFixture.Catalog, write ?? generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
         return new AdventureSurface(
-            book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
+            book, generator, () => null, commander ?? (() => "F1"), () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Stories: director,
             Fleet: fleet is not null ? () => fleet : ships is null ? null : ships.Plans.Fleet,
             Intend: ships is null ? null : hull => ships.Plans.Intend(hull));
     }
 
     internal static Surface Open(
-        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null, bool engineers = false)
+        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null, string? engineer = null, bool engineers = false,
+        Func<AdventureAsk, DateTimeOffset, CancellationToken, Task<AdventureOutcome>>? write = null,
+        Func<string?>? commander = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
     {
-        var surface = Build(kind, ships, shipType, fleet, engineer);
+        var surface = Build(kind, ships, shipType, fleet, engineer, write, commander);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableAdventures(surface);
+        panel.EnableAdventures(surface, desk: desk);
 
         if (ships is not null)
         {
@@ -132,7 +136,7 @@ internal static class NotForMeGroupFixture
         panel.Nav.GoTo(StoriesView.Crumb);
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel);
+        return new Surface(window, panel, surface);
     }
 
     internal static void ReadChapter(Surface surface)

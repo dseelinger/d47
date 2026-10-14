@@ -24,6 +24,7 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
             desk.Accept = () => OnUi(() => Page().AcceptDraft());
             desk.Reject = () => OnUi(() => Page().RejectDraft());
             desk.Ask = () => OnUi(() => Page().AskByVoice());
+            desk.ChangeObjective = () => OnUi(() => Page().ChangeObjectiveByVoice());
         }
 
         host.Furnish(

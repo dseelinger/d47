@@ -16,6 +16,8 @@ public static class AdventureCapability
 
     public const string RefuseBeatTool = "refuse_story_beat";
 
+    public const string ChangeObjectiveTool = "change_story_objective";
+
     public const string ChangeDraftTool = "change_adventure";
 
     public const string AcceptDraftTool = "accept_adventure";
@@ -54,7 +56,7 @@ public static class AdventureCapability
         public Func<CancellationToken, Task<string?>> Refuse { get; set; } = _ => Task.FromResult<string?>(NoStory);
     }
 
-    /// <summary>Asks for an adventure and acts on the draft in front of the Commander, each returning a refusal or null. The app sets it once the Adventures page exists.</summary>
+    /// <summary>Asks for an adventure, acts on the draft in front of the Commander and opens the entry for a different objective, each returning a refusal or null. The app sets it once the Adventures page exists.</summary>
     public sealed class AdventureDesk
     {
         public Func<bool> HasDraft { get; set; } = () => false;
@@ -67,6 +69,9 @@ public static class AdventureCapability
 
         /// <summary>Opens the Short Story page and the brief entry whose commit presses Go.</summary>
         public Func<string?> Ask { get; set; } = () => "The Short Story page is not available.";
+
+        /// <summary>Opens the entry that takes the Commander's words for a different objective.</summary>
+        public Func<string?> ChangeObjective { get; set; } = () => NoStory;
     }
 
     /// <summary>Writes the Narrator's recap of the story under way, or null when no story is under way. The app sets it once the story exists.</summary>
@@ -88,7 +93,7 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on, and "
+            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on or change it in their own words, and "
             + "ask the Narrator for the story so far.",
 
         // The phrases that genuinely work.
@@ -104,6 +109,8 @@ public static class AdventureCapability
             "accept the ending",
             "choose ending two",
             "this objective is not for me",
+            "never ask this",
+            "change this objective",
             "ask for a short story",
             "change the short story",
             "accept the short story",
@@ -186,6 +193,7 @@ public static class AdventureCapability
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
+            Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the ship's AI then proposes a replacement for them to use, keep or reword.", ["change this objective", "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
             Recap(recapper),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
@@ -235,6 +243,7 @@ public static class AdventureCapability
         Commands =
         [
             new ToolCommandPhrase("this objective is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("never ask this", new Dictionary<string, string>(StringComparer.Ordinal)),
             new ToolCommandPhrase("not for me", new Dictionary<string, string>(StringComparer.Ordinal)),
             new ToolCommandPhrase("give me a different objective", new Dictionary<string, string>(StringComparer.Ordinal)),
             new ToolCommandPhrase("this beat is not for me", new Dictionary<string, string>(StringComparer.Ordinal)),

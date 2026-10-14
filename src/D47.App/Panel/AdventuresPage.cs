@@ -492,7 +492,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return scroller;
     }
 
-    /// <summary>The NEXT group: the objective, the wait for a different one, and Not for me under it.</summary>
+    /// <summary>The NEXT group: the objective, the wait for a different one, and Change objective and Never ask this under it.</summary>
     private void AddObjective(StackPanel page, AdventureStanding standing)
     {
         var rewriting = _surface.Stories?.IsRewriting(_surface.Commander()) == true;
@@ -527,7 +527,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (standing.IsRefusable && !rewriting && _surface.Stories is not null)
         {
-            row.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
+            row.Children.Add(Action("Change objective", () => ChangeObjective(drawnFor)));
+
+            row.Children.Add(Action("Never ask this", () => StoriesView.NotForMe(
                 _surface,
                 _prompts,
                 drawnFor,
@@ -545,6 +547,36 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             row.Margin = new Thickness(0, 6, 0, 0);
             page.Children.Add(row);
+        }
+    }
+
+    /// <summary>Opens the entry for a different objective, saying why it cannot; returns the refusal, or null.</summary>
+    internal string? ChangeObjective(string? drawnFor)
+    {
+        var refusal = StoriesView.ChangeObjective(_surface, _prompts, drawnFor, () => _surface.Say("Writing a different objective…"), SayRefusal);
+
+        if (refusal is not null)
+        {
+            _surface.Say(refusal);
+        }
+
+        return refusal;
+    }
+
+    /// <summary>Shows the Stories tab and opens the entry for a different objective; returns why it cannot, or null.</summary>
+    internal string? ChangeObjectiveByVoice()
+    {
+        _prompts.Abandon();
+        _nav.Show(RootKey);
+        return StoriesView.ChangeObjective(
+            _surface, _prompts, _surface.Commander(), () => _surface.Say("Writing a different objective…"), SayRefusal);
+    }
+
+    private void SayRefusal(string? refusal)
+    {
+        if (refusal is not null)
+        {
+            _surface.Say(refusal);
         }
     }
 

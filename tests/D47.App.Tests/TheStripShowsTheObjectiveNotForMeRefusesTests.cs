@@ -8,7 +8,7 @@ using static D47.App.Tests.NotForMeGroupFixture;
 
 namespace D47.App.Tests;
 
-/// <summary>The Stories tab's current-story strip draws the objective with Not for me under it, above the story controls, and draws no group without a refusable objective.</summary>
+/// <summary>The Stories tab's current-story strip draws the objective with Change objective and Never ask this under it, above the story controls, and draws no group without a refusable objective.</summary>
 [Trait("Category", "Integration")]
 public sealed class TheStripShowsTheObjectiveNotForMeRefusesTests
 {
@@ -21,7 +21,7 @@ public sealed class TheStripShowsTheObjectiveNotForMeRefusesTests
         Save(surface.Window, "not-for-me-under-objective-strip.png");
 
         var objective = Assert.IsAssignableFrom<TextBlock>(Starting(surface.Panel, "Arrive"));
-        var refuse = Assert.IsAssignableFrom<Button>(Pressable(surface.Panel, "Not for me"));
+        var refuse = Assert.IsAssignableFrom<Button>(Pressable(surface.Panel, "Never ask this"));
         var read = Assert.IsAssignableFrom<Button>(Pressable(surface.Panel, "Read the chapter"));
 
         Assert.True(Bottom(objective, surface.Window) <= Top(refuse, surface.Window));
@@ -38,7 +38,7 @@ public sealed class TheStripShowsTheObjectiveNotForMeRefusesTests
         var surface = Open(TriggerKind.Beacon);
         Save(surface.Window, "not-for-me-under-objective-strip-none.png");
 
-        Assert.Null(Pressable(surface.Panel, "Not for me"));
+        Assert.Null(Pressable(surface.Panel, "Never ask this"));
         Assert.Null(Starting(surface.Panel, "Scan"));
         Assert.NotNull(Pressable(surface.Panel, "Read the chapter"));
 

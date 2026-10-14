@@ -50,14 +50,14 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Wait for the game to move. On a stock story chapter you can also say "not for me" to be given a different objective.</p>
-<p class="expect">After three play sessions and seven days at the same objective, your ship AI nudges you toward it. "Not for me" does not apply to a short story.</p>
-<p class="expect">An objective to board a ship has a button beside Not for me that plans that ship, or shows it when you own it or have planned it. An objective to reach a stage with an engineer, sell data or apply suit mods has one that opens the engineer's page, the unsold data page or the suits page, when that page is on.</p>
+<p class="say">Wait for the game to move. On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to say what you would rather do.</p>
+<p class="expect">After three play sessions and seven days at the same objective, your ship AI nudges you toward it. Neither applies to a short story.</p>
+<p class="expect">An objective to board a ship has a button beside Change objective and Never ask this that plans that ship, or shows it when you own it or have planned it. An objective to reach a stage with an engineer, sell data or apply suit mods has one that opens the engineer's page, the unsold data page or the suits page, when that page is on.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="152" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A story moves when the game does.</text>
  <text x="440" y="98" text-anchor="middle" font-size="16" fill="var(--text)">Sitting in the menu, nothing happens. After three sessions and seven days, the Narrator nudges.</text>
- <text x="440" y="134" text-anchor="middle" font-size="16" fill="var(--text)">On a stock story chapter, say "not for me" for a different objective.</text>
+ <text x="440" y="134" text-anchor="middle" font-size="16" fill="var(--text)">On a stock story chapter, say "never ask this" or "change this objective".</text>
 </svg>
 </section>
 </div></div>
@@ -727,8 +727,8 @@ activity you have refused in the story is never picked.
 
 ### Refusing an objective
 
-A story chapter's current objective has a **Not for me** button, on the chapter's page and on the Stories
-page, and a voice command: "this objective is not for me", "not for me" or "give me a different objective". The
+A story chapter's current objective has a **Never ask this** button, on the chapter's page and on the Stories
+page, and a voice command: "never ask this", "this objective is not for me", "not for me" or "give me a different objective". The
 button asks "Write a different objective?" and, for an objective that asks for an activity, "This story won't ask
 you to collect bounties again." (or whichever activity it is). On yes the ship's AI writes new objectives from
 the current one to the end of the chapter. Objectives already done stay as they were, the chapter count and the
@@ -748,6 +748,31 @@ The model is refused this tool.
 #### `refuse_story_beat`
 
 Refuse the objective the Commander's story chapter is waiting on and write a different one in its place. The story remembers the activity and does not ask for it again. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### Changing an objective
+
+Beside **Never ask this**, a story chapter's current objective has a **Change objective** button, on the chapter's
+page and on the Stories page, in the window and on the VR big panel. Say "change this objective" or "change the
+objective" to open the same page. The page asks "What would you rather do?" and takes your words by speech or
+keyboard. The ship's AI then writes the current objective and those after it again from your words, and the status
+line reads "Writing a different objective…" meanwhile. It says its reply and shows it with three buttons:
+
+- **Use this** replaces the current objective and those after it with the proposal.
+- **Keep the current one** drops the proposal.
+- **Say something else** opens the page again, and the AI keeps what was said so far.
+
+Unlike **Never ask this**, changing an objective does not remember the activity: a later chapter may ask for it.
+A proposal is refused when the story has moved on while it was written, and the objective stays as it was. Both
+buttons are left out while an objective is being written, and for an objective that cannot be refused. The model
+is refused this tool.
+
+#### `change_story_objective`
+
+Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the ship's AI then proposes a replacement for them to use, keep or reword. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

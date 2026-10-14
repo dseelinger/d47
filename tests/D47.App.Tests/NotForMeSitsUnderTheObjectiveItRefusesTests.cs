@@ -9,7 +9,7 @@ using static D47.App.Tests.NotForMeGroupFixture;
 
 namespace D47.App.Tests;
 
-/// <summary>On a stock story's chapter page, Not for me sits under the objective it refuses and Story on is in a row below. Captures go to <see cref="TestSurface.CaptureDirectory"/>.</summary>
+/// <summary>On a stock story's chapter page, Change objective and Never ask this sit under the objective and Story on is in a row below. Captures go to <see cref="TestSurface.CaptureDirectory"/>.</summary>
 [Trait("Category", "Integration")]
 public sealed class NotForMeSitsUnderTheObjectiveItRefusesTests
 {
@@ -24,7 +24,7 @@ public sealed class NotForMeSitsUnderTheObjectiveItRefusesTests
 
         var head = Assert.IsAssignableFrom<TextBlock>(Starting(surface.Panel, "Next"));
         var objective = Assert.IsAssignableFrom<TextBlock>(Starting(surface.Panel, "Arrive"));
-        var refuse = Assert.IsAssignableFrom<Button>(Pressable(surface.Panel, "Not for me"));
+        var refuse = Assert.IsAssignableFrom<Button>(Pressable(surface.Panel, "Never ask this"));
         var storyOn = Assert.Single(surface.Panel.GetVisualDescendants().OfType<CheckBox>(), box => box.Content is TextBlock { Text: "Story on" });
 
         Assert.True(Top(head, surface.Window) < Top(objective, surface.Window));
@@ -42,7 +42,7 @@ public sealed class NotForMeSitsUnderTheObjectiveItRefusesTests
         var surface = Open(TriggerKind.Beacon);
         ReadChapter(surface);
 
-        Assert.Null(Pressable(surface.Panel, "Not for me"));
+        Assert.Null(Pressable(surface.Panel, "Never ask this"));
 
         surface.Window.Close();
     }
