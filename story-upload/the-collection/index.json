@@ -1009,6 +1009,61 @@
     "number": 62
   },
   {
+    "id": "the-portrait",
+    "title": "The Portrait",
+    "genre": "Whydunit",
+    "tone": "Elegant art-crime mystery, wry",
+    "level": "endgame",
+    "length": "1-month",
+    "core": "archivist",
+    "blurb": "Nine years ago you flew a painter called Clio Arnaud out to a Guardian beacon, took a portrait of yourself instead of a fare, and forgot it existed. Last week it sold at auction at Shifnalport for the price of a frigate, to a buyer nobody will name, because almost nobody has ever seen your face. Seven days later Clio was found dead in her studio and the portrait was gone, and every art newsfeed in the bubble printed your face beside the word suspect. Then the police arrested Matthias Brecht, the restorer who has loved her for forty years, and everyone who knows him says he could not hurt anyone. Get it wrong, and whatever Clio hid is lost for good, and so is the reason she died. Why would anyone kill for a picture of you?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend, and for twenty years I have kept my face off every newsfeed in the bubble. My carrier works as a repair yard for explorers on the edge of the black, and the people aboard it know what I look like. Almost nobody else does. Nine years ago a painter called Clio Arnaud asked for passage to a Guardian beacon and offered to paint me instead of paying. I said yes because I was sure nobody would ever see it. I sat for her three afternoons in the observation lounge and never went back for the picture. This morning my face was on every art feed in the bubble, under the word suspect.",
+    "beacon": "Clio painted the background from life: the Guardian beacon in HIP 36823, lit, as we saw it from my observation lounge, and the auction catalogue names the system. She never told me why she needed to go there. If somebody killed her for that picture, I am going to start with the part of it that is not my face.",
+    "castPictures": [
+      "the-portrait.brecht",
+      "the-portrait.clio"
+    ],
+    "number": 63
+  },
+  {
+    "id": "the-wedding-promise",
+    "title": "The Wedding Promise",
+    "genre": "Out of the Bottle",
+    "tone": "Screwball wedding comedy, warm",
+    "level": "endgame",
+    "length": "1-month",
+    "core": "mender",
+    "blurb": "Saskia Holm has been your best friend since you were nine, and in a month she marries Rafe Mercer aboard your fleet carrier, beside a Guardian beacon. You told her, 'I promise you the wedding you deserve,' and you meant every credit of it. Since the beacon scan, every promise you make out loud comes true by the next morning, and never the way you meant it. The planner Saskia hired has a schedule for every hour of the month, and every arrangement either of you makes falls apart by breakfast. The bride laughs at every disaster, which is not like her. Get this wrong, and Saskia's wedding, and the oldest friendship you have, fall apart in front of everyone she knows. What wedding does Saskia deserve?",
+    "inYourWords": "I spent twenty years alone in a mining ship, cracking asteroids for void opals, and it paid for a fleet carrier, a hangar of engineered ships and more credits than I will ever spend. I am good with rock and bad with people. I have one friend from before the money: Saskia Holm, who grew up two doors down from me and talks ships in to land at a starport for a living. Last week she called and said she needed to tell me something about her wedding to Rafe Mercer. Before she finished the sentence I had offered her my carrier and said, 'I promise you the wedding you deserve.' I have never broken a promise. I have also never been to a wedding.",
+    "beacon": "When we were eleven, Saskia saw a picture of a lit Guardian beacon and told me she would be married beside one. The beacon in Synuefe RL-C b46-6 stays dark until somebody scans it. Before the guests, the flowers or anything else, I am flying out there to scan it while she watches over the link, so that she can see it lit.",
+    "castPictures": [
+      "the-wedding-promise.saskia",
+      "the-wedding-promise.planner.for-man",
+      "the-wedding-promise.planner.for-woman",
+      "the-wedding-promise.rafe"
+    ],
+    "number": 64
+  },
+  {
+    "id": "the-second-act",
+    "title": "The Second Act",
+    "genre": "Rites of Passage",
+    "tone": "Gentle midlife romance, wry",
+    "level": "endgame",
+    "length": "6-months",
+    "core": "analyst-prime",
+    "blurb": "You have a fleet carrier, a hangar of ships and more credits than you can spend, and you have stopped enjoying any of it. So you signed on as a hired pilot for the Bluebell Line: one passenger route, two old ships, and an owner who had never heard of you. The Bluebell is failing. It loses bids it should win, its licence review is six months away, and Felix Haddow of Orrery Lines has an offer on the table and all the patience in the world. The harder you fly for the line, the more work it loses, and the owner is better company than anyone you have met in years. Fail, and in six months the Bluebell is sold for what is left of it, and the owner who spent twenty years building it is left with nothing. Why does the Bluebell keep losing work it should win?",
+    "inYourWords": "I have a fleet carrier, a hangar of engineered ships and more credits than I will ever spend. Last month I finished the last thing on a list I made twenty years ago, and I sat in the cockpit afterwards waiting to feel something, and nothing came. My carrier crew run the carrier without me. So when I saw a notice on a starport board, pilot needed, one route, poor pay, kind passengers, I signed on under my own name. The Bluebell Line has two old ships, a mechanic called Dorrie Fane who read my logbook and did not believe a word of it, and an owner who had never heard of me and did not ask. The trial is a month. I have not told anybody who I am.",
+    "beacon": "The first charter I flew for the Bluebell was a party of sightseers who had paid to watch a Guardian beacon light up. The owner had promised them a data-link scan of it and had nobody else to fly them, so I flew them out and made the scan.",
+    "castPictures": [
+      "the-second-act.owner.for-man",
+      "the-second-act.owner.for-woman",
+      "the-second-act.dorrie",
+      "the-second-act.haddow"
+    ],
+    "number": 65
+  },
+  {
     "id": "the-collection",
     "title": "The Collection",
     "genre": "Golden Fleece",
@@ -1023,6 +1078,6 @@
       "the-collection.ilse",
       "the-collection.emeric"
     ],
-    "number": 63
+    "number": 66
   }
 ]
