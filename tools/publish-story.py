@@ -81,21 +81,18 @@ def git(*args: str, env: dict | None = None) -> str:
 
 
 def stage(files: list, story: str, branch: str, work: pathlib.Path) -> None:
-    """Commit the files to story-upload/<story>/ on the branch through a separate index, then push the branch."""
+    """Commit the files to story-upload/<story>/ on the branch, or on a new branch from main, through a separate index, then push it."""
     env = {**os.environ, "GIT_INDEX_FILE": str(work / "staging.index")}
-    parent = None
-    if git("ls-remote", "--heads", "origin", branch):
-        git("fetch", "--quiet", "origin", branch)
-        parent = git("rev-parse", "FETCH_HEAD")
-        git("read-tree", parent, env=env)
-    else:
-        git("read-tree", "--empty", env=env)
+    base = branch if git("ls-remote", "--heads", "origin", branch) else WORKFLOW_REF
+    git("fetch", "--quiet", "origin", base)
+    parent = git("rev-parse", "FETCH_HEAD")
+    git("read-tree", parent, env=env)
     git("rm", "-r", "--cached", "--quiet", "--ignore-unmatch", f"{STAGING}/{story}", env=env)
     for file in files:
         blob = git("hash-object", "-w", str(file))
         git("update-index", "--add", "--cacheinfo", f"100644,{blob},{STAGING}/{story}/{file.name}", env=env)
     tree = git("write-tree", env=env)
-    commit = git("commit-tree", tree, *(["-p", parent] if parent else []), "-m", f"Stage {story} for the {RELEASE} release")
+    commit = git("commit-tree", tree, "-p", parent, "-m", f"Stage {story} for the {RELEASE} release")
     git("push", "--quiet", "origin", f"{commit}:refs/heads/{branch}")
     (work / "staging.index").unlink(missing_ok=True)
 
