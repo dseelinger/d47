@@ -267,9 +267,13 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
    The dry run checks the card, the hidden entry and the pictures and lists the files; a fault is
    printed by id and field and nothing is uploaded. The second command is a GitHub write: run it
    only after he says to publish. In a cloud session, whose GitHub access refuses release uploads
-   (HTTP 415), add `--via-actions --branch <the session's designated branch>`: the files are pushed
-   to `story-upload/<story-id>/` on that branch and `.github/workflows/publish-story.yml` uploads
-   them and removes them from the branch. Then republish the draft page marked published and delete the
+   (HTTP 415), add `--via-actions --branch <the session's designated branch>`. A local session
+   uploads directly, and only when no other session is publishing: the direct upload is not
+   serialised and can drop another story's `index.json` entry. With `--via-actions` the files and the card
+   are pushed to `story-upload/<story-id>/` on that branch, and `.github/workflows/publish-story.yml`
+   runs one publish at a time from a queue: it uploads the files, adds the card to `index.json` by
+   id with its number, and removes the files from the branch. The script waits for its own run and
+   fails unless that run succeeds. Then republish the draft page marked published and delete the
    scratch files: the story folder, the draft page's HTML file and the generated images.
 
 Publishing changes nothing in the checkout. A story that seems to need a code change is a gap:

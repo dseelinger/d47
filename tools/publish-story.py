@@ -9,20 +9,28 @@ Not part of the build. Writes no file in the checkout.
 <folder> holds `card.json`, `hidden.json` and the picked pictures: `<story-id>.<cast-id>.png`, or
 `<story-id>.<cast-id>.for-man.png` and `.for-woman.png` for a cast member with `versions`.
 
-The script downloads `index.json` from the release (an empty list if there is none), refuses an id already in
-it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and requires a
-picture for every primary cast member (any other member with no picture file is published without one), numbers the card,
-lists the primary members' picture names in its `castPictures`, and builds in the work directory: `<id>.sealed`, a 1024 px
-JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and the new `index.json`. It then
-uploads them through `gh api`, replacing any asset of the same name, `index.json` last. --dry-run stops before
-the upload and lists each file with its size. The release is created with make_latest false when missing:
-UpdateChecker reads the latest release to find updates.
+The script downloads `index.json` from the release (an empty list if the release holds no story), refuses an id
+already in it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and
+requires a picture for every primary cast member (any other member with no picture file is published without one),
+lists the primary members' picture names in the card's `castPictures`, and builds in the work directory:
+`<id>.sealed`, a 1024 px JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and `card.json`.
+--dry-run stops there and lists each file with its size. The release is created with make_latest false when
+missing: UpdateChecker reads the latest release to find updates. A release that holds stories but no `index.json`
+is refused rather than given a new index.
+
+Without --via-actions the files are uploaded through `gh api`, replacing any asset of the same name. Then
+`index.json` is downloaded again, the card is added or replaced by id and numbered (its old number, or the highest
+plus one), and the index is uploaded. This is not serialised against other publishes: use it only when no other
+session is publishing.
 
 Only REST endpoints are called, because cloud sessions refuse GitHub's GraphQL API, which `gh release` uses.
 
 --via-actions is for sessions whose GitHub access accepts only JSON request bodies, which cannot upload release
-assets. It commits the built files to `story-upload/<id>/` on <branch> without touching the checkout, pushes the
-branch, dispatches .github/workflows/publish-story.yml to upload them from the runner, and waits for that run.
+assets, and is safe with several sessions publishing at once. It commits the built files and `card.json` to
+`story-upload/<id>/` on <branch> without touching the checkout, pushes the branch, and dispatches
+.github/workflows/publish-story.yml with that commit and a random token. The workflow's runs wait in a queue and
+run one at a time; each uploads its files and merges its card into `index.json` as above. The script finds its own
+run by the token in the run name, fails unless that run succeeds, and then reads the card's number from the release.
 """
 import argparse
 import base64
@@ -36,6 +44,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 import zlib
 
 try:
@@ -52,7 +61,7 @@ QUALITY = 85
 WORKFLOW = "publish-story.yml"
 WORKFLOW_REF = "main"
 STAGING = "story-upload"
-WAIT = 15 * 60
+WAIT = 30 * 60
 
 
 def load_sealer():
@@ -80,8 +89,8 @@ def git(*args: str, env: dict | None = None) -> str:
     return done.stdout.strip()
 
 
-def stage(files: list, story: str, branch: str, work: pathlib.Path) -> None:
-    """Commit the files to story-upload/<story>/ on the branch, or on a new branch from main, through a separate index, then push it."""
+def stage(files: list, story: str, branch: str, work: pathlib.Path) -> str:
+    """Commit the files to story-upload/<story>/ on the branch, or on a new branch from main, through a separate index, push it and return the commit."""
     env = {**os.environ, "GIT_INDEX_FILE": str(work / "staging.index")}
     base = branch if git("ls-remote", "--heads", "origin", branch) else WORKFLOW_REF
     git("fetch", "--quiet", "origin", base)
@@ -95,20 +104,19 @@ def stage(files: list, story: str, branch: str, work: pathlib.Path) -> None:
     commit = git("commit-tree", tree, "-p", parent, "-m", f"Stage {story} for the {RELEASE} release")
     git("push", "--quiet", "origin", f"{commit}:refs/heads/{branch}")
     (work / "staging.index").unlink(missing_ok=True)
+    return commit
 
 
-def run_workflow(story: str, branch: str) -> None:
-    """Dispatch the upload workflow and wait for its run to finish."""
-    runs = f"repos/{SLUG}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&per_page=10"
-    listed = gh_api(runs)
-    if listed.returncode != 0:
-        sys.exit(f"Could not list the runs of {WORKFLOW}: {listed.stderr.strip()}")
-    seen = {run["id"] for run in json.loads(listed.stdout)["workflow_runs"]}
-    body = json.dumps({"ref": WORKFLOW_REF, "inputs": {"branch": branch, "story": story}})
+def run_workflow(story: str, branch: str, commit: str, replace: bool) -> None:
+    """Dispatch the upload workflow and wait for the run whose name carries this dispatch's token."""
+    token = uuid.uuid4().hex
+    inputs = {"branch": branch, "commit": commit, "story": story, "token": token, "replace": str(replace).lower()}
+    body = json.dumps({"ref": WORKFLOW_REF, "inputs": inputs})
     started = gh_api("--method", "POST", f"repos/{SLUG}/actions/workflows/{WORKFLOW}/dispatches", "--input", "-", body=body)
     if started.returncode != 0:
         sys.exit(f"Could not dispatch {WORKFLOW}: {started.stderr.strip()}")
 
+    runs = f"repos/{SLUG}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&per_page=100"
     deadline = time.monotonic() + WAIT
     run = None
     while time.monotonic() < deadline:
@@ -116,8 +124,7 @@ def run_workflow(story: str, branch: str) -> None:
         listed = gh_api(runs)
         if listed.returncode != 0:
             continue
-        fresh = [r for r in json.loads(listed.stdout)["workflow_runs"] if r["id"] not in seen]
-        run = fresh[0] if fresh else None
+        run = next((r for r in json.loads(listed.stdout)["workflow_runs"] if token in r.get("display_title", "")), run)
         if run is not None and run["status"] == "completed":
             break
     if run is None:
@@ -138,10 +145,13 @@ def find_release() -> dict | None:
     return json.loads(view.stdout)
 
 
-def download_index(release: dict | None) -> list:
-    """The release's story list; empty when the release or its index.json is missing."""
-    asset = next((a for a in (release or {}).get("assets", []) if a["name"] == INDEX), None)
+def download_index(release: dict | None, own: str) -> list:
+    """The release's story list: empty when it holds no story but <own>, refused when it holds others but no index.json."""
+    assets = (release or {}).get("assets", [])
+    asset = next((a for a in assets if a["name"] == INDEX), None)
     if asset is None:
+        if any(a["name"].endswith(".sealed") and a["name"] != f"{own}.sealed" for a in assets):
+            sys.exit(f"{RELEASE} holds stories but no {INDEX}; refusing to start a new index.")
         return []
     fetched = gh_api("-H", "Accept: application/octet-stream", f"repos/{SLUG}/releases/assets/{asset['id']}")
     if fetched.returncode != 0:
@@ -170,6 +180,17 @@ def upload(release: dict, file: pathlib.Path) -> None:
                       f"https://uploads.github.com/repos/{SLUG}/releases/{release['id']}/assets?name={file.name}")
     if uploaded.returncode != 0:
         sys.exit(f"Upload of {file.name} failed: {uploaded.stderr.strip()}")
+
+
+def merge(index: list, card: dict) -> None:
+    """Add the card to the index or replace the entry with its id, keeping that entry's number or taking the highest plus one."""
+    known = next((at for at, existing in enumerate(index) if existing.get("id") == card["id"]), None)
+    if known is not None:
+        card["number"] = index[known]["number"]
+        index[known] = card
+    else:
+        card["number"] = max((c.get("number", 0) for c in index), default=0) + 1
+        index.append(card)
 
 
 def picture_names(entry: dict) -> list:
@@ -225,7 +246,7 @@ def main() -> None:
         sys.exit(f"card.json has the id {story} and hidden.json has {entry.get('id')}; they must match")
 
     release = find_release()
-    index = download_index(release)
+    index = download_index(release, story)
     known = next((at for at, existing in enumerate(index) if existing.get("id") == story), None)
     if known is not None and not args.replace:
         sys.exit(f"{story} is already in the release; pass --replace to publish it again")
@@ -246,20 +267,15 @@ def main() -> None:
         sys.exit(1)
 
     card["castPictures"] = [name for name, primary in picture_names(entry) if primary]
-    card["number"] = index[known]["number"] if known is not None else max((c.get("number", 0) for c in index), default=0) + 1
-    if known is not None:
-        index[known] = card
-    else:
-        index.append(card)
+    card.pop("number", None)
 
     (work / f"{story}.sealed").write_text(seal(entry), encoding="ascii", newline="\n")
     files = [work / f"{story}.sealed"]
     for name, source in sources.items():
         files += convert(source, work, name)
-    (work / INDEX).write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    files.append(work / INDEX)
+    (work / "card.json").write_text(json.dumps(card, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    for file in files:
+    for file in files + [work / "card.json"]:
         print(f"{file.name}  {file.stat().st_size:,} bytes")
     if args.dry_run:
         print(f"Dry run: nothing uploaded. Files are in {work}")
@@ -268,12 +284,20 @@ def main() -> None:
     if release is None:
         release = create_release()
     if args.via_actions:
-        stage(files, story, args.branch, work)
-        run_workflow(story, args.branch)
+        commit = stage(files + [work / "card.json"], story, args.branch, work)
+        run_workflow(story, args.branch, commit, args.replace)
     else:
         for file in files:
             upload(release, file)
-    print(f"Published {story} as number {card['number']} to {RELEASE}.")
+        release = find_release()
+        index = download_index(release, story)
+        merge(index, card)
+        (work / INDEX).write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        upload(release, work / INDEX)
+    published = next((c for c in download_index(find_release(), story) if c.get("id") == story), None)
+    if published is None:
+        sys.exit(f"{story} is not in {RELEASE}'s {INDEX} after publishing.")
+    print(f"Published {story} as number {published['number']} to {RELEASE}.")
 
 
 if __name__ == "__main__":
