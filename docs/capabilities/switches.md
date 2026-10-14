@@ -396,6 +396,16 @@ change and silently press button 15 of a block that is no longer the same block.
 id changes, so instead the switch **fails closed**: the row says it needs reassigning, and
 nothing is pressed.
 
+Windows also gives a device a new id when the throttle is plugged into another USB port or the
+devices are found in a different order. The buttons are unchanged, so the switches do not need
+walking again. Open the HOTAS switches page and flip one of the switches that cannot find its
+device. Directive 47 finds the device it moved on and points every switch learned on the old id at
+the new one, writing the switch file at once. The card says
+"Found on VID 0x… PID 0x…, 32 buttons, … — 4 switches re-pointed." A throttle in 4x32 mode has one
+id per block, so flip one switch on each block. A device is accepted only when it describes itself
+the same way as the one the switch was learned on, and a 4x32 change alters the button count, so
+after a 4x32 change the switch still has to be assigned again.
+
 ### When Elite is bound to the same button
 
 **The most common way for this to go wrong is the one you can see, so Directive 47 looks.** If a

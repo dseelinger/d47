@@ -93,6 +93,8 @@ public sealed class SwitchPage : DialogPage
 
     private SwitchCapture? _capture;
 
+    private readonly LostDeviceFinder _finder = new();
+
     public SwitchPage(
         SwitchStore store,
         IHotasReader reader,
@@ -286,6 +288,11 @@ public sealed class SwitchPage : DialogPage
                 _capture = capture;
             }
         }
+        else
+        {
+            // Not during a walk, so one flip is never both a position walked and a device found.
+            Find(readings);
+        }
 
         foreach (var control in _list.Children.OfType<Border>())
         {
@@ -295,6 +302,61 @@ public sealed class SwitchPage : DialogPage
             }
         }
     }
+
+    /// <summary>Re-points the switches of a missing device when one of them is flipped on another.</summary>
+    private void Find(IReadOnlyList<HotasReading> readings)
+    {
+        var result = _finder.Poll(readings, _store.Switches);
+
+        foreach (var (name, why) in result.Refused)
+        {
+            foreach (var mapping in Stored(name))
+            {
+                mapping.Note = why;
+                mapping.NoteIsRefusal = true;
+            }
+        }
+
+        if (result.Found is not { } found)
+        {
+            return;
+        }
+
+        // Re-read first, so a hand edit or another open page that has already moved these switches is not undone.
+        _store.Poll();
+
+        var stored = _store.Switches;
+        var moved = found.Count(stored);
+
+        if (moved == 0)
+        {
+            return;
+        }
+
+        // Written straight away, and from the stored set rather than this page's working copy, so the page's own
+        // unsaved edits stay unsaved.
+        _store.Save(found.Apply(stored));
+        _store.Poll();
+
+        var says = found.Says(moved);
+
+        foreach (var mapping in _switches.Where(mapping => found.Covers(mapping.DeviceId, mapping.Device, mapping.StoredName)))
+        {
+            mapping.DeviceId = found.NewId;
+
+            if (found.Fills)
+            {
+                mapping.Device = found.Device;
+            }
+
+            mapping.Note = says;
+            mapping.NoteIsRefusal = false;
+        }
+    }
+
+    /// <summary>The working copies of the stored switch with this name.</summary>
+    private IEnumerable<MutableSwitch> Stored(string name) =>
+        _switches.Where(mapping => string.Equals(mapping.StoredName, name, StringComparison.OrdinalIgnoreCase));
 
     private void Save()
     {
@@ -386,6 +448,15 @@ public sealed class SwitchPage : DialogPage
 
         Themed(health, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
+        var found = new TextBlock
+        {
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = false,
+        };
+
+        Themed(found, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
         var collided = false;
 
         var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { BuildHeads() } };
@@ -412,6 +483,7 @@ public sealed class SwitchPage : DialogPage
                     device,
                     positions,
                     health,
+                    found,
                 },
             },
         };
@@ -426,6 +498,17 @@ public sealed class SwitchPage : DialogPage
                 string.Equals(s.Name, mapping.Name, StringComparison.OrdinalIgnoreCase));
 
             resume.IsVisible = state?.Health == SwitchHealth.Paused;
+
+            // A refusal is about a device that is missing, so it goes once the switch is read again.
+            if (mapping.NoteIsRefusal && state?.Health is not (null or SwitchHealth.Reassign or SwitchHealth.Waiting))
+            {
+                mapping.Note = string.Empty;
+                mapping.NoteIsRefusal = false;
+            }
+
+            found.Text = mapping.Note;
+            found.IsVisible = mapping.Note.Length > 0;
+            device.Text = mapping.Device.Length == 0 ? mapping.DeviceId : mapping.Device;
 
             foreach (var held in holds)
             {
@@ -781,9 +864,18 @@ public sealed class SwitchPage : DialogPage
 
         public List<MutablePosition> Positions { get; init; } = [];
 
+        /// <summary>The name in the switch file, or empty for a switch not saved yet.</summary>
+        public string StoredName { get; init; } = string.Empty;
+
+        /// <summary>What the last flip on this page said about this switch's missing device.</summary>
+        public string Note { get; set; } = string.Empty;
+
+        public bool NoteIsRefusal { get; set; }
+
         public static MutableSwitch From(SwitchMapping mapping) => new()
         {
             Name = mapping.Name,
+            StoredName = mapping.Name,
             DeviceId = mapping.DeviceId,
             Device = mapping.Device,
             Positions =
