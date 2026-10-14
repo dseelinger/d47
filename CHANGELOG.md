@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On a stock story's chapter page, **Not for me** now sits directly under the objective it refuses, inside a NEXT section, and Story on is in a separate row below. On the Stories tab, the current-story strip shows the objective with **Not for me** under it, above Read the chapter, Story on and Abandon. When the story is not waiting on an objective you can refuse, no objective is shown there. Before, the button sat beside Story on and nothing said it refused the objective rather than the story.
+
 A story objective that waits on an engineer is now checked against the engineer list when the story is written. A name that is not an engineer is sent back to the writer with the list, and a surname or a near spelling is saved as the engineer's full name, so "Farseer" becomes "Felicity Farseer". Before, a misspelt name passed and the chapter waited on it until it was refused.
 
 On a story's page, each character in the Cast section now shows who they are to you under their name, for example "The search-and-rescue coordinator at Ebbrells Watch, who sends the Commander the names nobody else will look for". The line is written by the story's author and says nothing the story keeps hidden. A story published before roles existed shows its characters as before, and older installs read it without trouble.

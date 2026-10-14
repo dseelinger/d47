@@ -399,6 +399,38 @@ public sealed class StoriesView : UserControl
             });
     }
 
+    private Control? ObjectiveGroup(string? commander, string chapterKey)
+    {
+        if (_director.RefusableBeat(commander) is null
+            || _director.IsRewriting(commander)
+            || _surface.Book.Standing(commander, chapterKey)?.NextTrigger() is not { } next)
+        {
+            return null;
+        }
+
+        var refuse = Act("Not for me", () => NotForMe(
+            _surface,
+            _prompts,
+            commander,
+            () => _status.Say("Writing a different objective…"),
+            refusal =>
+            {
+                if (refusal is null)
+                {
+                    _status.Clear();
+                }
+                else
+                {
+                    _status.Fail(refusal);
+                }
+            }));
+
+        var group = new StackPanel { Spacing = 6, Margin = new Thickness(0, 6, 0, 0) };
+        group.Children.Add(AdventuresPage.Trigger(AdventuresPage.Sentence(next), _surface.State()?.Location?.StarSystem));
+        group.Children.Add(AdventuresPage.Buttons(refuse));
+        return group;
+    }
+
     private Control CurrentCard(Story story)
     {
         var commander = _surface.Commander();
@@ -408,26 +440,6 @@ public sealed class StoriesView : UserControl
         if (story.CurrentChapter is { } key && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
             buttons.Children.Add(Act("Read the chapter", () => IfShown(commander, _status, () => _nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name)))));
-        }
-
-        if (_director.RefusableBeat(commander) is not null && !_director.IsRewriting(commander))
-        {
-            buttons.Children.Add(Act("Not for me", () => NotForMe(
-                _surface,
-                _prompts,
-                commander,
-                () => _status.Say("Writing a different objective…"),
-                refusal =>
-                {
-                    if (refusal is null)
-                    {
-                        _status.Clear();
-                    }
-                    else
-                    {
-                        _status.Fail(refusal);
-                    }
-                })));
         }
 
         if (story.State == StoryState.Paused)
@@ -459,13 +471,21 @@ public sealed class StoriesView : UserControl
                 }
             }), destructive: true));
 
-        var row = story.Refused.Count == 0
-            ? Row(AdventuresPage.RowName(story.Title), AdventuresPage.RowSecondary(Standing(story, commander)), buttons)
-            : Row(
-                AdventuresPage.RowName(story.Title),
-                AdventuresPage.RowSecondary(Standing(story, commander)),
-                AdventuresPage.Muted(RefusedLine(story)),
-                buttons);
+        var parts = new List<Control> { AdventuresPage.RowName(story.Title), AdventuresPage.RowSecondary(Standing(story, commander)) };
+
+        if (story.Refused.Count > 0)
+        {
+            parts.Add(AdventuresPage.Muted(RefusedLine(story)));
+        }
+
+        if (story.CurrentChapter is { } chapterKey && ObjectiveGroup(commander, chapterKey) is { } objective)
+        {
+            parts.Add(objective);
+        }
+
+        parts.Add(buttons);
+
+        var row = Row([.. parts]);
 
         row.Margin = new Thickness(0, 0, 0, 10);
         row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title) { Level = ReadPrefix });

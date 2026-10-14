@@ -443,17 +443,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 page.Children.Add(new AdventureThinking());
             }
 
-            if (_surface.Stories?.IsRewriting(_surface.Commander()) == true)
-            {
-                page.Children.Add(new AdventureThinking());
-                page.Children.Add(Muted("Writing a different objective…"));
-            }
-
-            // What to do next, spelled out (asked for 2026-08-22).
-            if (standing.NextTrigger() is { } next)
-            {
-                page.Children.Add(Labelled("Next", null, Trigger(Sentence(next), Here(), standing.CurrentBeat?.Trigger.System, Copy())));
-            }
+            AddObjective(page, standing);
 
             if (standing.IsDone && adventure.Beats.Count > 0)
             {
@@ -502,6 +492,51 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return scroller;
     }
 
+    /// <summary>The NEXT group: the objective, the wait for a different one, and Not for me under it.</summary>
+    private void AddObjective(StackPanel page, AdventureStanding standing)
+    {
+        var rewriting = _surface.Stories?.IsRewriting(_surface.Commander()) == true;
+        var next = standing.NextTrigger();
+
+        if (next is null && !rewriting)
+        {
+            return;
+        }
+
+        page.Children.Add(RoutingKit.Section("Next"));
+
+        if (rewriting)
+        {
+            page.Children.Add(new AdventureThinking());
+            page.Children.Add(Muted("Writing a different objective…"));
+        }
+
+        if (next is not null)
+        {
+            page.Children.Add(Trigger(Sentence(next), Here(), standing.CurrentBeat?.Trigger.System, Copy()));
+        }
+
+        if (standing.IsRefusable && !rewriting && _surface.Stories is not null)
+        {
+            var drawnFor = _surface.Commander();
+            var row = Buttons(Action("Not for me", () => StoriesView.NotForMe(
+                _surface,
+                _prompts,
+                drawnFor,
+                () => _surface.Say("Writing a different objective…"),
+                refusal =>
+                {
+                    if (refusal is not null)
+                    {
+                        _surface.Say(refusal);
+                    }
+                })));
+
+            row.Margin = new Thickness(0, 6, 0, 0);
+            page.Children.Add(row);
+        }
+    }
+
     /// <summary>Whether the page may show an adventure's Premise, Turn and Ending: never for a stock story's chapter.</summary>
     internal static bool ShowsSpine(Adventure adventure) => adventure.StoryId is null;
 
@@ -523,22 +558,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
                 _ => Action(label, () => IfShown(drawnFor, () => Remove(adventure, confirm: true, drawnFor)), destructive: true),
             });
-        }
-
-        if (standing.IsRefusable && _surface.Stories is { } director && !director.IsRewriting(_surface.Commander()))
-        {
-            bar.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
-                _surface,
-                _prompts,
-                drawnFor,
-                () => _surface.Say("Writing a different objective…"),
-                refusal =>
-                {
-                    if (refusal is not null)
-                    {
-                        _surface.Say(refusal);
-                    }
-                })));
         }
 
         if (adventure is { StoryId: null, IsActive: true } && !standing.IsDone && _surface.Recap is { } recap)
