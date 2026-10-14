@@ -7,6 +7,8 @@ using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
+using D47.Core.Checklists;
+using D47.Core.Ships;
 using D47.Core.Interface;
 using D47.Core.Storage;
 using D47.Core.Stories;
@@ -25,7 +27,30 @@ internal static class NotForMeGroupFixture
 
     internal sealed record Surface(Window Window, PanelView Panel);
 
-    internal static Surface Open(TriggerKind kind)
+    /// <summary>The ships a story's objective can show or plan.</summary>
+    internal sealed record Ships(ShipPlanService Plans, ChecklistService Checklists);
+
+    internal static Ships Fleet(string folder)
+    {
+        var paths = new AppPaths(TestSurface.MemoryFolder(folder));
+
+        var checklists = new ChecklistService(
+            new ChecklistStore(Path.Combine(paths.Data, "checklist.json"), new MemoryFileSystem(), NullLogger<ChecklistStore>.Instance),
+            new ChecklistProposalStore(
+                Path.Combine(paths.Data, "checklist-proposals.json"), new MemoryFileSystem(), NullLogger<ChecklistProposalStore>.Instance),
+            () => null);
+
+        return new Ships(
+            new ShipPlanService(
+                new ShipBuildStore(Path.Combine(paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
+                checklists,
+                () => null),
+            checklists);
+    }
+
+    /// <summary>The Stories surface for a one-chapter story; a ship objective reads <paramref name="fleet"/> or else the plans.</summary>
+    internal static AdventureSurface Build(
+        TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-not-for-me-group"));
         paths.EnsureCreated();
@@ -47,7 +72,7 @@ internal static class NotForMeGroupFixture
                 new AdventureBeat
                 {
                     Title = "The Signal",
-                    Trigger = new AdventureTrigger { Kind = kind, SystemAddress = 13872878396833, System = "IC 2391 Sector MX-T b3-6" },
+                    Trigger = new AdventureTrigger { Kind = kind, ShipType = shipType, SystemAddress = 13872878396833, System = "IC 2391 Sector MX-T b3-6" },
                     Line = "Go and look.",
                 },
             ],
@@ -71,12 +96,24 @@ internal static class NotForMeGroupFixture
         var director = new StoryDirector(
             stories, book, () => StoryFixture.Catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);
 
-        var surface = new AdventureSurface(
+        return new AdventureSurface(
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
-            Stories: director);
+            Stories: director,
+            Fleet: fleet is not null ? () => fleet : ships is null ? null : ships.Plans.Fleet,
+            Intend: ships is null ? null : hull => ships.Plans.Intend(hull));
+    }
+
+    internal static Surface Open(TriggerKind kind, Ships? ships = null, string? shipType = null, IReadOnlyList<FleetEntry>? fleet = null)
+    {
+        var surface = Build(kind, ships, shipType, fleet);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
+
+        if (ships is not null)
+        {
+            panel.EnableLoadout(ships.Plans, ships.Checklists, () => null, null);
+        }
 
         var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();

@@ -516,10 +516,18 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             page.Children.Add(Trigger(Sentence(next), Here(), standing.CurrentBeat?.Trigger.System, Copy()));
         }
 
+        var drawnFor = _surface.Commander();
+        var row = Buttons();
+
+        if (!rewriting
+            && ShipObjectiveButtons.For(_surface, standing.CurrentBeat?.Trigger, _nav, _prompts) is { } ship)
+        {
+            row.Children.Add(ship);
+        }
+
         if (standing.IsRefusable && !rewriting && _surface.Stories is not null)
         {
-            var drawnFor = _surface.Commander();
-            var row = Buttons(Action("Not for me", () => StoriesView.NotForMe(
+            row.Children.Add(Action("Not for me", () => StoriesView.NotForMe(
                 _surface,
                 _prompts,
                 drawnFor,
@@ -531,7 +539,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                         _surface.Say(refusal);
                     }
                 })));
+        }
 
+        if (row.Children.Count > 0)
+        {
             row.Margin = new Thickness(0, 6, 0, 0);
             page.Children.Add(row);
         }

@@ -156,24 +156,24 @@ public sealed class ShipsMode(
 
     /// <summary>A hull to plan a build for before it is bought.</summary>
     public void New(PanelPrompts prompts, Action done) =>
+        Plan(prompts, string.Empty, hull => ships.Intend(hull), _ => done());
+
+    /// <summary>Asks which hull to plan, starting from <paramref name="initial"/>, and hands back the build it made.</summary>
+    internal static void Plan(PanelPrompts prompts, string initial, Func<string, ShipBuild?> intend, Action<ShipBuild?> done) =>
         prompts.Enter(
             new EntryRequest(
                 "loadout.intend",
                 "Ship",
                 "Which ship do you intend to buy?",
                 "The build is planned now; buying one will point the plan at it.",
-                string.Empty,
+                initial,
                 EntrySurface.Voice,
                 value => EliteSpecifications.Ship(value) is null
                     ? EntryVerdict.No($"I do not know a ship called “{value}”.")
                     : EntryVerdict.Ok,
                 Hulls,
                 "Plan this hull"),
-            hull =>
-            {
-                ships.Intend(hull);
-                done();
-            });
+            hull => done(intend(hull)));
 
     /// <summary>
     /// Every hull the specification table can measure, alphabetically — the list the picker offers and,

@@ -222,7 +222,9 @@ public partial class MainWindow : Window
                     host.StoryRatings,
                     commanderSwitched,
                     host.Narration.Recap,
-                    host.StoryBench);
+                    host.StoryBench,
+                    host.Ships.Fleet,
+                    hull => host.Ships.Intend(hull));
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

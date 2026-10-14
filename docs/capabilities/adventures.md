@@ -52,6 +52,7 @@ nav_order: 115
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Wait for the game to move. On a stock story chapter you can also say "not for me" to be given a different objective.</p>
 <p class="expect">After three play sessions and seven days at the same objective, your ship AI nudges you toward it. "Not for me" does not apply to a short story.</p>
+<p class="expect">An objective to board a ship has a button beside Not for me that plans that ship, or shows it when you own it or have planned it.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="152" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">A story moves when the game does.</text>

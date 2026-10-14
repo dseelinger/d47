@@ -427,7 +427,11 @@ public sealed class StoriesView : UserControl
 
         var group = new StackPanel { Spacing = 6, Margin = new Thickness(0, 6, 0, 0) };
         group.Children.Add(AdventuresPage.Trigger(AdventuresPage.Sentence(next), _surface.State()?.Location?.StarSystem));
-        group.Children.Add(AdventuresPage.Buttons(refuse));
+
+        var ship = ShipObjectiveButtons.For(
+            _surface, _surface.Book.Standing(commander, chapterKey)?.CurrentBeat?.Trigger, _nav, _prompts);
+
+        group.Children.Add(ship is null ? AdventuresPage.Buttons(refuse) : AdventuresPage.Buttons(ship, refuse));
         return group;
     }
 
