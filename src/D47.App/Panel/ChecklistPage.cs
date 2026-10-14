@@ -40,6 +40,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>The All lists level: every line, the filter stepper, no Add.</summary>
     public static NavCrumb AllLists => new(AllKey, "All lists") { Whole = true };
 
+    /// <summary>The Suggestions level: proposals waiting for a yes.</summary>
+    public static NavCrumb Suggestions => new(SuggestionsKey, "Suggestions");
+
+    /// <summary>The Activities level.</summary>
+    public static NavCrumb Activities => new(ActivitiesKey, "Activities");
+
     /// <summary>The level that shows one list.</summary>
     public static NavCrumb ListCrumb(ChecklistList list)
     {
@@ -227,11 +233,9 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         _hereOnly.IsCheckedChanged += (_, _) => Rebuild();
 
-        _suggestions.Click += (_, _) =>
-            _nav.Drill(new NavCrumb(SuggestionsKey, "Suggestions"));
+        _suggestions.Click += (_, _) => _nav.Drill(Suggestions);
 
-        _activities.Click += (_, _) =>
-            _nav.Drill(new NavCrumb(ActivitiesKey, "Activities"));
+        _activities.Click += (_, _) => _nav.Drill(Activities);
 
         // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
         // never assigns IsChecked back and there is no loop to break.

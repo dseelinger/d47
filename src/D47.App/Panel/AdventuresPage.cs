@@ -35,6 +35,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     public const string AskKey = "adventure.ask";
 
+    public static NavCrumb AskCrumb => new(AskKey, "Short Story");
+
     /// <summary>The ask form for the next chapter of the finished adventure keyed after it.</summary>
     public const string NextPrefix = "adventure.next.";
 
@@ -79,8 +81,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _nav = nav;
         _prompts = prompts;
 
-        _messages.Click += (_, _) => _nav.Drill(new NavCrumb(MessagesView.RootKey, MessagesView.PageName));
-        _ask.Click += (_, _) => _nav.Drill(new NavCrumb(AskKey, "Short Story"));
+        _messages.Click += (_, _) => _nav.Drill(MessagesView.Crumb);
+        _ask.Click += (_, _) => _nav.Drill(AskCrumb);
         _stories.Click += (_, _) => _nav.Drill(StoriesView.Crumb);
         _stories.IsVisible = surface.Stories is not null;
         _bench.Click += (_, _) => _nav.Drill(StoryBenchPage.Crumb);
@@ -222,13 +224,13 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         _messages.IsVisible = false;
 
-        if (_surface.Messages is { } store && InAStory(store))
+        if (_surface.Messages is { } store && InAStory(_surface, store))
         {
             _messages.IsVisible = true;
             _messages.Content = MessagesView.ButtonLabel(store);
         }
 
-        _ask.IsEnabled = _surface.ModelAvailable() && _surface.GalaxySearchOn();
+        _ask.IsEnabled = CanAsk(_surface);
 
         var standings = _surface.Book.Standings(_surface.Commander());
 
@@ -290,15 +292,18 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <summary>Whether the shown Commander has a story or short story under way, or a story ending waiting for an answer.</summary>
-    private bool InAStory(D47.Core.Messages.MessageStore store)
+    internal static bool InAStory(AdventureSurface surface, D47.Core.Messages.MessageStore store)
     {
-        var commander = _surface.Commander();
+        var commander = surface.Commander();
 
-        return _surface.Stories?.Stories.Current(commander) is not null
-            || _surface.Book.Standings(commander).Any(standing =>
+        return surface.Stories?.Stories.Current(commander) is not null
+            || surface.Book.Standings(commander).Any(standing =>
                 !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone)
-            || store.All.Any(message => MessagesView.IsWaiting(message, _surface));
+            || store.All.Any(message => MessagesView.IsWaiting(message, surface));
     }
+
+    /// <summary>Whether a short story can be asked for: a model to write it and galaxy search to check its places.</summary>
+    internal static bool CanAsk(AdventureSurface surface) => surface.ModelAvailable() && surface.GalaxySearchOn();
 
     private string AskShutBecause() => !_surface.ModelAvailable()
         ? "A short story needs a language model, and none is configured."

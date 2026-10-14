@@ -156,6 +156,11 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             },
             [.. roots]);
 
+        if (plan && progress)
+        {
+            host.Nav.Declare(RoutingPages.PlanRoot, RoutingPages.ProgressCrumb);
+        }
+
         // Each launch opens Plan with Progress beside it; once the Commander leaves it, Plan stays alone.
         if (plan
             && progress

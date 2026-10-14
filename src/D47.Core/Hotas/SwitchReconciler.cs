@@ -62,8 +62,8 @@ public sealed record SwitchState
 /// <param name="Label">How the action — or the page — is named mid-sentence.</param>
 /// <param name="Steps">Empty when this is only something to say, or only somewhere to go.</param>
 /// <param name="Destination">
-/// The root key the host is to put the panel on, for a position that names a page rather than an action
-/// (Phase 46).
+/// The destination key the host is to put the panel on, for a position that names a page rather than an
+/// action (Phase 46).
 /// </param>
 public readonly record struct PendingReconcile(
     string Switch,
@@ -101,7 +101,7 @@ public readonly record struct SwitchTick
     private readonly IReadOnlyList<PanelDestination>? _destinations;
 
     /// <summary>
-    /// The root key the panel is showing, or null when d47 cannot say — no surface is up, or two
+    /// The destination key the panel is showing, or null when d47 cannot say — no surface is up, or two
     /// surfaces are showing different things.
     /// </summary>
     public string? Showing { get; init; }
@@ -383,13 +383,13 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
             return ready;
         }
 
-        if (string.Equals(tick.Showing, destination, StringComparison.Ordinal))
+        if (tick.Showing is { } showing && Agrees(tick, destination, showing))
         {
             logger.LogInformation(
                 "Switch {Name} moved to {Position}; the panel is already on {Page}, so nothing moved",
                 mapping.Name,
                 position.Describe(),
-                page.Root.Word);
+                page.Word);
 
             return ready;
         }
@@ -398,15 +398,24 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
             "Switch {Name} moved to {Position}; showing {Page}",
             mapping.Name,
             position.Describe(),
-            page.Root.Word);
+            page.Word);
 
-        _pending.Enqueue(new PendingReconcile(mapping.Name, page.Root.Word, [], Destination: destination));
+        _pending.Enqueue(new PendingReconcile(mapping.Name, page.Word, [], Destination: destination));
 
         return ready;
     }
 
     private static PanelDestination? Page(SwitchTick tick, string key) =>
-        tick.Destinations.FirstOrDefault(page => string.Equals(page.Root.Key, key, StringComparison.Ordinal));
+        tick.Destinations.FirstOrDefault(page => string.Equals(page.Key, key, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Whether the panel is where a position asks: on that destination, or, for a root, on one of the root's
+    /// sub-pages, which is still that root.
+    /// </summary>
+    private static bool Agrees(SwitchTick tick, string destination, string showing) =>
+        string.Equals(showing, destination, StringComparison.Ordinal)
+        || (Page(tick, showing) is { SubPage: not null } beside
+            && string.Equals(beside.Root.Key, destination, StringComparison.Ordinal));
 
     /// <summary>Item 5.</summary>
     private void Watching(SwitchTick tick, SwitchMapping mapping, bool flipped)
@@ -504,13 +513,13 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger)
             // Only when d47 can say what the panel is showing, and only against a page that exists — a key
             // nothing answers to is reported on the row, not annunciated.
             if (tick.Showing is not { } showing
-                || string.Equals(showing, destination, StringComparison.Ordinal)
+                || Agrees(tick, destination, showing)
                 || Page(tick, destination) is null)
             {
                 return null;
             }
 
-            return $"the panel is on {Page(tick, showing)?.Root.Word ?? showing}";
+            return $"the panel is on {Page(tick, showing)?.Word ?? showing}";
         }
 
         if (position.Action is not { Length: > 0 } id || GameActions.Find(id) is not { } action)

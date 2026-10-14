@@ -30,11 +30,28 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
             PanelTab.Stories,
             crumb => crumb.Key == AdventuresPage.RootKey
                 ? Page()
-                : page?.Build(crumb) ?? new TextBlock { Text = "Nothing here." },
+                : Page().Build(crumb) ?? new TextBlock { Text = "Nothing here." },
             new NavCrumb(AdventuresPage.RootKey, "Stories")
             {
                 Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
             });
+
+        // Read from the surface rather than the page's buttons: the page is not built until the tab is first shown.
+        host.Nav.Declare(
+            AdventuresPage.RootKey,
+            MessagesView.Crumb,
+            () => surface.Messages is { } store && AdventuresPage.InAStory(surface, store));
+        host.Nav.Declare(AdventuresPage.RootKey, AdventuresPage.AskCrumb, () => AdventuresPage.CanAsk(surface));
+
+        if (surface.Stories is not null)
+        {
+            host.Nav.Declare(AdventuresPage.RootKey, StoriesView.Crumb);
+
+            if (surface.Bench is not null)
+            {
+                host.Nav.Declare(AdventuresPage.RootKey, StoryBenchPage.Crumb);
+            }
+        }
 
         if (surface.Switched is { } switched)
         {

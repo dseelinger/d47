@@ -128,6 +128,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             planCarrierRoute);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
+        host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);
         ShowCarrierRoot();
 
         if (construction is not null)
@@ -212,6 +213,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             {
                 Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id,
             });
+        host.Nav.Declare(EngineersPages.DirectoryRoot, EngineersPages.RouteCrumb);
     }
 
     /// <summary>Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody.</summary>

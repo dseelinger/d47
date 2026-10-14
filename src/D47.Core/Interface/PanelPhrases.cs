@@ -111,12 +111,12 @@ public static class PanelPhrases
             return nav.Select(tab) ? $"{tab}." : null;
         }
 
-        // A root of any tab, when only one tab has a root of that name.
-        var named = nav.Destinations.Where(destination => Named(input, destination.Root)).ToList();
+        // A root or sub-page of any tab, when only one tab has a destination of that name.
+        var named = nav.Destinations.Where(destination => Named(input, destination.Page)).ToList();
 
         if (named.Count > 0 && named.All(destination => destination.Tab == named[0].Tab))
         {
-            return nav.Show(named[0].Root.Key) ? $"{named[0].Root.Word}." : null;
+            return nav.Show(named[0].Key) ? $"{named[0].Word}." : null;
         }
 
         return null;

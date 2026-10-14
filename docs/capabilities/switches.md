@@ -330,6 +330,13 @@ Two things are different, because the target is:
 - **It is never paused.** Nothing else drives the panel behind Directive 47's back, so there is
   nothing to desync with and nothing to stop reconciling for.
 
+A page may also be one of the fixed pages one level below a tab's page: Story log, Short Story,
+Catalogue and Story bench under Stories; Suggestions, Activities and All lists under Checklist;
+Compare under Ships; Route under Engineers; Progress under Plan. Story log, Short Story and
+Suggestions open only while their buttons would: a story under way, a model and galaxy search, a
+suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
+beside it.
+
 A position names an action *or* a page, never both. A page the panel does not have — a key
 mistyped in the file, say — is reported on the row by name and never moved to. And a switch
 sitting on a page the panel is not showing is annunciated like any other stale switch:
@@ -452,8 +459,8 @@ reason**, and the rest of the file still loads.
 
 A page is its own `destination` field, never a prefix on `action` — a statement about what the
 position means rather than a naming rule a rename would silently break. The keys are the ones the
-panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, and the
-roots of every other tab.
+panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, the
+roots of every other tab, and the fixed pages below them, such as `stories` for the Catalogue.
 
 ### What it does not do
 

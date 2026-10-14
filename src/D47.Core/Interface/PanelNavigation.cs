@@ -88,18 +88,30 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     public bool Local { get; init; }
 }
 
-/// <summary>One place a surface can be sent to: a root, and the tab it is a root of (Phase 46).</summary>
-public sealed record PanelDestination(PanelTab Tab, NavCrumb Root)
+/// <summary>
+/// One place a surface can be sent to: a root and the tab it is a root of, or a fixed sub-page of that root
+/// (Phase 46, #1149).
+/// </summary>
+public sealed record PanelDestination(PanelTab Tab, NavCrumb Root, NavCrumb? SubPage = null)
 {
+    /// <summary>The key a switch position stores: the sub-page's where there is one, else the root's.</summary>
+    public string Key => SubPage?.Key ?? Root.Key;
+
+    /// <summary>What the Commander calls it.</summary>
+    public string Word => SubPage?.Word ?? Root.Word;
+
+    /// <summary>The level whose word and spoken aliases name it.</summary>
+    public NavCrumb Page => SubPage ?? Root;
+
     /// <summary>
     /// How it reads in a list of every destination: the root's word, and the tab when the word alone
     /// would not say which tab — "Technical (Transcript)", but "Stories" rather than "Stories
-    /// (Stories)".
+    /// (Stories)". A sub-page reads with its root: "Catalogue (Stories)".
     /// </summary>
     public string Describe() =>
-        string.Equals(Root.Word, Tab.ToString(), StringComparison.OrdinalIgnoreCase)
-            ? Root.Word
-            : $"{Root.Word} ({Tab})";
+        SubPage is { } page ? $"{page.Word} ({Root.Word})"
+        : string.Equals(Root.Word, Tab.ToString(), StringComparison.OrdinalIgnoreCase) ? Root.Word
+        : $"{Root.Word} ({Tab})";
 }
 
 /// <summary>
@@ -123,9 +135,20 @@ public sealed class PanelNavigator
     /// <summary>Which tab is showing.</summary>
     public PanelTab Tab { get; private set; } = PanelTab.Transcript;
 
-    /// <summary>Declares a root of a tab.</summary>
+    /// <summary>The fixed sub-pages each root declared, keyed by the root's key, in declaration order.</summary>
+    private readonly Dictionary<string, List<SubPage>> _subPages = [];
+
+    /// <summary>Every declared sub-page's key, so no root or sub-page can take one again.</summary>
+    private readonly HashSet<string> _subPageKeys = new(StringComparer.Ordinal);
+
+    /// <summary>Declares a root of a tab. A key a sub-page already holds is ignored.</summary>
     public void Register(PanelTab tab, NavCrumb root)
     {
+        if (_subPageKeys.Contains(root.Key))
+        {
+            return;
+        }
+
         if (!_roots.TryGetValue(tab, out var roots))
         {
             roots = [];
@@ -192,31 +215,115 @@ public sealed class PanelNavigator
     /// <summary>Whether a tab has anything behind it.</summary>
     public bool Has(PanelTab tab) => Roots(tab).Count > 0;
 
-    /// <summary>Every root of every tab this surface furnished, in bar order (Phase 46).</summary>
+    /// <summary>
+    /// Declares a page one level below a registered root as a destination of its own (#1149).
+    /// <paramref name="canOpen"/> is asked each time it is shown; a page it refuses stays listed. Refused when
+    /// the root is not registered or the key is already a root's or a sub-page's.
+    /// </summary>
+    public bool Declare(string rootKey, NavCrumb page, Func<bool>? canOpen = null)
+    {
+        if (!_trails.ContainsKey(rootKey) || _trails.ContainsKey(page.Key) || !_subPageKeys.Add(page.Key))
+        {
+            return false;
+        }
+
+        if (!_subPages.TryGetValue(rootKey, out var pages))
+        {
+            pages = [];
+            _subPages[rootKey] = pages;
+        }
+
+        pages.Add(new SubPage(page, canOpen));
+        Raise();
+        return true;
+    }
+
+    /// <summary>Every root of every tab this surface furnished, each followed by its sub-pages, in bar order (Phase 46).</summary>
     public IReadOnlyList<PanelDestination> Destinations =>
-        [.. Enum.GetValues<PanelTab>().SelectMany(tab => Roots(tab).Select(root => new PanelDestination(tab, root)))];
+    [
+        .. Enum.GetValues<PanelTab>().SelectMany(tab => Roots(tab).SelectMany(root => (PanelDestination[])
+        [
+            new PanelDestination(tab, root),
+            .. SubPagesOf(root.Key).Select(sub => new PanelDestination(tab, root, sub.Page)),
+        ])),
+    ];
 
     /// <summary>
-    /// Puts this surface on the root with this key, whichever tab it belongs to — the tab's mode first
-    /// and then the tab, so a destination on another tab arrives without a visible flick through that
-    /// tab's previous mode.
+    /// The destination this surface is on: a declared sub-page when the trail is its root and it alone,
+    /// else the root.
     /// </summary>
-    public bool Show(string rootKey)
+    public string DestinationKey
+    {
+        get
+        {
+            var trail = Trail;
+
+            return trail.Count == 2 && SubPagesOf(trail[0].Key).Any(sub => sub.Page.Key == trail[1].Key)
+                ? trail[1].Key
+                : Root.Key;
+        }
+    }
+
+    /// <summary>
+    /// Puts this surface on the destination with this key, whichever tab it belongs to — the tab's mode
+    /// first and then the tab, so a destination on another tab arrives without a visible flick through that
+    /// tab's previous mode. A sub-page leaves the trail at its root and it, and is refused when its page
+    /// cannot be opened.
+    /// </summary>
+    public bool Show(string key)
     {
         foreach (var tab in _roots.Keys)
         {
-            if (!Roots(tab).Any(root => root.Key == rootKey))
+            foreach (var root in Roots(tab))
             {
-                continue;
+                if (root.Key == key)
+                {
+                    var moved = SelectRoot(tab, key);
+
+                    return Select(tab) || moved;
+                }
+
+                if (SubPagesOf(root.Key).FirstOrDefault(sub => sub.Page.Key == key) is { } page)
+                {
+                    return Show(tab, root, page);
+                }
             }
-
-            var moved = SelectRoot(tab, rootKey);
-
-            return Select(tab) || moved;
         }
 
         return false;
     }
+
+    private bool Show(PanelTab tab, NavCrumb root, SubPage page)
+    {
+        var trail = _trails[root.Key];
+
+        if (Modal || trail[^1].Modal || page.CanOpen?.Invoke() == false)
+        {
+            return false;
+        }
+
+        // The trail is set before the root and the tab are selected, so the root's old trail is never drawn.
+        var drilled = trail.Count != 2 || trail[1].Key != page.Page.Key;
+
+        if (drilled)
+        {
+            trail.RemoveRange(1, trail.Count - 1);
+            trail.Add(page.Page);
+        }
+
+        var moved = SelectRoot(tab, root.Key);
+        var selected = Select(tab);
+
+        if (drilled && !moved && !selected)
+        {
+            Raise();
+        }
+
+        return drilled || moved || selected;
+    }
+
+    private IReadOnlyList<SubPage> SubPagesOf(string rootKey) =>
+        _subPages.TryGetValue(rootKey, out var pages) ? pages : [];
 
     /// <summary>
     /// Which capability's help explains where the Commander is standing, or null where nothing on the
@@ -478,4 +585,6 @@ public sealed class PanelNavigator
             : null;
 
     private void Raise() => Changed?.Invoke(this, EventArgs.Empty);
+
+    private sealed record SubPage(NavCrumb Page, Func<bool>? CanOpen);
 }

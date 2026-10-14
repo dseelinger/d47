@@ -22,6 +22,8 @@ public sealed class MessagesView : UserControl
 
     public const string PageName = "Story log";
 
+    public static NavCrumb Crumb => new(RootKey, PageName);
+
     public const string Empty = "Nothing said yet. Lines from your stories are written here as they are spoken.";
 
     public const string WaitingHeading = "Waiting for your answer";

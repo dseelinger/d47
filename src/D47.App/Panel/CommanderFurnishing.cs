@@ -26,26 +26,36 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         D47.Core.Activities.ActivityLedger? activities = null)
     {
         ChecklistPage? page = null;
+        var root = new NavCrumb(ChecklistRoot, "Checklist")
+        {
+            // The suggestions level drilled from here inherits it: a proposal is still the checklist's subject.
+            Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
+        };
+
+        ChecklistPage Page(NavCrumb crumb) =>
+            new(checklists, host.Nav, host.Prompts, goals, backfill, crumb: crumb, ask: question => host.Model?.AskNow(question));
 
         _checklistBuild = crumb => crumb.Key switch
         {
-            ChecklistPage.SuggestionsKey => page?.BuildSuggestions()
-                                            ?? new TextBlock { Text = "Nothing waiting." },
+            // Suggestions opened by a switch or by voice may be drawn before the root ever was.
+            ChecklistPage.SuggestionsKey => (page ??= Page(root)).BuildSuggestions(),
             ChecklistPage.ActivitiesKey => activities is null
                 ? new TextBlock { Text = "No activity dates yet." }
                 : new ActivitiesPage(activities, () => checklists.Document.CommanderFid),
-            _ => page = new ChecklistPage(checklists, host.Nav, host.Prompts, goals, backfill, crumb: crumb, ask: question => host.Model?.AskNow(question)),
+            _ => page = Page(crumb),
         };
 
-        host.Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb("checklist", "Checklist")
-            {
-                // The suggestions level drilled from here inherits it: a proposal is still the checklist's subject.
-                Help = D47.Core.Capabilities.Builtin.ChecklistCapability.Id,
-            });
+        host.Furnish(PanelTab.Commander, BuildCommander, root);
+
+        host.Nav.Declare(
+            ChecklistRoot,
+            ChecklistPage.Suggestions,
+            () => checklists.Proposals.PendingFor(checklists.Document.CommanderFid).Count > 0);
+        host.Nav.Declare(ChecklistRoot, ChecklistPage.Activities);
+        host.Nav.Declare(ChecklistRoot, ChecklistPage.AllLists);
     }
+
+    private const string ChecklistRoot = "checklist";
 
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,

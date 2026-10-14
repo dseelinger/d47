@@ -67,7 +67,7 @@ public sealed class SwitchPage : DialogPage
 
         foreach (var page in destinations)
         {
-            _pageKeys.Add(page.Root.Key);
+            _pageKeys.Add(page.Key);
             _pageWords.Add(page.Describe());
         }
 

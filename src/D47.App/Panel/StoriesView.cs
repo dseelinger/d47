@@ -17,7 +17,10 @@ public sealed class StoriesView : UserControl
     public const string RootKey = "stories";
     public const string PageName = "Catalogue";
 
-    public static NavCrumb Crumb => new(RootKey, PageName) { Leads = true };
+    /// <summary>The American spelling, which is what the transcriber writes.</summary>
+    private static readonly string[] SpokenNames = ["catalog"];
+
+    public static NavCrumb Crumb => new(RootKey, PageName) { Leads = true, Spoken = SpokenNames };
 
     public const string ReadPrefix = "story.read.";
 

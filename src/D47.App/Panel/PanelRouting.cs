@@ -105,12 +105,12 @@ public sealed class PanelRouting(Func<bool> headsetShowing, Func<IReadOnlyList<F
         }
     }
 
-    /// <summary>Puts every surface on this page, each on its own thread (Phase 46).</summary>
-    public void Show(string rootKey)
+    /// <summary>Puts every surface on this destination, each on its own thread (Phase 46).</summary>
+    public void Show(string key)
     {
         foreach (var (nav, post, _) in _surfaces)
         {
-            post(() => nav.Show(rootKey));
+            post(() => nav.Show(key));
         }
     }
 
@@ -148,11 +148,11 @@ public sealed class PanelRouting(Func<bool> headsetShowing, Func<IReadOnlyList<F
         var navigators = _navigators;
         var destinations = navigators
             .SelectMany(nav => nav.Destinations)
-            .DistinctBy(page => page.Root.Key)
+            .DistinctBy(page => page.Key)
             .ToList();
 
         // What the panel is showing is what every surface agrees it is showing.
-        var showing = navigators.Select(nav => nav.Root.Key).Distinct().ToList();
+        var showing = navigators.Select(nav => nav.DestinationKey).Distinct().ToList();
 
         _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null);
     }
