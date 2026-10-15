@@ -146,6 +146,9 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
     private readonly Dictionary<string, ViewWatch> _viewWatching = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The focus each switch is moving the game to, or holding it at.</summary>
+    private readonly Dictionary<string, FocusGoal> _focusGoals = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The headset view as read on this poll, or null until something asks.</summary>
     private HeadsetView? _view;
 
@@ -166,6 +169,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             _paused.Remove(name);
             _watching.Remove(name);
             _viewWatching.Remove(name);
+            _focusGoals.Remove(name);
 
             // The switch is wherever it is; the next flip is the next question.
             _last.Remove(name);
@@ -259,6 +263,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             _last.Remove(mapping.Name);
             _watching.Remove(mapping.Name);
             _viewWatching.Remove(mapping.Name);
+            _focusGoals.Remove(mapping.Name);
 
             return new SwitchState
             {
@@ -284,6 +289,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         // paused on this poll reports it on this poll. A flick is a flip.
         Watching(tick, mapping, flipped || flick is not null);
         WatchingTheHeadset(tick, mapping, flipped || flick is not null);
+        WatchingTheFocus(tick, mapping, flipped || flick is not null);
 
         if (_paused.TryGetValue(mapping.Name, out var why))
         {
@@ -414,6 +420,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             };
         }
 
+        if (FocusTargets.Find(position.Target) is { } focus)
+        {
+            return ReconcileFocus(tick, mapping, position, focus, flipped, ready);
+        }
+
         var (label, wanted) = Wanted(position);
 
         if (wanted.Count == 0)
@@ -487,6 +498,160 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         _watching[mapping.Name] = new Watch(pressed, tick.Now + ContestWindow, tick.Context);
 
         return ready;
+    }
+
+    /// <summary>
+    /// A position that names a focus. A flip sets a goal; every poll after it presses the next step, closing the
+    /// open interface first and opening the target once the game reads the cockpit.
+    /// </summary>
+    private SwitchState ReconcileFocus(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        FocusTarget target,
+        bool flipped,
+        SwitchState ready)
+    {
+        var current = tick.Status.GuiFocus;
+        FocusGoal? held = _focusGoals.TryGetValue(mapping.Name, out var known) ? known : null;
+
+        if (flipped)
+        {
+            held = null;
+            _focusGoals.Remove(mapping.Name);
+
+            if (current == target.Focus)
+            {
+                logger.LogInformation(
+                    "Switch {Name} moved to {Position}; {Focus} is already open, so nothing was pressed",
+                    mapping.Name,
+                    position.Describe(),
+                    current);
+
+                return ready;
+            }
+
+            held = new FocusGoal(target, FocusStage.Start, tick.Now + ContestWindow);
+        }
+
+        if (held is not { } goal)
+        {
+            return current == target.Focus || FocusTargets.Of(current) is not null
+                ? ready
+                : ready with { Note = Untouched(current) };
+        }
+
+        if (current == target.Focus)
+        {
+            _focusGoals[mapping.Name] = goal with { Stage = FocusStage.Arrived, Until = tick.Now + ContestWindow };
+            return ready;
+        }
+
+        if (goal.Stage == FocusStage.Arrived)
+        {
+            return ready;
+        }
+
+        if (goal.Stage != FocusStage.Start && tick.Now > goal.Until)
+        {
+            _focusGoals.Remove(mapping.Name);
+
+            var silent = $"I set {FocusTargets.Say(target.Focus)} from {mapping.Name} and it did not take. "
+                         + "Something else may be bound to the same button.";
+
+            logger.LogWarning("Switch {Name} pressed for {Target} and the focus never arrived", mapping.Name, target.Id);
+            _pending.Enqueue(new PendingReconcile(mapping.Name, FocusTargets.Say(target.Focus), [], silent));
+
+            return ready;
+        }
+
+        var closing = FocusTargets.Of(current);
+
+        if (closing is null)
+        {
+            _focusGoals.Remove(mapping.Name);
+            return ready with { Note = Untouched(current) };
+        }
+
+        if (current != GuiFocus.None && goal.Stage == FocusStage.Closing)
+        {
+            return ready;
+        }
+
+        if (current == GuiFocus.None && goal.Stage == FocusStage.Opening)
+        {
+            return ready;
+        }
+
+        // The open key shuts what it opens, and the next step waits for the game to read the cockpit.
+        var press = current == GuiFocus.None ? target : closing;
+
+        if (GameActions.Find(press.OpenAction!) is not { } action)
+        {
+            _focusGoals.Remove(mapping.Name);
+            return ready;
+        }
+
+        var reach = ActionReachability.Resolve(action, tick.Binds, tick.Context);
+
+        if (!reach.IsOffered)
+        {
+            _focusGoals.Remove(mapping.Name);
+            return ready with { Note = reach.Reason };
+        }
+
+        logger.LogInformation(
+            "Switch {Name} is taking the game to {Target}; pressing {Gesture} for {Action} with {Focus} open",
+            mapping.Name,
+            target.Id,
+            reach.Binding!.Gesture(),
+            action.Id,
+            current);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, FocusTargets.Say(press.Focus), InputSequence.Tap(reach.Binding)));
+
+        _focusGoals[mapping.Name] = goal with
+        {
+            Stage = current == GuiFocus.None ? FocusStage.Opening : FocusStage.Closing,
+            Until = tick.Now + ContestWindow,
+        };
+
+        return ready;
+    }
+
+    private static string Untouched(GuiFocus focus) =>
+        $"{Capitalised(FocusTargets.Say(focus))} is open, so this switch pressed nothing.";
+
+    private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
+
+    /// <summary>Focus that leaves its target within the contest window pauses the switch.</summary>
+    private void WatchingTheFocus(SwitchTick tick, SwitchMapping mapping, bool flipped)
+    {
+        if (!_focusGoals.TryGetValue(mapping.Name, out var goal) || goal.Stage != FocusStage.Arrived)
+        {
+            return;
+        }
+
+        if (flipped || tick.Now > goal.Until)
+        {
+            _focusGoals.Remove(mapping.Name);
+            return;
+        }
+
+        if (tick.Status.GuiFocus == goal.Target.Focus)
+        {
+            return;
+        }
+
+        var why = $"Something else took {FocusTargets.Say(goal.Target.Focus)} away right after D47 set it. "
+                  + $"D47 has stopped reconciling {mapping.Name} rather than fight it.";
+
+        _paused[mapping.Name] = why;
+        _focusGoals.Remove(mapping.Name);
+
+        logger.LogWarning("Switch {Name} contested on {Target}; reconciling paused", mapping.Name, goal.Target.Id);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, FocusTargets.Say(goal.Target.Focus), [], why));
     }
 
     /// <summary>The label and the action states a position asks for; empty when it asks for none.</summary>
@@ -825,6 +990,13 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return $"the panel is on {Page(tick, showing)?.Word ?? showing}";
         }
 
+        if (FocusTargets.Find(position.Target) is { } focus)
+        {
+            var open = tick.Status.GuiFocus;
+
+            return open == focus.Focus ? null : $"{FocusTargets.Say(open)} is open";
+        }
+
         foreach (var (action, state) in Wanted(position).Wanted)
         {
             if ((action.Contexts & tick.Context) != 0 && action.AlreadyIn(state, tick.Status) == false)
@@ -835,6 +1007,23 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         return null;
     }
+
+    private enum FocusStage
+    {
+        /// <summary>Nothing pressed yet.</summary>
+        Start,
+
+        /// <summary>The open interface's key was pressed; waiting for the cockpit.</summary>
+        Closing,
+
+        /// <summary>The target's key was pressed; waiting for the target.</summary>
+        Opening,
+
+        /// <summary>The target is open; <c>Until</c> ends the contest watch.</summary>
+        Arrived,
+    }
+
+    private readonly record struct FocusGoal(FocusTarget Target, FocusStage Stage, DateTimeOffset Until);
 
     private readonly record struct WatchedPart(GameAction Action, DesiredState State, bool Arrived = false);
 

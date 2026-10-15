@@ -685,20 +685,26 @@ public sealed class SwitchPage : DialogPage
             entries.Add(new InlinePickerHeading("Several at once"));
             entries.AddRange(SwitchTargets.All.Select(target =>
                 new InlinePickerOption(TargetPrefix + target.Id, target.Name, ThemeManager.WhiteKey)));
+            entries.Add(new InlinePickerHeading("What is open"));
+            entries.AddRange(FocusTargets.All.Select(focus =>
+                new InlinePickerOption(TargetPrefix + focus.Id, focus.Name, ThemeManager.WhiteKey)));
             entries.Add(new InlinePickerHeading("Headset"));
             entries.Add(new InlinePickerOption(HeadsetId, HeadsetWord, ThemeManager.WhiteKey));
 
             var headset = position.View is not null;
             var target = SwitchTargets.Find(position.Target);
+            var focus = FocusTargets.Find(position.Target);
+            var targetId = target?.Id ?? focus?.Id;
+            var targetName = target?.Name ?? focus?.Name;
 
             action.Show(
                 entries,
-                headset ? HeadsetId : target is null ? position.Action : TargetPrefix + target.Id,
-                headset ? HeadsetWord : target?.Name ?? named.Name ?? NothingWord,
-                headset || target is not null || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
+                headset ? HeadsetId : targetId is null ? position.Action : TargetPrefix + targetId,
+                headset ? HeadsetWord : targetName ?? named.Name ?? NothingWord,
+                headset || targetId is not null || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
                 null);
 
-            state.IsEnabled = headset || (position.Action.Length > 0 && target is null);
+            state.IsEnabled = headset || (position.Action.Length > 0 && targetId is null);
 
             var choices = headset ? Views : States;
 

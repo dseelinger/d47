@@ -59,7 +59,7 @@ public sealed record SwitchMapping
     public ControlContext Contexts =>
         Positions
             .Select(position => position.Target is { Length: > 0 } target
-                ? SwitchTargets.Find(target)?.Contexts ?? ControlContext.None
+                ? SwitchTargets.Find(target)?.Contexts ?? FocusTargets.Find(target)?.Contexts ?? ControlContext.None
                 : position.Action is { } id ? GameActions.Find(id)?.Contexts ?? ControlContext.None : ControlContext.None)
             .Aggregate(ControlContext.None, (all, contexts) => all | contexts);
 
@@ -175,7 +175,7 @@ public static class SwitchValidation
 
             if (position.Target is { Length: > 0 } target)
             {
-                if (SwitchTargets.Find(target) is null)
+                if (SwitchTargets.Find(target) is null && FocusTargets.Find(target) is null)
                 {
                     return $"There is no switch target called '{target}'.";
                 }

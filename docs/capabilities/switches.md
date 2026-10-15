@@ -331,6 +331,30 @@ on its own right after D47 sets it, the switch pauses, the same as for a single 
 that never arrives is said out loud. Analysis mode on its own is already an action, so the third
 position of the HUD layout uses it directly.
 
+#### A position may name which interface is open
+
+A position can name the interface that should have focus, chosen under *What is open*. The target
+is met when Elite's `Status.json` reports that focus, so a three-position switch can be up for the
+galaxy map, centre for the cockpit and down for the system map, or left panel, cockpit and right
+panel.
+
+| Target | Met when |
+| --- | --- |
+| Cockpit, nothing open | no full-screen interface is open |
+| Galaxy map | the galaxy map is open |
+| System map | the system map is open |
+| Left panel | the left panel is open |
+| Right panel | the right panel is open |
+
+Flipping to a target presses nothing if it is already open. Otherwise D47 presses the open key of
+whatever is open, which closes it, and then the target's open key on the poll after Elite reports
+the cockpit; from the cockpit it presses the target's open key at once. Cockpit only closes. If
+station services, the full spectrum scanner, the codex, the orrery or the comms or role panel is
+open, the flip presses nothing and the row says what is open. A target needs the open keys bound in
+Elite, and sits behind *Let a HOTAS switch operate the ship* like any action. If the focus leaves
+the target on its own within four seconds the switch pauses, and a key that never takes is said out
+loud. A mismatch is annunciated as, for example, "the galaxy map is open".
+
 #### A position may name a page of Directive 47's own panel instead
 
 A spare three-position toggle with nothing bound to it can flip the Transcript between
