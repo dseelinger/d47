@@ -832,6 +832,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return ready with { Note = "D47's panel is not up yet." };
         }
 
+        if (RelativeTab.Direction(destination) is not null)
+        {
+            return ReconcileRelativeTab(mapping, position, destination, flipped, ready);
+        }
+
         if (Page(tick, destination) is not { } page)
         {
             // The vocabulary is whatever the surfaces registered, so this is where a hand-edited key is
@@ -862,6 +867,34 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             page.Word);
 
         _pending.Enqueue(new PendingReconcile(mapping.Name, page.Word, [], Destination: destination));
+
+        return ready;
+    }
+
+    /// <summary>A position that moves the panel one tab along the bar; each surface steps from its own tab.</summary>
+    private SwitchState ReconcileRelativeTab(
+        SwitchMapping mapping,
+        SwitchPosition position,
+        string destination,
+        bool flipped,
+        SwitchState ready)
+    {
+        if (!flipped)
+        {
+            return ready;
+        }
+
+        logger.LogInformation(
+            "Switch {Name} moved to {Position}; moving the panel to the {Word}",
+            mapping.Name,
+            position.Describe(),
+            RelativeTab.Word(destination));
+
+        _pending.Enqueue(new PendingReconcile(
+            mapping.Name,
+            destination == RelativeTab.Next ? "the next tab" : "the previous tab",
+            [],
+            Destination: destination));
 
         return ready;
     }
@@ -1118,6 +1151,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         if (position.Destination is { Length: > 0 } destination)
         {
+            if (RelativeTab.Direction(destination) is not null)
+            {
+                return null;
+            }
+
             // Only when d47 can say what the panel is showing, and only against a page that exists — a key
             // nothing answers to is reported on the row, not annunciated.
             if (tick.Showing is not { } showing

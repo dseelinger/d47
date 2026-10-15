@@ -1,6 +1,8 @@
 using D47.Core.Capabilities;
+using D47.Core.Hotas;
 using D47.Core.Interface;
 using D47.Core.Ships;
+using Microsoft.Extensions.Logging;
 
 namespace D47.App.Panel;
 
@@ -8,7 +10,10 @@ namespace D47.App.Panel;
 public sealed record PanelSnapshot(IReadOnlyList<PanelDestination> Destinations, string? Showing);
 
 /// <summary>Routes spoken and switch input to the panel surfaces: the window, the headset and the mini panel.</summary>
-public sealed class PanelRouting(Func<bool> headsetShowing, Func<IReadOnlyList<FleetEntry>> fleet)
+public sealed class PanelRouting(
+    Func<bool> headsetShowing,
+    Func<IReadOnlyList<FleetEntry>> fleet,
+    ILogger<PanelRouting>? logger = null)
 {
     private readonly object _registration = new();
     private readonly TranscriptMirror _transcript = new();
@@ -108,10 +113,31 @@ public sealed class PanelRouting(Func<bool> headsetShowing, Func<IReadOnlyList<F
     /// <summary>Puts every surface on this destination, each on its own thread (Phase 46).</summary>
     public void Show(string key)
     {
+        if (RelativeTab.Direction(key) is { } direction)
+        {
+            foreach (var (nav, post, _) in _surfaces)
+            {
+                post(() => Step(nav, direction));
+            }
+
+            return;
+        }
+
         foreach (var (nav, post, _) in _surfaces)
         {
             post(() => nav.Show(key));
         }
+    }
+
+    private void Step(PanelNavigator nav, int direction)
+    {
+        if (nav.Modal)
+        {
+            logger?.LogInformation("A dialog holds the panel, so the switch's tab step was ignored");
+            return;
+        }
+
+        nav.Step(direction);
     }
 
     /// <summary>Opens the page a Commander's question was about on every surface (#575).</summary>

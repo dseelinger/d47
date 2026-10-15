@@ -107,10 +107,13 @@ public sealed class AppHost : IDisposable
     {
         Paths = paths;
         Files = files;
-        PanelRouting = new PanelRouting(() => Vr?.State == Core.Vr.VrState.Active, () => Ships.Fleet());
+        _loggerFactory = loggerFactory;
+        PanelRouting = new PanelRouting(
+            () => Vr?.State == Core.Vr.VrState.Active,
+            () => Ships.Fleet(),
+            loggerFactory.CreateLogger<PanelRouting>());
         Router = router;
         Cancellation = cancellation;
-        _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<AppHost>();
         Writer = new LineWriter(
             settings,

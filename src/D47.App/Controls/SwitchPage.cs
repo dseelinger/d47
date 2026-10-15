@@ -117,6 +117,12 @@ public sealed class SwitchPage : DialogPage
         _exportPath = exportPath;
         _switches = [.. store.Switches.Select(MutableSwitch.From)];
 
+        foreach (var key in new[] { RelativeTab.Next, RelativeTab.Previous })
+        {
+            _pageKeys.Add(key);
+            _pageWords[key] = RelativeTab.Word(key)!;
+        }
+
         foreach (var page in destinations)
         {
             _pageKeys.Add(page.Key);
@@ -836,6 +842,7 @@ public sealed class SwitchPage : DialogPage
     /// <summary>A page's word alone; its group head names the tab.</summary>
     private string PickedWord(string value) =>
         value == NoPage ? NothingWord
+        : RelativeTab.Word(value) is { } relative ? relative
         : _destinations.TryGetValue(value, out var page) ? page.Word
         : value;
 

@@ -410,6 +410,15 @@ Suggestions open only while their buttons would: a story under way, a model and 
 suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
 beside it.
 
+A position may instead name **Next tab** or **Previous tab**, the first two entries in the page list. A flip
+moves the panel one tab along the bar of seven, wrapping from the last tab to the first and back, and
+skipping a tab with nothing on it. It lands on the tab as it was last left. Each flip moves one tab; a
+switch held in the position does not repeat. A spring-return rocker that rests in the centre is the natural
+control: push up for the next tab, down for the previous one. When the window and the headset show different
+tabs, each steps from its own. While a dialog holds the panel the flip does nothing and the log says so. A
+position that names a tab step never reports a disagreement, and like a page it works with *Let a HOTAS
+switch operate the ship* off.
+
 A position means one thing: an action, a target, a page or a headset view. A page the panel does not have — a key
 mistyped in the file, say — is reported on the row by name and never moved to. And a switch
 sitting on a page the panel is not showing is annunciated like any other stale switch:

@@ -104,15 +104,15 @@ public class ThePageAPositionOpensIsPickedByTabTests
         var rows = Rows(OpenPicker(shown));
 
         Assert.Equal(
-            ["Nothing", "Technical", "Stories", "Catalogue", "Story log", "Ships", "Settings"],
+            ["Nothing", "Next tab", "Previous tab", "Technical", "Stories", "Catalogue", "Story log", "Ships", "Settings"],
             rows.Select(row => row.Text));
         Assert.Equal(
-            [null, "TRANSCRIPT", "STORIES", null, null, "ASSET MGMT", "SETTINGS"],
+            [null, null, null, "TRANSCRIPT", "STORIES", null, null, "ASSET MGMT", "SETTINGS"],
             rows.Select(row => row.Head));
         Assert.Equal(["1", "3", "1", "1"], rows.Where(row => row.Head is not null).Select(row => row.HeadCount));
-        Assert.Equal([false, false, false, true, true, false, false], rows.Select(row => row.Nested));
+        Assert.Equal([false, false, false, false, false, true, true, false, false], rows.Select(row => row.Nested));
         Assert.Equal(
-            [null, null, null, null, "Only while a story is running", null, null],
+            [null, null, null, null, null, null, "Only while a story is running", null, null],
             rows.Select(row => row.Detail));
 
         shown.Window.Close();
@@ -138,7 +138,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         var count = picker.GetControl<TextBlock>("MatchCount");
 
         Assert.True(count.IsVisible);
-        Assert.Equal("1 OF 7 PAGES", count.Text ?? string.Concat(count.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text)));
+        Assert.Equal("1 OF 9 PAGES", count.Text ?? string.Concat(count.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text)));
 
         shown.Window.Close();
     }
@@ -174,7 +174,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         var gone = Assert.Single(rows, row => row.Value == "gone.page");
 
         Assert.Equal("gone.page", gone.Text);
-        Assert.Equal(1, rows.IndexOf(gone));
+        Assert.Equal(3, rows.IndexOf(gone));
         Assert.True(gone.InUse);
         Assert.Null(gone.Head);
 

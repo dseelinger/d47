@@ -3,6 +3,30 @@ using D47.Core.Vr;
 
 namespace D47.Core.Hotas;
 
+/// <summary>The reserved <see cref="SwitchPosition.Destination"/> values that move the panel one tab along the bar.</summary>
+public static class RelativeTab
+{
+    public const string Next = "@next-tab";
+
+    public const string Previous = "@previous-tab";
+
+    /// <summary>1 for next, -1 for previous, null for any other key.</summary>
+    public static int? Direction(string? key) => key switch
+    {
+        Next => 1,
+        Previous => -1,
+        _ => null,
+    };
+
+    /// <summary>How the position is named in the page picker.</summary>
+    public static string? Word(string? key) => key switch
+    {
+        Next => "Next tab",
+        Previous => "Previous tab",
+        _ => null,
+    };
+}
+
 /// <summary>One position of one switch, and what the Commander means by it.</summary>
 /// <param name="Button">The button held at this position, or null when none is.</param>
 /// <param name="Action">
@@ -12,7 +36,8 @@ namespace D47.Core.Hotas;
 /// <param name="State">What the position means.</param>
 /// <param name="Destination">
 /// The page of d47's own panel this position asks for, as the key of a root some surface registered —
-/// <c>transcript.technical</c> — or null (Phase 46).
+/// <c>transcript.technical</c> — or <see cref="RelativeTab.Next"/> or <see cref="RelativeTab.Previous"/>, or null
+/// (Phase 46).
 /// </param>
 /// <param name="View">The headset view this position asks for, or null.</param>
 /// <param name="Target">The <see cref="SwitchTargets"/> id this position asks for, or null.</param>

@@ -381,6 +381,28 @@ public sealed class PanelNavigator
         return true;
     }
 
+    /// <summary>
+    /// Shows the next tab along the bar (<paramref name="direction"/> 1) or the previous one (-1), wrapping and
+    /// skipping tabs with nothing registered.
+    /// </summary>
+    public bool Step(int direction)
+    {
+        var tabs = Enum.GetValues<PanelTab>();
+        var at = Array.IndexOf(tabs, Tab);
+
+        for (var distance = 1; distance < tabs.Length; distance++)
+        {
+            var tab = tabs[(((at + (direction * distance)) % tabs.Length) + tabs.Length) % tabs.Length];
+
+            if (Has(tab))
+            {
+                return Select(tab);
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Switches the current tab to another of its roots, keeping the drill state of both.</summary>
     public bool SelectRoot(string rootKey) => SelectRoot(Tab, rootKey);
 
