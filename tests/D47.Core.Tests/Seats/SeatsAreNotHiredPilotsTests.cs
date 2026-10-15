@@ -32,12 +32,13 @@ public class SeatsAreNotHiredPilotsTests
             provider)
         {
             Persona = "You are the ship's AI aboard this vessel.",
+            ShipAiNames = () => [ShipAi],
         };
 
         IReadOnlyList<CrewSeat> aboard = seats;
 
-        loop.Lines.Add(new CrewLine(() => Pilots, () => "Warden's Reach", () => ShipAi, () => aboard));
-        loop.Lines.Add(new SeatLine(() => aboard, () => "Warden's Reach", () => "Python", () => Pilots, () => ShipAi));
+        loop.Lines.Add(new CrewLine(() => Pilots, () => "Warden's Reach", () => aboard));
+        loop.Lines.Add(new SeatLine(() => aboard, () => "Warden's Reach", () => "Python", () => Pilots));
 
         return loop;
     }

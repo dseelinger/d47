@@ -8,7 +8,7 @@ namespace D47.Core.Persona;
 
 /// <summary>
 /// The Narrator, who answers whatever the Commander says shortly after a narration with more narration. A
-/// command with a model-free route, or an utterance opening with the ship AI's name, is left to the ship.
+/// command with a model-free route is left to the ship.
 /// Thread-safe: <see cref="Heard"/> runs on the callout drain and <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
 /// <param name="modelFree">Whether an utterance has a route that needs no model.</param>
@@ -16,7 +16,6 @@ namespace D47.Core.Persona;
 /// <param name="commander">How the Narrator names the Commander when there is no character sheet, or null.</param>
 public sealed partial class NarratorLine(
     Func<DateTimeOffset> clock,
-    Func<string?> shipAiName,
     Func<string, bool> modelFree,
     Func<string?> hiddenStory,
     Func<string?>? commander = null,
@@ -94,12 +93,6 @@ public sealed partial class NarratorLine(
     {
         if (!Carries())
         {
-            return new LineDecision.NotMine();
-        }
-
-        if (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
-        {
-            _lastLineAt = null;
             return new LineDecision.NotMine();
         }
 

@@ -36,7 +36,6 @@ public class TheCaptainAnswersOverTheLineTests
                 new CaptainLine(
                     () => world.GameState.Active?.Carrier ?? CarrierState.None,
                     () => world.GameState.Active?.Location.StarSystem,
-                    () => PersonaCatalog.Warden.Name,
                     (_, _, _) => Task.FromResult<double?>(100)),
             ],
         };
@@ -84,7 +83,6 @@ public class TheCaptainAnswersOverTheLineTests
                 new CaptainLine(
                     () => world.GameState.Active?.Carrier ?? CarrierState.None,
                     () => world.GameState.Active?.Location.StarSystem,
-                    () => PersonaCatalog.Warden.Name,
                     (_, _, _) => Task.FromResult<double?>(lightYears)),
             ],
         };

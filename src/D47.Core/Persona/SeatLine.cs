@@ -11,13 +11,11 @@ namespace D47.Core.Persona;
 /// <param name="shipName">What the ship is called, for the seat's brief.</param>
 /// <param name="hull">The hull as it is said, for the seat's brief.</param>
 /// <param name="crew">The hired pilots; a pilot's name at the front of an utterance closes the line.</param>
-/// <param name="shipAiName">What the Commander calls the ship's AI; at the front of an utterance it closes the line.</param>
 public sealed class SeatLine(
     Func<IReadOnlyList<CrewSeat>> seats,
     Func<string?> shipName,
     Func<string?> hull,
-    Func<ShipCrew?> crew,
-    Func<string?> shipAiName) : ILine
+    Func<ShipCrew?> crew) : ILine
 {
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = [];
 
@@ -32,7 +30,6 @@ public sealed class SeatLine(
         var aboard = seats();
 
         if (aboard.Count == 0
-            || (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
             || CrewAddressing.Opens(input, NpcChatter.CaptainName) is not null)
         {
             return NotMine();

@@ -28,11 +28,12 @@ public class TheNarratorCannotBeAddressedTests
             provider)
         {
             Persona = "You are the ship's AI.",
+            ShipAiNames = () => ["Warden"],
         };
 
-        loop.Lines.Add(new CaptainLine(() => CarrierState.None, () => "Diaguandri", () => "Warden"));
-        loop.Lines.Add(new CrewLine(() => null, () => "Vagrant", () => "Warden"));
-        loop.Lines.Add(new ChatterLine(() => now, () => "Diaguandri", () => AmbientSituation.Docked, () => "Warden"));
+        loop.Lines.Add(new CaptainLine(() => CarrierState.None, () => "Diaguandri"));
+        loop.Lines.Add(new CrewLine(() => null, () => "Vagrant"));
+        loop.Lines.Add(new ChatterLine(() => now, () => "Diaguandri", () => AmbientSituation.Docked));
 
         List<TurnEvent> events = [];
 

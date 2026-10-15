@@ -56,7 +56,6 @@ public class TheCommanderCanAnswerACastMemberTests
 
         var line = new CastLine(
             () => world.Now,
-            () => ShipAi,
             input => router.MatchSetting(input) is not null
                      || router.MatchToolCommand(input) is not null
                      || router.Match(input, InputSource.Spoken) is not null
@@ -75,6 +74,7 @@ public class TheCommanderCanAnswerACastMemberTests
             provider)
         {
             Persona = ShipAiBrief,
+            ShipAiNames = () => [ShipAi],
             HiddenStory = () => "The ship AI's own reading.",
             WebSearchEnabled = () => true,
         };

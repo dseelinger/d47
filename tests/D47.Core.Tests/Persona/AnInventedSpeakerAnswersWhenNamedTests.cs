@@ -34,7 +34,6 @@ public class AnInventedSpeakerAnswersWhenNamedTests
             () => world.Now,
             () => world.System,
             () => world.Situation,
-            () => ShipAi,
             model: () => Background,
             accentOf: voice => voice == "bf_emma" ? "British" : null);
 
@@ -48,6 +47,7 @@ public class AnInventedSpeakerAnswersWhenNamedTests
             provider)
         {
             Persona = ShipAiBrief,
+            ShipAiNames = () => [ShipAi],
         };
 
         loop.Lines.Add(line);

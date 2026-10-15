@@ -210,7 +210,7 @@ public sealed class AppHost : IDisposable
             voice,
             said: text => Said?.Invoke(text),
             prompted: PanelRouting.Prompted,
-            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke()),
+            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), ShipAiNames(personas)),
             recorder: () => AudioRecorder,
             shipName: () => personas.ShipName,
             panel: Panel,
@@ -763,6 +763,10 @@ public sealed class AppHost : IDisposable
 
         return host;
     }
+
+    /// <summary>The names that address the ship's AI: the core's name, then "D47".</summary>
+    private static IReadOnlyList<string> ShipAiNames(PersonaHost personas) =>
+        personas.ShipName is { Length: > 0 } name ? [name, ShipAiAddressing.CallSign] : [ShipAiAddressing.CallSign];
 
     private static FoundationParts ComposeFoundations()
     {
@@ -2860,12 +2864,14 @@ public sealed class AppHost : IDisposable
                                     late.Host?.SearchReachesTheWeb ?? true))))))),
         };
 
+        // The ship's AI, by its name or "D47"; either at the front of an utterance closes every line below.
+        turns.ShipAiNames = () => ShipAiNames(personas);
+
         // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
         // search is on.
         turns.Lines.Add(new CaptainLine(
             () => gameState.Active?.Carrier ?? D47.Core.Journal.CarrierState.None,
             () => gameState.Active?.Location.StarSystem,
-            () => personas.ShipName,
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null)));
@@ -2885,7 +2891,6 @@ public sealed class AppHost : IDisposable
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
             () => gameState.Active?.Ship.Name,
-            () => personas.ShipName,
             SeatsAboard));
 
         // A crew seat on the ship flown, reached by name (#846).
@@ -2893,15 +2898,13 @@ public sealed class AppHost : IDisposable
             SeatsAboard,
             () => gameState.Active?.FlownShip.Name,
             () => gameState.Active?.FlownShip.TypeSaid,
-            () => gameState.Active?.Crew,
-            () => personas.ShipName));
+            () => gameState.Active?.Crew));
 
         // An invented speaker from the last overheard exchange, reached by name while it is still going.
         turns.Lines.Add(new ChatterLine(
             () => SystemWallClock.Instance.UtcNow,
             () => gameState.Active?.Location.StarSystem,
             () => AmbientLines.Situate(status.Current),
-            () => personas.ShipName,
             () => turns.BackgroundModel,
             voiceId => late.Host?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
@@ -2911,7 +2914,6 @@ public sealed class AppHost : IDisposable
         // ship would run or offer without the model.
         turns.Lines.Add(new NarratorLine(
             () => SystemWallClock.Instance.UtcNow,
-            () => personas.ShipName,
             input => router.MatchSetting(input) is not null
                      || router.MatchToolCommand(input) is not null
                      || router.Match(input, InputSource.Spoken) is not null
@@ -3005,7 +3007,6 @@ public sealed class AppHost : IDisposable
         // ship would run or offer without the model.
         turns.Lines.Add(new CastLine(
             () => SystemWallClock.Instance.UtcNow,
-            () => personas.ShipName,
             input => router.MatchSetting(input) is not null
                      || router.MatchToolCommand(input) is not null
                      || router.Match(input, InputSource.Spoken) is not null

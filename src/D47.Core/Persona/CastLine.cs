@@ -8,7 +8,7 @@ namespace D47.Core.Persona;
 
 /// <summary>
 /// A running story's cast member, who answers whatever the Commander says shortly after that member's line, in the
-/// first person. A command with a model-free route, or an utterance opening with the ship AI's name, is left to the ship.
+/// first person. A command with a model-free route is left to the ship.
 /// Thread-safe: <see cref="Heard"/> runs on the callout drain and <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
 /// <param name="modelFree">Whether an utterance has a route that needs no model.</param>
@@ -19,7 +19,6 @@ namespace D47.Core.Persona;
 /// <param name="hiddenStory">The running story's hidden layer as every speaker reads it, or null.</param>
 public sealed class CastLine(
     Func<DateTimeOffset> clock,
-    Func<string?> shipAiName,
     Func<string, bool> modelFree,
     Func<string, AdventureSpeaker?> member,
     Func<string?> hiddenStory,
@@ -103,12 +102,6 @@ public sealed class CastLine(
     {
         if (Carries() is not { } speaking)
         {
-            return new LineDecision.NotMine();
-        }
-
-        if (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
-        {
-            _lastLineAt = null;
             return new LineDecision.NotMine();
         }
 

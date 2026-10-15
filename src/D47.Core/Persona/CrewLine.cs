@@ -9,12 +9,10 @@ namespace D47.Core.Persona;
 /// <summary>A hired pilot, on the intercom while addressed.</summary>
 /// <param name="crew">The roster, or null while there is no active Commander.</param>
 /// <param name="shipName">What the pilot calls the hull they are posted to, for their own brief.</param>
-/// <param name="shipAiName">What the Commander calls the ship's AI; at the front of an utterance it closes the line.</param>
 /// <param name="seats">The crew seats on the ship flown; a seat's name at the front of an utterance closes the line.</param>
 public sealed class CrewLine(
     Func<ShipCrew?> crew,
     Func<string?> shipName,
-    Func<string?> shipAiName,
     Func<IReadOnlyList<CrewSeat>>? seats = null) : ILine
 {
     private readonly Dictionary<long, List<ConversationMessage>> _transcripts = [];
@@ -30,12 +28,6 @@ public sealed class CrewLine(
         var roster = crew();
 
         if (roster is not { Any: true })
-        {
-            _open = null;
-            return Task.FromResult<LineDecision>(new LineDecision.NotMine());
-        }
-
-        if (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
         {
             _open = null;
             return Task.FromResult<LineDecision>(new LineDecision.NotMine());

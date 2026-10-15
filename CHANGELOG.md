@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Starting a sentence with your ship AI's name or with "D47" now speaks to the ship AI whoever else is on the line. The captain, crew, a story's cast or the Narrator stop answering, and the name is taken off before the rest is handled, so "Cora, take us in" runs the command instead of being answered "Did you mean 'take us in'?" and then offered for learning. "D47", "D-47" and "d47" all count. A name said after it still reaches that speaker: "Cora, captain, how's our fuel?" is answered by the captain. Your ship AI's name alone ends the line, and the next sentence goes to the ship AI. Speech recognition is now told both names ahead of every other name.
+
 When D47 offers to remember your wording after a near-miss command, only a yes or a no answers the offer. A yes learns the phrase and a no says "Dropped." Anything else drops the offer without a word and is handled as an ordinary request, where before it was answered "Dropped." and ignored. A dropped offer is not counted as declined, so the same wording can be offered again.
 
 Abandoning a story or finishing it now puts your Backstory back to the one you had before your first story, or to empty if you had none. Edits you made to the Backstory while the story ran are discarded. Switching passes the earlier Backstory on to the new story, so stopping that one restores it too. A Backstory that was a stock story's words when you picked is treated as none. The Abandon confirmation, the Stories intro and the Adventures help page say so.

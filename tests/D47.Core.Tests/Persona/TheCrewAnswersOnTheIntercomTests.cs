@@ -27,7 +27,7 @@ public class TheCrewAnswersOnTheIntercomTests
         ILlmProvider provider,
         ShipCrew? roster = null)
     {
-        var line = new CrewLine(() => roster ?? Roster, () => "Warden's Reach", () => ShipAi);
+        var line = new CrewLine(() => roster ?? Roster, () => "Warden's Reach");
 
         var loop = new TurnLoop(
             surface.Registry,
@@ -39,6 +39,7 @@ public class TheCrewAnswersOnTheIntercomTests
             provider)
         {
             Persona = ShipAiBrief,
+            ShipAiNames = () => [ShipAi],
         };
 
         loop.Lines.Add(line);
@@ -105,8 +106,7 @@ public class TheCrewAnswersOnTheIntercomTests
 
         loop.Lines.Add(new CaptainLine(
             () => new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
-            () => "Sol",
-            () => ShipAi));
+            () => "Sol"));
 
         await RunAsync(loop, "Vance, how is the fighter");
         var next = await RunAsync(loop, "Captain, fuel");

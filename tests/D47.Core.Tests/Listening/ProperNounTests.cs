@@ -45,6 +45,21 @@ public class ProperNounTests
     }
 
     [Fact]
+    public void TheShipAisNamesLeadTheList()
+    {
+        var names = ProperNouns.From(
+            StateFrom("""{"timestamp":"3311-01-01T00:01:00Z","event":"Docked","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial"}"""),
+            shipAi: ["Cora", "D47"]);
+
+        Assert.Equal(["Cora", "D47"], names.Take(2));
+        Assert.Contains("Shinrarta Dezhra", names);
+    }
+
+    [Fact]
+    public void TheShipAisNamesAreOfferedWithNoCommander() =>
+        Assert.Equal(["Cora", "D47"], ProperNouns.From(null, shipAi: ["Cora", "D47"]));
+
+    [Fact]
     public void WhereTheCommanderIsAndWhatTheyFlyAreOffered()
     {
         var names = ProperNouns.From(StateFrom(

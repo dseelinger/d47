@@ -22,11 +22,17 @@ public static class ProperNouns
     public const int Limit = 60 + CommandShare;
 
     /// <summary>The names worth biasing towards, most relevant first.</summary>
-    public static IReadOnlyList<string> From(CommanderGameState? state, NavRoute? route = null)
+    /// <param name="shipAi">The names that address the ship's AI, ahead of every other name.</param>
+    public static IReadOnlyList<string> From(
+        CommanderGameState? state, NavRoute? route = null, IReadOnlyList<string>? shipAi = null)
     {
+        var addressing = (shipAi ?? [])
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name.Trim());
+
         if (state is null)
         {
-            return [];
+            return [.. addressing.Distinct(StringComparer.OrdinalIgnoreCase)];
         }
 
         var names = new List<string?>
@@ -80,7 +86,8 @@ public static class ProperNouns
         // from the end, so the engineer names are the first to be dropped.
         return
         [
-            .. journal
+            .. addressing
+                .Concat(journal)
                 .Concat(Commands())
                 .Concat(Shipped())
                 .Distinct(StringComparer.OrdinalIgnoreCase)

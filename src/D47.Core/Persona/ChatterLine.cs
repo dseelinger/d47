@@ -13,7 +13,6 @@ namespace D47.Core.Persona;
 /// <param name="clock">The time now.</param>
 /// <param name="system">The Commander's current star system.</param>
 /// <param name="situation">What the Commander is doing, as <see cref="AmbientLines.Situate"/> reads it.</param>
-/// <param name="shipAiName">What the Commander calls the ship's AI; at the front of an utterance it closes the line.</param>
 /// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
 /// <param name="accentOf">The accent a voice id speaks with, or null for none.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
@@ -21,7 +20,6 @@ public sealed class ChatterLine(
     Func<DateTimeOffset> clock,
     Func<string?> system,
     Func<AmbientSituation> situation,
-    Func<string?> shipAiName,
     Func<string?>? model = null,
     Func<string?, string?>? accentOf = null,
     Func<ShipFacts>? facts = null,
@@ -108,12 +106,6 @@ public sealed class ChatterLine(
     private LineDecision Route(string input)
     {
         if (_exchange is not { Answerable: true } exchange || exchange.People.Count == 0)
-        {
-            _open = null;
-            return new LineDecision.NotMine();
-        }
-
-        if (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
         {
             _open = null;
             return new LineDecision.NotMine();

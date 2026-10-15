@@ -22,7 +22,7 @@ public class ASeatAnswersToItsNameTests
         ILlmProvider provider,
         Func<IReadOnlyList<CrewSeat>> seats)
     {
-        var line = new SeatLine(seats, () => "Warden's Reach", () => "Python", () => null, () => ShipAi);
+        var line = new SeatLine(seats, () => "Warden's Reach", () => "Python", () => null);
 
         var loop = new TurnLoop(
             surface.Registry,
@@ -34,6 +34,7 @@ public class ASeatAnswersToItsNameTests
             provider)
         {
             Persona = "You are the ship's AI aboard this vessel.",
+            ShipAiNames = () => [ShipAi],
         };
 
         loop.Lines.Add(line);

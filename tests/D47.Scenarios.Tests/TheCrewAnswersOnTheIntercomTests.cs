@@ -33,8 +33,7 @@ public class TheCrewAnswersOnTheIntercomTests
             [
                 new CrewLine(
                     () => world.GameState.Active?.Crew,
-                    () => world.GameState.Active?.Ship.Name,
-                    () => PersonaCatalog.Warden.Name),
+                    () => world.GameState.Active?.Ship.Name),
             ],
         };
 

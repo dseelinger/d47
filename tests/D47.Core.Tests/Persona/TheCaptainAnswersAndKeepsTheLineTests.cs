@@ -35,7 +35,6 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         var line = new CaptainLine(
             () => carrier ?? Owned,
             () => "Sol",
-            () => ShipAi,
             distance ?? ((_, _, _) => Task.FromResult<double?>(100)));
 
         var loop = new TurnLoop(
@@ -48,6 +47,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
             provider)
         {
             Persona = ShipAiBrief,
+            ShipAiNames = () => [ShipAi],
         };
 
         loop.Lines.Add(line);

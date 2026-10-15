@@ -34,12 +34,12 @@ public class AFaintCaptainIsHeardInPiecesTests
             provider)
         {
             Persona = "You are the ship's AI aboard this vessel.",
+            ShipAiNames = () => ["Warden"],
         };
 
         loop.Lines.Add(new CaptainLine(
             () => Owned,
             () => "Sol",
-            () => "Warden",
             (_, _, _) => Task.FromResult<double?>(lightYears)));
 
         return loop;

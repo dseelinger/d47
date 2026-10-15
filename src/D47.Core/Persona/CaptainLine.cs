@@ -6,12 +6,10 @@ using D47.Core.Journal;
 namespace D47.Core.Persona;
 
 /// <summary>The captain of the Commander's fleet carrier, on the line while addressed.</summary>
-/// <param name="shipAiName">What the Commander calls the ship's AI; at the front of an utterance it closes the line.</param>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
 public sealed class CaptainLine(
     Func<CarrierState> carrier,
     Func<string?> commanderSystem,
-    Func<string?> shipAiName,
     Func<string, string, CancellationToken, Task<double?>>? distance = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
@@ -32,12 +30,6 @@ public sealed class CaptainLine(
         var state = carrier();
 
         if (!state.Owned || state.StarSystem is not { Length: > 0 } carrierSystem)
-        {
-            IsOpen = false;
-            return new LineDecision.NotMine();
-        }
-
-        if (shipAiName() is { Length: > 0 } shipAi && CrewAddressing.Opens(input, shipAi) is not null)
         {
             IsOpen = false;
             return new LineDecision.NotMine();

@@ -36,7 +36,6 @@ public class TheNarratorAnswersInNarrationTests
 
         var line = new NarratorLine(
             () => world.Now,
-            () => ShipAi,
             input => router.MatchSetting(input) is not null
                      || router.MatchToolCommand(input) is not null
                      || router.Match(input, InputSource.Spoken) is not null
@@ -57,6 +56,7 @@ public class TheNarratorAnswersInNarrationTests
             provider)
         {
             Persona = ShipAiBrief,
+            ShipAiNames = () => [ShipAi],
             HiddenStory = () => "The ship AI's own reading.",
         };
 

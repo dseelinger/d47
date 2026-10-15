@@ -453,6 +453,9 @@ public sealed class TurnLoop(
     /// </summary>
     public List<Persona.ILine> Lines { get; } = [];
 
+    /// <summary>The names that address the ship's AI; one at the front of an utterance closes every line and is removed.</summary>
+    public Func<IReadOnlyList<string>>? ShipAiNames { get; set; }
+
     private readonly Lock _heardGate = new();
 
     /// <summary>When each line was last heard, as a count of lines heard; a later line is offered first.</summary>
@@ -527,8 +530,33 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0.4. Addressed to the ship's AI by name.
+        var bareName = false;
+
+        if (ShipAiNames?.Invoke() is { Count: > 0 } shipAiNames
+            && D47.Core.Persona.ShipAiAddressing.Opens(input, shipAiNames) is { } rest)
+        {
+            foreach (var line in Lines)
+            {
+                line.Close();
+            }
+
+            if (rest.Length == 0)
+            {
+                bareName = true;
+            }
+            else
+            {
+                input = rest;
+            }
+        }
+
         // 0.5. Addressed to someone other than the ship's AI.
-        switch (await AddressedAsync(input, cancellationToken).ConfigureAwait(false))
+        var addressed = bareName
+            ? new Persona.LineDecision.NotMine()
+            : await AddressedAsync(input, cancellationToken).ConfigureAwait(false);
+
+        switch (addressed)
         {
             case Persona.LineDecision.Taken taken:
                 await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
