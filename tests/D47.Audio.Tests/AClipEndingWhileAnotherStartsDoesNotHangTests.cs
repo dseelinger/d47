@@ -29,7 +29,12 @@ public class AClipEndingWhileAnotherStartsDoesNotHangTests
         {
             if (id == 1)
             {
-                var next = Task.Run(() => sink.Play(new PlaybackRequest(2, Short, Loop: false, Gain: 1f)));
+                // A dedicated thread, so the wait below measures the sink rather than how soon the pool has a thread free.
+                var next = Task.Factory.StartNew(
+                    () => sink.Play(new PlaybackRequest(2, Short, Loop: false, Gain: 1f)),
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default);
                 started = next.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
             }
         };

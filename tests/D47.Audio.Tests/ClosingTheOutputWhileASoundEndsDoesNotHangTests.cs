@@ -42,17 +42,22 @@ public class ClosingTheOutputWhileASoundEndsDoesNotHangTests
         {
             if (closing is null)
             {
-                closing = Task.Run(() =>
-                {
-                    if (close == "reopen")
+                // A dedicated thread, so the wait below measures the sink rather than how soon the pool has a thread free.
+                closing = Task.Factory.StartNew(
+                    () =>
                     {
-                        sink.Reopen(null);
-                    }
-                    else
-                    {
-                        sink.Dispose();
-                    }
-                });
+                        if (close == "reopen")
+                        {
+                            sink.Reopen(null);
+                        }
+                        else
+                        {
+                            sink.Dispose();
+                        }
+                    },
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default);
 
                 closingStarted = output.Disposing.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
             }
