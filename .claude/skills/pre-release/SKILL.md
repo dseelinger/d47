@@ -18,16 +18,12 @@ Before the first build, run `/claude-voice Pre-release`. The suite takes minutes
 maintainer will be doing something else while it runs. It is a default, not a fixture:
 `/claude-voice off` stops it and the run carries on unchanged.
 
-## No lane still running
-
-Before the build, run `git worktree list`. A worktree under `.claude/worktrees/` is a lane working
-an issue. Its merge would move `main` while the suite runs, or land after the push and miss the
-release. Name each one and ask whether to wait; start nothing until the maintainer answers.
-
 ## Clear what finished lanes left
 
-Once no lane is running, remove what `/issue-worker` leaves behind after a merge. Do it without
-asking.
+The maintainer runs `/pre-release` only once the lanes and issues for the release are done. Do not
+check for running lanes or ask whether to wait for one.
+
+Before the build, remove what `/issue-worker` leaves behind after a merge. Do it without asking.
 
 ```bash
 git worktree prune

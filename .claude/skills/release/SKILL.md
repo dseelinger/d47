@@ -26,10 +26,10 @@ doing something else. `/claude-voice off` stops it and the release carries on.
 
 ## Before the script
 
-Run `git worktree list`. A worktree under `.claude/worktrees/` is a lane still working an issue;
-name each one and ask whether to wait. Start nothing until the maintainer answers.
+The maintainer runs `/release` only once the lanes and issues for the release are done. Do not
+check for running lanes or ask whether to wait for one.
 
-Then put the branch where the script needs it:
+Put the branch where the script needs it:
 
 ```bash
 git status --porcelain; git rev-parse --abbrev-ref HEAD
