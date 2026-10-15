@@ -169,7 +169,9 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 }
 
                 // Advertise, then demote (Phase 29, ported here by Phase 54).
+                // A refused "thinking off" says nothing about whether the model takes adaptive thinking.
                 else if (advanced == 0 && !demoted && refused is { } rejected
+                    && !(rejected == Demotable.AdaptiveThinking && TurnsThinkingOff(request))
                     && EndpointDemotions.Demote(_endpoint, rejected, request.Model))
                 {
                     demoted = true;
@@ -491,15 +493,25 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             },
 
             // Adaptive rather than a token budget: budget_tokens is removed on Opus 5 and returns a 400.
-            Thinking = capabilities.SupportsThinkingEffort
-                ? new ThinkingConfigAdaptive { Display = Display.Summarized }
-                : (ThinkingConfigParam?)null,
+            // Effort is still sent with thinking off, because it also sets how long the answer runs.
+            Thinking = !capabilities.SupportsThinkingEffort ? (ThinkingConfigParam?)null
+                : TurnsThinkingOff(request) ? new ThinkingConfigDisabled()
+                : new ThinkingConfigAdaptive { Display = Display.Summarized },
             OutputConfig = capabilities.SupportsThinkingEffort
                 ? new OutputConfig { Effort = Translate(request.Effort) }
                 : null,
             Messages = messages,
         };
     }
+
+    /// <summary>
+    /// Whether this request is sent with thinking disabled: asked for, and accepted by the model at the
+    /// request's effort. A current model sent no <c>thinking</c> field still thinks.
+    /// </summary>
+    private bool TurnsThinkingOff(LlmRequest request) =>
+        !request.ThinkingAllowed
+        && Traits(request.Model).CanDisableThinking
+        && request.Effort <= CoreConversation.ThinkingEffort.High;
 
     /// <summary>The result's text, followed by its picture where the model reads one.</summary>
     private static ToolResultBlockParamContent ResultContent(ConversationContent.ToolResult result, bool readsImages)

@@ -75,6 +75,7 @@ public static class FlavourTurn
             hiddenStory).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
+    /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
     public static async Task<FlavourReply> AskForAsync(
         ILlmProvider? provider,
         string? model,
@@ -93,7 +94,8 @@ public static class FlavourTurn
         bool canBeDirected = false,
         string? humor = null,
         string? scenario = null,
-        string? hiddenStory = null)
+        string? hiddenStory = null,
+        bool thinking = true)
     {
         if (provider is null)
         {
@@ -118,6 +120,7 @@ public static class FlavourTurn
 
             // Off for every line that came before Phase 23.
             WebSearch = webSearch,
+            ThinkingAllowed = thinking,
             Prompt = new PromptAssembly
             {
                 // No tools.

@@ -147,7 +147,8 @@ internal sealed class LineWriter
                     scenario: ScenarioFor(brief, announcement.Voice),
                     hiddenStory: brief.NeedsPersona ? HiddenStory(VoiceRole.ShipAi)
                         : announcement.Voice == VoiceRole.Narrator ? HiddenStory(VoiceRole.Narrator)
-                        : null);
+                        : null,
+                    thinking: Rewording.IsNarration(announcement));
             },
             stockCoreAboard: () => Personas.Current.Stock);
     }

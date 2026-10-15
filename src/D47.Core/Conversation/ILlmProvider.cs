@@ -163,6 +163,12 @@ public sealed record LlmRequest
 
     /// <summary>Whether the model may call a tool. When false the tools are still declared, but not callable.</summary>
     public bool ToolCallsAllowed { get; init; } = true;
+
+    /// <summary>
+    /// Whether the model may think before answering. When false, a model that cannot run without
+    /// thinking thinks as usual.
+    /// </summary>
+    public bool ThinkingAllowed { get; init; } = true;
 }
 
 /// <summary>The seam.</summary>

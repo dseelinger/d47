@@ -38,8 +38,10 @@ List what differs from the file, one line each, with the page it was read from a
 - models the provider has retired or no longer lists
 - whether a provider's `default` or `backgroundDefault` should move
 
-For each new Anthropic model, give the six traits d47 sends on: `operatorSystemMessages`,
-`toolSearch`, `minimumCacheablePrefix`, `basicWebSearchOnly`, `legacyThinking`, `images`. For each
+For each new Anthropic model, give the seven traits d47 sends on: `operatorSystemMessages`,
+`toolSearch`, `minimumCacheablePrefix`, `basicWebSearchOnly`, `legacyThinking`,
+`canDisableThinking`, `images`. `canDisableThinking` is whether `thinking: {"type": "disabled"}` is
+accepted at effort `low`; a model that thinks when `thinking` is omitted and rejects `disabled` is `false`. For each
 new OpenAI model, give `images`, from the input modalities on its model page
 (`https://developers.openai.com/api/docs/models/<id>`). `images` is whether the model takes image input.
 

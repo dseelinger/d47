@@ -26,6 +26,9 @@ public sealed record ModelTraits
     /// <summary>Whether the model rejects <c>thinking</c> and <c>output_config.effort</c>.</summary>
     public bool LegacyThinking { get; init; }
 
+    /// <summary>Whether the model accepts <c>thinking: disabled</c> at effort high or below.</summary>
+    public bool CanDisableThinking { get; init; }
+
     /// <summary>Whether the model reads image input.</summary>
     public bool Images { get; init; }
 }
@@ -304,6 +307,7 @@ public sealed class ModelCatalog
             : ModelTraits.Unknown.MinimumCacheablePrefix,
         BasicWebSearchOnly = OptionalBool(element, "basicWebSearchOnly"),
         LegacyThinking = OptionalBool(element, "legacyThinking"),
+        CanDisableThinking = OptionalBool(element, "canDisableThinking"),
         Images = OptionalBool(element, "images"),
     };
 

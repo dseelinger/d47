@@ -10,10 +10,14 @@ namespace D47.Core.Callouts;
 public sealed class Rewording(RewordChance chance, ILogger? logger)
 {
     /// <summary>How long a line may spend being written, retry included, before the authored one is used.</summary>
-    public TimeSpan Budget { get; init; } = TimeSpan.FromSeconds(3);
+    public TimeSpan Budget { get; init; } = TimeSpan.FromSeconds(4);
 
     /// <summary>The same for a narration, which carries the whole backstory and is not waited on.</summary>
     public TimeSpan NarrationBudget { get; init; } = TimeSpan.FromSeconds(15);
+
+    /// <summary>Whether the announcement is a narration, which has <see cref="NarrationBudget"/> and may think first.</summary>
+    public static bool IsNarration(Announcement announcement) =>
+        announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal);
 
     /// <summary>The announcement to speak, or null for silence.</summary>
     /// <param name="ask">Asks the model for one line from a brief and an instruction.</param>
@@ -62,8 +66,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
 
         var snapshot = ship.Value;
 
-        using var budget = new CancellationTokenSource(
-            announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal) ? NarrationBudget : Budget);
+        using var budget = new CancellationTokenSource(IsNarration(announcement) ? NarrationBudget : Budget);
 
         var reply = await ask(brief, brief.Instruction, budget.Token).ConfigureAwait(false);
 
