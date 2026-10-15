@@ -529,6 +529,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Supplies the picture name of the Commander flying; read when a turn is written.</summary>
     public Func<string?>? CommanderPictureSource { get; set; }
 
+    /// <summary>Supplies the picture name of the carrier captain or the tower in the voice now set, or null; read when drawn.</summary>
+    public Func<D47.Core.Audio.VoiceRole, string?>? CarrierPictureSource { get; set; }
+
     /// <summary>The picture name of the core aboard, or null.</summary>
     public string? ShipPicture => ShipPictureSource?.Invoke();
 

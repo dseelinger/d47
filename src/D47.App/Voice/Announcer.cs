@@ -412,7 +412,7 @@ public sealed class Announcer : IDisposable
 
     /// <summary>The picture name the Conversation page shows a spoken line with, or null.</summary>
     private string? ConversationPicture(Announcement announcement) =>
-        ConversationPicture(announcement, Personas.Current.Id, _genderOf, GameState.Active?.Crew);
+        ConversationPicture(announcement, Personas.Current.Id, _genderOf, GameState.Active?.Crew, GameState.Active?.Identity.FrontierId);
 
     /// <summary>
     /// The picture name for a spoken line: a cast line's own, the core aboard for the ship, the Narrator's, the
@@ -422,7 +422,8 @@ public sealed class Announcer : IDisposable
         Announcement announcement,
         string coreAboard,
         Func<VoiceRole, VoiceGender> genderOf,
-        ShipCrew? crew)
+        ShipCrew? crew,
+        string? frontierId = null)
     {
         if (D47.Core.Interface.SpeakerPictures.IsName(announcement.Picture))
         {
@@ -434,7 +435,7 @@ public sealed class Announcer : IDisposable
             VoiceRole.ShipAi when announcement.Speaker is null => D47.Core.Interface.SpeakerPictures.Core(coreAboard),
             VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
             VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
-                D47.Core.Interface.SpeakerPictures.ByVoice(announcement.Voice, genderOf(announcement.Voice)),
+                D47.Core.Interface.SpeakerPictures.ByVoice(announcement.Voice, genderOf(announcement.Voice), frontierId),
             VoiceRole.Crew => CrewPicture(announcement.Speaker, crew),
             _ => null,
         };

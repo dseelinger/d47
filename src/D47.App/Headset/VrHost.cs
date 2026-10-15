@@ -231,7 +231,7 @@ public sealed class VrHost : IDisposable
         {
             host.Configure();
 
-            if (change.Key == ShipsCapability.HullArtKey)
+            if (change.Key == ShipsCapability.HullArtKey || change.Key.StartsWith("speech.", StringComparison.Ordinal))
             {
                 panel.InvalidateLoadout();
             }

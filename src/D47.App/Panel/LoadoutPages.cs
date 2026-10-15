@@ -83,7 +83,10 @@ public static class LoadoutPages
         Func<Control>? crew = null,
 
         // Opens Plan's Carrier Route card from Fleet › Carrier, with From set (#637).
-        Func<string?, bool>? planCarrierRoute = null)
+        Func<string?, bool>? planCarrierRoute = null,
+
+        // The captain's and tower's pictures, on Fleet › Carrier.
+        CarrierPictures? carrierPictures = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -107,6 +110,7 @@ public static class LoadoutPages
                 copy: copy,
                 settingsStrip: carrierSettingsStrip?.Invoke(),
                 planRoute: planCarrierRoute,
+                pictures: carrierPictures,
                 hullPictures: modes.FirstOrDefault(mode => mode.ItemPrefix == ShipPrefix)?.Pictures ?? false);
         }
 

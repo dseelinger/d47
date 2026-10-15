@@ -207,8 +207,8 @@ panel shows no pictures.
 | --- | --- |
 | The ship | `core.<core id>`, the core aboard when the turn started |
 | You | `commander.<Frontier id>`, the Commander flying; none before that is known |
-| The carrier captain | `captain.man` or `captain.woman`, by the gender of the captain's voice |
-| The tower | `tower.man` or `tower.woman`, the same way |
+| The carrier captain | `captain.man.<Frontier id>` or `captain.woman.<Frontier id>`, by the gender of the captain's voice; the shipped `captain.man` or `captain.woman` shows until the Commander has chosen their own |
+| The tower | `tower.man.<Frontier id>` or `tower.woman.<Frontier id>`, the same way |
 | The Narrator | `narrator` |
 | A hired pilot | `crew.<crew id>` |
 | A story's cast member | `<story id>.<cast id>` |
@@ -216,6 +216,12 @@ panel shows no pictures.
 You choose your own picture on the Commander record, under your name: **Change picture** keeps it for the
 Commander flying, and **Use the default** removes it, which leaves no picture. Until D47 has seen which
 Commander is flying, both buttons are disabled.
+
+You choose the captain's and the tower's pictures on Asset Mgmt › Carrier, under **Captain and tower**. A picture
+is kept for the Commander flying and for the gender of the voice now set: **Change picture** keeps the file, and
+**Use the default** removes this Commander's file for that gender, which brings the shipped picture back. Another
+Commander on the same install sees the shipped pictures until they choose their own. The section is not drawn in the
+mini panel.
 
 A voice whose listing gives no gender, as OpenAI's do, shows no captain or tower picture.
 Invented comms show none.

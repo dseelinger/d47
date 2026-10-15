@@ -125,7 +125,10 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             () => _comparePage = new ComparePage(state),
             () => _storedModulesPage = new StoredModulesPage(state),
             () => _crewPage = new CrewPage(state, crewSeats, host.Portraits?.Pictures),
-            planCarrierRoute);
+            planCarrierRoute,
+            host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture
+                ? new CarrierPictures(pictures, picture, () => host.Model?.CommanderPictureSource?.Invoke() is not null)
+                : null);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
         host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);

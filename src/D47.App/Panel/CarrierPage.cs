@@ -7,6 +7,8 @@ using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Audio;
+using D47.Core.Interface;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
@@ -36,6 +38,9 @@ public sealed class CarrierSource(
     public void Invalidate() => Changed?.Invoke();
 }
 
+/// <summary>The captain's and tower's pictures: the files, the name for a role, and whether the flying Commander is known.</summary>
+public sealed record CarrierPictures(SpeakerPictures Pictures, Func<VoiceRole, string?> Of, Func<bool> CommanderKnown);
+
 /// <summary>The Commander's fleet carrier, on the tab named after it (#230).</summary>
 public sealed class CarrierPage : UserControl, IPageChrome
 {
@@ -47,6 +52,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
     private IDisposable? _sized;
     private const string CarrierHull = "fleetcarrier";
 
+    private readonly CarrierPictures? _pictures;
     private readonly bool _hullPictures;
     private bool _mini;
 
@@ -62,8 +68,12 @@ public sealed class CarrierPage : UserControl, IPageChrome
         Func<string?, bool>? planRoute = null,
 
         // Whether Hull pictures is on.
-        bool hullPictures = false)
+        bool hullPictures = false,
+
+        // The captain's and tower's pictures; the section is not drawn without them.
+        CarrierPictures? pictures = null)
     {
+        _pictures = pictures;
         BarTool = PageChrome.ToolOf(settingsStrip);
         _hullPictures = hullPictures;
         _carrier = carrier;
@@ -197,6 +207,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
         }
 
         Tritium(carrier);
+        Speakers();
 
         if (upkept is { Adjusted: true } adjusted)
         {
@@ -214,6 +225,29 @@ public sealed class CarrierPage : UserControl, IPageChrome
             age.Margin = new Thickness(0, 6, 0, 0);
 
             _body.Children.Add(age);
+        }
+    }
+
+    /// <summary>One picture chooser for the captain and one for the tower; not in the mini panel.</summary>
+    private void Speakers()
+    {
+        if (_mini || _pictures is not { } pictures)
+        {
+            return;
+        }
+
+        _body.Children.Add(LoadoutPages.Section("Captain and tower", compact: false));
+
+        foreach (var (role, label, possessive) in (ReadOnlySpan<(VoiceRole, string, string)>)
+                 [(VoiceRole.CarrierCaptain, "Captain", "the captain's"), (VoiceRole.TowerControl, "Tower", "the tower's")])
+        {
+            var picture = pictures.Of(role);
+            var unset = pictures.CommanderKnown()
+                ? "This voice has no gender, so no picture is shown."
+                : $"Fly once with D47 running to set {possessive} picture.";
+
+            _body.Children.Add(LoadoutPages.SlotName(label));
+            _body.Children.Add(new PictureChooser(pictures.Pictures, picture, 120, unset) { Margin = new Thickness(0, 0, 0, 8) });
         }
     }
 

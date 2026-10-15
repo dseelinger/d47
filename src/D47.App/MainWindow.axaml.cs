@@ -593,7 +593,7 @@ public partial class MainWindow : Window
                 BindHeadsetZoomAndResizeKeys();
             }
 
-            if (change.Key == ShipsCapability.HullArtKey)
+            if (change.Key == ShipsCapability.HullArtKey || change.Key.StartsWith("speech.", StringComparison.Ordinal))
             {
                 Panel.InvalidateLoadout();
             }

@@ -32,10 +32,10 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
     public static string Crew(long crewId) => "crew." + crewId.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// The picture name of the carrier captain or the tower speaking in a voice of <paramref name="gender"/>; null for
-    /// any other role, or a voice whose listing gives no gender.
+    /// The picture name of the carrier captain or the tower speaking in a voice of <paramref name="gender"/>, carrying
+    /// the Commander's Frontier id when known; null for any other role, or a voice whose listing gives no gender.
     /// </summary>
-    public static string? ByVoice(VoiceRole role, VoiceGender gender)
+    public static string? ByVoice(VoiceRole role, VoiceGender gender, string? frontierId = null)
     {
         var prefix = role switch
         {
@@ -44,13 +44,15 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
             _ => null,
         };
 
-        return (prefix, gender) switch
+        var name = (prefix, gender) switch
         {
             (null, _) => null,
             (_, VoiceGender.Masculine) => prefix + ".man",
             (_, VoiceGender.Feminine) => prefix + ".woman",
             _ => null,
         };
+
+        return name is not null && IsName(frontierId) ? name + "." + frontierId : name;
     }
 
     /// <summary>The file system the pictures are found and read in.</summary>
@@ -72,7 +74,10 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
     /// <summary>Whether the Commander has chosen their own file for <paramref name="picture"/>.</summary>
     public bool IsChosen(string? picture) => IsName(picture) && !IsCore(picture!) && files.Stat(Chosen(picture!)) is not null;
 
-    /// <summary>The file to show for <paramref name="picture"/>, or null when none is on disk.</summary>
+    /// <summary>
+    /// The file to show for <paramref name="picture"/>, or null when none is on disk. A captain's or tower's
+    /// per-Commander name falls back to the shipped picture of its gender.
+    /// </summary>
     public string? Find(string? picture)
     {
         if (!IsName(picture))
@@ -80,7 +85,7 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
             return null;
         }
 
-        foreach (var file in IsCore(picture!) ? (string[])[Shipped(picture!), Default(picture!)] : [Chosen(picture!), Shipped(picture!), Default(picture!)])
+        foreach (var file in IsCore(picture!) ? (string[])[Shipped(picture!), Default(picture!)] : [Chosen(picture!), Shipped(Gendered(picture!)), Default(picture!)])
         {
             if (files.Stat(file) is not null)
             {
@@ -90,6 +95,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
 
         return null;
     }
+
+    private static string Gendered(string picture) =>
+        PerCommander().Match(picture) is { Success: true } match ? match.Groups[1].Value : picture;
 
     private static bool IsCore(string picture) => picture.StartsWith("core.", StringComparison.Ordinal);
 
@@ -117,6 +125,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
 
         files.Delete(Chosen(picture));
     }
+
+    [GeneratedRegex(@"^((?:captain|tower)\.(?:man|woman))\.[A-Za-z0-9_-]+$")]
+    private static partial Regex PerCommander();
 
     [GeneratedRegex(@"^[A-Za-z0-9._-]+$")]
     private static partial Regex Name();

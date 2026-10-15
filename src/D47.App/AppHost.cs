@@ -151,6 +151,7 @@ public sealed class AppHost : IDisposable
         Panel.ShipNameSource = () => personas.ShipName;
         Panel.ShipPictureSource = () => ShipPicture;
         Panel.CommanderPictureSource = () => CommanderPicture;
+        Panel.CarrierPictureSource = SpeakerPicture;
         ShipCores = shipCores;
         LlmAvailability = llmAvailability;
         Spend = spend;
@@ -5570,7 +5571,7 @@ public sealed class AppHost : IDisposable
         : addressed.Role switch
     {
         VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
-            D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role)),
+            D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role), Flying),
         VoiceRole.Crew => Announcer.CrewPicture(addressed.Name, GameState.Active?.Crew),
         VoiceRole.Narrator => D47.Core.Interface.SpeakerPictures.Narrator,
         _ => null,
@@ -5593,6 +5594,10 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The picture name of the core aboard.</summary>
     public string ShipPicture => D47.Core.Interface.SpeakerPictures.Core(Personas.Current.Id);
+
+    /// <summary>The picture name of the captain or tower in the voice now set for <paramref name="role"/>, for the flying Commander, or null.</summary>
+    public string? SpeakerPicture(VoiceRole role) =>
+        D47.Core.Interface.SpeakerPictures.ByVoice(role, RoleGender(role), Flying);
 
     /// <summary>The picture name of the Commander flying, or null before their Frontier id is known.</summary>
     public string? CommanderPicture => Flying is { Length: > 0 } fid ? D47.Core.Interface.SpeakerPictures.Commander(fid) : null;
