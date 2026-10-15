@@ -73,6 +73,7 @@ public static class CrewDomains
         "npc-chatter",
         "carrier-fuel",
         "carrier-upkeep",
+        "carrier-payroll",
         "hold-full",
         "mining-summary",
         "powerplay-merits",

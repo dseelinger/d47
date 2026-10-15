@@ -29,6 +29,9 @@ public sealed record ViewState
     /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the Powerplay cycle its closing reminder was last said in, or null.</summary>
     public string? PowerplayCycleSaidFor { get; init; }
 
+    /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the carrier tick week its payroll line was last said in, or null.</summary>
+    public string? CarrierPayrollSaidFor { get; init; }
+
     /// <summary>Where the Commander put the flat mini panel, or null if they never moved it (Phase 48).</summary>
     public OverlayPlacement? Overlay { get; init; }
 

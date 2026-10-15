@@ -513,6 +513,26 @@ public static class FlavourBriefs
                 };
             }
 
+            if (announcement.Key == CarrierPayrollCallout.Key)
+            {
+                return new FlavourBrief
+                {
+                    Speaker = speaker,
+                    Instruction =
+                        "The carrier's weekly payroll has gone out, and you tell its owner so. Say it in "
+                        + "your own words, in one or two short sentences. Keep the name on the payroll "
+                        + "exactly as given, and keep how it relates to you as the authored line has it: "
+                        + "your own name, the name the Commander calls you as it should be, or your nom "
+                        + "de plume played lightly. Keep any figure exactly and never present it as your "
+                        + "own pay. Invent no other facts: no other crew names, no events. Treat the "
+                        + $"authored line as a register sample rather than a script: \"{announcement.Text}\"",
+                    NeedsPersona = false,
+                    NeedsGameState = false,
+                    NeedsAboutMe = false,
+                    NeedsScenario = true,
+                };
+            }
+
             if (announcement.Key == CarrierCallout.JumpKey)
             {
                 return new FlavourBrief

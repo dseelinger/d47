@@ -17,7 +17,8 @@ public sealed class CaptainLine(
     Func<DateTimeOffset> now,
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
     Func<string, bool>? modelFree = null,
-    Func<FightSnapshot>? fight = null) : ILine
+    Func<FightSnapshot>? fight = null,
+    Func<string?>? captainName = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
     public const double RangeLightYears = LinkSignal.LostLightYears;
@@ -79,7 +80,7 @@ public sealed class CaptainLine(
             new Speaker(
                 VoiceRole.CarrierCaptain,
                 NpcChatter.CaptainName,
-                Brief(state),
+                Brief(state, captainName?.Invoke()),
                 _transcript,
                 OffersTools: false,
                 Signal: LinkSignal.Strength(lightYears),
@@ -185,7 +186,7 @@ public sealed class CaptainLine(
     }
 
     /// <summary>The prompt block for the captain.</summary>
-    public static string Brief(CarrierState state) =>
+    public static string Brief(CarrierState state, string? captainName = null) =>
         $"""
          You are the captain of the Commander's fleet carrier{(state.Name is { Length: > 0 } name ? $", {name}" : string.Empty)}.
          You are a human being and an employee: you run the carrier day to day and report to the
@@ -201,7 +202,28 @@ public sealed class CaptainLine(
          reports a fight in the Commander's system, you know of that too, and nothing more about it. Of the Commander's
          ships you know only how many there are, and each one's name and hull. Anything else — a ship's
          fuel, cargo or fittings, systems, stations or the galaxy — is not yours to know: say so and
-         leave it to the ship's AI. Invent no figures, crew names or events; where the report does not
-         say, tell the Commander you do not have it.
+         leave it to the ship's AI. Invent no figures or events, and no crew names beyond your own; where the report does not
+         say, tell the Commander you do not have it.{OwnName(state, captainName)}
          """;
+
+    /// <summary>What Elite calls the captain and how the Commander's name for them relates to it; empty without a captain on file.</summary>
+    private static string OwnName(CarrierState state, string? captainName)
+    {
+        if (CarrierPayrollCallout.EliteCaptainName(state) is not { } elite)
+        {
+            return string.Empty;
+        }
+
+        const string Payroll = "Each week the carrier's payroll goes out made out to that name.";
+
+        return CarrierPayrollCallout.Classify(elite, captainName) switch
+        {
+            CaptainNameCase.Unnamed =>
+                $"\n\nElite's crew list gives your name as {elite}, and the Commander has given you no other, so it is your own name. {Payroll}",
+            CaptainNameCase.Same =>
+                $"\n\nElite's crew list gives your name as {elite}, which is what the Commander calls you. {Payroll} It is made out to you, as it should be.",
+            _ =>
+                $"\n\nElite's crew list gives your name as {elite}, but the Commander calls you {captainName?.Trim()}. {Payroll} {elite} is your nom de plume; play that lightly if asked.",
+        };
+    }
 }

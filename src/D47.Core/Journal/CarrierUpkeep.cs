@@ -40,6 +40,9 @@ public static class CarrierUpkeep
     public static int TicksBetween(DateTimeOffset from, DateTimeOffset to) =>
         to <= from ? 0 : (int)(WeeksSinceAnchor(to) - WeeksSinceAnchor(from));
 
+    /// <summary>The most recent tick at or before <paramref name="at"/>.</summary>
+    public static DateTimeOffset TickAtOrBefore(DateTimeOffset at) => Anchor.AddDays(7 * WeeksSinceAnchor(at));
+
     private static long WeeksSinceAnchor(DateTimeOffset at)
     {
         var ticks = (at - Anchor).Ticks;

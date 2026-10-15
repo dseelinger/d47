@@ -136,6 +136,11 @@ public static class ShippedCallouts
             .Add(new CarrierCallout())
             .Add(new CarrierFuelCallout { Plan = () => sources.PlanBook.Last(D47.Core.Knowledge.RoutePlanKind.Carrier), Warnings = sources.StandingWarnings })
             .Add(new CarrierUpkeepCallout { Warnings = sources.StandingWarnings })
+            .Add(new CarrierPayrollCallout
+            {
+                LastSaidWeek = () => sources.ViewState.Load().CarrierPayrollSaidFor,
+                RememberSaidWeek = week => sources.ViewState.Save(sources.ViewState.Load() with { CarrierPayrollSaidFor = week }),
+            })
 
             .Add(new MissionCallout { Offer = sources.HandInOffer, Markets = sources.MarketBook, Log = loggers.CreateLogger<MissionCallout>() })
 
@@ -381,6 +386,7 @@ public static class ShippedCallouts
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
+        engine.SetEnabled("carrier-payroll", callouts.CarrierPayroll, now);
         engine.SetEnabled("missions", callouts.Missions, now);
         engine.SetEnabled("reminders", callouts.Reminders, now);
 
@@ -403,6 +409,10 @@ public static class ShippedCallouts
                 case CarrierCallout carrier:
                     carrier.CaptainName = () => settings.Current.Speech.CarrierCaptainName;
                     carrier.TowerName = () => settings.Current.Speech.TowerName;
+                    break;
+
+                case CarrierPayrollCallout payroll:
+                    payroll.CaptainName = () => settings.Current.Speech.CarrierCaptainName;
                     break;
 
                 case BiologyCallout biology:

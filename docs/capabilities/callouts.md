@@ -1131,6 +1131,26 @@ less the upkeep since. It is said once for each recorded balance, and again afte
 Nothing is said before d47 has a weekly figure, for a squadron carrier or one you do not own, or
 while d47 is catching up on a journal it did not watch being written.
 
+#### Carrier payroll {#carrier-payroll}
+
+The first time you dock at your own carrier after the weekly tick (Thursday 07:00 UTC), the carrier
+captain mentions that the week's payroll has gone out, made out to the name Elite has on file for the
+captain ([#1184](https://github.com/dseelinger/d47/issues/1184)). What the captain says about the name
+depends on the Captain name setting. The comparison ignores case and surrounding spaces, and the first
+or last word of Elite's name counts as the same name.
+
+```text
+Setting empty:      Payroll's gone through, Commander Hale. Made out to me, Jane Doe.
+Setting "Doe":      Payroll's gone through, Commander Hale, made out to me, as it should be.
+Setting "Reyes":    Payroll's gone through. The cheque says Jane Doe, of course. My nom de plume.
+```
+
+Where d47 knows the carrier's weekly upkeep, the line adds it as the carrier's upkeep, not the
+captain's pay. It is said once for each tick week, including after d47 restarts, and after the
+captain's welcome. The captain also answers questions about the payroll or the Elite name in line with
+the table. Nothing is said for a jump request, for a squadron carrier or one you do not own, when
+Elite names no captain, or while d47 is catching up on a journal it did not watch being written.
+
 #### Reminders {#reminders}
 
 A reminder waits for a moment in the game and is said once when the journal reaches it

@@ -660,6 +660,9 @@ public sealed record CalloutSettings
     /// <summary>A warning when the own carrier's balance covers under four weeks of upkeep (#835).</summary>
     public bool CarrierUpkeep { get; init; } = true;
 
+    /// <summary>The carrier captain mentioning the week's payroll on the first docking after the tick (#1184).</summary>
+    public bool CarrierPayroll { get; init; } = true;
+
     /// <summary>Missions handed in at the station docked at or left, and their expiry warnings (#662).</summary>
     public bool Missions { get; init; } = true;
 

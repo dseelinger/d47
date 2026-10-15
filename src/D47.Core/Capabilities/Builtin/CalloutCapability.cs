@@ -66,6 +66,7 @@ public static class CalloutCapability
     public const string SessionLengthKey = "callouts.sessionLength";
     public const string SessionLengthHoursKey = "callouts.sessionLengthHours";
     public const string CarrierUpkeepKey = "callouts.carrierUpkeep";
+    public const string CarrierPayrollKey = "callouts.carrierPayroll";
     public const string MissionsKey = "callouts.missions";
     public const string RemindersKey = "callouts.reminders";
     public const string DomainKey = "callouts.domain";
@@ -618,6 +619,16 @@ public static class CalloutCapability
                 "carrier upkeep",
                 s => s.Callouts.CarrierUpkeep,
                 (s, v) => s with { Callouts = s.Callouts with { CarrierUpkeep = v } }),
+
+            Toggle(
+                CarrierPayrollKey,
+                "Carrier payroll",
+                "On the first docking at your own carrier after the weekly tick, the captain mentions the "
+                + "week's payroll and the name Elite has on file for them. Said once for each tick week.",
+                "carrier-payroll",
+                "carrier payroll",
+                s => s.Callouts.CarrierPayroll,
+                (s, v) => s with { Callouts = s.Callouts with { CarrierPayroll = v } }),
 
             Toggle(
                 MissionsKey,
