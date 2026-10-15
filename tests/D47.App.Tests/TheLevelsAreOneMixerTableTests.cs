@@ -63,6 +63,9 @@ public class TheLevelsAreOneMixerTableTests
 
     private static void Click(SettingsHost host, Control target, Point within)
     {
+        target.BringIntoView();
+        Jobs();
+
         var point = target.TranslatePoint(within, host.Window)!.Value;
 
         host.Window.MouseDown(point, MouseButton.Left);

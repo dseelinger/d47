@@ -551,11 +551,11 @@ chapter (a recording plays or a call comes in), their words are a line in their 
 description of what they said. A cast member may give their own name only when introducing themselves:
 "This is …", "My name is …" or "… here".
 
-- **`ship`** is the core aboard, in the ship's voice as you set it under **Its voice**. While the core
+- **`ship`** is the core aboard, in the ship's voice as you set it under **Your core › Its voice**. While the core
   aboard is stock COVAS, a `ship` line is spoken in the narrator voice and posted from the Narrator, and
   the chapter writer is told so, so it writes those lines as narration. With a Guardian core or a core you
   wrote aboard, that core speaks them. This is decided when the line is spoken.
-- **`narrator`** is the narrator voice set under **Narrator Voice**.
+- **`narrator`** is the narrator voice set under **Other voices › Narrator and stories**.
 - **A cast member** the story marked `pinned: true` speaks in the provider and voice the story gave it,
   Kokoro or Chatterbox, whatever **Where each voice comes from** says. Any other cast member speaks through the
   provider you set for the ship, in the voice paired with it for that provider, or in the crew voice while none
@@ -608,11 +608,11 @@ Kokoro download.
 
 - the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
 - the Kokoro download and its size, when a member speaks through Kokoro and it is not downloaded;
-- a recording of Your voice under **Settings**, **Custom voices**, when a member speaks in your own voice;
-- the provider's API key under **Settings**, **Its voice**, when you chose a provider that needs a key and
+- a recording of Your voice under **Settings**, **Providers**, **Speech synthesis**, **Custom voices**, when a member speaks in your own voice;
+- the provider's API key under **Settings**, **Providers**, **Speech synthesis**, when you chose a provider that needs a key and
   none is stored.
 
-The **Local voice** and **Chatterbox voice** download rows under **Its voice** appear while a downloaded
+The **Local voice** and **Chatterbox voice** download rows under **Providers › Speech synthesis** appear while a downloaded
 story's cast needs them, even when no slot uses that provider. A pick tried anyway is refused, and the ship
 posts one message to the Story log listing the same things.
 

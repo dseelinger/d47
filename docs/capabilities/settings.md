@@ -139,8 +139,9 @@ in: what you can change by talking to it.
 
 ### Where things are on the page
 
-The Settings tab is one scrolling page in six areas: **Voice and hearing**, **The ship's AI**,
-**Speaking up**, **Acting on the game**, **Screens**, and **Privacy and this install**. Each area
+The Settings tab is one scrolling page in eight areas: **Your core**, **Other voices**,
+**Hearing and sound**, **Providers**, **You and your records**, **Acting on the game**, **Screens**,
+and **Privacy and this install**. Each area
 holds a few sections, and each section is one card. The nav down the side lists the areas with
 their sections beneath them, and marks the section at the top of the page as you scroll.
 
@@ -149,7 +150,7 @@ A section is about one job rather than one part of Directive 47, so it can hold 
 section's rows, and its **?** opens the page for the part of Directive 47 it is mostly about.
 
 A few rows are on the tab they concern instead, under **Page settings**: Rescan my
-journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices on Asset Mgmt ›
+journals and Hull pictures on Asset Mgmt › Ships, the captain and tower's names and voices, and the carrier's humor, on Asset Mgmt ›
 Carrier, and Notable places for short stories on Stories.
 
 ### Ask for it

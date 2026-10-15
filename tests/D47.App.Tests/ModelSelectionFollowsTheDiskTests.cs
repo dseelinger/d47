@@ -198,6 +198,8 @@ public class ModelSelectionFollowsTheDiskTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "speech-recognition" });
+
         return (SettingsHost.Open(settings, viewState, paths, downloadModel: download), settings);
     }
 

@@ -75,7 +75,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void ChoosingV3TakesTheSpeakingRateOffThePageAndFlashBringsItBack()
     {
         var host = OnElevenLabs(out var settings);
-        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        host.View.ShowPlaceOf(SpeechCapability.RateKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         settings.Apply(SpeechCapability.ElevenLabsModelKey, ElevenLabsModels.Flash, SettingsCaller.Panel);

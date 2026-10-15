@@ -58,7 +58,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
-        Assert.Contains($"Download Chatterbox, about {ChatterboxAssets.TotalMegabytes:0} MB, under Settings, Its voice.", refusal, StringComparison.Ordinal);
+        Assert.Contains($"Download Chatterbox, about {ChatterboxAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.", refusal, StringComparison.Ordinal);
         Assert.DoesNotContain("Record your voice", refusal, StringComparison.Ordinal);
         Assert.Single(posted);
     }
@@ -73,7 +73,7 @@ public sealed class AStoryWithAnUnreadyVoiceCannotBePickedTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(
-            $"{Card.Title} cannot start until its voices are ready. Download the Kokoro local voice, about {KokoroAssets.TotalMegabytes:0} MB, under Settings, Its voice.",
+            $"{Card.Title} cannot start until its voices are ready. Download the Kokoro local voice, about {KokoroAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.",
             refusal);
     }
 

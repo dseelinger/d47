@@ -105,7 +105,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     public void AStoredDeepgramKeyIsBulletsAndABadgeWithNoField()
     {
         var host = Open(out _, stored: true);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         var editor = Editor(host, DeepgramRow);
 
@@ -132,7 +132,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     public void ReplaceOpensTheFieldAndCancelLeavesTheStoreAlone()
     {
         var host = Open(out var settings, stored: true);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         var editor = Editor(host, DeepgramRow);
 
@@ -159,7 +159,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     public void SaveOverAStoredKeyReturnsToTheStoredLine()
     {
         var host = Open(out var settings, stored: true);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         var editor = Editor(host, DeepgramRow);
 
@@ -181,7 +181,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     {
         var checks = 0;
         var host = Open(out _, stored: true, onVerify: () => checks++);
-        ShowPlace(host, "voice");
+        ShowPlace(host, "speech-synthesis");
 
         var editor = Editor(host, ElevenLabsRow);
         var verify = Press(editor, "VERIFY");
@@ -203,7 +203,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     public void WithNoKeyTheFieldAndSaveShowAtOnce()
     {
         var host = Open(out _, stored: false);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         var editor = Editor(host, DeepgramRow);
 
@@ -222,7 +222,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     public void ForgetKeyAsksAndOnYesDeletesTheKey()
     {
         var host = Open(out var settings, stored: true);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         var forget = Press(Editor(host, DeepgramRow), "FORGET KEY");
 
@@ -252,7 +252,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     {
         using var kit = AppLook.ControlKit();
         var host = Open(out _, stored: true);
-        ShowPlace(host, "voice-input");
+        ShowPlace(host, "speech-recognition");
 
         Click(Press(Editor(host, DeepgramRow), "FORGET KEY"));
 
@@ -278,7 +278,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
         {
             var host = Open(out _, stored, width, height);
 
-            foreach (var (place, key) in new[] { ("voice-input", DeepgramRow), ("voice", ElevenLabsRow) })
+            foreach (var (place, key) in new[] { ("speech-recognition", DeepgramRow), ("speech-synthesis", ElevenLabsRow) })
             {
                 ShowPlace(host, place);
                 host.View.ControlFor(key)!.BringIntoView();

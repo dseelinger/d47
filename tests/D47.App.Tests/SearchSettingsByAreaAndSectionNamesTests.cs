@@ -57,9 +57,9 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        var area = SettingsLayout.Areas.Single(a => a.Title == "Voice and hearing");
+        var area = SettingsLayout.Areas.Single(a => a.Title == "Hearing and sound");
 
-        Box(host).Text = "Voice and hearing";
+        Box(host).Text = "Hearing and sound";
         Jobs();
 
         Assert.Equal(
@@ -78,6 +78,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        SettingsPageReading.Open(host.View, "voice-input");
         Box(host).Text = "ptt";
         Jobs();
 

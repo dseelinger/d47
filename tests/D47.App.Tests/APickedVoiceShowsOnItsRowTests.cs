@@ -108,6 +108,8 @@ public class APickedVoiceShowsOnItsRowTests
     {
         // The full settings page, not the carrier strip: push-to-talk lives there.
         var (settings, viewState, paths) = TestSurface.Create(voices: Voices());
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         var host = SettingsHost.Open(settings, viewState, paths);
         Dispatcher.UIThread.RunJobs();
 

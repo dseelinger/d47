@@ -152,17 +152,17 @@ public static class StoryVoices
             .Where(provider => provider.NeedsKey && here.HasKey?.Invoke(provider.Id) == false)
             .DistinctBy(provider => provider.Id))
         {
-            missing.Add($"Add your {provider.Name} API key under Settings, Its voice.");
+            missing.Add($"Add your {provider.Name} API key under Settings, Providers, Speech synthesis.");
         }
 
         if (!here.Chatterbox && voices.Any(voice => voice.Provider == StorySpeaker.Chatterbox))
         {
-            missing.Add($"Download Chatterbox, about {ChatterboxAssets.TotalMegabytes:0} MB, under Settings, Its voice.");
+            missing.Add($"Download Chatterbox, about {ChatterboxAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.");
         }
 
         if (!here.Kokoro && voices.Any(voice => voice.Provider == StorySpeaker.Kokoro))
         {
-            missing.Add($"Download the Kokoro local voice, about {KokoroAssets.TotalMegabytes:0} MB, under Settings, Its voice.");
+            missing.Add($"Download the Kokoro local voice, about {KokoroAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.");
         }
 
         if (!here.OwnRecording && voices.Any(voice => voice.Provider == StorySpeaker.Chatterbox && voice.Voice == StorySpeaker.Own))

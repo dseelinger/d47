@@ -28,6 +28,8 @@ public class OneRowForPushToTalkTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         return (settings, SettingsHost.Open(settings, viewState, paths));
     }
 
@@ -98,6 +100,8 @@ public class OneRowForPushToTalkTests
         settings.Apply(ListeningCapability.PushToTalkKeyKey, "RightShift", SettingsCaller.Panel);
         settings.Apply(ListeningCapability.PushToTalkButtonKey, $"{Stick}#10", SettingsCaller.Panel);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         var host = SettingsHost.Open(settings, viewState, paths);
         Dispatcher.UIThread.RunJobs();
 
@@ -163,6 +167,8 @@ public class OneRowForPushToTalkTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(
             settings, viewState, paths, switches: controllers ? Editing(paths, settings) : null);
@@ -248,6 +254,8 @@ public class OneRowForPushToTalkTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
         var row = Row(host, "Push-to-talk")!;
@@ -373,6 +381,8 @@ public class OneRowForPushToTalkTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths, switches: Editing(paths, settings));
         var row = Row(host, "Push-to-talk")!;

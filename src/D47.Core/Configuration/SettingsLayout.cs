@@ -80,20 +80,14 @@ public static class SettingsLayout
 
     /// <summary>
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
-    /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry (17
-    /// entries, all Advanced, so 0 shown); <c>voice</c> holds nine ship's voice rows, the provider slot
-    /// family, the two COVAS Voice rows (Advanced), the Narrator Voice row, the Guardian Voice Effects preset row and
-    /// five cost rows (19 entries); <c>persona</c>
-    /// spells out a humor level and frequency for each of three groups (17 entries, the six humor rows
-    /// Advanced); <c>voice-input</c> holds the hearing provider
-    /// beside the microphone, wake word and corrections rows (16 entries, the hosted providers' keys one
-    /// family entry of which at most one row applies at a time, and every speech-recognition row
-    /// Advanced); <c>chatter</c> holds the scene chatter row beside NPC chatter as well as the seven
-    /// messages rows and the accent row (15 entries, the chatter rows Advanced); <c>plans-and-stories</c>
-    /// holds the callout toggles beside the two week-boundary rows (20 entries, the week rows Advanced);
-    /// <c>exploring</c> holds the exploration and exobiology callout toggles (16 entries).
+    /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry, beside
+    /// the output device (19 entries, the mixer rows Advanced); <c>callouts</c> holds the callouts switch and
+    /// the plans and reminders toggles (18 entries, the week rows Advanced); <c>exploring</c> holds the
+    /// exploration and exobiology callout toggles (17 entries); <c>chatter</c> holds the scene chatter row
+    /// beside NPC chatter as well as the seven messages rows, the accent and NPC humor rows, the carrier
+    /// captain and the fighter pilot (19 entries, the chatter rows Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "voice", "persona", "voice-input", "chatter", "plans-and-stories", "exploring"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -136,229 +130,40 @@ public static class SettingsLayout
     public static bool IsSubsystemLevelFamily(string key) =>
         key.StartsWith("logging.subsystems.", StringComparison.Ordinal);
 
+    private const string OtherVoicesSwitchHelp =
+        "These stop when Speak without being asked is off. That switch is under Your core › Callouts.";
+
     public static readonly IReadOnlyList<SettingsArea> Areas =
     [
         new SettingsArea(
-            "voice",
-            "Voice and hearing",
-            "How D47 hears you, and how it sounds.",
+            "core",
+            "Your core",
+            "Which core is aboard, how it sounds, and what it says without being asked.",
             [
-                new SettingsPlace(
-                    "voice-input",
-                    "Voice Input",
-                    "The input device, how D47 decides you are talking to it, and which model turns speech into words.",
-                    "listening",
-                    ["mic", "ptt", "stt", "whisper"],
-                    false,
-                    [
-                        G(
-                            "Microphone",
-                            "The input device, and how D47 decides you are talking to it.",
-                            [
-                                E("listening.inputDevice"),
-                                E("listening.pushToTalkKey"),
-                                E("listening.cancelHotkey"),
-                                E("listening.mode"),
-                                E("listening.sensitivity"),
-                                E("listening.silence"),
-                                E("listening.preRoll"),
-                                E("listening.echoCancellation"),
-                                E("listening.noiseSuppression"),
-                            ]),
-                        G(
-                            "Speech recognition",
-                            "Who turns speech into words, and where it runs.",
-                            [
-                                E("listening.provider"),
-                                F(IsHearingProviderKeyFamily),
-                                E("listening.model"),
-                                E("listening.useGpu"),
-                            ]),
-                        G(
-                            "Wake word",
-                            "What D47 answers to, hands free, and how long it keeps listening after.",
-                            [E("listening.wakeWords"), E("listening.wakeWindow")]),
-                        G(
-                            "Corrections",
-                            "Names D47 has learned to hear correctly.",
-                            [E("listening.corrections")]),
-                    ]),
-                new SettingsPlace(
-                    "voice",
-                    "Its voice",
-                    "Where spoken replies are synthesised, in which voice, and what it costs.",
-                    "speech",
-                    ["tts", "text to speech"],
-                    false,
-                    [
-                        G(
-                            "Ship's voice",
-                            "Where D47 speaks from, and who voices it.",
-                            [
-                                E("speech.outputDevice"),
-                                E("speech.provider"),
-                                E("speech.voice"),
-                                E("speech.rate"),
-                                F(IsLocalVoiceDownloadFamily),
-                                E("speech.localVoiceBuild"),
-                                F(IsSpeechProviderKeyFamily),
-                                E("speech.elevenlabs.model"),
-                                E("speech.resetVoices"),
-                            ]),
-                        G(
-                            "Where each voice comes from",
-                            "Every voice that is not the ship's own can come from a different provider.",
-                            [F(IsVoiceProviderSlotFamily)]),
-                        G(
-                            "COVAS Voice",
-                            "How the stock COVAS core sounds.",
-                            [E("speech.covasVoice.reverb"), E("speech.covasVoice.test")]),
-                        G(
-                            "Narrator Voice",
-                            "Who reads the Narrator's lines.",
-                            [
-                                E("speech.narratorVoice"),
-                                .. Capabilities.Builtin.SpeechCapability.SeatVoiceRoles
-                                    .Select(role => E(Capabilities.Builtin.SpeechCapability.SeatVoiceKey(role))),
-                            ]),
-                        G(
-                            "Guardian Voice Effects",
-                            "Optional treatments for the ship AI's voice, all off by default and global to every core.",
-                            [E("speech.guardianVoice.preset")]),
-                        G(
-                            "What it costs",
-                            "What this session has spent, and the rates it was priced at.",
-                            [
-                                E("speech.characterPrice"),
-                                E("speech.minutePrice"),
-                                E("speech.spent"),
-                                E("speech.spentBySlot"),
-                                E("speech.egress"),
-                            ]),
-                    ]),
-                new SettingsPlace(
-                    "custom-voices",
-                    "Custom voices",
-                    "Your voice and other voices you record or import, kept on this PC, for Chatterbox to speak in.",
-                    "speech",
-                    ["record", "my voice", "own voice", "your voice", "import", "clone"],
-                    false,
-                    [
-                        G(
-                            "Custom voices",
-                            "Record, import, hear, rename and delete voices.",
-                            [E("speech.customVoices")]),
-                    ]),
-                new SettingsPlace(
-                    "sounds",
-                    "Sounds and levels",
-                    "The cues, the thinking bed, and the mixer for every channel.",
-                    "audio",
-                    [],
-                    false,
-                    [
-                        G(
-                            "Cues",
-                            "Sounds D47 makes while it listens and thinks.",
-                            [
-                                E("speech.cues"),
-                                E("speech.thinkingBed"),
-                            ]),
-                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
-                        {
-                            Layout = SettingsGroupLayout.Mixer,
-                        },
-                        G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
-                    ]),
-            ]),
-        new SettingsArea(
-            "ai",
-            "The ship's AI",
-            "Who answers you, how hard it thinks, and what it keeps between sessions.",
-            [
-                new SettingsPlace(
-                    "language-model",
-                    "Language model",
-                    "Which provider and model answer, and how hard they think.",
-                    "conversation",
-                    [],
-                    false,
-                    [
-                        G(
-                            "Provider and model",
-                            "Who answers, with which model, and how hard it thinks.",
-                            [
-                                E("llm.provider"),
-                                F(IsLlmProviderKeyFamily),
-                                E("llm.endpoint"),
-                                E("llm.model"),
-                                E("llm.test"),
-                                E("llm.backgroundModel"),
-                                E("llm.effortFloor"),
-                                E("llm.effortCeiling"),
-                                E("models.refreshCatalog"),
-                            ]),
-                    ]),
-                new SettingsPlace(
-                    "look-up",
-                    "What it can look up",
-                    "What D47 may reach out to the web or the galaxy index for.",
-                    "conversation",
-                    [],
-                    false,
-                    [
-                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.inaraKey")]),
-                    ]),
-                new SettingsPlace(
-                    "turn-fails",
-                    "When a turn fails",
-                    "How many times a failing turn is retried, and how long it waits.",
-                    "speech",
-                    [],
-                    false,
-                    [
-                        G(
-                            "Retries",
-                            "How often a failed turn is tried again, and how long D47 waits for one.",
-                            [
-                                E("speech.retryAttempts"),
-                                E("speech.retryWait"),
-                                E("speech.retryBackoff"),
-                                E("speech.turnTimeout"),
-                            ]),
-                    ]),
                 new SettingsPlace(
                     "persona",
-                    "Persona",
-                    "Which core is aboard, its character, and what it knows about you.",
+                    "Core and character",
+                    "Which core is aboard, its character, its humor and its name.",
                     "persona",
                     [],
                     false,
                     [
                         G(
                             "Core and character",
-                            "Which core is aboard, how it behaves, and what it knows about you.",
+                            "Which core is aboard, and how it behaves.",
                             [
                                 E("persona.id"),
                                 E("llm.personality"),
                                 E("persona.introductions"),
                                 E("persona.own"),
                                 E("persona.avatarClips"),
-                                E("llm.characterSheet"),
-                                E("llm.aboutMe"),
-                                E("llm.scenario"),
-                                E("llm.scenarioAudience", under: true),
                             ]),
                         G(
                             "Humor",
-                            "How funny each group may be, and on how many of its lines.",
+                            "How funny the core may be, and on how many of its lines.",
                             [
                                 E("persona.coreHumor"),
                                 E("persona.coreHumorPercent", under: true),
-                                E("persona.npcHumor"),
-                                E("persona.npcHumorPercent", under: true),
-                                E("persona.carrierHumor"),
-                                E("persona.carrierHumorPercent", under: true),
                             ]),
                         G(
                             "Ship name",
@@ -374,58 +179,58 @@ public static class SettingsLayout
                             ]),
                     ]),
                 new SettingsPlace(
-                    "memory",
-                    "Memory, notes and debrief",
-                    "What D47 remembers between sessions, and what it drafts from a session's corrections.",
-                    "memory",
+                    "voice",
+                    "Its voice",
+                    "How the core sounds, and the effects on its voice.",
+                    "speech",
                     [],
                     false,
                     [
                         G(
-                            "Memory and debrief",
-                            "What D47 keeps between sessions, and what it drafts after one.",
-                            [
-                                E("memory.enabled"),
-                                E("memory.expiryDays"),
-                                E("memory.store"),
-                                E("lore.book"),
-                                E("debrief.enabled"),
-                                E("debrief.directions"),
-                            ]),
-                    ]),
-                new SettingsPlace(
-                    "logs-and-goals",
-                    "Logs and goals",
-                    "The Commander's log, and the long campaigns tracked alongside it.",
-                    "logbook",
-                    [],
-                    false,
-                    [
+                            "Voice",
+                            "Who voices the core aboard, and how fast it speaks.",
+                            [E("speech.voice"), E("speech.rate")]),
                         G(
-                            "Log and goals",
-                            "How the Commander's log is written, and where it and your goals are kept.",
-                            [
-                                E("logbook.voice"),
-                                E("logbook.range"),
-                                E("logbook.length"),
-                                E("logbook.store"),
-                                E("goals.store"),
-                            ]),
+                            "COVAS Voice",
+                            "How the stock COVAS core sounds.",
+                            [E("speech.covasVoice.reverb"), E("speech.covasVoice.test")]),
+                        G(
+                            "Guardian Voice Effects",
+                            "Optional treatments for the ship AI's voice, all off by default and global to every core.",
+                            [E("speech.guardianVoice.preset")]),
                     ]),
-            ]),
-        new SettingsArea(
-            "speaking-up",
-            "Speaking up",
-            "What D47 says without being asked.",
-            [
                 new SettingsPlace(
                     "callouts",
                     "Callouts",
-                    "The one switch every callout below depends on.",
+                    "The one switch every callout depends on, and the plans and reminders the core raises.",
                     "callouts",
                     [],
                     false,
-                    [G("All callouts", "One switch for everything D47 says without being asked.", [E("callouts.enabled")])]),
+                    [
+                        G("All callouts", "One switch for everything D47 says without being asked.", [E("callouts.enabled")]),
+                        G(
+                            "Plans and reminders",
+                            "What the core says about your checklist and reminders, community goals, trades and what it pays attention to.",
+                            [
+                                E("callouts.checklist"),
+                                E("callouts.continuity"),
+                                E("callouts.recap"),
+                                E("callouts.communityGoalSales"),
+                                E("callouts.weekBoundaryDay", under: true),
+                                E("callouts.weekBoundaryHourUtc", under: true),
+                                E("callouts.communityGoalExpiry"),
+                                E("callouts.colonisation"),
+                                E("callouts.powerplayCycle"),
+                                E("callouts.missions"),
+                                E("callouts.outstandingCrimes"),
+                                E("callouts.reminders"),
+                                E("callouts.sessionLength"),
+                                E("callouts.sessionLengthHours", under: true),
+                                E("callouts.domain"),
+                                E("callouts.tradingMode"),
+                                E("callouts.tradingModeMinHold", under: true),
+                            ]),
+                    ]),
                 new SettingsPlace(
                     "in-flight",
                     "In flight",
@@ -509,40 +314,51 @@ public static class SettingsLayout
                                 E("callouts.holdFull"),
                             ]),
                     ]),
+            ]),
+        new SettingsArea(
+            "other-voices",
+            "Other voices",
+            "Everyone aboard and on comms who is not your core.",
+            [
                 new SettingsPlace(
-                    "plans-and-stories",
-                    "Plans and stories",
-                    "Checklist changes, reminders, session length, continuity, stories, community goals, your core's subject, what to buy and the Narrator.",
+                    "narrator-and-stories",
+                    "Narrator and stories",
+                    "The Narrator telling your story, and when D47 offers a story.",
                     "callouts",
                     [],
                     false,
                     [
                         G(
-                            "Plan and story callouts",
-                            "What D47 says about your checklist and reminders, stories, community goals, trades and what your core pays attention to, and the Narrator telling your story.",
+                            "Narrator",
+                            $"Who tells your story, and how often. {OtherVoicesSwitchHelp}",
                             [
-                                E("callouts.checklist"),
-                                E("callouts.continuity"),
-                                E("callouts.recap"),
-                                E("callouts.adventure"),
-                                E("callouts.backstoryNudge", under: true),
-                                E("callouts.communityGoalSales"),
-                                E("callouts.weekBoundaryDay", under: true),
-                                E("callouts.weekBoundaryHourUtc", under: true),
-                                E("callouts.communityGoalExpiry"),
-                                E("callouts.colonisation"),
-                                E("callouts.powerplayCycle"),
-                                E("callouts.missions"),
-                                E("callouts.outstandingCrimes"),
-                                E("callouts.reminders"),
-                                E("callouts.sessionLength"),
-                                E("callouts.sessionLengthHours", under: true),
-                                E("callouts.domain"),
-                                E("callouts.tradingMode"),
-                                E("callouts.tradingModeMinHold", under: true),
                                 E("callouts.narrator"),
                                 E("callouts.narratorSeconds", under: true),
                                 E("callouts.narratorMaxSeconds", under: true),
+                                E("speech.narratorVoice"),
+                            ]),
+                        G(
+                            "Stories",
+                            $"Whether D47 offers a story, and nudges you about one. {OtherVoicesSwitchHelp}",
+                            [
+                                E("callouts.adventure"),
+                                E("callouts.backstoryNudge", under: true),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "crew-seats",
+                    "Crew seats",
+                    "Who speaks from each crew seat.",
+                    "speech",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Seat voices",
+                            "Who speaks from each seat, on every ship. A seat's unprompted remarks stop when Speak without being asked is off. That switch is under Your core › Callouts.",
+                            [
+                                .. Capabilities.Builtin.SpeechCapability.SeatVoiceRoles
+                                    .Select(role => E(Capabilities.Builtin.SpeechCapability.SeatVoiceKey(role))),
                             ]),
                     ]),
                 new SettingsPlace(
@@ -555,7 +371,7 @@ public static class SettingsLayout
                     [
                         G(
                             "Chatter",
-                            "Invented radio traffic between other pilots and at settlements, and how often it plays.",
+                            $"Invented radio traffic between other pilots and at settlements, and how often it plays. {OtherVoicesSwitchHelp}",
                             [
                                 E("callouts.ambient"),
                                 E("callouts.ambientSeconds", under: true),
@@ -579,12 +395,258 @@ public static class SettingsLayout
                             ]),
                         G(
                             "How NPCs sound",
-                            "How often the words written for an accented voice suit its accent.",
-                            [E("speech.accentPercent")]),
+                            "How often the words written for an accented voice suit its accent, and how funny the other pilots may be.",
+                            [
+                                E("speech.accentPercent"),
+                                E("persona.npcHumor"),
+                                E("persona.npcHumorPercent", under: true),
+                            ]),
+                        G(
+                            "Carrier captain",
+                            $"Your carrier's captain mentioning the weekly payroll. {OtherVoicesSwitchHelp}",
+                            [E("callouts.carrierPayroll")]),
                         G(
                             "Fighter pilot",
-                            "Your hired pilot speaking when the fighter launches, docks, is lost or is rebuilt.",
+                            $"Your hired pilot speaking when the fighter launches, docks, is lost or is rebuilt. {OtherVoicesSwitchHelp}",
                             [E("callouts.fighter")]),
+                    ]),
+            ]),
+        new SettingsArea(
+            "voice",
+            "Hearing and sound",
+            "How D47 hears you, and the sounds it plays.",
+            [
+                new SettingsPlace(
+                    "voice-input",
+                    "Voice Input",
+                    "The input device, and how D47 decides you are talking to it.",
+                    "listening",
+                    ["mic", "ptt"],
+                    false,
+                    [
+                        G(
+                            "Microphone",
+                            "The input device, and how D47 decides you are talking to it.",
+                            [
+                                E("listening.inputDevice"),
+                                E("listening.pushToTalkKey"),
+                                E("listening.cancelHotkey"),
+                                E("listening.mode"),
+                                E("listening.sensitivity"),
+                                E("listening.silence"),
+                                E("listening.preRoll"),
+                                E("listening.echoCancellation"),
+                                E("listening.noiseSuppression"),
+                            ]),
+                        G(
+                            "Wake word",
+                            "What D47 answers to, hands free, and how long it keeps listening after.",
+                            [E("listening.wakeWords"), E("listening.wakeWindow")]),
+                        G(
+                            "Corrections",
+                            "Names D47 has learned to hear correctly.",
+                            [E("listening.corrections")]),
+                    ]),
+                new SettingsPlace(
+                    "sounds",
+                    "Sounds and levels",
+                    "The output device, the cues, the thinking bed, and the mixer for every channel.",
+                    "audio",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Output",
+                            "Where D47 speaks from.",
+                            [E("speech.outputDevice")]),
+                        G(
+                            "Cues",
+                            "Sounds D47 makes while it listens and thinks.",
+                            [
+                                E("speech.cues"),
+                                E("speech.thinkingBed"),
+                            ]),
+                        G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
+                        {
+                            Layout = SettingsGroupLayout.Mixer,
+                        },
+                        G("Your own audio", "Sound files you've dropped in for D47 to use.", [E("audio.drops")]),
+                    ]),
+            ]),
+        new SettingsArea(
+            "providers",
+            "Providers",
+            "Which services answer, hear and speak, what they cost, and how hard D47 retries them.",
+            [
+                new SettingsPlace(
+                    "language-model",
+                    "Language model",
+                    "Which provider and model answer, and how hard they think.",
+                    "conversation",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Provider and model",
+                            "Who answers, with which model, and how hard it thinks.",
+                            [
+                                E("llm.provider"),
+                                F(IsLlmProviderKeyFamily),
+                                E("llm.endpoint"),
+                                E("llm.model"),
+                                E("llm.test"),
+                                E("llm.backgroundModel"),
+                                E("llm.effortFloor"),
+                                E("llm.effortCeiling"),
+                                E("models.refreshCatalog"),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "speech-recognition",
+                    "Speech recognition",
+                    "Which model turns speech into words, and where it runs.",
+                    "listening",
+                    ["stt", "whisper"],
+                    false,
+                    [
+                        G(
+                            "Speech recognition",
+                            "Who turns speech into words, and where it runs.",
+                            [
+                                E("listening.provider"),
+                                F(IsHearingProviderKeyFamily),
+                                E("listening.model"),
+                                E("listening.useGpu"),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "speech-synthesis",
+                    "Speech synthesis",
+                    "Where spoken replies are synthesised, your own voices, and what it costs.",
+                    "speech",
+                    ["tts", "text to speech", "record", "my voice", "own voice", "your voice", "import", "clone"],
+                    false,
+                    [
+                        G(
+                            "Provider",
+                            "Where D47 synthesises speech, and what the provider needs.",
+                            [
+                                E("speech.provider"),
+                                F(IsSpeechProviderKeyFamily),
+                                E("speech.elevenlabs.model"),
+                                F(IsLocalVoiceDownloadFamily),
+                                E("speech.localVoiceBuild"),
+                                E("speech.resetVoices"),
+                            ]),
+                        G(
+                            "Where each voice comes from",
+                            "Every voice that is not the ship's own can come from a different provider.",
+                            [F(IsVoiceProviderSlotFamily)]),
+                        G(
+                            "Custom voices",
+                            "Your voice and other voices you record or import, kept on this PC, for Chatterbox to speak in.",
+                            [E("speech.customVoices")]),
+                        G(
+                            "What it costs",
+                            "What this session has spent, and the rates it was priced at.",
+                            [
+                                E("speech.characterPrice"),
+                                E("speech.minutePrice"),
+                                E("speech.spent"),
+                                E("speech.spentBySlot"),
+                                E("speech.egress"),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "look-up",
+                    "Outside sources",
+                    "What D47 may reach out to the web or the galaxy index for.",
+                    "conversation",
+                    [],
+                    false,
+                    [
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.inaraKey")]),
+                    ]),
+                new SettingsPlace(
+                    "turn-fails",
+                    "When a turn fails",
+                    "How many times a failing turn is retried, and how long it waits.",
+                    "speech",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Retries",
+                            "How often a failed turn is tried again, and how long D47 waits for one.",
+                            [
+                                E("speech.retryAttempts"),
+                                E("speech.retryWait"),
+                                E("speech.retryBackoff"),
+                                E("speech.turnTimeout"),
+                            ]),
+                    ]),
+            ]),
+        new SettingsArea(
+            "you",
+            "You and your records",
+            "What D47 knows about you, and what it keeps between sessions.",
+            [
+                new SettingsPlace(
+                    "about-you",
+                    "About you",
+                    "Your character sheet, what you have told D47 about yourself, and the scenario.",
+                    "persona",
+                    [],
+                    false,
+                    [
+                        G(
+                            "About you",
+                            "What the core knows about you.",
+                            [
+                                E("llm.characterSheet"),
+                                E("llm.aboutMe"),
+                                E("llm.scenario"),
+                                E("llm.scenarioAudience", under: true),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "memory",
+                    "Memory, notes and debrief",
+                    "What D47 remembers between sessions, and what it drafts from a session's corrections.",
+                    "memory",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Memory and debrief",
+                            "What D47 keeps between sessions, and what it drafts after one.",
+                            [
+                                E("memory.enabled"),
+                                E("memory.expiryDays"),
+                                E("memory.store"),
+                                E("lore.book"),
+                                E("debrief.enabled"),
+                                E("debrief.directions"),
+                            ]),
+                    ]),
+                new SettingsPlace(
+                    "logs-and-goals",
+                    "Logs and goals",
+                    "The Commander's log, and the long campaigns tracked alongside it.",
+                    "logbook",
+                    [],
+                    false,
+                    [
+                        G(
+                            "Log and goals",
+                            "How the Commander's log is written, and where it and your goals are kept.",
+                            [
+                                E("logbook.voice"),
+                                E("logbook.range"),
+                                E("logbook.length"),
+                                E("logbook.store"),
+                                E("goals.store"),
+                            ]),
                     ]),
             ]),
         new SettingsArea(
@@ -801,6 +863,8 @@ public static class SettingsLayout
                 E("speech.carrierCaptainVoice"),
                 E("speech.towerName"),
                 E("speech.towerVoice"),
+                E("persona.carrierHumor"),
+                E("persona.carrierHumorPercent", under: true),
             ]),
         new SettingsTabPlace(
             "checklist", "checklist", false, "Checklist",

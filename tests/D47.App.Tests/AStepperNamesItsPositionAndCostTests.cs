@@ -24,6 +24,8 @@ public class AStepperNamesItsPositionAndCostTests
     public void TheSpeechModelStepperNamesItsPositionAndWhatSteppingOntoItCosts()
     {
         var host = Open();
+        host.View.RevealRow(ListeningCapability.ModelKey);
+        Dispatcher.UIThread.RunJobs();
 
         var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 
@@ -38,7 +40,7 @@ public class AStepperNamesItsPositionAndCostTests
     public void AProviderStepperNamesItsPositionAloneWhenNoChoiceHasACostToName()
     {
         var host = Open();
-        host.View.Reveal(SpeechCapability.Id);
+        host.View.RevealRow(SpeechCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         var stepper = Row(host, "Voice provider").GetVisualDescendants().OfType<Stepper>().First();
@@ -54,6 +56,8 @@ public class AStepperNamesItsPositionAndCostTests
     public void SteppingThroughTheThirdOfSixModelsShowsThreeOfSix()
     {
         var host = Open();
+        host.View.RevealRow(ListeningCapability.ModelKey);
+        Dispatcher.UIThread.RunJobs();
 
         var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
         var next = stepper.GetVisualDescendants().OfType<RepeatButton>()
@@ -77,6 +81,8 @@ public class AStepperNamesItsPositionAndCostTests
     public void TheSpeechModelStepperHasRoomForItsWholeFrameAndTheLineUnderIt()
     {
         var host = Open();
+        host.View.RevealRow(ListeningCapability.ModelKey);
+        Dispatcher.UIThread.RunJobs();
 
         var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
         var position = Position(stepper);
@@ -102,6 +108,8 @@ public class AStepperNamesItsPositionAndCostTests
     public void EachArrowRepeatsFourHundredMillisecondsInAtEightASecond()
     {
         var host = Open();
+        host.View.RevealRow(ListeningCapability.ModelKey);
+        Dispatcher.UIThread.RunJobs();
 
         var stepper = Row(host, "Speech model").GetVisualDescendants().OfType<Stepper>().First();
 

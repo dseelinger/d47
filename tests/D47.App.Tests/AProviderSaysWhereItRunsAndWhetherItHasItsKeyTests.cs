@@ -66,7 +66,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
     public void TheVoiceProviderStepperNamesEachOfItsSevenAndSaysWhatEachIs()
     {
         var (host, _) = OpenOnHearing();
-        host.View.Reveal(SpeechCapability.Id);
+        host.View.RevealRow(SpeechCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         var stepper = StepperFor(host, SpeechCapability.ProviderKey);
@@ -127,8 +127,8 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
         foreach (var (placeId, key) in new[]
                  {
                      ("voice-input", ListeningCapability.ModeKey),
-                     ("voice-input", ListeningCapability.ProviderKey),
-                     ("voice", SpeechCapability.ProviderKey),
+                     ("speech-recognition", ListeningCapability.ProviderKey),
+                     ("speech-synthesis", SpeechCapability.ProviderKey),
                  })
         {
             Open(host.View, placeId);
@@ -164,7 +164,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
         new ThemeManager(Avalonia.Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.Reveal(ListeningCapability.Id);
+        host.View.ShowPlaceOf(ListeningCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         return (host, secrets);

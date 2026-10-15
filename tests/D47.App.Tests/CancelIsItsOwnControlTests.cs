@@ -26,6 +26,8 @@ public class CancelIsItsOwnControlTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         return (settings, SettingsHost.Open(settings, viewState, paths));
     }
 

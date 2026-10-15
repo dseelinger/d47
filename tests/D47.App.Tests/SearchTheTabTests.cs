@@ -269,6 +269,8 @@ public class SearchTheTabTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         var host = SettingsHost.Open(settings, viewState, paths);
 
         var rowsBefore = Rows(host);
@@ -414,6 +416,8 @@ public class SearchTheTabTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         var host = SettingsHost.Open(settings, viewState, paths);
 
         Assert.Empty(MarkedRuns(host));
@@ -455,6 +459,8 @@ public class SearchTheTabTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
@@ -519,6 +525,8 @@ public class SearchTheTabTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
@@ -594,6 +602,8 @@ public class SearchTheTabTests
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
+
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
 
         var host = SettingsHost.Open(settings, viewState, paths);
         var box = (TextBox)host.Panel.FindControl<Control>("SearchInput")!;

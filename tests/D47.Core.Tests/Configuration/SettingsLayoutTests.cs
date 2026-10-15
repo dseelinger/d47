@@ -50,8 +50,8 @@ public class SettingsLayoutTests
             .ToDictionary(group => group.Title, group => group.Entries.Select(entry => entry.Key).ToArray());
 
         Assert.Contains("knowledge.inaraKey", groups["Outside sources"]);
-        Assert.Contains("callouts.weekBoundaryDay", groups["Plan and story callouts"]);
-        Assert.Contains("callouts.weekBoundaryHourUtc", groups["Plan and story callouts"]);
+        Assert.Contains("callouts.weekBoundaryDay", groups["Plans and reminders"]);
+        Assert.Contains("callouts.weekBoundaryHourUtc", groups["Plans and reminders"]);
         Assert.DoesNotContain(SettingsLayout.Tabs, tab => tab.Id == "routing-community-goal");
     }
 
@@ -140,6 +140,16 @@ public class SettingsLayoutTests
     }
 
     [Fact]
+    public void EveryTotalLimitExceptionIsReallyOverTheLimitTests()
+    {
+        var notOver = SettingsLayout.TotalLimitExceptions
+            .Where(id => EntryCount(id) <= SettingsLayout.MostEntriesPerPlace)
+            .ToArray();
+
+        Assert.True(notOver.Length == 0, $"Listed as over the total cap but not: {string.Join(", ", notOver)}");
+    }
+
+    [Fact]
     public void NoPlaceHoldsMoreThanFourteenEntriesExceptTheDocumentedExceptionTests()
     {
         var offending = SettingsLayout.Areas
@@ -183,15 +193,15 @@ public class SettingsLayoutTests
             rows.Select(r => r.Key));
     }
 
-    /// <summary>Every channel's Level and Mute, and Duck for the three that duck (#217, "Notes for the build").</summary>
+    /// <summary>The output device, then every channel's Level and Mute, and Duck for the three that duck; only the device is shown.</summary>
     [Fact]
-    public void SoundsHoldsExactlyEighteenAllAdvancedEntriesTests()
+    public void SoundsHoldsTheOutputDeviceAndEighteenAdvancedMixerEntriesTests()
     {
         var surface = Surface();
 
-        Assert.Equal(18, EntryCount("sounds"));
-        Assert.Equal(0, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(18, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(19, EntryCount("sounds"));
+        Assert.Equal(1, ShownCount(surface.Settings, "sounds"));
+        Assert.Equal(19, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     [Fact]
@@ -202,7 +212,8 @@ public class SettingsLayoutTests
 
     [Theory]
     [InlineData("voice-input", ListeningCapability.PushToTalkKeyKey)]
-    [InlineData("voice", SpeechCapability.ProviderKey)]
+    [InlineData("speech-synthesis", SpeechCapability.ProviderKey)]
+    [InlineData("voice", SpeechCapability.VoiceKey)]
     [InlineData("turn-fails", SpeechCapability.RetryAttemptsKey)]
     [InlineData("may-do", "actions.keyboard")]
     [InlineData("may-do", "actions.takeUsOut")]

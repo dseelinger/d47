@@ -165,6 +165,8 @@ public class RowWidthTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "speech-recognition" });
+
         var host = SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply("listening.model", model, SettingsCaller.Panel);

@@ -49,7 +49,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, Banner(view), "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("voice", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
 
         window.Close();
     }
@@ -93,7 +93,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, second, "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("voice", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
 
         window.Close();
     }
@@ -183,7 +183,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Jobs();
 
         Assert.Equal(PanelTab.Settings, headset.Nav.Tab);
-        Assert.Equal("voice", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
 
         headset.Dispose();
     }

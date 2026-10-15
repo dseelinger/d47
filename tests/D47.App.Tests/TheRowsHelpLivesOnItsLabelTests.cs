@@ -32,6 +32,8 @@ public class TheRowsHelpLivesOnItsLabelTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         return SettingsHost.Open(settings, viewState, paths);
     }
 

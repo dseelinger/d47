@@ -66,7 +66,7 @@ public sealed class TheCommandersCastVoiceIsTheOneSpokenTests
         var keyless = new CastVoicesHere(true, true, true) { HasKey = _ => false };
         var keyed = new CastVoicesHere(true, true, true) { HasKey = _ => true };
 
-        Assert.Equal(["Add your ElevenLabs API key under Settings, Its voice."], StoryVoices.Missing(Secret, null, keyless, choices));
+        Assert.Equal(["Add your ElevenLabs API key under Settings, Providers, Speech synthesis."], StoryVoices.Missing(Secret, null, keyless, choices));
         Assert.Empty(StoryVoices.Missing(Secret, null, keyed, choices));
     }
 

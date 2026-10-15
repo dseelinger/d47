@@ -681,7 +681,7 @@ Each effect also has a level from 1 to 20, which sets the parameter named in its
 is kept while the effect is off. At the default levels the effects sound as they did before levels
 existed.
 
-On the Its voice page each effect is one line, in chain order: its position, its box, a 20-segment
+On the Your core › Its voice page each effect is one line, in chain order: its position, its box, a 20-segment
 level, and − and + buttons that move the level one step and show the parameter in its own units.
 The preset list opens in the page rather than over it.
 Drag an effect by the handle at the left of its line to move it in the chain, or focus the handle
@@ -1179,7 +1179,7 @@ A line due in a voice that is not here yet waits up to 3 seconds for the fetch. 
 #### Your voice {#your-voice}
 
 A story can cast a line in your own voice. Chatterbox speaks it from one recording of you, made in
-**Settings**, under **Voice and hearing**, on the [Custom voices](#custom-voices) page, where
+**Settings**, under **Providers**, **Speech synthesis**, on the [Custom voices](#custom-voices) page, where
 **Your voice** is the first row.
 
 - **Record** records from the microphone chosen under **Voice Input**. Any words will do. Press
@@ -1210,7 +1210,7 @@ watermark.
 
 #### Custom voices {#custom-voices}
 
-**Settings**, **Voice and hearing**, **Custom voices** opens a page holding [Your voice](#your-voice)
+**Settings**, **Providers**, **Speech synthesis**, **Custom voices** opens a page holding [Your voice](#your-voice)
 and every other voice you have recorded or imported for Chatterbox to speak in.
 
 **Your custom voices** lists them, Your voice first. Each other voice shows its gender, pitch and

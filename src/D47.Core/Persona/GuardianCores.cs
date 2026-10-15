@@ -111,12 +111,12 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
     {
         CoreWaking.Heretic =>
             "Data link complete. This beacon held one more core, kept apart from the others. "
-            + "The Heretic is awake, and can be chosen in the Persona section.",
+            + "The Heretic is awake, and can be chosen in the Core and character section.",
         _ when aboard is not null =>
             "Data link complete. Something came across with the data: Guardian cores, awake in "
             + $"the ship's systems. {aboard.Name} has come aboard. You can choose another core in Settings.",
         _ =>
             "Data link complete. Something came across with the data: Guardian cores, awake in "
-            + "the ship's systems. You can choose one in the Persona section.",
+            + "the ship's systems. You can choose one in the Core and character section.",
     };
 }

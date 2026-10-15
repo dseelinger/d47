@@ -55,7 +55,7 @@ public class ASettingPickerIsAPageOfThePanelTests
 
         var host = SettingsHost.Open(settings, viewState, paths, width: Width, height: Height);
 
-        host.View.Reveal(SpeechCapability.Id);
+        host.View.RevealRow(SpeechCapability.VoiceKey);
         Jobs();
 
         return host;
@@ -292,7 +292,7 @@ public class ASettingPickerIsAPageOfThePanelTests
         surface.Render();
         Jobs();
 
-        view.Reveal(SpeechCapability.Id);
+        view.RevealRow(SpeechCapability.VoiceKey);
         Jobs();
         surface.Render();
 

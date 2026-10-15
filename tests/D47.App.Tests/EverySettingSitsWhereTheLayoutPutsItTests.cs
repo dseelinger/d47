@@ -57,8 +57,9 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     /// them.
     /// </summary>
     [AvaloniaTheory]
-    [InlineData("Voice and hearing")]
-    [InlineData("The ship's AI")]
+    [InlineData("Your core")]
+    [InlineData("Providers")]
+    [InlineData("You and your records")]
     [InlineData("Privacy and this install")]
     public void AnAreasPlacesAreListedUnderItsHeading(string areaTitle)
     {
@@ -85,7 +86,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     }
 
     [AvaloniaFact]
-    public void AttemptsIsDrawnInWhenATurnFailsUnderTheShipsAi()
+    public void AttemptsIsDrawnInWhenATurnFailsUnderProviders()
     {
         var host = Open(out var settings);
 
@@ -101,7 +102,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
         var at = nav.FindIndex(item => item.Classes.Contains(SettingsView.NavPlaceClass) && Words(item) == "When a turn fails");
         var area = nav.Take(at).Last(item => item.Classes.Contains(SettingsView.NavAreaClass));
 
-        Assert.Equal("The ship's AI", Words(area));
+        Assert.Equal("Providers", Words(area));
 
         host.Close();
     }
@@ -127,7 +128,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     }
 
     [AvaloniaTheory]
-    [InlineData(CommunityGoalCapability.KeyRow, "What it can look up")]
+    [InlineData(CommunityGoalCapability.KeyRow, "Outside sources")]
     public void TheSettingsSearchFindsARowMovedOntoThePage(string key, string place)
     {
         var host = Open(out _);

@@ -306,7 +306,7 @@ comes aboard.
 happened to be running while you were flying something; a binding that appeared on its own is a
 preference you never stated.
 
-**You set it on the Settings tab**, on the rows under Persona. It was also a spoken phrase and a
+**You set it on the Settings tab**, on the rows under Your core › Core and character. It was also a spoken phrase and a
 `Ctrl+Alt+B` gesture until 0.94.0, and both were retired: it is a thing done once per ship, at the
 desk, and two more roads to it were two more things to keep in step. Settings is desktop-only, so
 this is now a desk job — which is where it was already being done.

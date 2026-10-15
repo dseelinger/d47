@@ -43,7 +43,7 @@ public sealed class AStoryPinsOnlyToAFreeVoiceProviderTests
 
         var missing = StoryVoices.Missing(Secret, null, here, CommandersChoice(TtsProviderCatalog.ElevenLabsId, "JBFqnCBsd6RMkjVDRZzb"));
 
-        Assert.Equal(["Add your ElevenLabs API key under Settings, Its voice."], missing);
+        Assert.Equal(["Add your ElevenLabs API key under Settings, Providers, Speech synthesis."], missing);
     }
 
     [Fact]

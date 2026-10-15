@@ -158,11 +158,11 @@ rebind your keys, and was never given a way to.
 
 #### Show every setting {#show-every-setting}
 
-The settings page is arranged in six areas, in this order: Voice and hearing, The ship's AI,
-Speaking up, Acting on the game, Screens, and Privacy and this install. The nav lists each area's
+The settings page is arranged in eight areas, in this order: Your core, Other voices, Hearing and
+sound, Providers, You and your records, Acting on the game, Screens, and Privacy and this install. The nav lists each area's
 name with its sections beneath it; pressing an area's name goes to its first section. A section is
 one card, and it gathers the rows for one job wherever in Directive 47 they are declared — *When a
-turn fails* sits under The ship's AI.
+turn fails* sits under Providers.
 
 **At the top of the settings page, above every section**, rather than inside one. It decides what
 the whole page draws, and somebody who cannot see the rest of the settings should not have to go

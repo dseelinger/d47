@@ -27,10 +27,11 @@ public sealed class SettingsShowsOnePlacePerPageTests
         [.. place.Groups.SelectMany(group => group.Entries).SelectMany(settings.RowsForEntry).Select(row => row.Key)];
 
     [AvaloniaTheory]
-    [InlineData("voice-input")]
-    [InlineData("voice")]
-    [InlineData("sounds")]
-    public void EachPlaceIsShownAloneUnderItsBreadcrumbAndTitle(string placeId)
+    [InlineData("voice-input", "HEARING AND SOUND ›")]
+    [InlineData("voice", "YOUR CORE ›")]
+    [InlineData("sounds", "HEARING AND SOUND ›")]
+    [InlineData("speech-synthesis", "PROVIDERS ›")]
+    public void EachPlaceIsShownAloneUnderItsBreadcrumbAndTitle(string placeId, string crumb)
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
@@ -40,7 +41,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         var area = SettingsLayout.Areas.Single(a => a.Places.Any(p => p.Id == placeId));
         var place = area.Places.Single(p => p.Id == placeId);
 
-        Assert.Equal("VOICE AND HEARING ›", Crumb(host.View).Text);
+        Assert.Equal(crumb, Crumb(host.View).Text);
         Assert.Equal(place.Title.ToUpperInvariant(), Words(Title(host.View)));
 
         Assert.Contains(Keys(settings, place), key => OnPage(host.View, host.View.ControlFor(key)));
@@ -88,7 +89,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         Jobs();
 
         Assert.Equal("turn-fails", host.View.SectionIds[host.View.ActiveSection]);
-        Assert.Equal("THE SHIP'S AI ›", Crumb(host.View).Text);
+        Assert.Equal("PROVIDERS ›", Crumb(host.View).Text);
         Assert.Equal("WHEN A TURN FAILS", Words(Title(host.View)));
 
         host.Close();
@@ -101,7 +102,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        host.View.SelectArea(AreaIndex("The ship's AI"));
+        host.View.SelectArea(AreaIndex("Providers"));
         Jobs();
 
         Assert.Equal("language-model", host.View.SectionIds[host.View.ActiveSection]);
@@ -131,9 +132,9 @@ public sealed class SettingsShowsOnePlacePerPageTests
 
         var entries = dropdown.ItemsSource.Cast<object>().Select(item => item.ToString()).ToList();
 
-        Assert.Contains("Voice and hearing › Its voice", entries);
+        Assert.Contains("Your core › Its voice", entries);
 
-        var index = entries.IndexOf("The ship's AI › When a turn fails");
+        var index = entries.IndexOf("Providers › When a turn fails");
 
         var next = dropdown.GetVisualDescendants().OfType<Button>()
             .First(button => AutomationProperties.GetName(button) == "Next");

@@ -309,6 +309,8 @@ public class SettingsIsATabTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .FollowSettings(settings);
 
+        viewState.Save(viewState.Load() with { SettingsSection = "voice-input" });
+
         var view = new SettingsView();
 
         var window = new MainWindow(host: null) { PushToTalkGesture = () => "F9" };

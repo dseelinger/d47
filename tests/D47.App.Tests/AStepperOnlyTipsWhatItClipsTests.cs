@@ -46,7 +46,7 @@ public class AStepperOnlyTipsWhatItClipsTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.Reveal(SpeechCapability.Id);
+        host.View.RevealRow(SpeechCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         // Provider names are a word or two, well short of the column — nothing here should ever clip.
@@ -82,6 +82,7 @@ public class AStepperOnlyTipsWhatItClipsTests
 
         var host = SettingsHost.Open(settings, viewState, paths);
 
+        host.View.RevealRow(ListeningCapability.ModelKey);
         settings.Apply("listening.model", model, SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
