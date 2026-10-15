@@ -35,15 +35,17 @@ public sealed record PromptAssembly
 
     /// <summary>What the model is told about delivery direction.</summary>
     public const string DeliveryDirection =
-        "Your voice can be directed. Where a line genuinely calls for it, you may open a sentence "
-        + "with a note in square brackets and it will be performed rather than read out. A note can "
-        + "be a manner or a reaction — [sighs], [alarmed], [dryly], [reassuring] — or a sound — "
-        + "[klaxon blaring], [static crackle], [door slams]. Any short description works; you are "
-        + "not choosing from a list.\n"
+        "Your voice can be directed. Where a line genuinely calls for it, you may put a note in "
+        + "square brackets right before the words it shapes, and it will be performed rather than "
+        + "read out. Put it at the start of a sentence, or partway through where the delivery "
+        + "changes. It holds until the next note or the end of the sentence. A note can be a "
+        + "manner, a reaction or a sound — [klaxon blaring], [static crackle], [door slams]. Any "
+        + "short description works; you are not choosing from a list.\n"
+        + "Take the note from who is speaking: their character, manner or role as you were given "
+        + "it. Do not use the same note line after line. A note names how a line is said, never "
+        + "the humor in it.\n"
         + "Use it sparingly, where the delivery carries something the words do not. Most lines "
-        + "need none.\n"
-        + "A note applies only to the sentence it opens, so put one on each sentence you mean it "
-        + "for. Never put two in one sentence. Never use one to narrate — it directs how you "
+        + "need none. Never put two notes together. Never use one to narrate — it directs how you "
         + "sound, and is not something the Commander reads.";
 
     /// <summary>What the model is told about listing modules aloud.</summary>

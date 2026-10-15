@@ -506,7 +506,7 @@ carrier's captain and tower).
 - **Frequency, a percentage.** The share of that group's lines that get humor. d47 decides, not
   the model: it rolls for each line the model writes and adds the humor instruction only when the
   roll hits. It does not apply to lines spoken as written.
-- **Levels 1 to 6 are dry.** Understatement and timing only, with hard bans on similes and
+- **Levels 1 to 6 are restrained.** The level sets how much humor a line gets and the speaker's character sets the kind, with hard bans on similes and
   comparisons, puns, whimsy, zany exaggeration, exclamation marks and "…" pauses for comic effect.
   **From 7 the bans lift**: puns, comparisons and absurdity are allowed.
 - **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v4 Turbo

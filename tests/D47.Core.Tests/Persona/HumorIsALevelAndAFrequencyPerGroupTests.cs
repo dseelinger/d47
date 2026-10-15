@@ -47,6 +47,20 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
         Assert.Null(Rolling(25).ForLine(dial, canBeDirected: false));
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    public void NoLevelCallsItsHumorDry(int level) =>
+        Assert.DoesNotContain("dry", Humor.ForLine(level, canBeDirected: true)!, StringComparison.OrdinalIgnoreCase);
+
     [Fact]
     public void TheBansHoldUpToSixAndLiftAtSeven()
     {

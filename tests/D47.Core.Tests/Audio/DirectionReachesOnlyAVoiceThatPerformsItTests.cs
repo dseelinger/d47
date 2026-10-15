@@ -74,6 +74,10 @@ public class DirectionReachesOnlyAVoiceThatPerformsItTests
     public void TheModelIsToldANoteCanBeASound() =>
         Assert.Contains("[klaxon blaring]", D47.Core.Conversation.PromptAssembly.DeliveryDirection);
 
+    [Fact]
+    public void TheModelIsNotGivenDrylyAsAnExample() =>
+        Assert.DoesNotContain("[dryly]", D47.Core.Conversation.PromptAssembly.DeliveryDirection, StringComparison.Ordinal);
+
     /// <summary>What the log line is built from.</summary>
     [Fact]
     public void TheDirectionIsReadableForTheLog()

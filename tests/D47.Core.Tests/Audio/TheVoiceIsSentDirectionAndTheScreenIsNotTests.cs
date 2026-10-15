@@ -35,6 +35,22 @@ public class TheVoiceIsSentDirectionAndTheScreenIsNotTests
     }
 
     [Fact]
+    public async Task ANoteMidSentenceReachesAPerformingVoiceAndLeavesTheCaptionWithoutIt()
+    {
+        var (arbiter, _) = Build();
+        var tts = new FakeTtsProvider { ReadsAudioTags = true };
+
+        await using var pipeline = Pipeline(arbiter, tts);
+
+        pipeline.Push("That is the third [sighs] interdiction this hour. ");
+        await pipeline.CompleteAsync();
+
+        Assert.Equal(["That is the third [sighs] interdiction this hour."], tts.Requested);
+        Assert.Equal("That is the third interdiction this hour.", arbiter.Activity.Caption);
+        Assert.DoesNotContain("  ", AudioTags.Strip("That is the third [sighs] interdiction this hour. "), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AProviderThatPerformsItIsSentItWhole()
     {
         var (arbiter, _) = Build();

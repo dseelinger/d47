@@ -248,8 +248,8 @@ public static class PersonaCapability
         HumorLevel(
             CoreHumorKey,
             "Core humor",
-            "How funny the ship's AI may be, from 0 (none) to 10 (comedian). Up to 6 the wit is "
-            + "dry: no puns, comparisons or whimsy. From 7 those are allowed. COVAS ignores it.",
+            "How funny the ship's AI may be, from 0 (none) to 10 (comedian). Up to 6 the humor is "
+            + "restrained: no puns, comparisons or whimsy. From 7 those are allowed. COVAS ignores it.",
             s => s.CoreHumor,
             (p, v) => p with { CoreHumor = v },
             [new SettingCommandPhrase("humor on", "3"), new SettingCommandPhrase("humor off", "0")]),

@@ -34,9 +34,10 @@ public static class Humor
 
     /// <summary>What levels 1 to 6 forbid.</summary>
     public const string Bans =
-        "The wit is understatement, timing and precision — never decoration. Hard bans, no "
-        + "exceptions: no similes and no borrowed images — the moment \"like\" or \"as if\" is about "
-        + "to introduce a comparison, cut the comparison and let the plain fact land dry. No puns, no "
+        "The humor is the speaker's own: their character decides what they find funny and how "
+        + "they say it. Never decoration. Hard bans, no exceptions: no similes and no borrowed "
+        + "images — the moment \"like\" or \"as if\" is about to introduce a comparison, cut the "
+        + "comparison and state the plain fact. No puns, no "
         + "whimsy, no zany exaggeration, no exclamation marks, and no \"...\" pauses for comic effect.";
 
     /// <summary>Added on a hit when the voice performs delivery notes.</summary>
@@ -58,9 +59,9 @@ public static class Humor
 
         var grade = Math.Min(level, Top) switch
         {
-            1 or 2 => "At most one dry word or understatement; the rest is plain.",
-            3 or 4 => "An occasional light touch of wit, dry and brief.",
-            5 or 6 => "Wit is welcome: one clear dry joke, well timed.",
+            1 or 2 => "At most one light touch of humor; the rest is plain.",
+            3 or 4 => "An occasional touch of humor, brief.",
+            5 or 6 => "Humor is welcome: one clear joke, well timed.",
             7 or 8 =>
                 "Openly funny. Puns, comparisons and absurd exaggeration are allowed; one or two jokes.",
             _ =>
