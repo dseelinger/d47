@@ -15,12 +15,14 @@ namespace D47.Core.Hotas;
 /// <c>transcript.technical</c> — or null (Phase 46).
 /// </param>
 /// <param name="View">The headset view this position asks for, or null.</param>
+/// <param name="Target">The <see cref="SwitchTargets"/> id this position asks for, or null.</param>
 public sealed record SwitchPosition(
     int? Button,
     string? Action = null,
     DesiredState State = DesiredState.On,
     string? Destination = null,
-    HeadsetView? View = null)
+    HeadsetView? View = null,
+    string? Target = null)
 {
     /// <summary>How the position reads in a report or on the panel.</summary>
     public string Describe() => Button is { } button ? $"button {button}" : "nothing held";
@@ -28,7 +30,7 @@ public sealed record SwitchPosition(
     public bool IsAssigned => ReachesTheGame || ReachesThePanel || ReachesTheHeadset;
 
     /// <summary>Whether this position can end in a key press.</summary>
-    public bool ReachesTheGame => Action is { Length: > 0 };
+    public bool ReachesTheGame => Action is { Length: > 0 } || Target is { Length: > 0 };
 
     /// <summary>Whether this position moves d47's own panel.</summary>
     public bool ReachesThePanel => Destination is { Length: > 0 };
@@ -56,9 +58,10 @@ public sealed record SwitchMapping
     /// <summary>The modes this switch is worth acting in, taken from the actions its positions name.</summary>
     public ControlContext Contexts =>
         Positions
-            .Select(position => position.Action is { } id ? GameActions.Find(id) : null)
-            .Where(action => action is not null)
-            .Aggregate(ControlContext.None, (all, action) => all | action!.Contexts);
+            .Select(position => position.Target is { Length: > 0 } target
+                ? SwitchTargets.Find(target)?.Contexts ?? ControlContext.None
+                : position.Action is { } id ? GameActions.Find(id)?.Contexts ?? ControlContext.None : ControlContext.None)
+            .Aggregate(ControlContext.None, (all, contexts) => all | contexts);
 
     /// <summary>The position this reading is at, or null when it is at none of them.</summary>
     public SwitchPosition? At(HotasReading reading)
@@ -164,9 +167,20 @@ public static class SwitchValidation
             }
 
             // One meaning per position.
-            if ((position.ReachesTheGame ? 1 : 0) + (position.ReachesThePanel ? 1 : 0) + (position.View is null ? 0 : 1) > 1)
+            if ((position.Action is { Length: > 0 } ? 1 : 0) + (position.Target is { Length: > 0 } ? 1 : 0)
+                + (position.ReachesThePanel ? 1 : 0) + (position.View is null ? 0 : 1) > 1)
             {
                 return OneMeaning;
+            }
+
+            if (position.Target is { Length: > 0 } target)
+            {
+                if (SwitchTargets.Find(target) is null)
+                {
+                    return $"There is no switch target called '{target}'.";
+                }
+
+                continue;
             }
 
             if (position.View is not null)

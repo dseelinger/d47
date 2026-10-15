@@ -128,6 +128,9 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     /// </summary>
     public static readonly TimeSpan ContestWindow = TimeSpan.FromSeconds(4);
 
+    /// <summary>The wait between two taps of one target.</summary>
+    private static readonly TimeSpan PartGap = TimeSpan.FromMilliseconds(100);
+
     private readonly ConcurrentQueue<PendingReconcile> _pending = new();
 
     /// <summary>Guards the dictionaries and the view below.</summary>
@@ -411,19 +414,29 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             };
         }
 
-        if (position.Action is not { Length: > 0 } id || GameActions.Find(id) is not { } action)
+        var (label, wanted) = Wanted(position);
+
+        if (wanted.Count == 0)
         {
             return ready with { Note = $"{position.Describe()} means nothing." };
         }
 
-        var reach = ActionReachability.Resolve(action, tick.Binds, tick.Context);
+        var presses = new List<(GameAction Action, DesiredState State, EliteBinding Binding)>();
+        var pressed = new List<WatchedPart>();
 
-        if (!reach.IsOffered)
+        foreach (var (action, state) in wanted)
         {
-            // The refusal carries the reason, for the same reason the tool path's does: the audience is
-            // HOTAS-heavy, so an action bound only to a stick is the common case, and it fails as silence
-            // unless something says why.
-            return ready with { Note = reach.Reason };
+            var reach = ActionReachability.Resolve(action, tick.Binds, tick.Context);
+
+            if (!reach.IsOffered)
+            {
+                // The refusal carries the reason, for the same reason the tool path's does: the audience is
+                // HOTAS-heavy, so an action bound only to a stick is the common case, and it fails as silence
+                // unless something says why.
+                return ready with { Note = reach.Reason };
+            }
+
+            presses.Add((action, state, reach.Binding!));
         }
 
         if (!flipped)
@@ -432,30 +445,72 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return ready;
         }
 
-        if (action.AlreadyIn(position.State, tick.Status) == true)
+        var steps = new List<InputStep>();
+
+        foreach (var (action, state, binding) in presses)
         {
+            if (action.AlreadyIn(state, tick.Status) == true)
+            {
+                logger.LogInformation(
+                    "Switch {Name} moved to {Position}; {Action} is already there, so nothing was pressed",
+                    mapping.Name,
+                    position.Describe(),
+                    action.Id);
+
+                continue;
+            }
+
             logger.LogInformation(
-                "Switch {Name} moved to {Position}; {Action} is already there, so nothing was pressed",
+                "Switch {Name} moved to {Position}; pressing {Gesture} for {Action}",
                 mapping.Name,
                 position.Describe(),
+                binding.Gesture(),
                 action.Id);
 
+            if (steps.Count > 0)
+            {
+                steps.Add(InputStep.Wait(PartGap));
+            }
+
+            steps.AddRange(InputSequence.Tap(binding));
+            pressed.Add(new WatchedPart(action, state));
+        }
+
+        if (pressed.Count == 0)
+        {
             return ready;
         }
 
-        logger.LogInformation(
-            "Switch {Name} moved to {Position}; pressing {Gesture} for {Action}",
-            mapping.Name,
-            position.Describe(),
-            reach.Binding!.Gesture(),
-            action.Id);
+        _pending.Enqueue(new PendingReconcile(mapping.Name, label, steps));
 
-        _pending.Enqueue(new PendingReconcile(mapping.Name, action.Label, InputSequence.Tap(reach.Binding!)));
-
-        // Item 5's watch starts here, with the state the press was for and the mode it was made in.
-        _watching[mapping.Name] = new Watch(action, position.State, tick.Now + ContestWindow, tick.Context);
+        // Item 5's watch starts here, with the states the presses were for and the mode they were made in.
+        _watching[mapping.Name] = new Watch(pressed, tick.Now + ContestWindow, tick.Context);
 
         return ready;
+    }
+
+    /// <summary>The label and the action states a position asks for; empty when it asks for none.</summary>
+    private static (string Label, IReadOnlyList<(GameAction Action, DesiredState State)> Wanted) Wanted(
+        SwitchPosition position)
+    {
+        if (position.Target is { Length: > 0 } id)
+        {
+            if (SwitchTargets.Find(id) is not { } target)
+            {
+                return (id, []);
+            }
+
+            return (target.Name, [.. target.Parts
+                .Where(part => GameActions.Find(part.Action) is not null)
+                .Select(part => (GameActions.Find(part.Action)!, part.State))]);
+        }
+
+        if (position.Action is { Length: > 0 } actionId && GameActions.Find(actionId) is { } action)
+        {
+            return (action.Label, [(action, position.State)]);
+        }
+
+        return (string.Empty, []);
     }
 
     /// <summary>A position that names a page of d47's own panel (Phase 46).</summary>
@@ -656,44 +711,58 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             _watching.Remove(mapping.Name);
 
             // The press that never took, said out loud (#147).
-            if (!watch.Arrived && watch.Action.AlreadyIn(watch.State, tick.Status) == false)
+            foreach (var part in watch.Parts)
             {
-                var silent = $"I set {watch.Action.Label} from {mapping.Name} and it did not take. "
+                if (part.Arrived || part.Action.AlreadyIn(part.State, tick.Status) != false)
+                {
+                    continue;
+                }
+
+                var silent = $"I set {part.Action.Label} from {mapping.Name} and it did not take. "
                              + "Something else may be bound to the same button.";
 
                 logger.LogWarning(
                     "Switch {Name} pressed {Action} and the state never arrived",
                     mapping.Name,
-                    watch.Action.Id);
+                    part.Action.Id);
 
-                _pending.Enqueue(new PendingReconcile(mapping.Name, watch.Action.Label, [], silent));
+                _pending.Enqueue(new PendingReconcile(mapping.Name, part.Action.Label, [], silent));
             }
 
             return;
         }
 
-        var there = watch.Action.AlreadyIn(watch.State, tick.Status);
+        var parts = watch.Parts.ToArray();
 
-        if (there == true)
+        for (var index = 0; index < parts.Length; index++)
         {
-            _watching[mapping.Name] = watch with { Arrived = true };
+            var part = parts[index];
+            var there = part.Action.AlreadyIn(part.State, tick.Status);
+
+            if (there == true)
+            {
+                parts[index] = part with { Arrived = true };
+                continue;
+            }
+
+            if (there != false || !part.Arrived)
+            {
+                continue;
+            }
+
+            var why = $"Something else is bound to {part.Action.Label}: it went back on its own right after D47 "
+                      + $"set it. D47 has stopped reconciling {mapping.Name} rather than fight it.";
+
+            _paused[mapping.Name] = why;
+            _watching.Remove(mapping.Name);
+
+            logger.LogWarning("Switch {Name} contested on {Action}; reconciling paused", mapping.Name, part.Action.Id);
+
+            _pending.Enqueue(new PendingReconcile(mapping.Name, part.Action.Label, [], why));
             return;
         }
 
-        if (there != false || !watch.Arrived)
-        {
-            return;
-        }
-
-        var why = $"Something else is bound to {watch.Action.Label}: it went back on its own right after D47 "
-                  + $"set it. D47 has stopped reconciling {mapping.Name} rather than fight it.";
-
-        _paused[mapping.Name] = why;
-        _watching.Remove(mapping.Name);
-
-        logger.LogWarning("Switch {Name} contested on {Action}; reconciling paused", mapping.Name, watch.Action.Id);
-
-        _pending.Enqueue(new PendingReconcile(mapping.Name, watch.Action.Label, [], why));
+        _watching[mapping.Name] = watch with { Parts = parts };
     }
 
     /// <summary>Whether Elite binds the same button, in which case every flip acts twice (#147).</summary>
@@ -756,27 +825,23 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return $"the panel is on {Page(tick, showing)?.Word ?? showing}";
         }
 
-        if (position.Action is not { Length: > 0 } id || GameActions.Find(id) is not { } action)
+        foreach (var (action, state) in Wanted(position).Wanted)
         {
-            return null;
+            if ((action.Contexts & tick.Context) != 0 && action.AlreadyIn(state, tick.Status) == false)
+            {
+                return $"{action.Label} is {(state == DesiredState.On ? "off" : "on")}";
+            }
         }
 
-        if ((action.Contexts & tick.Context) == 0)
-        {
-            return null;
-        }
-
-        return action.AlreadyIn(position.State, tick.Status) == false
-            ? $"{action.Label} is {(position.State == DesiredState.On ? "off" : "on")}"
-            : null;
+        return null;
     }
 
+    private readonly record struct WatchedPart(GameAction Action, DesiredState State, bool Arrived = false);
+
     private readonly record struct Watch(
-        GameAction Action,
-        DesiredState State,
+        IReadOnlyList<WatchedPart> Parts,
         DateTimeOffset Until,
-        ControlContext Context,
-        bool Arrived = false);
+        ControlContext Context);
 
     /// <summary>
     /// A press of Shift+Win+D waiting for the view to change from <c>From</c> to <c>View</c>, timed from the first

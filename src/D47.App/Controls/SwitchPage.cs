@@ -56,6 +56,8 @@ public sealed class SwitchPage : DialogPage
 
     private const string NoAction = "";
 
+    private const string TargetPrefix = "target:";
+
     private const string NothingWord = "Nothing";
 
     private const double ColumnGap = 8;
@@ -680,19 +682,23 @@ public sealed class SwitchPage : DialogPage
             var named = Assignable.FirstOrDefault(known => known.Id == position.Action);
             var entries = new List<InlinePickerEntry> { new InlinePickerOption(NoAction, NothingWord, ThemeManager.GreyKey) };
             entries.AddRange(Assignable.Select(known => new InlinePickerOption(known.Id, known.Name, ThemeManager.WhiteKey)));
+            entries.Add(new InlinePickerHeading("Several at once"));
+            entries.AddRange(SwitchTargets.All.Select(target =>
+                new InlinePickerOption(TargetPrefix + target.Id, target.Name, ThemeManager.WhiteKey)));
             entries.Add(new InlinePickerHeading("Headset"));
             entries.Add(new InlinePickerOption(HeadsetId, HeadsetWord, ThemeManager.WhiteKey));
 
             var headset = position.View is not null;
+            var target = SwitchTargets.Find(position.Target);
 
             action.Show(
                 entries,
-                headset ? HeadsetId : position.Action,
-                headset ? HeadsetWord : named.Name ?? NothingWord,
-                headset || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
+                headset ? HeadsetId : target is null ? position.Action : TargetPrefix + target.Id,
+                headset ? HeadsetWord : target?.Name ?? named.Name ?? NothingWord,
+                headset || target is not null || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
                 null);
 
-            state.IsEnabled = headset || position.Action.Length > 0;
+            state.IsEnabled = headset || (position.Action.Length > 0 && target is null);
 
             var choices = headset ? Views : States;
 
@@ -714,15 +720,24 @@ public sealed class SwitchPage : DialogPage
 
         action.Picked += (_, id) =>
         {
-            if (id == HeadsetId)
+            if (id.StartsWith(TargetPrefix, StringComparison.Ordinal))
+            {
+                position.Target = id[TargetPrefix.Length..];
+                position.Action = string.Empty;
+                position.Destination = string.Empty;
+                position.View = null;
+            }
+            else if (id == HeadsetId)
             {
                 position.Action = string.Empty;
+                position.Target = string.Empty;
                 position.Destination = string.Empty;
                 position.View ??= D47.Core.Vr.HeadsetView.Vr;
             }
             else
             {
                 position.Action = id;
+                position.Target = string.Empty;
                 position.View = null;
 
                 if (id.Length > 0)
@@ -837,6 +852,7 @@ public sealed class SwitchPage : DialogPage
         if (position.Destination.Length > 0)
         {
             position.Action = string.Empty;
+            position.Target = string.Empty;
             position.View = null;
         }
 
@@ -898,6 +914,7 @@ public sealed class SwitchPage : DialogPage
                 {
                     Button = position.Button,
                     Action = position.Action ?? string.Empty,
+                    Target = position.Target ?? string.Empty,
                     State = position.State == DesiredState.Off ? "off" : "on",
                     Destination = position.Destination ?? string.Empty,
                     View = position.View,
@@ -917,7 +934,8 @@ public sealed class SwitchPage : DialogPage
                     position.Action.Length == 0 ? null : position.Action,
                     position.State == "off" ? DesiredState.Off : DesiredState.On,
                     position.Destination.Length == 0 ? null : position.Destination,
-                    position.View)),
+                    position.View,
+                    position.Target.Length == 0 ? null : position.Target)),
             ],
         };
     }
@@ -927,6 +945,8 @@ public sealed class SwitchPage : DialogPage
         public int? Button { get; set; }
 
         public string Action { get; set; } = string.Empty;
+
+        public string Target { get; set; } = string.Empty;
 
         public string State { get; set; } = "on";
 

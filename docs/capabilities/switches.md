@@ -304,10 +304,32 @@ think it should not have been, that file is the whole of the evidence.
 Each captured position gets an action and a state. Only the actions Elite **reports the state
 of** can be assigned, because those are the only ones that can be asked *are you already there*:
 
-landing gear, ship lights, cargo scoop, hardpoints, flight assist, silent running, analysis mode,
-SRV turret view, SRV handbrake, SRV drive assist.
+landing gear, ship lights, night vision, cargo scoop, hardpoints, supercruise, flight assist,
+silent running, analysis mode, SRV turret view, SRV handbrake, SRV drive assist.
 
 A position may also mean nothing, which is what the centre of a three-position switch usually is.
+
+#### A position may set several things at once
+
+Some layouts need one position to set two states. A lights switch has up for lights on, centre
+for lights and night vision off, and down for night vision on; with one action per position the
+centre could turn only one of them off. A position can instead name a **target**, chosen under
+*Several at once* in the same list as the actions:
+
+| Target | Sets |
+| --- | --- |
+| Lights on, night vision off | lights on, night vision off |
+| Night vision on, lights off | night vision on, lights off |
+| Lights and night vision off | lights off, night vision off |
+| Combat mode, hardpoints out | analysis mode off, hardpoints on |
+| Combat mode, hardpoints stowed | analysis mode off, hardpoints off |
+
+Flipping to a target presses each part that is not already in its state, in the order above, and
+nothing else; if every part is already there nothing is pressed. A target has no on/off choice.
+Every part needs a key bound in Elite, and if one has none the row says which. If a part goes back
+on its own right after D47 sets it, the switch pauses, the same as for a single action; a part
+that never arrives is said out loud. Analysis mode on its own is already an action, so the third
+position of the HUD layout uses it directly.
 
 #### A position may name a page of Directive 47's own panel instead
 
@@ -338,7 +360,7 @@ Suggestions open only while their buttons would: a story under way, a model and 
 suggestion waiting. A position on a tab's page agrees with the panel while one of these is open
 beside it.
 
-A position means one thing: an action, a page or a headset view. A page the panel does not have — a key
+A position means one thing: an action, a target, a page or a headset view. A page the panel does not have — a key
 mistyped in the file, say — is reported on the row by name and never moved to. And a switch
 sitting on a page the panel is not showing is annunciated like any other stale switch:
 
