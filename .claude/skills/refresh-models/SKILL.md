@@ -78,3 +78,10 @@ an earlier diff does not cover a changed one.
 maintainer's word, in the turn they give it. Until then, say the file is written and not published.
 
 Do not commit unless asked; the maintainer's usual rule on pushes applies.
+
+## Weekly run
+
+A scheduled task, `refresh-models`, does the Read and Report steps once a week and saves the report
+with its proposed diff to `C:\Users\dougs\.claude\refresh-models\runs\{date}\report.md`. It asks
+nothing, writes nothing in the repository and never publishes. Proposing and writing stay with a
+session the maintainer is watching.
