@@ -64,7 +64,8 @@ public class TheShipAisNameReachesTheShipTests
                 WatchDockingRequest = () => new Requested(),
             }));
 
-    private static (TurnLoop Loop, CaptainLine Captain, FakeLlmProvider Provider, RecordingGameInput Input) Build()
+    internal static (TurnLoop Loop, CaptainLine Captain, FakeLlmProvider Provider, RecordingGameInput Input) Build(
+        params string[] shipAiNames)
     {
         var input = new RecordingGameInput();
         var registry = Commands(input);
@@ -84,7 +85,7 @@ public class TheShipAisNameReachesTheShipTests
             provider)
         {
             Persona = ShipAiBrief,
-            ShipAiNames = () => ["Cora", ShipAiAddressing.CallSign],
+            ShipAiNames = () => shipAiNames is { Length: > 0 } ? shipAiNames : ["Cora", ShipAiAddressing.CallSign],
         };
 
         loop.Lines.Add(captain);
@@ -92,7 +93,7 @@ public class TheShipAisNameReachesTheShipTests
         return (loop, captain, provider, input);
     }
 
-    private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
+    internal static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
     {
         List<TurnEvent> events = [];
 
@@ -104,7 +105,7 @@ public class TheShipAisNameReachesTheShipTests
         return events;
     }
 
-    private static TurnResult Result(IEnumerable<TurnEvent> events) =>
+    internal static TurnResult Result(IEnumerable<TurnEvent> events) =>
         Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
 
     private static string Text(ConversationMessage message) =>

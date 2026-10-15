@@ -16,8 +16,8 @@ public enum WakeOutcome
     Addressed,
 }
 
-/// <summary><param name="Text"> What was actually said to d47, with the name taken off the front.</summary>
-/// <param name="Text">What was actually said to d47, with the name taken off the front.</param>
+/// <summary>What the wake-word policy decided, and the words to pass on.</summary>
+/// <param name="Text">What was said to d47, from the wake phrase on; the whole utterance inside the window.</param>
 public readonly record struct WakeDecision(WakeOutcome Outcome, string Text);
 
 /// <summary>Wake-word gating (Phase 13), as another policy over the same audio stream.</summary>
@@ -30,7 +30,7 @@ public sealed class WakeWordGate
     /// <summary>How far into an utterance the name may appear and still count as being addressed.</summary>
     public int Lead { get; set; } = 12;
 
-    /// <summary>How long d47 keeps listening after answering to its name with nothing after it.</summary>
+    /// <summary>How long d47 keeps listening after its name alone, or after another speaker's reply.</summary>
     public TimeSpan Window { get; set; } = TimeSpan.FromSeconds(12);
 
     /// <summary>The names it answers to.</summary>
@@ -65,6 +65,15 @@ public sealed class WakeWordGate
         }
     }
 
+    /// <summary>Opens the window at <paramref name="now"/>, as the name alone does.</summary>
+    public void Open(DateTimeOffset now)
+    {
+        lock (_gate)
+        {
+            _awake = now;
+        }
+    }
+
     /// <summary>Shuts the window.</summary>
     public void Sleep()
     {
@@ -75,8 +84,8 @@ public sealed class WakeWordGate
     }
 
     /// <summary>
-    /// Decides whether <paramref name="transcript"/> was addressed to d47, and returns what is left of
-    /// it once the name is taken off.
+    /// Decides whether <paramref name="transcript"/> was addressed to d47, and returns it from the wake
+    /// phrase on.
     /// </summary>
     public WakeDecision Admit(string transcript, DateTimeOffset now)
     {
@@ -89,9 +98,9 @@ public sealed class WakeWordGate
                 return new WakeDecision(WakeOutcome.Addressed, said);
             }
 
-            if (Locate(said) is { } found)
+            if (Locate(said) is var (start, end))
             {
-                var rest = said[found..].TrimStart(' ', ',', '.', '!', '?', ':', ';', '-');
+                var rest = said[end..].TrimStart(' ', ',', '.', '!', '?', ':', ';', '-');
 
                 if (rest.Length == 0)
                 {
@@ -101,7 +110,7 @@ public sealed class WakeWordGate
                 }
 
                 _awake = null;
-                return new WakeDecision(WakeOutcome.Addressed, rest);
+                return new WakeDecision(WakeOutcome.Addressed, said[start..]);
             }
 
             if (_awake is { } since && now - since < Window)
@@ -116,10 +125,10 @@ public sealed class WakeWordGate
     }
 
     /// <summary>
-    /// Where the wake phrase ends in <paramref name="said"/>, or null if it is not near the front of
-    /// it.
+    /// Where the wake phrase starts and ends in <paramref name="said"/>, or null if it is not near the
+    /// front of it.
     /// </summary>
-    private int? Locate(string said)
+    private (int Start, int End)? Locate(string said)
     {
         var map = new List<int>(said.Length);
         var flat = new StringBuilder(said.Length);
@@ -146,8 +155,8 @@ public sealed class WakeWordGate
                 continue;
             }
 
-            // One past the last character the phrase consumed, in the original string.
-            return map[at + phrase.Length - 1] + 1;
+            // The phrase's first character, and one past its last, in the original string.
+            return (map[at], map[at + phrase.Length - 1] + 1);
         }
 
         return null;

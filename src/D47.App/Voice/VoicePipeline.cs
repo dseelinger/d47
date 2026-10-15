@@ -42,6 +42,9 @@ public sealed class VoicePipeline(
     /// <summary>Whether this turn was spoken aloud.</summary>
     private bool _spoke;
 
+    /// <summary>1 while another speaker's answered reply is still audible, else 0.</summary>
+    private int _replyAudible;
+
     /// <summary>
     /// Whether the Commander is mid-exchange — from the moment the microphone opens until the answer
     /// has been spoken and the loop has settled (#61).
@@ -116,12 +119,18 @@ public sealed class VoicePipeline(
     /// <summary>Raised with a voice id the provider refused, so it can be written out of settings.</summary>
     public event Action<string>? VoiceRejected;
 
+    /// <summary>Raised once a reply from someone other than the ship's AI has finished playing.</summary>
+    public event Action? AddressedReplyEnded;
+
     /// <summary>Consumes a turn's events, making each one audible as it arrives.</summary>
     public async Task<TurnResult?> RunAsync(
         IAsyncEnumerable<TurnEvent> turn,
         Action<TurnEvent>? onEvent = null,
         CancellationToken cancellationToken = default)
     {
+        // Before the drop below, which can quieten the arbiter while the last reply is still marked audible.
+        Volatile.Write(ref _replyAudible, 0);
+
         var number = Interlocked.Increment(ref _turnNumber);
         var group = $"turn-{number}";
 
@@ -131,6 +140,7 @@ public sealed class VoicePipeline(
         SpeechPipeline? speech = null;
         TurnResult? result = null;
         var signal = 1.0;
+        var addressedTurn = false;
 
         KeptTurn = null;
 
@@ -147,6 +157,7 @@ public sealed class VoicePipeline(
                 {
                     case TurnEvent.Addressed addressed:
                         signal = addressed.Signal;
+                        addressedTurn = true;
                         break;
 
                     case TurnEvent.TextDelta text:
@@ -229,8 +240,20 @@ public sealed class VoicePipeline(
                 _ => cancellationToken.IsCancellationRequested ? LoopState.Idle : LoopState.Failed,
             };
 
+            // Marked before the state is entered, because the arbiter can call Settle from inside it.
+            if (addressedTurn && settled == LoopState.Answered)
+            {
+                Volatile.Write(ref _replyAudible, 1);
+            }
+
             // Answered and spoken needs no chime.
             EnterState(settled, cue: !(settled == LoopState.Answered && _spoke));
+
+            // A reply that finished playing, or never played, before the state was entered.
+            if (!arbiter.IsSpeaking)
+            {
+                ReplyEnded();
+            }
         }
 
         return result;
@@ -575,6 +598,12 @@ public sealed class VoicePipeline(
     /// <summary>Returns the loop to idle once nothing is audible any more.</summary>
     public void Settle(AudioActivity activity)
     {
+        // The arbiter's own state rather than the snapshot, which is raised outside its lock and can arrive late.
+        if (!arbiter.IsSpeaking)
+        {
+            ReplyEnded();
+        }
+
         if (activity.Channel is not null || activity.BedPlaying)
         {
             return;
@@ -588,6 +617,17 @@ public sealed class VoicePipeline(
         _state = LoopState.Idle;
         arbiter.OpenGroup(SpokenGroup.InventedChatter);
         StateEntered?.Invoke(LoopState.Idle);
+    }
+
+    /// <summary>Forgets a reply cut off by the Commander, so its silence is not taken for its end.</summary>
+    public void ReplyCut() => Volatile.Write(ref _replyAudible, 0);
+
+    private void ReplyEnded()
+    {
+        if (Interlocked.Exchange(ref _replyAudible, 0) == 1)
+        {
+            AddressedReplyEnded?.Invoke();
+        }
     }
 
     private void OnSynthesisFailed(SynthesisFailure failure) => SynthesisFailed?.Invoke(failure);

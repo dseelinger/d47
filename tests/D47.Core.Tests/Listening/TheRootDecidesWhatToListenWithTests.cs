@@ -109,8 +109,14 @@ public class TheRootDecidesWhatToListenWithTests
     [Fact]
     public void AnUnsetRowAnswersToTheShipsName()
     {
-        Assert.Equal(["Aurora"], ListeningWiring.WakePhrases(ListeningCapability.WakeMode, null, "Aurora"));
-        Assert.Equal(["Aurora"], ListeningWiring.WakePhrases(ListeningCapability.WakeMode, "", "Aurora"));
+        Assert.Equal(["Aurora", "D47"], ListeningWiring.WakePhrases(ListeningCapability.WakeMode, null, "Aurora"));
+        Assert.Equal(["Aurora", "D47"], ListeningWiring.WakePhrases(ListeningCapability.WakeMode, "", "Aurora"));
+    }
+
+    [Fact]
+    public void D47IsAWakePhraseBesideCustomWords()
+    {
+        Assert.Equal(["Computer", "D47"], ListeningWiring.WakePhrases(ListeningCapability.WakeMode, "Computer", "Aurora"));
     }
 
     [Fact]

@@ -473,7 +473,12 @@ costs a little dead air on the end of the clip, which the speech model ignores.
 #### What D47 answers to {#wake-words}
 
 Only applies in **Listen when I say its name**. Leave it unset and Directive 47 answers to whatever
-you call your ship's AI, so renaming the core renames the wake word with it.
+you call your ship's AI, so renaming the core renames the wake word with it. "D47" always works as
+well, whatever this is set to.
+
+Every wake phrase addresses the ship's AI. Saying one closes any conversation with the captain, a
+crew member or anyone else, and what follows it goes to the ship's AI — so "Warden, captain, how's
+our fuel?" reaches the captain, and "Warden, request docking" requests docking.
 
 Set it — comma-separated — when the speech model keeps hearing the name as something else. It is
 already forgiving: the comparison ignores punctuation and spacing, so `D47`, `D 47`, `d-47` and
@@ -490,7 +495,13 @@ request — the way you would address a person. **12 seconds** out of the box, a
 closes the window again: it is one reply, not an open microphone. Nothing is said back and nothing
 reaches the transcript; being called by name is not conversation.
 
-Set it to zero if you would rather the name and the request always arrived in the same breath.
+The same window opens when the captain, a crew member, a seat, a voice on comms, a story's cast or
+the Narrator finishes answering you, so you can reply to them without a name: ask the captain about
+fuel, then say "how much tritium?" and the captain answers that too. Start the reply with a wake
+phrase and it goes to the ship's AI instead. No window opens after the ship's AI answers.
+
+Set it to zero if you would rather the name and the request always arrived in the same breath. That
+turns the reply window off too.
 
 #### Cancel D47's own voice out of the microphone {#echo-cancellation}
 

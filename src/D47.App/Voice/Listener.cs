@@ -111,6 +111,9 @@ public sealed class Listener : IDisposable
     /// <summary>Something the Commander said that no turn is going to write down.</summary>
     public event Action<string>? HeardText;
 
+    /// <summary>Raised when a wake phrase was said with nothing after it.</summary>
+    public event Action? Woken;
+
     /// <summary>Whether an utterance was addressed to d47 at all, in wake-word mode.</summary>
     public WakeWordGate Wake { get; }
 
@@ -346,6 +349,8 @@ public sealed class Listener : IDisposable
                     // The name and nothing after it.
                     _logger.LogInformation("Woken by name; listening for what follows");
 
+                    Woken?.Invoke();
+
                     // The cue on its own rather than the loop state behind it.
                     _voice.Cue(LoopState.Listening);
 
@@ -356,7 +361,7 @@ public sealed class Listener : IDisposable
                 _logger.LogInformation("Heard: {Text}", transcription.Text);
 
                 // What was heard, where it is not what gets asked.
-                if (!string.Equals(decision.Text, transcription.Text, StringComparison.Ordinal))
+                if (!string.Equals(decision.Text, transcription.Text.Trim(), StringComparison.Ordinal))
                 {
                     HeardAside(transcription.Text, "heard");
                 }

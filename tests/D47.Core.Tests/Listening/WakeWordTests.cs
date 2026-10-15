@@ -26,16 +26,38 @@ public class WakeWordTests
     }
 
     [Fact]
-    public void TheNameIsTakenOffWhatIsPassedOn()
+    public void TheNameStaysOnWhatIsPassedOn()
     {
         var gate = Gate("D47");
 
         var decision = gate.Admit("D47, how much fuel do I have?", Now);
 
-        // The turn should receive the request, not the vocative. "D47, how much fuel" reaching the router is
-        // a phrase that matches nothing it declares.
+        // The turn loop takes the name off, and closes every open line as it does (#1181).
         Assert.Equal(WakeOutcome.Addressed, decision.Outcome);
-        Assert.Equal("how much fuel do I have?", decision.Text);
+        Assert.Equal("D47, how much fuel do I have?", decision.Text);
+    }
+
+    [Fact]
+    public void WhatComesBeforeTheNameIsTakenOff()
+    {
+        var decision = Gate("D47").Admit("Hey D47, gear up", Now);
+
+        Assert.Equal(WakeOutcome.Addressed, decision.Outcome);
+        Assert.Equal("D47, gear up", decision.Text);
+    }
+
+    [Fact]
+    public void AWindowOpenedFromOutsideAdmitsOneUnnamedUtterance()
+    {
+        var gate = Gate("D47");
+
+        gate.Open(Now);
+
+        var decision = gate.Admit("how much tritium?", Now.AddSeconds(3));
+
+        Assert.Equal(WakeOutcome.Addressed, decision.Outcome);
+        Assert.Equal("how much tritium?", decision.Text);
+        Assert.Equal(WakeOutcome.Ignored, gate.Admit("and the cargo?", Now.AddSeconds(4)).Outcome);
     }
 
     /// <summary>The reason this matches a flattened form rather than the string.</summary>

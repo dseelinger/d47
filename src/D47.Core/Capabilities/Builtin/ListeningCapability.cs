@@ -513,8 +513,8 @@ public static class ListeningCapability
                 Label = "What D47 answers to",
                 Help =
                     "Comma-separated. Leave it unset and D47 answers to whatever you call your ship's "
-                    + "AI, so renaming the core renames the wake word too. Add spellings if the speech "
-                    + "model keeps hearing the name as something else.",
+                    + "AI, so renaming the core renames the wake word too. \"D47\" always works as well. "
+                    + "Add spellings if the speech model keeps hearing the name as something else.",
                 Kind = SettingKind.Text,
                 DefaultDisplay = "(the ship's AI name)",
                 DefaultDisplaySource = _ => surface.WakeWords?.Invoke() is { Count: > 0 } names
@@ -542,8 +542,9 @@ public static class ListeningCapability
                 Unit = "s",
                 Help =
                     "Say the name alone, D47 answers, and the next thing you say is the request — the "
-                    + "way you would address a person. Zero means the name and the request have to "
-                    + "arrive in the same breath.",
+                    + "way you would address a person. It also opens when the captain, the crew or anyone "
+                    + "else but the ship's AI finishes answering you, so you can reply without a name. "
+                    + "Zero means the name and the request have to arrive in the same breath.",
                 Kind = SettingKind.Number,
                 Minimum = 0,
                 Maximum = 60,

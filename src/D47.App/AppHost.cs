@@ -225,6 +225,9 @@ public sealed class AppHost : IDisposable
             wake,
             heardAt);
 
+        // A wake phrase alone addresses the ship's AI, so it closes every line as the name at the front of a turn does.
+        Listener.Woken += turns.CloseLines;
+
         OwnVoice = ownVoice;
         CustomVoices = customVoices;
         _ownVoiceRecording = new OwnVoiceRecording(
@@ -1840,6 +1843,10 @@ public sealed class AppHost : IDisposable
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn returns,
         // because the turn returns while the reply is still being spoken.
         audio.ActivityChanged += voice.Settle;
+        audio.Silenced += voice.ReplyCut;
+
+        // Another speaker's reply opens the wake window, so the Commander can answer them without a name.
+        voice.AddressedReplyEnded += () => wake.Open(DateTimeOffset.Now);
 
         // Off unless D47_RECORD_AUDIO=1 (#164).
         var recording = Recording.AudioRecorder.Create(
@@ -2864,8 +2871,10 @@ public sealed class AppHost : IDisposable
                                     late.Host?.SearchReachesTheWeb ?? true))))))),
         };
 
-        // The ship's AI, by its name or "D47"; either at the front of an utterance closes every line below.
-        turns.ShipAiNames = () => ShipAiNames(personas);
+        // The ship's AI, by its name, "D47" or a wake phrase; any of them at the front of an utterance closes every
+        // line below.
+        var wake = services.Wake;
+        turns.ShipAiNames = () => [.. ShipAiNames(personas), .. wake.Phrases];
 
         // What the ship runs without the model, exactly; near misses stay with an open line.
         bool ModelFree(string input) => router.MatchSetting(input) is not null

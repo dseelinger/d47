@@ -81,7 +81,7 @@ public static class ListeningWiring
     public static bool NeedsMicrophone(string? mode, bool keyBound) =>
         keyBound || ListeningCapability.IsHandsFree(mode);
 
-    /// <summary>What d47 answers to (Phase 13).</summary>
+    /// <summary>What d47 answers to (Phase 13): the spelled phrases or the ship's AI name, then "D47".</summary>
     public static IReadOnlyList<string> WakePhrases(string? mode, string? spelled, string shipName)
     {
         if (!string.Equals(mode, ListeningCapability.WakeMode, StringComparison.Ordinal))
@@ -89,8 +89,10 @@ public static class ListeningWiring
             return [];
         }
 
-        return spelled is { Length: > 0 } written
-            ? [.. written.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)]
+        string[] named = spelled is { Length: > 0 } written
+            ? written.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             : [shipName];
+
+        return [.. named.Append(Persona.ShipAiAddressing.CallSign).Distinct(StringComparer.OrdinalIgnoreCase)];
     }
 }

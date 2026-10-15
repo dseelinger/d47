@@ -456,6 +456,15 @@ public sealed class TurnLoop(
     /// <summary>The names that address the ship's AI; one at the front of an utterance closes every line and is removed.</summary>
     public Func<IReadOnlyList<string>>? ShipAiNames { get; set; }
 
+    /// <summary>Closes every line, as naming the ship's AI does.</summary>
+    public void CloseLines()
+    {
+        foreach (var line in Lines)
+        {
+            line.Close();
+        }
+    }
+
     private readonly Lock _heardGate = new();
 
     /// <summary>When each line was last heard, as a count of lines heard; a later line is offered first.</summary>
@@ -536,10 +545,7 @@ public sealed class TurnLoop(
         if (ShipAiNames?.Invoke() is { Count: > 0 } shipAiNames
             && D47.Core.Persona.ShipAiAddressing.Opens(input, shipAiNames) is { } rest)
         {
-            foreach (var line in Lines)
-            {
-                line.Close();
-            }
+            CloseLines();
 
             if (rest.Length == 0)
             {
