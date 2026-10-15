@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using D47.Core.Input;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -271,6 +271,13 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         }
 
         var position = mapping.At(reading);
+
+        // A position pressed and released between two polls is a flip to it, then a flip back.
+        foreach (var missed in MissedPositions(mapping, reading, position))
+        {
+            Reconcile(tick, mapping, missed, Flipped(mapping.Name, missed));
+        }
+
         var flipped = position is not null && Flipped(mapping.Name, position);
 
         // Watched before the flip is acted on, so a second flip inside the window ends the watch rather than
@@ -319,6 +326,17 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             Collides = Collision(tick, mapping, position),
         };
     }
+
+    /// <summary>Positions whose button was down since the last poll but is up now, other than the current one.</summary>
+    private static IEnumerable<SwitchPosition> MissedPositions(
+        SwitchMapping mapping,
+        HotasReading reading,
+        SwitchPosition? current) =>
+        mapping.Positions.Where(position =>
+            position != current
+            && position.Button is { } button
+            && !reading.IsHeld(button)
+            && reading.WasDownSinceLastRead(button));
 
     /// <summary>Whether this poll is a flip.</summary>
     private bool Flipped(string name, SwitchPosition position)

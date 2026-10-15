@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A HOTAS switch pushed and released between two of d47's readings is no longer missed. A spring-return switch, such as gear down on a push up and gear up on a push down, that you flick and let spring back to the centre now counts as a flip to the pushed position and then a flip back, where before the flick could do nothing with no message. A latched switch, push-to-talk and cancel behave as before.
+
 A story chapter's current objective now has **Change objective** beside the button that was **Not for me**, which is now **Never ask this**. Change objective, on the chapter page and the Stories tab, on the desktop window and in the headset, opens a page asking "What would you rather do?" that takes your words by voice or keyboard. The ship's AI writes the current objective and those after it again from what you said and shows the reply with three buttons: **Use this**, **Keep the current one** and **Say something else**, which asks again and keeps what was said. Say "change this objective" or "change the objective" for the same page. Unlike Never ask this, it does not stop the story asking for that activity later. "Never ask this" is now also a phrase for the old refusal, and "not for me" still works. The model cannot change an objective for you.
 
 Three more story objectives now have a button next to **Not for me**, on the chapter page and the Stories tab strip, on the desktop window and in the headset. An engineer objective reads **Show Felicity Farseer** and opens that engineer's page. A sell-data objective reads **Show unsold data** and a suit-mod objective reads **Show suits**. A button is left out when its page is not switched on. Nothing is spoken.

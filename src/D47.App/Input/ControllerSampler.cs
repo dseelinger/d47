@@ -25,6 +25,9 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
     private readonly Thread _thread;
     private readonly Func<TimeSpan> _now;
 
+    private readonly object _downGate = new();
+    private readonly Dictionary<string, bool[]> _down = new();
+
     private Sampled _latest = new(false, [], TimeSpan.Zero);
     private bool _faulted;
 
@@ -63,6 +66,29 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
         return _now() - latest.At > Stale ? [] : latest.Readings;
     }
 
+    /// <summary>
+    /// <see cref="Poll"/> with each reading carrying the buttons that were down in any sample since the last
+    /// call, which this clears. For the switches tick only.
+    /// </summary>
+    public IReadOnlyList<HotasReading> PollWithPresses()
+    {
+        var readings = Poll();
+
+        lock (_downGate)
+        {
+            var carried = readings
+                .Select(reading => reading with
+                {
+                    DownSinceLastRead = _down.TryGetValue(reading.Id, out var down) ? down : [],
+                })
+                .ToList();
+
+            _down.Clear();
+
+            return carried;
+        }
+    }
+
     public ControllerSampler Start()
     {
         _thread.Start();
@@ -74,6 +100,24 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
     {
         var settled = _reader.IsSettled;
         var readings = settled ? _reader.Poll() : [];
+
+        lock (_downGate)
+        {
+            foreach (var reading in readings)
+            {
+                if (!_down.TryGetValue(reading.Id, out var down) || down.Length < reading.Buttons.Count)
+                {
+                    var grown = new bool[reading.Buttons.Count];
+                    down?.CopyTo(grown, 0);
+                    _down[reading.Id] = down = grown;
+                }
+
+                for (var index = 0; index < reading.Buttons.Count; index++)
+                {
+                    down[index] |= reading.Buttons[index];
+                }
+            }
+        }
 
         Volatile.Write(ref _latest, new Sampled(settled, readings, _now()));
     }

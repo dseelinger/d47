@@ -96,6 +96,23 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     }
 
     [Fact]
+    public void AButtonReleasedBetweenTicksIsReportedOnceAsDownSinceTheLastRead()
+    {
+        var reader = new FakeHotasReader().Holding(Stick, 8, 3);
+        using var sampler = new ControllerSampler(reader, NullLogger<ControllerSampler>.Instance);
+
+        sampler.Sample();
+        reader.Holding(Stick, 8);
+        sampler.Sample();
+
+        var first = Assert.Single(sampler.PollWithPresses());
+
+        Assert.False(first.IsHeld(3));
+        Assert.True(first.WasDownSinceLastRead(3));
+        Assert.False(Assert.Single(sampler.PollWithPresses()).WasDownSinceLastRead(3));
+    }
+
+    [Fact]
     public void ASampleIsTakenMoreOftenThanATick()
     {
         Assert.True(ControllerSampler.Period < TickLoop.DefaultPeriod);
@@ -106,7 +123,7 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     public void TheTickSubscribersReadTheSamplerAndNotTheControllers()
     {
         Assert.NotEmpty(AppSource.CodeLines("PollTheStick(sampledControllers,"));
-        Assert.NotEmpty(AppSource.CodeLines("Readings = sampledControllers.Poll(),"));
+        Assert.NotEmpty(AppSource.CodeLines("Readings = sampledControllers.PollWithPresses(),"));
         Assert.Empty(AppSource.CodeLinesMatchingOutside(
             "SelfTest",
             new System.Text.RegularExpressions.Regex(@"\b_?controllers\??\.(Poll\(|IsSettled)")));

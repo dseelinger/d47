@@ -17,6 +17,9 @@ public sealed record HotasReading
     /// <summary>Held or not, by button index.</summary>
     public required IReadOnlyList<bool> Buttons { get; init; }
 
+    /// <summary>Buttons that were down in any sample since the last read; empty when the reader does not track it.</summary>
+    public IReadOnlyList<bool> DownSinceLastRead { get; init; } = [];
+
     /// <summary>Hat positions, as the platform's own enumeration values.</summary>
     public IReadOnlyList<int> Hats { get; init; } = [];
 
@@ -24,6 +27,10 @@ public sealed record HotasReading
 
     /// <summary>Whether a button index exists on this device and is currently held.</summary>
     public bool IsHeld(int button) => button >= 0 && button < Buttons.Count && Buttons[button];
+
+    /// <summary>Whether a button index was down in any sample since the last read, or is held now.</summary>
+    public bool WasDownSinceLastRead(int button) =>
+        IsHeld(button) || (button >= 0 && button < DownSinceLastRead.Count && DownSinceLastRead[button]);
 
     /// <summary>Every held button index, ascending.</summary>
     public IReadOnlyList<int> Held()

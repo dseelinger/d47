@@ -3621,7 +3621,7 @@ public sealed class AppHost : IDisposable
                 new SwitchTick
                 {
                     Now = context.Now,
-                    Readings = sampledControllers.Poll(),
+                    Readings = sampledControllers.PollWithPresses(),
                     Status = status.Current,
                     Binds = late.Binds!(),
 
