@@ -53,7 +53,8 @@ public static class FlavourTurn
         bool canBeDirected = false,
         string? humor = null,
         string? scenario = null,
-        string? hiddenStory = null) =>
+        string? hiddenStory = null,
+        string? recentDelivery = null) =>
         (await AskForAsync(
             provider,
             model,
@@ -72,7 +73,8 @@ public static class FlavourTurn
             canBeDirected,
             humor,
             scenario,
-            hiddenStory).ConfigureAwait(false)).Line;
+            hiddenStory,
+            recentDelivery: recentDelivery).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
@@ -95,7 +97,8 @@ public static class FlavourTurn
         string? humor = null,
         string? scenario = null,
         string? hiddenStory = null,
-        bool thinking = true)
+        bool thinking = true,
+        string? recentDelivery = null)
     {
         if (provider is null)
         {
@@ -135,6 +138,7 @@ public static class FlavourTurn
                 History = [new ConversationMessage(ConversationRole.User, instruction)],
                 LiveGameState = gameState,
                 Humor = humor,
+                RecentDelivery = canBeDirected ? recentDelivery : null,
             },
         };
 

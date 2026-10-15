@@ -105,15 +105,19 @@ public sealed record PromptAssembly
     /// <summary>Position 9 — this line's humor instruction, rolled per line, or null.</summary>
     public string? Humor { get; init; }
 
-    /// <summary>Positions 8 and 9, which providers send after the history, or null when both are empty.</summary>
-    public string? TrailingState =>
-        (string.IsNullOrWhiteSpace(LiveGameState), string.IsNullOrWhiteSpace(Humor)) switch
+    /// <summary>Position 10 — the delivery notes this speaker used recently, or null.</summary>
+    public string? RecentDelivery { get; init; }
+
+    /// <summary>Positions 8 through 10, which providers send after the history, or null when all are empty.</summary>
+    public string? TrailingState
+    {
+        get
         {
-            (true, true) => null,
-            (false, true) => LiveGameState,
-            (true, false) => Humor,
-            _ => $"{LiveGameState}\n\n{Humor}",
-        };
+            var parts = new[] { LiveGameState, Humor, RecentDelivery }.Where(part => !string.IsNullOrWhiteSpace(part)).ToList();
+
+            return parts.Count == 0 ? null : string.Join("\n\n", parts);
+        }
+    }
 
     /// <summary>Positions 2 through 6, in order.</summary>
     public string RenderCachedSystemBlock()

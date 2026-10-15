@@ -100,6 +100,27 @@ internal sealed class LineWriter
     /// <summary>Decides, line by line, which model-written lines get humor.</summary>
     private readonly HumorRoll _humor = new();
 
+    /// <summary>The delivery notes each speaker used lately.</summary>
+    private readonly RecentDelivery _delivery = new();
+
+    /// <summary>The voice a line is heard as: the ship's AI by persona, a cast member by id, anyone else by role.</summary>
+    private string SpeakerOf(VoiceRole role, string? cast = null) =>
+        cast is { Length: > 0 } ? $"cast:{cast}"
+        : role == VoiceRole.ShipAi ? $"persona:{Personas.Current.Id}"
+        : $"role:{role}";
+
+    private string? Noted(string speaker, bool directed) => directed ? _delivery.Describe(speaker) : null;
+
+    private string? Remember(string speaker, bool directed, string? line)
+    {
+        if (directed && line is not null)
+        {
+            _delivery.Record(speaker, line);
+        }
+
+        return line;
+    }
+
     /// <summary>Decides, line by line, which accented NPC lines are written to suit the accent.</summary>
     private readonly AccentRoll _accent = new();
 
@@ -124,8 +145,9 @@ internal sealed class LineWriter
             {
                 // Against the slot this line will be spoken in, not the ship's.
                 var directed = DirectableIn(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel));
+                var speaker = SpeakerOf(announcement.Voice, announcement.Cast);
 
-                return FlavourTurn.AskForAsync(
+                return RememberingAsync(speaker, directed, FlavourTurn.AskForAsync(
                     Turns.Provider,
                     Turns.BackgroundModel,
                     brief.NeedsPersona
@@ -148,12 +170,21 @@ internal sealed class LineWriter
                     hiddenStory: brief.NeedsPersona ? HiddenStory(VoiceRole.ShipAi)
                         : announcement.Voice == VoiceRole.Narrator ? HiddenStory(VoiceRole.Narrator)
                         : null,
-                    thinking: Rewording.IsNarration(announcement));
+                    thinking: Rewording.IsNarration(announcement),
+                    recentDelivery: Noted(speaker, directed)));
             },
             stockCoreAboard: () => Personas.Current.Stock,
             fight: () => GameState.Active is { } active
                 ? CarrierFight.Describe(Fight.Snapshot, active.Location.StarSystem, active.Carrier, D47.Core.SystemWallClock.Instance.UtcNow)
                 : null);
+    }
+
+    private async Task<FlavourReply> RememberingAsync(string speaker, bool directed, Task<FlavourReply> ask)
+    {
+        var reply = await ask.ConfigureAwait(false);
+        Remember(speaker, directed, reply.Line);
+
+        return reply;
     }
 
     /// <summary>The cast invented chatter is voiced from.</summary>
@@ -255,7 +286,10 @@ internal sealed class LineWriter
             _logger,
             budget.Token,
             canBeDirected: directed,
-            hiddenStory: HiddenStory(VoiceRole.Comms)).ConfigureAwait(false);
+            hiddenStory: HiddenStory(VoiceRole.Comms),
+            recentDelivery: Noted("group:npc", directed)).ConfigureAwait(false);
+
+        Remember("group:npc", directed, script);
 
         // Checked again once written: the Commander may have left the scene while the model was writing.
         if (scene is not null && !SceneCallout.IsStillHappening(scene, Scenes.Snapshot))
@@ -345,7 +379,7 @@ internal sealed class LineWriter
             : D47.Core.Stories.StoryClues.Speaking(clue, voice.Narrated);
         var directed = voice.Pinned is { } pinned ? CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
 
-        return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed).ConfigureAwait(false) is { } said
+        return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed, voice.Cast?.Id).ConfigureAwait(false) is { } said
             ? Voiced(marker with { Text = said }, voice)
             : null;
     }
@@ -450,7 +484,7 @@ internal sealed class LineWriter
     /// A story line the model writes from the brief in the given voice, or null when no line came back. The ship's lines
     /// are written by the core aboard; every other speaker's by the brief's own speaker.
     /// </summary>
-    internal async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null)
+    internal async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null, string? cast = null)
     {
         if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
         {
@@ -462,7 +496,9 @@ internal sealed class LineWriter
 
         using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
-        Task<string?> AskAsync(string ask) => FlavourTurn.AskAsync(
+        var speaker = SpeakerOf(voice, cast);
+
+        async Task<string?> AskAsync(string ask) => Remember(speaker, directed, await FlavourTurn.AskAsync(
             Turns.Provider,
             Turns.BackgroundModel,
             ship ? Personas.RenderBlock(personalityEnabled: true) : brief.Speaker,
@@ -475,7 +511,8 @@ internal sealed class LineWriter
             budget.Token,
             canBeDirected: directed,
             scenario: ScenarioFor(brief, voice),
-            hiddenStory: HiddenStory(voice));
+            hiddenStory: HiddenStory(voice),
+            recentDelivery: Noted(speaker, directed)).ConfigureAwait(false));
 
         var facts = ShipFacts.Of(GameState.Active);
 
