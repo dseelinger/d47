@@ -11,11 +11,13 @@ namespace D47.Core.Persona;
 /// <param name="shipName">What the ship is called, for the seat's brief.</param>
 /// <param name="hull">The hull as it is said, for the seat's brief.</param>
 /// <param name="crew">The hired pilots; a pilot's name at the front of an utterance closes the line.</param>
+/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class SeatLine(
     Func<IReadOnlyList<CrewSeat>> seats,
     Func<string?> shipName,
     Func<string?> hull,
-    Func<ShipCrew?> crew) : ILine
+    Func<ShipCrew?> crew,
+    Func<string, bool>? modelFree = null) : ILine
 {
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = [];
 
@@ -49,6 +51,11 @@ public sealed class SeatLine(
         }
         else if (aboard.FirstOrDefault(s => s.Id == _open) is { } current)
         {
+            if (modelFree?.Invoke(input) == true)
+            {
+                return Task.FromResult<LineDecision>(new LineDecision.NotMine());
+            }
+
             seat = current;
             question = input.Trim();
         }

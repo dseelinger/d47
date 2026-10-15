@@ -1,0 +1,81 @@
+using D47.Core.Journal;
+using D47.Core.Persona;
+using D47.Core.Seats;
+using Xunit;
+
+namespace D47.Core.Tests.Persona;
+
+/// <summary>An unnamed utterance the ship runs without the model goes to the ship AI, and an open line stays open.</summary>
+public class AShipCommandPassesAnOpenLineTests
+{
+    private const string Command = "request docking";
+
+    private static readonly CarrierState Carrier = new() { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" };
+
+    private static readonly ShipCrew Pilots = new()
+    {
+        Members = [new CrewMember("Vance", CrewId: 1, CombatRank: "Dangerous", Active: true)],
+    };
+
+    private static readonly CrewSeat Teo = new("0000000a", CrewRole.ScienceOfficer, null, "Teo Marsh");
+
+    private static bool IsCommand(string input) => input == Command;
+
+    private static async Task AssertPassesAndKeepsAsync(ILine line, string named, string question)
+    {
+        await line.RouteAsync(named, CancellationToken.None);
+        Assert.True(line.IsOpen);
+
+        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync(Command, CancellationToken.None));
+        Assert.True(line.IsOpen);
+
+        Assert.IsType<LineDecision.Taken>(await line.RouteAsync(question, CancellationToken.None));
+    }
+
+    [Fact]
+    public Task TheCaptainPassesACommandAndKeepsTheLine() =>
+        AssertPassesAndKeepsAsync(
+            new CaptainLine(() => Carrier, () => "Sol", modelFree: IsCommand),
+            "Captain, status?",
+            "how's our fuel?");
+
+    [Fact]
+    public Task AHiredPilotPassesACommandAndKeepsTheLine() =>
+        AssertPassesAndKeepsAsync(
+            new CrewLine(() => Pilots, () => "Warden's Reach", modelFree: IsCommand),
+            "Vance, status?",
+            "how's our fuel?");
+
+    [Fact]
+    public Task ACrewSeatPassesACommandAndKeepsTheLine() =>
+        AssertPassesAndKeepsAsync(
+            new SeatLine(() => [Teo], () => "Warden's Reach", () => "Python", () => null, IsCommand),
+            "Teo Marsh, status?",
+            "how's our fuel?");
+
+    [Fact]
+    public async Task ACommandThatNamesTheCaptainStillGoesToTheCaptain()
+    {
+        var line = new CaptainLine(() => Carrier, () => "Sol", modelFree: IsCommand);
+
+        await line.RouteAsync("Captain, status?", CancellationToken.None);
+
+        Assert.IsType<LineDecision.Taken>(await line.RouteAsync("Captain, request docking", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ACommandThatNamesAPilotStillGoesToThePilot()
+    {
+        var line = new CrewLine(() => Pilots, () => "Warden's Reach", modelFree: IsCommand);
+
+        Assert.IsType<LineDecision.Taken>(await line.RouteAsync("Vance, request docking", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ACommandThatNamesASeatStillGoesToTheSeat()
+    {
+        var line = new SeatLine(() => [Teo], () => "Warden's Reach", () => "Python", () => null, IsCommand);
+
+        Assert.IsType<LineDecision.Taken>(await line.RouteAsync("Teo Marsh, request docking", CancellationToken.None));
+    }
+}

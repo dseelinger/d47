@@ -7,10 +7,12 @@ namespace D47.Core.Persona;
 
 /// <summary>The captain of the Commander's fleet carrier, on the line while addressed.</summary>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
+/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class CaptainLine(
     Func<CarrierState> carrier,
     Func<string?> commanderSystem,
-    Func<string, string, CancellationToken, Task<double?>>? distance = null) : ILine
+    Func<string, string, CancellationToken, Task<double?>>? distance = null,
+    Func<string, bool>? modelFree = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
     public const double RangeLightYears = LinkSignal.LostLightYears;
@@ -43,6 +45,11 @@ public sealed class CaptainLine(
         }
         else if (IsOpen)
         {
+            if (modelFree?.Invoke(input) == true)
+            {
+                return new LineDecision.NotMine();
+            }
+
             question = input.Trim();
         }
         else

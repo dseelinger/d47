@@ -2867,6 +2867,12 @@ public sealed class AppHost : IDisposable
         // The ship's AI, by its name or "D47"; either at the front of an utterance closes every line below.
         turns.ShipAiNames = () => ShipAiNames(personas);
 
+        // What the ship runs without the model, exactly; near misses stay with an open line.
+        bool ModelFree(string input) => router.MatchSetting(input) is not null
+                                        || router.MatchToolCommand(input) is not null
+                                        || router.Match(input, InputSource.Spoken) is not null
+                                        || wording.LearnedPhraseFor(input) is not null;
+
         // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
         // search is on.
         turns.Lines.Add(new CaptainLine(
@@ -2874,7 +2880,8 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Location.StarSystem,
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
-                : Task.FromResult<double?>(null)));
+                : Task.FromResult<double?>(null),
+            ModelFree));
 
         D47.Core.Seats.ShipSeats? SeatsFlown() =>
             gameState.Active is { } active && active.FlownShip.ShipId is { } shipId
@@ -2891,14 +2898,16 @@ public sealed class AppHost : IDisposable
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
             () => gameState.Active?.Ship.Name,
-            SeatsAboard));
+            SeatsAboard,
+            ModelFree));
 
         // A crew seat on the ship flown, reached by name (#846).
         turns.Lines.Add(new SeatLine(
             SeatsAboard,
             () => gameState.Active?.FlownShip.Name,
             () => gameState.Active?.FlownShip.TypeSaid,
-            () => gameState.Active?.Crew));
+            () => gameState.Active?.Crew,
+            ModelFree));
 
         // An invented speaker from the last overheard exchange, reached by name while it is still going.
         turns.Lines.Add(new ChatterLine(
