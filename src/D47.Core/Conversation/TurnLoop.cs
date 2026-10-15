@@ -267,6 +267,12 @@ public sealed class TurnLoop(
     /// <summary>How many messages of one persona's transcript are kept (remediation.md 17, item 4).</summary>
     public const int TranscriptKept = 80;
 
+    /// <summary>
+    /// How many messages a trim leaves. Trimming in chunks keeps the front of the transcript, and so the
+    /// cached history, the same between trims.
+    /// </summary>
+    public const int TranscriptTrimmedTo = 60;
+
     /// <summary>A turn with fewer output tokens left than this sends no further request.</summary>
     public const int MinimumRoundOutputTokens = 1024;
 
@@ -298,8 +304,8 @@ public sealed class TurnLoop(
     }
 
     /// <summary>
-    /// Trims the transcript to <see cref="TranscriptKept"/>, never leaving a tool call whose result was
-    /// dropped with it.
+    /// Trims the transcript to <see cref="TranscriptTrimmedTo"/> once it passes <see cref="TranscriptKept"/>,
+    /// never leaving a tool call whose result was dropped with it.
     /// </summary>
     private static void Bound(List<ConversationMessage> transcript)
     {
@@ -308,7 +314,7 @@ public sealed class TurnLoop(
             return;
         }
 
-        var cut = transcript.Count - TranscriptKept;
+        var cut = transcript.Count - TranscriptTrimmedTo;
 
         // Forward past any message that would leave a dangling half: a tool result whose call is being
         // dropped, the assistant call it belongs to, and a provider block tied to either.
@@ -1538,6 +1544,9 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Routed(TurnRoute.Model, effortReported);
 
         var usage = LlmUsage.None;
+
+        // The first completed round's usage, which alone shows whether the prefix carried over from the last turn.
+        var firstRound = LlmUsage.None;
         var longestGap = TimeSpan.Zero;
 
         // Requests that started and did not complete, and how many rounds completed: both are billed.
@@ -1714,6 +1723,12 @@ public sealed class TurnLoop(
 
                 // Every round is a billed request, so usage accumulates across the whole turn.
                 usage = Add(usage, outcome.Usage);
+
+                if (roundsBilled == 0)
+                {
+                    firstRound = outcome.Usage;
+                }
+
                 roundsBilled++;
                 longestGap = Max(longestGap, outcome.LongestGap);
                 answer = outcome.Reply.ToString().Trim();
@@ -1896,9 +1911,9 @@ public sealed class TurnLoop(
             StandingSaid?.Invoke();
         }
 
-        // Warmth is read from the completed rounds alone; an unfinished request adds only to the cost.
+        // Warmth is read from the first completed round alone; the bill is every round, unfinished ones included.
         var cost = CostOf(Add(usage, unfinished.Usage));
-        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(usage, providerCapabilities));
+        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(firstRound, providerCapabilities));
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer about what it
         // will do rather than a fault in the pipeline.
@@ -2084,17 +2099,15 @@ public sealed class TurnLoop(
         }
     }
 
-    /// <summary>One turn is several rounds, and the bill is their sum.</summary>
+    /// <summary>
+    /// Judged from a turn's first round: cold when it read nothing from cache and sent at least a cacheable
+    /// prefix. Writing cache is not cold, because every turn writes its new history.
+    /// </summary>
     private static PrefixWarmth Warmth(LlmUsage usage, LlmProviderCapabilities capabilities)
     {
         if (!usage.Reported || !capabilities.SupportsPromptCaching)
         {
             return PrefixWarmth.Unknown;
-        }
-
-        if (usage.CacheCreationInputTokens > 0)
-        {
-            return PrefixWarmth.Cold;
         }
 
         if (usage.CacheReadInputTokens > 0)

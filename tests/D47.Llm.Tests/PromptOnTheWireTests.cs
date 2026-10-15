@@ -30,15 +30,19 @@ public class PromptOnTheWireTests
         Prompt = new PromptAssembly { History = history, LiveGameState = liveGameState },
     };
 
+    /// <summary>
+    /// A block list rather than a plain string, so the message has the same form on a later request where it
+    /// no longer carries the breakpoint.
+    /// </summary>
     [Fact]
-    public async Task ATextOnlyTurnIsAPlainStringRatherThanABlockList()
+    public async Task ATextOnlyTurnIsAOneBlockList()
     {
         var sent = await SentAsync(With([new ConversationMessage(ConversationRole.User, "fuel?")]));
 
-        var content = sent.GetProperty("messages")[0].GetProperty("content");
+        var block = Assert.Single(sent.GetProperty("messages")[0].GetProperty("content").EnumerateArray());
 
-        Assert.Equal(JsonValueKind.String, content.ValueKind);
-        Assert.Equal("fuel?", content.GetString());
+        Assert.Equal("text", block.GetProperty("type").GetString());
+        Assert.Equal("fuel?", block.GetProperty("text").GetString());
     }
 
     [Fact]
@@ -78,7 +82,10 @@ public class PromptOnTheWireTests
         Assert.Contains("Shinrarta Dezhra", last.GetProperty("content").GetString()!, StringComparison.Ordinal);
     }
 
-    /// <summary>Where it cannot, it folds into the last user turn as a <c>&lt;system-reminder&gt;</c>.</summary>
+    /// <summary>
+    /// Where it cannot, it folds into the last user turn as a <c>&lt;system-reminder&gt;</c> block after the
+    /// question.
+    /// </summary>
     [Fact]
     public async Task LiveGameStateFoldsIntoTheUserTurnWhereItCannot()
     {
@@ -94,12 +101,13 @@ public class PromptOnTheWireTests
             messages.EnumerateArray(),
             message => message.GetProperty("role").GetString() == "system");
 
-        var content = messages[0].GetProperty("content").GetString()!;
+        var content = messages[0].GetProperty("content");
 
-        Assert.Contains("<system-reminder>", content, StringComparison.Ordinal);
-        Assert.Contains("Shinrarta Dezhra", content, StringComparison.Ordinal);
-
-        Assert.EndsWith("\n\nwhere am I?", content, StringComparison.Ordinal);
+        Assert.Equal(2, content.GetArrayLength());
+        Assert.Equal("where am I?", content[0].GetProperty("text").GetString());
+        Assert.Equal(
+            "<system-reminder>\nSystem: Shinrarta Dezhra\n</system-reminder>",
+            content[1].GetProperty("text").GetString());
     }
 
     [Theory]
@@ -110,7 +118,9 @@ public class PromptOnTheWireTests
         var sent = await SentAsync(With([new ConversationMessage(ConversationRole.User, "hello")], model: model));
 
         Assert.Equal(1, sent.GetProperty("messages").GetArrayLength());
-        Assert.Equal("hello", sent.GetProperty("messages")[0].GetProperty("content").GetString());
+
+        var block = Assert.Single(sent.GetProperty("messages")[0].GetProperty("content").EnumerateArray());
+        Assert.Equal("hello", block.GetProperty("text").GetString());
     }
 
     [Fact]
@@ -207,14 +217,36 @@ public class PromptOnTheWireTests
 
         var sent = await SentAsync(With(history));
 
-        var marked = sent.GetProperty("messages")
-            .EnumerateArray()
-            .Where(message => message.GetProperty("content").ValueKind == JsonValueKind.Array)
-            .SelectMany(message => message.GetProperty("content").EnumerateArray())
-            .Count(block => block.TryGetProperty("cache_control", out var control)
-                            && control.ValueKind == JsonValueKind.Object);
+        var blocks = Blocks(sent);
 
-        Assert.InRange(marked, 1, 3);
+        Assert.True(Marked(blocks[^1]), "the end of the history is not marked");
+        Assert.InRange(blocks[..^1].Count(Marked), 1, 2);
+    }
+
+    /// <summary>A fifth breakpoint is refused with a 400, however long the exchange.</summary>
+    [Fact]
+    public async Task NoRequestCarriesMoreThanFourBreakpoints()
+    {
+        var history = new List<ConversationMessage> { new(ConversationRole.User, "do the thing") };
+
+        for (var i = 0; i < 40; i++)
+        {
+            history.Add(new ConversationMessage(
+                ConversationRole.Assistant,
+                [new ConversationContent.ToolUse($"toolu_{i}", "step", "{}")]));
+
+            history.Add(new ConversationMessage(
+                ConversationRole.User,
+                [new ConversationContent.ToolResult($"toolu_{i}", "done", IsError: false)]));
+        }
+
+        var sent = await SentAsync(With(history));
+
+        var blocks = Blocks(sent);
+
+        Assert.Equal(1, sent.GetProperty("system").EnumerateArray().Count(Marked));
+        Assert.True(Marked(blocks[^1]), "the end of the history is not marked");
+        Assert.Equal(2, blocks[..^1].Count(Marked));
     }
 
     [Fact]
@@ -228,12 +260,83 @@ public class PromptOnTheWireTests
                 [new ConversationContent.ToolResult("toolu_1", "done", IsError: false)]),
         ]));
 
-        var block = sent.GetProperty("messages")[1].GetProperty("content")[0];
+        var blocks = Blocks(sent);
 
-        Assert.True(
-            !block.TryGetProperty("cache_control", out var control) || control.ValueKind == JsonValueKind.Null,
-            $"a breakpoint was spent on a two-block exchange: {block}");
+        Assert.True(Marked(blocks[^1]), "the end of the history is not marked");
+        Assert.DoesNotContain(blocks[..^1], Marked);
     }
+
+    /// <summary>
+    /// The end of the history is cached ahead of the live game state, which follows as a system message where
+    /// the model takes one and as a reminder block after the question where it does not.
+    /// </summary>
+    [Theory]
+    [InlineData("claude-opus-5", true)]
+    [InlineData("claude-sonnet-5", false)]
+    public async Task TheEndOfTheHistoryIsMarkedAheadOfTheGameState(string model, bool operatorMessages)
+    {
+        var sent = await SentAsync(With(
+            [
+                new ConversationMessage(ConversationRole.User, "where am I?"),
+                new ConversationMessage(ConversationRole.Assistant, "Shinrarta Dezhra."),
+                new ConversationMessage(ConversationRole.User, "how far is Sol?"),
+            ],
+            liveGameState: "System: Shinrarta Dezhra",
+            model: model));
+
+        var messages = sent.GetProperty("messages");
+        var last = messages[messages.GetArrayLength() - 1];
+        var blocks = Blocks(sent);
+
+        if (operatorMessages)
+        {
+            Assert.Equal("system", last.GetProperty("role").GetString());
+            Assert.Equal(JsonValueKind.String, last.GetProperty("content").ValueKind);
+            Assert.Equal("how far is Sol?", blocks[^1].GetProperty("text").GetString());
+            Assert.True(Marked(blocks[^1]), "the question is not marked");
+        }
+        else
+        {
+            Assert.Equal("user", last.GetProperty("role").GetString());
+            Assert.Equal("how far is Sol?", blocks[^2].GetProperty("text").GetString());
+            Assert.True(Marked(blocks[^2]), "the question is not marked");
+            Assert.StartsWith("<system-reminder>", blocks[^1].GetProperty("text").GetString(), StringComparison.Ordinal);
+        }
+
+        Assert.Single(blocks, Marked);
+    }
+
+    /// <summary>A thinking block cannot carry a breakpoint, so the last block that can is marked instead.</summary>
+    [Theory]
+    [InlineData("""{"type":"thinking","thinking":"x","signature":"y"}""")]
+    [InlineData("""{"type":"redacted_thinking","data":"ZW5jcnlwdGVk"}""")]
+    public async Task TheBreakpointIsNeverOnAThinkingBlock(string thinking)
+    {
+        var sent = await SentAsync(With(
+        [
+            new ConversationMessage(ConversationRole.User, "where am I?"),
+            new ConversationMessage(
+                ConversationRole.Assistant,
+                [new ConversationContent.Text("Shinrarta Dezhra."), new ConversationContent.ThinkingBlock("anthropic", thinking)]),
+        ]));
+
+        var content = sent.GetProperty("messages")[1].GetProperty("content");
+
+        Assert.True(Marked(content[0]), "the text before the thinking block is not marked");
+        Assert.False(Marked(content[1]), "a breakpoint was put on a thinking block");
+    }
+
+    /// <summary>Every content block of every message, in order.</summary>
+    private static JsonElement[] Blocks(JsonElement sent) =>
+    [
+        .. sent.GetProperty("messages")
+            .EnumerateArray()
+            .Where(message => message.GetProperty("content").ValueKind == JsonValueKind.Array)
+            .SelectMany(message => message.GetProperty("content").EnumerateArray()),
+    ];
+
+    private static bool Marked(JsonElement block) =>
+        block.TryGetProperty("cache_control", out var control) && control.ValueKind == JsonValueKind.Object;
 
     [Theory]
     [InlineData(ThinkingEffort.Low, "low")]

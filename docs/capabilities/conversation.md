@@ -416,10 +416,11 @@ Which model writes the things you did not ask for: a line of In Ship chatter, th
 what Directive 47 says after a long gap, a lore lookup, and choosing a voice for a core. Leave it
 empty and they use the model above, which is what every version before this one did.
 
-**It is close to free money, and the reason is caching rather than the rate card.** A conversation
-turn re-sends everything said so far, and the provider charges the cheap cached rate for a prefix
-it has seen before — but a cache belongs to one model, so *alternating* between two models pays to
-write the cache again each time you come back. One detour costs several times what the cheap turn
+**It is close to free money, and the reason is caching rather than the rate card.** Every turn
+on the same model reads the instructions and the tool list from the provider's cache, at the cheap
+cached rate. The conversation is read from cache between the tool rounds of one answer, and between
+answers at the same model and effort less than five minutes apart. A cache belongs to one model, so
+*alternating* between two models pays to write the cache again each time you come back. One detour costs several times what the cheap turn
 saved, which is why Directive 47 will never switch models question by question. The background calls are
 the opposite case: none of them carry the conversation, every one of them already starts cold, so
 sending them somewhere cheaper costs nothing at all and saves most of what Directive 47 spends

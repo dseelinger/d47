@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -288,6 +288,65 @@ public class TurnLoopTests
         Assert.Equal(1, spend.UnexplainedColdPrefixes);
     }
 
+    /// <summary>
+    /// A turn is judged by its first round: a later round reads what the first one wrote, so a read there does
+    /// not show the prefix carried over from the turn before.
+    /// </summary>
+    [Fact]
+    public async Task ATurnWhoseFirstRoundReadNothingIsColdWhateverLaterRoundsRead()
+    {
+        var registry = CapabilityRegistry.Build(
+        [
+            new CapabilityDescriptor
+            {
+                Id = "survey",
+                Group = "Knowledge",
+                Name = "Survey",
+                Summary = "Surveys things.",
+                Tools =
+                [
+                    new ToolDefinition
+                    {
+                        Name = "survey",
+                        Description = "Surveys the system.",
+                        Handler = (_, _) => Task.FromResult(ToolResult.Ok("Surveyed.")),
+                    },
+                ],
+            },
+        ]);
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying("Answered.", new LlmUsage(200, 10, 0, CacheReadInputTokens: 4_000)),
+            [
+                new LlmStreamEvent.ToolUse("call_1", "survey", "{}"),
+                new LlmStreamEvent.Completed(new LlmUsage(4_400, 10, 0, CacheReadInputTokens: 0), LlmStopReason.ToolUse),
+            ],
+            RoundScriptedLlmProvider.Saying("Surveyed.", new LlmUsage(100, 10, 0, CacheReadInputTokens: 4_400)));
+
+        var loop = Build(registry, provider, out _, out var spend);
+
+        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunAsync(loop, "tell me more about hyperspace physics");
+
+        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(1, spend.UnexplainedColdPrefixes);
+    }
+
+    /// <summary>Every turn writes cache for its new history, so a write alone is not a cold prefix.</summary>
+    [Fact]
+    public async Task AFirstRoundThatReadsAndWritesIsWarm()
+    {
+        var install = new MemoryInstall();
+        var provider = FakeLlmProvider.Answering(
+            "Answered.", new LlmUsage(200, 10, CacheCreationInputTokens: 300, CacheReadInputTokens: 4_000));
+        var loop = Build(BuiltinRegistry(install), provider, out _, out var spend);
+
+        await RunAsync(loop, "tell me about hyperspace physics");
+        await RunAsync(loop, "tell me more about hyperspace physics");
+
+        Assert.Equal(0, spend.UnexplainedColdPrefixes);
+    }
+
     [Fact]
     public async Task EffortIsChosenPerTurnAndReportedOnTheResult()
     {
@@ -491,7 +550,7 @@ public class TurnLoopTests
             StringComparison.Ordinal);
     }
 
- /// <summary>The transcript has a ceiling.</summary>
+    /// <summary>The transcript has a ceiling.</summary>
     [Fact]
     public async Task TheTranscriptIsBounded()
     {
@@ -502,9 +561,10 @@ public class TurnLoopTests
         for (var turn = 0; turn < TurnLoop.TranscriptKept; turn++)
         {
             await RunAsync(loop, $"question {turn.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            Assert.InRange(loop.History.Count, 0, TurnLoop.TranscriptKept);
         }
 
-        Assert.Equal(TurnLoop.TranscriptKept, loop.History.Count);
+        Assert.InRange(loop.History.Count, TurnLoop.TranscriptTrimmedTo, TurnLoop.TranscriptKept);
 
         // The oldest went first, which is the ordinary meaning of a conversation you can follow.
         Assert.DoesNotContain(
@@ -516,6 +576,43 @@ public class TurnLoopTests
             message => Text(message).Contains(
                 $"question {(TurnLoop.TranscriptKept - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}",
                 StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The transcript is trimmed in chunks, so its first message, and the cached history that starts with it,
+    /// stays the same from one turn to the next between trims.
+    /// </summary>
+    [Fact]
+    public async Task TheTranscriptKeepsItsFirstMessageBetweenTrims()
+    {
+        var install = new MemoryInstall();
+        var provider = FakeLlmProvider.Answering("Answered.");
+        var loop = Build(BuiltinRegistry(install), provider, out _, out _);
+        var asked = 0;
+
+        async Task AskAsync() =>
+            await RunAsync(loop, $"question {(asked++).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+
+        // Two messages a turn: the turn that passes the ceiling is the one that trims.
+        while (loop.History.Count + 2 <= TurnLoop.TranscriptKept)
+        {
+            await AskAsync();
+        }
+
+        await AskAsync();
+        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History.Count);
+
+        var first = loop.History[0];
+
+        while (loop.History.Count + 2 <= TurnLoop.TranscriptKept)
+        {
+            await AskAsync();
+            Assert.Same(first, loop.History[0]);
+        }
+
+        await AskAsync();
+        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History.Count);
+        Assert.NotSame(first, loop.History[0]);
     }
 
     private static string Text(ConversationMessage message) =>

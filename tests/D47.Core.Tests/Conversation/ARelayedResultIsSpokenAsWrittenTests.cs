@@ -202,7 +202,7 @@ public class ARelayedResultIsSpokenAsWrittenTests
 
         await RunAsync(Build(provider, transcript), "plot a course to Colonia");
 
-        Assert.Equal(TurnLoop.TranscriptKept, transcript.Count);
+        Assert.Equal(TurnLoop.TranscriptTrimmedTo, transcript.Count);
         AssertNoStrandedPair(transcript);
     }
 

@@ -1,4 +1,5 @@
-using System.Text.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using D47.Core.Capabilities;
 using D47.Core.Conversation;
 using D47.Llm.OpenAi;
@@ -66,7 +67,26 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         int maxToolRounds = 8,
         bool redacted = false)
     {
-        using var endpoint = RecordedEndpoint.StreamingEach(CallingRound(model, redacted), AnsweringRound(model));
+        var (requests, loop) = await RequestsAsync(model, stateChanges, maxToolRounds, redacted, followUp: null);
+
+        Assert.Equal(2, requests.Count);
+
+        return (requests[0], requests[1], loop);
+    }
+
+    /// <summary>
+    /// The two-round turn, then, when <paramref name="followUp"/> is given, a one-round turn asking it.
+    /// </summary>
+    private static async Task<(IReadOnlyList<JsonElement> Requests, TurnLoop Loop)> RequestsAsync(
+        string model,
+        bool stateChanges,
+        int maxToolRounds,
+        bool redacted,
+        string? followUp)
+    {
+        using var endpoint = followUp is null
+            ? RecordedEndpoint.StreamingEach(CallingRound(model, redacted), AnsweringRound(model))
+            : RecordedEndpoint.StreamingEach(CallingRound(model, redacted), AnsweringRound(model), AnsweringRound(model));
 
         var state = "Docked at Jameson Memorial.";
         TurnLoop? loop = null;
@@ -132,15 +152,67 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         {
         }
 
-        var requests = endpoint.Requests;
-        Assert.Equal(2, requests.Count);
+        if (followUp is not null)
+        {
+            await foreach (var _ in loop.RunAsync(followUp, cancellationToken: Token))
+            {
+            }
+        }
 
-        return (Parse(requests[0]), Parse(requests[1]), loop);
+        return ([.. endpoint.Requests.Select(Parse)], loop);
     }
 
     private static JsonElement Parse(string body) => JsonDocument.Parse(body).RootElement.Clone();
 
     private static string[] Raw(JsonElement array) => [.. array.EnumerateArray().Select(element => element.GetRawText())];
+
+    /// <summary>Each element's JSON with every <c>cache_control</c> removed.</summary>
+    private static string[] Unmarked(JsonElement array) =>
+        [.. array.EnumerateArray().Select(element => Unmarked(JsonNode.Parse(element.GetRawText())!).ToJsonString())];
+
+    private static JsonNode Unmarked(JsonNode node)
+    {
+        switch (node)
+        {
+            case JsonObject members:
+                members.Remove("cache_control");
+
+                foreach (var (_, member) in members)
+                {
+                    if (member is not null)
+                    {
+                        Unmarked(member);
+                    }
+                }
+
+                break;
+
+            case JsonArray items:
+                foreach (var item in items)
+                {
+                    if (item is not null)
+                    {
+                        Unmarked(item);
+                    }
+                }
+
+                break;
+        }
+
+        return node;
+    }
+
+    private static bool Marked(JsonElement block) =>
+        block.TryGetProperty("cache_control", out var control) && control.ValueKind == JsonValueKind.Object;
+
+    /// <summary>Every content block of every message that has a block list, in order.</summary>
+    private static JsonElement[] Blocks(JsonElement messages) =>
+    [
+        .. messages
+            .EnumerateArray()
+            .Where(message => message.GetProperty("content").ValueKind == JsonValueKind.Array)
+            .SelectMany(message => message.GetProperty("content").EnumerateArray()),
+    ];
 
     [Trait("Category", "Integration")]
     [Theory]
@@ -153,16 +225,43 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
         Assert.Equal(Raw(first.GetProperty("system")), Raw(second.GetProperty("system")));
         Assert.Equal(Raw(first.GetProperty("tools")), Raw(second.GetProperty("tools")));
 
-        var before = Raw(first.GetProperty("messages"));
-        var after = Raw(second.GetProperty("messages"));
+        var before = Unmarked(first.GetProperty("messages"));
+        var after = Unmarked(second.GetProperty("messages"));
 
         Assert.True(after.Length > before.Length);
         Assert.Equal(before, after[..before.Length]);
+
+        // Round 1's question is the end of its history, so round 2 reads everything round 1 sent from cache.
+        var question = Blocks(first.GetProperty("messages")).Single(Marked);
+        Assert.Equal("text", question.GetProperty("type").GetString());
+        Assert.EndsWith("how far is Sol", question.GetProperty("text").GetString(), StringComparison.Ordinal);
 
         var added = second.GetProperty("messages").EnumerateArray().Skip(before.Length).ToList();
         Assert.Equal("assistant", added[0].GetProperty("role").GetString());
         Assert.Equal("user", added[1].GetProperty("role").GetString());
         Assert.Equal("tool_result", added[1].GetProperty("content")[0].GetProperty("type").GetString());
+    }
+
+    /// <summary>
+    /// The next turn's request repeats the last turn's first request up to its question, so it can read the
+    /// entry that request wrote there.
+    /// </summary>
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task TheNextTurnBeginsWithTheLastTurnsQuestion()
+    {
+        var (requests, _) = await RequestsAsync(
+            "claude-sonnet-5-5", stateChanges: false, maxToolRounds: 8, redacted: false, followUp: "and Achenar");
+
+        Assert.Equal(3, requests.Count);
+
+        // The first request is the question and the game state after it.
+        var firstRequest = requests[0].GetProperty("messages");
+        var question = firstRequest[0];
+
+        Assert.Equal("user", question.GetProperty("role").GetString());
+        Assert.True(Marked(Blocks(firstRequest)[^1]), "the first request's question is not marked");
+        Assert.Equal(Unmarked(firstRequest)[0], Unmarked(requests[2].GetProperty("messages"))[0]);
     }
 
     [Trait("Category", "Integration")]

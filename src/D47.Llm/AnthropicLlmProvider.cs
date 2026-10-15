@@ -320,58 +320,60 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         var messages = new List<MessageParam>();
 
         // Each cache breakpoint walks back at most 20 content blocks looking for a prior entry, and one
-        // agentic turn produces a tool_use and a tool_result per call — so a multi-tool exchange can push the
-        // last breakpoint out of reach, after which the next turn silently re-bills the entire prefix
-        //.
+        // agentic turn produces a tool_use and a tool_result per call, so a long tool exchange spends
+        // intermediate breakpoints to keep the last cache entry within that lookback.
         var blocksSinceBreakpoint = 0;
-        var breakpointsSpent = 1;
 
-        // The blocks the last message was built from, or null when it was built from a plain string.
-        List<ContentBlockParam>? lastBlocks = null;
-        var lastText = string.Empty;
+        // The system block and the end of the history each hold one.
+        var breakpointsSpent = 2;
+
+        // Another provider's blocks are not sent, and nor are this provider's tool search blocks on a request
+        // that defers no tool: a replayed tool_reference to a tool the request does not declare is a 400.
+        List<ConversationContent> Sent(ConversationMessage turn) => turn.Content
+            .Where(part => part switch
+            {
+                ConversationContent.Opaque opaque => opaque.ProviderId == Id && deferring,
+                ConversationContent.ThinkingBlock thinking => thinking.ProviderId == Id,
+                ConversationContent.TrailingState => false,
+                _ => true,
+            })
+            .ToList();
+
+        // The end of the history is cached, ahead of the live game state, so each tool round reads what the
+        // round before it sent. Never a thinking block, which cannot carry a breakpoint.
+        var endOfHistory = prompt.History
+            .Select(Sent)
+            .LastOrDefault(parts => parts.Count > 0)?
+            .LastOrDefault(part => part is ConversationContent.Text
+                                   or ConversationContent.ToolUse
+                                   or ConversationContent.ToolResult);
+
+        // The blocks the last message was built from.
+        List<ContentBlockParam> lastBlocks = [];
 
         foreach (var turn in prompt.History)
         {
             var role = turn.Role == ConversationRole.Assistant ? Role.Assistant : Role.User;
-
-            // Another provider's blocks are not sent, and nor are this provider's tool search blocks on a request
-            // that defers no tool: a replayed tool_reference to a tool the request does not declare is a 400.
-            var parts = turn.Content
-                .Where(part => part switch
-                {
-                    ConversationContent.Opaque opaque => opaque.ProviderId == Id && deferring,
-                    ConversationContent.ThinkingBlock thinking => thinking.ProviderId == Id,
-                    ConversationContent.TrailingState => false,
-                    _ => true,
-                })
-                .ToList();
+            var parts = Sent(turn);
 
             if (parts.Count == 0)
             {
                 continue;
             }
 
-            // An ordinary text turn stays an ordinary string on the wire.
-            if (parts is [ConversationContent.Text only])
-            {
-                messages.Add(new MessageParam { Role = role, Content = only.Value });
-                blocksSinceBreakpoint++;
-                lastBlocks = null;
-                lastText = only.Value;
-                AttachSentState(turn);
-                continue;
-            }
-
+            // Always a block list, never a plain string, so a message has the same form on every request
+            // it is sent in, whether or not it carries the breakpoint.
             var blocks = new List<ContentBlockParam>();
 
             foreach (var part in parts)
             {
                 blocksSinceBreakpoint++;
+                var marked = ReferenceEquals(part, endOfHistory) ? new CacheControlEphemeral() : null;
 
                 switch (part)
                 {
                     case ConversationContent.Text text:
-                        blocks.Add(new TextBlockParam { Text = text.Value });
+                        blocks.Add(new TextBlockParam { Text = text.Value, CacheControl = marked });
                         break;
 
                     case ConversationContent.ToolUse call:
@@ -380,14 +382,16 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                             ID = call.Id,
                             Name = call.Name,
                             Input = Parse(call.InputJson),
+                            CacheControl = marked,
                         });
                         break;
 
                     case ConversationContent.ToolResult result:
-                        // The breakpoint goes on a tool result rather than anywhere else, because tool
-                        // results are what make a turn long enough to need one.
+                        // An intermediate breakpoint goes on a tool result, because tool results are what
+                        // make a turn long enough to need one.
                         var spendHere = blocksSinceBreakpoint >= BlocksPerBreakpoint
                                         && breakpointsSpent < MaxBreakpoints
+                                        && marked is null
                                         && ReferenceEquals(part, parts[^1]);
 
                         blocks.Add(new ToolResultBlockParam
@@ -395,7 +399,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                             ToolUseID = result.ToolUseId,
                             Content = ResultContent(result, capabilities.SupportsImages),
                             IsError = result.IsError,
-                            CacheControl = spendHere ? new CacheControlEphemeral() : null,
+                            CacheControl = spendHere ? new CacheControlEphemeral() : marked,
                         });
 
                         if (spendHere)
@@ -444,24 +448,14 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             }
             else if (messages.Count > 0)
             {
-                var last = messages[^1];
-                var reminder = $"<system-reminder>\n{state}\n</system-reminder>";
-
                 // Folded into the last message rather than added after it: a message of its own would be a
                 // second user turn in a row, and in the middle of a tool round it would stand between a
-                // tool_use and the result answering it.
-                if (lastBlocks is null)
-                {
-                    lastText = $"{reminder}\n\n{lastText}";
-                    messages[^1] = new MessageParam { Role = last.Role, Content = lastText };
-                }
-                else
-                {
-                    // After the blocks rather than before them, because a user message carrying tool results
-                    // has to open with them.
-                    lastBlocks = [.. lastBlocks, new TextBlockParam { Text = reminder }];
-                    messages[^1] = new MessageParam { Role = last.Role, Content = lastBlocks };
-                }
+                // tool_use and the result answering it. After the blocks rather than before them, because a
+                // user message carrying tool results has to open with them, and the breakpoint stays on the
+                // last history block.
+                var last = messages[^1];
+                lastBlocks = [.. lastBlocks, new TextBlockParam { Text = $"<system-reminder>\n{state}\n</system-reminder>" }];
+                messages[^1] = new MessageParam { Role = last.Role, Content = lastBlocks };
             }
         }
 
@@ -485,7 +479,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             // The tools stay declared when calls are not allowed, so the prefix does not change.
             ToolChoice = !request.ToolCallsAllowed && tools.Count > 0 ? new ToolChoice(new ToolChoiceNone()) : null,
 
-            // The cache breakpoint.
+            // The first cache breakpoint.
             System = new List<TextBlockParam>
             {
                 new()

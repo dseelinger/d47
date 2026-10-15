@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace D47.Core.Conversation;
 
@@ -6,9 +6,8 @@ namespace D47.Core.Conversation;
 /// One turn's prompt, ordered strictly by volatility: <code> 1 tool schemas per
 /// mode, from a closed set 2 guardrails never 3 persona per persona selection 4 Commander's About Me
 /// per session 5 remembered facts rarely, and never per turn 6 standing directions at a session
-/// boundary, and never within one ---- cache breakpoint ---- 7 conversation history per turn 8 live
-/// game state per turn </code> Position 6 was the breakpoint's own row until #162 put the standing
-/// directions in it.
+/// boundary, and never within one ---- cache breakpoint ---- 7 conversation history per turn ----
+/// cache breakpoint ---- 8 live game state per turn </code>
 /// </summary>
 public sealed record PromptAssembly
 {
@@ -92,7 +91,10 @@ public sealed record PromptAssembly
     /// </summary>
     public string? Directions { get; init; }
 
-    /// <summary>Position 7 — below the breakpoint, so it changes every turn for free.</summary>
+    /// <summary>
+    /// Position 7 — cached to its end, so the rounds of one turn, and turns at the same model and effort,
+    /// read it back.
+    /// </summary>
     public IReadOnlyList<ConversationMessage> History { get; init; } = [];
 
     /// <summary>Position 8.</summary>

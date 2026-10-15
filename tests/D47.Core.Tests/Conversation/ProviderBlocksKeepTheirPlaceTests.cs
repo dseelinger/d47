@@ -132,12 +132,13 @@ public class ProviderBlocksKeepTheirPlaceTests
             ConversationRole.Assistant,
             [new ConversationContent.Text("Searching."), new ConversationContent.Opaque("anthropic", SearchCall)]);
 
-        // One answered turn adds two messages, so the cut falls on index 2.
+        // One answered turn adds two messages, so the cut falls where that leaves the trimmed length.
         var transcript = Enumerable.Range(0, TurnLoop.TranscriptKept).Select(Plain).ToList();
+        var cut = TurnLoop.TranscriptKept + 2 - TurnLoop.TranscriptTrimmedTo;
         var atTheCut = WithBlock();
         var later = WithBlock();
-        transcript[2] = atTheCut;
-        transcript[41] = later;
+        transcript[cut] = atTheCut;
+        transcript[cut + 21] = later;
 
         var loop = Build(FakeLlmProvider.Answering("Answered."));
         loop.UseTranscript(transcript);

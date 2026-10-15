@@ -1,4 +1,4 @@
-using D47.Core.Conversation;
+﻿using D47.Core.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;
@@ -150,17 +150,18 @@ public class UsageConventionTests
     }
 
     /// <summary>
-    /// A caller that has not been taught to work the warmth out gets the original rule, so no existing
-    /// behaviour moved when the parameter arrived.
+    /// A caller that has not worked the warmth out gets the turn path's rule: a turn that read nothing from
+    /// cache is cold, and one that read the prefix is warm whether or not it also wrote cache.
     /// </summary>
     [Fact]
-    public void AnUninformedCallerStillGetsTheOriginalRule()
+    public void AnUninformedCallerCountsATurnThatReadNothingAsCold()
     {
         var tracker = new SpendTracker();
 
         tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), coldPrefixExpected: false);
         tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), coldPrefixExpected: true);
         tracker.Record(new TurnCost(new LlmUsage(200, 50, 0, 4_000), 0.1m, true), coldPrefixExpected: false);
+        tracker.Record(new TurnCost(new LlmUsage(200, 50, 300, 4_000), 0.1m, true), coldPrefixExpected: false);
 
         Assert.Equal(1, tracker.UnexplainedColdPrefixes);
         Assert.Equal(0, tracker.UnmeasuredPrefixes);

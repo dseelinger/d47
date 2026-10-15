@@ -1,4 +1,4 @@
-using D47.Core.Catalog;
+﻿using D47.Core.Catalog;
 
 namespace D47.Core.Conversation;
 
@@ -58,8 +58,8 @@ public enum PrefixWarmth
     Unknown,
 
     /// <summary>
-    /// The prefix was not there: cache was written, or nothing was read when a cacheable prefix should
-    /// have been waiting.
+    /// The prefix was not there: the turn's first request read nothing from cache when a cacheable prefix
+    /// should have been waiting.
     /// </summary>
     Cold,
 
@@ -102,12 +102,8 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
 
     /// <summary>
     /// <paramref name="coldPrefixExpected"/> is true for the first turn of a session and for the turn
-    /// after a model or provider change — the cases where writing cache is correct.
+    /// after a model or provider change — the cases where a cold prefix is correct.
     /// </summary>
-    /// <paramref name="coldPrefixExpected"/>
-    /// is true for the first turn of a session and for the turn after a model or provider change — the
-    /// cases where writing cache is correct.
-    /// </paramref>
     public void Record(
         TurnCost cost,
         bool coldPrefixExpected,
@@ -118,12 +114,12 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
         _turns.Add(cost);
         RunningTotalDollars += cost.Dollars;
 
-        // An uninformed caller gets the original rule — a cache write with no sanctioned cause — which is
-        // still correct for the provider it was written against.
+        // An uninformed caller gets the turn path's rule without its size threshold, which needs the model:
+        // nothing read from cache is cold.
         var observed = warmth is not PrefixWarmth.Unknown ? warmth
             : !cost.Usage.Reported ? PrefixWarmth.Unknown
-            : cost.Usage.CacheCreationInputTokens > 0 ? PrefixWarmth.Cold
-            : PrefixWarmth.Warm;
+            : cost.Usage.CacheReadInputTokens > 0 ? PrefixWarmth.Warm
+            : PrefixWarmth.Cold;
 
         if (observed is PrefixWarmth.Unknown)
         {
