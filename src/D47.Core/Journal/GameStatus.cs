@@ -86,6 +86,13 @@ public enum GuiFocus
     Codex = 11,
 }
 
+/// <summary>The power distributor in half-pips, summing to twelve.</summary>
+public readonly record struct PowerDistribution(int Systems, int Engines, int Weapons)
+{
+    /// <summary>The split as the switch page and the annunciator say it: "4, 4, 4".</summary>
+    public override string ToString() => $"{Systems}, {Engines}, {Weapons}";
+}
+
 /// <summary>What the Commander has selected to travel to, as Status.json reports it.</summary>
 /// <param name="System">The system's address.</param>
 /// <param name="Body">The body's id, and zero where the destination is the system itself.</param>
@@ -115,6 +122,9 @@ public sealed record GameStatus
 
     /// <summary>Which full-screen interface is showing, if any.</summary>
     public GuiFocus GuiFocus { get; init; }
+
+    /// <summary>The power distributor, or null where Status.json has no <c>Pips</c>.</summary>
+    public PowerDistribution? Pips { get; init; }
 
     public double? FuelMain { get; init; }
 
@@ -236,6 +246,7 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
                 Flags = (StatusFlags)(root.Long("Flags") ?? 0),
                 Flags2 = (uint)(root.Long("Flags2") ?? 0),
                 GuiFocus = (GuiFocus)(root.Int("GuiFocus") ?? 0),
+                Pips = Pips(root),
                 FuelMain = root.Object("Fuel")?.Double("FuelMain"),
                 FuelReservoir = root.Object("Fuel")?.Double("FuelReservoir"),
                 Cargo = root.Double("Cargo"),
@@ -264,6 +275,29 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
             logger.LogDebug(ex, "Could not read Status.json; will retry");
             return false;
         }
+    }
+
+    private static PowerDistribution? Pips(JsonElement root)
+    {
+        if (!root.TryGetProperty("Pips", out var pips)
+            || pips.ValueKind != JsonValueKind.Array
+            || pips.GetArrayLength() != 3)
+        {
+            return null;
+        }
+
+        var values = new int[3];
+        var index = 0;
+
+        foreach (var item in pips.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Number || !item.TryGetInt32(out values[index++]))
+            {
+                return null;
+            }
+        }
+
+        return new PowerDistribution(values[0], values[1], values[2]);
     }
 
     private static StatusDestination? Destination(JsonElement root) =>

@@ -688,14 +688,18 @@ public sealed class SwitchPage : DialogPage
             entries.Add(new InlinePickerHeading("What is open"));
             entries.AddRange(FocusTargets.All.Select(focus =>
                 new InlinePickerOption(TargetPrefix + focus.Id, focus.Name, ThemeManager.WhiteKey)));
+            entries.Add(new InlinePickerHeading("Power distributor"));
+            entries.AddRange(PipTargets.All.Select(pips =>
+                new InlinePickerOption(TargetPrefix + pips.Id, pips.Name, ThemeManager.WhiteKey)));
             entries.Add(new InlinePickerHeading("Headset"));
             entries.Add(new InlinePickerOption(HeadsetId, HeadsetWord, ThemeManager.WhiteKey));
 
             var headset = position.View is not null;
             var target = SwitchTargets.Find(position.Target);
             var focus = FocusTargets.Find(position.Target);
-            var targetId = target?.Id ?? focus?.Id;
-            var targetName = target?.Name ?? focus?.Name;
+            var split = PipTargets.Find(position.Target);
+            var targetId = target?.Id ?? focus?.Id ?? split?.Id;
+            var targetName = target?.Name ?? focus?.Name ?? split?.Name;
 
             action.Show(
                 entries,

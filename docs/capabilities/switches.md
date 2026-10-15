@@ -355,6 +355,32 @@ Elite, and sits behind *Let a HOTAS switch operate the ship* like any action. If
 the target on its own within four seconds the switch pauses, and a key that never takes is said out
 loud. A mismatch is annunciated as, for example, "the galaxy map is open".
 
+#### A position may name a split of the power distributor
+
+A position can name where the pips should sit, chosen under *Power distributor*. D47 reads the
+split from the `Pips` field of Elite's `Status.json`: three numbers in half-pips, in the order
+systems, engines, weapons, summing to twelve.
+
+| Target | Systems, engines, weapons |
+| --- | --- |
+| Balanced | 4, 4, 4 |
+| 4 pips to engines | 2, 8, 2 |
+| 4 pips to weapons | 2, 2, 8 |
+| 4 pips to systems | 8, 2, 2 |
+| 4 systems, 2 engines | 8, 4, 0 |
+| 4 systems, 2 weapons | 8, 0, 4 |
+| 4 engines, 2 systems | 4, 8, 0 |
+| 4 engines, 2 weapons | 0, 8, 4 |
+| 4 weapons, 2 systems | 4, 0, 8 |
+| 4 weapons, 2 engines | 0, 4, 8 |
+
+Flipping to a target presses nothing if the pips already read that split. Otherwise D47 presses
+*balance power* and then the power keys that reach the target from balanced, as one reconcile with
+a short wait between taps. Targets are offered in the ship, a fighter and the SRV, need the
+distributor keys bound in Elite, and sit behind *Let a HOTAS switch operate the ship* like any
+action. If the pips leave the target on their own within four seconds the switch pauses, and pips
+that never arrive are said out loud. A mismatch is annunciated as, for example, "pips are 4, 4, 4".
+
 #### A position may name a page of Directive 47's own panel instead
 
 A spare three-position toggle with nothing bound to it can flip the Transcript between

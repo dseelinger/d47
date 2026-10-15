@@ -90,3 +90,43 @@ public static class FocusTargets
         _ => "a full-screen view",
     };
 }
+
+/// <summary>A target met when the power distributor reads a split.</summary>
+/// <param name="Id">The id a switch file stores.</param>
+/// <param name="Name">How the picker names it.</param>
+/// <param name="Pips">The split the target means.</param>
+/// <param name="Presses">The power keys to press after a reset to balanced, in order.</param>
+public sealed record PipTarget(string Id, string Name, PowerDistribution Pips, IReadOnlyList<string> Presses)
+{
+    /// <summary>The modes in which the distributor keys apply.</summary>
+    public ControlContext Contexts =>
+        GameActions.Find(PipTargets.Reset)?.Contexts ?? ControlContext.None;
+}
+
+/// <summary>The closed list of power distributor targets.</summary>
+public static class PipTargets
+{
+    /// <summary>The action that returns the distributor to balanced, which every sequence starts from.</summary>
+    public const string Reset = "balance_power";
+
+    private const string S = "power_to_systems";
+    private const string E = "power_to_engines";
+    private const string W = "power_to_weapons";
+
+    public static IReadOnlyList<PipTarget> All { get; } =
+    [
+        new("pips_balanced", "Balanced", new(4, 4, 4), []),
+        new("pips_engines", "4 pips to engines", new(2, 8, 2), [E, E]),
+        new("pips_weapons", "4 pips to weapons", new(2, 2, 8), [W, W]),
+        new("pips_systems", "4 pips to systems", new(8, 2, 2), [S, S]),
+        new("pips_systems_engines", "4 systems, 2 engines", new(8, 4, 0), [S, S, E, E, S]),
+        new("pips_systems_weapons", "4 systems, 2 weapons", new(8, 0, 4), [S, S, W, W, S]),
+        new("pips_engines_systems", "4 engines, 2 systems", new(4, 8, 0), [S, S, E, E, E]),
+        new("pips_engines_weapons", "4 engines, 2 weapons", new(0, 8, 4), [E, E, W, W, E]),
+        new("pips_weapons_systems", "4 weapons, 2 systems", new(4, 0, 8), [S, S, W, W, W]),
+        new("pips_weapons_engines", "4 weapons, 2 engines", new(0, 4, 8), [E, E, W, W, W]),
+    ];
+
+    public static PipTarget? Find(string? id) =>
+        All.FirstOrDefault(target => string.Equals(target.Id, id, StringComparison.Ordinal));
+}

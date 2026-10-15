@@ -149,6 +149,9 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     /// <summary>The focus each switch is moving the game to, or holding it at.</summary>
     private readonly Dictionary<string, FocusGoal> _focusGoals = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The split each switch has set the distributor to, and is watching.</summary>
+    private readonly Dictionary<string, PipGoal> _pipGoals = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The headset view as read on this poll, or null until something asks.</summary>
     private HeadsetView? _view;
 
@@ -170,6 +173,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             _watching.Remove(name);
             _viewWatching.Remove(name);
             _focusGoals.Remove(name);
+            _pipGoals.Remove(name);
 
             // The switch is wherever it is; the next flip is the next question.
             _last.Remove(name);
@@ -264,6 +268,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             _watching.Remove(mapping.Name);
             _viewWatching.Remove(mapping.Name);
             _focusGoals.Remove(mapping.Name);
+            _pipGoals.Remove(mapping.Name);
 
             return new SwitchState
             {
@@ -290,6 +295,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         Watching(tick, mapping, flipped || flick is not null);
         WatchingTheHeadset(tick, mapping, flipped || flick is not null);
         WatchingTheFocus(tick, mapping, flipped || flick is not null);
+        WatchingThePips(tick, mapping, flipped || flick is not null);
 
         if (_paused.TryGetValue(mapping.Name, out var why))
         {
@@ -423,6 +429,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         if (FocusTargets.Find(position.Target) is { } focus)
         {
             return ReconcileFocus(tick, mapping, position, focus, flipped, ready);
+        }
+
+        if (PipTargets.Find(position.Target) is { } pips)
+        {
+            return ReconcilePips(tick, mapping, position, pips, flipped, ready);
         }
 
         var (label, wanted) = Wanted(position);
@@ -617,6 +628,135 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         };
 
         return ready;
+    }
+
+    /// <summary>
+    /// A position that names a power split. A flip resets to balanced and presses the target's sequence as one
+    /// reconcile, unless the distributor already reads the split.
+    /// </summary>
+    private SwitchState ReconcilePips(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        PipTarget target,
+        bool flipped,
+        SwitchState ready)
+    {
+        var actions = new List<GameAction>();
+        var bindings = new List<EliteBinding>();
+
+        foreach (var id in target.Presses.Prepend(PipTargets.Reset))
+        {
+            if (GameActions.Find(id) is not { } action)
+            {
+                return ready;
+            }
+
+            var reach = ActionReachability.Resolve(action, tick.Binds, tick.Context);
+
+            if (!reach.IsOffered)
+            {
+                return ready with { Note = reach.Reason };
+            }
+
+            actions.Add(action);
+            bindings.Add(reach.Binding!);
+        }
+
+        if (!flipped)
+        {
+            return ready;
+        }
+
+        _pipGoals.Remove(mapping.Name);
+
+        if (tick.Status.Pips == target.Pips)
+        {
+            logger.LogInformation(
+                "Switch {Name} moved to {Position}; the pips are already {Pips}, so nothing was pressed",
+                mapping.Name,
+                position.Describe(),
+                target.Pips);
+
+            return ready;
+        }
+
+        var steps = new List<InputStep>();
+
+        for (var index = 0; index < actions.Count; index++)
+        {
+            if (index > 0)
+            {
+                steps.Add(InputStep.Wait(PartGap));
+            }
+
+            steps.AddRange(InputSequence.Tap(bindings[index]));
+        }
+
+        logger.LogInformation(
+            "Switch {Name} moved to {Position}; pressing {Presses} for {Target} from {Pips}",
+            mapping.Name,
+            position.Describe(),
+            string.Join(", ", actions.Select(action => action.Id)),
+            target.Id,
+            tick.Status.Pips?.ToString() ?? "unknown pips");
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, target.Name, steps));
+        _pipGoals[mapping.Name] = new PipGoal(target, tick.Now + ContestWindow, tick.Context);
+
+        return ready;
+    }
+
+    /// <summary>Pips that leave the target within the contest window pause the switch; pips that never reach it are said aloud.</summary>
+    private void WatchingThePips(SwitchTick tick, SwitchMapping mapping, bool flipped)
+    {
+        if (!_pipGoals.TryGetValue(mapping.Name, out var goal))
+        {
+            return;
+        }
+
+        if (flipped || tick.Context != goal.Context || tick.Status.Pips is not { } pips)
+        {
+            _pipGoals.Remove(mapping.Name);
+            return;
+        }
+
+        if (pips == goal.Target.Pips)
+        {
+            _pipGoals[mapping.Name] = goal with { Arrived = true };
+            return;
+        }
+
+        if (tick.Now > goal.Until)
+        {
+            _pipGoals.Remove(mapping.Name);
+
+            if (!goal.Arrived)
+            {
+                var silent = $"I set the power distributor to {goal.Target.Name} from {mapping.Name} and it did not take. "
+                             + "Something else may be bound to the same buttons.";
+
+                logger.LogWarning("Switch {Name} pressed for {Target} and the pips never arrived", mapping.Name, goal.Target.Id);
+                _pending.Enqueue(new PendingReconcile(mapping.Name, goal.Target.Name, [], silent));
+            }
+
+            return;
+        }
+
+        if (!goal.Arrived)
+        {
+            return;
+        }
+
+        var why = $"Something else changed the power distributor right after D47 set it to {goal.Target.Name}. "
+                  + $"D47 has stopped reconciling {mapping.Name} rather than fight it.";
+
+        _paused[mapping.Name] = why;
+        _pipGoals.Remove(mapping.Name);
+
+        logger.LogWarning("Switch {Name} contested on {Target}; reconciling paused", mapping.Name, goal.Target.Id);
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, goal.Target.Name, [], why));
     }
 
     private static string Untouched(GuiFocus focus) =>
@@ -997,6 +1137,15 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return open == focus.Focus ? null : $"{FocusTargets.Say(open)} is open";
         }
 
+        if (PipTargets.Find(position.Target) is { } pipTarget)
+        {
+            return (pipTarget.Contexts & tick.Context) != 0
+                   && tick.Status.Pips is { } pips
+                   && pips != pipTarget.Pips
+                ? $"pips are {pips}"
+                : null;
+        }
+
         foreach (var (action, state) in Wanted(position).Wanted)
         {
             if ((action.Contexts & tick.Context) != 0 && action.AlreadyIn(state, tick.Status) == false)
@@ -1024,6 +1173,12 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     }
 
     private readonly record struct FocusGoal(FocusTarget Target, FocusStage Stage, DateTimeOffset Until);
+
+    private readonly record struct PipGoal(
+        PipTarget Target,
+        DateTimeOffset Until,
+        ControlContext Context,
+        bool Arrived = false);
 
     private readonly record struct WatchedPart(GameAction Action, DesiredState State, bool Arrived = false);
 
