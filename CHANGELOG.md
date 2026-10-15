@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The carrier's tower and captain now know about a fight in the system the carrier is in. If you have been attacked there, or have destroyed a ship there, since you arrived, they know how many ships you destroyed, the faction of the last one, and how many minutes ago it was. Their lines may mention it, and the captain can answer about it. They do not know who attacked you, and a fight in another system is unknown to them.
+
 The carrier captain now knows only the carrier and your ships' names and hulls. They are given the carrier report and a list of your ships, the one you are flying and every stored one, each by name and hull with the count, and they use no tools. "Captain, how's our fuel?" is answered with the carrier's tritium, where before the captain also read out your ship's tank. Asked about your ship, a system, a station or anything else outside the carrier, the captain says it is not theirs to know and leaves it to the ship's AI. Until D47 has seen your stored ships, the captain knows only the ship you are flying.
 
 Starting a sentence with your ship AI's name or with "D47" now speaks to the ship AI whoever else is on the line. The captain, crew, a story's cast or the Narrator stop answering, and the name is taken off before the rest is handled, so "Cora, take us in" runs the command instead of being answered "Did you mean 'take us in'?" and then offered for learning. "D47", "D-47" and "d47" all count. A name said after it still reaches that speaker: "Cora, captain, how's our fuel?" is answered by the captain. Your ship AI's name alone ends the line, and the next sentence goes to the ship AI. Speech recognition is now told both names ahead of every other name.

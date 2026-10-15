@@ -29,7 +29,8 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
         Func<ShipFacts> facts,
         string? commanderName,
         Func<FlavourBrief, string, CancellationToken, Task<FlavourReply>> ask,
-        Func<bool>? stockCoreAboard = null)
+        Func<bool>? stockCoreAboard = null,
+        Func<string?>? fight = null)
     {
         ArgumentNullException.ThrowIfNull(announcement);
         ArgumentNullException.ThrowIfNull(facts);
@@ -48,7 +49,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             return AsWritten(announcement, "no model", ship, commanderName, checkFacts: false);
         }
 
-        if (FlavourBriefs.For(announcement, personalityEnabled, commanderName) is not { } brief)
+        if (FlavourBriefs.For(announcement, personalityEnabled, commanderName, fight?.Invoke()) is not { } brief)
         {
             return AsWritten(announcement, "personality off", ship, commanderName, checkFacts: false);
         }

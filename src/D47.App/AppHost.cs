@@ -2891,7 +2891,8 @@ public sealed class AppHost : IDisposable
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null),
-            ModelFree));
+            ModelFree,
+            () => stores.Fight.Snapshot));
 
         D47.Core.Seats.ShipSeats? SeatsFlown() =>
             gameState.Active is { } active && active.FlownShip.ShipId is { } shipId

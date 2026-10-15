@@ -107,7 +107,19 @@ public static class FlavourBriefs
     /// <summary>The brief for one announcement, or null when it is to be said exactly as written.</summary>
     /// <param name="personalityEnabled">Personality off silences all of it.</param>
     /// <param name="commanderName">Used only to address the owner of a carrier.</param>
-    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled, string? commanderName = null)
+    /// <param name="fight">What the carrier knows of a fight in its system; added to the tower's and captain's briefs.</param>
+    public static FlavourBrief? For(Announcement announcement, bool personalityEnabled, string? commanderName = null, string? fight = null)
+    {
+        var brief = ForCore(announcement, personalityEnabled, commanderName);
+
+        return fight is not null
+               && brief is not null
+               && announcement.Voice is VoiceRole.CarrierCaptain or VoiceRole.TowerControl
+            ? brief with { Instruction = brief.Instruction + CarrierFight.Instruction(fight) }
+            : brief;
+    }
+
+    private static FlavourBrief? ForCore(Announcement announcement, bool personalityEnabled, string? commanderName)
     {
         ArgumentNullException.ThrowIfNull(announcement);
 

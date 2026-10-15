@@ -150,7 +150,10 @@ internal sealed class LineWriter
                         : null,
                     thinking: Rewording.IsNarration(announcement));
             },
-            stockCoreAboard: () => Personas.Current.Stock);
+            stockCoreAboard: () => Personas.Current.Stock,
+            fight: () => GameState.Active is { } active
+                ? CarrierFight.Describe(Fight.Snapshot, active.Location.StarSystem, active.Carrier, D47.Core.SystemWallClock.Instance.UtcNow)
+                : null);
     }
 
     /// <summary>The cast invented chatter is voiced from.</summary>

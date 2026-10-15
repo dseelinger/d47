@@ -16,7 +16,8 @@ public sealed class CaptainLine(
     Func<string?> commanderSystem,
     Func<DateTimeOffset> now,
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
-    Func<string, bool>? modelFree = null) : ILine
+    Func<string, bool>? modelFree = null,
+    Func<FightSnapshot>? fight = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
     public const double RangeLightYears = LinkSignal.LostLightYears;
@@ -82,7 +83,7 @@ public sealed class CaptainLine(
                 _transcript,
                 OffersTools: false,
                 Signal: LinkSignal.Strength(lightYears),
-                LiveState: () => Knows(commander(), now())),
+                LiveState: () => Knows(commander(), now(), fight?.Invoke())),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
@@ -134,9 +135,16 @@ public sealed class CaptainLine(
         }
     }
 
-    /// <summary>The captain's live game state: the carrier report, then the roster.</summary>
-    public static string Knows(CommanderGameState? state, DateTimeOffset now) =>
-        $"{CarrierCapability.Describe(state, now)}\n\n{Roster(state)}";
+    /// <summary>The captain's live game state: the carrier report, the roster, then any fight in the carrier's system.</summary>
+    public static string Knows(CommanderGameState? state, DateTimeOffset now, FightSnapshot? fight = null)
+    {
+        var known = $"{CarrierCapability.Describe(state, now)}\n\n{Roster(state)}";
+
+        return fight is not null && state is not null
+               && CarrierFight.Describe(fight, state.Location.StarSystem, state.Carrier, now) is { } fact
+            ? $"{known}\n\n{fact}"
+            : known;
+    }
 
     /// <summary>The ship flown and every stored ship, each by name and hull, with the count.</summary>
     public static string Roster(CommanderGameState? state)
@@ -189,7 +197,8 @@ public sealed class CaptainLine(
          voice aboard the Commander's ship and it can answer for itself.
 
          You know the carrier as the live game state reports it: its fuel, cargo, balance, jump range,
-         docking access, booked jump and services. Fuel means the carrier's tritium. Of the Commander's
+         docking access, booked jump and services. Fuel means the carrier's tritium. If the state
+         reports a fight in the Commander's system, you know of that too, and nothing more about it. Of the Commander's
          ships you know only how many there are, and each one's name and hull. Anything else — a ship's
          fuel, cargo or fittings, systems, stations or the galaxy — is not yours to know: say so and
          leave it to the ship's AI. Invent no figures, crew names or events; where the report does not
