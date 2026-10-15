@@ -295,6 +295,9 @@ public sealed class AnthropicLlmProvider : ILlmProvider
             else if (streamEvent.TryPickStart(out var start))
             {
                 usage = Merge(usage, start!.Message.Usage);
+
+                yield return new LlmStreamEvent.Started(
+                    new LlmUsage(usage.InputTokens, 0, usage.CacheCreationInputTokens, usage.CacheReadInputTokens));
             }
             else if (streamEvent.TryPickDelta(out var messageDelta))
             {

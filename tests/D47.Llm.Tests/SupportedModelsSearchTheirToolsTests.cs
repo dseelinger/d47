@@ -168,6 +168,7 @@ public class SupportedModelsSearchTheirToolsTests
 
         Assert.Collection(
             events,
+            e => Assert.IsType<LlmStreamEvent.Started>(e),
             e => Assert.IsType<LlmStreamEvent.TextDelta>(e),
             e => Assert.IsType<LlmStreamEvent.Opaque>(e),
             e => Assert.IsType<LlmStreamEvent.Opaque>(e),

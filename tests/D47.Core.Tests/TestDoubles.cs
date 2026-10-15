@@ -439,7 +439,15 @@ public sealed class ManualTurnClock : D47.Core.Conversation.ITurnClock
             if (deadline <= Now)
             {
                 _deadlines.Remove(source);
-                source.Cancel();
+
+                try
+                {
+                    source.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Its owner disposed it, so it has nothing left to trip.
+                }
             }
         }
     }

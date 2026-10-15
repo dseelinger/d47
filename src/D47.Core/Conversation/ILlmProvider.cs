@@ -110,6 +110,12 @@ public abstract record LlmStreamEvent
     {
     }
 
+    /// <summary>
+    /// The input and cache counts known when the response begins, with no output. Optional: a provider that
+    /// reports usage only at the end does not send it.
+    /// </summary>
+    public sealed record Started(LlmUsage Usage) : LlmStreamEvent;
+
     /// <summary>A fragment of the reply.</summary>
     public sealed record TextDelta(string Text) : LlmStreamEvent;
 

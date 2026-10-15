@@ -1539,6 +1539,14 @@ public sealed class TurnLoop(
 
         var usage = LlmUsage.None;
         var longestGap = TimeSpan.Zero;
+
+        // Requests that started and did not complete, and how many rounds completed: both are billed.
+        var unfinished = new UnfinishedRequests();
+        var roundsBilled = 0;
+
+        // Whether the turn reached a point that records its own spend; otherwise the finally below records it.
+        var recordsItself = false;
+
         var answer = string.Empty;
         var stopReason = LlmStopReason.Completed;
 
@@ -1577,272 +1585,288 @@ public sealed class TurnLoop(
         // The live game state an earlier round sent, which stays where it was sent.
         string? stateSent = null;
 
-        for (var round = 1; ; round++)
+        try
         {
-            // The last round may not call the tools it is still shown.
-            var lastRound = round > MaxToolRounds;
-
-            var remaining = OutputCeilingFor(effort) - usage.OutputTokens;
-
-            if (remaining < MinimumRoundOutputTokens)
+            for (var round = 1; ; round++)
             {
-                stopReason = LlmStopReason.MaxTokens;
-                break;
-            }
+                // The last round may not call the tools it is still shown.
+                var lastRound = round > MaxToolRounds;
 
-            if (round > 1 && previousRoundSpoke)
-            {
-                yield return new TurnEvent.TextDelta(" ");
-            }
+                var remaining = OutputCeilingFor(effort) - usage.OutputTokens;
 
-            // After the first round, only a state that has changed is sent, after everything already sent.
-            var live = LiveGameState?.Invoke();
-            var liveToSend = round == 1 || !string.Equals(live, stateSent, StringComparison.Ordinal) ? live : null;
-
-            var request = new LlmRequest
-            {
-                Model = chosenModel,
-                Effort = effort,
-                MaxOutputTokens = remaining,
-
-                // Warm, on every round including the last one (#98).
-                Sampling = LlmSampling.Conversation,
-                WebSearch = webSearch,
-
-                // The last round exists to force an answer out of what is already known.
-                ToolCallsAllowed = !lastRound,
-                Prompt = new PromptAssembly
+                if (remaining < MinimumRoundOutputTokens)
                 {
-                    Tools = advertised,
-                    ToolsSearchable = searchable,
-                    Persona = persona,
-                    CanBeDirected = directed,
-                    AboutMe = aboutMe,
-                    Scenario = scenario,
-                    HiddenStory = hiddenStory,
-                    Recall = recall,
-                    Directions = directions,
-                    History = trimmed ? [.. pending] : [.. transcript, .. pending],
-                    LiveGameState = liveToSend,
-                    Humor = round == 1 ? humor : null,
-                },
-            };
-
-            var outcome = new RoundOutcome();
-
-            await foreach (var turnEvent in RunRoundAsync(request, activeProvider, outcome, cancellationToken)
-                               .ConfigureAwait(false))
-            {
-                yield return turnEvent;
-            }
-
-            // The provider withdrew tool search on refusing this request, so the round is asked once more with the
-            // mode's list. Its space, if any, has already been said.
-            if (outcome.Failure is not null && searchable && !activeProvider.CapabilitiesFor(chosenModel).SupportsToolSearch)
-            {
-                logger.LogInformation("Asking round {Round} again with the mode's tool list: {Failure}", round, outcome.Failure);
-
-                searchable = false;
-                advertised = ModeTools();
-                previousRoundSpoke = false;
-                round--;
-                continue;
-            }
-
-            // The provider learned the model's context from refusing this request, so the round is asked once
-            // more with the short list.
-            if (outcome.Failure is not null
-                && !compact
-                && !searchable
-                && providerCapabilities.SupportsToolCalls
-                && speaker is not { OffersTools: false }
-                && activeProvider.CapabilitiesFor(chosenModel).ContextTokens is { } learned)
-            {
-                compact = true;
-                var full = advertised.Count;
-                advertised = ModeTools();
-
-                logger.LogInformation(
-                    "This model's context is {Context} tokens, so it is offered {Offered} of {Tools} tools; asking round {Round} again",
-                    learned,
-                    advertised.Count,
-                    full,
-                    round);
-
-                previousRoundSpoke = false;
-                round--;
-                continue;
-            }
-
-            // Too large even with the short list, so the round is asked once more without the earlier turns.
-            if (outcome.Failure is not null && outcome.ContextExceeded && !trimmed)
-            {
-                logger.LogInformation("Asking round {Round} again with only this turn's exchange: {Failure}", round, outcome.Failure);
-
-                trimmed = true;
-                previousRoundSpoke = false;
-                round--;
-                continue;
-            }
-
-            if (outcome.Failure is not null)
-            {
-                // Said out loud in the current voice, because the alternative is silence, and silence here is
-                // indistinguishable from a model with nothing to say.
-                var text = outcome.Attempts > 1
-                    ? $"I couldn't reach the model after {outcome.Attempts} tries. {outcome.Failure}"
-                    : $"I couldn't reach the model just then. {outcome.Failure}";
-
-                yield return new TurnEvent.TextDelta(text);
-                yield return new TurnEvent.Completed(new TurnResult(
-                    TurnOutcome.Failed, TurnRoute.Model, text, effortReported, Cost: null, chosenModel));
-                yield break;
-            }
-
-            // Every round is a billed request, so usage accumulates across the whole turn.
-            usage = Add(usage, outcome.Usage);
-            longestGap = Max(longestGap, outcome.LongestGap);
-            answer = outcome.Reply.ToString().Trim();
-            stopReason = outcome.StopReason;
-            previousRoundSpoke = answer.Length > 0;
-
-            foreach (var search in outcome.Searches)
-            {
-                logger.LogInformation(
-                    "Model searched its tools in round {Round} for \"{Query}\": found {Tools}",
-                    round,
-                    search.Query,
-                    search.Found.Count == 0 ? "nothing" : string.Join(", ", search.Found));
-            }
-
-            // A call on the last round is not run, and not kept: a tool_use with no result is refused next turn.
-            if (outcome.ToolUses.Count == 0 || lastRound)
-            {
-                closingContent = [.. outcome.Content.Where(part => part is not ConversationContent.ToolUse)];
-                break;
-            }
-
-            // The state this round sent, kept on the message it followed.
-            if (request.Prompt.TrailingState is { } trailing)
-            {
-                pending[^1] = pending[^1] with
-                {
-                    Content = [.. pending[^1].Content, new ConversationContent.TrailingState(trailing)],
-                };
-            }
-
-            stateSent = liveToSend ?? stateSent;
-
-            // The assistant's own turn, carrying the calls it asked for, in the order they arrived.
-            pending.Add(new ConversationMessage(ConversationRole.Assistant, [.. outcome.Content]));
-
-            var results = new List<ConversationContent>();
-
-            // Results the tool asked to have spoken as written (#111).
-            var relayed = new List<string>();
-
-            foreach (var call in outcome.ToolUses)
-            {
-                yield return new TurnEvent.ToolStarted(call.Name);
-
-                var key = call.Name + " " + call.InputJson;
-                ToolResult result;
-
-                if (triedThisTurn.TryGetValue(key, out var prior))
-                {
-                    // Not run again: whatever the first attempt did — an announcement included — happens once,
-                    // and the model is told plainly that asking again will not change the answer (#87).
-                    result = ToolResult.Error(
-                        "Already tried once this turn with the same arguments, and the answer was: "
-                        + $"{prior.Content} Asking again will not change it.");
-
-                    logger.LogInformation(
-                        "Model called {Tool} in round {Round}: skipped, already tried this turn",
-                        call.Name,
-                        round);
-                }
-                else
-                {
-                    // The one call site that says Model.
-                    result = await capabilities
-                        .InvokeAsync(
-                            call.Name,
-                            ToolArguments.FromJson(call.InputJson),
-                            cancellationToken,
-                            ToolCaller.Model)
-                        .ConfigureAwait(false);
-
-                    triedThisTurn[key] = result;
-
-                    if (result.IsError)
-                    {
-                        logger.LogInformation(
-                            "Model called {Tool} in round {Round}: error, arguments {Arguments}",
-                            call.Name,
-                            round,
-                            call.InputJson);
-                    }
-                    else
-                    {
-                        logger.LogInformation(
-                            "Model called {Tool} in round {Round}: ok",
-                            call.Name,
-                            round);
-                    }
+                    stopReason = LlmStopReason.MaxTokens;
+                    break;
                 }
 
-                yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
-
-                var content = result.Content;
-
-                // Once per engineer per session, and only in the ship AI's own voice with personality on.
-                if (!result.IsError
-                    && speaker is null
-                    && persona is not null
-                    && result.Page is { Kind: PageKind.Engineer } engineerPage
-                    && Knowledge.EngineerDirectory.ById((int)engineerPage.Id) is { } quipped
-                    && Engineers.EngineerQuips.NoteFor(quipped) is { } note
-                    && _quippedEngineers.Add(quipped.Id))
-                {
-                    content += "\n\n" + note;
-                }
-
-                results.Add(new ConversationContent.ToolResult(call.Id, content, result.IsError) { Image = result.Image });
-
-                if (!result.IsError && result.Page is { } named)
-                {
-                    page = named;
-                }
-
-                if (result.Image is { Source: { } source })
-                {
-                    pictures.Add(source);
-                }
-
-                if (result.Relayed)
-                {
-                    relayed.Add(result.Spoken);
-                }
-            }
-
-            pending.Add(new ConversationMessage(ConversationRole.User, results));
-
-            // The turn ends on the tool's own sentence, so the model is never asked to report an action it
-            // has just taken. Any other result in the same round is committed to history unspoken, and a
-            // follow-up next turn is answered from the transcript rather than by running the tool again.
-            if (relayed.Count > 0)
-            {
-                var said = string.Join(' ', relayed);
-
-                if (previousRoundSpoke)
+                if (round > 1 && previousRoundSpoke)
                 {
                     yield return new TurnEvent.TextDelta(" ");
                 }
 
-                yield return new TurnEvent.TextDelta(said);
+                // After the first round, only a state that has changed is sent, after everything already sent.
+                var live = LiveGameState?.Invoke();
+                var liveToSend = round == 1 || !string.Equals(live, stateSent, StringComparison.Ordinal) ? live : null;
 
-                answer = previousRoundSpoke ? $"{answer} {said}" : said;
-                break;
+                var request = new LlmRequest
+                {
+                    Model = chosenModel,
+                    Effort = effort,
+                    MaxOutputTokens = remaining,
+
+                    // Warm, on every round including the last one (#98).
+                    Sampling = LlmSampling.Conversation,
+                    WebSearch = webSearch,
+
+                    // The last round exists to force an answer out of what is already known.
+                    ToolCallsAllowed = !lastRound,
+                    Prompt = new PromptAssembly
+                    {
+                        Tools = advertised,
+                        ToolsSearchable = searchable,
+                        Persona = persona,
+                        CanBeDirected = directed,
+                        AboutMe = aboutMe,
+                        Scenario = scenario,
+                        HiddenStory = hiddenStory,
+                        Recall = recall,
+                        Directions = directions,
+                        History = trimmed ? [.. pending] : [.. transcript, .. pending],
+                        LiveGameState = liveToSend,
+                        Humor = round == 1 ? humor : null,
+                    },
+                };
+
+                var outcome = new RoundOutcome();
+
+                await foreach (var turnEvent in RunRoundAsync(request, activeProvider, outcome, unfinished, cancellationToken)
+                                   .ConfigureAwait(false))
+                {
+                    yield return turnEvent;
+                }
+
+                // The provider withdrew tool search on refusing this request, so the round is asked once more with the
+                // mode's list. Its space, if any, has already been said.
+                if (outcome.Failure is not null && searchable && !activeProvider.CapabilitiesFor(chosenModel).SupportsToolSearch)
+                {
+                    logger.LogInformation("Asking round {Round} again with the mode's tool list: {Failure}", round, outcome.Failure);
+
+                    searchable = false;
+                    advertised = ModeTools();
+                    previousRoundSpoke = false;
+                    round--;
+                    continue;
+                }
+
+                // The provider learned the model's context from refusing this request, so the round is asked once
+                // more with the short list.
+                if (outcome.Failure is not null
+                    && !compact
+                    && !searchable
+                    && providerCapabilities.SupportsToolCalls
+                    && speaker is not { OffersTools: false }
+                    && activeProvider.CapabilitiesFor(chosenModel).ContextTokens is { } learned)
+                {
+                    compact = true;
+                    var full = advertised.Count;
+                    advertised = ModeTools();
+
+                    logger.LogInformation(
+                        "This model's context is {Context} tokens, so it is offered {Offered} of {Tools} tools; asking round {Round} again",
+                        learned,
+                        advertised.Count,
+                        full,
+                        round);
+
+                    previousRoundSpoke = false;
+                    round--;
+                    continue;
+                }
+
+                // Too large even with the short list, so the round is asked once more without the earlier turns.
+                if (outcome.Failure is not null && outcome.ContextExceeded && !trimmed)
+                {
+                    logger.LogInformation("Asking round {Round} again with only this turn's exchange: {Failure}", round, outcome.Failure);
+
+                    trimmed = true;
+                    previousRoundSpoke = false;
+                    round--;
+                    continue;
+                }
+
+                if (outcome.Failure is not null)
+                {
+                    RecordEarlyEnd();
+                    recordsItself = true;
+
+                    // Said out loud in the current voice, because the alternative is silence, and silence here is
+                    // indistinguishable from a model with nothing to say.
+                    var text = outcome.Attempts > 1
+                        ? $"I couldn't reach the model after {outcome.Attempts} tries. {outcome.Failure}"
+                        : $"I couldn't reach the model just then. {outcome.Failure}";
+
+                    yield return new TurnEvent.TextDelta(text);
+                    yield return new TurnEvent.Completed(new TurnResult(
+                        TurnOutcome.Failed, TurnRoute.Model, text, effortReported, Cost: null, chosenModel));
+                    yield break;
+                }
+
+                // Every round is a billed request, so usage accumulates across the whole turn.
+                usage = Add(usage, outcome.Usage);
+                roundsBilled++;
+                longestGap = Max(longestGap, outcome.LongestGap);
+                answer = outcome.Reply.ToString().Trim();
+                stopReason = outcome.StopReason;
+                previousRoundSpoke = answer.Length > 0;
+
+                foreach (var search in outcome.Searches)
+                {
+                    logger.LogInformation(
+                        "Model searched its tools in round {Round} for \"{Query}\": found {Tools}",
+                        round,
+                        search.Query,
+                        search.Found.Count == 0 ? "nothing" : string.Join(", ", search.Found));
+                }
+
+                // A call on the last round is not run, and not kept: a tool_use with no result is refused next turn.
+                if (outcome.ToolUses.Count == 0 || lastRound)
+                {
+                    closingContent = [.. outcome.Content.Where(part => part is not ConversationContent.ToolUse)];
+                    break;
+                }
+
+                // The state this round sent, kept on the message it followed.
+                if (request.Prompt.TrailingState is { } trailing)
+                {
+                    pending[^1] = pending[^1] with
+                    {
+                        Content = [.. pending[^1].Content, new ConversationContent.TrailingState(trailing)],
+                    };
+                }
+
+                stateSent = liveToSend ?? stateSent;
+
+                // The assistant's own turn, carrying the calls it asked for, in the order they arrived.
+                pending.Add(new ConversationMessage(ConversationRole.Assistant, [.. outcome.Content]));
+
+                var results = new List<ConversationContent>();
+
+                // Results the tool asked to have spoken as written (#111).
+                var relayed = new List<string>();
+
+                foreach (var call in outcome.ToolUses)
+                {
+                    yield return new TurnEvent.ToolStarted(call.Name);
+
+                    var key = call.Name + " " + call.InputJson;
+                    ToolResult result;
+
+                    if (triedThisTurn.TryGetValue(key, out var prior))
+                    {
+                        // Not run again: whatever the first attempt did — an announcement included — happens once,
+                        // and the model is told plainly that asking again will not change the answer (#87).
+                        result = ToolResult.Error(
+                            "Already tried once this turn with the same arguments, and the answer was: "
+                            + $"{prior.Content} Asking again will not change it.");
+
+                        logger.LogInformation(
+                            "Model called {Tool} in round {Round}: skipped, already tried this turn",
+                            call.Name,
+                            round);
+                    }
+                    else
+                    {
+                        // The one call site that says Model.
+                        result = await capabilities
+                            .InvokeAsync(
+                                call.Name,
+                                ToolArguments.FromJson(call.InputJson),
+                                cancellationToken,
+                                ToolCaller.Model)
+                            .ConfigureAwait(false);
+
+                        triedThisTurn[key] = result;
+
+                        if (result.IsError)
+                        {
+                            logger.LogInformation(
+                                "Model called {Tool} in round {Round}: error, arguments {Arguments}",
+                                call.Name,
+                                round,
+                                call.InputJson);
+                        }
+                        else
+                        {
+                            logger.LogInformation(
+                                "Model called {Tool} in round {Round}: ok",
+                                call.Name,
+                                round);
+                        }
+                    }
+
+                    yield return new TurnEvent.ToolFinished(call.Name, !result.IsError);
+
+                    var content = result.Content;
+
+                    // Once per engineer per session, and only in the ship AI's own voice with personality on.
+                    if (!result.IsError
+                        && speaker is null
+                        && persona is not null
+                        && result.Page is { Kind: PageKind.Engineer } engineerPage
+                        && Knowledge.EngineerDirectory.ById((int)engineerPage.Id) is { } quipped
+                        && Engineers.EngineerQuips.NoteFor(quipped) is { } note
+                        && _quippedEngineers.Add(quipped.Id))
+                    {
+                        content += "\n\n" + note;
+                    }
+
+                    results.Add(new ConversationContent.ToolResult(call.Id, content, result.IsError) { Image = result.Image });
+
+                    if (!result.IsError && result.Page is { } named)
+                    {
+                        page = named;
+                    }
+
+                    if (result.Image is { Source: { } source })
+                    {
+                        pictures.Add(source);
+                    }
+
+                    if (result.Relayed)
+                    {
+                        relayed.Add(result.Spoken);
+                    }
+                }
+
+                pending.Add(new ConversationMessage(ConversationRole.User, results));
+
+                // The turn ends on the tool's own sentence, so the model is never asked to report an action it
+                // has just taken. Any other result in the same round is committed to history unspoken, and a
+                // follow-up next turn is answered from the transcript rather than by running the tool again.
+                if (relayed.Count > 0)
+                {
+                    var said = string.Join(' ', relayed);
+
+                    if (previousRoundSpoke)
+                    {
+                        yield return new TurnEvent.TextDelta(" ");
+                    }
+
+                    yield return new TurnEvent.TextDelta(said);
+
+                    answer = previousRoundSpoke ? $"{answer} {said}" : said;
+                    break;
+                }
+            }
+
+            recordsItself = true;
+        }
+        finally
+        {
+            if (!recordsItself)
+            {
+                RecordEarlyEnd();
             }
         }
 
@@ -1872,17 +1896,8 @@ public sealed class TurnLoop(
             StandingSaid?.Invoke();
         }
 
-        // A model on the Commander's own machine is free, and that is a fact about the address rather than
-        // about the model id — no table row could hold it, because the id is whatever the local server
-        // happens to call the weights it loaded (Phase 29).
-        var price = activeProvider.RunsOnThisMachine
-            ? PriceTable.Free
-            : prices.For(activeProvider.Id, chosenModel);
-
-        // Usage the provider never sent is unpriced even when the model is in the table.
-        var cost = price is null || !usage.Reported
-            ? TurnCost.Unpriced(usage)
-            : new TurnCost(usage, price.DollarsFor(usage), true);
+        // Warmth is read from the completed rounds alone; an unfinished request adds only to the cost.
+        var cost = CostOf(Add(usage, unfinished.Usage));
         spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(usage, providerCapabilities));
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer about what it
@@ -1913,6 +1928,30 @@ public sealed class TurnLoop(
 
         yield return new TurnEvent.Completed(new TurnResult(
             turnOutcome, TurnRoute.Model, answer, effortReported, cost, chosenModel, page, pictures.Count == 0 ? null : pictures));
+
+        // A turn that ends early is still billed for every request it started. Its warmth is not judged.
+        void RecordEarlyEnd()
+        {
+            if (roundsBilled > 0 || unfinished.Count > 0)
+            {
+                spend.Record(CostOf(Add(usage, unfinished.Usage)), coldPrefixExpected: true, activeProvider.Id, chosenModel);
+            }
+        }
+
+        TurnCost CostOf(LlmUsage billed)
+        {
+            // A model on the Commander's own machine is free, and that is a fact about the address rather than
+            // about the model id — no table row could hold it, because the id is whatever the local server
+            // happens to call the weights it loaded (Phase 29).
+            var price = activeProvider.RunsOnThisMachine
+                ? PriceTable.Free
+                : prices.For(activeProvider.Id, chosenModel);
+
+            // Usage the provider never sent is unpriced even when the model is in the table.
+            return price is null || !billed.Reported
+                ? TurnCost.Unpriced(billed)
+                : new TurnCost(billed, price.DollarsFor(billed), true);
+        }
     }
 
     /// <summary>
@@ -2031,6 +2070,20 @@ public sealed class TurnLoop(
         }
     }
 
+    /// <summary>The requests of one turn that started and did not complete, billed for their start usage.</summary>
+    private sealed class UnfinishedRequests
+    {
+        public LlmUsage Usage { get; private set; } = LlmUsage.None;
+
+        public int Count { get; private set; }
+
+        public void Add(LlmUsage started)
+        {
+            Usage = TurnLoop.Add(Usage, started);
+            Count++;
+        }
+    }
+
     /// <summary>One turn is several rounds, and the bill is their sum.</summary>
     private static PrefixWarmth Warmth(LlmUsage usage, LlmProviderCapabilities capabilities)
     {
@@ -2073,6 +2126,7 @@ public sealed class TurnLoop(
         LlmRequest request,
         ILlmProvider activeProvider,
         RoundOutcome outcome,
+        UnfinishedRequests unfinished,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var transient = false;
@@ -2097,63 +2151,82 @@ public sealed class TurnLoop(
             outcome.Attempts = attempt;
             transient = false;
             var receivedContent = false;
+            LlmUsage? started = null;
+            var completed = false;
 
-            await foreach (var streamEvent in AttemptAsync(request, activeProvider, outcome, cancellationToken)
-                               .ConfigureAwait(false))
+            try
             {
-                switch (streamEvent)
+                await foreach (var streamEvent in AttemptAsync(request, activeProvider, outcome, cancellationToken)
+                                   .ConfigureAwait(false))
                 {
-                    case LlmStreamEvent.TextDelta text:
-                        outcome.AddText(text.Text);
-                        receivedContent = true;
-                        yield return new TurnEvent.TextDelta(text.Text);
-                        break;
+                    switch (streamEvent)
+                    {
+                        // Not content: an attempt that has only begun may still be retried.
+                        case LlmStreamEvent.Started start:
+                            started = start.Usage;
+                            break;
 
-                    case LlmStreamEvent.ThinkingDelta thinking:
-                        receivedContent = true;
-                        yield return new TurnEvent.ThinkingDelta(thinking.Text);
-                        break;
+                        case LlmStreamEvent.TextDelta text:
+                            outcome.AddText(text.Text);
+                            receivedContent = true;
+                            yield return new TurnEvent.TextDelta(text.Text);
+                            break;
 
-                    case LlmStreamEvent.ToolUse toolUse:
-                        outcome.Add(new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
-                        receivedContent = true;
-                        break;
+                        case LlmStreamEvent.ThinkingDelta thinking:
+                            receivedContent = true;
+                            yield return new TurnEvent.ThinkingDelta(thinking.Text);
+                            break;
 
-                    case LlmStreamEvent.Opaque opaque:
-                        outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
-                        receivedContent = true;
-                        break;
+                        case LlmStreamEvent.ToolUse toolUse:
+                            outcome.Add(new ConversationContent.ToolUse(toolUse.Id, toolUse.Name, toolUse.InputJson));
+                            receivedContent = true;
+                            break;
 
-                    case LlmStreamEvent.ThinkingBlock thinking:
-                        outcome.Add(new ConversationContent.ThinkingBlock(activeProvider.Id, thinking.Json));
-                        receivedContent = true;
-                        break;
+                        case LlmStreamEvent.Opaque opaque:
+                            outcome.Add(new ConversationContent.Opaque(activeProvider.Id, opaque.Json));
+                            receivedContent = true;
+                            break;
 
-                    case LlmStreamEvent.ToolSearched searched:
-                        outcome.Searches.Add(searched);
-                        receivedContent = true;
-                        break;
+                        case LlmStreamEvent.ThinkingBlock thinking:
+                            outcome.Add(new ConversationContent.ThinkingBlock(activeProvider.Id, thinking.Json));
+                            receivedContent = true;
+                            break;
 
-                    case LlmStreamEvent.Completed completed:
-                        outcome.Usage = completed.Usage;
-                        outcome.StopReason = completed.StopReason;
-                        break;
+                        case LlmStreamEvent.ToolSearched searched:
+                            outcome.Searches.Add(searched);
+                            receivedContent = true;
+                            break;
 
-                    case LlmStreamEvent.Failed failed:
-                        outcome.Failure = failed.Message;
-                        outcome.ContextExceeded = failed.ContextExceeded;
-                        transient = failed.Transient;
+                        case LlmStreamEvent.Completed done:
+                            completed = true;
+                            outcome.Usage = done.Usage;
+                            outcome.StopReason = done.StopReason;
+                            break;
 
-                        if (!failed.TimedOut)
-                        {
-                            availability.MarkFailed(failed.Message, failed.Transient);
-                        }
+                        case LlmStreamEvent.Failed failed:
+                            outcome.Failure = failed.Message;
+                            outcome.ContextExceeded = failed.ContextExceeded;
+                            transient = failed.Transient;
 
-                        logger.LogWarning(
-                            "Model turn failed ({Kind}): {Message}",
-                            failed.Transient ? "transient" : "configuration",
-                            failed.Message);
-                        break;
+                            if (!failed.TimedOut)
+                            {
+                                availability.MarkFailed(failed.Message, failed.Transient);
+                            }
+
+                            logger.LogWarning(
+                                "Model turn failed ({Kind}): {Message}",
+                                failed.Transient ? "transient" : "configuration",
+                                failed.Message);
+                            break;
+                    }
+                }
+            }
+            finally
+            {
+                // Billed from its start, whether it timed out, failed or was called off.
+                if (!completed && started is { } billed)
+                {
+                    unfinished.Add(billed);
                 }
             }
 

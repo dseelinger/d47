@@ -9,13 +9,15 @@ public class RecordedStreamTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task AOneWordTurnArrivesAsTextThenCompleted()
+    public async Task AOneWordTurnArrivesAsStartedThenTextThenCompleted()
     {
         using var endpoint = RecordedEndpoint.Streaming(Recordings.OneWord("Acknowledged"));
 
         var events = await Recordings.DrainAsync(endpoint, cancellationToken: Token);
 
-        var text = Assert.IsType<LlmStreamEvent.TextDelta>(events[0]);
+        Assert.IsType<LlmStreamEvent.Started>(events[0]);
+
+        var text = Assert.IsType<LlmStreamEvent.TextDelta>(events[1]);
         Assert.Equal("Acknowledged", text.Text);
 
         var done = Assert.IsType<LlmStreamEvent.Completed>(events[^1]);
@@ -176,6 +178,29 @@ public class RecordedStreamTests
         Assert.Equal(900, usage.CacheReadInputTokens);
     }
 
+    /// <summary>
+    /// The start reports the input once, before any text, so a request cancelled part-way can still be billed
+    /// for it. Its output is not known until the end.
+    /// </summary>
+    [Fact]
+    public async Task TheStartReportsTheInputOnceWithNoOutput()
+    {
+        using var endpoint = RecordedEndpoint.Streaming(
+            Recordings.MessageStart(input: 1200, output: 1, cacheCreation: 300, cacheRead: 900),
+            Recordings.TextBlockStart(),
+            Recordings.TextDelta("."),
+            Recordings.BlockStop(),
+            Recordings.MessageDelta("end_turn", output: 64),
+            Recordings.MessageStop());
+
+        var events = await Recordings.DrainAsync(endpoint, cancellationToken: Token);
+        var started = Assert.Single(events.OfType<LlmStreamEvent.Started>());
+
+        Assert.Same(started, events[0]);
+        Assert.Equal(new LlmUsage(1200, 0, 300, 900), started.Usage);
+        Assert.Equal(new LlmUsage(1200, 64, 300, 900), Assert.IsType<LlmStreamEvent.Completed>(events[^1]).Usage);
+    }
+
     /// <summary>Web searches are billed separately and are counted the same way.</summary>
     [Fact]
     public async Task WebSearchRequestsAreCounted()
@@ -203,7 +228,10 @@ public class RecordedStreamTests
 
         var events = await Recordings.DrainAsync(endpoint, cancellationToken: Token);
 
-        Assert.IsType<LlmStreamEvent.Completed>(Assert.Single(events));
+        Assert.Collection(
+            events,
+            e => Assert.IsType<LlmStreamEvent.Started>(e),
+            e => Assert.IsType<LlmStreamEvent.Completed>(e));
     }
 
     [Fact]

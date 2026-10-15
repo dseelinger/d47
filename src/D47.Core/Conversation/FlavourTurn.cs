@@ -139,8 +139,28 @@ public static class FlavourTurn
         };
 
         var reply = new System.Text.StringBuilder();
-        var usage = LlmUsage.None;
         var stopReason = LlmStopReason.Completed;
+
+        // The request is billed from the moment the provider reports usage, whether or not it completes.
+        LlmUsage? usage = null;
+
+        void Record()
+        {
+            if (spend is null || usage is null)
+            {
+                return;
+            }
+
+            var price = prices?.For(provider.Id, chosenModel);
+            spend.Record(
+                price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true),
+
+                // Its prefix is not the conversation's prefix, so a cold one here is expected rather than the
+                // regression an unexplained cache miss on the turn path is.
+                coldPrefixExpected: true,
+                provider.Id,
+                chosenModel);
+        }
 
         try
         {
@@ -154,6 +174,10 @@ public static class FlavourTurn
                         reply.Append(text.Text);
                         break;
 
+                    case LlmStreamEvent.Started started:
+                        usage = started.Usage;
+                        break;
+
                     case LlmStreamEvent.Completed completed:
                         usage = completed.Usage;
                         stopReason = completed.StopReason;
@@ -161,33 +185,27 @@ public static class FlavourTurn
 
                     case LlmStreamEvent.Failed failed:
                         logger?.LogDebug("A flavour line was not generated: {Message}", failed.Message);
+                        Record();
                         return new FlavourReply(null, FlavourMiss.Failed, failed.Message);
                 }
             }
         }
         catch (OperationCanceledException)
         {
+            Record();
             return new FlavourReply(null, FlavourMiss.Cancelled);
         }
         catch (Exception ex)
         {
             // A provider throwing where it should have reported is still just a line that did not happen.
             logger?.LogDebug(ex, "A flavour line was not generated");
+            Record();
             return new FlavourReply(null, FlavourMiss.Failed, ex.Message);
         }
 
-        if (spend is not null)
-        {
-            var price = prices?.For(provider.Id, chosenModel);
-            spend.Record(
-                price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true),
-
-                // Its prefix is not the conversation's prefix, so a cold one here is expected rather than the
-                // regression an unexplained cache miss on the turn path is.
-                coldPrefixExpected: true,
-                provider.Id,
-                chosenModel);
-        }
+        // A provider that completes without reporting usage is still recorded, as an empty turn.
+        usage ??= LlmUsage.None;
+        Record();
 
         var line = reply.ToString().Trim();
 
