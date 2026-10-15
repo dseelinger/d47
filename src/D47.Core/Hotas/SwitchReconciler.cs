@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using D47.Core.Input;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -272,19 +272,15 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         var position = mapping.At(reading);
 
-        // A position pressed and released between two polls is a flip to it, then a flip back.
-        foreach (var missed in MissedPositions(mapping, reading, position))
-        {
-            Reconcile(tick, mapping, missed, Flipped(mapping.Name, missed));
-        }
-
+        // Read before Flipped moves the last position on.
+        var flick = Flick(mapping, reading, position);
         var flipped = position is not null && Flipped(mapping.Name, position);
 
         // Watched before the flip is acted on, so a second flip inside the window ends the watch rather than
         // being blamed for what the first one started — and before the pause is read below, so a switch
-        // paused on this poll reports it on this poll.
-        Watching(tick, mapping, flipped);
-        WatchingTheHeadset(tick, mapping, flipped);
+        // paused on this poll reports it on this poll. A flick is a flip.
+        Watching(tick, mapping, flipped || flick is not null);
+        WatchingTheHeadset(tick, mapping, flipped || flick is not null);
 
         if (_paused.TryGetValue(mapping.Name, out var why))
         {
@@ -318,6 +314,13 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             };
         }
 
+        // A flick is a flip to the position pressed, then a flip back.
+        if (flick is not null)
+        {
+            Reconcile(tick, mapping, flick, flipped: true);
+            flipped = true;
+        }
+
         var state = Reconcile(tick, mapping, position, flipped);
 
         return state with
@@ -327,16 +330,44 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         };
     }
 
-    /// <summary>Positions whose button was down since the last poll but is up now, other than the current one.</summary>
-    private static IEnumerable<SwitchPosition> MissedPositions(
-        SwitchMapping mapping,
-        HotasReading reading,
-        SwitchPosition? current) =>
-        mapping.Positions.Where(position =>
-            position != current
-            && position.Button is { } button
-            && !reading.IsHeld(button)
-            && reading.WasDownSinceLastRead(button));
+    /// <summary>
+    /// The one position pressed and released since the last poll, when the switch is back where it was then;
+    /// otherwise null. A switch now somewhere new only passed through it, and two such positions have no
+    /// order.
+    /// </summary>
+    private SwitchPosition? Flick(SwitchMapping mapping, HotasReading reading, SwitchPosition? current)
+    {
+        if (current is null || !_last.TryGetValue(mapping.Name, out var last) || last.Button != current.Button)
+        {
+            return null;
+        }
+
+        SwitchPosition? flick = null;
+
+        foreach (var position in mapping.Positions)
+        {
+            if (position.Button is not { } button
+                || button == current.Button
+                || reading.IsHeld(button)
+                || !reading.WasDownSinceLastRead(button))
+            {
+                continue;
+            }
+
+            if (flick is not null)
+            {
+                logger.LogInformation(
+                    "Switch {Name} was in more than one position between two readings, so only where it is now counts",
+                    mapping.Name);
+
+                return null;
+            }
+
+            flick = position;
+        }
+
+        return flick;
+    }
 
     /// <summary>Whether this poll is a flip.</summary>
     private bool Flipped(string name, SwitchPosition position)

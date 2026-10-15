@@ -113,6 +113,36 @@ public class TheTickReadsTheSticksWithoutWaitingOnWindowsTests
     }
 
     [Fact]
+    public void APressAfterTheSetsAreReusedIsReportedOnceAgain()
+    {
+        var reader = new FakeHotasReader();
+        using var sampler = new ControllerSampler(reader, NullLogger<ControllerSampler>.Instance);
+
+        bool Flick()
+        {
+            reader.Holding(Stick, 8, 3);
+            sampler.Sample();
+            reader.Holding(Stick, 8);
+            sampler.Sample();
+
+            return Assert.Single(sampler.PollWithPresses()).WasDownSinceLastRead(3);
+        }
+
+        bool Quiet()
+        {
+            sampler.Sample();
+
+            return Assert.Single(sampler.PollWithPresses()).WasDownSinceLastRead(3);
+        }
+
+        Assert.True(Flick());
+        Assert.False(Quiet());
+        Assert.True(Flick());
+        Assert.False(Quiet());
+        Assert.False(Quiet());
+    }
+
+    [Fact]
     public void ASampleIsTakenMoreOftenThanATick()
     {
         Assert.True(ControllerSampler.Period < TickLoop.DefaultPeriod);

@@ -25,8 +25,10 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
     private readonly Thread _thread;
     private readonly Func<TimeSpan> _now;
 
+    // Guards _down, _handed and every write of _latest, so a read sees the press set and the sample it ends on.
     private readonly object _downGate = new();
-    private readonly Dictionary<string, bool[]> _down = new();
+    private Dictionary<string, bool[]> _down = new();
+    private Dictionary<string, bool[]> _handed = new();
 
     private Sampled _latest = new(false, [], TimeSpan.Zero);
     private bool _faulted;
@@ -68,22 +70,29 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
 
     /// <summary>
     /// <see cref="Poll"/> with each reading carrying the buttons that were down in any sample since the last
-    /// call, which this clears. For the switches tick only.
+    /// call, which this clears. For the switches tick only: the sets it hands out are reused by the call after.
     /// </summary>
     public IReadOnlyList<HotasReading> PollWithPresses()
     {
-        var readings = Poll();
-
         lock (_downGate)
         {
-            var carried = readings
-                .Select(reading => reading with
-                {
-                    DownSinceLastRead = _down.TryGetValue(reading.Id, out var down) ? down : [],
-                })
-                .ToList();
+            var readings = Poll();
+            var carried = new HotasReading[readings.Count];
 
-            _down.Clear();
+            for (var index = 0; index < readings.Count; index++)
+            {
+                carried[index] = readings[index] with
+                {
+                    DownSinceLastRead = _down.TryGetValue(readings[index].Id, out var down) ? down : [],
+                };
+            }
+
+            foreach (var handed in _handed.Values)
+            {
+                Array.Clear(handed);
+            }
+
+            (_down, _handed) = (_handed, _down);
 
             return carried;
         }
@@ -117,9 +126,9 @@ public sealed class ControllerSampler : IHotasReader, IDisposable
                     down[index] |= reading.Buttons[index];
                 }
             }
-        }
 
-        Volatile.Write(ref _latest, new Sampled(settled, readings, _now()));
+            Volatile.Write(ref _latest, new Sampled(settled, readings, _now()));
+        }
     }
 
     private void Run()

@@ -32,7 +32,11 @@ public class ASwitchFlickBetweenPollsIsSeenTests
         Bindings = [new EliteBinding("LandingGearToggle", "Primary", "Keyboard", "Key_L")],
     };
 
-    private static SwitchTick Tick(int[] downSince, int[] held)
+    private static SwitchTick Tick(
+        int[] downSince,
+        int[] held,
+        StatusFlags flags = StatusFlags.InMainShip,
+        DateTimeOffset? at = null)
     {
         var down = new bool[32];
         var now = new bool[32];
@@ -49,9 +53,9 @@ public class ASwitchFlickBetweenPollsIsSeenTests
 
         return new SwitchTick
         {
-            Now = Start,
+            Now = at ?? Start,
             Readings = [new HotasReading { Id = Stick, Buttons = now, DownSinceLastRead = down }],
-            Status = new GameStatus { Flags = StatusFlags.InMainShip, ReadAt = Start },
+            Status = new GameStatus { Flags = flags | StatusFlags.InMainShip, ReadAt = at ?? Start },
             Binds = Binds,
             Enabled = true,
         };
@@ -94,5 +98,91 @@ public class ASwitchFlickBetweenPollsIsSeenTests
         reconciler.Poll(Tick([9], [9]), switches);
 
         Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void ASwitchMovedThroughAPositionToAnotherPressesOnlyWhereItStops()
+    {
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+
+        var rotary = new[]
+        {
+            GearSwitch with
+            {
+                Positions =
+                [
+                    new SwitchPosition(1),
+                    new SwitchPosition(2, "landing_gear", DesiredState.On),
+                    new SwitchPosition(3),
+                ],
+            },
+        };
+
+        reconciler.Poll(Tick([1], [1]), rotary);
+        reconciler.Poll(Tick([1, 2, 3], [3]), rotary);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void TwoPositionsFlickedBetweenPollsPressNothingBecauseTheirOrderIsUnknown()
+    {
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+
+        var threeWay = new[]
+        {
+            GearSwitch with
+            {
+                Positions =
+                [
+                    new SwitchPosition(null),
+                    new SwitchPosition(8, "landing_gear", DesiredState.On),
+                    new SwitchPosition(9, "landing_gear", DesiredState.Off),
+                ],
+            },
+        };
+
+        reconciler.Poll(Tick([], []), threeWay);
+        reconciler.Poll(Tick([8, 9], []), threeWay);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void APausedSwitchPressesNothingForAFlick()
+    {
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+        var switches = new[] { GearSwitch };
+
+        reconciler.Poll(Tick([], []), switches);
+        reconciler.Poll(Tick([9], [9]), switches);
+        reconciler.Poll(Tick([9], [9], StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Poll(Tick([9], [9], StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        Assert.True(reconciler.IsPaused(GearSwitch.Name));
+
+        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(1)), switches);
+        reconciler.Drain();
+
+        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(2)), switches);
+
+        Assert.Empty(reconciler.Drain());
+    }
+
+    [Fact]
+    public void AFlickWhosePressNeverTakesIsSaid()
+    {
+        var reconciler = new SwitchReconciler(NullLogger<SwitchReconciler>.Instance);
+        var switches = new[] { GearSwitch };
+
+        reconciler.Poll(Tick([], []), switches);
+        reconciler.Poll(Tick([9], []), switches);
+        Assert.Single(reconciler.Drain());
+
+        var late = Start + SwitchReconciler.ContestWindow + TimeSpan.FromSeconds(1);
+        reconciler.Poll(Tick([], [], StatusFlags.None, late), switches);
+
+        var said = Assert.Single(reconciler.Drain());
+        Assert.Empty(said.Steps);
+        Assert.Contains("did not take", said.Say ?? string.Empty, StringComparison.Ordinal);
     }
 }
