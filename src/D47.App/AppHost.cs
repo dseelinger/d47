@@ -5777,21 +5777,11 @@ public sealed class AppHost : IDisposable
             return null;
         }
 
-        if (Secrets.TryGet(name, out var stored))
-        {
-            return (stored, "the secret store");
-        }
-
-        // Only Anthropic has a conventional environment variable worth honouring.
-        if (provider.Id != LlmProviderCatalog.AnthropicId)
-        {
-            return null;
-        }
-
-        var fromEnvironment = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
-        return string.IsNullOrWhiteSpace(fromEnvironment)
-            ? null
-            : (fromEnvironment, "the ANTHROPIC_API_KEY environment variable");
+        return LlmKeyResolution.Resolve(
+            Paths.IsTestDrive,
+            provider.Id,
+            Secrets.TryGet(name, out var stored) ? stored : null,
+            Environment.GetEnvironmentVariable);
     }
 
     private static string? Join(string? situation, string? actions) =>
