@@ -102,7 +102,7 @@ public sealed class StoriesView : UserControl
         var root = new DockPanel { Margin = new Thickness(14) };
         var (title, _) = RoutingKit.Title(PageName);
         var intro = AdventuresPage.Muted(
-            "Stock stories that run from three days to a year, a chapter at a time. Picking one makes its words your Backstory and "
+            "Stock stories that run from three days to a year, a chapter at a time. Picking one makes its words your Backstory until it stops, and "
             + "has the ship's AI write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
             + "is written and begins. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon "
             + "the story to have them back at once.");
@@ -614,7 +614,7 @@ public sealed class StoriesView : UserControl
             "story.abandon",
             "Abandon",
             $"Abandon {story.Title}?",
-            "The story ends here. Its chapters leave the list on the Stories tab, and any Guardian core it held back is available at once.",
+            "The story ends here. Its chapters leave the list on the Stories tab, any Guardian core it held back is available at once, and your Backstory goes back to the one you had before the story.",
             "Abandon it",
             () =>
             {

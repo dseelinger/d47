@@ -428,8 +428,9 @@ For such a story, the story's page asks **Your Commander is**: **A man** or **A 
 Commander and is asked only by a story that needs it. The same control is on
 the page of your running story; changing it there takes effect from the story's next line.
 
-**Pick** makes the card's words your Backstory and has the ship's AI write chapter one, which then
-begins. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
+**Pick** makes the card's words your Backstory until the story stops, and has the ship's AI write
+chapter one, which then begins. D47 keeps the Backstory you had before; a Backstory that is some
+story's own words counts as none. Edits you make to the Backstory while a story runs are not kept. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. Before each act-one chapter D47 checks whether
 the ship you are in can reach that beacon: it can when you own a fleet carrier, or when the beacon is at
 most 20 jumps away at the ship's maximum jump range and a fuel scoop is fitted. When it can, the
@@ -444,7 +445,9 @@ A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after yo
 speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
 chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
 month or longer keeps the real scan.
-**Abandon** ends the story. Neither changes your Guardian cores. A chapter's own page has no Abandon;
+**Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
+had before your first story, or to empty. Switch passes that earlier Backstory on to the new story.
+Neither changes your Guardian cores. A chapter's own page has no Abandon;
 it has **Story on**, which pauses the story.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When

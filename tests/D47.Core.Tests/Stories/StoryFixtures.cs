@@ -207,6 +207,7 @@ internal sealed class StoryFixtures : IDisposable
             backstory => Backstory = backstory,
             NullLogger.Instance)
         {
+            Backstory = () => Backstory,
             Archive = StoryChapterArchive.Open(Files, ArchivePath, NullLogger<StoryChapterArchive>.Instance),
         };
 
@@ -228,7 +229,7 @@ internal sealed class StoryFixtures : IDisposable
 
     public StoryDirector Director { get; }
 
-    public string? Backstory { get; private set; }
+    public string? Backstory { get; set; }
 
     /// <summary>Where the Commander is, for the nearest beacon.</summary>
     public StarPosition Here { get; set; } = StarPosition.Origin;

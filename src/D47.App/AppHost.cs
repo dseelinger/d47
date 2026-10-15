@@ -2977,6 +2977,7 @@ public sealed class AppHost : IDisposable
         };
 
         storyDirector.Gender = () => settings.Current.CommanderGender;
+        storyDirector.Backstory = () => settings.Current.Llm.AboutMe;
         storyDirector.Game = () => gameState.Active;
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });

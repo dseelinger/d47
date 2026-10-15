@@ -59,6 +59,9 @@ public sealed record Story
     /// <summary>The beacon systems the Commander scanned while this story was current, by <c>SystemAddress</c>, in order.</summary>
     public IReadOnlyList<long> BeaconSystems { get; init; } = [];
 
+    /// <summary>The Commander's Backstory before the first story of the chain was picked, restored when the chain stops; null in a story saved without it, which restores empty.</summary>
+    public string? BackstoryBefore { get; init; }
+
     /// <summary>When it was abandoned, ended or finished.</summary>
     public DateTimeOffset? StoppedAt { get; init; }
 
