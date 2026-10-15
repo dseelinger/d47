@@ -33,8 +33,9 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         CarrierState? carrier = null)
     {
         var line = new CaptainLine(
-            () => carrier ?? Owned,
+            () => new CommanderGameState(new CommanderIdentity("F1", "Tester")) { Carrier = carrier ?? Owned },
             () => "Sol",
+            () => DateTimeOffset.UnixEpoch,
             distance ?? ((_, _, _) => Task.FromResult<double?>(100)));
 
         var loop = new TurnLoop(

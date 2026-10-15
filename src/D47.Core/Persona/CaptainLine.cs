@@ -1,16 +1,20 @@
+using System.Text;
 using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 
 namespace D47.Core.Persona;
 
 /// <summary>The captain of the Commander's fleet carrier, on the line while addressed.</summary>
+/// <param name="commander">The active Commander, whose carrier and ships the captain knows.</param>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
 /// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class CaptainLine(
-    Func<CarrierState> carrier,
+    Func<CommanderGameState?> commander,
     Func<string?> commanderSystem,
+    Func<DateTimeOffset> now,
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
     Func<string, bool>? modelFree = null) : ILine
 {
@@ -29,7 +33,7 @@ public sealed class CaptainLine(
 
     public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
     {
-        var state = carrier();
+        var state = commander()?.Carrier ?? CarrierState.None;
 
         if (!state.Owned || state.StarSystem is not { Length: > 0 } carrierSystem)
         {
@@ -76,8 +80,9 @@ public sealed class CaptainLine(
                 NpcChatter.CaptainName,
                 Brief(state),
                 _transcript,
-                OffersTools: true,
-                Signal: LinkSignal.Strength(lightYears)),
+                OffersTools: false,
+                Signal: LinkSignal.Strength(lightYears),
+                LiveState: () => Knows(commander(), now())),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
@@ -129,6 +134,48 @@ public sealed class CaptainLine(
         }
     }
 
+    /// <summary>The captain's live game state: the carrier report, then the roster.</summary>
+    public static string Knows(CommanderGameState? state, DateTimeOffset now) =>
+        $"{CarrierCapability.Describe(state, now)}\n\n{Roster(state)}";
+
+    /// <summary>The ship flown and every stored ship, each by name and hull, with the count.</summary>
+    public static string Roster(CommanderGameState? state)
+    {
+        var flown = state?.FlownShip;
+        var flownSaid = flown?.TypeSaid is { } hull ? flown.Name is { } name ? $"{name} ({hull})" : hull : null;
+        var fleet = state?.Fleet ?? FleetRegistry.Empty;
+
+        if (!fleet.IsKnown)
+        {
+            return flownSaid is null
+                ? "The Commander's ships are not known."
+                : $"The Commander is flying {flownSaid}. Their other ships are not known.";
+        }
+
+        var flownId = flown?.ShipId ?? state?.Ship.ShipId;
+
+        List<string> ships = [.. fleet.Ships
+            .Where(ship => flownId is not { } id || ship.ShipId != id)
+            .Select(ship => ship.Describe())];
+
+        var count = ships.Count + (flownSaid is null ? 0 : 1);
+        var roster = new StringBuilder(flownSaid is null
+            ? $"The Commander has {count} stored {(count == 1 ? "ship" : "ships")}:"
+            : $"The Commander owns {count} {(count == 1 ? "ship" : "ships")}:\n- {flownSaid}, flying now");
+
+        foreach (var ship in ships)
+        {
+            roster.Append($"\n- {ship}");
+        }
+
+        if (flownSaid is null)
+        {
+            roster.Append("\nThe ship they are flying is not known.");
+        }
+
+        return roster.ToString();
+    }
+
     /// <summary>The prompt block for the captain.</summary>
     public static string Brief(CarrierState state) =>
         $"""
@@ -141,9 +188,11 @@ public sealed class CaptainLine(
          not describe your own personality, and you do not speak for the ship's AI — it is a separate
          voice aboard the Commander's ship and it can answer for itself.
 
-         For the carrier's fuel, cargo, balance, jump range, docking access, booked jump and services,
-         call describe_carrier and answer from what it returns. For anything about systems, stations
-         or the galaxy, use the galaxy tools. Invent no figures, crew names or events; where a tool
-         does not say, tell the Commander you do not have it.
+         You know the carrier as the live game state reports it: its fuel, cargo, balance, jump range,
+         docking access, booked jump and services. Fuel means the carrier's tritium. Of the Commander's
+         ships you know only how many there are, and each one's name and hull. Anything else — a ship's
+         fuel, cargo or fittings, systems, stations or the galaxy — is not yours to know: say so and
+         leave it to the ship's AI. Invent no figures, crew names or events; where the report does not
+         say, tell the Commander you do not have it.
          """;
 }

@@ -38,8 +38,9 @@ public class AFaintCaptainIsHeardInPiecesTests
         };
 
         loop.Lines.Add(new CaptainLine(
-            () => Owned,
+            () => new CommanderGameState(new CommanderIdentity("F1", "Tester")) { Carrier = Owned },
             () => "Sol",
+            () => DateTimeOffset.UnixEpoch,
             (_, _, _) => Task.FromResult<double?>(lightYears)));
 
         return loop;

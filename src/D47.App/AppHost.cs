@@ -2885,8 +2885,9 @@ public sealed class AppHost : IDisposable
         // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
         // search is on.
         turns.Lines.Add(new CaptainLine(
-            () => gameState.Active?.Carrier ?? D47.Core.Journal.CarrierState.None,
+            () => gameState.Active,
             () => gameState.Active?.Location.StarSystem,
+            () => SystemWallClock.Instance.UtcNow,
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null),

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The carrier captain now knows only the carrier and your ships' names and hulls. They are given the carrier report and a list of your ships, the one you are flying and every stored one, each by name and hull with the count, and they use no tools. "Captain, how's our fuel?" is answered with the carrier's tritium, where before the captain also read out your ship's tank. Asked about your ship, a system, a station or anything else outside the carrier, the captain says it is not theirs to know and leaves it to the ship's AI. Until D47 has seen your stored ships, the captain knows only the ship you are flying.
+
 Starting a sentence with your ship AI's name or with "D47" now speaks to the ship AI whoever else is on the line. The captain, crew, a story's cast or the Narrator stop answering, and the name is taken off before the rest is handled, so "Cora, take us in" runs the command instead of being answered "Did you mean 'take us in'?" and then offered for learning. "D47", "D-47" and "d47" all count. A name said after it still reaches that speaker: "Cora, captain, how's our fuel?" is answered by the captain. Your ship AI's name alone ends the line, and the next sentence goes to the ship AI. Speech recognition is now told both names ahead of every other name.
 
 When D47 offers to remember your wording after a near-miss command, only a yes or a no answers the offer. A yes learns the phrase and a no says "Dropped." Anything else drops the offer without a word and is handled as an ordinary request, where before it was answered "Dropped." and ignored. A dropped offer is not counted as declined, so the same wording can be offered again.

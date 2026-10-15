@@ -166,8 +166,10 @@ Services:
 > "Captain, how much fuel have we got"
 
 A question that opens with "Captain" goes to the carrier's captain instead of the ship AI, and is
-spoken in the captain's voice. The captain answers from `describe_carrier` and the galaxy tools, and
-answers follow-up questions with no name needed until the line is ended by one of these:
+spoken in the captain's voice. The captain uses no tools. They know the carrier report above and,
+of your ships, how many there are and each one's name and hull. Asked about fuel, they give the
+carrier's tritium; anything else they leave to the ship's AI. They answer follow-up questions with
+no name needed until the line is ended by one of these:
 
 ```csharp
 public static readonly IReadOnlyList<string> Dismissals =

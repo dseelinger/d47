@@ -31,7 +31,7 @@ public class TheNarratorCannotBeAddressedTests
             ShipAiNames = () => ["Warden"],
         };
 
-        loop.Lines.Add(new CaptainLine(() => CarrierState.None, () => "Diaguandri"));
+        loop.Lines.Add(new CaptainLine(() => null, () => "Diaguandri", () => now));
         loop.Lines.Add(new CrewLine(() => null, () => "Vagrant"));
         loop.Lines.Add(new ChatterLine(() => now, () => "Diaguandri", () => AmbientSituation.Docked));
 

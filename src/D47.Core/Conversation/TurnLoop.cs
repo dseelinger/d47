@@ -1656,7 +1656,7 @@ public sealed class TurnLoop(
                 }
 
                 // After the first round, only a state that has changed is sent, after everything already sent.
-                var live = LiveGameState?.Invoke();
+                var live = speaker?.LiveState is { } own ? own() : LiveGameState?.Invoke();
                 var liveToSend = round == 1 || !string.Equals(live, stateSent, StringComparison.Ordinal) ? live : null;
 
                 var request = new LlmRequest

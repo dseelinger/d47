@@ -10,7 +10,10 @@ public class AShipCommandPassesAnOpenLineTests
 {
     private const string Command = "request docking";
 
-    private static readonly CarrierState Carrier = new() { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" };
+    private static readonly CommanderGameState Commander = new(new CommanderIdentity("F1", "Tester"))
+    {
+        Carrier = new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
+    };
 
     private static readonly ShipCrew Pilots = new()
     {
@@ -35,7 +38,7 @@ public class AShipCommandPassesAnOpenLineTests
     [Fact]
     public Task TheCaptainPassesACommandAndKeepsTheLine() =>
         AssertPassesAndKeepsAsync(
-            new CaptainLine(() => Carrier, () => "Sol", modelFree: IsCommand),
+            new CaptainLine(() => Commander, () => "Sol", () => DateTimeOffset.UnixEpoch, modelFree: IsCommand),
             "Captain, status?",
             "how's our fuel?");
 
@@ -56,7 +59,7 @@ public class AShipCommandPassesAnOpenLineTests
     [Fact]
     public async Task ACommandThatNamesTheCaptainStillGoesToTheCaptain()
     {
-        var line = new CaptainLine(() => Carrier, () => "Sol", modelFree: IsCommand);
+        var line = new CaptainLine(() => Commander, () => "Sol", () => DateTimeOffset.UnixEpoch, modelFree: IsCommand);
 
         await line.RouteAsync("Captain, status?", CancellationToken.None);
 

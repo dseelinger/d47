@@ -72,8 +72,12 @@ public class TheShipAisNameReachesTheShipTests
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
 
         var captain = new CaptainLine(
-            () => new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
-            () => "Sol");
+            () => new CommanderGameState(new CommanderIdentity("F1", "Tester"))
+            {
+                Carrier = new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
+            },
+            () => "Sol",
+            () => DateTimeOffset.UnixEpoch);
 
         var loop = new TurnLoop(
             registry,

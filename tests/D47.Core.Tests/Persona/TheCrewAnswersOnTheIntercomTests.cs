@@ -105,8 +105,12 @@ public class TheCrewAnswersOnTheIntercomTests
         var (loop, crewLine) = Build(surface, provider);
 
         loop.Lines.Add(new CaptainLine(
-            () => new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
-            () => "Sol"));
+            () => new CommanderGameState(new CommanderIdentity("F1", "Tester"))
+            {
+                Carrier = new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
+            },
+            () => "Sol",
+            () => DateTimeOffset.UnixEpoch));
 
         await RunAsync(loop, "Vance, how is the fighter");
         var next = await RunAsync(loop, "Captain, fuel");

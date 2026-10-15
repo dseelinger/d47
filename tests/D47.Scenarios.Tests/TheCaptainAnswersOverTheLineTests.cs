@@ -34,8 +34,9 @@ public class TheCaptainAnswersOverTheLineTests
             Lines = world =>
             [
                 new CaptainLine(
-                    () => world.GameState.Active?.Carrier ?? CarrierState.None,
+                    () => world.GameState.Active,
                     () => world.GameState.Active?.Location.StarSystem,
+                    () => DateTimeOffset.UnixEpoch,
                     (_, _, _) => Task.FromResult<double?>(100)),
             ],
         };
@@ -60,6 +61,8 @@ public class TheCaptainAnswersOverTheLineTests
 
         Assert.Contains("captain of the Commander's fleet carrier, Sacred Fire", prompt.Persona, StringComparison.Ordinal);
         Assert.NotEqual(PersonaCatalog.Warden.RenderBlock(), prompt.Persona);
+        Assert.Empty(prompt.Tools);
+        Assert.Contains("Fuel 792 t", prompt.LiveGameState, StringComparison.Ordinal);
         Assert.Equal(TurnRoute.Model, trace.Result?.Route);
     }
 
@@ -81,8 +84,9 @@ public class TheCaptainAnswersOverTheLineTests
             Lines = world =>
             [
                 new CaptainLine(
-                    () => world.GameState.Active?.Carrier ?? CarrierState.None,
+                    () => world.GameState.Active,
                     () => world.GameState.Active?.Location.StarSystem,
+                    () => DateTimeOffset.UnixEpoch,
                     (_, _, _) => Task.FromResult<double?>(lightYears)),
             ],
         };
