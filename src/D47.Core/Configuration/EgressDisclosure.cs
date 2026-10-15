@@ -849,7 +849,7 @@ public static class EgressDisclosure
                 LanguageModel,
                 NameOf(LanguageModel),
                 $"{provider.Name} is selected and pointed at {destination}, which is this machine. Your question, "
-                + "the reply, the persona, what D47 remembers about you, "
+                + "the reply, the core, what D47 remembers about you, "
                 + (commander is null ? string.Empty : $"{commander}, ")
                 + "a hidden story while a stock story runs, "
                 + "a stock story's cast and the ship's voice list when the story starts, "

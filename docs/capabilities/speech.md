@@ -164,7 +164,7 @@ nav_order: 122
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="audio.html"><span class="ct">Audio →</span><span class="cd">How loud it is, and what gets out of its way while it talks.</span></a>
-<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">Who the voice belongs to, and how a core is paired with one.</span></a>
+<a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">Who the voice belongs to, and how a core is paired with one.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">The spoken-reply destination, beside every other one that is open.</span></a>
 </div>
 </div>
@@ -325,7 +325,7 @@ starting D47 also loads the model, so it takes longer than the lines after it.
 and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —
 and Directive 47 sends it the description of whichever Guardian core is aboard. So a core on OpenAI
 is cast rather than merely given a larynx, and the same core on Edge or ElevenLabs is not. There is
-nothing to switch on: it happens whenever the ship's AI speaks through OpenAI with personality on.
+nothing to switch on: it happens whenever the core speaks through OpenAI with personality on.
 
 One limitation. Directive 47 keeps **one connection per provider** shared across all six voice
 slots, so if you also put the carrier or the NPCs on OpenAI, they are performed the same way. The
@@ -503,7 +503,7 @@ which for a voice id is a value you have no way of knowing.
 ##### Choices survive a provider switch
 
 A voice id means nothing to a provider that did not issue it, so switching provider still empties
-every voice row. It no longer *loses* them: the ship AI's voice, both carrier roles and all
+every voice row. It no longer *loses* them: the core's voice, both carrier roles and all
 eleven per-core pairings are filed under the provider they were chosen for, and switching back
 puts them where they were — including the flag that says the pairing has already run, so eleven
 cores are not re-picked from scratch.
@@ -598,7 +598,7 @@ from somewhere else, and each of these rows says where:
 
 | Slot | Who is in it | Where it starts |
 |---|---|---|
-| Aboard | Your ship's AI and your crew | The [voice provider](#provider) row above |
+| Aboard | Your core and your crew | The [voice provider](#provider) row above |
 | Carrier | Your fleet carrier's captain and its tower | Edge Neural |
 | NPCs | Stations, police, and every other ship the game speaks for | Edge Neural |
 | People you know | Your friends, your wing and your squadron | Edge Neural |
@@ -670,7 +670,7 @@ never bills a provider.
 
 #### Guardian Voice Effects {#guardian-voice}
 
-Optional effects for the ship AI's voice, each off by default. They apply to what the ship AI says —
+Optional effects for the core's voice, each off by default. They apply to what the core says —
 turn replies, its own callouts, and a persona's introduction or return — and to nothing else: your
 crew, the carrier and every over-the-air voice are unchanged. COVAS, the stock core, is never given
 them. Any combination can be ticked at once,
@@ -858,9 +858,9 @@ Plays a line through whichever effects above are ticked, in their order and at t
 never bills a provider. Which clip it plays depends on what the selected provider offers, checked in this
 order:
 
-1. The provider costs nothing (Edge, Kokoro): a fresh line in the ship AI's own voice.
+1. The provider costs nothing (Edge, Kokoro): a fresh line in the core's own voice.
 2. The provider is paid but offers a free sample of this voice: that sample.
-3. The provider is paid, and the ship AI's voice was already auditioned this session (from the
+3. The provider is paid, and the core's voice was already auditioned this session (from the
    Voice row above, or an earlier press of Test): that clip, at no extra cost.
 4. Nothing free is available — including when no voice provider is selected at all: a bundled
    stand-in voice, and the row says so.
@@ -913,7 +913,7 @@ OpenAI states. It is a good proxy, it is far better than guessing from character
 still a proxy. Correct the row if your account tells you otherwise.
 
 **Spoken this session** is a fact. It is the number of characters actually handed to the
-provider since Directive 47 started, counted at the one seam every caller passes — the ship's AI,
+provider since Directive 47 started, counted at the one seam every caller passes — the core,
 a callout, a re-voiced in-game message and a core's own introduction all converge there. It
 counts what went **on the wire**, which for ElevenLabs is a little longer than what you read:
 numerals are spelled out before they are sent, so "88 of 100" leaves as
@@ -959,7 +959,7 @@ carrier whose captain and tower sound identical, or answer to the same name, is 
 person on it.
 
 The two voice rows offer the same play glyphs as the voice row, and both audition as themselves
-rather than reciting the ship AI's opening — a tower saying "You're cleared for landing pad seven"
+rather than reciting the core's opening — a tower saying "You're cleared for landing pad seven"
 is what you are actually listening for when you cast one.
 
 #### Narrator voice {#narrator-voice}
@@ -967,7 +967,7 @@ is what you are actually listening for when you cast one.
 Who tells your story, for the [Narrator](callouts.md#narrator). It is picked from the voices of the
 provider that speaks for your ship, because the Narrator is heard in the cockpit rather than over
 the radio. Left empty, or set to the ship's own voice, the Narrator takes the first voice on that
-list that is not the ship's, so a narration is never mistaken for your ship's AI talking to you.
+list that is not the ship's, so a narration is never mistaken for your core talking to you.
 
 #### Crew voices {#crew-voices}
 
@@ -1002,7 +1002,7 @@ own after a few seconds if nothing follows. A second press inside that window is
 runs it:
 
 - Every core's voice is forgotten, including any you picked by hand, and so are the carrier
-  captain's and the tower's. The ship AI speaks in the voice of the core aboard, so it is covered
+  captain's and the tower's. The core speaks in the voice of the core aboard, so it is covered
   too.
 - **Every voice provider you have used is covered, not only the one selected now.** The provider in
   use is paired again at once, from its current list. Any other is paired the next time you select
@@ -1038,7 +1038,7 @@ be refused.
 
 #### Speak incoming messages {#incoming-messages}
 
-Reads in-game chat aloud, each sender in their own voice — never your ship AI's, because a
+Reads in-game chat aloud, each sender in their own voice — never your core's, because a
 message arriving in your companion's voice reads as your companion saying it.
 
 **Off by default, and not only because it is chatty.** Message text is written by other players,
@@ -1272,7 +1272,7 @@ leaving, and to whom — and then says which slot is going where:
 
 ```text
 Another player's words are sent to speech.platform.bing.com to be spoken aloud. Line by
-line: Aboard (your ship's AI, your crew and the narrator) → ElevenLabs; Carrier (your fleet carrier's
+line: Aboard (your core, your crew and the narrator) → ElevenLabs; Carrier (your fleet carrier's
 captain and its tower) → Edge Neural; NPCs (stations, police, and every other ship the
 game speaks for) → Edge Neural; People you know (your friends, your wing and your
 squadron) → Edge Neural; Direct messages (a Commander messaging you directly) → Edge

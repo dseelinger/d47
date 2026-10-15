@@ -645,7 +645,7 @@ public static class ConversationCapability
             Help =
                 "Your Commander's backstory, in your own words — as long as you like. D47 treats it as true "
                 + "of the world you share. Sent with every turn, and with about one unprompted remark in "
-                + "four, so the ship's AI knows who it is flying with. Kept between sessions.",
+                + "four, so the core knows who it is flying with. Kept between sessions.",
             Kind = SettingKind.Text,
             Multiline = true,
             DefaultDisplay = "(nothing yet)",
@@ -687,7 +687,7 @@ public static class ConversationCapability
             Advanced = true,
             Label = "Who knows about it",
             Help =
-                "Who hears your scenario: only those aboard — the ship's AI and the crew; those aboard and "
+                "Who hears your scenario: only those aboard — the core and the crew; those aboard and "
                 + "your carrier's captain and tower; or everyone, comms included. Scene chatter at a settlement "
                 + "or in a ship fight is given it whatever this is set to.",
             Kind = SettingKind.Choice,

@@ -55,7 +55,7 @@ public static class AdventureContext
                 ? "written by the Commander"
                 : personaName(adventure.WrittenBy) is { } name
                     ? $"written by {name}"
-                    : "written without a persona";
+                    : "written without a core";
 
             block.Append(", ").Append(by);
 

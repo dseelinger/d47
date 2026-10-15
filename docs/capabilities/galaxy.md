@@ -154,7 +154,7 @@ Turning it on takes effect immediately. There is no restart.
 ### Notable places for short stories {#notable-places-for-short-stories}
 
 A second setting, added with list.md Phase 47 and off by default, and a second host. When the
-ship's AI writes you a short story it may pick the story's stops from the
+core writes you a short story it may pick the story's stops from the
 [Galactic Exploration Catalog](https://edastro.com/gec/) on edastro.com — the community
 catalogue of nebulae, notable bodies, wrecks, memorials and tourist sites that the Galactic
 Mapping Project was migrated into. One request fetches the whole catalogue, about two megabytes,

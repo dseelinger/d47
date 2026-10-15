@@ -45,7 +45,7 @@ public static class CrewSeatRules
 
         if (reserved.Any(taken => Same(taken, name)))
         {
-            return $"{name} is already a name aboard: a hired pilot, the ship AI or the carrier captain.";
+            return $"{name} is already a name aboard: a hired pilot, the core or the carrier captain.";
         }
 
         return seat.Role != CrewRole.Custom && rest.Any(other => other.Role == seat.Role)

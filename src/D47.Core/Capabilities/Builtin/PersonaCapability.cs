@@ -58,9 +58,9 @@ public static class PersonaCapability
     {
         Id = Id,
         Group = "Conversation",
-        Name = "Persona",
+        Name = "Core",
         Summary = "Report which core is aboard, what it is called, and how to change it.",
-        Examples = ["who are you", "which persona is this", "switch to Cora"],
+        Examples = ["who are you", "which core is this", "switch to Cora"],
         // Each names its tool (#161). state_identity is what all five already reached, and saying so is what
         // stops the next tool declared above it silently taking them — bind_ship_core and forget_ship_core
         // both take no required argument and both write.
@@ -72,7 +72,7 @@ public static class PersonaCapability
             new("which core", "state_identity"),
             new("who am I talking to", "state_identity"),
         ],
-        Display = new CapabilityDisplay { PanelTitle = "Persona", Order = 12 },
+        Display = new CapabilityDisplay { PanelTitle = "Core", Order = 12 },
         Tools =
         [
             // First, and the order matters rather than being cosmetic: the keyword router answers with a
@@ -83,7 +83,7 @@ public static class PersonaCapability
             {
                 Name = "state_identity",
                 Description =
-                    "Answer who you are. The name the Commander calls this ship's AI, in one "
+                    "Answer who you are. The name the Commander calls this core, in one "
                     + "sentence, and nothing else — no status, no list of what else is available.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok($"I am {host.ShipName}.")),
             },
@@ -91,8 +91,8 @@ public static class PersonaCapability
             {
                 Name = "describe_persona",
                 Description =
-                    "Report which persona is currently active, what the Commander calls it, and which "
-                    + "other personas are available to switch to.",
+                    "Report which core is currently active, what the Commander calls it, and which "
+                    + "other cores are available to switch to.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current, ships))),
             },
         ],
@@ -104,7 +104,7 @@ public static class PersonaCapability
         new SettingRow
         {
             Key = PersonaKey,
-            Label = "Persona",
+            Label = "Core",
             Help =
                 "Which core answers you. Each keeps its own memory of your conversations. While a story "
                 + "runs, COVAS answers and the Guardian cores are locked until you scan a Guardian beacon.",
@@ -134,8 +134,8 @@ public static class PersonaCapability
         {
             Key = ShipNameKey,
             Advanced = true,
-            Label = "Ship AI name",
-            Help = "What you call your ship's AI. Empty uses the persona's own name.",
+            Label = "Name it answers to",
+            Help = "What you call your core. Empty uses the core's own name.",
             Kind = SettingKind.Text,
 
             // Follows the persona rather than being pinned, which is the requirement: "defaults to Persona's
@@ -156,7 +156,7 @@ public static class PersonaCapability
         {
             Key = KeepShipNameKey,
             Advanced = true,
-            Label = "Keep Ship AI name on persona switch",
+            Label = "Keep the name when you switch cores",
             Help =
                 "On, the name above stays whoever is aboard. Off, changing core clears it and "
                 + "the new core answers to its own name.",
@@ -248,7 +248,7 @@ public static class PersonaCapability
         HumorLevel(
             CoreHumorKey,
             "Core humor",
-            "How funny the ship's AI may be, from 0 (none) to 10 (comedian). Up to 6 the humor is "
+            "How funny the core may be, from 0 (none) to 10 (comedian). Up to 6 the humor is "
             + "restrained: no puns, comparisons or whimsy. From 7 those are allowed. COVAS ignores it.",
             s => s.CoreHumor,
             (p, v) => p with { CoreHumor = v },
@@ -256,7 +256,7 @@ public static class PersonaCapability
         HumorPercent(
             CoreHumorPercentKey,
             "Core humor frequency",
-            "The share of the ship's AI's lines that get humor. d47 decides line by line.",
+            "The share of the core's lines that get humor. d47 decides line by line.",
             s => s.CoreHumor,
             s => s.CoreHumorPercent,
             (p, v) => p with { CoreHumorPercent = v }),
@@ -557,7 +557,7 @@ public static class PersonaCapability
         var report = new StringBuilder();
         var current = host.Current;
 
-        report.AppendLine($"Active persona: {current.Name} — {current.Tagline}");
+        report.AppendLine($"Active core: {current.Name} — {current.Tagline}");
 
         if (!string.Equals(host.ShipName, current.Name, StringComparison.Ordinal))
         {
@@ -566,7 +566,7 @@ public static class PersonaCapability
 
         report.AppendLine(settings.Llm.PersonalityEnabled
             ? "Personality is on."
-            : "Personality is off, so you are answering plainly and this persona's voice is not in play.");
+            : "Personality is off, so you are answering plainly and this core's voice is not in play.");
 
         // The binding, read and never written (Phase 35).
         if (ships is not null)

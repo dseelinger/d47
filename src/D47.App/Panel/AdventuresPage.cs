@@ -21,7 +21,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     public string? HelpTopic => null;
 
-    public string Summary => "Stories you fly, told by the ship's AI. Progress comes from your own journal.";
+    public string Summary => "Stories you fly, told by the core. Progress comes from your own journal.";
 
     event EventHandler? IPageSummary.SummaryChanged
     {
@@ -644,14 +644,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             page.Children.Add(RoutingKit.Title("Ask for a short story").Row);
             page.Children.Add(Muted(
-                "The ship's AI writes a story for you to fly and waits for your yes. Three choices with "
+                "The core writes a story for you to fly and waits for your yes. Three choices with "
                 + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
         }
         else
         {
             page.Children.Add(RoutingKit.Title("Write the next chapter").Row);
             page.Children.Add(Muted(
-                $"The ship's AI writes the story that follows {after?.Name ?? "that story"}, from how it ended, "
+                $"The core writes the story that follows {after?.Name ?? "that story"}, from how it ended, "
                 + "and waits for your yes. The same three choices, and a brief if you want one."));
         }
 
@@ -1015,7 +1015,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             "adventure.revise",
             "Change",
             "What should change?",
-            "Say it as you would to the ship's AI — \"not Colonia, something closer\", \"the stakes are too low\".",
+            "Say it as you would to the core — \"not Colonia, something closer\", \"the stakes are too low\".",
             string.Empty,
             EntrySurface.Voice,
             value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("Say what should change.") : EntryVerdict.Ok),

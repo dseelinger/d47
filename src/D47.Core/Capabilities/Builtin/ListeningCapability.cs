@@ -516,10 +516,10 @@ public static class ListeningCapability
                     + "AI, so renaming the core renames the wake word too. \"D47\" always works as well. "
                     + "Add spellings if the speech model keeps hearing the name as something else.",
                 Kind = SettingKind.Text,
-                DefaultDisplay = "(the ship's AI name)",
+                DefaultDisplay = "(the core's name)",
                 DefaultDisplaySource = _ => surface.WakeWords?.Invoke() is { Count: > 0 } names
                     ? $"({string.Join(", ", names)})"
-                    : "(the ship's AI name)",
+                    : "(the core's name)",
                 DocsAnchor = "wake-words",
                 AppliesWhen = s => s.Listening.Mode == WakeMode,
                 Binding = new SettingBinding
@@ -543,7 +543,7 @@ public static class ListeningCapability
                 Help =
                     "Say the name alone, D47 answers, and the next thing you say is the request — the "
                     + "way you would address a person. It also opens when the captain, the crew or anyone "
-                    + "else but the ship's AI finishes answering you, so you can reply without a name. "
+                    + "else but the core finishes answering you, so you can reply without a name. "
                     + "Zero means the name and the request have to arrive in the same breath.",
                 Kind = SettingKind.Number,
                 Minimum = 0,

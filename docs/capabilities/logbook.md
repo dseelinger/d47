@@ -103,7 +103,7 @@ nav_order: 146
 </section>
 <section>
 <h2><span class="num">3</span> Three voices, and they are not interchangeable.</h2>
-<svg viewBox="0 0 880 236" role="img" aria-label="A log can be written in your voice, in the ship AI's voice, or yours with the AI interjecting">
+<svg viewBox="0 0 880 236" role="img" aria-label="A log can be written in your voice, in the core's voice, or yours with the AI interjecting">
  <rect x="20" y="36" width="270" height="126" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="78" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">YOU WRITE IT</text>
  <text x="155" y="110" text-anchor="middle" font-size="14" fill="var(--text-muted)">your own account,</text>
@@ -144,7 +144,7 @@ nav_order: 146
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">The voice the ship’s-AI log is written in.</span></a>
+<a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">The voice the ship’s-AI log is written in.</span></a>
 <a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">The spend ledger a written log reports into.</span></a>
 </div>
 </div>
@@ -193,14 +193,14 @@ Three voices, and they are not interchangeable.
 | Setting | What it writes |
 |---|---|
 | **You write it, in your own words** | Your own account, first person. The shipped default, and the plain one. |
-| **D47 writes about you** | The ship's AI, in the personality you have chosen, writing about your flying. |
+| **D47 writes about you** | the core, in the personality you have chosen, writing about your flying. |
 | **You write, D47 chips in** | Your account, with D47 interjecting a handful of times. |
 
 The second is the one only d47 can do, which is exactly why it is the one you opt into rather than
 the one that happens to you the first time you press a button.
 
 **A log is d47 speaking at length, so it inherits the persona's protection.** With personality
-switched off, the ship's-AI voice writes plainly rather than writing as somebody else, and the
+switched off, the core's voice writes plainly rather than writing as somebody else, and the
 commentary voice loses its commentary. Either way the file's header says which voice you asked for
 and which one actually wrote it.
 

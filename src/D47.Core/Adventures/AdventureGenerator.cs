@@ -1242,7 +1242,7 @@ public sealed class AdventureGenerator(
     {
         text.AppendLine();
         text.AppendLine(
-            "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the ship's AI aboard"
+            "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the core aboard"
             + (story.Core is { Length: > 0 } core ? $" ({core})" : string.Empty)
             + "; \"narrator\", who tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", "
             + "never speaks to the Commander, and never offers, asks or waits for anything; or one of the story's cast, over comms, in a recording "

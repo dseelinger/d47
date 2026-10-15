@@ -193,7 +193,7 @@ public static class AdventureCapability
             Switch(ResumeTool, "Resume the Commander's running story after a pause.", true, ["resume the story", "resume my story"], storySwitch),
             Answer(endingAnswer),
             Refuse(beatRefusal),
-            Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the ship's AI then proposes a replacement for them to use, keep or reword.", ["change this objective", "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
+            Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", ["change this objective", "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
             Recap(recapper),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),

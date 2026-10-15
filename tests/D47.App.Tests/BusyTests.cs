@@ -224,5 +224,5 @@ public class BusyTests
     private static Grid CoreRow(SettingsHost host) =>
         host.View.GetVisualDescendants().OfType<Grid>()
             .First(grid => grid.Classes.Contains(D47.App.Settings.SettingsView.CompactRowClass)
-                && grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "Persona"));
+                && grid.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "Core"));
 }

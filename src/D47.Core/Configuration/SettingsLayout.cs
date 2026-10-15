@@ -167,7 +167,7 @@ public static class SettingsLayout
                             ]),
                         G(
                             "Ship name",
-                            "What you call your ship's AI, and whether the name follows it across a core switch.",
+                            "What you call your core, and whether the name follows it across a core switch.",
                             [E("persona.shipName"), E("persona.keepShipName")]),
                         G(
                             "A core per ship",
@@ -196,7 +196,7 @@ public static class SettingsLayout
                             [E("speech.covasVoice.reverb"), E("speech.covasVoice.test")]),
                         G(
                             "Guardian Voice Effects",
-                            "Optional treatments for the ship AI's voice, all off by default and global to every core.",
+                            "Optional treatments for the core's voice, all off by default and global to every core.",
                             [E("speech.guardianVoice.preset")]),
                     ]),
                 new SettingsPlace(

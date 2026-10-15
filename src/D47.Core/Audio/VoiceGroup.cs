@@ -61,7 +61,7 @@ public static class VoiceGroups
         Id = "aboard",
         Group = VoiceGroup.Aboard,
         Name = "Aboard",
-        Covers = "your ship's AI, your crew and the narrator",
+        Covers = "your core, your crew and the narrator",
         OverTheAir = false,
         OtherPeoplesWords = false,
         Roles = [VoiceRole.ShipAi, VoiceRole.Crew, VoiceRole.Narrator],

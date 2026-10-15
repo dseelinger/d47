@@ -70,7 +70,7 @@ public class AdventureContextTests
     [Fact]
     public void WhoWroteItIsSaidInWords()
     {
-        Assert.Contains("written without a persona", Block(After(0)));
+        Assert.Contains("written without a core", Block(After(0)));
 
         var byArchivist = AdventureFold.Start(LanternRoute(Accepted) with { WrittenBy = "archivist" });
         Assert.Contains("written by Archivist", Block(byArchivist));

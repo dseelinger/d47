@@ -114,7 +114,7 @@ public static class LogPrompt
     private static string Voice(LogVoice voice) => voice switch
     {
         LogVoice.ShipsAi =>
-            "You are the ship's AI, and you are writing about the Commander in the third person — 'the "
+            "You are the core, and you are writing about the Commander in the third person — 'the "
             + "Commander', or their name if the facts give it. Write in your own character, as established "
             + "above. This is your account of their flying, not theirs.\n"
 
@@ -127,7 +127,7 @@ public static class LogPrompt
         LogVoice.FirstPersonWithCommentary =>
             "The body of the log is the Commander's own, in the first person — 'I dropped into Deciat'. You "
             + "are writing it as them, plainly and without flourish. Then, no more than three times in the "
-            + "whole log, add one line of your own in your own character, as the ship's AI, set off as a "
+            + "whole log, add one line of your own in your own character, as the core, set off as a "
             + "markdown blockquote on its own line starting with '> '. Those lines are the only place your "
             + "personality appears; they still carry their citations, and they still may not invent anything.",
 

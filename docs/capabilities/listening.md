@@ -473,11 +473,11 @@ costs a little dead air on the end of the clip, which the speech model ignores.
 #### What D47 answers to {#wake-words}
 
 Only applies in **Listen when I say its name**. Leave it unset and Directive 47 answers to whatever
-you call your ship's AI, so renaming the core renames the wake word with it. "D47" always works as
+you call your core, so renaming the core renames the wake word with it. "D47" always works as
 well, whatever this is set to.
 
-Every wake phrase addresses the ship's AI. Saying one closes any conversation with the captain, a
-crew member or anyone else, and what follows it goes to the ship's AI — so "Warden, captain, how's
+Every wake phrase addresses the core. Saying one closes any conversation with the captain, a
+crew member or anyone else, and what follows it goes to the core — so "Warden, captain, how's
 our fuel?" reaches the captain, and "Warden, request docking" requests docking.
 
 Set it — comma-separated — when the speech model keeps hearing the name as something else. It is
@@ -498,7 +498,7 @@ reaches the transcript; being called by name is not conversation.
 The same window opens when the captain, a crew member, a seat, a voice on comms, a story's cast or
 the Narrator finishes answering you, so you can reply to them without a name: ask the captain about
 fuel, then say "how much tritium?" and the captain answers that too. Start the reply with a wake
-phrase and it goes to the ship's AI instead. No window opens after the ship's AI answers.
+phrase and it goes to the core instead. No window opens after the core answers.
 
 Set it to zero if you would rather the name and the request always arrived in the same breath. That
 turns the reply window off too.
@@ -857,7 +857,7 @@ same `Write` path opening the same gate; the wake word does not touch the gate a
 decides about *words* rather than about audio — the detector segments the stream, Whisper turns a
 segment into text, and `WakeWordGate` decides whether that text was addressed to D47. So the wake
 word is a settings row rather than a second model to ship, a second download, and a fixed
-vocabulary chosen at build time that could never be the name the Commander gave their ship's AI.
+vocabulary chosen at build time that could never be the name the Commander gave their core.
 Its cost is stated rather than hidden: everything said in the room is transcribed before it can be
 discarded.
 

@@ -176,7 +176,7 @@ public sealed class CastLine(
         return $"""
                  You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}
                  The Commander has answered you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
-                 in one to three short sentences, as said aloud. You are not the ship's AI and never speak for it. You
+                 in one to three short sentences, as said aloud. You are not the core and never speak for it. You
                  have no tools and change nothing aboard. The exchange so far:
 
                  {string.Join('\n', _said)}{last}

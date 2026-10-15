@@ -103,7 +103,7 @@ public sealed class StoriesView : UserControl
         var (title, _) = RoutingKit.Title(PageName);
         var intro = AdventuresPage.Muted(
             "Stock stories that run from three days to a year, a chapter at a time. Picking one makes its words your Backstory until it stops, and "
-            + "has the ship's AI write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
+            + "has the core write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
             + "is written and begins. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon "
             + "the story to have them back at once.");
         intro.Margin = new Thickness(0, 0, 0, 10);
@@ -441,7 +441,7 @@ public sealed class StoriesView : UserControl
                 "story.objective",
                 "Change objective",
                 "What would you rather do?",
-                "Say it as you would to the ship's AI — \"a bounty instead\", \"something closer to home\".",
+                "Say it as you would to the core — \"a bounty instead\", \"something closer to home\".",
                 string.Empty,
                 EntrySurface.Voice,
                 value => string.IsNullOrWhiteSpace(value) ? EntryVerdict.No("Say what you would rather do.") : EntryVerdict.Ok),

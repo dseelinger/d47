@@ -165,6 +165,6 @@ public class TheCaptainKnowsOnlyTheCarrierAndFleetTests
         Assert.DoesNotContain("describe_carrier", brief, StringComparison.Ordinal);
         Assert.DoesNotContain("galaxy tools", brief, StringComparison.Ordinal);
         Assert.Contains("each one's name and hull", brief, StringComparison.Ordinal);
-        Assert.Contains("leave it to the ship's AI", brief, StringComparison.Ordinal);
+        Assert.Contains("leave it to the core", brief, StringComparison.Ordinal);
     }
 }

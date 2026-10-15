@@ -118,9 +118,9 @@ then the rest, soonest expiry first in each group. A mission whose accept the jo
 named by its internal name alone. With no missions the answer says so.
 
 With a First officer seat filled on the ship you are flying (Fleet › Crew), that seat reads the board
-instead of the ship AI, in its own voice and under its name, with the same words. It does so only when
+instead of the core, in its own voice and under its name, with the same words. It does so only when
 the board is asked for directly, as above. When the model reads the board as part of a longer answer,
-the ship AI gives it.
+the core gives it.
 
 > "what kinds of missions are there"
 > "where would I find a disable mission"

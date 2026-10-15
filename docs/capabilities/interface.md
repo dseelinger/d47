@@ -575,7 +575,7 @@ The transcript tab has four **readings**, three of them on a stepper at the righ
 bar and the fourth on a switch beside it. They are readings of one session rather than four
 destinations, which is why they are a stepper and not four tabs of their own.
 
-**In Ship** is the conversation: you, the ship's AI, and the callouts spoken to you — everything
+**In Ship** is the conversation: you, the core, and the callouts spoken to you — everything
 but invented chatter you cannot answer and a message you only overheard rather than were sent. It is what a fresh
 installation opens on, and what you come back to unless you left the tab on another reading — see
 *the panel* above.
@@ -683,7 +683,7 @@ without the diagnostics, or with them, or the log file. A search query highlight
 rather than filtering, so it deliberately does not narrow what is copied — you asked for the log.
 The button says **Copied** for a moment, and says so if it could not.
 
-### The ship AI's face {#avatar}
+### The core's face {#avatar}
 
 Top left of the panel, and in the headset too. One look per stage of a turn, so you can tell what
 Directive 47 is doing without reading anything — which in a cockpit is the point.
@@ -705,12 +705,12 @@ signal. Colour comes from your theme, so switching theme repaints the face with 
 Each one breathes: a slow opacity cycle, faster while a turn is running and very slow at rest.
 Nothing here jitters, because a companion's face that jitters is a companion that looks anxious.
 
-While someone other than the ship AI speaks, and they have a picture, the face shows their picture
+While someone other than the core speaks, and they have a picture, the face shows their picture
 instead: the Narrator, the carrier captain, the tower, a hired pilot or a story's cast member. It is
 the picture the Transcript shows beside their line, drawn whole, in the main window, on the mini
 panel and on both VR panels. This includes their answer when you speak to them and a cast
 member's voice sample played from the Stories page. When the line ends,
-the ship AI's face comes back. A speaker with no picture on disk leaves the face as it is.
+the core's face comes back. A speaker with no picture on disk leaves the face as it is.
 
 #### Using your own
 

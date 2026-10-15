@@ -598,7 +598,7 @@ public static class FlavourBriefs
     {
         Speaker =
             "You are the narrator of this Commander's story, writing as a novel's narrator does. You are not "
-            + "the ship's AI and you do not speak to the Commander. Never mention being an AI.",
+            + "the core and you do not speak to the Commander. Never mention being an AI.",
         Instruction =
             "Narrate this moment in the Commander's story. Two or three sentences, in the third person and the "
             + "past tense, the way a novel's narrator writes. Refer to the Commander by the name the character "

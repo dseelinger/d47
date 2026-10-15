@@ -189,7 +189,7 @@ public static class SpeechCapability
                 surface.VoicePace?.Invoke(group, id)),
             Watch = surface.WatchVoiceClips,
             Fetch = surface.FetchVoice is { } fetch ? id => fetch(group, id) : null,
-            Suggested = surface.SuggestedVoice?.Invoke(role) is { } voice ? (voice, role == VoiceRole.ShipAi ? "Ship AI" : VoiceRoles.Called(role) ?? role.ToString()) : null,
+            Suggested = surface.SuggestedVoice?.Invoke(role) is { } voice ? (voice, role == VoiceRole.ShipAi ? "Core" : VoiceRoles.Called(role) ?? role.ToString()) : null,
             Name = id => surface.VoiceName?.Invoke(group, id),
             StandIn = surface.ChatterboxCatalogue is { } catalogue ? id => StandInName(catalogue(group), id, role) : null,
             Installed = surface.ChatterboxInstalled,
@@ -588,7 +588,7 @@ public static class SpeechCapability
                 Key = VoiceKey,
                 Label = "Voice",
                 Help =
-                    "Which voice the core aboard speaks in. Kept per core, so switching persona "
+                    "Which voice the core aboard speaks in. Kept per core, so switching core "
                     + "switches voice. The voices come from the provider set under Providers › Speech "
                     + "synthesis, and clearing the row has d47 choose for this core again.",
                 Kind = SettingKind.Choice,
@@ -1194,7 +1194,7 @@ public static class SpeechCapability
                 Key = GuardianTestKey,
                 Label = "Test",
                 Help =
-                    "Plays a line in the ship AI's voice through whichever treatments above are "
+                    "Plays a line in the core's voice through whichever treatments above are "
                     + "switched on. Never costs money: it plays a free synthesis where the provider "
                     + "is free, the provider's free sample where it has one, an audition already paid "
                     + "for this session where there is one, or a bundled stand-in voice.",

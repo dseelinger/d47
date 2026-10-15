@@ -142,7 +142,7 @@ nav_order: 120
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">Who is answering, and why the model cannot change that.</span></a>
+<a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">Who is answering, and why the model cannot change that.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy →</span><span class="cd">Every destination that is open right now, computed rather than written down.</span></a>
 <a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The other half of the bill, and where its rate comes from.</span></a>
 </div>
@@ -730,7 +730,7 @@ towards, where you have been. Kept between sessions.
 
 **It is treated as true.** A biography names people, places and factions that are your own invention
 rather than Frontier's lore, and the answer is not a disclaimer: it is your character in your game,
-and the ship's AI is told the story is true of the world you share and to inhabit it. A core that
+and the core is told the story is true of the world you share and to inhabit it. A core that
 speaks of a Power with suspicion because you have reason to is the feature. Operational answers are
 unaffected — those come from tools and tables, not from this box.
 
@@ -767,7 +767,7 @@ can set your backstory. **Per Commander**, like the rows above it.
 
 Who hears the scenario. Decided by who is speaking, never left to the model:
 
-| Choice | The ship's AI and crew | Carrier captain and tower | Comms |
+| Choice | the core and crew | Carrier captain and tower | Comms |
 | --- | --- | --- | --- |
 | **Only those aboard** (`aboard`, the default) | yes | no | no |
 | **Aboard and my carrier** (`carrier`) | yes | yes | no |

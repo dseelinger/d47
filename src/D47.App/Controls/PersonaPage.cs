@@ -58,7 +58,7 @@ public sealed class PersonaPage : DialogPage
             Children = { header, _problems, FormField.Legend(required: true, supplied: true), _list },
         };
 
-        Modal.Apply(this, "Persona", Title, root, [add, save, close]);
+        Modal.Apply(this, "Core", Title, root, [add, save, close]);
 
         Rebuild();
         ShowProblems();

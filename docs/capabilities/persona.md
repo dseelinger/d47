@@ -1,5 +1,5 @@
 ---
-title: Persona
+title: Core
 group: Conversation
 nav_order: 121
 ---
@@ -19,14 +19,14 @@ nav_order: 121
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to a ship AI that sounds like yours.</p>
+<p class="intro">Three steps to a core that sounds like yours.</p>
 <section>
 <h2><span class="num">1</span> Pick a core.</h2>
 <p class="say">Pick a core, and set a ship name and the personality switch.</p>
-<p class="expect">The Persona page shows your core, and the voice changes to match it.</p>
-<svg viewBox="0 0 880 308" role="img" aria-label="Persona">
+<p class="expect">The Core page shows your core, and the voice changes to match it.</p>
+<svg viewBox="0 0 880 308" role="img" aria-label="Core">
  <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Core</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Core</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">one of eleven</text>
@@ -43,9 +43,9 @@ nav_order: 121
 <h2><span class="num">2</span> Bind one to a ship, if you want it to follow the hull.</h2>
 <p class="say">Bind a core to a ship on the Settings tab.</p>
 <p class="expect">The core follows that hull, and the name carries over if Keep the name across a core change is on.</p>
-<svg viewBox="0 0 880 252" role="img" aria-label="Persona">
+<svg viewBox="0 0 880 252" role="img" aria-label="Core">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
- <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Persona</text>
+ <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Core</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">The ship this core flies</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">Anaconda — Ptarmigan</text>
@@ -171,9 +171,9 @@ nav_order: 121
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">What is behind the words, and what switching personality off does not touch.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Language model →</span><span class="cd">What is behind the words, and what switching coreslity off does not touch.</span></a>
 <a class="card" href="speech.html"><span class="ct">Speech →</span><span class="cd">The Voice row a core's pairing lands on, and how to take it back.</span></a>
-<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Why the model can rename your ship's AI but cannot choose who it is.</span></a>
+<a class="card" href="settings.html"><span class="ct">Settings →</span><span class="cd">Why the model can rename your core but cannot choose who it is.</span></a>
 </div>
 </div>
 </div></div>
@@ -248,7 +248,7 @@ like the rest of the cast.
 
 **The frame is not on offer.** The shared preamble and the standing instructions wrap what you
 wrote exactly as they wrap Warden. They are what hold the cast together, and what stops a model
-sanding a persona toward pleasant and helpful over a long evening; a core that opted out of them
+sanding a core toward pleasant and helpful over a long evening; a core that opted out of them
 would drift out of the fiction inside a session. What you are writing is the character, not the
 scaffolding — which is why a working core takes a name and a paragraph rather than seven boxes.
 
@@ -433,7 +433,7 @@ properly. Anything you set by hand after that stands, whatever it is.
 
 ### Settings
 
-#### Persona
+#### Core {#persona}
 
 Which core answers you.
 
@@ -448,9 +448,9 @@ Saying so works with a fixed set of phrasings per core:
 "switch to cora"    "be cora"    "become cora"    "persona cora"    "wake cora"
 ```
 
-#### Ship AI name
+#### Name it answers to {#ship-ai-name}
 
-What you call your ship's AI. Leave it empty and it is the core's own name, which means it
+What you call your core. Leave it empty and it is the core's own name, which means it
 follows when you switch.
 
 Set it to something else and the core is told — it does not simply answer to a new label. Several
@@ -460,9 +460,9 @@ there was nobody left to say the whole thing to.
 This row *is* reachable by the model, unlike the one above. "Call yourself Fred" changes nothing
 anything depends on, and refusing it would be protecting you from a nickname.
 
-#### Keep Ship AI name on persona switch {#keep-ship-ai-name}
+#### Keep the name when you switch cores {#keep-ship-ai-name}
 
-On out of the box: the name you gave stays whoever is aboard, because naming your ship's AI names
+On out of the box: the name you gave stays whoever is aboard, because naming your core names
 the *ship's* AI and eleven cores answering to it is the point.
 
 Turn it off for the other reading, which is equally coherent — these are eleven separate
@@ -493,11 +493,11 @@ cores are spent before you press it, and states that none are afterwards.
 The core currently aboard is forgotten with the rest, but hearing it again means switching away
 and back — selecting the core that is already running is not a switch, and never has been.
 
-This row is not reachable by the model, for the same reason the persona row above is not.
+This row is not reachable by the model, for the same reason the core row above is not.
 
 #### Humor {#humor}
 
-Humor has a level and a frequency for each of three groups: **Core humor** (the ship's AI),
+Humor has a level and a frequency for each of three groups: **Core humor** (the core),
 **NPC humor** (chatter, hails and the canned lines d47 rewords) and **Carrier crew humor** (your
 carrier's captain and tower).
 
@@ -568,7 +568,7 @@ The [conversation](conversation.md) capability has a **Personality** switch. Off
 answers with no core, no flavour and no chatter of either kind.
 
 The anti-invention guardrails are unaffected. They sit *above* the persona in the assembled
-prompt, and there is no code path that can vary them — switching personality off truncates a
+prompt, and there is no code path that can vary them — switching coreslity off truncates a
 later block and cannot reach that one. A guardrail a setting could remove would be a guardrail in
 name only.
 
@@ -578,7 +578,7 @@ name only.
 #### `state_identity`
 
 Answers "who are you" with the name and nothing else — `I am Warden.`, or `I am Fred.` when you
-have named the ship's AI yourself. Takes no arguments.
+have named the core yourself. Takes no arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -591,7 +591,7 @@ name got a status report and a list of the ten it was not.
 
 #### `describe_persona`
 
-Reports which persona is active, what the Commander calls it, and what else is available. Takes
+Reports which core is active, what the Commander calls it, and what else is available. Takes
 no arguments.
 
 ```json

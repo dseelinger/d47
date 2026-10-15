@@ -41,18 +41,18 @@ nav_order: 103
  <text x="44" y="53" font-size="17" fill="var(--text)">Vasquez, how is the fighter holding up?</text>
  <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VASQUEZ]</text>
  <text x="180" y="116" font-size="16" fill="var(--text)">Still flying, Commander. Wing took a knock.</text>
- <text x="20" y="150" font-size="16" fill="var(--text-muted)">Start with the name and the turn goes to them instead of the ship's AI.</text>
+ <text x="20" y="150" font-size="16" fill="var(--text-muted)">Start with the name and the turn goes to them instead of the core.</text>
  <text x="20" y="184" font-size="15" fill="var(--text-muted)">The next question reaches them too, no name needed, until you say "that's all" or name somebody else.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Use the name of a crew member you have hired.</p>
-<p class="expect">That crew member answers; any other name reaches the ship AI, which says they are not aboard.</p>
+<p class="expect">That crew member answers; any other name reaches the core, which says they are not aboard.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Only the crew you have actually hired can answer.">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
  <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">Only the crew you have actually hired can answer.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A name that is not on your roster reaches the ship AI, which will say so rather than invent somebody.</text>
+ <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">A name that is not on your roster reaches the core, which will say so rather than invent somebody.</text>
 </svg>
 </section>
 </div></div>
@@ -66,10 +66,10 @@ nav_order: 103
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">The pilots you have hired, and how to talk to one of them instead of your ship's AI.</p>
+<p class="intro">The pilots you have hired, and how to talk to one of them instead of your core.</p>
 <section>
 <h2><span class="num">1</span> The name has to be at the front.</h2>
-<svg viewBox="0 0 880 240" role="img" aria-label="Opening with a crew member's name sends the turn to them; mentioning them later is a question for your ship's AI">
+<svg viewBox="0 0 880 240" role="img" aria-label="Opening with a crew member's name sends the turn to them; mentioning them later is a question for your core">
  <rect x="20" y="40" width="400" height="110" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="220" y="78" text-anchor="middle" font-size="16" fill="var(--text)">“Vance, what’s the fighter</text>
  <text x="220" y="102" text-anchor="middle" font-size="16" fill="var(--text)">looking like?”</text>
@@ -95,16 +95,16 @@ nav_order: 103
  <text x="660" y="134" text-anchor="middle" font-size="15" fill="var(--text)">no tools, no database</text>
  <text x="440" y="196" text-anchor="middle" font-size="16" fill="var(--text)">Asked something they cannot see from where they sit, they say so.</text>
 </svg>
-<p class="body">They speak in their own voice, kept for the session like any other. Each keeps their own conversation, the way the carrier's captain does, and the ship's AI is told each exchange as one it overheard rather than one it had — it can refer to what was said, but the pilot's answers are never added to its own conversation.</p>
+<p class="body">They speak in their own voice, kept for the session like any other. Each keeps their own conversation, the way the carrier's captain does, and the core is told each exchange as one it overheard rather than one it had — it can refer to what was said, but the pilot's answers are never added to its own conversation.</p>
 </section>
 <section>
 <h2><span class="num">3</span> The line stays open until you end it.</h2>
-<svg viewBox="0 0 880 212" role="img" aria-label="A pilot keeps the line for every follow-up until dismissed, the ship AI is named, or somebody else is">
+<svg viewBox="0 0 880 212" role="img" aria-label="A pilot keeps the line for every follow-up until dismissed, the core is named, or somebody else is">
  <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">An intercom does not fade</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">a pilot's line carries as clearly on the last word as the first</text>
- <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Ends on "that's all" and its kin, on your ship AI's name, or on naming another pilot.</text>
- <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">The ship AI's own name always wins, even mid-conversation with a pilot.</text>
+ <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Ends on "that's all" and its kin, on your core's name, or on naming another pilot.</text>
+ <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">The core's own name always wins, even mid-conversation with a pilot.</text>
 </svg>
 </section>
 <section>
@@ -132,7 +132,7 @@ nav_order: 103
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">The voice a crew turn steps aside from, and comes back to.</span></a>
+<a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">The voice a crew turn steps aside from, and comes back to.</span></a>
 <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The hulls a posting is remembered against.</span></a>
 <a class="card" href="journal.html"><span class="ct">Journal →</span><span class="cd">The four events this whole page is built from.</span></a>
 </div>
@@ -159,12 +159,12 @@ Address one of them by name to talk to them directly, for example "Vance Ilo, st
 
 ### Talking to one of them
 
-Open with their name and the turn goes to them instead of your ship's AI.
+Open with their name and the turn goes to them instead of your core.
 
 > "Vance, what's the fighter looking like?"
 
 The name has to be at the **front**. "What does Vance think of the fighter" is a question for
-your ship's AI *about* Vance, and that is a real difference rather than a parsing quirk.
+your core *about* Vance, and that is a real difference rather than a parsing quirk.
 
 A bare name works too — it is how you get somebody's attention.
 
@@ -179,10 +179,10 @@ they will say so.
 
 Once you address a pilot, the line stays open — an intercom does not fade the way the carrier's
 captain does over distance. The next thing you say reaches the same pilot with no name needed,
-until you end it with "that's all" and its kin, name your ship AI, or name a different pilot. If the
+until you end it with "that's all" and its kin, name your core, or name a different pilot. If the
 Narrator or a story's cast member speaks while the line is open, what you say next goes to them
-instead, and the pilot's line ends. The ship AI is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
-answers are never added to the ship AI's own conversation.
+instead, and the pilot's line ends. The core is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
+answers are never added to the core's own conversation.
 
 ### What Directive 47 actually knows about your crew
 
@@ -255,7 +255,7 @@ is already saved stores it at once.
 A save is refused, with the reason on the row and nothing written, when:
 
 - another seat on the ship has the same name;
-- a hired pilot, the ship AI or the carrier captain has the same name;
+- a hired pilot, the core or the carrier captain has the same name;
 - another seat on the ship holds the same standard role;
 - the name is empty or longer than 32 characters, or a Custom title is empty or longer than 24.
 
@@ -284,11 +284,11 @@ assigned aboard. Takes no arguments.
 Addressing is resolved before the turn runs, in `CrewAddressing.Match`, against the closed set of
 names the journal supplied — the same shape the keyword router uses. `CrewLine` holds the line
 open the way `CaptainLine` does: once a pilot answers, the same pilot takes every turn until a
-dismissal, the ship AI's name, or another pilot's name closes it, with no tool offered on any of
+dismissal, the core's name, or another pilot's name closes it, with no tool offered on any of
 those turns.
 
-Each pilot keeps their own transcript, one per `CrewId`, rather than sharing the ship AI's. The
-ship AI is told each exchange as overheard rather than reading it from a shared history, so a
+Each pilot keeps their own transcript, one per `CrewId`, rather than sharing the core's. The
+core is told each exchange as overheard rather than reading it from a shared history, so a
 pilot's words are never mistaken for its own.
 
 </details>

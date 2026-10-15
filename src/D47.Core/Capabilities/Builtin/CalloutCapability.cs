@@ -673,7 +673,7 @@ public static class CalloutCapability
                 // and borrows the wording the Aboard voice slot already uses so one vocabulary covers both
                 // surfaces.
                 "In Ship chatter",
-                "Your ship's AI and your crew - the voices inside your ship. The occasional "
+                "Your core and your crew - the voices inside your ship. The occasional "
                 + "in-character line to you, said because nothing has happened rather than because "
                 + "something did; only the AI speaks unasked, and your crew answer when you "
                 + "address them. Written by the model in the core's own voice, so it needs a "
@@ -769,7 +769,7 @@ public static class CalloutCapability
             // Reworded twice, and the property name deliberately not either time: for its new sibling (#258),
             // and again on 2026-09-02 when the pair took the name of who is speaking.
             Label = "The least time between In Ship chatter (seconds)",
-            Help = "Between two lines from your ship's AI or your crew. Each gap lands "
+            Help = "Between two lines from your core or your crew. Each gap lands "
                    + "somewhere between this and the row below, so the chatter never ticks like a "
                    + "clock. Lower is a talkative companion; higher is a quiet one; 0 silences it. "
 
@@ -801,7 +801,7 @@ public static class CalloutCapability
             Key = AmbientMaxSecondsKey,
             Advanced = true,
             Label = "The most time between In Ship chatter (seconds)",
-            Help = "Between two lines from your ship's AI or your crew. Equal to the "
+            Help = "Between two lines from your core or your crew. Equal to the "
                    + "row above pins a fixed cadence; anything below it reads as equal.",
             Kind = SettingKind.Number,
             DefaultDisplay = "600",

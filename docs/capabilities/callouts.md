@@ -984,7 +984,7 @@ row; the **Last session recap** entry under **Privacy and egress** goes silent w
 #### Story objectives {#adventure}
 
 An objective of the story you are following, said when you reach the place it waits for
-(list.md Phase 47). A short story is one the ship's AI tells you across a flight — a spine,
+(list.md Phase 47). A short story is one the core tells you across a flight — a spine,
 a handful of objectives, each anchored to a real place by the one thing the journal can prove: you
 arrived in a system, docked at a station, landed on or scanned a body, or were promoted. The
 Stories tab is where you ask for one; this is the voice it reaches you by.
@@ -1300,7 +1300,7 @@ Commander doing the interdicting.
 
 #### In Ship chatter {#ambient}
 
-**Who it is: your ship's AI and your crew** — the voices inside your ship, as against the
+**Who it is: your core and your crew** — the voices inside your ship, as against the
 [NPC chatter](#npc-chatter) below, which is everybody outside it. Only the AI speaks unasked; your
 crew answer when you address them.
 
@@ -1360,7 +1360,7 @@ sounds further off than a hail and has its own row, Overheard chatter, in the au
 notices you, can be answered: start with the speaker's name — *"Vance, thanks"*, or the whole
 *"Courier Vance"* — within 90 seconds of the last line anyone said in that exchange, and they reply
 in the voice you heard them in. Once you have named them, your next line goes to them too, until you
-name your ship's AI or say goodbye. Each exchange gives **four replies at most**; the fourth is their sign-off.
+name your core or say goodbye. Each exchange gives **four replies at most**; the fourth is their sign-off.
 A reply that would contradict your ship or claim something the game would log — a scan, a fine, a
 docking decision — is replaced with *"Got to go. Vance out."*, which ends the exchange. After 90
 seconds, a jump, a change of situation such as docking or undocking, or the next exchange, naming
@@ -1550,7 +1550,7 @@ chatter muted in the mixer, there are no scenes.
 
 #### Narrator {#narrator}
 
-**Who it is: a voice of its own**, neither your ship's AI nor anybody outside the ship. It tells your
+**Who it is: a voice of its own**, neither your core nor anybody outside the ship. It tells your
 story in the third person and the past tense, the way a novel's narrator writes, from your
 [character sheet](conversation.md#character-sheet), your [Backstory](conversation.md#backstory) and
 your [current scenario](conversation.md#current-scenario), connected to where you are now. It names you as the
@@ -1565,7 +1565,7 @@ switched on counts as a story to tell. With no such story and the character shee
 scenario all empty, it says nothing, unless a stock core is aboard (below).
 
 **With a stock core aboard, the Narrator takes the ambient slot.** While the core actually aboard is a
-stock core such as COVAS, the ship's AI makes no idle remarks, and the Narrator speaks in those
+stock core such as COVAS, the core makes no idle remarks, and the Narrator speaks in those
 moments instead: its gap is the same thirty to sixty minutes, and it narrates the moment from the
 game state whether or not a story is running. The other rules above still hold. With no character sheet it names you as the journal does. Turning the Narrator or
 personality off, or setting its least time to 0, leaves those moments silent; so does having no
@@ -1585,7 +1585,7 @@ chosen under Speech → [Narrator voice](speech.md#narrator-voice). It is never 
 goes to the Narrator, which answers with more narration in the third person and the past tense, taking
 what you said as what your Commander said or did. Each reply restarts the ninety seconds, and a
 narration takes at most four replies. Two things still go to the ship: a command d47 runs or offers
-without the model, such as "gear down", and anything that starts with your ship AI's name, which also
+without the model, such as "gear down", and anything that starts with your core's name, which also
 ends the exchange. The Narrator is offered no tools, so nothing it says can act on the ship. A reply
 that addresses you as "you" is not said, and ends the exchange. Each reply is posted to the Story log from
 the Narrator, and goes to the same model as the narration. Outside those ninety seconds, saying

@@ -29,7 +29,7 @@ public static class DebriefRewording
         var quoted = new string([.. because.Where(c => !char.IsControl(c) && c != '"')]).Trim();
 
         return
-            "A player of a science-fiction game said the line below to their ship's AI assistant while playing. "
+            "A player of a science-fiction game said the line below to their core, the assistant aboard their ship, while playing. "
             + "If it tells the assistant how to behave, rewrite it as one standing instruction to an AI assistant, "
             + $"in plain English, no longer than {StandingDirection.MaxText} characters, keeping the player's meaning "
             + "and leaving out greetings, names and filler. Answer with the instruction alone, on one line. If the "

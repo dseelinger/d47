@@ -35,7 +35,7 @@ nav_order: 115
 <section>
 <h2><span class="num">2</span> Fly. The next objective arrives when your journal earns it.</h2>
 <p class="say">Fly as you normally would, and listen for the next objective.</p>
-<p class="expect">When your journal shows a jump, dock or scan that earns it, your ship AI speaks the next objective.</p>
+<p class="expect">When your journal shows a jump, dock or scan that earns it, your core speaks the next objective.</p>
 <svg viewBox="0 0 880 168" role="img" aria-label="A jump or a docking in the journal moves the story to its next objective">
  <rect x="20" y="24" width="250" height="72" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="145" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">YOU JUMP</text>
@@ -44,14 +44,14 @@ nav_order: 115
  <polygon points="320,60 304,52 304,68" fill="var(--accent-muted)"/>
  <rect x="334" y="24" width="526" height="72" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="597" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">THE NEXT OBJECTIVE IS SPOKEN</text>
- <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your ship AI's own voice</text>
+ <text x="597" y="80" text-anchor="middle" font-size="15" fill="var(--text-muted)">in your core's own voice</text>
  <text x="20" y="146" font-size="16" fill="var(--text-muted)">Nothing is on a timer. Say "where am I up to" to hear the story so far.</text>
 </svg>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Wait for the game to move. On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to say what you would rather do.</p>
-<p class="expect">After three play sessions and seven days at the same objective, your ship AI nudges you toward it. Neither applies to a short story.</p>
+<p class="expect">After three play sessions and seven days at the same objective, your core nudges you toward it. Neither applies to a short story.</p>
 <p class="expect">An objective to board a ship has a button beside Change objective and Never ask this that plans that ship, or shows it when you own it or have planned it. An objective to reach a stage with an engineer, sell data or apply suit mods has one that opens the engineer's page, the unsold data page or the suits page, when that page is on.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="152" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -71,7 +71,7 @@ nav_order: 115
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">A story you fly, told by the ship's AI, moved along by your own journal.</p>
+<p class="intro">A story you fly, told by the core, moved along by your own journal.</p>
 <section>
 <h2><span class="num">1</span> A story, not a list of stops.</h2>
 <svg viewBox="0 0 880 300" role="img" aria-label="A spine of premise, want, stake, turn and ending, with objectives hung on real places">
@@ -118,7 +118,7 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">3</span> It cannot spoil itself.</h2>
-<svg viewBox="0 0 880 274" role="img" aria-label="What the ship's AI is told, and when">
+<svg viewBox="0 0 880 274" role="img" aria-label="What the core is told, and when">
  <rect x="20" y="24" width="840" height="62" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="56" y="62" font-size="18" font-weight="700" fill="var(--accent)">always</text>
  <text x="824" y="62" text-anchor="end" font-size="16" fill="var(--text)">the premise, what you want, what is at stake</text>
@@ -130,7 +130,7 @@ nav_order: 115
  <text x="824" y="210" text-anchor="end" font-size="16" fill="var(--text)">the objectives ahead of you</text>
  <text x="440" y="268" text-anchor="middle" font-size="16" fill="var(--text-muted)">A storyteller who knows the ending leaks it. So the AI is simply never told what is coming.</text>
 </svg>
-<p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier objectives, by the turn that did know the ending. Between objectives the ship's AI wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict an objective you have not reached.</p>
+<p class="body">Foreshadowing still happens — it is written <em>into</em> the earlier objectives, by the turn that did know the ending. Between objectives the core wonders aloud in character and never states a new fact about the story, so nothing it says on a quiet stretch can contradict an objective you have not reached.</p>
 </section>
 </div></div>
 </details>
@@ -139,7 +139,7 @@ nav_order: 115
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="persona.html"><span class="ct">Persona →</span><span class="cd">Whose story it is — each core writes the one it cares about.</span></a>
+<a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">Whose story it is — each core writes the one it cares about.</span></a>
 <a class="card" href="galaxy.html"><span class="ct">Galaxy search →</span><span class="cd">The catalogue a generated story picks its places from.</span></a>
 <a class="card" href="checklists.html"><span class="ct">Checklists →</span><span class="cd">The other thing that remembers what you are in the middle of.</span></a>
 </div>
@@ -150,7 +150,7 @@ nav_order: 115
 
 A short story is a story: someone wants something, there is a belief the events exist to test, a
 turn where it stops being what it looked like, and an ending that means something. It is told by
-the ship's AI, anchored to the galaxy by objectives, accepted by you, and advanced by your own journal.
+the core, anchored to the galaxy by objectives, accepted by you, and advanced by your own journal.
 
 The drive behind it is to add story to a sandbox, which sandboxes deeply lack. It is deliberately
 **not** a checklist of things to complete.
@@ -281,7 +281,7 @@ story speaks, whether in an opening, an objective, a clue, a finale line or a re
 goes to that member. They answer in the first person, in their own voice. Each reply restarts the ninety
 seconds, and one line takes at most four replies; the window opens again the next time that member
 speaks. Two things still go to the ship: a command d47 runs or offers without the model, such as "gear
-down", and anything that starts with your ship AI's name, which also ends the exchange. The member reads
+down", and anything that starts with your core's name, which also ends the exchange. The member reads
 the hidden story as every speaker does, so they may hint at the secret but never state it, and never
 mislead you about fuel, cargo, credits, routes, rank or danger. A reply that contradicts your ship, such
 as one counting on a fuel scoop you have not fitted, is not said, and ends the exchange. The member is
@@ -327,7 +327,7 @@ Both are yours alone, reachable from the panel and nowhere else.
 
 Generation, beginning, abandoning and removing are all your acts, on the panel. Asking for a short story,
 and accepting, changing and rejecting a draft, are yours too, by voice or by their buttons, and so are pausing and resuming
-a stock story, by voice or by the **Story on** checkbox, and asking for the story so far. The ship's AI can
+a stock story, by voice or by the **Story on** checkbox, and asking for the story so far. the core can
 *read* the story — that is what it is for, so it can play off it — and can change nothing about
 it. A hostile message arriving in your comms panel cannot propose a story, end one, or delete one.
 
@@ -414,7 +414,7 @@ speakers who exist only in the story. Each of those speakers has a local voice, 
 story may mark a speaker `pinned: true` so that it always speaks in that voice. A speaker that is not pinned
 speaks through the provider you set for the ship, so a story never sends its lines to a provider you did not
 choose. A speaker whose voice is `own` is pinned. Every clue and finale
-line names who says it: one of those speakers, the ship's AI or the narrator. D47 keeps that layer
+line names who says it: one of those speakers, the core or the narrator. D47 keeps that layer
 sealed, never shows it, and sends it to the language model so the chapters can hint at it.
 
 A speaker may be written in two versions: `forMan`, the version a Commander who is a man meets, and
@@ -428,7 +428,7 @@ For such a story, the story's page asks **Your Commander is**: **A man** or **A 
 Commander and is asked only by a story that needs it. The same control is on
 the page of your running story; changing it there takes effect from the story's next line.
 
-**Pick** makes the card's words your Backstory until the story stops, and has the ship's AI write
+**Pick** makes the card's words your Backstory until the story stops, and has the core write
 chapter one, which then begins. D47 keeps the Backstory you had before; a Backstory that is some
 story's own words counts as none. Edits you make to the Backstory while a story runs are not kept. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. Before each act-one chapter D47 checks whether
@@ -517,7 +517,7 @@ A speaker may have a picture, downloaded with the story as `<story-id>.<cast-id>
 `data\stories`; a speaker in two versions has one for each, ending `.for-man.jpg` and `.for-woman.jpg`. A
 speaker marked `primary` is a recurring character named on the story's card, and always has one. A line
 that speaker says is posted to the Story log with the picture, which the message page shows above the text, at
-most 240 px wide. A line from the ship's AI or the narrator has none.
+most 240 px wide. A line from the core or the narrator has none.
 
 While the speaker's line plays, including an answer to you and a message played again from the Story log, the
 avatar shows the picture whole in place of the core aboard: in the main window, on the mini panel, and on both
@@ -733,7 +733,7 @@ activity you have refused in the story is never picked.
 A story chapter's current objective has a **Never ask this** button, on the chapter's page and on the Stories
 page, and a voice command: "never ask this", "this objective is not for me", "not for me" or "give me a different objective". The
 button asks "Write a different objective?" and, for an objective that asks for an activity, "This story won't ask
-you to collect bounties again." (or whichever activity it is). On yes the ship's AI writes new objectives from
+you to collect bounties again." (or whichever activity it is). On yes the core writes new objectives from
 the current one to the end of the chapter. Objectives already done stay as they were, the chapter count and the
 clues do not change, and the new objectives count only what happens after you refused. A replacement arrive
 objective for a system you had already visited waits for your next arrival there. If the write fails, the objective
@@ -761,7 +761,7 @@ Refuse the objective the Commander's story chapter is waiting on and write a dif
 Beside **Never ask this**, a story chapter's current objective has a **Change objective** button, on the chapter's
 page and on the Stories page, in the window and on the VR big panel. Say "change this objective" or "change the
 objective" to open the same page. The page asks "What would you rather do?" and takes your words by speech or
-keyboard. The ship's AI then writes the current objective and those after it again from your words, and the status
+keyboard. the core then writes the current objective and those after it again from your words, and the status
 line reads "Writing a different objective…" meanwhile. It says its reply and shows it with three buttons:
 
 - **Use this** replaces the current objective and those after it with the proposal.
@@ -775,7 +775,7 @@ is refused this tool.
 
 #### `change_story_objective`
 
-Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the ship's AI then proposes a replacement for them to use, keep or reword. The Commander's choice alone.
+Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

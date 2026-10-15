@@ -90,7 +90,7 @@ nav_order: 142
 <div class="next-title">Where to go next</div>
 <div class="cards">
 <a class="card" href="utilities.html"><span class="ct">Timers and alarms →</span><span class="cd">Countdowns and alarms that say their own name, behind the --utilities switch.</span></a>
-<a class="card" href="conversation.html"><span class="ct">Conversation →</span><span class="cd">What the ship's AI is told with every question, the date included.</span></a>
+<a class="card" href="conversation.html"><span class="ct">Conversation →</span><span class="cd">What the core is told with every question, the date included.</span></a>
 </div>
 </div>
 </div></div>
@@ -123,7 +123,7 @@ different days. Your own clock is written the way your computer writes dates.
 
 **Directive 47 answers this itself.** No turn is taken, no provider is needed, and nothing is
 spent — it works with no key configured and no network. Both dates also go into the block of live
-game state that goes with every conversation, already worked out, so the ship's AI can mention
+game state that goes with every conversation, already worked out, so the core can mention
 the date without asking for it. It is never asked to add 1286 to anything: that is arithmetic,
 and a model doing arithmetic in prose is wrong occasionally and confidently.
 

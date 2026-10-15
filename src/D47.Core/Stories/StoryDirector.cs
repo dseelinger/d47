@@ -1336,7 +1336,7 @@ public sealed class StoryDirector(
         string? Named(string? speaker) => speaker switch
         {
             StorySpeaker.Narrator => null,
-            null or StorySpeaker.Ship => Aboard()?.Name ?? "The ship's AI",
+            null or StorySpeaker.Ship => Aboard()?.Name ?? "The core",
             _ => secret?.Cast.FirstOrDefault(member => string.Equals(member.Id, speaker, StringComparison.Ordinal))?.Shown(secret.Id, Gender()).Name,
         };
 

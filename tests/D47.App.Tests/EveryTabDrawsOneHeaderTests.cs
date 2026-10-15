@@ -184,7 +184,7 @@ public class EveryTabDrawsOneHeaderTests
         foreach (var (tab, expected) in new[]
                  {
                      (PanelTab.Assets, "1 of "),
-                     (PanelTab.Stories, "Stories you fly, told by the ship's AI. Progress comes from your own journal."),
+                     (PanelTab.Stories, "Stories you fly, told by the core. Progress comes from your own journal."),
                      (PanelTab.Settings, "Changes apply as you make them."),
                  })
         {
