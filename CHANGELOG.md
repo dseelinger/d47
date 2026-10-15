@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When D47 offers to remember your wording after a near-miss command, only a yes or a no answers the offer. A yes learns the phrase and a no says "Dropped." Anything else drops the offer without a word and is handled as an ordinary request, where before it was answered "Dropped." and ignored. A dropped offer is not counted as declined, so the same wording can be offered again.
+
 Abandoning a story or finishing it now puts your Backstory back to the one you had before your first story, or to empty if you had none. Edits you made to the Backstory while the story ran are discarded. Switching passes the earlier Backstory on to the new story, so stopping that one restores it too. A Backstory that was a stock story's words when you picked is treated as none. The Abandon confirmation, the Stories intro and the Adventures help page say so.
 
 A test drive now uses the Anthropic key in the D47_COMPARE_KEY environment variable when it is set and not blank, ahead of the stored key, so its requests bill to the dev workspace. The startup log names the source as "the D47_COMPARE_KEY environment variable (test drive)". Without the variable a test drive behaves as before, and a release build never reads it. Other providers are unchanged.

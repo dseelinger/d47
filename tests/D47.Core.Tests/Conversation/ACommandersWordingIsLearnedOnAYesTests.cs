@@ -163,6 +163,44 @@ public class ACommandersWordingIsLearnedOnAYesTests
     }
 
     [Fact]
+    public async Task AnUnrelatedUtteranceDropsTheLearnOfferAndRoutesAsUsual()
+    {
+        var spy = new Spy();
+        var store = Store();
+        var loop = Build(spy.Registry(), store);
+
+        await RunAsync(loop, "run the first think");
+        await RunAsync(loop, "yes");
+
+        var unrelated = await RunAsync(loop, "run the first thing");
+        Assert.NotEqual("Dropped.", unrelated.Text);
+        Assert.Equal(["first_thing", "first_thing"], spy.Ran);
+
+        var late = await RunAsync(loop, "yes");
+        Assert.NotEqual("Learned.", late.Text);
+
+        var reading = Store();
+        reading.Load();
+        Assert.Null(reading.PhraseFor("F1", "run the first think"));
+    }
+
+    [Fact]
+    public async Task AnOfferDroppedByAnUnrelatedUtteranceCanBeMadeAgain()
+    {
+        var spy = new Spy();
+        var loop = Build(spy.Registry(), Store());
+
+        await RunAsync(loop, "run the first think");
+        await RunAsync(loop, "yes");
+        await RunAsync(loop, "run the first thing");
+
+        await RunAsync(loop, "run the first think");
+        var ran = await RunAsync(loop, "yes");
+
+        Assert.Contains("Want me to remember", ran.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ADeclinedUtteranceIsNotAskedAboutAgainThisSession()
     {
         var spy = new Spy();

@@ -559,7 +559,9 @@ public sealed class TurnLoop(
         {
             _pendingLearn = null;
 
-            if (IsAffirmative(input))
+            var reading = ReadYesNo(input);
+
+            if (reading is OfferReading.Picked)
             {
                 LearnPhrase?.Invoke(PhrasePattern.Literal(pending.Said), pending.Phrase);
 
@@ -567,8 +569,11 @@ public sealed class TurnLoop(
                 {
                     yield return turnEvent;
                 }
+
+                yield break;
             }
-            else
+
+            if (reading is OfferReading.Declined)
             {
                 _declinedLearn.Add(KeywordRouter.Utterance(pending.Said));
 
@@ -576,9 +581,9 @@ public sealed class TurnLoop(
                 {
                     yield return turnEvent;
                 }
-            }
 
-            yield break;
+                yield break;
+            }
         }
 
         switch (Offers.Read(input))
@@ -1228,12 +1233,14 @@ public sealed class TurnLoop(
     }
 
     /// <summary>Reads a yes/no answer the same way the offer window would, for the one standing choice.</summary>
-    private static bool IsAffirmative(string input)
+    private static bool IsAffirmative(string input) => ReadYesNo(input) is OfferReading.Picked;
+
+    private static OfferReading ReadYesNo(string input)
     {
         var probe = new OfferWindow();
         probe.Open(new Offer([new OfferChoice("that", new OfferTarget.Answer(() => new OfferAnswer(string.Empty)))]));
 
-        return probe.Read(input) is OfferReading.Picked;
+        return probe.Read(input);
     }
 
     /// <summary>Whether an utterance is read as a yes, a no or a pick by any standing offer.</summary>
