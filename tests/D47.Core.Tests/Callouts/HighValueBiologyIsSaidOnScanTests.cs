@@ -137,7 +137,7 @@ public class HighValueBiologyIsSaidOnScanTests
 
         var said = Assert.Single(new BiologyCallout().Examine(Context(state, false, scan)));
 
-        Assert.Equal("3 b could hold 2.6 million to 16.2 million in biology: Stratum.", said.Text);
+        Assert.Equal("3 b could hold 1.4 million to 16.2 million in biology: Stratum.", said.Text);
     }
 
     [Fact]

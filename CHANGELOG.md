@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking about a body you have mapped now lists, under each genus the surface scan named, the species its conditions admit, with each one's value, most valuable first. It says that this is a prediction and the sample decides. A species whose surveyed gravity, temperature or pressure range the body misses by under 2% of the range's width is now counted as possible.
+
 A HOTAS switch set to a power distributor split now sets it when you flip it away and straight back. If the pips had not yet moved for the first flip, D47 took the second flip as already done and pressed nothing, so the distributor ended on the split you had flipped away from.
 
 The Catalogue now reads as a sentence: "Show All stories of Any length", with the length, rating and sort added as you choose them. Each word in the accent colour is a button that opens its choices under the sentence, and the level takes any number of ticks, such as New commander and Endgame together. A line under the sentence says how many stories match and offers Clear filters. Stories are cards in a grid, three across on the big panel, each with its first picture large and any others in a column beside it, its length, level and core, the start of its blurb and its rating. The heading and the paragraph above the list are gone; the title line carries the summary, and the sentences about picking, the Guardian beacon and the Guardian cores now sit on each story's page above Pick or Switch. The sort that was called Highest rated reads Highest rating.

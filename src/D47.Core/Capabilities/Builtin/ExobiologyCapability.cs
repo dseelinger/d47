@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -67,9 +67,9 @@ public static class ExobiologyCapability
                 Description =
                     "What the Commander's own detailed surface scan found on a body: how many "
                     + "biological signals, which genera, and what else is down there. This is the "
-                    + "game's own answer and outranks any prediction. It names the genus only — the "
-                    + "species, which sets the price, is not known until a sample is taken, so this "
-                    + "never quotes a value.",
+                    + "game's own answer and outranks any prediction. For a mapped body it also lists "
+                    + "the species of each genus that the body's conditions admit, with each one's "
+                    + "value; that is a prediction from the conditions and the sample decides.",
                 Parameters =
                 [
                     new ToolParameter
@@ -258,14 +258,31 @@ public static class ExobiologyCapability
             // Said once, on the answer that would otherwise invite the question.
             report.AppendLine();
 
+            if (estimate is { Named.Count: > 0 })
+            {
+                foreach (var genus in estimate.Named)
+                {
+                    report.AppendLine(
+                        genus.Candidates.Count == 0
+                            ? $"  {genus.Genus}: the conditions admit none of the species I have for it."
+                            : $"  {genus.Genus}: "
+                              + string.Join(
+                                  "; ",
+                                  genus.Candidates.Select(entry => $"{entry.Species} {Number(entry.Value)}"))
+                              + ".");
+                }
+
+                report.AppendLine();
+            }
+
             var range = estimate is { Low: { } low, High: { } high }
                 ? $"That could be worth {Number(low)} to {Number(high)} credits. "
                 : string.Empty;
 
             report.AppendLine(
                 range
-                + "Elite names the genus and not the species, and the species is what sets the price — "
-                + "so I cannot tell you what this is worth until you sample it.");
+                + "Elite names the genus and not the species. The candidates are a prediction from the "
+                + "body's conditions, and the sample decides.");
         }
 
         return report.ToString().TrimEnd();

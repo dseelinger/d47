@@ -170,15 +170,16 @@ HR 3230 3 a a, surface-scanned 2026-08-16 10:00 game time.
   1 biological signal: Brain Trees.
   Also down there: 3 Geological.
 
-Elite names the genus and not the species, and the species is what sets the price — so I cannot
-tell you what this is worth until you sample it.
+Elite names the genus and not the species. The candidates are a prediction from the body's
+conditions, and the sample decides.
 ```
 
-**That last paragraph is the ceiling on this half, and it is not a limitation D47 can engineer
-around.** Every one of the 792 events measured names a *genus* — `Bacterium`, `Stratum`,
-`Brain Trees` — and never a species. *Bacterium Alcyoneum* and *Bacterium Acies* are very different
-money, and the game does not say which you are looking at until you take the sample. So this half
-lists what is there and does not quote one price for it.
+**The game's own answer stops at the genus.** Every one of the 792 events measured names a *genus* —
+`Bacterium`, `Stratum`, `Brain Trees` — and never a species. *Bacterium Alcyoneum* and *Bacterium Acies*
+are very different money, and the game does not say which you are looking at until you take the
+sample. For a mapped body whose `Scan` D47 holds, it lists under each genus the species the body's
+conditions admit, most valuable first, each with its value. Those are a prediction and the sample
+decides; D47 does not rank them by likelihood.
 
 D47 does estimate a range, from the body's own scan. `ExobiologyCatalogue.Possible` keeps the species
 whose surveyed conditions — planet class, atmosphere, volcanism, gravity, temperature, pressure and,
@@ -194,7 +195,9 @@ reaches its threshold, as "up to 18.2 million" before a surface scan and as "X t
 ```
 
 That is what the body's conditions allow, not a price: the species actually there may be the
-cheapest of its genus.
+cheapest of its genus. `ExobiologyCatalogue.Possible` widens each gravity, temperature and pressure
+band by 2% of its width on both sides, because a surveyed range is a sample of the bodies that carry
+the species and not its edge.
 
 A scan that found nothing is a real answer and the one that saves you a landing:
 
@@ -336,7 +339,8 @@ Dropping bodyless stops is what keeps "three systems worth landing on" from read
 
 #### `get_body_biology`
 
-What your own surface scan found. Names genera; never quotes a value.
+What your own surface scan found. For a mapped body it also lists the species of each genus the
+body's conditions admit, with each one's value: a prediction from the conditions, and the sample decides.
 
 ```json
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}

@@ -74,6 +74,9 @@ public static class ExobiologyCatalogue
 {
     private const string ResourceName = "D47.Core.Exobiology";
 
+    /// <summary>Fraction of a band's width added to each side of its gravity, temperature and pressure limits.</summary>
+    private const double BandMargin = 0.02;
+
     private static readonly Lazy<IReadOnlyList<ExobiologyEntry>> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -85,7 +88,8 @@ public static class ExobiologyCatalogue
             ?.ColonyDistance;
 
     /// <summary>
-    /// Every species whose surveyed columns and ranges contain the body's conditions. With
+    /// Every species whose surveyed columns and ranges, each numeric band widened by <see cref="BandMargin"/>
+    /// of its width on both sides, contain the body's conditions. With
     /// <paramref name="region"/> given, also drops a species whose surveyed regions do not include it.
     /// </summary>
     public static IReadOnlyList<ExobiologyEntry> Possible(BodyConditions body, string? region = null)
@@ -100,11 +104,18 @@ public static class ExobiologyCatalogue
                 entry.PlanetTypes.Contains(planetType, StringComparer.Ordinal)
                 && entry.Atmospheres.Contains(atmosphere, StringComparer.Ordinal)
                 && entry.Volcanism.Contains(volcanism, StringComparer.Ordinal)
-                && body.Gravity >= entry.GravityLow && body.Gravity <= entry.GravityHigh
-                && body.Temperature >= entry.TemperatureLow && body.Temperature <= entry.TemperatureHigh
-                && body.Pressure >= entry.PressureLow && body.Pressure <= entry.PressureHigh
+                && Within(body.Gravity, entry.GravityLow, entry.GravityHigh)
+                && Within(body.Temperature, entry.TemperatureLow, entry.TemperatureHigh)
+                && Within(body.Pressure, entry.PressureLow, entry.PressureHigh)
                 && (region is null || entry.Regions.Contains(region, StringComparer.Ordinal))),
         ];
+    }
+
+    private static bool Within(double value, double low, double high)
+    {
+        var margin = (high - low) * BandMargin;
+
+        return value >= low - margin && value <= high + margin;
     }
 
     // ---------------------------------------------------------- normalisation

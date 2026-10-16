@@ -243,13 +243,11 @@ public class ExobiologyCapabilityTests
 
         Assert.Contains("Stratum", result.Content, StringComparison.Ordinal);
         Assert.Contains(
-            "That could be worth 2,637,500 to 16,202,800 credits.",
+            "That could be worth 1,362,000 to 16,202,800 credits.",
             result.Content,
             StringComparison.Ordinal);
-        Assert.Contains(
-            "cannot tell you what this is worth until you sample it",
-            result.Content,
-            StringComparison.Ordinal);
+        Assert.Contains("Stratum: Stratum Cucumisis 16,202,800", result.Content, StringComparison.Ordinal);
+        Assert.Contains("the sample decides", result.Content, StringComparison.Ordinal);
     }
 
     /// <summary>

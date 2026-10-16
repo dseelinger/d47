@@ -113,4 +113,53 @@ public class ABodyHoldsOneSpeciesPerGenusTests
         Assert.Equal(Value("Frutexa Flabellum"), estimate.Low);
         Assert.Equal(Value("Frutexa Flammasis"), estimate.High);
     }
+
+    [Fact]
+    public void ANamedGenusWithOneAdmittedSpeciesHasThatOneCandidate()
+    {
+        var estimate = BiologyPotential.For(FrutexaScan(), 1, ["Frutexa"], "Norma Expanse");
+
+        Assert.NotNull(estimate);
+        Assert.Equal(["Frutexa Flammasis"], estimate.Named.Single().Candidates.Select(entry => entry.Species));
+    }
+
+    [Fact]
+    public void CandidatesAreListedMostValuableFirst()
+    {
+        var estimate = BiologyPotential.For(FrutexaScan(), 1, ["Frutexa"]);
+
+        Assert.NotNull(estimate);
+        Assert.Equal(
+            ["Frutexa Flammasis", "Frutexa Flabellum"],
+            estimate.Named.Single().Candidates.Select(entry => entry.Species));
+    }
+
+    [Fact]
+    public void ANamedGenusWithNoAdmittedSpeciesHasNoCandidatesAndTheWholeGenusRange()
+    {
+        var estimate = BiologyPotential.For(TwoGenera(), 1, ["Fonticulua"]);
+        var fonticulua = ExobiologyCatalogue.All.Where(entry => entry.Genus == "Fonticulua").ToList();
+
+        Assert.NotNull(estimate);
+        Assert.Empty(estimate.Named.Single().Candidates);
+        Assert.Equal(fonticulua.Min(entry => entry.Value), estimate.Named.Single().Low);
+        Assert.Equal(fonticulua.Max(entry => entry.Value), estimate.Named.Single().High);
+    }
+
+    [Fact]
+    public void ABodyJustUnderASpeciesLowTemperatureStillAdmitsIt()
+    {
+        var species = ExobiologyCatalogue.Possible(
+            new BodyConditions
+            {
+                PlanetClass = "Rocky body",
+                Atmosphere = "thin ammonia atmosphere",
+                Volcanism = "",
+                Gravity = 0.2,
+                Temperature = 165.25,
+                Pressure = 0.01,
+            });
+
+        Assert.Contains(species, entry => entry.Species == "Stratum Paleas");
+    }
 }
