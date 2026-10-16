@@ -84,6 +84,9 @@ public static class ShippedCallouts
 
         public required Func<bool> StockCoreAboard { get; init; }
 
+        /// <summary>The time of the last BGS tick, or null.</summary>
+        public required Func<DateTimeOffset?> BgsLastTick { get; init; }
+
         /// <summary>The recap line for the session that started before the instant given, or null; reads journal files.</summary>
         public required Func<DateTimeOffset, string?> ComposeRecap { get; init; }
 
@@ -179,6 +182,12 @@ public static class ShippedCallouts
                 Boundary = () => (settings.Current.Callouts.WeekBoundaryDay, settings.Current.Callouts.WeekBoundaryHourUtc),
                 LastSaidCycle = () => sources.ViewState.Load().PowerplayCycleSaidFor,
                 RememberSaidCycle = cycle => sources.ViewState.Save(sources.ViewState.Load() with { PowerplayCycleSaidFor = cycle }),
+            })
+
+            .Add(new BgsTickCallout
+            {
+                LastSaidTick = () => sources.ViewState.Load().BgsTickSaidFor,
+                RememberSaidTick = tick => sources.ViewState.Save(sources.ViewState.Load() with { BgsTickSaidFor = tick }),
             })
 
             // Phase 23.
@@ -293,6 +302,10 @@ public static class ShippedCallouts
                     missions.StoryAsides = services.StoryAsides;
                     break;
 
+                case BgsTickCallout bgs:
+                    bgs.LastTick = () => services.Settings.Current.Knowledge.BgsTick ? services.BgsLastTick() : null;
+                    break;
+
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
                     break;
@@ -353,6 +366,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
+        engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
         engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);

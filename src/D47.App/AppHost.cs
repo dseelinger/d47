@@ -3061,6 +3061,7 @@ public sealed class AppHost : IDisposable
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
+            BgsLastTick = () => late.Host?.BgsTick?.Last,
             ComposeRecap = before => ComposeRecap(files, before, JournalsOnDisk(journalDirectory, logger), loggerFactory),
         });
 

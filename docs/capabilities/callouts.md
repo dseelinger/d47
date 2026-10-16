@@ -559,6 +559,20 @@ ended while d47 was not running is not mentioned. The same total and the time to
 the game state the model reads, so *"how many merits have I earned this week"* has an answer. Turn
 this one off with the `powerplay-cycle` row.
 
+#### BGS tick {#bgs-tick}
+
+When the BGS ticks, once per tick, soon after the tick detector reports it. Needs *BGS tick time*
+under Galaxy search ([#1212](https://github.com/dseelinger/d47/issues/1212)).
+
+```text
+The BGS has ticked.
+```
+
+A tick more than fifteen minutes old is said with its age, rounded to the nearest five minutes:
+*"The BGS ticked forty minutes ago."* A tick more than an hour old is not said, so a restart or a long
+gap stays quiet. A time within an hour after the one already said is treated as the same tick, revised.
+Turn this one off with the `bgs-tick` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.

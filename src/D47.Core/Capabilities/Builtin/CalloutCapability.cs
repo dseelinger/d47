@@ -53,6 +53,7 @@ public static class CalloutCapability
     public const string PowerplayMeritsKey = "callouts.powerplayMerits";
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
+    public const string BgsTickKey = "callouts.bgsTick";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -483,6 +484,16 @@ public static class CalloutCapability
                 "powerplay cycle",
                 s => s.Callouts.PowerplayCycle,
                 (s, v) => s with { Callouts = s.Callouts with { PowerplayCycle = v } }),
+
+            Toggle(
+                BgsTickKey,
+                "BGS tick",
+                "When the BGS ticks, says so. Needs BGS tick time under Galaxy search.",
+                "bgs-tick",
+                "BGS tick",
+                s => s.Callouts.BgsTick,
+                (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } },
+                appliesWhen: s => s.Knowledge.BgsTick),
 
             Toggle(
                 ChecklistKey,

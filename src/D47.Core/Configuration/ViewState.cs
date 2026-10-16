@@ -29,6 +29,9 @@ public sealed record ViewState
     /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the Powerplay cycle its closing reminder was last said in, or null.</summary>
     public string? PowerplayCycleSaidFor { get; init; }
 
+    /// <summary>The BGS tick (ISO 8601, UTC) last said, or null.</summary>
+    public string? BgsTickSaidFor { get; init; }
+
     /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the carrier tick week its payroll line was last said in, or null.</summary>
     public string? CarrierPayrollSaidFor { get; init; }
 

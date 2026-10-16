@@ -79,6 +79,7 @@ public static class CrewDomains
         "powerplay-merits",
         "powerplay-salvage",
         "powerplay-cycle",
+        "bgs-tick",
         "ring-hotspots",
         "unsold-data-at-risk",
         "reminders",

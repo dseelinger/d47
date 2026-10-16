@@ -518,6 +518,9 @@ public sealed record CalloutSettings
     /// <summary>Twelve hours before the Powerplay cycle ends, the merits earned in it.</summary>
     public bool PowerplayCycle { get; init; } = true;
 
+    /// <summary>The BGS tick, said when the detector reports it.</summary>
+    public bool BgsTick { get; init; } = true;
+
     /// <summary>
     /// A checklist item the journal has just changed its mind about, the last unit a plan needed, and a
     /// watched line ticked by its event.

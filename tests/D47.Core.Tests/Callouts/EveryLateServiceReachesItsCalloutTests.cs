@@ -45,6 +45,8 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         public bool StockCore { get; set; }
 
+        public DateTimeOffset? BgsTick { get; set; }
+
         public List<DateTimeOffset> RecapAsked { get; } = [];
 
         public T Shipped<T>() => Engine.Callouts.OfType<T>().Single();
@@ -63,6 +65,7 @@ public sealed class EveryLateServiceReachesItsCalloutTests
             StoryRunning = () => true,
             StoryAsides = new StoryMissionAsides(),
             StockCoreAboard = () => wired!.StockCore,
+            BgsLastTick = () => wired!.BgsTick,
             ComposeRecap = before =>
             {
                 wired!.RecapAsked.Add(before);
@@ -130,6 +133,20 @@ public sealed class EveryLateServiceReachesItsCalloutTests
         Assert.Same(wired.Services.Galaxy, missions.Galaxy());
         Assert.Same(wired.Services.Galaxy, surveyed.Galaxy());
         Assert.Same(wired.Services.Trade, trading.Trade());
+    }
+
+    [Fact]
+    public void TheBgsTickIsReadOnlyWhileItsKnowledgeSettingIsOn()
+    {
+        var wired = Connected();
+        var callout = wired.Shipped<BgsTickCallout>();
+        wired.BgsTick = Start;
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { BgsTick = true } });
+        Assert.Equal(Start, callout.LastTick());
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { BgsTick = false } });
+        Assert.Null(callout.LastTick());
     }
 
     [Fact]
