@@ -211,7 +211,7 @@ public sealed class AppHost : IDisposable
             voice,
             said: text => Said?.Invoke(text),
             prompted: PanelRouting.Prompted,
-            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), ShipAiNames(personas)),
+            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), NamesToHear(personas)),
             recorder: () => AudioRecorder,
             shipName: () => personas.ShipName,
             panel: Panel,
@@ -771,6 +771,13 @@ public sealed class AppHost : IDisposable
     /// <summary>The names that address the ship's AI: the core's name, then "D47".</summary>
     private static IReadOnlyList<string> ShipAiNames(PersonaHost personas) =>
         personas.ShipName is { Length: > 0 } name ? [name, ShipAiAddressing.CallSign] : [ShipAiAddressing.CallSign];
+
+    /// <summary>
+    /// The ship AI's names, then every core's, for the transcriber to expect. Not names that address the ship
+    /// AI: saying a core's name mid-sentence must not open a line.
+    /// </summary>
+    private static IReadOnlyList<string> NamesToHear(PersonaHost personas) =>
+        [.. ShipAiNames(personas), .. PersonaCatalog.All.Select(core => core.Name)];
 
     private static FoundationParts ComposeFoundations()
     {

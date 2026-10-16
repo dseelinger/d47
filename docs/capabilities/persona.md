@@ -448,6 +448,10 @@ Saying so works with a fixed set of phrasings per core:
 "switch to cora"    "be cora"    "become cora"    "persona cora"    "wake cora"
 ```
 
+Every core d47 ships has these, COVAS included. "Switch to" also matches a name by sound, so a
+misspelt transcription such as "switch to Quora" still reaches Cora, and it reaches a core you
+wrote yourself. When a name sounds equally like two cores, both are offered and you say which.
+
 #### Name it answers to {#ship-ai-name}
 
 What you call your core. Leave it empty and it is the core's own name, which means it

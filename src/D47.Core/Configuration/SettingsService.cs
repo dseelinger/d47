@@ -541,7 +541,7 @@ public sealed class SettingsService
 
         if (string.Equals(row.Binding!.Read(Current), normalised, StringComparison.Ordinal))
         {
-            return new SettingApplyResult(SettingApplyStatus.Unchanged, $"{row.Label} is already {Describe(normalised)}.");
+            return new SettingApplyResult(SettingApplyStatus.Unchanged, $"{row.Label} is already {Described(row, normalised)}.");
         }
 
         var next = row.Binding.Write!(Current, normalised);
@@ -568,10 +568,10 @@ public sealed class SettingsService
         {
             return new SettingApplyResult(
                 SettingApplyStatus.Failed,
-                NotRemembered($"{row.Label} is now {Describe(normalised)}"));
+                NotRemembered($"{row.Label} is now {Described(row, normalised)}"));
         }
 
-        return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Describe(normalised)}.");
+        return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Described(row, normalised)}.");
     }
 
     private SettingApplyResult ApplySecret(SettingRow row, string? value, SettingsCaller caller)
@@ -655,4 +655,8 @@ public sealed class SettingsService
     }
 
     private static string Describe(string? value) => value ?? "(default)";
+
+    /// <summary>A value as the row writes it for a person.</summary>
+    private string Described(SettingRow row, string? value) =>
+        value is null ? Describe(value) : row.DescriberFor(Current)(value);
 }

@@ -2,6 +2,7 @@ using System.Globalization;
 
 using System.Text;
 using D47.Core.Configuration;
+using D47.Core.Listening;
 using D47.Core.Persona;
 
 namespace D47.Core.Capabilities.Builtin;
@@ -122,8 +123,9 @@ public static class PersonaCapability
             // Protected, and this is the one row in the phase where that is a judgement call rather than a
             // rule being followed.
             Protected = true,
-            // The shipped cores only.
-            Commands = [.. PersonaCatalog.Shipped.SelectMany(SelectionPhrases)],
+            // The stock core and the shipped cores. A core the Commander wrote is reached by sound, below.
+            Commands = [.. PersonaCatalog.Stocked.SelectMany(SelectionPhrases)],
+            ValuesBySound = CoresHeardIn,
             Binding = new SettingBinding
             {
                 Read = s => host.Cores.Admit(PersonaCatalog.Resolve(s.Persona.Id)).Id,
@@ -528,6 +530,73 @@ public static class PersonaCapability
             yield return new SettingCommandPhrase($"switch to {bare}", persona.Id);
             yield return new SettingCommandPhrase($"be {bare}", persona.Id);
             yield return new SettingCommandPhrase($"become {bare}", persona.Id);
+        }
+    }
+
+    /// <summary>
+    /// The cores "switch to X" names when X is compared by sound with each core's name, the closest ones only:
+    /// "switch to Quora" is Cora. Empty for anything else.
+    /// </summary>
+    internal static IReadOnlyList<string> CoresHeardIn(string said)
+    {
+        const string Opener = "switch to ";
+
+        var lowered = said.ToLowerInvariant();
+
+        if (!lowered.StartsWith(Opener, StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        var rest = lowered[Opener.Length..];
+
+        if (rest.StartsWith("the ", StringComparison.Ordinal))
+        {
+            rest = rest[4..];
+        }
+
+        var heard = PhoneticKey.Of(rest);
+
+        if (heard.Length == 0)
+        {
+            return [];
+        }
+
+        // Starting on the same sound, so "switch to commander" is not Mender.
+        var near = PersonaCatalog.All
+            .Select(core => (core.Id, Distance: SpokenNames(core)
+                .Select(PhoneticKey.Of)
+                .Where(key => key.Length > 0 && key[0] == heard[0])
+                .Select(key => (Apart: PhoneticKey.Distance(heard, key), Allowed: PhoneticKey.Tolerance(key)))
+                .Where(score => score.Apart <= score.Allowed)
+                .Select(score => (int?)score.Apart)
+                .Min()))
+            .Where(core => core.Distance is not null)
+            .ToList();
+
+        if (near.Count == 0)
+        {
+            return [];
+        }
+
+        var closest = near.Min(core => core.Distance);
+
+        return [.. near.Where(core => core.Distance == closest).Select(core => core.Id)];
+    }
+
+    /// <summary>What a Commander calls a core: its name, its name without "The", and a shipped core's id.</summary>
+    private static IEnumerable<string> SpokenNames(Persona.Persona core)
+    {
+        yield return core.Name;
+
+        if (core.Name.StartsWith("the ", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return core.Name[4..];
+        }
+
+        if (PersonaCatalog.Stocked.Any(stocked => string.Equals(stocked.Id, core.Id, StringComparison.Ordinal)))
+        {
+            yield return core.Id;
         }
     }
 

@@ -521,7 +521,7 @@ public class PersonaIsNotTheModelsToChangeTests
 
         var phrases = surface.Settings.Find(PersonaCapability.PersonaKey)!.Commands;
 
-        foreach (var persona in PersonaCatalog.Shipped)
+        foreach (var persona in PersonaCatalog.Stocked)
         {
             Assert.Contains(phrases, phrase => phrase.Value == persona.Id);
         }

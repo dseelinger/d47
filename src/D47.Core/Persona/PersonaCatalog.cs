@@ -692,6 +692,9 @@ public static class PersonaCatalog
         Heretic,
     ];
 
+    /// <summary>The stock core, then the eleven Guardian cores: every core d47 ships.</summary>
+    public static IReadOnlyList<Persona> Stocked { get; } = [Covas, .. Shipped];
+
     /// <summary>
     /// The cores the Commander wrote, where anything has supplied them (remediation.md 11, item 9).
     /// </summary>

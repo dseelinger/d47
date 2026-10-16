@@ -179,6 +179,33 @@ public sealed class KeywordRouter(
         }
     }
 
+    /// <summary>
+    /// The settings an utterance names by sound, for the first row that reads it as naming any; empty when
+    /// none does. Each match's phrase is the utterance as said.
+    /// </summary>
+    public IReadOnlyList<SettingCommandMatch> MatchSettingBySound(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return [];
+        }
+
+        var utterance = Utterance(input);
+
+        foreach (var capability in registry.All)
+        {
+            foreach (var row in capability.Descriptor.Settings)
+            {
+                if (row.ValuesBySound?.Invoke(utterance) is { Count: > 0 } values)
+                {
+                    return [.. values.Select(value => new SettingCommandMatch(capability.Descriptor.Id, row, value, utterance))];
+                }
+            }
+        }
+
+        return [];
+    }
+
     /// <summary>Matches a tool command phrase — the model-free way to act on the game (Phase 10).</summary>
     public ToolCommandMatch? MatchToolCommand(string input)
     {

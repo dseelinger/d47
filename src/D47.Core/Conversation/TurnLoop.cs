@@ -730,6 +730,41 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // A setting named by sound: "switch to Quora" is Cora. One runs; several are offered, and only they are.
+        if (settings is not null && keywordRouter.MatchSettingBySound(input) is { Count: > 0 } bySound)
+        {
+            if (bySound is [var soundsLike])
+            {
+                logger.LogInformation(
+                    "Read \"{Said}\" by sound as {Key} {Value}", input, soundsLike.Row.Key, soundsLike.Value);
+
+                foreach (var turnEvent in AppliedSetting(settings, soundsLike, input))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
+
+            var describe = bySound[0].Row.DescriberFor(settings.Current);
+            List<SettingCommandMatch> named = [.. bySound.Take(OfferedAtMost)];
+
+            Offers.Open(new Offer(
+            [
+                .. named.Select(match => new OfferChoice(
+                    describe(match.Value ?? string.Empty),
+                    new OfferTarget.Answer(() => new OfferAnswer(
+                        settings.Apply(match.Row.Key, match.Value, SettingsCaller.KeywordRouter).Message)))),
+            ]));
+
+            foreach (var turnEvent in Offered(DidYouMean([.. named.Select(match => describe(match.Value ?? string.Empty))]), input))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
         // Near misses: one unguarded Equivalent runs, anything else is offered.
         var candidates = keywordRouter.Book.Candidates(input, source);
 
@@ -994,9 +1029,12 @@ public sealed class TurnLoop(
     private const int OfferedAtMost = 3;
 
     /// <summary>"Did you mean 'a'?", "Did you mean 'a', or 'b'?", and so on.</summary>
-    private static string DidYouMean(IReadOnlyList<PhraseCandidate> offered)
+    private static string DidYouMean(IReadOnlyList<PhraseCandidate> offered) =>
+        DidYouMean([.. offered.Select(candidate => candidate.Phrase)]);
+
+    private static string DidYouMean(IReadOnlyList<string> phrases)
     {
-        var quoted = offered.Select(candidate => $"'{candidate.Phrase}'").ToList();
+        var quoted = phrases.Select(phrase => $"'{phrase}'").ToList();
 
         return quoted.Count == 1
             ? $"Did you mean {quoted[0]}?"
@@ -1300,6 +1338,34 @@ public sealed class TurnLoop(
         yield return new TurnEvent.Completed(new TurnResult(outcome, TurnRoute.Offer, text, Effort: null, Cost: null));
     }
 
+    /// <summary>A settings row set by the router, said and recorded.</summary>
+    private IEnumerable<TurnEvent> AppliedSetting(SettingsService settings, SettingCommandMatch command, string input)
+    {
+        yield return new TurnEvent.Routed(TurnRoute.SettingCommand, Effort: null);
+
+        var applied = settings.Apply(command.Row.Key, command.Value, SettingsCaller.KeywordRouter);
+
+        logger.LogInformation(
+            "Keyword router applied {Key} from the phrase \"{Phrase}\": {Status}",
+            command.Row.Key,
+            command.Phrase,
+            applied.Status);
+
+        // Recorded, so a follow-up lands in a conversation that knows this happened (remediation.md 17,
+        // item 4). *"Stop calling things out"* answered by the router, and then *"why did you do that?"*,
+        // reproduces the reported transcript by a second road: none of these four routes ever wrote a
+        // word into history.
+        Said(applied.Message, input);
+
+        yield return new TurnEvent.TextDelta(applied.Message);
+        yield return new TurnEvent.Completed(new TurnResult(
+            applied.Ok ? TurnOutcome.Answered : TurnOutcome.Failed,
+            TurnRoute.SettingCommand,
+            applied.Message,
+            Effort: null,
+            Cost: null));
+    }
+
     /// <summary>The seat on the ship flown that reads a model-free answer from this tool, or null for the core.</summary>
     private Seats.CrewSeat? SeatAnswering(string tool, ToolResult result) =>
         !result.IsError && Seats.CrewDomains.Answers.TryGetValue(tool, out var role)
@@ -1384,29 +1450,12 @@ public sealed class TurnLoop(
         if (settings is not null && keywordRouter.MatchSetting(input) is { } settingCommand)
         {
             routing.Handled = true;
-            yield return new TurnEvent.Routed(TurnRoute.SettingCommand, Effort: null);
 
-            var applied = settings.Apply(settingCommand.Row.Key, settingCommand.Value, SettingsCaller.KeywordRouter);
+            foreach (var turnEvent in AppliedSetting(settings, settingCommand, input))
+            {
+                yield return turnEvent;
+            }
 
-            logger.LogInformation(
-                "Keyword router applied {Key} from the phrase \"{Phrase}\": {Status}",
-                settingCommand.Row.Key,
-                settingCommand.Phrase,
-                applied.Status);
-
-            // Recorded, so a follow-up lands in a conversation that knows this happened (remediation.md 17,
-            // item 4). *"Stop calling things out"* answered by the router, and then *"why did you do that?"*,
-            // reproduces the reported transcript by a second road: none of these four routes ever wrote a
-            // word into history.
-            Said(applied.Message, input);
-
-            yield return new TurnEvent.TextDelta(applied.Message);
-            yield return new TurnEvent.Completed(new TurnResult(
-                applied.Ok ? TurnOutcome.Answered : TurnOutcome.Failed,
-                TurnRoute.SettingCommand,
-                applied.Message,
-                Effort: null,
-                Cost: null));
             yield break;
         }
 

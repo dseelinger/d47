@@ -281,6 +281,12 @@ public sealed record SettingRow
     public IReadOnlyList<SettingCommandPhrase> Commands { get; init; } = [];
 
     /// <summary>
+    /// The values an utterance no phrase matched names when read for sound rather than spelling, all equally
+    /// close; empty when it names none. Asked only after every exact route has missed.
+    /// </summary>
+    public Func<string, IReadOnlyList<string>>? ValuesBySound { get; init; }
+
+    /// <summary>
     /// The one thing an <see cref="SettingKind.Info"/> row may do besides state a value: a button that
     /// clears the state the row describes.
     /// </summary>
