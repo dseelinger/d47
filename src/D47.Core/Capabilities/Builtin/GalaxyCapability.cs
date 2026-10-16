@@ -112,7 +112,10 @@ public static class GalaxyCapability
         Journal.VisitedStarsBook? visits = null,
 
         // The last 25 searches per Commander.
-        SearchHistory? history = null) => new()
+        SearchHistory? history = null,
+
+        // The time of the last BGS tick, or null when none is held.
+        Func<DateTimeOffset?>? bgsTick = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -657,6 +660,18 @@ public static class GalaxyCapability
                     HowToGetAsync(galaxy, trade, currentSystem, settings, gameState, arguments, cancellationToken),
             },
             MissionStations.Definition(galaxy, currentSystem, settings, gameState),
+            new ToolDefinition
+            {
+                Name = "get_bgs_tick",
+                Description = "When the last BGS tick was, in UTC and as how long ago.",
+                Parameters = [],
+                Commands = [.. BgsTickQuestions.Select(phrase => new ToolCommandPhrase(phrase, NoArguments))],
+                Handler = (_, _) => Task.FromResult(
+                    ToolResult.Ok(DescribeBgsTick(
+                        settings.Current.Knowledge.BgsTick,
+                        bgsTick?.Invoke(),
+                        now?.Invoke() ?? DateTimeOffset.UtcNow))),
+            },
         ],
         Settings =
         [
@@ -732,6 +747,41 @@ public static class GalaxyCapability
 
     /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
     public const string BgsTickKey = "knowledge.bgsTick";
+
+    private static readonly IReadOnlyDictionary<string, string> NoArguments =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
+    private static readonly string[] BgsTickQuestions =
+    [
+        "when was the tick", "when was the last tick", "when was the bgs tick", "when did the bgs tick",
+        "has the bgs ticked", "bgs tick",
+    ];
+
+    /// <summary>The answer to a question about the last BGS tick; in-game time is UTC.</summary>
+    internal static string DescribeBgsTick(bool enabled, DateTimeOffset? last, DateTimeOffset now)
+    {
+        if (!enabled)
+        {
+            return "BGS tick time is off, so I don't know when the tick was. It can be turned on under Galaxy search.";
+        }
+
+        if (last is not { } tick)
+        {
+            return "I haven't read the tick time yet.";
+        }
+
+        var age = now - tick;
+        var minutes = (long)Math.Max(0, Math.Floor(age.TotalMinutes));
+        var ago = minutes < 60
+            ? minutes == 0 ? "less than a minute ago" : $"{Plural(minutes, "minute")} ago"
+            : $"{Plural(minutes / 60, "hour")} ago";
+
+        return $"The last BGS tick was at {tick.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture)} UTC on "
+               + $"{tick.UtcDateTime.ToString("d MMMM", CultureInfo.InvariantCulture)}, {ago}.";
+
+        static string Plural(long count, string unit) =>
+            count == 1 ? $"1 {unit}" : $"{count.ToString(CultureInfo.InvariantCulture)} {unit}s";
+    }
 
     /// <summary>The <c>order_by</c> and <c>order</c> parameters of a search of <paramref name="kind"/>.</summary>
     private static IEnumerable<ToolParameter> SortParameters(GalaxySearchKind kind) =>

@@ -2691,6 +2691,7 @@ public sealed class AppHost : IDisposable
                 starSystems: starSystems,
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
                 searchHistory: searchHistory,
+                bgsTick: () => late.Host?.BgsTick?.Last,
                 pickCommander: feed.Picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,

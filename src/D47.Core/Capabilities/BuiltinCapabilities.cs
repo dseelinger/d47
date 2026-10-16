@@ -252,6 +252,9 @@ public static class BuiltinCapabilities
         // The last 25 galaxy searches per Commander.
         Knowledge.SearchHistory? searchHistory = null,
 
+        // The time of the last BGS tick, or null when none is held.
+        Func<DateTimeOffset?>? bgsTick = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -303,7 +306,8 @@ public static class BuiltinCapabilities
             starSystems,
             () => gameState.Active?.Location.SystemAddress,
             visitedStars,
-            searchHistory),
+            searchHistory,
+            bgsTick),
         RouteCapability.Create(
             routes,
             trade,

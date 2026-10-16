@@ -547,6 +547,26 @@ With no `system`, or the name of the system the Commander is in, it checks that 
 with galaxy lookups off. Any other name has to be turned into a system address by Spansh, so with
 lookups off d47 says it can only check the system the Commander is in.
 
+#### `get_bgs_tick`
+
+When the last BGS tick was. It reads the time held by BGS tick time and fetches nothing.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Asking "when was the last tick", "when was the bgs tick" or "has the bgs ticked" is answered
+without a language model. The time is in-game time, which is UTC. With a time held, and then under
+the setting being off or nothing read yet:
+
+```csharp
+"The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago."
+"BGS tick time is off, so I don't know when the tick was. It can be turned on under Galaxy search."
+"I haven't read the tick time yet."
+```
+
+Under an hour, the answer gives minutes instead of hours.
+
 #### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,

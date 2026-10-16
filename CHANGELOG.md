@@ -12,6 +12,8 @@ A new setting, BGS tick time under Settings › Providers › Outside sources, l
 
 With BGS tick time on, D47 now says when the BGS has ticked, once per tick: "The BGS has ticked." for a tick up to fifteen minutes old, or "The BGS ticked forty minutes ago." up to an hour. An older tick is not said, so a restart stays quiet. Turn it off with the BGS tick row under Callouts.
 
+You can now ask when the last BGS tick was, by voice or typed, with no language model needed: "when was the last tick" answers "The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago." With BGS tick time off it says so and where to turn it on, and with it on but nothing read yet it says it hasn't read the time.
+
 When a DSS names the genera on a landable body worth the high-value biology threshold, D47 now says each genus's candidate species and the value range before you land, once per body: the species itself for one candidate, both for two, "one of three" for three, and "and N more" past three genera. The `Scan` that follows says nothing more for that body.
 
 Asking about a body you have mapped now lists, under each genus the surface scan named, the species its conditions admit, with each one's value, most valuable first. It says that this is a prediction and the sample decides. A species whose surveyed gravity, temperature or pressure range the body misses by under 2% of the range's width is now counted as possible.
