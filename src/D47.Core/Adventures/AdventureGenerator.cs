@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -247,6 +248,7 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
+        var started = Stopwatch.GetTimestamp();
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
@@ -256,33 +258,35 @@ public sealed class AdventureGenerator(
         {
             var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
             var tail = await AskJsonAsync(
+                BeatsStep,
                 BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, rewrite.Exchange, rewrite.Remark),
                 BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
-            return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
+            return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
 
-        var spineJson = await AskJsonAsync(SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, cancellationToken).ConfigureAwait(false);
+        var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, cancellationToken).ConfigureAwait(false);
 
-        if (spineJson is null)
+        if (spineAsked.Json is null)
         {
-            return Failed(null, "The model did not write a story.", notes) with { Unanswered = true };
+            return Failed(null, "The model did not write a story.", notes, started, spineAsked) with { Unanswered = true };
         }
 
-        var spine = ReadSpine(spineJson, out var name);
+        var spine = ReadSpine(spineAsked.Json, out var name);
 
         if (spine is null || name is null)
         {
-            return Failed(null, "The model's answer was not a story I could read.", notes);
+            return Failed(null, "The model's answer was not a story I could read.", notes, started, spineAsked);
         }
 
-        var beatsJson = await AskJsonAsync(
+        var beatsAsked = await AskJsonAsync(
+            BeatsStep,
             BeatsInstruction(ask, facts, notable, candidates, name, spine, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
             BeatsOutputCeiling,
             cancellationToken).ConfigureAwait(false);
 
-        return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsJson, previous: null, now, notes, cancellationToken).ConfigureAwait(false);
+        return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsAsked, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Reasoning with the AI about a draft before it is accepted.</summary>
@@ -303,22 +307,25 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
+        var started = Stopwatch.GetTimestamp();
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
-        var json = await AskJsonAsync(
+        var asked = await AskJsonAsync(
+            BeatsStep,
             BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
             BeatsOutputCeiling,
             cancellationToken).ConfigureAwait(false);
 
         // A revision may rename and respine; the beats turn's answer carries the whole draft.
+        var json = asked.Json;
         var revisedSpine = json is null ? null : ReadSpine(json, out var revisedName);
         var spine = revisedSpine is { IsEmpty: false } ? revisedSpine : draft.Spine ?? new AdventureSpine();
         var name = json is not null && ReadSpine(json, out var renamed) is not null && renamed is { Length: > 0 } ? renamed : draft.Name;
 
-        return await FinishAsync(ask, facts, notable, candidates, name, spine, json, previous: draft, now, notes, cancellationToken).ConfigureAwait(false);
+        return await FinishAsync(ask, facts, notable, candidates, name, spine, asked, previous: draft, now, notes, started, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<AdventureOutcome> FinishAsync(
@@ -328,23 +335,26 @@ public sealed class AdventureGenerator(
         Candidates candidates,
         string name,
         AdventureSpine spine,
-        string? beatsJson,
+        Asked beatsAsked,
         Adventure? previous,
         DateTimeOffset now,
         List<string> notes,
+        long started,
         CancellationToken cancellationToken)
     {
-        if (beatsJson is null)
+        if (beatsAsked.Json is null)
         {
-            return Failed(null, "The model did not write the objectives.", notes) with { Unanswered = true };
+            return Failed(null, "The model did not write the objectives.", notes, started, beatsAsked) with { Unanswered = true };
         }
 
-        var read = ReadBeats(beatsJson);
+        var read = ReadBeats(beatsAsked.Json);
 
         if (read is null || read.Beats.Count == 0)
         {
-            return Failed(null, "The model's objectives were not something I could read.", notes);
+            return Failed(null, "The model's objectives were not something I could read.", notes, started, beatsAsked);
         }
+
+        Asked? unusedRewrite = null;
 
         var resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
 
@@ -355,16 +365,21 @@ public sealed class AdventureGenerator(
             notes.Add($"Rewrote {resolved.Refusals.Count} objective(s) the first draft could not stand on.");
 
             var again = await AskJsonAsync(
+                RewriteStep,
                 BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
                 BeatsOutputCeiling,
                 cancellationToken).ConfigureAwait(false);
 
-            var reread = again is null ? null : ReadBeats(again);
+            var reread = again.Json is null ? null : ReadBeats(again.Json);
 
             if (reread is { Beats.Count: > 0 })
             {
                 read = reread;
                 resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
+            }
+            else
+            {
+                unusedRewrite = again;
             }
         }
 
@@ -377,7 +392,9 @@ public sealed class AdventureGenerator(
                 (resolved.Refusals.Any(refusal => refusal.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
                     ? "The story cannot stand: "
                     : "The story names places that cannot stand: ") + string.Join(" ", resolved.Refusals),
-                notes);
+                notes,
+                started,
+                unusedRewrite);
         }
 
         var adventure = ask.Rewrite is { } rewrite
@@ -399,7 +416,7 @@ public sealed class AdventureGenerator(
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
         {
-            return Failed(read.Reply, string.Join(" ", problems), notes);
+            return Failed(read.Reply, string.Join(" ", problems), notes, started);
         }
 
         return new AdventureOutcome(adventure, read.Reply, null, notes)
@@ -408,9 +425,24 @@ public sealed class AdventureGenerator(
         };
     }
 
-    private AdventureOutcome Failed(string? reply, string detail, IReadOnlyList<string> notes)
+    private AdventureOutcome Failed(string? reply, string detail, IReadOnlyList<string> notes, long started, Asked? asked = null)
     {
-        logger.LogWarning("A story was not written: {Refusal}", detail);
+        var seconds = Stopwatch.GetElapsedTime(started).TotalSeconds;
+
+        if (asked is null)
+        {
+            logger.LogWarning("A story was not written: {Refusal} ({Seconds:F1}s since the write began)", detail, seconds);
+        }
+        else
+        {
+            logger.LogWarning(
+                "A story was not written at the {Step} step by {Model}: {Refusal} {Why} ({Seconds:F1}s since the write began)",
+                asked.Step,
+                asked.Model,
+                detail,
+                asked.Why,
+                seconds);
+        }
 
         return new AdventureOutcome(null, reply, detail, notes) { Internal = true };
     }
@@ -867,9 +899,22 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private async Task<string?> AskJsonAsync(string instruction, int budget, CancellationToken cancellationToken)
+    private const string SpineStep = "spine";
+    private const string BeatsStep = "beats";
+    private const string RewriteStep = "rewrite of the beats";
+
+    /// <summary>One model call: the step it served, the model asked, the reply, and the JSON object read out of it.</summary>
+    private sealed record Asked(string Step, string Model, FlavourReply Reply, string? Json)
     {
-        var reply = await FlavourTurn.AskAsync(
+        public string Why => Reply.Line is null
+            ? $"Nothing came back ({Reply.Miss}{(string.IsNullOrWhiteSpace(Reply.Message) ? "" : $": {Reply.Message}")})."
+            : $"{Reply.Line.Length} characters came back and could not be read.";
+    }
+
+    private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, CancellationToken cancellationToken)
+    {
+        var chosen = model() ?? provider()?.DefaultModel ?? "no model";
+        var reply = await FlavourTurn.AskForAsync(
             provider(),
             model(),
             persona(),
@@ -886,7 +931,7 @@ public sealed class AdventureGenerator(
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure).ConfigureAwait(false);
 
-        return reply is null ? null : Unfence(reply);
+        return new Asked(step, chosen, reply, reply.Line is null ? null : Unfence(reply.Line));
     }
 
     /// <summary>Models fence JSON in markdown whatever they are told; the object is what is wanted.</summary>

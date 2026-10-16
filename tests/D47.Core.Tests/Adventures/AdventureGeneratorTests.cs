@@ -347,7 +347,10 @@ public sealed class AdventureGeneratorTests
         Assert.Null(Careers.Match(""));
     }
 
-    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1, params string[] more)
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, int combat = 1, params string[] more) =>
+        Generator(provider, galaxy, NullLogger.Instance, combat, more);
+
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Microsoft.Extensions.Logging.ILogger logger, int combat = 1, params string[] more)
     {
         var state = State(combat, more);
 
@@ -362,7 +365,7 @@ public sealed class AdventureGeneratorTests
             () => null,
             null,
             null,
-            NullLogger.Instance);
+            logger);
     }
 
     /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>
