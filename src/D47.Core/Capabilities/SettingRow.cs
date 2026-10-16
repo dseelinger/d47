@@ -91,6 +91,14 @@ public sealed record SettingBinding
 /// <summary>A phrase the model-free keyword router accepts for this row, and the value it writes.</summary>
 public sealed record SettingCommandPhrase(string Phrase, string? Value);
 
+/// <summary>The values an utterance names by sound, all equally close.</summary>
+/// <param name="Values">Empty when it names none.</param>
+/// <param name="Certain">Whether the spelling is close as well, so a single value may be set without asking.</param>
+public sealed record ValuesHeard(IReadOnlyList<string> Values, bool Certain)
+{
+    public static readonly ValuesHeard None = new([], Certain: false);
+}
+
 /// <summary>What a long press does: report how far it has got, answer what to say when it ends.</summary>
 public delegate Task<string?> LongPress(IProgress<double> progress, CancellationToken cancellationToken);
 
@@ -281,10 +289,10 @@ public sealed record SettingRow
     public IReadOnlyList<SettingCommandPhrase> Commands { get; init; } = [];
 
     /// <summary>
-    /// The values an utterance no phrase matched names when read for sound rather than spelling, all equally
-    /// close; empty when it names none. Asked only after every exact route has missed.
+    /// The values an utterance no phrase matched names when read for sound rather than spelling. Asked only
+    /// after every exact route has missed.
     /// </summary>
-    public Func<string, IReadOnlyList<string>>? ValuesBySound { get; init; }
+    public Func<string, ValuesHeard>? ValuesBySound { get; init; }
 
     /// <summary>
     /// The one thing an <see cref="SettingKind.Info"/> row may do besides state a value: a button that

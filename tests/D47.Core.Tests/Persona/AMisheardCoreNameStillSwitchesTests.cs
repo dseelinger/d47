@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -48,26 +48,47 @@ public class AMisheardCoreNameStillSwitchesTests
         return result;
     }
 
+    /// <summary>The same sounds and nearly the same spelling: set without asking.</summary>
     [Theory]
     [InlineData("switch to Quora", "cora")]
     [InlineData("switch to Kora", "cora")]
     [InlineData("switch to core a", "cora")]
     [InlineData("switch to Kovas", "covas")]
-    [InlineData("switch to covers", "covas")]
     [InlineData("switch to Worden", "warden")]
     [InlineData("switch to analyst prime", "analyst-prime")]
     [InlineData("switch to Llama", "llamo")]
     [InlineData("switch to Lame-O", "llamo")]
-    [InlineData("switch to Centennial", "sentinel")]
-    [InlineData("switch to Kecks", "kex")]
     [InlineData("switch to Mentor", "mender")]
-    [InlineData("switch to Charts", "cartographer")]
     [InlineData("switch to the cartographer", "cartographer")]
     [InlineData("switch to quarter master", "quartermaster")]
-    [InlineData("switch to archivists", "archivist")]
     [InlineData("switch to heretic", "heretic")]
-    public void AMisspeltNameReadsAsTheCoreItSoundsLike(string said, string core) =>
-        Assert.Equal([core], PersonaCapability.CoresHeardIn(said));
+    public void AMisspeltNameIsTheCoreItSoundsLike(string said, string core)
+    {
+        var heard = PersonaCapability.CoresHeardIn(said);
+
+        Assert.Equal([core], heard.Values);
+        Assert.True(heard.Certain);
+    }
+
+    /// <summary>Close in sound only, which ordinary words also are: asked, not set.</summary>
+    [Theory]
+    [InlineData("switch to Kecks", "kex")]
+    [InlineData("switch to Centennial", "sentinel")]
+    [InlineData("switch to covers", "covas")]
+    [InlineData("switch to Charts", "cartographer")]
+    [InlineData("switch to archivists", "archivist")]
+    [InlineData("switch to carrier", "cora")]
+    [InlineData("switch to monitor", "mender")]
+    [InlineData("switch to cruise", "covas")]
+    [InlineData("switch to comms", "covas")]
+    [InlineData("switch to keys", "kex")]
+    public void AWordThatOnlySoundsLikeACoreIsAsked(string said, string core)
+    {
+        var heard = PersonaCapability.CoresHeardIn(said);
+
+        Assert.Equal([core], heard.Values);
+        Assert.False(heard.Certain);
+    }
 
     [Theory]
     [InlineData("switch to elite")]
@@ -79,10 +100,11 @@ public class AMisheardCoreNameStillSwitchesTests
     [InlineData("switch to navigation")]
     [InlineData("switch to commander Kestrel Vane")]
     [InlineData("switch to rex")]
+    [InlineData("switch to trade")]
     [InlineData("be kind")]
     [InlineData("wake up")]
     public void APhraseThatIsNotACoreReadsAsNone(string said) =>
-        Assert.Empty(PersonaCapability.CoresHeardIn(said));
+        Assert.Empty(PersonaCapability.CoresHeardIn(said).Values);
 
     [Fact]
     public async Task SwitchToQuoraPutsCoraAboardWithNoModel()
@@ -128,6 +150,37 @@ public class AMisheardCoreNameStillSwitchesTests
         Assert.Equal(PersonaCatalog.DefaultId, surface.Settings.Current.Persona.Id);
     }
 
+    [Fact]
+    public async Task APoliteTailDoesNotStopIt()
+    {
+        var install = new MemoryInstall();
+        var surface = TestSurface.For(install);
+        var loop = Build(surface.Registry, surface.Settings);
+
+        var result = await RunAsync(loop, "switch to Quora please");
+
+        Assert.Equal(TurnRoute.SettingCommand, result.Route);
+        Assert.Equal("cora", surface.Settings.Current.Persona.Id);
+    }
+
+    [Fact]
+    public async Task SwitchToCarrierAsksBeforeCoraComesAboard()
+    {
+        var install = new MemoryInstall();
+        var surface = TestSurface.For(install);
+        var loop = Build(surface.Registry, surface.Settings);
+
+        var offered = await RunAsync(loop, "switch to carrier");
+
+        Assert.Equal(TurnRoute.Offer, offered.Route);
+        Assert.Equal("Did you mean 'Cora'?", offered.Text);
+        Assert.Equal(PersonaCatalog.DefaultId, surface.Settings.Current.Persona.Id);
+
+        await RunAsync(loop, "yes");
+
+        Assert.Equal("cora", surface.Settings.Current.Persona.Id);
+    }
+
     /// <summary>Two equally close values are offered by name, only they are, and naming one sets it.</summary>
     [Fact]
     public async Task TwoEquallyCloseValuesAreOfferedAndTheOneNamedIsSet()
@@ -155,7 +208,9 @@ public class AMisheardCoreNameStillSwitchesTests
                         Kind = SettingKind.Choice,
                         Choices = ["warden", "mender"],
                         ChoiceLabel = id => PersonaCatalog.Resolve(id).Name,
-                        ValuesBySound = said => said == "switch to wender" ? ["warden", "mender"] : [],
+                        ValuesBySound = said => said == "switch to wender"
+                            ? new ValuesHeard(["warden", "mender"], Certain: true)
+                            : ValuesHeard.None,
                         Binding = new SettingBinding
                         {
                             Read = s => s.Persona.Id,

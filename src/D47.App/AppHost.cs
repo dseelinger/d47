@@ -2888,7 +2888,8 @@ public sealed class AppHost : IDisposable
         bool ModelFree(string input) => router.MatchSetting(input) is not null
                                         || router.MatchToolCommand(input) is not null
                                         || router.Match(input, InputSource.Spoken) is not null
-                                        || wording.LearnedPhraseFor(input) is not null;
+                                        || wording.LearnedPhraseFor(input) is not null
+                                        || router.MatchSettingBySound(input) is { Certain: true };
 
         // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
         // search is on.

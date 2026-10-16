@@ -730,10 +730,13 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        // A setting named by sound: "switch to Quora" is Cora. One runs; several are offered, and only they are.
-        if (settings is not null && keywordRouter.MatchSettingBySound(input) is { Count: > 0 } bySound)
+        // A setting named by sound: "switch to Quora" is Cora. One spelt close as well runs; anything else is
+        // offered, and only what it sounds like is.
+        if (settings is not null && keywordRouter.MatchSettingBySound(input) is { } soundMatch)
         {
-            if (bySound is [var soundsLike])
+            var bySound = soundMatch.Matches;
+
+            if (soundMatch.Certain && bySound is [var soundsLike])
             {
                 logger.LogInformation(
                     "Read \"{Said}\" by sound as {Key} {Value}", input, soundsLike.Row.Key, soundsLike.Value);

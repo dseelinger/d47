@@ -28,6 +28,9 @@ public sealed record KeywordMatch(string CapabilityId, string ToolName)
 /// <summary>A settings row a declared phrase asked for, and the value that phrase means.</summary>
 public sealed record SettingCommandMatch(string CapabilityId, SettingRow Row, string? Value, string Phrase);
 
+/// <summary>The settings an utterance names by sound, and whether the one named may be set without asking.</summary>
+public sealed record SettingSoundMatch(IReadOnlyList<SettingCommandMatch> Matches, bool Certain);
+
 /// <summary>A phrase that is not in any descriptor, because whoever wrote it was the Commander.</summary>
 public sealed record DynamicCommand(
     string Phrase,
@@ -180,30 +183,35 @@ public sealed class KeywordRouter(
     }
 
     /// <summary>
-    /// The settings an utterance names by sound, for the first row that reads it as naming any; empty when
-    /// none does. Each match's phrase is the utterance as said.
+    /// The settings an utterance names by sound, as said and then without a polite tail, for the first row
+    /// that reads it as naming any; null when none does. Each match's phrase is the reading it came from.
     /// </summary>
-    public IReadOnlyList<SettingCommandMatch> MatchSettingBySound(string input)
+    public SettingSoundMatch? MatchSettingBySound(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
-            return [];
+            return null;
         }
 
         var utterance = Utterance(input);
 
-        foreach (var capability in registry.All)
+        foreach (var said in new[] { utterance, SpokenTails.Strip(utterance) }.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            foreach (var row in capability.Descriptor.Settings)
+            foreach (var capability in registry.All)
             {
-                if (row.ValuesBySound?.Invoke(utterance) is { Count: > 0 } values)
+                foreach (var row in capability.Descriptor.Settings)
                 {
-                    return [.. values.Select(value => new SettingCommandMatch(capability.Descriptor.Id, row, value, utterance))];
+                    if (row.ValuesBySound?.Invoke(said) is { Values.Count: > 0 } heard)
+                    {
+                        return new SettingSoundMatch(
+                            [.. heard.Values.Select(value => new SettingCommandMatch(capability.Descriptor.Id, row, value, said))],
+                            heard.Certain && heard.Values.Count == 1);
+                    }
                 }
             }
         }
 
-        return [];
+        return null;
     }
 
     /// <summary>Matches a tool command phrase — the model-free way to act on the game (Phase 10).</summary>

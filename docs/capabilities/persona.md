@@ -1,4 +1,4 @@
----
+﻿---
 title: Core
 group: Conversation
 nav_order: 121
@@ -450,7 +450,8 @@ Saying so works with a fixed set of phrasings per core:
 
 Every core d47 ships has these, COVAS included. "Switch to" also matches a name by sound, so a
 misspelt transcription such as "switch to Quora" still reaches Cora, and it reaches a core you
-wrote yourself. When a name sounds equally like two cores, both are offered and you say which.
+wrote yourself. A word that only sounds like a core, such as "switch to carrier", is asked about
+first ("Did you mean 'Cora'?"), and a name that sounds equally like two cores offers both.
 
 #### Name it answers to {#ship-ai-name}
 
