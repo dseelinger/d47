@@ -248,7 +248,7 @@ Every lane merges into the main checkout's working tree, so it must have no unco
 tracked files:
 
 ```bash
-git status --porcelain --untracked-files=no
+git -C "$(git worktree list | head -1 | cut -d' ' -f1)" status --porcelain --untracked-files=no
 ```
 
 If that lists anything, say in one line above the table that the lanes cannot merge until those
@@ -304,10 +304,18 @@ find out what to do next.
 
 ## Save the grid
 
-After the report, write the same rows to `.claude/triage-state.json` with the Write tool. The
-Stream Deck's Issue key reads it: it asks for a number and launches the session on the model,
-effort and advisor chosen here, so a row missing from this file is a session that starts on the
-defaults.
+After the report, write the same rows to `.claude/triage-state.json` in the main checkout with the
+Write tool. The Stream Deck's Issue key reads it: it asks for a number and launches the session on
+the model, effort and advisor chosen here, so a row missing from this file is a session that starts
+on the defaults.
+
+The main checkout is the first entry of `git worktree list`, whichever worktree this session runs
+in. The deck tools and `/issue-worker` read the file there, so a copy written inside a worktree is
+never read. Get the path, then pass it to the Write tool as an absolute path:
+
+```bash
+echo "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json"
+```
 
 ```json
 {
