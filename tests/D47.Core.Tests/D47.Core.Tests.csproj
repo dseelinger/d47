@@ -17,6 +17,7 @@
     <EmbeddedResource Include="..\fixtures\kills\*.log" LogicalName="Fixtures.kills.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\missions\*.log" LogicalName="Fixtures.missions.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\fixtures\scenes\*.log" LogicalName="Fixtures.scenes.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\fixtures\status\*.json" LogicalName="Fixtures.status.%(Filename)%(Extension)" />
     <None Include="..\..\assets\voices\chatterbox\*.wav"
           Link="voices\chatterbox\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

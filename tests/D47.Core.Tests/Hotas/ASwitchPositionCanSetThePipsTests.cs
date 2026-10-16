@@ -124,6 +124,63 @@ public class ASwitchPositionCanSetThePipsTests
     }
 
     [Fact]
+    public void ALiveStatusJsonReadsItsPips()
+    {
+        var files = new MemoryFileSystem();
+        files.WriteText(
+            Path.Combine(@"C:\d47-test", GameStatusReader.FileName),
+            EmbeddedFixture.Text("status.Status.2026-09-30T140606.json"));
+
+        var reader = new GameStatusReader(@"C:\d47-test", files, NullLogger.Instance);
+        Assert.True(reader.Poll());
+
+        Assert.Equal(Balanced, reader.Current.Pips);
+    }
+
+    /// <summary>
+    /// Each target's presses, applied from balanced to a model of the distributor, land on its split. A press adds
+    /// two half-pips and takes one from each other system, or both from the one that is not empty.
+    /// </summary>
+    [Fact]
+    public void EverySequenceReachesItsSplitFromBalanced()
+    {
+        foreach (var target in PipTargets.All)
+        {
+            var pips = new[] { 4, 4, 4 };
+
+            foreach (var id in target.Presses)
+            {
+                var to = id switch
+                {
+                    "power_to_systems" => 0,
+                    "power_to_engines" => 1,
+                    "power_to_weapons" => 2,
+                    _ => throw new InvalidOperationException($"{target.Id} presses {id}"),
+                };
+
+                int[] others = [.. Enumerable.Range(0, 3).Where(index => index != to)];
+                Assert.True(pips[to] <= 6, $"{target.Id} presses {id} with that system at {pips[to]}");
+
+                pips[to] += 2;
+
+                if (pips[others[0]] > 0 && pips[others[1]] > 0)
+                {
+                    pips[others[0]]--;
+                    pips[others[1]]--;
+                }
+                else
+                {
+                    var from = pips[others[0]] > 0 ? others[0] : others[1];
+                    Assert.True(pips[from] >= 2, $"{target.Id} presses {id} with too little to take");
+                    pips[from] -= 2;
+                }
+            }
+
+            Assert.Equal(target.Pips, new PowerDistribution(pips[0], pips[1], pips[2]));
+        }
+    }
+
+    [Fact]
     public void EveryTargetSumsToTwelveHalfPips()
     {
         foreach (var target in PipTargets.All)
@@ -223,6 +280,44 @@ public class ASwitchPositionCanSetThePipsTests
     {
         Assert.Empty(Flip(1, 2, Balanced));
         Assert.Empty(Flip(2, 1, new PowerDistribution(2, 8, 2)));
+    }
+
+    [Fact]
+    public void FlippingBackBeforeThePressesLandPressesTheWayBack()
+    {
+        var reconciler = New();
+        reconciler.Poll(Tick(2, Balanced), [Pips]);
+        reconciler.Poll(Tick(1, Balanced, 0.1), [Pips]);
+        reconciler.Poll(Tick(2, Balanced, 0.2), [Pips]);
+
+        var pending = reconciler.Drain();
+
+        Assert.Equal(2, pending.Count);
+        Assert.Equal(Taps("balance_power"), pending[1].Steps);
+    }
+
+    [Fact]
+    public void AFlickOffTheSplitPressesTheWayBack()
+    {
+        var reconciler = New();
+        reconciler.Poll(Tick(2, Balanced), [Pips]);
+
+        var held = new bool[8];
+        held[2] = true;
+        var down = new bool[8];
+        down[1] = true;
+        down[2] = true;
+        reconciler.Poll(
+            Tick(2, Balanced, 0.1) with
+            {
+                Readings = [new HotasReading { Id = Stick, Buttons = held, DownSinceLastRead = down }],
+            },
+            [Pips]);
+
+        var pending = reconciler.Drain();
+
+        Assert.Equal(2, pending.Count);
+        Assert.Equal(Taps("balance_power"), pending[1].Steps);
     }
 
     [Fact]

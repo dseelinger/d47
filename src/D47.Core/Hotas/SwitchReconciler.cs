@@ -295,7 +295,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         Watching(tick, mapping, flipped || flick is not null);
         WatchingTheHeadset(tick, mapping, flipped || flick is not null);
         WatchingTheFocus(tick, mapping, flipped || flick is not null);
-        WatchingThePips(tick, mapping, flipped || flick is not null);
+        var pipsInFlight = WatchingThePips(tick, mapping, flipped || flick is not null);
 
         if (_paused.TryGetValue(mapping.Name, out var why))
         {
@@ -332,11 +332,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         // A flick is a flip to the position pressed, then a flip back.
         if (flick is not null)
         {
-            Reconcile(tick, mapping, flick, flipped: true);
+            Reconcile(tick, mapping, flick, flipped: true, pipsInFlight);
             flipped = true;
         }
 
-        var state = Reconcile(tick, mapping, position, flipped);
+        var state = Reconcile(tick, mapping, position, flipped, pipsInFlight);
 
         return state with
         {
@@ -403,7 +403,12 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         return true;
     }
 
-    private SwitchState Reconcile(SwitchTick tick, SwitchMapping mapping, SwitchPosition position, bool flipped)
+    private SwitchState Reconcile(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        bool flipped,
+        bool pipsInFlight)
     {
         var ready = new SwitchState { Name = mapping.Name, Health = SwitchHealth.Ready, Position = position };
 
@@ -433,7 +438,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         if (PipTargets.Find(position.Target) is { } pips)
         {
-            return ReconcilePips(tick, mapping, position, pips, flipped, ready);
+            return ReconcilePips(tick, mapping, position, pips, flipped, pipsInFlight, ready);
         }
 
         var (label, wanted) = Wanted(position);
@@ -640,6 +645,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         SwitchPosition position,
         PipTarget target,
         bool flipped,
+        bool inFlight,
         SwitchState ready)
     {
         var actions = new List<GameAction>();
@@ -668,9 +674,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             return ready;
         }
 
+        // Presses still queued for an earlier flip are not in Status.json yet, so a match there proves nothing.
+        var unsettled = inFlight || (_pipGoals.TryGetValue(mapping.Name, out var earlier) && !earlier.Arrived);
         _pipGoals.Remove(mapping.Name);
 
-        if (tick.Status.Pips == target.Pips)
+        if (!unsettled && tick.Status.Pips == target.Pips)
         {
             logger.LogInformation(
                 "Switch {Name} moved to {Position}; the pips are already {Pips}, so nothing was pressed",
@@ -708,23 +716,24 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     }
 
     /// <summary>Pips that leave the target within the contest window pause the switch; pips that never reach it are said aloud.</summary>
-    private void WatchingThePips(SwitchTick tick, SwitchMapping mapping, bool flipped)
+    /// <returns>True when the switch flipped before the presses for the last pip target showed in Status.json.</returns>
+    private bool WatchingThePips(SwitchTick tick, SwitchMapping mapping, bool flipped)
     {
         if (!_pipGoals.TryGetValue(mapping.Name, out var goal))
         {
-            return;
+            return false;
         }
 
         if (flipped || tick.Context != goal.Context || tick.Status.Pips is not { } pips)
         {
             _pipGoals.Remove(mapping.Name);
-            return;
+            return flipped && !goal.Arrived;
         }
 
         if (pips == goal.Target.Pips)
         {
             _pipGoals[mapping.Name] = goal with { Arrived = true };
-            return;
+            return false;
         }
 
         if (tick.Now > goal.Until)
@@ -740,12 +749,12 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
                 _pending.Enqueue(new PendingReconcile(mapping.Name, goal.Target.Name, [], silent));
             }
 
-            return;
+            return false;
         }
 
         if (!goal.Arrived)
         {
-            return;
+            return false;
         }
 
         var why = $"Something else changed the power distributor right after D47 set it to {goal.Target.Name}. "
@@ -757,6 +766,8 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         logger.LogWarning("Switch {Name} contested on {Target}; reconciling paused", mapping.Name, goal.Target.Id);
 
         _pending.Enqueue(new PendingReconcile(mapping.Name, goal.Target.Name, [], why));
+
+        return false;
     }
 
     private static string Untouched(GuiFocus focus) =>
