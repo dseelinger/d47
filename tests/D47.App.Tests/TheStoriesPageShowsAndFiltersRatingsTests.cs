@@ -82,7 +82,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
     }
 
     private static List<string> Drawn(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(CatalogueControls.TextOf)];
 
     private static List<string> Titles(PanelView panel) =>
         [.. Drawn(panel).Where(text => text.StartsWith("Story ", StringComparison.OrdinalIgnoreCase) && text.Length < 10).Select(text => text.ToUpperInvariant())];
@@ -118,10 +118,33 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         Assert.Equal(["STORY 0", "STORY 1", "STORY 2", "STORY 3"], Titles(page.Panel));
         Assert.Contains("(12)", drawn);
         Assert.Contains(StarRating.Unrated, drawn);
-        Assert.True(Named<Stepper>(page.Panel, "Rating").IsEffectivelyVisible);
-        Assert.True(Named<Segment>(page.Panel, "Sort").IsEffectivelyVisible);
+        Assert.True(CatalogueControls.Token(page.Panel, "Rating").IsEffectivelyVisible);
+        Assert.True(CatalogueControls.Token(page.Panel, "Sort").IsEffectivelyVisible);
         Assert.Equal(4.5, page.Panel.GetVisualDescendants().OfType<StarRating>().Select(stars => stars.Value).Max());
         Save(page.Window, $"stories-ratings-cards-{theme}.png");
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheRatingAndSortTokensAndTheirOptionsAreAtLeastFortyFourTall()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var page = Open();
+
+        foreach (var name in new[] { "Rating", "Sort" })
+        {
+            Assert.True(CatalogueControls.Token(page.Panel, name).Bounds.Height >= 44, name);
+
+            CatalogueControls.PressToken(page.Panel, name);
+
+            var options = Named<Segment>(page.Panel, name + " options").GetVisualDescendants().OfType<RadioButton>().ToList();
+            Assert.NotEmpty(options);
+            Assert.All(options, option => Assert.True(option.Bounds.Height >= 44, name));
+
+            CatalogueControls.PressToken(page.Panel, name);
+        }
 
         page.Window.Close();
     }
@@ -133,12 +156,10 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
 
         var page = Open();
 
-        Named<Stepper>(page.Panel, "Rating").GetVisualDescendants().OfType<RepeatButton>().Last()
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        CatalogueControls.Choose(page.Panel, "Rating", 1);
 
         Assert.Equal(["STORY 1", "STORY 2"], Titles(page.Panel));
-        Assert.Contains("2 of 4 stories.", Drawn(page.Panel));
+        Assert.Contains("2 of 4 stories", Drawn(page.Panel));
 
         page.Window.Close();
     }
@@ -150,8 +171,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
 
         var page = Open();
 
-        Named<Segment>(page.Panel, "Sort").GetVisualDescendants().OfType<RadioButton>().ElementAt(1).IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
+        CatalogueControls.Choose(page.Panel, "Sort", 1);
 
         Assert.Equal(["STORY 1", "STORY 2", "STORY 0", "STORY 3"], Titles(page.Panel));
 
@@ -166,7 +186,8 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
         var page = Open(ratingsOn: false);
 
         Assert.Empty(page.Panel.GetVisualDescendants().OfType<StarRating>());
-        Assert.False(Named<Segment>(page.Panel, "Sort").IsEffectivelyVisible);
+        Assert.False(CatalogueControls.Token(page.Panel, "Sort").IsEffectivelyVisible);
+        Assert.False(CatalogueControls.Token(page.Panel, "Rating").IsEffectivelyVisible);
         Assert.DoesNotContain(StarRating.Unrated, Drawn(page.Panel));
 
         Read(page, "story-1");

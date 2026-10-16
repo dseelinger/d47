@@ -86,7 +86,7 @@ public sealed class StoryFiltersAndSortsUseTheRatingsTests
         Assert.True(new StoryFilter().IsDefault);
         Assert.False(new StoryFilter(MinStars: 3).IsDefault);
         Assert.False(new StoryFilter(Sort: StorySort.HighestRated).IsDefault);
-        Assert.False(new StoryFilter(Level: "endgame").IsDefault);
+        Assert.False(new StoryFilter(Levels: ["endgame"]).IsDefault);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public sealed class StoryFiltersAndSortsUseTheRatingsTests
     {
         var filter = JsonSerializer.Deserialize<StoryFilter>("""{"level":"endgame","compare":2,"length":"1-week"}""", JsonSerializerOptions.Web)!;
 
-        Assert.Equal("endgame", filter.Level);
+        Assert.Equal(["endgame"], filter.Levels);
         Assert.Null(filter.MinStars);
         Assert.Equal(StorySort.Catalogue, filter.Sort);
     }
@@ -102,8 +102,27 @@ public sealed class StoryFiltersAndSortsUseTheRatingsTests
     [Fact]
     public void TheMinimumAndTheSortRoundTrip()
     {
-        var saved = new StoryFilter("endgame", MinStars: 3, Sort: StorySort.HighestRated);
+        var saved = new StoryFilter(["endgame"], MinStars: 3, Sort: StorySort.HighestRated);
 
         Assert.Equal(saved, JsonSerializer.Deserialize<StoryFilter>(JsonSerializer.Serialize(saved)));
+    }
+
+    [Fact]
+    public void SeveralLevelsRoundTripAndTheOrderTheyWereTickedInDoesNotMatter()
+    {
+        var saved = new StoryFilter(["endgame", "new"]);
+
+        Assert.Equal(saved, JsonSerializer.Deserialize<StoryFilter>(JsonSerializer.Serialize(saved)));
+        Assert.Equal(saved, new StoryFilter(["new", "endgame"]));
+        Assert.Equal(saved.GetHashCode(), new StoryFilter(["new", "endgame"]).GetHashCode());
+        Assert.NotEqual(saved, new StoryFilter(["new"]));
+    }
+
+    [Fact]
+    public void NoLevelAndEveryLevelBothMeanAnyLevel()
+    {
+        Assert.True(new StoryFilter([]).IsDefault);
+        Assert.True(new StoryFilter(["new", "midrange", "endgame"]).IsDefault);
+        Assert.False(new StoryFilter(["new", "endgame"]).IsDefault);
     }
 }

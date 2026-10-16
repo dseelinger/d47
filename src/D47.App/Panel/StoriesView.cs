@@ -12,7 +12,7 @@ using D47.Core.Stories;
 namespace D47.App.Panel;
 
 /// <summary>The Stories page: the running story, the stock story cards, and one card read.</summary>
-public sealed class StoriesView : UserControl
+public sealed class StoriesView : UserControl, IPageSummary
 {
     public const string RootKey = "stories";
     public const string PageName = "Catalogue";
@@ -24,6 +24,14 @@ public sealed class StoriesView : UserControl
 
     public const string ReadPrefix = "story.read.";
 
+    public string Summary => "Stock stories, three days to a year, told a chapter at a time.";
+
+    event EventHandler? IPageSummary.SummaryChanged
+    {
+        add { }
+        remove { }
+    }
+
     private readonly AdventureSurface _surface;
     private readonly StoryDirector _director;
     private readonly PanelNavigator _nav;
@@ -33,21 +41,8 @@ public sealed class StoriesView : UserControl
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly StatusLine _status = new();
     private readonly StoryFilterMemory? _memory;
-    private readonly StackPanel _filterBar = new() { Spacing = 4, Margin = new Thickness(0, 0, 0, 10), IsVisible = false };
-    private readonly TextBlock _count;
-    private readonly IChoiceControl _level;
-    private readonly IChoiceControl _compare;
-    private readonly IChoiceControl _length;
-    private readonly Control _lengthView;
-    private readonly IChoiceControl _minStars;
-    private readonly IChoiceControl _sort;
-    private readonly StackPanel _ratingFilters = new() { Spacing = 4 };
+    private readonly CatalogueFilters _filters;
     private StoryFilter _filter;
-
-    private static readonly string[] LevelLabels = ["Any level", "New", "Mid-range", "Endgame"];
-    private static readonly string[] CompareLabels = ["Any length", "At least", "Exactly", "At most"];
-    private static readonly string[] RatingLabels = ["Any rating", "4 stars & up", "3 stars & up", "2 stars & up", "1 star & up"];
-    private static readonly string[] SortLabels = ["Catalogue order", "Highest rated"];
 
     public StoriesView(AdventureSurface surface, StoryDirector director, PanelNavigator nav, PanelPrompts prompts)
     {
@@ -59,62 +54,14 @@ public sealed class StoriesView : UserControl
         _ratings = surface.Ratings;
         _memory = surface.StoryFilters;
         _filter = _memory?.Filter ?? new StoryFilter();
-
-        var lengths = StoryPacing.All.Select(pacing => pacing.Name).ToList();
-        var levelView = Choice.Build(LevelLabels, _filter.Level is null ? 0 : Math.Max(0, StoryCard.Levels.ToList().IndexOf(_filter.Level) + 1));
-        var compareView = Choice.Build(CompareLabels, (int)_filter.Compare);
-        var lengthIndex = StoryPacing.Find(_filter.Length) is { } known ? StoryPacing.All.ToList().IndexOf(known) : StoryPacing.All.ToList().IndexOf(StoryPacing.OneMonth);
-        var lengthChoice = Choice.Build(lengths, lengthIndex, alwaysStepper: true);
-
-        (_level, _compare, _length, _lengthView) = (levelView.Choice, compareView.Choice, lengthChoice.Choice, lengthChoice.View);
-        Avalonia.Automation.AutomationProperties.SetName(levelView.View, "Level");
-        Avalonia.Automation.AutomationProperties.SetName(compareView.View, "Length");
-        Avalonia.Automation.AutomationProperties.SetName(lengthChoice.View, "Story length");
-        levelView.View.HorizontalAlignment = HorizontalAlignment.Left;
-        compareView.View.HorizontalAlignment = HorizontalAlignment.Left;
-        lengthChoice.View.HorizontalAlignment = HorizontalAlignment.Left;
-        _lengthView.IsVisible = _filter.Compare != StoryLengthCompare.Any;
-
-        _level.SelectionChanged += (_, _) => FilterChanged();
-        _compare.SelectionChanged += (_, _) => FilterChanged();
-        _length.SelectionChanged += (_, _) => FilterChanged();
-
-        var ratingView = Choice.Build(RatingLabels, _filter.MinStars is { } least ? Math.Clamp(5 - least, 0, RatingLabels.Length - 1) : 0);
-        var sortView = Choice.Build(SortLabels, (int)_filter.Sort);
-
-        (_minStars, _sort) = (ratingView.Choice, sortView.Choice);
-        Avalonia.Automation.AutomationProperties.SetName(ratingView.View, "Rating");
-        Avalonia.Automation.AutomationProperties.SetName(sortView.View, "Sort");
-        ratingView.View.HorizontalAlignment = HorizontalAlignment.Left;
-        sortView.View.HorizontalAlignment = HorizontalAlignment.Left;
-        _minStars.SelectionChanged += (_, _) => FilterChanged();
-        _sort.SelectionChanged += (_, _) => FilterChanged();
-        _ratingFilters.Children.Add(ratingView.View);
-        _ratingFilters.Children.Add(sortView.View);
-
-        _count = AdventuresPage.Muted(string.Empty);
-        _filterBar.Children.Add(levelView.View);
-        _filterBar.Children.Add(compareView.View);
-        _filterBar.Children.Add(_lengthView);
-        _filterBar.Children.Add(_ratingFilters);
-        _filterBar.Children.Add(_count);
+        _filters = new CatalogueFilters(_filter) { IsVisible = false };
+        _filters.Changed += (_, _) => FilterChanged();
 
         var root = new DockPanel { Margin = new Thickness(14) };
-        var (title, _) = RoutingKit.Title(PageName);
-        var intro = AdventuresPage.Muted(
-            "Stock stories that run from three days to a year, a chapter at a time. Picking one makes its words your Backstory until it stops, and "
-            + "has the core write chapter one. Act one ends at a Guardian beacon once your ship can reach it. When a chapter finishes, the next "
-            + "is written and begins. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon "
-            + "the story to have them back at once.");
-        intro.Margin = new Thickness(0, 0, 0, 10);
 
-        DockPanel.SetDock(title, Dock.Top);
-        DockPanel.SetDock(intro, Dock.Top);
+        DockPanel.SetDock(_filters, Dock.Top);
         DockPanel.SetDock(_status, Dock.Top);
-        DockPanel.SetDock(_filterBar, Dock.Top);
-        root.Children.Add(title);
-        root.Children.Add(intro);
-        root.Children.Add(_filterBar);
+        root.Children.Add(_filters);
         root.Children.Add(_status);
         root.Children.Add(new ScrollViewer
         {
@@ -254,71 +201,66 @@ public sealed class StoriesView : UserControl
         var filter = ratings is null ? _filter with { MinStars = null, Sort = StorySort.Catalogue } : _filter;
         var shown = filter.Order(others.Where(card => filter.Matches(card, ratings ?? StoryRatings.Empty)), ratings ?? StoryRatings.Empty).ToList();
 
-        _filterBar.IsVisible = offered.Count > 0;
-        _ratingFilters.IsVisible = ratings is not null;
-        _count.IsVisible = shown.Count > 0 && shown.Count < others.Count;
-        _count.Text = string.Create(CultureInfo.InvariantCulture, $"{shown.Count} of {others.Count} stories.");
+        _filters.IsVisible = offered.Count > 0;
+        _filters.RatingsShown = ratings is not null;
+        _filters.ShowResults(shown.Count, others.Count, !filter.IsDefault);
 
         if (shown.Count == 0 && others.Count > 0)
         {
             _list.Children.Add(AdventuresPage.Muted("No stories match these filters."));
-            _list.Children.Add(Act("Clear filters", ClearFilters));
         }
+
+        var grid = new CardGrid();
 
         foreach (var card in shown)
         {
-            var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
-            var parts = new List<Control>
-            {
-                AdventuresPage.RowName(card.Title),
-                AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"),
-            };
-
-            if (ratings is not null)
-            {
-                parts.Add(Average(ratings.Get(card.Id)));
-            }
-
-            if (CastStrip.For(card, _director.Gender(), _surface.Pictures) is { } cast)
-            {
-                parts.Add(cast);
-            }
-
-            var blurb = AdventuresPage.Text(card.Blurb, TypeScale.Body);
-            blurb.MaxLines = 2;
-            blurb.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
-            parts.Add(blurb);
-
-            var row = Row([.. parts]);
-
-            var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title) { Level = ReadPrefix };
-            row.PointerPressed += (_, _) => _nav.Drill(crumb);
-            _list.Children.Add(row);
+            grid.Children.Add(CardFor(card, ratings));
         }
+
+        if (grid.Children.Count > 0)
+        {
+            _list.Children.Add(grid);
+        }
+    }
+
+    private Border CardFor(StoryCard card, StoryRatings? ratings)
+    {
+        var finished = _director.Stories.Find(_surface.Commander(), card.Id) is { State: StoryState.Finished };
+        var parts = new List<Control>();
+
+        if (CastStrip.For(card, _director.Gender(), _surface.Pictures) is { } cast)
+        {
+            parts.Add(cast);
+        }
+
+        var name = AdventuresPage.RowName(card.Title);
+        name.FontSize = TypeScale.Subheading;
+        name.LetterSpacing = TypeScale.Subheading * 0.03;
+        parts.Add(name);
+        parts.Add(AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"));
+
+        var blurb = AdventuresPage.Text(card.Blurb, TypeScale.Tip, ThemeManager.GreyKey);
+        blurb.MaxLines = 3;
+        blurb.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+        parts.Add(blurb);
+
+        if (ratings is not null)
+        {
+            parts.Add(Average(ratings.Get(card.Id)));
+        }
+
+        var row = Row(6, [.. parts]);
+        var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title) { Level = ReadPrefix };
+
+        row.PointerPressed += (_, _) => _nav.Drill(crumb);
+        return row;
     }
 
     private void FilterChanged()
     {
-        var compare = (StoryLengthCompare)Math.Max(0, _compare.SelectedIndex);
-        var level = _level.SelectedIndex > 0 ? StoryCard.Levels[_level.SelectedIndex - 1] : null;
-        var length = _length.SelectedIndex >= 0 ? StoryPacing.All[_length.SelectedIndex].Key : null;
-
-        var minStars = _minStars.SelectedIndex > 0 ? 5 - _minStars.SelectedIndex : (int?)null;
-        var sort = (StorySort)Math.Max(0, _sort.SelectedIndex);
-
-        _filter = new StoryFilter(level, compare, length, minStars, sort);
-        _lengthView.IsVisible = compare != StoryLengthCompare.Any;
+        _filter = _filters.Filter;
         _memory?.Remember(_filter);
         Rebuild();
-    }
-
-    private void ClearFilters()
-    {
-        _level.SelectedIndex = 0;
-        _compare.SelectedIndex = 0;
-        _minStars.SelectedIndex = 0;
-        _sort.SelectedIndex = 0;
-        FilterChanged();
     }
 
     /// <summary>The Story on checkbox for the Commander's current story.</summary>
@@ -864,6 +806,11 @@ public sealed class StoriesView : UserControl
         bar.Margin = new Thickness(0, 10, 0, 0);
         gated = null;
 
+        if (current is null || !string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            stack.Children.Add(AdventuresPage.Muted(PickingLine));
+        }
+
         if (current is null)
         {
             Button? pick = null;
@@ -1167,6 +1114,10 @@ public sealed class StoriesView : UserControl
         });
     }
 
+    internal const string PickingLine =
+        "Picking one makes its words your Backstory until it stops, and has the core write chapter one. Act one ends at a Guardian beacon "
+        + "once your ship can reach it. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon the story to have them back at once.";
+
     internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
 
     private void Begin(StoryCard card, bool switching, StatusLine status, string? commander)
@@ -1239,9 +1190,11 @@ public sealed class StoriesView : UserControl
             });
     }
 
-    private static Border Row(params Control[] children)
+    private static Border Row(params Control[] children) => Row(2, children);
+
+    private static Border Row(double spacing, Control[] children)
     {
-        var stack = new StackPanel { Spacing = 2 };
+        var stack = new StackPanel { Spacing = spacing };
 
         foreach (var child in children)
         {

@@ -52,12 +52,20 @@ public sealed class StoryFiltersKeepTheStoriesAskedForTests
     }
 
     [Fact]
+    public void SeveralLevelsKeepTheStoriesOfAnyOfThem()
+    {
+        var kept = Cards().Where(new StoryFilter(["new", "endgame"]).Matches).Select(card => card.Level).Distinct();
+
+        Assert.Equal(["new", "endgame"], kept);
+    }
+
+    [Fact]
     public void EndgameKeepsOnlyEndgameAndALengthNarrowsIt()
     {
-        Assert.All(Cards().Where(new StoryFilter("endgame").Matches), card => Assert.Equal("endgame", card.Level));
-        Assert.Equal(Lengths.Length, Kept(new StoryFilter("endgame")).Count());
+        Assert.All(Cards().Where(new StoryFilter(["endgame"]).Matches), card => Assert.Equal("endgame", card.Level));
+        Assert.Equal(Lengths.Length, Kept(new StoryFilter(["endgame"])).Count());
 
-        var narrowed = Cards().Where(new StoryFilter("endgame", StoryLengthCompare.AtMost, "1-month").Matches).ToList();
+        var narrowed = Cards().Where(new StoryFilter(["endgame"], StoryLengthCompare.AtMost, "1-month").Matches).ToList();
 
         Assert.All(narrowed, card => Assert.Equal("endgame", card.Level));
         Assert.Equal(["3-days", "1-week", "2-weeks", "1-month"], narrowed.Select(card => card.Length));

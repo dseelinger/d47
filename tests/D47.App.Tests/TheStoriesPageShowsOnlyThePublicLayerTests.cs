@@ -189,7 +189,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     }
 
     private static List<Image> CastStrip(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<StackPanel>()
+        [.. panel.GetVisualDescendants().OfType<Avalonia.Controls.Panel>()
             .Where(strip => Avalonia.Automation.AutomationProperties.GetName(strip) == "Cast")
             .SelectMany(strip => strip.Children.OfType<Image>())];
 
@@ -216,14 +216,23 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var strip = CastStrip(woman.Panel);
 
         Assert.Equal(3, strip.Count);
-        Assert.All(strip, image => Assert.Equal(44, image.Width));
-        Assert.All(strip, image => Assert.Equal(44, image.Height));
+        Assert.All(strip.Skip(1), image => Assert.Equal(44, image.Bounds.Width));
+        Assert.All(strip.Skip(1), image => Assert.Equal(44, image.Bounds.Height));
+        Assert.Equal(strip[0].Bounds.Width, strip[0].Bounds.Height);
+        Assert.True(strip[0].Bounds.Width > 44);
         Save(woman.Window, "stories-cast-strip.png");
         woman.Window.Close();
 
         var unset = Open(running: false, catalog, () => null, pictures);
         Assert.Equal(2, CastStrip(unset.Panel).Count);
         unset.Window.Close();
+
+        var lone = Open(running: false, new StoryCatalog([StoryFixture.Story with { CastPictures = [$"{id}.ren"] }, StoryFixture.Other], () => [StoryFixture.Secret]), () => CommanderGender.Woman, pictures);
+        var one = CastStrip(lone.Panel);
+        Assert.Single(one);
+        Assert.Equal(one[0].Bounds.Width, one[0].Bounds.Height);
+        Assert.True(one[0].Bounds.Width > 100);
+        lone.Window.Close();
 
         var none = Open(running: false, new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [StoryFixture.Secret]), () => CommanderGender.Woman, pictures);
         Assert.Empty(CastStrip(none.Panel));
@@ -397,17 +406,20 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Assert.Contains("Abandon", Buttons(panel));
         Assert.Contains("Read the chapter", Buttons(panel));
         Save(surface.Window, "stories-running.png");
+        Assert.False(Shows(panel, StoriesView.PickingLine));
 
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Switch", Buttons(panel));
         Assert.DoesNotContain("Pick", Buttons(panel));
+        Assert.True(Shows(panel, StoriesView.PickingLine));
 
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Shows(panel, "This is your story."));
+        Assert.False(Shows(panel, StoriesView.PickingLine));
 
         surface.Window.Close();
     }

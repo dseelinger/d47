@@ -12,6 +12,9 @@ public static class TypeScale
     /// <summary>A screen title.</summary>
     public const double Title = 28;
 
+    /// <summary>The Catalogue's filter sentence.</summary>
+    public const double Sentence = 22;
+
     /// <summary>A group heading.</summary>
     public const double Heading = 21;
 

@@ -399,9 +399,11 @@ time D47 runs.
 ### Stock stories
 
 Open **Catalogue** on the Stories tab for the stock stories, each written to run for the length on its
-card, a chapter at a time. Until stories are added to the catalog the page says "No stories yet." The
-list shows each story's title, its length, the level of Commander it was written for, a blurb saying why you might pick it, and the
-Guardian core the story is written for. The level is `new` (no engineering done yet), `midrange` (some
+card, a chapter at a time. Until stories are added to the catalog the page says "No stories yet." A sentence
+at the top narrows the list: "Show All stories of Any length". Press a word in it to open its choices under
+the sentence. The level takes any number of ticks, and with none ticked every level shows. Each story is a
+card with its pictures, its title, its length, the level of Commander it was written for, the Guardian core
+the story is written for, and a blurb saying why you might pick it. The level is `new` (no engineering done yet), `midrange` (some
 ship engineering done) or `endgame` (most ship and on-foot engineers unlocked, and at least one ship, suit
 and weapon fully engineered). It is a guide to choosing, not a limit: every story can be picked at any
 level, D47 does not work out your level, and where the story's backstory disagrees with your real ships,
@@ -500,8 +502,8 @@ kept in `data\story.json` with that Commander's stories. It is not your donation
 Frontier ID is never sent. Reinstalling without `data\` makes a new number, so one person can then vote
 twice. No voice command or model tool rates a story.
 
-Each card on the Stories page shows its stars and vote count, or five empty stars and "(No ratings yet)". The filter bar's
-**Rating** and **Sort** choices set the least star rating and the order, and **Clear filters** resets
+Each card on the Stories page shows its stars and vote count, or five empty stars and "(No ratings yet)". The **Rating** and **Sort** words
+in the Catalogue's filter sentence set the least star rating and the order, and **Clear filters** resets
 them. A story's page shows its average under the title. For a story you have picked it also shows
 **Your rating**: click a star to rate, click your current rating again to take it back, or use Left,
 Right and Delete once the stars have focus. A vote that could not be sent says so, and is sent again

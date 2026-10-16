@@ -19,7 +19,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Stories page narrows its list by level and length, says how many it hides, and remembers the filter.</summary>
+/// <summary>The Catalogue narrows its cards by the sentence of tokens, says how many it hides, and remembers the filter.</summary>
 [Trait("Category", "Integration")]
 public class TheStoriesPageFiltersItsListTests
 {
@@ -34,7 +34,7 @@ public class TheStoriesPageFiltersItsListTests
 
     private sealed record Page(Window Window, PanelView Panel, ViewStateStore Store);
 
-    private static Page Open(AppPaths paths, IReadOnlyList<(string Level, string Length)>? shapes = null)
+    private static (AdventureSurface Surface, ViewStateStore Store) Build(AppPaths paths, IReadOnlyList<(string Level, string Length)>? shapes = null)
     {
         var cards = (shapes ?? Shapes)
             .Select((shape, i) => StoryFixture.Story with
@@ -64,6 +64,12 @@ public class TheStoriesPageFiltersItsListTests
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Stories: director, StoryFilters: new StoryFilterMemory(store));
 
+        return (surface, store);
+    }
+
+    private static Page Open(AppPaths paths, IReadOnlyList<(string Level, string Length)>? shapes = null)
+    {
+        var (surface, store) = Build(paths, shapes);
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
         panel.EnableAdventures(surface);
 
@@ -84,17 +90,18 @@ public class TheStoriesPageFiltersItsListTests
         return paths;
     }
 
-    private static void Press(PanelView panel, int segment, int option)
-    {
-        panel.GetVisualDescendants().OfType<Segment>().ElementAt(segment).GetVisualDescendants().OfType<RadioButton>().ElementAt(option).IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
-    }
-
     private static List<string> Drawn(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(CatalogueControls.TextOf)];
 
     private static int Rows(PanelView panel) =>
         Drawn(panel).Count(text => text.StartsWith("Story ", StringComparison.OrdinalIgnoreCase) && text.Length < 10);
+
+    private static List<string> Sentence(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<WrapPanel>().First(wrap => wrap.GetVisualAncestors().OfType<StoriesView>().Any()).Children.Where(child => child.IsVisible).Select(child => child switch
+        {
+            TextBlock words => words.Text ?? string.Empty,
+            _ => child.GetVisualDescendants().OfType<TextBlock>().First().Text ?? string.Empty,
+        })];
 
     private static void Save(Window window, string name)
     {
@@ -112,15 +119,40 @@ public class TheStoriesPageFiltersItsListTests
         var page = Open(NewPaths());
 
         Assert.Equal(11, Rows(page.Panel));
-        Assert.DoesNotContain(Drawn(page.Panel), text => text.EndsWith(" stories.", StringComparison.Ordinal));
+        Assert.Contains("11 of 11 stories", Drawn(page.Panel));
+        Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<Button>(), button => button.Content as string == "Clear filters" && button.IsEffectivelyVisible);
 
-        Press(page.Panel, 0, 3);
+        CatalogueControls.Tick(page.Panel, "Endgame");
 
         Assert.Equal(3, Rows(page.Panel));
-        Assert.Contains("3 of 11 stories.", Drawn(page.Panel));
-        Assert.Equal("endgame", page.Store.Load().StoryFilter?.Level);
-        Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<Stepper>(), stepper => stepper.IsEffectivelyVisible);
+        Assert.Contains("3 of 11 stories", Drawn(page.Panel));
+        Assert.Equal(["endgame"], page.Store.Load().StoryFilter?.Levels);
+        Assert.Equal("ENDGAME", CatalogueControls.TokenText(page.Panel, "Level"));
+        Assert.False(CatalogueControls.Token(page.Panel, "Story length").IsEffectivelyVisible);
         Save(page.Window, "stories-filter-level.png");
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void SeveralLevelsListTheCardsOfAnyOfThemAndTheTokenNamesThem()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var page = Open(NewPaths());
+
+        CatalogueControls.Tick(page.Panel, "New commander");
+        CatalogueControls.Tick(page.Panel, "Endgame");
+
+        Assert.Equal(7, Rows(page.Panel));
+        Assert.Equal("NEW COMMANDER AND ENDGAME", CatalogueControls.TokenText(page.Panel, "Level"));
+        Assert.Contains(CatalogueFilters.LevelHint, Drawn(page.Panel));
+
+        CatalogueControls.Tick(page.Panel, "Mid-range");
+
+        Assert.Equal("ALL", CatalogueControls.TokenText(page.Panel, "Level"));
+        Assert.Equal(11, Rows(page.Panel));
+        Assert.Null(page.Store.Load().StoryFilter);
 
         page.Window.Close();
     }
@@ -132,19 +164,74 @@ public class TheStoriesPageFiltersItsListTests
 
         var page = Open(NewPaths());
 
-        Press(page.Panel, 1, 1);
+        Assert.False(CatalogueControls.Token(page.Panel, "Story length").IsEffectivelyVisible);
 
-        var stepper = page.Panel.GetVisualDescendants().OfType<Stepper>().Single(control => Avalonia.Automation.AutomationProperties.GetName(control) == "Story length");
-        Assert.True(stepper.IsEffectivelyVisible);
-        Assert.Equal(7, stepper.ItemsSource.Count);
-        Assert.Equal("1 month", stepper.SelectedItem);
+        CatalogueControls.Choose(page.Panel, "Length", 1);
+
+        Assert.True(CatalogueControls.Token(page.Panel, "Story length").IsEffectivelyVisible);
+        Assert.Equal("1 MONTH", CatalogueControls.TokenText(page.Panel, "Story length"));
         Assert.Equal(6, Rows(page.Panel));
-        Assert.Contains("6 of 11 stories.", Drawn(page.Panel));
+        Assert.Contains("6 of 11 stories", Drawn(page.Panel));
 
-        Press(page.Panel, 0, 3);
+        CatalogueControls.PressToken(page.Panel, "Story length");
+
+        var options = page.Panel.GetVisualDescendants().OfType<Segment>().Single(segment => Avalonia.Automation.AutomationProperties.GetName(segment) == "Story length options");
+        Assert.Equal(7, options.ItemsSource.Count);
+        Assert.Equal("1 month", options.SelectedItem);
+
+        CatalogueControls.Tick(page.Panel, "Endgame");
 
         Assert.Equal(2, Rows(page.Panel));
         Save(page.Window, "stories-filter-level-and-length.png");
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OpeningASecondPanelClosesTheFirstAndPickingAnOptionClosesItsPanel()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var page = Open(NewPaths());
+
+        CatalogueControls.PressToken(page.Panel, "Level");
+        Assert.Contains(page.Panel.GetVisualDescendants().OfType<CheckBox>(), box => box.IsEffectivelyVisible);
+
+        CatalogueControls.PressToken(page.Panel, "Length");
+
+        Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<CheckBox>(), box => box.IsEffectivelyVisible);
+        Assert.Contains(page.Panel.GetVisualDescendants().OfType<Segment>(), segment => segment.IsEffectivelyVisible);
+
+        CatalogueControls.PressToken(page.Panel, "Length");
+
+        Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<Segment>(), segment => segment.IsEffectivelyVisible);
+
+        CatalogueControls.Choose(page.Panel, "Length", 2);
+
+        Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<Segment>(), segment => segment.IsEffectivelyVisible);
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void EveryTokenAndOptionAndCheckboxIsAtLeastFortyFourTall()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var page = Open(NewPaths());
+
+        CatalogueControls.Choose(page.Panel, "Length", 1);
+
+        foreach (var name in new[] { "Level", "Length", "Story length" })
+        {
+            Assert.True(CatalogueControls.Token(page.Panel, name).Bounds.Height >= 44, name);
+        }
+
+        CatalogueControls.PressToken(page.Panel, "Story length");
+        Assert.All(page.Panel.GetVisualDescendants().OfType<Segment>().SelectMany(segment => segment.GetVisualDescendants().OfType<RadioButton>()).Where(option => option.IsEffectivelyVisible), option => Assert.True(option.Bounds.Height >= 44));
+
+        CatalogueControls.PressToken(page.Panel, "Level");
+        Assert.All(page.Panel.GetVisualDescendants().OfType<CheckBox>().Where(box => box.IsEffectivelyVisible), box => Assert.True(box.Bounds.Height >= 44));
 
         page.Window.Close();
     }
@@ -156,7 +243,7 @@ public class TheStoriesPageFiltersItsListTests
 
         var page = Open(NewPaths(), [("new", "1-year"), ("midrange", "1-year")]);
 
-        Press(page.Panel, 0, 3);
+        CatalogueControls.Tick(page.Panel, "Endgame");
 
         Assert.Equal(0, Rows(page.Panel));
         Assert.Contains("No stories match these filters.", Drawn(page.Panel));
@@ -181,16 +268,131 @@ public class TheStoriesPageFiltersItsListTests
         var paths = NewPaths();
         var first = Open(paths);
 
-        Press(first.Panel, 0, 3);
-        Press(first.Panel, 1, 3);
+        CatalogueControls.Tick(first.Panel, "Mid-range");
+        CatalogueControls.Tick(first.Panel, "Endgame");
+        CatalogueControls.Choose(first.Panel, "Length", 3);
         first.Window.Close();
 
         var second = Open(paths);
 
-        Assert.Equal(new StoryFilter("endgame", StoryLengthCompare.AtMost, "1-month"), second.Store.Load().StoryFilter);
-        Assert.Equal(2, Rows(second.Panel));
-        Assert.Contains("2 of 11 stories.", Drawn(second.Panel));
+        Assert.Equal(new StoryFilter(["midrange", "endgame"], StoryLengthCompare.AtMost, "1-month"), second.Store.Load().StoryFilter);
+        Assert.Equal("MID-RANGE AND ENDGAME", CatalogueControls.TokenText(second.Panel, "Level"));
+        Assert.Equal(4, Rows(second.Panel));
+        Assert.Contains("4 of 11 stories", Drawn(second.Panel));
 
         second.Window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData("{\"storyFilter\":{\"level\":\"endgame\"}}")]
+    [InlineData("{\"StoryFilter\":{\"Level\":\"endgame\"}}")]
+    public void AFilterSavedWithASingleLevelLoadsWithThatLevelTicked(string saved)
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var paths = NewPaths();
+        File.WriteAllText(paths.ViewStateFile, saved);
+
+        var page = Open(paths);
+
+        Assert.Equal("ENDGAME", CatalogueControls.TokenText(page.Panel, "Level"));
+        Assert.Equal(3, Rows(page.Panel));
+
+        CatalogueControls.Tick(page.Panel, "Endgame", on: false);
+
+        Assert.Null(page.Store.Load().StoryFilter);
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheSentenceReadsTheFilterInWords()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var page = Open(NewPaths());
+
+        Assert.Equal(["Show", "ALL", "stories of", "ANY LENGTH"], Sentence(page.Panel));
+        Assert.Contains(CatalogueFilters.TokenHint, Drawn(page.Panel));
+
+        CatalogueControls.Choose(page.Panel, "Length", 2);
+
+        Assert.Equal(["Show", "ALL", "stories of", "EXACTLY", "1 MONTH"], Sentence(page.Panel));
+
+        page.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheBigPanelAtItsDefaultSizeShowsThreeCardsInItsFirstRow()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var (surface, _) = Build(NewPaths());
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(D47.Core.Capabilities.Builtin.VrCapability.ModeKey, "full", SettingsCaller.Panel);
+
+        using var vr = new D47.App.Headset.VrPanelSurface(new PanelViewModel(), settings, _ => null, gameState: () => null, adventures: surface);
+
+        vr.Nav.Select(PanelTab.Stories);
+        vr.Nav.SelectRoot(StoriesView.RootKey);
+        Dispatcher.UIThread.RunJobs();
+        vr.Board.Render();
+        Dispatcher.UIThread.RunJobs();
+        vr.Board.Render();
+
+        var grid = vr.Board.View.GetVisualDescendants().OfType<CardGrid>().Single();
+        var firstRow = grid.Children.Where(card => card.Bounds.Top == 0).ToList();
+
+        Assert.Equal(3, firstRow.Count);
+        Assert.True(grid.Bounds.Width <= 940 + 1);
+        Assert.All(grid.Children, card => Assert.True(card.Bounds.Right <= grid.Bounds.Width + 0.5));
+
+        vr.Board.Render().SaveCapture("stories-catalogue-vr-big-panel.png");
+    }
+
+    [AvaloniaFact]
+    public void TheSevenLengthsAreOneRowOnTheBigPanel()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var paths = NewPaths();
+        File.WriteAllText(paths.ViewStateFile, "{\"storyFilter\":{\"compare\":1,\"length\":\"1-month\"}}");
+
+        var (surface, _) = Build(paths);
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(D47.Core.Capabilities.Builtin.VrCapability.ModeKey, "full", SettingsCaller.Panel);
+
+        using var vr = new D47.App.Headset.VrPanelSurface(new PanelViewModel(), settings, _ => null, gameState: () => null, adventures: surface);
+
+        vr.Nav.Select(PanelTab.Stories);
+        vr.Nav.SelectRoot(StoriesView.RootKey);
+        Dispatcher.UIThread.RunJobs();
+        vr.Board.Render();
+
+        vr.Board.View.GetVisualDescendants().OfType<Button>()
+            .Single(button => button.Classes.Contains(CatalogueFilters.TokenClass) && Avalonia.Automation.AutomationProperties.GetName(button) == "Story length")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        vr.Board.Render();
+        Dispatcher.UIThread.RunJobs();
+        vr.Board.Render();
+
+        var options = vr.Board.View.GetVisualDescendants().OfType<Segment>()
+            .Single(segment => Avalonia.Automation.AutomationProperties.GetName(segment) == "Story length options")
+            .GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.Equal(7, options.Count);
+        Assert.Single(options.Select(option => option.Bounds.Top).Distinct());
+        Assert.All(options, option => Assert.True(option.Bounds.Height >= 44));
+
+        vr.Board.Render().SaveCapture("stories-catalogue-vr-lengths.png");
+    }
+
+    [AvaloniaFact]
+    public void ThreeCardsFitAcrossTheBigPanelsDefaultPage()
+    {
+        Assert.Equal(3, CardGrid.ColumnsAt(940));
+        Assert.Equal(1, CardGrid.ColumnsAt(300));
+        Assert.Equal(2, CardGrid.ColumnsAt(600));
     }
 }

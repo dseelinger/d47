@@ -283,6 +283,7 @@ public sealed class ViewStateStore(AppPaths paths, IFileSystem files, ILogger<Vi
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
