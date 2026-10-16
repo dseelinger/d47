@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a DSS names the genera on a landable body worth the high-value biology threshold, D47 now says each genus's candidate species and the value range before you land, once per body: the species itself for one candidate, both for two, "one of three" for three, and "and N more" past three genera. The `Scan` that follows says nothing more for that body.
+
 Asking about a body you have mapped now lists, under each genus the surface scan named, the species its conditions admit, with each one's value, most valuable first. It says that this is a prediction and the sample decides. A species whose surveyed gravity, temperature or pressure range the body misses by under 2% of the range's width is now counted as possible.
 
 A HOTAS switch set to a power distributor split now sets it when you flip it away and straight back. If the pips had not yet moved for the first flip, D47 took the second flip as already done and pressed nothing, so the distributor ended on the split you had flipped away from.

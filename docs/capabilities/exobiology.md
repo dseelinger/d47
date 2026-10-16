@@ -194,6 +194,16 @@ reaches its threshold, as "up to 18.2 million" before a surface scan and as "X t
 3 b could hold up to 18.2 million in biology: Stratum, Bacterium.
 ```
 
+When a DSS names the genera on a landable body whose best case reaches the threshold, the callout says
+the candidate species once per body, before you land. Per genus: one candidate is named; two are named
+with the genus said once where both start with it; three give the genus and "one of three"; none give
+the genus alone. At most three genera are said, by value, then a count of the rest. The `Scan` that
+follows says nothing for that body.
+
+```text
+B 3 a could hold 2.1 to 21 million in biology: Tussock Pennatis, Stratum Paleas or Excutitus, and Bacterium, one of three.
+```
+
 That is what the body's conditions allow, not a price: the species actually there may be the
 cheapest of its genus. `ExobiologyCatalogue.Possible` widens each gravity, temperature and pressure
 band by 2% of its width on both sides, because a surveyed range is a sample of the bodies that carry

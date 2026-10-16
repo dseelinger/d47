@@ -3,12 +3,18 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
-/// <summary>A landable body whose biology could reach the threshold, said on its <c>Scan</c>, once per body.</summary>
+/// <summary>
+/// A landable body whose biology could reach the threshold, said once per body: on the <c>SAASignalsFound</c> that
+/// names its genera, with their candidate species, or else on its <c>Scan</c>.
+/// </summary>
 public sealed class BiologyCallout : ICallout
 {
     public const long DefaultThreshold = 10_000_000;
 
+    private const int MostGenera = 3;
+
     private readonly HashSet<(long SystemAddress, int BodyId)> _said = [];
+    private readonly HashSet<(long SystemAddress, int BodyId)> _dssSaid = [];
     private readonly HashSet<(long SystemAddress, int BodyId)> _named = [];
 
     public string Id => "biology";
@@ -31,7 +37,9 @@ public sealed class BiologyCallout : ICallout
 
         foreach (var journalEvent in context.Events)
         {
-            if (journalEvent.Kind != "Scan"
+            var isDss = journalEvent.Kind == "SAASignalsFound";
+
+            if ((!isDss && journalEvent.Kind != "Scan")
                 || journalEvent.Long("SystemAddress") is not { } systemAddress
                 || journalEvent.Int("BodyID") is not { } bodyId)
             {
@@ -42,10 +50,11 @@ public sealed class BiologyCallout : ICallout
             if (context.IsPriming)
             {
                 _said.Add((systemAddress, bodyId));
+                _dssSaid.Add((systemAddress, bodyId));
                 continue;
             }
 
-            if (_said.Contains((systemAddress, bodyId))
+            if ((isDss ? _dssSaid : _said).Contains((systemAddress, bodyId))
                 || AlreadySaid(systemAddress, bodyId)
                 || state.Scans.For(systemAddress, bodyId) is not { Landable: true } scan
                 || state.Bodies.Named(scan.BodyName) is not { BiologicalCount: > 0 } biology)
@@ -53,7 +62,14 @@ public sealed class BiologyCallout : ICallout
                 continue;
             }
 
-            var genera = biology.Source == BodySignalSource.SurfaceScan ? biology.Genera : [];
+            var named = biology.Source == BodySignalSource.SurfaceScan;
+
+            if (isDss && (!named || biology.Genera.Count == 0))
+            {
+                continue;
+            }
+
+            var genera = named ? biology.Genera : [];
             var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
 
             if (BiologyPotential.For(scan, biology.BiologicalCount, genera, region) is not { } estimate
@@ -66,19 +82,68 @@ public sealed class BiologyCallout : ICallout
             _said.Add((systemAddress, bodyId));
             _named.Add((systemAddress, bodyId));
 
+            if (isDss)
+            {
+                _dssSaid.Add((systemAddress, bodyId));
+            }
+
+            var body = Short(scan.BodyName, journalEvent.String("StarSystem") ?? state.Location.StarSystem);
+
             yield return new Announcement(
                 $"biology.{systemAddress}.{bodyId}",
-                Line(Short(scan.BodyName, journalEvent.String("StarSystem")), estimate));
+                isDss ? Line(body, estimate, Species(estimate)) : Line(body, estimate));
         }
     }
 
-    private static string Line(string body, BiologyEstimate estimate)
+    /// <summary>At most three genera with their candidates, the rest counted; null where no genus was named.</summary>
+    internal static string? Species(BiologyEstimate estimate)
+    {
+        if (estimate.Named.Count == 0)
+        {
+            return null;
+        }
+
+        var parts = estimate.Named.Take(MostGenera).Select(Candidates).ToList();
+
+        if (estimate.Named.Count > MostGenera)
+        {
+            parts.Add($"{estimate.Named.Count - MostGenera} more");
+        }
+
+        return parts.Count == 1 ? parts[0] : string.Join(", ", parts[..^1]) + ", and " + parts[^1];
+    }
+
+    private static string Candidates(GenusCandidates genus)
+    {
+        var species = genus.Candidates;
+
+        return species.Count switch
+        {
+            0 => genus.Genus,
+            1 => species[0].Species,
+            2 => species.All(entry => StartsWithGenus(entry.Species, genus.Genus))
+                ? $"{genus.Genus} {species[0].Species[(genus.Genus.Length + 1)..]} or {species[1].Species[(genus.Genus.Length + 1)..]}"
+                : $"{species[0].Species} or {species[1].Species}",
+            _ => $"{genus.Genus}, one of {(species.Count == 3 ? "three" : species.Count.ToString())}",
+        };
+    }
+
+    private static bool StartsWithGenus(string species, string genus) =>
+        species.Length > genus.Length + 1 && species.StartsWith(genus + " ", StringComparison.OrdinalIgnoreCase);
+
+    private static string Line(string body, BiologyEstimate estimate, string? species) =>
+        species is null ? Line(body, estimate) : $"{Amount(body, estimate)}: {species}.";
+
+    private static string Line(string body, BiologyEstimate estimate) =>
+        $"{Amount(body, estimate)}: {string.Join(", ", estimate.Genera)}.";
+
+    private static string Amount(string body, BiologyEstimate estimate)
     {
         var amount = estimate is { Low: { } low, High: { } high } && low < high
             ? $"{Credits(low)} to {Credits(high)}"
             : $"up to {Credits(estimate.BestCase)}";
 
-        return $"{body} could hold {amount} in biology: {string.Join(", ", estimate.Genera)}.";
+        return $"{body} could hold {amount} in biology";
     }
 
     internal static string Credits(long amount)
