@@ -220,6 +220,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Assert.All(strip.Skip(1), image => Assert.Equal(44, image.Bounds.Height));
         Assert.Equal(strip[0].Bounds.Width, strip[0].Bounds.Height);
         Assert.True(strip[0].Bounds.Width > 44);
+        var largeWidth = strip[0].Bounds.Width;
         Save(woman.Window, "stories-cast-strip.png");
         woman.Window.Close();
 
@@ -231,7 +232,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var one = CastStrip(lone.Panel);
         Assert.Single(one);
         Assert.Equal(one[0].Bounds.Width, one[0].Bounds.Height);
-        Assert.True(one[0].Bounds.Width > 100);
+        Assert.Equal(largeWidth, one[0].Bounds.Width);
         lone.Window.Close();
 
         var none = Open(running: false, new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [StoryFixture.Secret]), () => CommanderGender.Woman, pictures);

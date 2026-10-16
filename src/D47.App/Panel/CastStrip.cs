@@ -49,13 +49,13 @@ internal static class CastStrip
         return area;
     }
 
-    /// <summary>The first child as a square across the width, less the column of 44px squares beside it when there are more.</summary>
+    /// <summary>The first child as a square across the width less the column of 44px squares beside it, which stays reserved for one picture.</summary>
     private sealed class Pictures : Avalonia.Controls.Panel
     {
         private const double Gap = 2;
 
         private double LargeSide(double width) =>
-            Children.Count > 1 ? Math.Max(0, width - Size - Gap) : width;
+            Math.Max(0, width - Size - Gap);
 
         private double ColumnHeight => Children.Count > 1 ? ((Children.Count - 1) * (Size + Gap)) - Gap : 0;
 

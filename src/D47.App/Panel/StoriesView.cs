@@ -239,9 +239,8 @@ public sealed class StoriesView : UserControl, IPageSummary
         parts.Add(name);
         parts.Add(AdventuresPage.RowSecondary($"{card.Pacing.Name} · {card.LevelName} · {card.CoreName}{(finished ? " · Finished" : string.Empty)}"));
 
-        var blurb = AdventuresPage.Text(card.Blurb, TypeScale.Tip, ThemeManager.GreyKey);
-        blurb.MaxLines = 3;
-        blurb.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+        var blurb = new ClampedText { FullText = card.Blurb, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontSize = TypeScale.Tip };
+        AdventuresPage.Themed(blurb, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         parts.Add(blurb);
 
         if (ratings is not null)
