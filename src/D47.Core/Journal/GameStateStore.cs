@@ -74,6 +74,9 @@ public sealed class GameStateStore
     /// <summary>Records whether the Elite process is running, which a crash leaves no <c>Shutdown</c> to say.</summary>
     public void GameRunning(bool running) => _running = running;
 
+    /// <summary>Whether the Elite process was running when last checked.</summary>
+    public bool IsGameRunning => _running;
+
     public IReadOnlyCollection<CommanderGameState> All => _byFrontierId.Values;
 
     /// <summary>A tick's events as reactions to the shown Commander take them: none while off duty.</summary>

@@ -172,6 +172,19 @@ With this off, a generated short story still works, choosing its stops from the 
 the model's own knowledge. With galaxy search off, no short story can be generated at all, because
 the places in a story have to be real and this is the thing that checks.
 
+### BGS tick time {#bgs-tick-time}
+
+A third setting, off by default, and a third host. While it is on and Elite is running, d47 asks
+the community tick detector at `tick.infomancer.uk` when the last background simulation tick
+happened: once when the setting is turned on or at startup, then every ten minutes. Nothing about
+you goes with the request — no key, no Commander name, no position and nothing from your journal.
+
+The host answers only over plain HTTP, so the request is **not encrypted**: anyone on the network
+path can see that d47 asked, and could change the time that comes back. d47 uses the answer only
+when it is a UTC time no more than five minutes ahead of now, no more than seven days old, and not
+earlier than the tick it already holds; anything else is ignored and the held time stays. The time
+is kept across restarts.
+
 ### Why the filters are checked here rather than there
 
 The search service **ignores filter keys it does not recognise**. It does not reject them or

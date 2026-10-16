@@ -187,6 +187,9 @@ public sealed record KnowledgeSettings
     /// 47).
     /// </summary>
     public bool NotablePlaces { get; init; }
+
+    /// <summary>Whether d47 may ask tick.infomancer.uk for the time of the last BGS tick.</summary>
+    public bool BgsTick { get; init; }
 }
 
 /// <summary>The checklist's own settings (#255).</summary>

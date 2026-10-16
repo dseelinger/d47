@@ -151,6 +151,14 @@ other Commanders' names and Directive 47's own panel. It is never saved, and a l
 send it again. Off by default. Inactive when no model is usable or the model in use does not read
 pictures, and the picture does not leave this machine when the endpoint is a loopback address.
 
+**BGS tick** — `tick.infomancer.uk`, every ten minutes while Elite runs, for the time of the last
+background simulation tick. Nothing about you goes with it: no key, no Commander name, no position
+and nothing from your journal. It is reached over plain HTTP, because the host answers on nothing
+else, so anyone on the network path can see that d47 asked and could change the
+time that comes back; d47 keeps only that time, and only when it falls in a plausible window.
+**BGS tick time** under Outside sources in Settings ([Galaxy search](galaxy.md#bgs-tick-time)) turns it on; it is off
+by default.
+
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which
 redirect to their asset storage — so the bytes arrive from `objects.githubusercontent.com`. That
@@ -358,7 +366,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-bgstick} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

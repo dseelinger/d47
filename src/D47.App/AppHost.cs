@@ -26,6 +26,7 @@ using D47.Core.Diagnostics;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Listening;
 using D47.Core.Lore;
 using D47.Core.Memory;
@@ -419,6 +420,11 @@ public sealed class AppHost : IDisposable
     private AudioFolderWatch? _audioWatch;
 
     private ModelCatalogRefresher? _modelCatalog;
+
+    private D47.Knowledge.InfomancerBgsTickSource? _bgsTickSource;
+
+    /// <summary>The time of the last BGS tick d47 has read.</summary>
+    public BgsTickWatch? BgsTick { get; private set; }
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -3866,6 +3872,20 @@ public sealed class AppHost : IDisposable
             host.Music.Follow(status.Current, feed.EliteMusic.Track);
         });
 
+        // After ambience, so it reads this tick's running state.
+        var viewState = foundations.ViewState;
+        host._bgsTickSource = new D47.Knowledge.InfomancerBgsTickSource(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.InfomancerBgsTickSource>());
+        var bgsTick = host.BgsTick = new BgsTickWatch(
+            host._bgsTickSource,
+            () => settings.Current.Knowledge.BgsTick,
+            () => gameState.IsGameRunning,
+            () => viewState.Load().BgsTickLast,
+            last => viewState.Save(viewState.Load() with { BgsTickLast = last }),
+            foundations.LoggerFactory.CreateLogger<BgsTickWatch>());
+
+        tick.Add("bgs-tick", context => bgsTick.Poll(context.Now));
+
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
 
@@ -6093,6 +6113,7 @@ public sealed class AppHost : IDisposable
         _controllerSampler?.Dispose();
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
+        _bgsTickSource?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

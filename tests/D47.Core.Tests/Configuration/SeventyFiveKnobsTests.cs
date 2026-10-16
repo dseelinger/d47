@@ -103,6 +103,7 @@ public class SeventyFiveKnobsTests
     [InlineData("llm.webSearch")]
     [InlineData("knowledge.galaxy")]
     [InlineData("knowledge.notablePlaces")]
+    [InlineData("knowledge.bgsTick")]
     [InlineData("privacy.memory")]
     [InlineData("memory.enabled")]
     public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)

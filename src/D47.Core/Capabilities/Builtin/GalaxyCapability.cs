@@ -701,6 +701,26 @@ public static class GalaxyCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = BgsTickKey,
+                Label = "BGS tick time",
+                Help =
+                    "Lets d47 ask tick.infomancer.uk when the last BGS tick happened, every ten minutes while "
+                    + "Elite runs. Nothing about you goes with the request, and it is not encrypted. Off by "
+                    + "default; see [Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "bgs-tick-time",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.BgsTick ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { BgsTick = v == "true" },
+                    },
+                },
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
@@ -709,6 +729,9 @@ public static class GalaxyCapability
 
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
+
+    /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
+    public const string BgsTickKey = "knowledge.bgsTick";
 
     /// <summary>The <c>order_by</c> and <c>order</c> parameters of a search of <paramref name="kind"/>.</summary>
     private static IEnumerable<ToolParameter> SortParameters(GalaxySearchKind kind) =>

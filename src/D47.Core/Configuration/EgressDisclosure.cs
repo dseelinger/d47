@@ -58,6 +58,11 @@ public static class EgressDisclosure
     /// <summary>Listing community goals running where the Commander has not been.</summary>
     public const string CommunityGoals = "communitygoals";
 
+    /// <summary>Asking the tick detector for the time of the last BGS tick.</summary>
+    public const string BgsTick = "bgstick";
+
+    public const string BgsTickHost = "tick.infomancer.uk";
+
     /// <summary>Rewording the recap of the last session at launch.</summary>
     public const string Recap = "recap";
 
@@ -111,6 +116,7 @@ public static class EgressDisclosure
         GalaxySearch,
         NotablePlaces,
         CommunityGoals,
+        BgsTick,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -138,6 +144,7 @@ public static class EgressDisclosure
         GalaxySearch => "Galaxy search",
         NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
+        BgsTick => "BGS tick",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -259,6 +266,23 @@ public static class EgressDisclosure
                 NameOf(CommunityGoals),
                 "No Inara API key is stored, so nothing is requested and community goals are read only from "
                 + "your own journal."),
+
+        BgsTick => settings.Knowledge.BgsTick
+            ? new EgressEntry(
+                BgsTick,
+                NameOf(BgsTick),
+                BgsTickHost,
+                "One request to tick.infomancer.uk for the time of the last BGS tick, every ten minutes while "
+                + "Elite runs. Nothing about you goes with it: no key, no Commander name, no position and "
+                + "nothing from your journal. The request is unencrypted, so anyone on the network path can "
+                + "see that d47 asked and could change the time that comes back.",
+                Active: true,
+                Summary: "One unencrypted request for the time of the last BGS tick, every ten minutes while "
+                    + "Elite runs. Nothing about you goes with it.")
+            : EgressEntry.Silent(
+                BgsTick,
+                NameOf(BgsTick),
+                "BGS tick time is off, so nothing is requested and d47 does not know when the tick happened."),
 
         HullArt => settings.Ui.HullArt
             ? new EgressEntry(

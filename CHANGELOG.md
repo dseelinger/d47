@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new setting, BGS tick time under Settings › Providers › Outside sources, lets D47 read when the last BGS tick happened from tick.infomancer.uk: once when you turn it on or start D47 with it on, then every ten minutes, and only while Elite is running. It is off by default. The request carries nothing about you, and it is unencrypted because the host answers only over plain HTTP; Privacy and egress lists it as BGS tick. D47 keeps the time across restarts.
+
 When a DSS names the genera on a landable body worth the high-value biology threshold, D47 now says each genus's candidate species and the value range before you land, once per body: the species itself for one candidate, both for two, "one of three" for three, and "and N more" past three genera. The `Scan` that follows says nothing more for that body.
 
 Asking about a body you have mapped now lists, under each genus the surface scan named, the species its conditions admit, with each one's value, most valuable first. It says that this is a prediction and the sample decides. A species whose surveyed gravity, temperature or pressure range the body misses by under 2% of the range's width is now counted as possible.

@@ -32,6 +32,9 @@ public sealed record ViewState
     /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the carrier tick week its payroll line was last said in, or null.</summary>
     public string? CarrierPayrollSaidFor { get; init; }
 
+    /// <summary>The time of the last BGS tick d47 accepted, ISO 8601 UTC, or null.</summary>
+    public string? BgsTickLast { get; init; }
+
     /// <summary>Where the Commander put the flat mini panel, or null if they never moved it (Phase 48).</summary>
     public OverlayPlacement? Overlay { get; init; }
 
