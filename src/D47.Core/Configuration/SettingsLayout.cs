@@ -221,6 +221,7 @@ public static class SettingsLayout
                                 E("callouts.communityGoalExpiry"),
                                 E("callouts.colonisation"),
                                 E("callouts.powerplayCycle"),
+                                E("callouts.bgsTick"),
                                 E("callouts.missions"),
                                 E("callouts.outstandingCrimes"),
                                 E("callouts.reminders"),
