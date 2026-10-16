@@ -249,9 +249,9 @@ Three things, in this order:
 **1. Bind a key.** Already done — **Scroll Lock**, out of the box. Clear the row if you would
 rather Directive 47 never opened the microphone at all.
 
-**2. Download a speech model.** Also already done, or under way. Directive 47 ships with **Tiny
+**2. Download a speech model.** Also already done, or under way. Directive 47 ships with **Base
 (English only)** selected and fetches it from `huggingface.co` the first time it starts — about
-75 MB, once. Until it lands, Directive 47 captures your voice and tells you plainly that it
+142 MB, once. Until it lands, Directive 47 captures your voice and tells you plainly that it
 cannot understand it yet.
 
 **3. Check the key is yours alone.** If Elite is already using it, say so is exactly what

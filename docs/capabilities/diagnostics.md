@@ -31,7 +31,7 @@ nav_order: 101
  <text x="46" y="45" font-size="16" font-weight="700" fill="var(--accent)">Log File</text>
  <text x="44" y="96" font-size="16" fill="var(--text)">Journal folder C:\Users\...\Elite Dangerous</text>
  <text x="836" y="96" text-anchor="end" font-size="16" fill="var(--text-muted)">tailing</text>
- <text x="44" y="134" font-size="16" fill="var(--text)">Registered 45 capabilities exposing 98 tools</text>
+ <text x="44" y="134" font-size="16" fill="var(--text)">Registered N capabilities exposing M tools</text>
  <text x="44" y="172" font-size="16" fill="var(--text)">Audio output open on the system default device</text>
  <text x="44" y="222" font-size="15" fill="var(--text-muted)">Every line the app wrote this session, newest last.</text>
 </svg>

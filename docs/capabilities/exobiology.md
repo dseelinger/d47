@@ -72,15 +72,15 @@ nav_order: 118
 <details class="d47-band">
 <summary>Why it works this way</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Two halves, from two sources, answering two questions — and only one of them may quote money.</p>
+<p class="intro">Two halves, from two sources, answering two questions — and only one of them may quote a figure for a species.</p>
 <section>
 <h2><span class="num">1</span> Keeping the halves apart is the whole design.</h2>
-<svg viewBox="0 0 880 252" role="img" aria-label="The scan half names genera and cannot price them; the route half names species and can">
+<svg viewBox="0 0 880 252" role="img" aria-label="The scan half names genera and can only give a range; the route half names species and can quote figures">
  <rect x="20" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">AFTER THE SCAN</text>
  <text x="220" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">the game’s own answer</text>
  <text x="220" y="130" text-anchor="middle" font-size="15" fill="var(--text-muted)">names the genus</text>
- <text x="220" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">so it cannot quote money</text>
+ <text x="220" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="var(--danger)">so it gives a range, not a price</text>
  <rect x="460" y="40" width="400" height="124" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="660" y="78" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">BEFORE YOU GO</text>
  <text x="660" y="108" text-anchor="middle" font-size="15" fill="var(--text-muted)">an index of what others found</text>
@@ -98,7 +98,7 @@ nav_order: 118
  <text x="46" y="108" text-anchor="start" font-size="15" fill="var(--text-muted)">Also down there: 3 Geological.</text>
  <text x="440" y="170" text-anchor="middle" font-size="16" fill="var(--text)">Every one of the 792 events measured names a genus, and never a species.</text>
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Bacterium Alcyoneum and Bacterium Acies are very different money.</text>
- <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So this half lists what is there and refuses to price it.</text>
+ <text x="440" y="230" text-anchor="middle" font-size="17" font-weight="700" fill="var(--accent)">So this half lists what is there and quotes no single price.</text>
 </svg>
 <p class="body">A scan that found nothing is a real answer, and the one that saves you a landing — <em>no biological signals, nothing here to sample</em>. That is different from “I have not looked”, and the two are worded differently on purpose.</p>
 </section>
@@ -157,13 +157,13 @@ are at.
 > "reset unsold exobiology"
 
 Two halves, from two different sources, answering two different questions. Keeping them apart is the
-whole design — because one of them can quote money and the other cannot.
+whole design — because one of them can quote a figure for a species and the other can only give a range.
 
 ### After the scan: what the game already told you
 
 Once you have mapped a body with the detailed surface scanner, Elite writes `SAASignalsFound` and it
-says what is down there outright. No prediction, no inference from `Scan` properties — the game's own
-answer, which outranks anything D47 could work out.
+says what is down there outright: the game's own answer, which outranks anything D47 could work out
+from the body's `Scan`.
 
 ```text
 HR 3230 3 a a, surface-scanned 2026-08-16 10:00 game time.
@@ -178,7 +178,23 @@ tell you what this is worth until you sample it.
 around.** Every one of the 792 events measured names a *genus* — `Bacterium`, `Stratum`,
 `Brain Trees` — and never a species. *Bacterium Alcyoneum* and *Bacterium Acies* are very different
 money, and the game does not say which you are looking at until you take the sample. So this half
-lists what is there and refuses to price it.
+lists what is there and does not quote one price for it.
+
+D47 does estimate a range, from the body's own scan. `ExobiologyCatalogue.Possible` keeps the species
+whose surveyed conditions — planet class, atmosphere, volcanism, gravity, temperature, pressure and,
+where known, the galactic region — contain the body's, and `BiologyPotential` turns them into a value
+range. Before a surface scan it sums the most valuable species in the highest-valued genera, as many
+genera as the FSS counted signals. After one it takes the named genera alone, and the range runs from
+the cheapest species of each to the dearest. The
+[high-value biology callout](callouts.md#biology) says it on the body's `Scan` when the best case
+reaches its threshold, as "up to 18.2 million" before a surface scan and as "X to Y" after one:
+
+```text
+3 b could hold up to 18.2 million in biology: Stratum, Bacterium.
+```
+
+That is what the body's conditions allow, not a price: the species actually there may be the
+cheapest of its genus.
 
 A scan that found nothing is a real answer and the one that saves you a landing:
 

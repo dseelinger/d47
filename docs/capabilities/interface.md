@@ -22,12 +22,12 @@ nav_order: 127
 <p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
-<p class="say">Press the tabs along the top: Transcript, Checklist, Ships and Settings.</p>
+<p class="say">Press the tabs along the top: Transcript, Commander, Asset Mgmt and Settings.</p>
 <p class="expect">Each tab opens its page; the headset shows the same strip without the tabs it has no room for.</p>
-<svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Checklist  Ships  Settings tab">
+<svg viewBox="0 0 880 208" role="img" aria-label="The Transcript  Commander  Asset Mgmt  Settings tab">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Checklist  Ships  Settings</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Commander  Asset Mgmt  Settings</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">The page you land on</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">the conversation</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">Everything else</text>
@@ -330,8 +330,7 @@ kept in step, because there is nothing to keep in step; it cannot show something
 within a day, so it comes up when the game has the foreground and goes away when anything else
 does — including Directive 47's own window, which is right there showing strictly more.
 
-**It carries the same tabs as the headset's mini panel** — the transcript, the checklist, the
-engineers, the clocks and the story — and it follows the main window between them. Settings is the
+**It carries the same tabs as the headset's mini panel**, and it follows the main window between them. Settings is the
 one it does not have, for two reasons that agree: you could not touch it, and it is the one page
 mini cannot fit.
 
@@ -456,13 +455,15 @@ to have. See [Settings](settings.md).
 One bar along the top, and each tab is a surface of its own:
 
 ```text
-Transcript   Stories   Checklist   Asset Mgmt   Engineers   Navigation   Settings
+Transcript   Search   Stories   Commander   Asset Mgmt   Navigation   Settings
 ```
+
+Engineers is a page of Asset Mgmt, and the checklist is a page of Commander.
 
 **The two surfaces carry the same tabs, Settings aside** — the headset has no browser to open the
 site in and no window to show a settings surface inside, so that tab is the window's alone. Every
-other tab reached the headset in its own turn, for its own reason. Checklist and Asset Mgmt were both
-withdrawn on the Commander's own instruction, and Checklist went back first — what a Commander is
+other tab reached the headset in its own turn, for its own reason. The checklist and Asset Mgmt were both
+withdrawn on the Commander's own instruction, and the checklist went back first — what a Commander is
 working on is worth reading in the one place there is no other way to read it (Phase 39). Navigation
 followed it, every root of it: the plan forms were held back for wanting a keyboard, and their
 boxes reach the drawn one the same way the checklist's edit box does. Asset Mgmt was held back longest,
@@ -474,7 +475,7 @@ headset path and stays a mouse convenience; so does double-clicking a slot row t
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
 **Each tab remembers which of its readings you were on.** Leaving Navigation on *Course* and going to
-Engineers comes back to *Course*, and so does closing Directive 47 and opening it again — the
+Asset Mgmt comes back to *Course*, and so does closing Directive 47 and opening it again — the
 transcript's reading, Navigation's, and every other tab's. Settings comes back scrolled to the section
 you left it at, without opening any card you had closed. What is deliberately **not** remembered is
 which tab was showing: the panel opens on the transcript, the way it always has.
@@ -493,8 +494,8 @@ cannot glance at a second monitor. Every crumb but the last can be pressed — *
 
 > "back"
 > "corsair"
-> "checklist"
-> "select the checklist tab"
+> "navigation"
+> "select the navigation tab"
 
 Back is three routes that agree: the breadcrumb, the **grip button** on either controller, and
 the phrase. Say the name of the tab you are already on and you go back to its top, exactly as
@@ -632,8 +633,8 @@ A page is a screenful less one line, so the line you were reading when you said 
 when the page settles. A scroll is three lines, which is what one notch of a wheel does nearly
 everywhere.
 
-**It moves whichever page is showing**, not the transcript specifically — the checklist, the
-engineers and the clocks scroll the same way. If a chooser is open, it moves the chooser.
+**It moves whichever page is showing**, not the transcript specifically — the other tabs
+scroll the same way. If a chooser is open, it moves the chooser.
 
 **Why this exists, on each surface:**
 

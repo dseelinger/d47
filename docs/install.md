@@ -233,8 +233,8 @@ Out of the box D47 makes two kinds of outbound request of its own:
 - **The update check** described above. Switch it off in Settings and D47 makes no network call of
   its own. Pressing **Update now** on the banner adds one more: downloading that release from
   GitHub, which happens only when you press it.
-- **A speech model download**, once. D47 ships with the smallest English model selected and
-  fetches it from `huggingface.co` on first run, about 75 MB; choosing a different one fetches
+- **A speech model download**, once. D47 ships with the Base English model selected and
+  fetches it from `huggingface.co` on first run, about 142 MB; choosing a different one fetches
   that instead. Once it is on disk, transcription runs on this machine. Set the speech model to
   `none` if you would rather it fetched nothing.
 

@@ -16,8 +16,8 @@ and screenshots. It is the place to reach a person; you do not need a GitHub acc
 
 You talk to it while you fly. It watches the journal for what just happened, answers questions
 about ships, modules, engineers, blueprints and routes, calls out what is worth knowing without
-being asked, and can act on the game on your say-so. Forty-five capabilities are documented one
-page each under [Capabilities](https://dseelinger.github.io/d47/); the
+being asked, and can act on the game on your say-so. Each capability is documented on a
+page of its own under [Capabilities](https://dseelinger.github.io/d47/); the
 [open issues](https://github.com/dseelinger/d47/issues) are the full list of what is wrong with
 it today.
 
