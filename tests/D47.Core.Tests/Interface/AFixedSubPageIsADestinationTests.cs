@@ -6,7 +6,7 @@ namespace D47.Core.Tests.Interface;
 /// <summary>A page one level below a root, declared with a constant key, is somewhere a switch or a phrase can send the panel (#1149).</summary>
 public class AFixedSubPageIsADestinationTests
 {
-    private static readonly NavCrumb Catalogue = new("stories", "Catalogue") { Leads = true };
+    private static readonly NavCrumb Catalogue = new("stories", "Catalogue");
 
     private static readonly NavCrumb StoryLog = new("messages", "Story log");
 

@@ -36,7 +36,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         new(PanelTab.Transcript, new NavCrumb("transcript.technical", "Technical")),
         new(PanelTab.Stories, Stories),
         new(PanelTab.Stories, Stories, Catalogue),
-        new(PanelTab.Stories, Stories, MessagesView.Crumb),
+        new(PanelTab.Stories, MessagesView.Crumb),
         new(PanelTab.Assets, new NavCrumb("assets.ships", "Ships")),
         new(PanelTab.Settings, new NavCrumb("settings", "Settings")),
     ];
@@ -110,7 +110,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
             [null, null, null, "TRANSCRIPT", "STORIES", null, null, "ASSET MGMT", "SETTINGS"],
             rows.Select(row => row.Head));
         Assert.Equal(["1", "3", "1", "1"], rows.Where(row => row.Head is not null).Select(row => row.HeadCount));
-        Assert.Equal([false, false, false, false, false, true, true, false, false], rows.Select(row => row.Nested));
+        Assert.Equal([false, false, false, false, false, true, false, false, false], rows.Select(row => row.Nested));
         Assert.Equal(
             [null, null, null, null, null, null, "Only while a story is running", null, null],
             rows.Select(row => row.Detail));

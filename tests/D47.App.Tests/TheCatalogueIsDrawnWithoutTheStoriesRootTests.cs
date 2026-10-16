@@ -8,16 +8,16 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A level marked Leads is the first one drawn, so the levels above it stay behind the breadcrumb.</summary>
+/// <summary>The Catalogue is a root of the Stories tab, so a story drilled below it is drawn beside it and nothing sits above.</summary>
 [Trait("Category", "Integration")]
-public sealed class TheCatalogueLeadsTheStripTests
+public sealed class TheCatalogueIsDrawnWithoutTheStoriesRootTests
 {
     private static NavCrumb Root => new("adventures", "Stories");
 
     private static PanelView Wide()
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.Furnish(PanelTab.Stories, crumb => new TextBlock { Text = crumb.Word }, Root);
+        panel.Furnish(PanelTab.Stories, crumb => new TextBlock { Text = crumb.Word }, Root, StoriesView.Crumb);
 
         var window = new Window { Content = panel, Width = 1400, Height = 700 };
         window.Show();
@@ -42,7 +42,8 @@ public sealed class TheCatalogueLeadsTheStripTests
     {
         var panel = Wide();
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(Root, StoriesView.Crumb, new NavCrumb("read:mayday", "My Own Mayday"));
+        panel.Nav.SelectRoot(StoriesView.RootKey);
+        panel.Nav.GoTo(StoriesView.Crumb, new NavCrumb("read:mayday", "My Own Mayday"));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Catalogue", "My Own Mayday"], Panes(panel));
@@ -53,7 +54,7 @@ public sealed class TheCatalogueLeadsTheStripTests
     {
         var panel = Wide();
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(Root, StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Catalogue"], Panes(panel));

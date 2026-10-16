@@ -100,7 +100,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         window.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, director);
@@ -240,6 +240,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         var panel = surface.Panel;
         surface.Director.SetGender = chosen => gender = chosen;
 
+        panel.Nav.SelectRoot(AdventuresPage.RootKey);
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
         Dispatcher.UIThread.RunJobs();
 

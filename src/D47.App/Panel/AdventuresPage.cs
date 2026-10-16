@@ -52,10 +52,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     private readonly StackPanel _list = new() { Spacing = 2 };
     private readonly Notice _problems = new() { IsVisible = false };
 
-    private readonly Button _ask = new() { Content = "Short Story" };
-    private readonly Button _messages = new() { Name = "OpenMessages", Content = MessagesView.PageName };
-    private readonly Button _stories = new() { Name = "OpenStories", Content = StoriesView.PageName };
-    private readonly Button _bench = new() { Name = "OpenStoryBench", Content = StoryBenchPage.PageName };
     private StoryBenchPage? _benchPage;
     private MessagesView? _inbox;
     private StoriesView? _storiesView;
@@ -81,26 +77,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _nav = nav;
         _prompts = prompts;
 
-        _messages.Click += (_, _) => _nav.Drill(MessagesView.Crumb);
-        _ask.Click += (_, _) => _nav.Drill(AskCrumb);
-        _stories.Click += (_, _) => _nav.Drill(StoriesView.Crumb);
-        _stories.IsVisible = surface.Stories is not null;
-        _bench.Click += (_, _) => _nav.Drill(StoryBenchPage.Crumb);
-        _bench.IsVisible = surface.Stories is not null && surface.Bench is not null;
-
-        var bar = new StackPanel
-        {
-            Spacing = 8,
-            Margin = new Thickness(0, 0, 0, 10),
-            Children = { Buttons(_stories, _ask, _messages, _bench) },
-        };
-
         var root = new DockPanel { Margin = new Thickness(14) };
-        DockPanel.SetDock(bar, Dock.Top);
         DockPanel.SetDock(_problems, Dock.Top);
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
-        root.Children.Add(bar);
         root.Children.Add(_problems);
 
         if (settingsStrip is not null)
@@ -212,6 +192,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
 
+    /// <summary>Redraws the root after something it reads outside the book has changed.</summary>
+    public void Refresh() => Rebuild();
+
     // ---- the root ----------------------------------------------------------------------------
 
     private void Rebuild()
@@ -222,29 +205,24 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         _problems.IsVisible = problems.Count > 0;
         _problems.Text = string.Join("\n", problems.Select(problem => $"{problem.Where}: {problem.Reason}"));
 
-        _messages.IsVisible = false;
-
-        if (_surface.Messages is { } store && InAStory(_surface, store))
-        {
-            _messages.IsVisible = true;
-            _messages.Content = MessagesView.ButtonLabel(store);
-        }
-
-        _ask.IsEnabled = CanAsk(_surface);
-
         var standings = _surface.Book.Standings(_surface.Commander());
 
         if (standings.Count == 0)
         {
             _list.Children.Add(Muted(
-                "No stories yet. Pick one under Stories, or ask for a short story — D47 proposes one and waits for your yes."));
+                "No stories yet. Pick one under Catalogue, or ask for a short story — D47 proposes one and waits for your yes."));
 
-            if (!_ask.IsEnabled)
+            if (!CanAsk(_surface))
             {
                 _list.Children.Add(Muted(AskShutBecause()));
             }
 
             return;
+        }
+
+        if (!CanAsk(_surface))
+        {
+            _list.Children.Add(Muted(AskShutBecause()));
         }
 
         var drafts = standings.Where(standing => standing.Adventure.IsDraft).ToList();
@@ -799,13 +777,15 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     internal string? AskByVoice()
     {
         _prompts.Abandon();
-        _nav.Show(RootKey);
-        _nav.GoTo(new NavCrumb(AskKey, "Short Story"));
 
-        if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
+        if (!CanAsk(_surface))
         {
+            _nav.Show(RootKey);
             return AskShutBecause();
         }
+
+        _nav.SetVisible(PanelTab.Stories, AskKey, true);
+        _nav.Show(AskKey);
 
         if (!OnAsk())
         {
@@ -861,6 +841,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         // Below the root only: the root is the tab's own and GoTo keeps it. The Stories tab rather than the one
         // showing, which the Commander may have changed while the story was written.
+        _nav.SelectRoot(PanelTab.Stories, RootKey);
         _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, stored.Name));
     }
 

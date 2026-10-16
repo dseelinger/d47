@@ -21,7 +21,7 @@ public class TheStoryLogShowsOnlyInAStoryTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 13, 9, 0, 0, TimeSpan.Zero);
 
-    private sealed record Tab(Window Window, AdventuresPage Page, AdventureBook Book, StoryStore Stories, MessageStore Messages);
+    private sealed record Tab(Window Window, PanelView Panel, AdventureBook Book, StoryStore Stories, MessageStore Messages);
 
     private static Tab Open()
     {
@@ -42,22 +42,22 @@ public class TheStoryLogShowsOnlyInAStoryTests
             book, generator, () => null, () => "F1", () => Now, _ => { }, () => true, () => true, () => null, () => { },
             Messages: messages, Stories: director);
 
-        var nav = new PanelNavigator();
-        var page = new AdventuresPage(surface, nav, new PanelPrompts(nav, new Avalonia.Controls.Panel()));
-        var window = new Window { Content = page, Width = 1280, Height = 860 };
+        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
+        panel.EnableAdventures(surface);
+        var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();
+        panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        return new Tab(window, page, book, stories, messages);
+        return new Tab(window, panel, book, stories, messages);
     }
 
     private static bool Offered(Tab tab)
     {
         Dispatcher.UIThread.RunJobs();
+        tab.Panel.TickRouting();
 
-        return tab.Page.GetVisualDescendants().OfType<Button>()
-            .Single(button => button.Name == "OpenMessages")
-            .IsVisible;
+        return tab.Panel.Nav.Roots(PanelTab.Stories).Any(root => root.Key == MessagesView.RootKey);
     }
 
     private static Story Running() => new()

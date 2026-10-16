@@ -71,7 +71,7 @@ public class TheStoriesPageFiltersItsListTests
         window.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return new Page(window, panel, store);

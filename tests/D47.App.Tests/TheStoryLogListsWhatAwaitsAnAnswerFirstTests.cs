@@ -30,18 +30,6 @@ public class TheStoryLogListsWhatAwaitsAnAnswerFirstTests
     }
 
     [AvaloniaFact]
-    public void TheButtonReadsStoryLogWithTheUnreadCount()
-    {
-        var store = Store();
-        Assert.Equal("Story log", MessagesView.ButtonLabel(store));
-
-        store.Post("narrator", "Narration", "Tide's turning.", DateTimeOffset.Now);
-        store.Post("narrator", "Narration", "Again.", DateTimeOffset.Now);
-
-        Assert.Equal("Story log (2 new)", MessagesView.ButtonLabel(store));
-    }
-
-    [AvaloniaFact]
     public void TheSectionAwaitingAnAnswerComesBeforeEveryStory()
     {
         var store = Store();

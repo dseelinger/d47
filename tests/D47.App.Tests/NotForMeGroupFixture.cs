@@ -133,7 +133,7 @@ internal static class NotForMeGroupFixture
         window.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, surface);
@@ -141,6 +141,7 @@ internal static class NotForMeGroupFixture
 
     internal static void ReadChapter(Surface surface)
     {
+        surface.Panel.Nav.SelectRoot(AdventuresPage.RootKey);
         surface.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + ChapterKey, "The First Light"));
         Dispatcher.UIThread.RunJobs();
     }

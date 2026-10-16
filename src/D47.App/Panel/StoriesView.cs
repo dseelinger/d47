@@ -20,7 +20,7 @@ public sealed class StoriesView : UserControl
     /// <summary>The American spelling, which is what the transcriber writes.</summary>
     private static readonly string[] SpokenNames = ["catalog"];
 
-    public static NavCrumb Crumb => new(RootKey, PageName) { Leads = true, Spoken = SpokenNames };
+    public static NavCrumb Crumb => new(RootKey, PageName) { Spoken = SpokenNames };
 
     public const string ReadPrefix = "story.read.";
 
@@ -946,6 +946,7 @@ public sealed class StoriesView : UserControl
             && _director.Stories.Current(commander)?.CurrentChapter is { } key
             && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
+            _nav.SelectRoot(PanelTab.Stories, AdventuresPage.RootKey);
             _nav.GoTo(PanelTab.Stories, new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
         }
     }

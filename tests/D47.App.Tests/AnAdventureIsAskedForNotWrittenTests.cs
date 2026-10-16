@@ -21,7 +21,6 @@ public class AnAdventureIsAskedForNotWrittenTests
     {
         var (panel, _, _) = AdventuresTabTests.Open();
 
-        Assert.Contains("Short Story", Buttons(panel));
         Assert.DoesNotContain("Write an adventure", Buttons(panel));
     }
 

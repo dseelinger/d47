@@ -63,7 +63,7 @@ public class ASubPageOpensBeforeItsRootWasEverDrawnTests
         Assert.True(panel.Nav.Show(StoriesView.RootKey));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal([AdventuresPage.RootKey, StoriesView.RootKey], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal([StoriesView.RootKey], panel.Nav.Trail.Select(crumb => crumb.Key));
         Assert.NotEmpty(panel.GetVisualDescendants().OfType<StoriesView>());
         Assert.DoesNotContain(
             panel.GetVisualDescendants().OfType<TextBlock>(),
@@ -78,7 +78,7 @@ public class ASubPageOpensBeforeItsRootWasEverDrawnTests
         var (window, panel) = Open();
 
         Assert.Equal("Catalogue.", PanelPhrases.Apply("Open the catalog.", panel.Nav));
-        Assert.Equal([AdventuresPage.RootKey, StoriesView.RootKey], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal([StoriesView.RootKey], panel.Nav.Trail.Select(crumb => crumb.Key));
 
         window.Close();
     }

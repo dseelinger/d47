@@ -63,7 +63,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
         Assert.Equal(LoadoutPages.ShipPrefix + build.Id, surface.Panel.Nav.Trail[^1].Key);
 
         surface.Panel.Tab = PanelTab.Stories;
-        surface.Panel.Nav.GoTo(StoriesView.Crumb);
+        surface.Panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
         ReadChapter(surface);
 
@@ -162,7 +162,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
                 adventures: Build(TriggerKind.Board, ships, Hull, fleet));
 
             vr.Nav.Select(PanelTab.Stories);
-            vr.Nav.GoTo(StoriesView.Crumb);
+            vr.Nav.SelectRoot(StoriesView.RootKey);
             Dispatcher.UIThread.RunJobs();
             vr.Board.Render();
             Dispatcher.UIThread.RunJobs();
@@ -229,7 +229,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
             adventures: Build(TriggerKind.Engineer, ships, engineer: "Felicity Farseer"));
 
         vr.Nav.Select(PanelTab.Stories);
-        vr.Nav.GoTo(StoriesView.Crumb);
+        vr.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
         vr.Board.Render();
         Dispatcher.UIThread.RunJobs();

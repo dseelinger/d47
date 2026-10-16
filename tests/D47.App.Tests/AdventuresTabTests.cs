@@ -300,7 +300,7 @@ public class AdventuresTabTests
 
         Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Short Story"));
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));

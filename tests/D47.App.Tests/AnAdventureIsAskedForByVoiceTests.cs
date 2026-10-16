@@ -65,8 +65,27 @@ public class AnAdventureIsAskedForByVoiceTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Stories, panel.Nav.Tab);
-        Assert.Equal([AdventuresPage.RootKey, AdventuresPage.AskKey, "adventure.brief"], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal([AdventuresPage.AskKey, "adventure.brief"], panel.Nav.Trail.Select(crumb => crumb.Key));
         Assert.Empty(model!.Asked);
+    }
+
+    [AvaloniaFact]
+    public void ShortStoryIsASubTabOnlyWhileAskingIsOpen()
+    {
+        var (open, _, _, _) = Open(canAsk: true);
+        var (shut, _, desk, _) = Open(canAsk: false);
+
+        Assert.Contains(open.Nav.Roots(PanelTab.Stories), root => root.Key == AdventuresPage.AskKey);
+        Assert.DoesNotContain(shut.Nav.Roots(PanelTab.Stories), root => root.Key == AdventuresPage.AskKey);
+
+        shut.Tab = PanelTab.Stories;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("A short story needs a language model, and none is configured.", desk.Ask());
+        Assert.Equal([AdventuresPage.RootKey], shut.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.Contains(
+            shut.GetVisualDescendants().OfType<TextBlock>(),
+            text => text.Text == "A short story needs a language model, and none is configured.");
     }
 
     [AvaloniaFact]
@@ -75,7 +94,7 @@ public class AnAdventureIsAskedForByVoiceTests
         var (panel, book, desk, model) = Open(canAsk: true);
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.AskKey, "Short Story"));
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
         Choose(panel, "Reach: a session's flying");
@@ -121,7 +140,7 @@ public class AnAdventureIsAskedForByVoiceTests
     }
 
     [AvaloniaFact]
-    public void WithNoModelThePageOpensAndTheReasonIsSaidInsteadOfTheEntry()
+    public void WithNoModelYourStoriesOpensAndTheReasonIsSaidInsteadOfTheEntry()
     {
         var (panel, _, desk, _) = Open(canAsk: false);
 
@@ -129,7 +148,7 @@ public class AnAdventureIsAskedForByVoiceTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Stories, panel.Nav.Tab);
-        Assert.Equal([AdventuresPage.RootKey, AdventuresPage.AskKey], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal([AdventuresPage.RootKey], panel.Nav.Trail.Select(crumb => crumb.Key));
     }
 
     /// <summary>Pumps the UI thread while generation runs on the pool, until the condition holds.</summary>

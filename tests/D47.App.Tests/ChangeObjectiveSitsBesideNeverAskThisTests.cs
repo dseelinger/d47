@@ -318,7 +318,7 @@ public sealed class ChangeObjectiveSitsBesideNeverAskThisTests
         using var vr = new VrPanelSurface(new PanelViewModel(), settings, _ => null, gameState: () => null, adventures: stories);
 
         vr.Nav.Select(PanelTab.Stories);
-        vr.Nav.GoTo(StoriesView.Crumb);
+        vr.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
         vr.Board.Render();
         Dispatcher.UIThread.RunJobs();

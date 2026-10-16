@@ -6,7 +6,35 @@ namespace D47.App.Panel;
 /// <summary>The Stories tab and its mini-size story.</summary>
 internal sealed class StoriesFurnishing(IPanelTabHost host)
 {
+    private AdventureSurface? _surface;
+    private Action? _refresh;
+    private bool _askShown;
+
     public AdventureMini? Mini { get; private set; }
+
+    /// <summary>Shows or hides Short Story and Story log as the settings and the book change.</summary>
+    public bool Tick() => ShowConditionalRoots();
+
+    private bool ShowConditionalRoots()
+    {
+        if (_surface is not { } surface)
+        {
+            return false;
+        }
+
+        var ask = AdventuresPage.CanAsk(surface);
+        var log = surface.Messages is { } store && AdventuresPage.InAStory(surface, store);
+        var changed = host.Nav.SetVisible(PanelTab.Stories, AdventuresPage.AskKey, ask);
+        changed |= host.Nav.SetVisible(PanelTab.Stories, MessagesView.RootKey, log);
+
+        if (_askShown != ask)
+        {
+            _askShown = ask;
+            _refresh?.Invoke();
+        }
+
+        return changed;
+    }
 
     public void EnableAdventures(
         AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
@@ -27,32 +55,32 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
             desk.ChangeObjective = () => OnUi(() => Page().ChangeObjectiveByVoice());
         }
 
+        var help = D47.Core.Capabilities.Builtin.AdventureCapability.Id;
+        List<NavCrumb> roots = [new NavCrumb(AdventuresPage.RootKey, "Your stories") { Help = help }];
+
+        if (surface.Stories is not null)
+        {
+            roots.Add(StoriesView.Crumb with { Help = help });
+        }
+
+        roots.Add(AdventuresPage.AskCrumb with { Help = help });
+        roots.Add(MessagesView.Crumb with { Help = help });
+
+        if (surface.Stories is not null && surface.Bench is not null)
+        {
+            roots.Add(StoryBenchPage.Crumb with { Help = help });
+        }
+
         host.Furnish(
             PanelTab.Stories,
             crumb => crumb.Key == AdventuresPage.RootKey
                 ? Page()
                 : Page().Build(crumb) ?? new TextBlock { Text = "Nothing here." },
-            new NavCrumb(AdventuresPage.RootKey, "Stories")
-            {
-                Help = D47.Core.Capabilities.Builtin.AdventureCapability.Id,
-            });
+            [.. roots]);
 
-        // Read from the surface rather than the page's buttons: the page is not built until the tab is first shown.
-        host.Nav.Declare(
-            AdventuresPage.RootKey,
-            MessagesView.Crumb,
-            () => surface.Messages is { } store && AdventuresPage.InAStory(surface, store));
-        host.Nav.Declare(AdventuresPage.RootKey, AdventuresPage.AskCrumb, () => AdventuresPage.CanAsk(surface));
-
-        if (surface.Stories is not null)
-        {
-            host.Nav.Declare(AdventuresPage.RootKey, StoriesView.Crumb);
-
-            if (surface.Bench is not null)
-            {
-                host.Nav.Declare(AdventuresPage.RootKey, StoryBenchPage.Crumb);
-            }
-        }
+        _surface = surface;
+        _refresh = () => page?.Refresh();
+        ShowConditionalRoots();
 
         if (surface.Switched is { } switched)
         {

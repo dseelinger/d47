@@ -767,7 +767,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// Redraws the route being flown, from the host's tick, and says whether anything on it moved — the
     /// headset serves a frame for a true and holds the last one for a false (#52).
     /// </summary>
-    public bool TickRouting() => _navigation.Tick();
+    public bool TickRouting() => _navigation.Tick() | _stories.Tick();
 
     /// <summary>Gives this surface the Search tab, with the System page as its root.</summary>
     public void EnableStarSystem(StarSystemSurface surface) => _searchFurnishing.EnableStarSystem(surface);

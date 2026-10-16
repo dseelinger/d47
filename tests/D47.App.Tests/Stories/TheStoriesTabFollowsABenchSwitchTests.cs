@@ -64,7 +64,7 @@ public sealed class TheStoriesTabFollowsABenchSwitchTests
         new Window { Content = panel, Width = 1280, Height = 860 }.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
         Assert.DoesNotContain(Drawn(panel), text => text.StartsWith("Your story", StringComparison.OrdinalIgnoreCase));
 

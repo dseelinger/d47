@@ -97,16 +97,16 @@ public sealed class TheStoryBenchPageTests
     {
         var rig = Build(benchOn: false);
 
-        Assert.Null(Find(rig.Panel, "OpenStoryBench"));
+        Assert.DoesNotContain(rig.Panel.Nav.Roots(PanelTab.Stories), root => root.Key == StoryBenchPage.RootKey);
         Assert.DoesNotContain(Drawn(rig.Panel), text => text.Contains("Story bench", StringComparison.OrdinalIgnoreCase));
     }
 
     [AvaloniaFact]
-    public void WithTheBenchOnTheButtonOpensThePage()
+    public void WithTheBenchOnTheSubTabOpensThePage()
     {
         var rig = Build(benchOn: true);
 
-        Press(Find(rig.Panel, "OpenStoryBench")!);
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         Assert.NotNull(Find(rig.Panel, "NewSlot"));
@@ -119,7 +119,7 @@ public sealed class TheStoryBenchPageTests
         var rig = Build(benchOn: true);
         Assert.Null(rig.Bench!.Create("test"));
 
-        Press(Find(rig.Panel, "OpenStoryBench")!);
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         Press(Find(rig.Panel, "SwitchTo")!);
@@ -137,11 +137,11 @@ public sealed class TheStoryBenchPageTests
     {
         var rig = Build(benchOn: true);
 
-        Press(Find(rig.Panel, "OpenStoryBench")!);
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(0, rig.Stories.Current("F1")!.CluesGiven);
 
-        var stepper = rig.Panel.GetVisualDescendants().OfType<Control>().First(control => control is D47.App.Controls.IChoiceControl && control.IsEffectivelyVisible);
+        var stepper = rig.Panel.GetVisualDescendants().OfType<Control>().Last(control => control is D47.App.Controls.IChoiceControl && control.IsEffectivelyVisible);
         ((D47.App.Controls.IChoiceControl)stepper).SelectedIndex = 2;
 
         Press(Find(rig.Panel, "Jump")!);
@@ -161,7 +161,7 @@ public sealed class TheStoryBenchPageTests
         Settle(() => rig.Bench!.Checkpoints("F1").Count == 1);
         rig.Stories.Update("F1", id, story => story with { CluesGiven = 2 });
 
-        Press(Find(rig.Panel, "OpenStoryBench")!);
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         Dispatcher.UIThread.RunJobs();
         Assert.Contains(Drawn(rig.Panel), text => text.StartsWith("Chapter 1 — ", StringComparison.OrdinalIgnoreCase));
 

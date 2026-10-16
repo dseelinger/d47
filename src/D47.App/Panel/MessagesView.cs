@@ -58,12 +58,6 @@ public sealed class MessagesView : UserControl
         Rebuild();
     }
 
-    /// <summary>The button label on the Stories tab, carrying the unread count.</summary>
-    public static string ButtonLabel(MessageStore store) =>
-        store.UnreadCount is > 0 and var unread
-            ? $"{PageName} ({unread.ToString(CultureInfo.InvariantCulture)} new)"
-            : PageName;
-
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);

@@ -79,7 +79,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         window.Show();
 
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(StoriesView.Crumb);
+        panel.Nav.SelectRoot(StoriesView.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         tab.Window = window;
@@ -104,22 +104,16 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         [.. panel.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
 
     [AvaloniaFact]
-    public void TheRootBarReadsCatalogueShortStoryStoryLog()
+    public void TheSubTabsReadYourStoriesCatalogueShortStoryStoryLog()
     {
         var tab = Open();
 
         tab.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.RootKey, "Stories"));
         Dispatcher.UIThread.RunJobs();
 
-        var bar = tab.Panel.GetVisualDescendants().OfType<Button>()
-            .Where(button => button.IsEffectivelyVisible)
-            .Select(button => button.Content as string ?? string.Empty)
-            .Where(label => label is "Catalogue" or "Short Story" || label.StartsWith("Story log", StringComparison.Ordinal))
-            .ToList();
+        var bar = tab.Panel.Nav.Roots(PanelTab.Stories).Select(root => root.Word).ToList();
 
-        Assert.Equal(3, bar.Count);
-        Assert.Equal(["Catalogue", "Short Story"], bar.Take(2));
-        Assert.Equal("Story log", bar[2]);
+        Assert.Equal(["Your stories", "Catalogue", "Short Story", "Story log"], bar);
 
         tab.Window.Close();
     }
@@ -178,7 +172,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
 
         tab.Switch("B");
 
-        Assert.Equal([AdventuresPage.RootKey], tab.Panel.Nav.TrailOf(PanelTab.Stories).Select(crumb => crumb.Key));
+        Assert.Equal([StoriesView.RootKey], tab.Panel.Nav.TrailOf(PanelTab.Stories).Select(crumb => crumb.Key));
 
         tab.Window.Close();
     }
@@ -194,7 +188,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
 
         tab.Switch("B");
 
-        Assert.Equal([AdventuresPage.RootKey], tab.Panel.Nav.TrailOf(PanelTab.Stories).Select(crumb => crumb.Key));
+        Assert.Equal([StoriesView.RootKey], tab.Panel.Nav.TrailOf(PanelTab.Stories).Select(crumb => crumb.Key));
 
         tab.Window.Close();
     }
