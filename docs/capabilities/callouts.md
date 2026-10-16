@@ -562,7 +562,7 @@ this one off with the `powerplay-cycle` row.
 #### BGS tick {#bgs-tick}
 
 When the BGS ticks, once per tick, soon after the tick detector reports it. Needs *BGS tick time*
-under Galaxy search ([#1212](https://github.com/dseelinger/d47/issues/1212)).
+under Outside sources ([#1212](https://github.com/dseelinger/d47/issues/1212)).
 
 ```text
 The BGS has ticked.

@@ -488,7 +488,7 @@ public static class CalloutCapability
             Toggle(
                 BgsTickKey,
                 "BGS tick",
-                "When the BGS ticks, says so. Needs BGS tick time under Galaxy search.",
+                "When the BGS ticks, says so. Needs BGS tick time under Outside sources.",
                 "bgs-tick",
                 "BGS tick",
                 s => s.Callouts.BgsTick,

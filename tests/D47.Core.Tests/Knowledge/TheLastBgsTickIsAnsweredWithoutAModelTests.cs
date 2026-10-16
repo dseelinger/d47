@@ -61,7 +61,7 @@ public sealed class TheLastBgsTickIsAnsweredWithoutAModelTests
         var said = await Ask(Capability(false, Tick, Tick.AddHours(1)));
 
         Assert.Equal(
-            "BGS tick time is off, so I don't know when the tick was. It can be turned on under Galaxy search.",
+            "BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources.",
             said);
     }
 

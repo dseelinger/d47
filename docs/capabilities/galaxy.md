@@ -561,7 +561,7 @@ the setting being off or nothing read yet:
 
 ```csharp
 "The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago."
-"BGS tick time is off, so I don't know when the tick was. It can be turned on under Galaxy search."
+"BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources."
 "I haven't read the tick time yet."
 ```
 

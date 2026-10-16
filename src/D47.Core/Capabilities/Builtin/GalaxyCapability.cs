@@ -762,7 +762,7 @@ public static class GalaxyCapability
     {
         if (!enabled)
         {
-            return "BGS tick time is off, so I don't know when the tick was. It can be turned on under Galaxy search.";
+            return "BGS tick time is off, so I don't know when the tick was. It can be turned on under Outside sources.";
         }
 
         if (last is not { } tick)
