@@ -1048,7 +1048,7 @@ public sealed class AdventureGenerator(
                 : $"{Reply.Line.Length} characters came back and could not be read.";
     }
 
-    private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, StoryProgress? progress, CancellationToken cancellationToken)
+    private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken)
     {
         var asking = provider();
         var chosen = model() ?? asking?.DefaultModel ?? "no model";
@@ -1057,7 +1057,7 @@ public sealed class AdventureGenerator(
             model(),
             persona(),
             aboutMe(),
-            instruction,
+            call.Text,
             gameState: null,
             spend,
             prices,
@@ -1072,7 +1072,8 @@ public sealed class AdventureGenerator(
             sampling: LlmSampling.Adventure,
             // A model on this machine may be on a CPU, so it is never stopped for being slow.
             limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { Time = Time },
-            received: progress is null ? null : progress.Received).ConfigureAwait(false);
+            received: progress is null ? null : progress.Received,
+            responseSchema: call.Schema).ConfigureAwait(false);
 
         if (reply.Miss == FlavourMiss.TimedOut)
         {
@@ -1093,7 +1094,7 @@ public sealed class AdventureGenerator(
 
     // ---- the instructions ------------------------------------------------------------------
 
-    private static string SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates)
+    private static StoryCall SpineInstruction(AdventureAsk ask, Facts facts, IReadOnlyList<NotablePlace> notable, Candidates candidates)
     {
         var text = new StringBuilder();
 
@@ -1166,7 +1167,7 @@ public sealed class AdventureGenerator(
             + "\"stake\" (the inner one — the belief the story tests and what it would cost to be wrong), \"turn\" (where "
             + "it stops being what it looked like), \"ending\" (what the last objective means). Each under 600 characters.");
 
-        return text.ToString();
+        return new StoryCall(text.ToString(), StoryAnswer.SpineSchema());
     }
 
     /// <summary>
@@ -1611,7 +1612,7 @@ public sealed class AdventureGenerator(
         }
     }
 
-    private static string BeatsInstruction(
+    private static StoryCall BeatsInstruction(
         AdventureAsk ask,
         Facts facts,
         IReadOnlyList<NotablePlace> notable,
@@ -1710,7 +1711,9 @@ public sealed class AdventureGenerator(
         var reachAway = ask.Story?.BeaconAway;
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        text.AppendLine($"Each objective waits for exactly one of {Number(29 + team.Count + (beacon is null ? 0 : 1) + (reachAway is null ? 0 : 1))} things, and nothing else exists:");
+        var kinds = StoryAnswer.Kinds(team, beacon is not null, reachAway is not null);
+
+        text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
@@ -1828,27 +1831,18 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
+        var destination = ask.Story is { FinaleChapter: 1, Destination: null };
+
         text.AppendLine(
-            "Answer with one JSON object and nothing else: {\"name\": string, \"premise\": string, \"want\": string, "
-            + "\"stake\": string, \"turn\": string, \"ending\": string, "
-            + (speakers ? "\"opening\": [{\"text\": string, \"speaker\": string}]" : "\"opening\": string") + ", \"reply\": string, "
-            + "\"beats\": [{\"title\": string, \"function\": string, \"kind\": \"arrive\"|\"dock\"|\"land\"|\"scan\"|\"rank\"|\"board\"|\"bounty\"|\"bond\"|\"mission\"|\"sell\"|\"mine\"|\"onfoot\"|\"collect\"|\"organic\"|\"map\"|\"signal\"|\"wreck\"|\"codex\"|\"datasale\"|\"salvage\"|\"uss\"|\"rescue\"|\"engineer\"|\"srv\"|\"crew\"|\"suitmod\"|\"livery\""
-            + string.Concat(team.Select(kind => $"|\"{kind.ToString().ToLowerInvariant()}\""))
-            + (beacon is null ? string.Empty : "|\"beacon\"") + (reachAway is null ? string.Empty : "|\"reach\"") + ", "
-            + "\"reason\": string|null, \"system\": string|null, \"station\": string|null, \"body\": string|null, \"career\": string|null, "
-            + "\"rank\": number|null, \"ship\": string|null, \"count\": number|null, \"faction\": string|null, "
-            + "\"mission\": string|null, \"commodity\": string|null, \"filter\": string|null, \"organic\": boolean|null, "
-            + "\"engineer\": string|null, \"stage\": string|null, "
-            + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
-            + (ask.Story is { FinaleChapter: 1, Destination: null } ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty)
+            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination)
             + (changing
-                ? "}. \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
+                ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
                   + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
                   + "or that they should keep the objective. If you recommend keeping it, write it again unchanged. Your reply never states the hidden story."
-                : "}. \"reply\" is what you say to the Commander, in your own "
+                : ". \"reply\" is what you say to the Commander, in your own "
                   + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
-        return text.ToString();
+        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(speakers, kinds, destination));
     }
 
     private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)

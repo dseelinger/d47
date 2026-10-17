@@ -1,0 +1,140 @@
+using System.Text.Json.Nodes;
+using D47.Core.Conversation;
+
+namespace D47.Core.Adventures;
+
+/// <summary>A story call's instruction text and the JSON schema its answer must match.</summary>
+internal sealed record StoryCall(string Text, LlmResponseSchema Schema);
+
+/// <summary>The fields and kinds a story answer has, written once for both the instruction's JSON line and the schema.</summary>
+internal static class StoryAnswer
+{
+    internal const string SpineName = "story_spine";
+    internal const string BeatsName = "story_beats";
+
+    internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
+
+    /// <summary>Kinds offered in every story.</summary>
+    private static readonly string[] AlwaysKinds =
+    [
+        "arrive", "dock", "land", "scan", "rank", "board", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
+        "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew",
+        "suitmod", "livery", "conflict", "faction",
+    ];
+
+    private enum Shape
+    {
+        Text,
+        MaybeText,
+        MaybeWhole,
+        MaybeFlag,
+    }
+
+    private static readonly (string Name, Shape Shape)[] BeatFields =
+    [
+        ("reason", Shape.MaybeText), ("system", Shape.MaybeText), ("station", Shape.MaybeText), ("body", Shape.MaybeText),
+        ("career", Shape.MaybeText), ("rank", Shape.MaybeWhole), ("ship", Shape.MaybeText), ("count", Shape.MaybeWhole),
+        ("faction", Shape.MaybeText), ("mission", Shape.MaybeText), ("commodity", Shape.MaybeText), ("filter", Shape.MaybeText),
+        ("organic", Shape.MaybeFlag), ("engineer", Shape.MaybeText), ("stage", Shape.MaybeText),
+    ];
+
+    /// <summary>The kinds one beats call offers: those always offered, the team kinds, then beacon and reach when the story has them.</summary>
+    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach)
+    {
+        var kinds = new List<string>(AlwaysKinds);
+        kinds.InsertRange(AlwaysKinds.Length - 2, team.Select(kind => kind.ToString().ToLowerInvariant()));
+
+        if (beacon)
+        {
+            kinds.Add("beacon");
+        }
+
+        if (reach)
+        {
+            kinds.Add("reach");
+        }
+
+        return kinds;
+    }
+
+    internal static LlmResponseSchema SpineSchema() =>
+        new(SpineName, Object(SpineFields.Select(field => (field, (JsonNode)Text()))).ToJsonString());
+
+    /// <summary>The answer's JSON shape as the instruction states it.</summary>
+    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination) =>
+        "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
+        + ", \"opening\": " + (speakers ? "[{\"text\": string, \"speaker\": string}]" : "string")
+        + ", \"reply\": string, \"beats\": [{\"title\": string, \"function\": string, \"kind\": "
+        + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
+        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {Prose(field.Shape)}"))
+        + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
+        + (destination ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty) + "}";
+
+    internal static LlmResponseSchema BeatsSchema(bool speakers, IReadOnlyList<string> kinds, bool destination)
+    {
+        var beat = new List<(string, JsonNode)>
+        {
+            ("title", Text()),
+            ("function", Text()),
+            ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
+        };
+        beat.AddRange(BeatFields.Select(field => (field.Name, Of(field.Shape))));
+        beat.Add(speakers ? ("lines", Lines()) : ("line", Text()));
+
+        var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
+        {
+            ("opening", speakers ? Lines() : Text()),
+            ("reply", Text()),
+            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object(beat) }),
+        };
+
+        if (destination)
+        {
+            answer.Add(("destination", Object([("system", Text()), ("body", Text())])));
+        }
+
+        return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
+    }
+
+    private static string Prose(Shape shape) => shape switch
+    {
+        Shape.Text => "string",
+        Shape.MaybeText => "string|null",
+        Shape.MaybeWhole => "number|null",
+        _ => "boolean|null",
+    };
+
+    private static JsonNode Of(Shape shape) => shape switch
+    {
+        Shape.Text => Text(),
+        Shape.MaybeText => Maybe("string"),
+        Shape.MaybeWhole => Maybe("integer"),
+        _ => Maybe("boolean"),
+    };
+
+    private static JsonObject Text() => new() { ["type"] = "string" };
+
+    private static JsonObject Maybe(string type) => new() { ["type"] = new JsonArray(type, "null") };
+
+    private static JsonObject Lines() =>
+        new() { ["type"] = "array", ["items"] = Object([("text", Text()), ("speaker", Text())]) };
+
+    private static JsonObject Object(IEnumerable<(string Name, JsonNode Schema)> properties)
+    {
+        var list = properties.ToList();
+        var shape = new JsonObject();
+
+        foreach (var (name, schema) in list)
+        {
+            shape[name] = schema;
+        }
+
+        return new JsonObject
+        {
+            ["type"] = "object",
+            ["properties"] = shape,
+            ["required"] = new JsonArray(list.Select(property => (JsonNode)JsonValue.Create(property.Name)!).ToArray()),
+            ["additionalProperties"] = false,
+        };
+    }
+}
