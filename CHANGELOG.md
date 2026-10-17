@@ -12,6 +12,8 @@ While a short story is written, the Short Story page shows a bar with what D47 i
 
 While a story chapter is written, the Stories tab shows the same bar under the story's standing line, with what D47 is doing, the time so far and how long it usually takes, on the desktop and in the VR big panel. A second or third draft does not move the bar back, and it goes when the chapter is written or the write fails.
 
+While a jump on the Story bench writes a chapter, the bench page shows the same bar under its notice.
+
 Edge Neural speaks again. Microsoft changed how requests to the voice are signed, and every line failed with a 403 error; D47 now signs them the new way.
 
 A new setting, BGS tick time under Settings › Providers › Outside sources, lets D47 read when the last BGS tick happened from tick.infomancer.uk: once when you turn it on or start D47 with it on, then every ten minutes, and only while Elite is running. It is off by default. The request carries nothing about you, and it is unencrypted because the host answers only over plain HTTP; Privacy and egress lists it as BGS tick. D47 keeps the time across restarts.

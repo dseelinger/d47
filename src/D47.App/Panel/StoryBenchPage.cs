@@ -26,6 +26,9 @@ public sealed class StoryBenchPage : UserControl
     private readonly PanelPrompts _prompts;
     private readonly StackPanel _body = new() { Spacing = 8 };
     private readonly StatusLine _status = new();
+    private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private WriteProgressBar? _progress;
+    private string? _progressFor;
     private bool _acting;
     private string? _jumpLabel;
 
@@ -60,6 +63,8 @@ public sealed class StoryBenchPage : UserControl
         _bench.CheckpointsChanged += OnChanged;
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
+        _progressTimer.Tick += OnProgressTick;
+        _progressTimer.Start();
         Rebuild();
     }
 
@@ -70,15 +75,28 @@ public sealed class StoryBenchPage : UserControl
         _bench.CheckpointsChanged -= OnChanged;
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
+        _progressTimer.Stop();
+        _progressTimer.Tick -= OnProgressTick;
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
+
+    private void OnProgressTick(object? sender, EventArgs e) => RefreshProgress();
+
+    internal void RefreshProgress()
+    {
+        if (_progress is not null && _director.Progress(_progressFor) is { } progress)
+        {
+            _progress.Show(progress);
+        }
+    }
 
     private bool Writing(string? commander) => _director.IsWriting(commander) || _director.IsRewriting(commander);
 
     private void Rebuild()
     {
         _body.Children.Clear();
+        _progress = null;
 
         var commander = _surface.Commander();
         var busy = _acting || Writing(commander);
@@ -86,6 +104,14 @@ public sealed class StoryBenchPage : UserControl
         if (Writing(commander))
         {
             _body.Children.Add(AdventuresPage.Muted(WritingNotice));
+
+            if (_director.Progress(commander) is { } writing)
+            {
+                _progress = new WriteProgressBar("Writing the chapter");
+                _progress.Show(writing);
+                _progressFor = commander;
+                _body.Children.Add(_progress);
+            }
         }
 
         _body.Children.Add(AdventuresPage.Text("Slots", TypeScale.Small, ThemeManager.GreyKey));
