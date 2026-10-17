@@ -148,14 +148,14 @@ public class AStoryChapterShowsNoPremiseTests
         [.. panel.GetVisualDescendants().OfType<CheckBox>().Where(box => box.Content is TextBlock { Text: "Story on" })];
 
     [AvaloniaFact]
-    public void AChapterUnderWayPausesTheStoryAndCannotBeAbandoned()
+    public void AChapterUnderWayCanBePausedOrAbandoned()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         var surface = Open();
 
         Read(surface.Panel, "the-first-light", "The First Light");
-        Assert.DoesNotContain("Abandon", Buttons(surface.Panel));
+        Assert.Contains("Abandon", Buttons(surface.Panel));
 
         var box = Assert.Single(StoryOn(surface.Panel));
         Assert.True(box.IsChecked);
