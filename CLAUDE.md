@@ -45,14 +45,11 @@ change affects, and the gate filters. An unfiltered `D47.App.Tests` run is part 
 When fixing a failing test, never weaken it: deleting it, skipping it, loosening an assertion or widening a tolerance ships the defect. If the test makes a wrong claim, name the claim and say why it is wrong before changing it. A test that fails in a larger run and passes alone is shared state or ordering; report it, do not call it green.
 A unit test does not cross a process boundary or touch the file system; an integration test does either. Integration tests carry `[Trait("Category", "Integration")]`; `Category=Gate` tests count as integration.
 
-- SDK pinned by `global.json` to `10.0.400`, `rollForward: disable` — exact, because the suite
-  now runs partly here and partly on the runner and the two must agree on a toolchain.
-- `Directory.Build.props` sets `net10.0-windows`, `Nullable`, `ImplicitUsings`,
-  `EnforceCodeStyleInBuild` and **`TreatWarningsAsErrors`**. A warning is a build break. There is
+- `global.json` pins the SDK exactly (`rollForward: disable`) because the suite runs partly here
+  and partly on the runner and the two must agree on a toolchain.
+- **`TreatWarningsAsErrors`** is on (`Directory.Build.props`). A warning is a build break. There is
   no `#pragma warning disable` or `SuppressMessage` in `src/`; adding the first one is a
   deliberate act.
-- `D47.App` alone targets `net10.0-windows10.0.26100.0`, for `Windows.Gaming.Input`. Publishes
-  single-file, self-contained, `win-x64`.
 - xunit v3. `D47.Core.Tests` also references `Microsoft.CodeAnalysis.CSharp`: one gate reads
   source with the compiler because grep under-reported it (#270).
 
@@ -66,9 +63,6 @@ the About dialog. The changelog is a changelog: nothing in the release chain par
 - **Each spoke references only Core** — `D47.Audio`, `D47.Knowledge`, `D47.Llm`, `D47.Stt`,
   `D47.Tts`, `D47.Vr`. No spoke references another spoke.
 - **`D47.App` references all seven** and is the only place they meet.
-
-Core declares the seams (`ILlmProvider`, `ITtsProvider`, `ISpeechTranscriber`, `IAudioSink`,
-`IGalaxyService`, `IGameInput`); each spoke implements one.
 
 Enforced by `tests/D47.Core.Tests/CoreDependencyTests.cs`, which reflects over referenced
 assembly names and fails on `Avalonia`, `Vortice`, `NAudio`, `Whisper`, `Anthropic`, `OpenAI` or
@@ -130,16 +124,6 @@ rationale paragraphs and historical commentary removed, `.csproj` decision logs 
 rationale was lost with them. If a constraint is subtle enough that it needs explaining, prefer a
 test that fails when it is broken over a paragraph saying not to.
 
-### Tests are named as behavioural sentences
-
-Not `MethodName_Condition_Result`. From the suite: `ACancelledTurnIsNotAFailureTests`,
-`AStaleBuildSaysSoTests`, `TwoUnpromptedVoicesKeepTheirDistanceTests`, `SayItAndTheShipDoesItTests`.
-
-### Locate the repository root with `d47.slnx`
-
-Use `d47.slnx`, a build file that must exist for the test to have compiled. Keying off documentation
-makes the test fail when that file moves.
-
 ### Generated data is generated
 
 `tools/gen-*.py` produce `src/D47.Core/Knowledge/*.tsv` and
@@ -180,19 +164,3 @@ do not run `/design-sync`. `.design-sync/NOTES.md` has the details.
 - **The asset contract.** `src/D47.App/Updates/UpdateChecker.cs` hardcodes `d47.zip` and
   `d47.zip.sha256`. Every install in the field polls for those exact names; renaming either
   breaks updates silently, with no error anywhere.
-- `worker/` is the Cloudflare Worker backing donations — `wrangler deploy` from that directory,
-  and its `node --test` suite is deliberately not part of `dotnet test`. Nothing in the .NET
-  build references it.
-
-## Repo layout
-
-| Path | What |
-| --- | --- |
-| `src/` | The 8 projects. `D47.Core` is the hub; `D47.App` the composition root and UI. |
-| `tests/` | 8 xunit suites plus `tests/fixtures/` journal fixtures. |
-| `docs/` | Published Jekyll site. Also embedded into `D47.Core`. |
-| `tools/` | The Python table generators and the release commands. |
-| `worker/` | The Cloudflare Worker backing donations. |
-| `installer/` | `d47.iss`, the Inno Setup script. |
-| `assets/` | Cues, alert beds, ship art, icons. |
-| `design/` | `system/`, the Claude Design snapshot; `ds-update/` and `handoff/`, the design packs. |

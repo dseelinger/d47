@@ -1,6 +1,7 @@
 ---
 name: issue-worker
-description: Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. An issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+description: >-
+  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. An issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
