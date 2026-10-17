@@ -25,6 +25,9 @@ public sealed record StoryRecord
     /// <summary>"short story" or "chapter".</summary>
     public string Kind { get; init; } = "short story";
 
+    /// <summary><c>D47_COMPARE_LABEL</c>: the context and variant the run was made under.</summary>
+    public string Label { get; init; } = "";
+
     public required string Model { get; init; }
 
     public required string Effort { get; init; }
@@ -41,6 +44,12 @@ public sealed record StoryRecord
     public string? Reason { get; init; }
 
     public string? Refusal { get; init; }
+
+    /// <summary>The Commander's message when a reply stopped at the endpoint's context.</summary>
+    public string? ContextMessage { get; init; }
+
+    /// <summary>The file under <c>drafts</c> holding the whole draft, or the refusal.</summary>
+    public string? DraftFile { get; init; }
 
     public IReadOnlyList<string> Warnings { get; init; } = [];
 

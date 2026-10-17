@@ -100,6 +100,18 @@ public partial class StoryComparisonTests
         var galaxy = new TimedGalaxy(services.Galaxy);
         var places = new TimedNotablePlaces(new GecNotablePlacesService(NullLogger<GecNotablePlacesService>.Instance));
 
+        var label = Env("D47_COMPARE_LABEL") ?? "";
+        var drafts = Path.Combine(output, "drafts");
+        Directory.CreateDirectory(drafts);
+
+        await using var proxy = Env("D47_COMPARE_PROXY_PORT") is { } port
+            ? new LoopbackProxy(
+                int.Parse(port, CultureInfo.InvariantCulture),
+                Env("D47_COMPARE_PROXY_TARGET") ?? "http://127.0.0.1:1234/",
+                Env("D47_COMPARE_PROXY_VARIANT") ?? "",
+                Path.Combine(output, "proxy", label.Length > 0 ? label : DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)))
+            : null;
+
         var kind = chapters ? "chapter" : "short story";
         var results = Path.Combine(output, (dry ? "dry-" : "") + (chapters ? "chapters.jsonl" : "stories.jsonl"));
         var progress = Path.Combine(output, "stories-progress.log");
@@ -108,6 +120,17 @@ public partial class StoryComparisonTests
 
         Log($"{kind}s; models {string.Join(", ", models)}; efforts {string.Join(", ", efforts)}; {runs} run(s); cap ${cap}; spent so far ${meter.Spent:0.0000}");
         Log($"commander {world.GameState.Active?.Identity.Name ?? "none"}");
+
+        if (Env("D47_COMPARE_OVERFLOW_FIRST") == "1")
+        {
+            foreach (var model in models.Where(model => LocalModels.Contains(model, StringComparer.Ordinal)))
+            {
+                Log($"{model}: overflow first: {await OverflowAsync(ForModel(model), model).ConfigureAwait(false)}");
+            }
+        }
+
+        var chapterAsk = Env("D47_COMPARE_CHAPTER") == "6" ? ChapterSixAsk : ChapterAsk;
+        var lastRefused = Env("D47_COMPARE_LAST_REFUSED");
 
         // Run outermost, so a cap that stops the run still leaves every combination one story.
         for (var run = 1; run <= runs; run++)
@@ -122,10 +145,13 @@ public partial class StoryComparisonTests
                         continue;
                     }
 
-                    var ask = chapters
-                        ? ChapterAsk
-                        : new AdventureAsk(Reach: AdventureReach.NearHere, Length: AdventureLength.Short);
-                    var record = await WriteOneAsync(meter, model, effort, run, persona, world, galaxy, places, ask, kind);
+                    var ask = (chapters
+                        ? chapterAsk
+                        : new AdventureAsk(
+                            Reach: AdventureReach.NearHere,
+                            Length: Enum.Parse<AdventureLength>(Env("D47_COMPARE_LENGTH") ?? nameof(AdventureLength.Short)),
+                            Brief: Env("D47_COMPARE_BRIEF"))) with { LastDraftRefused = lastRefused };
+                    var record = await WriteOneAsync(meter, model, effort, run, persona, world, galaxy, places, ask, kind, label, drafts);
                     File.AppendAllText(results, JsonSerializer.Serialize(record) + Environment.NewLine);
                     Log($"{model} {effort} #{run}: {record.Outcome}{(record.FailingStep is null ? "" : $" at {record.FailingStep}")} "
                         + $"in {record.TotalSeconds:0}s (galaxy {record.GalaxySeconds:0}s), ${record.Dollars:0.0000}, spent ${meter.Spent:0.0000}");
@@ -146,7 +172,9 @@ public partial class StoryComparisonTests
         TimedGalaxy galaxy,
         TimedNotablePlaces places,
         AdventureAsk ask,
-        string kind)
+        string kind,
+        string label,
+        string drafts)
     {
         meter.Drain();
         galaxy.Reset();
@@ -191,10 +219,31 @@ public partial class StoryComparisonTests
         var warnings = log.Entries.Where(entry => entry.Level >= LogLevel.Warning).Select(entry => entry.Message).ToList();
         var reason = warnings.FirstOrDefault(warning => warning.StartsWith("A story was not written", StringComparison.Ordinal));
         var capped = metered.Any(request => request.Failure?.Contains(" cap.", StringComparison.Ordinal) == true);
+        var draftFile = Path.Combine(
+            drafts,
+            $"{(label.Length > 0 ? label + "-" : "")}{(kind == "chapter" ? "chapter" : "story")}-{model.Replace('/', '_')}-{effort}-{run}-{DateTimeOffset.Now:HHmmss}.json");
+
+        File.WriteAllText(draftFile, JsonSerializer.Serialize(
+            new
+            {
+                label,
+                kind,
+                model,
+                effort = effort.ToString(),
+                run,
+                lastDraftRefused = ask.LastDraftRefused,
+                draft = outcome?.Draft,
+                reply = outcome?.Reply,
+                refusal = outcome?.Refusal,
+                contextMessage = outcome?.ContextMessage,
+                notes = outcome?.Notes,
+            },
+            DraftJson));
 
         return new StoryRecord
         {
             Kind = kind,
+            Label = label,
             Model = model,
             Effort = effort.ToString(),
             Run = run,
@@ -202,6 +251,8 @@ public partial class StoryComparisonTests
             FailingStep = reason is null ? null : StepNamed().Match(reason) is { Success: true } match ? match.Groups[1].Value : null,
             Reason = reason,
             Refusal = outcome?.Refusal,
+            ContextMessage = outcome?.ContextMessage,
+            DraftFile = Path.GetFileName(draftFile),
             Warnings = warnings,
             Name = outcome?.Draft?.Name,
             Beats = outcome?.Draft?.Beats.Count ?? 0,
@@ -298,6 +349,98 @@ public partial class StoryComparisonTests
             ],
             Core: "archivist",
             CoreIsStock: true));
+
+    private static readonly JsonSerializerOptions DraftJson = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    /// <summary>
+    /// One call with a prompt larger than any context the server can load, so the provider learns the context from
+    /// the refusal and clamps every later call's output to a quarter of it.
+    /// </summary>
+    private static async Task<string> OverflowAsync(ILlmProvider provider, string model)
+    {
+        var tokens = int.Parse(Env("D47_COMPARE_OVERFLOW_TOKENS") ?? "140000", CultureInfo.InvariantCulture);
+        var filler = string.Join(' ', Enumerable.Range(0, tokens / 15).Select(at => $"The quick brown fox jumps over the lazy dog number {at}."));
+        var reply = await FlavourTurn.AskForAsync(
+            provider, model, null, null, filler + " Reply with OK.", null, null, null, null, Token, maxOutputTokens: 100).ConfigureAwait(false);
+
+        return reply.Line is null ? $"{reply.Miss}: {reply.Message}" : $"answered {reply.Line.Length} characters";
+    }
+
+    /// <summary>
+    /// Chapter six of the same story, after five invented chapters: the four before the last shown by name and
+    /// premise, the last in full, and a hidden layer grown by five chapters of clues.
+    /// </summary>
+    private static AdventureAsk ChapterSixAsk
+    {
+        get
+        {
+            var two = ChapterAsk.Chapter!.Previous;
+
+            static Adventure Earlier(string key, string name, string premise) => new()
+            {
+                Key = key,
+                Name = name,
+                Source = AdventureSource.Generated,
+                StoryId = "the-salt-ledger",
+                Spine = new AdventureSpine { Premise = premise },
+            };
+
+            var earlier = new[]
+            {
+                Earlier("the-broker", "The Broker's Receipt", "The receipt for the ship lists a previous owner whose name has been scratched out of the hull plate."),
+                two,
+                Earlier("the-frontier-dock", "Ren's Dock", "A dock hand on the frontier recognises the ship's registry and will not say from where."),
+                Earlier("the-lullaby", "The Lullaby", "The ship's voice hums the same four notes whenever the Commander enters a system with a Guardian site."),
+            };
+
+            var five = two with
+            {
+                Key = "the-second-signature",
+                Name = "The Second Signature",
+                Spine = new AdventureSpine
+                {
+                    Premise = "A second ledger entry, older than the first, is signed by someone with the Commander's voiceprint.",
+                    Want = "To find the station the entry names and what was promised there.",
+                    Stake = "Whether the Commander is paying off someone else's debt without being told.",
+                    Turn = "The station is abandoned, and its last log is in the ship's voice.",
+                    Ending = "The voice asks to be taken somewhere quiet, and will not say why.",
+                },
+            };
+
+            var story = ChapterAsk.Story! with
+            {
+                Chapter = 6,
+                DaysRunning = 41,
+                Stage = "fun and games",
+                Hidden = ChapterAsk.Story.Hidden
+                    + " Since then: the broker's receipt names a previous owner scratched from the hull plate; Ren at the frontier "
+                    + "dock knew the registry and went quiet; the voice hums four notes in any system with a Guardian site; a "
+                    + "second ledger entry, older than the first, carries the Commander's own voiceprint; the abandoned station's "
+                    + "last log is in the ship's voice. The Commander has started to suspect the voice is waiting for something.",
+                StageBeats =
+                [
+                    ("SetUp", "The Commander learns the ship's voice keeps a ledger of debts that are not theirs."),
+                    ("Catalyst", "An entry in the ledger names a station the Commander has never visited."),
+                    ("Debate", "The Commander weighs whether to keep a ship that remembers someone else."),
+                    ("BreakIntoTwo", "The Commander decides to follow the ledger rather than sell the ship."),
+                    ("FunAndGames", "Each entry the Commander settles opens another, further out toward the beacons."),
+                ],
+            };
+
+            return new AdventureAsk(
+                AdventureReach.Session,
+                AdventureLength.Evening,
+                Chapter: new AdventureChapter(five, earlier),
+                Story: story);
+        }
+    }
+
 
     /// <summary>The most one story by <paramref name="model"/> can cost; throws for a model with no published price.</summary>
     private static decimal WorstCase(string model)
