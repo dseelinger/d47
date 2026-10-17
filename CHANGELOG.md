@@ -10,6 +10,8 @@
 
 While a short story is written, the Short Story page shows a bar with what D47 is doing ("Writing your objectives…"), the time so far and how long it usually takes, and a Stop button that ends the write, and D47 says nothing. Leaving the page no longer loses the write: the bar is there when you come back, on the desktop and in the VR big panel. When the story is finished D47 saves it and says so straight away, whichever page or tab is showing, and opening Short Story afterwards takes you to the draft.
 
+While a story chapter is written, the Stories tab shows the same bar under the story's standing line, with what D47 is doing, the time so far and how long it usually takes, on the desktop and in the VR big panel. A second or third draft does not move the bar back, and it goes when the chapter is written or the write fails.
+
 Edge Neural speaks again. Microsoft changed how requests to the voice are signed, and every line failed with a 403 error; D47 now signs them the new way.
 
 A new setting, BGS tick time under Settings › Providers › Outside sources, lets D47 read when the last BGS tick happened from tick.infomancer.uk: once when you turn it on or start D47 with it on, then every ten minutes, and only while Elite is running. It is off by default. The request carries nothing about you, and it is unencrypted because the host answers only over plain HTTP; Privacy and egress lists it as BGS tick. D47 keeps the time across restarts.

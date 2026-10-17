@@ -655,13 +655,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { go, stop } };
         var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
 
-        var track = Gauge.Track(0, ThemeManager.AKey);
-        var hint = Muted("");
-        var progress = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), IsVisible = false };
-        progress.Children.Add(new Border());
-        progress.Children.Add(track);
-        progress.Children.Add(hint);
-        AutomationProperties.SetName(track, "Writing the story");
+        var progress = new WriteProgressBar("Writing the story") { IsVisible = false };
 
         void Label()
         {
@@ -741,10 +735,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             go.IsEnabled = false;
             stop.IsVisible = true;
             progress.IsVisible = true;
-            progress.Children[0] = Gauge.Heading(Doing(write.Progress.Stage), Clock(write.Progress.Elapsed), ThemeManager.AKey);
-            Gauge.Fill(track, write.Progress.Fill);
-            hint.Text = write.Progress.Hint;
-            hint.IsVisible = hint.Text.Length > 0;
+            progress.Show(write.Progress);
 
             if (write.Aside is { } aside)
             {
@@ -894,9 +885,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         WriteStage.Objectives => "Writing your objectives…",
         _ => "Checking the objectives…",
     };
-
-    private static string Clock(TimeSpan elapsed) =>
-        string.Create(CultureInfo.InvariantCulture, $"{(int)elapsed.TotalMinutes}:{elapsed.Seconds:00}");
 
     private bool OnAsk() => _nav.Tab == PanelTab.Stories && _nav.Trail is [.., { Key: AskKey }];
 
