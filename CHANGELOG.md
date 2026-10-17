@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The current story's current chapter page has an Abandon button beside Story on. It asks the same question as the Catalogue card, and on Abandon it ends the story and returns to the Your stories list.
+
 While a short story is written, the Short Story page shows a bar with what D47 is doing ("Writing your objectives…"), the time so far and how long it usually takes, and a Stop button that ends the write, and D47 says nothing. Leaving the page no longer loses the write: the bar is there when you come back, on the desktop and in the VR big panel. When the story is finished D47 saves it and says so straight away, whichever page or tab is showing, and opening Short Story afterwards takes you to the draft.
 
 While a story chapter is written, the Stories tab shows the same bar under the story's standing line, with what D47 is doing, the time so far and how long it usually takes, on the desktop and in the VR big panel. A second or third draft does not move the bar back, and it goes when the chapter is written or the write fails.

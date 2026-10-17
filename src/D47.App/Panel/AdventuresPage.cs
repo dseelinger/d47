@@ -597,6 +597,22 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             && string.Equals(story.CurrentChapter, adventure.Key, StringComparison.Ordinal))
         {
             bar.Children.Add(StoriesView.StoryOnBox(_surface, stories, story, drawnFor));
+            bar.Children.Add(Action("Abandon", () => StoriesView.AbandonStory(
+                _surface,
+                _prompts,
+                stories,
+                story,
+                drawnFor,
+                refusal =>
+                {
+                    if (refusal is not null)
+                    {
+                        _surface.Say(refusal);
+                        return;
+                    }
+
+                    _nav.ToRoot();
+                }), destructive: true));
         }
 
         return bar;

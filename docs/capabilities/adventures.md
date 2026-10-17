@@ -454,8 +454,8 @@ chapter one begins in act one with no beacon objective. The story's days count f
 month or longer keeps the real scan.
 **Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
 had before your first story, or to empty. Switch passes that earlier Backstory on to the new story.
-Neither changes your Guardian cores. A chapter's own page has no Abandon;
-it has **Story on**, which pauses the story.
+Neither changes your Guardian cores. **Abandon** on the current chapter's page ends the story, as it
+does on the Catalogue; that page also has **Story on**, which pauses the story.
 
 Each story is written for one Guardian core, shown on the list and on the story's page as "Core". When
 you scan the story's first Guardian beacon, or at the pick of a story shorter than a month, that core comes aboard in place of the core you had, says

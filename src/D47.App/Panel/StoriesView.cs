@@ -300,6 +300,40 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     /// <summary>
+    /// Asks whether to abandon the Commander's current story and on yes abandons it.
+    /// <paramref name="done"/> gets the refusal, or null once the story is abandoned; it is not called on Keep going.
+    /// </summary>
+    internal static void AbandonStory(AdventureSurface surface, PanelPrompts prompts, StoryDirector director, Story story, string? commander, Action<string?> done)
+    {
+        if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
+        {
+            done(CommanderChangedRefusal);
+            return;
+        }
+
+        prompts.Choose(
+            new ChoiceRequest(
+                "story.abandon",
+                "Abandon",
+                $"Abandon {story.Title}?",
+                "The story ends here. Its chapters leave the list on the Stories tab, any Guardian core it held back is available at once, and your Backstory goes back to the one you had before the story.",
+                [new ChoiceOption("keep", "Keep going"), new ChoiceOption("yes", "Abandon it")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key != "yes")
+                {
+                    return;
+                }
+
+                done(string.Equals(commander, surface.Commander(), StringComparison.Ordinal)
+                    ? director.Abandon(commander, surface.Now())
+                    : CommanderChangedRefusal);
+            });
+    }
+
+    /// <summary>
     /// Asks whether to replace the beat the current story's chapter is waiting on, and on yes has a different one written.
     /// <paramref name="doing"/> runs when the write starts; <paramref name="done"/> gets its refusal, or null.
     /// </summary>
@@ -567,17 +601,15 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         buttons.Children.Add(StoryOnBox(_surface, _director, story, commander, _status));
 
-        buttons.Children.Add(Act("Abandon", () => Confirm(
+        buttons.Children.Add(Act("Abandon", () => AbandonStory(
+            _surface,
+            _prompts,
+            _director,
+            story,
             commander,
-            _status,
-            "story.abandon",
-            "Abandon",
-            $"Abandon {story.Title}?",
-            "The story ends here. Its chapters leave the list on the Stories tab, any Guardian core it held back is available at once, and your Backstory goes back to the one you had before the story.",
-            "Abandon it",
-            () =>
+            refusal =>
             {
-                if (_director.Abandon(commander, _surface.Now()) is { } refusal)
+                if (refusal is not null)
                 {
                     _status.Fail(refusal);
                 }
