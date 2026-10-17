@@ -183,7 +183,19 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     public bool Unanswered { get; init; }
 
     /// <summary>What the Commander is shown and told; the detail stays in <see cref="Refusal"/>.</summary>
-    public string? Message => Refusal is null ? null : Internal ? NotWritten : Refusal;
+    public string? Message => Refusal is null ? null : ContextMessage ?? (Internal ? NotWritten : Refusal);
+
+    /// <summary>Set when a reply stopped at the endpoint's context; names the counts and the length to set.</summary>
+    public string? ContextMessage { get; init; }
+
+    /// <summary>The context length that fits a prompt of the given size and a full output ceiling, in 4096-token steps.</summary>
+    public static int ContextNeeded(int? promptTokens, int ceiling) =>
+        (((promptTokens ?? 8000) + ceiling + 4095) / 4096) * 4096;
+
+    internal static string ContextLimitMessage(FlavourCutOff cutOff) =>
+        $"The model's context ran out. The prompt took {cutOff.PromptTokens} tokens and the reply was cut off after "
+        + $"{cutOff.ReplyTokens}. Set the context length on the model's server to at least "
+        + $"{ContextNeeded(cutOff.PromptTokens, cutOff.Ceiling):N0} tokens, then write it again.";
 
     /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
     public AdventureDestination? Destination { get; init; }
@@ -447,7 +459,11 @@ public sealed class AdventureGenerator(
                 seconds);
         }
 
-        return new AdventureOutcome(null, reply, detail, notes) { Internal = true };
+        return new AdventureOutcome(null, reply, detail, notes)
+        {
+            Internal = true,
+            ContextMessage = asked?.Reply.CutOff is { AtContext: true } cutOff ? AdventureOutcome.ContextLimitMessage(cutOff) : null,
+        };
     }
 
     private const string UnknownSpeaker = "A line is given to ";

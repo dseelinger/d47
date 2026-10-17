@@ -1813,7 +1813,7 @@ public sealed class StoryDirector(
         if (outcome.Draft is not { } draft)
         {
             return outcome.Internal
-                ? new(outcome.Message, Retry: true, Detail: outcome.Unanswered ? null : outcome.Refusal)
+                ? new(outcome.Message, Retry: outcome.ContextMessage is null, Detail: outcome.Unanswered ? null : outcome.Refusal)
                 : new(outcome.Message ?? "Nothing came back.");
         }
 

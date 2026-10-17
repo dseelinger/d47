@@ -12,6 +12,8 @@ Edge Neural speaks again. Microsoft changed how requests to the voice are signed
 
 A new setting, BGS tick time under Settings › Providers › Outside sources, lets D47 read when the last BGS tick happened from tick.infomancer.uk: once when you turn it on or start D47 with it on, then every ten minutes, and only while Elite is running. It is off by default. The request carries nothing about you, and it is unencrypted because the host answers only over plain HTTP; Privacy and egress lists it as BGS tick. D47 keeps the time across restarts.
 
+When a local model's context is too small for a story, D47 now says so, with the token counts and the context length to set on the server, instead of "The chapter could not be written". It does not write the chapter again, because a second try fails the same way.
+
 With BGS tick time on, D47 now says when the BGS has ticked, once per tick: "The BGS has ticked." for a tick up to fifteen minutes old, or "The BGS ticked forty minutes ago." up to an hour. An older tick is not said, so a restart stays quiet. Turn it off with the BGS tick row under Callouts.
 
 You can now ask when the last BGS tick was, by voice or typed, with no language model needed: "when was the last tick" answers "The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago." With BGS tick time off it says so and where to turn it on, and with it on but nothing read yet it says it hasn't read the time.

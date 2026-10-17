@@ -51,6 +51,25 @@ public sealed class ACutOffStoryNamesTheLimitItHitTests
         Assert.Contains($"cut off at the {AdventureGenerator.BeatsOutputCeiling}-token output ceiling", notWritten);
     }
 
+    [Fact]
+    public async Task AReplyStoppedAtTheContextTellsTheCommanderTheLengthToSet()
+    {
+        var outcome = await Write(new LlmUsage(6084, 2108, 0, 0), new RecordingLogger());
+
+        Assert.Equal(
+            "The model's context ran out. The prompt took 6084 tokens and the reply was cut off after 2108. "
+            + "Set the context length on the model's server to at least 24,576 tokens, then write it again.",
+            outcome.Message);
+    }
+
+    [Fact]
+    public async Task AReplyStoppedAtTheCeilingKeepsTheUsualMessage()
+    {
+        var outcome = await Write(new LlmUsage(6084, AdventureGenerator.BeatsOutputCeiling, 0, 0), new RecordingLogger());
+
+        Assert.Equal(AdventureOutcome.NotWritten, outcome.Message);
+    }
+
     private static Task<AdventureOutcome> Write(LlmUsage beatsUsage, ILogger log)
     {
         var provider = new RoundScriptedLlmProvider(
