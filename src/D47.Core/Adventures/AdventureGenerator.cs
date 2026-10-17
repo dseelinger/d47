@@ -212,6 +212,9 @@ public sealed class AdventureGenerator(
     /// <summary>Output ceiling for each beats turn.</summary>
     public const int BeatsOutputCeiling = 16000;
 
+    /// <summary>The thinking effort every call asks for.</summary>
+    public ThinkingEffort Effort { get; init; } = ThinkingEffort.Medium;
+
     /// <summary>Beats per structure.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
@@ -908,7 +911,9 @@ public sealed class AdventureGenerator(
     {
         public string Why => Reply.Line is null
             ? $"Nothing came back ({Reply.Miss}{(string.IsNullOrWhiteSpace(Reply.Message) ? "" : $": {Reply.Message}")})."
-            : $"{Reply.Line.Length} characters came back and could not be read.";
+            : Reply.CutOff is { } cutOff
+                ? $"{Reply.Line.Length} characters came back, cut off {cutOff.Describe()}, and could not be read."
+                : $"{Reply.Line.Length} characters came back and could not be read.";
     }
 
     private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, CancellationToken cancellationToken)
@@ -926,7 +931,7 @@ public sealed class AdventureGenerator(
             logger,
             cancellationToken,
             maxOutputTokens: budget,
-            effort: ThinkingEffort.Medium,
+            effort: Effort,
 
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure).ConfigureAwait(false);

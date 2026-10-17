@@ -212,24 +212,41 @@ public static class FlavourTurn
         Record();
 
         var line = reply.ToString().Trim();
+        FlavourCutOff? cutOff = null;
 
         // **A truncated turn is not a declined one, and used to be indistinguishable from it** (#97).
         if (stopReason == LlmStopReason.MaxTokens)
         {
-            logger?.LogWarning(
-                "{Model} spent the whole {Ceiling}-token ceiling before finishing; "
-                + "{Wrote} characters were written. If it is a reasoning model, the thinking is "
-                + "being charged to the same ceiling as the answer.",
-                chosenModel,
-                ceiling,
-                line.Length);
+            cutOff = new FlavourCutOff(usage.Reported ? usage.TotalInputTokens : null, usage.Reported ? usage.OutputTokens : null, ceiling);
+
+            if (cutOff.AtContext)
+            {
+                logger?.LogWarning(
+                    "{Model} stopped after {Prompt} prompt and {Reply} reply tokens, short of the {Ceiling}-token "
+                    + "ceiling: the endpoint's context ran out. {Wrote} characters were written.",
+                    chosenModel,
+                    cutOff.PromptTokens,
+                    cutOff.ReplyTokens,
+                    ceiling,
+                    line.Length);
+            }
+            else
+            {
+                logger?.LogWarning(
+                    "{Model} spent the whole {Ceiling}-token ceiling before finishing; "
+                    + "{Wrote} characters were written. If it is a reasoning model, the thinking is "
+                    + "being charged to the same ceiling as the answer.",
+                    chosenModel,
+                    ceiling,
+                    line.Length);
+            }
         }
 
         return stopReason == LlmStopReason.Refusal
             ? new FlavourReply(null, FlavourMiss.Failed, "the model refused")
             : line.Length == 0
-                ? new FlavourReply(null, FlavourMiss.Failed, "the reply was empty")
-                : new FlavourReply(line);
+                ? new FlavourReply(null, FlavourMiss.Failed, "the reply was empty") { CutOff = cutOff }
+                : new FlavourReply(line) { CutOff = cutOff };
     }
 }
 
@@ -251,4 +268,19 @@ public enum FlavourMiss
 
 /// <summary>One flavour line, or why there is none.</summary>
 /// <param name="Message">The provider's own message for a <see cref="FlavourMiss.Failed"/> reply.</param>
-public sealed record FlavourReply(string? Line, FlavourMiss Miss = FlavourMiss.None, string? Message = null);
+public sealed record FlavourReply(string? Line, FlavourMiss Miss = FlavourMiss.None, string? Message = null)
+{
+    /// <summary>Where the reply was cut off, or null when it finished.</summary>
+    public FlavourCutOff? CutOff { get; init; }
+}
+
+/// <summary>A reply that stopped at a token limit, with the provider's counts where it reported them.</summary>
+public sealed record FlavourCutOff(int? PromptTokens, int? ReplyTokens, int Ceiling)
+{
+    /// <summary>Whether the reply stopped short of the ceiling, so the endpoint's context was the limit.</summary>
+    public bool AtContext => ReplyTokens is { } reply && reply > 0 && reply < Ceiling;
+
+    public string Describe() => AtContext
+        ? $"at the endpoint's context after {PromptTokens} prompt and {ReplyTokens} reply tokens"
+        : $"at the {Ceiling}-token output ceiling";
+}

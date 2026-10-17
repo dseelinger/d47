@@ -23,10 +23,10 @@ namespace D47.Scenarios.Tests.ModelComparison;
 [Trait("Category", "Integration")]
 public class ModelComparisonTests
 {
-    private static string? Env(string name) =>
+    internal static string? Env(string name) =>
         Environment.GetEnvironmentVariable(name) is { Length: > 0 } value ? value : null;
 
-    private static string Required(string name) =>
+    internal static string Required(string name) =>
         Env(name) ?? throw new InvalidOperationException($"Set {name}.");
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -53,7 +53,7 @@ public class ModelComparisonTests
                     new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed)),
                 Path.Combine(output, "dry-spend.jsonl"),
                 cap)
-            : new MeteredLlmProvider(Compose(), Path.Combine(output, "spend.jsonl"), cap);
+            : new MeteredLlmProvider(Compose(LlmProviderCatalog.AnthropicId), Path.Combine(output, "spend.jsonl"), cap);
 
         var services = new ScenarioServices
         {
@@ -154,7 +154,7 @@ public class ModelComparisonTests
     }
 
     /// <summary>Every journal line in the folder, oldest file first, that parses.</summary>
-    private static List<JournalEvent> Journal(string folder)
+    internal static List<JournalEvent> Journal(string folder)
     {
         var events = new List<JournalEvent>();
 
@@ -172,17 +172,29 @@ public class ModelComparisonTests
         return events;
     }
 
-    /// <summary>
-    /// The Anthropic provider, through the app's own factory. The key comes from <c>D47_COMPARE_KEY</c>, or
-    /// from d47's own encrypted store under <c>D47_COMPARE_SECRETS_FROM</c>, read in this process and never
-    /// written anywhere.
-    /// </summary>
-    private static ILlmProvider Compose()
-    {
-        var info = LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId)
-                   ?? throw new InvalidOperationException("No Anthropic provider in the catalog.");
+    /// <summary>Models served on this machine at <c>D47_COMPARE_LOCAL_ENDPOINT</c>, from <c>D47_COMPARE_LOCAL_MODELS</c>.</summary>
+    internal static IReadOnlyList<string> LocalModels => Env("D47_COMPARE_LOCAL_MODELS")?.Split(',') ?? [];
 
-        var key = Env("D47_COMPARE_KEY");
+    /// <summary>LM Studio's own port unless <c>D47_COMPARE_LOCAL_ENDPOINT</c> names another.</summary>
+    private static string LocalEndpoint => Env("D47_COMPARE_LOCAL_ENDPOINT") ?? "http://127.0.0.1:1234/v1";
+
+    /// <summary>
+    /// A provider through the app's own factory. The key comes from <c>D47_COMPARE_KEY</c> for Anthropic or
+    /// <c>D47_COMPARE_OPENAI_KEY</c> for OpenAI, or from d47's own encrypted store under
+    /// <c>D47_COMPARE_SECRETS_FROM</c>, read in this process and never written anywhere. A local endpoint takes none.
+    /// </summary>
+    internal static ILlmProvider Compose(string providerId)
+    {
+        var info = LlmProviderCatalog.Find(providerId)
+                   ?? throw new InvalidOperationException($"No {providerId} provider in the catalog.");
+
+        if (providerId == LlmProviderCatalog.OpenAiCompatibleId)
+        {
+            return LlmProviderFactory.Create(info, null, LocalEndpoint)
+                   ?? throw new InvalidOperationException(LlmProviderFactory.ReasonForNoClient(info));
+        }
+
+        var key = Env(providerId == LlmProviderCatalog.OpenAiId ? "D47_COMPARE_OPENAI_KEY" : "D47_COMPARE_KEY");
 
         if (key is null && Env("D47_COMPARE_SECRETS_FROM") is { } root)
         {
@@ -191,9 +203,15 @@ public class ModelComparisonTests
         }
 
         return LlmProviderFactory.Create(info, key ?? throw new InvalidOperationException(
-                   "No key: set D47_COMPARE_KEY or D47_COMPARE_SECRETS_FROM."), info.DefaultEndpoint)
+                   $"No {info.Name} key: set D47_COMPARE_KEY, D47_COMPARE_OPENAI_KEY or D47_COMPARE_SECRETS_FROM."), info.DefaultEndpoint)
                ?? throw new InvalidOperationException(LlmProviderFactory.ReasonForNoClient(info));
     }
+
+    /// <summary>The catalog provider that offers <paramref name="model"/>, or the local endpoint for a local model.</summary>
+    internal static string ProviderOf(string model) =>
+        LocalModels.Contains(model, StringComparer.Ordinal) ? LlmProviderCatalog.OpenAiCompatibleId
+        : LlmProviderCatalog.All.FirstOrDefault(provider => provider.Models.Contains(model, StringComparer.Ordinal))?.Id
+        ?? throw new InvalidOperationException($"No provider in the catalog offers {model}.");
 
     /// <summary>A fixed picture of the screen, from a JPEG on disk.</summary>
     private sealed class FileScreen(string path) : IScreenCapture

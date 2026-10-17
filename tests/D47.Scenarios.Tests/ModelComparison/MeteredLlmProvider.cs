@@ -19,8 +19,8 @@ public sealed record PublishedPrice(decimal Input, decimal Output, decimal Cache
 }
 
 /// <summary>
-/// The prices on the providers' own pricing pages on 2026-10-08, not d47's catalog, whose cache prices
-/// disagree with them. The five-minute cache write is the one d47 requests.
+/// Sonnet 5.5 and Haiku 5.5 at the prices on Anthropic's pricing page on 2026-10-08, not d47's catalog, whose
+/// cache prices disagree with it; the five-minute cache write is the one d47 requests. The rest from the catalog.
 /// </summary>
 public static class PublishedPrices
 {
@@ -30,11 +30,21 @@ public static class PublishedPrices
 
     private static readonly PublishedPrice Haiku55Long = new(0.50m, 2.50m, 0.625m, 0.05m);
 
+    /// <summary>Input and output from the model catalog published 2026-10-15; cache write and read at 1.25 and 0.1 of input.</summary>
+    private static PublishedPrice FromCatalog(decimal input, decimal output) => new(input, output, input * 1.25m, input * 0.1m);
+
+    private static readonly PublishedPrice OnThisMachine = new(0m, 0m, 0m, 0m);
+
     /// <summary>The price of one request, or null for a model this table does not know.</summary>
     public static PublishedPrice? For(string model, LlmUsage usage) => model switch
     {
         "claude-sonnet-5-5" => Sonnet55,
         "claude-haiku-5-5" => usage.TotalInputTokens > 100_000 ? Haiku55Long : Haiku55,
+        "claude-opus-5-5" => FromCatalog(4m, 20m),
+        "gpt-6.1-sol" => FromCatalog(2m, 10m),
+        "gpt-6-luna" => FromCatalog(0.10m, 0.50m),
+        "gpt-5.6-terra" => FromCatalog(2m, 12m),
+        _ when ModelComparisonTests.LocalModels.Contains(model, StringComparer.Ordinal) => OnThisMachine,
         _ => null,
     };
 }
@@ -44,7 +54,7 @@ public sealed class BudgetSpentException(decimal spent, decimal cap)
     : Exception(string.Create(CultureInfo.InvariantCulture, $"Spent ${spent:0.0000} of the ${cap:0.00} cap."));
 
 /// <summary>One request, as metered.</summary>
-public sealed record MeteredRequest(string Model, LlmUsage Usage, decimal Dollars, long Milliseconds, string? Failure);
+public sealed record MeteredRequest(string Model, LlmUsage Usage, decimal Dollars, long Milliseconds, string? Failure, LlmStopReason? StopReason = null);
 
 /// <summary>
 /// A provider that prices every request at <see cref="PublishedPrices"/>, appends it to a ledger that
@@ -105,6 +115,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
         var clock = Stopwatch.StartNew();
         LlmUsage? usage = null;
         string? failure = null;
+        LlmStopReason? stopReason = null;
 
         await foreach (var streamEvent in _inner.StreamAsync(request, cancellationToken).ConfigureAwait(false))
         {
@@ -112,6 +123,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
             {
                 case LlmStreamEvent.Completed completed:
                     usage = completed.Usage;
+                    stopReason = completed.StopReason;
                     break;
                 case LlmStreamEvent.Failed failed:
                     failure = failed.Message;
@@ -121,10 +133,10 @@ public sealed class MeteredLlmProvider : ILlmProvider
             yield return streamEvent;
         }
 
-        Record(request.Model, usage ?? LlmUsage.None, clock.ElapsedMilliseconds, failure);
+        Record(request.Model, usage ?? LlmUsage.None, clock.ElapsedMilliseconds, failure, stopReason);
     }
 
-    private void Record(string model, LlmUsage usage, long milliseconds, string? failure)
+    private void Record(string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason)
     {
         var price = PublishedPrices.For(model, usage)
                     ?? throw new InvalidOperationException($"No published price for {model}; refusing to run unpriced.");
@@ -134,7 +146,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
         lock (_gate)
         {
             Spent += dollars;
-            _requests.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure));
+            _requests.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason));
 
             File.AppendAllText(
                 _ledger,
