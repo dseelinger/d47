@@ -80,6 +80,7 @@ public static class FlavourTurn
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
     /// <param name="limits">When the call is stopped as <see cref="FlavourMiss.TimedOut"/>; null for no limit.</param>
+    /// <param name="received">Called with the length of each text and thinking delta.</param>
     public static async Task<FlavourReply> AskForAsync(
         ILlmProvider? provider,
         string? model,
@@ -101,7 +102,8 @@ public static class FlavourTurn
         string? hiddenStory = null,
         bool thinking = true,
         string? recentDelivery = null,
-        FlavourLimits? limits = null)
+        FlavourLimits? limits = null,
+        Action<int>? received = null)
     {
         if (provider is null)
         {
@@ -204,10 +206,12 @@ public static class FlavourTurn
                 {
                     case LlmStreamEvent.TextDelta text:
                         reply.Append(text.Text);
+                        received?.Invoke(text.Text.Length);
                         silence?.CancelAfter(silenceLimit);
                         break;
 
-                    case LlmStreamEvent.ThinkingDelta:
+                    case LlmStreamEvent.ThinkingDelta thought:
+                        received?.Invoke(thought.Text.Length);
                         silence?.CancelAfter(silenceLimit);
                         break;
 

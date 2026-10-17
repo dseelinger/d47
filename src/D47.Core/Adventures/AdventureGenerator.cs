@@ -44,7 +44,8 @@ public sealed record AdventureAsk(
     AdventureChapter? Chapter = null,
     AdventureStory? Story = null,
     AdventureRewrite? Rewrite = null,
-    string? LastDraftRefused = null);
+    string? LastDraftRefused = null,
+    StoryProgress? Progress = null);
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
@@ -174,6 +175,9 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
 {
     public const string NotWritten = "The chapter could not be written. Write it again and I will try a new draft.";
 
+    /// <summary>The write was cancelled: no draft and no refusal.</summary>
+    public static readonly AdventureOutcome Stopped = new(null, null, null, []);
+
     public bool Succeeded => Draft is not null;
 
     /// <summary>True when <see cref="Refusal"/> is written for the model and the log, not the Commander.</summary>
@@ -285,6 +289,7 @@ public sealed class AdventureGenerator(
             if (last is not null)
             {
                 logger.LogInformation("Writing draft {Draft} of {Drafts} of a short story", draft, StoryDirector.Drafts);
+                ask.Progress?.NextDraft();
                 writingAgain?.Invoke(StoryDirector.WritingAgainLine(draft, last.ForNextDraft is not null));
             }
 
@@ -297,6 +302,16 @@ public sealed class AdventureGenerator(
             {
                 logger.LogError(ex, "Writing a short story failed");
                 last = new AdventureOutcome(null, null, ex.Message, []) { Internal = true, Unanswered = true };
+            }
+
+            if (last.Draft is null && cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
+            if (last.Succeeded)
+            {
+                ask.Progress?.Done();
             }
 
             if (!last.Redraftable || cancellationToken.IsCancellationRequested)
@@ -319,6 +334,7 @@ public sealed class AdventureGenerator(
         }
 
         var started = Stopwatch.GetTimestamp();
+        Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
@@ -326,20 +342,28 @@ public sealed class AdventureGenerator(
 
         if (ask.Rewrite is { } rewrite)
         {
+            Enter(ask, WriteStage.Objectives);
             var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
             var tail = await AskJsonAsync(
                 BeatsStep,
                 BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, rewrite.Exchange, rewrite.Remark),
                 BeatsOutputCeiling,
+                ask.Progress,
                 cancellationToken).ConfigureAwait(false);
 
             return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
 
-        var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, cancellationToken).ConfigureAwait(false);
+        Enter(ask, WriteStage.Outline);
+        var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
 
         if (spineAsked.Json is null)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
             return Failed(null, "The model did not write a story.", notes, started, spineAsked) with { Unanswered = true };
         }
 
@@ -350,10 +374,12 @@ public sealed class AdventureGenerator(
             return Failed(null, "The model's answer was not a story I could read.", notes, started, spineAsked);
         }
 
+        Enter(ask, WriteStage.Objectives);
         var beatsAsked = await AskJsonAsync(
             BeatsStep,
             BeatsInstruction(ask, facts, notable, candidates, name, spine, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
             BeatsOutputCeiling,
+            ask.Progress,
             cancellationToken).ConfigureAwait(false);
 
         return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsAsked, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
@@ -378,15 +404,18 @@ public sealed class AdventureGenerator(
         }
 
         var started = Stopwatch.GetTimestamp();
+        Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
         var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
+        Enter(ask, WriteStage.Objectives);
         var asked = await AskJsonAsync(
             BeatsStep,
             BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
             BeatsOutputCeiling,
+            ask.Progress,
             cancellationToken).ConfigureAwait(false);
 
         // A revision may rename and respine; the beats turn's answer carries the whole draft.
@@ -412,8 +441,15 @@ public sealed class AdventureGenerator(
         long started,
         CancellationToken cancellationToken)
     {
+        Enter(ask, WriteStage.Checking);
+
         if (beatsAsked.Json is null)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
             return Failed(null, "The model did not write the objectives.", notes, started, beatsAsked) with { Unanswered = true };
         }
 
@@ -438,7 +474,13 @@ public sealed class AdventureGenerator(
                 RewriteStep,
                 BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
                 BeatsOutputCeiling,
+                ask.Progress,
                 cancellationToken).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
 
             var reread = again.Json is null ? null : ReadBeats(again.Json);
 
@@ -973,6 +1015,9 @@ public sealed class AdventureGenerator(
         }
     }
 
+    private void Enter(AdventureAsk ask, WriteStage stage) =>
+        ask.Progress?.Enter(stage, StoryPace.For(model() ?? provider()?.DefaultModel));
+
     private const string SpineStep = "spine";
     private const string BeatsStep = "beats";
     private const string RewriteStep = "rewrite of the beats";
@@ -987,7 +1032,7 @@ public sealed class AdventureGenerator(
                 : $"{Reply.Line.Length} characters came back and could not be read.";
     }
 
-    private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, CancellationToken cancellationToken)
+    private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, StoryProgress? progress, CancellationToken cancellationToken)
     {
         var asking = provider();
         var chosen = model() ?? asking?.DefaultModel ?? "no model";
@@ -1008,7 +1053,13 @@ public sealed class AdventureGenerator(
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure,
             // A model on this machine may be on a CPU, so it is never stopped for being slow.
-            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { Time = Time }).ConfigureAwait(false);
+            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { Time = Time },
+            received: progress is null ? null : progress.Received).ConfigureAwait(false);
+
+        if (reply.Miss == FlavourMiss.TimedOut)
+        {
+            progress?.CallStopped();
+        }
 
         return new Asked(step, chosen, reply, reply.Line is null ? null : Unfence(reply.Line));
     }

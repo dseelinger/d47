@@ -53,6 +53,7 @@ public sealed class StoryDirector(
 
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, StoryProgress> _progress = new(StringComparer.Ordinal);
 
     /// <summary>Commanders whose last chapter could not be written; the tick does not retry until WriteNextAsync is called.</summary>
     private readonly HashSet<string> _failed = new(StringComparer.Ordinal);
@@ -281,6 +282,15 @@ public sealed class StoryDirector(
         lock (_gate)
         {
             return _writing.Contains(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    /// <summary>How far the chapter being written for this Commander has got; null when none is.</summary>
+    public StoryProgress? Progress(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _progress.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
         }
     }
 
@@ -1664,6 +1674,7 @@ public sealed class StoryDirector(
             }
 
             _failed.Remove(commander);
+            _progress[commander] = new StoryProgress(Time);
         }
 
         WritingChanged?.Invoke();
@@ -1677,6 +1688,7 @@ public sealed class StoryDirector(
                 if (draft > 1)
                 {
                     logger.LogInformation("Writing draft {Draft} of {Drafts} of a story chapter", draft, Drafts);
+                    Progress(frontierId)?.NextDraft();
                     WritingAgain?.Invoke(WritingAgainLine(draft, attempt.Detail is not null));
                 }
 
@@ -1699,6 +1711,11 @@ public sealed class StoryDirector(
 
             var refusal = attempt.Retry ? NoDraftStood : attempt.Refusal;
 
+            if (refusal is null)
+            {
+                Progress(frontierId)?.Done();
+            }
+
             if (refusal is not null)
             {
                 lock (_gate)
@@ -1716,6 +1733,7 @@ public sealed class StoryDirector(
             lock (_gate)
             {
                 _writing.Remove(commander);
+                _progress.Remove(commander);
             }
 
             WritingChanged?.Invoke();
@@ -1728,6 +1746,9 @@ public sealed class StoryDirector(
     /// <summary>The refusal once every draft has failed.</summary>
     public static readonly string NoDraftStood =
         $"The chapter could not be written in {Drafts.ToString(CultureInfo.InvariantCulture)} drafts. Write it again and I will try {Drafts.ToString(CultureInfo.InvariantCulture)} more.";
+
+    /// <summary>The clock the progress of a chapter write runs on.</summary>
+    public TimeProvider Time { get; init; } = TimeProvider.System;
 
     /// <summary>Raised with the line to say before each draft after the first, on the thread doing the write.</summary>
     public event Action<string>? WritingAgain;
@@ -1806,7 +1827,8 @@ public sealed class StoryDirector(
                 longHaul,
                 comfort,
                 finaleChapter > 1 ? story.FinaleDestination : null),
-            LastDraftRefused: lastDraftRefused);
+            LastDraftRefused: lastDraftRefused,
+            Progress: Progress(frontierId));
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
