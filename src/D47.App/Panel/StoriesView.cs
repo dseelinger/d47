@@ -39,9 +39,6 @@ public sealed class StoriesView : UserControl, IPageSummary
     private readonly StoryDownloader? _downloads;
     private readonly StoryRatingClient? _ratings;
     private readonly StackPanel _list = new() { Spacing = 2 };
-    private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
-    private WriteProgressBar? _progress;
-    private string? _progressFor;
     private readonly StatusLine _status = new();
     private readonly StoryFilterMemory? _memory;
     private readonly CatalogueFilters _filters;
@@ -83,8 +80,6 @@ public sealed class StoriesView : UserControl, IPageSummary
         _director.Stories.Changed += OnChanged;
         _surface.Book.Store.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
-        _progressTimer.Tick += OnProgressTick;
-        _progressTimer.Start();
         _director.WritingAgain += OnWritingAgain;
         _director.OdysseyChanged += OnChanged;
 
@@ -114,8 +109,6 @@ public sealed class StoriesView : UserControl, IPageSummary
         _director.Stories.Changed -= OnChanged;
         _surface.Book.Store.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
-        _progressTimer.Stop();
-        _progressTimer.Tick -= OnProgressTick;
         _director.WritingAgain -= OnWritingAgain;
         _director.OdysseyChanged -= OnChanged;
 
@@ -155,16 +148,6 @@ public sealed class StoriesView : UserControl, IPageSummary
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
 
-    private void OnProgressTick(object? sender, EventArgs e) => RefreshProgress();
-
-    internal void RefreshProgress()
-    {
-        if (_progress is not null && _director.Progress(_progressFor) is { } progress)
-        {
-            _progress.Show(progress);
-        }
-    }
-
     private void OnWritingAgain(string line) => Dispatcher.UIThread.Post(() => _status.Say(line));
 
     private void OnSwitched() => Dispatcher.UIThread.Post(() =>
@@ -191,7 +174,6 @@ public sealed class StoriesView : UserControl, IPageSummary
     private void Rebuild()
     {
         _list.Children.Clear();
-        _progress = null;
 
         var current = _director.Stories.Current(_surface.Commander());
 
@@ -619,10 +601,9 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         if (_director.IsWriting(commander) && _director.Progress(commander) is { } writing)
         {
-            _progress = new WriteProgressBar("Writing the chapter");
-            _progress.Show(writing);
-            _progressFor = commander;
-            parts.Add(_progress);
+            var progress = new WriteProgressBar("Writing the chapter", () => _director.Progress(commander));
+            progress.Show(writing);
+            parts.Add(progress);
         }
 
         if (story.Refused.Count > 0)

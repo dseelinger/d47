@@ -671,7 +671,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { go, stop } };
         var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
 
-        var progress = new WriteProgressBar("Writing the story") { IsVisible = false };
+        var progress = new WriteProgressBar("Writing the story", () => _surface.Writing.Current?.Progress) { IsVisible = false };
 
         void Label()
         {
@@ -725,12 +725,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             status.Clear();
         }
 
-        // Only a page on screen shows a settled write, and never from the timer.
-        void Show(bool offer = true)
+        // Only a page on screen shows a settled write.
+        void Show()
         {
             var writing = _surface.Writing;
 
-            if (offer && TopLevel.GetTopLevel(view) is not null && writing.Take() is { Offer: { } settled } done)
+            if (TopLevel.GetTopLevel(view) is not null && writing.Take() is { Offer: { } settled } done)
             {
                 Ready();
                 Present(settled, done.Ask with { Progress = null }, status);
@@ -808,22 +808,17 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             Show();
         };
 
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        timer.Tick += (_, _) => Show(offer: false);
-
         void OnWriting() => Dispatcher.UIThread.Post(() => Show(), DispatcherPriority.Background);
 
         view.AttachedToVisualTree += (_, _) =>
         {
             _surface.Writing.Changed += OnWriting;
-            timer.Start();
             Show();
         };
 
         view.DetachedFromVisualTree += (_, _) =>
         {
             _surface.Writing.Changed -= OnWriting;
-            timer.Stop();
         };
 
         Label();

@@ -27,7 +27,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
         using var run = Begin();
 
         run.Clock.Advance(TimeSpan.FromSeconds(12));
-        run.Page.RefreshProgress();
+        Bar(run.Page).Refresh();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(StoryBenchPage.WritingNotice, Texts(run.Page));
@@ -54,13 +54,13 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
     {
         using var run = Begin();
         run.Clock.Advance(TimeSpan.FromSeconds(20));
-        run.Page.RefreshProgress();
+        Bar(run.Page).Refresh();
         Dispatcher.UIThread.RunJobs();
         var before = Fill(run.Page);
 
         run.Director.Progress("F1")!.NextDraft();
         run.Clock.Advance(TimeSpan.FromSeconds(1));
-        run.Page.RefreshProgress();
+        Bar(run.Page).Refresh();
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Fill(run.Page) >= before);
@@ -128,6 +128,8 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
 
         return new Run(window, page, director, clock, () => gate.TrySetResult(), look);
     }
+
+    private static WriteProgressBar Bar(Control host) => host.GetVisualDescendants().OfType<WriteProgressBar>().Single();
 
     private static List<Grid> Bars(Control page) =>
         [.. page.GetVisualDescendants().OfType<Grid>().Where(grid => Avalonia.Automation.AutomationProperties.GetName(grid) == "Writing the chapter")];

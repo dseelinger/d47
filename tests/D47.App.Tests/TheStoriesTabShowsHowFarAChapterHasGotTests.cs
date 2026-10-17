@@ -28,7 +28,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
         using var run = Begin();
 
         run.Clock.Advance(TimeSpan.FromSeconds(12));
-        run.View.RefreshProgress();
+        Bar(run.View).Refresh();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("0:12", Texts(run.View));
@@ -56,13 +56,13 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
     {
         using var run = Begin();
         run.Clock.Advance(TimeSpan.FromSeconds(20));
-        run.View.RefreshProgress();
+        Bar(run.View).Refresh();
         Dispatcher.UIThread.RunJobs();
         var before = Fill(run.View);
 
         run.Director.Progress("F1")!.NextDraft();
         run.Clock.Advance(TimeSpan.FromSeconds(1));
-        run.View.RefreshProgress();
+        Bar(run.View).Refresh();
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Fill(run.View) >= before);
@@ -102,6 +102,8 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
 
         return new Run(window, view, director, clock, () => { gate.SetResult(); task.GetAwaiter().GetResult(); }, look);
     }
+
+    private static WriteProgressBar Bar(Control host) => host.GetVisualDescendants().OfType<WriteProgressBar>().Single();
 
     private static List<Grid> Bars(Control view) =>
         [.. view.GetVisualDescendants().OfType<Grid>().Where(grid => Avalonia.Automation.AutomationProperties.GetName(grid) == "Writing the chapter")];
