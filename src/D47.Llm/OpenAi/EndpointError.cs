@@ -51,6 +51,20 @@ internal static partial class EndpointError
         return null;
     }
 
+    /// <summary>The prompt size an overflow refusal names, following the same nesting as <see cref="Describe"/>.</summary>
+    public static int? PromptTokens(JsonElement error)
+    {
+        foreach (var layer in Layers(error))
+        {
+            if (IsOverflow(layer) && Number(layer, "n_prompt_tokens") is > 0 and <= int.MaxValue and var tokens)
+            {
+                return (int)tokens;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary><paramref name="error"/>, then each error object embedded in the one before's <c>message</c>.</summary>
     private static IEnumerable<JsonElement> Layers(JsonElement error)
     {

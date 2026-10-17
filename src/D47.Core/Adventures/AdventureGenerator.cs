@@ -211,6 +211,12 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
         $"The model's context ran out. The prompt took {cutOff.PromptTokens} tokens and the reply was cut off after "
         + $"{cutOff.ReplyTokens}. {SetContextSentence(ContextNeeded(cutOff.PromptTokens))}";
 
+    internal static string ContextOverflowMessage(int? promptTokens) =>
+        (promptTokens is { } tokens
+            ? $"The prompt took {tokens:N0} tokens, more than the model's context holds. "
+            : "The prompt was larger than the model's context. ")
+        + SetContextSentence(ContextNeeded(promptTokens));
+
     /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
     public AdventureDestination? Destination { get; init; }
 }
@@ -564,7 +570,12 @@ public sealed class AdventureGenerator(
         return new AdventureOutcome(null, reply, detail, notes)
         {
             Internal = true,
-            ContextMessage = asked?.Reply.CutOff is { AtContext: true } cutOff ? AdventureOutcome.ContextLimitMessage(cutOff) : null,
+            ContextMessage = asked?.Reply switch
+            {
+                { CutOff: { AtContext: true } cutOff } => AdventureOutcome.ContextLimitMessage(cutOff),
+                { ContextExceeded: true } refused => AdventureOutcome.ContextOverflowMessage(refused.PromptTokens),
+                _ => null,
+            },
         };
     }
 

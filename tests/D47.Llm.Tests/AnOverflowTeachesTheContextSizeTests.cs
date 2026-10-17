@@ -18,6 +18,35 @@ public class AnOverflowTeachesTheContextSizeTests
 
     [Trait("Category", "Integration")]
     [Fact]
+    public async Task TheMidStreamRecordingSetsThePromptTokens()
+    {
+        using var endpoint = RecordedEndpoint.Streaming(AContextOverflowSaysHowToFixItTests.LmStudioOverflow);
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, endpoint.BaseUrl);
+
+        var events = await OpenAiRecordings.DrainAsync(provider, OpenAiRecordings.Ask("test-model"), Token);
+
+        var failed = Assert.IsType<LlmStreamEvent.Failed>(Assert.Single(events));
+        Assert.True(failed.ContextExceeded);
+        Assert.Equal(20016, failed.PromptTokens);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task AnOverflowReturnedAsAStatusCodeSetsThePromptTokens()
+    {
+        using var endpoint = RecordedEndpoint.Failing(
+            400,
+            """{"error":{"code":400,"message":"request (20016 tokens) exceeds the available context size (8192 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":20016,"n_ctx":8192}}""");
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, endpoint.BaseUrl);
+
+        var events = await OpenAiRecordings.DrainAsync(provider, OpenAiRecordings.Ask("test-model"), Token);
+
+        var failed = Assert.IsType<LlmStreamEvent.Failed>(Assert.Single(events));
+        Assert.Equal(20016, failed.PromptTokens);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
     public async Task TheCapturedFrameRecordsTheContextForThatModelOnly()
     {
         using var endpoint = RecordedEndpoint.Streaming(AContextOverflowSaysHowToFixItTests.LmStudioOverflow);

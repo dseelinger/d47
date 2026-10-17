@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a story prompt is larger than the model's context, D47 now says so at once, with the size the prompt took and the context to set, instead of writing the chapter three more times and reporting that no draft stood.
+
 When a model's context is too small for a story, D47 now asks for 16,384 tokens instead of 24,576 and says where to set it: LM Studio's context length in the loader, remembered for that model, or the other server's own settings. The conversation help gains a section on writing stories with a model on your own PC.
 
 A local model with a known context now gets a reply limit equal to the room its context has left after the prompt, instead of a quarter of the context, so long story replies are cut less often.

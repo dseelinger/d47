@@ -145,6 +145,9 @@ public abstract record LlmStreamEvent
         /// <summary>The endpoint refused the prompt as larger than the model's context.</summary>
         public bool ContextExceeded { get; init; }
 
+        /// <summary>The prompt size the refusal named, when it named one.</summary>
+        public int? PromptTokens { get; init; }
+
         /// <summary>d47's own stall timeout fired; the provider reported nothing.</summary>
         public bool TimedOut { get; init; }
     }

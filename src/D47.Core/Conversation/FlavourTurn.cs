@@ -228,7 +228,11 @@ public static class FlavourTurn
                     case LlmStreamEvent.Failed failed:
                         logger?.LogDebug("A flavour line was not generated: {Message}", failed.Message);
                         Record();
-                        return TimedOut() ?? new FlavourReply(null, FlavourMiss.Failed, failed.Message);
+                        return TimedOut() ?? new FlavourReply(null, FlavourMiss.Failed, failed.Message)
+                        {
+                            ContextExceeded = failed.ContextExceeded,
+                            PromptTokens = failed.PromptTokens,
+                        };
                 }
             }
         }
@@ -330,6 +334,12 @@ public sealed record FlavourReply(string? Line, FlavourMiss Miss = FlavourMiss.N
 {
     /// <summary>Where the reply was cut off, or null when it finished.</summary>
     public FlavourCutOff? CutOff { get; init; }
+
+    /// <summary>Whether the endpoint refused the prompt as larger than the model's context.</summary>
+    public bool ContextExceeded { get; init; }
+
+    /// <summary>The prompt size the refusal named, when it named one.</summary>
+    public int? PromptTokens { get; init; }
 }
 
 /// <summary>A reply that stopped at a token limit, with the provider's counts where it reported them.</summary>

@@ -146,14 +146,14 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
         using (response)
         {
-            var (detail, context) = await ReadDetailAsync(response, cancellationToken).ConfigureAwait(false);
+            var (detail, context, promptTokens) = await ReadDetailAsync(response, cancellationToken).ConfigureAwait(false);
             RecordContext(model, context);
 
             var (message, transient) = _endpoint.Describe(response.StatusCode, detail);
 
             return new Attempt(
                 null,
-                new LlmStreamEvent.Failed(message, transient) { ContextExceeded = context is not null },
+                new LlmStreamEvent.Failed(message, transient) { ContextExceeded = context is not null, PromptTokens = promptTokens },
                 sendsPicture && RefusedPicture(detail) ? Demotable.Images : WhatWasRejected(detail));
         }
     }
@@ -203,6 +203,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                     Transient: false)
                 {
                     ContextExceeded = context is not null,
+                    PromptTokens = EndpointError.PromptTokens(error),
                 };
 
                 yield break;
@@ -560,7 +561,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
     /// The error body, reduced to what the endpoint actually said, and the context size it named if it
     /// refused the prompt as too long.
     /// </summary>
-    private static async Task<(string? Detail, int? Context)> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async Task<(string? Detail, int? Context, int? PromptTokens)> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         string raw;
 
@@ -570,12 +571,12 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         try
@@ -587,7 +588,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             {
                 if (error.ValueKind == JsonValueKind.String)
                 {
-                    return (EndpointError.WithoutPictures(error.GetString()), null);
+                    return (EndpointError.WithoutPictures(error.GetString()), null, null);
                 }
 
                 if (error.ValueKind == JsonValueKind.Object)
@@ -599,7 +600,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                         ? $"{message} ({param})"
                         : message ?? param;
 
-                    return (EndpointError.WithoutPictures(detail), EndpointError.ContextSize(error));
+                    return (EndpointError.WithoutPictures(detail), EndpointError.ContextSize(error), EndpointError.PromptTokens(error));
                 }
             }
         }
@@ -608,7 +609,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
         // Not JSON.
         }
 
-        return (EndpointError.WithoutPictures(raw.Length > 400 ? raw[..400] : raw), null);
+        return (EndpointError.WithoutPictures(raw.Length > 400 ? raw[..400] : raw), null, null);
     }
 
     /// <summary>Usage, if the endpoint sent any.</summary>
