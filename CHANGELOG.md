@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Edge Neural speaks again. Microsoft changed how requests to the voice are signed, and every line failed with a 403 error; D47 now signs them the new way.
+
 A new setting, BGS tick time under Settings › Providers › Outside sources, lets D47 read when the last BGS tick happened from tick.infomancer.uk: once when you turn it on or start D47 with it on, then every ten minutes, and only while Elite is running. It is off by default. The request carries nothing about you, and it is unencrypted because the host answers only over plain HTTP; Privacy and egress lists it as BGS tick. D47 keeps the time across restarts.
 
 With BGS tick time on, D47 now says when the BGS has ticked, once per tick: "The BGS has ticked." for a tick up to fifteen minutes old, or "The BGS ticked forty minutes ago." up to an hour. An older tick is not said, so a restart stays quiet. Turn it off with the BGS tick row under Callouts.

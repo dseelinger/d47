@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace D47.Tts;
@@ -37,10 +36,9 @@ internal static class EdgeProtocol
         var seconds = now.ToUnixTimeSeconds() + 11_644_473_600L;
         seconds -= seconds % 300;
 
-        var digest = Convert.ToHexString(
-            SHA256.HashData(Encoding.ASCII.GetBytes($"{seconds * 10_000_000L}{TrustedClientToken}")));
+        var token = EdgeSecurityToken.Generate(seconds * 10_000_000L, TrustedClientToken);
 
-        return $"Sec-MS-GEC={digest}&Sec-MS-GEC-Version=1-{ChromiumVersion}";
+        return $"Sec-MS-GEC={token}&Sec-MS-GEC-Version=2-{ChromiumVersion}";
     }
 
     public static string Configuration(DateTimeOffset now) =>

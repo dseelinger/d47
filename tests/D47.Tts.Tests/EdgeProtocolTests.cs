@@ -49,6 +49,15 @@ public class EdgeProtocolTests
     }
 
     [Fact]
+    public void TheSecurityTokenAtNoonIsTheOneEdgeTtsComputes()
+    {
+        Assert.StartsWith(
+            "Sec-MS-GEC=3575017BE6BA2CA8-B3BA8420B435DDB0C48BFDAE783DEA42F2B361F94D0D625A231155D76B5CE4D2&",
+            EdgeProtocol.SecurityQuery(Noon),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheSecurityTokenIsStableWithinItsFiveMinuteWindowAndChangesAcrossIt()
     {
         var early = EdgeProtocol.SecurityQuery(Noon);
@@ -57,7 +66,7 @@ public class EdgeProtocolTests
 
         Assert.Equal(early, sameWindow);
         Assert.NotEqual(early, nextWindow);
-        Assert.Contains("Sec-MS-GEC-Version=1-", early, StringComparison.Ordinal);
+        Assert.Contains("Sec-MS-GEC-Version=2-", early, StringComparison.Ordinal);
     }
 
     /// <summary>

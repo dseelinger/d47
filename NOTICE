@@ -189,3 +189,11 @@ Other third-party components
                                               assets/fonts/OFL-JetBrainsMono.txt.
 
 Package dependencies are declared in the project files and are permissively licensed.
+
+
+Ported code
+-----------
+
+    src/D47.Tts/EdgeSecurityToken.cs   Ported from rany2/edge-tts, src/edge_tts/drm.py
+                                       (the v2 Sec-MS-GEC token). That file is licensed
+                                       LGPL-3.0.
