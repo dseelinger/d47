@@ -532,6 +532,41 @@ public static class AdventureFold
         return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0 };
     }
 
+    /// <summary>The bench's steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>
+    public static AdventureStanding ApplySteps(AdventureStanding standing, DateTimeOffset upTo)
+    {
+        var adventure = standing.Adventure;
+
+        if (adventure.Stepped.Count == 0 || !adventure.IsActive)
+        {
+            return standing;
+        }
+
+        foreach (var step in adventure.Stepped.Where(step => step.At <= upTo).OrderBy(step => step.At))
+        {
+            if (standing.IsDone || step.Beat != standing.Current)
+            {
+                continue;
+            }
+
+            if (adventure.RewrittenFrom is { } from && step.Beat >= from && step.At < adventure.RewrittenAt)
+            {
+                continue;
+            }
+
+            standing = Stepped(standing, step.At);
+        }
+
+        return standing;
+    }
+
+    /// <summary>The standing with its current beat fired by the bench at <paramref name="at"/>.</summary>
+    public static AdventureStanding Stepped(AdventureStanding standing, DateTimeOffset at) =>
+        standing with { Fired = [.. standing.Fired, at], FiredBy = [.. standing.FiredBy, BenchSource], Counted = 0, Side = null };
+
+    /// <summary>The <see cref="AdventureStanding.FiredBy"/> of a beat the bench fired.</summary>
+    public const string BenchSource = "Bench";
+
     private static ConflictPart Ended(ConflictPart part, AdventureWorld world) =>
         !part.Ended && world.Of(part) is { Ended: true } conflict ? part with { Ended = true, Winner = conflict.Winner } : part;
 

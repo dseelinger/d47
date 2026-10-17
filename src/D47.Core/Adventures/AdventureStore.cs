@@ -451,6 +451,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
+            Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null)
+                .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value)).Take(AdventureLimits.MaxBeats)],
         };
 
         var refusals = AdventureValidation.Problems(adventure);
@@ -527,6 +529,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
+        Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, At = step.At })] : null,
     };
 
     private sealed class Document
@@ -577,6 +580,15 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Follows { get; set; }
 
         public string? StoryId { get; set; }
+
+        public List<StepRecord>? Stepped { get; set; }
+    }
+
+    private sealed class StepRecord
+    {
+        public int? Beat { get; set; }
+
+        public DateTimeOffset? At { get; set; }
     }
 
     private sealed class SpineRecord

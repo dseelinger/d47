@@ -100,6 +100,76 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
     }
 
     [Fact]
+    public async Task RewindingToACheckpointTakenBeforeAStepLeavesThatBeatUnfired()
+    {
+        await WriteChapter(1, Now.AddHours(1));
+        await WriteChapter(2, Now.AddHours(2));
+
+        Assert.Null(_bench.Step("F1", Key(2), Now.AddHours(2.5)));
+        Assert.NotEmpty(_adventures.Find("F1", Key(2))!.Stepped);
+
+        Assert.Null(_bench.Rewind(2, Now.AddHours(5)));
+
+        Assert.Empty(_adventures.Find("F1", Key(2))!.Stepped);
+        Assert.True(_director.Book.NeedsCatchUp);
+
+        _director.Book.CatchUp([]);
+
+        Assert.Equal(0, _director.Book.Standing("F1", Key(2))!.Current);
+    }
+
+    [Fact]
+    public async Task SteppingTheLastBeatOfAChapterLetsTheDirectorWriteTheNext()
+    {
+        await WriteChapter(1, Now.AddHours(1));
+        var chapter = _adventures.Find("F1", Key(1))!;
+        Assert.Null(_adventures.Save("F1", chapter with { Beats = [chapter.Beats[0]] }));
+
+        Assert.Null(_bench.Step("F1", Key(1), Now.AddHours(2)));
+        Assert.True(_director.Book.Standing("F1", Key(1))!.IsDone);
+
+        var writing = _director.Tick("F1", Now.AddHours(3));
+
+        Assert.True(SpinWait.SpinUntil(() => _director.IsWriting("F1"), TimeSpan.FromSeconds(5)));
+        Assert.True(_director.IsWriting("F1"));
+
+        _write.SetResult(new AdventureOutcome(null, null, "No.", []));
+        await writing!;
+    }
+
+    [Fact]
+    public async Task ABeaconBeatCannotBeSteppedYet()
+    {
+        await WriteChapter(1, Now.AddHours(1));
+        var chapter = _adventures.Find("F1", Key(1))!;
+        Assert.Null(_adventures.Save("F1", chapter with
+        {
+            Beats = [AdventureFixtures.Beat("The Beacon", "resolution", new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = StoryFixtures.BeaconAddress, System = StoryFixtures.Beacon }, "Scan it.")],
+        }));
+        var before = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+
+        Assert.Equal("The beacon scan cannot be stepped yet.", _bench.Step("F1", Key(1), Now.AddHours(2)));
+        Assert.Equal(before, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+    }
+
+    [Fact]
+    public async Task AStepWhileAChapterIsWrittenIsRefusedAndChangesNothing()
+    {
+        await WriteChapter(1, Now.AddHours(1));
+
+        var picking = _director.PickAsync("F2", Id, Now, CancellationToken.None);
+        Assert.True(_director.IsWriting("F2"));
+
+        var adventures = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+
+        Assert.Equal(StoryBench.Writing, _bench.Step("F2", Key(1), Now.AddHours(3)));
+        Assert.Equal(adventures, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+
+        _write.SetResult(new AdventureOutcome(null, null, "No.", []));
+        await picking;
+    }
+
+    [Fact]
     public async Task ResumeBeginsTheRestoredChapterAgainAtTheResumeTime()
     {
         await WriteChapter(1, Now.AddHours(1));

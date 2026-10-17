@@ -232,6 +232,30 @@ public sealed partial class StoryBench
         return null;
     }
 
+    /// <summary>
+    /// Fires the beat the running chapter or Short Story <paramref name="key"/> is waiting on, without its journal event.
+    /// Writes a file, so it never runs on the tick. Returns a refusal or null.
+    /// </summary>
+    public string? Step(string? frontierId, string key, DateTimeOffset now)
+    {
+        if (Director is not { } director)
+        {
+            return "There is no story director to step.";
+        }
+
+        if (director.IsWriting(frontierId) || director.IsRewriting(frontierId))
+        {
+            return Writing;
+        }
+
+        if (director.Book.Standing(frontierId, key)?.CurrentBeat is { Trigger.Kind: TriggerKind.Beacon })
+        {
+            return "The beacon scan cannot be stepped yet.";
+        }
+
+        return director.Book.Step(frontierId, key, now);
+    }
+
     /// <summary>My story and then each bench slot, with the current story <paramref name="frontierId"/> has in it.</summary>
     public IReadOnlyList<BenchSlotSummary> Summaries(string? frontierId)
     {

@@ -399,6 +399,19 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
         }
 
+        foreach (var known in store.Commanders)
+        {
+            foreach (var adventure in store.For(known).Where(adventure => adventure.Stepped.Count > 0))
+            {
+                var standing = StandingOf(state, known, adventure);
+
+                if (AdventureFold.ApplySteps(standing, DateTimeOffset.MaxValue) is var stepped && !ReferenceEquals(stepped, standing))
+                {
+                    state.Standings[StandingKey(known, adventure.Key)] = stepped;
+                }
+            }
+        }
+
         logger.LogInformation("Caught adventures up over {Events} events in {Files} journals", events, files.Count);
         return state;
     }
@@ -473,7 +486,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         // Told is cleared with the stamp: a story begun again is being told again, and the feed the Commander
         // reads is what happened this time round rather than a splice of two runs.
-        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, RewrittenAt = null, RewrittenFrom = null, Previous = null, Told = [] };
+        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, RewrittenAt = null, RewrittenFrom = null, Previous = null, Told = [], Stepped = [] };
 
         if (store.Save(commander, begun) is { } refusal)
         {
@@ -557,6 +570,85 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
             return null;
         }
+    }
+
+    /// <summary>
+    /// Fires the beat an active story is waiting on without its journal event, recording the step so a walk fires it again.
+    /// Returns a refusal or null.
+    /// </summary>
+    internal string? Step(string? frontierId, string key, DateTimeOffset now)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        if (store.Find(commander, key) is not { } adventure)
+        {
+            return "There is no story by that name.";
+        }
+
+        if (!adventure.IsBegun)
+        {
+            return $"{adventure.Name} has not begun.";
+        }
+
+        if (adventure.IsAbandoned)
+        {
+            return $"{adventure.Name} was abandoned.";
+        }
+
+        AdventureStanding standing;
+
+        lock (_gate)
+        {
+            standing = StandingOf(_fold, commander, adventure);
+
+            if (standing.IsDone || standing.CurrentBeat is null)
+            {
+                return $"{adventure.Name} is finished.";
+            }
+
+            if (_stirring.Contains(StandingKey(commander, key)))
+            {
+                return $"{adventure.Name} is still being told.";
+            }
+        }
+
+        var step = new AdventureStep(standing.Current, now);
+        var stepped = adventure with { Stepped = [.. adventure.Stepped.Where(known => known.Beat != step.Beat), step] };
+
+        if (AdventureValidation.Problems(stepped) is { Count: > 0 } problems)
+        {
+            return string.Join(" ", problems);
+        }
+
+        if (store.Save(commander, stepped) is { } refusal)
+        {
+            return refusal;
+        }
+
+        stepped = store.Find(commander, key) ?? stepped;
+
+        lock (_gate)
+        {
+            var current = StandingOf(_fold, commander, adventure);
+
+            if (current.IsDone || current.Current != step.Beat)
+            {
+                return $"{adventure.Name} has moved on from that objective.";
+            }
+
+            _fold.Standings[StandingKey(commander, key)] = AdventureFold.Stepped(current, now) with { Adventure = stepped };
+            _moments.Enqueue(new AdventureMoment(commander, stepped, step.Beat, now));
+            Stir(commander, key);
+
+            if (_walking)
+            {
+                _generation++;
+                _needsCatchUp = true;
+            }
+        }
+
+        StirringChanged?.Invoke();
+        return null;
     }
 
     /// <summary>Stop telling me this.</summary>
@@ -712,10 +804,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
 
             var key = StandingKey(commander, adventure.Key);
-            var before = StandingOf(state, commander, adventure);
+            var original = StandingOf(state, commander, adventure);
+            var before = AdventureFold.ApplySteps(original, journalEvent.Timestamp);
             var after = AdventureFold.Apply(before, journalEvent, world);
 
-            if (ReferenceEquals(before, after))
+            if (ReferenceEquals(original, after))
             {
                 continue;
             }

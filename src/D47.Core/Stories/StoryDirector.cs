@@ -276,6 +276,8 @@ public sealed class StoryDirector(
     /// <summary>Raised as a chapter starts and stops being written, on the thread doing it.</summary>
     public event Action? WritingChanged;
 
+    internal AdventureBook Book => book;
+
     /// <summary>Whether a chapter is being written for this Commander.</summary>
     public bool IsWriting(string? frontierId)
     {
