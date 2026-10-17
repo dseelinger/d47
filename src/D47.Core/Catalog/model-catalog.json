@@ -83,7 +83,7 @@
         { "id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6-sol", "label": "GPT-6 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6-astra", "label": "GPT-6 Astra", "offered": true, "price": { "input": 10, "output": 50, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
-        { "id": "gpt-6-luna", "label": "GPT-6 Luna", "offered": true, "price": { "input": 0.10, "output": 0.50, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
+        { "id": "gpt-6-luna", "label": "GPT-6 Luna", "offered": true, "price": { "input": 0.10, "output": 0.50, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true, "storyEffort": "low" } },
         { "id": "gpt-5.6-terra", "label": "GPT-5.6 Terra", "offered": true, "price": { "input": 2, "output": 12, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-5.6-sol", "label": "GPT-5.6 Sol", "offered": true, "price": { "input": 4, "output": 20, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-5.6-luna", "label": "GPT-5.6 Luna", "offered": true, "price": { "input": 0.20, "output": 1.20, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },

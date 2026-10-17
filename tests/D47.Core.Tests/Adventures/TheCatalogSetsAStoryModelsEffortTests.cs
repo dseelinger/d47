@@ -78,6 +78,10 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
         Assert.Equal(("anthropic", "story-model"), asked);
     }
 
+    [Fact]
+    public void TheShippedCatalogNamesLowForLuna() =>
+        Assert.Equal(ThinkingEffort.Low, ModelCatalog.Embedded.TraitsFor("openai", "gpt-6-luna").StoryEffort);
+
     [Theory]
     [InlineData("""{"storyEffort": "low"}""", ThinkingEffort.Low)]
     [InlineData("""{"storyEffort": "High"}""", ThinkingEffort.High)]
@@ -100,11 +104,11 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
         var assembly = typeof(ModelCatalog).Assembly;
         using var reader = new StreamReader(assembly.GetManifestResourceStream("D47.Core.ModelCatalog")!);
         var json = reader.ReadToEnd();
-        const string Luna = "\"traits\": { \"images\": true } },";
         var from = json.IndexOf("\"id\": \"gpt-6-luna\"", StringComparison.Ordinal);
-        var at = json.IndexOf(Luna, from, StringComparison.Ordinal);
+        var start = json.IndexOf("\"traits\": {", from, StringComparison.Ordinal);
+        var end = json.IndexOf('}', start);
 
-        return json[..at] + "\"traits\": " + traits + " }," + json[(at + Luna.Length)..];
+        return json[..start] + "\"traits\": " + traits + json[(end + 1)..];
     }
 
     private static RoundScriptedLlmProvider Scripted() => new(
