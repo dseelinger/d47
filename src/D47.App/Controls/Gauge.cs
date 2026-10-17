@@ -96,6 +96,16 @@ public static class Gauge
         return track;
     }
 
+    /// <summary>Moves a <see cref="Track"/>'s fill to <paramref name="fill"/>, clamped to 0–1.</summary>
+    public static void Fill(Grid track, double fill)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+
+        var clamped = Math.Clamp(double.IsFinite(fill) ? fill : 0, 0, 1);
+        track.ColumnDefinitions[0].Width = new GridLength(clamped, GridUnitType.Star);
+        track.ColumnDefinitions[1].Width = new GridLength(1 - clamped, GridUnitType.Star);
+    }
+
     /// <summary>
     /// A <c>line2</c> track with a 1px Grey zero mark at its centre, filled from the mark by
     /// <paramref name="value"/>, clamped to −1–1: A rightwards when positive, Red leftwards when negative.

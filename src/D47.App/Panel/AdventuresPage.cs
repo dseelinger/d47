@@ -650,7 +650,18 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         var (thisShip, _) = LabeledCheckBox.Build("This ship only");
         var briefButton = new Button { HorizontalAlignment = HorizontalAlignment.Left };
         var status = new StatusLine();
-        var go = new Button { Content = "Go", HorizontalAlignment = HorizontalAlignment.Left };
+        var go = new Button { Content = "Go" };
+        var stop = new Button { Content = "Stop", IsVisible = false };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { go, stop } };
+        var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
+
+        var track = Gauge.Track(0, ThemeManager.AKey);
+        var hint = Muted("");
+        var progress = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), IsVisible = false };
+        progress.Children.Add(new Border());
+        progress.Children.Add(track);
+        progress.Children.Add(hint);
+        AutomationProperties.SetName(track, "Writing the story");
 
         void Label()
         {
@@ -691,11 +702,63 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         briefButton.Click += (_, _) => Brief(() => { });
 
-        var writing = false;
+        var view = new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var showing = false;
+
+        // Idle again after a write this form was showing: stopped, or offered on another page.
+        void Ready()
+        {
+            showing = false;
+            progress.IsVisible = false;
+            stop.IsVisible = false;
+            go.IsEnabled = !shut;
+            status.Clear();
+        }
+
+        // Only a page on screen shows a settled write, and never from the timer.
+        void Show(bool offer = true)
+        {
+            var writing = _surface.Writing;
+
+            if (offer && TopLevel.GetTopLevel(view) is not null && writing.Take() is { Offer: { } settled } done)
+            {
+                Ready();
+                Present(settled, done.Ask with { Progress = null }, status);
+                return;
+            }
+
+            if (writing.Current is not { } write)
+            {
+                if (showing)
+                {
+                    Ready();
+                }
+
+                return;
+            }
+
+            showing = true;
+            go.IsEnabled = false;
+            stop.IsVisible = true;
+            progress.IsVisible = true;
+            progress.Children[0] = Gauge.Heading(Doing(write.Progress.Stage), Clock(write.Progress.Elapsed), ThemeManager.AKey);
+            Gauge.Fill(track, write.Progress.Fill);
+            hint.Text = write.Progress.Hint;
+            hint.IsVisible = hint.Text.Length > 0;
+
+            if (write.Aside is { } aside)
+            {
+                status.Say(aside);
+            }
+            else
+            {
+                status.Clear();
+            }
+        }
 
         void Go()
         {
-            if (writing)
+            if (_surface.Writing.Current is not null)
             {
                 return;
             }
@@ -715,34 +778,46 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
-            var drawnFor = _surface.Commander();
-
-            writing = true;
-            go.IsEnabled = false;
-            status.Say("Writing…");
-
             var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter);
 
-            void WritingAgain(string line) => Dispatcher.UIThread.Post(() =>
-            {
-                status.Say(line);
-                _surface.Say(line);
-            });
+            status.Clear();
 
-            _ = Task.Run(async () =>
+            if (_surface.Writing.Begin(
+                    ask,
+                    _surface.Commander(),
+                    (asked, aside, token) => _surface.Generator.DraftAsync(asked, _surface.Now(), aside, token),
+                    line => Dispatcher.UIThread.Post(() => _surface.Say(line)),
+                    write => Dispatcher.UIThread.Post(() => Settle(write), DispatcherPriority.Background)))
             {
-                var outcome = await _surface.Generator.DraftAsync(ask, _surface.Now(), WritingAgain, CancellationToken.None).ConfigureAwait(false);
-
-                Dispatcher.UIThread.Post(() =>
-                {
-                    writing = false;
-                    go.IsEnabled = true;
-                    Offer(outcome, ask, status, drawnFor);
-                });
-            });
+                Show();
+            }
         }
 
         go.Click += (_, _) => Go();
+
+        stop.Click += (_, _) =>
+        {
+            _surface.Writing.Stop();
+            Show();
+        };
+
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        timer.Tick += (_, _) => Show(offer: false);
+
+        void OnWriting() => Dispatcher.UIThread.Post(() => Show(), DispatcherPriority.Background);
+
+        view.AttachedToVisualTree += (_, _) =>
+        {
+            _surface.Writing.Changed += OnWriting;
+            timer.Start();
+            Show();
+        };
+
+        view.DetachedFromVisualTree += (_, _) =>
+        {
+            _surface.Writing.Changed -= OnWriting;
+            timer.Stop();
+        };
 
         Label();
 
@@ -756,10 +831,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         page.Children.Add(briefButton);
-        page.Children.Add(go);
+        page.Children.Add(buttons);
+        page.Children.Add(progress);
         page.Children.Add(status);
 
-        if (!_surface.ModelAvailable() || !_surface.GalaxySearchOn())
+        if (shut)
         {
             status.Say(AskShutBecause());
             go.IsEnabled = false;
@@ -768,8 +844,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             settings.Click += (_, _) => _surface.OpenSettings();
             page.Children.Add(settings);
         }
-
-        var view = new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
 
         if (follows is null)
         {
@@ -812,22 +886,45 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return null;
     }
 
+    /// <summary>What a short story write is doing, beside its bar.</summary>
+    internal static string Doing(WriteStage stage) => stage switch
+    {
+        WriteStage.Places => "Finding places nearby…",
+        WriteStage.Outline => "Writing the outline…",
+        WriteStage.Objectives => "Writing your objectives…",
+        _ => "Checking the objectives…",
+    };
+
+    private static string Clock(TimeSpan elapsed) =>
+        string.Create(CultureInfo.InvariantCulture, $"{(int)elapsed.TotalMinutes}:{elapsed.Seconds:00}");
+
     private bool OnAsk() => _nav.Tab == PanelTab.Stories && _nav.Trail is [.., { Key: AskKey }];
 
-    /// <summary>A draft arrives: stored as a draft, the core's reply spoken, the reading level opened.</summary>
-    private void Offer(AdventureOutcome outcome, AdventureAsk ask, StatusLine status, string? drawnFor)
+    /// <summary>
+    /// A write finishes, whether or not a Short Story page is open: the draft stored and the core's reply spoken, or the
+    /// failure spoken. Posted at Background, so an aside the write posted before it is said first.
+    /// </summary>
+    private void Settle(StoryWrite write)
+    {
+        if (!ReferenceEquals(_surface.Writing.Current, write) || write.Outcome is not { } outcome)
+        {
+            return;
+        }
+
+        _surface.Writing.Settle(write, Stored(outcome, write.Ask with { Progress = null }, write.DrawnFor));
+    }
+
+    private StoryOffer Stored(AdventureOutcome outcome, AdventureAsk ask, string? drawnFor)
     {
         if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
         {
-            status.Fail(StoriesView.CommanderChangedRefusal);
-            return;
+            return new StoryOffer(null, null, StoriesView.CommanderChangedRefusal, Failed: true);
         }
 
         if (outcome.Draft is not { } draft)
         {
-            status.Fail(outcome.Message ?? "Nothing came back.");
             _surface.Say(outcome.Message ?? "I could not write that one.");
-            return;
+            return new StoryOffer(null, null, outcome.Message ?? "Nothing came back.", Failed: true);
         }
 
         var key = UniqueKey(draft.Key, draft.Previous?.Key);
@@ -836,19 +933,37 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (refusal is not null)
         {
-            status.Fail(refusal);
+            return new StoryOffer(null, null, refusal, Failed: true);
+        }
+
+        _asks[key] = ask;
+        _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
+
+        return new StoryOffer(key, stored.Name, string.Join(" ", outcome.Notes), Failed: false);
+    }
+
+    /// <summary>A settled write is shown: its failure on the status line, or its draft's reading level opened while the draft is on file.</summary>
+    private void Present(StoryOffer offer, AdventureAsk ask, StatusLine status)
+    {
+        if (offer.Failed)
+        {
+            status.Fail(offer.Note);
+            return;
+        }
+
+        status.Say(offer.Note);
+
+        if (offer.Key is not { } key || _surface.Book.Store.Find(_surface.Commander(), key) is null)
+        {
             return;
         }
 
         _asks[key] = ask;
-        status.Say(string.Join(" ", outcome.Notes));
-
-        _surface.Say(outcome.Reply ?? $"{stored.Name}. It is yours to accept or send back.");
 
         // Below the root only: the root is the tab's own and GoTo keeps it. The Stories tab rather than the one
         // showing, which the Commander may have changed while the story was written.
         _nav.SelectRoot(PanelTab.Stories, RootKey);
-        _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, stored.Name));
+        _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, offer.Name ?? key));
     }
 
     private string UniqueKey(string wanted, string? keep)

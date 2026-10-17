@@ -174,6 +174,11 @@ Say "ask for a short story" and D47 opens this form and the entry for the brief.
 press **Done** with it empty, and it asks with the form as it stands, as *Go* does. When a language model or galaxy
 search is missing, the form opens and D47 says which instead.
 
+While the story is written, a bar under *Go* shows what D47 is doing and about how long it usually takes. **Stop** ends
+the write, and D47 says nothing. Leaving the page does not end it: the bar is there when you come back, on the desktop or in the
+headset. When the story is finished D47 saves it and says so, whatever is showing, and opening Short Story afterwards
+takes you to the draft.
+
 **Things it reads rather than asks**, because asking would be asking you to describe your own
 ships: your fleet and what each hull can do, whether you have a carrier and where it is, where you
 are, who is aboard, and your ranks.

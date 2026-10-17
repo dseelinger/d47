@@ -32,7 +32,11 @@ public sealed record AdventureSurface(
     Func<string?, string?>? Recap = null,
     D47.Core.Stories.StoryBench? Bench = null,
     Func<IReadOnlyList<D47.Core.Ships.FleetEntry>>? Fleet = null,
-    Func<string, D47.Core.Ships.ShipBuild?>? Intend = null);
+    Func<string, D47.Core.Ships.ShipBuild?>? Intend = null)
+{
+    /// <summary>The short story being written, shared by the desktop window and the VR big panel.</summary>
+    public ShortStoryWriting Writing { get; init; } = new();
+}
 
 /// <summary>Raised when the shown Commander changes, on whichever thread the journal ticks; subscribers post to the UI thread.</summary>
 public sealed class CommanderSignal

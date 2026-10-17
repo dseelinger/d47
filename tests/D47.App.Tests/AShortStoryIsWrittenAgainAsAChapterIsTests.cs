@@ -148,7 +148,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
 
     private static StatusLine Status(PanelView panel) =>
-        ((Avalonia.Controls.Panel)Go(panel).Parent!).Children.OfType<StatusLine>().Single();
+        panel.GetVisualDescendants().OfType<StatusLine>().Single();
 
     private static void Press(PanelView panel) =>
         Go(panel).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
