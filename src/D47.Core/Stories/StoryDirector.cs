@@ -69,6 +69,7 @@ public sealed class StoryDirector(
 
     /// <summary>Narrated scans picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryScanDue> _scans = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, CoreWaking> _steppedWakings = new(StringComparer.Ordinal);
 
     /// <summary>Openings picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryOpeningDue> _openings = new(StringComparer.Ordinal);
@@ -1194,9 +1195,21 @@ public sealed class StoryDirector(
             return null;
         }
 
+        var woke = RecordScan(frontierId, current.Id, address, journalEvent.Timestamp);
+
+        logger.LogInformation("{Title}: the beacon in {System} was scanned", current.Title, GuardianCores.Beacons[address]);
+        return woke;
+    }
+
+    /// <summary>
+    /// Records the scan of the beacon at <paramref name="address"/> on the story and returns what it woke when it lifted
+    /// the hold on the cores. Null when the address was already recorded.
+    /// </summary>
+    private CoreWaking? RecordScan(string? frontierId, string storyId, long address, DateTimeOffset at)
+    {
         CoreWaking? woke = null;
 
-        stories.Update(frontierId, current.Id, story =>
+        stories.Update(frontierId, storyId, story =>
         {
             if (story.BeaconSystems.Contains(address))
             {
@@ -1206,7 +1219,7 @@ public sealed class StoryDirector(
             var held = story.HeldCores;
             var scanned = story with
             {
-                BeaconScanAt = story.BeaconScanAt ?? journalEvent.Timestamp,
+                BeaconScanAt = story.BeaconScanAt ?? at,
                 BeaconSystems = [.. story.BeaconSystems, address],
             };
 
@@ -1220,8 +1233,44 @@ public sealed class StoryDirector(
             return scanned;
         });
 
-        logger.LogInformation("{Title}: the beacon in {System} was scanned", current.Title, GuardianCores.Beacons[address]);
         return woke;
+    }
+
+    /// <summary>
+    /// Records a stepped beacon beat's scan on the current story. The waking waits for <see cref="TakeSteppedWaking"/>,
+    /// so only the tick wakes the cores. Returns a refusal or null.
+    /// </summary>
+    public string? RecordSteppedScan(string? frontierId, long? address, DateTimeOffset now)
+    {
+        if (address is not { } beacon || !GuardianCores.Beacons.ContainsKey(beacon))
+        {
+            return "The beacon beat has no beacon system to scan.";
+        }
+
+        if (stories.Current(frontierId) is not { } current)
+        {
+            return "There is no story to record the scan on.";
+        }
+
+        if (RecordScan(frontierId, current.Id, beacon, now) is { } waking)
+        {
+            lock (_gate)
+            {
+                _steppedWakings[frontierId ?? AdventureStore.NoCommander] = waking;
+            }
+        }
+
+        logger.LogInformation("{Title}: the beacon in {System} was stepped", current.Title, GuardianCores.Beacons[beacon]);
+        return null;
+    }
+
+    /// <summary>The waking a stepped beacon scan left, once; the tick adds it to the wakings.</summary>
+    public CoreWaking? TakeSteppedWaking(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _steppedWakings.Remove(frontierId ?? AdventureStore.NoCommander, out var waking) ? waking : null;
+        }
     }
 
     /// <summary>

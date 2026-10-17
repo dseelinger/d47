@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Persona;
 using D47.Core.Storage;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
@@ -137,19 +138,73 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         await writing!;
     }
 
-    [Fact]
-    public async Task ABeaconBeatCannotBeSteppedYet()
+    private async Task BeaconChapter(AdventureTrigger trigger)
     {
         await WriteChapter(1, Now.AddHours(1));
+        _stories.Save("F1", _stories.Current("F1")! with { BeaconScanAt = null });
         var chapter = _adventures.Find("F1", Key(1))!;
-        Assert.Null(_adventures.Save("F1", chapter with
-        {
-            Beats = [AdventureFixtures.Beat("The Beacon", "resolution", new AdventureTrigger { Kind = TriggerKind.Beacon, SystemAddress = StoryFixtures.BeaconAddress, System = StoryFixtures.Beacon }, "Scan it.")],
-        }));
-        var before = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+        Assert.Null(_adventures.Save("F1", chapter with { Beats = [AdventureFixtures.Beat("The Beacon", "resolution", trigger, "Scan it.")] }));
+    }
 
-        Assert.Equal("The beacon scan cannot be stepped yet.", _bench.Step("F1", Key(1), Now.AddHours(2)));
-        Assert.Equal(before, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+    private static AdventureTrigger Beacon(long? address) =>
+        new() { Kind = TriggerKind.Beacon, SystemAddress = address, System = StoryFixtures.Beacon };
+
+    [Fact]
+    public async Task SteppingABeaconBeatRecordsTheScanAtTheStepTime()
+    {
+        await BeaconChapter(Beacon(StoryFixtures.BeaconAddress));
+
+        Assert.Null(_bench.Step("F1", Key(1), Now.AddHours(2)));
+
+        var story = _stories.Current("F1")!;
+        Assert.Equal(Now.AddHours(2), story.BeaconScanAt);
+        Assert.Equal([StoryFixtures.BeaconAddress], story.BeaconSystems);
+        Assert.True(_director.Book.Standing("F1", Key(1))!.IsDone);
+        Assert.Equal(TimeSpan.Zero, story.SinceBeacon(Now.AddHours(2)));
+    }
+
+    [Fact]
+    public async Task ASteppedBeaconLeavesTheCoreWakingForTheTickOnce()
+    {
+        await BeaconChapter(Beacon(StoryFixtures.BeaconAddress));
+        Assert.Equal(HeldCores.All, _stories.Current("F1")!.HeldCores);
+
+        Assert.Null(_bench.Step("F1", Key(1), Now.AddHours(2)));
+
+        Assert.Equal(CoreWaking.Cores, _director.TakeSteppedWaking("F1"));
+        Assert.Null(_director.TakeSteppedWaking("F1"));
+    }
+
+    [Fact]
+    public async Task ARealScanOfASteppedBeaconChangesNothing()
+    {
+        await BeaconChapter(Beacon(StoryFixtures.BeaconAddress));
+        Assert.Null(_bench.Step("F1", Key(1), Now.AddHours(2)));
+        _director.TakeSteppedWaking("F1");
+        var before = _stories.Current("F1");
+
+        _director.Observe(AdventureFixtures.Jump(StoryFixtures.BeaconAddress, Now.AddHours(3)), "F1");
+        var woke = _director.Observe(DataScanned(Now.AddHours(3)), "F1");
+
+        Assert.Null(woke);
+        Assert.Equal(before, _stories.Current("F1"));
+    }
+
+    [Fact]
+    public async Task ABeaconBeatWithNoAddressIsRefusedAndChangesNothing()
+    {
+        await BeaconChapter(Beacon(StoryFixtures.BeaconAddress));
+        var path = StorySlotFiles.In(Data).Adventures;
+        _files.WriteText(path, _files.ReadText(path)!.Replace(StoryFixtures.BeaconAddress.ToString(), "0"));
+        _adventures.Poll();
+        var adventures = _files.ReadText(StorySlotFiles.In(Data).Adventures);
+        var story = _stories.Current("F1");
+
+        Assert.NotNull(_bench.Step("F1", Key(1), Now.AddHours(2)));
+
+        Assert.Equal(adventures, _files.ReadText(StorySlotFiles.In(Data).Adventures));
+        Assert.Equal(story, _stories.Current("F1"));
+        Assert.Null(_director.TakeSteppedWaking("F1"));
     }
 
     [Fact]

@@ -3812,6 +3812,13 @@ public sealed class AppHost : IDisposable
                 _ = storyDirector.DockOffline(journalEvent, inGame);
             }
 
+            if (storyDirector.TakeSteppedWaking(commander) is { } stepped)
+            {
+                var chapter = storyStore.Current(commander)?.CurrentChapter;
+                var core = stepped == CoreWaking.Cores ? storyDirector.CoreOf(commander) : null;
+                wakings.Add(stepped, core, chapter is not null && adventureBook.IsStirring(commander, chapter) ? chapter : null, context.Now);
+            }
+
             // The opening is said first, then a narrated scan, before the cores it wakes; the story's core comes aboard
             // once the scan line has been said.
             var opening = storyDirector.TakeOpening(commander);

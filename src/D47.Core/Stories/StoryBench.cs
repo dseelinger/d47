@@ -248,12 +248,17 @@ public sealed partial class StoryBench
             return Writing;
         }
 
-        if (director.Book.Standing(frontierId, key)?.CurrentBeat is { Trigger.Kind: TriggerKind.Beacon })
+        if (director.Book.Standing(frontierId, key)?.CurrentBeat is not { Trigger: { Kind: TriggerKind.Beacon } beacon })
         {
-            return "The beacon scan cannot be stepped yet.";
+            return director.Book.Step(frontierId, key, now);
         }
 
-        return director.Book.Step(frontierId, key, now);
+        if (beacon.SystemAddress is not { } address || !D47.Core.Persona.GuardianCores.Beacons.ContainsKey(address))
+        {
+            return "The beacon beat has no beacon system to scan.";
+        }
+
+        return director.Book.Step(frontierId, key, now) ?? director.RecordSteppedScan(frontierId, address, now);
     }
 
     /// <summary>My story and then each bench slot, with the current story <paramref name="frontierId"/> has in it.</summary>
