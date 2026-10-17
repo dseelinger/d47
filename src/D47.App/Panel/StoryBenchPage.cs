@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Adventures;
 using D47.Core.Interface;
 using D47.Core.Stories;
 
@@ -60,6 +61,7 @@ public sealed class StoryBenchPage : UserControl
         _bench.CheckpointsChanged += OnChanged;
         _director.Stories.Changed += OnChanged;
         _director.WritingChanged += OnChanged;
+        _surface.Book.StirringChanged += OnChanged;
         Rebuild();
     }
 
@@ -70,6 +72,7 @@ public sealed class StoryBenchPage : UserControl
         _bench.CheckpointsChanged -= OnChanged;
         _director.Stories.Changed -= OnChanged;
         _director.WritingChanged -= OnChanged;
+        _surface.Book.StirringChanged -= OnChanged;
     }
 
     private void OnChanged() => Dispatcher.UIThread.Post(Rebuild);
@@ -109,8 +112,84 @@ public sealed class StoryBenchPage : UserControl
         _body.Children.Add(AdventuresPage.Text("Jump", TypeScale.Small, ThemeManager.GreyKey));
         _body.Children.Add(JumpSection(commander, busy));
 
+        _body.Children.Add(AdventuresPage.Text("Beats", TypeScale.Small, ThemeManager.GreyKey));
+        _body.Children.Add(BeatSection(commander, busy));
+
         _body.Children.Add(AdventuresPage.Text("Checkpoints", TypeScale.Small, ThemeManager.GreyKey));
         _body.Children.Add(CheckpointSection(commander, busy));
+    }
+
+    internal const string NoBeatsNotice = "No chapter or Short Story is under way.";
+
+    internal static string BeatLabel(AdventureBeat beat) => $"{(string.IsNullOrWhiteSpace(beat.Function) ? "—" : beat.Function)} · {beat.Title}";
+
+    /// <summary>"Fired HH:mm" for a fired beat, "Waiting" for the current one, empty for a later one.</summary>
+    internal static string BeatState(AdventureStanding standing, int index) =>
+        index < standing.Fired.Count
+            ? $"Fired {standing.Fired[index].ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)}"
+            : index == standing.Current ? "Waiting" : string.Empty;
+
+    private StackPanel BeatSection(string? commander, bool busy)
+    {
+        var holder = new StackPanel { Spacing = 10 };
+        var active = _surface.Book.Active(commander);
+
+        if (active.Count == 0)
+        {
+            holder.Children.Add(AdventuresPage.Muted(NoBeatsNotice));
+            return holder;
+        }
+
+        var chapters = _director.Stories.Current(commander)?.Chapters ?? [];
+
+        foreach (var standing in active)
+        {
+            var adventure = standing.Adventure;
+            var number = adventure.StoryId is null ? -1 : chapters.ToList().IndexOf(adventure.Key);
+            var kind = adventure.StoryId is null
+                ? "Short Story"
+                : number >= 0 ? $"Story chapter {(number + 1).ToString(CultureInfo.InvariantCulture)}" : "Story chapter";
+
+            var block = new StackPanel { Spacing = 2 };
+            var heading = $"{adventure.Name} · {kind}";
+            block.Children.Add(AdventuresPage.RowName(standing.Step() is { } step ? $"{heading} · {step}" : heading));
+
+            var stirring = _surface.Book.IsStirring(commander, adventure.Key);
+
+            for (var index = 0; index < adventure.Beats.Count; index++)
+            {
+                var beat = adventure.Beats[index];
+                var state = BeatState(standing, index);
+                var row = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 4) };
+                row.Children.Add(AdventuresPage.RowSecondary(state.Length == 0 ? BeatLabel(beat) : $"{BeatLabel(beat)} · {state}"));
+
+                if (index == standing.Current)
+                {
+                    row.Children.Add(AdventuresPage.Muted(beat.HandOff()));
+
+                    var next = new Button
+                    {
+                        Name = "NextBeat",
+                        Content = "Next beat",
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        IsEnabled = !busy && !stirring,
+                    };
+                    var key = adventure.Key;
+                    var title = beat.Title;
+                    next.Click += (_, _) => Act(
+                        $"Stepping {title}…",
+                        () => Task.FromResult(_bench.Step(commander, key, _surface.Now())),
+                        $"Stepped {title}. It is said after the usual settle.");
+                    row.Children.Add(next);
+                }
+
+                block.Children.Add(row);
+            }
+
+            holder.Children.Add(block);
+        }
+
+        return holder;
     }
 
     internal static string Describe(BenchCheckpoint checkpoint) =>

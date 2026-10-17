@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -20,7 +21,7 @@ public sealed class TheStoryBenchPageTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 13, 20, 0, 0, TimeSpan.Zero);
 
-    private sealed record Rig(PanelView Panel, StoryBench? Bench, StoryStore Stories, StoryDirector Director);
+    private sealed record Rig(PanelView Panel, StoryBench? Bench, StoryStore Stories, StoryDirector Director, AdventureBook Book);
 
     private static Rig Build(bool benchOn)
     {
@@ -69,7 +70,72 @@ public sealed class TheStoryBenchPageTests
         panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        return new Rig(panel, bench, stories, director);
+        return new Rig(panel, bench, stories, director, book);
+    }
+
+    private static AdventureBeat Beat(string title, string function, long address) => new()
+    {
+        Title = title,
+        Function = function,
+        Trigger = new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = address, System = title },
+        Line = "Said.",
+    };
+
+    private static void BeginShortStory(Rig rig)
+    {
+        rig.Book.Write("F1", new Adventure
+        {
+            Key = "the-lantern-route",
+            Name = "The Lantern Route",
+            Source = AdventureSource.Generated,
+            Opening = "Begins.",
+            Beats = [Beat("The Lantern", "setup", 1001), Beat("The Survey", "catalyst", 1002)],
+        });
+        Assert.Null(rig.Book.Begin("F1", "the-lantern-route", Now));
+        rig.Book.Drain();
+        rig.Book.Told("F1", "the-lantern-route", new AdventureTold { Kind = AdventureToldKind.Beat, Text = "Begins.", At = Now });
+        rig.Book.CatchUp([]);
+    }
+
+    [AvaloniaFact]
+    public void WithNothingUnderWayTheBeatsSectionSaysSo()
+    {
+        var rig = Build(benchOn: true);
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(StoryBenchPage.NoBeatsNotice, Drawn(rig.Panel));
+        Assert.Null(Find(rig.Panel, "NextBeat"));
+    }
+
+    [AvaloniaFact]
+    public void AShortStoryListsItsBeatsAndNextBeatStepsTheWaitingOne()
+    {
+        var rig = Build(benchOn: true);
+        BeginShortStory(rig);
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(rig.Panel);
+        Assert.Contains(drawn, text => text.StartsWith("The Lantern Route · Short Story", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(drawn, text => text.StartsWith("setup · The Lantern · Waiting", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(drawn, text => string.Equals(text, "catalyst · The Survey", StringComparison.OrdinalIgnoreCase));
+
+        Press(Find(rig.Panel, "NextBeat")!);
+        Settle(() => rig.Book.Standing("F1", "the-lantern-route")!.Current == 1);
+
+        Assert.Equal(1, rig.Book.Standing("F1", "the-lantern-route")!.Current);
+        Assert.True(rig.Book.IsStirring("F1", "the-lantern-route"));
+        Assert.False(Find(rig.Panel, "NextBeat")!.IsEnabled);
+        Assert.Contains(Drawn(rig.Panel), text => text.StartsWith("setup · The Lantern · Fired ", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(Drawn(rig.Panel), text => text.StartsWith("catalyst · The Survey · Waiting", StringComparison.OrdinalIgnoreCase));
+
+        rig.Book.Told("F1", "the-lantern-route", new AdventureTold { Kind = AdventureToldKind.Beat, Text = "Said.", At = Now });
+        Settle(() => Find(rig.Panel, "NextBeat")?.IsEnabled == true);
+
+        Assert.True(Find(rig.Panel, "NextBeat")!.IsEnabled);
     }
 
     private static Button? Find(PanelView panel, string name) =>
@@ -170,6 +236,21 @@ public sealed class TheStoryBenchPageTests
 
         Assert.Equal(StoryState.Paused, rig.Stories.Current("F1")!.State);
         Assert.Equal(1, rig.Stories.Current("F1")!.CluesGiven);
+    }
+
+    [AvaloniaFact]
+    public void ABenchWithAPartSteppedChapterIsCaptured()
+    {
+        var rig = Build(benchOn: true);
+        BeginShortStory(rig);
+        Assert.Null(rig.Bench!.Step("F1", "the-lantern-route", Now.AddMinutes(5)));
+        rig.Book.Told("F1", "the-lantern-route", new AdventureTold { Kind = AdventureToldKind.Beat, Text = "Said.", At = Now });
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        using var frame = ((Window)TopLevel.GetTopLevel(rig.Panel)!).CaptureRenderedFrame()!;
+        frame.SaveCapture("story-bench-beats.png");
     }
 
     [Fact]
