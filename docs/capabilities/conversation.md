@@ -261,6 +261,17 @@ Personality: on
 Session so far: 0 turn(s), $0.0000
 ```
 
+### Writing stories with a model on your own PC
+
+Gemma 4 E4B (Q4_K_M) in LM Studio writes short stories and chapters. It takes about 5 GB of VRAM,
+about 80 seconds for a short story and about two and a half minutes for a chapter. Leave its
+reasoning on.
+
+It needs a context of 16,384 tokens or more. LM Studio's default of 8,192 writes nothing. In
+LM Studio, set the model's context length in the loader, tick "Remember settings for" that model so
+the setting survives a restart, and load the model again. Any other server sets the context in its
+own settings.
+
 ### Stopping a turn
 
 "Stop" and "cancel" are different things, and the difference is on your bill.

@@ -198,14 +198,18 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>What the next draft is told was wrong with this one; null when no answer came back to be wrong.</summary>
     public string? ForNextDraft => Unanswered ? null : Refusal;
 
-    /// <summary>The context length that fits a prompt of the given size and a full output ceiling, in 4096-token steps.</summary>
-    public static int ContextNeeded(int? promptTokens, int ceiling) =>
-        (((promptTokens ?? 8000) + ceiling + 4095) / 4096) * 4096;
+    /// <summary>The context length that fits a prompt and a 6,144-token reply, in 4096-token steps and at least 16,384.</summary>
+    public static int ContextNeeded(int? promptTokens) =>
+        Math.Max(16384, (((promptTokens ?? 0) + 6144 + 4095) / 4096) * 4096);
+
+    /// <summary>One sentence telling the Commander to set the context to at least <paramref name="tokens"/> and where.</summary>
+    public static string SetContextSentence(int tokens) =>
+        $"Set the context to at least {tokens:N0} tokens: in LM Studio, set the model's context length in the loader, "
+        + "tick \"Remember settings for\" that model and load it again; on any other server, set it in that server's own settings.";
 
     internal static string ContextLimitMessage(FlavourCutOff cutOff) =>
         $"The model's context ran out. The prompt took {cutOff.PromptTokens} tokens and the reply was cut off after "
-        + $"{cutOff.ReplyTokens}. Set the context length on the model's server to at least "
-        + $"{ContextNeeded(cutOff.PromptTokens, cutOff.Ceiling):N0} tokens, then write it again.";
+        + $"{cutOff.ReplyTokens}. {SetContextSentence(ContextNeeded(cutOff.PromptTokens))}";
 
     /// <summary>The finale's destination, when the draft is finale chapter 1.</summary>
     public AdventureDestination? Destination { get; init; }

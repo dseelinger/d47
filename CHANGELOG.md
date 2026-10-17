@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a model's context is too small for a story, D47 now asks for 16,384 tokens instead of 24,576 and says where to set it: LM Studio's context length in the loader, remembered for that model, or the other server's own settings. The conversation help gains a section on writing stories with a model on your own PC.
+
 A local model with a known context now gets a reply limit equal to the room its context has left after the prompt, instead of a quarter of the context, so long story replies are cut less often.
 
 The Story bench lists the beats of the current chapter and of a Short Story under way, with each beat's function, title and whether it has fired. Next beat steps the waiting beat without its journal event, and returns once the line has been said.

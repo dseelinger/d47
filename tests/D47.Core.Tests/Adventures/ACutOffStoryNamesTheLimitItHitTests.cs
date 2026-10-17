@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging;
@@ -58,8 +58,30 @@ public sealed class ACutOffStoryNamesTheLimitItHitTests
 
         Assert.Equal(
             "The model's context ran out. The prompt took 6084 tokens and the reply was cut off after 2108. "
-            + "Set the context length on the model's server to at least 24,576 tokens, then write it again.",
+            + AdventureOutcome.SetContextSentence(16384),
             outcome.Message);
+    }
+
+    [Theory]
+    [InlineData(6061, 16384)]
+    [InlineData(8384, 16384)]
+    [InlineData(12000, 20480)]
+    public void TheContextNeededIsThePromptPlusAReplyRoundedUp(int prompt, int expected) =>
+        Assert.Equal(expected, AdventureOutcome.ContextNeeded(prompt));
+
+    [Fact]
+    public void WithoutAPromptCountTheContextNeededIsTheFloor() =>
+        Assert.Equal(16384, AdventureOutcome.ContextNeeded(null));
+
+    [Fact]
+    public void TheContextSentenceNamesLmStudioAndOtherServers()
+    {
+        var sentence = AdventureOutcome.SetContextSentence(16384);
+
+        Assert.Contains("16,384", sentence);
+        Assert.Contains("LM Studio", sentence);
+        Assert.Contains("Remember settings for", sentence);
+        Assert.Contains("any other server", sentence);
     }
 
     [Fact]
