@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -226,7 +226,8 @@ public sealed class AdventureGenerator(
     Func<INotablePlacesService?> places,
     SpendTracker? spend,
     PriceTable? prices,
-    ILogger logger)
+    ILogger logger,
+    Func<string, string, ThinkingEffort?>? storyEffort = null)
 {
     /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
     public const int SpineOutputCeiling = 16000;
@@ -234,8 +235,8 @@ public sealed class AdventureGenerator(
     /// <summary>Output ceiling for each beats turn.</summary>
     public const int BeatsOutputCeiling = 16000;
 
-    /// <summary>The thinking effort every call asks for.</summary>
-    public ThinkingEffort Effort { get; init; } = ThinkingEffort.Medium;
+    /// <summary>Overrides the effort every call asks for; null uses the catalog's story effort for the model, else Medium.</summary>
+    public ThinkingEffort? Effort { get; init; }
 
     /// <summary>How long one model call may run on a provider that is not on this machine.</summary>
     public TimeSpan CallLimit { get; init; } = TimeSpan.FromSeconds(120);
@@ -1048,7 +1049,9 @@ public sealed class AdventureGenerator(
             logger,
             cancellationToken,
             maxOutputTokens: budget,
-            effort: Effort,
+            effort: Effort
+                ?? (asking is null ? null : storyEffort?.Invoke(asking.Id, chosen))
+                ?? ThinkingEffort.Medium,
 
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure,

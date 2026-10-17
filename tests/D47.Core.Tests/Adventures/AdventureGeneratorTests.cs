@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -366,6 +366,29 @@ public sealed class AdventureGeneratorTests
             null,
             null,
             logger);
+    }
+
+    /// <summary>As the first overload, asking for the effort <paramref name="storyEffort"/> names for the model, unless <paramref name="effort"/> overrides it.</summary>
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Func<string, string, ThinkingEffort?> storyEffort, ThinkingEffort? effort = null)
+    {
+        var state = State(1, []);
+
+        return new AdventureGenerator(
+            () => provider,
+            () => "story-model",
+            () => "You are the ship.",
+            () => "core",
+            () => null,
+            () => state,
+            () => galaxy,
+            () => null,
+            null,
+            null,
+            NullLogger.Instance,
+            storyEffort)
+        {
+            Effort = effort,
+        };
     }
 
     /// <summary>As <see cref="Generator(ILlmProvider, Galaxy, Microsoft.Extensions.Logging.ILogger, int, string[])"/>, its call limits on <paramref name="time"/>.</summary>

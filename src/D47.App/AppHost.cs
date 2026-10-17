@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -2984,7 +2984,8 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
             spend,
             PriceTable.Default,
-            loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>());
+            loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>(),
+            (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort);
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
         var storyDirector = new D47.Core.Stories.StoryDirector(

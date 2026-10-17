@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 
 using D47.Core.Audio;
@@ -31,6 +31,9 @@ public sealed record ModelTraits
 
     /// <summary>Whether the model reads image input.</summary>
     public bool Images { get; init; }
+
+    /// <summary>The thinking effort story calls use for this model, or null for the default.</summary>
+    public ThinkingEffort? StoryEffort { get; init; }
 }
 
 /// <summary>One model in the catalog.</summary>
@@ -309,6 +312,9 @@ public sealed class ModelCatalog
         LegacyThinking = OptionalBool(element, "legacyThinking"),
         CanDisableThinking = OptionalBool(element, "canDisableThinking"),
         Images = OptionalBool(element, "images"),
+        StoryEffort = element.TryGetProperty("storyEffort", out var story) && story.ValueKind is JsonValueKind.String
+            ? ThinkingEffortRange.Parse(story.GetString())
+            : null,
     };
 
     private static bool OptionalBool(JsonElement element, string name) =>
