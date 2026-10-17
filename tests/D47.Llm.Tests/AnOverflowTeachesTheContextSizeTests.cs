@@ -7,7 +7,7 @@ namespace D47.Llm.Tests;
 
 /// <summary>
 /// A context overflow names the model's context size. It is kept for the endpoint and model, reported as a
-/// capability, and caps the reply length asked for from then on.
+/// capability, and caps the reply length asked for to the room the prompt leaves.
 /// </summary>
 [Collection(nameof(EndpointDemotionCollection))]
 public class AnOverflowTeachesTheContextSizeTests
@@ -62,7 +62,7 @@ public class AnOverflowTeachesTheContextSizeTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task TheReplyIsCappedAtAQuarterOfTheContext()
+    public async Task AShortPromptKeepsTheRequestsOwnLimitAfterAnOverflow()
     {
         using var endpoint = RecordedEndpoint.Streaming(AContextOverflowSaysHowToFixItTests.LmStudioOverflow);
         using var provider = new ChatCompletionsLlmProvider(apiKey: null, endpoint.BaseUrl);
@@ -71,7 +71,7 @@ public class AnOverflowTeachesTheContextSizeTests
 
         await OpenAiRecordings.DrainAsync(provider, OpenAiRecordings.Ask("test-model"), Token);
 
-        Assert.Equal(4096, MaxOutput(provider, "test-model"));
+        Assert.Equal(8192, MaxOutput(provider, "test-model"));
         Assert.Equal(8192, MaxOutput(provider, "another-model"));
     }
 
@@ -87,7 +87,7 @@ public class AnOverflowTeachesTheContextSizeTests
 
         await OpenAiRecordings.DrainAsync(provider, OpenAiRecordings.Ask("test-model"), Token);
 
-        Assert.Equal(4096, MaxOutput(provider, "test-model", "max_tokens"));
+        Assert.Equal(8192, MaxOutput(provider, "test-model", "max_tokens"));
     }
 
     [Fact]
@@ -100,9 +100,39 @@ public class AnOverflowTeachesTheContextSizeTests
         Assert.Null(anthropic.CapabilitiesFor("claude-sonnet-5").ContextTokens);
     }
 
-    private static int MaxOutput(ChatCompletionsLlmProvider provider, string model, string field = "max_completion_tokens")
+    [Fact]
+    public void ALongPromptLeavesTheReplyTheRoomTheContextHas()
     {
-        using var document = JsonDocument.Parse(provider.BuildBody(OpenAiRecordings.Ask(model)));
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, "http://127.0.0.1:1/v1");
+        EndpointDemotions.RecordContext(OpenAiEndpoint.Normalise("http://127.0.0.1:1/v1"), "test-model", 12288);
+
+        Assert.InRange(MaxOutput(provider, "test-model", question: Question(totalChars: 30000)), 3700, 3800);
+    }
+
+    [Fact]
+    public void AFullPromptStillGetsAQuarterOfTheContext()
+    {
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, "http://127.0.0.1:1/v1");
+        EndpointDemotions.RecordContext(OpenAiEndpoint.Normalise("http://127.0.0.1:1/v1"), "test-model", 12288);
+
+        Assert.Equal(3072, MaxOutput(provider, "test-model", question: Question(totalChars: 40000)));
+    }
+
+    [Fact]
+    public void WithNoRecordedContextTheRequestsOwnLimitIsSent()
+    {
+        using var provider = new ChatCompletionsLlmProvider(apiKey: null, "http://127.0.0.1:1/v1");
+
+        Assert.Equal(8192, MaxOutput(provider, "test-model", question: Question(totalChars: 40000)));
+    }
+
+    // A question sized so the system block and the question together total the characters given.
+    private static string Question(int totalChars) =>
+        new('a', totalChars - OpenAiRecordings.Ask().Prompt.RenderCachedSystemBlock().Length);
+
+    private static int MaxOutput(ChatCompletionsLlmProvider provider, string model, string field = "max_completion_tokens", string question = "How much fuel?")
+    {
+        using var document = JsonDocument.Parse(provider.BuildBody(OpenAiRecordings.Ask(model, question)));
 
         return document.RootElement.GetProperty(field).GetInt32();
     }

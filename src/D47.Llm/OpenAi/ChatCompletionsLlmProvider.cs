@@ -314,20 +314,33 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             // assembly fixed.
             json.WriteStartObject();
             json.WriteString("role", "system");
-            json.WriteString("content", request.Prompt.RenderCachedSystemBlock());
+            var system = request.Prompt.RenderCachedSystemBlock();
+            json.WriteString("content", system);
             json.WriteEndObject();
+
+            var promptChars = system.Length;
 
             var readsImages = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Images, request.Model);
 
             foreach (var turn in OpenAiPrompt.Flatten(request.Prompt, operatorRoleAvailable: false))
             {
                 WriteTurn(json, turn, readsImages);
+                promptChars += CharactersOf(turn);
             }
 
             json.WriteEndArray();
 
+            var sendsTools = request.ToolCallsAllowed
+                && request.Prompt.Tools.Count > 0
+                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools);
+
+            if (sendsTools)
+            {
+                promptChars += request.Prompt.Tools.Sum(tool => tool.Name.Length + tool.Description.Length + tool.InputSchemaJson.Length);
+            }
+
             var maxOutput = EndpointDemotions.ContextOf(_endpoint.BaseUrl, request.Model) is { } context
-                ? Math.Min(request.MaxOutputTokens, Math.Max(context / 4, 1))
+                ? Math.Min(request.MaxOutputTokens, RoomLeft(context, promptChars))
                 : request.MaxOutputTokens;
 
             if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ModernTokenLimit))
@@ -363,9 +376,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                 json.WriteEndObject();
             }
 
-            if (request.ToolCallsAllowed
-                && request.Prompt.Tools.Count > 0
-                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools))
+            if (sendsTools)
             {
                 json.WriteStartArray("tools");
 
@@ -390,6 +401,17 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
 
         return buffer.WrittenMemory;
     }
+
+    private const double CharactersPerToken = 3.5;
+
+    /// <summary>The context less the estimated prompt, never under a quarter of the context.</summary>
+    private static int RoomLeft(int context, int promptChars) =>
+        Math.Max(Math.Max(context / 4, 1), context - (int)Math.Ceiling(promptChars / CharactersPerToken));
+
+    private static int CharactersOf(WireTurn turn) =>
+        (turn.Text?.Length ?? 0)
+        + turn.Results.Sum(result => result.Content.Length)
+        + turn.Calls.Sum(call => call.Name.Length + call.InputJson.Length);
 
     private static void WriteTurn(Utf8JsonWriter json, WireTurn turn, bool readsImages)
     {

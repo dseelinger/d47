@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A local model with a known context now gets a reply limit equal to the room its context has left after the prompt, instead of a quarter of the context, so long story replies are cut less often.
+
 The Story bench lists the beats of the current chapter and of a Short Story under way, with each beat's function, title and whether it has fired. Next beat steps the waiting beat without its journal event, and returns once the line has been said.
 
 Stories written with GPT-6 Luna now ask for low thinking effort instead of medium, which often ran for several minutes and was stopped. The model catalog can name a story effort for any model.
