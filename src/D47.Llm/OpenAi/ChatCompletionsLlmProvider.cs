@@ -366,6 +366,20 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
                 json.WriteNumber("temperature", temperature);
             }
 
+            if (request.ResponseSchema is { } schema
+                && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ResponseFormat))
+            {
+                json.WriteStartObject("response_format");
+                json.WriteString("type", "json_schema");
+                json.WriteStartObject("json_schema");
+                json.WriteString("name", schema.Name);
+                json.WriteBoolean("strict", true);
+                json.WritePropertyName("schema");
+                json.WriteRawValue(schema.SchemaJson);
+                json.WriteEndObject();
+                json.WriteEndObject();
+            }
+
             json.WriteBoolean("stream", true);
 
             if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.StreamUsage))
@@ -520,6 +534,10 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
             _ when said.Contains("stream_options", StringComparison.Ordinal)
                    || said.Contains("include_usage", StringComparison.Ordinal) => Demotable.StreamUsage,
             _ when said.Contains("max_completion_tokens", StringComparison.Ordinal) => Demotable.ModernTokenLimit,
+
+            // Before the tool arm: a refusal naming the schema format can also say "not supported" and "tool".
+            _ when said.Contains("response_format", StringComparison.Ordinal)
+                   || said.Contains("json_schema", StringComparison.Ordinal) => Demotable.ResponseFormat,
 
             // Tools are the one case with no single field name to match on, because a server that cannot call
             // them rejects "tools", "tool_choice" or "function" depending on who wrote it.

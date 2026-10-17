@@ -103,7 +103,8 @@ public static class FlavourTurn
         bool thinking = true,
         string? recentDelivery = null,
         FlavourLimits? limits = null,
-        Action<int>? received = null)
+        Action<int>? received = null,
+        LlmResponseSchema? responseSchema = null)
     {
         if (provider is null)
         {
@@ -129,6 +130,7 @@ public static class FlavourTurn
             // Off for every line that came before Phase 23.
             WebSearch = webSearch,
             ThinkingAllowed = thinking,
+            ResponseSchema = responseSchema,
             Prompt = new PromptAssembly
             {
                 // No tools.

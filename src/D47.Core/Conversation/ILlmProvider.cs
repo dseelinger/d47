@@ -178,7 +178,13 @@ public sealed record LlmRequest
     /// thinking thinks as usual.
     /// </summary>
     public bool ThinkingAllowed { get; init; } = true;
+
+    /// <summary>The JSON shape the reply must match. Only Chat Completions endpoints honour it.</summary>
+    public LlmResponseSchema? ResponseSchema { get; init; }
 }
+
+/// <summary>A named JSON schema for a reply, as a JSON string.</summary>
+public sealed record LlmResponseSchema(string Name, string SchemaJson);
 
 /// <summary>The seam.</summary>
 public interface ILlmProvider

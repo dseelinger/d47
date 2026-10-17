@@ -81,6 +81,9 @@ internal enum Demotable
     /// <summary><c>temperature</c> (#98).</summary>
     Sampling,
 
+    /// <summary><c>response_format</c>.</summary>
+    ResponseFormat,
+
     /// <summary>
     /// Anthropic's <c>thinking</c> and <c>output_config.effort</c>, which are one entry because they
     /// are one capability: both arrived with the 4.6 generation and a model that rejects either rejects
