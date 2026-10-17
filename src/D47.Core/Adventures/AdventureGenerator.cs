@@ -188,6 +188,12 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>Set when a reply stopped at the endpoint's context; names the counts and the length to set.</summary>
     public string? ContextMessage { get; init; }
 
+    /// <summary>Whether another draft may stand: an internal failure other than the endpoint's context running out.</summary>
+    public bool Redraftable => Draft is null && Internal && ContextMessage is null;
+
+    /// <summary>What the next draft is told was wrong with this one; null when no answer came back to be wrong.</summary>
+    public string? ForNextDraft => Unanswered ? null : Refusal;
+
     /// <summary>The context length that fits a prompt of the given size and a full output ceiling, in 4096-token steps.</summary>
     public static int ContextNeeded(int? promptTokens, int ceiling) =>
         (((promptTokens ?? 8000) + ceiling + 4095) / 4096) * 4096;
@@ -227,6 +233,15 @@ public sealed class AdventureGenerator(
     /// <summary>The thinking effort every call asks for.</summary>
     public ThinkingEffort Effort { get; init; } = ThinkingEffort.Medium;
 
+    /// <summary>How long one model call may run on a provider that is not on this machine.</summary>
+    public TimeSpan CallLimit { get; init; } = TimeSpan.FromSeconds(120);
+
+    /// <summary>How long a model call on a provider that is not on this machine may go with no text or thinking arriving.</summary>
+    public TimeSpan SilenceLimit { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>The clock <see cref="CallLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
+    public TimeProvider Time { get; init; } = TimeProvider.System;
+
     /// <summary>Beats per structure.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
@@ -252,6 +267,46 @@ public sealed class AdventureGenerator(
             AdventureReach.Session => Math.Max(300, range * 12),
             _ => carrier ? 5000 : 1500,
         };
+    }
+
+    /// <summary>
+    /// A short story in up to <see cref="StoryDirector.Drafts"/> drafts, as a chapter is written: an internal failure
+    /// is written again, told what was wrong, with <paramref name="writingAgain"/> raised before each later draft.
+    /// </summary>
+    public async Task<AdventureOutcome> DraftAsync(
+        AdventureAsk ask, DateTimeOffset now, Action<string>? writingAgain, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ask);
+
+        AdventureOutcome? last = null;
+
+        for (var draft = 1; draft <= StoryDirector.Drafts; draft++)
+        {
+            if (last is not null)
+            {
+                logger.LogInformation("Writing draft {Draft} of {Drafts} of a short story", draft, StoryDirector.Drafts);
+                writingAgain?.Invoke(StoryDirector.WritingAgainLine(draft, last.ForNextDraft is not null));
+            }
+
+            // A throw counts as a failed draft, as it does for a chapter.
+            try
+            {
+                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft }, now, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                logger.LogError(ex, "Writing a short story failed");
+                last = new AdventureOutcome(null, null, ex.Message, []) { Internal = true, Unanswered = true };
+            }
+
+            if (!last.Redraftable || cancellationToken.IsCancellationRequested)
+            {
+                return last;
+            }
+        }
+
+        logger.LogWarning("A short story was not written: {Refusal}", StoryDirector.NoDraftStood);
+        return new AdventureOutcome(null, null, StoryDirector.NoDraftStood, last!.Notes);
     }
 
     public async Task<AdventureOutcome> GenerateAsync(AdventureAsk ask, DateTimeOffset now, CancellationToken cancellationToken)
@@ -934,9 +989,10 @@ public sealed class AdventureGenerator(
 
     private async Task<Asked> AskJsonAsync(string step, string instruction, int budget, CancellationToken cancellationToken)
     {
-        var chosen = model() ?? provider()?.DefaultModel ?? "no model";
+        var asking = provider();
+        var chosen = model() ?? asking?.DefaultModel ?? "no model";
         var reply = await FlavourTurn.AskForAsync(
-            provider(),
+            asking,
             model(),
             persona(),
             aboutMe(),
@@ -950,7 +1006,9 @@ public sealed class AdventureGenerator(
             effort: Effort,
 
             // Cold, although what comes back is a story (#98).
-            sampling: LlmSampling.Adventure).ConfigureAwait(false);
+            sampling: LlmSampling.Adventure,
+            // A model on this machine may be on a CPU, so it is never stopped for being slow.
+            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { Time = Time }).ConfigureAwait(false);
 
         return new Asked(step, chosen, reply, reply.Line is null ? null : Unfence(reply.Line));
     }
@@ -1684,7 +1742,7 @@ public sealed class AdventureGenerator(
         else if (ask.LastDraftRefused is { Length: > 0 } refused)
         {
             text.AppendLine();
-            text.AppendLine("An earlier draft of this chapter could not be used, for this reason. Write this draft so that it does not happen again:");
+            text.AppendLine($"An earlier draft of this {(ask.Story is null ? "story" : "chapter")} could not be used, for this reason. Write this draft so that it does not happen again:");
             text.Append("- ").AppendLine(refused);
         }
 

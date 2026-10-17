@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
@@ -78,6 +79,7 @@ public static class FlavourTurn
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
+    /// <param name="limits">When the call is stopped as <see cref="FlavourMiss.TimedOut"/>; null for no limit.</param>
     public static async Task<FlavourReply> AskForAsync(
         ILlmProvider? provider,
         string? model,
@@ -98,7 +100,8 @@ public static class FlavourTurn
         string? scenario = null,
         string? hiddenStory = null,
         bool thinking = true,
-        string? recentDelivery = null)
+        string? recentDelivery = null,
+        FlavourLimits? limits = null)
     {
         if (provider is null)
         {
@@ -166,16 +169,46 @@ public static class FlavourTurn
                 chosenModel);
         }
 
+        var time = limits?.Time ?? TimeProvider.System;
+        var began = time.GetTimestamp();
+        string? stopped = null;
+        var finished = false;
+
+        void Stop(string limit, TimeSpan after) =>
+            Interlocked.CompareExchange(
+                ref stopped,
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"{limit} {after.TotalSeconds:0} s; stopped after {time.GetElapsedTime(began).TotalSeconds:0.0} s"),
+                null);
+
+        var silenceLimit = limits?.Silence ?? Timeout.InfiniteTimeSpan;
+
+        using var call = limits?.Call is { } callLimit ? new CancellationTokenSource(callLimit, time) : null;
+        using var silence = limits is null ? null : new CancellationTokenSource(silenceLimit, time);
+        using var limited = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, call?.Token ?? default, silence?.Token ?? default);
+        using var callStops = call?.Token.Register(() => Stop("a cloud call may run for", limits!.Call!.Value));
+        using var silenceStops = silence?.Token.Register(() => Stop("no text or thinking arrived for", silenceLimit));
+
+        // Null when the caller cancelled, which is not a limit.
+        FlavourReply? TimedOut() =>
+            stopped is { } why && !cancellationToken.IsCancellationRequested ? new FlavourReply(null, FlavourMiss.TimedOut, why) : null;
+
         try
         {
             await foreach (var streamEvent in provider
-                               .StreamAsync(request, cancellationToken)
+                               .StreamAsync(request, limited.Token)
                                .ConfigureAwait(false))
             {
                 switch (streamEvent)
                 {
                     case LlmStreamEvent.TextDelta text:
                         reply.Append(text.Text);
+                        silence?.CancelAfter(silenceLimit);
+                        break;
+
+                    case LlmStreamEvent.ThinkingDelta:
+                        silence?.CancelAfter(silenceLimit);
                         break;
 
                     case LlmStreamEvent.Started started:
@@ -183,6 +216,7 @@ public static class FlavourTurn
                         break;
 
                     case LlmStreamEvent.Completed completed:
+                        finished = true;
                         usage = completed.Usage;
                         stopReason = completed.StopReason;
                         break;
@@ -190,21 +224,28 @@ public static class FlavourTurn
                     case LlmStreamEvent.Failed failed:
                         logger?.LogDebug("A flavour line was not generated: {Message}", failed.Message);
                         Record();
-                        return new FlavourReply(null, FlavourMiss.Failed, failed.Message);
+                        return TimedOut() ?? new FlavourReply(null, FlavourMiss.Failed, failed.Message);
                 }
             }
         }
         catch (OperationCanceledException)
         {
             Record();
-            return new FlavourReply(null, FlavourMiss.Cancelled);
+            return TimedOut() ?? new FlavourReply(null, FlavourMiss.Cancelled);
         }
         catch (Exception ex)
         {
             // A provider throwing where it should have reported is still just a line that did not happen.
             logger?.LogDebug(ex, "A flavour line was not generated");
             Record();
-            return new FlavourReply(null, FlavourMiss.Failed, ex.Message);
+            return TimedOut() ?? new FlavourReply(null, FlavourMiss.Failed, ex.Message);
+        }
+
+        // A provider that ends its stream without throwing when cancelled has still been stopped.
+        if (!finished && TimedOut() is { } timedOut)
+        {
+            Record();
+            return timedOut;
         }
 
         // A provider that completes without reporting usage is still recorded, as an empty turn.
@@ -264,6 +305,19 @@ public enum FlavourMiss
 
     /// <summary>The caller's token was cancelled first; for a budgeted line, it timed out.</summary>
     Cancelled,
+
+    /// <summary>A <see cref="FlavourLimits"/> limit stopped the call; the message says which and when.</summary>
+    TimedOut,
+}
+
+/// <summary>
+/// How long one call may run: <see cref="Call"/> in all, when set, and <see cref="Silence"/> with no text or
+/// thinking arriving.
+/// </summary>
+public sealed record FlavourLimits(TimeSpan? Call, TimeSpan Silence)
+{
+    /// <summary>The clock both limits run on.</summary>
+    public TimeProvider Time { get; init; } = TimeProvider.System;
 }
 
 /// <summary>One flavour line, or why there is none.</summary>

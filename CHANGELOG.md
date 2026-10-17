@@ -14,6 +14,10 @@ A new setting, BGS tick time under Settings › Providers › Outside sources, l
 
 When a local model's context is too small for a story, D47 now says so, with the token counts and the context length to set on the server, instead of "The chapter could not be written". It does not write the chapter again, because a second try fails the same way.
 
+A short story that cannot be written is now written again, up to three drafts, as a story chapter is, and D47 says before each new draft why the last one was not used. A refusal you can act on, such as no language model being set, still stops after one draft.
+
+A model call for a story chapter or a short story on a cloud provider is now stopped when it is still running after two minutes, or when no text or thinking has come back for thirty seconds, and counts as a failed draft, so the next draft is written. A change to a short story by remark is stopped the same way. A model running on your own PC is never stopped for being slow.
+
 With BGS tick time on, D47 now says when the BGS has ticked, once per tick: "The BGS has ticked." for a tick up to fifteen minutes old, or "The BGS ticked forty minutes ago." up to an hour. An older tick is not said, so a restart stays quiet. Turn it off with the BGS tick row under Callouts.
 
 You can now ask when the last BGS tick was, by voice or typed, with no language model needed: "when was the last tick" answers "The last BGS tick was at 16:14 UTC on 15 October, 23 hours ago." With BGS tick time off it says so and where to turn it on, and with it on but nothing read yet it says it hasn't read the time.

@@ -723,9 +723,15 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
             var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter);
 
+            void WritingAgain(string line) => Dispatcher.UIThread.Post(() =>
+            {
+                status.Say(line);
+                _surface.Say(line);
+            });
+
             _ = Task.Run(async () =>
             {
-                var outcome = await _surface.Generator.GenerateAsync(ask, _surface.Now(), CancellationToken.None).ConfigureAwait(false);
+                var outcome = await _surface.Generator.DraftAsync(ask, _surface.Now(), WritingAgain, CancellationToken.None).ConfigureAwait(false);
 
                 Dispatcher.UIThread.Post(() =>
                 {

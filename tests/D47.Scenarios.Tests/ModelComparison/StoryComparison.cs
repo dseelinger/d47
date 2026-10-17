@@ -15,11 +15,16 @@ public sealed record StoryCall(
     int OutputTokens,
     string? StopReason,
     string? Failure,
-    decimal Dollars);
+    decimal Dollars,
+    double? FirstOutputSeconds = null,
+    double LongestSilenceSeconds = 0);
 
-/// <summary>One short story written by one model at one effort, as the results file holds it.</summary>
+/// <summary>One short story or story chapter written by one model at one effort, as the results file holds it.</summary>
 public sealed record StoryRecord
 {
+    /// <summary>"short story" or "chapter".</summary>
+    public string Kind { get; init; } = "short story";
+
     public required string Model { get; init; }
 
     public required string Effort { get; init; }

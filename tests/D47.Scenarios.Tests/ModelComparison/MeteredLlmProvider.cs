@@ -54,7 +54,17 @@ public sealed class BudgetSpentException(decimal spent, decimal cap)
     : Exception(string.Create(CultureInfo.InvariantCulture, $"Spent ${spent:0.0000} of the ${cap:0.00} cap."));
 
 /// <summary>One request, as metered.</summary>
-public sealed record MeteredRequest(string Model, LlmUsage Usage, decimal Dollars, long Milliseconds, string? Failure, LlmStopReason? StopReason = null);
+/// <param name="FirstOutputMilliseconds">From the request to its first text or thinking; null when none arrived.</param>
+/// <param name="LongestSilenceMilliseconds">The longest stretch with no text or thinking arriving, from the request to its end.</param>
+public sealed record MeteredRequest(
+    string Model,
+    LlmUsage Usage,
+    decimal Dollars,
+    long Milliseconds,
+    string? Failure,
+    LlmStopReason? StopReason = null,
+    long? FirstOutputMilliseconds = null,
+    long LongestSilenceMilliseconds = 0);
 
 /// <summary>
 /// A provider that prices every request at <see cref="PublishedPrices"/>, appends it to a ledger that
@@ -116,6 +126,9 @@ public sealed class MeteredLlmProvider : ILlmProvider
         LlmUsage? usage = null;
         string? failure = null;
         LlmStopReason? stopReason = null;
+        long? firstOutput = null;
+        long lastOutput = 0;
+        long longestSilence = 0;
 
         await foreach (var streamEvent in _inner.StreamAsync(request, cancellationToken).ConfigureAwait(false))
         {
@@ -128,15 +141,23 @@ public sealed class MeteredLlmProvider : ILlmProvider
                 case LlmStreamEvent.Failed failed:
                     failure = failed.Message;
                     break;
+                case LlmStreamEvent.TextDelta or LlmStreamEvent.ThinkingDelta:
+                    var at = clock.ElapsedMilliseconds;
+                    firstOutput ??= at;
+                    longestSilence = Math.Max(longestSilence, at - lastOutput);
+                    lastOutput = at;
+                    break;
             }
 
             yield return streamEvent;
         }
 
-        Record(request.Model, usage ?? LlmUsage.None, clock.ElapsedMilliseconds, failure, stopReason);
+        var elapsed = clock.ElapsedMilliseconds;
+        Record(request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput));
     }
 
-    private void Record(string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason)
+    private void Record(
+        string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence)
     {
         var price = PublishedPrices.For(model, usage)
                     ?? throw new InvalidOperationException($"No published price for {model}; refusing to run unpriced.");
@@ -146,7 +167,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
         lock (_gate)
         {
             Spent += dollars;
-            _requests.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason));
+            _requests.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence));
 
             File.AppendAllText(
                 _ledger,

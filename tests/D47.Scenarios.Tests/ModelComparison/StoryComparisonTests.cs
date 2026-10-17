@@ -18,9 +18,9 @@ using static D47.Scenarios.Tests.ModelComparison.ModelComparisonTests;
 namespace D47.Scenarios.Tests.ModelComparison;
 
 /// <summary>
-/// Short stories written for real by each model at each effort, against the Commander's latest journal state
-/// and the live galaxy search. Paid and opt-in like <see cref="ModelComparisonTests"/>: <c>D47_COMPARE=1</c>,
-/// stopped by <c>D47_COMPARE_CAP</c>, one JSON line per story in <c>stories.jsonl</c>.
+/// Short stories, or story chapters, written for real by each model at each effort, against the Commander's latest
+/// journal state and the live galaxy search. Paid and opt-in like <see cref="ModelComparisonTests"/>: <c>D47_COMPARE=1</c>,
+/// stopped by <c>D47_COMPARE_CAP</c>, one JSON line per story in <c>stories.jsonl</c> or <c>chapters.jsonl</c>.
 /// </summary>
 [Trait("Category", "Integration")]
 public partial class StoryComparisonTests
@@ -39,7 +39,13 @@ public partial class StoryComparisonTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task ShortStoriesAgainstEachModelAndEffort()
+    public Task ShortStoriesAgainstEachModelAndEffort() => RunAsync(chapters: false);
+
+    /// <summary>Chapter two of an invented stock story, with chapter one before it.</summary>
+    [Fact]
+    public Task StoryChaptersAgainstEachModelAndEffort() => RunAsync(chapters: true);
+
+    private static async Task RunAsync(bool chapters)
     {
         Assert.SkipUnless(Env("D47_COMPARE") == "1", "set D47_COMPARE=1 to compare models; this spends money");
 
@@ -94,12 +100,13 @@ public partial class StoryComparisonTests
         var galaxy = new TimedGalaxy(services.Galaxy);
         var places = new TimedNotablePlaces(new GecNotablePlacesService(NullLogger<GecNotablePlacesService>.Instance));
 
-        var results = Path.Combine(output, dry ? "dry-stories.jsonl" : "stories.jsonl");
+        var kind = chapters ? "chapter" : "short story";
+        var results = Path.Combine(output, (dry ? "dry-" : "") + (chapters ? "chapters.jsonl" : "stories.jsonl"));
         var progress = Path.Combine(output, "stories-progress.log");
 
         void Log(string line) => File.AppendAllText(progress, $"{DateTimeOffset.Now:HH:mm:ss} {line}{Environment.NewLine}");
 
-        Log($"models {string.Join(", ", models)}; efforts {string.Join(", ", efforts)}; {runs} run(s); cap ${cap}; spent so far ${meter.Spent:0.0000}");
+        Log($"{kind}s; models {string.Join(", ", models)}; efforts {string.Join(", ", efforts)}; {runs} run(s); cap ${cap}; spent so far ${meter.Spent:0.0000}");
         Log($"commander {world.GameState.Active?.Identity.Name ?? "none"}");
 
         // Run outermost, so a cap that stops the run still leaves every combination one story.
@@ -115,7 +122,10 @@ public partial class StoryComparisonTests
                         continue;
                     }
 
-                    var record = await WriteOneAsync(meter, model, effort, run, persona, world, galaxy, places);
+                    var ask = chapters
+                        ? ChapterAsk
+                        : new AdventureAsk(Reach: AdventureReach.NearHere, Length: AdventureLength.Short);
+                    var record = await WriteOneAsync(meter, model, effort, run, persona, world, galaxy, places, ask, kind);
                     File.AppendAllText(results, JsonSerializer.Serialize(record) + Environment.NewLine);
                     Log($"{model} {effort} #{run}: {record.Outcome}{(record.FailingStep is null ? "" : $" at {record.FailingStep}")} "
                         + $"in {record.TotalSeconds:0}s (galaxy {record.GalaxySeconds:0}s), ${record.Dollars:0.0000}, spent ${meter.Spent:0.0000}");
@@ -134,7 +144,9 @@ public partial class StoryComparisonTests
         Persona persona,
         ScenarioWorld world,
         TimedGalaxy galaxy,
-        TimedNotablePlaces places)
+        TimedNotablePlaces places,
+        AdventureAsk ask,
+        string kind)
     {
         meter.Drain();
         galaxy.Reset();
@@ -155,6 +167,10 @@ public partial class StoryComparisonTests
             log)
         {
             Effort = effort,
+
+            // Off, so a slow call is measured to its end rather than stopped.
+            CallLimit = Timeout.InfiniteTimeSpan,
+            SilenceLimit = Timeout.InfiniteTimeSpan,
         };
 
         var clock = Stopwatch.StartNew();
@@ -163,10 +179,7 @@ public partial class StoryComparisonTests
 
         try
         {
-            outcome = await generator.GenerateAsync(
-                new AdventureAsk(Reach: AdventureReach.NearHere, Length: AdventureLength.Short),
-                DateTimeOffset.Now,
-                Token).ConfigureAwait(false);
+            outcome = await generator.GenerateAsync(ask, DateTimeOffset.Now, Token).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -181,6 +194,7 @@ public partial class StoryComparisonTests
 
         return new StoryRecord
         {
+            Kind = kind,
             Model = model,
             Effort = effort.ToString(),
             Run = run,
@@ -205,7 +219,9 @@ public partial class StoryComparisonTests
                     request.Usage.OutputTokens,
                     request.StopReason?.ToString(),
                     request.Failure,
-                    request.Dollars)),
+                    request.Dollars,
+                    request.FirstOutputMilliseconds / 1000.0,
+                    request.LongestSilenceMilliseconds / 1000.0)),
             ],
             TotalSeconds = total,
             InputTokens = metered.Sum(request => request.Usage.TotalInputTokens),
@@ -214,6 +230,74 @@ public partial class StoryComparisonTests
             Exception = thrown,
         };
     }
+
+    /// <summary>Chapter two of a year-long story in its setup stage, asked the way the story director asks for one.</summary>
+    private static AdventureAsk ChapterAsk => new(
+        AdventureReach.Session,
+        AdventureLength.Evening,
+        Chapter: new AdventureChapter(
+            new Adventure
+            {
+                Key = "the-quiet-manifest",
+                Name = "The Quiet Manifest",
+                Source = AdventureSource.Generated,
+                StoryId = "the-salt-ledger",
+                Spine = new AdventureSpine
+                {
+                    Premise = "A freight manifest lists a cargo nobody loaded.",
+                    Want = "To find who signed for it.",
+                    Stake = "Whether the ship's voice is keeping something from the Commander.",
+                    Turn = "The signature is the Commander's own, dated before they bought the ship.",
+                    Ending = "The voice says it does not remember, and hums instead.",
+                },
+                Beats =
+                [
+                    new AdventureBeat
+                    {
+                        Title = "The Courier Run",
+                        Function = "setup",
+                        Trigger = new AdventureTrigger { Kind = TriggerKind.Mission, MissionFamily = "Mission_Courier", Count = 1 },
+                        Lines = [new AdventureLine { Text = "A packet for a station that has not answered in a week." }],
+                    },
+                    new AdventureBeat
+                    {
+                        Title = "The Ore",
+                        Function = "resolution",
+                        Trigger = new AdventureTrigger { Kind = TriggerKind.Mine, Count = 20 },
+                        Lines = [new AdventureLine { Text = "Twenty tonnes, and the voice counts them twice.", Speaker = "ship" }],
+                    },
+                ],
+            },
+            []),
+        Story: new AdventureStory(
+            "the-salt-ledger",
+            "The Salt Ledger",
+            "You bought a second-hand Cobra from a broker who would not meet your eye. Its ship's voice is older than "
+                + "the hull, and it keeps a ledger of debts that are not yours. Somewhere in it is a name you know.",
+            "The ship's voice was trained on the logs of a trader who vanished owing a Guardian-site salvage crew. "
+                + "The debt in the ledger is a promise to bring something back to a beacon. The trader was the Commander's "
+                + "parent, and the voice has been waiting for someone with the same voiceprint. Clues so far: the voice hums "
+                + "a lullaby; a dock hand at a frontier station recognises the ship's registry. Neither layer has named the "
+                + "parent yet. The voice must never say outright what it knows; it remembers in fragments.",
+            Chapter: 2,
+            DaysRunning: 6,
+            DaysSinceBeacon: null,
+            Level: "midrange",
+            Stage: "setup",
+            StageBeats:
+            [
+                ("SetUp", "The Commander learns the ship's voice keeps a ledger of debts that are not theirs."),
+                ("Catalyst", "An entry in the ledger names a station the Commander has never visited."),
+            ],
+            Genre: "Whydunit",
+            ChapterSize: "one to three play sessions",
+            Cast:
+            [
+                new AdventureSpeaker("dock-hand", "Ren", "A tired dock hand at a frontier station, short words.") { Role = "a dock hand who knows the ship" },
+                new AdventureSpeaker("broker", "Mara Venn", "The broker who sold the ship, smooth and evasive."),
+            ],
+            Core: "archivist",
+            CoreIsStock: true));
 
     /// <summary>The most one story by <paramref name="model"/> can cost; throws for a model with no published price.</summary>
     private static decimal WorstCase(string model)

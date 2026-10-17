@@ -13,7 +13,7 @@ public sealed class AdventureGeneratorTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
-    private const string Spine = """
+    internal const string Spine = """
         {"name": "The Unrecoverable Column", "premise": "A ledger will not balance.", "want": "To find the missing freight.",
          "stake": "Whether a debt can be owed to nobody.", "turn": "The freight was never loaded.", "ending": "The column balances."}
         """;
@@ -22,7 +22,7 @@ public sealed class AdventureGeneratorTests
     /// Three beats, every place real and within reach, the career written as the person rather than the
     /// ladder.
     /// </summary>
-    private const string GoodBeats = """
+    internal const string GoodBeats = """
         {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "station": null, "body": null, "career": null, "rank": null, "line": "Scoop here."},
           {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "body": null, "career": null, "rank": null, "line": "To one name."},
@@ -366,6 +366,28 @@ public sealed class AdventureGeneratorTests
             null,
             null,
             logger);
+    }
+
+    /// <summary>As <see cref="Generator(ILlmProvider, Galaxy, Microsoft.Extensions.Logging.ILogger, int, string[])"/>, its call limits on <paramref name="time"/>.</summary>
+    internal static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, Microsoft.Extensions.Logging.ILogger logger, TimeProvider time)
+    {
+        var state = State(1, []);
+
+        return new AdventureGenerator(
+            () => provider,
+            () => null,
+            () => "You are the ship.",
+            () => "core",
+            () => null,
+            () => state,
+            () => galaxy,
+            () => null,
+            null,
+            null,
+            logger)
+        {
+            Time = time,
+        };
     }
 
     /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>

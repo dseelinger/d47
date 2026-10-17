@@ -1735,7 +1735,7 @@ public sealed class StoryDirector(
     private static readonly string[] Ordinals = ["first", "second", "third", "fourth", "fifth"];
 
     /// <summary>What is said before <paramref name="draft"/>; <paramref name="told"/> is whether that draft is told what went wrong.</summary>
-    internal static string WritingAgainLine(int draft, bool told)
+    public static string WritingAgainLine(int draft, bool told)
     {
         var failed = Ordinals[Math.Clamp(draft - 2, 0, Ordinals.Length - 1)];
         var opening = draft == 2
@@ -1813,7 +1813,7 @@ public sealed class StoryDirector(
         if (outcome.Draft is not { } draft)
         {
             return outcome.Internal
-                ? new(outcome.Message, Retry: outcome.ContextMessage is null, Detail: outcome.Unanswered ? null : outcome.Refusal)
+                ? new(outcome.Message, Retry: outcome.Redraftable, Detail: outcome.ForNextDraft)
                 : new(outcome.Message ?? "Nothing came back.");
         }
 
