@@ -525,6 +525,17 @@ the bounties and combat bonds awarded at the kill, not what was redeemed.
 {"type":"object","properties":{"by":{"type":"string","description":"The grouping to report. Omit for the top entry of each.","enum":["enemy","ship","system","faction"]},"name":{"type":"string","description":"Report only the entries of the grouping whose name contains this, without regard to case."},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default all.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
 ```
 
+`get_credit_ledger` answers where the Commander's credits came from and went, from every journal on this
+PC. `period` is the last `day`, `week` or `month`, or `all`, and defaults to `week`; `kind` limits it to one
+kind of transaction. The first line gives the totals in and out and the balance, then the top three kinds
+each way with a count of the rest. Bounties and combat bonds count when redeemed, and are spoken as
+"bounties and bonds redeemed". Carrier bank transfers are spoken as moved, not spent. A gap between the
+journal and the game's own balance is spoken only from a million credits.
+
+```json
+{"type":"object","properties":{"kind":{"type":"string","description":"Report only this kind of transaction.","enum":["trade","exploration","missions","combat","vouchers","rescue","community_goals","colonisation","powerplay","ships","modules","upkeep","rebuy","fines","crew","on_foot","engineers","carrier"]},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
+```
+
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
 

@@ -100,6 +100,10 @@ public static class JournalCapability
                 new("session summary", "get_session_summary"),
                 new("how have i done", "get_session_summary"),
                 new("this session", "get_session_summary"),
+                new("credit ledger", "get_credit_ledger"),
+                new("where did my money go", "get_credit_ledger"),
+                new("where did my credits go", "get_credit_ledger"),
+                new("my earnings", "get_credit_ledger"),
                 new("combat stats", "get_combat_stats"),
                 new("combat statistics", "get_combat_stats"),
                 new("my kill stats", "get_combat_stats"),
@@ -319,6 +323,34 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
+                    Name = "get_credit_ledger",
+                    Description =
+                        "Report the credits the Commander earned and spent, by kind, from every journal on this PC, "
+                        + "with the current balance. Bounties and combat bonds count when redeemed.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "period",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.",
+                            AllowedValues = CombatPeriods,
+                        },
+                        new ToolParameter
+                        {
+                            Name = "kind",
+                            Type = ToolParameterType.String,
+                            Description = "Report only this kind of transaction.",
+                            AllowedValues = [.. CreditKinds.Select(pair => pair.Name)],
+                        },
+                    ],
+                    Commands = Asking(CreditLedgerQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeCreditLedger(gameState, state(), arguments, now?.Invoke() ?? DateTimeOffset.UtcNow))),
+                },
+                new ToolDefinition
+                {
                     Name = "get_commander_statistics",
                     Description =
                         "Report the Commander's career statistics from the journal's Statistics event — bank "
@@ -534,6 +566,37 @@ public static class JournalCapability
     [
         "combat stats", "combat statistics", "my combat stats", "my combat statistics", "my kill stats", "my kills",
     ];
+
+    private static readonly string[] CreditLedgerQuestions =
+    [
+        "credit ledger", "my credit ledger", "where did my money go", "where did my credits go", "my earnings",
+    ];
+
+    private static readonly (string Name, CreditKind Kind)[] CreditKinds =
+    [
+        ("trade", CreditKind.Trade),
+        ("exploration", CreditKind.Exploration),
+        ("missions", CreditKind.Missions),
+        ("combat", CreditKind.Combat),
+        ("vouchers", CreditKind.Vouchers),
+        ("rescue", CreditKind.Rescue),
+        ("community_goals", CreditKind.CommunityGoals),
+        ("colonisation", CreditKind.Colonisation),
+        ("powerplay", CreditKind.Powerplay),
+        ("ships", CreditKind.Ships),
+        ("modules", CreditKind.Modules),
+        ("upkeep", CreditKind.Upkeep),
+        ("rebuy", CreditKind.Rebuy),
+        ("fines", CreditKind.Fines),
+        ("crew", CreditKind.Crew),
+        ("on_foot", CreditKind.OnFoot),
+        ("engineers", CreditKind.Engineers),
+        ("carrier", CreditKind.Carrier),
+    ];
+
+    private const int CreditKindsNamed = 3;
+
+    private const long UnaccountedSpoken = 1_000_000;
 
     private static readonly string[] CombatGroupings = ["enemy", "ship", "system", "faction"];
 
@@ -1560,6 +1623,155 @@ public static class JournalCapability
             }
         }
     }
+
+    private static string DescribeCreditLedger(
+        GameStateStore gameState, HistoryState history, ToolArguments arguments, DateTimeOffset now)
+    {
+        if (history is HistoryState.Pending or HistoryState.Running)
+        {
+            return "I have not finished reading the journal history yet.";
+        }
+
+        if (gameState.Active is not { } active)
+        {
+            return "I do not know which Commander is flying yet.";
+        }
+
+        var period = arguments.TryGetString("period", out var asked) ? asked.Trim().ToLowerInvariant() : "week";
+        var kindName = arguments.TryGetString("kind", out var named) ? named.Trim().ToLowerInvariant() : string.Empty;
+        CreditKind? kind = null;
+
+        if (kindName.Length > 0)
+        {
+            kind = CreditKinds.Where(pair => pair.Name == kindName).Select(pair => (CreditKind?)pair.Kind).FirstOrDefault();
+
+            if (kind is null)
+            {
+                return $"I can break credits down by {string.Join(", ", CreditKinds.Select(pair => pair.Name.Replace('_', ' ')))}.";
+            }
+        }
+
+        var (from, span) = period switch
+        {
+            "day" => ((DateTimeOffset?)(now - TimeSpan.FromHours(24)), "24 hours"),
+            "month" => (now - TimeSpan.FromDays(30), "30 days"),
+            "all" => (null, string.Empty),
+            _ => (now - TimeSpan.FromDays(7), "7 days"),
+        };
+
+        var ledger = active.CreditLedger;
+        var slice = ledger.Since(from);
+        var unfinished = history is HistoryState.Failed or HistoryState.Stopped
+            ? "Reading the journal history did not finish, so this is only what the live journal shows."
+            : string.Empty;
+        var carrierBank = slice.ByKind.FirstOrDefault(total => total.Kind == CreditKind.CarrierBank);
+        var totals = slice.ByKind.Where(total => total.Kind != CreditKind.CarrierBank).ToList();
+        string report;
+
+        if (ledger.Entries.Count == 0)
+        {
+            report = "No credit transactions in the journals on this PC.";
+        }
+        else if (kind is { } only)
+        {
+            var total = totals.FirstOrDefault(entry => entry.Kind == only);
+            var label = kindName.Replace('_', ' ');
+            var heading = from is null ? $"{Capitalised(label)} on record" : $"{Capitalised(label)} in the last {span}";
+
+            report = total is null
+                ? $"No {label} credits {(from is null ? "on record" : $"in the last {span}")}."
+                : $"{heading}: {SpokenCredits.Band(total.In)} in, {SpokenCredits.Band(total.Out)} out, from "
+                    + $"{total.Count.ToString("N0", CultureInfo.InvariantCulture)} {(total.Count == 1 ? "transaction" : "transactions")}.";
+        }
+        else if (totals.Count == 0 && carrierBank is null && Math.Abs(slice.Unaccounted) < UnaccountedSpoken)
+        {
+            report = $"No credits moved in the last {span}.";
+        }
+        else
+        {
+            var covers = from is null
+                ? ledger.OnRecordSince is { } since
+                    ? $"On record since {since.UtcDateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)}"
+                    : "On record"
+                : $"In the last {span}";
+            var text = new StringBuilder(
+                $"{covers}: {SpokenCredits.Band(totals.Sum(total => total.In))} in, "
+                + $"{SpokenCredits.Band(totals.Sum(total => total.Out))} out.");
+
+            if (ledger.Balance is { } balance)
+            {
+                text.Append($" Balance {SpokenCredits.Band(balance)}.");
+            }
+
+            text.AppendLine();
+            text.AppendLine(CreditTop(
+                "Most in", [.. totals.Where(total => total.In > 0).OrderByDescending(total => total.In).Select(total => (total.Kind, total.In))]));
+            text.AppendLine(CreditTop(
+                "Most out", [.. totals.Where(total => total.Out > 0).OrderByDescending(total => total.Out).Select(total => (total.Kind, total.Out))]));
+
+            if (carrierBank is not null)
+            {
+                var moved = new List<string>();
+
+                if (carrierBank.Out > 0)
+                {
+                    moved.Add($"{SpokenCredits.Band(carrierBank.Out)} to your carrier");
+                }
+
+                if (carrierBank.In > 0)
+                {
+                    moved.Add($"{SpokenCredits.Band(carrierBank.In)} back");
+                }
+
+                if (moved.Count > 0)
+                {
+                    text.AppendLine($"You moved {string.Join(" and ", moved)}.");
+                }
+            }
+
+            if (Math.Abs(slice.Unaccounted) >= UnaccountedSpoken)
+            {
+                text.AppendLine(
+                    $"Your balance was {SpokenCredits.Band(Math.Abs(slice.Unaccounted))} "
+                    + $"{(slice.Unaccounted > 0 ? "more" : "less")} than the journal accounts for, such as credits "
+                    + "from another Commander or a carrier's scrap refund.");
+            }
+
+            report = text.ToString().TrimEnd();
+        }
+
+        return unfinished.Length == 0 ? report : $"{report} {unfinished}";
+    }
+
+    private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
+
+    private static string CreditTop(string heading, IReadOnlyList<(CreditKind Kind, long Amount)> kinds)
+    {
+        if (kinds.Count == 0)
+        {
+            return $"{heading}: nothing.";
+        }
+
+        var named = kinds.Take(CreditKindsNamed)
+            .Select(entry => $"{CreditKindLabel(entry.Kind)} {SpokenCredits.Band(entry.Amount)}")
+            .ToList();
+        var rest = kinds.Count - named.Count;
+
+        if (rest > 0)
+        {
+            named.Add($"and {rest} more");
+        }
+
+        return $"{heading}: {string.Join(", ", named)}.";
+    }
+
+    private static string CreditKindLabel(CreditKind kind) => kind switch
+    {
+        CreditKind.Combat => "bounties and bonds redeemed",
+        CreditKind.CommunityGoals => "community goals",
+        CreditKind.OnFoot => "on foot",
+        _ => kind.ToString().ToLowerInvariant(),
+    };
 
     private const int BgsPairsNamed = 3;
 

@@ -13,6 +13,10 @@ public class ACombatStatsQuestionReachesItsOwnToolTests
     [InlineData("combat statistics", "get_combat_stats")]
     [InlineData("my kill stats", "get_combat_stats")]
     [InlineData("my kills", "get_combat_stats")]
+    [InlineData("where did my money go", "get_credit_ledger")]
+    [InlineData("where did my credits go", "get_credit_ledger")]
+    [InlineData("my earnings", "get_credit_ledger")]
+    [InlineData("session spend", "get_model_status")]
     [InlineData("my career stats", "get_commander_statistics")]
     [InlineData("this session", "get_session_summary")]
     [InlineData("my bounties", "get_crime_status")]
@@ -23,6 +27,15 @@ public class ACombatStatsQuestionReachesItsOwnToolTests
 
         Assert.NotNull(match);
         Assert.Equal(tool, match!.ToolName);
+    }
+
+    [Fact]
+    public void TheModelMayCallTheCreditLedgerTool()
+    {
+        var registry = TestSurface.For(new MemoryInstall()).Registry;
+        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == "get_credit_ledger");
+
+        Assert.False(tool.Protected);
     }
 
     [Fact]
