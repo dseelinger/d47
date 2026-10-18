@@ -187,12 +187,24 @@ public static class FlavourTurn
                 null);
 
         var silenceLimit = limits?.Silence ?? Timeout.InfiniteTimeSpan;
+        var firstLimit = limits?.First ?? Timeout.InfiniteTimeSpan;
+        var arrived = false;
 
         using var call = limits?.Call is { } callLimit ? new CancellationTokenSource(callLimit, time) : null;
-        using var silence = limits is null ? null : new CancellationTokenSource(silenceLimit, time);
+        using var silence = limits is null ? null : new CancellationTokenSource(firstLimit, time);
         using var limited = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, call?.Token ?? default, silence?.Token ?? default);
         using var callStops = call?.Token.Register(() => Stop("a cloud call may run for", limits!.Call!.Value));
-        using var silenceStops = silence?.Token.Register(() => Stop("no text or thinking arrived for", silenceLimit));
+        using var silenceStops = silence?.Token.Register(() =>
+        {
+            if (arrived)
+            {
+                Stop("no text or thinking arrived for", silenceLimit);
+            }
+            else
+            {
+                Stop(firstLimit == silenceLimit ? "no text or thinking arrived for" : "no first text or thinking arrived for", firstLimit);
+            }
+        });
 
         // Null when the caller cancelled, which is not a limit.
         FlavourReply? TimedOut() =>
@@ -209,11 +221,13 @@ public static class FlavourTurn
                     case LlmStreamEvent.TextDelta text:
                         reply.Append(text.Text);
                         received?.Invoke(text.Text.Length);
+                        arrived = true;
                         silence?.CancelAfter(silenceLimit);
                         break;
 
                     case LlmStreamEvent.ThinkingDelta thought:
                         received?.Invoke(thought.Text.Length);
+                        arrived = true;
                         silence?.CancelAfter(silenceLimit);
                         break;
 
@@ -321,11 +335,20 @@ public enum FlavourMiss
 }
 
 /// <summary>
-/// How long one call may run: <see cref="Call"/> in all, when set, and <see cref="Silence"/> with no text or
-/// thinking arriving.
+/// How long one call may run: <see cref="Call"/> in all, when set, <see cref="First"/> until the first text or
+/// thinking arrives, and then <see cref="Silence"/> between arrivals.
 /// </summary>
 public sealed record FlavourLimits(TimeSpan? Call, TimeSpan Silence)
 {
+    private TimeSpan? first;
+
+    /// <summary>The longest wait for the first text or thinking; <see cref="Silence"/> when not set.</summary>
+    public TimeSpan First
+    {
+        get => first ?? Silence;
+        init => first = value;
+    }
+
     /// <summary>The clock both limits run on.</summary>
     public TimeProvider Time { get; init; } = TimeProvider.System;
 }

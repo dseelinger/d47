@@ -279,7 +279,10 @@ public sealed class AdventureGenerator(
     /// <summary>How long a model call on a provider that is not on this machine may go with no text or thinking arriving.</summary>
     public TimeSpan SilenceLimit { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>The clock <see cref="CallLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
+    /// <summary>How long a model call on a provider that is not on this machine may wait for its first text or thinking.</summary>
+    public TimeSpan FirstReplyLimit { get; init; } = TimeSpan.FromSeconds(90);
+
+    /// <summary>The clock <see cref="CallLimit"/>, <see cref="FirstReplyLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
     public TimeProvider Time { get; init; } = TimeProvider.System;
 
     /// <summary>Beats per structure.</summary>
@@ -1152,7 +1155,7 @@ public sealed class AdventureGenerator(
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure,
             // A model on this machine may be on a CPU, so it is never stopped for being slow.
-            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { Time = Time },
+            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { First = FirstReplyLimit, Time = Time },
             received: progress is null ? null : progress.Received,
             responseSchema: call.Schema).ConfigureAwait(false);
 

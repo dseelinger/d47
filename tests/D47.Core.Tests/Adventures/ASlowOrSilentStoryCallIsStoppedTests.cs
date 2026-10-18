@@ -16,7 +16,7 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     private static readonly DateTimeOffset Now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task ACloudCallWithNothingArrivingIsStoppedAtThirtySeconds()
+    public async Task ACloudCallWithNothingArrivingIsStoppedAtNinetySeconds()
     {
         var time = new ManualTime();
         var provider = new ClockedLlmProvider(time, local: false, Stalls);
@@ -28,7 +28,42 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         Assert.True(outcome.Unanswered);
         var warning = SingleWarning(log);
         Assert.Contains("spine step", warning);
-        Assert.Contains("TimedOut: no text or thinking arrived for 30 s; stopped after 30.0 s", warning);
+        Assert.Contains("TimedOut: no first text or thinking arrived for 90 s; stopped after 90.0 s", warning);
+    }
+
+    [Fact]
+    public async Task ACloudCallWhoseFirstTextArrivesAtSixtySecondsIsNotStopped()
+    {
+        var time = new ManualTime();
+        var provider = new ClockedLlmProvider(
+            time,
+            local: false,
+            [new(TimeSpan.FromSeconds(60), new LlmStreamEvent.TextDelta(AdventureGeneratorTests.Spine)), new(TimeSpan.Zero, Completed)],
+            Says(AdventureGeneratorTests.GoodBeats));
+
+        var outcome = await Generate(provider, new RecordingLogger(), time);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task ACloudCallSilentForThirtyOneSecondsAfterItsFirstTextIsStopped()
+    {
+        var time = new ManualTime();
+        var provider = new ClockedLlmProvider(
+            time,
+            local: false,
+            (IReadOnlyList<Step>)[
+                new(TimeSpan.FromSeconds(60), new LlmStreamEvent.TextDelta("{")),
+                new(TimeSpan.FromSeconds(31), new LlmStreamEvent.TextDelta("}")),
+                new(TimeSpan.Zero, Completed),
+            ]);
+        var log = new RecordingLogger();
+
+        var outcome = await Generate(provider, log, time);
+
+        Assert.True(outcome.Redraftable);
+        Assert.Contains("TimedOut: no text or thinking arrived for 30 s; stopped after 90.0 s", SingleWarning(log));
     }
 
     [Fact]

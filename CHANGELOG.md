@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story draft on a cloud model that is slow to start no longer fails at 30 seconds. A story call now waits up to 90 seconds for its first text or thinking, and the 30-second silence limit applies only after that. A call that sends nothing for 90 seconds is still stopped, and the log says no first reply arrived.
+
 A generated story or stock-story chapter no longer sends you to dock at a fleet carrier, a megaship or a construction site. Carriers and many megaships move, and a construction site is not a finished station, so a story now only docks at fixed, finished stations. A chapter already written that docks at one of these is unchanged; refuse that beat and it is written again.
 
 A story that docks at a named station now finds it in systems with more than twenty fixed stations. D47 asks for the station by name instead of listing the first twenty in the system, so a station past that limit is no longer refused as not being there.
