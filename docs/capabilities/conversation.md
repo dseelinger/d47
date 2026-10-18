@@ -272,6 +272,8 @@ LM Studio, set the model's context length in the loader, tick "Remember settings
 the setting survives a restart, and load the model again. Any other server sets the context in its
 own settings.
 
+On LM Studio, d47 reloads the model at 16,384 itself before a story when it is loaded with less.
+
 ### Stopping a turn
 
 "Stop" and "cancel" are different things, and the difference is on your bill.

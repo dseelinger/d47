@@ -884,7 +884,9 @@ public static class EgressDisclosure
                 + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
                 + " " + TypedChecklistLineSent
                 + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
-                + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty),
+                + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty)
+                + " When the server at that address is LM Studio, D47 also asks it which models are loaded and, before writing a story, "
+                + "reloads the story model with a larger context. The destination does not change.",
                 summary: $"Pointed at {destination}, this machine — nothing leaves it.");
         }
 

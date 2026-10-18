@@ -198,9 +198,34 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>What the next draft is told was wrong with this one; null when no answer came back to be wrong.</summary>
     public string? ForNextDraft => Unanswered ? null : Refusal;
 
-    /// <summary>The context length that fits a prompt and a 6,144-token reply, in 4096-token steps and at least 16,384.</summary>
+    /// <summary>The context a story call needs at least, and the one d47 loads a local model with before writing.</summary>
+    public const int StoryContextTokens = 16384;
+
+    /// <summary>The context length that fits a prompt and a 6,144-token reply, in 4096-token steps and at least <see cref="StoryContextTokens"/>.</summary>
     public static int ContextNeeded(int? promptTokens) =>
-        Math.Max(16384, (((promptTokens ?? 0) + 6144 + 4095) / 4096) * 4096);
+        Math.Max(StoryContextTokens, (((promptTokens ?? 0) + 6144 + 4095) / 4096) * 4096);
+
+    /// <summary>The load a model needs before a story call, given what the server reports.</summary>
+    public enum ContextStep
+    {
+        Nothing,
+        Load,
+        Reload,
+    }
+
+    /// <summary>Whether a model loaded as <paramref name="read"/> is left alone, loaded, or reloaded at <see cref="StoryContextTokens"/>.</summary>
+    public static ContextStep StepFor(LoadedContext? read) => read switch
+    {
+        null => ContextStep.Nothing,
+        { Instances: > 1 } => ContextStep.Nothing,
+        { Maximum: < StoryContextTokens } => ContextStep.Nothing,
+        { Tokens: null } => ContextStep.Load,
+        { Tokens: < StoryContextTokens } => ContextStep.Reload,
+        _ => ContextStep.Nothing,
+    };
+
+    internal static string ReloadFailedMessage(string model) =>
+        $"d47 could not load {model} with {StoryContextTokens:N0} tokens of context. {SetContextSentence(StoryContextTokens)}";
 
     /// <summary>One sentence telling the Commander to set the context to at least <paramref name="tokens"/> and where.</summary>
     public static string SetContextSentence(int tokens) =>
@@ -344,6 +369,11 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
+        if (await RoomForAStoryAsync(ask, cancellationToken).ConfigureAwait(false) is { } noRoom)
+        {
+            return noRoom;
+        }
+
         var started = Stopwatch.GetTimestamp();
         Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
@@ -414,6 +444,11 @@ public sealed class AdventureGenerator(
             return new AdventureOutcome(null, null, blocked, []);
         }
 
+        if (await RoomForAStoryAsync(ask, cancellationToken).ConfigureAwait(false) is { } noRoom)
+        {
+            return noRoom;
+        }
+
         var started = Stopwatch.GetTimestamp();
         Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
@@ -422,7 +457,7 @@ public sealed class AdventureGenerator(
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
         Enter(ask, WriteStage.Objectives);
-        var asked = await AskJsonAsync(
+        var asked =await AskJsonAsync(
             BeatsStep,
             BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
             BeatsOutputCeiling,
@@ -806,6 +841,48 @@ public sealed class AdventureGenerator(
         {
             return facts;
         }
+    }
+
+    /// <summary>
+    /// Loads or reloads the story model at <see cref="AdventureOutcome.StoryContextTokens"/> when its server reports it
+    /// below that; null when the write may go on, else the outcome that stops it.
+    /// </summary>
+    private async Task<AdventureOutcome?> RoomForAStoryAsync(AdventureAsk ask, CancellationToken cancellationToken)
+    {
+        if (provider() is not { } asking || asking is not IModelLoader loader)
+        {
+            return null;
+        }
+
+        var chosen = model() ?? asking.DefaultModel;
+        var step = AdventureOutcome.StepFor(await loader.LoadedContextAsync(chosen, cancellationToken).ConfigureAwait(false));
+
+        if (step == AdventureOutcome.ContextStep.Nothing)
+        {
+            return null;
+        }
+
+        ask.Progress?.Reloading(chosen, loaded: step == AdventureOutcome.ContextStep.Reload);
+        var reload = await loader.ReloadAsync(chosen, AdventureOutcome.StoryContextTokens, cancellationToken).ConfigureAwait(false);
+
+        if (reload.Loaded)
+        {
+            return null;
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return AdventureOutcome.Stopped;
+        }
+
+        logger.LogWarning("{Model} could not be loaded with {Tokens} tokens of context: {Detail}", chosen, AdventureOutcome.StoryContextTokens, reload.Detail);
+
+        return new AdventureOutcome(null, null, AdventureOutcome.ReloadFailedMessage(chosen), [])
+        {
+            Internal = true,
+            Unanswered = true,
+            ContextMessage = AdventureOutcome.ReloadFailedMessage(chosen),
+        };
     }
 
     private string? Blocked()

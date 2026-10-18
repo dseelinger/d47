@@ -10,6 +10,8 @@
 
 Story calls to a local model now send the shape of the answer they expect, so the model fills in every objective's kind instead of leaving it out. The objectives prompt also now lists the conflict and faction kinds in its answer format, for every provider.
 
+On LM Studio, D47 now reloads the story model with 16,384 tokens of context before writing a story or chapter when it is loaded with less, and loads it that way when it is not loaded. The progress line says "Reloading <model> with room for a story." while it does. If the reload fails, D47 says so and writes nothing.
+
 When a story prompt is larger than the model's context, D47 now says so at once, with the size the prompt took and the context to set, instead of writing the chapter three more times and reporting that no draft stood.
 
 When a model's context is too small for a story, D47 now asks for 16,384 tokens instead of 24,576 and says where to set it: LM Studio's context length in the loader, remembered for that model, or the other server's own settings. The conversation help gains a section on writing stories with a model on your own PC.

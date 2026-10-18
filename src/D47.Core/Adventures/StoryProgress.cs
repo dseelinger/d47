@@ -61,6 +61,7 @@ public sealed class StoryProgress(TimeProvider time)
     private double _base;
     private double _fill;
     private bool _stopped;
+    private string? _line;
     private TimeSpan? _finished;
 
     public WriteStage Stage
@@ -121,6 +122,11 @@ public sealed class StoryProgress(TimeProvider time)
                     return "That took too long. Trying again…";
                 }
 
+                if (_line is not null)
+                {
+                    return _line;
+                }
+
                 if (_pace is null)
                 {
                     return "";
@@ -155,7 +161,17 @@ public sealed class StoryProgress(TimeProvider time)
             _stageBegan = time.GetTimestamp();
             _characters = 0;
             _stopped = false;
+            _line = null;
             _visited.Add(stage);
+        }
+    }
+
+    /// <summary>The hint says the model is being loaded with room for a story, until the next <see cref="Enter"/>.</summary>
+    public void Reloading(string model, bool loaded)
+    {
+        lock (_gate)
+        {
+            _line = $"{(loaded ? "Reloading" : "Loading")} {model} with room for a story.";
         }
     }
 
