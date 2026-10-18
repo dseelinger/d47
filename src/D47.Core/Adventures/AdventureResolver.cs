@@ -169,7 +169,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                         return Resolution.Refused($"{where} docks nowhere: it names no station.");
                     }
 
-                    var stations = await galaxy.FindStationsAsync(StationQuery.Within(found.Name), cancellationToken).ConfigureAwait(false);
+                    var stations = await galaxy.FindStationsAsync(StationQuery.Within(found.Name, station), cancellationToken).ConfigureAwait(false);
                     var match = stations.Stations.FirstOrDefault(candidate =>
                         string.Equals(candidate.SystemName, found.Name, StringComparison.OrdinalIgnoreCase)
                         && string.Equals(candidate.Name, station.Trim(), StringComparison.OrdinalIgnoreCase)

@@ -168,6 +168,9 @@ public sealed record StationQuery
 
     public int Size { get; init; } = 5;
 
+    /// <summary>Sent as the service's station name filter; null sends none.</summary>
+    public string? StationName { get; init; }
+
     /// <summary>What the results are sorted by; null is nearest first.</summary>
     public SearchSort? Sort { get; init; }
 
@@ -500,12 +503,13 @@ public sealed record StationQuery
         string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Every fixed, finished station in one named system, for resolving a station a story names to its
-    /// market id (Phase 47).
+    /// The fixed, finished stations in one named system whose name matches <paramref name="station"/>, for
+    /// resolving a station a story names to its market id (Phase 47).
     /// </summary>
-    public static StationQuery Within(string system) => new()
+    public static StationQuery Within(string system, string station) => new()
     {
         ReferenceSystem = system.Trim(),
+        StationName = station.Trim(),
         MaxDistance = 1,
         Size = 20,
         FixedOnly = true,

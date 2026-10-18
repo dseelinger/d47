@@ -17,7 +17,7 @@ public class AStoryStationSearchAsksForFixedStationsOnlyTests
     [Fact]
     public void WithinNamesEveryTypeButCarriersMegashipsAndConstructionDepots()
     {
-        var types = Types(StationQuery.Within("Sol"));
+        var types = Types(StationQuery.Within("Sol", "Jameson Memorial"));
 
         Assert.DoesNotContain("Drake-Class Carrier", types);
         Assert.DoesNotContain("Mega ship", types);
@@ -32,6 +32,23 @@ public class AStoryStationSearchAsksForFixedStationsOnlyTests
     [Fact]
     public void NearWritesTheSameList()
     {
-        Assert.Equal(Types(StationQuery.Within("Sol")), Types(StationQuery.Near("Sol", 80, 20)));
+        Assert.Equal(Types(StationQuery.Within("Sol", "Jameson Memorial")), Types(StationQuery.Near("Sol", 80, 20)));
+    }
+
+    [Fact]
+    public void WithinWritesTheStationNameFilter()
+    {
+        var name = JsonDocument.Parse(SpanshRequest.Stations(StationQuery.Within("Eravate", "Cleve Hub")))
+            .RootElement.GetProperty("filters").GetProperty("name").GetProperty("value").GetString();
+
+        Assert.Equal("Cleve Hub", name);
+    }
+
+    [Fact]
+    public void ASearchWithoutAStationNameWritesNoNameFilter()
+    {
+        var filters = JsonDocument.Parse(SpanshRequest.Stations(StationQuery.Near("Eravate", 50, 5))).RootElement.GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("name", out _));
     }
 }

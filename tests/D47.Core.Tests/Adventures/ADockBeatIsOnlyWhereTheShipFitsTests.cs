@@ -43,10 +43,23 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
         Assert.True(station.Admits(PadSize.Medium));
     }
 
-    private static Task<Resolution> ResolveAsync(StationSummary station, PadSize needs) =>
-        new AdventureResolver(new Galaxy(station)).ResolveAsync(TriggerKind.Dock, "Dyson's Hollow", station.Name, null, "Beat 1", needs, CancellationToken.None);
+    [Fact]
+    public async Task AStationPastTheServicesPageIsFoundByName()
+    {
+        var stations = Enumerable.Range(1, 25)
+            .Select(i => new StationSummary { Name = $"Dock {i}", SystemName = "Dyson's Hollow", MarketId = i, Type = "Coriolis Starport" })
+            .ToArray();
 
-    private sealed class Galaxy(StationSummary station) : IGalaxyService
+        var resolution = await new AdventureResolver(new Galaxy(stations))
+            .ResolveAsync(TriggerKind.Dock, "Dyson's Hollow", "Dock 25", null, "Beat 1", null, CancellationToken.None);
+
+        Assert.True(resolution.Succeeded);
+    }
+
+    private static Task<Resolution> ResolveAsync(StationSummary station, PadSize needs) =>
+        new AdventureResolver(new Galaxy([station])).ResolveAsync(TriggerKind.Dock, "Dyson's Hollow", station.Name, null, "Beat 1", needs, CancellationToken.None);
+
+    private sealed class Galaxy(StationSummary[] all) : IGalaxyService
     {
         public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new GalaxySearchResult(
@@ -55,7 +68,10 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
         public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Task.FromResult<double?>(1);
 
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult(query.ReferenceSystem, 1, [station]));
+            Task.FromResult(new StationSearchResult(
+                query.ReferenceSystem,
+                1,
+                [.. all.Where(station => query.StationName is null || station.Name.Contains(query.StationName, StringComparison.OrdinalIgnoreCase)).Take(query.Size)]));
 
         public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
             Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));

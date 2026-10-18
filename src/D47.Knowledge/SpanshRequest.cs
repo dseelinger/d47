@@ -131,6 +131,13 @@ internal static class SpanshRequest
             writer.WriteString("max", Number(query.Unbounded ? UnboundedMax : query.MaxDistance));
             writer.WriteEndObject();
 
+            if (query.StationName is not null)
+            {
+                writer.WriteStartObject("name");
+                writer.WriteString("value", query.StationName);
+                writer.WriteEndObject();
+            }
+
             if (query.Ship is not null)
             {
                 writer.WriteStartObject("ships");
