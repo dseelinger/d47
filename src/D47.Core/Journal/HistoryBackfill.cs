@@ -120,6 +120,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's merits for their Power over the last week.</summary>
     public IReadOnlyDictionary<string, PowerplayCycleMerits>? CycleMerits { get; private set; }
 
+    /// <summary>Each Commander's BGS work over the last week.</summary>
+    public IReadOnlyDictionary<string, BgsWork>? BgsWork { get; private set; }
+
     /// <summary>The credits each Commander's newest LoadGame reported.</summary>
     public IReadOnlyDictionary<string, long>? Credits { get; private set; }
 
@@ -233,6 +236,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(PowerplayCycleBackfill)),
+                    cancellation));
+
+            BgsWork = Timed(
+                "bgs work backfill",
+                () => BgsWorkBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(BgsWorkBackfill)),
                     cancellation));
 
             Credits = Timed(

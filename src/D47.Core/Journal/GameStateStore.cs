@@ -141,6 +141,9 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, PowerplayCycleMerits?>? RestoreCycleMerits { get; init; }
 
+    /// <summary>The BGS work this Commander did over the last week, on the same terms as <see cref="RestoreFleet"/>.</summary>
+    public Func<string, BgsWork?>? RestoreBgsWork { get; init; }
+
     /// <summary>
     /// The credits this Commander's newest LoadGame reported, on the same terms as <see cref="RestoreFleet"/>.
     /// </summary>
@@ -228,6 +231,11 @@ public sealed class GameStateStore
             if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
             {
                 state.CycleMerits = merits.With(state.CycleMerits);
+            }
+
+            if (RestoreBgsWork?.Invoke(fid) is { IsKnown: true } bgsWork)
+            {
+                state.BgsWork = bgsWork.With(state.BgsWork);
             }
 
             if (RestoreCredits?.Invoke(fid) is { } credits)
@@ -410,6 +418,11 @@ public sealed class GameStateStore
         if (RestoreCycleMerits?.Invoke(identity.FrontierId) is { IsKnown: true } merits)
         {
             state.CycleMerits = merits;
+        }
+
+        if (RestoreBgsWork?.Invoke(identity.FrontierId) is { IsKnown: true } bgsWork)
+        {
+            state.BgsWork = bgsWork;
         }
 
         if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)

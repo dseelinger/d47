@@ -1113,6 +1113,7 @@ public sealed class AppHost : IDisposable
 
             // And the merits earned for the Commander's Power earlier this cycle.
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
+            RestoreBgsWork = fid => history.BgsWork?.GetValueOrDefault(fid),
 
             // And the credits the Commander's newest LoadGame reported, which a Commander picked while someone
             // else is in the game never folds.
