@@ -189,7 +189,7 @@ public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
         new MiniPanelServices { Checklists = checklists, GameState = () => state }.Furnish(view);
 
         Assert.Equal(
-            ["Checklist", "Missions", "Standing", "Statistics", "This session", "BGS work", "Combat stats"],
+            ["Checklist", "Missions", "Standing", "Statistics", "This session", "BGS work", "Combat stats", "Credits"],
             view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
 
         view.Tab = PanelTab.Commander;

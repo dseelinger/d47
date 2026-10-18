@@ -611,7 +611,11 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableCombatStats(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>
         _commander.EnableCombatStats(state, history, now);
 
-    /// <summary>Gives this surface Commander › Commanders, after Combat stats.</summary>
+    /// <summary>Gives this surface the Credits page and the transactions page below it.</summary>
+    public void EnableCredits(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>
+        _commander.EnableCredits(state, history, now);
+
+    /// <summary>Gives this surface Commander › Commanders, after Credits.</summary>
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);
 
     /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>

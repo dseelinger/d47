@@ -160,7 +160,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session, BGS work, Combat stats, Commanders.
+            // Commander roots land in call order: Checklist, Missions, Standing, Statistics, This session, BGS work, Combat stats, Credits, Commanders.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill, host.Activities);
             Panel.EnableMissions(
                 () => host.GameState.Active,
@@ -172,6 +172,7 @@ public partial class MainWindow : Window
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableBgsWork(() => host.GameState.Active, () => host.BgsTick?.Last, () => DateTimeOffset.UtcNow);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
+            Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCommanders(host.Commanders);
 
             // The title bar's Commander switcher, desktop only: the headset has no title bar.
