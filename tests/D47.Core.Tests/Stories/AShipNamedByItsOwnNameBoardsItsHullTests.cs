@@ -82,6 +82,6 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
     {
         var (_, provider) = Generate(Beats("Anaconda"));
 
-        Assert.Contains("its hull type, such as Anaconda, never the ship's own name", provider.Requests[1].Prompt.History[0].Text);
+        Assert.Contains("its hull type, one of ", provider.Requests[1].Prompt.History[0].Text);
     }
 }

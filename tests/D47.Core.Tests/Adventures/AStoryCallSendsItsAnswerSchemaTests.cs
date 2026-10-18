@@ -46,6 +46,39 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
     }
 
     [Fact]
+    public async Task AShortStoryWithNoShipInItsBriefIsNotOfferedBoard()
+    {
+        var beats = await BeatsCall("short");
+
+        Assert.DoesNotContain("board", Kinds(beats.Schema));
+        Assert.DoesNotContain("- \"board\":", beats.Text);
+        Assert.False(BeatProperties(Root(beats.Schema)).GetProperty("ship").TryGetProperty("enum", out _));
+    }
+
+    [Fact]
+    public async Task AShortStoryWhoseBriefNamesAHullIsOfferedBoardWithThatHull()
+    {
+        var beats = await BeatsCall("brief");
+        var ship = BeatProperties(Root(beats.Schema)).GetProperty("ship");
+
+        Assert.Contains("board", Kinds(beats.Schema));
+        Assert.Equal(["Cobra MkIII", null], ship.GetProperty("enum").EnumerateArray().Select(name => name.GetString()));
+        Assert.Contains("one of Cobra MkIII;", beats.Text);
+    }
+
+    [Fact]
+    public async Task AChapterIsOfferedBoardWithEveryHull()
+    {
+        var beats = await BeatsCall("cast");
+        var hulls = BeatProperties(Root(beats.Schema)).GetProperty("ship").GetProperty("enum").EnumerateArray().Select(name => name.GetString()).ToList();
+
+        Assert.Contains("board", Kinds(beats.Schema));
+        Assert.Contains("Cobra MkIII", hulls);
+        Assert.Contains("Anaconda", hulls);
+        Assert.Null(hulls[^1]);
+    }
+
+    [Fact]
     public async Task ACastGetsLinesAndAnArrayOpening()
     {
         var root = Root((await BeatsCall("cast")).Schema);
@@ -173,6 +206,7 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
             "beacon" => new AdventureAsk(Story: Chapter with { Beacon = new AdventureBeacon(1, "Beacon System") }),
             "away" => new AdventureAsk(Story: Chapter with { BeaconAway = new AdventureBeaconAway("Far System", 900, "too far") }),
             "finale" => new AdventureAsk(Story: Chapter with { FinaleChapter = 1 }),
+            "brief" => new AdventureAsk(Length: AdventureLength.Short, Brief: "Take me to a Cobra Mk III"),
             _ => new AdventureAsk(Length: AdventureLength.Short),
         };
 

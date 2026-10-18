@@ -214,6 +214,10 @@ public static class EliteSpecifications
             : Loaded.Value.HullNames.GetValueOrDefault(key);
     }
 
+    /// <summary>Every hull's name, measured or not, once each.</summary>
+    public static IReadOnlyList<string> HullNameList =>
+        [.. Loaded.Value.Ships.Values.Select(ship => ship.Name).Concat(Loaded.Value.HullNames.Values).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
+
     /// <summary>The symbol for a hull named any way Elite names it, or null for one nothing here knows.</summary>
     public static string? HullSymbol(string? hull) =>
         string.IsNullOrWhiteSpace(hull) ? null : Symbols.Value.GetValueOrDefault(Plain(hull));

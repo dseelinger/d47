@@ -1821,7 +1821,8 @@ public sealed class AdventureGenerator(
         var reachAway = ask.Story?.BeaconAway;
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
-        var kinds = StoryAnswer.Kinds(team, beacon is not null, reachAway is not null);
+        var ships = ask.Story is null ? BriefHulls(ask.Brief) : EliteSpecifications.HullNameList;
+        var kinds = StoryAnswer.Kinds(team, beacon is not null, reachAway is not null, ships.Count > 0);
 
         text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
@@ -1829,9 +1830,15 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
         text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
-        text.AppendLine(ask.Story is null
-            ? "- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, such as Anaconda, never the ship's own name. Use it only for a ship the Commander's brief names; otherwise never use it, because the Commander may not be able to afford another ship."
-            : "- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, such as Anaconda, never the ship's own name. Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
+        if (ships.Count > 0)
+        {
+            var hulls = string.Join(", ", ships);
+
+            text.AppendLine(ask.Story is null
+                ? $"- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, one of {hulls}; never the ship's own name. Use it only for a ship the Commander's brief names."
+                : $"- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, one of {hulls}; never the ship's own name. Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
+        }
+
         text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
         text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
         text.AppendLine(
@@ -1944,7 +1951,7 @@ public sealed class AdventureGenerator(
         var destination = ask.Story is { FinaleChapter: 1, Destination: null };
 
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination)
+            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null)
             + (changing
                 ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
                   + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
@@ -1952,7 +1959,7 @@ public sealed class AdventureGenerator(
                 : ". \"reply\" is what you say to the Commander, in your own "
                   + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
-        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(ask.Story is { } cast ? [.. Speakers(cast)] : null, kinds, destination));
+        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(ask.Story is { } cast ? [.. Speakers(cast)] : null, kinds, destination, ships.Count > 0 ? ships : null));
     }
 
     private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)
@@ -2684,6 +2691,9 @@ public sealed class AdventureGenerator(
         string.Equals(government, "Anarchy", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether the brief says the hull's name, in any spacing or case.</summary>
+    private static IReadOnlyList<string> BriefHulls(string? brief) =>
+        [.. EliteSpecifications.HullNameList.Where(name => EliteSpecifications.HullSymbol(name) is { } symbol && BriefNames(brief, symbol))];
+
     private static bool BriefNames(string? brief, string symbol)
     {
         static string Plain(string text) => string.Concat(text.Where(char.IsLetterOrDigit)).ToLowerInvariant();

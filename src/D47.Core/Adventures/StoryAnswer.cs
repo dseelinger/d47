@@ -17,7 +17,7 @@ internal static class StoryAnswer
     /// <summary>Kinds offered in every story.</summary>
     private static readonly string[] AlwaysKinds =
     [
-        "arrive", "dock", "land", "scan", "rank", "board", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
+        "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
         "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew",
         "suitmod", "livery", "conflict", "faction",
     ];
@@ -38,11 +38,16 @@ internal static class StoryAnswer
         ("organic", Shape.MaybeFlag), ("engineer", Shape.MaybeText), ("stage", Shape.MaybeText),
     ];
 
-    /// <summary>The kinds one beats call offers: those always offered, the team kinds, then beacon and reach when the story has them.</summary>
-    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach)
+    /// <summary>The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them.</summary>
+    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach, bool board)
     {
         var kinds = new List<string>(AlwaysKinds);
         kinds.InsertRange(AlwaysKinds.Length - 2, team.Select(kind => kind.ToString().ToLowerInvariant()));
+
+        if (board)
+        {
+            kinds.Insert(kinds.IndexOf("rank") + 1, "board");
+        }
 
         if (beacon)
         {
@@ -61,16 +66,16 @@ internal static class StoryAnswer
         new(SpineName, Object(SpineFields.Select(field => (field, (JsonNode)Text()))).ToJsonString());
 
     /// <summary>The answer's JSON shape as the instruction states it.</summary>
-    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination) =>
+    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
         + ", \"opening\": " + (speakers ? "[{\"text\": string, \"speaker\": string}]" : "string")
         + ", \"reply\": string, \"beats\": [{\"title\": string, \"function\": string, \"kind\": "
         + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
-        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {Prose(field.Shape)}"))
+        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
         + (destination ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty) + "}";
 
-    internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination)
+    internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null)
     {
         var beat = new List<(string, JsonNode)>
         {
@@ -78,7 +83,7 @@ internal static class StoryAnswer
             ("function", Text()),
             ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
         };
-        beat.AddRange(BeatFields.Select(field => (field.Name, Of(field.Shape))));
+        beat.AddRange(BeatFields.Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
         beat.Add(speakers is not null ? ("lines", Lines(speakers)) : ("line", Text()));
 
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
@@ -111,6 +116,13 @@ internal static class StoryAnswer
         Shape.MaybeWhole => Maybe("integer"),
         _ => Maybe("boolean"),
     };
+
+    private static JsonObject Hulls(IReadOnlyList<string> ships) =>
+        new()
+        {
+            ["type"] = new JsonArray("string", "null"),
+            ["enum"] = new JsonArray([.. ships.Select(ship => (JsonNode)JsonValue.Create(ship)!), null]),
+        };
 
     private static JsonObject Text() => new() { ["type"] = "string" };
 
