@@ -145,6 +145,12 @@ public sealed class GameStateStore
     public Func<string, BgsWork?>? RestoreBgsWork { get; init; }
 
     /// <summary>
+    /// The kills this Commander has made, on the same terms as <see cref="RestoreFleet"/> but merged whenever a
+    /// record comes back, so an empty one still marks the record whole.
+    /// </summary>
+    public Func<string, CombatRecord?>? RestoreCombat { get; init; }
+
+    /// <summary>
     /// The credits this Commander's newest LoadGame reported, on the same terms as <see cref="RestoreFleet"/>.
     /// </summary>
     public Func<string, long?>? RestoreCredits { get; init; }
@@ -236,6 +242,11 @@ public sealed class GameStateStore
             if (RestoreBgsWork?.Invoke(fid) is { IsKnown: true } bgsWork)
             {
                 state.BgsWork = bgsWork.With(state.BgsWork);
+            }
+
+            if (RestoreCombat?.Invoke(fid) is { } combat)
+            {
+                state.Combat = combat.With(state.Combat);
             }
 
             if (RestoreCredits?.Invoke(fid) is { } credits)
@@ -423,6 +434,11 @@ public sealed class GameStateStore
         if (RestoreBgsWork?.Invoke(identity.FrontierId) is { IsKnown: true } bgsWork)
         {
             state.BgsWork = bgsWork;
+        }
+
+        if (RestoreCombat?.Invoke(identity.FrontierId) is { } combat)
+        {
+            state.Combat = combat.With(state.Combat);
         }
 
         if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)

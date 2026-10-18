@@ -1115,6 +1115,11 @@ public sealed class AppHost : IDisposable
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
             RestoreBgsWork = fid => history.BgsWork?.GetValueOrDefault(fid),
 
+            // And every kill, offered only once the walk is done so that a record is whole when it arrives.
+            RestoreCombat = fid => history.State is HistoryState.Done
+                ? history.Combat?.GetValueOrDefault(fid) ?? CombatRecord.None
+                : null,
+
             // And the credits the Commander's newest LoadGame reported, which a Commander picked while someone
             // else is in the game never folds.
             RestoreCredits = fid => history.Credits is { } credits && credits.TryGetValue(fid, out var held) ? held : null,
