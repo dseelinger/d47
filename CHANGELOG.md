@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The story progress bar and its time hint now use slower times for a model on your own PC: "Usually ready in about 75 seconds" for a short story and 130 for a chapter, instead of 40 seconds for both. Models d47 has measured keep their own times.
+
 Story calls to a local model now send the shape of the answer they expect, so the model fills in every objective's kind instead of leaving it out. The objectives prompt also now lists the conflict and faction kinds in its answer format, for every provider.
 
 On LM Studio, D47 now reloads the story model with 16,384 tokens of context before writing a story or chapter when it is loaded with less, and loads it that way when it is not loaded. The progress line says "Reloading <model> with room for a story." while it does. If the reload fails, D47 says so and writes nothing.

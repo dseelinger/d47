@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace D47.Core.Adventures;
 
@@ -15,6 +15,8 @@ public enum WriteStage
 public sealed record StoryPace(double Places, double Outline, double Objectives)
 {
     private static readonly StoryPace Other = new(5, 13, 22);
+    private static readonly StoryPace LocalStory = new(5, 20, 50);
+    private static readonly StoryPace LocalChapter = new(5, 20, 105);
 
     private static readonly Dictionary<string, StoryPace> Models = new(StringComparer.Ordinal)
     {
@@ -28,8 +30,11 @@ public sealed record StoryPace(double Places, double Outline, double Objectives)
 
     public double Total => Places + Outline + Objectives;
 
-    /// <summary>The pace for <paramref name="model"/>, or the median of the measured models when it is not in the table.</summary>
-    public static StoryPace For(string? model) => model is not null && Models.TryGetValue(model, out var pace) ? pace : Other;
+    /// <summary>The pace for <paramref name="model"/>; a model outside the table gets the local row when it runs on this machine, else the median of the measured models.</summary>
+    public static StoryPace For(string? model, bool local = false, bool chapter = false) =>
+        model is not null && Models.TryGetValue(model, out var pace) ? pace
+        : !local ? Other
+        : chapter ? LocalChapter : LocalStory;
 
     internal double Seconds(WriteStage stage) => stage switch
     {

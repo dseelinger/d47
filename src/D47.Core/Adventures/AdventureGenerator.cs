@@ -1109,7 +1109,10 @@ public sealed class AdventureGenerator(
     }
 
     private void Enter(AdventureAsk ask, WriteStage stage) =>
-        ask.Progress?.Enter(stage, StoryPace.For(model() ?? provider()?.DefaultModel));
+        ask.Progress?.Enter(stage, StoryPace.For(
+            model() ?? provider()?.DefaultModel,
+            local: provider() is { RunsOnThisMachine: true },
+            chapter: ask.Story is not null));
 
     private const string SpineStep = "spine";
     private const string BeatsStep = "beats";

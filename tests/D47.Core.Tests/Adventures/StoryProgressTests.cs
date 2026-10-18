@@ -1,4 +1,4 @@
-using D47.Core.Adventures;
+﻿using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging;
@@ -101,6 +101,33 @@ public sealed class StoryProgressTests
     {
         Assert.Equal(new StoryPace(5, 13, 22), StoryPace.For("some-new-model"));
         Assert.Equal(StoryPace.For("some-new-model"), StoryPace.For(null));
+    }
+
+    [Fact]
+    public void AModelNotInTheTableGetsTheLocalRowOnThisMachine()
+    {
+        Assert.Equal(new StoryPace(5, 20, 50), StoryPace.For("some-new-model", local: true));
+        Assert.Equal(new StoryPace(5, 20, 105), StoryPace.For("some-new-model", local: true, chapter: true));
+        Assert.Equal(new StoryPace(5, 13, 22), StoryPace.For("some-new-model", chapter: true));
+        Assert.Equal(StoryPace.For("claude-haiku-5-5"), StoryPace.For("claude-haiku-5-5", local: true, chapter: true));
+    }
+
+    [Theory]
+    [InlineData(false, 75)]
+    [InlineData(true, 130)]
+    public void ALocalHintNamesTheLocalTimeThenSaysItIsTakingLonger(bool chapter, int seconds)
+    {
+        var time = new ManualTime();
+        var progress = new StoryProgress(time);
+        progress.Enter(WriteStage.Places, StoryPace.For("gemma-4-e4b", local: true, chapter: chapter));
+
+        Assert.Equal($"Usually ready in about {seconds} seconds.", progress.Hint);
+
+        time.Advance(TimeSpan.FromSeconds(seconds * 2));
+        Assert.Equal($"Usually ready in about {seconds} seconds.", progress.Hint);
+
+        time.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal("Taking longer than usual.", progress.Hint);
     }
 
     [Fact]
