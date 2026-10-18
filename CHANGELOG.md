@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Commander's log no longer says no model is selected when the model setting is left on the provider's default. It now uses that default, as conversation does.
+
+Working out what a Commander's log would cost is now optional. **Write it** on the Logbook page is always available, and "write the log" works without a quote: with nothing quoted, D47 reads the chosen window and writes it in one step, then says what it cost. A window with nothing in it is still not written. Changing the span or the dates drops an earlier quote, so a quote is never spent on a different window.
+
 A story chapter or short story whose first draft failed after its outline was written now keeps that outline for the second draft, with the same title, and writes only the objectives again. The third draft writes a new outline, so an outline that is itself the problem does not hold every draft. A draft whose outline could not be read still gets a new one.
 
 A story or chapter draft with objectives that cannot stand is now fixed one objective at a time. The objectives that passed the check are kept exactly as written, and only the refused ones are written again, in up to two rounds, so rewriting one objective no longer breaks another that had passed. The log now records every refusal with its draft and round.

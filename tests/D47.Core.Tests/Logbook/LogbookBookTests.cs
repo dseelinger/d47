@@ -21,27 +21,38 @@ public class LogbookBookTests
     private LogbookSettings _settings = new();
     private LogbookContext _context = new();
 
-    /// <summary>Item 4 in one assertion.</summary>
+    /// <summary>The quote is optional: a write with none prices the window and writes it in one call.</summary>
     [Fact]
-    public async Task NothingIsWrittenUntilAQuoteHasBeenGiven()
+    public async Task AWriteWithNoQuotePricesTheWindowAndWritesIt()
     {
         Evening1();
         var provider = FakeLlmProvider.Answering("A quiet run [1].");
         var book = Book(provider);
 
-        var refused = await book.WriteAsync(CancellationToken.None);
-
-        Assert.False(refused.Ok);
-        Assert.Equal(0, provider.CallCount);
-        Assert.Contains("what that would cost", refused.Message, StringComparison.Ordinal);
-
-        book.Estimate(null, null, null, out _);
-        Assert.NotNull(book.Armed);
+        Assert.Null(book.Armed);
 
         var written = await book.WriteAsync(CancellationToken.None);
 
         Assert.True(written.Ok, written.Message);
         Assert.Equal(1, provider.CallCount);
+        Assert.Null(book.Armed);
+        Assert.Single(book.Folder.Entries());
+    }
+
+    [Fact]
+    public async Task AnUnquotedWriteOverAnEmptyWindowSendsNothing()
+    {
+        _corpus.Journal(Evening, JournalCorpus.LoadGame(Evening));
+
+        var provider = FakeLlmProvider.Answering("...");
+        var book = Book(provider);
+
+        var refused = await book.WriteAsync(
+            "today", Evening.AddYears(-3), Evening.AddYears(-3).AddHours(1), CancellationToken.None);
+
+        Assert.False(refused.Ok);
+        Assert.Equal(0, provider.CallCount);
+        Assert.Contains("nothing in that window", refused.Message, StringComparison.Ordinal);
     }
 
     /// <summary>A second attempt is a second spend and it gets a second quote.</summary>
@@ -252,18 +263,35 @@ public class LogbookBookTests
                 "Docked",
                 "\"StarSystem\":\"Deciat\",\"StationName\":\"Garay Terminal\""));
 
-    /// <summary>
-    /// A provider with no model beneath it, which is the state on a fresh install and the state the
- /// Commander was in.
-    /// </summary>
+    /// <summary>A blank model setting means the provider's default, as it does for conversation.</summary>
+    [Fact]
+    public async Task ABlankModelUsesTheProvidersDefault()
+    {
+        Evening1();
+
+        var provider = FakeLlmProvider.Answering("A quiet run [1].");
+        var book = Book(provider);
+
+        _context = _context with { Model = null };
+
+        book.Estimate(null, null, null, out var said);
+
+        Assert.Equal("claude-opus-5", book.Armed?.Model);
+        Assert.DoesNotContain("no model selected", said, StringComparison.Ordinal);
+
+        var written = await book.WriteAsync(CancellationToken.None);
+
+        Assert.True(written.Ok, written.Message);
+        Assert.Equal("claude-opus-5", provider.LastRequest!.Model);
+    }
+
+    /// <summary>A provider with no model chosen and no default of its own.</summary>
     [Fact]
     public void AProviderWithNoModelIsNotToldToChooseAProvider()
     {
         Evening1();
 
-        _context = _context with { Model = null };
-
-        var book = Book(FakeLlmProvider.Answering("..."));
+        var book = Book(new FakeLlmProvider() { DefaultModel = "" });
 
         _context = _context with { Model = null };
 

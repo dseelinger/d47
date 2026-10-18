@@ -79,8 +79,8 @@ public static class LogbookCapability
                 {
                     Name = "write_log",
                     Description =
-                        "Write the log that was just quoted, and save it. Refuses unless a quote has been "
-                        + "given, because this is the one thing D47 does that costs real money on request.",
+                        "Write the log and save it: the one just quoted, or, with no quote, the span the "
+                        + "settings name.",
                     Protected = true,
                     Commands =
                     [
@@ -202,7 +202,7 @@ public static class LogbookCapability
         Choices = LogLengths.Ids,
         ChoiceLabel = LogLengths.LabelOf,
         DefaultDisplay = "standard — about a page",
-        DocsAnchor = "it-costs-money-and-says-so-first",
+        DocsAnchor = "it-costs-money-and-can-quote-you-first",
         Binding = new SettingBinding
         {
             Read = settings => settings.Logbook.Length,
@@ -221,7 +221,7 @@ public static class LogbookCapability
         Label = "Your logs",
         Help =
             "Logs are written as plain markdown beside D47, in data/commander-log. They are yours — D47 "
-            + "never overwrites one, and nothing is written until you ask and have seen what it costs.",
+            + "never overwrites one, and nothing is written until you ask.",
         Kind = SettingKind.Info,
         DocsAnchor = "writing-one",
         Binding = new SettingBinding { Read = _ => Summarise(book) },

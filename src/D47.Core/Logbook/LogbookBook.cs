@@ -112,11 +112,14 @@ public sealed class LogbookBook(
     /// <summary>Raised when the arming or the folder changed.</summary>
     public event Action? Changed;
 
-    /// <summary>Reads the window, prices it, and arms the writer.</summary>
+    /// <summary>The chosen model, or the provider's default where none is chosen.</summary>
+    private static string? ModelOf(LogbookContext host) =>
+        string.IsNullOrWhiteSpace(host.Model) ? host.Provider?.DefaultModel : host.Model;
+
     private static string? NotReady(LogbookContext host) =>
         host.Provider is null
             ? "There is no provider selected, so I cannot write anything. Choose one in Settings."
-            : string.IsNullOrWhiteSpace(host.Model)
+            : string.IsNullOrWhiteSpace(ModelOf(host))
                 ? "There is no model selected, so I cannot write anything. Your provider is set — "
                   + "it is the model beneath it that is not."
                 : null;
@@ -142,6 +145,7 @@ public sealed class LogbookBook(
         }
 
         var provider = host.Provider!;
+        var model = ModelOf(host)!;
 
         var asked = LogVoices.Parse(current.Voice);
         var used = LogVoices.Resolve(asked, host.PersonalityEnabled);
@@ -157,8 +161,8 @@ public sealed class LogbookBook(
             used,
             length,
             provider.Id,
-            host.Model!,
-            local ? PriceTable.Free : host.Prices.For(provider.Id, host.Model!),
+            model,
+            local ? PriceTable.Free : host.Prices.For(provider.Id, model),
             local);
 
         lock (_gate)
@@ -182,9 +186,19 @@ public sealed class LogbookBook(
         Changed?.Invoke();
     }
 
-    /// <summary>Writes the armed log.</summary>
-    public async Task<LogOutcome> WriteAsync(CancellationToken cancellationToken)
+    /// <summary>Writes the armed log, or the window the settings name where nothing is armed.</summary>
+    public Task<LogOutcome> WriteAsync(CancellationToken cancellationToken) =>
+        WriteAsync(spanId: null, from: null, to: null, cancellationToken);
+
+    /// <summary>Writes the armed log, or prices the given window and writes it where nothing is armed.</summary>
+    public async Task<LogOutcome> WriteAsync(
+        string? spanId, DateTimeOffset? from, DateTimeOffset? to, CancellationToken cancellationToken)
     {
+        if (Armed is null && Estimate(spanId, from, to, out var unquoted) is not { Digest.Any: true })
+        {
+            return new LogOutcome(false, unquoted);
+        }
+
         LogEstimate? estimate;
 
         lock (_gate)
@@ -197,10 +211,7 @@ public sealed class LogbookBook(
 
         if (estimate is null)
         {
-            return new LogOutcome(
-                false,
-                "I have not worked out what that would cost yet. Ask me for a log first and I will tell you, "
-                + "and then you can tell me to write it.");
+            return new LogOutcome(false, "There is nothing ready to write. Ask me again.");
         }
 
         var host = context();
@@ -211,14 +222,15 @@ public sealed class LogbookBook(
         }
 
         var provider = host.Provider!;
+        var model = ModelOf(host);
 
         if (!string.Equals(provider.Id, estimate.ProviderId, StringComparison.Ordinal) ||
-            !string.Equals(host.Model, estimate.Model, StringComparison.Ordinal))
+            !string.Equals(model, estimate.Model, StringComparison.Ordinal))
         {
             return new LogOutcome(
                 false,
                 $"The model changed after I quoted you — that was for {estimate.Model} and it is now "
-                + $"{host.Model}. Ask me again and I will re-price it.");
+                + $"{model}. Ask me again and I will re-price it.");
         }
 
         var prompt = LogPrompt.Build(

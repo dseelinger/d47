@@ -64,21 +64,24 @@ public sealed class LogbookPage : DialogPage
             _span.IsEnabled = !exact;
             _from.IsEnabled = exact;
             _to.IsEnabled = exact;
+            _book.Disarm();
         };
+
+        _span.SelectionChanged += (_, _) => _book.Disarm();
 
         _quote = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
             FontSize = TypeScale.Secondary,
             Text =
-                "Nothing is written until you ask, and nothing is sent until you have seen what it costs. "
-                + "Working it out reads your journals on this machine and spends nothing.",
+                "Nothing is written until you ask. Working out the cost first is optional: it reads your "
+                + "journals on this machine and spends nothing.",
         };
 
         Themed(_quote, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _estimate = new Button { Name = "EstimateLog", Content = "Work out what this would cost", MinWidth = 230 };
-        _write = new Button { Name = "WriteLog", Content = "Write it", MinWidth = 130, IsEnabled = false };
+        _write = new Button { Name = "WriteLog", Content = "Write it", MinWidth = 130 };
 
         _estimate.Click += async (_, _) => await EstimateAsync();
         _write.Click += async (_, _) => await WriteAsync();
@@ -128,11 +131,7 @@ public sealed class LogbookPage : DialogPage
         _estimate.IsEnabled = false;
         _quote.Text = "Reading your journals…";
 
-        var exact = _exact.IsChecked == true;
-        var span = LogRanges.Ids[Math.Max(0, _span.SelectedIndex)];
-        var from = exact ? _fromDay : null;
-        var to = exact ? _toDay : null;
-        var zone = TimeZoneInfo.Local;
+        var (span, from, to) = Window();
 
         // Off the UI thread, because a month of journals is a real read and Core is synchronous by design —
         // the App is what decides where a long fold runs, exactly as habit mining does.
@@ -140,11 +139,7 @@ public sealed class LogbookPage : DialogPage
         {
             try
             {
-                _book.Estimate(
-                    exact ? null : span,
-                    from is { } start ? LogDays.Start(start, zone) : null,
-                    to is { } end ? LogDays.End(end, zone) : null,
-                    out var described);
+                _book.Estimate(span, from, to, out var described);
 
                 return described;
             }
@@ -211,15 +206,28 @@ public sealed class LogbookPage : DialogPage
             _toDay = day;
             _to.Content = $"TO {LogDays.Write(day)}";
         }
+
+        _book.Disarm();
+    }
+
+    /// <summary>The window the page is set to: a span, or two exact days.</summary>
+    private (string? Span, DateTimeOffset? From, DateTimeOffset? To) Window()
+    {
+        if (_exact.IsChecked != true)
+        {
+            return (LogRanges.Ids[Math.Max(0, _span.SelectedIndex)], null, null);
+        }
+
+        var zone = TimeZoneInfo.Local;
+
+        return (
+            null,
+            _fromDay is { } start ? LogDays.Start(start, zone) : null,
+            _toDay is { } end ? LogDays.End(end, zone) : null);
     }
 
     private async Task WriteAsync()
     {
-        if (_book.Armed is null)
-        {
-            return;
-        }
-
         _write.IsEnabled = false;
         _estimate.IsEnabled = false;
         _quote.Text = "Writing. This is the largest thing D47 asks a model to do, so it takes a moment.";
@@ -227,9 +235,23 @@ public sealed class LogbookPage : DialogPage
         _running?.Cancel();
         _running = new CancellationTokenSource();
 
-        var outcome = await _book.WriteAsync(_running.Token);
+        var token = _running.Token;
+        var (span, from, to) = Window();
 
-        _quote.Text = outcome.Message;
+        // Off the UI thread, because an unquoted write reads the journals before it sends anything.
+        var message = await Task.Run(async () =>
+        {
+            try
+            {
+                return (await _book.WriteAsync(span, from, to, token)).Message;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                return $"I could not read your journals: {ex.Message}";
+            }
+        });
+
+        _quote.Text = message;
         _estimate.IsEnabled = true;
         Refresh();
     }
@@ -254,7 +276,7 @@ public sealed class LogbookPage : DialogPage
 
     private void Refresh()
     {
-        _write.IsEnabled = _book.Armed is not null;
+        _write.IsEnabled = _estimate.IsEnabled;
 
         if (_book.Armed is { } armed)
         {

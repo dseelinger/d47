@@ -121,8 +121,8 @@ nav_order: 146
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> It quotes you before it spends anything.</h2>
-<svg viewBox="0 0 880 244" role="img" aria-label="Asking for a log returns a price first, and a second sentence is needed to authorise writing it">
+<h2><span class="num">4</span> It can quote you before it spends anything.</h2>
+<svg viewBox="0 0 880 244" role="img" aria-label="Asking what a log would cost returns a price, and a second sentence writes it">
  <rect x="20" y="30" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="62" text-anchor="start" font-size="16" fill="var(--text)">you:   write my commander’s log</text>
  <rect x="20" y="96" width="840" height="80" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
@@ -131,7 +131,7 @@ nav_order: 146
  <rect x="20" y="190" width="840" height="52" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="46" y="222" text-anchor="start" font-size="16" fill="var(--text)">you:   write the log</text>
 </svg>
-<p class="body">Prose over a long session is the largest single request Directive 47 will ever make, so it never happens by itself: no schedule, no trigger, no callout starts one. Working out that price reads your journals here and sends nothing.</p>
+<p class="body">Prose over a long session is the largest single request Directive 47 will ever make, so it never happens by itself: no schedule, no trigger, no callout starts one. Working out that price reads your journals here and sends nothing. The quote is optional; “write the log” with no quote writes straight away.</p>
 </section>
 <section>
 <h2><span class="num">5</span> Story objectives are facts too.</h2>
@@ -215,18 +215,19 @@ Two exact dates are available from the panel. They are not available by voice, a
 deliberate: the phrase router matches whole phrases and extracts nothing from them, which is what
 stops it guessing at a date and confidently writing up the wrong fortnight.
 
-### It costs money, and says so first
+### It costs money, and can quote you first
 {: #cost }
 
 Prose over a long session is the largest single request d47 will ever make. So:
 
 - **It never happens by itself.** There is no schedule, no trigger, no callout that starts one.
-- **It quotes you first.** Working out the cost reads your journals on this machine and sends
-  nothing.
+- **It can quote you first.** Working out the cost reads your journals on this machine and sends
+  nothing. The quote is optional: **Write it** in the panel and `write the log` both write straight
+  away when nothing has been quoted.
 - **It reports what it actually cost** afterwards, through the same spend ledger as everything else,
   so `what has this cost this month` includes it.
 
-Asking is two steps, and they are separate on purpose:
+Asking for a quote first looks like this:
 
 > **you:** write my commander's log
 >
@@ -236,8 +237,8 @@ Asking is two steps, and they are separate on purpose:
 >
 > **you:** write the log
 
-A Commander who set a monthly cap and found it eaten by an unrequested essay about their Tuesday
-would be right to be angry. Nothing here can do that.
+A model changed between the quote and the write is refused rather than honoured, so a quote is
+always the price of the write that follows it.
 
 How long a log runs is a setting — brief, standard or full — because the output budget is most of
 what that figure is pricing.
@@ -270,8 +271,9 @@ Reads the window, prices it, and gets ready. Spends nothing.
 
 #### `write_log`
 
-Writes the log that was just quoted. Refuses unless a quote has been given, and consumes the quote
-whether it succeeds or not — a second attempt is a second spend, and gets a second figure.
+Writes the log that was just quoted, or, with no quote, prices the span the settings name and writes
+it in the same step. A quote is consumed whether the write succeeds or not. A window with nothing in
+it is not written.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
