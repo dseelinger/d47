@@ -1124,6 +1124,10 @@ public sealed class AppHost : IDisposable
                 ? history.CreditLedgers?.GetValueOrDefault(fid) ?? CreditLedger.None
                 : null,
 
+            RestoreCodexLedger = fid => history.State is HistoryState.Done
+                ? history.CodexLedgers?.GetValueOrDefault(fid) ?? CodexLedger.None
+                : null,
+
             // And the credits the Commander's newest LoadGame reported, which a Commander picked while someone
             // else is in the game never folds.
             RestoreCredits = fid => history.Credits is { } credits && credits.TryGetValue(fid, out var held) ? held : null,

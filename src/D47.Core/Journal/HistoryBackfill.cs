@@ -129,6 +129,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's credit transactions.</summary>
     public IReadOnlyDictionary<string, CreditLedger>? CreditLedgers { get; private set; }
 
+    /// <summary>Each Commander's codex entries.</summary>
+    public IReadOnlyDictionary<string, CodexLedger>? CodexLedgers { get; private set; }
+
     /// <summary>The credits each Commander's newest LoadGame reported.</summary>
     public IReadOnlyDictionary<string, long>? Credits { get; private set; }
 
@@ -266,6 +269,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(CreditLedgerBackfill)),
+                    cancellation));
+
+            CodexLedgers = Timed(
+                "codex ledger backfill",
+                () => CodexLedgerBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(CodexLedgerBackfill)),
                     cancellation));
 
             Credits = Timed(

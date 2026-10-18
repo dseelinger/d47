@@ -153,6 +153,9 @@ public sealed class GameStateStore
     /// <summary>The credit transactions of this Commander, on the same terms as <see cref="RestoreCombat"/>.</summary>
     public Func<string, CreditLedger?>? RestoreCreditLedger { get; init; }
 
+    /// <summary>The codex entries of this Commander, on the same terms as <see cref="RestoreCombat"/>.</summary>
+    public Func<string, CodexLedger?>? RestoreCodexLedger { get; init; }
+
     /// <summary>
     /// The credits this Commander's newest LoadGame reported, on the same terms as <see cref="RestoreFleet"/>.
     /// </summary>
@@ -255,6 +258,11 @@ public sealed class GameStateStore
             if (RestoreCreditLedger?.Invoke(fid) is { } ledger)
             {
                 state.CreditLedger = ledger.With(state.CreditLedger);
+            }
+
+            if (RestoreCodexLedger?.Invoke(fid) is { } codex)
+            {
+                state.CodexLedger = codex.With(state.CodexLedger);
             }
 
             if (RestoreCredits?.Invoke(fid) is { } credits)
@@ -452,6 +460,11 @@ public sealed class GameStateStore
         if (RestoreCreditLedger?.Invoke(identity.FrontierId) is { } ledger)
         {
             state.CreditLedger = ledger.With(state.CreditLedger);
+        }
+
+        if (RestoreCodexLedger?.Invoke(identity.FrontierId) is { } codex)
+        {
+            state.CodexLedger = codex.With(state.CodexLedger);
         }
 
         if (RestoreEvidence?.Invoke(identity.FrontierId) is { IsKnown: true } evidence)

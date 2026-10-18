@@ -47,6 +47,9 @@ public static class GalacticRegions
         return null;
     }
 
+    /// <summary>The name of the codex region with this number, or null for an unknown number.</summary>
+    public static string? NameOf(int id) => Loaded.Value.Names.GetValueOrDefault(id);
+
     private sealed record Map(
         IReadOnlyDictionary<int, string> Names,
         IReadOnlyList<IReadOnlyList<(int Span, int RegionId)>> Rows);
