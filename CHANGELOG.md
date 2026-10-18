@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Commander now has a Combat stats page after BGS work, on the desktop and on the big panel. It lists your kills and the credits they were awarded from the journals on this PC, for the last 24 hours, 7 days, 30 days or everything, grouped by enemy ship, your own ship, system or faction. Press a heading to sort, and the panel search narrows it by name. While D47 is still reading your older journals the page says so, and if that reading failed a warning gives the time the counts start at. The big panel's sub-tabs sit closer together so all eight fit.
+
 Commander now has a BGS work page after This session, on the desktop and on the big panel. It lists the work you have done for minor factions since the BGS tick, or in the last 24 hours when D47 does not know the tick time: one row per system and faction with mission marks, combat, trade, data and, with a tick time, influence before the tick and when you last visited. Press a heading to sort, and the panel search narrows it by system or faction. Without a tick time a notice says so, and on the desktop its OUTSIDE SOURCES tile opens the BGS tick time setting.
 
 Asking for your "codex entries" or "codex ledger" now reports how many codex entries you logged and how many were new to your codex, from every journal on this PC. It covers the time since you last sold exploration data unless you say "this session" or "all", names the three categories with the most new entries and, with more than one region, the three regions, and counts the rest. A region name, or "here", limits it to one region. It waits until all your earlier journals have been read.

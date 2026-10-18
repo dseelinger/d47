@@ -47,6 +47,13 @@ public sealed class TextChoice : ContentControl, IChoiceControl
         set => SetValue(ItemsSourceProperty, value);
     }
 
+    /// <summary>The gap between two choices on a line.</summary>
+    public double ItemSpacing
+    {
+        get => _row.ItemSpacing;
+        set => _row.ItemSpacing = value;
+    }
+
     public int SelectedIndex
     {
         get => GetValue(SelectedIndexProperty);

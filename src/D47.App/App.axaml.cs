@@ -128,7 +128,8 @@ public partial class App(AppHost? host) : Application
                 crewSeats: host.CrewSeatsHost,
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
-                bgsTick: () => host.BgsTick?.Last);
+                bgsTick: () => host.BgsTick?.Last,
+                historyState: () => host.History.State);
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 
@@ -181,6 +182,7 @@ public partial class App(AppHost? host) : Application
                     Ships = host.Ships,
                     GameState = () => host.GameState.Active,
                     BgsTick = () => host.BgsTick?.Last,
+                    HistoryState = () => host.History.State,
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
                     Construction = window?.Construction,

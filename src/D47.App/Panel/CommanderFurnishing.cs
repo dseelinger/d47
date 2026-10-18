@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Missions, Standing, Statistics, This session, BGS work and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Missions, Standing, Statistics, This session, BGS work, Combat stats and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -12,12 +12,14 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _statisticsBuild;
     private Func<NavCrumb, Control>? _sessionBuild;
     private Func<NavCrumb, Control>? _bgsWorkBuild;
+    private Func<NavCrumb, Control>? _combatStatsBuild;
     private Func<NavCrumb, Control>? _commandersBuild;
     private MissionsPage? _missions;
     private StandingPage? _standing;
     private StatisticsPage? _statistics;
     private SessionPage? _session;
     private BgsWorkPage? _bgsWork;
+    private CombatStatsPage? _combatStats;
     private CommandersPage? _commanders;
     private D47.App.Controls.JournalClock? _commanderClock;
 
@@ -144,6 +146,24 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             });
     }
 
+    public void EnableCombatStats(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        Func<D47.Core.Journal.HistoryState> history,
+        Func<DateTimeOffset> now)
+    {
+        var headset = host.Headset;
+
+        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset);
+
+        host.Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(CombatStatsPage.RootKey, "Combat stats")
+            {
+                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
+            });
+    }
+
     public void EnableCommanders(CommanderRoster roster)
     {
         _commandersBuild = _ => _commanders = new CommandersPage(roster);
@@ -193,6 +213,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= bgsWork.Tick();
         }
 
+        if (_combatStats is { } combatStats && root == CombatStatsPage.RootKey)
+        {
+            changed |= combatStats.Tick();
+        }
+
         if (_commanders is { } commanders && root == CommandersPage.RootKey)
         {
             changed |= commanders.Tick();
@@ -201,13 +226,14 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, BGS work, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, BGS work, Combat stats, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
         crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : crumb.Key == BgsWorkPage.RootKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
+        : crumb.Key == CombatStatsPage.RootKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

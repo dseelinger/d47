@@ -131,7 +131,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.CrewSeatsHost? crewSeats = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
-        Func<DateTimeOffset?>? bgsTick = null)
+        Func<DateTimeOffset?>? bgsTick = null,
+        Func<D47.Core.Journal.HistoryState>? historyState = null)
     {
         _dumpTo = dumpTo;
 
@@ -167,6 +168,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Ships = ships,
             GameState = gameState,
             BgsTick = bgsTick,
+            HistoryState = historyState,
             OnFoot = onFoot,
             EngineersMemory = engineersMemory,
             Construction = construction,

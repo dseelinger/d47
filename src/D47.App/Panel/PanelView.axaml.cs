@@ -603,11 +603,15 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Gives this surface Commander › This session, after Statistics.</summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 
-    /// <summary>Gives this surface Commander › Commanders, after This session.</summary>
     /// <summary>Gives this surface the BGS work page.</summary>
     public void EnableBgsWork(Func<D47.Core.Journal.CommanderGameState?> state, Func<DateTimeOffset?> tick, Func<DateTimeOffset> now) =>
         _commander.EnableBgsWork(state, tick, now);
 
+    /// <summary>Gives this surface the Combat stats page.</summary>
+    public void EnableCombatStats(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>
+        _commander.EnableCombatStats(state, history, now);
+
+    /// <summary>Gives this surface Commander › Commanders, after Combat stats.</summary>
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);
 
     /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>
@@ -2061,6 +2065,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         showing = showing == RawJournalRoot ? JournalRoot : showing;
 
         ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
+        ModeReadings.ItemSpacing = Classes.Contains("headset") ? 16 : 24;
 
         ShowPageBar();
         ShowLogSettingsStrip();
