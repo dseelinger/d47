@@ -26,7 +26,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
     public async Task TheLastFinaleChapterThatEndsElsewhereIsRefused()
     {
         var beats = Beats(Arrive("Kestrel"), Arrive("Closer"));
-        var outcome = await Write(Ask(finale: 4, destination: EdgeMoon), beats, beats);
+        var outcome = await Write(Ask(finale: 4, destination: EdgeMoon), beats, Repairs.Replacing(beats, 2), Repairs.Replacing(beats, 2));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("The last objective must be \"land\" on Edge Moon 1 a in Edge Moon, where the finale ends.", outcome.Refusal);
@@ -36,7 +36,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
     public async Task OnlyTheLastBeatMayGoBeyondTheReach()
     {
         var beats = Beats(Land("Edge Moon", "Edge Moon 1 a"), Arrive("Kestrel"));
-        var outcome = await Write(Ask(finale: 4, destination: EdgeMoon), beats, beats);
+        var outcome = await Write(Ask(finale: 4, destination: EdgeMoon), beats, Repairs.Replacing(beats, 1, 2), Repairs.Replacing(beats, 1, 2));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("is 1000 light years from the previous stop; the reach is 360.", outcome.Refusal);
@@ -50,7 +50,7 @@ public sealed class TheFinaleClosesOnItsDestinationTests
             Beats(Arrive("Kestrel"), Land("Edge Moon", "Edge Moon 1 a"), destination: ("Edge Moon", "Edge Moon 1 a")));
 
         var elsewhere = Beats(Arrive("Kestrel"), Arrive("Closer"), destination: ("Edge Moon", "Edge Moon 1 a"));
-        var refused = await Write(Ask(finale: 1, finaleChapters: 1), elsewhere, elsewhere);
+        var refused = await Write(Ask(finale: 1, finaleChapters: 1), elsewhere, Repairs.Replacing(elsewhere, 2), Repairs.Replacing(elsewhere, 2));
 
         Assert.True(landed.Succeeded, landed.Refusal);
         Assert.Equal(EdgeMoon, landed.Destination);

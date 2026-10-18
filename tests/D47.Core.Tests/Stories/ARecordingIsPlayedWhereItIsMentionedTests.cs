@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -60,7 +61,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(alone: "The first recording has been played twice, and stopped halfway both times."),
-            Written(alone: "The anchorage is quiet.")));
+            Repairs.Replacing(Written(alone: "The anchorage is quiet."), 2)));
         using var _ = fixtures;
 
         Assert.Null(refusal);
@@ -75,7 +76,7 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     [Fact]
     public async Task AnOpeningThatPlaysARecordingIsRefusedAsTheOpening()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: "The first recording has been played twice."), Written()));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: "The first recording has been played twice."), Repairs.ReplacingOpening(Written())));
         using var _ = fixtures;
 
         Assert.Null(refusal);
@@ -116,11 +117,11 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     public async Task ARecordingStillUnplayedAfterTheRewriteStillYieldsAChapter()
     {
         var stubborn = Written(alone: "A message is heard over comms.");
-        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, stubborn));
+        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Repairs.Replacing(stubborn, 2), Repairs.Replacing(stubborn, 2)));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(2 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("A message is heard over comms.", Chapter(fixtures).Beats[1].Lines[0].Text);
     }
 }

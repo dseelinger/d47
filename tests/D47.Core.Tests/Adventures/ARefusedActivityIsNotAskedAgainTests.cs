@@ -25,7 +25,8 @@ public sealed class ARefusedActivityIsNotAskedAgainTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(Beats(kind, extra)),
-            RoundScriptedLlmProvider.Saying(Beats(kind, extra)));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind, extra), 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind, extra), 2)));
 
         return await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Story: story), AdventureFixtures.Accepted, TestContext.Current.CancellationToken);

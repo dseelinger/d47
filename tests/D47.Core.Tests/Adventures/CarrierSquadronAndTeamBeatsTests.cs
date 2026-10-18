@@ -149,7 +149,8 @@ public class CarrierSquadronAndTeamBeatsTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(Beats(kind)),
-            RoundScriptedLlmProvider.Saying(Beats(kind)));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind), 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Beats(kind), 2)));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), 1, events)
             .GenerateAsync(

@@ -1746,7 +1746,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, attempt.Detail, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -1822,7 +1822,7 @@ public sealed class StoryDirector(
     /// <summary>One draft's result: the refusal or null, whether another draft may succeed, and what to tell it.</summary>
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null);
 
-    private async Task<Attempt> WriteAsync(string? frontierId, DateTimeOffset now, string? lastDraftRefused, CancellationToken cancellationToken)
+    private async Task<Attempt> WriteAsync(string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -1879,7 +1879,8 @@ public sealed class StoryDirector(
                 comfort,
                 finaleChapter > 1 ? story.FinaleDestination : null),
             LastDraftRefused: lastDraftRefused,
-            Progress: Progress(frontierId));
+            Progress: Progress(frontierId),
+            Draft: draftNumber);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 

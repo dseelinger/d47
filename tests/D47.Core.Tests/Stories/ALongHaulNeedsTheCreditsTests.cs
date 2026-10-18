@@ -53,7 +53,7 @@ public sealed class ALongHaulNeedsTheCreditsTests
     public async Task BelowTheThresholdTheWriterIsNotToldAndColoniaIsRefused()
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToColonia), RoundScriptedLlmProvider.Saying(BeatsToColonia));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsToColonia), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsToColonia, 2)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsToColonia, 2)));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Short, Story: Story(longHaul: false)), Now, CancellationToken.None);

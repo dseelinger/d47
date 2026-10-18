@@ -104,7 +104,7 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(FarBeats),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -125,7 +125,7 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(FarBeats),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
 
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -134,14 +134,15 @@ public sealed class AdventureGeneratorTests
         Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 objective", StringComparison.Ordinal));
 
         var retry = provider.Requests[2].Prompt.History[0].Text;
-        Assert.Contains("Your previous draft of the objectives:", retry);
+        Assert.Contains("Your draft of the objectives:", retry);
         Assert.Contains("1. The Lantern (setup) — arrive: Ossen's Lantern — reason: \"Someone there knows about the burst.\" — \"Scoop here.\"", retry);
         Assert.Contains("2. Where The Freight Went (turn) — arrive: Colonia", retry);
         Assert.Contains("3. The Column Will Not Balance (resolution) — rank: Trade 8", retry);
         Assert.Contains("Objective 2 (Where The Freight Went) is 21886 light years from the previous stop; the reach is 80.", retry);
-        Assert.Contains("Keep the objectives that were not refused", retry);
+        Assert.Contains("Write a replacement for objective 2, and for no other.", retry);
+        Assert.Contains("Every objective you do not replace is kept exactly as written above", retry);
 
-        // What survived is the retry's draft, not the first one.
+        // What survived is the first draft with the replacement in place of objective 2.
         Assert.Equal(["The Lantern", "The Anchorage", "The Column Will Not Balance"], outcome.Draft!.Beats.Select(beat => beat.Title));
     }
 
@@ -160,7 +161,7 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(landThenScan),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 3)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -232,7 +233,7 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BoardBeats),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(
             new AdventureAsk(Length: AdventureLength.Short, Brief: "a quiet trading story"), Now, CancellationToken.None);
@@ -257,7 +258,8 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(unknown),
-            RoundScriptedLlmProvider.Saying(unknown));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(unknown, 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(unknown, 2)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -304,7 +306,8 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(careerless),
-            RoundScriptedLlmProvider.Saying(careerless));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(careerless, 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(careerless, 2)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -326,7 +329,8 @@ public sealed class AdventureGeneratorTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(elite),
-            RoundScriptedLlmProvider.Saying(elite));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)));
 
         var outcome = await Generator(provider, new Galaxy(), combat: 8).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 

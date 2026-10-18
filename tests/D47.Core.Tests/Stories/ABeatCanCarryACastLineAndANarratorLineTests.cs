@@ -3,6 +3,7 @@ using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Messages;
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -119,13 +120,13 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     {
         var stranger = BeatsWithTwoLines.Replace("\"speaker\": \"narrator\"}", "\"speaker\": \"stranger\"}", StringComparison.Ordinal);
         using var fixtures = new StoryFixtures(
-            new RoundScriptedLlmProvider(EveryDraft(Spine, stranger, stranger)),
+            new RoundScriptedLlmProvider(EveryDraft(Spine, stranger, Repairs.Replacing(stranger, 1), Repairs.Replacing(stranger, 1))),
             Cast);
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
     [Fact]

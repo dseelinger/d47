@@ -21,7 +21,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     [Fact]
     public async Task AFirstFinaleChapterWithNoDestinationIsRefused()
     {
-        var outcome = await Write(Ask(finale: 1), Beats(Arrive("Kestrel")), Beats(Arrive("Kestrel")));
+        var outcome = await Write(Ask(finale: 1), Beats(Arrive("Kestrel")), Repairs.ReplacingDestination(Beats(Arrive("Kestrel"))), Repairs.ReplacingDestination(Beats(Arrive("Kestrel"))));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("Finale chapter 1 names no destination", outcome.Refusal);
@@ -40,7 +40,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     public async Task AYearLongFinaleMayNotNameAMoonSixThousandLightYearsAway()
     {
         var beats = Beats(Arrive("Kestrel"), destination: ("Too Far", "Too Far 1 a"));
-        var outcome = await Write(Ask(finale: 1), beats, beats);
+        var outcome = await Write(Ask(finale: 1), beats, Repairs.ReplacingDestination(beats), Repairs.ReplacingDestination(beats));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("The finale's destination, Too Far 1 a in Too Far, is 6000 light years from the Commander; the finale can cover at most 5400.", outcome.Refusal);
@@ -51,7 +51,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     {
         var near = await Write(Ask(finale: 1, finaleChapters: 2), Beats(Arrive("Kestrel"), destination: ("Middle", "Middle 1 a")));
         var beyond = Beats(Arrive("Kestrel"), destination: ("Beyond", "Beyond 1 a"));
-        var far = await Write(Ask(finale: 1, finaleChapters: 2), beyond, beyond);
+        var far = await Write(Ask(finale: 1, finaleChapters: 2), beyond, Repairs.ReplacingDestination(beyond), Repairs.ReplacingDestination(beyond));
 
         Assert.True(near.Succeeded, near.Refusal);
         Assert.False(far.Succeeded);
@@ -62,7 +62,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     public async Task ADestinationThatCannotBeLandedOnIsRefused()
     {
         var beats = Beats(Arrive("Kestrel"), destination: ("Far Moon", "Far Moon 1"));
-        var outcome = await Write(Ask(finale: 1), beats, beats);
+        var outcome = await Write(Ask(finale: 1), beats, Repairs.ReplacingDestination(beats), Repairs.ReplacingDestination(beats));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("The finale's destination lands on Far Moon 1, which cannot be landed on.", outcome.Refusal);
@@ -72,7 +72,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     public async Task AMiddleFinaleChapterThatEndsFartherAwayIsRefused()
     {
         var beats = Beats(Arrive("Kestrel"));
-        var outcome = await Write(Ask(finale: 2, destination: DeepMoon), beats, beats);
+        var outcome = await Write(Ask(finale: 2, destination: DeepMoon), beats, Repairs.Replacing(beats, 1), Repairs.Replacing(beats, 1));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains(
@@ -107,7 +107,7 @@ public sealed class TheFinaleEndsWhereItsFirstChapterSaidTests
     public async Task AHopLongerThanTheReachOutsideTheFinaleIsStillRefused()
     {
         var beats = Beats(Arrive("Kestrel"), Land("Edge Moon", "Edge Moon 1 a"));
-        var outcome = await Write(Ask(finale: null), beats, beats);
+        var outcome = await Write(Ask(finale: null), beats, Repairs.Replacing(beats, 2), Repairs.Replacing(beats, 2));
 
         Assert.False(outcome.Succeeded);
         Assert.Contains("is 900 light years from the previous stop; the reach is 360.", outcome.Refusal);

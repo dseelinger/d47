@@ -52,7 +52,7 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(noReason),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);

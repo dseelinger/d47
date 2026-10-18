@@ -81,7 +81,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
     public async Task AComfortChapterWithoutAPassengerMissionIsRefused()
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithoutPassengers), RoundScriptedLlmProvider.Saying(BeatsWithoutPassengers));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(BeatsWithoutPassengers), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithoutPassengers, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWithoutPassengers, 1)));
         var comfort = ChapterFit.LeastDone(Loaded(1_000_000, statistics: Statistics).Statistics);
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(

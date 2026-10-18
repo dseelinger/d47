@@ -139,7 +139,7 @@ public sealed class ADockBeatWithItsDocksOfflineIsWrittenAgainTests
     public async Task TheReplacementDoesNotNameTheClosedStation()
     {
         var said = new List<string>();
-        using var fixtures = AtTheAnchorage(said, DockAtTheAnchorage, DockAtTheLantern);
+        using var fixtures = AtTheAnchorage(said, DockAtTheAnchorage, Repairs.ReplacingAfter(1, DockAtTheLantern, 1));
 
         Assert.Null(await fixtures.Director.DockOffline(Denied(Anchorage, "DockOffline", DeniedAt), "F1")!);
 

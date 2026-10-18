@@ -2,6 +2,7 @@ using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Persona;
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -60,18 +61,18 @@ public sealed class ChapterOneEndsAtABeaconTests
     [Fact]
     public async Task AChapterOneThatEndsElsewhereIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsElsewhere, BeatsElsewhere)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsElsewhere, Repairs.Replacing(BeatsElsewhere, 2), Repairs.Replacing(BeatsElsewhere, 2))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
         Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
         Assert.Empty(fixtures.Stories.Current("F1")!.Chapters);
         Assert.True(fixtures.Director.WriteFailed("F1"));
 
-        // The refusal went back through the beats turn once before the Commander saw it.
+        // The refusal went back through the turn before the Commander saw it.
         Assert.Contains("The last objective must be", fixtures.Provider.Requests[2].Prompt.History[0].Text);
     }
 
@@ -79,12 +80,12 @@ public sealed class ChapterOneEndsAtABeaconTests
     [Fact]
     public async Task AChapterOneThatArrivesAtTheBeaconIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsArrivingAtTheBeacon, BeatsArrivingAtTheBeacon)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsArrivingAtTheBeacon, Repairs.Replacing(BeatsArrivingAtTheBeacon, 2), Repairs.Replacing(BeatsArrivingAtTheBeacon, 2))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
         Assert.Contains("The last objective must be \"beacon\"", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
@@ -93,12 +94,12 @@ public sealed class ChapterOneEndsAtABeaconTests
     [Fact]
     public async Task ABeaconBeatBeforeTheLastIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAnEarlyBeacon, BeatsWithAnEarlyBeacon)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAnEarlyBeacon, Repairs.Replacing(BeatsWithAnEarlyBeacon, 1), Repairs.Replacing(BeatsWithAnEarlyBeacon, 1))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
         Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", fixtures.LastRefusal);
         Assert.DoesNotContain("Beat 3", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
@@ -112,7 +113,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         [
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
-            .. EveryDraft(NextSpine, NextBeatsWithABeacon, NextBeatsWithABeacon),
+            .. EveryDraft(NextSpine, NextBeatsWithABeacon, Repairs.Replacing(NextBeatsWithABeacon, 2), Repairs.Replacing(NextBeatsWithABeacon, 2)),
         ]));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

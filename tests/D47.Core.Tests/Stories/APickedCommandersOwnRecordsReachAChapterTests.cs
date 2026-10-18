@@ -107,7 +107,7 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
     private static (AdventureOutcome Result, int Requests) Generate(GameStateStore store)
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ChieftainBeats), RoundScriptedLlmProvider.Saying(ChieftainBeats));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ChieftainBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ChieftainBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ChieftainBeats, 1)));
 
         var generator = new AdventureGenerator(
             () => provider, () => null, () => "You are the ship.", () => "core", () => null,

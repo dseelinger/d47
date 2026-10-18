@@ -4,6 +4,7 @@ using D47.Core.Audio;
 using D47.Core.Messages;
 using D47.Core.Persona;
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -189,12 +190,12 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
     [Fact]
     public async Task AChapterLineNamingASpeakerTheStoryDoesNotHaveIsRefused()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAStranger, BeatsWithAStranger)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsWithAStranger, Repairs.Replacing(BeatsWithAStranger, 1), Repairs.Replacing(BeatsWithAStranger, 1))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal(3 * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
     }
 
     private const string BeatsWhereHarrowNamesHimself = """
@@ -212,7 +213,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
             new RoundScriptedLlmProvider(
                 RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
-                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "I keep a quiet office.", StringComparison.Ordinal))),
+                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself.Replace("Harrow keeps a quiet office.", "I keep a quiet office.", StringComparison.Ordinal), 1))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -232,7 +233,8 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
             new RoundScriptedLlmProvider(
                 RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself),
-                RoundScriptedLlmProvider.Saying(BeatsWhereHarrowNamesHimself)),
+                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself, 1)),
+                RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsWhereHarrowNamesHimself, 1))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -358,7 +360,8 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
             new RoundScriptedLlmProvider(
                 RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(naming),
-                RoundScriptedLlmProvider.Saying(naming)),
+                RoundScriptedLlmProvider.Saying(Repairs.ReplacingOpening(naming)),
+                RoundScriptedLlmProvider.Saying(Repairs.ReplacingOpening(naming))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
@@ -396,7 +399,8 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
             new RoundScriptedLlmProvider(
                 RoundScriptedLlmProvider.Saying(Spine),
                 RoundScriptedLlmProvider.Saying(possessive),
-                RoundScriptedLlmProvider.Saying(possessive)),
+                RoundScriptedLlmProvider.Saying(Repairs.Replacing(possessive, 1)),
+                RoundScriptedLlmProvider.Saying(Repairs.Replacing(possessive, 1))),
             Cast);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

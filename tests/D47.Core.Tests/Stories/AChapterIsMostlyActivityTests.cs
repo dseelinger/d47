@@ -23,7 +23,7 @@ public sealed class AChapterIsMostlyActivityTests
     public async Task AChapterAfterTheFirstWithThreeTravelBeatsIsRefused()
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(ThreeTravelBeats));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)));
 
         var outcome = await Generate(provider, chapter: 2);
 
@@ -35,7 +35,7 @@ public sealed class AChapterIsMostlyActivityTests
     public async Task ARefusedChapterTellsTheCommanderOnlyThatItCouldNotBeWritten()
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(ThreeTravelBeats));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)));
 
         var outcome = await Generate(provider, chapter: 2);
 

@@ -1,4 +1,5 @@
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -17,7 +18,8 @@ public sealed class AFailedDraftIsWrittenAgainTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsElsewhere),
-            RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsElsewhere, 2)),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(BeatsElsewhere, 2)),
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
 
@@ -30,7 +32,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
         Assert.Null(fixtures.Asks[0].LastDraftRefused);
         Assert.Contains("The last objective must be \"beacon\"", fixtures.Asks[1].LastDraftRefused);
 
-        var beats = fixtures.Provider.Requests[4].Prompt.History[0].Text;
+        var beats = fixtures.Provider.Requests[5].Prompt.History[0].Text;
         Assert.Contains("An earlier draft of this chapter could not be used", beats);
         Assert.Contains("The last objective must be \"beacon\"", beats);
     }
@@ -38,7 +40,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
     [Fact]
     public async Task TheWriteStopsAfterTheLastDraftFails()
     {
-        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsElsewhere, BeatsElsewhere)));
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, BeatsElsewhere, Repairs.Replacing(BeatsElsewhere, 2), Repairs.Replacing(BeatsElsewhere, 2))));
 
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 

@@ -30,8 +30,8 @@ public partial class StoryComparisonTests
 
     private static readonly ThinkingEffort[] DefaultEfforts = [ThinkingEffort.Low, ThinkingEffort.Medium, ThinkingEffort.High];
 
-    /// <summary>The calls one story can make: spine, beats, and one rewrite of the beats.</summary>
-    private static readonly string[] Steps = ["spine", "beats", "rewrite of the beats"];
+    /// <summary>The calls one story can make: spine, beats, and two rounds of replacements.</summary>
+    private static readonly string[] Steps = ["spine", "beats", "replacements", "replacements"];
 
     /// <summary>The most one story is assumed to cost: every call, each with this much input and a full output ceiling.</summary>
     private const int WorstInputTokens = 30_000;

@@ -11,6 +11,7 @@ internal static class StoryAnswer
 {
     internal const string SpineName = "story_spine";
     internal const string BeatsName = "story_beats";
+    internal const string ReplacementsName = "story_replacements";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -68,14 +69,65 @@ internal static class StoryAnswer
     /// <summary>The answer's JSON shape as the instruction states it.</summary>
     internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
-        + ", \"opening\": " + (speakers ? "[{\"text\": string, \"speaker\": string}]" : "string")
-        + ", \"reply\": string, \"beats\": [{\"title\": string, \"function\": string, \"kind\": "
+        + ", \"opening\": " + OpeningShape(speakers)
+        + ", \"reply\": string, \"beats\": [" + BeatShape(speakers, kinds, ships, objective: false) + "]"
+        + (destination ? ", " + DestinationShape : string.Empty) + "}";
+
+    /// <summary>A repair answer's JSON shape: the replacements, and the opening and destination only when they are asked for again.</summary>
+    internal static string ReplacementsShape(bool speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null) =>
+        "{\"replacements\": [" + BeatShape(speakers, kinds, ships, objective: true) + "]"
+        + (opening ? ", \"opening\": " + OpeningShape(speakers) : string.Empty)
+        + (destination ? ", " + DestinationShape : string.Empty) + "}";
+
+    private const string DestinationShape = "\"destination\": {\"system\": string, \"body\": string}";
+
+    private static string OpeningShape(bool speakers) => speakers ? "[{\"text\": string, \"speaker\": string}]" : "string";
+
+    private static string BeatShape(bool speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships, bool objective) =>
+        "{" + (objective ? "\"objective\": number, " : string.Empty) + "\"title\": string, \"function\": string, \"kind\": "
         + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
         + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
-        + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
-        + (destination ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty) + "}";
+        + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}";
 
     internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null)
+    {
+        var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
+        {
+            ("opening", speakers is not null ? Lines(speakers) : Text()),
+            ("reply", Text()),
+            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object(Beat(speakers, kinds, ships)) }),
+        };
+
+        if (destination)
+        {
+            answer.Add(("destination", Destination()));
+        }
+
+        return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
+    }
+
+    /// <summary>The schema of a repair answer: each replacement is a beat with the number of the objective it replaces.</summary>
+    internal static LlmResponseSchema ReplacementsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null)
+    {
+        var replacement = new List<(string, JsonNode)> { ("objective", new JsonObject { ["type"] = "integer" }) };
+        replacement.AddRange(Beat(speakers, kinds, ships));
+
+        var answer = new List<(string, JsonNode)> { ("replacements", new JsonObject { ["type"] = "array", ["items"] = Object(replacement) }) };
+
+        if (opening)
+        {
+            answer.Add(("opening", speakers is not null ? Lines(speakers) : Text()));
+        }
+
+        if (destination)
+        {
+            answer.Add(("destination", Destination()));
+        }
+
+        return new LlmResponseSchema(ReplacementsName, Object(answer).ToJsonString());
+    }
+
+    private static List<(string, JsonNode)> Beat(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships)
     {
         var beat = new List<(string, JsonNode)>
         {
@@ -86,20 +138,10 @@ internal static class StoryAnswer
         beat.AddRange(BeatFields.Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
         beat.Add(speakers is not null ? ("lines", Lines(speakers)) : ("line", Text()));
 
-        var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
-        {
-            ("opening", speakers is not null ? Lines(speakers) : Text()),
-            ("reply", Text()),
-            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object(beat) }),
-        };
-
-        if (destination)
-        {
-            answer.Add(("destination", Object([("system", Text()), ("body", Text())])));
-        }
-
-        return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
+        return beat;
     }
+
+    private static JsonObject Destination() => Object([("system", Text()), ("body", Text())]);
 
     private static string Prose(Shape shape) => shape switch
     {

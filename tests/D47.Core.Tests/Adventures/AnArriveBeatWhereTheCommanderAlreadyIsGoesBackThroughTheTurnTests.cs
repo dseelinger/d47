@@ -33,7 +33,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             ]}
             """;
 
-        var retry = await RetryAfter(arriveHere);
+        var retry = await RetryAfter(arriveHere, 1);
 
         Assert.Contains("Objective 1 (Home Ledger) arrives at Oppi, but the Commander is already there at that point;", retry);
         Assert.DoesNotContain("Beat 2 (The Anchorage)", retry.Split("cannot stand")[1]);
@@ -50,19 +50,19 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             ]}
             """;
 
-        var retry = await RetryAfter(landThenArrive);
+        var retry = await RetryAfter(landThenArrive, 2);
 
         Assert.Contains("Objective 2 (The Lantern) arrives at Ossen's Lantern, but the Commander is already there at that point;", retry);
         Assert.DoesNotContain("Beat 1 (The Consignee)", retry.Split("cannot stand")[1]);
     }
 
     /// <summary>The refusal pass's instruction after the first draft of beats, once the retry has succeeded.</summary>
-    private static async Task<string> RetryAfter(string firstDraft)
+    private static async Task<string> RetryAfter(string firstDraft, int refused)
     {
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(firstDraft),
-            RoundScriptedLlmProvider.Saying(GoodBeats));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, refused)));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);

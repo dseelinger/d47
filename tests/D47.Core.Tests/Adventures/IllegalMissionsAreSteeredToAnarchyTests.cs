@@ -37,7 +37,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     [Fact]
     public async Task AnIllegalMissionAfterAnArriveInDemocracyIsRefused()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Ossen's Lantern")), Saying(Beats("Ossen's Lantern")));
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats("Ossen's Lantern")), Saying(Repairs.Replacing(Beats("Ossen's Lantern"), 2)), Saying(Repairs.Replacing(Beats("Ossen's Lantern"), 2)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
@@ -59,7 +59,7 @@ public sealed class IllegalMissionsAreSteeredToAnarchyTests
     [Fact]
     public async Task AnIllegalMissionThatDoesNotFollowAPlaceIsRefused()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats(null)), Saying(Beats(null)));
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats(null)), Saying(Repairs.Replacing(Beats(null), 1)), Saying(Repairs.Replacing(Beats(null), 1)));
 
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 

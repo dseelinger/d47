@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Persona;
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -81,7 +82,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(narrated: "Nobody aboard but me, and I'll say so."),
-            Written(narrated: "Nobody is aboard but the Commander.")));
+            Repairs.Replacing(Written(narrated: "Nobody is aboard but the Commander."), 1)));
         using var _ = fixtures;
 
         Assert.Null(refusal);
@@ -96,7 +97,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     [Fact]
     public async Task ANarratorOpeningInTheFirstPersonIsRefusedAsTheOpening()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: FirstPersonOpening), Written()));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(opening: FirstPersonOpening), Repairs.ReplacingOpening(Written())));
         using var _ = fixtures;
 
         Assert.Null(refusal);
@@ -111,7 +112,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
 
         var (own, _) = await PickAsync(Scripted(noSpeaker));
         using var ownFixtures = own;
-        var (stock, _) = await PickAsync(Scripted(noSpeaker, Written()), stock: true);
+        var (stock, _) = await PickAsync(Scripted(noSpeaker, Repairs.ReplacingOpening(Written())), stock: true);
         using var stockFixtures = stock;
 
         Assert.Equal(2, ownFixtures.Provider.Requests.Count);
@@ -123,7 +124,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var ship = Written(ship: "We should get to the anchorage.");
 
-        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Written()), stock: true);
+        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Repairs.Replacing(Written(), 2)), stock: true);
         using var stockFixtures = stock;
         var (own, ownRefusal) = await PickAsync(Scripted(ship));
         using var ownFixtures = own;
@@ -159,7 +160,7 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     [Fact]
     public async Task ACurlyApostropheDoesNotHideTheFirstPerson()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Written()));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Repairs.Replacing(Written(), 1)));
         using var _ = fixtures;
 
         Assert.Null(refusal);
@@ -170,11 +171,11 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     public async Task ANarratorLineStillInTheFirstPersonAfterTheRewriteStillYieldsAChapter()
     {
         var stubborn = Written(narrated: "Nobody aboard but me.");
-        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, stubborn));
+        var (fixtures, refusal) = await PickAsync(Scripted(stubborn, Repairs.Replacing(stubborn, 1), Repairs.Replacing(stubborn, 1)));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(2 + AdventureGenerator.RepairRounds, fixtures.Provider.Requests.Count);
         Assert.Equal("Nobody aboard but me.", Chapter(fixtures).Beats[0].Lines[0].Text);
         Assert.Equal(StorySpeaker.Narrator, Chapter(fixtures).Beats[0].Lines[0].Speaker);
     }

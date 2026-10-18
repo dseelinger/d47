@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Journal;
 using D47.Core.Stories;
+using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
 using static D47.Core.Tests.Adventures.AdventureFixtures;
@@ -95,7 +96,7 @@ public sealed class ADockBeatOutsideAStoryIsWrittenAgainTests
     public async Task DocksOfflineAtTheBeatsStationReplacesTheBeatAndKeepsTheBeatsDone()
     {
         var said = new List<string>();
-        using var fixtures = Standalone(said, DockAtTheAnchorage, DockAtTheLantern);
+        using var fixtures = Standalone(said, DockAtTheAnchorage, Repairs.ReplacingAfter(1, DockAtTheLantern, 1));
 
         var work = fixtures.Director.DockOffline(Denied(Anchorage, DeniedAt), "F1");
 

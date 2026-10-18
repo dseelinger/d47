@@ -70,7 +70,7 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
     [Fact]
     public void ANameNoShipCarriesIsRefusedWithAHullTypeToGiveInstead()
     {
-        var (result, provider) = Generate(Beats("Emberwake"), Beats("Emberwake"));
+        var (result, provider) = Generate(Beats("Emberwake"), Repairs.Replacing(Beats("Emberwake"), 1), Repairs.Replacing(Beats("Emberwake"), 1));
 
         Assert.False(result.Succeeded);
         Assert.Contains("\"Emberwake\" that d47 has no name for", result.Refusal);

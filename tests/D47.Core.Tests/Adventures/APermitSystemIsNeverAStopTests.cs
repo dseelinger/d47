@@ -40,7 +40,7 @@ public sealed class APermitSystemIsNeverAStopTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(ToShinrarta),
-            RoundScriptedLlmProvider.Saying(Elsewhere));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Elsewhere, 2)));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
@@ -58,7 +58,7 @@ public sealed class APermitSystemIsNeverAStopTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(ToShinrarta),
-            RoundScriptedLlmProvider.Saying(Elsewhere));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Elsewhere, 2)));
 
         var outcome = await AdventureGeneratorTests.Generator(
                 provider,

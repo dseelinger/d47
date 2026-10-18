@@ -34,7 +34,7 @@ public enum AdventureLength
 
 /// <summary>
 /// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
-/// the draft before this one could not be used, for the writer to avoid.
+/// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
 /// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
@@ -45,7 +45,8 @@ public sealed record AdventureAsk(
     AdventureStory? Story = null,
     AdventureRewrite? Rewrite = null,
     string? LastDraftRefused = null,
-    StoryProgress? Progress = null);
+    StoryProgress? Progress = null,
+    int Draft = 1);
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
@@ -335,7 +336,7 @@ public sealed class AdventureGenerator(
             // A throw counts as a failed draft, as it does for a chapter.
             try
             {
-                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft }, now, cancellationToken).ConfigureAwait(false);
+                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft }, now, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
@@ -390,7 +391,7 @@ public sealed class AdventureGenerator(
             var spoken = rewrite.Chapter.Spine ?? new AdventureSpine();
             var tail = await AskJsonAsync(
                 BeatsStep,
-                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, previousRefusals: null, previousBeats: null, draft: null, rewrite.Exchange, rewrite.Remark),
+                BeatsInstruction(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, repair: null, draft: null, rewrite.Exchange, rewrite.Remark),
                 BeatsOutputCeiling,
                 ask.Progress,
                 cancellationToken).ConfigureAwait(false);
@@ -421,7 +422,7 @@ public sealed class AdventureGenerator(
         Enter(ask, WriteStage.Objectives);
         var beatsAsked = await AskJsonAsync(
             BeatsStep,
-            BeatsInstruction(ask, facts, notable, candidates, name, spine, previousRefusals: null, previousBeats: null, draft: null, exchange: null, remark: null),
+            BeatsInstruction(ask, facts, notable, candidates, name, spine, repair: null, draft: null, exchange: null, remark: null),
             BeatsOutputCeiling,
             ask.Progress,
             cancellationToken).ConfigureAwait(false);
@@ -462,7 +463,7 @@ public sealed class AdventureGenerator(
         Enter(ask, WriteStage.Objectives);
         var asked =await AskJsonAsync(
             BeatsStep,
-            BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), previousRefusals: null, previousBeats: null, draft, exchange, remark),
+            BeatsInstruction(ask, facts, notable, candidates, draft.Name, draft.Spine ?? new AdventureSpine(), repair: null, draft, exchange, remark),
             BeatsOutputCeiling,
             ask.Progress,
             cancellationToken).ConfigureAwait(false);
@@ -509,19 +510,24 @@ public sealed class AdventureGenerator(
             return Failed(null, "The model's objectives were not something I could read.", notes, started, beatsAsked);
         }
 
-        Asked? unusedRewrite = null;
+        Asked? unusedRepair = null;
+        var offset = ask.Rewrite?.From ?? 0;
 
-        var resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
+        var resolved = await CheckAsync(read).ConfigureAwait(false);
+        LogRefusals(ask, "first", beatsAsked.Step, resolved.Refusals);
 
-        // One pass back through the turn with the refusals as a remark, before the Commander sees anything —
-        // so the common case is that they never see a refusal at all.
         if (resolved.Refusals.Count > 0)
         {
             notes.Add($"Rewrote {resolved.Refusals.Count} objective(s) the first draft could not stand on.");
+        }
 
+        // The objectives that stood are kept; only the refused ones go back through the turn, before the Commander sees anything.
+        for (var round = 1; round <= RepairRounds && resolved.Refusals.Count > 0; round++)
+        {
+            var repair = new Repair(read.Beats, resolved.Refusals, offset);
             var again = await AskJsonAsync(
-                RewriteStep,
-                BeatsInstruction(ask, facts, notable, candidates, name, spine, resolved.Refusals, read.Beats, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
+                RepairStep,
+                BeatsInstruction(ask, facts, notable, candidates, name, spine, repair, draft: null, ask.Rewrite?.Exchange, ask.Rewrite?.Remark),
                 BeatsOutputCeiling,
                 ask.Progress,
                 cancellationToken).ConfigureAwait(false);
@@ -531,17 +537,25 @@ public sealed class AdventureGenerator(
                 return AdventureOutcome.Stopped;
             }
 
-            var reread = again.Json is null ? null : ReadBeats(again.Json);
+            if ((again.Json is null ? null : ReadReplacements(again.Json)) is not { } answer)
+            {
+                unusedRepair = again;
 
-            if (reread is { Beats.Count: > 0 })
-            {
-                read = reread;
-                resolved = Speakers(await DryRunAsync(read.Beats, read.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), read, ask);
+                if (again.Reply is { CutOff: { AtContext: true } } or { ContextExceeded: true })
+                {
+                    break;
+                }
+
+                continue;
             }
-            else
-            {
-                unusedRewrite = again;
-            }
+
+            unusedRepair = null;
+            var (spliced, replaced) = repair.Splice(read, answer);
+            var before = resolved.Refusals;
+
+            read = spliced;
+            resolved = Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced, offset);
+            LogRefusals(ask, $"repair {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
         resolved = KeepWhatTheRewriteKept(NarrateSelfNaming(resolved, ask));
@@ -550,12 +564,12 @@ public sealed class AdventureGenerator(
         {
             return Failed(
                 read.Reply,
-                (resolved.Refusals.Any(refusal => refusal.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
+                (resolved.Refusals.Any(refusal => refusal.Text.StartsWith(UnknownSpeaker, StringComparison.Ordinal))
                     ? "The story cannot stand: "
-                    : "The story names places that cannot stand: ") + string.Join(" ", resolved.Refusals),
+                    : "The story names places that cannot stand: ") + string.Join(" ", resolved.Refusals.Select(refusal => refusal.Text)),
                 notes,
                 started,
-                unusedRewrite);
+                unusedRepair);
         }
 
         var adventure = ask.Rewrite is { } rewrite
@@ -583,6 +597,45 @@ public sealed class AdventureGenerator(
         return new AdventureOutcome(adventure, read.Reply, null, notes)
         {
             Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
+        };
+
+        async Task<Resolved> CheckAsync(ReadAnswer answer) =>
+            Speakers(await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), answer, ask);
+    }
+
+    /// <summary>Rounds of replacements a draft's refused objectives get before the draft fails.</summary>
+    public const int RepairRounds = 2;
+
+    private void LogRefusals(AdventureAsk ask, string round, string step, IReadOnlyList<Refusal> refusals)
+    {
+        foreach (var refusal in refusals)
+        {
+            logger.LogInformation("Draft {Draft}, {Round} round, {Step} step refused: {Refusal}", ask.Draft, round, step, refusal.Text);
+        }
+    }
+
+    /// <summary>
+    /// The refusals with each one that falls on an objective kept this round, and not refused before it, charged to the
+    /// nearest replacement before that objective, since that replacement is what changed before it.
+    /// </summary>
+    private static Resolved Blame(Resolved resolved, IReadOnlyList<Refusal> before, IReadOnlySet<int> replaced, int offset)
+    {
+        var refusedBefore = before.SelectMany(refusal => refusal.Objectives).ToHashSet();
+
+        return resolved with
+        {
+            Refusals =
+            [
+                .. resolved.Refusals.Select(refusal =>
+                    refusal is { Objectives: [var kept], Opening: false, Destination: false }
+                    && !replaced.Contains(kept)
+                    && !refusedBefore.Contains(kept)
+                    && replaced.Where(index => index < kept).DefaultIfEmpty(-1).Max() is var cause and >= 0
+                        ? new Refusal(
+                            $"The replacement objective {cause + offset + 1} leaves objective {kept + offset + 1}, which is kept, unable to stand: {refusal.Text}",
+                            [cause])
+                        : refusal),
+            ],
         };
     }
 
@@ -627,12 +680,18 @@ public sealed class AdventureGenerator(
             return resolved with { Opening = [.. read.Opening.Select(line => line with { Speaker = null })] };
         }
 
+        var offset = ask.Rewrite?.From ?? 0;
         var opening = ask.Rewrite is null ? read.Opening : [];
         var unknown = read.Beats.SelectMany(beat => beat.Lines.Select(line => line.Speaker))
             .Concat(opening.Select(line => line.Speaker))
             .Where(speaker => speaker is not null && Speaker(speaker, story) is null)
             .Distinct(StringComparer.Ordinal)
-            .Select(speaker => $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.")
+            .Select(speaker => new Refusal(
+                $"{UnknownSpeaker}\"{speaker}\", who is not one of the story's speakers: {string.Join(", ", Speakers(story))}.",
+                [.. read.Beats.Select((beat, index) => (beat, index)).Where(written => written.beat.Lines.Any(line => line.Speaker == speaker)).Select(written => written.index)])
+            {
+                Opening = opening.Any(line => line.Speaker == speaker),
+            })
             .ToList();
 
         var spoken = resolved with
@@ -641,17 +700,23 @@ public sealed class AdventureGenerator(
             Opening = [.. opening.Select(line => line with { Speaker = Speaker(line.Speaker, story) })],
         };
         var selfNamed = SelfNaming(spoken, story)
-            .Select(found => $"{SelfNamed}\"{found.Member.Name}\" in {Where(found.Index)}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
-                + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\".");
+            .Select(found => Charged(
+                found.Objective,
+                $"{SelfNamed}\"{found.Member.Name}\" in {Where(found.Objective, offset)}: a line given to \"{found.Member.Id}\" is what {found.Member.Name} says, in the first person; "
+                + $"narration that describes {found.Member.Name} is given to \"{Stories.StorySpeaker.Narrator}\"."));
 
         var firstPerson = NarratedFirstPerson(spoken, story)
-            .Select(where => $"{NarratorAsItself}{where} is read by the narrator and speaks in the first person or to the Commander; "
+            .Select(objective => Charged(
+                objective,
+                $"{NarratorAsItself}{Capital(Where(objective, offset))} is read by the narrator and speaks in the first person or to the Commander; "
                 + "the narrator tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", never speaks to the Commander, "
-                + "and never offers, asks or waits for anything. Rewrite it as narration.");
+                + "and never offers, asks or waits for anything. Rewrite it as narration."));
 
         var unplayed = UnplayedRecordings(spoken, story)
-            .Select(where => $"{Unplayed}{where} says a recording, call or message is played or heard, and nobody in it says that person's words. "
-                + "Give the person's words a line of their own, given to them, in the same place, or leave the recording out.");
+            .Select(objective => Charged(
+                objective,
+                $"{Unplayed}{Capital(Where(objective, offset))} says a recording, call or message is played or heard, and nobody in it says that person's words. "
+                + "Give the person's words a line of their own, given to them, in the same place, or leave the recording out."));
 
         return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson, .. unplayed] };
     }
@@ -676,7 +741,7 @@ public sealed class AdventureGenerator(
         && Sentences.Matches(text).Any(sentence => Playing.IsMatch(sentence.Value) && Recorded.IsMatch(sentence.Value));
 
     /// <summary>The opening and the beats where a line not given to the cast plays a recording and no cast member speaks.</summary>
-    private static IEnumerable<string> UnplayedRecordings(Resolved spoken, AdventureStory story)
+    private static IEnumerable<int> UnplayedRecordings(Resolved spoken, AdventureStory story)
     {
         var cast = (story.Cast ?? []).Select(member => member.Id).ToHashSet(StringComparer.Ordinal);
 
@@ -685,12 +750,12 @@ public sealed class AdventureGenerator(
             yield break;
         }
 
-        foreach (var (lines, index) in Said(spoken))
+        foreach (var (lines, _, objective) in Said(spoken))
         {
             if (!lines.Any(line => line.Speaker is { } speaker && cast.Contains(speaker))
                 && lines.Any(line => PlaysARecording(line.Text)))
             {
-                yield return index < 0 ? "The opening" : $"Objective {index + 1}";
+                yield return objective;
             }
         }
     }
@@ -715,35 +780,45 @@ public sealed class AdventureGenerator(
         });
 
     /// <summary>The opening and the beats whose narrator-read lines are in the first person; a stock core's ship lines, and a line with no speaker, are the narrator's.</summary>
-    private static IEnumerable<string> NarratedFirstPerson(Resolved spoken, AdventureStory story)
+    private static IEnumerable<int> NarratedFirstPerson(Resolved spoken, AdventureStory story)
     {
         bool Narrated(string? speaker) =>
             speaker == Stories.StorySpeaker.Narrator || (story.CoreIsStock && (speaker is null || speaker == Stories.StorySpeaker.Ship));
 
-        foreach (var (lines, index) in Said(spoken))
+        foreach (var (lines, _, objective) in Said(spoken))
         {
             if (lines.Any(line => Narrated(line.Speaker) && FirstPerson(line.Text)))
             {
-                yield return index < 0 ? "The opening" : $"Objective {index + 1}";
+                yield return objective;
             }
         }
     }
 
-    /// <summary>The opening's lines at index -1, then each beat's at its own index.</summary>
-    private static IEnumerable<(IReadOnlyList<AdventureLine> Lines, int Index)> Said(Resolved resolved) =>
-        resolved.Beats.Select((beat, index) => (beat.Lines, index)).Prepend((resolved.Opening, -1));
+    /// <summary>
+    /// The opening's lines at position -1, then each beat that stood at its position, each with the index of the
+    /// objective it was written as; the opening's is -1.
+    /// </summary>
+    private static IEnumerable<(IReadOnlyList<AdventureLine> Lines, int Position, int Objective)> Said(Resolved resolved) =>
+        resolved.Beats
+            .Select((beat, position) => (beat.Lines, position, position < resolved.Stood.Count ? resolved.Stood[position] : position))
+            .Prepend((resolved.Opening, -1, -1));
 
-    /// <summary>"the opening" or "objective N", for a refusal.</summary>
-    private static string Where(int index) => index < 0 ? "the opening" : $"objective {index + 1}";
+    /// <summary>"the opening" or "objective N", numbered in the chapter, for a refusal.</summary>
+    private static string Where(int index, int offset) => index < 0 ? "the opening" : $"objective {offset + index + 1}";
 
-    /// <summary>Drops the narrator first-person and unplayed-recording refusals, so a line still refused after the rewrite stands.</summary>
+    private static string Capital(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+
+    /// <summary>A refusal charged to the objective at <paramref name="index"/>, or to the opening when it is -1.</summary>
+    private static Refusal Charged(int index, string text) => index < 0 ? new Refusal(text, []) { Opening = true } : new Refusal(text, [index]);
+
+    /// <summary>Drops the narrator first-person and unplayed-recording refusals, so a line still refused after the last repair stands.</summary>
     private static Resolved KeepWhatTheRewriteKept(Resolved resolved) =>
         resolved with
         {
             Refusals =
             [
                 .. resolved.Refusals.Where(refusal =>
-                    !refusal.StartsWith(NarratorAsItself, StringComparison.Ordinal) && !refusal.StartsWith(Unplayed, StringComparison.Ordinal)),
+                    !refusal.Text.StartsWith(NarratorAsItself, StringComparison.Ordinal) && !refusal.Text.StartsWith(Unplayed, StringComparison.Ordinal)),
             ],
         };
 
@@ -751,11 +826,11 @@ public sealed class AdventureGenerator(
 
     /// <summary>
     /// The lines given to a cast member that name that member by their shown name other than to introduce
-    /// themselves, by beat and line; the opening is beat -1.
+    /// themselves, by beat position, objective and line; the opening is position and objective -1.
     /// </summary>
-    private static IEnumerable<(int Index, int Line, AdventureSpeaker Member)> SelfNaming(Resolved resolved, AdventureStory story)
+    private static IEnumerable<(int Position, int Objective, int Line, AdventureSpeaker Member)> SelfNaming(Resolved resolved, AdventureStory story)
     {
-        foreach (var (lines, index) in Said(resolved))
+        foreach (var (lines, position, objective) in Said(resolved))
         {
             for (var line = 0; line < lines.Count; line++)
             {
@@ -764,7 +839,7 @@ public sealed class AdventureGenerator(
                 if ((story.Cast ?? []).FirstOrDefault(member => member.Id == said.Speaker) is { } member
                     && AdventureMention.Holds(WithoutIntroductions(said.Text, member.Name), member.Name))
                 {
-                    yield return (index, line, member);
+                    yield return (position, objective, line, member);
                 }
             }
         }
@@ -797,7 +872,7 @@ public sealed class AdventureGenerator(
             return resolved;
         }
 
-        var named = SelfNaming(resolved, story).Select(found => (found.Index, found.Line)).ToHashSet();
+        var named = SelfNaming(resolved, story).Select(found => (found.Position, found.Line)).ToHashSet();
 
         return resolved with
         {
@@ -809,7 +884,7 @@ public sealed class AdventureGenerator(
                     Lines = [.. beat.Lines.Select((line, at) => named.Contains((index, at)) ? line with { Speaker = Stories.StorySpeaker.Narrator } : line)],
                 }),
             ],
-            Refusals = [.. resolved.Refusals.Where(refusal => !refusal.StartsWith(SelfNamed, StringComparison.Ordinal))],
+            Refusals = [.. resolved.Refusals.Where(refusal => !refusal.Text.StartsWith(SelfNamed, StringComparison.Ordinal))],
         };
     }
 
@@ -1146,7 +1221,7 @@ public sealed class AdventureGenerator(
 
     private const string SpineStep = "spine";
     private const string BeatsStep = "beats";
-    private const string RewriteStep = "rewrite of the beats";
+    private const string RepairStep = "replacements";
 
     /// <summary>One model call: the step it served, the model asked, the reply, and the JSON object read out of it.</summary>
     private sealed record Asked(string Step, string Model, FlavourReply Reply, string? Json)
@@ -1729,8 +1804,7 @@ public sealed class AdventureGenerator(
         Candidates candidates,
         string name,
         AdventureSpine spine,
-        IReadOnlyList<string>? previousRefusals,
-        IReadOnlyList<ReadBeat>? previousBeats,
+        Repair? repair,
         Adventure? draft,
         IReadOnlyList<AdventureRemark>? exchange,
         string? remark)
@@ -1907,26 +1981,9 @@ public sealed class AdventureGenerator(
             AppendSpeakers(text, told);
         }
 
-        if (previousRefusals is { Count: > 0 })
+        if (repair is not null)
         {
-            if (previousBeats is { Count: > 0 })
-            {
-                text.AppendLine();
-                text.AppendLine("Your previous draft of the objectives:");
-
-                foreach (var (beat, index) in previousBeats.Select((beat, index) => (beat, index)))
-                {
-                    text.AppendLine($"{index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
-                }
-            }
-
-            text.AppendLine();
-            text.AppendLine("Some of those objectives cannot stand, for these reasons. Keep the objectives that were not refused and rewrite the refused ones so that none of these remain:");
-
-            foreach (var refusal in previousRefusals)
-            {
-                text.Append("- ").AppendLine(refusal);
-            }
+            AppendRepair(text, repair);
         }
         else if (ask.LastDraftRefused is { Length: > 0 } refused)
         {
@@ -1948,6 +2005,19 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
+
+        if (repair is not null)
+        {
+            text.AppendLine(
+                "Answer with one JSON object and nothing else: "
+                + StoryAnswer.ReplacementsShape(speakers, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null)
+                + ". \"objective\" is the number of the objective a replacement takes the place of, as numbered above.");
+
+            return new StoryCall(
+                text.ToString(),
+                StoryAnswer.ReplacementsSchema(ask.Story is { } speaking ? [.. Speakers(speaking)] : null, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null));
+        }
+
         var destination = ask.Story is { FinaleChapter: 1, Destination: null };
 
         text.AppendLine(
@@ -1960,6 +2030,52 @@ public sealed class AdventureGenerator(
                   + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
         return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(ask.Story is { } cast ? [.. Speakers(cast)] : null, kinds, destination, ships.Count > 0 ? ships : null));
+    }
+
+    /// <summary>The draft's objectives numbered in the chapter, why some cannot stand, and which of them the answer replaces.</summary>
+    private static void AppendRepair(StringBuilder text, Repair repair)
+    {
+        text.AppendLine();
+        text.AppendLine("Your draft of the objectives:");
+
+        foreach (var (beat, index) in repair.Beats.Select((beat, index) => (beat, index)))
+        {
+            text.AppendLine($"{repair.Offset + index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
+        }
+
+        text.AppendLine();
+        text.AppendLine("Some of it cannot stand, for these reasons:");
+
+        foreach (var refusal in repair.Refusals)
+        {
+            text.Append("- ").AppendLine(refusal.Text);
+        }
+
+        var numbers = repair.Replaceable.Order().Select(index => (repair.Offset + index + 1).ToString(CultureInfo.InvariantCulture)).ToList();
+        var listed = string.Join(", ", numbers);
+
+        text.AppendLine();
+        text.AppendLine(numbers.Count switch
+        {
+            0 => "Replace no objective.",
+            _ when repair.Refusals.Any(refusal => refusal.Chapter) => $"Replace as few of objectives {listed} as clear these reasons.",
+            1 => $"Write a replacement for objective {listed}, and for no other.",
+            _ => $"Write a replacement for each of objectives {listed}, and for no other.",
+        });
+        text.AppendLine(
+            "Every objective you do not replace is kept exactly as written above, so each replacement must stand between the objective "
+            + "before it and the one after it: within the reach of the stop before it, not arriving where the Commander already is, "
+            + "and leaving the next stop within reach.");
+
+        if (repair.Opening)
+        {
+            text.AppendLine("The opening is refused too: write it again as \"opening\".");
+        }
+
+        if (repair.Destination)
+        {
+            text.AppendLine("The finale's destination is refused: name it again as \"destination\".");
+        }
     }
 
     private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)
@@ -2173,48 +2289,84 @@ public sealed class AdventureGenerator(
 
             if (root.TryGetProperty("beats", out var array) && array.ValueKind == JsonValueKind.Array)
             {
-                foreach (var element in array.EnumerateArray())
-                {
-                    if (!AdventureValidation.TryKind(Text(element, "kind"), out var kind))
-                    {
-                        continue;
-                    }
-
-                    // A rank beat's career and rank are read from wherever the model put them: the flat shape
-                    // it was asked for, or nested under "rank" or "trigger", or the rank as a numeric string.
-                    var nested = Nested(element, "trigger") ?? Nested(element, "rank") ?? Nested(element, "promotion");
-
-                    beats.Add(new ReadBeat(
-                        Text(element, "title") ?? "Untitled",
-                        Text(element, "function"),
-                        kind,
-                        Text(element, "reason"),
-                        Text(element, "system"),
-                        Text(element, "station"),
-                        Text(element, "body"),
-                        Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
-                        Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
-                        Text(element, "ship"),
-                        Integer(element, "count"),
-                        Text(element, "faction"),
-                        Text(element, "mission"),
-                        Text(element, "commodity"),
-                        Text(element, "filter"),
-                        Flag(element, "organic"),
-                        Text(element, "engineer"),
-                        Text(element, "stage"),
-                        ReadLines(element)));
-                }
+                beats.AddRange(array.EnumerateArray().Select(ReadBeatFrom).OfType<ReadBeat>());
             }
 
-            var destination = Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
-
-            return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, destination);
+            return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, ReadDestination(root));
         }
         catch (JsonException)
         {
             return null;
         }
+    }
+
+    /// <summary>A repair answer: each replacement with the number of the objective it replaces, and the opening and destination when written again.</summary>
+    private sealed record ReadRepair(IReadOnlyList<(int Objective, ReadBeat Beat)> Replacements, IReadOnlyList<AdventureLine> Opening, ReadPlace? Destination);
+
+    /// <summary>The repair answer, or null when it has no list of replacements to read.</summary>
+    private static ReadRepair? ReadReplacements(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true });
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty("replacements", out var array)
+                || array.ValueKind != JsonValueKind.Array)
+            {
+                return null;
+            }
+
+            var replacements = array.EnumerateArray()
+                .Select(element => (Objective: Integer(element, "objective"), Beat: ReadBeatFrom(element)))
+                .Where(read => read is { Objective: not null, Beat: not null })
+                .Select(read => (read.Objective!.Value, read.Beat!))
+                .ToList();
+
+            return new ReadRepair(replacements, ReadOpening(root), ReadDestination(root));
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static ReadPlace? ReadDestination(JsonElement root) =>
+        Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
+
+    /// <summary>One beat as the model wrote it, or null when its kind is not one d47 knows.</summary>
+    private static ReadBeat? ReadBeatFrom(JsonElement element)
+    {
+        if (!AdventureValidation.TryKind(Text(element, "kind"), out var kind))
+        {
+            return null;
+        }
+
+        // A rank beat's career and rank are read from wherever the model put them: the flat shape
+        // it was asked for, or nested under "rank" or "trigger", or the rank as a numeric string.
+        var nested = Nested(element, "trigger") ?? Nested(element, "rank") ?? Nested(element, "promotion");
+
+        return new ReadBeat(
+            Text(element, "title") ?? "Untitled",
+            Text(element, "function"),
+            kind,
+            Text(element, "reason"),
+            Text(element, "system"),
+            Text(element, "station"),
+            Text(element, "body"),
+            Text(element, "career") ?? Text(element, "ladder") ?? (nested is { } trigger ? Text(trigger, "career") ?? Text(trigger, "ladder") : null),
+            Integer(element, "rank") ?? Integer(element, "to") ?? (nested is { } nestedRank ? Integer(nestedRank, "rank") ?? Integer(nestedRank, "to") ?? Integer(nestedRank, "level") : null),
+            Text(element, "ship"),
+            Integer(element, "count"),
+            Text(element, "faction"),
+            Text(element, "mission"),
+            Text(element, "commodity"),
+            Text(element, "filter"),
+            Flag(element, "organic"),
+            Text(element, "engineer"),
+            Text(element, "stage"),
+            ReadLines(element));
     }
 
     /// <summary>The opening's lines: the <c>opening</c> list a story chapter is asked for, or the single <c>opening</c> and <c>openingSpeaker</c>.</summary>
@@ -2291,10 +2443,67 @@ public sealed class AdventureGenerator(
 
     // ---- the dry run -----------------------------------------------------------------------
 
-    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<string> Refusals, AdventureDestination? Destination)
+    private sealed record Resolved(IReadOnlyList<AdventureBeat> Beats, IReadOnlyList<Refusal> Refusals, AdventureDestination? Destination)
     {
         /// <summary>The opening's lines with their speakers resolved; set after the dry run.</summary>
         public IReadOnlyList<AdventureLine> Opening { get; init; } = [];
+
+        /// <summary>For each beat in <see cref="Beats"/>, the index of the objective it was written as.</summary>
+        public IReadOnlyList<int> Stood { get; init; } = [];
+    }
+
+    /// <summary>
+    /// Why the dry run refused something, and what a repair may replace to clear it: <see cref="Objectives"/> by index in
+    /// the beats as written, the opening or the destination. A refusal that names none of them is the whole chapter's.
+    /// </summary>
+    private sealed record Refusal(string Text, IReadOnlyList<int> Objectives)
+    {
+        public bool Opening { get; init; }
+
+        public bool Destination { get; init; }
+
+        public bool Chapter => Objectives.Count == 0 && !Opening && !Destination;
+    }
+
+    /// <summary>The objectives as written and the refusals a repair round answers; <see cref="Offset"/> objectives come before them in the chapter.</summary>
+    private sealed record Repair(IReadOnlyList<ReadBeat> Beats, IReadOnlyList<Refusal> Refusals, int Offset)
+    {
+        /// <summary>The indexes a replacement may take: those the refusals name, or every one when a refusal is the whole chapter's.</summary>
+        public IReadOnlySet<int> Replaceable =>
+            Refusals.Any(refusal => refusal.Chapter)
+                ? Enumerable.Range(0, Beats.Count).ToHashSet()
+                : Refusals.SelectMany(refusal => refusal.Objectives).ToHashSet();
+
+        public bool Opening => Refusals.Any(refusal => refusal.Opening);
+
+        public bool Destination => Refusals.Any(refusal => refusal.Destination);
+
+        /// <summary>The answer with each replacement in place of the objective it numbers, and the indexes replaced; every other objective is kept as written.</summary>
+        public (ReadAnswer Read, IReadOnlySet<int> Replaced) Splice(ReadAnswer read, ReadRepair answer)
+        {
+            var beats = read.Beats.ToArray();
+            var replaceable = Replaceable;
+            var replaced = new HashSet<int>();
+
+            foreach (var (objective, beat) in answer.Replacements)
+            {
+                var index = objective - Offset - 1;
+
+                if (replaceable.Contains(index) && replaced.Add(index))
+                {
+                    beats[index] = beat;
+                }
+            }
+
+            return (
+                read with
+                {
+                    Beats = beats,
+                    Opening = Opening && answer.Opening.Count > 0 ? answer.Opening : read.Opening,
+                    Destination = Destination && answer.Destination is not null ? answer.Destination : read.Destination,
+                },
+                replaced);
+        }
     }
 
     private async Task<Resolved> DryRunAsync(
@@ -2308,8 +2517,15 @@ public sealed class AdventureGenerator(
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId };
         var resolved = new List<AdventureBeat>();
-        var refusals = new List<string>();
+        var refusals = new List<Refusal>();
+        var stood = new List<int>();
         var previousSystem = facts.System;
+        var offset = ask.Rewrite?.From ?? 0;
+
+        // The index of the beat that last set the previous system.
+        int? lastPlaced = null;
+
+        void Refuse(int index, string text) => refusals.Add(new Refusal(text, [index]));
 
         // Every place that stood, by its beat number, for the scan-order rule below.
         var placed = new List<(string Where, AdventureTrigger Trigger)>();
@@ -2328,12 +2544,12 @@ public sealed class AdventureGenerator(
 
         if (unnamed is not null)
         {
-            refusals.Add(unnamed);
+            refusals.Add(new Refusal(unnamed, []) { Destination = true });
         }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
-            var where = $"Objective {index + 1} ({beat.Title})";
+            var where = $"Objective {offset + index + 1} ({beat.Title})";
             var stoodBefore = lastStood;
             lastStood = null;
             AdventureTrigger? trigger = null;
@@ -2347,7 +2563,7 @@ public sealed class AdventureGenerator(
                 }
                 else
                 {
-                    refusals.Add($"{where} is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.");
+                    Refuse(index, $"{where} is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.");
                 }
             }
             else if (beat.Kind == TriggerKind.Reach)
@@ -2358,7 +2574,7 @@ public sealed class AdventureGenerator(
                 }
                 else
                 {
-                    refusals.Add($"{where} is a \"reach\" objective; only a chapter whose Guardian beacon is out of reach may have one.");
+                    Refuse(index, $"{where} is a \"reach\" objective; only a chapter whose Guardian beacon is out of reach may have one.");
                 }
             }
             else if (beat.Kind == TriggerKind.Engineer)
@@ -2368,7 +2584,7 @@ public sealed class AdventureGenerator(
 
                 if (problems.Count > 0)
                 {
-                    refusals.AddRange(problems);
+                    problems.ForEach(problem => Refuse(index, problem));
                 }
                 else
                 {
@@ -2395,7 +2611,7 @@ public sealed class AdventureGenerator(
 
                 if (problems.Count > 0)
                 {
-                    refusals.AddRange(problems);
+                    problems.ForEach(problem => Refuse(index, problem));
                 }
                 else
                 {
@@ -2406,15 +2622,15 @@ public sealed class AdventureGenerator(
             {
                 if ((EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship)) is not { } symbol)
                 {
-                    refusals.Add($"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; give \"ship\" as a hull type such as Anaconda, or use another kind of objective.");
+                    Refuse(index, $"{where} boards a ship \"{beat.Ship ?? string.Empty}\" that d47 has no name for; give \"ship\" as a hull type such as Anaconda, or use another kind of objective.");
                 }
                 else if (ask.Story is null && !BriefNames(ask.Brief, symbol))
                 {
-                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of objective.");
+                    Refuse(index, $"{where} boards a {EliteSpecifications.HullName(symbol)}, which the Commander's brief does not name; make it another kind of objective.");
                 }
                 else if (ask.Story is not null && ChapterFit.BoardWhy(symbol, facts.Owns(symbol), facts.Credits) is { } why)
                 {
-                    refusals.Add($"{where} boards a {EliteSpecifications.HullName(symbol)}, but {why}; save up for it in this chapter and board it in a later one.");
+                    Refuse(index, $"{where} boards a {EliteSpecifications.HullName(symbol)}, but {why}; save up for it in this chapter and board it in a later one.");
                 }
                 else
                 {
@@ -2428,7 +2644,7 @@ public sealed class AdventureGenerator(
 
                 if (career is null)
                 {
-                    refusals.Add(beat.Career is null
+                    Refuse(index, beat.Career is null
                         ? $"{where} is a rank objective but names no career; \"career\" must be one of {careers}."
                         : $"{where} names a career \"{beat.Career}\" that is not one of {careers}.");
                 }
@@ -2438,11 +2654,11 @@ public sealed class AdventureGenerator(
 
                     if (held >= RankStanding.Elite)
                     {
-                        refusals.Add($"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of objective.");
+                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of objective.");
                     }
                     else if (beat.Rank is not { } rank || rank <= held || rank > RankStanding.Elite)
                     {
-                        refusals.Add(
+                        Refuse(index, 
                             $"{where} asks for {Careers.Word(career)} rank {beat.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the Commander holds {held}, "
                             + $"so the objective must name {held + 1}{(held + 1 < RankStanding.Elite ? $" or {held + 2}" : string.Empty)}.");
                     }
@@ -2460,13 +2676,13 @@ public sealed class AdventureGenerator(
 
                 if (resolution.Trigger is not { } place)
                 {
-                    refusals.Add(resolution.Refusal!);
+                    Refuse(index, resolution.Refusal!);
                 }
                 else if (notable.FirstOrDefault(p => string.Equals(p.System, place.System, StringComparison.OrdinalIgnoreCase))
                              is { SystemAddress: { } catalogued } && catalogued != place.SystemAddress)
                 {
                     // Two sources, one place, two ids: the Phase 23 generator assertion, at runtime.
-                    refusals.Add($"{where}: the catalogue and the galaxy search disagree about which system \"{beat.System}\" is, so it cannot be used.");
+                    Refuse(index, $"{where}: the catalogue and the galaxy search disagree about which system \"{beat.System}\" is, so it cannot be used.");
                 }
                 else
                 {
@@ -2480,7 +2696,7 @@ public sealed class AdventureGenerator(
                         }
                         catch (GalaxyUnavailableException ex)
                         {
-                            refusals.Add($"{where} could not be measured: {ex.Message}");
+                            Refuse(index, $"{where} could not be measured: {ex.Message}");
                             continue;
                         }
                     }
@@ -2488,16 +2704,16 @@ public sealed class AdventureGenerator(
                     if (place.Kind == TriggerKind.Arrive && previousSystem is not null && string.Equals(previousSystem, place.System, StringComparison.OrdinalIgnoreCase))
                     {
                         // An arrive beat fires only on a jump into the system, so one where the Commander already is never fires.
-                        refusals.Add($"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
+                        Refuse(index, $"{where} arrives at {place.System}, but the Commander is already there at that point; send them to another system, or make it a dock, land or scan objective.");
                     }
                     else if (PermitSystemTable.Locked(place.System))
                     {
-                        refusals.Add($"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
+                        Refuse(index, $"{where} is in {place.System}, which needs a permit the Commander may not hold; use a system without one.");
                     }
                     else if (hop is { } far && far > facts.RadiusLightYears
                              && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
                     {
-                        refusals.Add($"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
+                        Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
                     }
                     else if (place.Kind == TriggerKind.Scan
                              && placed.FirstOrDefault(p => p.Trigger.Kind is TriggerKind.Land or TriggerKind.Scan && AdventureValidation.SameBody(p.Trigger, place))
@@ -2505,11 +2721,12 @@ public sealed class AdventureGenerator(
                     {
                         // The same rule AdventureValidation applies to a written story, raised here so a
                         // generated one goes back through the turn with it.
-                        refusals.Add(AdventureValidation.ScanOutOfOrder(where, place, before.Where, earlier.Kind));
+                        Refuse(index, AdventureValidation.ScanOutOfOrder(where, place, before.Where, earlier.Kind));
                     }
                     else
                     {
                         previousSystem = place.System;
+                        lastPlaced = index;
                         trigger = place;
                         placed.Add((where, place));
                     }
@@ -2520,6 +2737,7 @@ public sealed class AdventureGenerator(
 
             if (trigger is not null)
             {
+                stood.Add(index);
                 resolved.Add(new AdventureBeat
                 {
                     Title = beat.Title,
@@ -2533,26 +2751,27 @@ public sealed class AdventureGenerator(
 
         if (closing && (lastStood is not { Kind: TriggerKind.Land } landed || !AdventureValidation.SameBody(landed, destination!.Landing())))
         {
-            refusals.Add($"The last objective must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.");
+            refusals.Add(new Refusal($"The last objective must be \"land\" on {destination!.Body} in {destination.System}, where the finale ends.", [beats.Count - 1]));
         }
 
         if (finale > 1 && !closing && destination is not null && facts.DestinationLightYears is { } start && start > facts.RadiusLightYears
             && await NotCloserAsync(previousSystem, destination, start, resolver, cancellationToken).ConfigureAwait(false) is { } notCloser)
         {
-            refusals.Add(notCloser);
+            refusals.Add(new Refusal(notCloser, lastPlaced is { } placedLast ? [placedLast] : []));
         }
 
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
-            refusals.Add($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.");
+            refusals.Add(new Refusal($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.", beats.Count > 0 ? [beats.Count - 1] : []));
         }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             if (IsTravel(beat.Kind) && beat.Reason is null)
             {
-                refusals.Add(
-                    $"Objective {index + 1} ({beat.Title}) is a travel objective with no \"reason\"; give it one plain sentence saying "
+                Refuse(
+                    index,
+                    $"Objective {offset + index + 1} ({beat.Title}) is a travel objective with no \"reason\"; give it one plain sentence saying "
                     + "what is at that place that matters to the story.");
             }
         }
@@ -2560,34 +2779,36 @@ public sealed class AdventureGenerator(
         if (ask.Story is { Chapter: > 1 }
             && beats.Count(beat => IsTravel(beat.Kind)) + kept.Count(beat => IsTravel(beat.Trigger.Kind)) is var travel and > MostTravel)
         {
-            refusals.Add(
+            refusals.Add(new Refusal(
                 $"The chapter has {travel} travel objectives (arrive, dock, land or scan); from chapter two on, no more than {MostTravel} may be. "
-                + "Make the others activities.");
+                + "Make the others activities.",
+                [.. beats.Select((beat, index) => (beat, index)).Where(written => IsTravel(written.beat.Kind)).Select(written => written.index)]));
         }
 
         if (ask.Story?.Comfort is { } comfort
             && !beats.Any(beat => comfort.Matches(beat.Kind, beat.MissionFamily))
             && !kept.Any(beat => comfort.Matches(beat.Trigger.Kind, beat.Trigger.MissionFamily)))
         {
-            refusals.Add($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.");
+            refusals.Add(new Refusal($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.", []));
         }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is { } why)
             {
-                refusals.Add($"Objective {index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" objective, but {why}; use another kind of objective.");
+                Refuse(index, $"Objective {offset + index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" objective, but {why}; use another kind of objective.");
             }
 
             if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily))
             {
-                refusals.Add(
-                    $"Objective {index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                Refuse(
+                    index,
+                    $"Objective {offset + index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
                     + "which they refused for this story; use another kind of objective.");
             }
         }
 
-        return new Resolved(resolved, refusals, destination);
+        return new Resolved(resolved, refusals, destination) { Stood = stood };
     }
 
     /// <summary>The destination finale chapter 1 names, resolved as a land beat's place, or why it cannot stand.</summary>
