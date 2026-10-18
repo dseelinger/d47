@@ -11,7 +11,7 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
     [Fact]
     public async Task AMediumShipIsRefusedAStationWithOnlySmallPads()
     {
-        var resolution = await ResolveAsync(new StationSummary { Name = "Pebble Dock", SystemName = "Dyson's Hollow", MarketId = 1, SmallPads = 4, MediumPads = 0, LargePads = 0 }, PadSize.Medium);
+        var resolution = await ResolveAsync(new StationSummary { Name = "Pebble Dock", SystemName = "Dyson's Hollow", MarketId = 1, Type = "Outpost", SmallPads = 4, MediumPads = 0, LargePads = 0 }, PadSize.Medium);
 
         Assert.False(resolution.Succeeded);
         Assert.Contains("Pebble Dock", resolution.Refusal);
@@ -21,7 +21,7 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
     [Fact]
     public async Task AMediumShipDocksWhereThereIsALargePad()
     {
-        var resolution = await ResolveAsync(new StationSummary { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", MarketId = 2, SmallPads = 0, MediumPads = 0, LargePads = 2 }, PadSize.Medium);
+        var resolution = await ResolveAsync(new StationSummary { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", MarketId = 2, Type = "Coriolis Starport", SmallPads = 0, MediumPads = 0, LargePads = 2 }, PadSize.Medium);
 
         Assert.True(resolution.Succeeded);
     }
@@ -29,7 +29,7 @@ public sealed class ADockBeatIsOnlyWhereTheShipFitsTests
     [Fact]
     public async Task AStationWithUnknownPadCountsIsNotRefused()
     {
-        var resolution = await ResolveAsync(new StationSummary { Name = "Mystery Port", SystemName = "Dyson's Hollow", MarketId = 3 }, PadSize.Large);
+        var resolution = await ResolveAsync(new StationSummary { Name = "Mystery Port", SystemName = "Dyson's Hollow", MarketId = 3, Type = "Coriolis Starport" }, PadSize.Large);
 
         Assert.True(resolution.Succeeded);
     }

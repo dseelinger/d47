@@ -207,9 +207,11 @@ internal static class SpanshRequest
                 WriteComparison(writer, "distance_to_arrival", 0, furthest);
             }
 
-            if (query.Kinds is { } kinds)
+            if (query.Kinds is not null || query.FixedOnly)
             {
-                WriteTypes(writer, AllStationTypes.Where(type => kinds.Contains(SpanshStarSystemService.KindOf(type))));
+                WriteTypes(writer, AllStationTypes.Where(type =>
+                    (query.Kinds is not { } kinds || kinds.Contains(SpanshStarSystemService.KindOf(type)))
+                    && (!query.FixedOnly || StationQuery.IsFixedType(type))));
             }
 
             WriteCriteria(writer, GalaxySearchKind.Stations, query.Criteria);

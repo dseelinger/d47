@@ -951,7 +951,8 @@ public sealed class AdventureGenerator(
             var open = new List<StationSummary>();
 
             foreach (var station in stations.Stations.Where(station =>
-                         !PermitSystemTable.Locked(station.SystemName)
+                         station.IsFixed
+                         && !PermitSystemTable.Locked(station.SystemName)
                          && (facts.NeedsPad(facts.ThisShipOnly) is not { } pad || station.Admits(pad))
                          && (facts.ClosedMarketId is null || station.MarketId != facts.ClosedMarketId)))
             {

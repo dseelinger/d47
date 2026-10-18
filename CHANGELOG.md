@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A generated story or stock-story chapter no longer sends you to dock at a fleet carrier, a megaship or a construction site. Carriers and many megaships move, and a construction site is not a finished station, so a story now only docks at fixed, finished stations. A chapter already written that docks at one of these is unchanged; refuse that beat and it is written again.
+
 Commander now has a Ledgers sub-tab between This session and Commanders, on the desktop and on the big panel. It lists BGS work, Combat stats, Credits and Codex, each with a one-line description. Press one to open its page; the breadcrumb, such as "Ledgers › Credits", takes you back to the list, and each page can still be opened by name.
 
 Ledgers has a Credits page. It shows where your credits came from and went, from the journals on this PC, for the last 24 hours, 7 days, 30 days or everything: totals for what you earned, what you spent, what moved to or from your carrier, the gaps between the journal and the game's own balance, and your balance, then one row per kind. Press a heading to sort and the panel search narrows by kind or journal event. Press a kind, or ALL TRANSACTIONS, to see the individual transactions with the balance after each; small gaps are folded into one row. While D47 is still reading your older journals the page says so, and if that reading failed a warning gives the time the ledger starts.

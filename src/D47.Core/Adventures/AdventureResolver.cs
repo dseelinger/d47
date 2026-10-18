@@ -114,6 +114,8 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
 
     private static string PadWord(PadSize size) => size.ToString().ToLowerInvariant();
 
+    private const string NeverStops = "Fleet carriers, megaships and construction sites are never story stops.";
+
     /// <summary>A trigger from names.</summary>
     /// <param name="where">How to name the beat in a refusal — "Beat 3 (The Anchorage)".</param>
     /// <param name="needsPad">The smallest pad a dock beat's station must have, or null for none.</param>
@@ -170,11 +172,12 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                     var stations = await galaxy.FindStationsAsync(StationQuery.Within(found.Name), cancellationToken).ConfigureAwait(false);
                     var match = stations.Stations.FirstOrDefault(candidate =>
                         string.Equals(candidate.SystemName, found.Name, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(candidate.Name, station.Trim(), StringComparison.OrdinalIgnoreCase));
+                        && string.Equals(candidate.Name, station.Trim(), StringComparison.OrdinalIgnoreCase)
+                        && candidate.IsFixed);
 
                     if (match?.MarketId is null)
                     {
-                        return Resolution.Refused($"{where} names a station, \"{station.Trim()}\", that is not in {found.Name}.");
+                        return Resolution.Refused($"{where} names a station, \"{station.Trim()}\", that is not in {found.Name}. {NeverStops}");
                     }
 
                     if (match.MarketId == ClosedMarketId)

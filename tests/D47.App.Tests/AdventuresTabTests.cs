@@ -405,7 +405,7 @@ public class AdventuresTabTests
         {
             IReadOnlyList<StationSummary> all =
             [
-                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = 3, MarketId = 2, Distance = 12, HasLargePad = true },
+                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = 3, MarketId = 2, Distance = 12, HasLargePad = true, Type = "Coriolis Starport" },
             ];
 
             var stations = query.MaxDistance <= 1

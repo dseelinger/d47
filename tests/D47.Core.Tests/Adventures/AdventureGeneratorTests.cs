@@ -449,6 +449,9 @@ public sealed class AdventureGeneratorTests
 
         public List<BodyQuery> BodyQueries { get; } = [];
 
+        /// <summary>Stations returned alongside the three every search knows.</summary>
+        public IReadOnlyList<StationSummary> Extra { get; init; } = [];
+
         public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
             var reference = query.ReferenceSystem ?? string.Empty;
@@ -471,9 +474,10 @@ public sealed class AdventureGeneratorTests
 
             IReadOnlyList<StationSummary> all =
             [
-                new() { Name = "Lantern Dock", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, MarketId = 1001, Distance = 8, HasLargePad = false },
-                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = AdventureFixtures.Hollow, MarketId = AdventureFixtures.Anchorage, Distance = 12, HasLargePad = true },
-                new() { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra", SystemAddress = 3932277478106, MarketId = 128666762, Distance = 30, HasLargePad = true },
+                new() { Name = "Lantern Dock", SystemName = "Ossen's Lantern", SystemAddress = AdventureFixtures.Lantern, MarketId = 1001, Distance = 8, HasLargePad = false, Type = "Outpost" },
+                new() { Name = "Maren Anchorage", SystemName = "Dyson's Hollow", SystemAddress = AdventureFixtures.Hollow, MarketId = AdventureFixtures.Anchorage, Distance = 12, HasLargePad = true, Type = "Coriolis Starport" },
+                new() { Name = "Jameson Memorial", SystemName = "Shinrarta Dezhra", SystemAddress = 3932277478106, MarketId = 128666762, Distance = 30, HasLargePad = true, Type = "Orbis Starport" },
+                .. Extra,
             ];
 
             // Within a light year of a named system is the resolver's question; wider is the candidate list.

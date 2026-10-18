@@ -74,6 +74,12 @@ public sealed record StationSummary
 
     /// <summary>When the service last had a report of this station.</summary>
     public DateTimeOffset? UpdatedAt { get; init; }
+
+    /// <summary>A finished station that does not move: not a carrier, a megaship or a construction site.</summary>
+    public bool IsFixed =>
+        StationQuery.IsFixedType(Type)
+        && !Name.StartsWith("Planetary Construction Site:", StringComparison.OrdinalIgnoreCase)
+        && !Name.StartsWith("Orbital Construction Site:", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>A station search as asked, before <see cref="StationQuery"/> validates it.</summary>
@@ -167,6 +173,16 @@ public sealed record StationQuery
 
     /// <summary>The kinds of station to include; null sends no type filter.</summary>
     public IReadOnlyList<StationKind>? Kinds { get; init; }
+
+    /// <summary>Leaves out every type <see cref="IsFixedType"/> rejects, on top of <see cref="Kinds"/>.</summary>
+    public bool FixedOnly { get; init; }
+
+    /// <summary>Whether a station type is a finished station that does not move; false for no type.</summary>
+    public static bool IsFixedType(string? type) =>
+        type is { Length: > 0 } named
+        && !MarketSnapshot.IsCarrierType(named)
+        && !named.Equals("Mega ship", StringComparison.OrdinalIgnoreCase)
+        && !named.Contains("Construction Depot", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The smallest pad the station must have: Medium or Large.</summary>
     public PadSize? MinPad { get; init; }
@@ -484,22 +500,24 @@ public sealed record StationQuery
         string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Every station in one named system, for resolving a station a story names to its market id (Phase
-    /// 47).
+    /// Every fixed, finished station in one named system, for resolving a station a story names to its
+    /// market id (Phase 47).
     /// </summary>
     public static StationQuery Within(string system) => new()
     {
         ReferenceSystem = system.Trim(),
         MaxDistance = 1,
         Size = 20,
+        FixedOnly = true,
     };
 
-    /// <summary>The stations nearest a system, for proposing real places a story may dock at (Phase 47).</summary>
+    /// <summary>The fixed, finished stations nearest a system, for proposing real places a story may dock at (Phase 47).</summary>
     public static StationQuery Near(string referenceSystem, double maxDistance, int size) => new()
     {
         ReferenceSystem = referenceSystem.Trim(),
         MaxDistance = Math.Clamp(maxDistance, 1, 500),
         Size = Math.Clamp(size, 1, 20),
+        FixedOnly = true,
     };
 
     /// <summary>The three kinds of material trader, in the index's own spelling.</summary>
