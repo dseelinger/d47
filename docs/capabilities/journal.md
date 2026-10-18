@@ -536,6 +536,17 @@ journal and the game's own balance is spoken only from a million credits.
 {"type":"object","properties":{"kind":{"type":"string","description":"Report only this kind of transaction.","enum":["trade","exploration","missions","combat","vouchers","rescue","community_goals","colonisation","powerplay","ships","modules","upkeep","rebuy","fines","crew","on_foot","engineers","carrier"]},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
 ```
 
+`get_codex_ledger` answers how many codex entries the Commander logged, and how many were new to their
+codex, from every journal on this PC. `period` is `trip` (since the last sale of exploration data, the
+default), `session` or `all`; `region` limits it to a codex region by name, or `here` for the region the
+Commander is in. The first line gives the period and the counts, then the top three categories by new
+entries and, without `region`, the top three regions, each with a count of the rest. It says nothing about
+codex vouchers, which the journal values only when they are redeemed.
+
+```json
+{"type":"object","properties":{"period":{"type":"string","description":"Since the last sale of exploration data (trip), since this session began, or all of the record. Default trip.","enum":["trip","session","all"]},"region":{"type":"string","description":"Report only this codex region, by name, or here for the region the Commander is in."}},"required":[],"additionalProperties":false}
+```
+
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
 

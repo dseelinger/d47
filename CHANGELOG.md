@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking for your "codex entries" or "codex ledger" now reports how many codex entries you logged and how many were new to your codex, from every journal on this PC. It covers the time since you last sold exploration data unless you say "this session" or "all", names the three categories with the most new entries and, with more than one region, the three regions, and counts the rest. A region name, or "here", limits it to one region. It waits until all your earlier journals have been read.
+
 Asking "where did my money go", "my earnings" or "credit ledger" now reports the credits you earned and spent, by kind, from every journal on this PC, with your balance. It covers the last week unless you say a day, month or "all", names the three biggest kinds in and out and counts the rest, and "exploration" or another kind gives just that line. Bounties and combat bonds count when redeemed. Credit transfers to your carrier are reported as moved, and a gap of a million credits or more between the journals and the game's balance is named. It waits until all your earlier journals have been read.
 
 Asking "my combat stats" or "my kills" now reports the kills you have made and the credits awarded for them, from every journal on this PC. With no grouping it names the top ship type, system, own ship and faction; "by enemy", "by ship", "by system" or "by faction" names the top three and counts the rest, a period of a day, week or month limits it, and a name narrows it. Every answer says what it covers, such as "on record since 2 July 2025", and it waits until all your earlier journals have been read.

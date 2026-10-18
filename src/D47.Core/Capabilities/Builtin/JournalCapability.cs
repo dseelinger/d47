@@ -104,6 +104,8 @@ public static class JournalCapability
                 new("where did my money go", "get_credit_ledger"),
                 new("where did my credits go", "get_credit_ledger"),
                 new("my earnings", "get_credit_ledger"),
+                new("codex ledger", "get_codex_ledger"),
+                new("codex entries", "get_codex_ledger"),
                 new("combat stats", "get_combat_stats"),
                 new("combat statistics", "get_combat_stats"),
                 new("my kill stats", "get_combat_stats"),
@@ -320,6 +322,33 @@ public static class JournalCapability
                     Commands = Asking(CombatStatsQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                         DescribeCombatStats(gameState, state(), arguments, now?.Invoke() ?? DateTimeOffset.UtcNow))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_codex_ledger",
+                    Description =
+                        "Report the codex entries the Commander logged over a period, how many were new to their "
+                        + "codex, by region and category.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "period",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "Since the last sale of exploration data (trip), since this session began, or all of the record. Default trip.",
+                            AllowedValues = CodexPeriods,
+                        },
+                        new ToolParameter
+                        {
+                            Name = "region",
+                            Type = ToolParameterType.String,
+                            Description = "Report only this codex region, by name, or here for the region the Commander is in.",
+                        },
+                    ],
+                    Commands = Asking(CodexLedgerQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeCodexLedger(gameState, state(), arguments))),
                 },
                 new ToolDefinition
                 {
@@ -571,6 +600,15 @@ public static class JournalCapability
     [
         "credit ledger", "my credit ledger", "where did my money go", "where did my credits go", "my earnings",
     ];
+
+    private static readonly string[] CodexLedgerQuestions =
+    [
+        "codex ledger", "my codex ledger", "codex entries", "my codex entries",
+    ];
+
+    private static readonly string[] CodexPeriods = ["trip", "session", "all"];
+
+    private const int CodexGroupsNamed = 3;
 
     private static readonly (string Name, CreditKind Kind)[] CreditKinds =
     [
@@ -1741,6 +1779,141 @@ public static class JournalCapability
         }
 
         return unfinished.Length == 0 ? report : $"{report} {unfinished}";
+    }
+
+    private static string DescribeCodexLedger(GameStateStore gameState, HistoryState history, ToolArguments arguments)
+    {
+        if (history is HistoryState.Pending or HistoryState.Running)
+        {
+            return "I have not finished reading the journal history yet.";
+        }
+
+        if (gameState.Active is not { } active)
+        {
+            return "I do not know which Commander is flying yet.";
+        }
+
+        var regionAsked = arguments.TryGetString("region", out var asked) ? asked.Trim() : string.Empty;
+        int? regionId = null;
+        string? regionName = null;
+
+        if (regionAsked.Equals("here", StringComparison.OrdinalIgnoreCase))
+        {
+            regionName = active.Location.StarPos is { } position ? GalacticRegions.Find(position) : null;
+            regionId = regionName is null ? null : GalacticRegions.IdOf(regionName);
+
+            if (regionId is null)
+            {
+                return "I do not know which region you are in.";
+            }
+        }
+        else if (regionAsked.Length > 0)
+        {
+            regionId = GalacticRegions.IdOf(regionAsked);
+            regionName = regionId is { } found ? GalacticRegions.NameOf(found) : null;
+
+            if (regionId is null)
+            {
+                return $"I do not know a region called {regionAsked}.";
+            }
+        }
+
+        var ledger = active.CodexLedger;
+        var unfinished = history is HistoryState.Failed or HistoryState.Stopped
+            ? " Reading the journal history did not finish, so this is only what the live journal shows."
+            : string.Empty;
+
+        if (ledger.Entries.Count == 0)
+        {
+            return "No codex entries in the journals on this PC." + unfinished;
+        }
+
+        var period = arguments.TryGetString("period", out var named) ? named.Trim().ToLowerInvariant() : "trip";
+        var (from, covers) = period switch
+        {
+            "session" when ledger.SessionStart is { } start => ((DateTimeOffset?)start, "this session"),
+            "all" or "session" => (null, OnRecord(ledger)),
+            _ when ledger.TripStart is { } sale =>
+                (sale, $"since you sold exploration data on {sale.UtcDateTime.ToString("d MMMM", CultureInfo.InvariantCulture)}"),
+            _ => (null, OnRecord(ledger)),
+        };
+
+        var items = ledger.Entries
+            .Where(entry => (from is null || entry.At >= from) && (regionId is null || entry.RegionId == regionId))
+            .ToList();
+
+        if (items.Count == 0)
+        {
+            return $"No codex entries{(regionName is null ? string.Empty : $" in {regionName}")} {covers}.{unfinished}";
+        }
+
+        var newCount = items.Count(entry => entry.IsNew);
+        var logged = items.Select(entry => (entry.EntryId, entry.RegionId)).Distinct().Count();
+        var heading = regionName is null ? Capitalised(covers) : $"In {regionName}, {covers}";
+        var text = new StringBuilder(
+            $"{heading}: {newCount.ToString("N0", CultureInfo.InvariantCulture)} new codex "
+            + $"{(newCount == 1 ? "entry" : "entries")}, {logged.ToString("N0", CultureInfo.InvariantCulture)} logged in all.");
+
+        text.AppendLine();
+        text.Append(CodexTop(
+            "Most new",
+            [.. items.Where(entry => entry.IsNew)
+                .GroupBy(entry => (entry.Category ?? "uncategorised").ToLowerInvariant())
+                .Select(group => (Name: group.Key, Count: group.Count()))
+                .OrderByDescending(group => group.Count)
+                .ThenBy(group => group.Name, StringComparer.Ordinal)
+                .Select(group => $"{group.Count.ToString("N0", CultureInfo.InvariantCulture)} {group.Name}")],
+            "Most new: nothing."));
+
+        if (regionId is null)
+        {
+            var regions = items
+                .Where(entry => entry.RegionId is { } id && GalacticRegions.NameOf(id) is not null)
+                .GroupBy(entry => entry.RegionId!.Value)
+                .ToList();
+
+            if (regions.Count > 1)
+            {
+                var ranked = regions
+                    .Select(group => (Name: GalacticRegions.NameOf(group.Key)!, Count: group.Count(entry => entry.IsNew)))
+                    .Where(group => group.Count > 0)
+                    .OrderByDescending(group => group.Count)
+                    .ThenBy(group => group.Name, StringComparer.Ordinal)
+                    .Select(group => $"{group.Count.ToString("N0", CultureInfo.InvariantCulture)} in {group.Name}")
+                    .ToList();
+
+                if (ranked.Count > 0)
+                {
+                    text.AppendLine();
+                    text.Append(CodexTop($"In {ranked.Count} {(ranked.Count == 1 ? "region" : "regions")}", ranked, string.Empty));
+                }
+            }
+        }
+
+        return text + unfinished;
+    }
+
+    private static string OnRecord(CodexLedger ledger) =>
+        ledger.OnRecordSince is { } since
+            ? $"on record since {since.UtcDateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)}"
+            : "on record";
+
+    private static string CodexTop(string heading, IReadOnlyList<string> groups, string none)
+    {
+        if (groups.Count == 0)
+        {
+            return none;
+        }
+
+        var named = groups.Take(CodexGroupsNamed).ToList();
+        var rest = groups.Count - named.Count;
+
+        if (rest > 0)
+        {
+            named.Add($"and {rest} more");
+        }
+
+        return $"{heading}: {string.Join(", ", named)}.";
     }
 
     private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];

@@ -50,6 +50,13 @@ public static class GalacticRegions
     /// <summary>The name of the codex region with this number, or null for an unknown number.</summary>
     public static string? NameOf(int id) => Loaded.Value.Names.GetValueOrDefault(id);
 
+    /// <summary>The number of the codex region with this name, without regard to case, or null.</summary>
+    public static int? IdOf(string name) =>
+        Loaded.Value.Names
+            .Where(pair => string.Equals(pair.Value, name.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Select(pair => (int?)pair.Key)
+            .FirstOrDefault();
+
     private sealed record Map(
         IReadOnlyDictionary<int, string> Names,
         IReadOnlyList<IReadOnlyList<(int Span, int RegionId)>> Rows);
