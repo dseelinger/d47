@@ -28,6 +28,8 @@ public sealed record MiniPanelServices
 
     public Func<D47.Core.Journal.CommanderGameState?>? GameState { get; init; }
 
+    public Func<DateTimeOffset?>? BgsTick { get; init; }
+
     public D47.Core.Loadout.OnFootPlanService? OnFoot { get; init; }
 
     public EngineerDirectoryMemory? EngineersMemory { get; init; }
@@ -111,6 +113,7 @@ public sealed record MiniPanelServices
             view.EnableStanding(gameState);
             view.EnableStatistics(gameState);
             view.EnableSession(gameState);
+            view.EnableBgsWork(gameState, BgsTick ?? (() => null), () => DateTimeOffset.UtcNow);
         }
 
         if (Commanders is not null)

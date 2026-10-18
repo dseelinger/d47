@@ -52,12 +52,19 @@ public sealed record SortColumn<TRow>
     public static SortColumn<TRow> Remote(string label, SortDirection first) =>
         new(label, first, _ => true, (_, _) => 0);
 
-    /// <summary>Sorts A–Z first, ignoring case; a null or blank value is missing.</summary>
-    public static SortColumn<TRow> Text(string label, Func<TRow, string?> key) => new(
+    /// <summary>Sorts A–Z first, ignoring case; a null or blank value is missing. Equal keys compare by <paramref name="then"/>.</summary>
+    public static SortColumn<TRow> Text(string label, Func<TRow, string?> key, Func<TRow, string?>? then = null) => new(
         label,
         SortDirection.Ascending,
         row => !string.IsNullOrWhiteSpace(key(row)),
-        (a, b) => StringComparer.CurrentCultureIgnoreCase.Compare(key(a), key(b)));
+        (a, b) =>
+        {
+            var order = CompareText(key(a), key(b));
+
+            return order != 0 || then is null ? order : CompareText(then(a), then(b));
+        });
+
+    private static int CompareText(string? a, string? b) => StringComparer.CurrentCultureIgnoreCase.Compare(a, b);
 
     /// <summary>
     /// Sorts by a figure, first in <paramref name="first"/>: ascending for a distance, time or cost,

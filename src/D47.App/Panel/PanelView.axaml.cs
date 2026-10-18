@@ -378,6 +378,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     bool IPanelTabHost.Headset => Classes.Contains("headset");
 
+    Action<string>? IPanelTabHost.SettingsJump => SettingsJump();
+
     /// <summary>Whether <paramref name="control"/> is drawn on the headset's panel.</summary>
     internal static bool OnHeadset(Visual control) =>
         control.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;
@@ -602,6 +604,10 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 
     /// <summary>Gives this surface Commander › Commanders, after This session.</summary>
+    /// <summary>Gives this surface the BGS work page.</summary>
+    public void EnableBgsWork(Func<D47.Core.Journal.CommanderGameState?> state, Func<DateTimeOffset?> tick, Func<DateTimeOffset> now) =>
+        _commander.EnableBgsWork(state, tick, now);
+
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);
 
     /// <summary>Redraws the Commander page showing and its footer when the journal has moved them on.</summary>

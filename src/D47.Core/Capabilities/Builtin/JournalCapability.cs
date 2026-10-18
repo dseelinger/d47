@@ -2136,7 +2136,7 @@ public static class JournalCapability
             return reason;
         }
 
-        var from = tick ?? now - TimeSpan.FromHours(24);
+        var from = BgsWork.PeriodStart(tick, now);
         var work = active.BgsWork;
         var faction = arguments.TryGetString("faction", out var factionAsked) && !string.IsNullOrWhiteSpace(factionAsked)
             ? factionAsked.Trim()

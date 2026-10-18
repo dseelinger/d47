@@ -130,7 +130,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CrewSeatsHost? crewSeats = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
-        Panel.SpendDesk? spend = null)
+        Panel.SpendDesk? spend = null,
+        Func<DateTimeOffset?>? bgsTick = null)
     {
         _dumpTo = dumpTo;
 
@@ -165,6 +166,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Unlocks = unlocks,
             Ships = ships,
             GameState = gameState,
+            BgsTick = bgsTick,
             OnFoot = onFoot,
             EngineersMemory = engineersMemory,
             Construction = construction,

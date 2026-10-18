@@ -963,13 +963,15 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return tag;
     }
 
-    private static StackPanel GroupHead(string name, string description, string? count = null)
+    private static StackPanel GroupHead(string name, string description, string? count = null) =>
+        GroupHead(name, RoutingKit.Ink(description, TypeScale.ControlLarge, ThemeManager.GreyKey), count);
+
+    internal static StackPanel GroupHead(string name, TextBlock note, string? count = null)
     {
         var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
         TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
         TitleText.Show(heading, name);
 
-        var note = RoutingKit.Ink(description, TypeScale.ControlLarge, ThemeManager.GreyKey);
         note.VerticalAlignment = VerticalAlignment.Center;
         note.Margin = new Thickness(12, 0, 0, 0);
 

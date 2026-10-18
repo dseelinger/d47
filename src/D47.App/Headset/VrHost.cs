@@ -182,7 +182,8 @@ public sealed class VrHost : IDisposable
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CrewSeatsHost? crewSeats = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
-        Panel.SpendDesk? spend = null)
+        Panel.SpendDesk? spend = null,
+        Func<DateTimeOffset?>? bgsTick = null)
     {
         VrHost? self = null;
 
@@ -202,6 +203,7 @@ public sealed class VrHost : IDisposable
             crewSeats: crewSeats,
             buildTalk: buildTalk,
             spend: spend,
+            bgsTick: bgsTick,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the

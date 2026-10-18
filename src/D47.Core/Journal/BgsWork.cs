@@ -54,6 +54,9 @@ public sealed record BgsWork
     /// <summary>The name of a system by address, or null when none has been seen.</summary>
     public string? NameOf(long address) => Names.GetValueOrDefault(address);
 
+    /// <summary>The start of the period to report: the BGS tick when it is known, otherwise the 24 hours before <paramref name="now"/>.</summary>
+    public static DateTimeOffset PeriodStart(DateTimeOffset? tick, DateTimeOffset now) => tick ?? now - TimeSpan.FromHours(24);
+
     /// <summary>The work at or after <paramref name="from"/>, by system and faction.</summary>
     public IReadOnlyList<BgsFactionWork> Since(DateTimeOffset from) =>
     [
