@@ -118,6 +118,7 @@ public sealed record MiniPanelServices
             view.EnableBgsWork(gameState, BgsTick ?? (() => null), () => DateTimeOffset.UtcNow);
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
+            view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
         }
 
         if (Commanders is not null)

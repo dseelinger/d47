@@ -14,6 +14,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _bgsWorkBuild;
     private Func<NavCrumb, Control>? _combatStatsBuild;
     private Func<NavCrumb, Control>? _creditsBuild;
+    private Func<NavCrumb, Control>? _codexBuild;
     private Func<NavCrumb, Control>? _commandersBuild;
     private MissionsPage? _missions;
     private StandingPage? _standing;
@@ -23,6 +24,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private CombatStatsPage? _combatStats;
     private CreditsPage? _credits;
     private CreditTransactionsPage? _creditTransactions;
+    private CodexPage? _codex;
+    private CodexRegionPage? _codexRegion;
     private CommandersPage? _commanders;
     private D47.App.Controls.JournalClock? _commanderClock;
 
@@ -176,6 +179,21 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         DeclareLedger(new NavCrumb(CreditsPage.PageKey, "Credits"));
     }
 
+    public void EnableCodex(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        Func<D47.Core.Journal.HistoryState> history,
+        Func<DateTimeOffset> now)
+    {
+        var headset = host.Headset;
+        var choice = new CodexChoice();
+
+        _codexBuild = crumb => CodexPage.IsRegion(crumb.Key)
+            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset)
+            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset);
+
+        DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
+    }
+
     /// <summary>Furnishes the Ledgers root, once, and declares <paramref name="ledger"/> under it as a page that fills the strip.</summary>
     private void DeclareLedger(NavCrumb ledger)
     {
@@ -245,6 +263,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
+        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf))
+        {
+            changed |= _codex?.Tick() ?? false;
+            changed |= _codexRegion?.Tick() ?? false;
+        }
+
         if (_commanders is { } commanders && root == CommandersPage.RootKey)
         {
             changed |= commanders.Tick();
@@ -263,6 +287,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

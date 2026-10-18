@@ -62,6 +62,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
             {
                 BgsWorkPage.PageKey => "BGS work",
                 CombatStatsPage.PageKey => "Combat stats",
+                CodexPage.PageKey => "Codex",
                 _ => "Credits",
             };
 
@@ -74,17 +75,18 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     [Fact]
     public void TheRowsFollowTheListsOrderWhateverOrderTheLedgersWereDeclaredIn()
     {
-        var rows = LedgersPage.Rows(Declared(CreditsPage.PageKey, BgsWorkPage.PageKey, CombatStatsPage.PageKey));
+        var rows = LedgersPage.Rows(Declared(CodexPage.PageKey, CreditsPage.PageKey, BgsWorkPage.PageKey, CombatStatsPage.PageKey));
 
-        Assert.Equal(["BGS work", "Combat stats", "Credits"], rows.Select(row => row.Name));
+        Assert.Equal(["BGS work", "Combat stats", "Credits", "Codex"], rows.Select(row => row.Name));
         Assert.Equal(
             [
                 "The work done for minor factions since the BGS tick.",
                 "Your kills and the credits they were awarded.",
                 "Where your credits came from and where they went.",
+                "The codex entries you have logged, by region.",
             ],
             rows.Select(row => row.Description));
-        Assert.Equal([BgsWorkPage.PageKey, CombatStatsPage.PageKey, CreditsPage.PageKey], rows.Select(row => row.Crumb.Key));
+        Assert.Equal([BgsWorkPage.PageKey, CombatStatsPage.PageKey, CreditsPage.PageKey, CodexPage.PageKey], rows.Select(row => row.Crumb.Key));
     }
 
     [Fact]
@@ -122,6 +124,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         view.EnableBgsWork(() => state, () => BgsTick, () => Now);
         view.EnableCombatStats(() => state, () => HistoryState.Done, () => Now);
         view.EnableCredits(() => state, () => HistoryState.Done, () => Now);
+        view.EnableCodex(() => state, () => HistoryState.Done, () => Now);
         view.EnableCommanders(Roster());
 
         return view;
@@ -232,7 +235,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Assert.IsNotAssignableFrom<IFilterablePage>(list);
 
         var rows = In<Button>(list).Where(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true).ToList();
-        Assert.Equal(["Ledger.bgs-work", "Ledger.combat-stats", "Ledger.credits"], rows.Select(row => row.Name));
+        Assert.Equal(["Ledger.bgs-work", "Ledger.combat-stats", "Ledger.credits", "Ledger.codex"], rows.Select(row => row.Name));
         Assert.All(rows, row => Assert.True(row.Bounds.Height >= TypeScale.MinimumTarget));
         Assert.True(Shows(list, "BGS WORK"));
         Assert.True(Shows(list, "The work done for minor factions since the BGS tick."));
@@ -242,6 +245,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
             ("Ledger.bgs-work", "BGS work", typeof(BgsWorkPage)),
             ("Ledger.combat-stats", "Combat stats", typeof(CombatStatsPage)),
             ("Ledger.credits", "Credits", typeof(CreditsPage)),
+            ("Ledger.codex", "Codex", typeof(CodexPage)),
         })
         {
             Press(In<Button>(view).Single(button => button.Name == row));
@@ -275,7 +279,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
         var underLedgers = view.Nav.Destinations.Where(destination => destination.Root.Key == LedgersPage.RootKey).ToList();
         Assert.Equal(
-            ["Ledgers (Commander)", "BGS work (Ledgers)", "Combat stats (Ledgers)", "Credits (Ledgers)"],
+            ["Ledgers (Commander)", "BGS work (Ledgers)", "Combat stats (Ledgers)", "Credits (Ledgers)", "Codex (Ledgers)"],
             underLedgers.Select(destination => destination.Describe()));
         Assert.Equal(underLedgers.Count - 1, LedgersPage.Rows(view.Nav).Count);
 

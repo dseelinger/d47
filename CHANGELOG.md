@@ -8,9 +8,11 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-Commander now has a Ledgers sub-tab between This session and Commanders, on the desktop and on the big panel. It lists BGS work, Combat stats and Credits, each with a one-line description. Press one to open its page; the breadcrumb, such as "Ledgers › Credits", takes you back to the list, and each page can still be opened by name.
+Commander now has a Ledgers sub-tab between This session and Commanders, on the desktop and on the big panel. It lists BGS work, Combat stats, Credits and Codex, each with a one-line description. Press one to open its page; the breadcrumb, such as "Ledgers › Credits", takes you back to the list, and each page can still be opened by name.
 
 Ledgers has a Credits page. It shows where your credits came from and went, from the journals on this PC, for the last 24 hours, 7 days, 30 days or everything: totals for what you earned, what you spent, what moved to or from your carrier, the gaps between the journal and the game's own balance, and your balance, then one row per kind. Press a heading to sort and the panel search narrows by kind or journal event. Press a kind, or ALL TRANSACTIONS, to see the individual transactions with the balance after each; small gaps are folded into one row. While D47 is still reading your older journals the page says so, and if that reading failed a warning gives the time the ledger starts.
+
+Ledgers has a Codex page. It shows the codex entries in the journals on this PC for this trip (since you last sold exploration data), this session or everything: totals for entries, new entries, distinct entries and regions, then one row per region with its three largest subcategories. Press a region to see its entries grouped by subcategory, each with its system, body and position, the time, and whether it was new or already logged and when it was first. Press a heading to sort and the panel search narrows by entry, system or region. While D47 is still reading older journals the page says so, and if that did not finish it says where the record starts.
 
 Ledgers has a Combat stats page. It lists your kills and the credits they were awarded from the journals on this PC, for the last 24 hours, 7 days, 30 days or everything, grouped by enemy ship, your own ship, system or faction. Press a heading to sort, and the panel search narrows it by name. While D47 is still reading your older journals the page says so, and if that reading failed a warning gives the time the counts start at. The big panel's sub-tabs sit closer together.
 
