@@ -68,6 +68,34 @@ internal sealed class OpenAiEndpoint : IDisposable
     public Task<HttpResponseMessage> GetAsync(string path, CancellationToken cancellationToken) =>
         _http.GetAsync($"{BaseUrl}{path}", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
+    /// <summary>The scheme, host and port of <see cref="BaseUrl"/>, which server-wide APIs hang off.</summary>
+    public string Root =>
+        Uri.TryCreate(BaseUrl, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : BaseUrl;
+
+    /// <summary>A GET of <paramref name="path"/> under <see cref="Root"/> rather than <see cref="BaseUrl"/>.</summary>
+    public Task<HttpResponseMessage> GetFromRootAsync(string path, CancellationToken cancellationToken) =>
+        _http.GetAsync($"{Root}{path}", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+    /// <summary>A POST of <paramref name="body"/> to <paramref name="path"/> under <see cref="Root"/>.</summary>
+    public Task<HttpResponseMessage> PostToRootAsync(string path, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{Root}{path}")
+        {
+            Content = new ReadOnlyMemoryContent(body),
+        };
+
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        return SendDisposingAsync(request, cancellationToken);
+    }
+
+    private async Task<HttpResponseMessage> SendDisposingAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        using (request)
+        {
+            return await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     public void Dispose()
     {
         if (_ownsClient)

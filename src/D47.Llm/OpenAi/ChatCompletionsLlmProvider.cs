@@ -8,7 +8,7 @@ namespace D47.Llm.OpenAi;
 /// A model on a machine the Commander controls, over Chat Completions (Phase 29, "A turn answered by a
 /// machine you own").
 /// </summary>
-public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
+public sealed class ChatCompletionsLlmProvider : ILlmProvider, IModelLoader, IDisposable
 {
     private readonly OpenAiEndpoint _endpoint;
 
@@ -52,6 +52,18 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
     /// <summary>The models this endpoint says it serves, or nothing if it will not say.</summary>
     public Task<EndpointModels> ListModelsAsync(CancellationToken cancellationToken) =>
         EndpointHandshake.ListModelsAsync(_endpoint, cancellationToken);
+
+    /// <summary>LM Studio's report of the model's loaded context, asked only of a server on this machine.</summary>
+    public async Task<LoadedContext?> LoadedContextAsync(string model, CancellationToken cancellationToken) =>
+        RunsOnThisMachine
+            ? (await LmStudioModels.ReadAsync(_endpoint, model, cancellationToken).ConfigureAwait(false))?.Context
+            : null;
+
+    /// <summary>Reloads the model in LM Studio with <paramref name="tokens"/> of context, only on this machine.</summary>
+    public Task<ContextReload> ReloadAsync(string model, int tokens, CancellationToken cancellationToken) =>
+        RunsOnThisMachine
+            ? LmStudioModels.ReloadAsync(_endpoint, model, tokens, cancellationToken)
+            : Task.FromResult(new ContextReload(false, null));
 
     public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
         LlmRequest request,
@@ -579,7 +591,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IDisposable
     /// The error body, reduced to what the endpoint actually said, and the context size it named if it
     /// refused the prompt as too long.
     /// </summary>
-    private static async Task<(string? Detail, int? Context, int? PromptTokens)> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    internal static async Task<(string? Detail, int? Context, int? PromptTokens)> ReadDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         string raw;
 
