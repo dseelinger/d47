@@ -214,9 +214,12 @@ internal sealed class StoryFixtures : IDisposable
         Director.WritingAgain += WritingAgain.Add;
     }
 
-    /// <summary>The same rounds once for every draft a chapter gets, for a chapter whose every draft fails.</summary>
+    /// <summary>
+    /// The rounds for a chapter whose every draft fails after its first round, which is the spine. Draft 2 reuses draft 1's
+    /// spine, so it has no spine round.
+    /// </summary>
     public static IReadOnlyList<LlmStreamEvent>[] EveryDraft(params string[] rounds) =>
-        [.. Enumerable.Repeat(rounds, StoryDirector.Drafts).SelectMany(draft => draft).Select(round => RoundScriptedLlmProvider.Saying(round))];
+        [.. Enumerable.Range(1, StoryDirector.Drafts).SelectMany(draft => draft == 2 ? rounds.Skip(1) : rounds).Select(round => RoundScriptedLlmProvider.Saying(round))];
 
     /// <summary>What the director said before each draft after the first, oldest first.</summary>
     public List<string> WritingAgain { get; } = [];

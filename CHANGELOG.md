@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter or short story whose first draft failed after its outline was written now keeps that outline for the second draft, with the same title, and writes only the objectives again. The third draft writes a new outline, so an outline that is itself the problem does not hold every draft. A draft whose outline could not be read still gets a new one.
+
 A story or chapter draft with objectives that cannot stand is now fixed one objective at a time. The objectives that passed the check are kept exactly as written, and only the refused ones are written again, in up to two rounds, so rewriting one objective no longer breaks another that had passed. The log now records every refusal with its draft and round.
 
 A story chapter no longer fails because a line names a speaker the story does not have. The chapter request now lists the story's speaker ids, and a line given to a cast member's full name, first name or last name is matched to that member. A name that fits two members, or nobody, is still refused.

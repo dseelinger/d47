@@ -35,6 +35,7 @@ public enum AdventureLength
 /// <summary>
 /// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
 /// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
+/// When <see cref="Outline"/> is set, the spine step is skipped and the objectives are written against it.
 /// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
@@ -46,7 +47,11 @@ public sealed record AdventureAsk(
     AdventureRewrite? Rewrite = null,
     string? LastDraftRefused = null,
     StoryProgress? Progress = null,
-    int Draft = 1);
+    int Draft = 1,
+    AdventureOutline? Outline = null);
+
+/// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
+public sealed record AdventureOutline(string Name, AdventureSpine Spine);
 
 /// <summary>
 /// A begun chapter whose beats from <see cref="From"/> on are to be written again; the beats before it are kept.
@@ -196,6 +201,9 @@ public sealed record AdventureOutcome(Adventure? Draft, string? Reply, string? R
     /// <summary>Whether another draft may stand: an internal failure other than the endpoint's context running out.</summary>
     public bool Redraftable => Draft is null && Internal && ContextMessage is null;
 
+    /// <summary>The name and spine of a failed draft whose spine was read; null when none was.</summary>
+    public AdventureOutline? Outline { get; init; }
+
     /// <summary>What the next draft is told was wrong with this one; null when no answer came back to be wrong.</summary>
     public string? ForNextDraft => Unanswered ? null : Refusal;
 
@@ -336,7 +344,7 @@ public sealed class AdventureGenerator(
             // A throw counts as a failed draft, as it does for a chapter.
             try
             {
-                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft }, now, cancellationToken).ConfigureAwait(false);
+                last = await GenerateAsync(ask with { LastDraftRefused = last?.ForNextDraft, Draft = draft, Outline = draft == 2 ? last?.Outline : null }, now, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
@@ -399,24 +407,36 @@ public sealed class AdventureGenerator(
             return await FinishAsync(ask, facts, notable, candidates, rewrite.Chapter.Name, spoken, tail, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
         }
 
-        Enter(ask, WriteStage.Outline);
-        var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        string name;
+        AdventureSpine spine;
 
-        if (spineAsked.Json is null)
+        if (ask.Outline is { } kept)
         {
-            if (cancellationToken.IsCancellationRequested)
+            (name, spine) = (kept.Name, kept.Spine);
+        }
+        else
+        {
+            Enter(ask, WriteStage.Outline);
+            var spineAsked = await AskJsonAsync(SpineStep, SpineInstruction(ask, facts, notable, candidates), SpineOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+
+            if (spineAsked.Json is null)
             {
-                return AdventureOutcome.Stopped;
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return AdventureOutcome.Stopped;
+                }
+
+                return Failed(null, "The model did not write a story.", notes, started, spineAsked) with { Unanswered = true };
             }
 
-            return Failed(null, "The model did not write a story.", notes, started, spineAsked) with { Unanswered = true };
-        }
+            var read = ReadSpine(spineAsked.Json, out var readName);
 
-        var spine = ReadSpine(spineAsked.Json, out var name);
+            if (read is null || readName is null)
+            {
+                return Failed(null, "The model's answer was not a story I could read.", notes, started, spineAsked);
+            }
 
-        if (spine is null || name is null)
-        {
-            return Failed(null, "The model's answer was not a story I could read.", notes, started, spineAsked);
+            (name, spine) = (readName, read);
         }
 
         Enter(ask, WriteStage.Objectives);
@@ -427,7 +447,9 @@ public sealed class AdventureGenerator(
             ask.Progress,
             cancellationToken).ConfigureAwait(false);
 
-        return await FinishAsync(ask, facts, notable, candidates, name, spine, beatsAsked, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
+        var finished = await FinishAsync(ask, facts, notable, candidates, name, spine, beatsAsked, previous: null, now, notes, started, cancellationToken).ConfigureAwait(false);
+
+        return finished.Draft is null && finished.Internal ? finished with { Outline = new AdventureOutline(name, spine) } : finished;
     }
 
     /// <summary>Reasoning with the AI about a draft before it is accepted.</summary>

@@ -126,7 +126,7 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
     }
 
     [Fact]

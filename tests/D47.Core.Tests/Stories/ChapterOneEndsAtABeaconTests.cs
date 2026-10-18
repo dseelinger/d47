@@ -66,7 +66,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
         Assert.Contains($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {Beacon}", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
         Assert.Empty(fixtures.Stories.Current("F1")!.Chapters);
@@ -85,7 +85,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
         Assert.Contains("The last objective must be \"beacon\"", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
     }
@@ -99,7 +99,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         var refusal = await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None);
 
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
-        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts, fixtures.Provider.CallCount);
+        Assert.Equal((2 + AdventureGenerator.RepairRounds) * StoryDirector.Drafts - 1, fixtures.Provider.CallCount);
         Assert.Contains("Objective 1 (Too Soon) is a \"beacon\" objective; only the last objective of the chapter that ends act one may be one.", fixtures.LastRefusal);
         Assert.DoesNotContain("Beat 3", fixtures.LastRefusal);
         Assert.Empty(fixtures.Book.Store.For("F1"));
