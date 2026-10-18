@@ -1555,7 +1555,16 @@ public static class JournalCapability
         foreach (var pair in named)
         {
             var place = work.NameOf(pair.Key.SystemAddress) ?? "a system not in your recent journals";
-            report.AppendLine($"{pair.Key.Faction} in {place}: {string.Join("; ", BgsKinds(pair))}.");
+            var kinds = BgsKinds(pair).ToList();
+
+            if (tick is { } boundary
+                && work.NameOf(pair.Key.SystemAddress) is { } systemName
+                && active.Standings.InfluenceAcross(systemName, pair.Key.Faction, boundary) is { } across)
+            {
+                kinds.Add(InfluenceClause(across));
+            }
+
+            report.AppendLine($"{pair.Key.Faction} in {place}: {string.Join("; ", kinds)}.");
         }
 
         if (pairs.Count > named.Count)
@@ -1579,6 +1588,17 @@ public static class JournalCapability
                 _ => $"{minutes / 60} hours ago",
             };
         }
+    }
+
+    private static string InfluenceClause(InfluenceAcrossResult across)
+    {
+        var before = (across.Before * 100).ToString("0.0", CultureInfo.InvariantCulture);
+        var after = (across.After * 100).ToString("0.0", CultureInfo.InvariantCulture);
+        var seen = across.LastSeen.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
+
+        return before == after
+            ? $"influence {before}%, unchanged when you were there at {seen} UTC"
+            : $"influence {before}% before the tick, {after}% when you were there at {seen} UTC";
     }
 
     private static IEnumerable<string> BgsKinds(IEnumerable<BgsEntry> entries)

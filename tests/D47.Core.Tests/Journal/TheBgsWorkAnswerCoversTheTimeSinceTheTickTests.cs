@@ -77,6 +77,44 @@ public class TheBgsWorkAnswerCoversTheTimeSinceTheTickTests
         Assert.DoesNotContain("Alpha Mining", said, StringComparison.Ordinal);
     }
 
+    private static string Visit(string time, double influence) =>
+        "{\"timestamp\":\"" + time + "\",\"event\":\"FSDJump\",\"StarSystem\":\"Alpha\",\"SystemAddress\":1,\"Factions\":"
+        + "[{\"Name\":\"Alpha Mining\",\"Influence\":" + influence.ToString(System.Globalization.CultureInfo.InvariantCulture) + "}]}";
+
+    private const string LateSale =
+        """{"timestamp":"2026-10-10T11:00:00Z","event":"MarketSell","MarketID":100,"Type":"gold","Count":10,"SellPrice":50000,"TotalSale":500000,"AvgPricePaid":40000}""";
+
+    [Fact]
+    public async Task InfluenceBeforeTheTickAndAtTheLatestVisitIsAddedToTheLine()
+    {
+        var store = Store(Commander, Docked, Visit("2026-10-10T10:10:00Z", 0.231), LateSale, Visit("2026-10-10T12:02:00Z", 0.24));
+
+        var said = await Ask(store, Tick, Tick.AddHours(3));
+
+        Assert.Contains("influence 23.1% before the tick, 24.0% when you were there at 12:02 UTC.", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EqualInfluenceIsSaidAsUnchanged()
+    {
+        var store = Store(Commander, Docked, Visit("2026-10-10T10:10:00Z", 0.231), LateSale, Visit("2026-10-10T12:02:00Z", 0.231));
+
+        var said = await Ask(store, Tick, Tick.AddHours(3));
+
+        Assert.Contains("influence 23.1%, unchanged when you were there at 12:02 UTC.", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WithoutATickTimeNoInfluenceIsAdded()
+    {
+        var store = Store(Commander, Docked, Visit("2026-10-10T10:10:00Z", 0.231), LateSale, Visit("2026-10-10T12:02:00Z", 0.24));
+
+        var said = await Ask(store, null, Tick.AddHours(3));
+
+        Assert.Contains("Alpha Mining in Alpha", said, StringComparison.Ordinal);
+        Assert.DoesNotContain("influence", said, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task NothingInThePeriodSaysSo()
     {

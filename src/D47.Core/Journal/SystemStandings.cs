@@ -31,10 +31,28 @@ public sealed record SystemReading(
         Factions.FirstOrDefault(f => string.Equals(f.Name, faction, StringComparison.OrdinalIgnoreCase))?.Influence;
 }
 
+/// <summary>A run of consecutive readings with the same factions and conflicts, with its first and last sighting.</summary>
+public sealed record StandingsSpan(
+    DateTimeOffset FirstSeen,
+    DateTimeOffset LastSeen,
+    IReadOnlyList<FactionInfluence> Factions,
+    IReadOnlyList<SystemConflict> Conflicts)
+{
+    public double? InfluenceOf(string faction) =>
+        Factions.FirstOrDefault(f => string.Equals(f.Name, faction, StringComparison.OrdinalIgnoreCase))?.Influence;
+
+    internal bool Holds(SystemReading reading) =>
+        Factions.SequenceEqual(reading.Factions) && Conflicts.SequenceEqual(reading.Conflicts);
+}
+
+/// <summary>A faction's influence in the span before a boundary and in the latest span, with the latest span's last sighting.</summary>
+public readonly record struct InfluenceAcrossResult(double Before, double After, DateTimeOffset LastSeen);
+
 /// <summary>
 /// The factions' influence and the conflicts in each system the Commander has been in, folded from the
 /// <c>Factions</c> and <c>Conflicts</c> of <c>Location</c>, <c>FSDJump</c> and <c>CarrierJump</c>.
-/// Each system keeps its last reading and the last reading from the UTC day before it.
+/// Each system keeps its last reading and the last reading from the UTC day before it, and the spans of
+/// distinct readings from the seven days before its newest one.
 /// </summary>
 public sealed record SystemStandings
 {
@@ -42,6 +60,11 @@ public sealed record SystemStandings
 
     private ImmutableDictionary<string, ImmutableList<SystemReading>> Readings { get; init; } =
         ImmutableDictionary.Create<string, ImmutableList<SystemReading>>(StringComparer.OrdinalIgnoreCase);
+
+    private ImmutableDictionary<string, ImmutableList<StandingsSpan>> Spans { get; init; } =
+        ImmutableDictionary.Create<string, ImmutableList<StandingsSpan>>(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly TimeSpan SpansKept = TimeSpan.FromDays(7);
 
     public bool IsKnown => !Readings.IsEmpty;
 
@@ -73,6 +96,31 @@ public sealed record SystemStandings
             ? now - before
             : null;
 
+    /// <summary>
+    /// A faction's influence in the newest span first seen before <paramref name="boundary"/> and in the latest span.
+    /// Null when no span starts before the boundary, the latest span was last seen before it, or either span lacks the faction.
+    /// </summary>
+    public InfluenceAcrossResult? InfluenceAcross(string system, string faction, DateTimeOffset boundary)
+    {
+        ArgumentNullException.ThrowIfNull(system);
+        ArgumentNullException.ThrowIfNull(faction);
+
+        if (!Spans.TryGetValue(system, out var spans) || spans.Count == 0)
+        {
+            return null;
+        }
+
+        var latest = spans[^1];
+        var before = spans.LastOrDefault(span => span.FirstSeen < boundary);
+
+        return before is not null
+            && latest.LastSeen >= boundary
+            && before.InfluenceOf(faction) is { } was
+            && latest.InfluenceOf(faction) is { } now
+                ? new InfluenceAcrossResult(was, now, latest.LastSeen)
+                : null;
+    }
+
     public SystemStandings Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
@@ -98,7 +146,29 @@ public sealed record SystemStandings
         var reading = new SystemReading(journalEvent.Timestamp, factions, conflicts);
         var held = Readings.TryGetValue(system, out var existing) ? existing : [];
 
-        return this with { Readings = Readings.SetItem(system, Remember(held, reading)) };
+        var remembered = Remember(held, reading);
+
+        if (ReferenceEquals(remembered, held))
+        {
+            return this;
+        }
+
+        var spans = Spans.TryGetValue(system, out var current) ? current : [];
+
+        return this with
+        {
+            Readings = Readings.SetItem(system, remembered),
+            Spans = Spans.SetItem(system, Spanned(spans, reading)),
+        };
+    }
+
+    private static ImmutableList<StandingsSpan> Spanned(ImmutableList<StandingsSpan> spans, SystemReading reading)
+    {
+        var grown = !spans.IsEmpty && spans[^1].Holds(reading)
+            ? spans.SetItem(spans.Count - 1, spans[^1] with { LastSeen = reading.SeenAt })
+            : spans.Add(new StandingsSpan(reading.SeenAt, reading.SeenAt, reading.Factions, reading.Conflicts));
+
+        return grown.RemoveAll(span => span.LastSeen < reading.SeenAt - SpansKept);
     }
 
     private static ImmutableList<SystemReading> Remember(ImmutableList<SystemReading> held, SystemReading reading)

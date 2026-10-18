@@ -322,12 +322,15 @@ entries first, and the rest are counted:
 
 ```text
 Since the BGS tick at 16:14 UTC, 3 hours ago:
-Diamond Frogs in HIP 97704: missions +5 and -1; bounties 117,480 credits; trade 2,400,000 credits sold for 310,000 profit; cartography 506,832 credits.
+Diamond Frogs in HIP 97704: missions +5 and -1; bounties 117,480 credits; trade 2,400,000 credits sold for 310,000 profit; cartography 506,832 credits; influence 23.1% before the tick, 24.0% when you were there at 18:02 UTC.
 and 4 more factions.
 ```
 
-Name a faction or a system and only the matching pairs come back, all of them. The answer is the
-work done, not the influence it produced.
+Name a faction or a system and only the matching pairs come back, all of them. When a tick time is
+known and your journals hold a reading from before it and one from after, each line adds the faction's
+influence before the tick and at your latest visit, or "unchanged" when the two readings agree. Elite
+updates systems for some hours after the tick, so that is what the readings showed, not a result of
+your work.
 
 **Your career statistics**, from the journal's `Statistics` event — every section Elite writes, or
 one section named, with each figure under a readable name and in its unit — credits, Merc Coins,
