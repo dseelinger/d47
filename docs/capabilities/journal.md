@@ -314,6 +314,21 @@ Balance at session start: 1,000,000 cr.
 Every figure is a sum of amounts Elite reported. Nothing comes from a price table or a market
 lookup, so the numbers are the ones you would recognise.
 
+**The BGS work you have done**, per system and faction, since the last BGS tick — *"what's my BGS
+work"*, *"what have I done for the BGS"*. It comes from the last seven days of your journals, so it
+survives a restart. With no tick time it covers the last 24 hours and says so, naming the BGS tick
+time setting in Galaxy. At most three system and faction pairs are named, the one with the most
+entries first, and the rest are counted:
+
+```text
+Since the BGS tick at 16:14 UTC, 3 hours ago:
+Diamond Frogs in HIP 97704: missions +5 and -1; bounties 117,480 credits; trade 2,400,000 credits sold for 310,000 profit; cartography 506,832 credits.
+and 4 more factions.
+```
+
+Name a faction or a system and only the matching pairs come back, all of them. The answer is the
+work done, not the influence it produced.
+
 **Your career statistics**, from the journal's `Statistics` event — every section Elite writes, or
 one section named, with each figure under a readable name and in its unit — credits, Merc Coins,
 light years, or hours and minutes:
@@ -490,6 +505,12 @@ schema:
 yet sold: `get_unsold_exploration` answers the total, and `clear_unsold_exploration` sets it to zero.
 The clear is Protected: the keyword phrase, the panel and a hotkey reach it, and the model is
 refused.
+
+`get_bgs_work` takes an optional faction and system, each compared without regard to case:
+
+```json
+{"type":"object","properties":{"faction":{"type":"string","description":"Report only the work done for this faction. Omit for every faction."},"system":{"type":"string","description":"Report only the work done in this system. Omit for every system."}},"required":[],"additionalProperties":false}
+```
 
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):

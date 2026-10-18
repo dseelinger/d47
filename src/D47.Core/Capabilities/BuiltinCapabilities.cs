@@ -281,7 +281,7 @@ public static class BuiltinCapabilities
             phraseBook ?? (() => PhraseBook.From(registry(), [])),
             () => gameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? learnedPhrases?.For(fid) ?? [] : []),
         DiagnosticsCapability.Create(paths, files ?? new Storage.DiskFileSystem(), verbosity, settings, version, coverage, history, ticking),
-        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus),
+        JournalCapability.Create(gameState, () => history?.State ?? Journal.HistoryState.Done, route, cartography, now, crimes, liveStatus, bgsTick),
         CrewCapability.Create(() => gameState.Active),
         CarrierCapability.Create(() => gameState.Active, now ?? (() => DateTimeOffset.MinValue)),
         GalaxyCapability.Create(

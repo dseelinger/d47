@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking "what's my BGS work" now reports the work you have done since the last BGS tick, per system and faction: mission influence marks, bounty and combat bond vouchers, trade sold and its profit, and cartographic and organic data sold. It names the three busiest system and faction pairs and counts the rest, and a faction or system narrows it. With no tick time it covers the last 24 hours and says so.
+
 Web search now works with the OpenAI provider pointed at xAI (`https://api.x.ai/v1`), and the Privacy and egress section names `api.x.ai` as the host that runs the search. Requests to xAI no longer include a reasoning setting, which its Grok models refuse.
 
 The story progress bar and its time hint now use slower times for a model on your own PC: "Usually ready in about 75 seconds" for a short story and 130 for a chapter, instead of 40 seconds for both. Models d47 has measured keep their own times.

@@ -31,7 +31,8 @@ public static class JournalCapability
         CartographyLedger? cartography = null,
         Func<DateTimeOffset>? now = null,
         OutstandingCrimes? crimes = null,
-        Func<GameStatus>? liveStatus = null)
+        Func<GameStatus>? liveStatus = null,
+        Func<DateTimeOffset?>? bgsTick = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -99,6 +100,9 @@ public static class JournalCapability
                 new("session summary", "get_session_summary"),
                 new("how have i done", "get_session_summary"),
                 new("this session", "get_session_summary"),
+                new("bgs work", "get_bgs_work"),
+                new("my bgs work", "get_bgs_work"),
+                new("what have i done for the bgs", "get_bgs_work"),
                 new("my career statistics", "get_commander_statistics"),
                 new("my career stats", "get_commander_statistics"),
                 new("commander statistics", "get_commander_statistics"),
@@ -246,6 +250,33 @@ public static class JournalCapability
                         + "jumps made, distance travelled, materials gained and bodies scanned.",
                     Commands = Asking(Done),
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeSession(gameState))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_bgs_work",
+                    Description =
+                        "Report the BGS work the Commander has done since the last BGS tick, per system and "
+                        + "faction: mission influence marks, bounty and combat bond vouchers, trade sold and its "
+                        + "profit, and cartographic and organic data sold. It reports the work done, not the "
+                        + "influence it produced.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "faction",
+                            Type = ToolParameterType.String,
+                            Description = "Report only the work done for this faction. Omit for every faction.",
+                        },
+                        new ToolParameter
+                        {
+                            Name = "system",
+                            Type = ToolParameterType.String,
+                            Description = "Report only the work done in this system. Omit for every system.",
+                        },
+                    ],
+                    Commands = Asking(BgsWorkQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow))),
                 },
                 new ToolDefinition
                 {
@@ -458,6 +489,11 @@ public static class JournalCapability
     [
         "how have i done this session", "how have i done", "session summary",
         "how has this session gone", "what have i done this session",
+    ];
+
+    private static readonly string[] BgsWorkQuestions =
+    [
+        "bgs work", "my bgs work", "what have i done for the bgs",
     ];
 
     private static readonly string[] MercCoins =
@@ -1470,6 +1506,124 @@ public static class JournalCapability
             {
                 into.Add($"{amount:N0} {label}");
             }
+        }
+    }
+
+    private const int BgsPairsNamed = 3;
+
+    private static string DescribeBgsWork(
+        GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var from = tick ?? now - TimeSpan.FromHours(24);
+        var work = active.BgsWork;
+        var faction = arguments.TryGetString("faction", out var factionAsked) && !string.IsNullOrWhiteSpace(factionAsked)
+            ? factionAsked.Trim()
+            : null;
+        var system = arguments.TryGetString("system", out var systemAsked) && !string.IsNullOrWhiteSpace(systemAsked)
+            ? systemAsked.Trim()
+            : null;
+
+        var pairs = work.Entries
+            .Where(entry => entry.At >= from)
+            .GroupBy(entry => (entry.SystemAddress, entry.Faction))
+            .Where(group => faction is null || string.Equals(group.Key.Faction, faction, StringComparison.OrdinalIgnoreCase))
+            .Where(group => system is null
+                || string.Equals(work.NameOf(group.Key.SystemAddress), system, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(group => group.Count())
+            .ToList();
+
+        var tickTime = tick is { } at ? at.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture) : null;
+
+        if (pairs.Count == 0)
+        {
+            return tickTime is null ? "No BGS work in the last 24 hours." : $"No BGS work since the tick at {tickTime} UTC.";
+        }
+
+        var report = new StringBuilder();
+
+        report.AppendLine(tickTime is null
+            ? "In the last 24 hours. d47 does not know when the BGS tick was; the BGS tick time setting in Galaxy lets it ask."
+            : $"Since the BGS tick at {tickTime} UTC, {Ago(now - from)}:");
+
+        var named = faction is null && system is null ? pairs.Take(BgsPairsNamed).ToList() : pairs;
+
+        foreach (var pair in named)
+        {
+            var place = work.NameOf(pair.Key.SystemAddress) ?? "a system not in your recent journals";
+            report.AppendLine($"{pair.Key.Faction} in {place}: {string.Join("; ", BgsKinds(pair))}.");
+        }
+
+        if (pairs.Count > named.Count)
+        {
+            var more = pairs.Count - named.Count;
+            report.AppendLine($"and {more} more faction{(more == 1 ? "" : "s")}.");
+        }
+
+        return report.ToString().TrimEnd();
+
+        static string Ago(TimeSpan age)
+        {
+            var minutes = (long)Math.Max(0, Math.Floor(age.TotalMinutes));
+
+            return minutes switch
+            {
+                0 => "less than a minute ago",
+                1 => "1 minute ago",
+                < 60 => $"{minutes} minutes ago",
+                < 120 => "1 hour ago",
+                _ => $"{minutes / 60} hours ago",
+            };
+        }
+    }
+
+    private static IEnumerable<string> BgsKinds(IEnumerable<BgsEntry> entries)
+    {
+        var all = entries.ToList();
+        var up = all.Where(entry => entry is { Kind: BgsWorkKind.Mission, Amount: > 0 }).Sum(entry => entry.Amount);
+        var down = -all.Where(entry => entry is { Kind: BgsWorkKind.Mission, Amount: < 0 }).Sum(entry => entry.Amount);
+        var marks = new List<string>();
+
+        if (up > 0)
+        {
+            marks.Add($"+{up}");
+        }
+
+        if (down > 0)
+        {
+            marks.Add($"-{down}");
+        }
+
+        if (marks.Count > 0)
+        {
+            yield return $"missions {string.Join(" and ", marks)}";
+        }
+
+        foreach (var (kind, label) in new[]
+        {
+            (BgsWorkKind.Bounty, "bounties"),
+            (BgsWorkKind.CombatBond, "combat bonds"),
+            (BgsWorkKind.Trade, "trade"),
+            (BgsWorkKind.Cartography, "cartography"),
+            (BgsWorkKind.Organic, "organic data"),
+        })
+        {
+            var ofKind = all.Where(entry => entry.Kind == kind).ToList();
+
+            if (ofKind.Count == 0)
+            {
+                continue;
+            }
+
+            var credits = ofKind.Sum(entry => entry.Amount).ToString("N0", CultureInfo.InvariantCulture);
+
+            yield return kind == BgsWorkKind.Trade
+                ? $"{label} {credits} credits sold for {ofKind.Sum(entry => entry.Profit).ToString("N0", CultureInfo.InvariantCulture)} profit"
+                : $"{label} {credits} credits";
         }
     }
 
