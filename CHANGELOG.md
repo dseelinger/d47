@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Asking "my combat stats" or "my kills" now reports the kills you have made and the credits awarded for them, from every journal on this PC. With no grouping it names the top ship type, system, own ship and faction; "by enemy", "by ship", "by system" or "by faction" names the top three and counts the rest, a period of a day, week or month limits it, and a name narrows it. Every answer says what it covers, such as "on record since 2 July 2025", and it waits until all your earlier journals have been read.
+
 D47 now remarks on combat milestones in the journals on this PC: the 100th, 250th, 500th and 1,000th kill and every 1,000th after, the first of a ship type, and a reward larger than every earlier one once there are ten kills. It says "on record" and speaks one remark per kill, ahead of the existing session remarks. It stays silent about them until all your earlier journals have been read.
 
 Asking "what's my BGS work" now reports the work you have done since the last BGS tick, per system and faction: mission influence marks, bounty and combat bond vouchers, trade sold and its profit, and cartographic and organic data sold. It names the three busiest system and faction pairs and counts the rest, and a faction or system narrows it. With no tick time it covers the last 24 hours and says so. Where your journals hold a reading of the system from before the tick and one from after, each line also gives the faction's influence before the tick and when you were last there.

@@ -515,6 +515,16 @@ refused.
 {"type":"object","properties":{"faction":{"type":"string","description":"Report only the work done for this faction. Omit for every faction."},"system":{"type":"string","description":"Report only the work done in this system. Omit for every system."}},"required":[],"additionalProperties":false}
 ```
 
+`get_combat_stats` answers how many kills the Commander has made and the credits awarded for them, from
+every journal on this PC. `by` groups by `enemy`, `ship`, `system` or `faction`, `period` limits it to the
+last `day`, `week` or `month`, and `name` narrows the grouping, without regard to case. With no `by` it
+gives the top entry of each grouping; with one it names the top three and counts the rest. Credits are
+the bounties and combat bonds awarded at the kill, not what was redeemed.
+
+```json
+{"type":"object","properties":{"by":{"type":"string","description":"The grouping to report. Omit for the top entry of each.","enum":["enemy","ship","system","faction"]},"name":{"type":"string","description":"Report only the entries of the grouping whose name contains this, without regard to case."},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default all.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
+```
+
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
 

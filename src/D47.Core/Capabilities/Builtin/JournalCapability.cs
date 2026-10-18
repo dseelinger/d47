@@ -100,6 +100,10 @@ public static class JournalCapability
                 new("session summary", "get_session_summary"),
                 new("how have i done", "get_session_summary"),
                 new("this session", "get_session_summary"),
+                new("combat stats", "get_combat_stats"),
+                new("combat statistics", "get_combat_stats"),
+                new("my kill stats", "get_combat_stats"),
+                new("my kills", "get_combat_stats"),
                 new("bgs work", "get_bgs_work"),
                 new("my bgs work", "get_bgs_work"),
                 new("what have i done for the bgs", "get_bgs_work"),
@@ -277,6 +281,41 @@ public static class JournalCapability
                     Commands = Asking(BgsWorkQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                         DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_combat_stats",
+                    Description =
+                        "Report the Commander's kills and the credits awarded for them, from every journal on this PC: "
+                        + "by enemy ship, by the Commander's own ship, by system and by faction. Credits are the bounties "
+                        + "and combat bonds awarded at the kill, not what was redeemed.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "by",
+                            Type = ToolParameterType.String,
+                            Description = "The grouping to report. Omit for the top entry of each.",
+                            AllowedValues = CombatGroupings,
+                        },
+                        new ToolParameter
+                        {
+                            Name = "period",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "The last day, week (7 days) or month (30 days) before now, or all of the record. Default all.",
+                            AllowedValues = CombatPeriods,
+                        },
+                        new ToolParameter
+                        {
+                            Name = "name",
+                            Type = ToolParameterType.String,
+                            Description = "Report only the entries of the grouping whose name contains this, without regard to case.",
+                        },
+                    ],
+                    Commands = Asking(CombatStatsQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeCombatStats(gameState, state(), arguments, now?.Invoke() ?? DateTimeOffset.UtcNow))),
                 },
                 new ToolDefinition
                 {
@@ -490,6 +529,19 @@ public static class JournalCapability
         "how have i done this session", "how have i done", "session summary",
         "how has this session gone", "what have i done this session",
     ];
+
+    private static readonly string[] CombatStatsQuestions =
+    [
+        "combat stats", "combat statistics", "my combat stats", "my combat statistics", "my kill stats", "my kills",
+    ];
+
+    private static readonly string[] CombatGroupings = ["enemy", "ship", "system", "faction"];
+
+    private static readonly string[] CombatPeriods = ["day", "week", "month", "all"];
+
+    private const int CombatEntriesNamed = 3;
+
+    private const string ConflictZoneKills = "ships in conflict zones";
 
     private static readonly string[] BgsWorkQuestions =
     [
@@ -1510,6 +1562,186 @@ public static class JournalCapability
     }
 
     private const int BgsPairsNamed = 3;
+
+    private readonly record struct CombatEntry(string Label, int Kills, long Awarded);
+
+    private static string DescribeCombatStats(
+        GameStateStore gameState, HistoryState history, ToolArguments arguments, DateTimeOffset now)
+    {
+        if (history is HistoryState.Pending or HistoryState.Running)
+        {
+            return "I have not finished reading the journal history yet.";
+        }
+
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        var by = arguments.TryGetString("by", out var grouping) ? grouping.Trim().ToLowerInvariant() : string.Empty;
+        var period = arguments.TryGetString("period", out var asked) ? asked.Trim().ToLowerInvariant() : "all";
+        var name = arguments.TryGetString("name", out var fragment) && !string.IsNullOrWhiteSpace(fragment)
+            ? fragment.Trim()
+            : null;
+
+        if (by.Length > 0 && !CombatGroupings.Contains(by))
+        {
+            return $"I can break combat stats down by {string.Join(", ", CombatGroupings)}.";
+        }
+
+        var (from, span) = period switch
+        {
+            "day" => ((DateTimeOffset?)(now - TimeSpan.FromHours(24)), "24 hours"),
+            "week" => (now - TimeSpan.FromDays(7), "7 days"),
+            "month" => (now - TimeSpan.FromDays(30), "30 days"),
+            _ => (null, string.Empty),
+        };
+
+        var record = active.Combat;
+        var slice = record.Since(from);
+        var unfinished = history is HistoryState.Failed or HistoryState.Stopped
+            ? "Reading the journal history did not finish, so this is only what the live journal shows."
+            : string.Empty;
+
+        if (slice.Kills == 0)
+        {
+            var none = from is null ? "No kills in the journals on this PC." : $"No kills in the last {span}.";
+
+            return unfinished.Length == 0 ? none : $"{none} {unfinished}";
+        }
+
+        var report = new StringBuilder();
+        var covers = from is null
+            ? record.OnRecordSince is { } since
+                ? $"On record since {since.UtcDateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)}"
+                : "On record"
+            : $"In the last {span}";
+
+        report.AppendLine(
+            $"{covers}: {slice.Kills.ToString("N0", CultureInfo.InvariantCulture)} {(slice.Kills == 1 ? "kill" : "kills")}, "
+            + $"{slice.Awarded.ToString("N0", CultureInfo.InvariantCulture)} credits awarded.");
+
+        var enemies = CombatEntries(slice.ByTarget, key => key is null ? ConflictZoneKills : record.TargetName(key));
+        var ships = CombatEntries(slice.ByVehicle, key => key.Vehicle switch
+        {
+            CombatVehicle.Srv => "in an SRV",
+            CombatVehicle.OnFoot => "on foot",
+            _ => (key.ShipId is { } id ? record.ShipName(id) : null) ?? "a ship not in your journals",
+        });
+        var systems = CombatEntries(
+            slice.BySystem, key => (key is { } address ? record.SystemName(address) : null) ?? "a system not in your journals");
+        var against = CombatEntries(slice.ByVictimFaction, key => key ?? "a faction not in your journals");
+        var paying = CombatEntries(slice.ByPayingFaction, key => key)
+            .OrderByDescending(entry => entry.Awarded)
+            .ToList();
+
+        switch (by)
+        {
+            case "enemy":
+                CombatList(report, enemies, name, "ship type", "ship types", bond: true);
+                break;
+            case "ship":
+                CombatList(report, ships, name, "ship", "ships");
+                break;
+            case "system":
+                CombatList(report, systems, name, "system", "systems");
+                break;
+            case "faction":
+                CombatList(report, against, name, "faction", "factions", heading: "Against");
+                CombatList(report, paying, name, "faction", "factions", heading: "Paid by", credits: true);
+                break;
+            default:
+                var tops = new List<string>();
+
+                if (enemies.Count > 0)
+                {
+                    tops.Add($"Most destroyed: {enemies[0].Label}, {enemies[0].Kills}.");
+                }
+
+                if (systems.Count > 0)
+                {
+                    tops.Add($"Most in {systems[0].Label}, {systems[0].Kills}.");
+                }
+
+                if (ships.Count > 0)
+                {
+                    tops.Add(ships[0].Label is "on foot" or "in an SRV"
+                        ? $"Most made {ships[0].Label}, {ships[0].Kills}."
+                        : $"Most from {ships[0].Label}, {ships[0].Kills}.");
+                }
+
+                if (against.Count > 0)
+                {
+                    tops.Add($"Most against {against[0].Label}, {against[0].Kills}.");
+                }
+
+                report.AppendLine(string.Join(' ', tops));
+                break;
+        }
+
+        report.Append(unfinished);
+
+        return report.ToString().TrimEnd();
+    }
+
+    /// <summary>The groups under their displayed names, groups that share a name merged, most kills first.</summary>
+    private static List<CombatEntry> CombatEntries<TKey>(
+        IReadOnlyList<CombatGroup<TKey>> groups, Func<TKey, string> label) =>
+        [
+            .. groups
+                .GroupBy(group => label(group.Key), StringComparer.Ordinal)
+                .Select(merged => new CombatEntry(merged.Key, merged.Sum(group => group.Kills), merged.Sum(group => group.Awarded)))
+                .OrderByDescending(entry => entry.Kills)
+                .ThenByDescending(entry => entry.Awarded),
+        ];
+
+    private static void CombatList(
+        StringBuilder report,
+        List<CombatEntry> entries,
+        string? name,
+        string singular,
+        string plural,
+        string? heading = null,
+        bool credits = false,
+        bool bond = false)
+    {
+        var matching = name is null
+            ? entries
+            : entries.Where(entry => entry.Label.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (matching.Count == 0)
+        {
+            report.AppendLine(name is null ? $"No {plural} recorded." : $"No {singular} matching {name}.");
+
+            return;
+        }
+
+        var named = name is null ? matching.Take(CombatEntriesNamed).ToList() : matching;
+        var parts = named.Select(entry => CombatEntryText(entry, credits, bond)).ToList();
+        var rest = matching.Count - named.Count;
+
+        if (rest > 0)
+        {
+            parts.Add($"and {rest} more {(rest == 1 ? singular : plural)}");
+        }
+
+        report.AppendLine((heading is null ? string.Empty : heading + ": ") + string.Join("; ", parts) + ".");
+    }
+
+    private static string CombatEntryText(CombatEntry entry, bool credits, bool bond)
+    {
+        var paid = entry.Awarded.ToString("N0", CultureInfo.InvariantCulture);
+        var kills = entry.Kills.ToString("N0", CultureInfo.InvariantCulture);
+
+        if (credits)
+        {
+            return $"{entry.Label}, {paid} credits";
+        }
+
+        return bond && entry.Label == ConflictZoneKills
+            ? $"{kills} in conflict zones, ship type not recorded, {paid} credits"
+            : $"{entry.Label}, {kills} {(entry.Kills == 1 ? "kill" : "kills")}, {paid} credits";
+    }
 
     private static string DescribeBgsWork(
         GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now)
