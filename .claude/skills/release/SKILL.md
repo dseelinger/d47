@@ -60,6 +60,10 @@ Release stamped with it, closes the installed d47, backs up its payload and `dat
 starts the app again if it was running. `data\` is backed up without the folders
 `DataBackup.LeftOut` names (downloads, recordings, logs, music, models), which no build changes.
 
+Both modes refuse while any other d47 is running outside the install, such as a test drive: a Debug
+build writes the installed `data\` from wherever it runs. Report the refusal and stop; do not close
+that copy.
+
 Relay what it prints. Remember three things from it: the version deployed, the version backed up,
 and whether it closed a running d47.
 
@@ -81,11 +85,11 @@ If it does not, restore and stop.
 pwsh -NoProfile -ExecutionPolicy Bypass -File .claude/skills/release/deploy-local.ps1 -Restore
 ```
 
-It closes the installed d47, saves the `data\` the deployed build wrote to
-`%LOCALAPPDATA%\d47-release-backup\replaced-data`, puts the backed-up payload and `data\` back, and
-starts the app again if it was running. Add `-Start` when the app is closed only because a deploy
-step stopped part way. Put the `replaced-data` path in the report: it is whatever the maintainer's
-play wrote during the release.
+It closes the installed d47, saves the `data\` the deployed build wrote to a dated
+`replaced-data-…` folder in `%LOCALAPPDATA%\d47-release-backup`, puts the backed-up payload and
+`data\` back, and starts the app again if it was running. Add `-Start` when the app is closed only
+because a deploy step stopped part way. Put the `replaced-data-…` path it prints in the report: it
+is whatever the maintainer's play wrote during the release.
 
 Restore when:
 
@@ -213,7 +217,7 @@ When the script exits 0:
 1. One line: the version published, the release URL
    (`https://github.com/dseelinger/d47/releases/tag/v<version>`), and the total time.
 2. One line on the local install: `deployed v<version>`, or `restored to v<previous>` with the
-   `replaced-data` path, or an unreleased version left installed with the restore command.
+   `replaced-data-…` path, or an unreleased version left installed with the restore command.
 3. The fixes, if there were any: a table of stage, test or step, the cause in a clause, and the
    commit subject.
 4. Anything still open: a test that failed only in the full run, a docs job that failed, a fix you

@@ -8,7 +8,7 @@
     stamped with it, closes the installed d47, backs up its payload and data\, mirrors the new payload
     in, runs --selftest on it and starts the app again if it was running.
 
-    Restore: closes the installed d47, saves its data\ to the backup's replaced-data folder, puts the
+    Restore: closes the installed d47, saves its data\ to a dated replaced-data folder in the backup, puts the
     backed-up payload and data\ back and starts the app again if it was running or -Start is passed.
     A failed selftest leaves the app closed, so the restore after one passes -Start when the deploy
     closed it.
@@ -126,6 +126,20 @@ if (-not (Test-Path (Join-Path $Installed 'd47.exe'))) {
     throw "No d47.exe at $Installed."
 }
 
+# A Debug build reads and writes the installed data\ from wherever it runs, so a test drive would
+# write into data\ while it is copied. A new install keeps its own data\.
+$others = @(Get-Process -Name d47 -ErrorAction SilentlyContinue | Where-Object {
+    $path = try { $_.Path } catch { $null }
+    -not ($path -and ($path.StartsWith($Installed + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        $path -like '*\d47-new-install\*'))
+})
+if ($others) {
+    $where = ($others | ForEach-Object {
+        try { "pid $($_.Id) at $($_.Path)" } catch { "pid $($_.Id)" }
+    }) -join '; '
+    throw "Another d47 is running ($where) and may write the installed data folder. Close it, then run this again."
+}
+
 if ($Restore) {
     $saved = Join-Path $Backup 'app'
     $versionFile = Join-Path $Backup 'version.txt'
@@ -138,7 +152,7 @@ if ($Restore) {
     $wasRunning = Stop-Installed
 
     $data = Join-Path $Installed 'data'
-    $replaced = Join-Path $Backup 'replaced-data'
+    $replaced = Join-Path $Backup ('replaced-data-{0:yyyyMMdd-HHmmss}-v{1}' -f (Get-Date), $was)
     Copy-Mirror $data $replaced $leftOut
     Write-Host "saved the data v$was wrote to $replaced"
 
@@ -160,6 +174,8 @@ else {
     if ($chosen.Count -ne 1) { throw 'Pass exactly one of -Patch, -Minor or -Version.' }
 
     # The same computation as tools\release.ps1. --match "v*" so an asset tag is not mistaken for a release.
+    & git -C $Repo fetch origin main --tags --quiet
+    if ($LASTEXITCODE -ne 0) { throw 'Could not reach origin.' }
     $latest = & git -C $Repo describe --tags --abbrev=0 --match 'v*' 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $latest) { throw 'No v* tag found.' }
     if ($latest -notmatch '^v(\d+)\.(\d+)\.(\d+)$') { throw "Newest v* tag '$latest' is not vX.Y.Z." }
@@ -202,8 +218,6 @@ else {
     Copy-Payload $Installed (Join-Path $Backup 'app')
     Copy-Mirror (Join-Path $Installed 'data') (Join-Path $Backup 'data') $leftOut
     Set-Content -Path (Join-Path $Backup 'version.txt') -Value $current -Encoding ascii
-    $stale = Join-Path $Backup 'replaced-data'
-    if (Test-Path $stale) { Remove-Item $stale -Recurse -Force }
     Write-Host "backed up v$current to $Backup"
 }
 
