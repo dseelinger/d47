@@ -53,7 +53,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private TextBlock? _pageTitle;
 
     /// <summary>The protected-row legend, shown under the page title when the place has one (#333).</summary>
-    private TextBlock? _areaLegend;
+    private DockPanel? _areaLegend;
 
     /// <summary>What the page says when a query leaves nothing on it.</summary>
     private StackPanel? _emptyBlock;
@@ -766,7 +766,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>What a protected row's bar means, said once per page rather than on every row (#333).</summary>
     internal const string ProtectedLegend =
-        "Rows marked ▌ are protected — D47 will not change them on your say-so alone.";
+        "Rows with a bar like this one are protected — D47 will not change them on your say-so alone.";
 
     /// <summary>Marks the page head, for a test to find it.</summary>
     public const string PageHeadName = "PageHead";
@@ -780,15 +780,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         var title = new TextBlock { TextWrapping = TextWrapping.Wrap };
         TitleText.Style(title, TypeScale.Heading, TitleRank.Screen);
 
-        var legend = new TextBlock
-        {
-            Text = ProtectedLegend,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 4, 0, 0),
-            IsVisible = false,
-        };
-        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        var legend = ProtectedLegendLine();
+        legend.Margin = new Thickness(0, 4, 0, 0);
+        legend.IsVisible = false;
 
         _pageCrumb = crumb;
         _pageTitle = title;

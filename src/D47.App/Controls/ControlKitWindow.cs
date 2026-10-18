@@ -294,7 +294,7 @@ public sealed class ControlKitWindow : Window
 
     private static Control GroupHead()
     {
-        var legend = Prose(SettingsView.ProtectedLegend, TypeScale.Secondary, ThemeManager.GreyKey);
+        var legend = SettingsView.ProtectedLegendLine();
 
         var (changed, _, _) = SettingsView.GroupHead(
             "Microphone",

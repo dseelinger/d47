@@ -169,6 +169,33 @@ public partial class SettingsView
         return bar;
     }
 
+    /// <summary>Marks the protected-row legend, for a test to find it.</summary>
+    public const string ProtectedLegendName = "ProtectedLegend";
+
+    /// <summary>The protected-row legend: a protected row's bar, then the line saying what it means.</summary>
+    internal static DockPanel ProtectedLegendLine()
+    {
+        var bar = new Border { Width = RowBarWidth };
+        Ink(bar, Border.BackgroundProperty, ThemeManager.AKey);
+
+        var text = new TextBlock
+        {
+            Text = ProtectedLegend,
+            FontSize = TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(RowHorizontalPadding, 0, 0, 0),
+        };
+        Ink(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var line = new DockPanel { Name = ProtectedLegendName };
+        DockPanel.SetDock(bar, Dock.Left);
+        line.Children.Add(bar);
+        line.Children.Add(text);
+
+        return line;
+    }
+
     /// <summary>A dropdown's tile: the value with its status line under it, and the chevron at the right.</summary>
     internal static (Button Tile, TextBlock Value, TextBlock Status) DropdownTile(string says) => DropdownTile(says, out _);
 

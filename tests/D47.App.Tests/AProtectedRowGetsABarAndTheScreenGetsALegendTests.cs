@@ -1,8 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Settings;
+using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using Xunit;
@@ -75,12 +78,50 @@ public class AProtectedRowGetsABarAndTheScreenGetsALegendTests
 
             var expected = settings.RowsForPlace(places[i].Id).Any(row => row.Protected);
 
-            var legend = host.View.GetVisualDescendants().OfType<TextBlock>()
-                .FirstOrDefault(block => block.Text == SettingsView.ProtectedLegend);
+            var legend = host.View.GetVisualDescendants().OfType<DockPanel>()
+                .FirstOrDefault(line => line.Name == SettingsView.ProtectedLegendName);
 
             Assert.True(legend is not null, $"{places[i].Title} drew no legend line at all");
             Assert.Equal(expected, legend!.IsVisible);
         }
+
+        host.Close();
+    }
+
+    /// <summary>The legend draws the bar it explains: the row bar's width and colour, beside the line.</summary>
+    [AvaloniaFact]
+    public void TheLegendDrawsTheProtectedRowsBar()
+    {
+        using var look = AppLook.Put();
+        var (settings, viewState, paths) = TestSurface.Create();
+        var host = SettingsHost.Open(settings, viewState, paths);
+
+        var places = SettingsLayout.Areas.SelectMany(area => area.Places).ToList();
+        var shown = Enumerable.Range(0, places.Count).First(i =>
+        {
+            host.View.ShowPlace(i);
+            Jobs();
+            return host.View.ActiveSection == i && settings.RowsForPlace(places[i].Id).Any(row => row.Protected);
+        });
+
+        var legend = host.View.GetVisualDescendants().OfType<DockPanel>()
+            .First(line => line.Name == SettingsView.ProtectedLegendName);
+        Assert.True(legend.IsVisible, $"{places[shown].Title} holds a protected row but hid the legend");
+
+        var accent = Assert.IsAssignableFrom<ISolidColorBrush>(Application.Current!.FindResource(ThemeManager.AKey)).Color;
+
+        var legendBar = Assert.Single(legend.Children.OfType<Border>());
+        Assert.Equal(SettingsView.RowBarWidth, legendBar.Width);
+        Assert.Equal(accent, Assert.IsAssignableFrom<ISolidColorBrush>(legendBar.Background).Color);
+
+        Assert.Contains(
+            host.View.GetVisualDescendants().OfType<Border>(),
+            border => border.BorderThickness is { Left: SettingsView.RowBarWidth, Top: 0, Right: 0, Bottom: 0 }
+                      && border.BorderBrush is ISolidColorBrush { Color: var color } && color == accent);
+
+        Assert.Contains(
+            legend.Children.OfType<TextBlock>(),
+            block => block.Text == SettingsView.ProtectedLegend);
 
         host.Close();
     }

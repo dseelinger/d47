@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The line under a settings page title that explains protected rows now draws the same orange bar a protected row carries, at the same left edge, instead of a small grey block character that looked nothing like it.
+
 The Commander's log no longer says no model is selected when the model setting is left on the provider's default. It now uses that default, as conversation does.
 
 Working out what a Commander's log would cost is now optional. **Write it** on the Logbook page is always available, and "write the log" works without a quote: with nothing quoted, D47 reads the chosen window and writes it in one step, then says what it cost. A window with nothing in it is still not written. Changing the span or the dates drops an earlier quote, so a quote is never spent on a different window.
