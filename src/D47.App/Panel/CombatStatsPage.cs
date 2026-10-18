@@ -58,10 +58,10 @@ public sealed record CombatStatsView(
     long Awarded,
     IReadOnlyList<CombatRow> Rows);
 
-/// <summary>Commander › Combat stats: the kills in the journals on this PC, grouped four ways (#1288).</summary>
+/// <summary>Commander › Ledgers › Combat stats: the kills in the journals on this PC, grouped four ways (#1288).</summary>
 public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 {
-    public const string RootKey = "combat-stats";
+    public const string PageKey = "combat-stats";
 
     public const string SummaryText = "Your kills and the credits they were awarded, from your journals.";
 

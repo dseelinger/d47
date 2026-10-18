@@ -60,7 +60,7 @@ public sealed record CreditTxView(
     IReadOnlyList<CreditTxRow> Rows,
     CreditTxRow? Fold);
 
-/// <summary>The rows behind Commander › Credits, built from a <see cref="CreditLedger"/> (#1289).</summary>
+/// <summary>The rows behind Commander › Ledgers › Credits, built from a <see cref="CreditLedger"/> (#1289).</summary>
 public static class CreditsModel
 {
     public const long SmallGap = 1000;

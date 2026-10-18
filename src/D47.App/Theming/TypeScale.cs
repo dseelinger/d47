@@ -42,6 +42,9 @@ public static class TypeScale
     /// </summary>
     public const double Secondary = 15;
 
+    /// <summary>A pressable row's one-line description beside its name.</summary>
+    public const double Description = 14;
+
     /// <summary>The value inside a stepper or an amount.</summary>
     public const double ControlLarge = 14;
 

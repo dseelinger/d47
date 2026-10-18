@@ -37,10 +37,10 @@ public sealed record BgsWorkRow(
     internal double? InfluenceChange => Influence is { } across ? across.After - across.Before : null;
 }
 
-/// <summary>Commander › BGS work: the work done for minor factions since the BGS tick, or in the last 24 hours (#1287).</summary>
+/// <summary>Commander › Ledgers › BGS work: the work done for minor factions since the BGS tick, or in the last 24 hours (#1287).</summary>
 public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 {
-    public const string RootKey = "bgs-work";
+    public const string PageKey = "bgs-work";
 
     public const string UnnamedSystem = "A system not in your recent journals";
 

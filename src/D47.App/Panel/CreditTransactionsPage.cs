@@ -11,7 +11,7 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Credits › a kind, or all transactions: one row per entry in the period (#1289).</summary>
+/// <summary>Commander › Ledgers › Credits › a kind, or all transactions: one row per entry in the period (#1289).</summary>
 public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFilterablePage
 {
     private static readonly string[] PanelColumns = ["150", "*", "210", "230"];

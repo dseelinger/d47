@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Missions, Standing, Statistics, This session, BGS work, Combat stats, Credits and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Missions, Standing, Statistics, This session, Ledgers and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -140,13 +140,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset);
 
-        host.Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(BgsWorkPage.RootKey, "BGS work")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
+        DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
     }
 
     public void EnableCombatStats(
@@ -158,13 +152,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset);
 
-        host.Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(CombatStatsPage.RootKey, "Combat stats")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
+        DeclareLedger(new NavCrumb(CombatStatsPage.PageKey, "Combat stats"));
     }
 
     public void EnableCredits(
@@ -185,14 +173,14 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             return _creditTransactions = new CreditTransactionsPage(state, history, now, choice, CreditsPage.KindOf(crumb.Key), headset);
         };
 
-        host.Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(CreditsPage.RootKey, "Credits")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
-        host.Nav.Declare(CreditsPage.RootKey, CreditsPage.AllCrumb);
+        DeclareLedger(new NavCrumb(CreditsPage.PageKey, "Credits"));
+    }
+
+    /// <summary>Furnishes the Ledgers root, once, and declares <paramref name="ledger"/> under it as a page that fills the strip.</summary>
+    private void DeclareLedger(NavCrumb ledger)
+    {
+        host.Furnish(PanelTab.Commander, BuildCommander, LedgersPage.Root);
+        host.Nav.Declare(LedgersPage.RootKey, ledger with { Whole = true });
     }
 
     public void EnableCommanders(CommanderRoster roster)
@@ -218,6 +206,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         var changed = _commanderClock?.Tick() ?? false;
         var root = host.Nav.RootKeyOf(PanelTab.Commander);
+        var trail = host.Nav.TrailOf(PanelTab.Commander);
+        var leaf = trail.Count > 0 ? trail[^1].Key : string.Empty;
 
         if (_missions is { } missions && root == MissionsPage.RootKey)
         {
@@ -239,17 +229,17 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= session.Tick();
         }
 
-        if (_bgsWork is { } bgsWork && root == BgsWorkPage.RootKey)
+        if (_bgsWork is { } bgsWork && leaf == BgsWorkPage.PageKey)
         {
             changed |= bgsWork.Tick();
         }
 
-        if (_combatStats is { } combatStats && root == CombatStatsPage.RootKey)
+        if (_combatStats is { } combatStats && leaf == CombatStatsPage.PageKey)
         {
             changed |= combatStats.Tick();
         }
 
-        if (root == CreditsPage.RootKey)
+        if (leaf == CreditsPage.PageKey || CreditsPage.IsTransactions(leaf))
         {
             changed |= _credits?.Tick() ?? false;
             changed |= _creditTransactions?.Tick() ?? false;
@@ -263,15 +253,16 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, BGS work, Combat stats, Credits, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
         crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
-        : crumb.Key == BgsWorkPage.RootKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
-        : crumb.Key == CombatStatsPage.RootKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
-        : (crumb.Key == CreditsPage.RootKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
+        : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav)
+        : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
+        : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
+        : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

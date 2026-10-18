@@ -19,7 +19,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Commander › BGS work as drawn: the empty page, the unknown-tick notice, the sort heading and the search (#1287).</summary>
+/// <summary>Commander › Ledgers › BGS work as drawn: the empty page, the unknown-tick notice, the sort heading and the search (#1287).</summary>
 public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-10-10T20:00:00Z", CultureInfo.InvariantCulture);
@@ -170,7 +170,7 @@ public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
     }
 
     [AvaloniaFact]
-    public void TheBigPanelListsBgsWorkAfterThisSessionAndGivesItsNoticeNoTile()
+    public void TheBigPanelOpensBgsWorkUnderLedgersAndGivesItsNoticeNoTile()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
@@ -189,14 +189,15 @@ public class TheBgsWorkPageShowsTheWorkOnTheCommanderTabTests
         new MiniPanelServices { Checklists = checklists, GameState = () => state }.Furnish(view);
 
         Assert.Equal(
-            ["Checklist", "Missions", "Standing", "Statistics", "This session", "BGS work", "Combat stats", "Credits"],
+            ["Checklist", "Missions", "Standing", "Statistics", "This session", "Ledgers"],
             view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
 
-        view.Tab = PanelTab.Commander;
-        view.Nav.SelectRoot(PanelTab.Commander, BgsWorkPage.RootKey);
+        Assert.True(view.Nav.Show(BgsWorkPage.PageKey));
         var window = new Window { Content = view, Width = 1280, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Ledgers", "BGS work"], view.Nav.Trail.Select(crumb => crumb.Word));
 
         var page = In<BgsWorkPage>(view).Single();
         Assert.Single(In<Notice>(page));

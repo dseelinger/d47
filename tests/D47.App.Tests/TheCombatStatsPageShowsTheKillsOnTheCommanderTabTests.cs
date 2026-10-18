@@ -18,7 +18,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Commander › Combat stats as drawn: the table, the history states and the sub-tab row (#1288).</summary>
+/// <summary>Commander › Ledgers › Combat stats as drawn: the table, the history states and its place under Ledgers (#1288).</summary>
 public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-10-10T20:00:00Z", CultureInfo.InvariantCulture);
@@ -145,7 +145,7 @@ public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
     }
 
     [AvaloniaFact]
-    public void TheBigPanelListsCombatStatsAfterBgsWorkWithTheTighterSubTabGap()
+    public void TheBigPanelOpensCombatStatsUnderLedgersWithTheTighterSubTabGap()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
@@ -164,15 +164,15 @@ public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
         new MiniPanelServices { Checklists = checklists, GameState = () => state, HistoryState = () => HistoryState.Done }.Furnish(view);
 
         Assert.Equal(
-            ["Checklist", "Missions", "Standing", "Statistics", "This session", "BGS work", "Combat stats", "Credits"],
+            ["Checklist", "Missions", "Standing", "Statistics", "This session", "Ledgers"],
             view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
 
-        view.Tab = PanelTab.Commander;
-        view.Nav.SelectRoot(PanelTab.Commander, CombatStatsPage.RootKey);
+        Assert.True(view.Nav.Show(CombatStatsPage.PageKey));
         var window = new Window { Content = view, Width = 1024, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
+        Assert.Equal(["Ledgers", "Combat stats"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CombatStatsPage>(view));
         Assert.Equal(16, view.FindControl<TextChoice>("ModeReadings")!.ItemSpacing);
 

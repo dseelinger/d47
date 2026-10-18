@@ -9,10 +9,10 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Credits: where the credits in the journals on this PC came from and went, by kind (#1289).</summary>
+/// <summary>Commander › Ledgers › Credits: where the credits in the journals on this PC came from and went, by kind (#1289).</summary>
 public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 {
-    public const string RootKey = "credits";
+    public const string PageKey = "credits";
 
     public const string AllKey = "credits-all";
 

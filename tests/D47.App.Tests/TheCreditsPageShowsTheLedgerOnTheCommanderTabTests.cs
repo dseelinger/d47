@@ -18,7 +18,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Commander › Credits as drawn: the kinds table, the transactions page, the history states and the sub-tab row (#1289).</summary>
+/// <summary>Commander › Ledgers › Credits as drawn: the kinds table, the transactions page, the history states and its place under Ledgers (#1289).</summary>
 public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-10-10T20:00:00Z", CultureInfo.InvariantCulture);
@@ -110,7 +110,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     public void PressingAKindRowOrTheAllTileDrillsToTheTransactionsPage()
     {
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Commander, new NavCrumb(CreditsPage.RootKey, "Credits"));
+        nav.Register(PanelTab.Commander, new NavCrumb(CreditsPage.PageKey, "Credits"));
         nav.Select(PanelTab.Commander);
 
         var (window, page) = Open(() => Root(State(Lines), HistoryState.Done, nav: nav));
@@ -290,7 +290,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
     }
 
     [AvaloniaFact]
-    public void TheBigPanelListsCreditsAfterCombatStatsAndBeforeCommanders()
+    public void TheBigPanelOpensCreditsUnderLedgersWithItsKindsBelowIt()
     {
         using var look = AppLook.Put();
 
@@ -314,12 +314,7 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
             Commanders = new CommanderRoster(() => null, () => 0, () => null, () => false, _ => { }),
         }.Furnish(view);
 
-        Assert.Equal(
-            ["Checklist", "Missions", "Standing", "Statistics", "This session", "BGS work", "Combat stats", "Credits", "Commanders"],
-            view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
-
-        view.Tab = PanelTab.Commander;
-        view.Nav.SelectRoot(PanelTab.Commander, CreditsPage.RootKey);
+        Assert.True(view.Nav.Show(CreditsPage.PageKey));
         var window = new Window
         {
             Content = view,
@@ -330,19 +325,21 @@ public class TheCreditsPageShowsTheLedgerOnTheCommanderTabTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
+        Assert.Equal(["Ledgers", "Credits"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CreditsPage>(view));
-
-        var buttons = In<RadioButton>(view.FindControl<TextChoice>("ModeReadings")!).ToList();
-        var lines = buttons.Select(button => button.TranslatePoint(default, window)!.Value.Y).Distinct().Count();
-        var widths = string.Join(", ", buttons.Select(button => $"{button.Bounds.Width:0}"));
-
-        Assert.True(lines == 1, $"The sub-tabs wrap onto {lines} lines; item widths {widths}.");
 
         if (TestSurface.CapturesWanted)
         {
             using var frame = window.CaptureRenderedFrame()!;
             frame.SaveCapture("credits-big-panel.png");
         }
+
+        In<Button>(view).First(button => button.Name == "CreditsKind.Trade").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Ledgers", "Credits", "Trade"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Single(In<CreditTransactionsPage>(view));
+        Assert.Empty(In<CreditsPage>(view));
 
         window.Close();
     }
