@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now remarks on combat milestones in the journals on this PC: the 100th, 250th, 500th and 1,000th kill and every 1,000th after, the first of a ship type, and a reward larger than every earlier one once there are ten kills. It says "on record" and speaks one remark per kill, ahead of the existing session remarks. It stays silent about them until all your earlier journals have been read.
+
 Asking "what's my BGS work" now reports the work you have done since the last BGS tick, per system and faction: mission influence marks, bounty and combat bond vouchers, trade sold and its profit, and cartographic and organic data sold. It names the three busiest system and faction pairs and counts the rest, and a faction or system narrows it. With no tick time it covers the last 24 hours and says so. Where your journals hold a reading of the system from before the tick and one from after, each line also gives the faction's influence before the tick and when you were last there.
 
 Web search now works with the OpenAI provider pointed at xAI (`https://api.x.ai/v1`), and the Privacy and egress section names `api.x.ai` as the host that runs the search. Requests to xAI no longer include a reasoning setting, which its Grok models refuse.

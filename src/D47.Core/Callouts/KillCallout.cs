@@ -5,8 +5,8 @@ using D47.Core.Knowledge;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A remark on a notable kill: the first of the game session, the best reward so far, one within thirty
-/// seconds of the last, and every fifth.
+/// A remark on a notable kill: a milestone on record, the first of the game session, the best reward so far,
+/// one within thirty seconds of the last, and every fifth.
 /// </summary>
 public sealed class KillCallout : ICallout
 {
@@ -17,6 +17,9 @@ public sealed class KillCallout : ICallout
     public const string QuickKey = KeyPrefix + "quick";
     public const string BestKey = KeyPrefix + "best";
     public const string CountKey = KeyPrefix + "count";
+    public const string RecordKey = KeyPrefix + "record";
+
+    private const int RecordAwardMinimumKills = 10;
 
     private static readonly TimeSpan QuickWindow = TimeSpan.FromSeconds(30);
 
@@ -35,6 +38,8 @@ public sealed class KillCallout : ICallout
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
+        var seen = new Dictionary<DateTimeOffset, int>();
+
         foreach (var journalEvent in context.Events)
         {
             switch (journalEvent.Kind)
@@ -53,7 +58,12 @@ public sealed class KillCallout : ICallout
 
                 case "Bounty" or "FactionKillBond":
                     // The backlog still counts, so a restart mid-session does not call the next kill the first.
-                    if (Counted(journalEvent) is { } announcement && !context.IsPriming)
+                    var order = seen.GetValueOrDefault(journalEvent.Timestamp);
+                    seen[journalEvent.Timestamp] = order + 1;
+
+                    var record = context.IsPriming ? null : RecordMilestone(context, journalEvent, order);
+
+                    if (Counted(journalEvent, record) is { } announcement && !context.IsPriming)
                     {
                         yield return announcement;
                     }
@@ -85,8 +95,63 @@ public sealed class KillCallout : ICallout
         _lastLines[from] = (line, journalEvent.Timestamp);
     }
 
+    /// <summary>
+    /// The milestone this kill is on record, judged against the kills before it. <paramref name="order"/> is its
+    /// place among the tick's kills in the same second.
+    /// </summary>
+    private static string? RecordMilestone(CalloutContext context, JournalEvent journalEvent, int order)
+    {
+        if (context.State?.Combat is not { IsWhole: true } combat)
+        {
+            return null;
+        }
+
+        var kills = combat.Kills;
+        var sameSecondInTick = context.Events.Count(other =>
+            other.Kind is "Bounty" or "FactionKillBond" && other.Timestamp == journalEvent.Timestamp);
+
+        var end = kills.Count;
+        while (end > 0 && kills[end - 1].At > journalEvent.Timestamp)
+        {
+            end--;
+        }
+
+        var start = end;
+        while (start > 0 && kills[start - 1].At == journalEvent.Timestamp)
+        {
+            start--;
+        }
+
+        var index = end - sameSecondInTick + order;
+
+        if (index < start || index >= end)
+        {
+            return null;
+        }
+
+        var kill = kills[index];
+        var number = index + 1;
+
+        if (number is 100 or 250 or 500 || number % 1000 == 0)
+        {
+            return $"Kill number {number.ToString("N0", CultureInfo.InvariantCulture)} on record.";
+        }
+
+        if (kill.Target is { } target && !kills.Take(index).Any(earlier => earlier.Target == target))
+        {
+            return $"First {combat.TargetName(target)} on record.";
+        }
+
+        if (index >= RecordAwardMinimumKills && kills.Take(index).All(earlier => earlier.Awarded < kill.Awarded))
+        {
+            return "Biggest reward on record.";
+        }
+
+        return null;
+    }
+
     /// <summary>Counts one kill, and returns the remark when it is a notable one.</summary>
-    private Announcement? Counted(JournalEvent journalEvent)
+    private Announcement? Counted(JournalEvent journalEvent, string? record)
     {
         var bond = journalEvent.Kind == "FactionKillBond";
         var reward = (bond ? journalEvent.Long("Reward") : journalEvent.Long("TotalReward")) ?? 0;
@@ -100,7 +165,8 @@ public sealed class KillCallout : ICallout
         _bestReward = Math.Max(_bestReward, reward);
 
         (string Key, string Reason)? why =
-            _kills == 1 ? (FirstKey, "First kill of the session.")
+            record is not null ? (RecordKey, record)
+            : _kills == 1 ? (FirstKey, "First kill of the session.")
             : _quickRun == 2 ? (QuickKey, "Two kills inside thirty seconds.")
             : _quickRun > 2 ? (QuickKey, $"{Number(_quickRun)} kills in quick succession.")
             : best ? (BestKey, "Best reward this session.")
