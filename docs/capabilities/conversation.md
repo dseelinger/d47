@@ -658,7 +658,8 @@ Off by default. On, Directive 47 can look something up online when a question tu
 information — what a patch changed, what other Commanders are reporting, a community guide that
 did not exist when the model was trained.
 
-**Directive 47 does not do the searching.** Your language-model provider does, on the far side of
+**Directive 47 does not do the searching.** Your language-model endpoint does — your provider, or
+xAI when the endpoint is `https://api.x.ai/v1` — on the far side of
 the connection you already have with them, and only the reply comes back. So this opens no new
 destination: nothing goes anywhere that was not already receiving your turns. What it does change
 is that the model can now read arbitrary pages about what you asked, and the wording of the

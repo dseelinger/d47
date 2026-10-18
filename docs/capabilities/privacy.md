@@ -132,7 +132,8 @@ Being wrong in that direction is the only safe way to be wrong here.
 
 **Web search** — the same host as the language model, doing something different. When the
 [web search row](conversation.md#let-the-model-search-the-web) is on and a question needs current
-information, your provider runs the search and reads the pages; Directive 47 only ever sees the
+information, the language-model endpoint runs the search and reads the pages — your provider, or
+xAI when the endpoint is `https://api.x.ai/v1`, in which case the row names `api.x.ai`; Directive 47 only ever sees the
 reply. It is listed separately even though it adds no new address, because "your provider gets
 your question" and "your provider will go and fetch pages about it" are not the same disclosure,
 and organising this list by host rather than by what is done would have hidden the second behind

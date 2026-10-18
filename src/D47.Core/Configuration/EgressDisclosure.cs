@@ -493,13 +493,15 @@ public static class EgressDisclosure
                 + "itself.");
         }
 
+        var searcher = SearcherName(settings, provider);
+
         return new EgressEntry(
             WebSearch,
             NameOf(WebSearch),
             settings.Llm.Endpoint ?? provider.DefaultEndpoint ?? provider.Name,
             $"D47 does not search the web itself. When a question needs current information — and, "
             + "if the lore remark is set to look things up, when you arrive in a system D47 knows "
-            + $"something about — {provider.Name} runs the search and reads the pages, and D47 only "
+            + $"something about — {searcher} runs the search and reads the pages, and D47 only "
             + "ever sees the reply. That means no new destination beyond the one above — but it does "
             + "mean the wording of the search, which is drawn from what you asked or from the name of "
             + "the system you just jumped into, and whatever those pages say comes back into the "
@@ -507,7 +509,20 @@ public static class EgressDisclosure
             + "and is never written into D47's own tables. Searches are billed by the provider on top "
             + "of the turn, at about a penny each.",
             Active: true,
-            Summary: $"{provider.Name} runs the search and reads the pages; D47 only ever sees the reply.");
+            Summary: $"{searcher} runs the search and reads the pages; D47 only ever sees the reply.");
+    }
+
+    /// <summary>The provider's name, or the endpoint's host when the endpoint is not the provider's own.</summary>
+    private static string SearcherName(D47Settings settings, LlmProviderInfo provider)
+    {
+        if (settings.Llm.Endpoint is { Length: > 0 } endpoint
+            && !string.Equals(endpoint.TrimEnd('/'), provider.DefaultEndpoint?.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)
+            && Uri.TryCreate(endpoint, UriKind.Absolute, out var uri))
+        {
+            return uri.Host;
+        }
+
+        return provider.Name;
     }
 
     /// <summary>What a picture of the screen sends, and where.</summary>

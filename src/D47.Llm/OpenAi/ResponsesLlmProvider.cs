@@ -18,7 +18,8 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
     private const int MaxWebSearchesPerTurn = 3;
 
     private readonly OpenAiEndpoint _endpoint;
-    private readonly bool _ownEndpoint;
+    private readonly bool _searchesHere;
+    private readonly bool _sendsReasoning;
     private readonly ModelCatalogSource _catalog;
 
     /// <summary><paramref name="catalog"/> is null for <see cref="ModelCatalogSource.Shared"/>.</summary>
@@ -32,16 +33,29 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
         var address = string.IsNullOrWhiteSpace(endpoint) ? DefaultEndpoint : endpoint;
 
-        // Whether this is OpenAI's own address rather than a gateway.
-        _ownEndpoint = string.Equals(
-            OpenAiEndpoint.Normalise(address),
-            DefaultEndpoint,
-            StringComparison.OrdinalIgnoreCase);
+        var normalised = OpenAiEndpoint.Normalise(address);
+
+        _searchesHere = Uri.TryCreate(normalised, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && SearchHosts.Contains(uri.Host)
+            && uri.AbsolutePath.TrimEnd('/') == "/v1";
+
+        _sendsReasoning = !(Uri.TryCreate(normalised, UriKind.Absolute, out var host)
+            && string.Equals(host.Host, XaiHost, StringComparison.OrdinalIgnoreCase));
 
         _endpoint = new OpenAiEndpoint(address, apiKey, http);
     }
 
     private const string DefaultEndpoint = "https://api.openai.com/v1";
+
+    private const string XaiHost = "api.x.ai";
+
+    /// <summary>Hosts known to run the Responses <c>web_search</c> tool.</summary>
+    private static readonly HashSet<string> SearchHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "api.openai.com",
+        XaiHost,
+    };
 
     public string Id => LlmProviderCatalog.OpenAiId;
 
@@ -54,11 +68,12 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
     {
         SupportsPromptCaching = true,
-        SupportsThinkingEffort = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort),
+        SupportsThinkingEffort = _sendsReasoning
+            && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort),
         SupportsOperatorSystemMessages = true,
         MinimumCacheablePrefixTokens = 1024,
         SupportsToolCalls = EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.Tools),
-        SupportsWebSearch = _ownEndpoint,
+        SupportsWebSearch = _searchesHere,
         SupportsImages = _catalog.TraitsFor(Id, model).Images,
     };
 
@@ -349,7 +364,7 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
             json.WriteNumber("max_output_tokens", request.MaxOutputTokens);
 
-            if (EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort))
+            if (_sendsReasoning && EndpointDemotions.Allows(_endpoint.BaseUrl, Demotable.ReasoningEffort))
             {
                 json.WriteStartObject("reasoning");
                 json.WriteString("effort", Translate(request.Effort));

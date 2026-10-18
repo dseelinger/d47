@@ -280,6 +280,31 @@ public class OpenAiResponsesTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SearchIsOfferedAtXaiAndNowhereElseOnTheList()
+    {
+        using var xai = new ResponsesLlmProvider("xai-test", "https://api.x.ai/v1");
+        using var other = new ResponsesLlmProvider("sk-test", "https://example.com/v1");
+
+        Assert.True(xai.CapabilitiesFor("grok-4").SupportsWebSearch);
+        Assert.False(other.CapabilitiesFor("grok-4").SupportsWebSearch);
+        Assert.Contains(
+            "{\"type\":\"web_search\"}",
+            Body(xai, OpenAiRecordings.Ask() with { WebSearch = true }),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void XaiIsNotSentReasoningAndOpenAiStillIs()
+    {
+        using var xai = new ResponsesLlmProvider("xai-test", "https://api.x.ai/v1");
+        using var own = new ResponsesLlmProvider("sk-test", endpoint: null);
+
+        Assert.DoesNotContain("\"reasoning\"", Body(xai, OpenAiRecordings.Ask()), StringComparison.Ordinal);
+        Assert.Contains("\"reasoning\"", Body(own, OpenAiRecordings.Ask()), StringComparison.Ordinal);
+        Assert.False(xai.CapabilitiesFor("grok-4").SupportsThinkingEffort);
+    }
+
     private static string Body(ResponsesLlmProvider provider, LlmRequest request) =>
         System.Text.Encoding.UTF8.GetString(provider.BuildBody(request).Span);
 }

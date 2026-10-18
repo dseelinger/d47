@@ -580,6 +580,20 @@ public class EgressDisclosureTests
         Assert.Contains("does not search the web itself", entry.What, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void WebSearchAtXaiNamesTheEndpointHostAsTheOneWhoSearches()
+    {
+        var settings = new D47Settings
+        {
+            Llm = new LlmSettings { Provider = LlmProviderCatalog.OpenAiId, Endpoint = "https://api.x.ai/v1", WebSearch = true },
+        };
+
+        var entry = EgressDisclosure.Entry(EgressDisclosure.WebSearch, settings, llmKeyPresent: true);
+
+        Assert.StartsWith("api.x.ai runs the search", entry.Summary, StringComparison.Ordinal);
+        Assert.Contains("api.x.ai runs the search", entry.What, StringComparison.Ordinal);
+    }
+
     /// <summary>The setting alone is not enough to make it active.</summary>
     [Fact]
     public void WebSearchOnWithNoKeyIsStillInert()

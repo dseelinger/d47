@@ -566,7 +566,7 @@ public static class ConversationCapability
             Help =
                 "Lets D47 look something up online when a question needs current information — a "
                 + "community guide, patch notes, what other Commanders are reporting. The search runs "
-                + "at your language-model provider, not here, so nothing new leaves this machine "
+                + "at your language-model endpoint (which may be xAI), not here, so nothing new leaves this machine "
                 + "beyond what you already send them. What comes back is spoken as something D47 read, "
                 + "never written into its own tables. Off by default; see [Privacy](privacy) for what is sent. "
                 + "Searches are billed separately by the provider, about a penny each.",
