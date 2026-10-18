@@ -82,6 +82,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>Every kill they have made, from every journal on disk.</summary>
     public CombatRecord Combat { get; internal set; } = CombatRecord.None;
 
+    /// <summary>Every credit transaction they have made, from every journal on disk.</summary>
+    public CreditLedger CreditLedger { get; internal set; } = CreditLedger.None;
+
     /// <summary>Salvage scooped in the current system while it was their Power's own.</summary>
     public ScoopedSalvage Salvage { get; private set; } = ScoopedSalvage.None;
 
@@ -185,6 +188,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(CycleMerits), "your merits this cycle", state => state.CycleMerits),
         new(nameof(BgsWork), "your BGS work", state => state.BgsWork),
         new(nameof(Combat), "your kills", state => state.Combat),
+        new(nameof(CreditLedger), "your credit record", state => state.CreditLedger),
         new(nameof(Salvage), "your scooped salvage", state => state.Salvage),
         new(nameof(Mining), "your mining runs", state => state.Mining),
         new(nameof(Bodies), "body signals", state => state.Bodies),
@@ -205,6 +209,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // Names and positions move the record without changing the kills.
         (CombatRecord a, CombatRecord b) when ReferenceEquals(a.Kills, b.Kills) && a.IsWhole == b.IsWhole => null,
+
+        // Every event moves the ledger's last time, so only its entries count.
+        (CreditLedger a, CreditLedger b) when ReferenceEquals(a.Entries, b.Entries) && a.IsWhole == b.IsWhole => null,
 
         // Every event moves LastEventAt, so only the rest of the session counts.
         (SessionSummary a, SessionSummary b) when a with { LastEventAt = b.LastEventAt } == b => null,
@@ -234,6 +241,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Standings = SystemStandings.Empty;
             BgsWork = BgsWork.None;
             Combat = CombatRecord.None with { IsWhole = Combat.IsWhole };
+            CreditLedger = CreditLedger.None with { IsWhole = CreditLedger.IsWhole };
             Contributions = EngineerContributions.Empty;
             Tallies = EngineerTallies.Empty;
             Loadouts = ShipLoadouts.NoShips;
@@ -281,6 +289,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         CycleMerits = CycleMerits.Apply(journalEvent, Pledge);
         BgsWork = BgsWork.Apply(journalEvent);
         Combat = Combat.Apply(journalEvent);
+        CreditLedger = CreditLedger.Apply(journalEvent);
         Salvage = Salvage.Apply(journalEvent, Location, Pledge);
         Mining = Mining.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
