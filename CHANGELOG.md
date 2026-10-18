@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter no longer fails because a line names a speaker the story does not have. The chapter request now lists the story's speaker ids, and a line given to a cast member's full name, first name or last name is matched to that member. A name that fits two members, or nobody, is still refused.
+
 A story draft on a cloud model that is slow to start no longer fails at 30 seconds. A story call now waits up to 90 seconds for its first text or thinking, and the 30-second silence limit applies only after that. A call that sends nothing for 90 seconds is still stopped, and the log says no first reply arrived.
 
 A generated story or stock-story chapter no longer sends you to dock at a fleet carrier, a megaship or a construction site. Carriers and many megaships move, and a construction site is not a finished station, so a story now only docks at fixed, finished stations. A chapter already written that docks at one of these is unchanged; refuse that beat and it is written again.

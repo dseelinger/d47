@@ -129,6 +129,37 @@ public sealed class ABeatCanCarryACastLineAndANarratorLineTests
     }
 
     [Fact]
+    public async Task ALineGivenToACastMembersFirstNameTakesTheirId()
+    {
+        var named = BeatsWithTwoLines.Replace("\"speaker\": \"caller\"}", "\"speaker\": \"the CALLER\"}", StringComparison.Ordinal)
+            .Replace("\"speaker\": \"narrator\"}", "\"speaker\": \"ren\"}", StringComparison.Ordinal);
+        using var fixtures = new StoryFixtures(Scripted(named), Cast);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
+
+        Assert.Equal(["caller", "dock-hand"], fixtures.Book.Store.Find("F1", key)!.Beats[0].Lines.Select(line => line.Speaker));
+    }
+
+    [Fact]
+    public async Task ALineGivenToANameTwoMembersShareIsRefused()
+    {
+        var twins = Secret with
+        {
+            Cast =
+            [
+                new StorySpeaker { Id = "mara-voss", Name = "Mara Voss", Who = "A pilot.", Provider = StorySpeaker.Kokoro, Voice = "bm_george" },
+                new StorySpeaker { Id = "mara-quill", Name = "Mara Quill", Who = "A broker.", Provider = StorySpeaker.Kokoro, Voice = "bm_lewis" },
+            ],
+        };
+        var beats = BeatsWithTwoLines.Replace("\"speaker\": \"caller\"}", "\"speaker\": \"Mara\"}", StringComparison.Ordinal);
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(EveryDraft(Spine, beats, beats)), twins);
+
+        Assert.Equal(StoryDirector.NoDraftStood, await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task TheChapterWriterIsAskedForALineListSpokenInOrder()
     {
         using var fixtures = new StoryFixtures(Scripted(BeatsWithTwoLines), Cast);

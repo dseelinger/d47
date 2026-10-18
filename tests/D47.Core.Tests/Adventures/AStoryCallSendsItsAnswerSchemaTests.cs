@@ -67,6 +67,18 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         Assert.False(beat.TryGetProperty("lines", out _));
     }
 
+    [Fact]
+    public async Task AChapterOffersItsSpeakerIdsAsAnEnumAndAShortStoryHasNone()
+    {
+        var chapter = Root((await BeatsCall("cast")).Schema).GetProperty("properties");
+        var opening = chapter.GetProperty("opening").GetProperty("items").GetProperty("properties").GetProperty("speaker");
+        var line = BeatProperties(Root((await BeatsCall("cast")).Schema)).GetProperty("lines").GetProperty("items").GetProperty("properties").GetProperty("speaker");
+
+        Assert.Equal(["ship", "narrator", "tess"], opening.GetProperty("enum").EnumerateArray().Select(id => id.GetString()));
+        Assert.Equal(["ship", "narrator", "tess"], line.GetProperty("enum").EnumerateArray().Select(id => id.GetString()));
+        Assert.DoesNotContain("\"speaker\"", (await BeatsCall("short")).Schema.SchemaJson, StringComparison.Ordinal);
+    }
+
     [Theory]
     [MemberData(nameof(Variants))]
     public async Task TheDestinationIsRequiredOnlyForFinaleChapterOne(string variant)

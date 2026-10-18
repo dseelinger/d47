@@ -70,7 +70,7 @@ internal static class StoryAnswer
         + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}]"
         + (destination ? ", \"destination\": {\"system\": string, \"body\": string}" : string.Empty) + "}";
 
-    internal static LlmResponseSchema BeatsSchema(bool speakers, IReadOnlyList<string> kinds, bool destination)
+    internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination)
     {
         var beat = new List<(string, JsonNode)>
         {
@@ -79,11 +79,11 @@ internal static class StoryAnswer
             ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
         };
         beat.AddRange(BeatFields.Select(field => (field.Name, Of(field.Shape))));
-        beat.Add(speakers ? ("lines", Lines()) : ("line", Text()));
+        beat.Add(speakers is not null ? ("lines", Lines(speakers)) : ("line", Text()));
 
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
         {
-            ("opening", speakers ? Lines() : Text()),
+            ("opening", speakers is not null ? Lines(speakers) : Text()),
             ("reply", Text()),
             ("beats", new JsonObject { ["type"] = "array", ["items"] = Object(beat) }),
         };
@@ -116,8 +116,12 @@ internal static class StoryAnswer
 
     private static JsonObject Maybe(string type) => new() { ["type"] = new JsonArray(type, "null") };
 
-    private static JsonObject Lines() =>
-        new() { ["type"] = "array", ["items"] = Object([("text", Text()), ("speaker", Text())]) };
+    private static JsonObject Lines(IReadOnlyList<string> speakers) =>
+        new()
+        {
+            ["type"] = "array",
+            ["items"] = Object([("text", Text()), ("speaker", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(speakers.Select(id => (JsonNode)JsonValue.Create(id)!).ToArray()) })]),
+        };
 
     private static JsonObject Object(IEnumerable<(string Name, JsonNode Schema)> properties)
     {

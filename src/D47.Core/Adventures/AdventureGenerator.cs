@@ -817,11 +817,37 @@ public sealed class AdventureGenerator(
     private static IEnumerable<string> Speakers(AdventureStory story) =>
         [Stories.StorySpeaker.Ship, Stories.StorySpeaker.Narrator, .. (story.Cast ?? []).Select(member => member.Id)];
 
-    /// <summary>The story's own spelling of a speaker id the model wrote in any case, or null when the story has no such speaker.</summary>
-    private static string? Speaker(string? written, AdventureStory? story) =>
-        written is null || story is null
-            ? null
-            : Speakers(story).FirstOrDefault(id => string.Equals(id, written.Trim(), StringComparison.OrdinalIgnoreCase));
+    /// <summary>The story's own spelling of a speaker id the model wrote in any case, or the id of the one cast member whose full name, first word or last word it matches; null otherwise.</summary>
+    private static string? Speaker(string? written, AdventureStory? story)
+    {
+        if (written is null || story is null)
+        {
+            return null;
+        }
+
+        var trimmed = written.Trim();
+
+        if (Speakers(story).FirstOrDefault(id => string.Equals(id, trimmed, StringComparison.OrdinalIgnoreCase)) is { } known)
+        {
+            return known;
+        }
+
+        var named = (story.Cast ?? [])
+            .Where(member =>
+            {
+                var words = member.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                return words.Length > 0
+                    && (string.Equals(member.Name.Trim(), trimmed, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(words[0], trimmed, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(words[^1], trimmed, StringComparison.OrdinalIgnoreCase));
+            })
+            .Select(member => member.Id)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        return named.Count == 1 ? named[0] : null;
+    }
 
     /// <summary>The facts with the light years from the Commander to the story's destination, when it has one and both can be measured.</summary>
     private async Task<Facts> DestinationDistanceAsync(Facts facts, AdventureAsk ask, CancellationToken cancellationToken)
@@ -1926,7 +1952,7 @@ public sealed class AdventureGenerator(
                 : ". \"reply\" is what you say to the Commander, in your own "
                   + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
-        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(speakers, kinds, destination));
+        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(ask.Story is { } cast ? [.. Speakers(cast)] : null, kinds, destination));
     }
 
     private static void AppendExchange(StringBuilder text, IReadOnlyList<AdventureRemark>? exchange, string? remark)
