@@ -67,7 +67,7 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> BoostStars { get; } = ["neutron", "whitedwarf"];
@@ -266,6 +266,10 @@ public static class AdventureValidation
                     problems.AddRange(EngineerProblems(where, beat.Trigger));
                     break;
 
+                case TriggerKind.Unlock:
+                    problems.AddRange(UnlockProblems(where, beat.Trigger, null));
+                    break;
+
                 case TriggerKind.Reach:
                     if (beat.Trigger.JumpRange is not > 0)
                     {
@@ -347,6 +351,25 @@ public static class AdventureValidation
         if (EngineerStages.Rank(trigger.Stage) == 0)
         {
             yield return $"{where} names the stage \"{trigger.Stage?.Trim() ?? string.Empty}\"; the stages are {string.Join(", ", EngineerStages.Named)}.";
+        }
+    }
+
+    /// <summary>What is wrong with an unlock trigger: a name that is not a joined tech broker row, or a row <paramref name="unlocks"/> shows as unlocked.</summary>
+    public static IEnumerable<string> UnlockProblems(string where, AdventureTrigger trigger, TechBrokerUnlocks? unlocks)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (string.IsNullOrWhiteSpace(trigger.Filter))
+        {
+            yield return $"{where} unlocks nothing: it names no tech broker item.";
+        }
+        else if (TechBrokerCatalogue.ForName(trigger.Filter) is not { } row)
+        {
+            yield return $"{where} names the tech broker item \"{trigger.Filter.Trim()}\", which is not one a tech broker unlocks that d47 can recognise.";
+        }
+        else if (unlocks?.IsKnownUnlocked(row) == true)
+        {
+            yield return $"{where} unlocks the {row.Name}, which the Commander has already unlocked.";
         }
     }
 

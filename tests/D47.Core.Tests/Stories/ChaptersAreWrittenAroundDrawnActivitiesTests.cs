@@ -67,7 +67,7 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
     public async Task TheObjectivesSchemaHasNoCountedKindOutsideTheSlots()
     {
         var (_, provider) = await Written(Chapter(Three), SpineText, BeatsMeeting(Three));
-        string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "claim"];
+        string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "claim", "unlock"];
 
         var kinds = KindsOf(provider, 1);
 

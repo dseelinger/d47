@@ -19,7 +19,7 @@ internal static class StoryAnswer
     private static readonly string[] AlwaysKinds =
     [
         "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
-        "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "boost", "discover", "footfall", "contribute", "claim", "crew",
+        "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "boost", "discover", "footfall", "contribute", "claim", "unlock", "crew",
         "suitmod", "conflict", "faction",
     ];
 

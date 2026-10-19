@@ -370,6 +370,11 @@ public static class AdventureFold
 
             TriggerKind.Claim => journalEvent.Kind is "ColonisationSystemClaim",
 
+            TriggerKind.Unlock =>
+                journalEvent.Kind is "TechnologyBroker"
+                && Knowledge.TechBrokerCatalogue.ForName(trigger.Filter) is { } row
+                && raw.Items("ItemsUnlocked").Any(item => Knowledge.TechBrokerCatalogue.ForSymbol(item.String("Name"))?.Name == row.Name),
+
             _ => false,
         };
     }

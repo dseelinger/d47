@@ -40,6 +40,12 @@ public static class TechBrokerCatalogue
     /// <summary>The rows that join to nothing.</summary>
     public static IReadOnlyList<TechBrokerRow> Unjoined => [.. Loaded.Value.Where(row => row.Symbols.Count == 0)];
 
+    /// <summary>The joined row with this name, or null.</summary>
+    public static TechBrokerRow? ForName(string? name) =>
+        string.IsNullOrWhiteSpace(name)
+            ? null
+            : Joined.FirstOrDefault(row => string.Equals(row.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+
     /// <summary>The row a module symbol unlocks, or null.</summary>
     public static TechBrokerRow? ForSymbol(string? symbol) =>
         symbol is null ? null : BySymbol.Value.GetValueOrDefault(Normalise(symbol));

@@ -2111,6 +2111,7 @@ public sealed class AdventureGenerator(
             "- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.",
             "- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".",
         };
+        counted.Add(UnlockLine(facts.Unlocks, name));
         counted.AddRange(team.Select(TeamLine));
 
         if (ask.Story?.Slots is { Count: > 0 } slots)
@@ -2302,6 +2303,7 @@ public sealed class AdventureGenerator(
         35 => "thirty-five",
         36 => "thirty-six",
         37 => "thirty-seven",
+        38 => "thirty-eight",
         _ => count.ToString(CultureInfo.InvariantCulture),
     };
 
@@ -2440,6 +2442,26 @@ public sealed class AdventureGenerator(
         }
     }
 
+    private const int UnlocksOffered = 8;
+
+    private static string UnlockLine(TechBrokerUnlocks? unlocks, string seed)
+    {
+        var offered = new List<string>();
+
+        foreach (var brokerType in new[] { TechBrokerCatalogue.Guardian, TechBrokerCatalogue.Human })
+        {
+            var rows = (unlocks ?? TechBrokerUnlocks.Empty).NotKnownToBeUnlocked(brokerType);
+
+            offered.AddRange(Shuffled(rows, seed + brokerType).Take(UnlocksOffered).Select(row =>
+                $"{row.Name} ({brokerType} broker; costs "
+                + string.Join(", ", row.Blueprint.Ingredients.Select(ingredient => $"{ingredient.Size} × {ingredient.Material?.Name ?? ingredient.Symbol}")) + ")"));
+        }
+
+        return "- \"unlock\": the Commander unlocks one item at a tech broker, once. \"filter\" is the item's name, taken only from this list of items the Commander has not unlocked yet"
+            + (offered.Count == 0 ? "; none is open, so do not use this kind" : ": " + string.Join("; ", offered))
+            + ". A Guardian item needs a Guardian blueprint and Guardian materials from Guardian sites, so a chapter can send the Commander to gather them before this objective.";
+    }
+
     private sealed record ReadBeat(
         string Title,
         string? Function,
@@ -2476,7 +2498,7 @@ public sealed class AdventureGenerator(
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind == TriggerKind.Engineer ? Written().Describe() : Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock ? Written().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -2807,6 +2829,20 @@ public sealed class AdventureGenerator(
                 else
                 {
                     trigger = written with { Engineer = EngineerDirectory.ByName(written.Engineer)!.Name };
+                }
+            }
+            else if (beat.Kind == TriggerKind.Unlock)
+            {
+                var written = beat.Written();
+                var problems = AdventureValidation.UnlockProblems(where, written, facts.Unlocks).ToList();
+
+                if (problems.Count > 0)
+                {
+                    problems.ForEach(problem => Refuse(index, problem));
+                }
+                else
+                {
+                    trigger = written with { Filter = TechBrokerCatalogue.ForName(written.Filter)!.Name };
                 }
             }
             else if (AdventureTrigger.IsOnceKind(beat.Kind))
@@ -3284,7 +3320,8 @@ public sealed class AdventureGenerator(
         SystemStandings? Standings = null,
         IReadOnlyList<Mission>? Missions = null,
         long? ClosedMarketId = null,
-        IReadOnlyList<(string Name, string Type)>? NamedShips = null)
+        IReadOnlyList<(string Name, string Type)>? NamedShips = null,
+        TechBrokerUnlocks? Unlocks = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -3322,7 +3359,8 @@ public sealed class AdventureGenerator(
                 NamedShips: [.. new[] { (Name: ship.Name, Type: ship.Type) }
                     .Concat((state?.Fleet.Ships ?? []).Select(stored => (Name: stored.Name, Type: (string?)stored.Type)))
                     .Where(named => named is { Name.Length: > 0, Type.Length: > 0 })
-                    .Select(named => (named.Name!, named.Type!))]);
+                    .Select(named => (named.Name!, named.Type!))],
+                Unlocks: state?.TechBroker);
         }
 
         public bool Owns(string symbol) =>

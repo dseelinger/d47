@@ -102,6 +102,7 @@ public static class RefusedActivities
         TriggerKind.Discover => "scan bodies no one has discovered",
         TriggerKind.Contribute => "deliver cargo to colonisation construction sites",
         TriggerKind.Claim => "claim a system for colonisation",
+        TriggerKind.Unlock => "unlock technology at a tech broker",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }
