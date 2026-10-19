@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-The Stories settings have eight new ratings under **What you like doing**: Combat, Trading, Mining, Exploration, Exobiology, Passengers, Search and rescue and Crime. Each is from 1 to 100, starts at 50, and is kept for the Commander who is flying. Say "set my mining rating to 80" or "rate exploration 30" to set one; a number outside 1 to 100 is refused, and the model cannot set them. Nothing reads them yet. The Crime rating will have no effect until Frontier's Law and Disorder update.
+The Stories settings have eight new ratings under **What you like doing**: Combat, Trading, Mining, Exploration, Exobiology, Passengers, Search and rescue and Crime. Each is from 1 to 100, starts at 50, and is kept for the Commander who is flying. Say "set my mining rating to 80" or "rate exploration 30" to set one; a number outside 1 to 100 is refused, and the model cannot set them. They weigh which activities a story chapter after the beacon scan is built around. The Crime rating will have no effect until Frontier's Law and Disorder update.
 
 A new **Signal index** setting under Outside sources, off by default, lets D47 download a daily index of the signals other Commanders have scanned and uploaded to EDDN, from this project's releases on github.com. The index is fetched only when you search for a signal and the copy on this PC is missing or more than 20 hours old, and it is kept in `data\signals`, outside the data backups. Nothing about you goes with the request. The Privacy and egress section lists it.
 
@@ -22,7 +22,9 @@ You can now ask where to buy several modules, or modules and a ship, at one stat
 
 Station searches now leave out Stronghold Carriers of Powers you are not pledged to. Spansh lists them as Planetary Outposts, so a search for a module could answer with one you cannot use. A Stronghold Carrier is kept when its system is controlled by your own Power, and an unpledged Commander gets none. When any were left out, the answer says so, for example "Left out 2 Stronghold Carriers of other Powers."
 
-A new table and draw let code choose a story chapter's counted activities from the Commander's career ratings, the ship's modules and the Commander's ranks, instead of leaving the choice to the writer. The chapter writer does not use it yet.
+A new table and draw let code choose a story chapter's counted activities from the Commander's career ratings, the ship's modules and the Commander's ranks, instead of leaving the choice to the writer.
+
+Story chapters written after the beacon scan are now built around three activities that d47 draws before the chapter is written. The outline and the objectives are both told the activities and their counts, the objectives may use only those activities besides places and milestones, and a chapter that leaves one out is written again. A chapter before the scan, and a short story, are written as before. If you refuse an objective that held one of the activities, only that activity is replaced.
 
 Short stories and story chapters now ask for a wider range of activities. Before, chapters leaned on courier missions and bounties. The story outline is now told the Commander does the game's activities, not only travel. The activities and mission families are offered in a different order for each story, and every mission family in d47's catalogue is offered instead of eight. Each chapter is told what the last three chapters asked for and to ask for something else. A comfort-zone chapter whose least-done activities are tied no longer always picks bounties.
 

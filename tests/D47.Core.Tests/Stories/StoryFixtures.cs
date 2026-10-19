@@ -134,6 +134,47 @@ internal sealed class StoryFixtures : IDisposable
         ]}
         """;
 
+    /// <summary>Beats that arrive, do each drawn activity once with its count, and dock.</summary>
+    public static string BeatsMeeting(IEnumerable<DrawnActivity> slots)
+    {
+        var beats = new System.Text.Json.Nodes.JsonArray
+        {
+            new System.Text.Json.Nodes.JsonObject
+            {
+                ["title"] = "The Lantern", ["function"] = "setup", ["kind"] = "arrive", ["reason"] = "Someone there knows about the burst.",
+                ["system"] = "Ossen's Lantern", ["line"] = "Scoop here.",
+            },
+        };
+
+        foreach (var slot in slots)
+        {
+            var beat = new System.Text.Json.Nodes.JsonObject
+            {
+                ["title"] = $"The {slot.Kind}", ["function"] = "turn", ["kind"] = slot.Kind.ToString().ToLowerInvariant(), ["count"] = slot.Count, ["line"] = "Do it.",
+            };
+
+            if (slot.Family is not null)
+            {
+                beat["mission"] = slot.Family;
+            }
+
+            if (slot.Organic is { } organic)
+            {
+                beat["organic"] = organic;
+            }
+
+            beats.Add(beat);
+        }
+
+        beats.Add(new System.Text.Json.Nodes.JsonObject
+        {
+            ["title"] = "The Anchorage", ["function"] = "resolution", ["kind"] = "dock", ["reason"] = "Someone there knows about the burst.",
+            ["system"] = "Dyson's Hollow", ["station"] = "Maren Anchorage", ["line"] = "To one name.",
+        });
+
+        return new System.Text.Json.Nodes.JsonObject { ["opening"] = "Again.", ["reply"] = "Here.", ["beats"] = beats }.ToJsonString();
+    }
+
     public const string BeatsElsewhere = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
@@ -201,7 +242,9 @@ internal sealed class StoryFixtures : IDisposable
                     throw new HttpRequestException("The provider went away.");
                 }
 
-                return Written(generator.GenerateAsync(ask, now, cancellationToken));
+                var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null } };
+
+                return Written(generator.GenerateAsync(sent, now, cancellationToken));
             },
             () => Here,
             backstory => Backstory = backstory,
@@ -236,6 +279,12 @@ internal sealed class StoryFixtures : IDisposable
 
     /// <summary>Where the Commander is, for the nearest beacon.</summary>
     public StarPosition Here { get; set; } = StarPosition.Origin;
+
+    /// <summary>
+    /// Whether the writer is sent the activities drawn for a chapter. Off, a chapter is written as if none were drawn, because a
+    /// scripted model's answers cannot meet activities it does not know; <see cref="Asks"/> holds the drawn activities either way.
+    /// </summary>
+    public bool WritesDrawnChapters { get; set; }
 
     /// <summary>Every chapter the director asked to have written, oldest first.</summary>
     public List<AdventureAsk> Asks { get; } = [];
@@ -287,14 +336,14 @@ internal sealed class StoryFixtures : IDisposable
     /// A Commander in a ship of this type who loaded the game with these credits, after a <c>Statistics</c> event carrying
     /// <paramref name="statistics"/> as its sections, when given.
     /// </summary>
-    public static CommanderGameState Loaded(long credits, string ship = "sidewinder", string? statistics = null)
+    public static CommanderGameState Loaded(long credits, string ship = "sidewinder", string? statistics = null, string modules = "", int cargo = 0)
     {
         var state = new CommanderGameState(new CommanderIdentity("F1", "Test"));
 
         state.Apply(AdventureFixtures.Event(
             $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"LoadGame", "FID":"F1", "Commander":"Test", "Odyssey":true, "Ship":"{{ship}}", "ShipID":1, "Credits":{{credits}} }"""));
         state.Apply(AdventureFixtures.Event(
-            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"{{ship}}", "ShipID":1, "MaxJumpRange":30.5, "Modules":[] }"""));
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"{{ship}}", "ShipID":1, "MaxJumpRange":30.5, "CargoCapacity":{{cargo}}, "Modules":[{{modules}}] }"""));
 
         if (statistics is not null)
         {

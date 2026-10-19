@@ -3053,6 +3053,7 @@ public sealed class AppHost : IDisposable
         storyDirector.Gender = () => settings.Current.CommanderGender;
         storyDirector.Backstory = () => settings.Current.Llm.AboutMe;
         storyDirector.Game = () => gameState.Active;
+        storyDirector.Ratings = () => settings.Current.CareerRatings;
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
         storyDirector.Choices = () => settings.Current.StoryVoices;

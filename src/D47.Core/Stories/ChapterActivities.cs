@@ -133,6 +133,13 @@ public static class ChapterActivities
         return held;
     }
 
+    /// <summary>The row an objective of this kind, mission family and organic flag is drawn from, or null for a place or milestone objective.</summary>
+    public static DrawableActivity? Find(TriggerKind kind, string? family, bool? organic) =>
+        All.FirstOrDefault(row =>
+            row.Kind == kind
+            && (row.Family is null || string.Equals(row.Family, family?.Trim(), StringComparison.OrdinalIgnoreCase))
+            && (row.Organic is null || organic is null || row.Organic == organic));
+
     /// <summary>Whether the row's gates are all in <paramref name="held"/>.</summary>
     public static bool Passes(DrawableActivity activity, ActivityGate held) => (activity.Gates & ~held) == ActivityGate.None;
 

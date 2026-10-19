@@ -119,7 +119,7 @@ public sealed record AdventureStory(
     IReadOnlyList<string>? GenreElements = null,
     string? ChapterSize = null,
     bool LongHaul = false,
-    AdventureActivity? Comfort = null,
+    IReadOnlyList<DrawnActivity>? Slots = null,
     AdventureDestination? Destination = null,
     IReadOnlyList<string>? Refused = null,
     IReadOnlyList<AdventureSpeaker>? Cast = null,
@@ -1354,7 +1354,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts);
+            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story));
         }
 
         if (ask.Story is { } story)
@@ -1387,7 +1387,7 @@ public sealed class AdventureGenerator(
     /// The chapter before in full — spine, beat titles and what was said — the <see cref="EarlierChaptersShown"/>
     /// before that as name and premise only, and how many came before those.
     /// </summary>
-    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts)
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied)
     {
         var previous = chapter.Previous;
 
@@ -1466,8 +1466,15 @@ public sealed class AdventureGenerator(
             "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
             + "stake is the belief that chapter left open. People, places and things it established may return; "
             + "what it settled stays settled.");
-        AppendVariety(text, chapter);
+
+        if (varied)
+        {
+            AppendVariety(text, chapter);
+        }
     }
+
+    /// <summary>Whether the chapter is written around drawn activities.</summary>
+    private static bool IsDrawn(AdventureStory? story) => story?.Slots is { Count: > 0 };
 
     /// <summary>The activities the last chapters asked for, and the instruction to ask for others.</summary>
     private static void AppendVariety(StringBuilder text, AdventureChapter chapter)
@@ -1800,7 +1807,7 @@ public sealed class AdventureGenerator(
             : "When this chapter starts farther from the destination than the reach, its last stop must be closer to the destination than where it starts.");
     }
 
-    /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the comfort-zone activity.</summary>
+    /// <summary>The genre's elements, the chapter size, the travel limit, a long haul when allowed, and the drawn activities.</summary>
     private static void AppendFit(StringBuilder text, AdventureStory story)
     {
         if (story.Genre is { Length: > 0 } genre)
@@ -1834,7 +1841,8 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine(
                 "From chapter two on, this is a story of activity, not only travel: no more than two of the chapter's objectives may be "
-                + "\"arrive\", \"dock\", \"land\" or \"scan\". Any mission family that fits the story may be used.");
+                + "\"arrive\", \"dock\", \"land\" or \"scan\"."
+                + (IsDrawn(story) ? string.Empty : " Any mission family that fits the story may be used."));
         }
 
         if (story.LongHaul)
@@ -1843,12 +1851,17 @@ public sealed class AdventureGenerator(
                 "The Commander can make a long haul: this chapter may go anywhere in the galaxy, as far as Colonia or Sagittarius A*.");
         }
 
-        if (story.Comfort is { } comfort)
+        if (story.Slots is { Count: > 0 } slots)
         {
             text.AppendLine();
             text.AppendLine(
-                $"This chapter takes the Commander outside their comfort zone: of the activities d47 tracks, {comfort.Name} is the one their "
-                + $"statistics show they have done least. The chapter must contain {comfort.Beat}.");
+                $"This chapter is built on {(slots.Count == 1 ? "this activity" : $"these {Number(slots.Count)} activities")}, drawn for it by d47. "
+                + "Its want and its turn are built on them, and it contains one objective of each, with the count given:");
+
+            foreach (var slot in slots)
+            {
+                text.Append("- ").AppendLine(SlotLine(slot));
+            }
         }
 
         if (story.Refused is { Count: > 0 } refused)
@@ -1858,6 +1871,29 @@ public sealed class AdventureGenerator(
                 "The Commander has refused these activities for this story, and no objective may ask for any of them: "
                 + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
         }
+    }
+
+    /// <summary>A drawn activity as the writer is told it: what the Commander does, the objective that holds it and its count.</summary>
+    private static string SlotLine(DrawnActivity slot)
+    {
+        var phrase = RefusedActivities.Phrase(slot.Kind, slot.Family) ?? slot.Kind.ToString().ToLowerInvariant();
+        var objective = slot.Family is null
+            ? $"a \"{slot.Kind.ToString().ToLowerInvariant()}\" objective"
+            : $"a \"mission\" objective whose family is exactly {slot.Family}";
+        var count = slot.Count.ToString("N0", CultureInfo.InvariantCulture);
+        var amount = slot.Kind switch
+        {
+            TriggerKind.Sell or TriggerKind.Mine => $"{count} tons",
+            TriggerKind.DataSale => slot.Organic switch
+            {
+                true => $"{count} credits of organic data",
+                false => $"{count} credits of cartographic data",
+                _ => $"{count} credits of exploration data",
+            },
+            _ => $"count {count}",
+        };
+
+        return $"{phrase}: {objective}, {amount}{(slot.PlaceBefore ? ", with an arrive or dock objective just before it" : string.Empty)}";
     }
 
     private static StoryCall BeatsInstruction(
@@ -1950,7 +1986,7 @@ public sealed class AdventureGenerator(
             AppendStory(text, story, facts);
         }
 
-        if (ask.Chapter is { } chapter)
+        if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
             text.AppendLine();
             AppendVariety(text, chapter);
@@ -1965,7 +2001,8 @@ public sealed class AdventureGenerator(
         var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
 
         var ships = ask.Story is null ? BriefHulls(ask.Brief) : EliteSpecifications.HullNameList;
-        var kinds = StoryAnswer.Kinds(team, beacon is not null, reachAway is not null, ships.Count > 0);
+        var kinds = StoryAnswer.Kinds(
+            team, beacon is not null, reachAway is not null, ships.Count > 0, ask.Story?.Slots is { Count: > 0 } drawn ? [.. drawn.Select(slot => slot.Kind)] : null);
 
         text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
@@ -2013,11 +2050,25 @@ public sealed class AdventureGenerator(
         };
         counted.AddRange(team.Select(TeamLine));
 
-        text.AppendLine("The counted kinds, in no order of preference:");
-
-        foreach (var line in Shuffled(counted, name))
+        if (ask.Story?.Slots is { Count: > 0 } slots)
         {
-            text.AppendLine(line);
+            text.AppendLine("The counted kinds are only these: one objective for each drawn activity above, with the count given there, and the milestones.");
+
+            foreach (var line in counted.Where(line => kinds.Contains(KindOf(line))))
+            {
+                text.AppendLine(KindOf(line) == "mission" ? MissionLine(slots) : line);
+            }
+
+            text.AppendLine("Every other objective is a place kind (arrive, dock, land or scan) or a milestone kind.");
+        }
+        else
+        {
+            text.AppendLine("The counted kinds, in no order of preference:");
+
+            foreach (var line in Shuffled(counted, name))
+            {
+                text.AppendLine(line);
+            }
         }
 
         AppendConflicts(text, facts.Standings);
@@ -2201,6 +2252,13 @@ public sealed class AdventureGenerator(
         new Random(unchecked((int)hash)).Shuffle(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(list));
         return list;
     }
+
+    /// <summary>The kind a line of the kinds list describes, the word in its first pair of quotes.</summary>
+    private static string KindOf(string line) => line.Split('"')[1];
+
+    private static string MissionLine(IEnumerable<DrawnActivity> slots) =>
+        "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
+        + "\"mission\" is the family, exactly one of these: " + string.Join(", ", slots.Where(slot => slot.Family is not null).Select(slot => slot.Family)) + ".";
 
     private static string TeamLine(TriggerKind kind) => kind switch
     {
@@ -2606,6 +2664,7 @@ public sealed class AdventureGenerator(
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId };
+        var unmet = new List<DrawnActivity>();
         var resolved = new List<AdventureBeat>();
         var refusals = new List<Refusal>();
         var stood = new List<int>();
@@ -2625,6 +2684,8 @@ public sealed class AdventureGenerator(
 
         // The beats of a chapter being rewritten that stay, which count toward the chapter's rules.
         IReadOnlyList<AdventureBeat> kept = ask.Rewrite is { } rewrite ? [.. rewrite.Chapter.Beats.Take(rewrite.From)] : [];
+
+        beats = MeetSlots(beats, kept, ask.Story?.Slots, unmet);
 
         var finale = ask.Story?.FinaleChapter;
         var (destination, unnamed) = finale == 1 && ask.Story!.Destination is null
@@ -2875,11 +2936,9 @@ public sealed class AdventureGenerator(
                 [.. beats.Select((beat, index) => (beat, index)).Where(written => IsTravel(written.beat.Kind)).Select(written => written.index)]));
         }
 
-        if (ask.Story?.Comfort is { } comfort
-            && !beats.Any(beat => comfort.Matches(beat.Kind, beat.MissionFamily))
-            && !kept.Any(beat => comfort.Matches(beat.Trigger.Kind, beat.Trigger.MissionFamily)))
+        foreach (var slot in unmet)
         {
-            refusals.Add(new Refusal($"This chapter leaves the comfort zone and must contain {comfort.Beat}, for {comfort.Name}.", []));
+            refusals.Add(new Refusal($"This chapter is built on drawn activities and has no objective for this one: {SlotLine(slot)}.", []));
         }
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
@@ -2900,6 +2959,50 @@ public sealed class AdventureGenerator(
 
         return new Resolved(resolved, refusals, destination) { Stood = stood };
     }
+
+    /// <summary>
+    /// The beats with each drawn activity's count, and its organic flag, set on the one beat that meets it; one beat meets one
+    /// activity. A beat already kept meets an activity as it stands. Activities no beat meets go in <paramref name="unmet"/>.
+    /// </summary>
+    private static IReadOnlyList<ReadBeat> MeetSlots(IReadOnlyList<ReadBeat> beats, IReadOnlyList<AdventureBeat> kept, IReadOnlyList<DrawnActivity>? slots, List<DrawnActivity> unmet)
+    {
+        if (slots is not { Count: > 0 })
+        {
+            return beats;
+        }
+
+        var result = beats.ToArray();
+        var used = new HashSet<int>();
+        var keptUsed = new HashSet<int>();
+
+        foreach (var slot in slots)
+        {
+            var keptAt = Enumerable.Range(0, kept.Count).FirstOrDefault(
+                index => !keptUsed.Contains(index) && Meets(slot, kept[index].Trigger.Kind, kept[index].Trigger.MissionFamily) && (slot.Organic is null || kept[index].Trigger.Organic == slot.Organic), -1);
+
+            if (keptAt >= 0)
+            {
+                keptUsed.Add(keptAt);
+                continue;
+            }
+
+            var at = Enumerable.Range(0, result.Length).FirstOrDefault(index => !used.Contains(index) && Meets(slot, result[index].Kind, result[index].MissionFamily), -1);
+
+            if (at < 0)
+            {
+                unmet.Add(slot);
+                continue;
+            }
+
+            used.Add(at);
+            result[at] = result[at] with { Count = slot.Count, Organic = slot.Organic ?? result[at].Organic };
+        }
+
+        return result;
+    }
+
+    private static bool Meets(DrawnActivity slot, TriggerKind kind, string? family) =>
+        slot.Kind == kind && (slot.Family is null || string.Equals(family?.Trim(), slot.Family, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The destination finale chapter 1 names, resolved as a land beat's place, or why it cannot stand.</summary>
     private static async Task<(AdventureDestination? Destination, string? Refusal)> DestinationAsync(

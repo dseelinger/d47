@@ -274,6 +274,9 @@ public sealed class StoryDirector(
     /// <summary>The Commander's game state, for whether the ship they are in can reach the beacon.</summary>
     public Func<CommanderGameState?> Game { get; set; } = () => null;
 
+    /// <summary>How much the Commander likes each career, for the draw of a chapter's activities.</summary>
+    public Func<Configuration.CareerRatingSettings?> Ratings { get; set; } = () => null;
+
     /// <summary>Raised as a chapter starts and stops being written, on the thread doing it.</summary>
     public event Action? WritingChanged;
 
@@ -1052,14 +1055,15 @@ public sealed class StoryDirector(
             : null;
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
-        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story))
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused, SinceBeacon(frontierId, story) / ChapterFit.ComfortEvery)
+        var previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
+        var slots = story.BeaconScanAt is { } scanned && chapter.Written >= scanned
+            ? RewriteSlots(story, chapter, rewrite, game, previous, number, finaleChapter)
             : null;
 
         return new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
-            Chapter: ChapterAt(frontierId, story, story.Chapters.Count - 2),
+            Chapter: previous,
             Story: Asked(
                 story,
                 secret,
@@ -1071,9 +1075,72 @@ public sealed class StoryDirector(
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
                 reach?.InReach != false,
                 longHaul,
-                comfort,
+                slots,
                 finaleChapter is null ? null : story.FinaleDestination),
             Rewrite: rewrite);
+    }
+
+    /// <summary>
+    /// The drawn activities a rewritten chapter is still built on: those its beats already hold, except the one at the beat
+    /// being replaced, which is drawn again when the Commander refused it. Null when the chapter holds none.
+    /// </summary>
+    private IReadOnlyList<DrawnActivity>? RewriteSlots(
+        Story story, Adventure chapter, AdventureRewrite rewrite, CommanderGameState? game, AdventureChapter? previous, int number, int? finaleChapter)
+    {
+        var statistics = game?.Statistics ?? CareerStatistics.Empty;
+        var held = chapter.Beats
+            .Select((beat, index) => (Beat: beat, Index: index, Row: ChapterActivities.Find(beat.Trigger.Kind, beat.Trigger.MissionFamily, beat.Trigger.Organic)))
+            .Where(slot => slot.Row is not null)
+            .ToList();
+        var others = held
+            .Where(slot => slot.Index != rewrite.From)
+            .Select(slot => new DrawnActivity(slot.Row!.Kind, slot.Row.Family, slot.Beat.Trigger.Count ?? slot.Row.Min) { Organic = slot.Beat.Trigger.Organic, PlaceBefore = slot.Row.PlaceBefore })
+            .ToList();
+
+        if (rewrite is { Remark: null, ClosedMarketId: null } && held.Any(slot => slot.Index == rewrite.From))
+        {
+            var refused = story.Refused.Concat(others.Select(slot => RefusedActivities.Key(slot.Kind, slot.Family)).OfType<string>()).ToList();
+            var redrawn = ChapterDraw.Draw(
+                Weights(statistics),
+                game?.Ranks ?? RankState.Empty,
+                game?.Ship ?? ShipLoadout.Unknown,
+                odyssey: true,
+                previous is null ? [] : AdventureGenerator.RecentActivities(previous),
+                refused,
+                comfort: false,
+                statistics,
+                FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore),
+                ChapterDraw.Seed(story.Id, number, rewrite.From));
+
+            others.AddRange(redrawn.Take(1));
+        }
+
+        return others.Count > 0 ? others : null;
+    }
+
+    /// <summary>The place objectives a finale chapter must already have: the landing of the last one, or the stop nearer the destination.</summary>
+    private static int FixedPlaces(Story story, int? finaleChapter) =>
+        finaleChapter is { } finale && (finale > 1 || story.Pacing.FinaleChapters <= 1) ? 1 : 0;
+
+    private CareerWeights Weights(CareerStatistics statistics)
+    {
+        var rating = Ratings();
+
+        return CareerWeights.From(
+            rating is null
+                ? null
+                : new Dictionary<Career, int>
+                {
+                    [Career.Combat] = rating.Combat,
+                    [Career.Trading] = rating.Trading,
+                    [Career.Mining] = rating.Mining,
+                    [Career.Exploration] = rating.Exploration,
+                    [Career.Exobiology] = rating.Exobiology,
+                    [Career.Passengers] = rating.Passengers,
+                    [Career.SearchAndRescue] = rating.SearchAndRescue,
+                    [Career.Crime] = rating.Crime,
+                },
+            statistics);
     }
 
     /// <summary>
@@ -1857,9 +1924,24 @@ public sealed class StoryDirector(
 
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
-        var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story) + 1)
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, story.Refused, (SinceBeacon(frontierId, story) + 1) / ChapterFit.ComfortEvery)
-            : null;
+        var sinceBeacon = SinceBeacon(frontierId, story) + 1;
+        var statistics = game?.Statistics ?? CareerStatistics.Empty;
+        var slots = story.BeaconScanAt is null
+            ? null
+            : ChapterDraw.Draw(
+                Weights(statistics),
+                game?.Ranks ?? RankState.Empty,
+                game?.Ship ?? ShipLoadout.Unknown,
+                odyssey: true,
+                previous is null ? [] : AdventureGenerator.RecentActivities(previous),
+                story.Refused,
+                ChapterFit.IsComfortChapter(sinceBeacon),
+                statistics,
+                FixedPlaces(story, finaleChapter),
+                ChapterDraw.Seed(story.Id, number),
+                sinceBeacon / ChapterFit.ComfortEvery) is { Count: > 0 } drawn
+                ? drawn
+                : null;
 
         var ask = new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -1876,7 +1958,7 @@ public sealed class StoryDirector(
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why) : null,
                 reach?.InReach != false,
                 longHaul,
-                comfort,
+                slots,
                 finaleChapter > 1 ? story.FinaleDestination : null),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
@@ -1931,7 +2013,7 @@ public sealed class StoryDirector(
         AdventureBeaconAway? away,
         bool beaconInReach,
         bool longHaul,
-        AdventureActivity? comfort,
+        IReadOnlyList<DrawnActivity>? slots,
         AdventureDestination? destination)
     {
         var card = catalog().Find(story.Id);
@@ -1956,7 +2038,7 @@ public sealed class StoryDirector(
             card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
             ChapterFit.Size(story.Pacing),
             longHaul,
-            comfort,
+            slots,
             destination,
             story.Refused,
             [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role })],

@@ -721,7 +721,7 @@ is a land objective on the destination, and that one objective may be farther th
 finale chapter both names the destination and lands on it.
 
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
-`Statistics` show you have done least, and the chapter must contain one objective of it:
+`Statistics` show you have done least, and it is the first of the chapter's drawn activities:
 
 | Activity | Figure |
 | --- | --- |
@@ -738,9 +738,9 @@ activity you have refused in the story is never picked.
 
 ### Drawing a chapter's activities {#chapter-draw}
 
-`ChapterDraw.Draw` chooses three counted activities from a fixed table, `ChapterActivities.All`. It is not wired
-into chapter writing yet. The draw is seeded by `ChapterDraw.Seed`, an FNV-1a hash of the story id and the chapter
-number, plus the index of the objective being replaced in a rewrite, so the same inputs give the same activities.
+`ChapterDraw.Draw` chooses three counted activities from a fixed table, `ChapterActivities.All`. The draw is seeded by
+`ChapterDraw.Seed`, an FNV-1a hash of the story id and the chapter number, plus the index of the objective being
+replaced in a rewrite, so the same inputs give the same activities.
 
 | Career | Kinds | Mission families |
 | --- | --- | --- |
@@ -776,11 +776,33 @@ the gates. The rest are drawn without replacement, with no two slots in one care
 left. Conflict and every illegal family need a place objective just before them; at most two place objectives may
 be in a chapter, counting those the chapter already has. Tons for sell and mine are 10 to 40, capped at the cargo capacity.
 
+### A chapter written around its drawn activities {#drawn-chapters}
+
+A story chapter written after the beacon scan is drawn three activities before its spine is written. `StoryDirector`
+calls `ChapterDraw.Draw` with the Commander's ratings, ranks, ship and `Statistics` from the last loaded Commander's game
+state, the activities the last three chapters asked for, and the activities the story refuses. A last finale chapter
+already has a land objective, and a finale chapter after the first already has a stop nearer the destination, so each
+leaves room for one fewer place objective in the draw. The chapter is written to its activities:
+
+- The spine prompt and the objectives prompt both list the three activities with their counts, and the spine prompt
+  says the chapter's want and turn are built on them.
+- The objectives prompt offers, as counted kinds, only the three activities and the milestone kinds: engineer, crew,
+  livery and the team kinds that apply. A mission activity names its family exactly. The schema's `kind` enum is narrowed to
+  match. The shuffled kind lists and the "Vary what the Commander does" line are not sent.
+- The resolve step needs one objective for each activity, of its kind and, for a mission, its exact family. The
+  objective's count is set to the drawn count, whatever the model wrote. An activity no objective meets goes through the
+  repair rounds like any other refusal, and the chapter fails if it is still missing after the last round.
+
+A chapter before the beacon scan, and a short story, are written without drawn activities. When you refuse an objective that
+held a drawn activity, only that activity is drawn again, without the refused one or the chapter's other activities, and
+the seed includes the index of the replaced objective. The chapter's activities are read back from its objectives, so
+nothing extra is stored.
+
 ### What you like doing {#career-ratings}
 
 The Stories settings hold eight ratings, one per career, each from 1 to 100 and 50 until you set it. They are kept per
 Commander, so two Commanders on one install keep separate values, and a Commander with none set reads 50 for each. They
-are the ratings `CareerWeights.From` reads. A value outside 1 to 100 is refused on the panel and by voice. Say "set my
+are the ratings `CareerWeights.From` reads when a chapter's activities are drawn. A value outside 1 to 100 is refused on the panel and by voice. Say "set my
 mining rating to 80" or "rate exploration 30", with the number in digits or words. The Commander sets a rating: it is
 not offered to the model, which is refused if it asks.
 

@@ -23,6 +23,13 @@ internal static class StoryAnswer
         "suitmod", "livery", "conflict", "faction",
     ];
 
+    /// <summary>The kinds a drawn chapter offers only for the activities drawn; the others stand for places and milestones.</summary>
+    private static readonly HashSet<string> DrawnKinds = new(StringComparer.Ordinal)
+    {
+        "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale",
+        "salvage", "uss", "rescue", "srv", "suitmod", "conflict", "faction",
+    };
+
     private enum Shape
     {
         Text,
@@ -39,8 +46,11 @@ internal static class StoryAnswer
         ("organic", Shape.MaybeFlag), ("engineer", Shape.MaybeText), ("stage", Shape.MaybeText),
     ];
 
-    /// <summary>The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them.</summary>
-    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach, bool board)
+    /// <summary>
+    /// The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them.
+    /// A drawn chapter offers, of the activity kinds, only <paramref name="drawn"/>.
+    /// </summary>
+    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach, bool board, IReadOnlyCollection<TriggerKind>? drawn = null)
     {
         var kinds = new List<string>(AlwaysKinds);
         kinds.InsertRange(AlwaysKinds.Length - 2, team.Select(kind => kind.ToString().ToLowerInvariant()));
@@ -58,6 +68,13 @@ internal static class StoryAnswer
         if (reach)
         {
             kinds.Add("reach");
+        }
+
+        if (drawn is not null)
+        {
+            var names = drawn.Select(kind => kind.ToString().ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
+
+            kinds.RemoveAll(kind => DrawnKinds.Contains(kind) && !names.Contains(kind));
         }
 
         return kinds;
