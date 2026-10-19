@@ -106,6 +106,9 @@ public static class JournalCapability
                 new("my earnings", "get_credit_ledger"),
                 new("codex ledger", "get_codex_ledger"),
                 new("codex entries", "get_codex_ledger"),
+                new("codex checklist", "get_codex_checklist"),
+                new("what codex entries am i missing", "get_codex_checklist"),
+                new("missing codex entries", "get_codex_checklist"),
                 new("combat stats", "get_combat_stats"),
                 new("combat statistics", "get_combat_stats"),
                 new("my kill stats", "get_combat_stats"),
@@ -349,6 +352,25 @@ public static class JournalCapability
                     Commands = Asking(CodexLedgerQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
                         DescribeCodexLedger(gameState, state(), arguments))),
+                },
+                new ToolDefinition
+                {
+                    Name = "get_codex_checklist",
+                    Description =
+                        "Report the codex entries known in a region, how many the Commander has logged and how many are "
+                        + "missing, by subcategory, with the most-reported missing ones named.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "region",
+                            Type = ToolParameterType.String,
+                            Description = "The codex region, by name, or here for the region the Commander is in. Default here.",
+                        },
+                    ],
+                    Commands = Asking(CodexChecklistQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeCodexChecklist(gameState, state(), arguments))),
                 },
                 new ToolDefinition
                 {
@@ -604,6 +626,11 @@ public static class JournalCapability
     private static readonly string[] CodexLedgerQuestions =
     [
         "codex ledger", "my codex ledger", "codex entries", "my codex entries",
+    ];
+
+    private static readonly string[] CodexChecklistQuestions =
+    [
+        "codex checklist", "my codex checklist", "what codex entries am i missing", "missing codex entries",
     ];
 
     private static readonly string[] CodexPeriods = ["trip", "session", "all"];
@@ -1797,25 +1824,16 @@ public static class JournalCapability
         int? regionId = null;
         string? regionName = null;
 
-        if (regionAsked.Equals("here", StringComparison.OrdinalIgnoreCase))
+        if (regionAsked.Length > 0)
         {
-            regionName = active.Location.StarPos is { } position ? GalacticRegions.Find(position) : null;
-            regionId = regionName is null ? null : GalacticRegions.IdOf(regionName);
+            var (id, name, refusal) = ResolveCodexRegion(active, regionAsked);
 
-            if (regionId is null)
+            if (refusal is not null)
             {
-                return "I do not know which region you are in.";
+                return refusal;
             }
-        }
-        else if (regionAsked.Length > 0)
-        {
-            regionId = GalacticRegions.IdOf(regionAsked);
-            regionName = regionId is { } found ? GalacticRegions.NameOf(found) : null;
 
-            if (regionId is null)
-            {
-                return $"I do not know a region called {regionAsked}.";
-            }
+            (regionId, regionName) = (id, name);
         }
 
         var ledger = active.CodexLedger;
@@ -1891,6 +1909,93 @@ public static class JournalCapability
         }
 
         return text + unfinished;
+    }
+
+    private static (int? Id, string? Name, string? Refusal) ResolveCodexRegion(CommanderGameState active, string asked)
+    {
+        if (asked.Equals("here", StringComparison.OrdinalIgnoreCase))
+        {
+            var here = active.Location.StarPos is { } position ? GalacticRegions.Find(position) : null;
+            var hereId = here is null ? null : GalacticRegions.IdOf(here);
+
+            return hereId is null ? (null, null, "I do not know which region you are in.") : (hereId, here, null);
+        }
+
+        return GalacticRegions.IdOf(asked) is { } id
+            ? (id, GalacticRegions.NameOf(id), null)
+            : (null, null, $"I do not know a region called {asked}.");
+    }
+
+    private static string DescribeCodexChecklist(GameStateStore gameState, HistoryState history, ToolArguments arguments)
+    {
+        if (history is HistoryState.Pending or HistoryState.Running)
+        {
+            return "I have not finished reading the journal history yet.";
+        }
+
+        if (gameState.Active is not { } active)
+        {
+            return "I do not know which Commander is flying yet.";
+        }
+
+        var asked = arguments.TryGetString("region", out var given) && given.Trim().Length > 0 ? given.Trim() : "here";
+        var (regionId, regionName, refusal) = ResolveCodexRegion(active, asked);
+
+        if (refusal is not null || regionId is not { } id)
+        {
+            return refusal!;
+        }
+
+        var unfinished = history is HistoryState.Failed or HistoryState.Stopped
+            ? " Reading the journal history did not finish, so this is only what the live journal shows."
+            : string.Empty;
+        var checklist = CodexChecklist.For(active.CodexLedger, CodexCatalogue.Table, id);
+
+        if (checklist.Known.Count == 0)
+        {
+            return $"The codex table lists no entries for {regionName}.{unfinished}";
+        }
+
+        var number = (int count) => count.ToString("N0", CultureInfo.InvariantCulture);
+        var text = new StringBuilder(
+            $"In {regionName}, {number(checklist.Known.Count)} codex {(checklist.Known.Count == 1 ? "entry is" : "entries are")} known: "
+            + $"{number(checklist.Logged.Count)} logged, {number(checklist.Missing.Count)} missing.");
+
+        var bySubcategory = checklist.Known
+            .GroupBy(item => item.Entry.SubCategory)
+            .Select(group => (Name: group.Key.ToLowerInvariant(), Missing: group.Count(item => item.Logged is null), Total: group.Count()))
+            .Where(group => group.Missing > 0)
+            .OrderByDescending(group => group.Missing)
+            .ThenBy(group => group.Name, StringComparer.Ordinal)
+            .Select(group => $"{number(group.Missing)} of {number(group.Total)} {group.Name}")
+            .ToList();
+
+        if (bySubcategory.Count > 0)
+        {
+            text.AppendLine();
+            text.Append(CodexTop("Missing by kind", bySubcategory, string.Empty));
+        }
+
+        if (checklist.Missing.Count > 0)
+        {
+            text.AppendLine();
+            text.Append(CodexTop(
+                "Most reported missing",
+                [.. checklist.Missing.Select(item => item.Entry.Name)],
+                string.Empty));
+        }
+
+        text.AppendLine();
+        text.Append(
+            $"The record runs {OnRecord(active.CodexLedger)}, so an entry logged before then reads as missing. "
+            + "Stars and planets are not covered");
+
+        if (checklist.Uncovered.Count > 0)
+        {
+            text.Append($"; you logged {number(checklist.Uncovered.Count)} more here that the table does not list");
+        }
+
+        return text + "." + unfinished;
     }
 
     private static string OnRecord(CodexLedger ledger) =>

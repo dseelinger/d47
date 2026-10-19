@@ -107,6 +107,8 @@ public static class CodexCatalogue
     private static readonly Lazy<CodexTable> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    public static CodexTable Table => Loaded.Value;
+
     public static CodexEntry? Entry(long entryId) => Loaded.Value.Entry(entryId);
 
     /// <summary>The entries reported in the region, most systems first.</summary>
