@@ -245,12 +245,14 @@ Thirty-seven triggers, and every one is a comparison on a structured field rathe
 | Deliver to construction sites | the `Amount` of each `Contributions` entry in a `ColonisationContribution`, optionally of one commodity `Name` | a `MarketSell` at a construction site's market |
 | Claim a system | a `ColonisationSystemClaim` event | anything else |
 | Unlock at a tech broker | a `TechnologyBroker` event whose `ItemsUnlocked` holds a module symbol of one tech broker item, such as `Guardian FSD Booster` | an unlock of another item, or an item the Commander is known to have unlocked already |
+| Pledge to a Power | a `PowerplayJoin` event, for the named Power or for any Power when none is named | a join to another Power, or a `PowerplayDefect` |
+| Reach a PowerPlay rank | a `PowerplayRank` event whose `Rank` is at least the asked rank | a lower rank |
 | Work for a faction | `+` marks in the `FactionEffects` of a `MissionCompleted` for one faction, optionally in one `SystemAddress`; `++++` counts as four | anything else |
 
 Only a stock story's chapter one uses the beacon trigger, as its last objective, and you cannot add one on the
 form.
 
-Every trigger after the seventh is counted except the engineer stage, the beacon-reach objective, the tech broker unlock and the once kinds (carrier buy, squadron, squadron founding and system claim), which each fire once. A counted objective fires when its total reaches its count, and only what happens
+Every trigger after the seventh is counted except the engineer stage, the beacon-reach objective, the tech broker unlock, the PowerPlay pledge and rank, and the once kinds (carrier buy, squadron, squadron founding and system claim), which each fire once. A counted objective fires when its total reaches its count, and only what happens
 after the objective before it has fired counts. It has no place of its own; a chapter that needs it done
 somewhere puts an arrive or dock objective there first. The card shows the running total, such as "Kill bonds
 for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
@@ -270,6 +272,8 @@ A suit mod or livery change is seen when the next `SuitLoadout` or `Loadout` is 
 | `wing` and `multicrew` (counted) | always |
 | `squadron` (once) | not in a squadron |
 | `squadronfound` (once) | 20,000,000 credits at the last load: the 10,000,000 it costs and a reserve of the same; and not in a squadron |
+| `pledge` (once) | the journal has said whether the Commander is pledged, and they are not; the Power is one of the twelve spelled as the galaxy search's `power` filter, or none for any |
+| `powerrank` | pledged, and the asked rank is above the rank held |
 
 A Commander is in a squadron from a `SquadronStartup`, `JoinedSquadron` or `SquadronCreated` until a `LeftSquadron`, `KickedFromSquadron` or `DisbandedSquadron`, or until the next `LoadGame` without a `SquadronStartup`. A wing or multicrew objective needs another player, so the writer is told the Commander can refuse it, and neither is ever the comfort-zone activity.
 The form offers the first six kinds and shows any other objective without changing it. A text filter ignores case and any `$…;` wrapping, so `Tritium` and `tritium` are one type, and `Thargoid` matches `$SAA_SignalType_Thargoid;`. An engineer objective at `Invited` is also met by `Unlocked`, and by the startup list that names every engineer. An on-foot engineer is written only in that startup list, so an engineer objective naming one fires at the first login after the stage is reached, not at the moment.

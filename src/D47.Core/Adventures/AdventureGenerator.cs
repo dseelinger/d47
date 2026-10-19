@@ -2057,7 +2057,7 @@ public sealed class AdventureGenerator(
             : $"Structure: exactly {count} objectives, which replace objective {(rewrite.From + 1).ToString(CultureInfo.InvariantCulture)} to the end of the chapter, in this order of function: {sheet}.");
         var beacon = ask.Story?.Beacon;
         var reachAway = ask.Story?.BeaconAway;
-        var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is null).ToList();
+        var team = TeamBeats.Kinds.Where(kind => TeamBeats.Why(kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits, facts.Pledge) is null).ToList();
 
         var ships = ask.Story is null ? BriefHulls(ask.Brief) : EliteSpecifications.HullNameList;
         var kinds = StoryAnswer.Kinds(
@@ -2336,6 +2336,8 @@ public sealed class AdventureGenerator(
         TriggerKind.Wing => "- \"wing\": the Commander joins a wing, or another player joins theirs, \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
         TriggerKind.Multicrew => "- \"multicrew\": the Commander joins another player's ship as crew \"count\" times. It needs another player, so never make it the only way forward; the Commander can refuse it.",
         TriggerKind.Squadron => "- \"squadron\": the Commander joins a squadron, once.",
+        TriggerKind.Pledge => "- \"pledge\": the Commander pledges to a PowerPlay Power, once. \"filter\" is the Power, one of " + string.Join(", ", GalaxyFilters.Powers) + ", or null for any Power. Use it only when the story gives the Commander a reason to serve a Power.",
+        TriggerKind.PowerRank => "- \"powerrank\": the Commander reaches PowerPlay rank \"rank\" with the Power they are pledged to, once, higher than the rank they hold now. Use it only when the story gives the Commander a reason to serve a Power; it may follow a pledge objective.",
         _ => "- \"squadronfound\": the Commander founds a squadron, once.",
     };
 
@@ -2495,10 +2497,11 @@ public sealed class AdventureGenerator(
             Organic = Organic,
             Engineer = Engineer,
             Stage = Stage,
+            Rank = Kind == TriggerKind.PowerRank ? Rank : null,
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock ? Written().Describe() : Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank ? Written().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -2845,6 +2848,38 @@ public sealed class AdventureGenerator(
                     trigger = written with { Filter = TechBrokerCatalogue.ForName(written.Filter)!.Name };
                 }
             }
+            else if (beat.Kind == TriggerKind.Pledge)
+            {
+                var written = beat.Written();
+                var problems = AdventureValidation.PledgeProblems(where, written).ToList();
+
+                if (problems.Count > 0)
+                {
+                    problems.ForEach(problem => Refuse(index, problem));
+                }
+                else
+                {
+                    trigger = written with { Filter = AdventureValidation.PowerNamed(written.Filter) };
+                }
+            }
+            else if (beat.Kind == TriggerKind.PowerRank)
+            {
+                var written = beat.Written();
+                var problems = AdventureValidation.PowerRankProblems(where, written).ToList();
+
+                if (problems.Count > 0)
+                {
+                    problems.ForEach(problem => Refuse(index, problem));
+                }
+                else if (written.Rank <= (facts.Pledge?.Rank ?? 0))
+                {
+                    Refuse(index, $"{where} waits for PowerPlay rank {written.Rank}, which the Commander already holds; ask for a higher rank.");
+                }
+                else
+                {
+                    trigger = written;
+                }
+            }
             else if (AdventureTrigger.IsOnceKind(beat.Kind))
             {
                 trigger = new AdventureTrigger { Kind = beat.Kind };
@@ -3058,7 +3093,7 @@ public sealed class AdventureGenerator(
 
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
-            if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits) is { } why)
+            if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits, facts.Pledge) is { } why)
             {
                 Refuse(index, $"Objective {offset + index + 1} ({beat.Title}) is a \"{beat.Kind.ToString().ToLowerInvariant()}\" objective, but {why}; use another kind of objective.");
             }
@@ -3321,7 +3356,8 @@ public sealed class AdventureGenerator(
         IReadOnlyList<Mission>? Missions = null,
         long? ClosedMarketId = null,
         IReadOnlyList<(string Name, string Type)>? NamedShips = null,
-        TechBrokerUnlocks? Unlocks = null)
+        TechBrokerUnlocks? Unlocks = null,
+        PowerplayPledge? Pledge = null)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -3360,7 +3396,8 @@ public sealed class AdventureGenerator(
                     .Concat((state?.Fleet.Ships ?? []).Select(stored => (Name: stored.Name, Type: (string?)stored.Type)))
                     .Where(named => named is { Name.Length: > 0, Type.Length: > 0 })
                     .Select(named => (named.Name!, named.Type!))],
-                Unlocks: state?.TechBroker);
+                Unlocks: state?.TechBroker,
+                Pledge: state?.Pledge);
         }
 
         public bool Owns(string symbol) =>

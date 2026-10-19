@@ -103,6 +103,8 @@ public static class RefusedActivities
         TriggerKind.Contribute => "deliver cargo to colonisation construction sites",
         TriggerKind.Claim => "claim a system for colonisation",
         TriggerKind.Unlock => "unlock technology at a tech broker",
+        TriggerKind.Pledge => "pledge to a Power",
+        TriggerKind.PowerRank => "rise through a Power's ranks",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

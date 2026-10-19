@@ -150,6 +150,12 @@ public enum TriggerKind
 
     /// <summary>A <c>TechnologyBroker</c> event that unlocks one tech broker row, named by <see cref="AdventureTrigger.Filter"/>. Not counted.</summary>
     Unlock,
+
+    /// <summary>A <c>PowerplayJoin</c> event, for the Power named by <see cref="AdventureTrigger.Filter"/> or any Power when that is null.</summary>
+    Pledge,
+
+    /// <summary>A <c>PowerplayRank</c> event whose rank is at least <see cref="AdventureTrigger.Rank"/>.</summary>
+    PowerRank,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -190,7 +196,7 @@ public sealed record AdventureTrigger
     /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
     public string? Commodity { get; init; }
 
-    /// <summary>The cargo, item, genus, category, signal, wreck or source type, the tech broker row an unlock beat waits for, the suit mod, the name of what is rescued, or the war type (<c>war</c>, <c>civilwar</c> or <c>election</c>), that a counted beat is limited to.</summary>
+    /// <summary>The cargo, item, genus, category, signal, wreck or source type, the tech broker row an unlock beat waits for, the Power a pledge beat waits for, the suit mod, the name of what is rescued, or the war type (<c>war</c>, <c>civilwar</c> or <c>election</c>), that a counted beat is limited to.</summary>
     public string? Filter { get; init; }
 
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
@@ -209,7 +215,7 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock) && !IsOnceKind(kind);
+        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank) && !IsOnceKind(kind);
 
     /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
     public static bool IsOnceKind(TriggerKind kind) =>
@@ -229,6 +235,8 @@ public sealed record AdventureTrigger
         TriggerKind.Board => ShipType is not null,
         TriggerKind.Reach => JumpRange > 0,
         TriggerKind.Unlock => Knowledge.TechBrokerCatalogue.ForName(Filter) is not null,
+        TriggerKind.Pledge => Filter is null || Knowledge.GalaxyFilters.Powers.Contains(Filter),
+        TriggerKind.PowerRank => Rank is > 0,
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
         TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim => true,
         _ => false,
@@ -280,6 +288,8 @@ public sealed record AdventureTrigger
         TriggerKind.Contribute => $"deliver {Tons()} of {CommodityWord()} to colonisation construction sites",
         TriggerKind.Claim => "claim a system for colonisation",
         TriggerKind.Unlock => UnlockWord(),
+        TriggerKind.Pledge => string.IsNullOrWhiteSpace(Filter) ? "pledge to a Power" : $"pledge to {Filter.Trim()}",
+        TriggerKind.PowerRank => $"reach PowerPlay rank {Rank}",
         _ => Kind.ToString(),
     };
 

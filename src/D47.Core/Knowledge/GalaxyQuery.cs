@@ -92,6 +92,14 @@ public sealed record GalaxyFilter(string Name, GalaxyFilterKind Kind, IReadOnlyL
 /// <summary>The filter vocabulary, and the local validation that is the reason for it.</summary>
 public static class GalaxyFilters
 {
+    /// <summary>The twelve Powers, spelled as the galaxy search's <c>power</c> filter takes them.</summary>
+    public static IReadOnlyList<string> Powers { get; } =
+    [
+        "A. Lavigny-Duval", "Aisling Duval", "Archon Delaine", "Denton Patreus", "Edmund Mahon",
+        "Felicia Winters", "Jerome Archer", "Li Yong-Rui", "Nakato Kaine", "Pranav Antal", "Yuri Grom",
+        "Zemina Torval",
+    ];
+
     private static readonly string[] Governments =
     [
         "Anarchy", "Communism", "Confederacy", "Cooperative", "Corporate", "Democracy", "Dictatorship", "Feudal",
@@ -183,11 +191,7 @@ public static class GalaxyFilters
             "power",
             "controlling_power",
             "The Powerplay power controlling the system.",
-            [
-                "A. Lavigny-Duval", "Aisling Duval", "Archon Delaine", "Denton Patreus", "Edmund Mahon",
-                "Felicia Winters", "Jerome Archer", "Li Yong-Rui", "Nakato Kaine", "Pranav Antal", "Yuri Grom",
-                "Zemina Torval",
-            ]) with
+            Powers) with
         {
             Fields = new Dictionary<GalaxySearchKind, string>
             {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Story chapters and short stories can now ask you to pledge to a PowerPlay Power, and to reach a PowerPlay rank with the Power you are pledged to. A pledge is met by a `PowerplayJoin` event and a rank by a `PowerplayRank` event of at least the asked rank. A pledge is asked only of a Commander known to be unpledged, and a rank only of one who is pledged and below that rank.
+
 Story chapters and short stories can now ask you to unlock one item at a tech broker, such as the Guardian FSD Booster. It is met by the `TechnologyBroker` event for that item, and is asked only for items you are not known to have unlocked. A Guardian item needs a Guardian blueprint and Guardian materials, so a story can send you to gather them first.
 
 Story chapters and short stories can now ask you to deliver tons of cargo to colonisation construction sites, optionally of one commodity, and to claim a system for colonisation. A delivery counts the tons in each `ColonisationContribution`, and a claim is met by a `ColonisationSystemClaim`. A claim costs credits, so the story asks for one only when it gives you a reason to found a colony.

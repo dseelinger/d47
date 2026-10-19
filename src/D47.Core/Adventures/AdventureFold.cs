@@ -375,6 +375,14 @@ public static class AdventureFold
                 && Knowledge.TechBrokerCatalogue.ForName(trigger.Filter) is { } row
                 && raw.Items("ItemsUnlocked").Any(item => Knowledge.TechBrokerCatalogue.ForSymbol(item.String("Name"))?.Name == row.Name),
 
+            TriggerKind.Pledge =>
+                journalEvent.Kind is "PowerplayJoin"
+                && (string.IsNullOrWhiteSpace(trigger.Filter) || string.Equals(trigger.Filter.Trim(), raw.String("Power"), StringComparison.OrdinalIgnoreCase)),
+
+            TriggerKind.PowerRank =>
+                journalEvent.Kind is "PowerplayRank"
+                && raw.Int("Rank") >= trigger.Rank,
+
             _ => false,
         };
     }

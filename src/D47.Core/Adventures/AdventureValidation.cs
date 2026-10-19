@@ -67,7 +67,7 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> BoostStars { get; } = ["neutron", "whitedwarf"];
@@ -270,6 +270,14 @@ public static class AdventureValidation
                     problems.AddRange(UnlockProblems(where, beat.Trigger, null));
                     break;
 
+                case TriggerKind.Pledge:
+                    problems.AddRange(PledgeProblems(where, beat.Trigger));
+                    break;
+
+                case TriggerKind.PowerRank:
+                    problems.AddRange(PowerRankProblems(where, beat.Trigger));
+                    break;
+
                 case TriggerKind.Reach:
                     if (beat.Trigger.JumpRange is not > 0)
                     {
@@ -353,6 +361,34 @@ public static class AdventureValidation
             yield return $"{where} names the stage \"{trigger.Stage?.Trim() ?? string.Empty}\"; the stages are {string.Join(", ", EngineerStages.Named)}.";
         }
     }
+
+    /// <summary>What is wrong with a pledge trigger: a Power that is not one of the twelve.</summary>
+    public static IEnumerable<string> PledgeProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (!string.IsNullOrWhiteSpace(trigger.Filter) && PowerNamed(trigger.Filter) is null)
+        {
+            yield return $"{where} names the Power \"{trigger.Filter.Trim()}\", which is not one of the twelve Powers: {string.Join(", ", GalaxyFilters.Powers)}.";
+        }
+    }
+
+    /// <summary>What is wrong with a power rank trigger: a rank under one.</summary>
+    public static IEnumerable<string> PowerRankProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (trigger.Rank is not > 0)
+        {
+            yield return $"{where} waits for a PowerPlay rank of {trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the rank must be 1 or more.";
+        }
+    }
+
+    /// <summary>The Power spelled as the galaxy search spells it, or null when <paramref name="name"/> is not one of the twelve.</summary>
+    public static string? PowerNamed(string? name) =>
+        string.IsNullOrWhiteSpace(name)
+            ? null
+            : GalaxyFilters.Powers.FirstOrDefault(power => string.Equals(power, name.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>What is wrong with an unlock trigger: a name that is not a joined tech broker row, or a row <paramref name="unlocks"/> shows as unlocked.</summary>
     public static IEnumerable<string> UnlockProblems(string where, AdventureTrigger trigger, TechBrokerUnlocks? unlocks)
