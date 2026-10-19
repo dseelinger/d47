@@ -115,6 +115,33 @@ public sealed class ANextChapterReadsTheOneBeforeItTests : IDisposable
     }
 
     [Fact]
+    public async Task TheChapterPromptsNameWhatTheCommanderDidAndOfferEveryActivity()
+    {
+        var bounties = new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 3 };
+        var third = Third() with { Beats = [.. Third().Beats, Beat("The Ledger", "finale", bounties, "Three names.")] };
+        var chapter = AdventureChapter.Of([First(), Second(), third], "third");
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: chapter), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var spine = provider.Requests[0].Prompt.History[0].Text;
+        Assert.DoesNotContain("The only things they can do", spine);
+        Assert.Contains("the Commander does the game's activities", spine);
+        Assert.Contains($"What those objectives asked for: 1. {LanternRoute().Beats[0].Trigger.Describe()}", spine);
+        Assert.Contains($"6. {bounties.Describe()}", spine);
+        Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", spine);
+
+        var beats = provider.Requests[1].Prompt.History[0].Text;
+        Assert.Contains("The counted kinds, in no order of preference:", beats);
+        Assert.Contains("Vary what the Commander does. The last chapters asked them to collect bounties.", beats);
+        Assert.Contains("Mission_Smuggle", beats);
+        Assert.Contains("Mission_PassengerVIP", beats);
+    }
+
+    [Fact]
     public async Task APreviousChapterWithNothingRecordedOffersItsWrittenLines()
     {
         var chapter = AdventureChapter.Of([Third() with { Told = [], Follows = null }], "third");

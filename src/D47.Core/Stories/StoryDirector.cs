@@ -1053,7 +1053,7 @@ public sealed class StoryDirector(
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story))
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused)
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, refused, SinceBeacon(frontierId, story) / ChapterFit.ComfortEvery)
             : null;
 
         return new AdventureAsk(
@@ -1858,7 +1858,7 @@ public sealed class StoryDirector(
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var comfort = ChapterFit.IsComfortChapter(SinceBeacon(frontierId, story) + 1)
-            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, story.Refused)
+            ? ChapterFit.LeastDone(game?.Statistics ?? CareerStatistics.Empty, story.Refused, (SinceBeacon(frontierId, story) + 1) / ChapterFit.ComfortEvery)
             : null;
 
         var ask = new AdventureAsk(

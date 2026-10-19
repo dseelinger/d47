@@ -732,7 +732,8 @@ finale chapter both names the destination and lands on it.
 | rescue | `Search_And_Rescue.SearchRescue_Count` |
 | passenger mission (a `Mission_Passenger` mission) | `Passengers.Passengers_Missions_Delivered` |
 
-A tie goes to the earlier row. Before d47 has seen a `Statistics` event, no activity is picked. An
+A tie goes to the earlier row, counting from a different row for each comfort-zone chapter: the first
+counts from bounty, the second from bond, and so on round the table. Before d47 has seen a `Statistics` event, no activity is picked. An
 activity you have refused in the story is never picked.
 
 ### Refusing an objective

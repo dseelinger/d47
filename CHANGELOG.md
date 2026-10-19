@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Short stories and story chapters now ask for a wider range of activities. Before, chapters leaned on courier missions and bounties. The story outline is now told the Commander does the game's activities, not only travel. The activities and mission families are offered in a different order for each story, and every mission family in d47's catalogue is offered instead of eight. Each chapter is told what the last three chapters asked for and to ask for something else. A comfort-zone chapter whose least-done activities are tied no longer always picks bounties.
+
 D47 no longer sometimes crashes at startup with "The calling thread cannot access this object because a different thread owns it". Background work that starts before the window could become the owner of the window's message queue, and the window then failed to open. The main thread now takes that ownership before any background work starts.
 
 A story's "fit out a ship that can reach the beacon" objective is now met when you arrive in the beacon's system, in any ship. Before, only a ship with the jump range the objective was written with counted, so a Commander who flew there in a ship with less range was left on that objective after scanning the beacon. The objective now also says the jump range it asks for, and that range is never more than 28 light years: a farther beacon used to ask for its distance over 20 jumps, 34 light years for one 687 light years away.

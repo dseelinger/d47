@@ -20,6 +20,18 @@ public static class MissionFamilies
         ("Mission_DS_", 725),
     ];
 
+    /// <summary>Every family in <see cref="Knowledge.MissionCatalogue"/> that is not set aside, in ordinal order.</summary>
+    public static IReadOnlyList<string> Offered => OfferedFamilies.Value;
+
+    private static readonly Lazy<IReadOnlyList<string>> OfferedFamilies = new(() =>
+    [
+        .. Knowledge.MissionCatalogue.All
+            .Select(mission => mission.Family)
+            .Where(family => family.StartsWith(Prefix, StringComparison.Ordinal) && !IsSetAside(family))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal),
+    ]);
+
     /// <summary>Families that are crimes against their target, besides any name containing <see cref="IllegalMarker"/>.</summary>
     public static IReadOnlyList<string> Illegal { get; } =
     [

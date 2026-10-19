@@ -1316,7 +1316,13 @@ public sealed class AdventureGenerator(
         text.AppendLine("Rules:");
         text.AppendLine("- The protagonist is the Commander. You are a character in it too, as yourself.");
         text.AppendLine("- You may invent people, a message, a wreck's log, a reason somebody left. You may NOT invent a star system, a station, a body, a faction, a Power or a game mechanic. Places must be real and are listed below.");
-        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous. The only things they can do in this story are fly to a system, dock, land, scan, earn a rank and, when the brief below names a ship, board that ship, so the story must turn on what they see at each place and what was left there, not on anyone they could question.");
+        text.AppendLine("- Invented people are told about, never met: the Commander cannot find, speak to or watch anyone in Elite Dangerous, so the story turns on what they see and do at each place and what was left there, not on anyone they could question.");
+        text.AppendLine(
+            "- Besides flying to a system, docking, landing and scanning, the Commander does the game's activities, and the story is built from them as much as from places: "
+            + "bounty hunting and conflict zones, missions of every kind (passengers, smuggling, piracy, assassination, salvage, sightseeing, on-foot work and more), "
+            + "trade, mining, mapping, exobiology, signal sources and wrecks, rescue, engineering, ranks"
+            + (ask.Story is null ? " and, when the brief below names a ship, boarding that ship." : ", squadrons and ships.")
+            + " Give the want and the turn an activity, not only a destination.");
         text.AppendLine("- Never tell the Commander what they feel. Show the world and let the feeling arrive.");
         text.AppendLine();
         text.Append(facts.Describe());
@@ -1424,6 +1430,7 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Turn: {previous.Spine?.Turn}");
         text.AppendLine($"Ending: {previous.Spine?.Ending}");
         text.AppendLine("Objectives: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
+        text.AppendLine("What those objectives asked for: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Trigger.Describe()}")));
 
         if (previous.Told.Count > 0)
         {
@@ -1459,7 +1466,32 @@ public sealed class AdventureGenerator(
             "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
             + "stake is the belief that chapter left open. People, places and things it established may return; "
             + "what it settled stays settled.");
+        AppendVariety(text, chapter);
     }
+
+    /// <summary>The activities the last chapters asked for, and the instruction to ask for others.</summary>
+    private static void AppendVariety(StringBuilder text, AdventureChapter chapter)
+    {
+        if (RecentActivities(chapter) is { Count: > 0 } recent)
+        {
+            text.AppendLine(
+                $"Vary what the Commander does. The last chapters asked them to {string.Join("; ", recent.Select(RefusedActivities.Phrase))}. "
+                + "Ask for activities and mission families those did not, unless this chapter carries on a longer undertaking the one before left unfinished.");
+        }
+    }
+
+    /// <summary>How many chapters back <see cref="RecentActivities"/> looks, the chapter just finished included.</summary>
+    public const int RecentChaptersVaried = 3;
+
+    /// <summary>The activity keys the last <see cref="RecentChaptersVaried"/> chapters asked for, newest first, each once.</summary>
+    internal static IReadOnlyList<string> RecentActivities(AdventureChapter chapter) =>
+        [.. new[] { chapter.Previous }
+            .Concat(chapter.Earlier.Reverse())
+            .Take(RecentChaptersVaried)
+            .SelectMany(adventure => adventure.Beats)
+            .Select(beat => RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily))
+            .OfType<string>()
+            .Distinct(StringComparer.Ordinal)];
 
     /// <summary>What the Commander did while the chapter ran, newest first.</summary>
     private static void AppendNotables(StringBuilder text, AdventureChapter chapter)
@@ -1481,7 +1513,7 @@ public sealed class AdventureGenerator(
 
         text.AppendLine(
             "Refer to at least one of these where it fits the story, in a line said by a cast member, the narrator or the ship. "
-            + "Do not name anyone who is not in the story.");
+            + "Do not name anyone who is not in the story. A reference is a line, not a reason to ask for the same activity again.");
     }
 
     /// <summary>How the Commander's conflicts ended, and whether each faction they worked for gained influence between visits.</summary>
@@ -1918,6 +1950,12 @@ public sealed class AdventureGenerator(
             AppendStory(text, story, facts);
         }
 
+        if (ask.Chapter is { } chapter)
+        {
+            text.AppendLine();
+            AppendVariety(text, chapter);
+        }
+
         text.AppendLine();
         text.AppendLine(rewrite is null
             ? $"Structure: exactly {count} objectives, in this order of function: {sheet}."
@@ -1944,41 +1982,47 @@ public sealed class AdventureGenerator(
                 : $"- \"board\": the Commander buys or swaps into a ship, given as \"ship\": its hull type, one of {hulls}; never the ship's own name. Use it only for a ship they own, or one they can buy: the price plus a reserve of the price again or 500,000,000, whichever is less, must be within the credits at the last load. A ship that costs more than that is saved for in this chapter and bought in a later one.");
         }
 
-        text.AppendLine("- \"bounty\": the Commander collects \"count\" bounties, anywhere.");
-        text.AppendLine("- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.");
-        text.AppendLine(
-            "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
-            + "\"mission\" is the family, the start of the mission's internal name: Mission_Courier, Mission_Delivery, Mission_Massacre, Mission_Assassinate, "
-            + "Mission_Collect, Mission_Salvage, Mission_OnFoot, Mission_AltruismCredits, or another starting Mission_; or null for any mission. Never "
-            + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ", or a family starting with one of them.");
-        text.AppendLine("- \"sell\": the Commander sells \"count\" tons of \"commodity\" (null for any), at any market.");
-        text.AppendLine("- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).");
-        text.AppendLine("- \"onfoot\": the Commander steps out on foot onto a planet surface \"count\" times.");
-        text.AppendLine("- \"collect\": the Commander picks up \"count\" items on foot. \"filter\" is Item, Component or Consumable, or an item's name, or null for any.");
-        text.AppendLine("- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any.");
-        text.AppendLine("- \"map\": the Commander maps \"count\" bodies with the surface mapper.");
-        text.AppendLine("- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.");
-        text.AppendLine("- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.");
-        text.AppendLine("- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is a category: Biology or StellarBodies; null for any.");
-        text.AppendLine("- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.");
-        text.AppendLine("- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.");
-        text.AppendLine("- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.");
-        text.AppendLine("- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.");
-        text.AppendLine("- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.");
-        text.AppendLine("- \"srv\": the Commander launches the SRV \"count\" times.");
-        text.AppendLine("- \"crew\": the Commander hires \"count\" crew members.");
-        text.AppendLine("- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.");
-        text.AppendLine("- \"livery\": the Commander changes their ship's paint, decals, name, colours or kit \"count\" times. It names no item: the Commander uses what they own.");
-        foreach (var kind in team)
+        var counted = new List<string>
         {
-            text.AppendLine(TeamLine(kind));
+            "- \"bounty\": the Commander collects \"count\" bounties, anywhere.",
+            "- \"bond\": the Commander earns \"count\" combat kill bonds in a conflict zone. \"faction\" is the side fought for; name one only when it appears in the game state or the places listed, and otherwise leave it null. Never Thargoid kill bonds.",
+            "- \"mission\": the Commander completes \"count\" missions. \"faction\" is the faction they are for, named only as for \"bond\", or null. "
+                + "\"mission\" is the family, the start of the mission's internal name, one of these, in no order of preference: "
+                + string.Join(", ", Shuffled(MissionFamilies.Offered, name)) + "; or null for any mission. Never "
+                + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ", or a family starting with one of them.",
+            "- \"sell\": the Commander sells \"count\" tons of \"commodity\" (null for any), at any market.",
+            "- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).",
+            "- \"onfoot\": the Commander steps out on foot onto a planet surface \"count\" times.",
+            "- \"collect\": the Commander picks up \"count\" items on foot. \"filter\" is Item, Component or Consumable, or an item's name, or null for any.",
+            "- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any.",
+            "- \"map\": the Commander maps \"count\" bodies with the surface mapper.",
+            "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.",
+            "- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.",
+            "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is a category: Biology or StellarBodies; null for any.",
+            "- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.",
+            "- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.",
+            "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.",
+            "- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.",
+            "- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.",
+            "- \"srv\": the Commander launches the SRV \"count\" times.",
+            "- \"crew\": the Commander hires \"count\" crew members.",
+            "- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.",
+            "- \"livery\": the Commander changes their ship's paint, decals, name, colours or kit \"count\" times. It names no item: the Commander uses what they own.",
+            "- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.",
+            "- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".",
+        };
+        counted.AddRange(team.Select(TeamLine));
+
+        text.AppendLine("The counted kinds, in no order of preference:");
+
+        foreach (var line in Shuffled(counted, name))
+        {
+            text.AppendLine(line);
         }
 
-        text.AppendLine("- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.");
-        text.AppendLine("- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".");
         AppendConflicts(text, facts.Standings);
         text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
-        text.AppendLine("Every kind from bounty on is counted, except engineer and those marked once, which are met once: only what happens after the objective before has fired counts, and none has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
+        text.AppendLine("A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. None has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
 
         if (reachAway is not null)
         {
@@ -2142,6 +2186,21 @@ public sealed class AdventureGenerator(
         33 => "thirty-three",
         _ => count.ToString(CultureInfo.InvariantCulture),
     };
+
+    /// <summary>The items in an order fixed by <paramref name="seed"/>, so one draft's prompts agree and the next draft's differ.</summary>
+    internal static IReadOnlyList<T> Shuffled<T>(IEnumerable<T> items, string seed)
+    {
+        var hash = 2166136261u;
+
+        foreach (var character in seed)
+        {
+            hash = (hash ^ character) * 16777619u;
+        }
+
+        var list = items.ToList();
+        new Random(unchecked((int)hash)).Shuffle(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(list));
+        return list;
+    }
 
     private static string TeamLine(TriggerKind kind) => kind switch
     {
