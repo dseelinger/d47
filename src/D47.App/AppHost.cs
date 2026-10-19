@@ -1050,6 +1050,13 @@ public sealed class AppHost : IDisposable
 
         activities.Load();
 
+        var activityBars = new D47.Core.Adventures.ActivityBars(
+            Path.Combine(paths.Data, "activity-bars.json"),
+            files,
+            loggerFactory.CreateLogger<D47.Core.Adventures.ActivityBars>());
+
+        activityBars.Load();
+
         // Mail Elite also sends and d47 has not said, with its read watermark (#618).
         var mail = new D47.Core.Journal.MailLedger(
             Path.Combine(paths.Data, D47.Core.Journal.MailLedger.FileName),
@@ -1463,6 +1470,7 @@ public sealed class AppHost : IDisposable
         return new StoreParts
         {
             Activities = activities,
+            ActivityBars = activityBars,
             AdventureBook = adventureBook,
             AdventureStore = adventureStore,
             Autonomous = autonomous,
@@ -3034,7 +3042,10 @@ public sealed class AppHost : IDisposable
             Archive = storyArchive,
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
             Ledger = () => late.Host?.Activities,
+            Bars = stores.ActivityBars,
         };
+
+        adventureGenerator.Barred = () => stores.ActivityBars.Barred(gameState.Active?.Identity.FrontierId);
 
         // After the startup catch-up, so each chapter moved keeps when its beats fired.
         storyDirector.ArchiveChapters();
@@ -4049,6 +4060,8 @@ public sealed class AppHost : IDisposable
     private sealed record StoreParts
     {
         public required D47.Core.Activities.ActivityLedger Activities { get; init; }
+
+        public required D47.Core.Adventures.ActivityBars ActivityBars { get; init; }
 
         public required D47.Core.Adventures.AdventureBook AdventureBook { get; init; }
 

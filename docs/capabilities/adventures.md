@@ -902,7 +902,7 @@ line reads "Writing a different objective…" meanwhile. It says its reply and s
 - **Keep the current one** drops the proposal.
 - **Say something else** opens the page again, and the AI keeps what was said so far.
 
-Unlike **Never ask this**, changing an objective does not remember the activity: a later chapter may ask for it.
+Unlike **Never ask this**, changing an objective does not bar the activity for the story. d47 counts, for each Commander, the changes applied to an objective that asks for an activity (arrive, dock, land and scan objectives count nothing; **Keep the current one** counts nothing). At five changes for one activity, it is barred for good: no later story chapter or short story asks for it, as **Never ask this** bars it for one story. A mission objective counts under its mission family. The counts are kept in `activity-bars.json` in the data folder. Nothing lifts a bar yet.
 A proposal is refused when the story has moved on while it was written, and the objective stays as it was. Both
 buttons are left out while an objective is being written, and for an objective that cannot be refused. The model
 is refused this tool.

@@ -59,6 +59,9 @@ public sealed class StoryDirector(
     /// <summary>The activity ledger, or null before it exists; with none, a comfort chapter does not look for unrun mission families.</summary>
     public Func<ActivityLedger?>? Ledger { get; set; }
 
+    /// <summary>The activities Commanders have changed away from often enough to bar them, or null before it exists.</summary>
+    public ActivityBars? Bars { get; set; }
+
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
     private readonly Dictionary<string, StoryProgress> _progress = new(StringComparer.Ordinal);
@@ -773,10 +776,19 @@ public sealed class StoryDirector(
             stories.Save(frontierId, still with { ChangedChapters = [.. still.ChangedChapters, proposal.ChapterKey] });
         }
 
+        if (RefusedActivities.Key(proposal.Current.Trigger.Kind, proposal.Current.Trigger.MissionFamily) is { } replaced)
+        {
+            Bars?.Count(frontierId, replaced);
+        }
+
         DiscardObjective(frontierId);
         logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", still.Title, proposal.From + 1, proposal.Draft.Name);
         return null;
     }
+
+    /// <summary>The story with the Commander's barred activities added to what the story refused. Not saved.</summary>
+    private Story WithBar(string? frontierId, Story story) =>
+        Bars?.Barred(frontierId) is { Count: > 0 } barred ? story with { Refused = [.. story.Refused.Union(barred)] } : story;
 
     private bool Unchanged(string? frontierId, Story story) =>
         stories.Current(frontierId) is { State: StoryState.Running } still
@@ -1054,6 +1066,7 @@ public sealed class StoryDirector(
     private async Task<AdventureAsk> RewriteAskAsync(
         string? frontierId, Story story, StorySecret secret, Adventure chapter, AdventureRewrite rewrite, DateTimeOffset now, CancellationToken cancellationToken)
     {
+        story = WithBar(frontierId, story);
         var refused = story.Refused;
 
         // The Story as it stood when this chapter was written: before the chapter itself was counted.
@@ -1963,6 +1976,7 @@ public sealed class StoryDirector(
             return new($"{story.Title} has had its last chapter.");
         }
 
+        story = WithBar(frontierId, story);
         var number = story.Chapters.Count + 1;
         AdventureChapter? previous = null;
 

@@ -36,6 +36,7 @@ public enum AdventureLength
 /// What the Commander decided on the form, and the brief they spoke (Phase 47). <see cref="LastDraftRefused"/> is why
 /// the draft before this one could not be used, for the writer to avoid. <see cref="Draft"/> is this draft's number, for the log.
 /// When <see cref="Outline"/> is set, the spine step is skipped and the objectives are written against it.
+/// <see cref="Barred"/> are activities a short story may not ask for.
 /// </summary>
 public sealed record AdventureAsk(
     AdventureReach Reach = AdventureReach.NearHere,
@@ -48,7 +49,8 @@ public sealed record AdventureAsk(
     string? LastDraftRefused = null,
     StoryProgress? Progress = null,
     int Draft = 1,
-    AdventureOutline? Outline = null);
+    AdventureOutline? Outline = null,
+    IReadOnlyList<string>? Barred = null);
 
 /// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
 public sealed record AdventureOutline(string Name, AdventureSpine Spine);
@@ -295,6 +297,9 @@ public sealed class AdventureGenerator(
     /// <summary>The clock <see cref="CallLimit"/>, <see cref="FirstReplyLimit"/> and <see cref="SilenceLimit"/> run on.</summary>
     public TimeProvider Time { get; init; } = TimeProvider.System;
 
+    /// <summary>The activities the Commander flying has changed away from often enough to bar them; a short story may not ask for one.</summary>
+    public Func<IReadOnlyList<string>>? Barred { get; set; }
+
     /// <summary>Beats per structure.</summary>
     public static (int Beats, string Sheet) Structure(AdventureLength length) => length switch
     {
@@ -376,6 +381,11 @@ public sealed class AdventureGenerator(
     public async Task<AdventureOutcome> GenerateAsync(AdventureAsk ask, DateTimeOffset now, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(ask);
+
+        if (ask.Story is null && Barred?.Invoke() is { Count: > 0 } barred)
+        {
+            ask = ask with { Barred = barred };
+        }
 
         if (Blocked() is { } blocked)
         {
@@ -1363,6 +1373,8 @@ public sealed class AdventureGenerator(
             AppendStory(text, story, facts);
         }
 
+        AppendBarred(text, ask);
+
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(ask.Brief))
@@ -1594,6 +1606,17 @@ public sealed class AdventureGenerator(
     }
 
     private const int MostConflictsListed = 8;
+
+    private static void AppendBarred(StringBuilder text, AdventureAsk ask)
+    {
+        if (ask.Barred is { Count: > 0 } barred)
+        {
+            text.AppendLine();
+            text.AppendLine(
+                "The Commander has changed these activities away too often to be asked for them again, and no objective may ask for any of them: "
+                + string.Join("; ", barred.Select(RefusedActivities.Phrase)) + ".");
+        }
+    }
 
     /// <summary>
     /// Both layers of a stock story, its stage and that stage's beats, and in act one the beacon its last beat
@@ -2018,6 +2041,7 @@ public sealed class AdventureGenerator(
             AppendStory(text, story, facts);
         }
 
+        AppendBarred(text, ask);
         AppendBand(text, ask, facts);
         AppendHome(text, ask, facts);
 
@@ -3001,6 +3025,13 @@ public sealed class AdventureGenerator(
                     index,
                     $"Objective {offset + index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
                     + "which they refused for this story; use another kind of objective.");
+            }
+            else if (RefusedActivities.Refuses(ask.Barred, beat.Kind, beat.MissionFamily))
+            {
+                Refuse(
+                    index,
+                    $"Objective {offset + index + 1} ({beat.Title}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                    + "which they have changed away from too often to be asked again; use another kind of objective.");
             }
         }
 
