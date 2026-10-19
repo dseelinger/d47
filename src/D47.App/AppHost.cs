@@ -3033,6 +3033,7 @@ public sealed class AppHost : IDisposable
         {
             Archive = storyArchive,
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
+            Ledger = () => late.Host?.Activities,
         };
 
         // After the startup catch-up, so each chapter moved keeps when its beats fired.

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using D47.Core.Journal;
+using D47.Core.Stories;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -349,11 +350,31 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
         Seen(book, journalEvent.Timestamp);
 
-        if (!book.Last.TryGetValue(key, out var last) || journalEvent.Timestamp > last)
+        Record(book, key, journalEvent.Timestamp);
+
+        if (journalEvent.Kind == "MissionCompleted" && MissionFamilyKey(journalEvent.String("Name")) is { } familyKey)
         {
-            book.Last[key] = journalEvent.Timestamp;
+            Record(book, familyKey, journalEvent.Timestamp);
         }
     }
+
+    private static void Record(Book book, string key, DateTimeOffset at)
+    {
+        if (!book.Last.TryGetValue(key, out var last) || at > last)
+        {
+            book.Last[key] = at;
+        }
+    }
+
+    /// <summary>The <c>mission:&lt;family&gt;</c> key for a mission name: the longest family in the draw table the name starts with.</summary>
+    public static string? MissionFamilyKey(string? name) =>
+        string.IsNullOrWhiteSpace(name)
+            ? null
+            : ChapterActivities.All
+                .Where(row => row.Family is not null && name.StartsWith(row.Family, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(row => row.Family!.Length)
+                .Select(row => row.Key)
+                .FirstOrDefault();
 
     private static void Seen(Book book, DateTimeOffset at)
     {

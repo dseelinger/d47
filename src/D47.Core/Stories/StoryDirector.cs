@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using D47.Core.Activities;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
@@ -54,6 +55,9 @@ public sealed class StoryDirector(
 
     /// <summary>The galaxy search, or null while it is off; with none, a chapter's draw is not gated on stations.</summary>
     public Func<IGalaxyService?>? Galaxy { get; set; }
+
+    /// <summary>The activity ledger, or null before it exists; with none, a comfort chapter does not look for unrun mission families.</summary>
+    public Func<ActivityLedger?>? Ledger { get; set; }
 
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
@@ -1130,6 +1134,12 @@ public sealed class StoryDirector(
         return others.Count > 0 ? others : null;
     }
 
+    /// <summary>Whether the ledger has no completion of a mission family; null while there is no ledger.</summary>
+    private Func<string, bool>? NeverCompleted() =>
+        Ledger?.Invoke() is { } ledger
+            ? family => RefusedActivities.Key(TriggerKind.Mission, family) is { } key && ledger.LastDone(key) is null
+            : null;
+
     /// <summary>
     /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within the chapter's reach.
     /// True when it cannot be told: galaxy search off, no known position, or the query failed.
@@ -1990,7 +2000,8 @@ public sealed class StoryDirector(
                 FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.Of(game?.Location.StarPos) is not null || home is not null) ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number),
                 sinceBeacon / ChapterFit.ComfortEvery,
-                stationsInReach) is { Count: > 0 } drawn
+                stationsInReach,
+                NeverCompleted()) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 

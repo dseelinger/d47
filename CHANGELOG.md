@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's comfort-zone chapter, every third one after the beacon scan, now asks for a kind of mission you have never completed: courier, delivery, smuggling, sightseeing and the rest that the ship and the story allow. Only when you have completed every kind does it use the activity your career figures show you have done least. d47 only knows the journals on this PC, so **Never ask this** bars a kind you have already done elsewhere.
+
 A story whose last two chapters you changed with **Change objective**, while you are more than 1,000 light years from both Sol and Colonia, now heads home. Its chapters cover up to the long-haul reach each, and each must end at least one reach nearer the nearer of Sol and Colonia (Sol, within 1,000 light years of Colonia), or within 1,000 light years of it. Once you are within 1,000 light years of it, the story goes on as before. **Never ask this** does not count as a change. This needs Galaxy search to measure the last stop.
 
 A story chapter that starts more than 500 light years from Sol now ends 100 to 300 light years nearer Sol than it started, so the story works you back toward populated space over several chapters. The chapter writer is told your distance from Sol and the range its last stop must fall in, and a draft outside it is written again. This needs Galaxy search to measure the last stop.

@@ -747,6 +747,12 @@ A tie goes to the earlier row, counting from a different row for each comfort-zo
 counts from bounty, the second from bond, and so on round the table. Before d47 has seen a `Statistics` event, no activity is picked. An
 activity you have refused in the story is never picked.
 
+A mission family you have never completed comes first. The activity ledger files each `MissionCompleted` under
+`mission:<family>`, the family in the draw table that the mission's `Name` starts with. If any family in the table has
+no such entry, passes the gates and is not refused in the story, the first slot is one of them, with that row's count
+range, and the table above is not used. Ties count from a different family for each comfort-zone chapter. The ledger only
+knows the journals on this PC, so a family it has not seen may have been completed before them; **Never ask this** bars it.
+
 ### Drawing a chapter's activities {#chapter-draw}
 
 `ChapterDraw.Draw` chooses three counted activities from a fixed table, `ChapterActivities.All`. The draw is seeded by
@@ -789,7 +795,7 @@ fails, the draw is not gated. A redrawn slot after **Never ask this** follows th
 
 A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
 reads the ratings of 1 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
-weighs 75, and Crime always weighs 50. In a comfort-zone chapter the first slot is the least-done activity that passes
+weighs 75, and Crime always weighs 50. In a comfort-zone chapter the first slot is a mission family never completed, else the least-done activity that passes
 the gates. The rest are drawn without replacement, with no two slots in one career while another career has a row
 left. Conflict and every illegal family need a place objective just before them; at most two place objectives may
 be in a chapter, counting those the chapter already has. Tons for sell and mine are 10 to 40, capped at the cargo capacity.

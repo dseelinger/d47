@@ -44,8 +44,9 @@ public static class ChapterDraw
     /// <summary>
     /// Up to <see cref="Slots"/> activities. <paramref name="recent"/> are <c>RefusedActivities</c> keys; <paramref name="fixedPlaces"/>
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
-    /// passes the gates, counting ties from row <paramref name="comfortFirst"/>. With <paramref name="stationsInReach"/> false,
-    /// rows that need a station are never drawn.
+    /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
+    /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
+    /// never drawn.
     /// </summary>
     public static IReadOnlyList<DrawnActivity> Draw(
         CareerWeights weights,
@@ -59,7 +60,8 @@ public static class ChapterDraw
         int fixedPlaces,
         uint seed,
         int comfortFirst = 0,
-        bool stationsInReach = true)
+        bool stationsInReach = true,
+        Func<string, bool>? neverCompleted = null)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -76,6 +78,15 @@ public static class ChapterDraw
         var room = Math.Max(0, MostPlaces - fixedPlaces);
 
         if (comfort
+            && neverCompleted is not null
+            && eligible.Where(row => row.Kind == TriggerKind.Mission && row.Family is not null && neverCompleted(row.Family) && (!row.PlaceBefore || places < room)).ToList() is { Count: > 0 } unrun)
+        {
+            var row = unrun[comfortFirst % unrun.Count];
+
+            drawn.Add(row);
+            places += row.PlaceBefore ? 1 : 0;
+        }
+        else if (comfort
             && ChapterFit.LeastDone(statistics, refused, comfortFirst, activity => eligible.Any(row => Same(activity, row))) is { } picked)
         {
             var rows = eligible.Where(row => Same(picked, row) && (!row.PlaceBefore || places < room)).ToList();
