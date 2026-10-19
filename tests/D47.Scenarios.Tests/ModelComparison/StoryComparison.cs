@@ -144,6 +144,9 @@ public sealed class TimedGalaxy(IGalaxyService inner) : Timed, IGalaxyService
     public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.ScanForColonisationAsync(query, cancellationToken));
 
+    public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
+        TimeAsync(() => inner.SystemBodiesAsync(systemAddress, cancellationToken));
+
     public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.SystemBiologyAsync(systemAddress, cancellationToken));
 

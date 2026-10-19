@@ -41,6 +41,7 @@ public class TheLikeliestMissionStationIsWhereMostFactionsMatchTests
             return Task.FromResult(Scan);
         }
 
+        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }

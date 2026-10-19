@@ -130,6 +130,30 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             : SpanshResponse.ReadSystemBiology(document, systemAddress);
     }
 
+    public async Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken)
+    {
+        using var dump = await SendAsync(
+            _logger,
+            token => _http.GetAsync($"api/dump/{systemAddress}", token),
+            "the system lookup",
+            cancellationToken,
+            missingWhen: HttpStatusCode.NotFound).ConfigureAwait(false);
+
+        if (dump is null)
+        {
+            return [];
+        }
+
+        using var system = await SendAsync(
+            _logger,
+            token => _http.GetAsync($"api/system/{systemAddress}", token),
+            "the system lookup",
+            cancellationToken,
+            missingWhen: HttpStatusCode.NotFound).ConfigureAwait(false);
+
+        return SpanshResponse.ReadSystemBodies(dump, system);
+    }
+
     public async Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
     {
         var origin = await CoordinatesAsync(from, cancellationToken).ConfigureAwait(false);

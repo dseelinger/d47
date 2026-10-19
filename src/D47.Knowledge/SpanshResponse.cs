@@ -317,6 +317,85 @@ internal static class SpanshResponse
         return new SystemBiology(systemAddress, bodies);
     }
 
+    /// <summary>
+    /// Every body of an <c>api/dump</c> record, with the mapping values of the matching <c>api/system</c>
+    /// record where there is one.
+    /// </summary>
+    public static IReadOnlyList<BodySummary> ReadSystemBodies(JsonDocument dump, JsonDocument? system)
+    {
+        var values = new Dictionary<long, long>();
+
+        if (system is not null)
+        {
+            foreach (var body in (system.RootElement.Object("record") ?? default).Items("bodies"))
+            {
+                if (Integer(body, "id64") is { } id && Integer(body, "estimated_mapping_value") is { } value)
+                {
+                    values[id] = value;
+                }
+            }
+        }
+
+        var record = dump.RootElement.Object("system") ?? default;
+        var systemName = String(record, "name") ?? "an unnamed system";
+        var systemAddress = Integer(record, "id64");
+        var bodies = new List<BodySummary>();
+
+        foreach (var body in record.Items("bodies"))
+        {
+            var id64 = Integer(body, "id64");
+
+            bodies.Add(new BodySummary
+            {
+                Name = String(body, "name") ?? "an unnamed body",
+                SystemName = systemName,
+                BodyId = Int(body, "bodyId"),
+                SystemAddress = systemAddress,
+                DistanceToArrival = Number(body, "distanceToArrival"),
+                Subtype = String(body, "subType"),
+                IsLandable = Boolean(body, "isLandable"),
+                TerraformingState = String(body, "terraformingState"),
+                ReserveLevel = String(body, "reserveLevel"),
+                Signals = [.. DumpSignals(body).Select(signal => (SignalKind(signal.Key), signal.Value))],
+                Rings = [.. body.Items("rings").Select(ring =>
+                    new RingSummary(String(ring, "name") ?? "an unnamed ring", String(ring, "type"))
+                    {
+                        Hotspots = [.. DumpSignals(ring).Select(signal => (signal.Key, signal.Value))],
+                        SignalsSeen = Timestamp(ring.Object("signals") ?? default, "updateTime"),
+                    })],
+                MappingValue = id64 is { } key && values.TryGetValue(key, out var mapping) ? mapping : null,
+                Volcanism = String(body, "volcanismType"),
+                Atmosphere = String(body, "atmosphereType"),
+                Gravity = Number(body, "gravity"),
+                SurfaceTemperature = Number(body, "surfaceTemperature"),
+                IsTidallyLocked = Boolean(body, "rotationalPeriodTidallyLocked"),
+            });
+        }
+
+        return bodies;
+    }
+
+    /// <summary>The name and count pairs under <c>signals.signals</c>.</summary>
+    private static IEnumerable<KeyValuePair<string, int>> DumpSignals(JsonElement holder)
+    {
+        if ((holder.Object("signals") ?? default).Object("signals") is not { } counts)
+        {
+            yield break;
+        }
+
+        foreach (var signal in counts.EnumerateObject())
+        {
+            if (signal.Value.ValueKind == JsonValueKind.Number && signal.Value.TryGetInt32(out var count))
+            {
+                yield return new(signal.Name, count);
+            }
+        }
+    }
+
+    /// <summary><c>$SAA_SignalType_Human;</c> as <c>Human</c>.</summary>
+    private static string SignalKind(string name) =>
+        name.StartsWith("$SAA_SignalType_", StringComparison.Ordinal) ? name["$SAA_SignalType_".Length..].TrimEnd(';') : name;
+
     /// <summary>Array members, or empty.</summary>
     private static IEnumerable<JsonElement> Items(this JsonElement element, string name) =>
         element.ValueKind == JsonValueKind.Object
