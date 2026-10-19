@@ -21,6 +21,7 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
     private readonly TextBox _field;
     private readonly Func<string, CancellationToken, Task<IReadOnlyList<T>>> _lookup;
     private readonly Func<T, string> _nameOf;
+    private readonly Func<T, string?>? _tagOf;
     private readonly Func<bool> _enabled;
     private readonly TimeSpan _pause;
     private readonly SystemNameSuggester<T> _suggester;
@@ -38,11 +39,13 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         Func<T, string> nameOf,
         Func<bool> enabled,
         Action<T> picked,
-        TimeSpan? pause = null)
+        TimeSpan? pause = null,
+        Func<T, string?>? tagOf = null)
     {
         _field = field;
         _lookup = lookup;
         _nameOf = nameOf;
+        _tagOf = tagOf;
         _enabled = enabled;
         _pause = pause ?? NameSuggestions.DefaultPause;
         _picked = picked;
@@ -236,9 +239,31 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
             _inks.Add(Ink(name, TextBlock.ForegroundProperty, ThemeManager.AKey));
         }
 
+        Control content = name;
+
+        if (_tagOf?.Invoke(match) is { } tag)
+        {
+            var kind = new TextBlock
+            {
+                Text = tag.ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Caption,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 0, 0),
+            };
+
+            if (!highlighted)
+            {
+                _inks.Add(Ink(kind, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+            }
+
+            Grid.SetColumn(kind, 1);
+            content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { name, kind } };
+        }
+
         var row = new Button
         {
-            Content = name,
+            Content = content,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,

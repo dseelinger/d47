@@ -27,6 +27,7 @@ public static class PageTrail
         {
             GalaxySearchKind.Systems => SystemSearchPage.RootKey,
             GalaxySearchKind.Stations => StationSearchPage.RootKey,
+            GalaxySearchKind.Outfitting => OutfittingSearchPage.RootKey,
             GalaxySearchKind.Bodies => BodySearchPage.RootKey,
             _ => null,
         };

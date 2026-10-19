@@ -193,6 +193,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Whether RUN SEARCH can be pressed.</summary>
     public bool CanRun => _run.IsEnabled;
 
+    /// <summary>Whether this page is drawn for the headset.</summary>
+    protected bool Headset => _headset;
+
     /// <summary>The plural noun the answer head counts in, upper case.</summary>
     protected abstract string Noun { get; }
 
@@ -279,6 +282,26 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, _lookupsEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
 
         return names;
+    }
+
+    /// <summary>Lists catalogue items under <paramref name="field"/> as it is typed into; nothing is sent anywhere.</summary>
+    protected SystemNameSuggestions<OutfittingItem> SuggestItems(TextBox field, Func<string, IReadOnlyList<OutfittingItem>> lookup, Action<OutfittingItem> picked)
+    {
+        SystemNameSuggestions<OutfittingItem>? items = null;
+        items = new SystemNameSuggestions<OutfittingItem>(
+            field,
+            (typed, _) => Task.FromResult(lookup(typed)),
+            item => item.Display,
+            () => true,
+            item =>
+            {
+                items!.SetText(string.Empty);
+                picked(item);
+            },
+            _searches.SuggestionPause,
+            item => item.IsShip ? "Ship" : "Module");
+
+        return items;
     }
 
     /// <summary>Lists faction names under <paramref name="field"/> as it is typed into; null when the surface offers none.</summary>
