@@ -2716,6 +2716,7 @@ public sealed class AppHost : IDisposable
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
                 searchHistory: searchHistory,
                 bgsTick: () => late.Host?.BgsTick?.Last,
+                signalSightings: stores.SignalSightings,
                 signalIndex: new D47.App.Panel.SignalIndexStore(
                     paths.Signals,
                     files,

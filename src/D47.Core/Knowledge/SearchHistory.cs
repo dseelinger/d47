@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Knowledge;
 
 /// <summary>One answered search, kept so it opens as it was answered.</summary>
-/// <param name="Tool"><c>describe_system</c>, <c>search_systems</c>, <c>search_stations</c>, <c>search_outfitting</c> or <c>find_body</c>.</param>
+/// <param name="Tool"><c>describe_system</c>, <c>search_systems</c>, <c>search_stations</c>, <c>search_outfitting</c>, <c>find_signal</c> or <c>find_body</c>.</param>
 /// <param name="SystemAddress">Set for <c>describe_system</c> only.</param>
 /// <param name="Result">
 /// A <see cref="GalaxySearchResult"/>, <see cref="StationSearchResult"/> or <see cref="BodySearchResult"/> by
@@ -161,6 +161,7 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
                     "search_systems" => element.Deserialize<GalaxySearchResult>(Json),
                     "search_stations" or "search_outfitting" => element.Deserialize<StationSearchResult>(Json),
                     "find_body" => element.Deserialize<BodySearchResult>(Json),
+                    "find_signal" => element.Deserialize<SignalSearchResult>(Json),
                     _ => null,
                 }
                 : null;
@@ -217,6 +218,7 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
         "search_systems" => JsonSerializer.SerializeToElement((GalaxySearchResult)entry.Result!, Json),
         "search_stations" or "search_outfitting" => JsonSerializer.SerializeToElement((StationSearchResult)entry.Result!, Json),
         "find_body" => JsonSerializer.SerializeToElement((BodySearchResult)entry.Result!, Json),
+        "find_signal" => JsonSerializer.SerializeToElement((SignalSearchResult)entry.Result!, Json),
         _ => null,
     };
 

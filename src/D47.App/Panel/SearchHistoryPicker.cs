@@ -107,6 +107,7 @@ public static class SearchHistoryPicker
             GalaxySearchResult result => result.Total,
             StationSearchResult result => result.Total,
             BodySearchResult result => result.Total,
+            SignalSearchResult result => result.Total,
             _ => null,
         };
 }

@@ -17,7 +17,7 @@ public sealed record SavedSearchOutcome(bool Saved, string Message);
 /// <summary>The galaxy searches named on this machine, shared by every Commander, kept at <c>data/saved-searches.json</c>.</summary>
 public sealed class SavedSearchStore(string path, IFileSystem files, ILogger<SavedSearchStore> logger)
 {
-    public static IReadOnlyList<string> Tools { get; } = ["search_systems", "search_stations", "find_body", "search_outfitting"];
+    public static IReadOnlyList<string> Tools { get; } = ["search_systems", "search_stations", "find_body", "search_outfitting", "find_signal"];
 
     private static readonly JsonSerializerOptions Json = new()
     {

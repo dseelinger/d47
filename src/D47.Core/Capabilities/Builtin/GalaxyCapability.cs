@@ -118,7 +118,11 @@ public static class GalaxyCapability
         Func<DateTimeOffset?>? bgsTick = null,
 
         // The daily index of FSS signals, or null where none is composed.
-        ISignalIndexSource? signalIndex = null) => new()
+        ISignalIndexSource? signalIndex = null,
+
+        // The signals this Commander has scanned, and where they are now.
+        Journal.SignalSightings? signals = null,
+        Func<Journal.StarPosition?>? currentPosition = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -337,6 +341,47 @@ public static class GalaxyCapability
                     SearchOutfittingAsync(
                         galaxy, currentSystem, settings, searches, Remember(history), now, arguments,
                         cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = "find_signal",
+                Description =
+                    "Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a memorial, nearest "
+                    + "first. Answers from the daily signal index and the Commander's own scans, on this machine.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "signal",
+                        Type = ToolParameterType.String,
+                        Description =
+                            $"A kind, one of {SignalSearch.AnyRes}, {string.Join(", ", SignalKind.All.Select(kind => kind.Name))}; "
+                            + "or any part of a signal's name such as \"unauthorised\", \"memorial\" or \"Natalie Fraser\".",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to theirs.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "How far to look, in light years. Default 100.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "limit",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many to return, 1 to 100. Default 25.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    FindSignalAsync(
+                        currentSystem, currentPosition, settings, systems, signals, signalIndex, searches,
+                        Remember(history), now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -1378,6 +1423,163 @@ public static class GalaxyCapability
     private static void Remember(Action<SearchHistoryEntry>? remember, string tool, GalaxySearchPosting posting) =>
         remember?.Invoke(SearchHistoryEntry.Of(
             tool, posting.Arguments, posting.Reference, null, posting.Result, posting.AskedAt));
+
+    private const double DefaultSignalDistance = 100;
+
+    private static async Task<ToolResult> FindSignalAsync(
+        Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
+        Configuration.SettingsService settings,
+        IStarSystemService? systems,
+        Journal.SignalSightings? signals,
+        ISignalIndexSource? signalIndex,
+        GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!arguments.TryGetString("signal", out var signal) || string.IsNullOrWhiteSpace(signal))
+        {
+            return ToolResult.Error("Say which signal to look for, such as a Hazardous RES or a nav beacon.");
+        }
+
+        var indexOn = settings.Current.Knowledge.SignalIndex;
+        var index = indexOn && signalIndex is not null
+            ? await signalIndex.GetAsync(cancellationToken).ConfigureAwait(false)
+            : null;
+        var own = signals?.Snapshot() ?? [];
+
+        var asked = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear.Trim()
+            : null;
+
+        if (asked is not null
+            && currentSystem() is { } where
+            && asked.Equals(where, StringComparison.OrdinalIgnoreCase)
+            && currentPosition?.Invoke() is not null)
+        {
+            asked = null;
+        }
+
+        Journal.StarPosition origin;
+        string? reference;
+
+        if (asked is null)
+        {
+            if (currentPosition?.Invoke() is not { } here)
+            {
+                return ToolResult.Error(
+                    "I don't know where the Commander is right now, so I need a system to search out from.");
+            }
+
+            origin = here;
+            reference = currentSystem();
+        }
+        else if (SignalSearch.Place(asked, own, index) is { } placed)
+        {
+            origin = placed;
+            reference = asked;
+        }
+        else if (systems is not null && settings.Current.Knowledge.GalaxySearch)
+        {
+            try
+            {
+                var matches = await systems.MatchNamesAsync(asked, cancellationToken).ConfigureAwait(false);
+                var exact = matches.FirstOrDefault(
+                    match => string.Equals(match.Name, asked, StringComparison.OrdinalIgnoreCase));
+
+                if (exact is null)
+                {
+                    return ToolResult.Error(
+                        matches.Count == 0
+                            ? $"Spansh has no system named {asked}."
+                            : $"Spansh has no system named exactly {asked}. Close names: "
+                              + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
+                }
+
+                origin = exact.Position;
+                reference = exact.Name;
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                return ToolResult.Error(ex.Message);
+            }
+        }
+        else
+        {
+            return ToolResult.Error(
+                $"I don't know where {asked} is: no signal I hold is in that system, and Galaxy search is off, so I "
+                + "can't look it up. The Commander can turn Galaxy search on in settings, or name a system a signal "
+                + "has been seen in.");
+        }
+
+        var maxDistance = arguments.TryGetDouble("max_distance", out var given) && given > 0
+            ? given
+            : DefaultSignalDistance;
+        var limit = Limit(arguments, out var askedLimit);
+        var (matcher, byKind) = SignalSearch.Matcher(signal);
+
+        var result = await Task.Run(
+            () => SignalSearch.Find(origin, reference, matcher, maxDistance, limit, own, index),
+            cancellationToken).ConfigureAwait(false);
+
+        var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
+        var distance = maxDistance.ToString("0.##", CultureInfo.InvariantCulture);
+        var from = string.IsNullOrWhiteSpace(reference) ? "here" : reference;
+
+        var source = !indexOn
+            ? " Searched your own scans only; the signal index is off in Settings."
+            : index is null
+                ? " Searched your own scans only; the signal index could not be loaded."
+                : string.Empty;
+
+        if (signals is { HistoryFolded: false })
+        {
+            source += " Your own scans are still loading.";
+        }
+
+        string said;
+
+        if (result.Signals.Count == 0)
+        {
+            said = $"No {signal.Trim()} found within {distance} light years of {from}."
+                   + (byKind
+                       ? string.Empty
+                       : " Names are matched as they were uploaded, in the uploader's game language, so a memorial "
+                         + "may be listed under another language's name (\"Sol-Pilotengedenkstätte\").");
+        }
+        else
+        {
+            var nearest = result.Signals[0];
+            var seen = (at.UtcDateTime.Date - nearest.LastSeen.UtcDateTime.Date).Days switch
+            {
+                <= 0 => "today",
+                1 => "yesterday",
+                _ => Since(at - nearest.LastSeen),
+            };
+
+            said = $"The nearest is {nearest.Signal} in {nearest.System}, "
+                   + $"{nearest.Distance.ToString("0.00", CultureInfo.InvariantCulture)} light years from {from}, "
+                   + $"last seen {seen}{(nearest.OwnScan ? " by you" : string.Empty)}."
+                   + (result.Total > 1 ? $" {result.Total - 1} more within {distance} light years." : string.Empty);
+        }
+
+        said += source + LimitRefused(askedLimit);
+
+        var posting = new GalaxySearchPosting(
+            GalaxySearchKind.Signals,
+            new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+            reference,
+            result,
+            said,
+            at);
+
+        searches?.Post(posting);
+        Remember(remember, "find_signal", posting);
+
+        return ToolResult.Ok(said);
+    }
 
     private static async Task<ToolResult> DescribeSystemAsync(
         IStarSystemService? systems,

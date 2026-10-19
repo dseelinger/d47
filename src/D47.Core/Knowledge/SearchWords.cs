@@ -25,6 +25,7 @@ public static class SearchWords
                 "search_stations" => "Stations",
                 "search_outfitting" => "Outfitting",
                 "find_body" => "Bodies",
+                "find_signal" => "Signals",
                 _ => tool,
             },
         };

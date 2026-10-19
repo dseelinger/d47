@@ -258,6 +258,9 @@ public static class BuiltinCapabilities
         // The daily index of FSS signals.
         Knowledge.ISignalIndexSource? signalIndex = null,
 
+        // The signals the Commander has scanned.
+        Journal.SignalSightings? signalSightings = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -311,7 +314,9 @@ public static class BuiltinCapabilities
             visitedStars,
             searchHistory,
             bgsTick,
-            signalIndex),
+            signalIndex,
+            signalSightings,
+            () => gameState.Active?.Location.StarPos),
         RouteCapability.Create(
             routes,
             trade,

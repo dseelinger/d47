@@ -104,6 +104,34 @@ public sealed class SignalIndex : IReadOnlyList<SignalSighting>
         return index;
     }
 
+    /// <summary>Where a system is, by name; null when no row is in it.</summary>
+    public StarPosition? Place(string system)
+    {
+        foreach (var place in _systems)
+        {
+            if (_strings[place.Name].Equals(system, StringComparison.OrdinalIgnoreCase))
+            {
+                return new StarPosition(place.X, place.Y, place.Z);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The sightings in systems within <paramref name="lightYears"/> of <paramref name="origin"/>.</summary>
+    public IEnumerable<SignalSighting> Within(StarPosition origin, double lightYears)
+    {
+        for (var i = 0; i < _rows.Count; i++)
+        {
+            var system = _systems[_rows[i].System];
+
+            if (origin.DistanceTo(new StarPosition(system.X, system.Y, system.Z)) <= lightYears)
+            {
+                yield return this[i];
+            }
+        }
+    }
+
     public IEnumerator<SignalSighting> GetEnumerator()
     {
         for (var i = 0; i < _rows.Count; i++)

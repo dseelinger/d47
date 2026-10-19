@@ -528,6 +528,33 @@ unless set. `min_pad` and `max_station_distance` are sent as in `search_stations
 no system filters. The answer is kept as the last outfitting search, in the search history, and can
 be saved by name.
 
+#### `find_signal`
+
+Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a memorial.
+
+```json
+{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 100."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"signal":{"type":"string","description":"A kind, one of Any RES, Nav beacon, Compromised nav beacon, Resource extraction site, Low RES, High RES, Hazardous RES, Colonisation beacon, Tourist beacon, Installation, Megaship, Titan, Listening post, Unregistered comms beacon, Notable stellar phenomena; or any part of a signal\u0027s name such as \u0022unauthorised\u0022, \u0022memorial\u0022 or \u0022Natalie Fraser\u0022."}},"required":["signal"],"additionalProperties":false}
+```
+
+`signal` is a kind's display name or "Any RES", tried first, or any part of a signal's name, such as
+`unauthorised`, `memorial` or `Natalie Fraser`. The tool is not gated on Galaxy search: it answers on
+this machine from the daily signal index, when the **Signal index** setting is on, and the
+Commander's own scans together. A signal held by both appears once, with the later date, and a
+megaship appears once, where it was last seen.
+
+`near` is placed from, in order: where the Commander is, when it is left out; a signal of the index
+or of the Commander's own scans in that system; Spansh, while Galaxy search is on. Otherwise the
+search is refused, saying the system's position is unknown. `max_distance` is in light years and
+defaults to 100.
+
+Each row of the answer gives the signal's name, its system, the distance to two decimals, the date
+last seen, and whether it came from the index or the Commander's own scan. The spoken answer names
+the nearest and how long ago it was seen. With the index off, the answer says only the Commander's
+own scans were searched; before the journal backfill is done, it says those scans are still loading.
+A name search that finds nothing says that names are matched as they were uploaded, in the
+uploader's game language. The answer is kept as the last signals search, in the search history, and
+can be saved by name.
+
 #### `distance_between`
 
 The straight-line distance in light years between two star systems.
