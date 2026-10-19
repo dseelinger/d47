@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Story chapters and short stories can now ask you to be the first to walk on one to three worlds. A footfall counts when you disembark onto a landable body whose scan said no one had been there, and each body counts once. You will usually have to leave populated space to find one. It is asked only of Commanders with Odyssey.
+
 Story chapters and short stories can now ask you to scan three to eight bodies that no one has discovered. Each body counts once, however many scans Elite writes for it. The discovery tag is awarded when you sell the data, so the story promises the find, not the tag.
 
 Story chapters and short stories can now ask you to boost off a jet cone once or twice, at a neutron star or a white dwarf. The objective counts each boost the journal records, and a `BoostValue` of 4 or more is a neutron star. **Change objective** and **Never ask this** treat it like any other activity.

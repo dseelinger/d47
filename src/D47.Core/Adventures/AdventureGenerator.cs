@@ -2103,6 +2103,7 @@ public sealed class AdventureGenerator(
             "- \"srv\": the Commander launches the SRV \"count\" times.",
             "- \"boost\": the Commander supercharges the frame shift drive in a star's jet cone \"count\" times. \"filter\" is neutron or whitedwarf, or null for either. Put an arrive objective in a system with that star just before it.",
             "- \"discover\": the Commander scans \"count\" bodies that no one has discovered, each body once. The discovery tag is awarded when the data is sold, so promise the find, not the tag. \"filter\" is Earthlike body, Water world, Ammonia world, Gas giant with water based life, Gas giant with ammonia based life, or N for a neutron star; null for any body.",
+            "- \"footfall\": the Commander makes \"count\" first footfalls, each on a landable body that no one has walked on, which is usually away from populated space.",
             "- \"crew\": the Commander hires \"count\" crew members.",
             "- \"suitmod\": the Commander applies \"count\" new suit or weapon mods at an on-foot engineer's workshop. \"filter\" is a mod name such as suit_nightvision or weapon_stability; null for any. It is seen when the next suit loadout is written, so it may fire minutes after the mod is applied.",
             "- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.",
@@ -2295,6 +2296,8 @@ public sealed class AdventureGenerator(
         31 => "thirty-one",
         32 => "thirty-two",
         33 => "thirty-three",
+        34 => "thirty-four",
+        35 => "thirty-five",
         _ => count.ToString(CultureInfo.InvariantCulture),
     };
 

@@ -138,6 +138,9 @@ public enum TriggerKind
 
     /// <summary><c>Scan</c> events of bodies no one has discovered, each body once. <see cref="AdventureTrigger.Filter"/> limits it to a planet class, or <c>N</c> for a neutron star.</summary>
     Discover,
+
+    /// <summary><c>Disembark</c> events onto a body whose scan said no one had walked there. Each body once.</summary>
+    Footfall,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -262,6 +265,7 @@ public sealed record AdventureTrigger
         TriggerKind.Conflict => $"take part {Times()} in {WarWord()}{For()}",
         TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
         TriggerKind.Boost => $"supercharge your frame shift drive in {BoostStar()} jet cone {Times()}",
+        TriggerKind.Footfall => $"be the first to walk on {Counted("world", "worlds")}",
         TriggerKind.Discover => $"be the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
         _ => Kind.ToString(),
     };
@@ -303,6 +307,7 @@ public sealed record AdventureTrigger
             TriggerKind.Conflict => $"Contributions to {WarWord()}{For()}: {of}",
             TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}: {of}",
             TriggerKind.Boost => $"{Capital(BoostWord())} boosts: {of}",
+            TriggerKind.Footfall => $"First footfalls: {of}",
             TriggerKind.Discover => $"{Capital(DiscoverWord(one: false))} scanned: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };

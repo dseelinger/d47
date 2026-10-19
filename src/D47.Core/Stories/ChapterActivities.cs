@@ -167,6 +167,7 @@ public static class ChapterActivities
             new(TriggerKind.Srv, null, Career.Exploration, ActivityGate.BuggyBay, 1, 3),
             new(TriggerKind.Boost, null, Career.Exploration, ActivityGate.None, 1, 2),
             new(TriggerKind.Discover, null, Career.Exploration, ActivityGate.None, 3, 8),
+            new(TriggerKind.Footfall, null, Career.Exploration, ActivityGate.Odyssey, 1, 3),
             new(TriggerKind.DataSale, null, Career.Exploration, ActivityGate.None, 1_000_000, 5_000_000, Organic: false),
             new(TriggerKind.Organic, null, Career.Exobiology, ActivityGate.Odyssey, 3, 6),
             new(TriggerKind.DataSale, null, Career.Exobiology, ActivityGate.Odyssey, 1_000_000, 5_000_000, Organic: true),

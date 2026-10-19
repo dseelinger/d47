@@ -37,9 +37,17 @@ public sealed record AdventureWorld
 
     public SystemStandings Standings { get; init; } = SystemStandings.Empty;
 
+    /// <summary>Every body scanned, and where a first footfall was taken.</summary>
+    public BodyScans Bodies { get; init; } = BodyScans.Empty;
+
     public AdventureWorld Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
+
+        if (journalEvent.Kind is "Scan" or "Disembark")
+        {
+            return this with { Bodies = Bodies.Apply(journalEvent) };
+        }
 
         if (journalEvent.Kind is not ("FSDJump" or "Location" or "CarrierJump") || journalEvent.String("StarSystem") is not { Length: > 0 } name)
         {
@@ -50,6 +58,13 @@ public sealed record AdventureWorld
 
         return this with { System = name, Names = names, Standings = Standings.Apply(journalEvent) };
     }
+
+    /// <summary>Whether <paramref name="journalEvent"/> is a <c>Disembark</c> that took the first footfall on its body.</summary>
+    public bool IsFirstFootfall(JournalEvent journalEvent) =>
+        journalEvent.Kind is "Disembark"
+        && journalEvent.Long("SystemAddress") is { } address
+        && journalEvent.Int("BodyID") is { } body
+        && Bodies.For(address, body)?.FootfallTakenAt == journalEvent.Timestamp;
 
     /// <summary>The name of a system the Commander has been in, from its address.</summary>
     public string? NameOf(long address) => Names.GetValueOrDefault(address);
