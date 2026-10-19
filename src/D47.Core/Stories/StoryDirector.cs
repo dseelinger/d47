@@ -501,7 +501,13 @@ public sealed class StoryDirector(
     /// The beacon scans a story picked now would open with, 1 or 2: the most scanned in any other story of this Commander
     /// that recorded a real or remembered scan, in any state. 0 when none did, and the story flies to its own beacon.
     /// </summary>
-    public int BeaconsOnRecord(string? frontierId, string pickingId)
+    public int BeaconsOnRecord(string? frontierId, string pickingId) =>
+        stories.BeaconForgotten(frontierId) ? 0 : ScansOnRecord(frontierId, pickingId);
+
+    /// <summary>Whether any story of this Commander recorded a real or remembered scan, whether or not they asked to fly to a beacon again.</summary>
+    public bool HasScanOnRecord(string? frontierId) => ScansOnRecord(frontierId, null) > 0;
+
+    private int ScansOnRecord(string? frontierId, string? pickingId)
     {
         var most = stories.For(frontierId)
             .Where(story => !string.Equals(story.Id, pickingId, StringComparison.OrdinalIgnoreCase)
@@ -1383,6 +1389,7 @@ public sealed class StoryDirector(
     private CoreWaking? RecordScan(string? frontierId, string storyId, long address, DateTimeOffset at)
     {
         CoreWaking? woke = null;
+        var added = false;
 
         stories.Update(frontierId, storyId, story =>
         {
@@ -1390,6 +1397,8 @@ public sealed class StoryDirector(
             {
                 return story;
             }
+
+            added = true;
 
             var held = story.HeldCores;
             var scanned = story with
@@ -1407,6 +1416,11 @@ public sealed class StoryDirector(
 
             return scanned;
         });
+
+        if (added)
+        {
+            stories.SetBeaconForgotten(frontierId, false);
+        }
 
         return woke;
     }

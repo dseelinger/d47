@@ -468,6 +468,47 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         surface.Window.Close();
     }
 
+    private static List<CheckBox> BeaconAgainBoxes(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<CheckBox>().Where(box => box.Name == "BeaconAgain")];
+
+    [AvaloniaFact]
+    public void TheBeaconAgainBoxIsDrawnOnlyOnceAScanIsOnRecord()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var bare = Open(running: false);
+
+        Assert.Empty(BeaconAgainBoxes(bare.Panel));
+        Assert.False(Shows(bare.Panel, StoriesView.BeaconAgainNote));
+
+        bare.Window.Close();
+
+        var surface = Open(running: false, onRecord: new Story
+        {
+            Id = StoryFixture.Other.Id,
+            Title = StoryFixture.Other.Title,
+            PublicLayer = StoryFixture.Other.Describe(),
+            State = StoryState.Finished,
+            PickedAt = Now.AddDays(-200),
+            BeaconScanAt = Now.AddDays(-199),
+            BeaconSystems = [13872878396833],
+            StoppedAt = Now.AddDays(-1),
+        });
+
+        var box = Assert.Single(BeaconAgainBoxes(surface.Panel));
+
+        Assert.False(box.IsChecked);
+        Assert.True(Shows(surface.Panel, StoriesView.BeaconAgainNote));
+
+        box.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(surface.Director.Stories.BeaconForgotten("F1"));
+        Assert.True(Assert.Single(BeaconAgainBoxes(surface.Panel)).IsChecked);
+
+        surface.Window.Close();
+    }
+
     [AvaloniaFact]
     public void APickedStoryLosesPickAndOffersWriteItAgainOnceItsChapterFails()
     {

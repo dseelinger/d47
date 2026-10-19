@@ -171,6 +171,33 @@ public sealed class StoriesView : UserControl, IPageSummary
         return true;
     }
 
+    internal const string BeaconAgainLabel = "Fly to a Guardian beacon again in my next story";
+    internal const string BeaconAgainNote =
+        "Your next story of a month or longer opens after the beacon you have scanned. Tick this to fly to one again.";
+
+    /// <summary>The checkbox that forgets the recorded scan for the next pick; null while no scan is on record and the box is unticked.</summary>
+    private StackPanel? BeaconAgain()
+    {
+        var commander = _surface.Commander();
+        var forgotten = _director.Stories.BeaconForgotten(commander);
+
+        if (!forgotten && !_director.HasScanOnRecord(commander))
+        {
+            return null;
+        }
+
+        var (box, _) = LabeledCheckBox.Build(BeaconAgainLabel);
+        box.Name = "BeaconAgain";
+        box.IsChecked = forgotten;
+        box.IsCheckedChanged += (_, _) => IfShown(commander, _status, () => _director.Stories.SetBeaconForgotten(commander, box.IsChecked == true));
+
+        var stack = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 10) };
+        stack.Children.Add(box);
+        stack.Children.Add(AdventuresPage.Muted(BeaconAgainNote));
+
+        return stack;
+    }
+
     private void Rebuild()
     {
         _list.Children.Clear();
@@ -182,6 +209,11 @@ public sealed class StoriesView : UserControl, IPageSummary
             var notice = AdventuresPage.Text(StoryDirector.NeedsOdyssey, TypeScale.Body);
             notice.Margin = new Thickness(0, 0, 0, 10);
             _list.Children.Add(notice);
+        }
+
+        if (BeaconAgain() is { } beaconAgain)
+        {
+            _list.Children.Add(beaconAgain);
         }
 
         if (current is not null)

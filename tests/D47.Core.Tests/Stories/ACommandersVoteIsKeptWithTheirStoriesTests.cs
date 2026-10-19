@@ -91,4 +91,20 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
 
         Assert.Null(Reopen().Voter("F1"));
     }
+
+    [Fact]
+    public void TheForgottenBeaconSurvivesARestartAndIsPerCommander()
+    {
+        var store = Reopen();
+        store.SetBeaconForgotten("F1", true);
+
+        var reopened = Reopen();
+
+        Assert.True(reopened.BeaconForgotten("F1"));
+        Assert.False(reopened.BeaconForgotten("F2"));
+
+        reopened.SetBeaconForgotten("F1", false);
+
+        Assert.False(Reopen().BeaconForgotten("F1"));
+    }
 }

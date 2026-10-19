@@ -215,4 +215,62 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
         Assert.NotNull(fixtures.Director.TakeNarratedScan("F1"));
         Assert.Null(fixtures.Director.TakeRememberedScan("F1"));
     }
+
+    [Fact]
+    public async Task AForgottenScanSendsTheNextLongStoryToABeacon()
+    {
+        using var fixtures = Fixtures(beats: BeatsToTheBeacon);
+        fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
+        fixtures.Stories.SetBeaconForgotten("F1", true);
+
+        Assert.False(fixtures.Director.Remembers("F1", ThreeMonths));
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var story = fixtures.Stories.Current("F1")!;
+
+        Assert.Null(story.BeaconScanAt);
+        Assert.Equal(0, story.BeaconsRemembered);
+        Assert.NotNull(fixtures.Asks[0].Story!.Beacon);
+        Assert.False(fixtures.Asks[0].Story!.Remembered);
+    }
+
+    [Fact]
+    public async Task ARealScanClearsTheForgottenScanAndTheNextStoryIsRemembered()
+    {
+        using var fixtures = Fixtures(picks: 2, beats: BeatsToTheBeacon);
+        fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
+        fixtures.Stories.SetBeaconForgotten("F1", true);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+        fixtures.ScanBeacon("F1", BeaconAddress, Now.AddHours(1));
+
+        Assert.False(fixtures.Stories.BeaconForgotten("F1"));
+        Assert.Null(fixtures.Director.Abandon("F1", Now.AddDays(1)));
+        Assert.True(fixtures.Director.Remembers("F1", Other));
+    }
+
+    [Fact]
+    public async Task UntickingBeforeAPickRestoresTheRememberedOpening()
+    {
+        using var fixtures = Fixtures();
+        fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
+        fixtures.Stories.SetBeaconForgotten("F1", true);
+        fixtures.Stories.SetBeaconForgotten("F1", false);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+        Assert.Equal(1, fixtures.Stories.Current("F1")!.BeaconsRemembered);
+    }
+
+    [Fact]
+    public void TheScanOnRecordIsReportedWhateverTheFlagSays()
+    {
+        using var fixtures = Fixtures();
+
+        Assert.False(fixtures.Director.HasScanOnRecord("F1"));
+
+        fixtures.Stories.Save("F1", OnRecord(StoryState.Finished, BeaconAddress));
+        fixtures.Stories.SetBeaconForgotten("F1", true);
+
+        Assert.True(fixtures.Director.HasScanOnRecord("F1"));
+    }
 }

@@ -30,12 +30,14 @@ public sealed class StoryStore
     private readonly IFileSystem _files;
     private Dictionary<string, IReadOnlyList<Story>> _byCommander;
     private Dictionary<string, string> _voters;
+    private HashSet<string> _forgotten;
 
     private StoryStore(
         string? path,
         ILogger? logger,
         Dictionary<string, IReadOnlyList<Story>> byCommander,
         Dictionary<string, string> voters,
+        HashSet<string> forgotten,
         IFileSystem files)
     {
         _path = path;
@@ -43,17 +45,18 @@ public sealed class StoryStore
         _files = files;
         _byCommander = byCommander;
         _voters = voters;
+        _forgotten = forgotten;
     }
 
     /// <summary>Held in memory only.</summary>
     public static StoryStore InMemory() =>
-        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
+        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
 
     public static StoryStore Open(string path, IFileSystem files, ILogger<StoryStore> logger)
     {
-        var (byCommander, voters) = Read(path, files, logger);
+        var (byCommander, voters, forgotten) = Read(path, files, logger);
 
-        return new(path, logger, byCommander, voters, files);
+        return new(path, logger, byCommander, voters, forgotten, files);
     }
 
     public event Action? Changed;
@@ -65,13 +68,14 @@ public sealed class StoryStore
 
         lock (_writeGate)
         {
-            var (byCommander, voters) = Read(path, _files, _logger ?? NullLogger.Instance);
+            var (byCommander, voters, forgotten) = Read(path, _files, _logger ?? NullLogger.Instance);
 
             lock (_gate)
             {
                 _path = path;
                 _byCommander = byCommander;
                 _voters = voters;
+                _forgotten = forgotten;
             }
         }
 
@@ -118,6 +122,46 @@ public sealed class StoryStore
         {
             return _voters.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
         }
+    }
+
+    /// <summary>Whether the Commander asked to fly to a Guardian beacon again, so no scan counts as on record.</summary>
+    public bool BeaconForgotten(string? frontierId)
+    {
+        lock (_gate)
+        {
+            return _forgotten.Contains(frontierId ?? AdventureStore.NoCommander);
+        }
+    }
+
+    public void SetBeaconForgotten(string? frontierId, bool forgotten)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_writeGate)
+        {
+            lock (_gate)
+            {
+                if (_forgotten.Contains(commander) == forgotten)
+                {
+                    return;
+                }
+
+                _forgotten = new HashSet<string>(_forgotten, StringComparer.Ordinal);
+
+                if (forgotten)
+                {
+                    _forgotten.Add(commander);
+                }
+                else
+                {
+                    _forgotten.Remove(commander);
+                }
+            }
+
+            Write();
+        }
+
+        Changed?.Invoke();
     }
 
     /// <summary>The Commander's voter token, minted and saved the first time it is asked for. It is not the donor token.</summary>
@@ -226,13 +270,15 @@ public sealed class StoryStore
             [
                 .. _byCommander.Keys
                     .Concat(_voters.Keys)
+                    .Concat(_forgotten)
                     .Distinct(StringComparer.Ordinal)
                     .Order(StringComparer.Ordinal)
-                    .Where(key => _byCommander.GetValueOrDefault(key)?.Count > 0 || _voters.ContainsKey(key))
+                    .Where(key => _byCommander.GetValueOrDefault(key)?.Count > 0 || _voters.ContainsKey(key) || _forgotten.Contains(key))
                     .Select(key => new CommanderRecord
                     {
                         FrontierId = key,
                         Voter = _voters.GetValueOrDefault(key),
+                        BeaconForgotten = _forgotten.Contains(key),
                         Stories = _byCommander.GetValueOrDefault(key) ?? [],
                     }),
             ],
@@ -248,16 +294,17 @@ public sealed class StoryStore
         }
     }
 
-    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters) Read(string path, IFileSystem files, ILogger logger)
+    private static (Dictionary<string, IReadOnlyList<Story>> Stories, Dictionary<string, string> Voters, HashSet<string> Forgotten) Read(string path, IFileSystem files, ILogger logger)
     {
         var loaded = new Dictionary<string, IReadOnlyList<Story>>(StringComparer.Ordinal);
         var voters = new Dictionary<string, string>(StringComparer.Ordinal);
+        var forgotten = new HashSet<string>(StringComparer.Ordinal);
 
         try
         {
             if (files.ReadText(path) is not { } text)
             {
-                return (loaded, voters);
+                return (loaded, voters, forgotten);
             }
 
             foreach (var commander in JsonSerializer.Deserialize<Document>(text, Json)?.Commanders ?? [])
@@ -270,6 +317,11 @@ public sealed class StoryStore
                 {
                     voters[key] = commander.Voter!;
                 }
+
+                if (commander.BeaconForgotten)
+                {
+                    forgotten.Add(key);
+                }
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
@@ -277,7 +329,7 @@ public sealed class StoryStore
             logger.LogError(ex, "Could not read {Path}; no story is running", path);
         }
 
-        return (loaded, voters);
+        return (loaded, voters, forgotten);
     }
 
     private sealed class Document
@@ -290,6 +342,9 @@ public sealed class StoryStore
         public string? FrontierId { get; set; }
 
         public string? Voter { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool BeaconForgotten { get; set; }
 
         public IReadOnlyList<Story>? Stories { get; set; }
     }

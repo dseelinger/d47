@@ -471,6 +471,11 @@ and its days counting from the pick. No scan line is said. Once the opening line
 the story's core comes aboard and D47 says "The Guardian cores from your last beacon scan are still in the
 ship's systems. {core} has come aboard for this story. You can choose another core in Settings." The
 chapter writer is told the trip is already behind you, and the story's page leaves out "The beacon".
+The Stories page shows a checkbox, "Fly to a Guardian beacon again in my next story", once a scan is on
+record. Ticking it makes the next story of 1 month or longer you pick fly to its own beacon as if no scan
+were on record; it never changes the story you are running. A real scan in that story clears the tick, and
+that scan is on record from then on. Unticking before you pick restores the remembered opening. Only the
+panel sets it; it is not a tool.
 **Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
 had before your first story, or to empty. Switch passes that earlier Backstory on to the new story.
 Neither changes your Guardian cores. **Abandon** on the current chapter's page ends the story, as it
