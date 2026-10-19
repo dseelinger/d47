@@ -1,0 +1,72 @@
+name: signal-index
+
+# Builds the index of FSS signals that d47 searches and publishes it as the asset signals.tsv.gz of the
+# prerelease signals-1. Each run reads one day of the EDDN archive (backfill_days reads several), merges it
+# into the published index and replaces the asset. tools/signal-index.py describes the format.
+#
+# The release is created once by hand as a prerelease with --latest=false, because UpdateChecker reads
+# releases/latest to find app updates. The last step fails if that stops being the app's tag.
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: "Days of archive to read, ending yesterday UTC (60 for the first build)"
+        required: false
+        type: number
+        default: 1
+
+concurrency:
+  group: signal-index
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE: signals-1
+      ASSET: signals.tsv.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the script on its fixture
+        run: python3 tools/signal-index.py --check tools/fixtures/signal-index
+
+      - name: Note the latest release
+        run: echo "LATEST_BEFORE=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)" >> "$GITHUB_ENV"
+
+      - name: Download the published index
+        run: |
+          mkdir work
+          names=$(gh release view "$RELEASE" --json assets --jq '.assets[].name')
+          if grep -qx "$ASSET" <<< "$names"; then
+            gh release download "$RELEASE" --pattern "$ASSET" --dir work
+          else
+            echo "No published index yet; starting empty."
+          fi
+
+      - name: Build the index
+        env:
+          DAYS: ${{ inputs.backfill_days || 1 }}
+        run: |
+          args=(--out work/new.tsv.gz --days "$DAYS")
+          if [ -f "work/$ASSET" ]; then args+=(--index "work/$ASSET"); fi
+          python3 tools/signal-index.py "${args[@]}"
+
+      - name: Publish the index
+        run: |
+          mv work/new.tsv.gz "work/$ASSET"
+          gh release upload "$RELEASE" "work/$ASSET" --clobber
+
+      - name: Check the latest release is still the app's
+        run: |
+          now=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          if [ "$now" != "$LATEST_BEFORE" ] || [ "$now" = "$RELEASE" ]; then
+            echo "releases/latest was '$LATEST_BEFORE' and is now '$now'." >&2
+            exit 1
+          fi

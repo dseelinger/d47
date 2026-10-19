@@ -1,0 +1,7 @@
+system_address	system_name	x	y	z	signal_type	signal_name	last_seen
+1001	Alpha	1.5	-2.25	3	NavBeacon	Nav Beacon	2026-10-15
+1001	Alpha	1.5	-2.25	3	ResourceExtraction	$MULTIPLAYER_SCENARIO14_TITLE;	2026-10-15
+1002	Beta	1.5	-2.25	3	Generic	$Warzone_Low;	2026-10-15
+1003	Gamma	1.5	-2.25	3	Installation	Mining Platform	2026-10-15
+1004	Delta	1.5	-2.25	3	Megaship	Kolo Gryphon	2026-10-15
+1006	Zeta	1	2	3	Installation	Old Depot	2026-08-01
