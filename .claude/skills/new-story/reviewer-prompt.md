@@ -58,10 +58,10 @@ Lengths, in days counted from the Guardian beacon scan, and how many clue lines 
 | 3 days | 1 | 1 | narrated before the story opens |
 | 1 week | 2 | 2 | narrated before the story opens |
 | 2 weeks | 4 | 2 | narrated before the story opens |
-| 1 month | 5 | 3 | flown: chapter one ends at a real beacon |
-| 3 months | 7 | 3 | flown |
-| 6 months | 8 | 4 | flown |
-| 1 year | 14 | 4 | flown |
+| 1 month | 5 | 3 | flown, unless the Commander's scan is on record: chapter one ends at a real beacon |
+| 3 months | 7 | 3 | flown, unless the Commander's scan is on record |
+| 6 months | 8 | 4 | flown, unless the Commander's scan is on record |
+| 1 year | 14 | 4 | flown, unless the Commander's scan is on record |
 
 The beat sheet follows Save the Cat (Break into Two, Fun and Games, Midpoint, Bad Guys Close In,
 All Is Lost, Dark Night of the Soul, Finale), with the stages a length reaches. Each premise names
@@ -102,7 +102,11 @@ Each premise names the core it is written for:
    batch.
 2. Act one ends with a data-link scan of a Guardian beacon, which brings the story's core aboard.
    In 3-day, 1-week and 2-week stories the scan has already happened when the story opens, and
-   the premise's `beacon` field says why the Commander made it.
+   the premise's `beacon` field says why the Commander made it. In a story of 1 month or more,
+   chapter one ends on a `beacon` beat, or, when the Commander scanned a beacon in an earlier story,
+   has none. Check that act one reads either way: `setUp`, `catalyst` and `debate` do not depend on
+   the trip still being ahead, and `breakIntoTwo` does not say the core comes aboard at this beacon.
+   The `beacon` field says why the Commander goes, or went, to a beacon.
 3. No core is removed or made worse, Guardian or COVAS, in the app or the fiction. Characters
    who exist only in the fiction may be lost.
 4. The Commander never loses anything the game holds (ships, credits, the carrier, cargo, rank),

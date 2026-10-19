@@ -32,10 +32,14 @@ Every story keeps all twelve. Check the draft against each before showing it.
    level already uses.
 2. Act one ends with a data-link scan of a Guardian beacon. The scan brings the story's Guardian
    core aboard (#716), and the `breakIntoTwo` beat says so without naming the core. Every story
-   names its own core on the card, chosen to match the story. From 1 month up, its first chapter
-   ends with a `beacon` beat for the scan. In a story of 3 days, 1 week or 2 weeks the scan happens
-   before the story opens and is narrated (#758): the hidden entry has a `scan` line, and the first
-   chapter has no `beacon` beat.
+   names its own core on the card, chosen to match the story. From 1 month up, a story opens one of
+   two ways: its first chapter ends with a `beacon` beat for the scan, or, when the Commander scanned
+   a beacon in an earlier story, the scan is behind them and the first chapter has no `beacon` beat.
+   Act one is written to read either way: `setUp`, `catalyst` and `debate` may lead toward a beacon
+   but do not depend on the trip still being ahead, and `breakIntoTwo` says the core comes aboard
+   without saying it happens at this beacon. The hidden entry of a long story has no `scan` line.
+   In a story of 3 days, 1 week or 2 weeks the scan happens before the story opens and is narrated
+   (#758): the hidden entry has a `scan` line, and the first chapter has no `beacon` beat.
 3. No core is removed or made worse, Guardian or `covas`, in the app or the fiction. NPCs that exist
    only in the fiction may be lost.
 4. The Commander never loses anything the game holds, and the story never says they did.
@@ -159,7 +163,7 @@ add.
 
 - **The card**, `card.json`: `id`, `number`, `title`, `genre` (one of the ten Save the
   Cat genres), `tone`, `level` (#739), `blurb`, `inYourWords` (the Commander's
-  backstory in the first person, starting at the level), `length` (the key of a `StoryPacing`), `beacon` (why they go to scan it; for a story shorter
+  backstory in the first person, starting at the level), `length` (the key of a `StoryPacing`), `beacon` (why they go, or went, to scan it; for a story shorter
   than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
   never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the card.
