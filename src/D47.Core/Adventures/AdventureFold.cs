@@ -252,8 +252,11 @@ public static class AdventureFold
                 journalEvent.Kind is "ShipyardNew" or "ShipyardSwap"
                 && string.Equals(raw.String("ShipType"), trigger.ShipType, StringComparison.OrdinalIgnoreCase),
 
+            // Arriving in the beacon's system proves the ship can make the trip, whatever its range.
             TriggerKind.Reach =>
                 journalEvent.Kind is "CarrierBuy"
+                || (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+                    && string.Equals(raw.String("StarSystem"), trigger.System?.Trim(), StringComparison.OrdinalIgnoreCase))
                 || (journalEvent.Kind is "Loadout"
                     && trigger.JumpRange is { } needed
                     && Stories.BeaconReach.CanMakeTrip(new Journal.ShipLoadout().Apply(journalEvent), needed)),

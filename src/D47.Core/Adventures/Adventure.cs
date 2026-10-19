@@ -130,7 +130,7 @@ public enum TriggerKind
     /// <summary><c>+</c> influence marks in the <c>FactionEffects</c> of <c>MissionCompleted</c> for one <see cref="AdventureTrigger.Faction"/>, optionally in one <see cref="AdventureTrigger.SystemAddress"/>.</summary>
     Faction,
 
-    /// <summary>A <c>Loadout</c> whose ship has the jump range and a fuel scoop for the trip to a Guardian beacon, or a <c>CarrierBuy</c>. Not counted.</summary>
+    /// <summary>A <c>Loadout</c> whose ship has the jump range and a fuel scoop for the trip to a Guardian beacon, arriving in the beacon's system, or a <c>CarrierBuy</c>. Not counted.</summary>
     Reach,
 }
 
@@ -307,6 +307,8 @@ public sealed record AdventureTrigger
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
         TriggerKind.Beacon => $"Next: {Describe()} with the ship's data-link scanner.",
+        TriggerKind.Reach =>
+            $"Next: {Describe()}: a jump range of at least {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years and a fuel scoop. Arriving there in any ship also counts.",
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };

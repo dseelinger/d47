@@ -4,7 +4,7 @@ using static D47.Core.Tests.Adventures.AdventureFixtures;
 
 namespace D47.Core.Tests.Adventures;
 
-/// <summary>A reach objective is met by a Loadout with the jump range and a fuel scoop, or by buying a fleet carrier.</summary>
+/// <summary>A reach objective is met by a Loadout with the jump range and a fuel scoop, by arriving in the beacon's system, or by buying a fleet carrier.</summary>
 public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
 {
     private static readonly AdventureTrigger Trigger = new() { Kind = TriggerKind.Reach, System = "Col 359 Sector XX-X c4-12", JumpRange = 30 };
@@ -35,10 +35,24 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
         Assert.True(Fires("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"CarrierBuy", "CarrierType":"FleetCarrier" }"""));
 
     [Fact]
+    public void ArrivingInTheBeaconSystemInAShortRangeShipFires() =>
+        Assert.True(Fires("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"FSDJump", "StarSystem":"Col 359 Sector XX-X c4-12", "SystemAddress":1 }"""));
+
+    [Fact]
+    public void StartingTheGameInTheBeaconSystemFires() =>
+        Assert.True(Fires("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"Location", "StarSystem":"col 359 sector xx-x c4-12", "SystemAddress":1 }"""));
+
+    [Fact]
+    public void ArrivingInAnotherSystemDoesNotFire() =>
+        Assert.False(Fires("""{ "timestamp":"2026-10-14T10:00:00Z", "event":"FSDJump", "StarSystem":"Col 359 Sector XX-X c4-13", "SystemAddress":2 }"""));
+
+    [Fact]
     public void ABeatWithNoRangeIsNotResolved() =>
         Assert.False(AdventureFold.Matches(Trigger with { JumpRange = null }, Event(Loadout(", \"MaxJumpRange\":50", scoop: true))));
 
     [Fact]
-    public void TheBeatSaysWhereTheBeaconIs() =>
-        Assert.Equal("Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12.", Trigger.HandOff());
+    public void TheBeatSaysWhereTheBeaconIsAndTheRangeItNeeds() =>
+        Assert.Equal(
+            "Next: fit out a ship that can reach the beacon in Col 359 Sector XX-X c4-12: a jump range of at least 30.0 light years and a fuel scoop. Arriving there in any ship also counts.",
+            Trigger.HandOff());
 }

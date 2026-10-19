@@ -210,7 +210,7 @@ Thirty-six triggers, and every one is a comparison on a structured field rather 
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |
 | Scan a Guardian beacon | a data-link scan while in a Guardian beacon system's id | the scan's type, or any name |
-| Fit out a ship that can reach the beacon | a `Loadout` whose `MaxJumpRange` is at least the range written into the objective and whose modules include a fuel scoop, or a `CarrierBuy`; a `Loadout` with no `MaxJumpRange` does not count. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
+| Fit out a ship that can reach the beacon | a `Loadout` whose `MaxJumpRange` is at least the range written into the objective and whose modules include a fuel scoop, or a `CarrierBuy`; a `Loadout` with no `MaxJumpRange` does not count. An `FSDJump`, `Location` or `CarrierJump` into the beacon's system also meets it, in any ship. Only a chapter whose Guardian beacon is out of reach has one | the ship's hull or name |
 | Collect bounties | `Bounty` events | anything else |
 | Earn kill bonds | `FactionKillBond` events, optionally for one `AwardingFaction` | the faction fought |
 | Complete missions | `MissionCompleted` events, optionally for one `Faction` and a mission family that starts the internal `Name`, such as `Mission_Courier` | the mission's title |
