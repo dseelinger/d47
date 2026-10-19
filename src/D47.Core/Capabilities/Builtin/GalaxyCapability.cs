@@ -122,7 +122,10 @@ public static class GalaxyCapability
 
         // The signals this Commander has scanned, and where they are now.
         Journal.SignalSightings? signals = null,
-        Func<Journal.StarPosition?>? currentPosition = null) => new()
+        Func<Journal.StarPosition?>? currentPosition = null,
+
+        // The minor faction each Commander has named for their squadron.
+        SquadronFactions? squadronFactions = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -787,6 +790,27 @@ public static class GalaxyCapability
                         bgsTick?.Invoke(),
                         now?.Invoke() ?? DateTimeOffset.UtcNow))),
             },
+            new ToolDefinition
+            {
+                Name = SetSquadronFactionTool,
+                Description =
+                    "Store the minor faction the Commander says their squadron backs, after checking the galaxy "
+                    + "service knows a faction by that name. The Commander's own decision.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "faction",
+                        Type = ToolParameterType.String,
+                        Description = "The minor faction's exact name, as the Commander said it.",
+                        Required = true,
+                    },
+                ],
+                Protected = true,
+                RefusalExample = "my squadron's faction is Hutton Truckers",
+                Handler = (arguments, cancellationToken) => SetSquadronFactionAsync(
+                    galaxy, currentSystem, settings, factions, gameState, squadronFactions, arguments, cancellationToken),
+            },
         ],
         Settings =
         [
@@ -878,6 +902,8 @@ public static class GalaxyCapability
 
     public const string EnabledKey = "knowledge.galaxy";
 
+    public const string SetSquadronFactionTool = "set_squadron_faction";
+
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
 
@@ -957,6 +983,80 @@ public static class GalaxyCapability
             : filter.Description,
         AllowedValues = filter.Kind == GalaxyFilterKind.Choice && !filter.Several ? filter.Choices : [],
     };
+
+    private static async Task<ToolResult> SetSquadronFactionAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        Func<IReadOnlyCollection<string>>? factions,
+        Func<Journal.CommanderGameState?>? gameState,
+        SquadronFactions? store,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (store is null || gameState?.Invoke() is not { } state)
+        {
+            return ToolResult.Error("I can't keep a squadron faction here.");
+        }
+
+        if (state.Identity.FrontierId is not { Length: > 0 } frontierId)
+        {
+            return ToolResult.Error("Nobody is flying, so there is no Commander to keep a squadron faction for.");
+        }
+
+        if (!state.Squadron.IsMember)
+        {
+            return ToolResult.Error("You are not in a squadron, so there is no squadron faction to keep.");
+        }
+
+        if (!arguments.TryGetString("faction", out var said) || string.IsNullOrWhiteSpace(said))
+        {
+            return ToolResult.Error("Which minor faction is it?");
+        }
+
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(
+                "Checking a faction name needs galaxy search, which is switched off. The Commander can turn it on in settings.");
+        }
+
+        var given = said.Trim();
+        var spelled = factions?.Invoke() is { } met && Catalogue.Match([.. met], given) is { } known ? known : given;
+
+        if (!GalaxyQuery.TryParse(
+                currentSystem(),
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = spelled },
+                1,
+                out var query,
+                out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        try
+        {
+            var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (result.Systems.Count == 0)
+            {
+                return ToolResult.Error($"I found no minor faction called {given}, so I have not stored it.");
+            }
+
+            var exact = result.Systems
+                .SelectMany(system => system.Factions)
+                .Select(faction => faction.Name)
+                .FirstOrDefault(name => string.Equals(name, spelled, StringComparison.OrdinalIgnoreCase))
+                ?? spelled;
+
+            return store.Set(frontierId, state.Squadron, exact)
+                ? ToolResult.Ok($"Your squadron's minor faction is {exact}.")
+                : ToolResult.Error("I couldn't save that squadron faction.");
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
 
     private static async Task<ToolResult> SearchAsync(
         IGalaxyService? galaxy,

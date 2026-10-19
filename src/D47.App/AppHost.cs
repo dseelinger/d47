@@ -994,6 +994,13 @@ public sealed class AppHost : IDisposable
 
         searchHistory.Load();
 
+        var squadronFactions = new D47.Core.Knowledge.SquadronFactions(
+            Path.Combine(paths.Data, "squadron-factions.json"),
+            files,
+            loggerFactory.CreateLogger<D47.Core.Knowledge.SquadronFactions>());
+
+        squadronFactions.Load();
+
         // Every run, not only behind the timers switch (#90).
         var journalReminders = new D47.Core.Reminders.JournalReminderStore(
             Path.Combine(paths.Data, "journal-reminders.json"),
@@ -1479,6 +1486,7 @@ public sealed class AppHost : IDisposable
             Bookmarks = bookmarks,
             SavedSearches = savedSearches,
             SearchHistory = searchHistory,
+            SquadronFactions = squadronFactions,
             Callouts = callouts,
             CargoBoard = cargoBoard,
             Cartography = cartography,
@@ -2727,6 +2735,7 @@ public sealed class AppHost : IDisposable
                 starSystems: starSystems,
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
                 searchHistory: searchHistory,
+                squadronFactions: stores.SquadronFactions,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
                 signalIndex: new D47.App.Panel.SignalIndexStore(
@@ -4077,6 +4086,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Knowledge.SavedSearchStore SavedSearches { get; init; }
 
         public required D47.Core.Knowledge.SearchHistory SearchHistory { get; init; }
+
+        public required D47.Core.Knowledge.SquadronFactions SquadronFactions { get; init; }
 
         public required CalloutEngine Callouts { get; init; }
 

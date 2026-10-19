@@ -634,6 +634,27 @@ the setting being off or nothing read yet:
 
 Under an hour, the answer gives minutes instead of hours.
 
+#### `set_squadron_faction`
+
+Store the minor faction the Commander says their squadron backs, for the squadron they are in now.
+Only the Commander can set it; the model cannot.
+
+```json
+{"type":"object","properties":{"faction":{"type":"string","description":"The minor faction\u0027s exact name, as the Commander said it."}},"required":["faction"],"additionalProperties":false}
+```
+
+Say "my squadron's faction is Hutton Truckers", "my squadron's minor faction is Hutton Truckers" or
+"our squadron's faction is Hutton Truckers". No language model is involved. d47 asks Spansh whether
+a minor faction with that name exists, and stores it only if one does. It is kept for the
+Commander who is flying, under the squadron's ID, or under its name when the journal gave no ID.
+Leaving the squadron or joining another one returns no faction until one is named for that squadron.
+
+```csharp
+"Your squadron's minor faction is Hutton Truckers."
+"I found no minor faction called Hutton Trukers, so I have not stored it."
+"Checking a faction name needs galaxy search, which is switched off. The Commander can turn it on in settings."
+```
+
 #### `find_nearest_station`
 
 Where to buy a named module or ship, nearest first. A rare good is answered from a table instead,

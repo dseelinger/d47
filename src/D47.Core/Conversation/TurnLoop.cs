@@ -1423,6 +1423,32 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0. A squadron's faction name, which no declared phrase can carry.
+        if (capabilities.Find(Capabilities.Builtin.GalaxyCapability.Id) is not null
+            && SquadronFactionPhrase.Read(input) is { } squadronFaction)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var stored = await capabilities
+                .InvokeAsync(
+                    Capabilities.Builtin.GalaxyCapability.SetSquadronFactionTool,
+                    new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = squadronFaction }),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            Said(stored.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(stored.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                stored.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                stored.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 0. A binding profile name, which no declared phrase can carry.
         if (capabilities.Find(Capabilities.Builtin.BindingProfilesCapability.Id) is not null
             && Input.BindingProfilePhrase.Read(input) is { } profile)

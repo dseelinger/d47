@@ -261,6 +261,9 @@ public static class BuiltinCapabilities
         // The signals the Commander has scanned.
         Journal.SignalSightings? signalSightings = null,
 
+        // The minor faction each Commander has named for their squadron.
+        Knowledge.SquadronFactions? squadronFactions = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -316,7 +319,8 @@ public static class BuiltinCapabilities
             bgsTick,
             signalIndex,
             signalSightings,
-            () => gameState.Active?.Location.StarPos),
+            () => gameState.Active?.Location.StarPos,
+            squadronFactions),
         RouteCapability.Create(
             routes,
             trade,
