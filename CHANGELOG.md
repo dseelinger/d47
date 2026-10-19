@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When a story objective will not complete, the ship AI now knows what you can do and says so instead of coaching the same objective again. In a running story it tells you to say "change this objective" or "never ask this", or press Change objective or Never ask this under NEXT on its page. At a Guardian beacon scan it says only the scan gets you past. For a short story it says there is no voice phrase and you can stop it from its page. It also knows that only your journal completes an objective and that it cannot complete, skip or change one.
+
 Ask "codex checklist", "what codex entries am I missing" or "missing codex entries" and D47 says how many codex entries are known in the region you are in, how many you have logged and how many are missing, by kind, and names the three most-reported missing ones. You can ask about another region by name. An entry logged before your oldest journal reads as missing, and stars and planets are not covered.
 
 A story of 1 month or longer no longer sends you back to a Guardian beacon when an earlier story you picked recorded a beacon scan. It opens with the scan behind you, its core comes aboard once the opening has been said, and D47 says the cores from your last scan are still in the ship's systems. One recorded scan leaves the Heretic waiting for a real scan in any system; two leave nothing held back. A scan made with no story running does not count. The story's page drops "The beacon" and the Pick and Switch text no longer promise a trip while a scan is on record. The Stories page has a checkbox, "Fly to a Guardian beacon again in my next story", that makes the next long story fly to a beacon again; a real scan in that story clears it.

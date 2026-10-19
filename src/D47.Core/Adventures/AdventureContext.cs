@@ -1,4 +1,5 @@
 using System.Text;
+using D47.Core.Capabilities.Builtin;
 
 namespace D47.Core.Adventures;
 
@@ -20,6 +21,9 @@ public static class AdventureContext
         + "it. Asked what to do next, say where the next objective is in plain words, with its reason when "
         + "it has one, and nothing beyond that. Asked why the Commander is going there, answer from that "
         + "reason and invent none. "
+        + "Only the journal completes an objective: you cannot complete, skip or change one. "
+        + "When the Commander says they cannot do the objective, or did it and the story has not moved, give them what the "
+        + "story's Stuck line says rather than coaching the objective again. "
         + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
         + "say which is which.";
 
@@ -100,9 +104,30 @@ public static class AdventureContext
                 var reason = string.IsNullOrWhiteSpace(current.Reason) ? string.Empty : $" Reason: {current.Reason.Trim()}";
                 Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.{reason}");
             }
+
+            Line(block, "Stuck", Stuck(standing));
         }
 
         return block.ToString().TrimEnd();
+    }
+
+    /// <summary>What the Commander can do when the objective will not complete, or null when the story has no objective.</summary>
+    internal static string? Stuck(AdventureStanding standing)
+    {
+        if (standing.IsRefusable)
+        {
+            return $"say \"{AdventureCapability.ChangeObjectivePhrase}\" to say what they would rather do, or "
+                + $"\"{AdventureCapability.RefuseBeatPhrase}\" for a different one; or press Change objective or Never ask this under NEXT on the story's page.";
+        }
+
+        if (standing.Adventure.StoryId is not null)
+        {
+            return standing.CurrentBeat is null
+                ? null
+                : "no phrase changes this objective; the scan itself is the only way past it.";
+        }
+
+        return "no voice phrase; the short story can be stopped from its page.";
     }
 
     private static void Line(StringBuilder block, string label, string? text)
