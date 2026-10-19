@@ -141,6 +141,12 @@ public enum TriggerKind
 
     /// <summary><c>Disembark</c> events onto a body whose scan said no one had walked there. Each body once.</summary>
     Footfall,
+
+    /// <summary>Tons in <c>ColonisationContribution</c> events, optionally of one <see cref="AdventureTrigger.Commodity"/>.</summary>
+    Contribute,
+
+    /// <summary>A <c>ColonisationSystemClaim</c> event.</summary>
+    Claim,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -169,7 +175,7 @@ public sealed record AdventureTrigger
 
     public string? Body { get; init; }
 
-    /// <summary>How many events, or tons for <see cref="TriggerKind.Sell"/> and <see cref="TriggerKind.Mine"/>, a counted beat waits for.</summary>
+    /// <summary>How many events, or tons for <see cref="TriggerKind.Sell"/>, <see cref="TriggerKind.Mine"/> and <see cref="TriggerKind.Contribute"/>, a counted beat waits for.</summary>
     public int? Count { get; init; }
 
     /// <summary>The faction a bond is awarded by or a mission is completed for, the side a conflict is fought for, or the faction a faction beat works for, as the journal spells it.</summary>
@@ -204,7 +210,7 @@ public sealed record AdventureTrigger
 
     /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
     public static bool IsOnceKind(TriggerKind kind) =>
-        kind is TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound;
+        kind is TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim;
 
     /// <summary>Whether a Commander can write this kind on the authored form.</summary>
     public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
@@ -220,7 +226,7 @@ public sealed record AdventureTrigger
         TriggerKind.Board => ShipType is not null,
         TriggerKind.Reach => JumpRange > 0,
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
-        TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound => true,
+        TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim => true,
         _ => false,
     };
 
@@ -267,6 +273,8 @@ public sealed record AdventureTrigger
         TriggerKind.Boost => $"supercharge your frame shift drive in {BoostStar()} jet cone {Times()}",
         TriggerKind.Footfall => $"be the first to walk on {Counted("world", "worlds")}",
         TriggerKind.Discover => $"be the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
+        TriggerKind.Contribute => $"deliver {Tons()} of {CommodityWord()} to colonisation construction sites",
+        TriggerKind.Claim => "claim a system for colonisation",
         _ => Kind.ToString(),
     };
 
@@ -309,6 +317,9 @@ public sealed record AdventureTrigger
             TriggerKind.Boost => $"{Capital(BoostWord())} boosts: {of}",
             TriggerKind.Footfall => $"First footfalls: {of}",
             TriggerKind.Discover => $"{Capital(DiscoverWord(one: false))} scanned: {of}",
+            TriggerKind.Contribute => string.IsNullOrWhiteSpace(Commodity)
+                ? $"Tons delivered to construction sites: {of}"
+                : $"Tons of {CommodityWord()} delivered to construction sites: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }

@@ -100,6 +100,8 @@ public static class RefusedActivities
         TriggerKind.Boost => "boost off jet cones",
         TriggerKind.Footfall => "walk where no one has walked",
         TriggerKind.Discover => "scan bodies no one has discovered",
+        TriggerKind.Contribute => "deliver cargo to colonisation construction sites",
+        TriggerKind.Claim => "claim a system for colonisation",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

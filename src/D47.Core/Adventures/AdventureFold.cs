@@ -364,6 +364,12 @@ public static class AdventureFold
                 journalEvent.Kind is "JetConeBoost"
                 && BoostStar(trigger.Filter, raw.Double("BoostValue")),
 
+            TriggerKind.Contribute =>
+                journalEvent.Kind is "ColonisationContribution"
+                && Delivered(trigger, raw) > 0,
+
+            TriggerKind.Claim => journalEvent.Kind is "ColonisationSystemClaim",
+
             _ => false,
         };
     }
@@ -379,12 +385,19 @@ public static class AdventureFold
         return trigger.Kind switch
         {
             TriggerKind.Sell => Math.Max(raw.Int("Count") ?? 0, 0),
+            TriggerKind.Contribute => Delivered(trigger, raw),
             TriggerKind.Collect or TriggerKind.Rescue => Math.Max(raw.Int("Count") ?? 1, 0),
             TriggerKind.DataSale => (int)Math.Clamp(Credits(journalEvent.Kind, raw), 0, int.MaxValue),
             TriggerKind.Faction => InfluenceLedger.UpMarks(journalEvent, trigger.Faction ?? string.Empty, trigger.SystemAddress),
             _ => 1,
         };
     }
+
+    /// <summary>The tons in a <c>ColonisationContribution</c> whose commodity the trigger accepts.</summary>
+    private static int Delivered(AdventureTrigger trigger, JsonElement raw) =>
+        raw.Items("Contributions")
+            .Where(entry => SameCommodity(trigger.Commodity, entry.String("Name")))
+            .Sum(entry => Math.Max(entry.Int("Amount") ?? 0, 0));
 
     private static long Credits(string kind, JsonElement raw) => kind is "SellOrganicData"
         ? raw.Items("BioData").Sum(entry => (entry.Long("Value") ?? 0) + (entry.Long("Bonus") ?? 0))
