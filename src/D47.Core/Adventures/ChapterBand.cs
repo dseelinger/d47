@@ -8,9 +8,6 @@ public static class ChapterBand
     /// <summary>Light years from Sol beyond which a chapter works toward Sol.</summary>
     public const double OutsideBubble = 500;
 
-    /// <summary>Light years from Sol where the black begins.</summary>
-    public const double Black = 1_000;
-
     /// <summary>The least a chapter moves the Commander nearer Sol.</summary>
     public const double LeastNearer = 100;
 
@@ -30,13 +27,13 @@ public static class ChapterBand
             : null;
     }
 
-    /// <summary>The band for a chapter starting at <paramref name="start"/>, or null beyond the bubble's edge or past the black.</summary>
+    /// <summary>The band for a chapter starting at <paramref name="start"/>, or null within the bubble.</summary>
     public static Range? Of(StarPosition? start) =>
         start is { } at ? Of(at.DistanceTo(StarPosition.Origin)) : null;
 
     /// <summary>The band for a chapter starting <paramref name="lightYears"/> from Sol.</summary>
     public static Range? Of(double lightYears) =>
-        lightYears is > OutsideBubble and <= Black
+        lightYears > OutsideBubble
             ? new Range(Math.Round(lightYears - MostNearer), Math.Round(lightYears - LeastNearer))
             : null;
 }

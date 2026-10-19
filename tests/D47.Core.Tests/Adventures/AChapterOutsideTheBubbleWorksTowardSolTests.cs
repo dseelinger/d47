@@ -41,8 +41,11 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
     [Theory]
     [InlineData(450)]
     [InlineData(500)]
-    [InlineData(1200)]
-    public void AChapterInsideTheBubbleOrInTheBlackHasNoBand(double lightYears) => Assert.Null(ChapterBand.Of(lightYears));
+    public void AChapterInsideTheBubbleHasNoBand(double lightYears) => Assert.Null(ChapterBand.Of(lightYears));
+
+    [Fact]
+    public void AChapter1200LightYearsOutHasTheBandFrom900To1100() =>
+        Assert.Equal(new ChapterBand.Range(900, 1100), ChapterBand.Of(1200));
 
     [Theory]
     [InlineData("beacon")]
