@@ -135,6 +135,9 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, UnlockEvidence?>? RestoreEvidence { get; init; }
 
+    /// <summary>The tech broker unlocks this Commander's older journals show, merged into what is known.</summary>
+    public Func<string, TechBrokerUnlocks?>? RestoreTechBroker { get; init; }
+
     /// <summary>
     /// The merits this Commander earned for their Power over the last week, on the same terms as <see
     /// cref="RestoreFleet"/>.
@@ -238,6 +241,11 @@ public sealed class GameStateStore
                 state.Reputation = evidence.Reputation.With(state.Reputation);
                 state.Contributions = evidence.Contributions.With(state.Contributions);
                 state.Tallies = evidence.Tallies.With(state.Tallies);
+            }
+
+            if (RestoreTechBroker?.Invoke(fid) is { IsKnown: true } unlocks)
+            {
+                state.TechBroker = state.TechBroker.With(unlocks);
             }
 
             if (RestoreCycleMerits?.Invoke(fid) is { IsKnown: true } merits)
@@ -472,6 +480,11 @@ public sealed class GameStateStore
             state.Reputation = evidence.Reputation;
             state.Contributions = evidence.Contributions;
             state.Tallies = evidence.Tallies;
+        }
+
+        if (RestoreTechBroker?.Invoke(identity.FrontierId) is { IsKnown: true } unlocks)
+        {
+            state.TechBroker = unlocks;
         }
 
         if (RestoreCredits?.Invoke(identity.FrontierId) is { } credits)

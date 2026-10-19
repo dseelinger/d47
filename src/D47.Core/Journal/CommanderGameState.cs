@@ -103,6 +103,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What each body's own scan said, and when it was first footfalled (#202).</summary>
     public BodyScans Scans { get; private set; } = BodyScans.Empty;
 
+    /// <summary>The tech broker rows they are known to have unlocked.</summary>
+    public TechBrokerUnlocks TechBroker { get; internal set; } = TechBrokerUnlocks.Empty;
+
     /// <summary>What they have sampled, per body and per genus (Phase 18).</summary>
     public OrganicSampling Sampling { get; internal set; } = OrganicSampling.Empty;
 
@@ -197,6 +200,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Mining), "your mining runs", state => state.Mining),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
+        new(nameof(TechBroker), "your tech broker unlocks", state => state.TechBroker),
         new(nameof(Sampling), "your organic samples", state => state.Sampling),
         new(nameof(Session), "this session's totals", state => state.Session),
         new(nameof(Colonisation), "construction sites", state => state.Colonisation),
@@ -300,6 +304,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Mining = Mining.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
+        TechBroker = TechBroker.Apply(journalEvent);
         Sampling = Sampling.Apply(journalEvent, at);
         Session = Session.Apply(journalEvent);
 

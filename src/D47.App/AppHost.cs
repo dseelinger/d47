@@ -1126,6 +1126,7 @@ public sealed class AppHost : IDisposable
             // And faction reputation and engineer contributions, which Elite writes only where the faction is
             // present or the engineer is visited.
             RestoreEvidence = fid => history.Evidence?.GetValueOrDefault(fid),
+            RestoreTechBroker = fid => history.TechBroker?.GetValueOrDefault(fid),
 
             // And the merits earned for the Commander's Power earlier this cycle.
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
