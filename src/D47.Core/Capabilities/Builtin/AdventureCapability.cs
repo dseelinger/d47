@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using D47.Core.Configuration;
 using D47.Core.Stories;
 
@@ -33,6 +35,10 @@ public static class AdventureCapability
     public const string StoryRatingsKey = "adventures.storyRatings";
 
     public const string CastReactionsKey = "adventures.castReactions";
+
+    public const string RatingKeyPrefix = "adventures.rating.";
+
+    private const string RatingsGroup = "What you like doing";
 
     private const string NoStory = "No story is running.";
 
@@ -78,6 +84,127 @@ public static class AdventureCapability
     public sealed class StoryRecapper
     {
         public Func<CancellationToken, Task<string?>> Write { get; set; } = _ => Task.FromResult<string?>(null);
+    }
+
+    private sealed record Rating(
+        string Key,
+        string Label,
+        string Spoken,
+        string Anchor,
+        Func<CareerRatingSettings, int> Read,
+        Func<CareerRatingSettings, int, CareerRatingSettings> Write,
+        string? Note = null);
+
+    private static readonly Rating[] Ratings =
+    [
+        new("combat", "Combat", "combat", "rating-combat", r => r.Combat, (r, v) => r with { Combat = v }),
+        new("trading", "Trading", "trading", "rating-trading", r => r.Trading, (r, v) => r with { Trading = v }),
+        new("mining", "Mining", "mining", "rating-mining", r => r.Mining, (r, v) => r with { Mining = v }),
+        new("exploration", "Exploration", "exploration", "rating-exploration", r => r.Exploration, (r, v) => r with { Exploration = v }),
+        new("exobiology", "Exobiology", "exobiology", "rating-exobiology", r => r.Exobiology, (r, v) => r with { Exobiology = v }),
+        new("passengers", "Passengers", "passengers", "rating-passengers", r => r.Passengers, (r, v) => r with { Passengers = v }),
+        new("searchAndRescue", "Search and rescue", "search and rescue", "rating-search-and-rescue", r => r.SearchAndRescue, (r, v) => r with { SearchAndRescue = v }),
+        new(
+            "crime",
+            "Crime",
+            "crime",
+            "rating-crime",
+            r => r.Crime,
+            (r, v) => r with { Crime = v },
+            "This rating has no effect until Frontier's Law and Disorder update."),
+    ];
+
+    private static SettingRow CareerRatingRow(Rating rating) => new()
+    {
+        Key = RatingKeyPrefix + rating.Key,
+        Group = RatingsGroup,
+        GroupHelp = "How much you like each kind of play, from 1 to 100. Story chapters ask for the activities you rate higher more often.",
+        Label = rating.Label,
+        Help = $"How much you like {rating.Spoken}, from 1 to 100. 50 is neutral. Say \"set my {rating.Spoken} rating to 80\" or \"rate {rating.Spoken} 30\". "
+               + (rating.Note ?? "A higher rating makes story chapters ask for it more often."),
+        Kind = SettingKind.Number,
+        DefaultDisplay = "50",
+        Minimum = 1,
+        Maximum = 100,
+        DocsAnchor = rating.Anchor,
+        Scope = SettingScope.Commander,
+
+        // A rating steers what the story asks of the Commander; a model may not set it.
+        Protected = true,
+        ValuesBySound = said => RatingHeard(said, rating.Spoken),
+        Refuses = (_, value) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 1 and <= 100
+            ? null
+            : $"A {rating.Spoken} rating is from 1 to 100.",
+        Binding = new SettingBinding
+        {
+            Read = s => rating.Read(s.CareerRatings).ToString(CultureInfo.InvariantCulture),
+            Write = (s, v) => s with
+            {
+                CareerRatings = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && number is >= 1 and <= 100
+                    ? rating.Write(s.CareerRatings, number)
+                    : rating.Write(s.CareerRatings, CareerRatingSettings.Default),
+            },
+        },
+    };
+
+    /// <summary>The rating named in "set my mining rating to 80" or "rate mining 80", or none.</summary>
+    internal static ValuesHeard RatingHeard(string said, string spoken)
+    {
+        var name = Regex.Escape(spoken);
+
+        var match = Regex.Match(
+            said.Trim(),
+            $@"^(?:set (?:my |the )?{name} rating (?:to |at )?|rate {name} (?:to |at )?)(?<n>.+)$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        return match.Success && NumberIn(match.Groups["n"].Value) is { } number
+            ? new ValuesHeard([number.ToString(CultureInfo.InvariantCulture)], Certain: true)
+            : ValuesHeard.None;
+    }
+
+    private static readonly string[] Units =
+        ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+            "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+
+    private static readonly string[] Tens =
+        ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+    /// <summary>A whole number from 0 to 999 in digits or words, or null.</summary>
+    private static int? NumberIn(string text)
+    {
+        var words = text.Trim().ToLowerInvariant().Split([' ', '-'], StringSplitOptions.RemoveEmptyEntries);
+
+        if (words.Length == 1 && int.TryParse(words[0], NumberStyles.None, CultureInfo.InvariantCulture, out var digits))
+        {
+            return digits;
+        }
+
+        var total = 0;
+        var seen = false;
+
+        foreach (var word in words)
+        {
+            if (Array.IndexOf(Units, word) is var unit and >= 0)
+            {
+                total += unit;
+            }
+            else if (Array.IndexOf(Tens, word) is var ten and >= 2)
+            {
+                total += ten * 10;
+            }
+            else if (word is "hundred")
+            {
+                total = (seen ? total : 1) * 100;
+            }
+            else if (!(word is "a" && !seen))
+            {
+                return null;
+            }
+
+            seen = true;
+        }
+
+        return seen ? total : null;
     }
 
     public static CapabilityDescriptor Create(
@@ -185,6 +312,7 @@ public static class AdventureCapability
                     },
                 },
             },
+            .. Ratings.Select(CareerRatingRow),
         ],
 
         Tools =

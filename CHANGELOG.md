@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Stories settings have eight new ratings under **What you like doing**: Combat, Trading, Mining, Exploration, Exobiology, Passengers, Search and rescue and Crime. Each is from 1 to 100, starts at 50, and is kept for the Commander who is flying. Say "set my mining rating to 80" or "rate exploration 30" to set one; a number outside 1 to 100 is refused, and the model cannot set them. Nothing reads them yet. The Crime rating will have no effect until Frontier's Law and Disorder update.
+
 A new **Signal index** setting under Outside sources, off by default, lets D47 download a daily index of the signals other Commanders have scanned and uploaded to EDDN, from this project's releases on github.com. The index is fetched only when you search for a signal and the copy on this PC is missing or more than 20 hours old, and it is kept in `data\signals`, outside the data backups. Nothing about you goes with the request. The Privacy and egress section lists it.
 
 You can now ask where the nearest signal of a kind is, for example "where's the nearest Hazardous RES" or "find the nearest nav beacon within 50 light years". The answer names the nearest one, how far away it is, how long ago it was seen, and how many more are in range. It searches the signals you have scanned and, when the Signal index setting is on, the daily index, and a signal in both appears once with the later date. It works with Galaxy search off. A system you name with "near" is placed from the signals d47 holds, and otherwise from Galaxy search; with that off, d47 says it does not know where the system is. The answer is kept in the search history and can be saved by name.

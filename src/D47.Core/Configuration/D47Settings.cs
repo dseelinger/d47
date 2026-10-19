@@ -58,6 +58,9 @@ public sealed record D47Settings
 
     public CalloutSettings Callouts { get; init; } = new();
 
+    /// <summary>How much the Commander likes each career, for the chapter draw.</summary>
+    public CareerRatingSettings CareerRatings { get; init; } = new();
+
     public ListeningSettings Listening { get; init; } = new();
 
     public VrSettings Vr { get; init; } = new();
@@ -125,6 +128,56 @@ public sealed record CommanderSettings
 
     /// <summary>This Commander's <see cref="D47Settings.CommanderGender"/>.</summary>
     public string? CommanderGender { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Combat"/>.</summary>
+    public int? CombatRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Trading"/>.</summary>
+    public int? TradingRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Mining"/>.</summary>
+    public int? MiningRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Exploration"/>.</summary>
+    public int? ExplorationRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Exobiology"/>.</summary>
+    public int? ExobiologyRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Passengers"/>.</summary>
+    public int? PassengersRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.SearchAndRescue"/>.</summary>
+    public int? SearchAndRescueRating { get; init; }
+
+    /// <summary>This Commander's <see cref="CareerRatingSettings.Crime"/>.</summary>
+    public int? CrimeRating { get; init; }
+}
+
+/// <summary>How much the Commander likes each career, 1 to 100.</summary>
+public sealed record CareerRatingSettings
+{
+    public const int Default = 50;
+
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public int Combat { get; init; } = Default;
+
+    public int Trading { get; init; } = Default;
+
+    public int Mining { get; init; } = Default;
+
+    public int Exploration { get; init; } = Default;
+
+    public int Exobiology { get; init; } = Default;
+
+    public int Passengers { get; init; } = Default;
+
+    public int SearchAndRescue { get; init; } = Default;
+
+    public int Crime { get; init; } = Default;
 }
 
 /// <summary>The Commander's log (Phase 33).</summary>

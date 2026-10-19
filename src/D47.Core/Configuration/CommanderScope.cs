@@ -35,6 +35,17 @@ public static class CommanderScope
             {
                 HomeSystem = Read(overlay.HomeSystem, stored.Callouts.HomeSystem),
             },
+            CareerRatings = stored.CareerRatings with
+            {
+                Combat = overlay.CombatRating ?? stored.CareerRatings.Combat,
+                Trading = overlay.TradingRating ?? stored.CareerRatings.Trading,
+                Mining = overlay.MiningRating ?? stored.CareerRatings.Mining,
+                Exploration = overlay.ExplorationRating ?? stored.CareerRatings.Exploration,
+                Exobiology = overlay.ExobiologyRating ?? stored.CareerRatings.Exobiology,
+                Passengers = overlay.PassengersRating ?? stored.CareerRatings.Passengers,
+                SearchAndRescue = overlay.SearchAndRescueRating ?? stored.CareerRatings.SearchAndRescue,
+                Crime = overlay.CrimeRating ?? stored.CareerRatings.Crime,
+            },
         };
     }
 
@@ -71,6 +82,7 @@ public static class CommanderScope
             {
                 HomeSystem = stored.Callouts.HomeSystem,
             },
+            CareerRatings = stored.CareerRatings,
         };
 
         var overlay = OverlayFor(stored, fid) ?? new CommanderSettings { CommanderFid = fid };
@@ -109,6 +121,46 @@ public static class CommanderScope
         if (!string.Equals(next.CommanderGender, effective.CommanderGender, StringComparison.Ordinal))
         {
             updated = updated with { CommanderGender = Written(next.CommanderGender) };
+        }
+
+        if (next.CareerRatings.Combat != effective.CareerRatings.Combat)
+        {
+            updated = updated with { CombatRating = next.CareerRatings.Combat };
+        }
+
+        if (next.CareerRatings.Trading != effective.CareerRatings.Trading)
+        {
+            updated = updated with { TradingRating = next.CareerRatings.Trading };
+        }
+
+        if (next.CareerRatings.Mining != effective.CareerRatings.Mining)
+        {
+            updated = updated with { MiningRating = next.CareerRatings.Mining };
+        }
+
+        if (next.CareerRatings.Exploration != effective.CareerRatings.Exploration)
+        {
+            updated = updated with { ExplorationRating = next.CareerRatings.Exploration };
+        }
+
+        if (next.CareerRatings.Exobiology != effective.CareerRatings.Exobiology)
+        {
+            updated = updated with { ExobiologyRating = next.CareerRatings.Exobiology };
+        }
+
+        if (next.CareerRatings.Passengers != effective.CareerRatings.Passengers)
+        {
+            updated = updated with { PassengersRating = next.CareerRatings.Passengers };
+        }
+
+        if (next.CareerRatings.SearchAndRescue != effective.CareerRatings.SearchAndRescue)
+        {
+            updated = updated with { SearchAndRescueRating = next.CareerRatings.SearchAndRescue };
+        }
+
+        if (next.CareerRatings.Crime != effective.CareerRatings.Crime)
+        {
+            updated = updated with { CrimeRating = next.CareerRatings.Crime };
         }
 
         if (updated == overlay)
@@ -152,6 +204,14 @@ public static class CommanderScope
             Without(stored, fid, overlay with { ShipCoreShip = null }),
             Without(stored, fid, overlay with { HomeSystem = null }),
             Without(stored, fid, overlay with { CommanderGender = null }),
+            Without(stored, fid, overlay with { CombatRating = null }),
+            Without(stored, fid, overlay with { TradingRating = null }),
+            Without(stored, fid, overlay with { MiningRating = null }),
+            Without(stored, fid, overlay with { ExplorationRating = null }),
+            Without(stored, fid, overlay with { ExobiologyRating = null }),
+            Without(stored, fid, overlay with { PassengersRating = null }),
+            Without(stored, fid, overlay with { SearchAndRescueRating = null }),
+            Without(stored, fid, overlay with { CrimeRating = null }),
         ];
     }
 
@@ -170,7 +230,15 @@ public static class CommanderScope
                     && updated.ScenarioAudience is null
                     && updated.ShipCoreShip is null
                     && updated.HomeSystem is null
-                    && updated.CommanderGender is null;
+                    && updated.CommanderGender is null
+                    && updated.CombatRating is null
+                    && updated.TradingRating is null
+                    && updated.MiningRating is null
+                    && updated.ExplorationRating is null
+                    && updated.ExobiologyRating is null
+                    && updated.PassengersRating is null
+                    && updated.SearchAndRescueRating is null
+                    && updated.CrimeRating is null;
 
         return stored with { Commanders = empty ? [.. others] : [.. others, updated] };
     }
