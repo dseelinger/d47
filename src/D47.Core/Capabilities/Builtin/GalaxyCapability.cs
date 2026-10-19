@@ -989,6 +989,7 @@ public static class GalaxyCapability
 
             var said = FactionNotes(corrected, result.Stations.Count == 0 ? unknown : [], known)
                        + DescribeStations(result, query)
+                       + LeftOutSaid(result)
                        + LimitRefused(askedLimit);
 
             var posting = new GalaxySearchPosting(
@@ -1490,7 +1491,7 @@ public static class GalaxyCapability
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return ToolResult.Ok(Describe(result, query) + LimitRefused(askedLimit));
+            return ToolResult.Ok(Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -2623,6 +2624,12 @@ public static class GalaxyCapability
         sort?.Words is { } words
             ? $"here are {count}, ordered {words.ToLowerInvariant()}"
             : $"here are the nearest {count}";
+
+    /// <summary>One sentence naming the Stronghold Carriers left out of another Power's side; empty when none were.</summary>
+    private static string LeftOutSaid(StationSearchResult result) =>
+        result.LeftOut > 0
+            ? $" Left out {result.LeftOut} Stronghold Carrier{(result.LeftOut == 1 ? "" : "s")} of other Powers."
+            : string.Empty;
 
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
     private static string Describe(StationSearchResult result, StationQuery query)

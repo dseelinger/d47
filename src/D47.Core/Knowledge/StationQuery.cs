@@ -75,6 +75,19 @@ public sealed record StationSummary
     /// <summary>When the service last had a report of this station.</summary>
     public DateTimeOffset? UpdatedAt { get; init; }
 
+    /// <summary>The Power controlling the station's system, in the service's spelling.</summary>
+    public string? ControllingPower { get; init; }
+
+    /// <summary>The system's Powerplay state, in the service's spelling.</summary>
+    public string? PowerState { get; init; }
+
+    /// <summary>A Stronghold Carrier in a Stronghold system controlled by any Power but <paramref name="pledgedPower"/>.</summary>
+    public bool IsOtherPowersStrongholdCarrier(string? pledgedPower) =>
+        string.Equals(Name, "Stronghold Carrier", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(PowerState, "Stronghold", StringComparison.OrdinalIgnoreCase)
+        && !(pledgedPower is { Length: > 0 }
+             && string.Equals(ControllingPower, pledgedPower, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>A finished station that does not move: not a carrier, a megaship or a construction site.</summary>
     public bool IsFixed =>
         StationQuery.IsFixedType(Type)
@@ -133,7 +146,11 @@ public sealed record StationServiceName(string Name, string Field);
 public sealed record StationSearchResult(
     string? Reference,
     int Total,
-    IReadOnlyList<StationSummary> Stations);
+    IReadOnlyList<StationSummary> Stations)
+{
+    /// <summary>Stronghold Carriers of other Powers dropped from the answer.</summary>
+    public int LeftOut { get; init; }
+}
 
 /// <summary>A validated search for somewhere to buy something.</summary>
 public sealed record StationQuery

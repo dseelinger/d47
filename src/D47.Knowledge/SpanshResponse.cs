@@ -593,6 +593,8 @@ internal static class SpanshResponse
             : [],
         ControllingFaction = String(element, "controlling_minor_faction"),
         State = String(element, "state"),
+        ControllingPower = String(element, "system_controlling_power"),
+        PowerState = String(element, "system_power_state"),
         UpdatedAt = Timestamp(element, "updated_at"),
     };
 

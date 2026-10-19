@@ -2046,8 +2046,9 @@ public sealed class AppHost : IDisposable
             () => DateTimeOffset.Now,
             loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
 
-        var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Knowledge.SpanshGalaxyService(
-            loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()));
+        var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Core.Knowledge.StationPowerFilter(
+            new D47.Knowledge.SpanshGalaxyService(loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()),
+            () => gameState.Active?.Pledge));
 
         var starSystems = new D47.Knowledge.SpanshStarSystemService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshStarSystemService>());
