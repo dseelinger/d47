@@ -736,6 +736,46 @@ A tie goes to the earlier row, counting from a different row for each comfort-zo
 counts from bounty, the second from bond, and so on round the table. Before d47 has seen a `Statistics` event, no activity is picked. An
 activity you have refused in the story is never picked.
 
+### Drawing a chapter's activities {#chapter-draw}
+
+`ChapterDraw.Draw` chooses three counted activities from a fixed table, `ChapterActivities.All`. It is not wired
+into chapter writing yet. The draw is seeded by `ChapterDraw.Seed`, an FNV-1a hash of the story id and the chapter
+number, plus the index of the objective being replaced in a rewrite, so the same inputs give the same activities.
+
+| Career | Kinds | Mission families |
+| --- | --- | --- |
+| Combat | bounty, bond, conflict | Massacre, Assassinate, OnFoot_Massacre, OnFoot_Onslaught, OnFoot_Assassination, OnFoot_Defence |
+| Trading | sell | Courier, Delivery, Collect, OnFoot_Delivery, OnFoot_Collect |
+| Mining | mine | Mining |
+| Exploration | map, signal, codex, wreck, uss, srv, datasale (cartographic) | none |
+| Exobiology | organic, datasale (organic) | none |
+| Passengers | none | PassengerBulk, PassengerVIP, Sightseeing, LongDistanceExpedition |
+| Search and rescue | rescue, salvage | Rescue, Salvage, OnFoot_Salvage, OnFoot_Reboot, OnFoot_RebootRestore |
+| Crime | none | Smuggle, OnFoot_Smuggle, Piracy, OnFoot_Heist, OnFoot_ProductionHeist, OnFoot_Sabotage, and every illegal family |
+
+Never drawn: Altruism, AltruismCredits, MassacreThargoid, every set-aside family, and the onfoot, collect, suitmod
+and faction kinds. An activity the story refuses is excluded.
+
+An activity is excluded unless the ship aboard and the Commander pass its gate:
+
+| Gate | Applies to |
+| --- | --- |
+| A mining weapon (`hpt_mininglaser`, `hpt_mining_`, `hpt_miningtoolv2`) and `int_refinery` | mine, Mining missions |
+| `int_detailedsurfacescanner` | map |
+| `int_buggybay` | srv |
+| `int_passengercabin` or `int_mkii_passengercabin` | the Passengers families |
+| Cargo capacity above zero | sell, salvage, Delivery, Collect, Mining, Smuggle, Piracy |
+| Odyssey | every OnFoot family, organic, and the Exobiology data sale |
+| Combat rank 3 and three engineered modules | bond, conflict, Massacre, Assassinate |
+| Mercenary rank 2 | the OnFoot combat families |
+
+A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
+reads the ratings of 1 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
+weighs 75, and Crime always weighs 50. In a comfort-zone chapter the first slot is the least-done activity that passes
+the gates. The rest are drawn without replacement, with no two slots in one career while another career has a row
+left. Conflict and every illegal family need a place objective just before them; at most two place objectives may
+be in a chapter, counting those the chapter already has. Tons for sell and mine are 10 to 40, capped at the cargo capacity.
+
 ### Refusing an objective
 
 A story chapter's current objective has a **Never ask this** button, on the chapter's page and on the Stories

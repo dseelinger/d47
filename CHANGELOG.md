@@ -20,6 +20,8 @@ You can now ask where to buy several modules, or modules and a ship, at one stat
 
 Station searches now leave out Stronghold Carriers of Powers you are not pledged to. Spansh lists them as Planetary Outposts, so a search for a module could answer with one you cannot use. A Stronghold Carrier is kept when its system is controlled by your own Power, and an unpledged Commander gets none. When any were left out, the answer says so, for example "Left out 2 Stronghold Carriers of other Powers."
 
+A new table and draw let code choose a story chapter's counted activities from the Commander's career ratings, the ship's modules and the Commander's ranks, instead of leaving the choice to the writer. The chapter writer does not use it yet.
+
 Short stories and story chapters now ask for a wider range of activities. Before, chapters leaned on courier missions and bounties. The story outline is now told the Commander does the game's activities, not only travel. The activities and mission families are offered in a different order for each story, and every mission family in d47's catalogue is offered instead of eight. Each chapter is told what the last three chapters asked for and to ask for something else. A comfort-zone chapter whose least-done activities are tied no longer always picks bounties.
 
 D47 no longer sometimes crashes at startup with "The calling thread cannot access this object because a different thread owns it". Background work that starts before the window could become the owner of the window's message queue, and the window then failed to open. The main thread now takes that ownership before any background work starts.
