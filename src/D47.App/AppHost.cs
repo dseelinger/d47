@@ -1053,6 +1053,11 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.MailLedger>());
 
+        // The signals the Commander scans, rebuilt by the same walk and extended live.
+        var signalSightings = new D47.Core.Journal.SignalSightings(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.SignalSightings>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -1072,6 +1077,7 @@ public sealed class AppHost : IDisposable
             Crimes = crimes,
             Activities = activities,
             Mail = mail,
+            Signals = signalSightings,
             Step = StartupTimer.Step,
         };
 
@@ -1492,6 +1498,7 @@ public sealed class AppHost : IDisposable
             MarketBook = marketBook,
             Markets = markets,
             Memories = memories,
+            SignalSightings = signalSightings,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
             MessageStore = messageStore,
@@ -1540,6 +1547,7 @@ public sealed class AppHost : IDisposable
         var lore = stores.Lore;
         var loreVisits = stores.LoreVisits;
         var mail = stores.Mail;
+        var signalSightings = stores.SignalSightings;
         var markets = stores.Markets;
         var modulePower = stores.ModulePower;
         var planBook = stores.PlanBook;
@@ -1599,6 +1607,7 @@ public sealed class AppHost : IDisposable
             cartography.Apply(events, inGame);
             crimes.Apply(events, inGame);
             activities.Apply(events, inGame);
+            signalSightings.Apply(events);
 
             if (!context.IsFirst)
             {
@@ -4096,6 +4105,8 @@ public sealed class AppHost : IDisposable
         public required LoreVisits LoreVisits { get; init; }
 
         public required MailLedger Mail { get; init; }
+
+        public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
 
         public required D47.Core.Knowledge.MarketBook MarketBook { get; init; }
 

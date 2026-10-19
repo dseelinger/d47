@@ -71,6 +71,9 @@ public sealed class HistoryBackfill
     /// <summary>The mission results and promotions Elite also sends as mail, folded the same way (#618).</summary>
     public MailLedger? Mail { get; init; }
 
+    /// <summary>The scanned FSS signals, folded the same way.</summary>
+    public SignalSightings? Signals { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -328,6 +331,15 @@ public sealed class HistoryBackfill
                 Timed("mail backfill", () =>
                 {
                     mail.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Signals is { } signals)
+            {
+                Timed("signal backfill", () =>
+                {
+                    signals.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }
