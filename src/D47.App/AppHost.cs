@@ -3032,6 +3032,7 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Stories.StoryDirector>())
         {
             Archive = storyArchive,
+            Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
         };
 
         // After the startup catch-up, so each chapter moved keeps when its beats fired.

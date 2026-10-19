@@ -768,6 +768,13 @@ An activity is excluded unless the ship aboard and the Commander pass its gate:
 | Odyssey | every OnFoot family, organic, and the Exobiology data sale |
 | Combat rank 3 and three engineered modules | bond, conflict, Massacre, Assassinate |
 | Mercenary rank 2 | the OnFoot combat families |
+| A station within reach | bounty, bond, conflict, sell, both data sales, rescue, every Mission family |
+
+The station gate is checked once per chapter, before the draw. `StoryDirector` asks the galaxy search for fixed stations
+within the chapter's reach of the Commander's system (300 light years or more, or the long-haul reach) and counts one that
+needs no permit and has a pad for the ship aboard. With none, the rows in the last gate row are never drawn, and a comfort
+chapter's first slot can only be mine or organic. When the galaxy search is off, the position is unknown or the query
+fails, the draw is not gated. A redrawn slot after **Never ask this** follows the same gate.
 
 A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
 reads the ratings of 1 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`

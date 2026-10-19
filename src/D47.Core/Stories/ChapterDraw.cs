@@ -44,7 +44,8 @@ public static class ChapterDraw
     /// <summary>
     /// Up to <see cref="Slots"/> activities. <paramref name="recent"/> are <c>RefusedActivities</c> keys; <paramref name="fixedPlaces"/>
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
-    /// passes the gates, counting ties from row <paramref name="comfortFirst"/>.
+    /// passes the gates, counting ties from row <paramref name="comfortFirst"/>. With <paramref name="stationsInReach"/> false,
+    /// rows that need a station are never drawn.
     /// </summary>
     public static IReadOnlyList<DrawnActivity> Draw(
         CareerWeights weights,
@@ -57,7 +58,8 @@ public static class ChapterDraw
         CareerStatistics statistics,
         int fixedPlaces,
         uint seed,
-        int comfortFirst = 0)
+        int comfortFirst = 0,
+        bool stationsInReach = true)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -66,7 +68,7 @@ public static class ChapterDraw
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
         var eligible = ChapterActivities.All
-            .Where(row => ChapterActivities.Passes(row, held) && !RefusedActivities.Refuses(refused, row.Kind, row.Family))
+            .Where(row => ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && !RefusedActivities.Refuses(refused, row.Kind, row.Family))
             .ToList();
         var random = new Random32(seed);
         var drawn = new List<DrawableActivity>();

@@ -3,6 +3,7 @@ using System.Globalization;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Persona;
 using Microsoft.Extensions.Logging;
 
@@ -50,6 +51,9 @@ public sealed class StoryDirector(
     ILogger logger)
 {
     private readonly Lock _gate = new();
+
+    /// <summary>The galaxy search, or null while it is off; with none, a chapter's draw is not gated on stations.</summary>
+    public Func<IGalaxyService?>? Galaxy { get; set; }
 
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
@@ -696,7 +700,7 @@ public sealed class StoryDirector(
         var chapter = at.Standing.Adventure;
         var from = at.Standing.Current;
         var now = Clock();
-        var ask = RewriteAsk(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange), now);
+        var ask = await RewriteAskAsync(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange), now, cancellationToken).ConfigureAwait(false);
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
         if (outcome.Draft is not { } draft)
@@ -1002,7 +1006,7 @@ public sealed class StoryDirector(
         var refusedKey = closedMarketId is null ? RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily) : null;
         var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
         var now = Clock();
-        var ask = RewriteAsk(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId), now);
+        var ask = await RewriteAskAsync(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId), now, cancellationToken).ConfigureAwait(false);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -1038,7 +1042,8 @@ public sealed class StoryDirector(
     }
 
     /// <summary>The ask that writes the beats of the story's chapter from <paramref name="rewrite"/>'s index on again.</summary>
-    private AdventureAsk RewriteAsk(string? frontierId, Story story, StorySecret secret, Adventure chapter, AdventureRewrite rewrite, DateTimeOffset now)
+    private async Task<AdventureAsk> RewriteAskAsync(
+        string? frontierId, Story story, StorySecret secret, Adventure chapter, AdventureRewrite rewrite, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var refused = story.Refused;
 
@@ -1057,7 +1062,7 @@ public sealed class StoryDirector(
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
         var slots = story.BeaconScanAt is { } scanned && chapter.Written >= scanned
-            ? RewriteSlots(story, chapter, rewrite, game, previous, number, finaleChapter)
+            ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, cancellationToken).ConfigureAwait(false)
             : null;
 
         return new AdventureAsk(
@@ -1084,8 +1089,9 @@ public sealed class StoryDirector(
     /// The drawn activities a rewritten chapter is still built on: those its beats already hold, except the one at the beat
     /// being replaced, which is drawn again when the Commander refused it. Null when the chapter holds none.
     /// </summary>
-    private IReadOnlyList<DrawnActivity>? RewriteSlots(
-        Story story, Adventure chapter, AdventureRewrite rewrite, CommanderGameState? game, AdventureChapter? previous, int number, int? finaleChapter)
+    private async Task<IReadOnlyList<DrawnActivity>?> RewriteSlotsAsync(
+        Story story, Adventure chapter, AdventureRewrite rewrite, CommanderGameState? game, AdventureChapter? previous, int number, int? finaleChapter,
+        CancellationToken cancellationToken)
     {
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var held = chapter.Beats
@@ -1110,12 +1116,44 @@ public sealed class StoryDirector(
                 comfort: false,
                 statistics,
                 FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore),
-                ChapterDraw.Seed(story.Id, number, rewrite.From));
+                ChapterDraw.Seed(story.Id, number, rewrite.From),
+                stationsInReach: await StationsInReachAsync(story, game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
 
         return others.Count > 0 ? others : null;
+    }
+
+    /// <summary>
+    /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within the chapter's reach.
+    /// True when it cannot be told: galaxy search off, no known position, or the query failed.
+    /// </summary>
+    private async Task<bool> StationsInReachAsync(Story story, CommanderGameState? game, CancellationToken cancellationToken)
+    {
+        if (Galaxy?.Invoke() is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
+        {
+            return true;
+        }
+
+        var ship = game.Ship;
+        var reach = ChapterFit.IsLongHaul(story.Pacing, game) ? AdventureReach.Anywhere : AdventureReach.Session;
+        PadSize? pad = Enum.TryParse<PadSize>(EliteSpecifications.Ship(ship.Type)?.Pad, ignoreCase: true, out var size) ? size : null;
+
+        try
+        {
+            var found = await search
+                .FindStationsAsync(StationQuery.Near(system, AdventureGenerator.Radius(reach, ship.MaxJumpRange, game.Carrier.Owned), 20), cancellationToken)
+                .ConfigureAwait(false);
+
+            return found.Stations.Any(station =>
+                station.IsFixed && !PermitSystemTable.Locked(station.SystemName) && (pad is not { } needed || station.Admits(needed)));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The galaxy search could not list the stations within reach of a story chapter, so its activities are not gated on them");
+            return true;
+        }
     }
 
     /// <summary>The place objectives a finale chapter must already have: the landing of the last one, or the stop nearer the destination.</summary>
@@ -1800,6 +1838,9 @@ public sealed class StoryDirector(
         try
         {
             var attempt = new Attempt(null);
+            var stationsInReach = stories.Current(frontierId) is { BeaconScanAt: not null } running
+                ? await StationsInReachAsync(running, Game(), cancellationToken).ConfigureAwait(false)
+                : true;
 
             for (var draft = 1; draft <= Drafts; draft++)
             {
@@ -1813,7 +1854,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, draft == 2 ? attempt.Outline : null, stationsInReach, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -1889,7 +1930,8 @@ public sealed class StoryDirector(
     /// <summary>One draft's result: the refusal or null, whether another draft may succeed, and what to tell it.</summary>
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, AdventureOutline? Outline = null);
 
-    private async Task<Attempt> WriteAsync(string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, CancellationToken cancellationToken)
+    private async Task<Attempt> WriteAsync(
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, AdventureOutline? outline, bool stationsInReach, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -1939,7 +1981,8 @@ public sealed class StoryDirector(
                 statistics,
                 FixedPlaces(story, finaleChapter),
                 ChapterDraw.Seed(story.Id, number),
-                sinceBeacon / ChapterFit.ComfortEvery) is { Count: > 0 } drawn
+                sinceBeacon / ChapterFit.ComfortEvery,
+                stationsInReach) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 
