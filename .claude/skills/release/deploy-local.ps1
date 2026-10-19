@@ -191,7 +191,8 @@ if (-not $NoBuild) {
     if (Test-Path $Staging) { Remove-Item $Staging -Recurse -Force }
 
     Write-Host "publishing D47.App (Release, $next) - a minute or two"
-    $log = & dotnet publish $project -c Release "-p:Version=$next" -o $Staging --nologo 2>&1
+    # A build server left running by another session can write the publish where this one cannot see it.
+    $log = & dotnet publish $project -c Release "-p:Version=$next" -o $Staging --nologo --disable-build-servers 2>&1
     if ($LASTEXITCODE -ne 0) {
         $log | Select-Object -Last 25 | ForEach-Object { Write-Host $_ }
         throw 'The publish failed. Nothing was installed.'
