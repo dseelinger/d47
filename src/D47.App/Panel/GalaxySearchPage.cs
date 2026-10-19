@@ -35,6 +35,9 @@ public sealed record GalaxySearchSurface(
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
+
+    /// <summary>Whether a signal search has anything to read: the signal index is on or the Commander has scanned signals; null for always.</summary>
+    public Func<bool>? SignalSources { get; init; }
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>
@@ -104,6 +107,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private readonly GalaxySearchSurface _searches;
     private readonly Func<bool> _lookupsEnabled;
+    private readonly Func<bool> _namesEnabled;
     private readonly Action? _openSettings;
     private readonly bool _headset;
 
@@ -125,10 +129,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private readonly HistoryTile _history;
     private GalaxySearchPosting? _fromHistory;
 
-    protected GalaxySearchPage(GalaxySearchSurface searches, Func<bool> lookupsEnabled, Action? openSettings, bool headset)
+    protected GalaxySearchPage(GalaxySearchSurface searches, Func<bool> lookupsEnabled, Action? openSettings, bool headset, Func<bool>? namesEnabled = null)
     {
         _searches = searches;
         _lookupsEnabled = lookupsEnabled;
+        _namesEnabled = namesEnabled ?? lookupsEnabled;
         _openSettings = openSettings;
         _headset = headset;
         _history = new HistoryTile(searches);
@@ -198,6 +203,24 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>The plural noun the answer head counts in, upper case.</summary>
     protected abstract string Noun { get; }
+
+    /// <summary>The sentence drawn while the page cannot search.</summary>
+    protected virtual string OffSentence => LookupsOffText;
+
+    /// <summary>Why the page cannot search, for the RUN SEARCH tooltip.</summary>
+    protected virtual string OffTip => "Turn on “Look things up in the galaxy” in Settings to search.";
+
+    /// <summary>The label of the box drawn while a search runs.</summary>
+    protected virtual string RunningText => "Asking Spansh";
+
+    /// <summary>The label of the notice drawn when the tool refused the form.</summary>
+    protected virtual string RefusedLabel => "FILTER REFUSED";
+
+    /// <summary>Where the answer came from, in the footer stamp.</summary>
+    protected virtual string Origin => "SPANSH";
+
+    /// <summary>What the footer says to ask by voice; null for the page's first quick search.</summary>
+    protected virtual string? SayPhrase => null;
 
     /// <summary>What the page draws from the Commander's own state, such as their system; a change redraws it.</summary>
     protected virtual object? Followed => null;
@@ -279,7 +302,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
 
         SystemNameSuggestions<SystemNameMatch>? names = null;
-        names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, _lookupsEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
+        names = new SystemNameSuggestions<SystemNameMatch>(field, lookup, match => match.Name, _namesEnabled, match => names!.SetText(match.Name), _searches.SuggestionPause);
 
         return names;
     }
@@ -535,14 +558,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         Shown = View is GalaxySearchView.Answer or GalaxySearchView.NoResults ? last : null;
         Sentence = View switch
         {
-            GalaxySearchView.LookupsOff => LookupsOffText,
+            GalaxySearchView.LookupsOff => OffSentence,
             GalaxySearchView.Unavailable or GalaxySearchView.Refused => _failure!.Value.Text,
             GalaxySearchView.NoResults => Described(last!),
             _ => null,
         };
 
         _run.IsEnabled = lookups && _running is null;
-        ToolTip.SetTip(_run, lookups ? null : "Turn on “Look things up in the galaxy” in Settings to search.");
+        ToolTip.SetTip(_run, lookups ? null : OffTip);
 
         _saved.Content = SavedBlock();
         DrawStamp(last);
@@ -729,7 +752,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
             case GalaxySearchView.LookupsOff:
                 block.Children.Add(Head(Noun, null, refresh: null, save: false));
-                block.Children.Add(Prose(LookupsOffText, TypeScale.Secondary, ThemeManager.WhiteKey));
+                block.Children.Add(Prose(OffSentence, TypeScale.Secondary, ThemeManager.WhiteKey));
 
                 if (_openSettings is { } open)
                 {
@@ -743,7 +766,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             case GalaxySearchView.Running:
                 block.Children.Add(Head("Searching", Aside(_running!, null), refresh: null, save: false, disabled: true));
 
-                var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label("Asking Spansh", width: null) };
+                var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label(RunningText, width: null) };
                 Themed(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
                 block.Children.Add(asking);
                 break;
@@ -771,7 +794,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                     block.Children.Add(Head(Noun, null, refresh: null, save: false));
                 }
 
-                block.Children.Add(new Notice(NoticeLevel.Error) { Label = "FILTER REFUSED", Text = Sentence });
+                block.Children.Add(new Notice(NoticeLevel.Error) { Label = RefusedLabel, Text = Sentence });
                 break;
 
             case GalaxySearchView.NoResults:
@@ -805,9 +828,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     /// <summary>The answer's own sentence, without the notes it opens with.</summary>
     private static string Described(GalaxySearchPosting posting) =>
-        posting.Notes.Length > 0 && posting.Answer.StartsWith(posting.Notes, StringComparison.Ordinal)
-            ? posting.Answer[posting.Notes.Length..].Trim()
-            : posting.Answer;
+        posting.Notes.Length == 0 ? posting.Answer
+        : posting.Answer.StartsWith(posting.Notes, StringComparison.Ordinal) ? posting.Answer[posting.Notes.Length..].Trim()
+        : posting.Answer.EndsWith(posting.Notes, StringComparison.Ordinal) ? posting.Answer[..^posting.Notes.Length].Trim()
+        : posting.Answer;
 
     /// <summary>The arguments REFRESH and SAVE use: a history entry's <c>near</c> is its stored reference when left out.</summary>
     private IReadOnlyDictionary<string, string> Rerun(GalaxySearchPosting posting) =>
@@ -924,9 +948,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private Border Footer()
     {
-        var phrase = QuickSearches.All.FirstOrDefault(search => search.Tool == Tool) is { } quick
-            ? $"Say: “{QuickSearches.PhrasesOf(quick).First()}”"
-            : string.Empty;
+        var phrase = SayPhrase is { } say ? $"Say: “{say}”"
+            : QuickSearches.All.FirstOrDefault(search => search.Tool == Tool) is { } quick
+                ? $"Say: “{QuickSearches.PhrasesOf(quick).First()}”"
+                : string.Empty;
 
         var said = Prose(phrase, TypeScale.Tip, ThemeManager.GreyKey);
         said.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -957,7 +982,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return;
         }
 
-        var words = new Run("SPANSH · ANSWERED ") { FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Meta, FontWeight = FontWeight.Medium };
+        var words = new Run($"{Origin} · ANSWERED ") { FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Meta, FontWeight = FontWeight.Medium };
         words.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
 
         var time = new Run(last.AskedAt.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)) { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta };

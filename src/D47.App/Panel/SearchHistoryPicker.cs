@@ -74,6 +74,7 @@ public static class SearchHistoryPicker
             "search_stations" => GalaxySearchKind.Stations,
             "search_outfitting" => GalaxySearchKind.Outfitting,
             "find_body" => GalaxySearchKind.Bodies,
+            "find_signal" => GalaxySearchKind.Signals,
             _ => null,
         };
 

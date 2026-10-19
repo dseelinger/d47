@@ -29,6 +29,7 @@ public static class PageTrail
             GalaxySearchKind.Stations => StationSearchPage.RootKey,
             GalaxySearchKind.Outfitting => OutfittingSearchPage.RootKey,
             GalaxySearchKind.Bodies => BodySearchPage.RootKey,
+            GalaxySearchKind.Signals => SignalSearchPage.RootKey,
             _ => null,
         };
 

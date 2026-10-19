@@ -684,6 +684,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The last 25 galaxy searches each Commander has asked.</summary>
     public D47.Core.Knowledge.SearchHistory? SearchHistory { get; private set; }
 
+    /// <summary>The signals the Commander's journals have shown.</summary>
+    public D47.Core.Journal.SignalSightings? SignalSightings { get; private set; }
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -3562,6 +3565,7 @@ public sealed class AppHost : IDisposable
         host.GalaxySearches = galaxySearchBoard;
         host.SavedSearches = stores.SavedSearches;
         host.SearchHistory = stores.SearchHistory;
+        host.SignalSightings = stores.SignalSightings;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
 

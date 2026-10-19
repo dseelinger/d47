@@ -3,7 +3,7 @@ using D47.Core.Journal;
 namespace D47.Core.Knowledge;
 
 /// <summary>One signal an answer lists.</summary>
-public sealed record SignalFinding(string Signal, string System, double Distance, DateTimeOffset LastSeen, bool OwnScan);
+public sealed record SignalFinding(string Signal, string System, double Distance, DateTimeOffset LastSeen, bool OwnScan, long SystemAddress = 0);
 
 /// <summary>The answer to a signal search: <paramref name="Total"/> found, nearest first, of which <paramref name="Signals"/> are listed.</summary>
 public sealed record SignalSearchResult(string? Reference, int Total, IReadOnlyList<SignalFinding> Signals);
@@ -79,7 +79,8 @@ public static class SignalSearch
                 pair.Sighting.SystemName,
                 Math.Round(origin.DistanceTo(pair.Sighting.Position), 2),
                 pair.Sighting.LastSeen,
-                pair.Own))
+                pair.Own,
+                pair.Sighting.SystemAddress))
             .OrderBy(finding => finding.Distance)
             .ThenByDescending(finding => finding.LastSeen)
             .ThenBy(finding => finding.System, StringComparer.Ordinal)

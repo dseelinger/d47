@@ -1573,12 +1573,15 @@ public static class GalaxyCapability
             reference,
             result,
             said,
-            at);
+            at)
+        {
+            Notes = source.Trim(),
+        };
 
         searches?.Post(posting);
         Remember(remember, "find_signal", posting);
 
-        return ToolResult.Ok(said);
+        return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Signals) };
     }
 
     private static async Task<ToolResult> DescribeSystemAsync(

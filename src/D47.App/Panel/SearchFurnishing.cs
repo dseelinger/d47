@@ -18,6 +18,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private StationSearchPage? _stations;
     private OutfittingSearchPage? _outfitting;
     private BodySearchPage? _bodies;
+    private SignalSearchPage? _signals;
     private StarSystemPage? _found;
     private StarSystemSurface? _surface;
     private (long Address, string Id)? _pendingSystem;
@@ -41,6 +42,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             roots.Add(new NavCrumb(StationSearchPage.RootKey, "Stations") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(OutfittingSearchPage.RootKey, "Outfitting") { Help = GalaxyCapability.Id });
             roots.Add(new NavCrumb(BodySearchPage.RootKey, "Bodies") { Help = GalaxyCapability.Id });
+            roots.Add(new NavCrumb(SignalSearchPage.RootKey, "Signals") { Help = GalaxyCapability.Id });
         }
 
         host.Furnish(PanelTab.Search, crumb => Build(crumb, surface), [.. roots]);
@@ -63,6 +65,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         redrawn |= _stations is { } stations && host.Nav.RootKeyOf(PanelTab.Search) == StationSearchPage.RootKey && stations.Tick();
         redrawn |= _outfitting is { } outfitting && host.Nav.RootKeyOf(PanelTab.Search) == OutfittingSearchPage.RootKey && outfitting.Tick();
         redrawn |= _bodies is { } bodies && host.Nav.RootKeyOf(PanelTab.Search) == BodySearchPage.RootKey && bodies.Tick();
+        redrawn |= _signals is { } signals && host.Nav.RootKeyOf(PanelTab.Search) == SignalSearchPage.RootKey && signals.Tick();
 
         return redrawn;
     }
@@ -127,6 +130,21 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return _bodies;
         }
 
+        if (crumb.Key == SignalSearchPage.RootKey && surface.Searches is { } signalSearches)
+        {
+            _signals = new SignalSearchPage(
+                signalSearches,
+                surface.LookupsEnabled,
+                () => surface.Here()?.StarSystem,
+                OpenFound,
+                host.Copy,
+                surface.OpenSettings,
+                host.Headset);
+            ApplyPending();
+
+            return _signals;
+        }
+
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && long.TryParse(crumb.Key[FoundKeyPrefix.Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var address))
         {
@@ -173,6 +191,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             StationSearchPage.RootKey => _stations?.HistoryId,
             OutfittingSearchPage.RootKey => _outfitting?.HistoryId,
             BodySearchPage.RootKey => _bodies?.HistoryId,
+            SignalSearchPage.RootKey => _signals?.HistoryId,
             _ => _pendingSystem is null && _systemEntry is not null && _surface?.Searches is { History: { } history }
                 && history.All().FirstOrDefault(entry => entry.Id == _systemEntry)?.SystemAddress == _starSystem?.ShownAddress
                     ? _systemEntry
@@ -198,6 +217,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 GalaxySearchKind.Systems => SystemSearchPage.RootKey,
                 GalaxySearchKind.Stations => StationSearchPage.RootKey,
                 GalaxySearchKind.Outfitting => OutfittingSearchPage.RootKey,
+                GalaxySearchKind.Signals => SignalSearchPage.RootKey,
                 _ => BodySearchPage.RootKey,
             });
         }
@@ -219,6 +239,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         Deliver(GalaxySearchKind.Stations, _stations);
         Deliver(GalaxySearchKind.Outfitting, _outfitting);
         Deliver(GalaxySearchKind.Bodies, _bodies);
+        Deliver(GalaxySearchKind.Signals, _signals);
     }
 
     private void Deliver(GalaxySearchKind kind, GalaxySearchPage? page)

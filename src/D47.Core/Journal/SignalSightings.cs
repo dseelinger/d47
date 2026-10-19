@@ -42,6 +42,18 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
         }
     }
 
+    /// <summary>Whether any sighting is kept.</summary>
+    public bool Any
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _sightings.Count > 0 || _megaships.Count > 0;
+            }
+        }
+    }
+
     /// <summary>A copy of every sighting kept.</summary>
     public IReadOnlyList<SignalSighting> Snapshot()
     {
