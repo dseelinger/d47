@@ -528,7 +528,7 @@ public static class AdventureFold
             return ApplyConflict(standing, current.Trigger, journalEvent, world);
         }
 
-        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump;
+        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover;
         var gained = watched ? AdventureWatch.Amount(current.Trigger, observation) : 0;
 
         if (watched ? gained == 0 || !current.Trigger.IsResolved : !Matches(current.Trigger, journalEvent, standing.SystemAddress))

@@ -19,7 +19,7 @@ internal static class StoryAnswer
     private static readonly string[] AlwaysKinds =
     [
         "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
-        "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "boost", "crew",
+        "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "boost", "discover", "crew",
         "suitmod", "conflict", "faction",
     ];
 
@@ -27,7 +27,7 @@ internal static class StoryAnswer
     private static readonly HashSet<string> DrawnKinds = new(StringComparer.Ordinal)
     {
         "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale",
-        "salvage", "uss", "rescue", "srv", "boost", "suitmod", "conflict", "faction",
+        "salvage", "uss", "rescue", "srv", "boost", "discover", "suitmod", "conflict", "faction",
     };
 
     private enum Shape

@@ -98,6 +98,7 @@ public static class RefusedActivities
         TriggerKind.Faction => "work for a faction",
         TriggerKind.Reach => "fit out a ship that can reach the beacon",
         TriggerKind.Boost => "boost off jet cones",
+        TriggerKind.Discover => "scan bodies no one has discovered",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

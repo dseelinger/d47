@@ -240,6 +240,7 @@ Thirty-six triggers, and every one is a comparison on a structured field rather 
 | Found a squadron | a `SquadronCreated` event | the squadron's name |
 | Take part in a conflict | a `FactionKillBond` whose `AwardingFaction` is one side of an active or pending war or civil war in the system the Commander is in; or a `MissionCompleted` for one side of an active election whose `FactionEffects` mark influence in the election's system. Optionally one `WarType` (`war`, `civilwar` or `election`) and one side | anything else |
 | Boost off a jet cone | `JetConeBoost` events, optionally one star: `neutron` for a `BoostValue` of 4 or more, `whitedwarf` for less | anything else |
+| Discover a body | `Scan` events with `WasDiscovered` false, each body once, optionally one class: `Earthlike body`, `Water world`, `Ammonia world`, `Gas giant with water based life`, `Gas giant with ammonia based life`, or `N` for a neutron star | a scan of a body already discovered, or any other class |
 | Work for a faction | `+` marks in the `FactionEffects` of a `MissionCompleted` for one faction, optionally in one `SystemAddress`; `++++` counts as four | anything else |
 
 Only a stock story's chapter one uses the beacon trigger, as its last objective, and you cannot add one on the

@@ -5,7 +5,7 @@ using D47.Core.Journal;
 namespace D47.Core.Adventures;
 
 /// <summary>What one <c>SuitLoadout</c> or <c>Loadout</c> changed against the last one seen for the same suit, weapon or ship.</summary>
-public sealed record AdventureObservation(IReadOnlyDictionary<string, string> Seen, IReadOnlyList<string> NewMods, bool LiveryChanged, bool CarrierMoved = false);
+public sealed record AdventureObservation(IReadOnlyDictionary<string, string> Seen, IReadOnlyList<string> NewMods, bool LiveryChanged, bool CarrierMoved = false, string? Discovered = null);
 
 /// <summary>
 /// Compares each loadout, and each fleet carrier position, with the previous one, for the <see cref="TriggerKind.SuitMod"/>,
@@ -39,6 +39,7 @@ public static class AdventureWatch
             "SuitLoadout" => ObserveSuit(seen, journalEvent.Raw),
             "Loadout" => ObserveShip(seen, journalEvent.Raw),
             "CarrierLocation" => ObserveCarrier(seen, journalEvent.Raw),
+            "Scan" => ObserveScan(seen, journalEvent.Raw),
             _ => new AdventureObservation(seen, [], false),
         };
     }
@@ -54,9 +55,13 @@ public static class AdventureWatch
             TriggerKind.SuitMod => observation.NewMods.Count(mod => Same(trigger.Filter, mod)),
             TriggerKind.Livery => observation.LiveryChanged ? 1 : 0,
             TriggerKind.CarrierJump => observation.CarrierMoved ? 1 : 0,
+            TriggerKind.Discover => observation.Discovered is { } body && (DiscoverKey(trigger.Filter) is not { } wanted || wanted == body) ? 1 : 0,
             _ => 0,
         };
     }
+
+    /// <summary>A body class folded to lower case with spaces removed, so "Earthlike body" and "earthlikebody" are one.</summary>
+    public static string? DiscoverKey(string? bodyClass) => JournalJson.Symbol(bodyClass)?.Replace(" ", string.Empty, StringComparison.Ordinal);
 
     private static bool Same(string? wanted, string mod) =>
         string.IsNullOrWhiteSpace(wanted) || string.Equals(wanted.Trim(), mod, StringComparison.OrdinalIgnoreCase);
@@ -139,6 +144,28 @@ public static class AdventureWatch
         }
 
         return new AdventureObservation(new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = here }, [], false, known);
+    }
+
+    /// <summary>A scan of a body no one has discovered is counted once per body; the body's class is its planet class, or "n" for a neutron star.</summary>
+    private static AdventureObservation ObserveScan(IReadOnlyDictionary<string, string> seen, System.Text.Json.JsonElement raw)
+    {
+        if (!(raw.TryGetProperty("WasDiscovered", out var discovered) && discovered.ValueKind == System.Text.Json.JsonValueKind.False)
+            || raw.Long("SystemAddress") is not { } address
+            || raw.Int("BodyID") is not { } body)
+        {
+            return new AdventureObservation(seen, [], false);
+        }
+
+        var key = $"discovered:{address.ToString(CultureInfo.InvariantCulture)}:{body.ToString(CultureInfo.InvariantCulture)}";
+
+        if (seen.ContainsKey(key))
+        {
+            return new AdventureObservation(seen, [], false);
+        }
+
+        var bodyClass = DiscoverKey(raw.String("PlanetClass") ?? raw.String("StarType")) ?? string.Empty;
+
+        return new AdventureObservation(new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = bodyClass }, [], false, Discovered: bodyClass);
     }
 
     private static IEnumerable<string> Names(System.Text.Json.JsonElement element, string property) =>

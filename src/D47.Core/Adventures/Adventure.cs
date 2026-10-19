@@ -135,6 +135,9 @@ public enum TriggerKind
 
     /// <summary><c>JetConeBoost</c> events. <see cref="AdventureTrigger.Filter"/> limits it to <c>neutron</c> (a <c>BoostValue</c> of 4 or more) or <c>whitedwarf</c>.</summary>
     Boost,
+
+    /// <summary><c>Scan</c> events of bodies no one has discovered, each body once. <see cref="AdventureTrigger.Filter"/> limits it to a planet class, or <c>N</c> for a neutron star.</summary>
+    Discover,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -259,6 +262,7 @@ public sealed record AdventureTrigger
         TriggerKind.Conflict => $"take part {Times()} in {WarWord()}{For()}",
         TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
         TriggerKind.Boost => $"supercharge your frame shift drive in {BoostStar()} jet cone {Times()}",
+        TriggerKind.Discover => $"be the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
         _ => Kind.ToString(),
     };
 
@@ -299,6 +303,7 @@ public sealed record AdventureTrigger
             TriggerKind.Conflict => $"Contributions to {WarWord()}{For()}: {of}",
             TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}: {of}",
             TriggerKind.Boost => $"{Capital(BoostWord())} boosts: {of}",
+            TriggerKind.Discover => $"{Capital(DiscoverWord(one: false))} scanned: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }
@@ -360,6 +365,17 @@ public sealed record AdventureTrigger
         "neutron" => "neutron",
         "whitedwarf" => "white dwarf",
         _ => "jet cone",
+    };
+
+    private string DiscoverWord(bool one) => AdventureWatch.DiscoverKey(Filter) switch
+    {
+        "earthlikebody" => one ? "undiscovered Earth-like world" : "undiscovered Earth-like worlds",
+        "waterworld" => one ? "undiscovered water world" : "undiscovered water worlds",
+        "ammoniaworld" => one ? "undiscovered ammonia world" : "undiscovered ammonia worlds",
+        "gasgiantwithwaterbasedlife" => one ? "undiscovered water-life gas giant" : "undiscovered water-life gas giants",
+        "gasgiantwithammoniabasedlife" => one ? "undiscovered ammonia-life gas giant" : "undiscovered ammonia-life gas giants",
+        "n" => one ? "undiscovered neutron star" : "undiscovered neutron stars",
+        _ => one ? "undiscovered body" : "undiscovered bodies",
     };
 
     private string BoostStar() => Journal.JournalJson.Symbol(Filter) switch

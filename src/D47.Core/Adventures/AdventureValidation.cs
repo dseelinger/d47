@@ -67,10 +67,14 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> BoostStars { get; } = ["neutron", "whitedwarf"];
+
+    /// <summary>The body classes a discover beat may be limited to; <c>N</c> is a neutron star.</summary>
+    public static IReadOnlyList<string> DiscoverBodies { get; } =
+        ["Earthlike body", "Water world", "Ammonia world", "Gas giant with water based life", "Gas giant with ammonia based life", "N"];
 
     /// <summary>The war types a conflict beat may be limited to, as the journal spells them.</summary>
     public static IReadOnlyList<string> WarTypes { get; } = ["war", "civilwar", "election"];
@@ -302,6 +306,13 @@ public static class AdventureValidation
             && !BoostStars.Contains(JournalJson.Symbol(trigger.Filter) ?? string.Empty, StringComparer.Ordinal))
         {
             yield return $"{where} names the star \"{trigger.Filter.Trim()}\"; the stars are {string.Join(", ", BoostStars)}.";
+        }
+
+        if (trigger.Kind == TriggerKind.Discover
+            && !string.IsNullOrWhiteSpace(trigger.Filter)
+            && !DiscoverBodies.Any(body => AdventureWatch.DiscoverKey(body) == AdventureWatch.DiscoverKey(trigger.Filter)))
+        {
+            yield return $"{where} names the body \"{trigger.Filter.Trim()}\"; the bodies are {string.Join(", ", DiscoverBodies)}.";
         }
 
         if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))
