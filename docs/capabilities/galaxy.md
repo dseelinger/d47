@@ -488,6 +488,31 @@ The answer gives each station, its system, distance, type, largest pad, distance
 which of the asked-for services it has. Every answer is kept as the last stations search; a search
 that fails keeps nothing.
 
+#### `search_outfitting`
+
+Find stations that sell several modules, or modules and a ship, at once, nearest first.
+
+```json
+{"type":"object","properties":{"include_carriers":{"type":"boolean","description":"Include fleet carriers. Default false."},"items":{"type":"string","description":"Comma-separated: modules by name with an optional size and rating, and at most one ship, such as \u00225A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\u0022."},"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 50, at most 500."},"max_station_distance":{"type":"number","description":"Furthest from the star, in light seconds."},"min_pad":{"type":"string","description":"Large, or Medium for at least one medium pad.","enum":["Medium","Large"]},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"surface_stations":{"type":"boolean","description":"Include surface ports and settlements. Default true."}},"required":["items"],"additionalProperties":false}
+```
+
+`items` is comma-separated. A module is its catalogue name with an optional size and rating, such
+as `5A Frame Shift Drive (SCO)` or `fuel scoop`; a ship is its name, such as `Python MkII`. An
+unmatched name is refused with the closest catalogue names and is never sent. Every module must be
+sold at the one station, and a search takes at most one ship: asking for two is refused with "One
+ship per search."
+
+Each module is sent as a group of its own in an array under `modules`, which the service requires
+all of at one station. Probed on 2026-10-18 with Sol as the reference: 5A Frame Shift Drive (SCO)
+with 0F Shutdown Field Neutraliser gave K3K-N8W at Barnard's Star, a different answer from either
+alone; a ship with two module groups required all three. `ships` with two values means either
+ship, and `ships` as an array of groups is ignored, which is why a second ship is refused.
+
+`surface_stations` false leaves out surface ports and settlements, and `include_carriers` is false
+unless set. `min_pad` and `max_station_distance` are sent as in `search_stations`. The tool takes
+no system filters. The answer is kept as the last outfitting search, in the search history, and can
+be saved by name.
+
 #### `distance_between`
 
 The straight-line distance in light years between two star systems.

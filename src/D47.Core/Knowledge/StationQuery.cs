@@ -1,4 +1,6 @@
-﻿namespace D47.Core.Knowledge;
+﻿using System.Globalization;
+
+namespace D47.Core.Knowledge;
 
 /// <summary>A landing pad size, smallest first.</summary>
 public enum PadSize
@@ -152,6 +154,34 @@ public sealed record StationSearchResult(
     public int LeftOut { get; init; }
 }
 
+/// <summary>A module to be sold at the station, by catalogue name, with an optional size and rating.</summary>
+public sealed record ModuleRequirement(string Name, string? Class = null, string? Rating = null)
+{
+    /// <summary>"a 5A Frame Shift Drive".</summary>
+    public string Said => $"a {Class}{Rating} {Name}".Replace("  ", " ", StringComparison.Ordinal);
+}
+
+/// <summary>An outfitting search as asked, before <see cref="StationQuery"/> validates it.</summary>
+public sealed record OutfittingSearch
+{
+    public string? ReferenceSystem { get; init; }
+
+    public double? MaxDistance { get; init; }
+
+    public int Size { get; init; }
+
+    /// <summary>Comma-separated <see cref="OutfittingItem"/> display forms.</summary>
+    public string? Items { get; init; }
+
+    public string? MinPad { get; init; }
+
+    public double? MaxStationDistance { get; init; }
+
+    public bool SurfaceStations { get; init; } = true;
+
+    public bool IncludeCarriers { get; init; }
+}
+
 /// <summary>A validated search for somewhere to buy something.</summary>
 public sealed record StationQuery
 {
@@ -167,12 +197,8 @@ public sealed record StationQuery
     /// <summary>Searches the whole galaxy; <see cref="MaxDistance"/> is ignored.</summary>
     public bool Unbounded { get; init; }
 
-    /// <summary>The catalogue name of a module to be sold there, if that is the question.</summary>
-    public string? Module { get; init; }
-
-    public string? ModuleClass { get; init; }
-
-    public string? ModuleRating { get; init; }
+    /// <summary>Modules the station must sell every one of.</summary>
+    public IReadOnlyList<ModuleRequirement> Modules { get; init; } = [];
 
     /// <summary>The catalogue name of a ship to be sold there, if that is the question.</summary>
     public string? Ship { get; init; }
@@ -193,6 +219,9 @@ public sealed record StationQuery
 
     /// <summary>The kinds of station to include; null sends no type filter.</summary>
     public IReadOnlyList<StationKind>? Kinds { get; init; }
+
+    /// <summary>False leaves out every surface port and settlement type, on top of <see cref="Kinds"/>.</summary>
+    public bool SurfaceStations { get; init; } = true;
 
     /// <summary>Leaves out every type <see cref="IsFixedType"/> rejects, on top of <see cref="Kinds"/>.</summary>
     public bool FixedOnly { get; init; }
@@ -298,7 +327,7 @@ public sealed record StationQuery
             return false;
         }
 
-        if (stock.Module is null && stock.Ship is null)
+        if (stock.Modules.Count == 0 && stock.Ship is null)
         {
             failure = "Say what to look for — a module or a ship.";
             return false;
@@ -312,6 +341,84 @@ public sealed record StationQuery
             // Bounded on both ends.
             MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
+        };
+
+        return true;
+    }
+
+    /// <summary>Builds an outfitting search for several items at one station, or says what was wrong.</summary>
+    public static bool TryParse(OutfittingSearch search, out StationQuery query, out string failure)
+    {
+        query = new StationQuery();
+        failure = string.Empty;
+
+        var modules = new List<ModuleRequirement>();
+        string? ship = null;
+
+        foreach (var text in Split(search.Items ?? string.Empty))
+        {
+            if (!OutfittingItem.TryParse(text, out var item, out failure))
+            {
+                return false;
+            }
+
+            if (item.IsShip)
+            {
+                if (ship is not null && !Same(ship, item.Name))
+                {
+                    failure = "One ship per search.";
+                    return false;
+                }
+
+                ship = item.Name;
+            }
+            else
+            {
+                var required = new ModuleRequirement(
+                    item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating);
+
+                if (!modules.Contains(required))
+                {
+                    modules.Add(required);
+                }
+            }
+        }
+
+        if (modules.Count == 0 && ship is null)
+        {
+            failure = "Say what to look for — modules or a ship.";
+            return false;
+        }
+
+        PadSize? pad = null;
+
+        if (!string.IsNullOrWhiteSpace(search.MinPad))
+        {
+            if (MinPads.FirstOrDefault(size => Same(size, search.MinPad.Trim())) is not { } size)
+            {
+                failure = $"'{search.MinPad}' is not a pad size to insist on. It is Medium or Large.";
+                return false;
+            }
+
+            pad = Enum.Parse<PadSize>(size);
+        }
+
+        query = new StationQuery
+        {
+            ReferenceSystem = string.IsNullOrWhiteSpace(search.ReferenceSystem) ? null : search.ReferenceSystem.Trim(),
+            Modules = modules,
+            Ship = ship,
+            MinPad = pad,
+            MaxStationDistance = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null,
+            SurfaceStations = search.SurfaceStations,
+            Kinds =
+            [
+                .. Enum.GetValues<StationKind>().Where(kind =>
+                    (search.IncludeCarriers || kind != StationKind.FleetCarrier)
+                    && (search.SurfaceStations || kind is not (StationKind.SurfacePort or StationKind.Settlement))),
+            ],
+            MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
+            Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 
         return true;
@@ -419,7 +526,7 @@ public sealed record StationQuery
         var furthest = search.MaxStationDistance is > 0 ? search.MaxStationDistance : null;
 
         if (kinds is null && pad is null && furthest is null && services.Count == 0 && trader is null
-            && broker is null && stock.Module is null && stock.Ship is null && criteria.Count == 0)
+            && broker is null && stock.Modules.Count == 0 && stock.Ship is null && criteria.Count == 0)
         {
             failure =
                 "That search has nothing but a distance, so it would match every station in range. Narrow it "
@@ -504,9 +611,12 @@ public sealed record StationQuery
 
         stock = new StationQuery
         {
-            Module = matchedModule,
-            ModuleClass = string.IsNullOrWhiteSpace(moduleClass) ? null : moduleClass.Trim(),
-            ModuleRating = string.IsNullOrWhiteSpace(moduleRating) ? null : moduleRating.Trim().ToUpperInvariant(),
+            Modules = matchedModule is null
+                ? []
+                : [new ModuleRequirement(
+                    matchedModule,
+                    string.IsNullOrWhiteSpace(moduleClass) ? null : moduleClass.Trim(),
+                    string.IsNullOrWhiteSpace(moduleRating) ? null : moduleRating.Trim().ToUpperInvariant())],
             Ship = matchedShip,
         };
 

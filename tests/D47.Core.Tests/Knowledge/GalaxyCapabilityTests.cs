@@ -268,8 +268,8 @@ public class GalaxyCapabilityTests
             TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
-        Assert.Equal("Frame Shift Drive", galaxy.LastStationQuery?.Module);
-        Assert.Equal("5", galaxy.LastStationQuery?.ModuleClass);
+        Assert.Equal(
+            [new ModuleRequirement("Frame Shift Drive", "5", "A")], galaxy.LastStationQuery?.Modules);
     }
 
     [Fact]

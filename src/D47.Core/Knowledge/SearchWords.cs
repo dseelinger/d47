@@ -23,6 +23,7 @@ public static class SearchWords
             {
                 "search_systems" => "Systems",
                 "search_stations" => "Stations",
+                "search_outfitting" => "Outfitting",
                 "find_body" => "Bodies",
                 _ => tool,
             },

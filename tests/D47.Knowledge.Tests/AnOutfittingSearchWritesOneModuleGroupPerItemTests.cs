@@ -1,0 +1,69 @@
+using System.Text.Json;
+using D47.Core.Knowledge;
+using Xunit;
+
+namespace D47.Knowledge.Tests;
+
+/// <summary>search_outfitting's request body: every module is its own group, shapes probed on 2026-10-18.</summary>
+public class AnOutfittingSearchWritesOneModuleGroupPerItemTests
+{
+    private static string Body(OutfittingSearch search)
+    {
+        Assert.True(
+            StationQuery.TryParse(search with { ReferenceSystem = "Sol" }, out var query, out var failure),
+            failure);
+
+        return SpanshRequest.Stations(query);
+    }
+
+    private static JsonElement Filters(OutfittingSearch search) =>
+        JsonDocument.Parse(Body(search)).RootElement.GetProperty("filters");
+
+    private static string[] Values(JsonElement filter) =>
+        [.. filter.GetProperty("value").EnumerateArray().Select(value => value.GetString()!)];
+
+    [Fact]
+    public void TwoModulesAreAnArrayOfTwoGroupsWrittenOnTheString()
+    {
+        var body = Body(new OutfittingSearch { Items = "5A Frame Shift Drive (SCO), 0F Shutdown Field Neutraliser" });
+
+        Assert.Contains(
+            "\"modules\":[{\"name\":{\"value\":[\"Frame Shift Drive (SCO)\"]},\"class\":{\"value\":[\"5\"]},"
+            + "\"rating\":{\"value\":[\"A\"]}},{\"name\":{\"value\":[\"Shutdown Field Neutraliser\"]},"
+            + "\"class\":{\"value\":[\"0\"]},\"rating\":{\"value\":[\"F\"]}}]",
+            body,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AShipAndModulesAreAllRequired()
+    {
+        var filters = Filters(new OutfittingSearch { Items = "Python MkII, Fuel Scoop, 5A Frame Shift Drive (SCO)" });
+
+        Assert.Equal(["Python MkII"], Values(filters.GetProperty("ships")));
+        Assert.Equal(2, filters.GetProperty("modules").GetArrayLength());
+    }
+
+    [Fact]
+    public void WithoutSurfaceStationsNoSurfaceTypeIsSent()
+    {
+        var types = Values(Filters(new OutfittingSearch { Items = "Fuel Scoop", SurfaceStations = false })
+            .GetProperty("type"));
+
+        Assert.NotEmpty(types);
+        Assert.DoesNotContain(types, type => MarketSnapshot.IsSurfaceType(type));
+        Assert.DoesNotContain(types, type => MarketSnapshot.IsCarrierType(type));
+    }
+
+    [Fact]
+    public void CarriersAreLeftOutUnlessAskedFor()
+    {
+        var without = Values(Filters(new OutfittingSearch { Items = "Fuel Scoop" }).GetProperty("type"));
+        var with = Values(Filters(new OutfittingSearch { Items = "Fuel Scoop", IncludeCarriers = true })
+            .GetProperty("type"));
+
+        Assert.DoesNotContain(without, type => MarketSnapshot.IsCarrierType(type));
+        Assert.Contains(with, type => MarketSnapshot.IsCarrierType(type));
+        Assert.Contains(with, type => MarketSnapshot.IsSurfaceType(type));
+    }
+}

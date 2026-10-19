@@ -103,7 +103,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
 
         Assert.False(result.IsError);
         Assert.Equal("Anaconda", galaxy.LastStationQuery?.Ship);
-        Assert.Null(galaxy.LastStationQuery?.Module);
+        Assert.Empty(galaxy.LastStationQuery!.Modules);
     }
 
     [Fact]

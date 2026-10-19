@@ -270,6 +270,73 @@ public static class GalaxyCapability
             },
             new ToolDefinition
             {
+                Name = "search_outfitting",
+                Description =
+                    "Find stations that sell several modules, or modules and a ship, at once, nearest first. "
+                    + "Every module must be sold at the one station, and a search takes at most one ship. "
+                    + "Leaves out fleet carriers unless include_carriers is true.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "items",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "Comma-separated: modules by name with an optional size and rating, and at most one ship, "
+                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python MkII\".",
+                        Required = true,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "near",
+                        Type = ToolParameterType.String,
+                        Description = "Search out from this system. Defaults to theirs.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "How far to look, in light years. Default 50, at most 500.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "min_pad",
+                        Type = ToolParameterType.String,
+                        Description = "Large, or Medium for at least one medium pad.",
+                        AllowedValues = StationQuery.MinPads,
+                    },
+                    new ToolParameter
+                    {
+                        Name = "max_station_distance",
+                        Type = ToolParameterType.Number,
+                        Description = "Furthest from the star, in light seconds.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "surface_stations",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Include surface ports and settlements. Default true.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "include_carriers",
+                        Type = ToolParameterType.Boolean,
+                        Description = "Include fleet carriers. Default false.",
+                    },
+                    new ToolParameter
+                    {
+                        Name = "limit",
+                        Type = ToolParameterType.Integer,
+                        Description = "How many to return, 1 to 100. Default 25.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    SearchOutfittingAsync(
+                        galaxy, currentSystem, settings, searches, Remember(history), now, arguments,
+                        cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = "distance_between",
                 AlwaysLoaded = true,
                 Description =
@@ -1012,6 +1079,76 @@ public static class GalaxyCapability
 
         static string? Text(ToolArguments arguments, string name) =>
             arguments.TryGetString(name, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+    }
+
+    private static async Task<ToolResult> SearchOutfittingAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
+        Func<DateTimeOffset>? now,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(Unavailable);
+        }
+
+        var near = arguments.TryGetString("near", out var explicitNear) && !string.IsNullOrWhiteSpace(explicitNear)
+            ? explicitNear
+            : currentSystem();
+
+        if (string.IsNullOrWhiteSpace(near))
+        {
+            return ToolResult.Error(
+                "I don't know where the Commander is right now, so I need a system to search out from.");
+        }
+
+        var limit = Limit(arguments, out var askedLimit);
+
+        var search = new OutfittingSearch
+        {
+            ReferenceSystem = near,
+            MaxDistance = arguments.TryGetDouble("max_distance", out var maxDistance) ? maxDistance : null,
+            Size = limit,
+            Items = arguments.TryGetString("items", out var items) ? items : null,
+            MinPad = arguments.TryGetString("min_pad", out var pad) && !string.IsNullOrWhiteSpace(pad) ? pad : null,
+            MaxStationDistance =
+                arguments.TryGetDouble("max_station_distance", out var furthest) ? furthest : null,
+            SurfaceStations = !arguments.TryGetBoolean("surface_stations", out var surface) || surface,
+            IncludeCarriers = arguments.TryGetBoolean("include_carriers", out var carriers) && carriers,
+        };
+
+        if (!StationQuery.TryParse(search, out var query, out var failure))
+        {
+            return ToolResult.Error(failure);
+        }
+
+        try
+        {
+            var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            var said = Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit);
+
+            var posting = new GalaxySearchPosting(
+                GalaxySearchKind.Outfitting,
+                new Dictionary<string, string>(arguments.Values, StringComparer.Ordinal),
+                result.Reference,
+                result,
+                said,
+                now?.Invoke() ?? DateTimeOffset.UtcNow);
+
+            searches?.Post(posting);
+            Remember(remember, "search_outfitting", posting);
+
+            return ToolResult.Ok(said) with { Page = PageRef.Search(GalaxySearchKind.Outfitting) };
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
     }
 
     /// <summary>
@@ -2634,9 +2771,7 @@ public static class GalaxyCapability
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
     private static string Describe(StationSearchResult result, StationQuery query)
     {
-        var wanted = query.Module is not null
-            ? Describe(query)
-            : query.Ship ?? "that";
+        var wanted = Describe(query);
 
         if (result.Stations.Count == 0)
         {
@@ -2772,11 +2907,14 @@ public static class GalaxyCapability
 
     private static string Describe(StationQuery query)
     {
-        var size = query.ModuleClass is not null || query.ModuleRating is not null
-            ? $"{query.ModuleClass}{query.ModuleRating} "
-            : string.Empty;
+        var wanted = query.Modules.Select(module => module.Said).ToList();
 
-        return $"a {size}{query.Module}".Replace("  ", " ", StringComparison.Ordinal);
+        if (query.Ship is not null)
+        {
+            wanted.Add(query.Ship);
+        }
+
+        return wanted.Count == 0 ? "that" : string.Join(" and ", wanted);
     }
 
     internal const string Unavailable =

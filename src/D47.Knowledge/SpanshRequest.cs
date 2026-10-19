@@ -147,23 +147,21 @@ internal static class SpanshRequest
                 writer.WriteEndObject();
             }
 
-            if (query.Module is not null)
+            if (query.Modules.Count == 1)
             {
-                writer.WriteStartObject("modules");
+                writer.WritePropertyName("modules");
+                WriteModuleGroup(writer, query.Modules[0]);
+            }
+            else if (query.Modules.Count > 1)
+            {
+                writer.WriteStartArray("modules");
 
-                WriteGroupMember(writer, "name", query.Module);
-
-                if (query.ModuleClass is not null)
+                foreach (var module in query.Modules)
                 {
-                    WriteGroupMember(writer, "class", query.ModuleClass);
+                    WriteModuleGroup(writer, module);
                 }
 
-                if (query.ModuleRating is not null)
-                {
-                    WriteGroupMember(writer, "rating", query.ModuleRating);
-                }
-
-                writer.WriteEndObject();
+                writer.WriteEndArray();
             }
 
             if (query.IsAboutTraders)
@@ -214,10 +212,11 @@ internal static class SpanshRequest
                 WriteComparison(writer, "distance_to_arrival", 0, furthest);
             }
 
-            if (query.Kinds is not null || query.FixedOnly)
+            if (query.Kinds is not null || query.FixedOnly || !query.SurfaceStations)
             {
                 WriteTypes(writer, AllStationTypes.Where(type =>
                     (query.Kinds is not { } kinds || kinds.Contains(SpanshStarSystemService.KindOf(type)))
+                    && (query.SurfaceStations || !MarketSnapshot.IsSurfaceType(type))
                     && (!query.FixedOnly || StationQuery.IsFixedType(type))));
             }
 
@@ -684,6 +683,25 @@ internal static class SpanshRequest
         {
             // A number, not a range object.
             writer.WriteNumber("count", count.Value);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteModuleGroup(Utf8JsonWriter writer, ModuleRequirement module)
+    {
+        writer.WriteStartObject();
+
+        WriteGroupMember(writer, "name", module.Name);
+
+        if (module.Class is not null)
+        {
+            WriteGroupMember(writer, "class", module.Class);
+        }
+
+        if (module.Rating is not null)
+        {
+            WriteGroupMember(writer, "rating", module.Rating);
         }
 
         writer.WriteEndObject();
