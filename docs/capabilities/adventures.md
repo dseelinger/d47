@@ -328,13 +328,14 @@ current objective's title, or *finished*. *Objective 3 of 7* is checklist langua
 
 ### Stopping, and starting again
 
-**Abandon** a begun story and it stops telling you: no objective fires, the AI drops it from what it
-knows, and an objective waiting out its settle window is discarded. The record stays, folded away at the
-foot of the list with what it reached. **Begin again** on an abandoned one starts from the opening
-with a fresh stamp — nothing that happened in the gap counts, because a start is a start.
+**Remove** a begun short story and it stops telling you: no objective fires, the AI drops it from what
+it knows, and an objective waiting out its settle window is discarded. It asks first, because a story
+three objectives in is work you did, and the record goes with its messages. A short story has no
+Abandon button.
 
-**Remove** deletes the record. For a begun one it asks first, because a story three objectives in
-is work you did.
+A short story saved as abandoned earlier stays folded away at the foot of the list with what it
+reached. **Begin again** on it starts from the opening with a fresh stamp — nothing that happened in
+the gap counts, because a start is a start. **Remove** deletes it.
 
 Both are yours alone, reachable from the panel and nowhere else.
 

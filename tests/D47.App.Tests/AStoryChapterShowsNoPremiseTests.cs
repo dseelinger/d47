@@ -165,7 +165,8 @@ public class AStoryChapterShowsNoPremiseTests
         Assert.True(surface.Book.Standing("F1", "the-first-light")?.Adventure.IsActive);
 
         Read(surface.Panel, "the-last-dock", "The Last Dock");
-        Assert.Contains("Abandon", Buttons(surface.Panel));
+        Assert.DoesNotContain("Abandon", Buttons(surface.Panel));
+        Assert.Contains("Remove", Buttons(surface.Panel));
         Assert.Empty(StoryOn(surface.Panel));
 
         surface.Window.Close();

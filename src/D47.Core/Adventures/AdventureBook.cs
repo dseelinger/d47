@@ -706,6 +706,15 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         lock (_gate)
         {
             _fold.Standings.Remove(StandingKey(commander, key));
+
+            var kept = _moments.Where(moment => !SameStory(moment, commander, key)).ToList();
+            _moments.Clear();
+
+            foreach (var moment in kept)
+            {
+                _moments.Enqueue(moment);
+            }
+
             _stirring.Remove(StandingKey(commander, key));
         }
 

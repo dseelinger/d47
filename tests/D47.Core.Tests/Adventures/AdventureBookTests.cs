@@ -173,6 +173,18 @@ public class AdventureBookTests : IDisposable
     }
 
     [Fact]
+    public void RemoveDropsAWaitingBeat()
+    {
+        var book = Book();
+        book.Write("F1", LanternRoute(Accepted));
+
+        book.Observe(Jump(Lantern, Accepted.AddMinutes(1)), "F1");
+
+        Assert.True(book.Remove("F1", "the-lantern-route"));
+        Assert.Empty(book.Drain());
+    }
+
+    [Fact]
     public void BeginAgainStartsFromTheOpening()
     {
         var book = Book();

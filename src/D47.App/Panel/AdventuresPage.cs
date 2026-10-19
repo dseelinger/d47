@@ -575,7 +575,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                 "Accept" or "Begin" or "Begin again" => Action(label, () => IfShown(drawnFor, () => Begin(adventure.Key))),
                 "Change something" => Action(label, () => IfShown(drawnFor, () => Revise(adventure))),
                 "Decline" => Action(label, () => IfShown(drawnFor, () => Remove(adventure, confirm: false, drawnFor)), destructive: true),
-                "Abandon" => Action(label, () => IfShown(drawnFor, () => Abandon(adventure, drawnFor))),
                 "Write the next chapter" => Action(label, () => _nav.Drill(new NavCrumb(NextPrefix + adventure.Key, "Next chapter"))),
                 _ => Action(label, () => IfShown(drawnFor, () => Remove(adventure, confirm: true, drawnFor)), destructive: true),
             });
@@ -1008,33 +1007,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             _surface.Say(StoriesView.CommanderChangedRefusal);
         }
     }
-
-    private void Abandon(Adventure adventure, string? drawnFor) => _prompts.Choose(
-        new ChoiceRequest(
-            "adventure.abandon",
-            "Abandon",
-            $"Abandon {adventure.Name}?",
-            "The story stops here. It stays on file under Set aside, and Begin again starts it from the opening.",
-            [new ChoiceOption("keep", "Keep going"), new ChoiceOption("abandon", "Abandon it")],
-            null,
-            ChoiceSurface.Layer),
-        option =>
-        {
-            if (option.Key != "abandon")
-            {
-                return;
-            }
-
-            IfShown(drawnFor, () =>
-            {
-                var refusal = _surface.Book.Abandon(drawnFor, adventure.Key, _surface.Now());
-
-                if (refusal is not null)
-                {
-                    _surface.Say(refusal);
-                }
-            });
-        });
 
     private void Remove(Adventure adventure, bool confirm, string? drawnFor)
     {

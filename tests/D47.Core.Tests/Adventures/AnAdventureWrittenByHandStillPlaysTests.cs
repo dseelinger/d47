@@ -36,7 +36,7 @@ public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
     [Theory]
     [InlineData("the-lantern-route")]
     [InlineData("the-quiet-dock")]
-    public void ItLoadsBeginsAndOffersAbandonAndRemove(string key)
+    public void ItLoadsBeginsAndOffersRemove(string key)
     {
         var book = Book();
 
@@ -52,7 +52,7 @@ public sealed class AnAdventureWrittenByHandStillPlaysTests : IDisposable
         var after = book.Standing("F1", key)!;
 
         Assert.True(after.Adventure.IsActive);
-        Assert.Equal(["Abandon", "Remove"], after.ReadingButtons());
+        Assert.Equal(["Remove"], after.ReadingButtons());
     }
 
     private static string RepositoryRoot()

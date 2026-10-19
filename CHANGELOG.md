@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A short story that is under way now offers Remove instead of Abandon on its page. Remove asks first, then deletes the story with its messages and drops any objective still waiting to be announced. A short story already set aside still lists with Begin again and Remove. A full story's Abandon is unchanged.
+
 When a story objective will not complete, the ship AI now knows what you can do and says so instead of coaching the same objective again. In a running story it tells you to say "change this objective" or "never ask this", or press Change objective or Never ask this under NEXT on its page. At a Guardian beacon scan it says only the scan gets you past. For a short story it says there is no voice phrase and you can stop it from its page. It also knows that only your journal completes an objective and that it cannot complete, skip or change one.
 
 Ask "codex checklist", "what codex entries am I missing" or "missing codex entries" and D47 says how many codex entries are known in the region you are in, how many you have logged and how many are missing, by kind, and names the three most-reported missing ones. You can ask about another region by name. An entry logged before your oldest journal reads as missing, and stars and planets are not covered.

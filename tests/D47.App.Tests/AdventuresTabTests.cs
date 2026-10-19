@@ -209,7 +209,8 @@ public class AdventuresTabTests
 
         Assert.DoesNotContain(drawn, text => text.Contains("To one name."));
         Assert.DoesNotContain(drawn, text => text.Contains("Forty kilometres"));
-        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Abandon"));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Abandon"));
+        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Remove"));
     }
 
     /// <summary>A finished adventure offers its next chapter; a running, draft or abandoned one does not.</summary>
