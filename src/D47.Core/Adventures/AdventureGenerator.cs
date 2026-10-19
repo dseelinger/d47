@@ -127,7 +127,8 @@ public sealed record AdventureStory(
     IReadOnlyList<AdventureSpeaker>? Cast = null,
     string? Core = null,
     bool CoreIsStock = false,
-    string? Home = null);
+    string? Home = null,
+    bool Remembered = false);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
@@ -1682,6 +1683,13 @@ public sealed class AdventureGenerator(
                 "The Guardian beacon scan has already happened, and the Guardian cores came aboard with it. This chapter begins after "
                 + "it, whatever the chapter before was working toward. No premise, objective, reason or line sends the Commander to a "
                 + "Guardian beacon, asks for a beacon scan, or tells the trip to the beacon as still to come.");
+
+            if (story.Remembered)
+            {
+                text.AppendLine(
+                    "The Commander scanned a Guardian beacon in an earlier story, before this one opened. Where act one's beats lead "
+                    + "toward a beacon, that trip is already behind them: tell it as the past that brought the core aboard.");
+            }
         }
 
         text.AppendLine("Never write a line that states the hidden story. A chapter may echo a clue the Commander has had.");

@@ -11,6 +11,9 @@ public enum CoreWaking
 
     /// <summary>A second beacon, in another system: the Heretic.</summary>
     Heretic,
+
+    /// <summary>A story picked with a beacon scan from an earlier story on record: its core comes aboard at the pick.</summary>
+    Remembered,
 }
 
 /// <summary>Which Guardian cores a running story holds back.</summary>
@@ -25,7 +28,7 @@ public enum HeldCores
     All,
 }
 
-/// <summary>The cores a story holds back, the story's title, and whether its first beacon scan was narrated.</summary>
+/// <summary>The cores a story holds back, the story's title, and whether it opened with its first beacon scan behind it.</summary>
 public readonly record struct CoreHold(HeldCores Cores, string Story, bool Narrated = false)
 {
     public static readonly CoreHold None = new(HeldCores.None, string.Empty);
@@ -112,6 +115,12 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
         CoreWaking.Heretic =>
             "Data link complete. This beacon held one more core, kept apart from the others. "
             + "The Heretic is awake, and can be chosen in the Core and character section.",
+        CoreWaking.Remembered when aboard is not null =>
+            "The Guardian cores from your last beacon scan are still in the ship's systems. "
+            + $"{aboard.Name} has come aboard for this story. You can choose another core in Settings.",
+        CoreWaking.Remembered =>
+            "The Guardian cores from your last beacon scan are still in the ship's systems. "
+            + "You can choose one in the Core and character section.",
         _ when aboard is not null =>
             "Data link complete. Something came across with the data: Guardian cores, awake in "
             + $"the ship's systems. {aboard.Name} has come aboard. You can choose another core in Settings.",

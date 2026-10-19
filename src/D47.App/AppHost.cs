@@ -3879,7 +3879,9 @@ public sealed class AppHost : IDisposable
             }
 
             // The opening is said first, then a narrated scan, before the cores it wakes; the story's core comes aboard
-            // once the scan line has been said.
+            // once the scan line has been said. A remembered scan says no line and boards the core once no opening is
+            // being said. It is taken before the opening, so it is never taken a tick ahead of the opening it waits for.
+            var remembered = storyDirector.TakeRememberedScan(commander);
             var opening = storyDirector.TakeOpening(commander);
             var narrated = storyDirector.TakeNarratedScan(commander);
 
@@ -3893,8 +3895,18 @@ public sealed class AppHost : IDisposable
                 wakings.Add(CoreWaking.Cores, storyDirector.CoreOf(commander), StoryNarration.NarratedScanKey, context.Now);
             }
 
+            if (remembered is not null)
+            {
+                wakings.Add(CoreWaking.Remembered, storyDirector.CoreOf(commander), StoryNarration.OpeningKey, context.Now);
+            }
+
             foreach (var (waking, core) in wakings.Due(
-                         owed => owed == StoryNarration.NarratedScanKey ? host.Narration.IsNarratingScan : adventureBook.IsStirring(commander, owed),
+                         owed => owed switch
+                         {
+                             StoryNarration.NarratedScanKey => host.Narration.IsNarratingScan,
+                             StoryNarration.OpeningKey => host.Narration.IsSayingOpening,
+                             _ => adventureBook.IsStirring(commander, owed),
+                         },
                          context.Now))
             {
                 host.OnCoresWoke(waking, core);

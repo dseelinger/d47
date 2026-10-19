@@ -23,14 +23,15 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
     /// <summary>
     /// The rounds for chapters one to <paramref name="chapters"/>, each named "{prefix} n" with the premise
-    /// <paramref name="premise"/>, or "{prefix} premise n." without one.
+    /// <paramref name="premise"/>, or "{prefix} premise n." without one. Chapter one's beats are <paramref name="first"/>,
+    /// the trip to the beacon by default.
     /// </summary>
-    private static IEnumerable<IReadOnlyList<LlmStreamEvent>> Rounds(int chapters, string prefix = "Chapter", string? premise = null)
+    private static IEnumerable<IReadOnlyList<LlmStreamEvent>> Rounds(int chapters, string prefix = "Chapter", string? premise = null, string first = BeatsToTheBeacon)
     {
         for (var number = 1; number <= chapters; number++)
         {
             yield return RoundScriptedLlmProvider.Saying(NamedSpine($"{prefix} {number}", premise ?? $"{prefix} premise {number}."));
-            yield return RoundScriptedLlmProvider.Saying(number == 1 ? BeatsToTheBeacon : NextBeats);
+            yield return RoundScriptedLlmProvider.Saying(number == 1 ? first : NextBeats);
         }
     }
 
@@ -143,8 +144,8 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         [
             .. Rounds(3, "Old"),
             RoundScriptedLlmProvider.Saying(Spine),
-            RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
-            .. Rounds(4, "Old", "A new premise."),
+            RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            .. Rounds(4, "Old", "A new premise.", first: BeatsElsewhere),
         ]));
 
         await FlyTo(fixtures, 3);

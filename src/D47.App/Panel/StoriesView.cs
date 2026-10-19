@@ -762,7 +762,10 @@ public sealed class StoriesView : UserControl, IPageSummary
         page.Children.Add(AdventuresPage.Muted($"Core: {card.CoreName}"));
         page.Children.Add(AdventuresPage.Text(card.Blurb, TypeScale.Body));
         page.Children.Add(Labelled("In your words", card.InYourWords));
-        page.Children.Add(Labelled("The beacon", card.Beacon));
+        if (!_director.Remembers(commander, card))
+        {
+            page.Children.Add(Labelled("The beacon", card.Beacon));
+        }
 
         var cast = new StackPanel { Spacing = 8, Margin = new Thickness(0, 4, 0, 0) };
         ShowCast(cast, card.Id);
@@ -846,7 +849,7 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         if (current is null || !string.Equals(current.Id, card.Id, StringComparison.OrdinalIgnoreCase))
         {
-            stack.Children.Add(AdventuresPage.Muted(PickingLine));
+            stack.Children.Add(AdventuresPage.Muted(_director.Remembers(commander, card) ? PickingLineRemembered : PickingLine));
         }
 
         if (current is null)
@@ -866,7 +869,9 @@ public sealed class StoriesView : UserControl, IPageSummary
                 "Switch",
                 $"Switch from {current.Title} to {card.Title}?",
                 $"{current.Title} is abandoned and its chapters leave the list on the Stories tab. Your Backstory becomes this "
-                + "story's words, and the Guardian cores wait for its own beacon scan.",
+                + (_director.Remembers(commander, card)
+                    ? "story's words, and it opens with your last beacon scan behind you."
+                    : "story's words, and the Guardian cores wait for its own beacon scan."),
                 "Switch",
                 () => Start(card, switching: true, status, switchTo, commander)));
             switchTo.IsEnabled = !withoutOdyssey && GenderReady(card) && missing == 0;
@@ -1155,6 +1160,10 @@ public sealed class StoriesView : UserControl, IPageSummary
     internal const string PickingLine =
         "Picking one makes its words your Backstory until it stops, and has the core write chapter one. Act one ends at a Guardian beacon "
         + "once your ship can reach it. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon the story to have them back at once.";
+
+    internal const string PickingLineRemembered =
+        "Picking one makes its words your Backstory until it stops, and has the core write chapter one. You scanned a Guardian beacon in an "
+        + "earlier story, so this one opens with that scan behind you and its core comes aboard as it begins.";
 
     internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
 

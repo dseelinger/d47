@@ -58,7 +58,8 @@ public sealed class StoryNarration
     /// <summary>What a waking held behind a narrated scan line waits on, in place of a chapter key.</summary>
     internal const string NarratedScanKey = "story.scan";
 
-    private const string OpeningKey = "story.opening";
+    /// <summary>What a waking held behind a story's opening lines waits on, in place of a chapter key.</summary>
+    internal const string OpeningKey = "story.opening";
 
     private const string RecapKey = "story.recap";
 

@@ -211,6 +211,10 @@ system brings back the Heretic. Each is said once per story, aloud and in the St
 before the story was picked does not count toward it. In a story shorter than a month, the scan narrated
 at the pick is the first beacon, and a real beacon scan in any system brings back the Heretic.
 
+A story of a month or longer picked while an earlier story's scan is on record (see Adventures) counts the
+scans on record, at most two, from the pick. With one, every core but the Heretic is awake at the pick,
+and a real beacon scan in any system brings back the Heretic; with two, nothing is held back.
+
 Pausing the story, switching it off or abandoning it gives the cores back at once, and so does a
 session without Odyssey. Resuming a story that has not had its beacon scan holds them again; resuming
 one that has does not. COVAS is never held back.

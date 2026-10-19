@@ -461,7 +461,16 @@ A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after yo
 **Pick**, the scan is narrated in the words the story was written with, posted to the Story log from its
 speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
 chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
-month or longer keeps the real scan.
+month or longer keeps the real scan, unless a scan is on record.
+
+A scan is on record when any other story you picked, running or stopped, recorded a real beacon scan
+while it was current, or itself opened with one on record. A scan made with no story running, or before
+d47, is not on record, and no journal history is read for it. A story of 1 month or longer picked while a
+scan is on record begins with the scan behind you: no trip, no beacon objective, chapter one in act one,
+and its days counting from the pick. No scan line is said. Once the opening lines, if any, have been said,
+the story's core comes aboard and D47 says "The Guardian cores from your last beacon scan are still in the
+ship's systems. {core} has come aboard for this story. You can choose another core in Settings." The
+chapter writer is told the trip is already behind you, and the story's page leaves out "The beacon".
 **Abandon** ends the story, and so does finishing it; either puts your Backstory back to the one you
 had before your first story, or to empty. Switch passes that earlier Backstory on to the new story.
 Neither changes your Guardian cores. **Abandon** on the current chapter's page ends the story, as it

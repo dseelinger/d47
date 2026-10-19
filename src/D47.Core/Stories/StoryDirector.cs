@@ -16,6 +16,9 @@ public sealed record StoryScanDue(string StoryId, string Title, StoryLine? Line)
 /// <summary>A story picked with fixed opening lines, waiting for the tick to say them before anything else of the story.</summary>
 public sealed record StoryOpeningDue(string StoryId, string Title, IReadOnlyList<StoryLine> Lines);
 
+/// <summary>A story picked with a beacon scan on record, waiting for the tick to bring its core aboard after the opening.</summary>
+public sealed record StoryRememberedDue(string StoryId, string Title);
+
 /// <summary>
 /// The current objective and the ones after it written again from the Commander's words, with the model's
 /// <see cref="Reply"/>; <see cref="Exchange"/> is every round so far, this one last.
@@ -84,6 +87,9 @@ public sealed class StoryDirector(
 
     /// <summary>Openings picked and not yet taken by the tick, by Commander.</summary>
     private readonly Dictionary<string, StoryOpeningDue> _openings = new(StringComparer.Ordinal);
+
+    /// <summary>Remembered scans picked and not yet taken by the tick, by Commander.</summary>
+    private readonly Dictionary<string, StoryRememberedDue> _remembered = new(StringComparer.Ordinal);
 
     /// <summary>Whether the story files are being swapped; the tick and journal events are skipped and every write is refused.</summary>
     private bool _switching;
@@ -368,7 +374,7 @@ public sealed class StoryDirector(
         }
     }
 
-    /// <summary>Forgets the failed writes, narrated scans, openings and standings of the files swapped out, and ends the hold.</summary>
+    /// <summary>Forgets the failed writes, narrated and remembered scans, openings and standings of the files swapped out, and ends the hold.</summary>
     public void ReleaseSwitch()
     {
         book.WalkAgain();
@@ -378,6 +384,7 @@ public sealed class StoryDirector(
             _failed.Clear();
             _scans.Clear();
             _openings.Clear();
+            _remembered.Clear();
             _switching = false;
         }
     }
@@ -439,15 +446,17 @@ public sealed class StoryDirector(
         setBackstory(card.InYourWords);
 
         var narrated = card.Pacing.NarratedScan;
+        var remembered = narrated ? 0 : BeaconsOnRecord(frontierId, card.Id);
         var story = new Story
         {
             Id = card.Id,
             Title = card.Title,
-            PublicLayer = card.Describe(),
+            PublicLayer = card.Describe(withBeacon: remembered == 0),
             Length = card.Pacing.Key,
             PickedAt = now,
-            BeaconScanAt = narrated ? now : null,
+            BeaconScanAt = narrated || remembered > 0 ? now : null,
             BeaconNarrated = narrated,
+            BeaconsRemembered = remembered,
             BackstoryBefore = before,
         };
 
@@ -474,9 +483,42 @@ public sealed class StoryDirector(
             {
                 _scans[who] = new StoryScanDue(card.Id, card.Title, hidden?.Scan);
             }
+
+            if (remembered > 0)
+            {
+                _remembered[who] = new StoryRememberedDue(card.Id, card.Title);
+            }
+            else
+            {
+                _remembered.Remove(who);
+            }
         }
 
         return WriteChapterAsync(frontierId, now, cancellationToken);
+    }
+
+    /// <summary>
+    /// The beacon scans a story picked now would open with, 1 or 2: the most scanned in any other story of this Commander
+    /// that recorded a real or remembered scan, in any state. 0 when none did, and the story flies to its own beacon.
+    /// </summary>
+    public int BeaconsOnRecord(string? frontierId, string pickingId)
+    {
+        var most = stories.For(frontierId)
+            .Where(story => !string.Equals(story.Id, pickingId, StringComparison.OrdinalIgnoreCase)
+                            && (story.BeaconSystems.Count > 0 || story.BeaconsRemembered > 0))
+            .Select(story => story.BeaconsScanned)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return most == 0 ? 0 : Math.Clamp(most, 1, 2);
+    }
+
+    /// <summary>Whether picking this card now opens with the beacon scan behind the Commander, without a narrated scan line.</summary>
+    public bool Remembers(string? frontierId, StoryCard card)
+    {
+        ArgumentNullException.ThrowIfNull(card);
+
+        return !card.Pacing.NarratedScan && BeaconsOnRecord(frontierId, card.Id) > 0;
     }
 
     /// <summary>Abandons the current story, moving its chapters to the archive, and picks another.</summary>
@@ -1429,6 +1471,28 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
+    /// The remembered scan of the story just picked, once, while it is still the running story; the caller brings the
+    /// story's core aboard after the opening. Null when none waits.
+    /// </summary>
+    public StoryRememberedDue? TakeRememberedScan(string? frontierId)
+    {
+        StoryRememberedDue? due;
+
+        lock (_gate)
+        {
+            if (!_remembered.Remove(frontierId ?? AdventureStore.NoCommander, out due))
+            {
+                return null;
+            }
+        }
+
+        return stories.Current(frontierId) is { State: StoryState.Running, BeaconsRemembered: > 0 } story
+               && string.Equals(story.Id, due.StoryId, StringComparison.OrdinalIgnoreCase)
+            ? due
+            : null;
+    }
+
+    /// <summary>
     /// The opening of the story just picked, once, while it is still the running story; the caller says its lines before
     /// the narrated scan and chapter one. Null when none waits.
     /// </summary>
@@ -1638,7 +1702,7 @@ public sealed class StoryDirector(
         {
             var who = frontierId ?? AdventureStore.NoCommander;
 
-            if (_openings.ContainsKey(who) || _scans.ContainsKey(who))
+            if (_openings.ContainsKey(who) || _scans.ContainsKey(who) || _remembered.ContainsKey(who))
             {
                 return null;
             }
@@ -2123,7 +2187,8 @@ public sealed class StoryDirector(
             [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role })],
             Aboard()?.Name,
             Aboard()?.Stock == true,
-            home);
+            home,
+            story.BeaconsRemembered > 0);
     }
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>

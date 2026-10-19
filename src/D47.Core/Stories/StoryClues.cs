@@ -98,7 +98,7 @@ public static class StoryClues
 
     /// <summary>
     /// Where the story stands in its beat sheet: act one before the beacon scan, and for chapter one after a narrated
-    /// scan, then by the clues given.
+    /// or remembered scan, then by the clues given.
     /// </summary>
     public static StoryStage Stage(Story story)
     {
@@ -109,7 +109,7 @@ public static class StoryClues
             return StoryStage.Finale;
         }
 
-        if (story.BeaconScanAt is null || (story.BeaconNarrated && story.Chapters.Count == 0))
+        if (story.BeaconScanAt is null || (story.OpenedAfterScan && story.Chapters.Count == 0))
         {
             return StoryStage.ActOne;
         }

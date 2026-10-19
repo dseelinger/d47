@@ -34,7 +34,8 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Func<string?>? gender = null,
         SpeakerPictures? pictures = null,
         Func<StoryCatalog>? catalogs = null,
-        StoryDownloader? downloads = null)
+        StoryDownloader? downloads = null,
+        Story? onRecord = null)
     {
         var paths = new AppPaths(TempFolders.Create("d47-stories-capture"));
         paths.EnsureCreated();
@@ -75,6 +76,11 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
                 Chapters = ["the-first-light"],
                 PickedAt = Now.AddHours(-1),
             });
+        }
+
+        if (onRecord is not null)
+        {
+            stories.Save("F1", onRecord);
         }
 
         var generator = new AdventureGenerator(
@@ -421,6 +427,43 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         Assert.True(Shows(panel, "This is your story."));
         Assert.False(Shows(panel, StoriesView.PickingLine));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AScanOnRecordTakesTheTripOffALongStorysPage()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var week = StoryFixture.Story with { Length = StoryPacing.OneWeek.Key };
+        var catalog = new StoryCatalog([StoryFixture.Story, week with { Id = "the-short-story", Title = "The Short Story" }, StoryFixture.Other], () =>
+            [StoryFixture.Secret, StoryFixture.Secret with { Id = "the-short-story" }, StoryFixture.Secret with { Id = StoryFixture.Other.Id }]);
+        var surface = Open(running: false, catalog, onRecord: new Story
+        {
+            Id = StoryFixture.Other.Id,
+            Title = StoryFixture.Other.Title,
+            PublicLayer = StoryFixture.Other.Describe(),
+            State = StoryState.Finished,
+            PickedAt = Now.AddDays(-200),
+            BeaconScanAt = Now.AddDays(-199),
+            BeaconSystems = [13872878396833],
+            StoppedAt = Now.AddDays(-1),
+        });
+        var panel = surface.Panel;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Shows(panel, StoriesView.PickingLineRemembered));
+        Assert.False(Shows(panel, StoriesView.PickingLine));
+        Assert.False(Shows(panel, "The beacon calls."));
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + "the-short-story", "The Short Story"));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Shows(panel, StoriesView.PickingLine));
+        Assert.True(Shows(panel, "The beacon calls."));
 
         surface.Window.Close();
     }

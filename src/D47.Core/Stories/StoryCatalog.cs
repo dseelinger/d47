@@ -157,8 +157,8 @@ public sealed record StoryCard
         return null;
     }
 
-    /// <summary>The layer as the model reads it.</summary>
-    public string Describe()
+    /// <summary>The layer as the model reads it; without the beacon line for a story that opens with the scan behind it.</summary>
+    public string Describe(bool withBeacon = true)
     {
         var text = new StringBuilder();
         text.AppendLine(Tone is { Length: > 0 } tone ? $"{Title} — {tone}." : $"{Title}.");
@@ -167,7 +167,11 @@ public sealed record StoryCard
         Line(text, "Written for", LevelGuideline);
         Line(text, "The core aboard once the beacon is scanned", CoreName);
         text.AppendLine($"In the Commander's words: \"{InYourWords}\"");
-        Line(text, "The beacon", Beacon);
+        if (withBeacon)
+        {
+            Line(text, "The beacon", Beacon);
+        }
+
         return text.ToString().TrimEnd();
     }
 
