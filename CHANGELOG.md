@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Short stories and story chapters no longer ask you to change your ship's livery. The journal shows only the paint fitted to a ship, not the paint you own, so d47 could not tell whether you had a paint to change to. A chapter written earlier that has a livery objective still loads and finishes as before.
+
 A Commander who changes the same kind of activity away five times with **Change objective** is no longer asked for it: it is barred from every later story chapter and short story, as **Never ask this** bars it for one story. Courier missions, bounties and the other activity kinds are counted separately for each Commander, and the counts and the bar survive a restart. **Keep the current one** counts nothing, and nothing lifts a bar yet.
 
 A story's comfort-zone chapter, every third one after the beacon scan, now asks for a kind of mission you have never completed: courier, delivery, smuggling, sightseeing and the rest that the ship and the story allow. Only when you have completed every kind does it use the activity your career figures show you have done least. d47 only knows the journals on this PC, so **Never ask this** bars a kind you have already done elsewhere.

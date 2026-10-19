@@ -104,7 +104,7 @@ public class SuitModAndLiveryBeatsTests
     }
 
     [Fact]
-    public async Task TheWritersBriefForbidsArxPurchasesAndNamesBothKinds()
+    public async Task TheWritersBriefForbidsArxPurchasesAndOffersNoLiveryKind()
     {
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
@@ -119,6 +119,42 @@ public class SuitModAndLiveryBeatsTests
 
         Assert.Contains("No objective may need an ARX purchase", brief);
         Assert.Contains("\"suitmod\"", brief);
-        Assert.Contains("\"livery\"", brief);
+        Assert.DoesNotContain("\"livery\"", brief, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"livery\"", provider.Requests[1].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AShortStoryBriefOffersNoLiveryKind()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying("""{"opening": "Again.", "reply": "Here.", "beats": [{"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}]}"""));
+
+        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.DoesNotContain("\"livery\"", provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"livery\"", provider.Requests[1].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ADraftAskingForALiveryObjectiveIsRefused()
+    {
+        const string livery = """
+            {"opening": "Again.", "reply": "Here.", "beats": [
+              {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},
+              {"title": "The Repaint", "function": "resolution", "kind": "livery", "count": 2, "line": "Painted."}
+            ]}
+            """;
+
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(livery),
+            RoundScriptedLlmProvider.Saying(livery),
+            RoundScriptedLlmProvider.Saying(livery));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy()).GenerateAsync(new AdventureAsk(AdventureReach.Session, Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.False(outcome.Succeeded);
+        Assert.Contains("is a \"livery\" objective, but the journal cannot show which paint the Commander owns", outcome.Refusal);
     }
 }

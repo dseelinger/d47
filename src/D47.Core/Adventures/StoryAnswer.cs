@@ -20,7 +20,7 @@ internal static class StoryAnswer
     [
         "arrive", "dock", "land", "scan", "rank", "bounty", "bond", "mission", "sell", "mine", "onfoot", "collect",
         "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew",
-        "suitmod", "livery", "conflict", "faction",
+        "suitmod", "conflict", "faction",
     ];
 
     /// <summary>The kinds a drawn chapter offers only for the activities drawn; the others stand for places and milestones.</summary>

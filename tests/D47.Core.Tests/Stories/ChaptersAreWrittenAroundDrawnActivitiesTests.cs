@@ -67,14 +67,14 @@ public sealed class ChaptersAreWrittenAroundDrawnActivitiesTests
     public async Task TheObjectivesSchemaHasNoCountedKindOutsideTheSlots()
     {
         var (_, provider) = await Written(Chapter(Three), SpineText, BeatsMeeting(Three));
-        string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "livery", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound"];
+        string[] placesAndMilestones = ["arrive", "dock", "land", "scan", "rank", "board", "engineer", "crew", "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound"];
 
         var kinds = KindsOf(provider, 1);
 
         Assert.Equal(["bounty", "mission", "signal"], kinds.Except(placesAndMilestones).Order());
         Assert.Contains("engineer", kinds);
         Assert.Contains("crew", kinds);
-        Assert.Contains("livery", kinds);
+        Assert.DoesNotContain("livery", kinds);
         Assert.DoesNotContain("onfoot", PromptOf(provider, 1).Split('\n').Where(line => line.StartsWith("- \"", StringComparison.Ordinal)).Select(line => line.Split('"')[1]));
     }
 
