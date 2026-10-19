@@ -2716,6 +2716,12 @@ public sealed class AppHost : IDisposable
                 visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
                 searchHistory: searchHistory,
                 bgsTick: () => late.Host?.BgsTick?.Last,
+                signalIndex: new D47.App.Panel.SignalIndexStore(
+                    paths.Signals,
+                    files,
+                    () => settings.Current.Knowledge.SignalIndex,
+                    () => DateTimeOffset.UtcNow,
+                    loggerFactory.CreateLogger<D47.App.Panel.SignalIndexStore>()),
                 pickCommander: feed.Picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,

@@ -14,7 +14,7 @@ public static class DataBackup
     /// <summary>Top-level folders left out: downloads, recordings, logs and the Commander's music, which are large and which a build does not change.</summary>
     public static readonly IReadOnlySet<string> LeftOut = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "audio", "avatar-clips", "backups", "flight", "logs", "models", "ships", "stories",
+        "audio", "avatar-clips", "backups", "flight", "logs", "models", "ships", "signals", "stories",
     };
 
     /// <summary>Sorts by time; <paramref name="label"/> names the build that took it.</summary>

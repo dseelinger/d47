@@ -115,7 +115,10 @@ public static class GalaxyCapability
         SearchHistory? history = null,
 
         // The time of the last BGS tick, or null when none is held.
-        Func<DateTimeOffset?>? bgsTick = null) => new()
+        Func<DateTimeOffset?>? bgsTick = null,
+
+        // The daily index of FSS signals, or null where none is composed.
+        ISignalIndexSource? signalIndex = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -803,6 +806,27 @@ public static class GalaxyCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = SignalIndexKey,
+                Label = "Signal index",
+                Help =
+                    "Lets d47 download the daily index of signals other Commanders have scanned, from this "
+                    + "project's releases on github.com, when you search for a signal and the copy on this PC is "
+                    + "more than 20 hours old. Nothing about you goes with the request. Off by default; see "
+                    + "[Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "signal-index",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.SignalIndex ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { SignalIndex = v == "true" },
+                    },
+                },
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
@@ -814,6 +838,9 @@ public static class GalaxyCapability
 
     /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
     public const string BgsTickKey = "knowledge.bgsTick";
+
+    /// <summary>Downloading the daily signal index.</summary>
+    public const string SignalIndexKey = "knowledge.signalIndex";
 
     private static readonly IReadOnlyDictionary<string, string> NoArguments =
         new Dictionary<string, string>(StringComparer.Ordinal);

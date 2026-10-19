@@ -63,6 +63,9 @@ public static class EgressDisclosure
 
     public const string BgsTickHost = "tick.infomancer.uk";
 
+    /// <summary>Downloading the daily index of FSS signals.</summary>
+    public const string SignalIndex = "signalindex";
+
     /// <summary>Rewording the recap of the last session at launch.</summary>
     public const string Recap = "recap";
 
@@ -117,6 +120,7 @@ public static class EgressDisclosure
         NotablePlaces,
         CommunityGoals,
         BgsTick,
+        SignalIndex,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -145,6 +149,7 @@ public static class EgressDisclosure
         NotablePlaces => "Notable places",
         CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
+        SignalIndex => "Signal index",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -283,6 +288,25 @@ public static class EgressDisclosure
                 BgsTick,
                 NameOf(BgsTick),
                 "BGS tick time is off, so nothing is requested and d47 does not know when the tick happened."),
+
+        SignalIndex => settings.Knowledge.SignalIndex
+            ? new EgressEntry(
+                SignalIndex,
+                NameOf(SignalIndex),
+                "github.com",
+                "A request for the daily index of signals Commanders have uploaded to EDDN, from the signals-1 "
+                + "release, made when you search for a signal and the copy in data\\signals is missing or more than "
+                + "20 hours old - one file, several megabytes, at most once in 20 hours. A request that fails is "
+                + "tried again on a later search, no sooner than an hour after. Nothing about you goes with it: no "
+                + "position, no key, no Commander name, no identifier and nothing from your journal. The search "
+                + "itself happens on this machine.",
+                Active: true,
+                Summary: "The daily signal index, at most once in 20 hours, when you search for a signal. Nothing "
+                    + "about you goes with it.")
+            : EgressEntry.Silent(
+                SignalIndex,
+                NameOf(SignalIndex),
+                "The signal index is off, so no index is fetched and a signal search answers from your own scans alone."),
 
         HullArt => settings.Ui.HullArt
             ? new EgressEntry(

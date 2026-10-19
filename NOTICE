@@ -131,6 +131,15 @@ Catalogues read at runtime, never shipped
                             and the descriptions are read as information. Directive 47 is
                             non-commercial, which is the condition the licence attaches.
 
+    EDDN FSS signals        No licence published. Signals uploaded by Commanders to the
+                            Elite Dangerous Data Network, read from its public daily archive
+                            at https://edgalaxydata.space/ by tools/signal-index.py, which
+                            publishes the daily index on the signals-1 release of this
+                            repository. Downloaded over the network when a signal search asks
+                            for it, behind a setting that is off by default. It holds system
+                            names, positions and signal names, which are Frontier's game data
+                            under the rules quoted above.
+
 
 Vendored inside a package, and not covered by that package's own licence
 -------------------------------------------------------------------------

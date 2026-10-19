@@ -255,6 +255,9 @@ public static class BuiltinCapabilities
         // The time of the last BGS tick, or null when none is held.
         Func<DateTimeOffset?>? bgsTick = null,
 
+        // The daily index of FSS signals.
+        Knowledge.ISignalIndexSource? signalIndex = null,
+
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
@@ -307,7 +310,8 @@ public static class BuiltinCapabilities
             () => gameState.Active?.Location.SystemAddress,
             visitedStars,
             searchHistory,
-            bgsTick),
+            bgsTick,
+            signalIndex),
         RouteCapability.Create(
             routes,
             trade,

@@ -104,6 +104,7 @@ public class SeventyFiveKnobsTests
     [InlineData("knowledge.galaxy")]
     [InlineData("knowledge.notablePlaces")]
     [InlineData("knowledge.bgsTick")]
+    [InlineData("knowledge.signalIndex")]
     [InlineData("privacy.memory")]
     [InlineData("memory.enabled")]
     public void ARowThatDecidesWhatLeavesThisMachineIsNeverFolded(string key)

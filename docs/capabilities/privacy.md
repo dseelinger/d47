@@ -160,6 +160,15 @@ time that comes back; d47 keeps only that time, and only when it falls in a plau
 **BGS tick time** under Outside sources in Settings ([Galaxy search](galaxy.md#bgs-tick-time)) turns it on; it is off
 by default.
 
+**Signal index** — `github.com`, which redirects to GitHub's asset storage, from the `signals-1`
+release. When you search for a signal and the copy in `data\signals` is missing or more than 20
+hours old, D47 downloads the daily index of signals Commanders have uploaded to EDDN: one file,
+several megabytes. A download that fails is tried again on a later search, no sooner than an hour
+after. Nothing about you goes with it: no position, no key, no Commander name, no identifier and
+nothing from your journal, and the search itself happens on this machine.
+**Signal index** under Outside sources in Settings ([Galaxy search](galaxy.md#signal-index)) turns it
+on; it is off by default. With it off, a signal search answers from your own scans alone.
+
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which
 redirect to their asset storage — so the bytes arrive from `objects.githubusercontent.com`. That
@@ -367,7 +376,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-bgstick} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-bgstick} {#egress-signalindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces}
 {#egress-hullart} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

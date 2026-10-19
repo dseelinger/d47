@@ -185,6 +185,21 @@ when it is a UTC time no more than five minutes ahead of now, no more than seven
 earlier than the tick it already holds; anything else is ignored and the held time stays. The time
 is kept across restarts.
 
+### Signal index {#signal-index}
+
+A fourth setting, off by default. While it is on, a signal search can also answer from a daily
+index of the signals other Commanders have scanned and uploaded to EDDN — nav beacons, resource
+extraction sites, megaships, installations and the like. The project builds the index once a day
+and publishes it as `signals.tsv.gz` on the `signals-1` release on github.com.
+
+D47 downloads it only when you search for a signal and the copy in `data\signals` is missing or
+more than 20 hours old. Nothing about you goes with the request, and the search happens on this
+machine. A download replaces the copy on disk only once it reads as an index; one that fails
+leaves the old copy in use and is tried again on a later search, no sooner than an hour after.
+The data backups taken when a new build starts leave `data\signals` out.
+
+With this off, nothing is downloaded and a signal search answers from your own scans alone.
+
 ### Why the filters are checked here rather than there
 
 The search service **ignores filter keys it does not recognise**. It does not reject them or

@@ -566,7 +566,7 @@ public static class SettingsLayout
                     [],
                     false,
                     [
-                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.inaraKey")]),
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("knowledge.inaraKey")]),
                     ]),
                 new SettingsPlace(
                     "turn-fails",

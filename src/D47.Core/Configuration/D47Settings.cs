@@ -190,6 +190,9 @@ public sealed record KnowledgeSettings
 
     /// <summary>Whether d47 may ask tick.infomancer.uk for the time of the last BGS tick.</summary>
     public bool BgsTick { get; init; }
+
+    /// <summary>Whether d47 may download the daily index of FSS signals from the <c>signals-1</c> release.</summary>
+    public bool SignalIndex { get; init; }
 }
 
 /// <summary>The checklist's own settings (#255).</summary>
