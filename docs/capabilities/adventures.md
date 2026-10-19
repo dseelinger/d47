@@ -729,6 +729,8 @@ band is refused and goes back through the repair rounds, as does one whose last 
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
 that starts within 500 light years. The chapter also keeps one of its two place objectives for this stop.
 
+**Heading home from the black.** A chapter counts as changed when you apply a **Change objective** replacement in it; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least one reach nearer the target than the chapter starts, or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
+
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
 `Statistics` show you have done least, and it is the first of the chapter's drawn activities:
 

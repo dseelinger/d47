@@ -22,7 +22,7 @@ public static class ChapterBand
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Story: { Beacon: null, FinaleChapter: null }, Rewrite: null, Length: not AdventureLength.Short }
+        return ask is { Story: { Beacon: null, FinaleChapter: null, Home: null }, Rewrite: null, Length: not AdventureLength.Short }
             ? Of(start)
             : null;
     }

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story whose last two chapters you changed with **Change objective**, while you are more than 1,000 light years from both Sol and Colonia, now heads home. Its chapters cover up to the long-haul reach each, and each must end at least one reach nearer the nearer of Sol and Colonia (Sol, within 1,000 light years of Colonia), or within 1,000 light years of it. Once you are within 1,000 light years of it, the story goes on as before. **Never ask this** does not count as a change. This needs Galaxy search to measure the last stop.
+
 A story chapter that starts more than 500 light years from Sol now ends 100 to 300 light years nearer Sol than it started, so the story works you back toward populated space over several chapters. The chapter writer is told your distance from Sol and the range its last stop must fall in, and a draft outside it is written again. This needs Galaxy search to measure the last stop.
 
 A story chapter after the beacon scan is no longer given bounties, bonds, conflicts, selling, data sales, rescues or missions when no station is within its reach of where you are. This needs Galaxy search; with it off, or when it cannot answer, the activities are drawn as before.

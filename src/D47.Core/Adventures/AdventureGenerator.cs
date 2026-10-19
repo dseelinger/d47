@@ -124,7 +124,8 @@ public sealed record AdventureStory(
     IReadOnlyList<string>? Refused = null,
     IReadOnlyList<AdventureSpeaker>? Cast = null,
     string? Core = null,
-    bool CoreIsStock = false);
+    bool CoreIsStock = false,
+    string? Home = null);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
@@ -1701,6 +1702,22 @@ public sealed class AdventureGenerator(
             + $"and {band.Max.ToString("0", CultureInfo.InvariantCulture)} light years from Sol, so the story works its way back toward populated space.");
     }
 
+    /// <summary>For a chapter heading home, where it is going and that its last stop must be a reach nearer.</summary>
+    private static void AppendHome(StringBuilder text, AdventureAsk ask, Facts facts)
+    {
+        if (HomeLeg.Of(ask) is not { } target || facts.Position is not { } position || HomeLeg.PositionOf(target) is not { } there)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            $"The Commander is {position.DistanceTo(there).ToString("0", CultureInfo.InvariantCulture)} light years from {target} and has turned down the last chapters out here, "
+            + $"so the story heads home to {target}. This chapter travels: its last stop, the system of its last place objective, must be at least "
+            + $"{facts.RadiusLightYears.ToString("0", CultureInfo.InvariantCulture)} light years nearer {target} than where the chapter starts, or within "
+            + $"{HomeLeg.Home.ToString("0", CultureInfo.InvariantCulture)} light years of {target}. It may have more than {MostTravel} place objectives, each hop within the reach.");
+    }
+
     /// <summary>Who may speak a story chapter's lines, and how the ship's lines are read while a stock core is aboard.</summary>
     private static void AppendSpeakers(StringBuilder text, AdventureStory story)
     {
@@ -2002,6 +2019,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendBand(text, ask, facts);
+        AppendHome(text, ask, facts);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
@@ -2934,6 +2952,12 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal(offBand, lastPlaced is { } placedEnd ? [placedEnd] : []));
         }
 
+        if (HomeLeg.Of(ask) is { } home && facts.Position is { } homeStart
+            && await NotHomeAsync(lastPlaced is null ? null : previousSystem, home, homeStart, facts.RadiusLightYears, resolver, cancellationToken).ConfigureAwait(false) is { } notHome)
+        {
+            refusals.Add(new Refusal(notHome, lastPlaced is { } homeEnd ? [homeEnd] : []));
+        }
+
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
             refusals.Add(new Refusal($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.", beats.Count > 0 ? [beats.Count - 1] : []));
@@ -2950,7 +2974,7 @@ public sealed class AdventureGenerator(
             }
         }
 
-        if (ask.Story is { Chapter: > 1 }
+        if (ask.Story is { Chapter: > 1 } && HomeLeg.Of(ask) is null
             && beats.Count(beat => IsTravel(beat.Kind)) + kept.Count(beat => IsTravel(beat.Trigger.Kind)) is var travel and > MostTravel)
         {
             refusals.Add(new Refusal(
@@ -3122,6 +3146,33 @@ public sealed class AdventureGenerator(
             : null;
     }
 
+    /// <summary>The refusal for a chapter heading home whose last stop is less than a reach nearer <paramref name="target"/> and not home, or null.</summary>
+    private static async Task<string?> NotHomeAsync(
+        string? lastStop, string target, StarPosition position, double reach, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        var start = position.DistanceTo(HomeLeg.PositionOf(target)!.Value);
+        double? end;
+
+        try
+        {
+            end = lastStop is null ? start : await resolver.DistanceAsync(lastStop, target, cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return $"The chapter's last stop could not be measured against {target}: {ex.Message}";
+        }
+
+        if (end is not { } measured)
+        {
+            return $"The chapter's last stop could not be measured against {target}.";
+        }
+
+        return measured > HomeLeg.Home && measured > start - reach
+            ? $"The chapter starts {start:0} light years from {target} and its last stop is {measured:0} light years from it; "
+              + $"the story is heading home, so its last stop must be at least {reach:0} light years nearer {target} than the start, or within {HomeLeg.Home:0} light years of it."
+            : null;
+    }
+
     /// <summary>Travel beats a story chapter after the first may have.</summary>
     public const int MostTravel = 2;
 
@@ -3211,7 +3262,7 @@ public sealed class AdventureGenerator(
             return new Facts(
                 state?.Location.StarSystem,
                 state?.Location.StarPos,
-                ask is { Reach: AdventureReach.Anywhere, Story.LongHaul: true } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
+                ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } ? LongHaulLightYears : Radius(ask.Reach, ship.MaxJumpRange, carrier.Owned),
                 ask.Reach,
                 ask.ThisShipOnly,
                 ship,

@@ -155,6 +155,29 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     }
 
     [Fact]
+    public async Task ApplyingAProposalRecordsTheChapterAsChanged()
+    {
+        using var fixtures = AtTheBond(ABountyAndADock);
+
+        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+        Assert.Empty(fixtures.Stories.Current("F1")!.ChangedChapters);
+        Assert.Null(fixtures.Director.ApplyObjective("F1"));
+
+        Assert.Equal([ChapterKey], fixtures.Stories.Current("F1")!.ChangedChapters);
+    }
+
+    [Fact]
+    public async Task DiscardingAProposalRecordsNoChangedChapter()
+    {
+        using var fixtures = AtTheBond(ABountyAndADock);
+
+        await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
+        fixtures.Director.DiscardObjective("F1");
+
+        Assert.Empty(fixtures.Stories.Current("F1")!.ChangedChapters);
+    }
+
+    [Fact]
     public async Task DiscardingAProposalChangesNothing()
     {
         using var fixtures = AtTheBond(ABountyAndADock);

@@ -764,6 +764,11 @@ public sealed class StoryDirector(
             return refusal;
         }
 
+        if (!still.ChangedChapters.Contains(proposal.ChapterKey))
+        {
+            stories.Save(frontierId, still with { ChangedChapters = [.. still.ChangedChapters, proposal.ChapterKey] });
+        }
+
         DiscardObjective(frontierId);
         logger.LogInformation("{Title}: beat {Beat} of {Chapter} was changed by the Commander", still.Title, proposal.From + 1, proposal.Draft.Name);
         return null;
@@ -1967,6 +1972,9 @@ public sealed class StoryDirector(
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var sinceBeacon = SinceBeacon(frontierId, story) + 1;
+        var beaconChapter = reach is { InReach: true };
+        var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
+
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var slots = story.BeaconScanAt is null
             ? null
@@ -1979,7 +1987,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && ChapterBand.Of(game?.Location.StarPos) is not null ? 1 : 0),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.Of(game?.Location.StarPos) is not null || home is not null) ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach) is { Count: > 0 } drawn
@@ -1987,7 +1995,7 @@ public sealed class StoryDirector(
                 : null;
 
         var ask = new AdventureAsk(
-            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
+            longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -2002,7 +2010,8 @@ public sealed class StoryDirector(
                 reach?.InReach != false,
                 longHaul,
                 slots,
-                finaleChapter > 1 ? story.FinaleDestination : null),
+                finaleChapter > 1 ? story.FinaleDestination : null,
+                home),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2039,6 +2048,7 @@ public sealed class StoryDirector(
             Chapters = [.. still.Chapters, key],
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
+            HomeTarget = home,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
         ArchiveChapters(frontierId);
@@ -2057,7 +2067,8 @@ public sealed class StoryDirector(
         bool beaconInReach,
         bool longHaul,
         IReadOnlyList<DrawnActivity>? slots,
-        AdventureDestination? destination)
+        AdventureDestination? destination,
+        string? home = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -2086,7 +2097,8 @@ public sealed class StoryDirector(
             story.Refused,
             [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role })],
             Aboard()?.Name,
-            Aboard()?.Stock == true);
+            Aboard()?.Stock == true,
+            home);
     }
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>

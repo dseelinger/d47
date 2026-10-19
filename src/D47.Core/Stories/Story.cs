@@ -117,6 +117,12 @@ public sealed record Story
     /// <summary>The activities the Commander refused, as <see cref="RefusedActivities"/> keys. No later beat of this story asks for one.</summary>
     public IReadOnlyList<string> Refused { get; init; } = [];
 
+    /// <summary>The chapters, by key, in which the Commander applied a Change objective replacement.</summary>
+    public IReadOnlyList<string> ChangedChapters { get; init; } = [];
+
+    /// <summary>The system, Sol or Colonia, the story's chapters head for after changed chapters in the black; null when none.</summary>
+    public string? HomeTarget { get; init; }
+
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 
