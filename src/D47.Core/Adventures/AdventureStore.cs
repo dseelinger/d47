@@ -452,7 +452,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
             Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null)
-                .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value)).Take(AdventureLimits.MaxBeats)],
+                .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value, string.Equals(step.By?.Trim(), CommanderStep, StringComparison.Ordinal) ? AdventureFold.CommanderSource : null)).Take(AdventureLimits.MaxBeats)],
         };
 
         var refusals = AdventureValidation.Problems(adventure);
@@ -529,7 +529,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
-        Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, At = step.At })] : null,
+        Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, At = step.At, By = step.By == AdventureFold.CommanderSource ? CommanderStep : null })] : null,
     };
 
     private sealed class Document
@@ -584,11 +584,16 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public List<StepRecord>? Stepped { get; set; }
     }
 
+    /// <summary>The <see cref="StepRecord.By"/> written for a step the Commander marked; a step without one is the bench's.</summary>
+    private const string CommanderStep = "Commander";
+
     private sealed class StepRecord
     {
         public int? Beat { get; set; }
 
         public DateTimeOffset? At { get; set; }
+
+        public string? By { get; set; }
     }
 
     private sealed class SpineRecord

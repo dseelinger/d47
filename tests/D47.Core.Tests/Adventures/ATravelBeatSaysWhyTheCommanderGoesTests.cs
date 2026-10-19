@@ -126,8 +126,8 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
 
         Assert.Null(back.Beats[2].Reason);
         Assert.Equal("Next: dock at Maren Anchorage in Dyson's Hollow.", back.Beats[2].HandOff());
-        Assert.EndsWith(
-            "Now: The Anchorage (midpoint): waiting to dock at Maren Anchorage in Dyson's Hollow.",
+        Assert.Contains(
+            "Now: The Anchorage (midpoint): waiting to dock at Maren Anchorage in Dyson's Hollow." + Environment.NewLine,
             AdventureContext.Describe(
                 [WholeRoute(Accepted).Take(2).Aggregate(AdventureFold.Start(back), AdventureFold.Apply)], _ => null, Accepted.AddHours(1)));
     }

@@ -24,6 +24,10 @@ public static class AdventureCapability
 
     public const string RefuseBeatPhrase = "never ask this";
 
+    public const string MarkDoneTool = "mark_objective_done";
+
+    public const string MarkDonePhrase = "mark this objective done";
+
     public const string ChangeDraftTool = "change_adventure";
 
     public const string AcceptDraftTool = "accept_adventure";
@@ -64,6 +68,12 @@ public static class AdventureCapability
     public sealed class BeatRefusal
     {
         public Func<CancellationToken, Task<string?>> Refuse { get; set; } = _ => Task.FromResult<string?>(NoStory);
+    }
+
+    /// <summary>Fires the objective the Commander's story is waiting on as if the journal had shown it, returning a refusal or null. The app sets it once the story exists.</summary>
+    public sealed class ObjectiveMark
+    {
+        public Func<string?> Mark { get; set; } = () => NoStory;
     }
 
     /// <summary>Asks for an adventure, acts on the draft in front of the Commander and opens the entry for a different objective, each returning a refusal or null. The app sets it once the Adventures page exists.</summary>
@@ -218,7 +228,8 @@ public static class AdventureCapability
         EndingAnswer? endingAnswer = null,
         BeatRefusal? beatRefusal = null,
         AdventureDesk? desk = null,
-        StoryRecapper? recapper = null) => new()
+        StoryRecapper? recapper = null,
+        ObjectiveMark? objectiveMark = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -226,7 +237,7 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on or change it in their own words, and "
+            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on, change it in their own words or mark it done, and "
             + "ask the Narrator for the story so far.",
 
         // The phrases that genuinely work.
@@ -244,6 +255,7 @@ public static class AdventureCapability
             "this objective is not for me",
             RefuseBeatPhrase,
             ChangeObjectivePhrase,
+            MarkDonePhrase,
             "ask for a short story",
             "change the short story",
             "accept the short story",
@@ -329,6 +341,7 @@ public static class AdventureCapability
             Refuse(beatRefusal),
             Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", [ChangeObjectivePhrase, "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
             Recap(recapper),
+            Mark(objectiveMark),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
             Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject),
@@ -390,6 +403,27 @@ public static class AdventureCapability
             await (beatRefusal?.Refuse(cancellationToken) ?? Task.FromResult<string?>(NoStory)).ConfigureAwait(false) is { } refusal
                 ? ToolResult.Error(refusal)
                 : ToolResult.Ok("That objective is replaced, and the story will not ask for it again."),
+    };
+
+    private static ToolDefinition Mark(ObjectiveMark? objectiveMark) => new()
+    {
+        Name = MarkDoneTool,
+        Description =
+            "Mark the objective the Commander's story is waiting on as done, as if the journal had shown it: the running story's chapter, "
+            + "or with no story running the one short story under way. The Commander's choice alone.",
+        Commands =
+        [
+            new ToolCommandPhrase(MarkDonePhrase, new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("mark the objective done", new Dictionary<string, string>(StringComparer.Ordinal)),
+            new ToolCommandPhrase("this objective is done", new Dictionary<string, string>(StringComparer.Ordinal)),
+        ],
+
+        // Only the Commander can attest that an objective is done; the model is refused.
+        Protected = true,
+        Handler = (_, _) => Task.FromResult(
+            (objectiveMark is null ? NoStory : objectiveMark.Mark()) is { } refusal
+                ? ToolResult.Error(refusal)
+                : ToolResult.Ok("That objective is marked done.")),
     };
 
     private static ToolDefinition Recap(StoryRecapper? recapper) => new()

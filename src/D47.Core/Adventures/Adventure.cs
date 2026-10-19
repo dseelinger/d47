@@ -616,7 +616,7 @@ public sealed record Adventure
     /// </summary>
     public IReadOnlyList<AdventureTold> Told { get; init; } = [];
 
-    /// <summary>The beats the story bench fired, oldest first; the fold counts each as a fire at its time.</summary>
+    /// <summary>The beats fired without their journal event, by the story bench or the Commander, oldest first; the fold counts each as a fire at its time.</summary>
     public IReadOnlyList<AdventureStep> Stepped { get; init; } = [];
 
     public bool IsBegun => AcceptedAt is not null;
@@ -630,8 +630,8 @@ public sealed record Adventure
     public bool IsActive => IsBegun && !IsAbandoned;
 }
 
-/// <summary>A beat fired by the story bench at <paramref name="At"/>.</summary>
-public sealed record AdventureStep(int Beat, DateTimeOffset At);
+/// <summary>A beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>
+public sealed record AdventureStep(int Beat, DateTimeOffset At, string? By = null);
 
 /// <summary>Bounds, so a hand-edited file cannot be a novel and a model cannot be asked for one.</summary>
 public static class AdventureLimits

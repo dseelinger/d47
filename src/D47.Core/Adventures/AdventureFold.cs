@@ -16,7 +16,7 @@ public sealed record AdventureStanding
     /// <summary>When each beat reached so far fired, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Fired { get; init; } = [];
 
-    /// <summary>The journal event kind that fired each beat in <see cref="Fired"/>, in the same order.</summary>
+    /// <summary>The journal event kind that fired each beat in <see cref="Fired"/>, in the same order, or the source of a step.</summary>
     public IReadOnlyList<string> FiredBy { get; init; } = [];
 
     /// <summary>When each <c>LoadGame</c> since acceptance was written, oldest first.</summary>
@@ -573,7 +573,7 @@ public static class AdventureFold
         return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0 };
     }
 
-    /// <summary>The bench's steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>
+    /// <summary>The steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>
     public static AdventureStanding ApplySteps(AdventureStanding standing, DateTimeOffset upTo)
     {
         var adventure = standing.Adventure;
@@ -595,18 +595,21 @@ public static class AdventureFold
                 continue;
             }
 
-            standing = Stepped(standing, step.At);
+            standing = Stepped(standing, step.At, step.By);
         }
 
         return standing;
     }
 
-    /// <summary>The standing with its current beat fired by the bench at <paramref name="at"/>.</summary>
-    public static AdventureStanding Stepped(AdventureStanding standing, DateTimeOffset at) =>
-        standing with { Fired = [.. standing.Fired, at], FiredBy = [.. standing.FiredBy, BenchSource], Counted = 0, Side = null };
+    /// <summary>The standing with its current beat fired at <paramref name="at"/> by <paramref name="by"/>, the bench when null.</summary>
+    public static AdventureStanding Stepped(AdventureStanding standing, DateTimeOffset at, string? by = null) =>
+        standing with { Fired = [.. standing.Fired, at], FiredBy = [.. standing.FiredBy, by ?? BenchSource], Counted = 0, Side = null };
 
     /// <summary>The <see cref="AdventureStanding.FiredBy"/> of a beat the bench fired.</summary>
     public const string BenchSource = "Bench";
+
+    /// <summary>The <see cref="AdventureStanding.FiredBy"/> of a beat the Commander marked done.</summary>
+    public const string CommanderSource = "Marked done by the Commander";
 
     private static ConflictPart Ended(ConflictPart part, AdventureWorld world) =>
         !part.Ended && world.Of(part) is { Ended: true } conflict ? part with { Ended = true, Winner = conflict.Winner } : part;

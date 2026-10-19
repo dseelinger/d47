@@ -2132,6 +2132,7 @@ public sealed class AppHost : IDisposable
         var endingAnswer = new AdventureCapability.EndingAnswer();
         var storyRecapper = new AdventureCapability.StoryRecapper();
         var beatRefusal = new AdventureCapability.BeatRefusal();
+        var objectiveMark = new AdventureCapability.ObjectiveMark();
         var adventureDesk = new AdventureCapability.AdventureDesk();
 
         return new ServiceParts
@@ -2172,6 +2173,7 @@ public sealed class AppHost : IDisposable
             Macros = macros,
             Microphone = microphone,
             Models = models,
+            ObjectiveMark = objectiveMark,
             Offers = offers,
             OnFootBuilds = onFootBuilds,
             OnFootPlans = onFootPlans,
@@ -2279,6 +2281,7 @@ public sealed class AppHost : IDisposable
         var macros = services.Macros;
         var microphone = services.Microphone;
         var models = services.Models;
+        var objectiveMark = services.ObjectiveMark;
         var offers = services.Offers;
         var onFootPlans = services.OnFootPlans;
         var personas = services.Personas;
@@ -2724,6 +2727,7 @@ public sealed class AppHost : IDisposable
                 beatRefusal: beatRefusal,
                 adventureDesk: adventureDesk,
                 storyRecapper: storyRecapper,
+                objectiveMark: objectiveMark,
                 journalReminders: journalReminders,
                 miningTargets: miningTargets,
                 crimes: crimes,
@@ -2868,6 +2872,7 @@ public sealed class AppHost : IDisposable
         var galaxy = services.Galaxy;
         var llmAvailability = services.LlmAvailability;
         var macros = services.Macros;
+        var objectiveMark = services.ObjectiveMark;
         var offers = services.Offers;
         var personas = services.Personas;
         var speech = services.Speech;
@@ -3090,6 +3095,7 @@ public sealed class AppHost : IDisposable
 
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
+        objectiveMark.Mark = () => storyDirector.MarkObjectiveDone(gameState.Active?.Identity.FrontierId, DateTimeOffset.Now);
         adventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
@@ -4289,6 +4295,8 @@ public sealed class AppHost : IDisposable
         public required WasapiMicrophone Microphone { get; init; }
 
         public required HttpModelStore Models { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.ObjectiveMark ObjectiveMark { get; init; }
 
         public required OfferWindow Offers { get; init; }
 

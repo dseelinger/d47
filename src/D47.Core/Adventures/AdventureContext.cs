@@ -21,7 +21,7 @@ public static class AdventureContext
         + "it. Asked what to do next, say where the next objective is in plain words, with its reason when "
         + "it has one, and nothing beyond that. Asked why the Commander is going there, answer from that "
         + "reason and invent none. "
-        + "Only the journal completes an objective: you cannot complete, skip or change one. "
+        + "Only the journal or the Commander completes an objective: you cannot complete, skip or change one. "
         + "When the Commander says they cannot do the objective, or did it and the story has not moved, give them what the "
         + "story's Stuck line says rather than coaching the objective again. "
         + "You do not know how it ends. Asked what is actually at a place, answer from your tools and "
@@ -47,6 +47,9 @@ public static class AdventureContext
         }
 
         var block = new StringBuilder(Label);
+
+        // The phrase marks the running story's chapter, or with none the one short story under way.
+        var shortStoryByVoice = active.Count == 1 && active[0].Adventure.StoryId is null;
 
         foreach (var standing in active)
         {
@@ -105,18 +108,24 @@ public static class AdventureContext
                 Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.{reason}");
             }
 
-            Line(block, "Stuck", Stuck(standing));
+            Line(block, "Stuck", Stuck(standing, shortStoryByVoice));
         }
 
         return block.ToString().TrimEnd();
     }
 
-    /// <summary>What the Commander can do when the objective will not complete, or null when the story has no objective.</summary>
-    internal static string? Stuck(AdventureStanding standing)
+    /// <summary>
+    /// What the Commander can do when the objective will not complete, or null when the story has no objective.
+    /// <paramref name="byVoice"/> is whether the mark-done phrase reaches a short story.
+    /// </summary>
+    internal static string? Stuck(AdventureStanding standing, bool byVoice)
     {
+        const string Did = "if they did it and the story has not moved, ";
+
         if (standing.IsRefusable)
         {
-            return $"say \"{AdventureCapability.ChangeObjectivePhrase}\" to say what they would rather do, or "
+            return $"{Did}say \"{AdventureCapability.MarkDonePhrase}\" or press Mark done under NEXT on the story's page. To do something else, "
+                + $"say \"{AdventureCapability.ChangeObjectivePhrase}\" to say what they would rather do, or "
                 + $"\"{AdventureCapability.RefuseBeatPhrase}\" for a different one; or press Change objective or Never ask this under NEXT on the story's page.";
         }
 
@@ -124,10 +133,16 @@ public static class AdventureContext
         {
             return standing.CurrentBeat is null
                 ? null
-                : "no phrase changes this objective; the scan itself is the only way past it.";
+                : "no phrase changes this objective or marks it done; the scan itself is the only way past it.";
         }
 
-        return "no voice phrase; the short story can be stopped from its page.";
+        if (standing.CurrentBeat is null)
+        {
+            return null;
+        }
+
+        return (byVoice ? $"{Did}say \"{AdventureCapability.MarkDonePhrase}\" or press Mark done" : $"{Did}press Mark done")
+            + " under NEXT on the short story's page. To do something else, press Change objective or Never ask this there, or Remove to stop it.";
     }
 
     private static void Line(StringBuilder block, string label, string? text)

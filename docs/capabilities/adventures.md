@@ -50,9 +50,10 @@ nav_order: 115
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Wait for the game to move. On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to say what you would rather do.</p>
+<p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to say what you would rather do.</p>
 <p class="expect">After three play sessions and seven days at the same objective, your core nudges you toward it. The nudge does not apply to a short story.</p>
 <p class="expect">A short story you have begun and not finished shows Change objective and Never ask this under NEXT on its page. They work as on a story chapter and change only that short story. Neither has a voice phrase for a short story.</p>
+<p class="expect">Mark done, under NEXT on a story chapter's page or a short story's page, moves the story on as if the journal had shown the objective. The Guardian beacon scan cannot be marked done.</p>
 <p class="expect">An objective to board a ship has a button beside Change objective and Never ask this that plans that ship, or shows it when you own it or have planned it. An objective to reach a stage with an engineer, sell data or apply suit mods has one that opens the engineer's page, the unsold data page or the suits page, when that page is on.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="152" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -936,6 +937,34 @@ is refused this tool.
 #### `change_story_objective`
 
 Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+### Marking an objective done
+
+Only the journal completes an objective on its own. When you did the objective and the journal missed it, press **Mark
+done** under NEXT, beside the ship button, on a story chapter's page or a begun, unfinished short story's page, in the
+window and on the VR big panel. It asks "Mark "The Anchorage" done? The story moves on as if the journal had shown it." (with
+the objective's title), and on **Mark it done** the objective fires: its lines are told, the story waits on the next one, and
+a chapter's last objective moves the story on to the next chapter. The button is left out while an objective is being
+written.
+
+Say "mark this objective done", "mark the objective done" or "this objective is done" to do the same without the question.
+The phrase marks the running story's chapter. While your story is paused it marks nothing and asks you to resume it
+or use the button. With no story under way it marks the one short story under way; with more than one, d47 names them
+and asks you to press **Mark done** on the page of the one you mean. A chapter is not marked while the game runs without
+Odyssey.
+
+The Guardian beacon scan cannot be marked done: d47 says "The beacon scan is the one objective the journal has to show.
+Scan the beacon in" and the beacon's system. An objective to fit out a ship for the trip can be marked. A marked
+objective stays fired after a restart, and the logbook names it as marked done by the Commander. Marking does not bar
+the activity or count toward a bar. The model is refused this tool.
+
+#### `mark_objective_done`
+
+Mark the objective the Commander's story is waiting on as done, as if the journal had shown it: the running story's chapter, or with no story running the one short story under way. The Commander's choice alone.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

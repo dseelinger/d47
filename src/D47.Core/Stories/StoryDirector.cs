@@ -906,6 +906,116 @@ public sealed class StoryDirector(
         }
     }
 
+    /// <summary>
+    /// Fires the beat the running story's chapter is waiting on as if the journal had shown it; with no story running, the
+    /// one active short story's. Returns a refusal or null.
+    /// </summary>
+    public string? MarkObjectiveDone(string? frontierId, DateTimeOffset now)
+    {
+        if (stories.Current(frontierId) is { CurrentChapter: { } chapter }
+            && book.Standing(frontierId, chapter) is { Adventure.IsActive: true, IsDone: false })
+        {
+            return IsRunning(frontierId)
+                ? MarkObjectiveDone(frontierId, chapter, now)
+                : "Your story is paused. Resume it first, or press Mark done on the page of the story you mean.";
+        }
+
+        var shortStories = book.Standings(frontierId)
+            .Where(standing => standing.Adventure is { StoryId: null, IsActive: true } && !standing.IsDone)
+            .Select(standing => standing.Adventure)
+            .ToList();
+
+        return shortStories.Count switch
+        {
+            1 => MarkObjectiveDone(frontierId, shortStories[0].Key, now),
+            0 => stories.Current(frontierId) is not { CurrentChapter: not null }
+                ? "No story is under way."
+                : IsRunning(frontierId) ? "The story is not waiting on an objective." : "Resume the story first.",
+            _ => $"{string.Join(", ", shortStories.SkipLast(1).Select(adventure => adventure.Name))} and {shortStories[^1].Name} are under way. "
+                 + "Press Mark done on the page of the one you mean.",
+        };
+    }
+
+    /// <summary>
+    /// Fires the beat the chapter or short story <paramref name="key"/> is waiting on as if the journal had shown it. With
+    /// <paramref name="beat"/>, refuses when the story is no longer waiting on that beat. Returns a refusal or null.
+    /// </summary>
+    public string? MarkObjectiveDone(string? frontierId, string key, DateTimeOffset now, int? beat = null)
+    {
+        if (MarkDoneRefusal(frontierId, key) is { } refusal)
+        {
+            return refusal;
+        }
+
+        if (book.Standing(frontierId, key) is not { } standing)
+        {
+            return "There is no such story.";
+        }
+
+        if (beat is { } expected && standing.Current != expected)
+        {
+            return "The story has moved on from that objective.";
+        }
+
+        if (book.Step(frontierId, key, now, AdventureFold.CommanderSource) is { } stepped)
+        {
+            return stepped;
+        }
+
+        logger.LogInformation("{Adventure}: beat {Beat} was marked done by the Commander", standing.Adventure.Name, standing.Current + 1);
+        return null;
+    }
+
+    /// <summary>Why the objective of the chapter or short story <paramref name="key"/> cannot be marked done now, or null.</summary>
+    public string? MarkDoneRefusal(string? frontierId, string key)
+    {
+        if (book.Standing(frontierId, key) is not { } standing)
+        {
+            return "There is no such story.";
+        }
+
+        if (!standing.Adventure.IsActive || standing.CurrentBeat is not { } current)
+        {
+            return "That story is not waiting on an objective.";
+        }
+
+        if (standing.Adventure.StoryId is not null)
+        {
+            if (stories.Current(frontierId) is not { } story || !string.Equals(story.CurrentChapter, key, StringComparison.Ordinal))
+            {
+                return "That chapter is not the one your story is on.";
+            }
+
+            if (!IsRunning(frontierId))
+            {
+                return "Resume the story first.";
+            }
+
+            if (WithoutOdyssey(frontierId))
+            {
+                return NeedsOdyssey;
+            }
+        }
+
+        if (Switching)
+        {
+            return Swapping;
+        }
+
+        if (IsWriting(frontierId) || IsRewriting(frontierId))
+        {
+            return "A different objective is being written.";
+        }
+
+        if (current.Trigger.Kind == TriggerKind.Beacon)
+        {
+            return "The beacon scan is the one objective the journal has to show. "
+                   + (string.IsNullOrWhiteSpace(current.Trigger.System) ? "Scan the beacon." : $"Scan the beacon in {current.Trigger.System}.");
+        }
+
+        return null;
+    }
+
     private string? ApplyHeldAdventure(string? frontierId, ObjectiveProposal proposal)
     {
         if (!StillWaitingOn(frontierId, proposal.ChapterKey, proposal.From)

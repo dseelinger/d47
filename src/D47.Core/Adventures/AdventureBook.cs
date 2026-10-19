@@ -574,9 +574,9 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     /// <summary>
     /// Fires the beat an active story is waiting on without its journal event, recording the step so a walk fires it again.
-    /// Returns a refusal or null.
+    /// <paramref name="by"/> is the source the step records, the bench when null. Returns a refusal or null.
     /// </summary>
-    internal string? Step(string? frontierId, string key, DateTimeOffset now)
+    internal string? Step(string? frontierId, string key, DateTimeOffset now, string? by = null)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
 
@@ -612,7 +612,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             }
         }
 
-        var step = new AdventureStep(standing.Current, now);
+        var step = new AdventureStep(standing.Current, now, by);
         var stepped = adventure with { Stepped = [.. adventure.Stepped.Where(known => known.Beat != step.Beat), step] };
 
         if (AdventureValidation.Problems(stepped) is { Count: > 0 } problems)
@@ -636,7 +636,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 return $"{adventure.Name} has moved on from that objective.";
             }
 
-            _fold.Standings[StandingKey(commander, key)] = AdventureFold.Stepped(current, now) with { Adventure = stepped };
+            _fold.Standings[StandingKey(commander, key)] = AdventureFold.Stepped(current, now, by) with { Adventure = stepped };
             _moments.Enqueue(new AdventureMoment(commander, stepped, step.Beat, now));
             Stir(commander, key);
 

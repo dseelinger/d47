@@ -206,7 +206,7 @@ public sealed class ABenchStepSurvivesReplayTests
 
     [Trait("Category", "Gate")]
     [Fact]
-    public void NothingButTheBenchCallsTheBooksStep()
+    public void NothingButTheBenchAndTheCommandersMarkCallTheBooksStep()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
 
@@ -223,8 +223,9 @@ public sealed class ABenchStepSurvivesReplayTests
                 .OfType<InvocationExpressionSyntax>()
                 .Any(call => call.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Step" } access && access.Expression.ToString().Contains("book", StringComparison.OrdinalIgnoreCase)))
             .Select(file => Path.GetFileName(file))
+            .Order(StringComparer.Ordinal)
             .ToList();
 
-        Assert.Equal(["StoryBench.cs"], callers);
+        Assert.Equal(["StoryBench.cs", "StoryDirector.cs"], callers);
     }
 }

@@ -470,7 +470,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return scroller;
     }
 
-    /// <summary>The NEXT group: the objective, the wait for a different one, and Change objective and Never ask this under it.</summary>
+    /// <summary>The NEXT group: the objective, the wait for a different one, and Mark done, Change objective and Never ask this under it.</summary>
     private void AddObjective(StackPanel page, AdventureStanding standing)
     {
         var rewriting = _surface.Stories?.IsRewriting(_surface.Commander()) == true;
@@ -503,6 +503,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             row.Children.Add(ship);
         }
 
+        if (!rewriting && standing is { Adventure.IsActive: true, CurrentBeat: not null } && _surface.Stories is not null)
+        {
+            row.Children.Add(Action("Mark done", () => MarkDone(standing, drawnFor)));
+        }
+
         var shortKey = standing.IsShortStoryRefusable ? standing.Adventure.Key : null;
 
         if ((standing.IsRefusable || shortKey is not null) && !rewriting && _surface.Stories is not null)
@@ -529,6 +534,47 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             row.Margin = new Thickness(0, 6, 0, 0);
             page.Children.Add(row);
         }
+    }
+
+    /// <summary>Asks whether to mark the objective <paramref name="standing"/> is waiting on done, and on yes fires it; says why it cannot.</summary>
+    internal void MarkDone(AdventureStanding standing, string? drawnFor)
+    {
+        var key = standing.Adventure.Key;
+        var beat = standing.Current;
+
+        if (!string.Equals(drawnFor, _surface.Commander(), StringComparison.Ordinal))
+        {
+            _surface.Say(StoriesView.CommanderChangedRefusal);
+            return;
+        }
+
+        if (_surface.Stories is not { } director || standing.CurrentBeat is not { } current)
+        {
+            return;
+        }
+
+        if (director.MarkDoneRefusal(drawnFor, key) is { } refusal)
+        {
+            _surface.Say(refusal);
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "story.markDone",
+                "Mark done",
+                $"Mark \"{current.Title}\" done?",
+                "The story moves on as if the journal had shown it.",
+                [new ChoiceOption("keep", "Not yet"), new ChoiceOption("yes", "Mark it done")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key == "yes")
+                {
+                    IfShown(drawnFor, () => SayRefusal(director.MarkObjectiveDone(drawnFor, key, _surface.Now(), beat)));
+                }
+            });
     }
 
     /// <summary>Opens the entry for a different objective, saying why it cannot; returns the refusal, or null.</summary>

@@ -221,6 +221,9 @@ public static class BuiltinCapabilities
         // Starts the Narrator's recap of the story under way.
         AdventureCapability.StoryRecapper? storyRecapper = null,
 
+        // Marks the objective a story is waiting on done.
+        AdventureCapability.ObjectiveMark? objectiveMark = null,
+
         // The Commander's journal reminders (#643).
         Reminders.JournalReminderStore? journalReminders = null,
 
@@ -350,7 +353,7 @@ public static class BuiltinCapabilities
             now),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(
