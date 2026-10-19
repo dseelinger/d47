@@ -98,6 +98,10 @@ public sealed record AdventureStanding
     public bool IsRefusable =>
         Adventure is { StoryId: not null, IsActive: true } && CurrentBeat is { Trigger.Kind: not TriggerKind.Beacon };
 
+    /// <summary>Whether a begun, unfinished short story is waiting on a beat the Commander may replace.</summary>
+    public bool IsShortStoryRefusable =>
+        Adventure is { StoryId: null, IsActive: true } && CurrentBeat is not null;
+
     /// <summary>How far through, as a count (asked for 2026-08-22).</summary>
     public string? Step()
     {

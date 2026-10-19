@@ -503,9 +503,11 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             row.Children.Add(ship);
         }
 
-        if (standing.IsRefusable && !rewriting && _surface.Stories is not null)
+        var shortKey = standing.IsShortStoryRefusable ? standing.Adventure.Key : null;
+
+        if ((standing.IsRefusable || shortKey is not null) && !rewriting && _surface.Stories is not null)
         {
-            row.Children.Add(Action("Change objective", () => ChangeObjective(drawnFor)));
+            row.Children.Add(Action("Change objective", () => ChangeObjective(drawnFor, shortKey)));
 
             row.Children.Add(Action("Never ask this", () => StoriesView.NotForMe(
                 _surface,
@@ -518,7 +520,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
                     {
                         _surface.Say(refusal);
                     }
-                })));
+                },
+                shortKey)));
         }
 
         if (row.Children.Count > 0)
@@ -529,9 +532,10 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <summary>Opens the entry for a different objective, saying why it cannot; returns the refusal, or null.</summary>
-    internal string? ChangeObjective(string? drawnFor)
+    internal string? ChangeObjective(string? drawnFor, string? adventureKey = null)
     {
-        var refusal = StoriesView.ChangeObjective(_surface, _prompts, drawnFor, () => _surface.Say("Writing a different objective…"), SayRefusal);
+        var refusal = StoriesView.ChangeObjective(
+            _surface, _prompts, drawnFor, () => _surface.Say("Writing a different objective…"), SayRefusal, adventureKey: adventureKey);
 
         if (refusal is not null)
         {

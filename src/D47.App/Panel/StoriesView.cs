@@ -348,10 +348,12 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     /// <summary>
-    /// Asks whether to replace the beat the current story's chapter is waiting on, and on yes has a different one written.
-    /// <paramref name="doing"/> runs when the write starts; <paramref name="done"/> gets its refusal, or null.
+    /// Asks whether to replace the beat the current story's chapter, or the short story <paramref name="adventureKey"/>, is
+    /// waiting on, and on yes has a different one written. <paramref name="doing"/> runs when the write starts;
+    /// <paramref name="done"/> gets its refusal, or null.
     /// </summary>
-    internal static void NotForMe(AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done)
+    internal static void NotForMe(
+        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, string? adventureKey = null)
     {
         if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
         {
@@ -359,7 +361,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             return;
         }
 
-        if (surface.Stories is not { } director || director.RefusableBeat(commander) is not { } beat)
+        if (surface.Stories is not { } director || RefusableBeat(surface, director, commander, adventureKey) is not { } beat)
         {
             done("The story is not waiting on an objective.");
             return;
@@ -401,7 +403,9 @@ public sealed class StoriesView : UserControl, IPageSummary
 
                 _ = Task.Run(async () =>
                 {
-                    var refusal = await director.RefuseBeatAsync(commander, CancellationToken.None).ConfigureAwait(false);
+                    var refusal = adventureKey is null
+                        ? await director.RefuseBeatAsync(commander, CancellationToken.None).ConfigureAwait(false)
+                        : await director.RefuseAdventureBeatAsync(commander, adventureKey, CancellationToken.None).ConfigureAwait(false);
 
                     Dispatcher.UIThread.Post(() => done(refusal));
                 });
@@ -414,14 +418,14 @@ public sealed class StoriesView : UserControl, IPageSummary
     /// </summary>
     internal static string? ChangeObjective(
         AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done,
-        IReadOnlyList<D47.Core.Adventures.AdventureRemark>? exchange = null)
+        IReadOnlyList<D47.Core.Adventures.AdventureRemark>? exchange = null, string? adventureKey = null)
     {
         if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
         {
             return CommanderChangedRefusal;
         }
 
-        if (surface.Stories is not { } director || director.RefusableBeat(commander) is null)
+        if (surface.Stories is not { } director || RefusableBeat(surface, director, commander, adventureKey) is null)
         {
             return "The story is not waiting on an objective.";
         }
@@ -464,9 +468,11 @@ public sealed class StoriesView : UserControl, IPageSummary
 
                 _ = Task.Run(async () =>
                 {
-                    var outcome = await director.ReviseObjectiveAsync(commander, remark, earlier, CancellationToken.None).ConfigureAwait(false);
+                    var outcome = adventureKey is null
+                        ? await director.ReviseObjectiveAsync(commander, remark, earlier, CancellationToken.None).ConfigureAwait(false)
+                        : await director.ReviseAdventureObjectiveAsync(commander, adventureKey, remark, earlier, CancellationToken.None).ConfigureAwait(false);
 
-                    Dispatcher.UIThread.Post(() => Propose(surface, prompts, commander, doing, done, outcome));
+                    Dispatcher.UIThread.Post(() => Propose(surface, prompts, commander, doing, done, outcome, adventureKey));
                 });
             });
 
@@ -474,11 +480,16 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     internal static void Propose(
-        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, ObjectiveProposalOutcome outcome)
+        AdventureSurface surface, PanelPrompts prompts, string? commander, Action doing, Action<string?> done, ObjectiveProposalOutcome outcome,
+        string? adventureKey = null)
     {
         if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
         {
-            surface.Stories?.DiscardObjective(commander);
+            if (surface.Stories is { } held)
+            {
+                Discard(held, commander, adventureKey);
+            }
+
             done(CommanderChangedRefusal);
             return;
         }
@@ -509,7 +520,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             {
                 if (!string.Equals(commander, surface.Commander(), StringComparison.Ordinal))
                 {
-                    director.DiscardObjective(commander);
+                    Discard(director, commander, adventureKey);
                     done(CommanderChangedRefusal);
                     return;
                 }
@@ -517,11 +528,11 @@ public sealed class StoriesView : UserControl, IPageSummary
                 switch (option.Key)
                 {
                     case "use":
-                        done(director.ApplyObjective(commander));
+                        done(adventureKey is null ? director.ApplyObjective(commander) : director.ApplyAdventureObjective(commander, adventureKey));
                         break;
 
                     case "again":
-                        if (ChangeObjective(surface, prompts, commander, doing, done, proposal.Exchange) is { } refusal)
+                        if (ChangeObjective(surface, prompts, commander, doing, done, proposal.Exchange, adventureKey) is { } refusal)
                         {
                             done(refusal);
                         }
@@ -529,10 +540,27 @@ public sealed class StoriesView : UserControl, IPageSummary
                         break;
 
                     default:
-                        director.DiscardObjective(commander);
+                        Discard(director, commander, adventureKey);
                         break;
                 }
             });
+    }
+
+    private static D47.Core.Adventures.AdventureBeat? RefusableBeat(AdventureSurface surface, StoryDirector director, string? commander, string? adventureKey) =>
+        adventureKey is null
+            ? director.RefusableBeat(commander)
+            : surface.Book.Standing(commander, adventureKey) is { IsShortStoryRefusable: true } standing ? standing.CurrentBeat : null;
+
+    private static void Discard(StoryDirector director, string? commander, string? adventureKey)
+    {
+        if (adventureKey is null)
+        {
+            director.DiscardObjective(commander);
+        }
+        else
+        {
+            director.DiscardAdventureObjective(commander, adventureKey);
+        }
     }
 
     private Control? ObjectiveGroup(string? commander, string chapterKey)
