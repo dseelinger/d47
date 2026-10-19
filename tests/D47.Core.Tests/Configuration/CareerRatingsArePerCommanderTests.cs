@@ -178,3 +178,21 @@ public class CareerRatingsArePerCommanderTests
         ratings.Exobiology, ratings.Passengers, ratings.SearchAndRescue, ratings.Crime,
     ];
 }
+
+public class CareerRatingsAreOnTheStoriesTabTests
+{
+    [Fact]
+    public void TheStoriesSettingsHoldAllEightRatings()
+    {
+        var surface = TestSurface.For(new MemoryInstall());
+        var keys = surface.Settings.Sections.SelectMany(section => section.Rows)
+            .Select(row => row.Key)
+            .Where(SettingsLayout.IsCareerRatingFamily)
+            .ToList();
+
+        var tab = SettingsLayout.Tabs.Single(place => place.Id == "adventures");
+
+        Assert.Equal(8, keys.Count);
+        Assert.All(keys, key => Assert.Contains(tab.Entries, entry => entry.Family?.Invoke(key) == true));
+    }
+}

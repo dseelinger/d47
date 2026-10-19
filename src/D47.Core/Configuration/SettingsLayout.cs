@@ -118,6 +118,9 @@ public static class SettingsLayout
     public static Func<string, bool> IsVrPlacementFamily(string slot) =>
         key => key.StartsWith($"vr.{slot}.", StringComparison.Ordinal);
 
+    public static bool IsCareerRatingFamily(string key) =>
+        key.StartsWith(Capabilities.Builtin.AdventureCapability.RatingKeyPrefix, StringComparison.Ordinal);
+
     public static bool IsVrHotkeyFamily(string key) =>
         key is Capabilities.Builtin.VrCapability.ZoomInHotkeyKey
             or Capabilities.Builtin.VrCapability.ZoomOutHotkeyKey
@@ -853,7 +856,7 @@ public static class SettingsLayout
         new SettingsTabPlace(
             "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art"), E("ships.hullgpu")]),
         new SettingsTabPlace(
-            "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads"), E("adventures.storyRatings"), E("adventures.castReactions")]),
+            "adventures", "adventures", true, "Stories", [E("knowledge.notablePlaces"), E("adventures.storyDownloads"), E("adventures.storyRatings"), E("adventures.castReactions"), F(IsCareerRatingFamily)]),
         new SettingsTabPlace(
             "fleet-carrier",
             "loadout.carrier",
