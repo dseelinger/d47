@@ -124,6 +124,8 @@ public static class AdventureCapability
                + (rating.Note ?? "A higher rating makes story chapters ask for it more often."),
         Kind = SettingKind.Number,
         DefaultDisplay = "50",
+        Note = _ => $"How much you like {rating.Spoken}, 1 to 100. Story chapters ask for what you rate higher more often."
+                    + (rating.Note is null ? string.Empty : " " + rating.Note),
         Minimum = 1,
         Maximum = 100,
         DocsAnchor = rating.Anchor,

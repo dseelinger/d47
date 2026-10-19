@@ -196,3 +196,19 @@ public class CareerRatingsAreOnTheStoriesTabTests
         Assert.All(keys, key => Assert.Contains(tab.Entries, entry => entry.Family?.Invoke(key) == true));
     }
 }
+
+public class EachCareerRatingSaysWhatItIsForTests
+{
+    [Fact]
+    public void EveryRatingRowCarriesAVisibleDescription()
+    {
+        var surface = TestSurface.For(new MemoryInstall());
+        var rows = surface.Settings.Sections.SelectMany(section => section.Rows)
+            .Where(row => SettingsLayout.IsCareerRatingFamily(row.Key))
+            .ToList();
+
+        Assert.Equal(8, rows.Count);
+        Assert.All(rows, row => Assert.Contains("1 to 100", row.Note!(new D47Settings())));
+        Assert.Contains("Law and Disorder", rows.Single(row => row.Label == "Crime").Note!(new D47Settings()));
+    }
+}
