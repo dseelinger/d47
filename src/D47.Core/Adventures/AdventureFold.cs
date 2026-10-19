@@ -360,6 +360,10 @@ public static class AdventureFold
                 journalEvent.Kind is "MissionCompleted"
                 && InfluenceLedger.UpMarks(journalEvent, trigger.Faction!, trigger.SystemAddress) > 0,
 
+            TriggerKind.Boost =>
+                journalEvent.Kind is "JetConeBoost"
+                && BoostStar(trigger.Filter, raw.Double("BoostValue")),
+
             _ => false,
         };
     }
@@ -401,6 +405,16 @@ public static class AdventureFold
         || (JournalJson.Symbol(wanted) is { } folded
             && JournalJson.Symbol(actual) is { } found
             && (folded == found || found.Split('_').Contains(folded)));
+
+    /// <summary>A boost of 4 or more is a neutron star's; less is a white dwarf's.</summary>
+    private static bool BoostStar(string? wanted, double? value) =>
+        JournalJson.Symbol(wanted) switch
+        {
+            null or "" => true,
+            "neutron" => value >= 4,
+            "whitedwarf" => value < 4,
+            _ => false,
+        };
 
     private static bool AtBody(AdventureTrigger trigger, JsonElement raw) =>
         (trigger.SystemAddress is null || raw.Long("SystemAddress") == trigger.SystemAddress)

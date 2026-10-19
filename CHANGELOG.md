@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Story chapters and short stories can now ask you to boost off a jet cone once or twice, at a neutron star or a white dwarf. The objective counts each boost the journal records, and a `BoostValue` of 4 or more is a neutron star. **Change objective** and **Never ask this** treat it like any other activity.
+
 Short stories and story chapters no longer ask you to change your ship's livery. The journal shows only the paint fitted to a ship, not the paint you own, so d47 could not tell whether you had a paint to change to. A chapter written earlier that has a livery objective still loads and finishes as before.
 
 A Commander who changes the same kind of activity away five times with **Change objective** is no longer asked for it: it is barred from every later story chapter and short story, as **Never ask this** bars it for one story. Courier missions, bounties and the other activity kinds are counted separately for each Commander, and the counts and the bar survive a restart. **Keep the current one** counts nothing, and nothing lifts a bar yet.

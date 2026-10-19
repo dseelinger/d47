@@ -67,7 +67,10 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost"];
+
+    /// <summary>The stars a boost beat may be limited to.</summary>
+    public static IReadOnlyList<string> BoostStars { get; } = ["neutron", "whitedwarf"];
 
     /// <summary>The war types a conflict beat may be limited to, as the journal spells them.</summary>
     public static IReadOnlyList<string> WarTypes { get; } = ["war", "civilwar", "election"];
@@ -292,6 +295,13 @@ public static class AdventureValidation
             && !WarTypes.Contains(trigger.Filter.Trim(), StringComparer.OrdinalIgnoreCase))
         {
             yield return $"{where} names the war type \"{trigger.Filter.Trim()}\"; the war types are {string.Join(", ", WarTypes)}.";
+        }
+
+        if (trigger.Kind == TriggerKind.Boost
+            && !string.IsNullOrWhiteSpace(trigger.Filter)
+            && !BoostStars.Contains(JournalJson.Symbol(trigger.Filter) ?? string.Empty, StringComparer.Ordinal))
+        {
+            yield return $"{where} names the star \"{trigger.Filter.Trim()}\"; the stars are {string.Join(", ", BoostStars)}.";
         }
 
         if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))

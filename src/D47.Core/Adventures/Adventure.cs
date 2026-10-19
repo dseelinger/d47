@@ -132,6 +132,9 @@ public enum TriggerKind
 
     /// <summary>A <c>Loadout</c> whose ship has the jump range and a fuel scoop for the trip to a Guardian beacon, arriving in the beacon's system, or a <c>CarrierBuy</c>. Not counted.</summary>
     Reach,
+
+    /// <summary><c>JetConeBoost</c> events. <see cref="AdventureTrigger.Filter"/> limits it to <c>neutron</c> (a <c>BoostValue</c> of 4 or more) or <c>whitedwarf</c>.</summary>
+    Boost,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -255,6 +258,7 @@ public sealed record AdventureTrigger
         TriggerKind.SquadronFound => "found a squadron",
         TriggerKind.Conflict => $"take part {Times()} in {WarWord()}{For()}",
         TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
+        TriggerKind.Boost => $"supercharge your frame shift drive in {BoostStar()} jet cone {Times()}",
         _ => Kind.ToString(),
     };
 
@@ -294,6 +298,7 @@ public sealed record AdventureTrigger
             TriggerKind.Multicrew => $"Crews joined: {of}",
             TriggerKind.Conflict => $"Contributions to {WarWord()}{For()}: {of}",
             TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}: {of}",
+            TriggerKind.Boost => $"{Capital(BoostWord())} boosts: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }
@@ -347,6 +352,21 @@ public sealed record AdventureTrigger
         "civilwar" => "a civil war",
         "election" => "an election",
         _ => "a war, civil war or election",
+    };
+
+    /// <summary>"neutron", "white dwarf", or "jet cone" for either.</summary>
+    private string BoostWord() => Journal.JournalJson.Symbol(Filter) switch
+    {
+        "neutron" => "neutron",
+        "whitedwarf" => "white dwarf",
+        _ => "jet cone",
+    };
+
+    private string BoostStar() => Journal.JournalJson.Symbol(Filter) switch
+    {
+        "neutron" => "a neutron star's",
+        "whitedwarf" => "a white dwarf's",
+        _ => "a neutron star's or white dwarf's",
     };
 
     private string Plain() => string.IsNullOrWhiteSpace(Filter) ? "any" : Plain(Filter);
