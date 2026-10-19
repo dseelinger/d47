@@ -64,6 +64,10 @@ internal static class Program
             return;
         }
 
+        // Avalonia makes the first thread to reach a dispatcher the UI thread, and the host's own threads post
+        // to it before the window exists. Before AppHost.Start, so that thread is this one.
+        Avalonia.Threading.Dispatcher.UIThread.VerifyAccess();
+
         var wiring = Diagnostics.StartupTimer.Step("host");
 
         using var host = AppHost.Start();
