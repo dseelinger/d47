@@ -311,7 +311,8 @@ public static class AdventureFold
 
             TriggerKind.Codex =>
                 journalEvent.Kind is "CodexEntry"
-                && SameType(trigger.Filter, raw.String("Category")),
+                && (SameType(trigger.Filter, raw.String("Category")) || SameType(trigger.Filter, raw.String("SubCategory")))
+                && (trigger.New != true || (raw.TryGetProperty("IsNewEntry", out var isNew) && isNew.ValueKind == JsonValueKind.True)),
 
             TriggerKind.DataSale =>
                 journalEvent.Kind switch

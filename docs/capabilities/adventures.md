@@ -224,7 +224,7 @@ Thirty-seven triggers, and every one is a comparison on a structured field rathe
 | Map bodies | `SAAScanComplete`, optionally of one body | anything else |
 | Survey signals | `SAASignalsFound` with a `Signals` entry of one type, such as `Thargoid` or `Platinum` | the body's name |
 | Land at a wreck | `Touchdown` at a `$Settlement_Unflattened_Wrecked…` destination, of one type; unfiltered, only `Unknown`, a crashed Thargoid ship | the destination's display name |
-| Log codex entries | `CodexEntry`, optionally of one `Category` | the entry's name |
+| Log codex entries | `CodexEntry`, optionally of one `Category` or `SubCategory` (Biology, StellarBodies, Civilisations or Guardian), and with `new` true only an entry whose `IsNewEntry` is true, the first time it is logged in a region | the entry's name |
 | Sell data | credits from `SellExplorationData`, `MultiSellExplorationData` and `SellOrganicData`, optionally one of the two kinds | anything else |
 | Salvage cargo | `CollectCargo`, optionally of one `Type` | the cargo's display name |
 | Drop into a signal source | `USSDrop`, optionally of one `USSType` | the source's display name |

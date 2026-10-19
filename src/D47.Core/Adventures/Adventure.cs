@@ -202,6 +202,9 @@ public sealed record AdventureTrigger
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
     public bool? Organic { get; init; }
 
+    /// <summary>For <see cref="TriggerKind.Codex"/>: true counts only the first time the Commander logs an entry in a region; false or null counts any.</summary>
+    public bool? New { get; init; }
+
     /// <summary>For <see cref="TriggerKind.Reach"/>: the jump range, in light years, the ship needs for the trip.</summary>
     public double? JumpRange { get; init; }
 
@@ -264,7 +267,7 @@ public sealed record AdventureTrigger
         TriggerKind.Map => $"map {Counted("body", "bodies")} with the surface mapper",
         TriggerKind.Signal => $"survey {Counted("body", "bodies")} with {Plain()} signals",
         TriggerKind.Wreck => $"touch down at {Counted(Wrecks(one: true), Wrecks(one: false))}",
-        TriggerKind.Codex => $"log {Counted("codex entry", "codex entries")}{Of()}",
+        TriggerKind.Codex => $"log {Counted(CodexWord(one: true), CodexWord(one: false))}",
         TriggerKind.DataSale => $"sell {Credits()} of {DataWord()} data",
         TriggerKind.Salvage => $"pick up {Counted(Cargo(one: true), Cargo(one: false))}",
         TriggerKind.Uss => $"drop into {Counted(Sources(one: true), Sources(one: false))}",
@@ -315,7 +318,7 @@ public sealed record AdventureTrigger
             TriggerKind.Map => $"Bodies mapped: {of}",
             TriggerKind.Signal => $"Bodies with {Plain()} signals: {of}",
             TriggerKind.Wreck => $"{Capital(Wrecks(one: false))}: {of}",
-            TriggerKind.Codex => $"Codex entries{Of()}: {of}",
+            TriggerKind.Codex => $"{Capital(CodexWord(one: false))}: {of}",
             TriggerKind.DataSale => $"{Capital(DataWord())} data sold: {of} cr",
             TriggerKind.Salvage => $"{Capital(Cargo(one: false))}: {of}",
             TriggerKind.Uss => $"{Capital(Sources(one: false))}: {of}",
@@ -445,6 +448,12 @@ public sealed record AdventureTrigger
 
     private string Survivors(bool one) =>
         (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ") + (one ? "rescue item" : "rescue items");
+
+    /// <summary>"new codex entries", "Guardian codex entries", "new Guardian codex entry".</summary>
+    private string CodexWord(bool one) =>
+        (New == true ? "new " : string.Empty)
+        + (string.IsNullOrWhiteSpace(Filter) ? string.Empty : Plain(Filter) + " ")
+        + (one ? "codex entry" : "codex entries");
 
     private string DataWord() => Organic switch { true => "organic", false => "cartographic", _ => "exploration" };
 

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story or short story objective can ask for new codex entries, which count only the first time you log an entry in a region, and for Xenological (Civilisations) or Guardian codex entries. The Guardian beacon scan counts toward the Guardian objective.
+
 When you did a story objective and the journal missed it, press Mark done under NEXT on a story chapter's page or a short story's page, or say "mark this objective done", "mark the objective done" or "this objective is done". The button asks first; the phrase does not. The objective fires as if the journal had shown it: its lines are told, and a chapter's last objective moves the story on to the next chapter. The phrase marks the running story's chapter, or with no story running the one short story under way; with two or more short stories it names them and asks you to use the button on the right page. The Guardian beacon scan cannot be marked done. The logbook names a marked objective as marked done by the Commander.
 
 A short story you have begun and not finished now shows Change objective and Never ask this under NEXT on its page, as a story chapter does. Change objective asks what you would rather do, proposes a replacement, and lets you use it, keep the current one or say something else. Never ask this has a different objective written. Each changes only the short story whose page you are on. Both say why they cannot when no language model is configured or galaxy search is off. There is no voice phrase for a short story.

@@ -70,6 +70,8 @@ public static class AdventureValidation
          "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
+    public static IReadOnlyList<string> CodexFilters { get; } = ["Biology", "StellarBodies", "Civilisations", "Guardian"];
+
     public static IReadOnlyList<string> BoostStars { get; } = ["neutron", "whitedwarf"];
 
     /// <summary>The body classes a discover beat may be limited to; <c>N</c> is a neutron star.</summary>
@@ -325,6 +327,13 @@ public static class AdventureValidation
             && !DiscoverBodies.Any(body => AdventureWatch.DiscoverKey(body) == AdventureWatch.DiscoverKey(trigger.Filter)))
         {
             yield return $"{where} names the body \"{trigger.Filter.Trim()}\"; the bodies are {string.Join(", ", DiscoverBodies)}.";
+        }
+
+        if (trigger.Kind == TriggerKind.Codex
+            && !string.IsNullOrWhiteSpace(trigger.Filter)
+            && !CodexFilters.Contains((JournalJson.Symbol(trigger.Filter) ?? string.Empty).Split('_')[^1], StringComparer.OrdinalIgnoreCase))
+        {
+            yield return $"{where} names the codex filter \"{trigger.Filter.Trim()}\"; the filters are {string.Join(", ", CodexFilters)}.";
         }
 
         if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))

@@ -2102,7 +2102,7 @@ public sealed class AdventureGenerator(
             "- \"map\": the Commander maps \"count\" bodies with the surface mapper.",
             "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.",
             "- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.",
-            "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is a category: Biology or StellarBodies; null for any.",
+            "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. \"new\" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.",
             "- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.",
             "- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.",
             "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.",
@@ -2489,6 +2489,7 @@ public sealed class AdventureGenerator(
         string? Commodity,
         string? Filter,
         bool? Organic,
+        bool? New,
         string? Engineer,
         string? Stage,
         IReadOnlyList<AdventureLine> Lines)
@@ -2503,6 +2504,7 @@ public sealed class AdventureGenerator(
             Commodity = Commodity,
             Filter = Filter,
             Organic = Organic,
+            New = New,
             Engineer = Engineer,
             Stage = Stage,
             Rank = Kind == TriggerKind.PowerRank ? Rank : null,
@@ -2612,6 +2614,7 @@ public sealed class AdventureGenerator(
             Text(element, "commodity"),
             Text(element, "filter"),
             Flag(element, "organic"),
+            Flag(element, "new"),
             Text(element, "engineer"),
             Text(element, "stage"),
             ReadLines(element));
