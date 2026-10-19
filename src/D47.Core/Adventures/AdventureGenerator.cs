@@ -1612,6 +1612,15 @@ public sealed class AdventureGenerator(
         text.AppendLine(story.DaysSinceBeacon is { } scanned
             ? $", and {scanned.ToString(CultureInfo.InvariantCulture)} days have run since the Commander scanned the Guardian beacon, not counting days it was paused."
             : ", and the Commander has not yet scanned a Guardian beacon.");
+
+        if (story.DaysSinceBeacon is not null)
+        {
+            text.AppendLine(
+                "The Guardian beacon scan has already happened, and the Guardian cores came aboard with it. This chapter begins after "
+                + "it, whatever the chapter before was working toward. No premise, objective, reason or line sends the Commander to a "
+                + "Guardian beacon, asks for a beacon scan, or tells the trip to the beacon as still to come.");
+        }
+
         text.AppendLine("Never write a line that states the hidden story. A chapter may echo a clue the Commander has had.");
 
         if (story.BeaconAway is { } away)
