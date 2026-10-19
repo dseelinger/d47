@@ -440,7 +440,7 @@ chapter one, which then begins. D47 keeps the Backstory you had before; a Backst
 story's own words counts as none. Edits you make to the Backstory while a story runs are not kept. Act one ends when you scan the Guardian beacon nearest to you with the ship's data-link
 scanner; arriving in the beacon's system is not enough. Before each act-one chapter D47 checks whether
 the ship you are in can reach that beacon: it can when you own a fleet carrier, or when the beacon is at
-most 20 jumps away at the ship's maximum jump range and a fuel scoop is fitted. When it can, the
+most 20 jumps away at the ship's maximum jump range, or the ship jumps at least 28 light years, and a fuel scoop is fitted. When it can, the
 chapter ends at the beacon. When it cannot, the chapter has no beacon objective, keeps to a session's
 flying, and works toward a ship that can make the trip; the chapter writer is told the beacon, its
 distance, and whether the jump range, the missing fuel scoop or both stand in the way. The chapter's last line is said before

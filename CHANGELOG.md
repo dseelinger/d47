@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-A story's "fit out a ship that can reach the beacon" objective is now met when you arrive in the beacon's system, in any ship. Before, only a ship with the jump range the objective was written with counted, so a Commander who flew there in a ship with less range was left on that objective after scanning the beacon. The objective now also says the jump range it asks for.
+A story's "fit out a ship that can reach the beacon" objective is now met when you arrive in the beacon's system, in any ship. Before, only a ship with the jump range the objective was written with counted, so a Commander who flew there in a ship with less range was left on that objective after scanning the beacon. The objective now also says the jump range it asks for, and that range is never more than 28 light years: a farther beacon used to ask for its distance over 20 jumps, 34 light years for one 687 light years away.
 
 A story chapter written after the Guardian beacon scan no longer sends you back to a beacon. The chapter writer is now told plainly that the scan has happened and the cores are aboard, so a chapter that follows one working toward the beacon starts after the scan instead of telling the trip again.
 

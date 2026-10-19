@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Stories;
 
 /// <summary>
 /// An act-one chapter ends at the beacon only when the ship the Commander is in can reach it: a fleet carrier, or
-/// twenty jumps or fewer with a fuel scoop. Otherwise the chapter works toward a ship that can.
+/// twenty jumps or fewer with a fuel scoop, never asking for more than 28 light years. Otherwise the chapter works toward a ship that can.
 /// </summary>
 public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 {
@@ -37,6 +37,23 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
     [Fact]
     public void ThirtyFiveLightYearsAndAScoopReach686() =>
         Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true).Ship, carrier: false).InReach);
+
+    [Fact]
+    public void TwentyEightLightYearsAndAScoopReach686() =>
+        Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(28, scoop: true).Ship, carrier: false).InReach);
+
+    [Fact]
+    public void JustUnderTwentyEightLightYearsDoesNotReach686AndSaysWhatTheTripNeeds()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(27.9, scoop: true).Ship, carrier: false);
+
+        Assert.False(reach.InReach);
+        Assert.Contains("jump range of 27.9 light years is under the 28.0 the trip needs", reach.Why);
+    }
+
+    [Fact]
+    public void ANearerBeaconAsksForLessThanTwentyEight() =>
+        Assert.Equal(20, BeaconReach.RangeNeeded(400), 3);
 
     [Fact]
     public void FortySevenLightYearsAndAScoopReach584() =>
