@@ -385,7 +385,7 @@ public sealed class AdventureGenerator(
 
         if (ask.Story is null && Barred?.Invoke() is { Count: > 0 } barred)
         {
-            ask = ask with { Barred = barred };
+            ask = ask with { Barred = [.. (ask.Barred ?? []).Union(barred)] };
         }
 
         if (Blocked() is { } blocked)
