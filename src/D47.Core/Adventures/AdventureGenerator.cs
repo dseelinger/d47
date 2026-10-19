@@ -1686,6 +1686,21 @@ public sealed class AdventureGenerator(
         AppendMissions(text, facts);
     }
 
+    /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be.</summary>
+    private static void AppendBand(StringBuilder text, AdventureAsk ask, Facts facts)
+    {
+        if (ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } position)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            $"The Commander is {position.DistanceTo(StarPosition.Origin).ToString("0", CultureInfo.InvariantCulture)} light years from Sol, outside the bubble. "
+            + $"The chapter's last stop, the system of its last place objective, must be between {band.Min.ToString("0", CultureInfo.InvariantCulture)} "
+            + $"and {band.Max.ToString("0", CultureInfo.InvariantCulture)} light years from Sol, so the story works its way back toward populated space.");
+    }
+
     /// <summary>Who may speak a story chapter's lines, and how the ship's lines are read while a stock core is aboard.</summary>
     private static void AppendSpeakers(StringBuilder text, AdventureStory story)
     {
@@ -1985,6 +2000,8 @@ public sealed class AdventureGenerator(
         {
             AppendStory(text, story, facts);
         }
+
+        AppendBand(text, ask, facts);
 
         if (ask.Chapter is { } chapter && !IsDrawn(ask.Story))
         {
@@ -2911,6 +2928,12 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal(notCloser, lastPlaced is { } placedLast ? [placedLast] : []));
         }
 
+        if (ChapterBand.Of(facts.Position, ask) is { } band
+            && await OutsideBandAsync(lastPlaced is null ? null : previousSystem, facts.Position!.Value.DistanceTo(StarPosition.Origin), band, resolver, cancellationToken).ConfigureAwait(false) is { } offBand)
+        {
+            refusals.Add(new Refusal(offBand, lastPlaced is { } placedEnd ? [placedEnd] : []));
+        }
+
         if (ask.Story?.Beacon is { } last && (beats.Count == 0 || beats[^1].Kind != TriggerKind.Beacon))
         {
             refusals.Add(new Refusal($"The last objective must be \"beacon\", where the Commander scans the Guardian beacon in {last.System}.", beats.Count > 0 ? [beats.Count - 1] : []));
@@ -3070,6 +3093,32 @@ public sealed class AdventureGenerator(
         return end >= start
             ? $"The chapter starts {start:0} light years from the finale's destination in {destination.System} and its last stop is {end:0} light years from it; "
               + "its last stop must be closer to the destination than where it starts."
+            : null;
+    }
+
+    /// <summary>The refusal for a chapter whose last stop is outside <paramref name="band"/> light years from Sol, or null.</summary>
+    private static async Task<string?> OutsideBandAsync(
+        string? lastStop, double start, ChapterBand.Range band, AdventureResolver resolver, CancellationToken cancellationToken)
+    {
+        double? end;
+
+        try
+        {
+            end = lastStop is null ? start : await resolver.DistanceAsync(lastStop, "Sol", cancellationToken).ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return $"The chapter's last stop could not be measured against Sol: {ex.Message}";
+        }
+
+        if (end is not { } measured)
+        {
+            return "The chapter's last stop could not be measured against Sol.";
+        }
+
+        return measured < band.Min || measured > band.Max
+            ? $"The chapter starts {start:0} light years from Sol and its last stop is {measured:0} light years from Sol; "
+              + $"its last stop must be between {band.Min:0} and {band.Max:0} light years from Sol."
             : null;
     }
 

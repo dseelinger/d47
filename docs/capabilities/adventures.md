@@ -720,6 +720,15 @@ reach from the destination must end closer to it than it started. The last final
 is a land objective on the destination, and that one objective may be farther than the reach. A 3-day story's one
 finale chapter both names the destination and lands on it.
 
+**Outside the bubble.** A story chapter that starts more than 500 and at most 1,000 light years from Sol
+(`StarPosition.Origin`) must end 100 to 300 light years nearer Sol than it started, so a Commander left far out by the
+beacon scan works back over several chapters. The writer is told how far you are from Sol and the band its last stop
+must fall in: a chapter starting 588 light years out has a last stop between 288 and 488. The last stop is the system
+of the chapter's last place objective, and a chapter with none counts as ending where it started. A draft outside the
+band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
+rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
+that starts within 500 or beyond 1,000 light years. The chapter also keeps one of its two place objectives for this stop.
+
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
 `Statistics` show you have done least, and it is the first of the chapter's drawn activities:
 

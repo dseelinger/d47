@@ -1979,7 +1979,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && ChapterBand.Of(game?.Location.StarPos) is not null ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach) is { Count: > 0 } drawn

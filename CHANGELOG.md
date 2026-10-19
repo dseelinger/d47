@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter that starts more than 500 and up to 1,000 light years from Sol now ends 100 to 300 light years nearer Sol than it started, so the story works you back toward populated space over several chapters. The chapter writer is told your distance from Sol and the range its last stop must fall in, and a draft outside it is written again. This needs Galaxy search to measure the last stop.
+
 A story chapter after the beacon scan is no longer given bounties, bonds, conflicts, selling, data sales, rescues or missions when no station is within its reach of where you are. This needs Galaxy search; with it off, or when it cannot answer, the activities are drawn as before.
 
 The Stories settings have eight new ratings under **What you like doing**: Combat, Trading, Mining, Exploration, Exobiology, Passengers, Search and rescue and Crime. Each is from 1 to 100, starts at 50, and is kept for the Commander who is flying. Say "set my mining rating to 80" or "rate exploration 30" to set one; a number outside 1 to 100 is refused, and the model cannot set them. They weigh which activities a story chapter after the beacon scan is built around. The Crime rating will have no effect until Frontier's Law and Disorder update.
