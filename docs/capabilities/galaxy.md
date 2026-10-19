@@ -145,8 +145,11 @@ on, three things leave this machine:
   system" cannot be asked without saying where from
 - the letters you type into a field that suggests system or faction names, such as the one on
   **Search › System**, sent as you type once there are three of them
+- when you ask for a home system suggestion: the names of systems you have claimed for colonisation,
+  your pledged Power, your squadron's minor faction, and your position for a search within 200
+  light years
 
-No key, no identifier, nothing else from your journal. The Privacy section computes this same
+No key and no identifier goes with any of it. The Privacy section computes this same
 list rather than repeating it by hand, so it cannot go stale.
 
 Turning it on takes effect immediately. There is no restart.
@@ -633,6 +636,32 @@ the setting being off or nothing read yet:
 ```
 
 Under an hour, the answer gives minutes instead of hours.
+
+#### `suggest_home_system`
+
+Suggest up to three systems the Commander could make their home, each with its reason and its two
+strongest careers. It takes no parameters. It reads the Commander's claimed systems, pledged Power,
+stored squadron faction and career ratings, searches around their position, and ranks what it finds.
+It does not set the home system; the Commander asks for that after hearing the suggestion.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+The answer names which case applied, in this order:
+
+1. **Architect**: the Commander has deployed a beacon in a system they claimed. Those systems replace every other candidate.
+2. **Squadron and power**: systems the squadron's minor faction controls and strongholds of the pledged Power, those in both first.
+3. **Squadron**: systems the squadron's minor faction controls.
+4. **Power**: strongholds of the pledged Power, and its capital.
+5. **Interests**: populated systems within 200 light years, chosen by the careers the Commander rates highest.
+
+When the Commander is in a squadron with no stored minor faction, the answer says the squadron case
+was skipped so the model can ask for the faction.
+
+```csharp
+"Suggesting a home system needs galaxy search, which is switched off. The Commander can turn it on in settings."
+```
 
 #### `set_squadron_faction`
 

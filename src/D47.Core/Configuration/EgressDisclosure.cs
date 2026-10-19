@@ -223,7 +223,9 @@ public static class EgressDisclosure
                 + "that system's address to spansh.co.uk, to read its record. "
                 + "Typing three or more letters into a field that suggests system or faction names sends those letters "
                 + "to spansh.co.uk as you type. "
-                + "No key, no identifier, and nothing else from your journal.",
+                + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "
+                + "your pledged Power, your squadron's minor faction and your position for a search within 200 light years. "
+                + "No key and no identifier goes with any of it.",
                 Active: true,
                 Summary: "Sends the system name and search filters you ask about, and your location "
                     + "when a question is relative to you.")

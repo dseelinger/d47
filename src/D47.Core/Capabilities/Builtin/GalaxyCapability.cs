@@ -792,6 +792,16 @@ public static class GalaxyCapability
             },
             new ToolDefinition
             {
+                Name = SuggestHomeSystemTool,
+                Description =
+                    "Suggest up to three systems the Commander could make their home, each with the reason and its two "
+                    + "strongest careers. Say the answer; setting the home system is the Commander's own request.",
+                Parameters = [],
+                Handler = (_, cancellationToken) =>
+                    SuggestHomeSystemAsync(galaxy, currentSystem, settings, gameState, squadronFactions, cancellationToken),
+            },
+            new ToolDefinition
+            {
                 Name = SetSquadronFactionTool,
                 Description =
                     "Store the minor faction the Commander says their squadron backs, after checking the galaxy "
@@ -904,6 +914,8 @@ public static class GalaxyCapability
 
     public const string SetSquadronFactionTool = "set_squadron_faction";
 
+    public const string SuggestHomeSystemTool = "suggest_home_system";
+
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
 
@@ -982,6 +994,109 @@ public static class GalaxyCapability
             ? $"{filter.Description} One or more, comma-separated: {string.Join(", ", filter.Choices)}."
             : filter.Description,
         AllowedValues = filter.Kind == GalaxyFilterKind.Choice && !filter.Several ? filter.Choices : [],
+    };
+
+    private static async Task<ToolResult> SuggestHomeSystemAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        Func<Journal.CommanderGameState?>? gameState,
+        SquadronFactions? squadronFactions,
+        CancellationToken cancellationToken)
+    {
+        if (galaxy is null || !settings.Current.Knowledge.GalaxySearch)
+        {
+            return ToolResult.Error(
+                "Suggesting a home system needs galaxy search, which is switched off. The Commander can turn it on in settings.");
+        }
+
+        if (currentSystem() is not { Length: > 0 } here)
+        {
+            return ToolResult.Error("I don't know where the Commander is right now, so I can't search around them.");
+        }
+
+        var state = gameState?.Invoke();
+        var rating = settings.Current.CareerRatings;
+        var power = state?.Pledge.Power is { Length: > 0 } pledged && PowerCapitals.TryGet(pledged, out _) ? pledged : null;
+        var member = state?.Squadron.IsMember == true;
+        var faction = member && state is not null ? squadronFactions?.For(state.Identity.FrontierId, state.Squadron) : null;
+        var claims = state?.Colonisation.Claims ?? [];
+
+        var request = new HomeSystemRequest
+        {
+            CurrentSystem = here,
+            Weights = Stories.CareerWeights.From(
+                new Dictionary<Stories.Career, int>
+                {
+                    [Stories.Career.Combat] = rating.Combat,
+                    [Stories.Career.Trading] = rating.Trading,
+                    [Stories.Career.Mining] = rating.Mining,
+                    [Stories.Career.Exploration] = rating.Exploration,
+                    [Stories.Career.Exobiology] = rating.Exobiology,
+                    [Stories.Career.Passengers] = rating.Passengers,
+                    [Stories.Career.SearchAndRescue] = rating.SearchAndRescue,
+                    [Stories.Career.Crime] = rating.Crime,
+                },
+                state?.Statistics ?? Journal.CareerStatistics.Empty),
+            Claims = claims,
+            Power = power,
+            SquadronFaction = faction,
+        };
+
+        try
+        {
+            var suggestions = await new HomeSystemGatherer(galaxy).SuggestAsync(request, cancellationToken).ConfigureAwait(false);
+
+            var architect = claims.Any(claim => claim.BeaconDeployedAt is not null);
+            var skipped = member && string.IsNullOrWhiteSpace(faction) && !architect;
+
+            var said = new StringBuilder();
+            said.Append(CultureInfo.InvariantCulture, $"Case: {(architect ? "architect" : (faction, power) switch
+            {
+                ({ }, { }) => "squadron and power",
+                ({ }, null) => "squadron",
+                (null, { }) => "power",
+                _ => "interests",
+            })}. ");
+
+            if (skipped)
+            {
+                said.Append("The squadron case was skipped because no minor faction is stored for the squadron; ask the Commander for it. ");
+            }
+
+            if (suggestions.Count == 0)
+            {
+                said.Append("No system qualified.");
+                return ToolResult.Ok(said.ToString().TrimEnd());
+            }
+
+            foreach (var suggestion in suggestions)
+            {
+                said.Append(CultureInfo.InvariantCulture, $"{suggestion.Name} ({ReasonText(suggestion.Reason)}");
+
+                foreach (var strength in suggestion.Strengths)
+                {
+                    said.Append(CultureInfo.InvariantCulture, $"; {strength.Career}: {strength.Feature}");
+                }
+
+                said.Append("). ");
+            }
+
+            return ToolResult.Ok(said.ToString().TrimEnd());
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            return ToolResult.Error(ex.Message);
+        }
+    }
+
+    private static string ReasonText(HomeSystemReason reason) => reason switch
+    {
+        HomeSystemReason.Architect => "claimed by the Commander",
+        HomeSystemReason.SquadronAndPower => "squadron and power",
+        HomeSystemReason.Squadron => "squadron",
+        HomeSystemReason.Power => "pledged power",
+        _ => "suits their interests",
     };
 
     private static async Task<ToolResult> SetSquadronFactionAsync(

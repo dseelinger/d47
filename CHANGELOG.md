@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ask "suggest a home system" and D47 names up to three systems you could settle, each with the reason and its two strongest careers. Systems you have claimed come first; otherwise it uses your squadron's minor faction and your pledged Power where you have them, and your career ratings where you have neither. If you are in a squadron with no minor faction stored, it says so and asks for one. It does not set your home system; ask for that after hearing the suggestion. This needs Galaxy search, and the Privacy and egress section now lists the claimed system names, pledged Power, squadron faction and position it sends.
+
 Say "my squadron's faction is" and a minor faction's name, or "our squadron's minor faction is" and a name, to tell D47 which minor faction your squadron backs. D47 asks the galaxy service whether a faction by that name exists and stores it only if one does; with Galaxy search off it says the check needs Galaxy search. The name is kept for the Commander who is flying and for the squadron they are in, so leaving or changing squadron leaves no faction until you name one for the new squadron. The model cannot set it.
 
 Story chapters and short stories can now ask you to pledge to a PowerPlay Power, and to reach a PowerPlay rank with the Power you are pledged to. A pledge is met by a `PowerplayJoin` event and a rank by a `PowerplayRank` event of at least the asked rank. A pledge is asked only of a Commander known to be unpledged, and a rank only of one who is pledged and below that rank.
