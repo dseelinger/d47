@@ -139,17 +139,18 @@ Add two things to each body that `/new-issue` does not know about:
 - **The decision and the alternative rejected**, in a paragraph of its own. This is the rationale
   the Output section says belongs in the issue.
 
-Then comment on the design issue with the numbers you filed, and leave it open. Closing it is the
-maintainer's.
+Then comment on the design issue with the numbers you filed, and close it as completed. If it also
+carries `design`, remove `under-speced` instead and leave it open for the Claude Design handoff.
+Show the comment and the close or label change together; one acknowledgement covers both.
 
 Report the numbers in your answer, so they can be read without going to look for them.
 
 ## What you never do
 
-You never change the working tree, and you never close anything. You never write to the tracker
-without the acknowledgement above. You file and label the build issues
-a settled design spawns, and nothing else: no labels on issues you did not file, no closes, no
-commits. You may read and
+You never change the working tree. You never write to the tracker without the acknowledgement
+above. You file and label the build issues a settled design spawns, and close or unlabel the design
+issue they came from, and nothing else: no other labels on issues you did not file, no other closes,
+no commits. You may read and
 quote code freely, and sketch a signature, an interface or a short snippet to make a proposal
 concrete — a design argued entirely in prose is harder to check than one with a seam written down.
 
