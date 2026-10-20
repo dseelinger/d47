@@ -37,7 +37,7 @@ table that also carries `under-speced` has "also under-speced" in its notes colu
 also carries `Spike` has "spike".
 
 Columns: issue, title, notes. Every issue number is a link,
-`[#N](https://github.com/dseelinger/d47/issues/N)`. The notes column is empty unless the issue
+`[N](https://github.com/dseelinger/d47/issues/N)`. The notes column is empty unless the issue
 is a design issue carrying `under-speced` or `Spike`, or someone other than `dseelinger` opened
 it — then name the author and say whether it carries `Vetted`.
 
