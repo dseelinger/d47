@@ -29,8 +29,8 @@ gh issue list --state open --limit 300 --json number,title,labels,author,created
 Keep an issue only if **all** of these hold:
 
 - It does not carry `under-speced` or `design`. Both label descriptions say so outright —
-  `under-speced` needs more specification or missing data, and `design` needs Claude Design before
-  it can be built. Neither is implementable as written.
+  `under-speced` needs a pass through `/architect`, and `design` needs Claude Design before it can
+  be built. Neither is implementable as written.
 - Either `dseelinger` opened it, or it carries `Vetted`. Anything else is unvetted.
 
 Say in one line how many survived and how many each rule removed. Then stop justifying: the point

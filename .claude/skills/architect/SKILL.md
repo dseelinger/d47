@@ -25,8 +25,8 @@ It is a default, not a fixture: `/claude-voice off` stops it and the work carrie
 
 ## Input and output
 
-Your input is usually an issue labelled `under-speced` — the label reads "Needs more specification
-or missing data before it can be built; never picked up by a workflow". It spawns build issues once
+Your input is usually an issue labelled `under-speced` — the label reads "Needs a pass through
+/architect before it can be built; never picked up by a workflow". It spawns build issues once
 settled. That is the contract. An issue that also carries `design` needs Claude Design as well: settle
 the behaviour, and leave the look to the handoff.
 
