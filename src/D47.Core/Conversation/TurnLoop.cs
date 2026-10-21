@@ -1504,6 +1504,7 @@ public sealed class TurnLoop(
                 (var tool, var toolArguments) = logged switch
                 {
                     CaptainsLog.CaptainsLogReading.DeleteLast => (Capabilities.Builtin.CaptainsLogCapability.DeleteTool, new Dictionary<string, string>(StringComparer.Ordinal)),
+                    CaptainsLog.CaptainsLogReading.ExportAll => (Capabilities.Builtin.CaptainsLogCapability.ExportTool, new Dictionary<string, string>(StringComparer.Ordinal)),
                     CaptainsLog.CaptainsLogReading.Count => (Capabilities.Builtin.CaptainsLogCapability.FindTool, new Dictionary<string, string>(StringComparer.Ordinal) { ["count_only"] = "true" }),
                     CaptainsLog.CaptainsLogReading.Find find => (Capabilities.Builtin.CaptainsLogCapability.FindTool, FindArguments(find)),
                     _ => throw new InvalidOperationException("Unhandled captain's log reading."),
@@ -1518,6 +1519,10 @@ public sealed class TurnLoop(
                     case CaptainsLog.CaptainsLogReading.Find:
                         asked = Capabilities.Builtin.CaptainsLogCapability.AskedForRead(answer);
                         recorded = $"{char.ToUpperInvariant(asked[0])}{asked[1..]}.";
+                        break;
+                    case CaptainsLog.CaptainsLogReading.ExportAll:
+                        asked = "export captain's log entries";
+                        recorded = answer.IsError ? answer.Spoken : "Exported the captain's log entries.";
                         break;
                     case CaptainsLog.CaptainsLogReading.Count:
                         asked = "count captain's log entries";

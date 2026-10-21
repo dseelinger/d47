@@ -87,6 +87,15 @@ calendar and its system. More than three ends with "and four more on the Captain
 "Captain's log entries from Sol" is a search, not an entry. The model cannot read entries, so
 "what did I note about Colonia" does not work; "read log entries about Colonia" does.
 
+### Exporting them
+
+"Export my log entries" writes every entry for the Commander flying, oldest first, to
+`data\captains-log\<Frontier id>\captains-log-<yyyy-MM-dd>.md`. A second export the same day is
+written as `-2`, then `-3`, and never over the first. Each entry is a heading with its date in the
+game's calendar, a line with whichever of system, body, station, ship and position were known, and
+the text. D47 says how many entries and where the file is. With no entries nothing is written and
+D47 says so.
+
 ### Where the words go
 
 D47 sends entries nowhere. The words pass through the speech recognition provider you have
@@ -124,6 +133,15 @@ by the read phrases above.
 
 Delete the Commander's newest captain's log entry. Reached only by saying "delete my last log
 entry".
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `export_log_entries`
+
+Write every captain's log entry of the Commander to a Markdown file, oldest first, and say how many
+and where. Reached only by saying "export my log entries".
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

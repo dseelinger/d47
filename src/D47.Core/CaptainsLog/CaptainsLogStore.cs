@@ -101,6 +101,41 @@ public sealed class CaptainsLogStore(string path, IFileSystem files, ILogger<Cap
         return true;
     }
 
+    /// <summary>Writes this Commander's entries to <c>captains-log\&lt;Frontier id&gt;\captains-log-&lt;date&gt;.md</c> beside the store, never over an earlier export.</summary>
+    public CaptainsLogExported Export(string frontierId, DateTimeOffset now)
+    {
+        var entries = For(frontierId);
+
+        if (entries.Count == 0)
+        {
+            return new CaptainsLogExported(0, null);
+        }
+
+        var id = new string([.. frontierId.Where(char.IsAsciiLetterOrDigit)]);
+        var folder = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path) ?? string.Empty, "captains-log", id);
+        var stem = $"captains-log-{now.ToUniversalTime():yyyy-MM-dd}";
+        var target = System.IO.Path.Combine(folder, $"{stem}.md");
+
+        for (var suffix = 2; files.Stat(target) is not null && suffix < 1000; suffix++)
+        {
+            target = System.IO.Path.Combine(folder, $"{stem}-{suffix.ToString(System.Globalization.CultureInfo.InvariantCulture)}.md");
+        }
+
+        try
+        {
+            files.WriteText(target, CaptainsLogExport.Render(entries));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not write {Path}", target);
+            return new CaptainsLogExported(entries.Count, null);
+        }
+
+        logger.LogInformation("Exported {Count} captain's log entries to {Path}", entries.Count, target);
+
+        return new CaptainsLogExported(entries.Count, target);
+    }
+
     /// <summary>Deletes an entry. False when it could not be written or was not there.</summary>
     public bool Remove(string frontierId, string entryId)
     {

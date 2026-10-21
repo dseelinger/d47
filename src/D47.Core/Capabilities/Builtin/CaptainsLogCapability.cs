@@ -18,6 +18,8 @@ public static partial class CaptainsLogCapability
 
     public const string DeleteTool = "delete_log_entry";
 
+    public const string ExportTool = "export_log_entries";
+
     /// <summary>The most entries read aloud in one answer.</summary>
     public const int ReadAloud = 3;
 
@@ -110,6 +112,17 @@ public static partial class CaptainsLogCapability
                 Protected = true,
                 Parameters = [],
                 Handler = (_, _) => Task.FromResult(DeleteLast(store, frontierId())),
+            },
+            new ToolDefinition
+            {
+                Name = ExportTool,
+                Description =
+                    "Write every captain's log entry of the Commander to a Markdown file, oldest first, and say how "
+                    + "many and where. The Commander's own act: reached only by saying \"export my log entries\", "
+                    + "not offered to the model, and refused if it asks.",
+                Protected = true,
+                Parameters = [],
+                Handler = (_, _) => Task.FromResult(Export(store, frontierId(), now())),
             },
         ],
     };
@@ -233,6 +246,30 @@ public static partial class CaptainsLogCapability
         }
 
         return ToolResult.Ok(string.Join('\n', lines));
+    }
+
+    private static ToolResult Export(CaptainsLogStore? store, string frontierId, DateTimeOffset now)
+    {
+        if (store is null)
+        {
+            return ToolResult.Error("Nothing here keeps a captain's log.");
+        }
+
+        if (string.IsNullOrWhiteSpace(frontierId))
+        {
+            return ToolResult.Error(NoCommander);
+        }
+
+        var exported = store.Export(frontierId, now);
+
+        if (exported.Count == 0)
+        {
+            return ToolResult.Ok("You have no log entries to export.");
+        }
+
+        return exported.Path is null
+            ? ToolResult.Error("I couldn't write the export. Check that the data folder can be written to.")
+            : ToolResult.Ok($"Exported {(exported.Count == 1 ? "one log entry" : $"{Spell(exported.Count)} log entries")} to {exported.Path}.");
     }
 
     private static ToolResult DeleteLast(CaptainsLogStore? store, string frontierId)

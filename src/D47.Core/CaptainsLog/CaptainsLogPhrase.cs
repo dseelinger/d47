@@ -24,6 +24,9 @@ public abstract record CaptainsLogReading
 
     /// <summary>The newest entry, to delete.</summary>
     public sealed record DeleteLast : CaptainsLogReading;
+
+    /// <summary>Every entry, to write to a file.</summary>
+    public sealed record ExportAll : CaptainsLogReading;
 }
 
 /// <summary>The model-free grammar for "captain's log, …" and "log entry, …".</summary>
@@ -64,6 +67,11 @@ public static partial class CaptainsLogPhrase
             return new CaptainsLogReading.DeleteLast();
         }
 
+        if (ExportPattern().IsMatch(plain))
+        {
+            return new CaptainsLogReading.ExportAll();
+        }
+
         if (CountPattern().IsMatch(plain))
         {
             return new CaptainsLogReading.Count();
@@ -99,6 +107,9 @@ public static partial class CaptainsLogPhrase
 
     [GeneratedRegex(@"^(?:delete|remove) (?:my|the) last " + Entries, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex DeleteLastPattern();
+
+    [GeneratedRegex(@"^export (?:my|the|all my|all the) " + Entries + "$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ExportPattern();
 
     [GeneratedRegex(@"^how many " + Entries, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex CountPattern();
