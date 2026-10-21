@@ -19,6 +19,13 @@ public sealed class RoutePlanResultPage : UserControl
     private readonly RoutePlanKind _kind;
     private readonly StackPanel _stack = new() { Spacing = 2 };
 
+    private readonly RouteMapView _map = new()
+    {
+        IsVisible = false,
+        VerticalAlignment = VerticalAlignment.Top,
+        Margin = new Thickness(14, 14, 0, 0),
+    };
+
     private StoredRoutePlan? _planSeen;
     private string? _offDutySeen;
 
@@ -35,13 +42,19 @@ public sealed class RoutePlanResultPage : UserControl
         _here = here;
         _kind = plan.Kind;
 
-        Content = new ScrollViewer
+        var list = new ScrollViewer
         {
             Padding = new Thickness(14),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             Content = _stack,
         };
+
+        var body = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star)] };
+        Grid.SetColumn(list, 1);
+        body.Children.Add(_map);
+        body.Children.Add(list);
+        Content = body;
 
         Draw(plan);
     }
@@ -75,6 +88,16 @@ public sealed class RoutePlanResultPage : UserControl
         var here = offDuty is null ? _here?.Invoke() : null;
 
         _stack.Children.Clear();
+        _map.IsVisible = false;
+
+        if (offDuty is null
+            && plan.Carrier is { } route
+            && RouteMapLayout.For(RouteMapStop.From(route), plan.Reached ?? -1, null) is { } layout)
+        {
+            _map.Show(layout, null);
+            _map.IsVisible = true;
+        }
+
         _stack.Children.Add(RoutingKit.Title(Heading(plan), sentence: true).Row);
 
         var provenance = RoutingKit.Prose(Provenance(plan));

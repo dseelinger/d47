@@ -7,7 +7,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The Progress page's route map: a <see cref="RouteMapLayout"/> drawn in a square with a key under it (#1396).</summary>
+/// <summary>A route map: a <see cref="RouteMapLayout"/> drawn in a square with a key under it (#1396).</summary>
 /// <remarks>Static: no hover, click, zoom or pan. Every ink is a theme key resolved when drawn.</remarks>
 public sealed class RouteMapView : Control
 {
@@ -30,9 +30,10 @@ public sealed class RouteMapView : Control
         Neutron,
         WhiteDwarf,
         NoFuel,
+        Restock,
     }
 
-    private static readonly Star[] KeyOrder = [Star.Neutron, Star.WhiteDwarf, Star.BlackHole, Star.NoFuel];
+    private static readonly Star[] KeyOrder = [Star.Neutron, Star.WhiteDwarf, Star.BlackHole, Star.NoFuel, Star.Restock];
 
     private RouteMapLayout? _layout;
     private string? _here;
@@ -71,6 +72,7 @@ public sealed class RouteMapView : Control
         : marks.HasFlag(RouteStopMarks.Neutron) ? Star.Neutron
         : marks.HasFlag(RouteStopMarks.WhiteDwarf) ? Star.WhiteDwarf
         : marks.HasFlag(RouteStopMarks.NotScoopable) ? Star.NoFuel
+        : marks.HasFlag(RouteStopMarks.Restock) ? Star.Restock
         : null;
 
     public override void Render(DrawingContext context)
@@ -200,6 +202,12 @@ public sealed class RouteMapView : Control
                 context.DrawRectangle(white, null, new Rect(-1.5, -1.5, 3, 3));
                 break;
 
+            case Star.Restock:
+                context.DrawEllipse(bg, null, new Point(0, 0), 7, 7);
+                context.DrawEllipse(null, new Pen(Brush(ThemeManager.BlueKey), 2), new Point(0, 0), 5, 5);
+                context.DrawEllipse(Brush(ThemeManager.BlueKey), null, new Point(0, 0), 1.5, 1.5);
+                break;
+
             default:
                 context.DrawGeometry(bg, null, Polygon((0, -7.5), (7.5, 6), (-7.5, 6)));
                 context.DrawGeometry(Brush(ThemeManager.WarnKey), null, Polygon((0, -5.5), (5.5, 4.5), (-5.5, 4.5)));
@@ -306,6 +314,7 @@ public sealed class RouteMapView : Control
         Star.Neutron => "NEUTRON",
         Star.WhiteDwarf => "WHITE DWARF",
         Star.BlackHole => "BLACK HOLE",
+        Star.Restock => "OUT OF TRITIUM",
         _ => "NO FUEL",
     };
 
