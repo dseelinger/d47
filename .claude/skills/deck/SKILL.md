@@ -17,6 +17,7 @@ Run from the repo root, with the Bash tool:
 | *(none)* | `cmd.exe //c 'tools\deck\spawn.cmd' Claude claude.cmd` |
 | `triage` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd` |
 | `triage lanes` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd lanes` |
+| `triage overnight` | `cmd.exe //c 'tools\deck\spawn.cmd' Triage triage.cmd overnight` |
 | `architect` | `cmd.exe //c 'tools\deck\spawn.cmd' Architect architect.cmd` |
 | `issue <N>` or `issue <lane>` | `cmd.exe //c 'tools\deck\spawn.cmd' Issue issue-worker.cmd <N>` |
 | `pre-release` | `cmd.exe //c 'tools\deck\spawn.cmd' Pre-release pre-release.cmd` |

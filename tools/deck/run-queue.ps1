@@ -4,7 +4,8 @@
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\deck\run-queue.ps1 -From 478 -BudgetUsd 15
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\deck\run-queue.ps1 -StopOnFailure
 #
-# Run it from a plain console, not from inside a Claude session.
+# Run /triage overnight first, then start this from a plain console, not from inside a Claude
+# session.
 #
 # Each session runs /issue-worker on the model, effort and advisor triage chose, with manual
 # testing, the voice and every question to the maintainer switched off. Issues that are closed on
@@ -52,6 +53,9 @@ function Report([string]$line) {
     Add-Content -Path $summary -Value $line
 }
 Report "Queue of $($numbers.Count), triage generated $($state.generated). Logs in $logs"
+if ($state.mode -ne 'overnight') {
+    Report 'This grid is from a plain /triage, so it may hold issues that need the maintainer. /triage overnight leaves them out.'
+}
 
 # True when a one-line session on this model answers OK without an error.
 function Test-Capacity([string]$model) {

@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. Reports only; files, labels and starts nothing. Use when the user invokes /triage or /triage lanes, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. With "overnight", leaves out every issue that needs the maintainer at the keyboard, so the grid is the unattended queue tools/deck/run-queue.ps1 works through. Reports only; files, labels and starts nothing. Use when the user invokes /triage, /triage lanes or /triage overnight, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes", "triage for the overnight queue".
 ---
 
 # Triage
@@ -55,7 +55,8 @@ The titles in this repository state the defect and usually its cause — "the ro
 DrillView that has not drawn its panes yet" is a diagnosis, not a summary. Title and labels are
 enough to rank most issues.
 
-Fetch bodies only for the issues going into the first release group. Reading 36 issue bodies to
+Fetch bodies only for the issues going into the first release group, except in lanes and
+overnight modes, which say otherwise below. Reading 36 issue bodies to
 produce a ranking that only acts on five is waste the maintainer pays for. In lanes mode every
 eligible issue goes into a lane, so fetch every eligible body: the lane split depends on the files
 each one names. Fetch them in one call, save them to the scratchpad, and extract the file paths,
@@ -168,7 +169,7 @@ is a triage the maintainer learns to skip, and then the one that mattered goes u
 ## Lanes
 
 Only when invoked as `/triage lanes`, or `/triage lanes <N>` to set the number of lanes. A plain
-`/triage` produces no lanes and writes none.
+`/triage` or `/triage overnight` produces no lanes and writes none.
 
 A lane is a list of issues worked in order, one session per issue on that issue's own model and
 effort, each in its own worktree and merged into `main` when it lands (`/issue-worker` defines
@@ -242,7 +243,42 @@ with no `Fixes #N` commit.
 A later triage run keeps a paused issue first in its lane. Find paused issues with
 `git worktree list`: a worktree under `.claude/worktrees/<N>` whose issue is still open.
 
-### The main checkout
+### Overnight
+
+Only when invoked as `/triage overnight`. It produces no lanes; `overnight` and `lanes` do not
+combine.
+
+The grid is the queue `tools/deck/run-queue.ps1` works through unattended, one headless session per
+issue, while the maintainer is asleep. The order is the same as a plain `/triage`. The difference is
+what goes in: an issue a session cannot finish without the maintainer is left out of the queue and
+listed in **Not now** with what it needs from him.
+
+Leave an eligible issue out when any of these holds:
+
+- It carries `needs-repro`, `needs-gameplay`, `Spike` or `tabled`. A spike ends in a finding for the
+  maintainer to read, not a `Fixes` commit, and a tabled issue is not worked until he says so.
+- The body leaves a choice open for the maintainer: options with no pick, "Doug to decide", an open
+  question addressed to him.
+- Building or diagnosing it needs something only he can do or supply: playing the game, a device or
+  the headset, a journal from his own play, a screenshot or recording, a key or file he holds, or a
+  request he makes to someone else.
+- It needs a step that leaves this checkout: a push, a GitHub write, a release, the installed app's
+  `data\` folder, or files outside the repository.
+- It needs an issue left out under these rules, directly or through the needs chain. Name that issue
+  as the reason.
+
+Manual testing afterwards is not a reason to leave an issue out. A fix that needs the maintainer to
+check the panel, the overlay, speech or the game once it has landed still goes in the queue; the
+session commits it and he tests it in the morning. A `vr` issue goes in unless the body says the fix
+itself needs the headset.
+
+Every eligible issue is judged, so fetch every eligible body, as lanes mode does. Save them to the
+scratchpad in one call and scan them with a script for the signals above: the open-choice phrases,
+the devices and the game, "screenshot", "journal", "Discord", "release", "push". Read a body in full
+only where the scan flags it, and keep the issue in the queue when a flag turns out to be about
+testing afterwards.
+
+## The main checkout
 
 Every lane merges into the main checkout's working tree, so it must have no uncommitted changes to
 tracked files:
@@ -293,6 +329,11 @@ Markdown, and short. Three parts:
    only what the lanes cannot hold: an issue waiting on an ineligible one, and a tracking issue.
    Omit the section when there is nothing.
 
+   In overnight mode it also holds every issue left out under **Overnight**, as a list with one
+   issue per line: the linked number, the shortened title, and what it needs from the maintainer.
+
+   - [#1232](https://github.com/dseelinger/d47/issues/1232) Proton on the Steam Deck — a spike, and needs the Deck
+
 No launch lines. The Stream Deck's Issue key starts a session from the grid below, with
 `/issue-worker` as its opening command, so the finish line that skill defines is in its first
 message. A pasted line would bypass the skill. Given a lane letter instead of an issue number, the
@@ -340,6 +381,9 @@ echo "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json"
 - `advisor`, `release` and `review` are optional; leave them out where the table's cell is blank.
 - In lanes mode, each laned issue also carries `"lane": "A"`, and the file gains a top-level
   `lanes` object: each lane's issue numbers in work order. A plain `/triage` writes neither.
+- In overnight mode, the file gains `"mode": "overnight"` at the top level, and the issues left out
+  under **Overnight** get no row. The queue works through the rows in the order they are written,
+  so write them in the table's order.
 
   ```json
   "lanes": {
