@@ -2862,6 +2862,7 @@ public sealed class AppHost : IDisposable
                 signalSightings: stores.SignalSightings,
                 signalIndex: signalIndexStore,
                 pickCommander: feed.Picks.Enqueue,
+                galNetArchive: () => late.Host?.GalNet?.Archive,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
                 screen: screenCapture,

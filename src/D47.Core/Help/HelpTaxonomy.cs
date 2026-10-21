@@ -252,7 +252,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Debrief",
                     "After a session, draft standing directions from what the Commander corrected, and change nothing until they take one.",
-                    "debrief"))),
+                    "debrief"),
+                HelpNode.Leaf(
+                    "GalNet",
+                    "Name the newest GalNet articles, search the ones kept on this PC and have one read aloud.",
+                    "galnet"))),
 
         HelpNode.Category(
             "Seeing what happened",

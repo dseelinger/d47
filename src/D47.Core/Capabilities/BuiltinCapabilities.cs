@@ -289,6 +289,9 @@ public static class BuiltinCapabilities
         // Hands a Commander pick to the tick thread, which writes game state.
         Action<Journal.CommanderIdentity>? pickCommander = null,
 
+        // The kept GalNet articles, once the watch that fills them is built.
+        Func<Knowledge.GalNetArchive?>? galNetArchive = null,
+
         // Carrier warnings that answer "noted" and the snoozes (#837).
         Callouts.StandingWarnings? standingWarnings = null,
 
@@ -508,6 +511,9 @@ public static class BuiltinCapabilities
             now ?? (() => DateTimeOffset.MinValue)),
         CommanderLogCapability.Create(commanderLog, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
         ScreenshotsCapability.Create(),
+        GalNetCapability.Create(
+            galNetArchive ?? (() => null),
+            () => settings.Current.Knowledge.GalNet),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+You can now ask about the GalNet articles kept on this PC. Say "what's on galnet", "galnet headlines" or "any galnet news" for the titles and in-game dates of the three newest. Say "read the latest galnet article", "read galnet" or "read the galnet article" and D47 reads the newest in full. The AI model can also search the articles by word, title matches ranking above body matches, and read any article by title; it is sent the full text of the three best matches and the titles of up to seven more, only when it asks. These work with the **GalNet news** setting off, from what is already kept. With nothing kept, D47 says so and, if the setting is off, where to turn it on.
+
 Your core now says the headlines of new GalNet articles as they arrive: "GalNet: Faulcon DeLacy Announces Anaconda Mk II.", or for several, "New on GalNet: …" with the three newest titles and, past three, a count. It never reads the article itself. It needs the **GalNet news** setting under Outside sources, and a new **GalNet headlines** setting turns the callout off. Articles that arrive while it is off are not said later.
 
 A new **GalNet news** setting under Outside sources, off by default, keeps a copy of GalNet on this PC. With it on, D47 asks Frontier's GalNet server (cms.zaonce.net) for the newest articles at startup and every hour while it runs, and the first time it reads back up to two years. Nothing about you goes with the request. The articles are kept in `data\galnet.json` and never deleted; turning the setting off stops the requests and keeps what is there. **Privacy and egress** lists GalNet news. Nothing reads the articles yet.

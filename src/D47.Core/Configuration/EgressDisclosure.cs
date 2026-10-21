@@ -367,14 +367,16 @@ public static class EgressDisclosure
                 GalNetHost,
                 "One request to Frontier's GalNet server, cms.zaonce.net, for the newest articles at startup and "
                 + "every hour while d47 runs, and for up to two years of older articles the first time. Nothing "
-                + "about you goes with it: no key, no Commander name and nothing from your journal.",
+                + "about you goes with it: no key, no Commander name and nothing from your journal. When your "
+                + "language model searches or reads the kept articles, their text goes to it.",
                 Active: true,
                 Summary: "One request for the newest GalNet articles at startup and every hour, and up to two "
                     + "years of older ones the first time. Nothing about you goes with it.")
             : EgressEntry.Silent(
                 GalNet,
                 NameOf(GalNet),
-                "GalNet news is off, so nothing is requested. Articles already kept stay on this machine."),
+                "GalNet news is off, so nothing is requested. Articles already kept stay on this machine; if your language model "
+                + "searches or reads them, their text goes to it."),
 
         SignalIndex => settings.Knowledge.SignalIndex
             ? new EgressEntry(
