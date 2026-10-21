@@ -715,7 +715,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The ask form; with <paramref name="follows"/>, for the next chapter of that adventure.</summary>
     private Control BuildAsk(string? follows)
     {
-        var page = new StackPanel { Spacing = 10, Margin = new Thickness(14) };
+        var page = new StackPanel { Spacing = 28, Margin = new Thickness(14, 32, 14, 14), MaxWidth = AskWidth, HorizontalAlignment = HorizontalAlignment.Left };
+        var rows = new StackPanel { Spacing = 20 };
         var reach = AdventureReach.NearHere;
         var length = AdventureLength.Evening;
         var thisShipOnly = false;
@@ -726,48 +727,95 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         var after = follows is null ? null : _surface.Book.Store.Find(_surface.Commander(), follows);
 
-        if (follows is null)
+        var intro = Muted(
+            follows is null
+                ? "D47 writes a story for you to fly, then waits for your yes. GO on its own is a complete ask."
+                : $"D47 writes the story that follows {after?.Name ?? "that story"}, from how it ended, then waits for your yes.");
+        intro.LineHeight = TypeScale.Body * 1.5;
+        page.Children.Add(intro);
+
+        var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
+
+        if (shut)
         {
-            page.Children.Add(RoutingKit.Title("Ask for a short story").Row);
-            page.Children.Add(Muted(
-                "The core writes a story for you to fly and waits for your yes. Three choices with "
-                + "defaults, and a brief if you want one — pressing Go on an untouched form is a complete ask."));
-        }
-        else
-        {
-            page.Children.Add(RoutingKit.Title("Write the next chapter").Row);
-            page.Children.Add(Muted(
-                $"The core writes the story that follows {after?.Name ?? "that story"}, from how it ended, "
-                + "and waits for your yes. The same three choices, and a brief if you want one."));
+            var notice = new Notice(NoticeLevel.Warning) { Label = "Can't write a story yet", Text = AskShutBecause() };
+            var settings = new Button { Content = "Open settings", Height = TypeScale.MinimumTarget };
+            settings.Click += (_, _) => _surface.OpenSettings();
+            notice.Actions.Add(settings);
+            page.Children.Add(notice);
         }
 
         var reachCombo = new Segment
         {
-            ItemsSource = ["Reach: near here", "Reach: a session's flying", "Reach: anywhere"],
+            ItemsSource = ["Near here", "A session's flying", "Anywhere"],
             SelectedIndex = 0,
         };
         AutomationProperties.SetName(reachCombo, "Reach");
 
         var lengthCombo = new Segment
         {
-            ItemsSource = ["Length: short", "Length: an evening", "Length: long"],
+            ItemsSource = ["Short", "An evening", "Long"],
             SelectedIndex = 1,
         };
         AutomationProperties.SetName(lengthCombo, "Length");
 
         var (thisShip, _) = LabeledCheckBox.Build("This ship only");
-        var briefButton = new Button { HorizontalAlignment = HorizontalAlignment.Left };
+        var briefText = new TextBlock
+        {
+            FontFamily = new FontFamily(Fonts.ProseFamily),
+            FontSize = TypeScale.Secondary,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.NoWrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var briefButton = new Button
+        {
+            Content = briefText,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(14, 0),
+            Height = TypeScale.MinimumTarget,
+        };
+        AutomationProperties.SetName(briefButton, "Brief");
+        var clearBrief = new Button { Content = "Clear", Height = TypeScale.MinimumTarget, Margin = Gaps.TileBefore, IsVisible = false };
+        var reachHint = Hint();
+        var lengthHint = Hint();
+        var shipHint = Hint();
         var status = new StatusLine();
-        var go = new Button { Content = "Go" };
-        var stop = new Button { Content = "Stop", IsVisible = false };
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { go, stop } };
-        var shut = !_surface.ModelAvailable() || !_surface.GalaxySearchOn();
+        var go = new Button { Content = "Go", Width = 200, Height = TypeScale.MinimumTarget };
+        var stop = new Button { Content = "Stop", Width = 200, Height = TypeScale.MinimumTarget, Margin = Gaps.TileBefore, IsVisible = false };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Children = { go, stop } };
 
-        var progress = new WriteProgressBar("Writing the story", () => _surface.Writing.Current?.Progress) { IsVisible = false };
+        var progress = new WriteProgressBar("Writing the story", () => _surface.Writing.Current?.Progress) { IsVisible = false, Margin = default };
+
+        void Hints()
+        {
+            var radius = AdventureGenerator.Radius(reach, state?.Ship.MaxJumpRange, state?.Carrier.Owned == true);
+
+            reachHint.Inlines = new InlineCollection
+            {
+                new Run("Each leg of the story is up to about "),
+                new Run(radius.ToString("N0", CultureInfo.InvariantCulture)) { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta },
+                new Run(" ly."),
+            };
+
+            lengthHint.Text = length switch
+            {
+                AdventureLength.Short => "Three objectives: setup, turn, resolution.",
+                AdventureLength.Long => "Eight objectives or more.",
+                _ => "Five objectives: setup, catalyst, midpoint, all is lost, finale.",
+            };
+
+            shipHint.Text = thisShipOnly ? "Only the ship you are flying now." : "Any ship you own may be part of it.";
+        }
 
         void Label()
         {
-            briefButton.Content = string.IsNullOrWhiteSpace(brief) ? "Brief: none" : $"Brief: \"{brief}\"";
+            var empty = string.IsNullOrWhiteSpace(brief);
+
+            briefText.Text = empty ? BriefHint : brief;
+            Themed(briefText, TextBlock.ForegroundProperty, empty ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+            clearBrief.IsVisible = !empty;
         }
 
         reachCombo.SelectionChanged += (_, _) => reach = reachCombo.SelectedIndex switch
@@ -777,6 +825,8 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             _ => AdventureReach.NearHere,
         };
 
+        reachCombo.SelectionChanged += (_, _) => Hints();
+
         lengthCombo.SelectionChanged += (_, _) => length = lengthCombo.SelectedIndex switch
         {
             0 => AdventureLength.Short,
@@ -784,15 +834,21 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             _ => AdventureLength.Evening,
         };
 
+        lengthCombo.SelectionChanged += (_, _) => Hints();
+
         thisShip.IsChecked = thisShipOnly;
-        thisShip.IsCheckedChanged += (_, _) => thisShipOnly = thisShip.IsChecked == true;
+        thisShip.IsCheckedChanged += (_, _) =>
+        {
+            thisShipOnly = thisShip.IsChecked == true;
+            Hints();
+        };
 
         void Brief(Action then) => _prompts.Enter(
             new EntryRequest(
                 "adventure.brief",
                 "Brief",
                 "What should it be about?",
-                "A theme, a mood, a place it must include. Empty is fine.",
+                BriefHint,
                 brief,
                 EntrySurface.Voice),
             value =>
@@ -803,6 +859,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             });
 
         briefButton.Click += (_, _) => Brief(() => { });
+
+        clearBrief.Click += (_, _) =>
+        {
+            brief = string.Empty;
+            Label();
+        };
 
         var view = new ScrollViewer { Content = page, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         var showing = false;
@@ -925,29 +987,44 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         };
 
         Label();
+        Hints();
 
-        page.Children.Add(reachCombo);
-        page.Children.Add(lengthCombo);
+        var briefTile = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            Children = { briefButton, clearBrief },
+        };
+        Grid.SetColumn(clearBrief, 1);
+
+        rows.Children.Add(AskRow("Reach", reachCombo, reachHint));
+        rows.Children.Add(AskRow("Length", lengthCombo, lengthHint));
 
         // Left out rather than hidden when there is nothing to choose between (#202).
         if (hasChoice)
         {
-            page.Children.Add(thisShip);
+            var ship = new WrapPanel { Orientation = Orientation.Horizontal, Children = { thisShip } };
+            shipHint.Margin = new Thickness(16, 0, 0, 0);
+            shipHint.VerticalAlignment = VerticalAlignment.Center;
+            ship.Children.Add(shipHint);
+            rows.Children.Add(AskRow("Ship", ship, null));
         }
 
-        page.Children.Add(briefButton);
-        page.Children.Add(buttons);
-        page.Children.Add(progress);
-        page.Children.Add(status);
+        var briefHint = Hint();
+        briefHint.Text = "Optional. Press it to say it, or type it.";
+        rows.Children.Add(AskRow("Brief", briefTile, briefHint));
+        page.Children.Add(rows);
+
+        var rule = new Border { Height = 1 };
+        Themed(rule, Border.BackgroundProperty, ThemeManager.Line2Key);
+        page.Children.Add(rule);
+        page.Children.Add(AskRow(null, buttons, null));
+
+        var below = new StackPanel { Spacing = 8, Children = { progress, status } };
+        page.Children.Add(AskRow(null, below, null));
 
         if (shut)
         {
-            status.Say(AskShutBecause());
             go.IsEnabled = false;
-
-            var settings = new Button { Content = "Open settings", HorizontalAlignment = HorizontalAlignment.Left };
-            settings.Click += (_, _) => _surface.OpenSettings();
-            page.Children.Add(settings);
         }
 
         if (follows is null)
@@ -956,6 +1033,57 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         return view;
+    }
+
+    private const double AskWidth = 900;
+    private const double AskLabelWidth = 120;
+    private const string BriefHint = "A theme, a mood, a place it must include. Empty is fine.";
+
+    private static TextBlock Hint()
+    {
+        var hint = Text(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
+        hint.LineHeight = TypeScale.Small * 1.4;
+        return hint;
+    }
+
+    /// <summary>A form row: a label column, then the control with its hint under it. A null label leaves the column empty.</summary>
+    private static Grid AskRow(string? label, Control control, TextBlock? hint)
+    {
+        var row = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(AskLabelWidth, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star)],
+            ColumnSpacing = 24,
+        };
+
+        var body = new StackPanel { Spacing = 8, Children = { control } };
+
+        if (hint is not null)
+        {
+            body.Children.Add(hint);
+        }
+
+        Grid.SetColumn(body, 1);
+        row.Children.Add(body);
+
+        if (label is not null)
+        {
+            var name = new TextBlock
+            {
+                Text = label.ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Control,
+                FontWeight = FontWeight.Medium,
+                LetterSpacing = TypeScale.Control * Fonts.ChromeTracking,
+                Height = TypeScale.MinimumTarget,
+                VerticalAlignment = VerticalAlignment.Top,
+                TextAlignment = TextAlignment.Left,
+            };
+            name.Padding = new Thickness(0, 13, 0, 0);
+            Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            row.Children.Add(name);
+        }
+
+        return row;
     }
 
     /// <summary>Shows the Ask page and opens its brief entry, whose commit presses Go; or says why asking is shut.</summary>

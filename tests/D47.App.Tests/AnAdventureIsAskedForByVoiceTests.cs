@@ -1,9 +1,12 @@
 using D47.Core.Storage;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
@@ -97,8 +100,8 @@ public class AnAdventureIsAskedForByVoiceTests
         panel.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();
 
-        Choose(panel, "Reach: a session's flying");
-        Choose(panel, "Length: short");
+        Choose(panel, "A session's flying");
+        Choose(panel, "Short");
 
         Assert.Null(desk.Ask());
         Dispatcher.UIThread.RunJobs();
@@ -114,6 +117,100 @@ public class AnAdventureIsAskedForByVoiceTests
         Assert.Contains("The Commander's brief, in their words: \"a lighthouse nobody tends\"", spine, StringComparison.Ordinal);
         Assert.Contains("Reach: a session's flying", spine, StringComparison.Ordinal);
         Assert.Contains(AdventureGenerator.Structure(AdventureLength.Short).Sheet, model.Asked[1], StringComparison.Ordinal);
+    }
+
+    [AvaloniaFact]
+    public void TheFormHasNoTitleAndItsOptionsCarryNoGroupName()
+    {
+        var (panel, _, _, _) = Open(canAsk: true);
+
+        panel.Tab = PanelTab.Stories;
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = panel.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text ?? text.Inlines?.Text).ToList();
+        var options = panel.GetVisualDescendants().OfType<Segment>().SelectMany(segment => segment.GetVisualDescendants().OfType<RadioButton>()).Select(button => button.Content).ToList();
+
+        Assert.DoesNotContain(drawn, text => text is not null && text.Contains("Ask for a short story", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(["Near here", "A session's flying", "Anywhere", "Short", "An evening", "Long"], options);
+        Assert.Equal(["Length", "Reach"], panel.GetVisualDescendants().OfType<Segment>().Select(AutomationProperties.GetName).Order());
+        Assert.Contains("Optional. Press it to say it, or type it.", drawn);
+
+        using var frame = TopLevel.GetTopLevel(panel)!.CaptureRenderedFrame()!;
+        frame.SaveCapture("short-story-ask-ready.png");
+    }
+
+    [AvaloniaFact]
+    public void TheReachHintStatesTheRadiusOfTheSelectedReach()
+    {
+        var (panel, _, _, _) = Open(canAsk: true);
+        var state = AdventuresTabTests.State();
+
+        panel.Tab = PanelTab.Stories;
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
+        Dispatcher.UIThread.RunJobs();
+
+        foreach (var (option, reach) in new[] { ("Near here", AdventureReach.NearHere), ("A session's flying", AdventureReach.Session), ("Anywhere", AdventureReach.Anywhere) })
+        {
+            Choose(panel, option);
+
+            var radius = AdventureGenerator.Radius(reach, state.Ship.MaxJumpRange, state.Carrier.Owned).ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
+            Assert.Contains(
+                panel.GetVisualDescendants().OfType<TextBlock>(),
+                text => text.Inlines?.Text == $"Each leg of the story is up to about {radius} ly.");
+        }
+    }
+
+    [AvaloniaFact]
+    public void ClearEmptiesTheBriefWithoutOpeningTheEntryAndGoThenAsksWithNone()
+    {
+        var (panel, book, _, model) = Open(canAsk: true);
+
+        panel.Tab = PanelTab.Stories;
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Clear") && button.IsEffectivelyVisible);
+
+        Press(panel, button => AutomationProperties.GetName(button) == "Brief");
+        panel.Prompts.Hear(new Heard("a lighthouse nobody tends", 1, Final: true));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), text => text.Text == "a lighthouse nobody tends");
+
+        Press(panel, button => Equals(button.Content, "Clear") && button.IsEffectivelyVisible);
+
+        Assert.Equal([AdventuresPage.AskKey], panel.Nav.Trail.Select(crumb => crumb.Key));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Clear") && button.IsEffectivelyVisible);
+
+        Press(panel, button => Equals(button.Content, "Go"));
+        Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
+
+        Assert.DoesNotContain("The Commander's brief", model!.Asked[0], StringComparison.Ordinal);
+    }
+
+    private static void Press(PanelView panel, Func<Button, bool> which)
+    {
+        panel.GetVisualDescendants().OfType<Button>().Single(which).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void ASessionWithNoModelShowsTheWarningNoticeOnTheNextChapterPage()
+    {
+        var (panel, _, _, _) = Open(canAsk: false);
+
+        panel.Tab = PanelTab.Stories;
+        panel.Nav.GoTo(new NavCrumb(AdventuresPage.NextPrefix + "none", "Next chapter"));
+        Dispatcher.UIThread.RunJobs();
+
+        var notice = Assert.Single(panel.GetVisualDescendants().OfType<Notice>(), notice => notice.Label == "Can't write a story yet");
+
+        Assert.Equal(NoticeLevel.Warning, notice.Level);
+        Assert.Contains(notice.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Open settings"));
+        Assert.False(panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go")).IsEnabled);
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<StatusLine>(), line => line.IsEffectivelyVisible && !string.IsNullOrEmpty(line.Text));
     }
 
     [AvaloniaFact]

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Short Story and Next chapter forms are redrawn: labelled Reach, Length, Ship and Brief rows with a hint under each, the brief as a tile with a Clear tile beside it, Go under a rule, and a warning with Open settings when asking is shut. The page title is gone.
+
 The protected bar on a settings row now appears only where no voice command can change the row, so the Core row has none. The legend reads "Rows with a bar like this one are protected — these cannot be changed via a voice command, but the others can." and shows only on a page that has a barred row.
 
 Introductions, Cores of your own and Cores by ship no longer print a whole list. Each states a count, names the first three and counts the rest. Introductions names no core, and its Forget introductions button is red and greyed out while none have introduced themselves. The own-cores button reads Write a core with none and Your cores otherwise. Lines `ship-cores.json` refused show as a warning under Cores by ship instead of a sentence in it.

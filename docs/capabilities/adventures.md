@@ -160,7 +160,7 @@ The drive behind it is to add story to a sandbox, which sandboxes deeply lack. I
 ### How to have one
 
 **Short Story** — a form and D47 writes it, in the voice of whichever core is aboard. Three
-choosers, each with a default, so pressing *Go* on an untouched form is a complete ask:
+labelled rows, each with a default, so pressing *Go* on an untouched form is a complete ask:
 
 - **Reach** — how far the story may go: *near here*, *a session's flying*, *anywhere*. Turned into
   light years by what you can actually move — your ship's jump range, or your carrier's if you have
@@ -168,13 +168,13 @@ choosers, each with a default, so pressing *Go* on an untouched form is a comple
 - **Length** — which structure. *Short* is three objectives, setup and turn and resolution. *An evening*
   is five. *Long* is eight or more. The count follows from the structure rather than the other way
   round.
-- **Using** — *this ship only*, or *anything I own*. Shown only when you have a choice.
+- **Ship** — *this ship only*, or *anything I own*. Shown only when you have a choice.
 
-And one optional thing said: a brief — a theme, a mood, a place it must include. Empty is fine.
+Each row has a grey hint under it that changes with the choice, such as how many light years a leg of the story may run. And one optional thing said: a brief — a theme, a mood, a place it must include. Empty is fine. The brief row is a tile showing the brief; press it to say or type one, and press *Clear* beside it to empty it.
 
 Say "ask for a short story" and D47 opens this form and the entry for the brief. Say the brief, or
 press **Done** with it empty, and it asks with the form as it stands, as *Go* does. When a language model or galaxy
-search is missing, the form opens and D47 says which instead.
+search is missing, a warning at the top of the form says which, with *Open settings*, and *Go* is disabled.
 
 While the story is written, a bar under *Go* shows what D47 is doing and about how long it usually takes. **Stop** ends
 the write, and D47 says nothing. Leaving the page does not end it: the bar is there when you come back, on the desktop or in the

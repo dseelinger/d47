@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
@@ -247,7 +248,7 @@ public class AdventuresTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(AdventuresPage.NextPrefix + "the-lantern-route", panel.Nav.Trail[^1].Key);
-        Assert.Contains(Drawn(panel), text => text.Contains("WRITE THE NEXT CHAPTER", StringComparison.Ordinal));
+        Assert.DoesNotContain(Drawn(panel), text => text.Contains("WRITE THE NEXT CHAPTER", StringComparison.Ordinal));
         Assert.Contains(Drawn(panel), text => text.Contains("follows The Lantern Route", StringComparison.Ordinal));
 
         // The draft card names the chapter it follows.
@@ -266,8 +267,11 @@ public class AdventuresTabTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text.Contains("ASK FOR A SHORT STORY", StringComparison.Ordinal));
+        Assert.DoesNotContain(drawn, text => text.Contains("ASK FOR A SHORT STORY", StringComparison.Ordinal));
         Assert.Contains(drawn, text => text.Contains("needs a language model"));
+        Assert.Contains(drawn, text => text.Contains("CAN'T WRITE A STORY YET", StringComparison.Ordinal));
+        Assert.Contains(panel.GetVisualDescendants().OfType<Notice>(), notice => notice.Level == NoticeLevel.Warning);
+        Assert.Single(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Open settings"));
 
         var go = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Go"));
         Assert.False(go.IsEnabled);
