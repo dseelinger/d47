@@ -963,10 +963,11 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return tag;
     }
 
-    private static StackPanel GroupHead(string name, string description, string? count = null) =>
-        GroupHead(name, RoutingKit.Ink(description, TypeScale.ControlLarge, ThemeManager.GreyKey), count);
+    internal static StackPanel GroupHead(string name, string description, string? count = null, Control? end = null) =>
+        GroupHead(name, RoutingKit.Ink(description, TypeScale.ControlLarge, ThemeManager.GreyKey), count, end);
 
-    internal static StackPanel GroupHead(string name, TextBlock note, string? count = null)
+    /// <summary>A group head; <paramref name="end"/> is a control drawn at its right end.</summary>
+    internal static StackPanel GroupHead(string name, TextBlock note, string? count = null, Control? end = null)
     {
         var heading = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
         TitleText.Style(heading, TypeScale.Section, TitleRank.Group);
@@ -974,6 +975,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
         note.VerticalAlignment = VerticalAlignment.Center;
         note.Margin = new Thickness(12, 0, 0, 0);
+        note.TextWrapping = TextWrapping.Wrap;
 
         var counted = new TextBlock
         {
@@ -987,7 +989,16 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         var line = new DockPanel { MinHeight = 38 };
         DockPanel.SetDock(counted, Dock.Right);
         line.Children.Add(counted);
-        line.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, Children = { heading, note } });
+
+        if (end is not null)
+        {
+            end.VerticalAlignment = VerticalAlignment.Center;
+            end.Margin = new Thickness(12, 0, 0, 0);
+            DockPanel.SetDock(end, Dock.Right);
+            line.Children.Add(end);
+        }
+
+        line.Children.Add(new WrapPanel { Orientation = Orientation.Horizontal, Children = { heading, note } });
 
         var rule = new Border { Height = 1, Margin = new Thickness(0, 6, 0, 0) };
         RoutingKit.Themed(rule, Border.BackgroundProperty, ThemeManager.AKey);

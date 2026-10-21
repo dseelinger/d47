@@ -14,6 +14,8 @@ Introductions, Cores of your own and Cores by ship no longer print a whole list.
 
 Humor is one scale from 0 (serious) to 10 (comedian). The three level rows draw a ten-segment track between SERIOUS and COMEDIAN, and the model no longer gets a ban list up to 6 or a lift at 7: every level gets its grade, and the speaker's character decides the kind of humor.
 
+The Story Bench page (on while `D47_STORY_BENCH=1`) is redrawn in the design system, with no title of its own under the Stories header. Slots, jump, beats and checkpoints each have a head with a line saying what they do. The active slot has a cyan bar and says ACTIVE where the other slots have SWITCH TO, and its name no longer carries "(active)". Jump shows the story, its length, clues given and stage in four tiles, with labels such as "Clue 4 · day 28". A beat shows ✓ FIRED, WAITING or a dash with its time, and a stirring adventure's NEXT BEAT says it returns once D47 has said the last line. REWIND is a red tile. With no story and no Short Story under way, one message replaces the three empty sections. Slot, beat and checkpoint text, which drew with no colour, is visible again.
+
 Cores by ship now names each bound ship as the Ship dropdown does, from your fleet as it is now. A ship you renamed in game shows its new name without being bound again, and no entry shows a ship id unless nothing else is known about that ship.
 
 The Forget this ship's core button is gone from Cores by ship. To unbind a ship, pick it in the Ship row and choose Nobody for its core.
