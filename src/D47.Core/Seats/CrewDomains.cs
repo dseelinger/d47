@@ -94,6 +94,7 @@ public static class CrewDomains
         "colonisation",
         "outstanding-crimes",
         "notable-ships",
+        "ship-modes",
     };
 
     /// <summary>

@@ -300,6 +300,23 @@ public static class FlavourBriefs
             };
         }
 
+        // A ship mode has been held for a while (#1445). The mode and the authored line are all it carries.
+        if (announcement.Key.StartsWith(ShipModeCallout.KeyPrefix, StringComparison.Ordinal)
+            && ShipModeCallout.ModeOf(announcement.Key) is { } mode)
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    $"The Commander has had {mode} for a while now. Make one short remark about it in your own "
+                    + $"voice, from this: \"{announcement.Text}\" Add no facts: do not guess why, give no advice "
+                    + "and do not tell them to change it. One or two sentences. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
         // A figure in the subject the core aboard pays attention to (#611).
         if (announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal))
         {

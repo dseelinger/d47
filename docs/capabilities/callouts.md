@@ -1376,6 +1376,10 @@ whether or not NPC messages are read aloud, once per kind per game session. The 
 nothing from the message. With personality off the authored line is said as written. **Notable ships** in
 the callout settings turns it off.
 
+#### Ship modes {#ship-modes}
+
+The core aboard remarks when you have held a ship mode long enough to be deliberate ([#1445](https://github.com/dseelinger/d47/issues/1445)): silent running for 10 seconds, flight assist off for 30, hardpoints out with nothing hostile around, the cargo scoop left open, or the landing gear down away from a station for 60, or mass locked in danger for 10. Hardpoints and the scoop stay quiet for 10 minutes after mining, and the scoop after collecting cargo. It never speaks docked, landed, in supercruise or outside the main ship, once per mode per game session and at most one remark every five minutes. With personality off the authored line is said as written. **Ship modes** in the callout settings turns it off.
+
 ### Settings
 
 #### Speak without being asked {#enabled}

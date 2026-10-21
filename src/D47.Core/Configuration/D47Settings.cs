@@ -813,6 +813,9 @@ public sealed record CalloutSettings
     /// <summary>A remark when a notable ship hails nearby, once per kind per session (#1444).</summary>
     public bool NotableShips { get; init; } = true;
 
+    /// <summary>A remark when a ship mode has been held for a while, once per mode per session (#1445).</summary>
+    public bool ShipModes { get; init; } = true;
+
     /// <summary>The day the Elite week turns, UTC (#332).</summary>
     public DayOfWeek WeekBoundaryDay { get; init; } = DayOfWeek.Thursday;
 

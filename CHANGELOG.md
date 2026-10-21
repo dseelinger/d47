@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your core now remarks when you hold the ship in a mode for a while: silent running, flight assist off, hardpoints out with nothing hostile around, the cargo scoop left open, the landing gear down away from a station, or mass locked in danger. It speaks once per mode per game session and at most one remark every five minutes, never while docked, landed or in supercruise. With personality on the core says it in its own voice; with it off, the line is said as written. A new **Ship modes** setting turns it off.
+
 Your core now remarks when a notable ship hails nearby: a wedding or funeral convoy, nomads, a refugee flotilla fleeing a war, a tour liner, a protester, a propagandist or a security academy training flight. It speaks once per kind per game session, whether or not NPC messages are read aloud. With personality on the core says it in its own voice; with it off, the line is said as written. The remark carries only the kind of ship, never its name or what it said. A new **Notable ships** setting turns it off.
 
 Each screenshot you take in Elite is now copied as a JPEG into `Frontier Developments\Elite Dangerous\D47` under Pictures, named with the local time, the system and the body, such as `2026-10-12 19-40-03 Shinrarta Dezhra.jpg`. A second screenshot in the same second and place adds ` (2)`. D47 waits up to two minutes for a high-resolution screenshot to finish writing, and skips one that does not arrive. Elite's BMP is left where it is, unchanged. Screenshots taken before D47 started are not copied.

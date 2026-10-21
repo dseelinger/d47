@@ -121,6 +121,7 @@ public static class ShippedCallouts
             // Above everything except danger itself (Phase 15).
             .Add(new AnnouncedAttackCallout())
             .Add(new KillCallout())
+            .Add(new ShipModeCallout())
             .Add(new MetBeforeCallout(sources.CommanderLog))
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
@@ -439,6 +440,7 @@ public static class ShippedCallouts
         engine.SetEnabled("station-damage", callouts.StationDamage, now);
         engine.SetEnabled("domain", callouts.Domain, now);
         engine.SetEnabled("notable-ships", callouts.NotableShips, now);
+        engine.SetEnabled("ship-modes", callouts.ShipModes, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
         engine.SetEnabled("carrier-payroll", callouts.CarrierPayroll, now);

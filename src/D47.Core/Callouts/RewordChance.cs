@@ -22,6 +22,7 @@ public sealed class RewordChance(Random? choice = null)
             || announcement.Key.StartsWith(PromotionCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(NotableShipCallout.KeyPrefix, StringComparison.Ordinal)
+            || announcement.Key.StartsWith(ShipModeCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(RecapCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.StoryAside is not null
             || string.Equals(announcement.Key, IncomingMessages.CarrierCannedKey, StringComparison.Ordinal)
