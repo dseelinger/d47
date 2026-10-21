@@ -117,6 +117,9 @@ public static class EgressDisclosure
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
+    /// <summary>Elite's screenshots, copied as JPEG into a D47 folder on this PC.</summary>
+    public const string Screenshots = "screenshots";
+
     /// <summary>The Commander's own recorded voice, kept on this PC and sent nowhere.</summary>
     public const string OwnVoice = "ownvoice";
 
@@ -155,6 +158,7 @@ public static class EgressDisclosure
         Diagnostics,
         JournalFiles,
         ChosenPictures,
+        Screenshots,
         OwnVoice,
         CustomVoices,
         CaptainsLog,
@@ -190,6 +194,7 @@ public static class EgressDisclosure
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
+        Screenshots => "Your screenshots",
         OwnVoice => "Your recorded voice",
         CustomVoices => "Your custom voices",
         CaptainsLog => "Captain's log",
@@ -554,6 +559,14 @@ public static class EgressDisclosure
             ChosenPictures,
             NameOf(ChosenPictures),
             "A picture you choose for yourself, a hired pilot or a story's character is kept in data\\pictures on this PC and never sent anywhere."),
+
+        Screenshots => EgressEntry.Silent(
+            Screenshots,
+            NameOf(Screenshots),
+            settings.Screenshots.Convert
+                ? $"Elite's screenshots are copied as JPEG into {Capabilities.Builtin.ScreenshotsCapability.TargetFolder()} on this PC. "
+                    + "D47 sends them nowhere. If Windows syncs your Pictures folder, as OneDrive can, that sync uploads them."
+                : "Converting Elite's screenshots is off. D47 writes nothing to your Pictures folder."),
 
         Donation => DonationEntry(),
 

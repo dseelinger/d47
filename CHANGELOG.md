@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+There is a new **Convert Elite's screenshots** setting, on by default, with a **Saved to** line showing the D47 folder inside Elite's pictures folder where JPEG copies will go. Saying "stop converting my screenshots" or "start converting my screenshots" changes it; the AI model cannot. **Privacy and egress** lists **Your screenshots**: the copies stay on this PC, and D47 says that a synced Pictures folder, as OneDrive can be, uploads them. The copies themselves are not written yet.
+
 The journal pane now says where a screenshot was taken: "Screenshot taken at A 1, Example Sector AB-C d1-23", or "Screenshot taken in <system>" when the event names no body. A screenshot with no place still reads "Screenshot taken".
 
 You can now ask whether you have met a Commander before. Say "have I met this commander" and D47 lists your encounters with the Commander you targeted most recently this session, newest first: when, the system, their ship where known, and what happened; with no target this session it lists the ten Commanders you met most recently. "Have I met Arden Vale before" does the same for a name, at most ten encounters with the total. It reads your journals only, never includes message text, and says when older journals are still being read. The AI model can ask too; doing so sends that Commander's name and your encounters with them, and **Privacy and egress** now says so. "Have I met this commander" is answered on this machine.

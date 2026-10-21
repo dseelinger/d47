@@ -502,6 +502,7 @@ public static class BuiltinCapabilities
             gameStatus,
             now ?? (() => DateTimeOffset.MinValue)),
         CommanderLogCapability.Create(commanderLog, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
+        ScreenshotsCapability.Create(),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

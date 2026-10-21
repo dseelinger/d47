@@ -85,6 +85,9 @@ public sealed record D47Settings
     /// <summary>Whether d47 debriefs itself after a session, and what it does with what it finds (#162).</summary>
     public DebriefSettings Debrief { get; init; } = new();
 
+    /// <summary>Whether d47 converts Elite's screenshots to JPEG copies.</summary>
+    public ScreenshotSettings Screenshots { get; init; } = new();
+
     /// <summary>How a Commander's log is written when one is asked for (Phase 33).</summary>
     public LogbookSettings Logbook { get; init; } = new();
 
@@ -225,6 +228,17 @@ public sealed record DebriefSettings
 
     /// <summary>Whether the pass runs at the end of a session at all.</summary>
     public bool Enabled { get; init; } = true;
+}
+
+/// <summary>Elite's screenshots.</summary>
+public sealed record ScreenshotSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>Whether each Elite screenshot is copied as a JPEG into a D47 folder beside it.</summary>
+    public bool Convert { get; init; } = true;
 }
 
 /// <summary>Looking things up outside this machine (Phase 14).</summary>

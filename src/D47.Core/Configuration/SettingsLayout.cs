@@ -667,6 +667,13 @@ public static class SettingsLayout
                                 E("logbook.store"),
                                 E("goals.store"),
                             ]),
+                        G(
+                            "Screenshots",
+                            "Whether D47 saves a JPEG copy of each Elite screenshot, and where.",
+                            [
+                                E("screenshots.convert"),
+                                E("screenshots.folder"),
+                            ]),
                     ]),
             ]),
         new SettingsArea(
