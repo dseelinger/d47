@@ -58,6 +58,7 @@ internal static class TriggerConfirms
         [TriggerKind.MissionComplete] = "that mission was handed in as completed — not how it went or what it paid",
         [TriggerKind.MissionAbandon] = "that mission was abandoned, expired or failed — not why",
         [TriggerKind.Choice] = "the Commander said which option they chose — not that they did it",
+        [TriggerKind.Event] = "that event happened as many times as the count, with those fields — not why, where, or what followed",
     };
 
     /// <summary>The kinds that have an entry.</summary>

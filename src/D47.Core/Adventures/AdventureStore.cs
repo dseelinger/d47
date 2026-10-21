@@ -552,6 +552,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Engineer = record.Engineer?.Trim(),
         Stage = record.Stage?.Trim(),
         JumpRange = record.JumpRange,
+        Event = record.Event?.Trim(),
+        Where = new EventFilter((record.Where ?? []).Where(pair => pair.Field is not null && pair.Value is not null).Select(pair => new EventField(pair.Field!.Trim(), pair.Value!.Trim()))),
+        Task = record.Task?.Trim(),
     };
 
     private static TriggerRecord ToTrigger(AdventureTrigger trigger) => new()
@@ -578,6 +581,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Engineer = trigger.Engineer,
         Stage = trigger.Stage,
         JumpRange = trigger.JumpRange,
+        Event = trigger.Event,
+        Where = trigger.Where.Count > 0 ? [.. trigger.Where.Select(pair => new WhereRecord { Field = pair.Field, Value = pair.Value })] : null,
+        Task = trigger.Task,
     };
 
     private static AdventureRecord ToRecord(Adventure adventure) => new()
@@ -845,5 +851,18 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Stage { get; set; }
 
         public string? SiteName { get; set; }
+
+        public string? Event { get; set; }
+
+        public List<WhereRecord>? Where { get; set; }
+
+        public string? Task { get; set; }
+    }
+
+    private sealed class WhereRecord
+    {
+        public string? Field { get; set; }
+
+        public string? Value { get; set; }
     }
 }

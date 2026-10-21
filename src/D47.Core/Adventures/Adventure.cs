@@ -174,6 +174,50 @@ public enum TriggerKind
 
     /// <summary>The Commander says which of the step's <see cref="BeatStep.Options"/> they choose: the d47 event <see cref="AdventureChoice.EventName"/>, never a journal event. Not counted, not authorable.</summary>
     Choice,
+
+    /// <summary>Any event <see cref="Knowledge.StepEventCatalogue"/> allows, named by <see cref="AdventureTrigger.Event"/> and limited by <see cref="AdventureTrigger.Where"/>. Not authorable.</summary>
+    Event,
+}
+
+/// <summary>One field of an event and the value it has to hold.</summary>
+public sealed record EventField(string Field, string Value);
+
+/// <summary>The field and value pairs an event step requires, every one of which must hold. Equal when the pairs are equal in order.</summary>
+public sealed class EventFilter : IReadOnlyList<EventField>, IEquatable<EventFilter>
+{
+    public static readonly EventFilter None = new([]);
+
+    private readonly EventField[] _pairs;
+
+    public EventFilter(IEnumerable<EventField> pairs)
+    {
+        ArgumentNullException.ThrowIfNull(pairs);
+        _pairs = [.. pairs];
+    }
+
+    public int Count => _pairs.Length;
+
+    public EventField this[int index] => _pairs[index];
+
+    public IEnumerator<EventField> GetEnumerator() => ((IEnumerable<EventField>)_pairs).GetEnumerator();
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public bool Equals(EventFilter? other) => other is not null && _pairs.SequenceEqual(other._pairs);
+
+    public override bool Equals(object? obj) => Equals(obj as EventFilter);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+
+        foreach (var pair in _pairs)
+        {
+            hash.Add(pair);
+        }
+
+        return hash.ToHashCode();
+    }
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -244,6 +288,17 @@ public sealed record AdventureTrigger
     /// <summary><c>Invited</c> or <c>Unlocked</c>; an engineer beat is also met by the stage after it.</summary>
     public string? Stage { get; init; }
 
+    public const int MaxTaskLength = 60;
+
+    /// <summary>For <see cref="TriggerKind.Event"/>: the event's name as the step event table spells it.</summary>
+    public string? Event { get; init; }
+
+    /// <summary>For <see cref="TriggerKind.Event"/>: the fields the event has to carry, every one holding.</summary>
+    public EventFilter Where { get; init; } = EventFilter.None;
+
+    /// <summary>For <see cref="TriggerKind.Event"/>: the short phrase the step is described by, such as "analyse a Stratum sample".</summary>
+    public string? Task { get; init; }
+
     /// <summary>Whether this kind fires on a running total rather than on one event.</summary>
     public bool IsCounted => IsCountedKind(Kind);
 
@@ -262,7 +317,9 @@ public sealed record AdventureTrigger
     public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
 
     /// <summary>Whether the ids this kind matches on are all present.</summary>
-    public bool IsResolved => IsCounted ? Count >= 1 && (Kind != TriggerKind.Faction || !string.IsNullOrWhiteSpace(Faction)) : Kind switch
+    public bool IsResolved => IsCounted
+        ? Count >= 1 && (Kind != TriggerKind.Faction || !string.IsNullOrWhiteSpace(Faction)) && (Kind != TriggerKind.Event || !string.IsNullOrWhiteSpace(Event))
+        : Kind switch
     {
         TriggerKind.Engineer => !string.IsNullOrWhiteSpace(Engineer) && EngineerStages.Rank(Stage) > 0,
         TriggerKind.Arrive => SystemAddress is not null,
@@ -343,6 +400,7 @@ public sealed record AdventureTrigger
         TriggerKind.MissionComplete => $"complete the {Handle?.Trim()} mission",
         TriggerKind.MissionAbandon => $"abandon the {Handle?.Trim()} mission",
         TriggerKind.Choice => "say which option you choose",
+        TriggerKind.Event => Task?.Trim() ?? Event?.Trim() ?? "wait for an event",
         _ => Kind.ToString(),
     };
 
@@ -388,6 +446,7 @@ public sealed record AdventureTrigger
             TriggerKind.Contribute => string.IsNullOrWhiteSpace(Commodity)
                 ? $"Tons delivered to construction sites: {of}"
                 : $"Tons of {CommodityWord()} delivered to construction sites: {of}",
+            TriggerKind.Event => $"{Capital(Describe())}: {of}",
             _ => $"{Capital(CommodityWord())} refined: {of} t",
         };
     }

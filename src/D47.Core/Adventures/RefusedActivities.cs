@@ -110,6 +110,7 @@ public static class RefusedActivities
         TriggerKind.MissionComplete => "complete a mission they took",
         TriggerKind.MissionAbandon => "abandon a mission they took",
         TriggerKind.Choice => "choose between options",
+        TriggerKind.Event => "do what an event step asks",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

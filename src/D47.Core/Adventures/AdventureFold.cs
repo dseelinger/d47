@@ -517,6 +517,27 @@ public static class AdventureFold
                 journalEvent.Kind is "PowerplayRank"
                 && raw.Int("Rank") >= trigger.Rank,
 
+            TriggerKind.Event =>
+                journalEvent.Kind == trigger.Event
+                && trigger.Where.All(pair => FieldHolds(raw, pair)),
+
+            _ => false,
+        };
+    }
+
+    /// <summary>A string field holds when the folded symbols are equal, a boolean when it is present and equal; a missing field never holds.</summary>
+    private static bool FieldHolds(JsonElement raw, EventField pair)
+    {
+        if (raw.ValueKind != JsonValueKind.Object || !raw.TryGetProperty(pair.Field, out var value))
+        {
+            return false;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => string.Equals(JournalJson.Symbol(value.GetString()), JournalJson.Symbol(pair.Value), StringComparison.OrdinalIgnoreCase),
+            JsonValueKind.True => bool.TryParse(pair.Value?.Trim(), out var wanted) && wanted,
+            JsonValueKind.False => bool.TryParse(pair.Value?.Trim(), out var wanted) && !wanted,
             _ => false,
         };
     }

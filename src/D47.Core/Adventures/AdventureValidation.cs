@@ -68,7 +68,7 @@ public static class AdventureValidation
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
          "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank", "site",
-         "missiontaken", "missiondestination", "missioncomplete", "missionabandon", "choice"];
+         "missiontaken", "missiondestination", "missioncomplete", "missionabandon", "choice", "event"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> CodexFilters { get; } = ["Biology", "StellarBodies", "Civilisations", "Guardian"];
@@ -399,6 +399,53 @@ public static class AdventureValidation
             {
                 yield return problem;
             }
+        }
+
+        if (trigger.Kind == TriggerKind.Event)
+        {
+            foreach (var problem in EventProblems(where, trigger))
+            {
+                yield return problem;
+            }
+        }
+    }
+
+    /// <summary>What is wrong with an event trigger: an event or field the step event table does not allow, a value the field does not allow, or a task that is empty or too long.</summary>
+    public static IEnumerable<string> EventProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        var catalogue = StepEventCatalogue.Default;
+        var name = trigger.Event?.Trim();
+
+        if (!catalogue.Exists(name))
+        {
+            yield return $"{where} waits for the event \"{name ?? string.Empty}\", which is not an event a step may wait on.";
+        }
+        else
+        {
+            foreach (var pair in trigger.Where)
+            {
+                var fields = catalogue.FieldsOf(name);
+
+                if (!fields.Contains(pair.Field, StringComparer.Ordinal))
+                {
+                    yield return $"{where} tests the field \"{pair.Field}\", which {name} does not have; its fields are {string.Join(", ", fields)}.";
+                }
+                else if (!catalogue.AllowsValue(name, pair.Field, pair.Value))
+                {
+                    yield return $"{where} tests {name} {pair.Field} against \"{pair.Value}\", which that field does not allow.";
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(trigger.Task))
+        {
+            yield return $"{where} waits for an event but gives no task to describe it.";
+        }
+        else if (trigger.Task.Trim().Length > AdventureTrigger.MaxTaskLength)
+        {
+            yield return $"{where}'s task is {trigger.Task.Trim().Length} characters; at most {AdventureTrigger.MaxTaskLength}.";
         }
     }
 
