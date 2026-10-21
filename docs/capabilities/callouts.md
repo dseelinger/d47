@@ -1481,7 +1481,7 @@ crew answer when you address them.
 The occasional in-character line **to you**, said because *nothing* has happened. Everything else
 on this page speaks because something did. Spoken to you rather than narrated, on purpose: the
 brief tells the core it is talking to its Commander, not describing the view, so a remark is a
-dry aside in the cockpit and never a scene from a novel.
+short aside in the cockpit and never a scene from a novel.
 
 Three rules keep it from being noise. It waits out an interval — and that interval is a range, not
 a tick: each gap lands somewhere between the least and the most time rows, five to ten minutes out

@@ -168,8 +168,8 @@ add.
   never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the card.
 - **The tone** is a feel word or two, then the kind of story, for example "dark, haunted mystery" or
-  "desperate survival thriller". Voice words (wry, warm, dry, quiet, cosy) may follow but never open
-  it. It does not chain "then turns" clauses.
+  "desperate survival thriller". A word for how the story is told may follow, but never opens it. It
+  does not chain "then turns" clauses.
 - **The blurb** is four parts, in order: the situation that hooks, how it escalates, what is lost if
   the Commander fails, and the question left open. The loss is in the fiction (an NPC, a love, a
   colony, a war, the truth), within rules 3 and 4. It uses no praise words such as brilliant,

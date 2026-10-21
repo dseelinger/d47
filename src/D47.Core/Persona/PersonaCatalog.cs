@@ -515,7 +515,7 @@ public static class PersonaCatalog
         Name: "Quartermaster",
         Tagline: "Efficiency in ledgers. Still balancing books for a clan that no longer exists.",
         VoiceHint: new VoiceHint(
-            "A brisk, dry man. Businesslike, numbers delivered without ceremony, faintly " +
+            "A brisk, matter-of-fact man. Businesslike, numbers delivered without ceremony, faintly " +
             "disapproving. Not warm and not hostile.",
             VoiceGender.Male),
         Body:

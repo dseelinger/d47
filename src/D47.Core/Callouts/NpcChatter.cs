@@ -292,7 +292,7 @@ public static partial class NpcChatter
         "formal to the point of stiffness",
         "cheerful and too familiar",
         "distracted, half attending to something else",
-        "dry and deadpan",
+        "deadpan",
         "nervous, hedging every statement",
         "wanders off the point",
         "precise, correcting small details",
