@@ -578,30 +578,6 @@ no arguments.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-#### `bind_ship_core`
-
-Binds the ship the Commander is in to the core aboard. Takes no arguments — the ship and the core
-are both read from where they already are.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-#### `forget_ship_core`
-
-Unbinds the ship the Commander is in. Takes no arguments.
-
-```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
-```
-
-**Both are protected, so neither is advertised.** They are reachable from the panel, from the
-model-free keyword router and from the gesture, and refused outright to the model — the same rule
-the `persona.id` row carries, for a stronger reason: a binding changes who is speaking every time
-that ship is boarded from then on. Being protected also means they cost nothing on the advertised
-surface, which is inside a hundred bytes of its budget. What the model *may* do is read a
-binding, and that arrives in `describe_persona`'s output rather than as a tool of its own.
-
 There is deliberately no tool for *changing* persona. The `persona.id` row is marked protected,
 so `set_setting` refuses it like any other protected row, and the model is never shown the row in
 `list_settings`. The panel, the keyword router and the settings surface all reach it — protected

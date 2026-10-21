@@ -30,6 +30,8 @@
     <EmbeddedResource Include="Knowledge\PowerplayRanks.tsv" LogicalName="D47.Core.PowerplayRanks" />
     <EmbeddedResource Include="Knowledge\LandingPads.tsv" LogicalName="D47.Core.LandingPads" />
     <EmbeddedResource Include="Knowledge\Missions.tsv" LogicalName="D47.Core.Missions" />
+    <EmbeddedResource Include="Knowledge\StepEvents.tsv" LogicalName="D47.Core.StepEvents" />
+    <EmbeddedResource Include="Knowledge\StepFields.tsv" LogicalName="D47.Core.StepFields" />
   </ItemGroup>
 
   <ItemGroup>
