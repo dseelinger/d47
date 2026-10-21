@@ -269,6 +269,9 @@ public sealed record KnowledgeSettings
     /// <summary>Whether d47 may fetch GalNet articles from Frontier's server and keep them.</summary>
     public bool GalNet { get; init; }
 
+    /// <summary>Whether d47 may ask ed-server-status.orerve.net whether Elite's servers are up.</summary>
+    public bool ServerStatus { get; init; }
+
     /// <summary>Whether d47 may download the daily index of FSS signals from the <c>signals-1</c> release.</summary>
     public bool SignalIndex { get; init; }
 }
@@ -624,6 +627,9 @@ public sealed record CalloutSettings
 
     /// <summary>The headlines of new GalNet articles.</summary>
     public bool GalNet { get; init; } = true;
+
+    /// <summary>Elite's servers going down, going offline or coming back.</summary>
+    public bool ServerStatus { get; init; } = true;
 
     /// <summary>
     /// A checklist item the journal has just changed its mind about, the last unit a plan needed, and a

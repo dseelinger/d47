@@ -928,6 +928,27 @@ public static class GalaxyCapability
             },
             new SettingRow
             {
+                Key = ServerStatusKey,
+                Label = "Server status",
+                Help =
+                    "Lets d47 ask ed-server-status.orerve.net whether Elite's servers are up, at startup and "
+                    + "then every ten minutes while they are, or every minute while they are not, whether or not "
+                    + "Elite is running. Shows the answer in the title bar. Nothing about you goes with the "
+                    + "request. Off by default; see [Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "server-status",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.ServerStatus ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { ServerStatus = v == "true" },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = SignalIndexKey,
                 Label = "Signal index",
                 Help =
@@ -995,6 +1016,8 @@ public static class GalaxyCapability
     public const string BgsTickKey = "knowledge.bgsTick";
 
     public const string GalNetKey = "knowledge.galNet";
+
+    public const string ServerStatusKey = "knowledge.serverStatus";
 
     /// <summary>Downloading the daily signal index.</summary>
     public const string SignalIndexKey = "knowledge.signalIndex";

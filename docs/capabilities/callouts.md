@@ -617,6 +617,20 @@ as new when it is new to the archive, so a restart does not repeat a headline, a
 d47 was closed are said at the next start. Nothing is said for the first backfill, and articles that arrive
 while this is off are not said when it is switched back on. Turn this one off with the `galnet` row.
 
+#### Server status {#server-status}
+
+When Elite's servers go down or come back. Needs **Server status** under Outside sources, and works with Elite
+closed.
+
+```text
+Elite's servers are down for maintenance.
+```
+
+*"Elite's servers are down for maintenance."* and *"Elite's servers are offline."* are said when the servers go
+from Online to that state, or when the first answer is not Online. *"Elite's servers are back up."* is said only
+when they come back from Maintenance or Offline. A failed request is not a state: it says nothing and does not
+reset what d47 last knew. Turn this one off with the `server-status` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.

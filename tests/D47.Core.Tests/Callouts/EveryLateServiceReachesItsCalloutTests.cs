@@ -49,6 +49,8 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         public IReadOnlyList<GalNetArticle> GalNetArrived { get; set; } = [];
 
+        public GameServerState? ServerStatusAnnounce { get; set; }
+
         public List<DateTimeOffset> RecapAsked { get; } = [];
 
         public T Shipped<T>() => Engine.Callouts.OfType<T>().Single();
@@ -69,6 +71,7 @@ public sealed class EveryLateServiceReachesItsCalloutTests
             StockCoreAboard = () => wired!.StockCore,
             BgsLastTick = () => wired!.BgsTick,
             GalNetArrived = () => wired!.GalNetArrived,
+            ServerStatusAnnounce = () => wired!.ServerStatusAnnounce,
             ComposeRecap = before =>
             {
                 wired!.RecapAsked.Add(before);
@@ -164,6 +167,20 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalNet = false } });
         Assert.Empty(callout.Arrived());
+    }
+
+    [Fact]
+    public void ServerStatusLinesAreReadOnlyWhileTheirKnowledgeSettingIsOn()
+    {
+        var wired = Connected();
+        var callout = wired.Shipped<ServerStatusCallout>();
+        wired.ServerStatusAnnounce = GameServerState.Maintenance;
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { ServerStatus = true } });
+        Assert.Equal(GameServerState.Maintenance, callout.Announce());
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { ServerStatus = false } });
+        Assert.Null(callout.Announce());
     }
 
     [Fact]

@@ -424,6 +424,7 @@ public sealed class AppHost : IDisposable
 
     private D47.Knowledge.InfomancerBgsTickSource? _bgsTickSource;
     private D47.Knowledge.FrontierGalNetSource? _galNetSource;
+    private D47.Knowledge.FrontierServerStatusSource? _serverStatusSource;
 
     private D47.Knowledge.EddnUploader? _eddnUploader;
 
@@ -433,6 +434,8 @@ public sealed class AppHost : IDisposable
     public BgsTickWatch? BgsTick { get; private set; }
 
     public GalNetWatch? GalNet { get; private set; }
+
+    public ServerStatusWatch? ServerStatus { get; private set; }
 
     /// <summary>The colonisation planner's plans read this session.</summary>
     public ColonisationPlans? ColonisationPlans { get; private set; }
@@ -3252,6 +3255,7 @@ public sealed class AppHost : IDisposable
             StockCoreAboard = () => personas.Current.Stock,
             BgsLastTick = () => late.Host?.BgsTick?.Last,
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
+            ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
             ComposeRecap = launch => ComposeRecap(files, launch, JournalsOnDisk(journalDirectory, logger), loggerFactory),
         });
 
@@ -4119,6 +4123,15 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<GalNetWatch>());
 
         tick.Add("galnet", context => galNet.Poll(context.Now));
+
+        host._serverStatusSource = new D47.Knowledge.FrontierServerStatusSource(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierServerStatusSource>());
+        var serverStatus = host.ServerStatus = new ServerStatusWatch(
+            host._serverStatusSource,
+            () => settings.Current.Knowledge.ServerStatus,
+            foundations.LoggerFactory.CreateLogger<ServerStatusWatch>());
+
+        tick.Add("server-status", context => serverStatus.Poll(context.Now));
 
         // Built whether or not the switch is on; it sends nothing while off.
         host._colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
@@ -6435,6 +6448,7 @@ public sealed class AppHost : IDisposable
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();
         _galNetSource?.Dispose();
+        _serverStatusSource?.Dispose();
         _eddnUploader?.Dispose();
         _colonisationPlanService?.Dispose();
 

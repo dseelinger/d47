@@ -71,6 +71,7 @@ public static class CalloutCapability
     public const string BgsTickKey = "callouts.bgsTick";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
     public const string GalNetKey = "callouts.galNet";
+    public const string ServerStatusKey = "callouts.serverStatus";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -663,6 +664,16 @@ public static class CalloutCapability
                 s => s.Callouts.GalNet,
                 (s, v) => s with { Callouts = s.Callouts with { GalNet = v } },
                 appliesWhen: s => s.Knowledge.GalNet),
+
+            Toggle(
+                ServerStatusKey,
+                "Server status",
+                "When Elite's servers go down for maintenance, go offline or come back, says so. Needs Server status under Outside sources.",
+                "server-status",
+                "Server status",
+                s => s.Callouts.ServerStatus,
+                (s, v) => s with { Callouts = s.Callouts with { ServerStatus = v } },
+                appliesWhen: s => s.Knowledge.ServerStatus),
 
             Toggle(
                 FriendsOnlineKey,

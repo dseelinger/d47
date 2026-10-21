@@ -166,6 +166,12 @@ it: no key, no Commander name and nothing from your journal. The articles are ke
 on this PC. **GalNet news** under Outside sources in Settings ([Galaxy search](galaxy.md#galnet-news)) turns
 it on; it is off by default. With it off, nothing is requested and articles already kept stay on this PC.
 
+**Server status** — `ed-server-status.orerve.net`, Frontier's server status page, once when d47 starts and then
+every ten minutes while the servers are up and every minute while they are not, whether or not Elite is
+running. Nothing about you goes with it: no key, no Commander name and nothing from your journal. **Server
+status** under Outside sources in Settings ([Galaxy search](galaxy.md#server-status)) turns it on; it is off by
+default. With it off, nothing is requested.
+
 **Signal index** — `github.com`, which redirects to GitHub's asset storage, from the `signals-1`
 release. When you search for a signal and the copy in `data\signals` is missing or more than 20
 hours old, D47 downloads the daily index of signals Commanders have uploaded to EDDN: one file,
@@ -391,7 +397,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-communitygoals} {#egress-bgstick} {#egress-galnet} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-communitygoals} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
 {#egress-hullart} {#egress-codexpictures} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

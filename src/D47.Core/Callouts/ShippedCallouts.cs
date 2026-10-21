@@ -100,6 +100,9 @@ public static class ShippedCallouts
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
 
+        /// <summary>The server state to announce after the last poll, or null.</summary>
+        public Func<GameServerState?> ServerStatusAnnounce { get; init; } = () => null;
+
         /// <summary>The recap line for the session that started before the instant given, or null; reads journal files.</summary>
         public required Func<DateTimeOffset, string?> ComposeRecap { get; init; }
 
@@ -213,6 +216,8 @@ public static class ShippedCallouts
             .Add(new FriendsCallout(sources.Friends))
 
             .Add(new GalNetCallout())
+
+            .Add(new ServerStatusCallout())
 
             // Phase 23.
             .Add(new LoreCallout(sources.Lore, sources.LoreVisits))
@@ -336,6 +341,10 @@ public static class ShippedCallouts
                     galNet.Arrived = () => services.Settings.Current.Knowledge.GalNet ? services.GalNetArrived() : [];
                     break;
 
+                case ServerStatusCallout serverStatus:
+                    serverStatus.Announce = () => services.Settings.Current.Knowledge.ServerStatus ? services.ServerStatusAnnounce() : null;
+                    break;
+
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
                     break;
@@ -418,6 +427,7 @@ public static class ShippedCallouts
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);
+        engine.SetEnabled("server-status", callouts.ServerStatus, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
         engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);

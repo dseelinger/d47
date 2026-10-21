@@ -171,6 +171,7 @@ public partial class MainWindow : Window
             Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableBgsWork(() => host.GameState.Active, () => host.BgsTick?.Last, () => DateTimeOffset.UtcNow);
+            FollowServerStatus(host.ServerStatus);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
@@ -493,6 +494,27 @@ public partial class MainWindow : Window
 
     /// <summary>The game server readout in the title bar, left of HELP; hidden until given a state.</summary>
     public ServerStatusReadout ServerStatus { get; } = new();
+
+    private void FollowServerStatus(D47.Core.Knowledge.ServerStatusWatch? watch)
+    {
+        if (watch is null)
+        {
+            return;
+        }
+
+        ServerStatus.Show(ReadoutState(watch.Shown));
+        watch.ShownChanged += state => Avalonia.Threading.Dispatcher.UIThread.Post(() => ServerStatus.Show(ReadoutState(state)));
+    }
+
+    /// <summary>The readout's state for a watch state.</summary>
+    public static ServerState? ReadoutState(D47.Core.Knowledge.GameServerState? state) => state switch
+    {
+        D47.Core.Knowledge.GameServerState.Online => ServerState.Online,
+        D47.Core.Knowledge.GameServerState.Maintenance => ServerState.Maintenance,
+        D47.Core.Knowledge.GameServerState.Offline => ServerState.Offline,
+        D47.Core.Knowledge.GameServerState.Unknown => ServerState.Unknown,
+        _ => null,
+    };
 
     /// <summary>What the panel is showing.</summary>
     public PanelViewModel Model => _model;

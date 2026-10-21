@@ -88,6 +88,7 @@ public static class CrewDomains
         "bgs-tick",
         "friends",
         "galnet",
+        "server-status",
         "ring-hotspots",
         "unsold-data-at-risk",
         "reminders",

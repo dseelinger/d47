@@ -210,6 +210,18 @@ The articles are kept in `data\galnet.json` on this PC and never pruned. An arti
 replaces the kept copy. A fetch that fails leaves the file as it was. Turning the setting off stops the
 requests; the kept articles stay.
 
+### Server status {#server-status}
+
+Off by default, with a host of its own. While it is on, d47 asks Frontier's server status page at
+`ed-server-status.orerve.net` whether Elite's servers are up when it starts, then every ten minutes while the
+answer is Online and every minute otherwise, whether or not Elite is running. Nothing about you goes with the
+request: no key, no Commander name and nothing from your journal.
+
+The title bar shows the latest answer left of HELP as **SERVERS ONLINE**, **MAINTENANCE**, **OFFLINE** or
+**UNKNOWN**; Unknown means the request failed or the answer could not be read. Nothing is shown while the
+setting is off or before the first answer. Frontier's `Good` is Online, `Maintenance` is Maintenance and any
+other status is Offline. Turning the setting off stops the requests and hides the readout.
+
 ### Signal index {#signal-index}
 
 A fourth setting, off by default. While it is on, a signal search can also answer from a daily

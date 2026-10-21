@@ -71,6 +71,11 @@ public static class EgressDisclosure
 
     public const string GalNetHost = "cms.zaonce.net";
 
+    /// <summary>Asking whether Elite's servers are up.</summary>
+    public const string ServerStatus = "serverstatus";
+
+    public const string ServerStatusHost = "ed-server-status.orerve.net";
+
     /// <summary>Downloading the daily index of FSS signals.</summary>
     public const string SignalIndex = "signalindex";
 
@@ -150,6 +155,7 @@ public static class EgressDisclosure
         CommunityGoals,
         BgsTick,
         GalNet,
+        ServerStatus,
         SignalIndex,
         Eddn,
         UpdateCheck,
@@ -186,6 +192,7 @@ public static class EgressDisclosure
         CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
         GalNet => "GalNet news",
+        ServerStatus => "Server status",
         SignalIndex => "Signal index",
         Eddn => "EDDN",
         WebSearch => "Web search",
@@ -377,6 +384,23 @@ public static class EgressDisclosure
                 NameOf(GalNet),
                 "GalNet news is off, so nothing is requested. Articles already kept stay on this machine; if your language model "
                 + "searches or reads them, their text goes to it."),
+
+        ServerStatus => settings.Knowledge.ServerStatus
+            ? new EgressEntry(
+                ServerStatus,
+                NameOf(ServerStatus),
+                ServerStatusHost,
+                "One request to Frontier's server status page, ed-server-status.orerve.net, when d47 starts, "
+                + "then every ten minutes while the servers are up and every minute while they are not, "
+                + "whether or not Elite is running. Nothing about you goes with it: no key, no Commander "
+                + "name and nothing from your journal.",
+                Active: true,
+                Summary: "One request at startup, then every ten minutes (every minute while the servers are "
+                    + "down), even with Elite closed. Nothing about you goes with it.")
+            : EgressEntry.Silent(
+                ServerStatus,
+                NameOf(ServerStatus),
+                "Server status is off, so nothing is requested and the title bar shows no server state."),
 
         SignalIndex => settings.Knowledge.SignalIndex
             ? new EgressEntry(
