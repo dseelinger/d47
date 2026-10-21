@@ -7,6 +7,7 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using D47.App.Theming;
 using D47.Core.Goals;
+using D47.Core.Knowledge;
 
 namespace D47.App.Controls;
 
@@ -57,7 +58,7 @@ public static class GoalTrackBar
             : name;
     }
 
-    public static Control Build(GoalTrack track, double height)
+    public static Control Build(GoalTrack track, double height, PowerplayBenefits? benefits = null)
     {
         ArgumentNullException.ThrowIfNull(track);
 
@@ -101,6 +102,11 @@ public static class GoalTrackBar
         root.Children.Add(labels);
         root.Children.Add(segments);
 
+        if (benefits is not null)
+        {
+            root.Children.Add(Ticks(benefits));
+        }
+
         if (Caption(track) is { } caption)
         {
             var line = new TextBlock
@@ -121,6 +127,41 @@ public static class GoalTrackBar
         AutomationProperties.SetName(root, "Progress " + Whole(track) + (Caption(track) is { } said ? ", " + said : string.Empty));
 
         return root;
+    }
+
+    /// <summary>A 2px tick under the track at each rank that gives a perk, a rebuy cut or a module, and a legend.</summary>
+    private static Control Ticks(PowerplayBenefits benefits)
+    {
+        var whole = (double)(PowerplayRanks.MeritsNeeded(PowerplayRanks.LastTabulatedRank) ?? 1);
+        var strip = new Canvas { Height = 2, Margin = new Thickness(0, 2, 0, 0) };
+        var placed = new List<(Border Tick, double At)>();
+
+        foreach (var rank in benefits.TickRanks)
+        {
+            var tick = new Border { Width = 2, Height = 2 };
+            Themed(tick, Border.BackgroundProperty, rank <= benefits.Rank ? ThemeManager.AKey : ThemeManager.WhiteKey);
+            strip.Children.Add(tick);
+            placed.Add((tick, (PowerplayRanks.MeritsNeeded(rank) ?? 0) / whole));
+        }
+
+        strip.SizeChanged += (_, _) =>
+        {
+            foreach (var (tick, at) in placed)
+            {
+                Canvas.SetLeft(tick, Math.Max(0, at * strip.Bounds.Width - 2));
+            }
+        };
+
+        var legend = new TextBlock
+        {
+            Text = "Ticks mark a perk, a rebuy cut or a module: held, then to come.",
+            FontSize = TypeScale.Meta,
+            Margin = new Thickness(0, 4, 0, 0),
+        };
+
+        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        return new StackPanel { Children = { strip, legend } };
     }
 
     private static ColumnDefinitions Columns(GoalTrack track)

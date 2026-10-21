@@ -120,14 +120,14 @@ public static class PowerplayCapability
 
         if (rewards.FirstOrDefault(r => r.Rank > held + 1 && IsPerk(r)) is { } perk)
         {
-            said.Add($"The next perk is at rank {perk.Rank}{Away(perk.Rank, merits)}: {PerkPhrase(perk, name)}.");
+            said.Add($"The next perk is at rank {perk.Rank}{Away(perk.Rank, merits)}: {PowerplayWording.PerkPhrase(perk, name)}.");
         }
 
         if (rewards.FirstOrDefault(r => r.Rank > held + 1 && r.Kind == PowerplayRewardKind.Module) is { } module)
         {
             var which = rewards.Any(r => r.Kind == PowerplayRewardKind.Module && r.Rank <= held) ? "next" : "first";
 
-            said.Add($"The {which} module is the {ModuleName(module)} at rank {module.Rank}{Away(module.Rank, merits)}.");
+            said.Add($"The {which} module is the {PowerplayWording.ModuleName(module)} at rank {module.Rank}{Away(module.Rank, merits)}.");
         }
 
         return string.Join(' ', said);
@@ -172,7 +172,7 @@ public static class PowerplayCapability
                     $"In {name}'s territory your rebuy is {percent}% {(lower ? "lower" : "higher")}.",
                 PowerplayRewardKind.RebuyRival =>
                     $"When a rival Power's ship kills you outside {name}'s territory your rebuy is {percent}% {(lower ? "lower" : "higher")}.",
-                _ => $"In {name}'s territory, {Label(reward)} {(lower ? "down" : "up")} {percent}%.",
+                _ => $"In {name}'s territory, {PowerplayWording.PerkLabel(reward)} {(lower ? "down" : "up")} {percent}%.",
             };
         }
 
@@ -180,7 +180,7 @@ public static class PowerplayCapability
 
         if (modules.Count > 0)
         {
-            var named = modules.Take(MaxNamed).Select(ModuleName).ToList();
+            var named = modules.Take(MaxNamed).Select(PowerplayWording.ModuleName).ToList();
             var more = modules.Count - named.Count;
 
             yield return more > 0
@@ -198,33 +198,9 @@ public static class PowerplayCapability
     {
         PowerplayRewardKind.Decal => $"a {reward.Subject} decal",
         PowerplayRewardKind.CarePackage => $"a {reward.Subject} care package",
-        PowerplayRewardKind.Module => $"the {ModuleName(reward)}",
-        _ => PerkPhrase(reward, name),
+        PowerplayRewardKind.Module => $"the {PowerplayWording.ModuleName(reward)}",
+        _ => PowerplayWording.PerkPhrase(reward, name),
     };
-
-    private static string PerkPhrase(PowerplayReward reward, string name)
-    {
-        var percent = Math.Abs(reward.Value ?? 0).ToString(CultureInfo.InvariantCulture);
-        var lower = reward.Value < 0;
-
-        return reward.Kind switch
-        {
-            PowerplayRewardKind.RebuyOwnTerritory =>
-                $"{percent}% {(lower ? "off" : "on top of")} rebuy in {name}'s territory",
-            PowerplayRewardKind.RebuyRival =>
-                $"{percent}% {(lower ? "off" : "on top of")} rebuy when a rival Power's ship kills you outside {name}'s territory",
-            _ => $"{Label(reward)} {(lower ? "down" : "up")} {percent}% in {name}'s territory",
-        };
-    }
-
-    private static string Label(PowerplayReward reward) =>
-        PowerplayRanks.PerkLabel(reward.Subject) ?? reward.Subject;
-
-    private static string ModuleName(PowerplayReward reward) =>
-        EliteSpecifications.Modules
-            .FirstOrDefault(m => string.Equals(m.Entitlement, reward.Subject, StringComparison.OrdinalIgnoreCase))
-            ?.Name
-        ?? reward.Subject;
 
     private static string Away(int rank, long? merits) =>
         merits is { } have && PowerplayRanks.MeritsNeeded(rank) is { } needed && needed > have

@@ -1,3 +1,5 @@
+using D47.Core.Knowledge;
+
 namespace D47.Core.Goals;
 
 /// <summary>How an arc's progress is settled (Phase 34, "Progress is derived, never typed").</summary>
@@ -99,6 +101,9 @@ public sealed record GoalStanding
 
     /// <summary>The goal's segments and the Commander's place in them, or null on a goal that has none.</summary>
     public GoalTrack? Track { get; init; }
+
+    /// <summary>What the pledged Power's ranks give, on the Powerplay arc.</summary>
+    public PowerplayBenefits? Benefits { get; init; }
 
     /// <summary>0 to 1 over the whole arc, or null where either half is unknown.</summary>
     public double? Fraction => Track is { } track

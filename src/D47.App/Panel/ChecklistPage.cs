@@ -1187,7 +1187,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (track is not null)
         {
-            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight));
+            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight, standing.Benefits));
 
             if (standing.Arc.Kind != D47.Core.Goals.GoalKind.Story)
             {
@@ -1195,6 +1195,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             }
 
             body.Children.Add(Chapters(track));
+
+            if (standing.Benefits is { } benefits)
+            {
+                body.Children.Add(PowerplayBenefitsView.Build(benefits));
+            }
         }
         else if (CountTrack(standing) is { } count)
         {

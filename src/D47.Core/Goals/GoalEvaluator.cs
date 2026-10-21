@@ -152,6 +152,7 @@ public static class GoalEvaluator
             Rung = track.Fill,
             NextRank = pledge.Rank < GoalCatalogue.PowerplayTop ? $"Rank {pledge.Rank + 1}" : null,
             Track = track,
+            Benefits = PowerplayBenefits.For(pledge.Power, pledge.Rank),
             IsDone = pledge.Rank >= GoalCatalogue.PowerplayTop,
         };
     }
