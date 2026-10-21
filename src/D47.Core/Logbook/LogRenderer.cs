@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.CaptainsLog;
 using D47.Core.Conversation;
 
 namespace D47.Core.Logbook;
@@ -29,6 +30,9 @@ public sealed record LogWritten
     public bool Local { get; init; }
 
     public string Version { get; init; } = string.Empty;
+
+    /// <summary>Captain's log entries quoted verbatim; never sent to the model.</summary>
+    public IReadOnlyList<CaptainsLogEntry> Entries { get; init; } = [];
 
     /// <summary>Where it landed.</summary>
     public string? Path { get; init; }
@@ -77,6 +81,7 @@ public static class LogRenderer
         text.AppendLine("---");
         text.AppendLine();
 
+        OwnWords(text, written);
         Sources(text, written);
         Untraced(text, audit);
         Colophon(text, written);
@@ -91,6 +96,39 @@ public static class LogRenderer
             "Written from the Commander's flight journal, with Directive 47 chipping in.",
         _ => "Written from the Commander's flight journal.",
     };
+
+    /// <summary>The Commander's captain's log entries inside the range, oldest first.</summary>
+    private static void OwnWords(StringBuilder text, LogWritten written)
+    {
+        var range = written.Digest.Range;
+        var held = written.Entries.Where(entry => range.Holds(entry.At)).OrderBy(entry => entry.At).ToList();
+
+        if (held.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine("## In your own words");
+        text.AppendLine();
+
+        foreach (var entry in held)
+        {
+            text.Append("**").Append(entry.At.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)).Append(" UTC");
+
+            if (!string.IsNullOrWhiteSpace(entry.System))
+            {
+                text.Append(" — ").Append(entry.System);
+            }
+
+            text.AppendLine("**");
+            text.AppendLine();
+            text.AppendLine(entry.Text.Trim());
+            text.AppendLine();
+        }
+
+        text.AppendLine("---");
+        text.AppendLine();
+    }
 
     /// <summary>What the log drew on.</summary>
     private static void Sources(StringBuilder text, LogWritten written)

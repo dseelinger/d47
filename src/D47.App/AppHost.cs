@@ -1944,7 +1944,8 @@ public sealed class AppHost : IDisposable
 
                 return D47.Core.Logbook.LogStoryBeat.From(
                     adventureBook.Standings(frontierId), id => storyStore.Find(frontierId, id), storyArchive.For(frontierId));
-            });
+            },
+            frontierId => frontierId is null ? [] : stores.CaptainsLog.For(frontierId));
 
         // Audio comes up before the registry because the speech capability's settings rows read the bed names
         // and the device list from it.

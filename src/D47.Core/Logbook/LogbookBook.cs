@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.CaptainsLog;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
@@ -48,7 +49,8 @@ public sealed class LogbookBook(
     Func<DateTimeOffset> now,
     Func<LogbookContext> context,
     ILogger<LogbookBook> logger,
-    Func<IReadOnlyList<LogStoryBeat>>? storyBeats = null)
+    Func<IReadOnlyList<LogStoryBeat>>? storyBeats = null,
+    Func<string?, IReadOnlyList<CaptainsLogEntry>>? captainsLog = null)
 {
     private readonly Lock _gate = new();
 
@@ -267,6 +269,7 @@ public sealed class LogbookBook(
             Cost = cost,
             Local = estimate.Local,
             Version = host.Version,
+            Entries = captainsLog?.Invoke(host.FrontierId) ?? [],
         };
 
         string path;

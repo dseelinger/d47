@@ -1,5 +1,6 @@
 using D47.Core.Storage;
 using D47.Core;
+using D47.Core.CaptainsLog;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Logbook;
@@ -20,6 +21,7 @@ public class LogbookBookTests
 
     private LogbookSettings _settings = new();
     private LogbookContext _context = new();
+    private IReadOnlyList<CaptainsLogEntry> _entries = [];
 
     /// <summary>The quote is optional: a write with none prices the window and writes it in one call.</summary>
     [Fact]
@@ -252,6 +254,71 @@ public class LogbookBookTests
         Assert.Contains("sentences trace back to a fact", file, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ALogQuotesTheEntriesInItsRangeVerbatimAfterTheModelsText()
+    {
+        Evening1();
+        _entries =
+        [
+            new CaptainsLogEntry("b", "Second thought, odd  spacing.", Evening.AddMinutes(30)) { System = "Deciat" },
+            new CaptainsLogEntry("a", "First thought.", Evening.AddMinutes(5)) { System = "Sol" },
+            new CaptainsLogEntry("c", "Years ago.", Evening.AddYears(-1)),
+        ];
+
+        var book = Book(FakeLlmProvider.Answering("A quiet run [1]."));
+        book.Estimate(null, null, null, out _);
+
+        var outcome = await book.WriteAsync(CancellationToken.None);
+        var file = _corpus.FileSystem.ReadText(outcome.Written!.Path!)!;
+
+        var section = file.IndexOf("## In your own words", StringComparison.Ordinal);
+
+        Assert.True(section > file.IndexOf("A quiet run", StringComparison.Ordinal));
+        Assert.True(section < file.IndexOf("## Sources", StringComparison.Ordinal));
+        Assert.True(file.IndexOf("First thought.", StringComparison.Ordinal) > section);
+        Assert.True(
+            file.IndexOf("First thought.", StringComparison.Ordinal)
+            < file.IndexOf("Second thought, odd  spacing.", StringComparison.Ordinal));
+        Assert.Contains("— Sol", file, StringComparison.Ordinal);
+        Assert.Contains("— Deciat", file, StringComparison.Ordinal);
+        Assert.DoesNotContain("Years ago.", file, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ALogWithNoEntriesInRangeHasNoOwnWordsSection()
+    {
+        Evening1();
+        _entries = [new CaptainsLogEntry("c", "Years ago.", Evening.AddYears(-1))];
+
+        var book = Book(FakeLlmProvider.Answering("A quiet run [1]."));
+        book.Estimate(null, null, null, out _);
+
+        var outcome = await book.WriteAsync(CancellationToken.None);
+
+        Assert.DoesNotContain("In your own words", _corpus.FileSystem.ReadText(outcome.Written!.Path!), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EntriesNeverReachThePromptOrChangeTheQuote()
+    {
+        Evening1();
+
+        var plain = Book(FakeLlmProvider.Answering("A quiet run [1]."));
+        plain.Estimate(null, null, null, out _);
+        var plainPrice = plain.Armed!.Price;
+
+        _entries = [new CaptainsLogEntry("a", "Purple walrus secret.", Evening.AddMinutes(5)) { System = "Sol" }];
+
+        var book = Book(FakeLlmProvider.Answering("A quiet run [1]."));
+        book.Estimate(null, null, null, out _);
+
+        var request = LogPrompt.Build(book.Armed!.Digest, book.Armed.Used, book.Armed.Length, null, null);
+        var sent = request.RenderCachedSystemBlock() + string.Concat(request.History.Select(message => message.Text));
+
+        Assert.DoesNotContain("walrus", sent, StringComparison.Ordinal);
+        Assert.Equal(plainPrice, book.Armed.Price);
+    }
+
     /// <summary>One short evening: enough to have something to write about.</summary>
     private void Evening1() =>
         _corpus.Journal(
@@ -337,6 +404,7 @@ public class LogbookBookTests
             () => _corpus.Files,
             () => Evening.AddHours(5),
             () => _context,
-            NullLogger<LogbookBook>.Instance);
+            NullLogger<LogbookBook>.Instance,
+            captainsLog: _ => _entries);
     }
 }
