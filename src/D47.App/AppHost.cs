@@ -2870,6 +2870,7 @@ public sealed class AppHost : IDisposable
                 signalIndex: signalIndexStore,
                 pickCommander: feed.Picks.Enqueue,
                 galNetArchive: () => late.Host?.GalNet?.Archive,
+                serverStatus: () => late.Host?.ServerStatus,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
                 screen: screenCapture,

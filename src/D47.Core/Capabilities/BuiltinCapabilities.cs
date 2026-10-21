@@ -293,6 +293,9 @@ public static class BuiltinCapabilities
         // The kept GalNet articles, once the watch that fills them is built.
         Func<Knowledge.GalNetArchive?>? galNetArchive = null,
 
+        // The server status watch, once it is built.
+        Func<Knowledge.ServerStatusWatch?>? serverStatus = null,
+
         // Carrier warnings that answer "noted" and the snoozes (#837).
         Callouts.StandingWarnings? standingWarnings = null,
 
@@ -516,6 +519,10 @@ public static class BuiltinCapabilities
         GalNetCapability.Create(
             galNetArchive ?? (() => null),
             () => settings.Current.Knowledge.GalNet),
+        ServerStatusCapability.Create(
+            serverStatus ?? (() => null),
+            () => settings.Current.Knowledge.ServerStatus,
+            now ?? (() => DateTimeOffset.MinValue)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

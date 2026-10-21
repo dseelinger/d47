@@ -24,6 +24,7 @@ public sealed class ServerStatusWatch
     private bool _wasEnabled;
     private DateTimeOffset? _fetchedAt;
     private GameServerState? _answer;
+    private DateTimeOffset? _answeredAt;
     private GameServerState? _lastKnown;
 
     public ServerStatusWatch(IServerStatusSource source, Func<bool> enabled, ILogger<ServerStatusWatch> logger)
@@ -38,6 +39,9 @@ public sealed class ServerStatusWatch
 
     /// <summary>The latest answer; null while the setting is off or before the first answer.</summary>
     public GameServerState? Shown { get; private set; }
+
+    /// <summary>When <see cref="Shown"/> was last answered; null whenever it is null.</summary>
+    public DateTimeOffset? ShownAt { get; private set; }
 
     /// <summary>Raised on the tick thread when <see cref="Shown"/> changes.</summary>
     public event Action<GameServerState?>? ShownChanged;
@@ -64,6 +68,7 @@ public sealed class ServerStatusWatch
         {
             _answers.Clear();
             _answer = null;
+            _answeredAt = null;
             _lastKnown = null;
             _fetching = false;
         }
@@ -72,6 +77,7 @@ public sealed class ServerStatusWatch
         {
             _fetching = false;
             _answer = answer;
+            _answeredAt = now;
 
             if (answer == GameServerState.Unknown)
             {
@@ -83,6 +89,7 @@ public sealed class ServerStatusWatch
         }
 
         var shown = enabled ? _answer : null;
+        ShownAt = shown is null ? null : _answeredAt;
 
         if (shown != Shown)
         {
