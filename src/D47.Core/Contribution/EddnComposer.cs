@@ -9,13 +9,17 @@ namespace D47.Core.Contribution;
 /// <param name="readMarket">Returns the text of <c>Market.json</c>, or null when it cannot be read.</param>
 /// <param name="readOutfitting">Returns the text of <c>Outfitting.json</c>, or null when it cannot be read.</param>
 /// <param name="readShipyard">Returns the text of <c>Shipyard.json</c>, or null when it cannot be read.</param>
+/// <param name="readNavRoute">Returns the text of <c>NavRoute.json</c>, or null when it cannot be read.</param>
+/// <param name="statusBodyName">Returns the <c>BodyName</c> in <c>Status.json</c>, or null when it has none.</param>
 public sealed class EddnComposer(
     Func<string?> uploaderId,
     string softwareVersion,
     Func<string?> readMarket,
     bool useTestSchemas = false,
     Func<string?>? readOutfitting = null,
-    Func<string?>? readShipyard = null)
+    Func<string?>? readShipyard = null,
+    Func<string?>? readNavRoute = null,
+    Func<string?>? statusBodyName = null)
 {
     public const string SoftwareName = "Directive 47";
 
@@ -28,6 +32,10 @@ public sealed class EddnComposer(
     private const string FssBodySignalsSchema = "https://eddn.edcd.io/schemas/fssbodysignals/1";
     private const string FssAllBodiesFoundSchema = "https://eddn.edcd.io/schemas/fssallbodiesfound/1";
     private const string ScanBaryCentreSchema = "https://eddn.edcd.io/schemas/scanbarycentre/1";
+    private const string CodexEntrySchema = "https://eddn.edcd.io/schemas/codexentry/1";
+    private const string ApproachSettlementSchema = "https://eddn.edcd.io/schemas/approachsettlement/1";
+    private const string NavBeaconScanSchema = "https://eddn.edcd.io/schemas/navbeaconscan/1";
+    private const string NavRouteSchema = "https://eddn.edcd.io/schemas/navroute/1";
 
     /// <summary>How long after its last signal a run of FSSSignalDiscovered events is closed.</summary>
     public static readonly TimeSpan RunIdle = TimeSpan.FromSeconds(10);
@@ -50,6 +58,24 @@ public sealed class EddnComposer(
         "OrbitalInclination", "Periapsis", "OrbitalPeriod", "AscendingNode", "MeanAnomaly",
     ];
 
+    private static readonly string[] CodexKeys =
+    [
+        "timestamp", "event", "System", "SystemAddress", "Name", "Region", "EntryID", "Category", "SubCategory",
+        "Latitude", "Longitude", "NearestDestination", "VoucherAmount", "Traits",
+    ];
+
+    private static readonly string[] SettlementKeys =
+    [
+        "timestamp", "event", "SystemAddress", "Name", "MarketID", "BodyID", "BodyName", "Latitude", "Longitude",
+        "StationGovernment", "StationAllegiance", "StationEconomies", "StationFaction", "StationServices", "StationEconomy",
+    ];
+
+    private static readonly string[] SettlementRequired = ["Name", "BodyID", "BodyName", "Latitude", "Longitude"];
+
+    private static readonly string[] BeaconKeys = ["timestamp", "event", "SystemAddress", "NumBodies"];
+
+    private static readonly string[] RouteStopKeys = ["StarSystem", "SystemAddress", "StarPos", "StarClass"];
+
     private static readonly string[] FactionRemovals = ["MyReputation", "HappiestSystem", "HomeSystem", "SquadronFaction"];
 
     private static readonly string[] JumpRemovals = ["Wanted", "BoostUsed", "FuelLevel", "FuelUsed", "JumpDist"];
@@ -60,6 +86,8 @@ public sealed class EddnComposer(
     private string _gameBuild = "";
     private bool? _horizons;
     private bool? _odyssey;
+    private string? _journalBodyName;
+    private long? _journalBodyId;
     private readonly List<JournalEvent> _run = [];
     private DateTimeOffset _runLastSignal;
 
@@ -150,6 +178,10 @@ public sealed class EddnComposer(
             "FSSBodySignals" => ComposeFss(journalEvent, FssBodySignalsSchema, BodySignalsKeys, true),
             "FSSAllBodiesFound" => ComposeFss(journalEvent, FssAllBodiesFoundSchema, AllBodiesFoundKeys, false),
             "ScanBaryCentre" => ComposeFss(journalEvent, ScanBaryCentreSchema, BaryCentreKeys, true),
+            "CodexEntry" => ComposeFss(journalEvent, CodexEntrySchema, CodexKeys, false, ShapeCodex),
+            "ApproachSettlement" => ComposeFss(journalEvent, ApproachSettlementSchema, SettlementKeys, true, ShapeSettlement),
+            "NavBeaconScan" => ComposeFss(journalEvent, NavBeaconScanSchema, BeaconKeys, true),
+            "NavRoute" => ComposeNavRoute(journalEvent),
             _ => null,
         };
     }
@@ -172,7 +204,28 @@ public sealed class EddnComposer(
                 _odyssey = Flag(journalEvent.Raw, "Odyssey");
                 break;
 
+            case "ApproachBody":
+                _journalBodyName = journalEvent.String("BodyName");
+                _journalBodyId = journalEvent.Long("BodyID");
+                break;
+
+            case "LeaveBody":
+                _journalBodyName = null;
+                _journalBodyId = null;
+                break;
+
             case "Location" or "FSDJump" or "CarrierJump":
+                if (journalEvent.Kind == "Location")
+                {
+                    _journalBodyName = journalEvent.String("Body");
+                    _journalBodyId = journalEvent.Long("BodyID");
+                }
+                else
+                {
+                    _journalBodyName = null;
+                    _journalBodyId = null;
+                }
+
                 StarSystem = journalEvent.String("StarSystem") ?? StarSystem;
                 SystemAddress = journalEvent.Long("SystemAddress") ?? SystemAddress;
                 StarPos = StarPosition.Read(journalEvent.Raw) ?? StarPos;
@@ -346,12 +399,19 @@ public sealed class EddnComposer(
     private (long Address, string Name, StarPosition Position)? CurrentLocation =>
         SystemAddress is { } address && StarSystem is { } name && StarPos is { } position ? (address, name, position) : null;
 
-    private EddnEnvelope? ComposeFss(JournalEvent journalEvent, string schema, string[] keys, bool addsStarSystem)
+    /// <param name="shape">Checks and adjusts the picked message before the location is added; false builds nothing.</param>
+    private EddnEnvelope? ComposeFss(
+        JournalEvent journalEvent, string schema, string[] keys, bool addsStarSystem, Func<JsonObject, bool>? shape = null)
     {
         if (uploaderId() is not { Length: > 0 } uploader
             || CurrentLocation is not { } location
             || journalEvent.Long("SystemAddress") != location.Address
             || Pick(journalEvent.Raw, keys) is not { } message)
+        {
+            return null;
+        }
+
+        if (shape is not null && !shape(message))
         {
             return null;
         }
@@ -364,6 +424,122 @@ public sealed class EddnComposer(
         message["StarPos"] = new JsonArray(location.Position.X, location.Position.Y, location.Position.Z);
 
         return Finish(schema, uploader, message);
+    }
+
+    /// <summary>Adds the body the Commander is on, per the codexentry README: <c>BodyID</c> only when the journal and Status.json name the same body.</summary>
+    private bool ShapeCodex(JsonObject message)
+    {
+        if (message["System"] is null || message["EntryID"] is null)
+        {
+            return false;
+        }
+
+        if (statusBodyName?.Invoke() is { Length: > 0 } body)
+        {
+            message["BodyName"] = body;
+
+            if (_journalBodyId is { } id && string.Equals(_journalBodyName, body, StringComparison.Ordinal))
+            {
+                message["BodyID"] = id;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ShapeSettlement(JsonObject message)
+    {
+        if (SettlementRequired.Any(key => message[key] is null))
+        {
+            return false;
+        }
+
+        if (message["StationFaction"] is JsonObject faction)
+        {
+            Keep(faction, "Name", "FactionState");
+        }
+
+        if (message["StationEconomies"] is JsonArray economies)
+        {
+            foreach (var economy in economies.OfType<JsonObject>())
+            {
+                Keep(economy, "Name", "Proportion");
+            }
+        }
+
+        return true;
+    }
+
+    private static void Keep(JsonObject node, params string[] keys)
+    {
+        foreach (var key in node.Select(pair => pair.Key).Where(key => !keys.Contains(key)).ToList())
+        {
+            node.Remove(key);
+        }
+    }
+
+    /// <summary>Builds navroute/1 from NavRoute.json when it is the file the event names and it holds a route.</summary>
+    private EddnEnvelope? ComposeNavRoute(JournalEvent routeEvent)
+    {
+        if (uploaderId() is not { Length: > 0 } uploader
+            || readNavRoute?.Invoke() is not { } text
+            || string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        JsonNode? parsed;
+
+        try
+        {
+            parsed = JsonNode.Parse(text);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (parsed is not JsonObject file
+            || file["timestamp"] is not JsonValue { } stamp
+            || !stamp.TryGetValue<string>(out var timestamp)
+            || timestamp != routeEvent.String("timestamp")
+            || file["Route"] is not JsonArray { Count: > 0 } stops)
+        {
+            return null;
+        }
+
+        var route = new JsonArray();
+
+        foreach (var stop in stops)
+        {
+            if (stop is not JsonObject source)
+            {
+                return null;
+            }
+
+            var picked = new JsonObject();
+
+            foreach (var key in RouteStopKeys)
+            {
+                if (source[key] is not { } value)
+                {
+                    return null;
+                }
+
+                picked[key] = value.DeepClone();
+            }
+
+            route.Add(picked);
+        }
+
+        var message = new JsonObject
+        {
+            ["timestamp"] = timestamp,
+            ["event"] = "NavRoute",
+            ["Route"] = route,
+        };
+
+        return Finish(NavRouteSchema, uploader, message);
     }
 
     /// <summary>Copies the named properties of the event, with every _Localised key removed.</summary>

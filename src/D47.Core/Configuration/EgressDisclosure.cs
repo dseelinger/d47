@@ -354,6 +354,8 @@ public static class EgressDisclosure
                 + "the same way, names only. The system you jump to, the station you dock at and what you scan are "
                 + "sent too, with the system's position and no fines, fuel, reputation or position on a planet. "
                 + "The signals your scanner finds in a system and the number of bodies it counts go as well. "
+                + "Codex discoveries, settlements you approach, nav beacon scans and routes you plot go too; "
+                + "a plotted route is where you intend to go, not something the galaxy shows. "
                 + "EDDN republishes it to anyone listening and replaces that number before it "
                 + "does. Nothing personal goes with it: not your Commander name, your Frontier ID, your "
                 + "credits, your cargo, your ship or any key. Only what happens while d47 is running is sent, "

@@ -936,7 +936,8 @@ public static class GalaxyCapability
                     + "you open its outfitting or shipyard. The system you jump to, the station you dock at and what you scan "
                     + "are sent with the system's position, and nothing of your own state: no fines, fuel, "
                     + "reputation or position on a planet. "
-                    + "The signals and body counts your scanner finds are sent too. Your Commander name is not sent; a random number "
+                    + "The signals and body counts your scanner finds are sent too, as are codex discoveries, settlements "
+                    + "you approach, nav beacon scans and routes you plot; a route is where you intend to go. Your Commander name is not sent; a random number "
                     + "made on this PC for your Commander stands in for it. If another program already sends "
                     + "your game data to EDDN, leave this off: sending it twice adds nothing. Off by default; "
                     + "see [Privacy](privacy).",
