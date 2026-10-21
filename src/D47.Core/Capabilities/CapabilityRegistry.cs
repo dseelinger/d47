@@ -29,9 +29,10 @@ public enum ToolCaller
     Model,
 }
 
-/// <summary>One tool call and how it went.</summary>
-/// <param name="Succeeded">Whether the capability's own handler came back clean.</param>
-public sealed record ToolInvocation(string Tool, bool Succeeded);
+/// <summary>One tool call, who made it, and how it went.</summary>
+/// <param name="Succeeded">Whether the capability's own handler came back clean, or the argument guard refused the call.</param>
+/// <param name="Ran">Whether the handler ran and returned no error; false when the argument guard refused the call.</param>
+public sealed record ToolInvocation(string Tool, bool Succeeded, ToolCaller Caller, bool Ran);
 
 /// <summary>The single source for capabilities.</summary>
 public sealed partial class CapabilityRegistry
@@ -158,7 +159,7 @@ public sealed partial class CapabilityRegistry
         {
             // Announced, and announced clean: the tool was reached for, and what stopped the call was the
             // guard rather than the capability.
-            ToolInvoked?.Invoke(new ToolInvocation(toolName, Succeeded: true));
+            ToolInvoked?.Invoke(new ToolInvocation(toolName, Succeeded: true, caller, Ran: false));
             return refusal;
         }
 
@@ -177,7 +178,7 @@ public sealed partial class CapabilityRegistry
             result = ToolResult.Error($"{toolName} failed: {ex.Message}");
         }
 
-        ToolInvoked?.Invoke(new ToolInvocation(toolName, !result.IsError));
+        ToolInvoked?.Invoke(new ToolInvocation(toolName, !result.IsError, caller, Ran: !result.IsError));
 
         return result;
     }

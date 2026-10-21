@@ -63,6 +63,9 @@ public sealed class ChecklistService(
     /// <summary>The Commander typed a line into a surface's Add box, with the Commander it was filed under.</summary>
     public event Action<string, ChecklistItem>? Typed;
 
+    /// <summary>Raised once for each new line that lands on a checklist, with the scope it landed in.</summary>
+    public event Action<ChecklistScope>? LineAdded;
+
     private CommanderGameState? State => commander();
 
     private string Fid => State?.Identity.FrontierId ?? string.Empty;
@@ -1224,7 +1227,32 @@ public sealed class ChecklistService(
     /// <param name="goal">The arc that asked for the line, where one did (Phase 34).</param>
     public ChecklistChange AddNote(ChecklistScope scope, string text, string? goal = null, ChecklistWatch? watch = null) =>
         // The new line becomes the selected one (reported 2026-08-21).
-        Selecting(list.Apply(Fid, Name, document => document.AddNote(scope, text, goal, watch)));
+        Selecting(Adding(document => document.AddNote(scope, text, goal, watch)));
+
+    /// <summary>Applies <paramref name="change"/> to the list and raises <see cref="LineAdded"/> for each line it put there.</summary>
+    private ChecklistChange Adding(Func<ChecklistDocument, ChecklistChange> change)
+    {
+        IReadOnlyList<ChecklistScope> added = [];
+
+        var made = list.Apply(Fid, Name, document =>
+        {
+            var result = change(document);
+            var before = document.Items.Select(item => item.Id).ToHashSet();
+
+            added = [.. result.Document.Items.Where(item => !before.Contains(item.Id)).Select(item => item.Scope)];
+            return result;
+        });
+
+        if (made.Changed)
+        {
+            foreach (var scope in added)
+            {
+                LineAdded?.Invoke(scope);
+            }
+        }
+
+        return made;
+    }
 
     /// <summary>Adds a line the Commander typed into an Add box, and raises <see cref="Typed"/> when it lands.</summary>
     public ChecklistChange AddTyped(ChecklistScope scope, string text)
@@ -1295,7 +1323,7 @@ public sealed class ChecklistService(
             return ChecklistChange.Refused(Document, $"Nothing is outstanding for {engineer.Name}.");
         }
 
-        return list.Apply(Fid, Name, document =>
+        return Adding(document =>
         {
             var before = document.Items.Count;
             var updated = wanted.Aggregate(document, (current, item) => current.Adopt(item));
@@ -1593,7 +1621,7 @@ public sealed class ChecklistService(
 
         return proposal.Kind switch
         {
-            ProposalKind.Plan => Revise(proposal.Scope, proposal.Source, proposal.Items),
+            ProposalKind.Plan => Adding(document => document.Revise(proposal.Scope, proposal.Source, proposal.Items)),
             ProposalKind.Complete => Complete(target),
             ProposalKind.Reopen => Uncomplete(target),
             ProposalKind.Remove => Delete(target),
@@ -1825,7 +1853,7 @@ public sealed class ChecklistService(
             return "That would leave the plan empty, and I would rather you dropped it from the panel.";
         }
 
-        var change = Revise(scope, source, wanted);
+        var change = Adding(document => document.Revise(scope, source, wanted));
 
         // The count, said out loud.
         var landed = items.Count;

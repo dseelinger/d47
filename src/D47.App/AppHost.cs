@@ -3762,6 +3762,34 @@ public sealed class AppHost : IDisposable
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
 
+        var storyLogger = loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>();
+
+        // On the pool: a tool can be run from any thread, the tick's included, and recording saves the adventures file.
+        void RecordForStories(D47.Core.Adventures.D47Event? made)
+        {
+            if (made is null)
+            {
+                return;
+            }
+
+            var frontierId = gameState.Active?.Identity.FrontierId;
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    adventureBook.Record(frontierId, made);
+                }
+                catch (Exception ex)
+                {
+                    storyLogger.LogWarning(ex, "Could not record the d47 event {Event}", made.Name);
+                }
+            });
+        }
+
+        capabilities.ToolInvoked += invocation => RecordForStories(D47.Core.Adventures.D47Event.Ran(invocation, DateTimeOffset.Now));
+        checklists.LineAdded += scope => RecordForStories(D47.Core.Adventures.D47Event.LineAdded(scope, DateTimeOffset.Now));
+
         host.AudioRecorder = recording;
         host.InputTrace = inputTrace;
         host.ScreenCapture = screenCapture;

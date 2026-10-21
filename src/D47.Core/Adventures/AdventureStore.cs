@@ -445,6 +445,12 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value, string.Equals(step.By?.Trim(), CommanderStep, StringComparison.Ordinal) ? AdventureFold.CommanderSource : null, Math.Max(step.Step ?? 0, 0)))],
             Choices = [.. (record.Choices ?? []).Where(choice => choice is { Beat: >= 0, Option: >= 0, At: not null } && choice.Beat < beats.Count && choice.Option < (beats[choice.Beat!.Value].Steps.FirstOrDefault()?.Options.Count ?? 0))
                 .Select(choice => new AdventureChoice(choice.Beat!.Value, choice.Option!.Value, choice.At!.Value))],
+            Events = [.. (record.Events ?? []).Where(made => made is { Name.Length: > 0, At: not null })
+                .Take(AdventureLimits.MaxEvents)
+                .Select(made => new D47Event(
+                    made.Name!.Trim(),
+                    [.. (made.Fields ?? []).Where(pair => pair.Field is not null && pair.Value is not null).Select(pair => new EventField(pair.Field!.Trim(), pair.Value!.Trim()))],
+                    made.At!.Value))],
             Offered = record.Offered is { Beat: >= 0, At: not null } offered ? new AdventureOffer(offered.Beat!.Value, offered.At.Value) : null,
         };
 
@@ -634,6 +640,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         StoryId = adventure.StoryId,
         Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, Step = step.Step > 0 ? step.Step : null, At = step.At, By = step.By == AdventureFold.CommanderSource ? CommanderStep : null })] : null,
         Choices = adventure.Choices.Count > 0 ? [.. adventure.Choices.Select(choice => new ChoiceRecord { Beat = choice.Beat, Option = choice.Option, At = choice.At })] : null,
+        Events = adventure.Events.Count > 0
+            ? [.. adventure.Events.Select(made => new EventRecord { Name = made.Name, Fields = [.. made.Fields.Select(pair => new WhereRecord { Field = pair.Field, Value = pair.Value })], At = made.At })]
+            : null,
         Offered = adventure.Offered is { } offered ? new OfferRecord { Beat = offered.Beat, At = offered.At } : null,
     };
 
@@ -697,7 +706,18 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         public List<ChoiceRecord>? Choices { get; set; }
 
+        public List<EventRecord>? Events { get; set; }
+
         public OfferRecord? Offered { get; set; }
+    }
+
+    private sealed class EventRecord
+    {
+        public string? Name { get; set; }
+
+        public List<WhereRecord>? Fields { get; set; }
+
+        public DateTimeOffset? At { get; set; }
     }
 
     private sealed class ChoiceRecord

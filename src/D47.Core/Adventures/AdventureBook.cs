@@ -90,7 +90,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 {
     private readonly Lock _gate = new();
 
-    /// <summary>Held across a rewrite's read, save and fold update; never taken under <see cref="_gate"/>.</summary>
+    /// <summary>Held across every read, change and save of an adventure on file, and the fold update after it; never taken under <see cref="_gate"/>.</summary>
     private readonly Lock _rewriteGate = new();
     private readonly Queue<AdventureMoment> _moments = new();
     private AdventureFoldState _fold = new();
@@ -171,19 +171,22 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         Quiet(commander, key);
 
-        if (store.Find(commander, key) is not { } adventure)
+        lock (_rewriteGate)
         {
-            return;
-        }
+            if (store.Find(commander, key) is not { } adventure)
+            {
+                return;
+            }
 
-        var kept = adventure.Told.Count + 1 > AdventureLimits.MaxTold
-            ? adventure.Told.Skip(adventure.Told.Count + 1 - AdventureLimits.MaxTold).Append(entry).ToList()
-            : adventure.Told.Append(entry).ToList();
+            var kept = adventure.Told.Count + 1 > AdventureLimits.MaxTold
+                ? adventure.Told.Skip(adventure.Told.Count + 1 - AdventureLimits.MaxTold).Append(entry).ToList()
+                : adventure.Told.Append(entry).ToList();
 
-        // Straight to the store, which is what the panel and the file both read.
-        if (store.Save(commander, adventure with { Told = kept }) is { } refusal)
-        {
-            logger.LogWarning("Could not record what was said about {Name}: {Refusal}", adventure.Name, refusal);
+            // Straight to the store, which is what the panel and the file both read.
+            if (store.Save(commander, adventure with { Told = kept }) is { } refusal)
+            {
+                logger.LogWarning("Could not record what was said about {Name}: {Refusal}", adventure.Name, refusal);
+            }
         }
     }
 
@@ -436,7 +439,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         foreach (var known in store.Commanders)
         {
-            foreach (var adventure in store.For(known).Where(adventure => adventure.Stepped.Count > 0 || adventure.Choices.Count > 0))
+            foreach (var adventure in store.For(known).Where(adventure => adventure.Stepped.Count > 0 || adventure.Choices.Count > 0 || adventure.Events.Count > 0))
             {
                 var standing = StandingOf(state, known, adventure);
 
@@ -502,41 +505,57 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// <summary>The acceptance act.</summary>
     public string? Begin(string? frontierId, string key, DateTimeOffset now)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
+        var stirred = false;
 
-        if (store.Find(commander, key) is not { } adventure)
+        try
         {
-            return "There is no story by that name.";
-        }
+            lock (_rewriteGate)
+            {
+                var commander = frontierId ?? AdventureStore.NoCommander;
 
-        if (adventure.IsActive)
+                if (store.Find(commander, key) is not { } adventure)
+                {
+                    return "There is no story by that name.";
+                }
+
+                if (adventure.IsActive)
+                {
+                    return $"{adventure.Name} is already under way.";
+                }
+
+                if (AdventureValidation.NotReady(adventure) is { Count: > 0 } reasons)
+                {
+                    return string.Join(" ", reasons);
+                }
+
+                // Told is cleared with the stamp: a story begun again is being told again, and the feed the Commander
+                // reads is what happened this time round rather than a splice of two runs.
+                var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Ending = null, RewrittenAt = null, RewrittenFrom = null, RewrittenStep = 0, Previous = null, Told = [], Stepped = [], Choices = [], Events = [], Offered = null };
+
+                if (store.Save(commander, begun) is { } refusal)
+                {
+                    return refusal;
+                }
+
+                lock (_gate)
+                {
+                    _fold.Standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(_fold, commander), Seen(_fold, commander));
+                    _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
+                    Stir(commander, begun.Key);
+                }
+
+                stirred = true;
+                return null;
+            }
+        }
+        finally
         {
-            return $"{adventure.Name} is already under way.";
+            // Outside the gate: the handlers redraw panels.
+            if (stirred)
+            {
+                StirringChanged?.Invoke();
+            }
         }
-
-        if (AdventureValidation.NotReady(adventure) is { Count: > 0 } reasons)
-        {
-            return string.Join(" ", reasons);
-        }
-
-        // Told is cleared with the stamp: a story begun again is being told again, and the feed the Commander
-        // reads is what happened this time round rather than a splice of two runs.
-        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Ending = null, RewrittenAt = null, RewrittenFrom = null, RewrittenStep = 0, Previous = null, Told = [], Stepped = [], Choices = [], Offered = null };
-
-        if (store.Save(commander, begun) is { } refusal)
-        {
-            return refusal;
-        }
-
-        lock (_gate)
-        {
-            _fold.Standings[StandingKey(commander, begun.Key)] = AdventureFold.Start(begun, Here(_fold, commander), Seen(_fold, commander));
-            _moments.Enqueue(new AdventureMoment(commander, begun, -1, now));
-            Stir(commander, begun.Key);
-        }
-
-        StirringChanged?.Invoke();
-        return null;
     }
 
     /// <summary>
@@ -653,123 +672,155 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// </summary>
     internal string? Step(string? frontierId, string key, DateTimeOffset now, string? by = null)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
+        var stirred = false;
 
-        if (store.Find(commander, key) is not { } adventure)
+        try
         {
-            return "There is no story by that name.";
-        }
-
-        if (!adventure.IsBegun)
-        {
-            return $"{adventure.Name} has not begun.";
-        }
-
-        if (adventure.IsAbandoned)
-        {
-            return $"{adventure.Name} was abandoned.";
-        }
-
-        AdventureStanding standing;
-
-        lock (_gate)
-        {
-            standing = StandingOf(_fold, commander, adventure);
-
-            if (standing.IsDone || standing.CurrentBeat is null)
+            lock (_rewriteGate)
             {
-                return $"{adventure.Name} is finished.";
-            }
+                var commander = frontierId ?? AdventureStore.NoCommander;
 
-            if (_stirring.Contains(StandingKey(commander, key)))
-            {
-                return $"{adventure.Name} is still being told.";
-            }
+                if (store.Find(commander, key) is not { } adventure)
+                {
+                    return "There is no story by that name.";
+                }
 
-            if (standing.CurrentObjective is { IsChoice: true } choice)
-            {
-                return $"{adventure.Name} is waiting on a choice. {choice.HandOff()}";
+                if (!adventure.IsBegun)
+                {
+                    return $"{adventure.Name} has not begun.";
+                }
+
+                if (adventure.IsAbandoned)
+                {
+                    return $"{adventure.Name} was abandoned.";
+                }
+
+                AdventureStanding standing;
+
+                lock (_gate)
+                {
+                    standing = StandingOf(_fold, commander, adventure);
+
+                    if (standing.IsDone || standing.CurrentBeat is null)
+                    {
+                        return $"{adventure.Name} is finished.";
+                    }
+
+                    if (_stirring.Contains(StandingKey(commander, key)))
+                    {
+                        return $"{adventure.Name} is still being told.";
+                    }
+
+                    if (standing.CurrentObjective is { IsChoice: true } choice)
+                    {
+                        return $"{adventure.Name} is waiting on a choice. {choice.HandOff()}";
+                    }
+                }
+
+                var step = new AdventureStep(standing.Current, now, by, standing.CurrentStep);
+                var stepped = adventure with { Stepped = [.. adventure.Stepped.Where(known => known.Beat != step.Beat || known.Step != step.Step), step] };
+
+                if (AdventureValidation.Problems(stepped) is { Count: > 0 } problems)
+                {
+                    return string.Join(" ", problems);
+                }
+
+                if (store.Save(commander, stepped) is { } refusal)
+                {
+                    return refusal;
+                }
+
+                stepped = store.Find(commander, key) ?? stepped;
+
+                lock (_gate)
+                {
+                    var current = StandingOf(_fold, commander, adventure);
+
+                    if (current.IsDone || current.Current != step.Beat || current.CurrentStep != step.Step)
+                    {
+                        return $"{adventure.Name} has moved on from that objective.";
+                    }
+
+                    var after = AdventureFold.Stepped(current, now, by) with { Adventure = stepped };
+
+                    _fold.Standings[StandingKey(commander, key)] = after;
+                    Announce(commander, current, after, now);
+
+                    if (_walking)
+                    {
+                        _generation++;
+                        _needsCatchUp = true;
+                    }
+                }
+
+                stirred = true;
+                return null;
             }
         }
-
-        var step = new AdventureStep(standing.Current, now, by, standing.CurrentStep);
-        var stepped = adventure with { Stepped = [.. adventure.Stepped.Where(known => known.Beat != step.Beat || known.Step != step.Step), step] };
-
-        if (AdventureValidation.Problems(stepped) is { Count: > 0 } problems)
+        finally
         {
-            return string.Join(" ", problems);
-        }
-
-        if (store.Save(commander, stepped) is { } refusal)
-        {
-            return refusal;
-        }
-
-        stepped = store.Find(commander, key) ?? stepped;
-
-        lock (_gate)
-        {
-            var current = StandingOf(_fold, commander, adventure);
-
-            if (current.IsDone || current.Current != step.Beat || current.CurrentStep != step.Step)
+            // Outside the gate: the handlers redraw panels.
+            if (stirred)
             {
-                return $"{adventure.Name} has moved on from that objective.";
-            }
-
-            var after = AdventureFold.Stepped(current, now, by) with { Adventure = stepped };
-
-            _fold.Standings[StandingKey(commander, key)] = after;
-            Announce(commander, current, after, now);
-
-            if (_walking)
-            {
-                _generation++;
-                _needsCatchUp = true;
+                StirringChanged?.Invoke();
             }
         }
-
-        StirringChanged?.Invoke();
-        return null;
     }
 
     /// <summary>Stop telling me this.</summary>
     public string? Abandon(string? frontierId, string key, DateTimeOffset now)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
+        var stirred = false;
 
-        if (store.Find(commander, key) is not { } adventure)
+        try
         {
-            return "There is no story by that name.";
-        }
-
-        if (!adventure.IsActive)
-        {
-            return $"{adventure.Name} is not under way.";
-        }
-
-        var abandoned = adventure with { AbandonedAt = now };
-
-        if (store.Save(commander, abandoned) is { } refusal)
-        {
-            return refusal;
-        }
-
-        lock (_gate)
-        {
-            if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
+            lock (_rewriteGate)
             {
-                _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = abandoned };
+                var commander = frontierId ?? AdventureStore.NoCommander;
+
+                if (store.Find(commander, key) is not { } adventure)
+                {
+                    return "There is no story by that name.";
+                }
+
+                if (!adventure.IsActive)
+                {
+                    return $"{adventure.Name} is not under way.";
+                }
+
+                var abandoned = adventure with { AbandonedAt = now };
+
+                if (store.Save(commander, abandoned) is { } refusal)
+                {
+                    return refusal;
+                }
+
+                lock (_gate)
+                {
+                    if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
+                    {
+                        _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = abandoned };
+                    }
+
+                    // A beat waiting out its settle window belongs to a story that has just been stopped.
+                    DropMoments(commander, key);
+
+                    // And so does the animation that was waiting with it.
+                    _stirring.Remove(StandingKey(commander, key));
+                }
+
+                stirred = true;
+                return null;
             }
-
-            // A beat waiting out its settle window belongs to a story that has just been stopped.
-            DropMoments(commander, key);
-
-            // And so does the animation that was waiting with it.
-            _stirring.Remove(StandingKey(commander, key));
         }
-
-        StirringChanged?.Invoke();
-        return null;
+        finally
+        {
+            // Outside the gate: the handlers redraw panels.
+            if (stirred)
+            {
+                StirringChanged?.Invoke();
+            }
+        }
     }
 
     /// <summary>
@@ -778,24 +829,27 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// </summary>
     public void Offered(string? frontierId, string key, int beat, DateTimeOffset at)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
-
-        if (store.Find(commander, key) is not { IsActive: true } adventure)
+        lock (_rewriteGate)
         {
-            return;
-        }
+            var commander = frontierId ?? AdventureStore.NoCommander;
 
-        lock (_gate)
-        {
-            if (StandingOf(_fold, commander, adventure) is not { InChoice: true, CurrentStep: 0 } standing || standing.Current != beat)
+            if (store.Find(commander, key) is not { IsActive: true } adventure)
             {
                 return;
             }
-        }
 
-        if (store.Save(commander, adventure with { Offered = new AdventureOffer(beat, at) }) is { } refusal)
-        {
-            logger.LogWarning("Could not record that the choice in {Name} was offered: {Refusal}", adventure.Name, refusal);
+            lock (_gate)
+            {
+                if (StandingOf(_fold, commander, adventure) is not { InChoice: true, CurrentStep: 0 } standing || standing.Current != beat)
+                {
+                    return;
+                }
+            }
+
+            if (store.Save(commander, adventure with { Offered = new AdventureOffer(beat, at) }) is { } refusal)
+            {
+                logger.LogWarning("Could not record that the choice in {Name} was offered: {Refusal}", adventure.Name, refusal);
+            }
         }
     }
 
@@ -805,87 +859,169 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// </summary>
     public AdventureChoiceOutcome Choose(string? frontierId, string key, int option, DateTimeOffset now)
     {
+        var stirred = false;
+
+        try
+        {
+            lock (_rewriteGate)
+            {
+                var commander = frontierId ?? AdventureStore.NoCommander;
+
+                if (store.Find(commander, key) is not { IsActive: true } adventure)
+                {
+                    return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
+                }
+
+                BeatStep choice;
+                int beat;
+
+                lock (_gate)
+                {
+                    if (StandingOf(_fold, commander, adventure) is not { OpenChoice: { } open } standing)
+                    {
+                        return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
+                    }
+
+                    choice = open;
+                    beat = standing.Current;
+                }
+
+                if (option < 0 || option >= choice.Options.Count)
+                {
+                    return AdventureChoiceOutcome.Refused($"There is no option {(option + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}. {choice.HandOff()}");
+                }
+
+                var made = new AdventureChoice(beat, option, now);
+                var chosen = adventure with { Choices = [.. adventure.Choices.Where(known => known.Beat != beat), made] };
+
+                if (store.Save(commander, chosen) is { } refusal)
+                {
+                    return AdventureChoiceOutcome.Refused(refusal);
+                }
+
+                chosen = store.Find(commander, key) ?? chosen;
+                BeatStep? next = null;
+
+                lock (_gate)
+                {
+                    var current = StandingOf(_fold, commander, adventure);
+
+                    if (current.OpenChoice is null || current.Current != beat)
+                    {
+                        return AdventureChoiceOutcome.Refused($"{adventure.Name} has moved on from that choice.");
+                    }
+
+                    var after = AdventureFold.Chose(current, option, now) with { Adventure = chosen };
+                    _fold.Standings[StandingKey(commander, key)] = after;
+
+                    // The next step's hand-off is the reply; a beat or an ending the choice itself reaches is said as usual.
+                    if (after.Fired.Count != current.Fired.Count || after.Reached is not null)
+                    {
+                        Announce(commander, current, after, now);
+                    }
+                    else
+                    {
+                        next = after.CurrentObjective;
+                        Logged(current, after, now);
+                    }
+
+                    if (_walking)
+                    {
+                        _generation++;
+                        _needsCatchUp = true;
+                    }
+                }
+
+                logger.LogInformation(
+                    "d47 event {Event}: {Story} beat {Beat} option {Option} ({Label}) at {At}",
+                    AdventureChoice.EventName,
+                    key,
+                    beat + 1,
+                    option + 1,
+                    choice.Options[option].Label,
+                    now);
+
+                stirred = true;
+
+                var reply = $"You chose to {choice.Options[option].Label.Trim()}.";
+
+                return new AdventureChoiceOutcome(null, next is null ? reply : $"{reply} {next.HandOff()}");
+            }
+        }
+        finally
+        {
+            // Outside the gate: the handlers redraw panels.
+            if (stirred)
+            {
+                StirringChanged?.Invoke();
+            }
+        }
+    }
+
+    /// <summary>Stores <paramref name="made"/> on each active adventure of this Commander with a step or <c>failsOn</c> waiting on it, and folds it in.</summary>
+    public void Record(string? frontierId, D47Event made)
+    {
+        ArgumentNullException.ThrowIfNull(made);
+
         var commander = frontierId ?? AdventureStore.NoCommander;
+        var happened = made.AsJournalEvent();
+        var stirred = false;
 
-        if (store.Find(commander, key) is not { IsActive: true } adventure)
+        lock (_rewriteGate)
         {
-            return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
-        }
-
-        BeatStep choice;
-        int beat;
-
-        lock (_gate)
-        {
-            if (StandingOf(_fold, commander, adventure) is not { OpenChoice: { } open } standing)
+            foreach (var adventure in store.For(commander).ToList())
             {
-                return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
-            }
+                if (!adventure.IsActive || IsSilenced(commander, adventure, made.At) || !AdventureFold.WaitsOn(adventure, happened))
+                {
+                    continue;
+                }
 
-            choice = open;
-            beat = standing.Current;
-        }
+                if (adventure.Events.Count >= AdventureLimits.MaxEvents)
+                {
+                    logger.LogWarning("{Name} already holds {Most} d47 events; {Event} was not kept", adventure.Name, AdventureLimits.MaxEvents, made.Name);
+                    continue;
+                }
 
-        if (option < 0 || option >= choice.Options.Count)
-        {
-            return AdventureChoiceOutcome.Refused($"There is no option {(option + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}. {choice.HandOff()}");
-        }
+                // Kept in time order, which is the order the fold applies them in.
+                var kept = adventure.Events.Count > 0 && adventure.Events[^1].At > made.At ? made with { At = adventure.Events[^1].At } : made;
+                var recorded = adventure with { Events = [.. adventure.Events, kept] };
 
-        var made = new AdventureChoice(beat, option, now);
-        var chosen = adventure with { Choices = [.. adventure.Choices.Where(known => known.Beat != beat), made] };
+                if (store.Save(commander, recorded) is { } refusal)
+                {
+                    logger.LogWarning("Could not record the d47 event {Event} on {Name}: {Refusal}", made.Name, adventure.Name, refusal);
+                    continue;
+                }
 
-        if (store.Save(commander, chosen) is { } refusal)
-        {
-            return AdventureChoiceOutcome.Refused(refusal);
-        }
+                recorded = store.Find(commander, adventure.Key) ?? recorded;
 
-        chosen = store.Find(commander, key) ?? chosen;
-        BeatStep? next = null;
+                lock (_gate)
+                {
+                    var before = StandingOf(_fold, commander, recorded);
+                    var after = AdventureFold.ApplySteps(before, kept.At);
+                    var count = _stirring.Count;
 
-        lock (_gate)
-        {
-            var current = StandingOf(_fold, commander, adventure);
+                    if (!ReferenceEquals(before, after))
+                    {
+                        Settle(_fold, commander, before, after, kept.At, announce: true);
+                    }
 
-            if (current.OpenChoice is null || current.Current != beat)
-            {
-                return AdventureChoiceOutcome.Refused($"{adventure.Name} has moved on from that choice.");
-            }
+                    stirred |= _stirring.Count != count;
 
-            var after = AdventureFold.Chose(current, option, now) with { Adventure = chosen };
-            _fold.Standings[StandingKey(commander, key)] = after;
+                    if (_walking)
+                    {
+                        _generation++;
+                        _needsCatchUp = true;
+                    }
+                }
 
-            // The next step's hand-off is the reply; a beat or an ending the choice itself reaches is said as usual.
-            if (after.Fired.Count != current.Fired.Count || after.Reached is not null)
-            {
-                Announce(commander, current, after, now);
-            }
-            else
-            {
-                next = after.CurrentObjective;
-                Logged(current, after, now);
-            }
-
-            if (_walking)
-            {
-                _generation++;
-                _needsCatchUp = true;
+                logger.LogInformation("d47 event {Event} recorded on {Name} at {At}", made.Name, adventure.Name, kept.At);
             }
         }
 
-        logger.LogInformation(
-            "d47 event {Event}: {Story} beat {Beat} option {Option} ({Label}) at {At}",
-            AdventureChoice.EventName,
-            key,
-            beat + 1,
-            option + 1,
-            choice.Options[option].Label,
-            now);
-
-        StirringChanged?.Invoke();
-
-        var reply = $"You chose to {choice.Options[option].Label.Trim()}.";
-
-        return new AdventureChoiceOutcome(null, next is null ? reply : $"{reply} {next.HandOff()}");
+        if (stirred)
+        {
+            StirringChanged?.Invoke();
+        }
     }
 
     /// <summary>
@@ -894,54 +1030,57 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     /// </summary>
     public string? StoreEnding(string? frontierId, string key)
     {
-        var commander = frontierId ?? AdventureStore.NoCommander;
-
-        if (store.Find(commander, key) is not { } adventure)
+        lock (_rewriteGate)
         {
-            return "There is no story by that name.";
-        }
+            var commander = frontierId ?? AdventureStore.NoCommander;
 
-        if (!adventure.IsActive)
-        {
-            return $"{adventure.Name} is not under way.";
-        }
-
-        AdventureEnding ending;
-
-        lock (_gate)
-        {
-            var standing = StandingOf(_fold, commander, adventure);
-
-            if (standing.Failure is { } failure)
+            if (store.Find(commander, key) is not { } adventure)
             {
-                ending = new AdventureEnding(AdventureEnding.Failed, failure.At, failure.Reason);
+                return "There is no story by that name.";
             }
-            else if (standing.Reached is { } reached)
+
+            if (!adventure.IsActive)
             {
-                ending = reached;
+                return $"{adventure.Name} is not under way.";
             }
-            else
+
+            AdventureEnding ending;
+
+            lock (_gate)
             {
-                return $"{adventure.Name} has not ended.";
+                var standing = StandingOf(_fold, commander, adventure);
+
+                if (standing.Failure is { } failure)
+                {
+                    ending = new AdventureEnding(AdventureEnding.Failed, failure.At, failure.Reason);
+                }
+                else if (standing.Reached is { } reached)
+                {
+                    ending = reached;
+                }
+                else
+                {
+                    return $"{adventure.Name} has not ended.";
+                }
             }
-        }
 
-        var ended = adventure with { Ending = ending };
+            var ended = adventure with { Ending = ending };
 
-        if (store.Save(commander, ended) is { } refusal)
-        {
-            return refusal;
-        }
-
-        lock (_gate)
-        {
-            if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
+            if (store.Save(commander, ended) is { } refusal)
             {
-                _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = store.Find(commander, key) ?? ended };
+                return refusal;
             }
-        }
 
-        return null;
+            lock (_gate)
+            {
+                if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
+                {
+                    _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = store.Find(commander, key) ?? ended };
+                }
+            }
+
+            return null;
+        }
     }
 
     /// <summary>The standings of this Commander that failed or reached an option's ending and whose ending is not stored yet.</summary>
@@ -1063,7 +1202,6 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 continue;
             }
 
-            var key = StandingKey(commander, adventure.Key);
             var original = StandingOf(state, commander, adventure);
             var before = AdventureFold.ApplySteps(original, journalEvent.Timestamp);
             var after = AdventureFold.Apply(before, journalEvent, world);
@@ -1073,33 +1211,41 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 continue;
             }
 
-            if (after.Failure is { } failure && before.Failure is null)
-            {
-                after = after with { Failure = failure with { Live = announce } };
-            }
-
-            state.Standings[key] = after;
-
-            if (after.Failure is { Live: true } && before.Failure is null)
-            {
-                DropMoments(commander, adventure.Key);
-                _moments.Enqueue(new AdventureMoment(commander, adventure, AdventureMoment.FailedBeat, journalEvent.Timestamp, after.Failure.Reason));
-                _stirring.Remove(StandingKey(commander, adventure.Key));
-                logger.LogInformation("Adventure {Name} failed at beat {Beat}: {Reason}", adventure.Name, after.Current + 1, after.Failure.Reason);
-                continue;
-            }
-
-            if (announce)
-            {
-                Announce(commander, before, after, journalEvent.Timestamp);
-            }
-            else
-            {
-                Logged(before, after, journalEvent.Timestamp);
-            }
+            Settle(state, commander, before, after, journalEvent.Timestamp, announce);
         }
 
         state.Seen[commander] = AdventureWatch.Observe(Seen(state, commander), journalEvent).Seen;
+    }
+
+    /// <summary>Puts <paramref name="after"/> in <paramref name="state"/> and queues or logs what it reached beyond <paramref name="before"/>. Under the gate when announcing.</summary>
+    private void Settle(AdventureFoldState state, string commander, AdventureStanding before, AdventureStanding after, DateTimeOffset at, bool announce)
+    {
+        var adventure = after.Adventure;
+
+        if (after.Failure is { } failure && before.Failure is null)
+        {
+            after = after with { Failure = failure with { Live = announce } };
+        }
+
+        state.Standings[StandingKey(commander, adventure.Key)] = after;
+
+        if (after.Failure is { Live: true } && before.Failure is null)
+        {
+            DropMoments(commander, adventure.Key);
+            _moments.Enqueue(new AdventureMoment(commander, adventure, AdventureMoment.FailedBeat, at, after.Failure.Reason));
+            _stirring.Remove(StandingKey(commander, adventure.Key));
+            logger.LogInformation("Adventure {Name} failed at beat {Beat}: {Reason}", adventure.Name, after.Current + 1, after.Failure.Reason);
+            return;
+        }
+
+        if (announce)
+        {
+            Announce(commander, before, after, at);
+        }
+        else
+        {
+            Logged(before, after, at);
+        }
     }
 
     /// <summary>Queues and logs what <paramref name="after"/> reached beyond <paramref name="before"/>: an option's ending, a beat, or a step's hand-off. Under the gate.</summary>

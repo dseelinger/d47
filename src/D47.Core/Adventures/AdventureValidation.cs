@@ -150,6 +150,11 @@ public static class AdventureValidation
             problems.Add($"{adventure.Beats.Count} beats; at most {AdventureLimits.MaxBeats}.");
         }
 
+        if (adventure.Events.Count > AdventureLimits.MaxEvents)
+        {
+            problems.Add($"{adventure.Events.Count} d47 events; at most {AdventureLimits.MaxEvents}.");
+        }
+
         problems.AddRange(ScansOutOfOrder(adventure.Beats));
         problems.AddRange(MissionHandleProblems(adventure.Beats));
         problems.AddRange(ChoiceProblems(adventure.Beats, adventure.OpeningLines));

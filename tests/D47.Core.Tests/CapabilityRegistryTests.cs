@@ -154,7 +154,19 @@ public class CapabilityRegistryTests
 
         await registry.Invoke("do_thing", ToolArguments.Empty);
 
-        Assert.Equal([new ToolInvocation("do_thing", true)], announced);
+        Assert.Equal([new ToolInvocation("do_thing", true, ToolCaller.Commander, Ran: true)], announced);
+    }
+
+    [Fact]
+    public async Task AModelCallIsAnnouncedWithItsCaller()
+    {
+        var registry = CapabilityRegistry.Build([Descriptor()]);
+        var announced = new List<ToolInvocation>();
+        registry.ToolInvoked += announced.Add;
+
+        await registry.InvokeAsync("do_thing", ToolArguments.Empty, TestContext.Current.CancellationToken, ToolCaller.Model);
+
+        Assert.Equal([new ToolInvocation("do_thing", true, ToolCaller.Model, Ran: true)], announced);
     }
 
     [Fact]
@@ -170,7 +182,7 @@ public class CapabilityRegistryTests
 
         await registry.Invoke("do_thing", ToolArguments.Empty);
 
-        Assert.Equal([new ToolInvocation("do_thing", false)], announced);
+        Assert.Equal([new ToolInvocation("do_thing", false, ToolCaller.Commander, Ran: false)], announced);
     }
 
     /// <summary>
@@ -190,7 +202,7 @@ public class CapabilityRegistryTests
 
         await registry.Invoke("do_thing", ToolArguments.Empty);
 
-        Assert.Equal([new ToolInvocation("do_thing", false)], announced);
+        Assert.Equal([new ToolInvocation("do_thing", false, ToolCaller.Commander, Ran: false)], announced);
     }
 
     /// <summary>The distinction the whole outcome rests on.</summary>
@@ -221,7 +233,7 @@ public class CapabilityRegistryTests
             new ToolArguments(new Dictionary<string, string> { [parameter] = "three" }));
 
         Assert.True(result.IsError);
-        Assert.Equal([new ToolInvocation("do_thing", true)], announced);
+        Assert.Equal([new ToolInvocation("do_thing", true, ToolCaller.Commander, Ran: false)], announced);
     }
 
     /// <summary>Nothing in the inventory to attribute it to, so nothing is claimed about it.</summary>

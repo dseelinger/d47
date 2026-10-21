@@ -853,6 +853,9 @@ public sealed record Adventure
     /// <summary>The choices the Commander made, oldest first; the fold applies each at its time, in order with the journal.</summary>
     public IReadOnlyList<AdventureChoice> Choices { get; init; } = [];
 
+    /// <summary>The d47 events a step or <c>failsOn</c> of this adventure waits on, oldest first; the fold applies each at its time, in order with the journal.</summary>
+    public IReadOnlyList<D47Event> Events { get; init; } = [];
+
     /// <summary>When the offer of a choice was last said; the choice can be made only after it.</summary>
     public AdventureOffer? Offered { get; init; }
 
@@ -919,4 +922,7 @@ public static class AdventureLimits
 
     /// <summary>How much of what was said is kept per story.</summary>
     public const int MaxTold = 60;
+
+    /// <summary>How many d47 events are kept per story.</summary>
+    public const int MaxEvents = 200;
 }

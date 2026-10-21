@@ -46,6 +46,9 @@ public sealed record AdventureStanding
     /// <summary>The running total toward the current step when it is counted: events, or tons sold or refined.</summary>
     public int Counted { get; init; }
 
+    /// <summary>How many of <see cref="Adventure.Events"/>, from the oldest, the fold has applied.</summary>
+    public int EventsApplied { get; init; }
+
     /// <summary>The last suit mods, ship cosmetics and fleet carrier system seen for each suit, weapon, ship and carrier, for <see cref="AdventureWatch"/>.</summary>
     public IReadOnlyDictionary<string, string> Seen { get; init; } = AdventureWatch.Nothing;
 
@@ -910,27 +913,33 @@ public static class AdventureFold
         return Matches(other, journalEvent, standing.SystemAddress, standing) ? other : null;
     }
 
-    /// <summary>
-    /// The steps and choices at or before <paramref name="upTo"/> applied in time order, each to the beat it names when the standing is
-    /// waiting on it.
-    /// </summary>
+    /// <summary>The steps, choices and d47 events at or before <paramref name="upTo"/> applied in time order; each d47 event is applied once.</summary>
     public static AdventureStanding ApplySteps(AdventureStanding standing, DateTimeOffset upTo)
     {
         var adventure = standing.Adventure;
 
-        if ((adventure.Stepped.Count == 0 && adventure.Choices.Count == 0) || !adventure.IsActive)
+        if ((adventure.Stepped.Count == 0 && adventure.Choices.Count == 0 && adventure.Events.Count <= standing.EventsApplied) || !adventure.IsActive)
         {
             return standing;
         }
 
-        var due = adventure.Stepped.Where(step => step.At <= upTo).Select(step => (step.At, Step: (AdventureStep?)step, Choice: (AdventureChoice?)null))
-            .Concat(adventure.Choices.Where(choice => choice.At <= upTo).Select(choice => (choice.At, Step: (AdventureStep?)null, Choice: (AdventureChoice?)choice)))
+        var events = adventure.Events.Skip(standing.EventsApplied).TakeWhile(made => made.At <= upTo).ToList();
+
+        var due = adventure.Stepped.Where(step => step.At <= upTo).Select(step => (step.At, Step: (AdventureStep?)step, Choice: (AdventureChoice?)null, Event: (D47Event?)null))
+            .Concat(adventure.Choices.Where(choice => choice.At <= upTo).Select(choice => (choice.At, Step: (AdventureStep?)null, Choice: (AdventureChoice?)choice, Event: (D47Event?)null)))
+            .Concat(events.Select(made => (made.At, Step: (AdventureStep?)null, Choice: (AdventureChoice?)null, Event: (D47Event?)made)))
             .OrderBy(entry => entry.At);
 
-        foreach (var (at, step, choice) in due)
+        foreach (var (at, step, choice, d47) in due)
         {
             if (standing.IsDone || standing.IsFailed || (BeforeRewrite(standing) && at < adventure.RewrittenAt))
             {
+                continue;
+            }
+
+            if (d47 is { } happened)
+            {
+                standing = Apply(standing, happened.AsJournalEvent());
                 continue;
             }
 
@@ -953,7 +962,20 @@ public static class AdventureFold
             standing = Stepped(standing, step.At, step.By);
         }
 
-        return standing;
+        return events.Count > 0 ? standing with { EventsApplied = standing.EventsApplied + events.Count } : standing;
+    }
+
+    /// <summary>Whether any step or <c>failsOn</c> of <paramref name="adventure"/>, options included, waits on <paramref name="made"/>.</summary>
+    public static bool WaitsOn(Adventure adventure, JournalEvent made)
+    {
+        ArgumentNullException.ThrowIfNull(adventure);
+        ArgumentNullException.ThrowIfNull(made);
+
+        return adventure.Beats
+            .SelectMany(beat => beat.Steps)
+            .SelectMany(step => step.Options.SelectMany(option => option.Steps).Prepend(step))
+            .SelectMany(step => step.FailsOn.Select(AdventureValidation.FailTrigger).Prepend(step.Trigger))
+            .Any(trigger => trigger.Kind == TriggerKind.Event && Matches(trigger, made));
     }
 
     /// <summary>The standing with its current step fired at <paramref name="at"/> by <paramref name="by"/>, the bench when null.</summary>
