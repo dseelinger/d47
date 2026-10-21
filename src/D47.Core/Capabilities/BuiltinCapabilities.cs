@@ -182,6 +182,9 @@ public static class BuiltinCapabilities
         // Where a Commander has named a system so they can return to it by voice (#489).
         Conversation.BookmarkStore? bookmarks = null,
 
+        // The marks the Commander has saved on the body they are at; null builds a private store.
+        Builtin.SurfaceMarks? surfaceMarks = null,
+
         // The whole phrase book the model-free router accepts, macros and learned phrases included, so
         // the model can be told what actually works rather than guess (#229). Null builds one with no
         // dynamic commands, for a caller — a test — with no router of its own.
@@ -470,6 +473,12 @@ public static class BuiltinCapabilities
                 paths.Captures,
                 () => gameState.Active,
                 now ?? (() => DateTimeOffset.MinValue))),
+
+        SurfaceGuidanceCapability.Create(
+            surfaceMarks ?? new Builtin.SurfaceMarks(),
+            () => gameState.Active,
+            gameStatus,
+            now ?? (() => DateTimeOffset.MinValue)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

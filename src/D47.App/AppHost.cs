@@ -2244,6 +2244,7 @@ public sealed class AppHost : IDisposable
         var autonomous = stores.Autonomous;
         var backfillGoals = stores.BackfillGoals;
         var bookmarks = stores.Bookmarks;
+        var surfaceMarks = new SurfaceMarks();
         var savedSearches = stores.SavedSearches;
         var searchHistory = stores.SearchHistory;
         var callouts = stores.Callouts;
@@ -2731,6 +2732,7 @@ public sealed class AppHost : IDisposable
                 offers: offers,
                 learnedPhrases: learnedPhrases,
                 bookmarks: bookmarks,
+                surfaceMarks: surfaceMarks,
                 phraseBook: () => late.Router?.Book ?? throw new InvalidOperationException(
                     "The phrase book was asked for before the router finished building."),
                 contextNote: () => late.Host?.ContextNote,
@@ -2848,6 +2850,9 @@ public sealed class AppHost : IDisposable
                 // bookmark the flying Commander has made.
                 .Concat(BookmarksCapability.Phrases(
                     bookmarks, () => gameState.Active?.Identity.FrontierId ?? string.Empty))
+
+                // And "which way to mark 1", one per mark valid for the body the Commander is at.
+                .Concat(SurfaceGuidanceCapability.Phrases(surfaceMarks, () => gameState.Active))
 
                 // And "switch to commander Kestrel Vane" (#895), one pair per Commander but the one flying.
                 .Concat(CommandersCapability.Phrases(
