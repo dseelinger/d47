@@ -53,12 +53,12 @@ not its existence — the symbol is still what the journal writes, so a named bu
 no numbers still answers "that is your Reactive Surface Composite" instead of
 "panthermkii_armour_reactive".
 
-Their names carry the hull. Frontier calls forty-eight different objects "Lightweight
+Their names carry the hull. Frontier calls the armour of every hull "Lightweight
 Alloy" because the outfitting screen already knows which ship you are standing in and this
 table does not, so the hull is prefixed — from `outfitting.csv`'s own `ship` column,
 spelled as the ships section above spells it. That makes each name unique, and it makes
 `get_module_specification` behave: a bare "Lightweight Alloy" is ambiguous across
-forty-eight hulls, and Catalogue answers an ambiguous fragment by offering the candidates
+every hull, and Catalogue answers an ambiguous fragment by offering the candidates
 back rather than picking one.
 
 Class and rating are deliberately dropped. `outfitting.csv` files every bulkhead as class
@@ -270,7 +270,7 @@ def ship_documents(paths: list[str]) -> list[dict]:
     """Every coriolis ship entry, fetched once.
 
     Two passes read these — the hull figures, and the bulkheads sitting inside them — and
-    fetching forty-seven files twice to do it would make the second pass look free when it
+    fetching every ship file twice to do it would make the second pass look free when it
     is not.
     """
     return [
@@ -740,7 +740,7 @@ def build_bulkheads(
         built.append([
             identity["symbol"].lower(),
 
-            # The hull, then Frontier's name for the armour. Forty-eight ships have a
+            # The hull, then Frontier's name for the armour. Every ship has a
             # "Lightweight Alloy", and the outfitting screen can leave the hull unsaid
             # because the Commander is standing in it. A table cannot.
             f"{identity['ship']} {identity['name']}",
@@ -1366,7 +1366,7 @@ def main() -> None:
         "# can supply it. Cosmetic slots are deliberately absent: this table is what can be",
         "# outfitted, so a paint job is not in it.",
         "# Bulkheads are per-hull and live in coriolis-data's ship files rather than its",
-        "# modules/, and their names carry the hull because forty-eight hulls have a",
+        "# modules/, and their names carry the hull because every hull has a",
         "# Lightweight Alloy. Class and rating are placeholders for armour and are dropped.",
         "# Game data is Frontier's, used under their media usage rules — see NOTICE.",
         f"# Ships: {len(ships)}. Modules: {len(modules)}, of which bulkheads {len(bulkheads)}. "

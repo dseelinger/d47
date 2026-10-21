@@ -7,7 +7,7 @@
 # can supply it. Cosmetic slots are deliberately absent: this table is what can be
 # outfitted, so a paint job is not in it.
 # Bulkheads are per-hull and live in coriolis-data's ship files rather than its
-# modules/, and their names carry the hull because forty-eight hulls have a
+# modules/, and their names carry the hull because every hull has a
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
 # Ships: 48. Modules: 1214, of which bulkheads 241. Known but unmeasured: 0.

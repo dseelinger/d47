@@ -207,7 +207,7 @@ only `outfitting.csv` rows with a ship named. Reading only `modules/` dropped ev
 which is how 1,725 of 20,526 engineered modules across 912 real journals came to be read out as
 raw symbols like `mandalay_armour_grade1`.
 
-So the name carries the hull. Frontier calls forty-eight different objects "Lightweight Alloy"
+So the name carries the hull. Frontier calls the armour of every hull "Lightweight Alloy"
 because the outfitting screen already knows which ship you are standing in, and a table does not:
 
 ```text
