@@ -124,6 +124,10 @@ public sealed class StepEventCatalogue
     public bool IsDrawableValue(string name, string field, string value) =>
         _drawableValues.TryGetValue($"{name}.{field}", out var values) && values.Contains(value);
 
+    /// <summary>The values a story may draw for the field, in order; none where the field has none.</summary>
+    public IReadOnlyList<string> DrawableValuesOf(string name, string field) =>
+        _drawableValues.TryGetValue($"{name}.{field}", out var values) ? [.. values.Order(StringComparer.Ordinal)] : [];
+
     private static IEnumerable<string[]> Rows(string text, int columns)
     {
         using var reader = new StringReader(text);

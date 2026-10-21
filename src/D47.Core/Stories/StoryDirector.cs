@@ -72,6 +72,9 @@ public sealed class StoryDirector(
     /// <summary>The activity ledger, or null before it exists; with none, a comfort chapter does not look for unrun mission families.</summary>
     public Func<ActivityLedger?>? Ledger { get; set; }
 
+    /// <summary>The tools a chapter may send the Commander to run, or null before it exists; with none, a chapter draws no event step.</summary>
+    public Func<IReadOnlyList<DrawableTool>>? Tools { get; set; }
+
     /// <summary>The activities Commanders have changed away from often enough to bar them, or null before it exists.</summary>
     public ActivityBars? Bars { get; set; }
 
@@ -890,7 +893,7 @@ public sealed class StoryDirector(
             var from = standing.Current;
             var trigger = standing.CurrentTrigger!;
             var barred = Bars?.Barred(frontierId) ?? [];
-            var replaced = RefusedActivities.Key(trigger.Kind, trigger.MissionFamily);
+            var replaced = RefusedActivities.Key(trigger);
             var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Step: standing.CurrentStep), replaced is null ? barred : [.. barred.Union([replaced])]);
             var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
 
@@ -1072,7 +1075,7 @@ public sealed class StoryDirector(
             return refusal;
         }
 
-        if (RefusedActivities.Key(proposal.Trigger.Kind, proposal.Trigger.MissionFamily) is { } replaced)
+        if (RefusedActivities.Key(proposal.Trigger) is { } replaced)
         {
             Bars?.Count(frontierId, replaced);
         }
@@ -1250,7 +1253,7 @@ public sealed class StoryDirector(
             stories.Save(frontierId, still with { ChangedChapters = [.. still.ChangedChapters, proposal.ChapterKey] });
         }
 
-        if (RefusedActivities.Key(proposal.Trigger.Kind, proposal.Trigger.MissionFamily) is { } replaced)
+        if (RefusedActivities.Key(proposal.Trigger) is { } replaced)
         {
             Bars?.Count(frontierId, replaced);
         }
@@ -1502,7 +1505,7 @@ public sealed class StoryDirector(
 
         var chapter = standing.Adventure;
         var from = standing.Current;
-        var refusedKey = closedMarketId is null && standing.CurrentTrigger is { } refusedTrigger ? RefusedActivities.Key(refusedTrigger.Kind, refusedTrigger.MissionFamily) : null;
+        var refusedKey = closedMarketId is null && standing.CurrentTrigger is { } refusedTrigger ? RefusedActivities.Key(refusedTrigger) : null;
         var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
         var now = Clock();
         var ask = await RewriteAskAsync(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId, Step: standing.CurrentStep), now, cancellationToken).ConfigureAwait(false);
@@ -2597,7 +2600,9 @@ public sealed class StoryDirector(
                 ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
-                NeverCompleted()) is { Count: > 0 } drawn
+                NeverCompleted(),
+                Tools is null ? null : StepEventCatalogue.Default,
+                Tools?.Invoke()) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 

@@ -145,6 +145,10 @@ public static class ChapterActivities
         activity.Kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.Conflict or TriggerKind.Sell
             or TriggerKind.DataSale or TriggerKind.Rescue or TriggerKind.Mission;
 
+    /// <summary>Whether every gate named in a step event row's <c>needs</c> is in <paramref name="held"/>; a name that is no gate is never held.</summary>
+    public static bool Passes(IReadOnlyList<string> needs, ActivityGate held) =>
+        needs.All(name => Enum.TryParse<ActivityGate>(name, out var gate) && gate != ActivityGate.None && Enum.IsDefined(gate) && (gate & ~held) == ActivityGate.None);
+
     /// <summary>Whether the row's gates are all in <paramref name="held"/>.</summary>
     public static bool Passes(DrawableActivity activity, ActivityGate held) => (activity.Gates & ~held) == ActivityGate.None;
 

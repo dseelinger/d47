@@ -2,18 +2,25 @@ namespace D47.Core.Adventures;
 
 /// <summary>
 /// The activities a Commander has refused in a story, kept as keys: a counted or engineer kind in lower case, and for a
-/// mission with a family <c>mission:</c> and the family. Place kinds are never refused.
+/// mission with a family <c>mission:</c> and the family, and for an event step <c>event:</c>, the event and for a tool run the tool.
+/// Place kinds are never refused.
 /// </summary>
 public static class RefusedActivities
 {
     private const string MissionKey = "mission";
+    private const string EventKey = "event";
 
     /// <summary>The key a beat of this kind and mission family is refused under, or null for a place kind.</summary>
-    public static string? Key(TriggerKind kind, string? family)
+    public static string? Key(TriggerKind kind, string? family, string? eventName = null, string? tool = null)
     {
         if (kind < TriggerKind.Bounty)
         {
             return null;
+        }
+
+        if (kind == TriggerKind.Event && !string.IsNullOrWhiteSpace(eventName))
+        {
+            return string.IsNullOrWhiteSpace(tool) ? $"{EventKey}:{eventName.Trim()}" : $"{EventKey}:{eventName.Trim()}:{tool.Trim()}";
         }
 
         return kind == TriggerKind.Mission && !string.IsNullOrWhiteSpace(family)
@@ -21,16 +28,39 @@ public static class RefusedActivities
             : kind.ToString().ToLowerInvariant();
     }
 
+    /// <summary>The key a step is refused under.</summary>
+    public static string? Key(AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        return Key(trigger.Kind, trigger.MissionFamily, trigger.Event, ToolOf(trigger.Where));
+    }
+
+    /// <summary>The <c>Tool</c> value among an event step's field tests, or null.</summary>
+    public static string? ToolOf(EventFilter where) => where.FirstOrDefault(pair => pair.Field == "Tool")?.Value;
+
     /// <summary>Whether a beat of this kind and mission family is one of the refused activities.</summary>
-    public static bool Refuses(IReadOnlyList<string>? refused, TriggerKind kind, string? family)
+    public static bool Refuses(IReadOnlyList<string>? refused, TriggerKind kind, string? family, string? eventName = null, string? tool = null)
     {
         if (refused is null || kind < TriggerKind.Bounty)
         {
             return false;
         }
 
+        var eventKey = Key(kind, family, eventName, tool);
+
         foreach (var key in refused)
         {
+            if (key.StartsWith(EventKey + ":", StringComparison.Ordinal))
+            {
+                if (kind == TriggerKind.Event && string.Equals(key, eventKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
             if (key.StartsWith(MissionKey + ":", StringComparison.Ordinal))
             {
                 if (kind == TriggerKind.Mission
@@ -57,6 +87,13 @@ public static class RefusedActivities
         if (key.StartsWith(MissionKey + ":", StringComparison.Ordinal))
         {
             return $"complete {MissionFamilies.Word(key[(MissionKey.Length + 1)..])} missions";
+        }
+
+        if (key.StartsWith(EventKey + ":", StringComparison.Ordinal))
+        {
+            var parts = key.Split(':');
+
+            return parts.Length > 2 ? $"say the command for the {parts[2]} tool" : $"do what the {parts[1]} event step asks";
         }
 
         return Enum.TryParse<TriggerKind>(key, ignoreCase: true, out var kind) ? Phrase(kind) : key;

@@ -31,6 +31,8 @@ internal static class StoryAnswer
         "salvage", "uss", "rescue", "srv", "boost", "discover", "footfall", "contribute", "suitmod", "conflict", "faction",
     };
 
+    internal const string EventKind = "event";
+
     private enum Shape
     {
         Text,
@@ -46,6 +48,10 @@ internal static class StoryAnswer
         ("faction", Shape.MaybeText), ("mission", Shape.MaybeText), ("commodity", Shape.MaybeText), ("filter", Shape.MaybeText),
         ("organic", Shape.MaybeFlag), ("engineer", Shape.MaybeText), ("stage", Shape.MaybeText),
     ];
+
+    /// <summary>The beat fields, with <c>task</c> only where <c>event</c> is a kind.</summary>
+    private static IEnumerable<(string Name, Shape Shape)> FieldsFor(IReadOnlyList<string> kinds) =>
+        kinds.Contains(EventKind) ? [.. BeatFields, ("task", Shape.MaybeText)] : BeatFields;
 
     /// <summary>
     /// The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them, and site when sites are listed.
@@ -81,6 +87,11 @@ internal static class StoryAnswer
             var names = drawn.Select(kind => kind.ToString().ToLowerInvariant()).ToHashSet(StringComparer.Ordinal);
 
             kinds.RemoveAll(kind => DrawnKinds.Contains(kind) && !names.Contains(kind));
+
+            if (names.Contains(EventKind))
+            {
+                kinds.Add(EventKind);
+            }
         }
 
         return kinds;
@@ -120,13 +131,13 @@ internal static class StoryAnswer
     private static string BeatShape(bool speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships, bool objective) =>
         "{" + (objective ? "\"objective\": number, " : string.Empty) + "\"title\": string, \"function\": string, \"kind\": "
         + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
-        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
+        + string.Concat(FieldsFor(kinds).Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string")
         + (objective ? string.Empty : ", \"then\": [" + StepShape(kinds, ships) + "]") + "}";
 
     private static string StepShape(IReadOnlyList<string> kinds, IReadOnlyList<string>? ships) =>
         "{\"kind\": " + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
-        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
+        + string.Concat(FieldsFor(kinds).Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + "}";
 
     internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null)
@@ -187,7 +198,7 @@ internal static class StoryAnswer
         {
             ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
         };
-        step.AddRange(BeatFields.Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
+        step.AddRange(FieldsFor(kinds).Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
 
         return step;
     }

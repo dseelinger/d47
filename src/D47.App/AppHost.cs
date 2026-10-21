@@ -3192,6 +3192,11 @@ public sealed class AppHost : IDisposable
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,
+            Tools = () =>
+                [.. (late.Registry?.All ?? [])
+                    .SelectMany(capability => capability.Descriptor.Tools)
+                    .Where(tool => tool.Commands.Count > 0)
+                    .Select(tool => new D47.Core.Stories.DrawableTool(tool.Name, tool.Commands[0].Phrase))],
         };
 
         adventureGenerator.Barred = () => stores.ActivityBars.Barred(gameState.Active?.Identity.FrontierId);

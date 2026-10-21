@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A stock story chapter now sometimes ends on a step D47 draws from the events it can watch: a journal event with at most one value to match, or a tool you run by saying its first command phrase. The story's writer is told only that one step and writes its task. Refusing a step keeps that event, or that tool, out of the story from then on.
+
 An open goal is drawn on the Slab ground, no wider than 900 px, with its figures in a strip with no tiles behind them: Rank, Into this rank, Next rank and Ranks to go. The list of every segment with its share is gone. On the open Powerplay goal the strip reads RANK, TO RANK, MERITS and RANKS TO GO, with the merits into the next rank and the merit total; a pledge that has not given its merits reads "not known yet". Perk ticks sit above the track, 10 px and in the accent where held and 6 px and Grey where still to come, with a key and the chapter ranges under the track. A This chapter close-up has a column for each rank in your chapter: held ranks solid, the next rank filled to its percent in Cyan, and what each rank gives. Held and Still to come stand side by side where there is room, Still to come opens with the current chapter and the next two, and a button opens the rest.
 
 A saved neutron, Road to Riches or exobiology plan's result page draws the same map as a carrier plan, in the window and on the big panel. The start is drawn first and, on a loop, the return closes it. A plan saved before positions were read, and a trade plan, keep the page as it was.

@@ -1,6 +1,7 @@
 using System.Text;
 using D47.Core.Adventures;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Stories;
 
@@ -12,12 +13,30 @@ public sealed record DrawnActivity(TriggerKind Kind, string? Family, int Count)
 
     /// <summary>Whether a place objective must come just before it.</summary>
     public bool PlaceBefore { get; init; }
+
+    /// <summary>For an event slot: the event's name as the step event table spells it.</summary>
+    public string? Event { get; init; }
+
+    /// <summary>For an event slot: the field test the step carries, or none.</summary>
+    public EventFilter Where { get; init; } = EventFilter.None;
+
+    /// <summary>For a tool run slot: the phrase the Commander says to run the tool.</summary>
+    public string? Say { get; init; }
 }
+
+/// <summary>A tool a story may send the Commander to run, with the first phrase that runs it.</summary>
+public sealed record DrawableTool(string Name, string Phrase);
 
 /// <summary>Draws a chapter's counted activities from <see cref="ChapterActivities"/>.</summary>
 public static class ChapterDraw
 {
     public const int Slots = 3;
+
+    /// <summary>The share of chapters whose last slot is an event step.</summary>
+    public const double EventShare = 1.0 / 3;
+
+    /// <summary>Most journal events an event slot counts.</summary>
+    public const int MostEventCount = 3;
 
     /// <summary>Most place objectives a chapter may hold.</summary>
     public const int MostPlaces = 2;
@@ -61,7 +80,9 @@ public static class ChapterDraw
         uint seed,
         int comfortFirst = 0,
         bool stationsInReach = true,
-        Func<string, bool>? neverCompleted = null)
+        Func<string, bool>? neverCompleted = null,
+        StepEventCatalogue? events = null,
+        IReadOnlyList<DrawableTool>? tools = null)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -116,7 +137,108 @@ public static class ChapterDraw
             places += chosen.PlaceBefore ? 1 : 0;
         }
 
-        return [.. drawn.Select(row => new DrawnActivity(row.Kind, row.Family, Count(row, ship, random)) { Organic = row.Organic, PlaceBefore = row.PlaceBefore })];
+        var slots = drawn.Select(row => new DrawnActivity(row.Kind, row.Family, Count(row, ship, random)) { Organic = row.Organic, PlaceBefore = row.PlaceBefore }).ToList();
+
+        if (events is not null && random.NextDouble() < EventShare && DrawEvent(events, tools ?? [], held, refused, recent, weights, [.. drawn.Take(Math.Min(drawn.Count, Slots - 1))], random) is { } slot)
+        {
+            if (slots.Count >= Slots)
+            {
+                slots.RemoveAt(slots.Count - 1);
+            }
+
+            slots.Add(slot);
+        }
+
+        return slots;
+    }
+
+    /// <summary>One event slot from the drawable events whose gates are held and which are not refused, or null when none is left.</summary>
+    private static DrawnActivity? DrawEvent(
+        StepEventCatalogue events,
+        IReadOnlyList<DrawableTool> tools,
+        ActivityGate held,
+        IReadOnlyList<string>? refused,
+        IReadOnlyList<string> recent,
+        CareerWeights weights,
+        List<DrawableActivity> kept,
+        Random32 random)
+    {
+        var candidates = new List<(StepEvent Row, string? Tool, string? Say)>();
+
+        foreach (var row in events.Drawable.Where(row => ChapterActivities.Passes(row.Needs, held)))
+        {
+            if (row.Event == D47Event.ToolRun)
+            {
+                candidates.AddRange(tools
+                    .Where(tool => events.IsDrawableValue(row.Event, "Tool", tool.Name) && !RefusedActivities.Refuses(refused, TriggerKind.Event, null, row.Event, tool.Name))
+                    .Select(tool => (row, (string?)tool.Name, (string?)tool.Phrase)));
+            }
+            else if (!RefusedActivities.Refuses(refused, TriggerKind.Event, null, row.Event))
+            {
+                candidates.Add((row, null, null));
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        var fresh = candidates.Where(candidate => !Enum.TryParse<Career>(candidate.Row.Career, out var career) || kept.All(done => done.Career != career)).ToList();
+        var pool = fresh.Count > 0 ? fresh : candidates;
+        var values = pool.Select(candidate =>
+                (Enum.TryParse<Career>(candidate.Row.Career, out var career) ? weights.Weight(career) : 1)
+                * (recent.Contains(RefusedActivities.Key(TriggerKind.Event, null, candidate.Row.Event, candidate.Tool) ?? string.Empty, StringComparer.OrdinalIgnoreCase) ? RecentFactor : 1))
+            .ToList();
+        var total = values.Sum();
+        var chosen = pool[^1];
+
+        if (total <= 0)
+        {
+            chosen = pool[random.Next(pool.Count)];
+        }
+        else
+        {
+            var point = random.NextDouble() * total;
+
+            for (var index = 0; index < pool.Count; index++)
+            {
+                point -= values[index];
+
+                if (point < 0)
+                {
+                    chosen = pool[index];
+                    break;
+                }
+            }
+        }
+
+        if (chosen.Tool is not null)
+        {
+            return new DrawnActivity(TriggerKind.Event, null, 1)
+            {
+                Event = chosen.Row.Event,
+                Where = new EventFilter([new EventField("Tool", chosen.Tool)]),
+                Say = chosen.Say,
+            };
+        }
+
+        var withValues = events.FieldsOf(chosen.Row.Event).Where(field => events.DrawableValuesOf(chosen.Row.Event, field).Count > 0).ToList();
+        var pair = EventFilter.None;
+
+        if (withValues.Count > 0 && chosen.Row.Source == StepEventCatalogue.JournalSource)
+        {
+            var field = withValues[random.Next(withValues.Count)];
+            var options = events.DrawableValuesOf(chosen.Row.Event, field);
+
+            pair = new EventFilter([new EventField(field, options[random.Next(options.Count)])]);
+        }
+
+        return new DrawnActivity(TriggerKind.Event, null, chosen.Row.Source == StepEventCatalogue.JournalSource ? 1 + random.Next(MostEventCount) : 1)
+        {
+            Event = chosen.Row.Event,
+            Where = pair,
+        };
     }
 
     private static bool Same(AdventureActivity activity, DrawableActivity row) =>

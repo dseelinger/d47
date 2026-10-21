@@ -367,7 +367,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             return;
         }
 
-        var activity = D47.Core.Adventures.RefusedActivities.Phrase(beat.Trigger.Kind, beat.Trigger.MissionFamily);
+        var activity = D47.Core.Adventures.RefusedActivities.Key(beat.Trigger) is { } refusable ? D47.Core.Adventures.RefusedActivities.Phrase(refusable) : null;
 
         prompts.Choose(
             new ChoiceRequest(

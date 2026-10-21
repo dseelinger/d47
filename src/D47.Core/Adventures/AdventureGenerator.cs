@@ -1869,7 +1869,7 @@ public sealed class AdventureGenerator(
             .Take(RecentChaptersVaried)
             .SelectMany(adventure => adventure.Beats)
             .SelectMany(beat => beat.Steps)
-            .Select(step => RefusedActivities.Key(step.Trigger.Kind, step.Trigger.MissionFamily))
+            .Select(step => RefusedActivities.Key(step.Trigger))
             .OfType<string>()
             .Distinct(StringComparer.Ordinal)];
 
@@ -2298,6 +2298,11 @@ public sealed class AdventureGenerator(
     /// <summary>A drawn activity as the writer is told it: what the Commander does, the objective that holds it and its count.</summary>
     private static string SlotLine(DrawnActivity slot)
     {
+        if (slot.Kind == TriggerKind.Event)
+        {
+            return EventSlotLine(slot);
+        }
+
         var phrase = RefusedActivities.Phrase(slot.Kind, slot.Family) ?? slot.Kind.ToString().ToLowerInvariant();
         var objective = slot.Family is null
             ? $"a \"{slot.Kind.ToString().ToLowerInvariant()}\" objective"
@@ -2316,6 +2321,20 @@ public sealed class AdventureGenerator(
         };
 
         return $"{phrase}: {objective}, {amount}{(slot.PlaceBefore ? ", with an arrive or dock objective just before it" : string.Empty)}";
+    }
+
+    /// <summary>An event slot as the writer is told it: the event, what it means, the field test in words and the count.</summary>
+    private static string EventSlotLine(DrawnActivity slot)
+    {
+        var row = StepEventCatalogue.Default.Drawable.FirstOrDefault(entry => entry.Event == slot.Event);
+        var what = $"{slot.Event}: {row?.Description.TrimEnd('.')}";
+        var pairs = string.Join(" and ", slot.Where.Select(pair => $"{pair.Field} is {pair.Value}"));
+        var count = slot.Count.ToString(CultureInfo.InvariantCulture);
+        var line = $"an \"event\" objective for the event {what}{(pairs.Length > 0 ? $", where {pairs}" : string.Empty)}, count {count}";
+
+        return slot.Say is { } say
+            ? $"{line}. The Commander runs it by saying \"{say}\": the \"task\" must tell them to say it"
+            : line;
     }
 
     private static StoryCall BeatsInstruction(
@@ -2484,6 +2503,14 @@ public sealed class AdventureGenerator(
             "- \"conflict\": the Commander takes part in a war, civil war or election \"count\" times; it counts taking part, never winning. A kill bond counts for a war or civil war in the system they are in, a mission for an election. \"filter\" is war, civilwar or election, or null for any. \"faction\" is the side to work for, named only from the conflicts listed, or null to leave the Commander to find a conflict. Put an arrive objective in the conflict's system just before it.",
             "- \"faction\": the Commander earns \"count\" influence marks, each mission giving one to four, working missions for \"faction\", which it must name, as for \"bond\".",
         };
+        if (kinds.Contains(StoryAnswer.EventKind))
+        {
+            counted.Add(
+                "- \"event\": the Commander does what the drawn event objective above describes. \"task\" is a phrase of at most "
+                + AdventureTrigger.MaxTaskLength.ToString(CultureInfo.InvariantCulture)
+                + " characters saying what the Commander does, such as \"analyse a Stratum sample\". Leave the event, its fields and \"count\" to d47.");
+        }
+
         counted.Add(UnlockLine(facts.Unlocks, name));
         counted.AddRange(team.Select(TeamLine));
 
@@ -2897,6 +2924,18 @@ public sealed class AdventureGenerator(
         /// <summary>For a choice: its options as the model wrote them.</summary>
         public IReadOnlyList<ReadOption> Options { get; init; } = [];
 
+        /// <summary>For an event step: the phrase the model wrote for what the Commander does.</summary>
+        public string? Task { get; init; }
+
+        /// <summary>For an event step: the event, set from the drawn slot and never written by the model.</summary>
+        public string? Event { get; init; }
+
+        /// <summary>For an event step: the field test, set from the drawn slot.</summary>
+        public EventFilter Where { get; init; } = EventFilter.None;
+
+        /// <summary>For a tool run step: the phrase the Commander says, which the task has to hold.</summary>
+        public string? Say { get; init; }
+
         /// <summary>The title, marked when this is a further step.</summary>
         public string Named => Continues ? $"{Title}, a further step" : Title;
 
@@ -2916,6 +2955,9 @@ public sealed class AdventureGenerator(
             Rank = Kind == TriggerKind.PowerRank ? Rank : null,
             Handle = Handle,
             Station = AdventureTrigger.IsMissionHandleKind(Kind) ? Station : null,
+            Event = Kind == TriggerKind.Event ? Event : null,
+            Where = Kind == TriggerKind.Event ? Where : EventFilter.None,
+            Task = Kind == TriggerKind.Event ? Task : null,
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
@@ -3057,6 +3099,7 @@ public sealed class AdventureGenerator(
             ReadLines(element))
         {
             Handle = Text(element, "handle"),
+            Task = Text(element, "task"),
             Options = kind == TriggerKind.Choice ? ReadOptions(element) : [],
         };
     }
@@ -3478,6 +3521,11 @@ public sealed class AdventureGenerator(
                 var counted = beat.Written();
                 var problems = AdventureValidation.CountedProblems(where, counted).ToList();
 
+                if (beat is { Kind: TriggerKind.Event, Say: { } say } && counted.Task?.Contains(say, StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    problems.Add($"{where} is a tool run, and its \"task\" has to hold the phrase the Commander says, \"{say}\".");
+                }
+
                 if (problems.Count == 0
                     && steerIllegal
                     && beat.Kind == TriggerKind.Mission
@@ -3683,18 +3731,20 @@ public sealed class AdventureGenerator(
                 Refuse(index, $"Objective {offset + index + 1} ({beat.Named}) is a \"livery\" objective, but the journal cannot show which paint the Commander owns; use another kind of objective.");
             }
 
-            if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily))
+            var tool = RefusedActivities.ToolOf(beat.Where);
+
+            if (RefusedActivities.Refuses(ask.Story?.Refused, beat.Kind, beat.MissionFamily, beat.Event, tool))
             {
                 Refuse(
                     index,
-                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {BeatPhrase(beat)}, "
                     + "which they refused for this story; use another kind of objective.");
             }
-            else if (RefusedActivities.Refuses(ask.Barred, beat.Kind, beat.MissionFamily))
+            else if (RefusedActivities.Refuses(ask.Barred, beat.Kind, beat.MissionFamily, beat.Event, tool))
             {
                 Refuse(
                     index,
-                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {RefusedActivities.Phrase(beat.Kind, beat.MissionFamily)}, "
+                    $"Objective {offset + index + 1} ({beat.Named}) asks the Commander to {BeatPhrase(beat)}, "
                     + "which they have changed away from too often to be asked again; use another kind of objective.");
             }
         }
@@ -3721,7 +3771,8 @@ public sealed class AdventureGenerator(
         foreach (var slot in slots)
         {
             var keptAt = Enumerable.Range(0, keptTriggers.Count).FirstOrDefault(
-                index => !keptUsed.Contains(index) && Meets(slot, keptTriggers[index].Kind, keptTriggers[index].MissionFamily) && (slot.Organic is null || keptTriggers[index].Organic == slot.Organic), -1);
+                index => !keptUsed.Contains(index) && Meets(slot, keptTriggers[index].Kind, keptTriggers[index].MissionFamily) && (slot.Organic is null || keptTriggers[index].Organic == slot.Organic)
+                    && (slot.Kind != TriggerKind.Event || (keptTriggers[index].Event == slot.Event && keptTriggers[index].Where.Equals(slot.Where))), -1);
 
             if (keptAt >= 0)
             {
@@ -3739,10 +3790,18 @@ public sealed class AdventureGenerator(
 
             used.Add(at);
             result[at] = result[at] with { Count = slot.Count, Organic = slot.Organic ?? result[at].Organic };
+
+            if (slot.Kind == TriggerKind.Event)
+            {
+                result[at] = result[at] with { Event = slot.Event, Where = slot.Where, Say = slot.Say };
+            }
         }
 
         return result;
     }
+
+    private static string? BeatPhrase(ReadBeat beat) =>
+        RefusedActivities.Key(beat.Kind, beat.MissionFamily, beat.Event, RefusedActivities.ToolOf(beat.Where)) is { } key ? RefusedActivities.Phrase(key) : null;
 
     private static bool Meets(DrawnActivity slot, TriggerKind kind, string? family) =>
         slot.Kind == kind && (slot.Family is null || string.Equals(family?.Trim(), slot.Family, StringComparison.OrdinalIgnoreCase));
