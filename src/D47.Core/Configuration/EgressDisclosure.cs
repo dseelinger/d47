@@ -351,7 +351,9 @@ public static class EgressDisclosure
                 + "demand, with the station, its market id and its system. With it go the game's version and "
                 + "build, whether Horizons and Odyssey are running, and a random number made on this PC for "
                 + "your Commander. When you open a station's outfitting or shipyard, the modules and ships it sells go "
-                + "the same way, names only. EDDN republishes it to anyone listening and replaces that number before it "
+                + "the same way, names only. The system you jump to, the station you dock at and what you scan are "
+                + "sent too, with the system's position and no fines, fuel, reputation or position on a planet. "
+                + "EDDN republishes it to anyone listening and replaces that number before it "
                 + "does. Nothing personal goes with it: not your Commander name, your Frontier ID, your "
                 + "credits, your cargo, your ship or any key. Only what happens while d47 is running is sent, "
                 + "never journals it reads from before it started.",

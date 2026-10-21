@@ -22,6 +22,13 @@ public sealed class EddnComposer(
     private const string CommoditySchema = "https://eddn.edcd.io/schemas/commodity/3";
     private const string OutfittingSchema = "https://eddn.edcd.io/schemas/outfitting/2";
     private const string ShipyardSchema = "https://eddn.edcd.io/schemas/shipyard/2";
+    private const string JournalSchema = "https://eddn.edcd.io/schemas/journal/1";
+
+    private static readonly string[] FactionRemovals = ["MyReputation", "HappiestSystem", "HomeSystem", "SquadronFaction"];
+
+    private static readonly string[] JumpRemovals = ["Wanted", "BoostUsed", "FuelLevel", "FuelUsed", "JumpDist"];
+
+    private static readonly string[] LocationRemovals = ["Wanted", "Latitude", "Longitude"];
 
     private string _gameVersion = "";
     private string _gameBuild = "";
@@ -59,6 +66,11 @@ public sealed class EddnComposer(
             "Market" => ComposeCommodity(journalEvent),
             "Outfitting" => ComposeOutfitting(journalEvent),
             "Shipyard" => ComposeShipyard(journalEvent),
+            "Docked" => ComposeJournal(journalEvent, ["Wanted", "ActiveFine", "CockpitBreach"], false, true),
+            "Scan" or "SAASignalsFound" => ComposeJournal(journalEvent, [], false, true),
+            "FSDJump" => ComposeJournal(journalEvent, JumpRemovals, true, false),
+            "Location" => ComposeJournal(journalEvent, LocationRemovals, true, false),
+            "CarrierJump" => ComposeJournal(journalEvent, [.. JumpRemovals, .. LocationRemovals], true, false),
             _ => null,
         };
     }
@@ -199,6 +211,101 @@ public sealed class EddnComposer(
         message["ships"] = ships;
 
         return new EddnEnvelope(SchemaRef(ShipyardSchema), Header(station.Uploader), message);
+    }
+
+    private EddnEnvelope? ComposeJournal(JournalEvent journalEvent, string[] removals, bool factions, bool addLocation)
+    {
+        if (uploaderId() is not { Length: > 0 } uploader
+            || JsonNode.Parse(journalEvent.Raw.GetRawText()) is not JsonObject message)
+        {
+            return null;
+        }
+
+        if (addLocation)
+        {
+            if (!AddFoldedLocation(message, journalEvent))
+            {
+                return null;
+            }
+        }
+        else if (message["StarSystem"] is null || message["SystemAddress"] is null || message["StarPos"] is null)
+        {
+            return null;
+        }
+
+        foreach (var key in removals)
+        {
+            message.Remove(key);
+        }
+
+        if (factions && message["Factions"] is JsonArray entries)
+        {
+            foreach (var entry in entries.OfType<JsonObject>())
+            {
+                foreach (var key in FactionRemovals)
+                {
+                    entry.Remove(key);
+                }
+            }
+        }
+
+        RemoveLocalised(message);
+
+        if (_horizons is { } horizons)
+        {
+            message["horizons"] = horizons;
+        }
+
+        if (_odyssey is { } odyssey)
+        {
+            message["odyssey"] = odyssey;
+        }
+
+        return new EddnEnvelope(SchemaRef(JournalSchema), Header(uploader), message);
+    }
+
+    /// <summary>Adds the folded system's name and position when the event is in that system; false when it is not or none is known.</summary>
+    private bool AddFoldedLocation(JsonObject message, JournalEvent journalEvent)
+    {
+        if (SystemAddress is not { } address
+            || StarSystem is null
+            || StarPos is not { } position
+            || journalEvent.Long("SystemAddress") != address)
+        {
+            return false;
+        }
+
+        message["StarSystem"] ??= StarSystem;
+        message["StarPos"] ??= new JsonArray(position.X, position.Y, position.Z);
+
+        return true;
+    }
+
+    private static void RemoveLocalised(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var key in obj.Select(pair => pair.Key).Where(key => key.EndsWith("_Localised", StringComparison.Ordinal)).ToList())
+                {
+                    obj.Remove(key);
+                }
+
+                foreach (var pair in obj)
+                {
+                    RemoveLocalised(pair.Value);
+                }
+
+                break;
+
+            case JsonArray array:
+                foreach (var item in array)
+                {
+                    RemoveLocalised(item);
+                }
+
+                break;
+        }
     }
 
     private void AddIdentity(JsonObject message, StationFile station)
