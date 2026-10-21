@@ -45,7 +45,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         Func<D47.Core.Journal.GameStatus>? status = null,
         ConstructionSurface? construction = null)
     {
-        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status);
+        var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status,
+            D47.App.Input.DesktopClipboard.ReadTextAsync);
 
         _loadoutMode = shipsMode;
         _loadoutState = state;

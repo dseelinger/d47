@@ -12,6 +12,23 @@ namespace D47.App.Input;
 public sealed class DesktopClipboard(ILogger<DesktopClipboard> logger)
     : D47.Core.Capabilities.Builtin.IClipboard
 {
+    /// <summary>The clipboard's text, or null where there is none or it cannot be read.</summary>
+    public static async Task<string?> ReadTextAsync()
+    {
+        try
+        {
+            return await Dispatcher.UIThread.InvokeAsync(async () =>
+                Avalonia.Application.Current?.ApplicationLifetime
+                    is IClassicDesktopStyleApplicationLifetime { MainWindow.Clipboard: { } clipboard }
+                    ? await clipboard.TryGetTextAsync().ConfigureAwait(true)
+                    : null).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     public async Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default)
     {
         try

@@ -1712,6 +1712,11 @@ public sealed class ItemPage : LoadoutPage
             Children = { promote },
         };
 
+        if (mode.ImportLabel(item) is { Length: > 0 } importLabel)
+        {
+            actions.Children.Add(LoadoutPages.Press(importLabel, ImportFromClipboard));
+        }
+
         // Only where there is something to drop — an intended hull rather than an owned ship (remediation.md
         // 11, item 7).
         if (mode.DropLabel(item) is { Length: > 0 } label)
@@ -1778,6 +1783,50 @@ public sealed class ItemPage : LoadoutPage
                     Dropped();
                 }
             });
+    }
+
+    /// <summary>Reads the clipboard, asks before replacing a plan, and reports on the summary line.</summary>
+    private async void ImportFromClipboard()
+    {
+        var offer = await Mode.ReadImport(_item);
+
+        if (offer.Refusal is { } refusal)
+        {
+            Said(refusal);
+            return;
+        }
+
+        if (offer.Question is not { } question || _prompts is null)
+        {
+            Imported(offer);
+            return;
+        }
+
+        _prompts.Choose(
+            new ChoiceRequest(
+                "loadout.import",
+                "Import",
+                "Import from clipboard",
+                question,
+                [new ChoiceOption("keep", "Keep this plan"), new ChoiceOption("replace", "Replace it")],
+                null,
+                ChoiceSurface.Layer),
+            option =>
+            {
+                if (option.Key == "replace")
+                {
+                    Imported(offer);
+                }
+            });
+    }
+
+    private void Imported(LoadoutImportOffer offer)
+    {
+        var said = Mode.Import(_item, offer);
+
+        Refresh();
+
+        Said(said);
     }
 
     /// <summary>Drops it and says so on the summary line, which is where <c>Promote</c> already reports.</summary>

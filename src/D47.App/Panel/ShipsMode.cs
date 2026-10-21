@@ -18,7 +18,8 @@ public sealed class ShipsMode(
     Func<ModulePower>? measured = null,
     Func<bool>? hullArt = null,
     BuildTalk? talk = null,
-    Func<GameStatus>? status = null) : ILoadoutMode
+    Func<GameStatus>? status = null,
+    Func<Task<string?>>? clipboardText = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -1027,6 +1028,67 @@ public sealed class ShipsMode(
 
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";
+
+    public string? ImportLabel(string item) =>
+        clipboardText is not null && Resolve(item) is not null ? "Import from clipboard" : null;
+
+    public async Task<LoadoutImportOffer> ReadImport(string item)
+    {
+        if (clipboardText is null)
+        {
+            return new LoadoutImportOffer("There is no clipboard to read here.");
+        }
+
+        var text = await clipboardText().ConfigureAwait(true);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return new LoadoutImportOffer("The clipboard holds no text. Copy a SLEF loadout and try again.");
+        }
+
+        if (Resolve(item) is not { } build)
+        {
+            return new LoadoutImportOffer("That build is not there any more.");
+        }
+
+        var read = LoadoutImport.Read(text);
+
+        if (read.Refusal is { } refusal)
+        {
+            return new LoadoutImportOffer(refusal);
+        }
+
+        var hull = EliteSpecifications.Ship(build.Hull)?.Symbol ?? build.Hull;
+
+        if (!string.Equals(hull, read.Hull, StringComparison.OrdinalIgnoreCase))
+        {
+            return new LoadoutImportOffer(
+                $"That loadout is for a {EliteSpecifications.HullSaid(read.Hull ?? string.Empty)}, "
+                + $"and this build is for a {build.HullName}. Nothing was changed.");
+        }
+
+        if (build.Slots.Count == 0)
+        {
+            return new LoadoutImportOffer(null, null, read);
+        }
+
+        var unread = read.Unread.Count == 0
+            ? "All of it could be read."
+            : $"{Count(read.Unread.Count, "slot")} could not be read.";
+
+        return new LoadoutImportOffer(
+            null,
+            $"This build plans {Count(build.Slots.Count, "slot")}, and the import replaces them. "
+            + $"The import plans {Count(read.Slots.Count, "slot")}. {unread}",
+            read);
+    }
+
+    public string Import(string item, LoadoutImportOffer offer) =>
+        offer.Read is { } read && Resolve(item) is { } build
+            ? ships.Import(build.Id, read, checklists.RemoveFulfilled)
+            : offer.Refusal ?? "That build is not there any more.";
+
+    private static string Count(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
     public bool HasPlan(string item, string slot) => Resolve(item)?.For(slot) is not null;
 

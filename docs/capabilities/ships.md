@@ -344,6 +344,22 @@ does — so it looks like the same rule, because it is one.
 Delete a plan and whatever it already put on your checklist **stays there**. You ordered your list
 around those lines, and silently removing them makes the history wrong.
 
+### Importing a build from the clipboard
+
+Copy a SLEF loadout from an outfitting site, open the build's page and press **Import from
+clipboard**. The press is on the page of an owned ship and of an intended hull, and it is a panel
+action only: the model has no tool for it and nothing is said aloud. The loadout must be for the
+same hull as the build. Where the build already plans slots, d47 asks first, saying how many slots
+it plans now, how many the import plans and how many could not be read. **Replace it** replaces the
+plan; **Keep this plan** changes nothing.
+
+```csharp
+if (mode.ImportLabel(item) is { Length: > 0 } importLabel)
+{
+    actions.Children.Add(LoadoutPages.Press(importLabel, ImportFromClipboard));
+}
+```
+
 ### Talking through a build
 
 A ship's own page opens with **Talk through this build**. Type a remark into the field, or say it:

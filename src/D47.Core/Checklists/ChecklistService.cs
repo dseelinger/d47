@@ -48,7 +48,7 @@ public sealed class ChecklistService(
     private DateTimeOffset Now => now?.Invoke() ?? DateTimeOffset.MaxValue;
 
     /// <summary>Whether a fulfilled derived item removes itself rather than staying ticked (#255).</summary>
-    private bool RemoveFulfilled => removeFulfilled?.Invoke() ?? false;
+    public bool RemoveFulfilled => removeFulfilled?.Invoke() ?? false;
 
     public ChecklistStore List => list;
 

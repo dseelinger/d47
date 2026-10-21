@@ -146,6 +146,15 @@ public sealed record LoadoutPower(D47.Core.Ships.PowerGauge? Gauge, string? Sile
 /// <param name="No">Declines it, and answers with what happened.</param>
 public sealed record LoadoutNotice(string Text, Func<string> Yes, Func<string> No);
 
+/// <summary>
+/// What reading the clipboard for an import found: a refusal sentence, or the loadout with the question
+/// to ask first, which is null where the build plans no slots yet.
+/// </summary>
+public sealed record LoadoutImportOffer(
+    string? Refusal,
+    string? Question = null,
+    D47.Core.Ships.LoadoutImport? Read = null);
+
 /// <summary>One pressable line of a loadout index.</summary>
 /// <param name="Key">What the crumb below this row is keyed on.</param>
 /// <param name="Word">What the breadcrumb calls it.</param>
@@ -373,6 +382,16 @@ public interface ILoadoutMode
 
     /// <summary>Drops it, and says what happened.</summary>
     string Drop(string item);
+
+    /// <summary>The label for importing a plan from the clipboard, or null where this item has none.</summary>
+    string? ImportLabel(string item) => null;
+
+    /// <summary>Reads the clipboard for an import into the item, without changing anything.</summary>
+    Task<LoadoutImportOffer> ReadImport(string item) =>
+        Task.FromResult(new LoadoutImportOffer("That cannot take an import."));
+
+    /// <summary>Replaces the item's plan with a read import, and says what happened.</summary>
+    string Import(string item, LoadoutImportOffer offer) => offer.Refusal ?? string.Empty;
 
     /// <summary>What is actually there, from the journal.</summary>
     IReadOnlyList<LoadoutLine> Fitted(string item, string slot);
