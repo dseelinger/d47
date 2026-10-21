@@ -10,7 +10,7 @@ namespace D47.Core.Tests.Conversation;
 /// <summary>A model answer about one engineer carries a note inviting a remark on the tribute, once per session (#26).</summary>
 public class AnEngineersTributeEarnsOneRemarkPerSessionTests
 {
-    private const string Persona = "You are a dry ship's AI.";
+    private const string Persona = "You are a terse ship's AI.";
 
     private static TurnLoop Build(ILlmProvider provider, string? persona)
     {

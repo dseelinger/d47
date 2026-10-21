@@ -23,10 +23,10 @@ public sealed class RecentDeliveryNotesTests
     {
         var delivery = new RecentDelivery();
 
-        delivery.Record("ship", "[dryly] Noted.");
+        delivery.Record("ship", "[flatly] Noted.");
         delivery.Record("tower", "[curtly] Cleared.");
 
-        Assert.Contains("dryly", delivery.Describe("ship"));
+        Assert.Contains("flatly", delivery.Describe("ship"));
         Assert.DoesNotContain("curtly", delivery.Describe("ship"));
     }
 
@@ -54,7 +54,7 @@ public sealed class RecentDeliveryNotesTests
     [Fact]
     public async Task ANoteInOneReplyReachesTheNextRequestForThatSpeaker()
     {
-        var provider = new EchoingProvider("[dryly] Docked.");
+        var provider = new EchoingProvider("[flatly] Docked.");
         var delivery = new RecentDelivery();
 
         for (var line = 0; line < 2; line++)
@@ -68,7 +68,7 @@ public sealed class RecentDeliveryNotesTests
         }
 
         Assert.Null(provider.Trailing[0]);
-        Assert.Contains("dryly", provider.Trailing[1]);
+        Assert.Contains("flatly", provider.Trailing[1]);
     }
 
     [Fact]

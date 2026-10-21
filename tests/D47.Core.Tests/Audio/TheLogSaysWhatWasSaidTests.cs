@@ -113,9 +113,9 @@ public class TheLogSaysWhatWasSaidTests
             new FakeTtsProvider { ReadsAudioTags = true },
             "D47",
             "Hull is holding. ",
-            "[dryly] The correction is yours to make."));
+            "[flatly] The correction is yours to make."));
 
-        Assert.Contains("Hull is holding. [dryly] The correction is yours", line, StringComparison.Ordinal);
+        Assert.Contains("Hull is holding. [flatly] The correction is yours", line, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -128,9 +128,9 @@ public class TheLogSaysWhatWasSaidTests
         var line = SaidLine(await SpokenAsync(
             new FakeTtsProvider { ReadsAudioTags = false },
             "D47",
-            "[dryly] The correction is yours to make."));
+            "[flatly] The correction is yours to make."));
 
-        Assert.DoesNotContain("[dryly]", line, StringComparison.Ordinal);
+        Assert.DoesNotContain("[flatly]", line, StringComparison.Ordinal);
         Assert.Contains("The correction is yours to make.", line, StringComparison.Ordinal);
     }
 }
