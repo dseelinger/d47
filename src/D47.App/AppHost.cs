@@ -1615,7 +1615,9 @@ public sealed class AppHost : IDisposable
                 () => gameState.InGame?.Identity.FrontierId is { Length: > 0 } frontierId ? uploaderIds.For(frontierId) : null,
                 BuildInfo.Semantic,
                 () => files.ReadText(Path.Combine(journalDirectory, "Market.json")),
-                useTestSchemas: EddnTestSchemas),
+                useTestSchemas: EddnTestSchemas,
+                readOutfitting: () => files.ReadText(Path.Combine(journalDirectory, "Outfitting.json")),
+                readShipyard: () => files.ReadText(Path.Combine(journalDirectory, "Shipyard.json"))),
             eddn,
             () => foundations.Settings.Current.Contribution.Eddn);
 

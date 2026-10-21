@@ -932,7 +932,8 @@ public static class GalaxyCapability
                 Label = "Share with EDDN",
                 Help =
                     "Sends the market prices your game shows you to EDDN, the relay the galaxy sites read, so "
-                    + "other Commanders' searches see them. Your Commander name is not sent; a random number "
+                    + "other Commanders' searches see them. The modules and ships a station sells are sent when "
+                    + "you open its outfitting or shipyard. Your Commander name is not sent; a random number "
                     + "made on this PC for your Commander stands in for it. If another program already sends "
                     + "your game data to EDDN, leave this off: sending it twice adds nothing. Off by default; "
                     + "see [Privacy](privacy).",

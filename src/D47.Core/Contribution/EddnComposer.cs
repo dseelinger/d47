@@ -7,15 +7,21 @@ namespace D47.Core.Contribution;
 /// <summary>Builds EDDN messages from journal events. Holds the game state the headers need.</summary>
 /// <param name="uploaderId">Returns the random number standing for the Commander, or null when there is none; read only when a message is built.</param>
 /// <param name="readMarket">Returns the text of <c>Market.json</c>, or null when it cannot be read.</param>
+/// <param name="readOutfitting">Returns the text of <c>Outfitting.json</c>, or null when it cannot be read.</param>
+/// <param name="readShipyard">Returns the text of <c>Shipyard.json</c>, or null when it cannot be read.</param>
 public sealed class EddnComposer(
     Func<string?> uploaderId,
     string softwareVersion,
     Func<string?> readMarket,
-    bool useTestSchemas = false)
+    bool useTestSchemas = false,
+    Func<string?>? readOutfitting = null,
+    Func<string?>? readShipyard = null)
 {
     public const string SoftwareName = "Directive 47";
 
     private const string CommoditySchema = "https://eddn.edcd.io/schemas/commodity/3";
+    private const string OutfittingSchema = "https://eddn.edcd.io/schemas/outfitting/2";
+    private const string ShipyardSchema = "https://eddn.edcd.io/schemas/shipyard/2";
 
     private string _gameVersion = "";
     private string _gameBuild = "";
@@ -43,7 +49,18 @@ public sealed class EddnComposer(
 
         Fold(journalEvent);
 
-        return journalEvent.Kind == "Market" && Eligible ? ComposeCommodity(journalEvent) : null;
+        if (!Eligible)
+        {
+            return null;
+        }
+
+        return journalEvent.Kind switch
+        {
+            "Market" => ComposeCommodity(journalEvent),
+            "Outfitting" => ComposeOutfitting(journalEvent),
+            "Shipyard" => ComposeShipyard(journalEvent),
+            _ => null,
+        };
     }
 
     private bool Eligible =>
@@ -85,12 +102,150 @@ public sealed class EddnComposer(
 
     private EddnEnvelope? ComposeCommodity(JournalEvent marketEvent)
     {
+        using var station = OpenStationFile(readMarket, marketEvent);
+
+        if (station is null)
+        {
+            return null;
+        }
+
+        var commodities = new JsonArray();
+
+        foreach (var item in station.File.Items("Items"))
+        {
+            if (Commodity(item) is { } commodity)
+            {
+                commodities.Add(commodity);
+            }
+        }
+
+        var message = station.Message();
+
+        if (station.File.String("StationType") is { Length: > 0 } stationType)
+        {
+            message["stationType"] = stationType;
+        }
+
+        if (station.File.String("CarrierDockingAccess") is { Length: > 0 } access)
+        {
+            message["carrierDockingAccess"] = access;
+        }
+
+        AddIdentity(message, station);
+        message["commodities"] = commodities;
+
+        return new EddnEnvelope(SchemaRef(CommoditySchema), Header(station.Uploader), message);
+    }
+
+    private EddnEnvelope? ComposeOutfitting(JournalEvent outfittingEvent)
+    {
+        using var station = OpenStationFile(readOutfitting, outfittingEvent);
+
+        if (station is null)
+        {
+            return null;
+        }
+
+        var modules = new JsonArray();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var item in station.File.Items("Items"))
+        {
+            if (Module(item) is { } name && seen.Add(name))
+            {
+                modules.Add(name);
+            }
+        }
+
+        if (modules.Count == 0)
+        {
+            return null;
+        }
+
+        var message = station.Message();
+        AddIdentity(message, station);
+        message["modules"] = modules;
+
+        return new EddnEnvelope(SchemaRef(OutfittingSchema), Header(station.Uploader), message);
+    }
+
+    private EddnEnvelope? ComposeShipyard(JournalEvent shipyardEvent)
+    {
+        using var station = OpenStationFile(readShipyard, shipyardEvent);
+
+        if (station is null)
+        {
+            return null;
+        }
+
+        var ships = new JsonArray();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var item in station.File.Items("PriceList"))
+        {
+            if (item.String("ShipType") is { Length: > 0 } ship && seen.Add(ship))
+            {
+                ships.Add(ship);
+            }
+        }
+
+        if (ships.Count == 0)
+        {
+            return null;
+        }
+
+        var message = station.Message();
+        AddIdentity(message, station);
+        message["ships"] = ships;
+
+        return new EddnEnvelope(SchemaRef(ShipyardSchema), Header(station.Uploader), message);
+    }
+
+    private void AddIdentity(JsonObject message, StationFile station)
+    {
+        message["marketId"] = station.MarketId;
+
+        if (_horizons is { } horizons)
+        {
+            message["horizons"] = horizons;
+        }
+
+        if (_odyssey is { } odyssey)
+        {
+            message["odyssey"] = odyssey;
+        }
+
+        message["timestamp"] = station.Timestamp;
+    }
+
+    /// <summary>The module's name when a station sells it to every Commander, else null.</summary>
+    private static string? Module(JsonElement item)
+    {
+        var name = item.String("Name");
+
+        if (string.IsNullOrEmpty(name)
+            || name.Equals("Int_PlanetApproachSuite", StringComparison.OrdinalIgnoreCase)
+            || !(name.StartsWith("Hpt_", StringComparison.OrdinalIgnoreCase)
+                || name.StartsWith("Int_", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("_Armour_", StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
+
+        var sku = item.String("sku");
+
+        return string.IsNullOrEmpty(sku) || sku == "ELITE_HORIZONS_V_PLANETARY_LANDINGS" ? name : null;
+    }
+
+    /// <summary>Opens a station file and returns it only when it is the one the event names.</summary>
+    private StationFile? OpenStationFile(Func<string?>? read, JournalEvent journalEvent)
+    {
         if (uploaderId() is not { Length: > 0 } uploader)
         {
             return null;
         }
 
-        var text = readMarket();
+        var text = read?.Invoke();
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -107,67 +262,50 @@ public sealed class EddnComposer(
             return null;
         }
 
-        using (document)
+        var file = document.RootElement;
+        var timestamp = file.String("timestamp");
+        var marketId = file.Long("MarketID");
+        var system = file.String("StarSystem");
+        var station = file.String("StationName");
+
+        if (timestamp is null
+            || marketId is null
+            || string.IsNullOrEmpty(system)
+            || string.IsNullOrEmpty(station)
+            || timestamp != journalEvent.String("timestamp")
+            || marketId != journalEvent.Long("MarketID"))
         {
-            var file = document.RootElement;
-            var timestamp = file.String("timestamp");
-            var marketId = file.Long("MarketID");
-            var system = file.String("StarSystem");
-            var station = file.String("StationName");
+            document.Dispose();
 
-            if (timestamp is null
-                || marketId is null
-                || string.IsNullOrEmpty(system)
-                || string.IsNullOrEmpty(station)
-                || timestamp != marketEvent.String("timestamp")
-                || marketId != marketEvent.Long("MarketID"))
-            {
-                return null;
-            }
-
-            var commodities = new JsonArray();
-
-            foreach (var item in file.Items("Items"))
-            {
-                if (Commodity(item) is { } commodity)
-                {
-                    commodities.Add(commodity);
-                }
-            }
-
-            var message = new JsonObject
-            {
-                ["systemName"] = system,
-                ["stationName"] = station,
-            };
-
-            if (file.String("StationType") is { Length: > 0 } stationType)
-            {
-                message["stationType"] = stationType;
-            }
-
-            if (file.String("CarrierDockingAccess") is { Length: > 0 } access)
-            {
-                message["carrierDockingAccess"] = access;
-            }
-
-            message["marketId"] = marketId;
-
-            if (_horizons is { } horizons)
-            {
-                message["horizons"] = horizons;
-            }
-
-            if (_odyssey is { } odyssey)
-            {
-                message["odyssey"] = odyssey;
-            }
-
-            message["timestamp"] = timestamp;
-            message["commodities"] = commodities;
-
-            return new EddnEnvelope(SchemaRef(CommoditySchema), Header(uploader), message);
+            return null;
         }
+
+        return new StationFile(document, uploader, timestamp, marketId.Value, system, station);
+    }
+
+    private sealed class StationFile(
+        JsonDocument document,
+        string uploader,
+        string timestamp,
+        long marketId,
+        string system,
+        string station) : IDisposable
+    {
+        public JsonElement File => document.RootElement;
+
+        public string Uploader => uploader;
+
+        public string Timestamp => timestamp;
+
+        public long MarketId => marketId;
+
+        public JsonObject Message() => new()
+        {
+            ["systemName"] = system,
+            ["stationName"] = station,
+        };
+
+        public void Dispose() => document.Dispose();
     }
 
     private static JsonObject? Commodity(JsonElement item)
