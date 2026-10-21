@@ -511,6 +511,9 @@ public sealed record AdventureBeat
 
     public required AdventureTrigger Trigger { get; init; }
 
+    /// <summary>Events that fail the chapter while this beat is the one it waits on; none counts to a total.</summary>
+    public IReadOnlyList<AdventureTrigger> FailsOn { get; init; } = [];
+
     /// <summary>What is said when this beat is reached, in order: one line, or up to <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
     public IReadOnlyList<AdventureLine> Lines { get; init; } = [];
 
@@ -534,9 +537,10 @@ public sealed record AdventureBeat
         && Function == other.Function
         && Reason == other.Reason
         && Trigger == other.Trigger
+        && FailsOn.SequenceEqual(other.FailsOn)
         && Lines.SequenceEqual(other.Lines);
 
-    public override int GetHashCode() => HashCode.Combine(Title, Function, Reason, Trigger, Lines.Count > 0 ? Lines[0] : null);
+    public override int GetHashCode() => HashCode.Combine(Title, Function, Reason, Trigger, FailsOn.Count, Lines.Count > 0 ? Lines[0] : null);
 
     /// <summary>The trigger's hand-off, followed by the reason when there is one.</summary>
     public string HandOff() =>
@@ -623,6 +627,9 @@ public sealed record Adventure
     /// <summary>Null unless abandoned.</summary>
     public DateTimeOffset? AbandonedAt { get; init; }
 
+    /// <summary>The named ending the chapter reached, or null while it is under way or ran to its last beat.</summary>
+    public AdventureEnding? Ending { get; init; }
+
     /// <summary>When the beats from <see cref="RewrittenFrom"/> on were last replaced; events before it do not count toward them.</summary>
     public DateTimeOffset? RewrittenAt { get; init; }
 
@@ -654,11 +661,22 @@ public sealed record Adventure
 
     public bool IsAbandoned => AbandonedAt is not null;
 
+    public bool IsEnded => Ending is not null;
+
+    public bool IsFailed => Ending is { Name: AdventureEnding.Failed };
+
     /// <summary>A generated adventure nobody has agreed to yet.</summary>
     public bool IsDraft => Source == AdventureSource.Generated && AcceptedAt is null;
 
-    /// <summary>Running: begun and not abandoned.</summary>
-    public bool IsActive => IsBegun && !IsAbandoned;
+    /// <summary>Running: begun, not abandoned and without an ending.</summary>
+    public bool IsActive => IsBegun && !IsAbandoned && !IsEnded;
+}
+
+/// <summary>A named ending a chapter reached, when, and why.</summary>
+public sealed record AdventureEnding(string Name, DateTimeOffset At, string Reason)
+{
+    /// <summary>The name of the ending a <c>failsOn</c> trigger gives.</summary>
+    public const string Failed = "Failed";
 }
 
 /// <summary>A beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>

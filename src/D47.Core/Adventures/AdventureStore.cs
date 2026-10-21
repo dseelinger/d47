@@ -394,30 +394,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 Lines = beat.Lines is { Count: > 0 } lines
                     ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
                     : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
-                Trigger = new AdventureTrigger
-                {
-                    Kind = kind,
-                    SystemAddress = beat.Trigger!.SystemAddress,
-                    MarketId = beat.Trigger.MarketId,
-                    BodyId = beat.Trigger.BodyId,
-                    Career = Careers.Match(beat.Trigger.Career) ?? beat.Trigger.Career?.Trim(),
-                    Rank = beat.Trigger.Rank,
-                    ShipType = EliteSpecifications.HullSymbol(beat.Trigger.ShipType) ?? beat.Trigger.ShipType?.Trim(),
-                    System = beat.Trigger.System?.Trim(),
-                    Station = beat.Trigger.Station?.Trim(),
-                    Body = beat.Trigger.Body?.Trim(),
-                    Count = beat.Trigger.Count,
-                    Faction = beat.Trigger.Faction?.Trim(),
-                    MissionFamily = beat.Trigger.MissionFamily?.Trim(),
-                    Commodity = beat.Trigger.Commodity?.Trim(),
-                    Filter = beat.Trigger.Filter?.Trim(),
-                    SiteName = beat.Trigger.SiteName?.Trim(),
-                    Organic = beat.Trigger.Organic,
-                    New = beat.Trigger.New,
-                    Engineer = beat.Trigger.Engineer?.Trim(),
-                    Stage = beat.Trigger.Stage?.Trim(),
-                    JumpRange = beat.Trigger.JumpRange,
-                },
+                Trigger = FromTrigger(beat.Trigger!, kind),
+                FailsOn = [.. (beat.FailsOn ?? []).Where(fail => AdventureValidation.TryKind(fail.Kind, out _)).Select(fail => FromTrigger(fail, Enum.Parse<TriggerKind>(fail.Kind!.Trim(), ignoreCase: true)))],
             });
         }
 
@@ -448,6 +426,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Beats = beats,
             AcceptedAt = record.AcceptedAt,
             AbandonedAt = record.AbandonedAt,
+            Ending = record.Ending is { Name.Length: > 0, At: not null } ending
+                ? new AdventureEnding(ending.Name.Trim(), ending.At.Value, ending.Reason?.Trim() ?? string.Empty)
+                : null,
             RewrittenAt = record.RewrittenAt,
             RewrittenFrom = record.RewrittenFrom,
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
@@ -467,6 +448,56 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         return adventure;
     }
+
+    private static AdventureTrigger FromTrigger(TriggerRecord record, TriggerKind kind) => new()
+    {
+        Kind = kind,
+        SystemAddress = record.SystemAddress,
+        MarketId = record.MarketId,
+        BodyId = record.BodyId,
+        Career = Careers.Match(record.Career) ?? record.Career?.Trim(),
+        Rank = record.Rank,
+        ShipType = EliteSpecifications.HullSymbol(record.ShipType) ?? record.ShipType?.Trim(),
+        System = record.System?.Trim(),
+        Station = record.Station?.Trim(),
+        Body = record.Body?.Trim(),
+        Count = record.Count,
+        Faction = record.Faction?.Trim(),
+        MissionFamily = record.MissionFamily?.Trim(),
+        Commodity = record.Commodity?.Trim(),
+        Filter = record.Filter?.Trim(),
+        SiteName = record.SiteName?.Trim(),
+        Organic = record.Organic,
+        New = record.New,
+        Engineer = record.Engineer?.Trim(),
+        Stage = record.Stage?.Trim(),
+        JumpRange = record.JumpRange,
+    };
+
+    private static TriggerRecord ToTrigger(AdventureTrigger trigger) => new()
+    {
+        Kind = trigger.Kind.ToString().ToLowerInvariant(),
+        SystemAddress = trigger.SystemAddress,
+        MarketId = trigger.MarketId,
+        BodyId = trigger.BodyId,
+        Career = trigger.Career,
+        Rank = trigger.Rank,
+        ShipType = trigger.ShipType,
+        System = trigger.System,
+        Station = trigger.Station,
+        Body = trigger.Body,
+        Count = trigger.Count,
+        Faction = trigger.Faction,
+        MissionFamily = trigger.MissionFamily,
+        Commodity = trigger.Commodity,
+        Filter = trigger.Filter,
+        SiteName = trigger.SiteName,
+        Organic = trigger.Organic,
+        New = trigger.New,
+        Engineer = trigger.Engineer,
+        Stage = trigger.Stage,
+        JumpRange = trigger.JumpRange,
+    };
 
     private static AdventureRecord ToRecord(Adventure adventure) => new()
     {
@@ -497,30 +528,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 Title = beat.Title,
                 Function = beat.Function,
                 Reason = beat.Reason,
-                Trigger = new TriggerRecord
-                {
-                    Kind = beat.Trigger.Kind.ToString().ToLowerInvariant(),
-                    SystemAddress = beat.Trigger.SystemAddress,
-                    MarketId = beat.Trigger.MarketId,
-                    BodyId = beat.Trigger.BodyId,
-                    Career = beat.Trigger.Career,
-                    Rank = beat.Trigger.Rank,
-                    ShipType = beat.Trigger.ShipType,
-                    System = beat.Trigger.System,
-                    Station = beat.Trigger.Station,
-                    Body = beat.Trigger.Body,
-                    Count = beat.Trigger.Count,
-                    Faction = beat.Trigger.Faction,
-                    MissionFamily = beat.Trigger.MissionFamily,
-                    Commodity = beat.Trigger.Commodity,
-                    Filter = beat.Trigger.Filter,
-                    SiteName = beat.Trigger.SiteName,
-                    Organic = beat.Trigger.Organic,
-                    New = beat.Trigger.New,
-                    Engineer = beat.Trigger.Engineer,
-                    Stage = beat.Trigger.Stage,
-                    JumpRange = beat.Trigger.JumpRange,
-                },
+                Trigger = ToTrigger(beat.Trigger),
+                FailsOn = beat.FailsOn.Count > 0 ? [.. beat.FailsOn.Select(ToTrigger)] : null,
                 Line = beat.Lines.Count == 1 ? beat.Line : null,
                 Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
                 Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker, Introduces = line.Introduces })],
@@ -528,6 +537,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         ],
         AcceptedAt = adventure.AcceptedAt,
         AbandonedAt = adventure.AbandonedAt,
+        Ending = adventure.Ending is { } ended ? new EndingRecord { Name = ended.Name, At = ended.At, Reason = ended.Reason } : null,
         RewrittenAt = adventure.RewrittenAt,
         RewrittenFrom = adventure.RewrittenFrom,
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
@@ -575,6 +585,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         public DateTimeOffset? AbandonedAt { get; set; }
 
+        public EndingRecord? Ending { get; set; }
+
         public DateTimeOffset? RewrittenAt { get; set; }
 
         public int? RewrittenFrom { get; set; }
@@ -590,6 +602,15 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
     /// <summary>The <see cref="StepRecord.By"/> written for a step the Commander marked; a step without one is the bench's.</summary>
     private const string CommanderStep = "Commander";
+
+    private sealed class EndingRecord
+    {
+        public string? Name { get; set; }
+
+        public DateTimeOffset? At { get; set; }
+
+        public string? Reason { get; set; }
+    }
 
     private sealed class StepRecord
     {
@@ -622,6 +643,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Reason { get; set; }
 
         public TriggerRecord? Trigger { get; set; }
+
+        public List<TriggerRecord>? FailsOn { get; set; }
 
         public string? Line { get; set; }
 

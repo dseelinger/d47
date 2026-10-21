@@ -28,6 +28,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>The hand-off after a beat whose line is not the ship's, said by the ship.</summary>
     public const string HandOffPrefix = "adventure-handoff.";
 
+    /// <summary>The line said when a chapter fails, keyed <c>adventure-failed.&lt;story&gt;</c>.</summary>
+    public const string FailedPrefix = "adventure-failed.";
+
     /// <summary>A beat's second or third line, keyed <c>adventure-line.&lt;story&gt;.&lt;beat&gt;.&lt;line&gt;</c>.</summary>
     public const string LinePrefix = "adventure-line.";
 
@@ -39,6 +42,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     /// <summary>Whether the Backstory nudge is switched on.</summary>
     public Func<bool> NudgeBackstory { get; init; } = () => true;
+
+    /// <summary>Whether the core aboard is a stock core, whose Narrator tells a failure instead of the ship.</summary>
+    public Func<bool> CoreIsStock { get; init; } = () => false;
 
     /// <summary>Whether a Commander's reached beats wait, unsaid, behind lines that must be said first.</summary>
     public Func<string?, bool> Held { get; init; } = _ => false;
@@ -214,7 +220,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             // And the acknowledgement, now, with no settle and no model behind it — see <see
             // cref="AdventureAcks"/> for why it is split off from the beat at all.
-            if (!moment.IsOpening)
+            if (!moment.IsOpening && !moment.IsFailure)
             {
                 yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}", AdventureAcks.Pick(_acks++))
                 {
@@ -276,6 +282,21 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
                 {
                     Urgency = CalloutUrgency.Routine,
+                };
+
+                continue;
+            }
+
+            if (moment.IsFailure)
+            {
+                var narrated = CoreIsStock();
+
+                yield return new Announcement(
+                    moment.Key,
+                    narrated ? $"The chapter failed. {moment.Reason}" : $"This chapter has failed. {moment.Reason}")
+                {
+                    Urgency = CalloutUrgency.Routine,
+                    Voice = narrated ? Audio.VoiceRole.Narrator : Audio.VoiceRole.ShipAi,
                 };
 
                 continue;

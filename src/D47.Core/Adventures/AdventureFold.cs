@@ -5,6 +5,9 @@ using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
 
+/// <summary>A <c>failsOn</c> trigger matched: the beat the chapter was waiting on, when, and why. <paramref name="Live"/> is set when the book found it announcing.</summary>
+public sealed record AdventureFailure(int Beat, DateTimeOffset At, string Reason, bool Live = false);
+
 /// <summary>
 /// Where one adventure stands, computed rather than read (Phase 47, "Progress is derived, and an
 /// adventure counts forward only").
@@ -40,13 +43,19 @@ public sealed record AdventureStanding
     /// <summary>The notable things the journal shows the Commander did after acceptance, oldest first.</summary>
     public IReadOnlyList<Notable> Notables { get; init; } = [];
 
+    /// <summary>Set by the fold when a <c>failsOn</c> trigger matched; the book stores it as the adventure's ending.</summary>
+    public AdventureFailure? Failure { get; init; }
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
     public bool IsDone => Adventure.IsBegun && Fired.Count >= Adventure.Beats.Count && Adventure.Beats.Count > 0;
 
+    /// <summary>Whether a <c>failsOn</c> trigger matched, stored or not.</summary>
+    public bool IsFailed => Failure is not null || Adventure.IsFailed;
+
     public AdventureBeat? CurrentBeat =>
-        Adventure.IsBegun && !IsDone && Current < Adventure.Beats.Count ? Adventure.Beats[Current] : null;
+        Adventure.IsBegun && !IsDone && !IsFailed && Current < Adventure.Beats.Count ? Adventure.Beats[Current] : null;
 
     public AdventureBeat? LastBeat => Fired.Count > 0 ? Adventure.Beats[Fired.Count - 1] : null;
 
@@ -81,6 +90,10 @@ public sealed record AdventureStanding
         {
             buttons.Add("Begin again");
         }
+        else if (adventure.IsFailed && !story)
+        {
+            buttons.Add("Write the next chapter");
+        }
         else if (IsDone && !story)
         {
             buttons.Add("Write the next chapter");
@@ -105,7 +118,7 @@ public sealed record AdventureStanding
     /// <summary>How far through, as a count (asked for 2026-08-22).</summary>
     public string? Step()
     {
-        if (!Adventure.IsBegun || Adventure.Beats.Count == 0)
+        if (!Adventure.IsBegun || Adventure.Beats.Count == 0 || IsFailed)
         {
             return null;
         }
@@ -129,6 +142,11 @@ public sealed record AdventureStanding
     /// <summary>Where the story is, in words a card can show.</summary>
     public string Place()
     {
+        if (IsFailed)
+        {
+            return "failed";
+        }
+
         if (Adventure.IsAbandoned)
         {
             return CurrentBeatTitle() is { } waiting ? $"abandoned at {waiting}" : "abandoned";
@@ -151,6 +169,12 @@ public sealed record AdventureStanding
     public string Describe(DateTimeOffset now)
     {
         var parts = new List<string> { $"{Adventure.Name}: {Place()}." };
+
+        if (IsFailed)
+        {
+            parts.Add(Adventure.Ending?.Reason ?? Failure!.Reason);
+            return string.Join(" ", parts);
+        }
 
         if (Adventure.IsBegun && !IsDone && !Adventure.IsAbandoned && LastFiredAt is { } last)
         {
@@ -520,7 +544,7 @@ public static class AdventureFold
             standing = standing with { Seen = observation.Seen };
         }
 
-        if (!adventure.IsBegun || standing.IsDone)
+        if (!adventure.IsBegun || standing.IsDone || standing.IsFailed)
         {
             return standing;
         }
@@ -531,6 +555,11 @@ public static class AdventureFold
         }
 
         if (adventure.AbandonedAt is { } abandoned && journalEvent.Timestamp >= abandoned)
+        {
+            return standing;
+        }
+
+        if (adventure.Ending is { } ended && journalEvent.Timestamp >= ended.At)
         {
             return standing;
         }
@@ -560,14 +589,21 @@ public static class AdventureFold
             return standing;
         }
 
+        if (FailedOn(current, standing, journalEvent, observation, world) is { } failing)
+        {
+            return standing with
+            {
+                Failure = new AdventureFailure(standing.Current, journalEvent.Timestamp, $"At \"{current.Title}\" the Commander did what ruled it out: {failing.Describe()}."),
+            };
+        }
+
         if (current.Trigger.Kind == TriggerKind.Conflict)
         {
             return ApplyConflict(standing, current.Trigger, journalEvent, world);
         }
 
-        var watched = current.Trigger.Kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover or TriggerKind.Footfall;
-        var footfall = current.Trigger.Kind == TriggerKind.Footfall;
-        var gained = footfall ? (world?.IsFirstFootfall(journalEvent) == true ? 1 : 0) : watched ? AdventureWatch.Amount(current.Trigger, observation) : 0;
+        var watched = IsWatched(current.Trigger.Kind);
+        var gained = Gained(current.Trigger, journalEvent, observation, world);
 
         if (watched ? gained == 0 || !current.Trigger.IsResolved : !Matches(current.Trigger, journalEvent, standing.SystemAddress))
         {
@@ -585,6 +621,37 @@ public static class AdventureFold
         }
 
         return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0 };
+    }
+
+    private static bool IsWatched(TriggerKind kind) =>
+        kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover or TriggerKind.Footfall;
+
+    private static int Gained(AdventureTrigger trigger, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world) =>
+        trigger.Kind == TriggerKind.Footfall
+            ? world?.IsFirstFootfall(journalEvent) == true ? 1 : 0
+            : IsWatched(trigger.Kind) ? AdventureWatch.Amount(trigger, observation) : 0;
+
+    /// <summary>The first of the beat's <c>failsOn</c> triggers this event would count toward, as evaluated with a count of one.</summary>
+    private static AdventureTrigger? FailedOn(AdventureBeat beat, AdventureStanding standing, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world)
+    {
+        foreach (var fail in beat.FailsOn)
+        {
+            var trigger = AdventureValidation.FailTrigger(fail);
+
+            if (trigger.Kind == TriggerKind.Conflict)
+            {
+                continue;
+            }
+
+            if (IsWatched(trigger.Kind)
+                ? trigger.IsResolved && Gained(trigger, journalEvent, observation, world) > 0
+                : Matches(trigger, journalEvent, standing.SystemAddress))
+            {
+                return trigger;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>

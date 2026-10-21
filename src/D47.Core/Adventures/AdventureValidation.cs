@@ -189,6 +189,11 @@ public static class AdventureValidation
                 }
             }
 
+            foreach (var fail in beat.FailsOn)
+            {
+                problems.AddRange(FailsOnProblems(where, fail));
+            }
+
             if (!Enum.IsDefined(beat.Trigger.Kind))
             {
                 problems.Add($"{where} names a trigger that is not one of {string.Join(", ", Kinds)}.");
@@ -292,6 +297,41 @@ public static class AdventureValidation
 
         return problems;
     }
+
+    /// <summary>What is wrong with a <c>failsOn</c> trigger: a count, the conflict kind, or a filter its kind does not take.</summary>
+    public static IEnumerable<string> FailsOnProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (!Enum.IsDefined(trigger.Kind))
+        {
+            yield return $"{where} has a failsOn that is not one of {string.Join(", ", Kinds)}.";
+            yield break;
+        }
+
+        if (trigger.Count is not null)
+        {
+            yield return $"{where} has a failsOn with a count; the first matching event fails the chapter.";
+        }
+
+        if (trigger.Kind == TriggerKind.Conflict)
+        {
+            yield return $"{where} has a failsOn of the conflict kind, which cannot fail a chapter.";
+            yield break;
+        }
+
+        if (trigger.IsCounted)
+        {
+            foreach (var problem in CountedProblems(where, FailTrigger(trigger)))
+            {
+                yield return problem;
+            }
+        }
+    }
+
+    /// <summary>A <c>failsOn</c> trigger as the fold evaluates it: a counted kind needs a count to be resolved, and one event is all it takes.</summary>
+    public static AdventureTrigger FailTrigger(AdventureTrigger trigger) =>
+        trigger.IsCounted ? trigger with { Count = 1 } : trigger;
 
     /// <summary>What is wrong with a counted trigger: a count under one, or a mission family that is not one or is set aside.</summary>
     public static IEnumerable<string> CountedProblems(string where, AdventureTrigger trigger)
