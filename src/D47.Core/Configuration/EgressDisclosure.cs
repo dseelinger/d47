@@ -271,7 +271,7 @@ public static class EgressDisclosure
                 CommunityBiology,
                 NameOf(CommunityBiology),
                 CanonnHost,
-                "The name of the system you are in, when you map a body there that has biological signals. "
+                "The name of the system you are in, when you map a body there that has biological signals, or ask what has been found on a body. "
                 + "No commander name, key or identifier goes with it. Each system is asked at most once a session.",
                 Active: true,
                 Summary: "The name of the system you map a biology body in. Nothing else about you goes with it.")

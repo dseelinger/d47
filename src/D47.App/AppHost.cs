@@ -2161,6 +2161,9 @@ public sealed class AppHost : IDisposable
 
         return new ServiceParts
         {
+            CommunityBiology = new D47.Knowledge.CanonnBiologyService(
+                loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>()),
+            EarlierFinds = new D47.Core.Knowledge.EarlierFinds(),
             AdventureDesk = adventureDesk,
             Audio = audio,
             AudioSink = audioSink,
@@ -2751,6 +2754,8 @@ public sealed class AppHost : IDisposable
                     return () => music.Changed -= Changed;
                 },
                 exobiology: exobiology,
+                communityBiology: services.CommunityBiology,
+                earlierFinds: services.EarlierFinds,
                 cartography: cartography,
                 storySwitch: storySwitch,
                 endingAnswer: endingAnswer,
@@ -3059,9 +3064,6 @@ public sealed class AppHost : IDisposable
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
 
-        var communityBiology = new D47.Knowledge.CanonnBiologyService(
-            loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>());
-
         // What writes an adventure, once, for the Commander to agree to.
         var adventureGenerator = new D47.Core.Adventures.AdventureGenerator(
             () => turns.Provider,
@@ -3159,7 +3161,8 @@ public sealed class AppHost : IDisposable
             Settings = settings,
             Galaxy = galaxy,
             Trade = tradePlanner,
-            CommunityBiology = () => settings.Current.Knowledge.CommunityBiology ? communityBiology : null,
+            CommunityBiology = () => settings.Current.Knowledge.CommunityBiology ? services.CommunityBiology : null,
+            EarlierFinds = services.EarlierFinds,
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
@@ -4271,6 +4274,10 @@ public sealed class AppHost : IDisposable
 
     private sealed record ServiceParts
     {
+        public required D47.Core.Knowledge.ICommunityBiology CommunityBiology { get; init; }
+
+        public required D47.Core.Knowledge.EarlierFinds EarlierFinds { get; init; }
+
         public required D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk AdventureDesk { get; init; }
 
         public required AudioArbiter Audio { get; init; }

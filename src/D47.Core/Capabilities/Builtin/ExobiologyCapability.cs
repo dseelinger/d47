@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -11,6 +12,8 @@ public static class ExobiologyCapability
     public const string Id = "exobiology";
 
     public const string ResetTool = "clear_unsold_exobiology";
+
+    public const string EarlierFindsTool = "get_earlier_finds";
 
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it.
@@ -28,7 +31,9 @@ public static class ExobiologyCapability
         Func<GameStatus>? status = null,
         RoutePlanBook? plans = null,
         Func<DateTimeOffset>? now = null,
-        ExobiologyLedger? ledger = null) => new()
+        ExobiologyLedger? ledger = null,
+        ICommunityBiology? community = null,
+        EarlierFinds? earlier = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -44,6 +49,7 @@ public static class ExobiologyCapability
             "what did the scan find here",
             "how much exobiology data am I carrying",
             "reset unsold exobiology",
+            "what has been found on this body",
         ],
         // Each names its tool (#161). "exobiology route" asks for a route and used to be answered with what
         // the scanner found on the body underneath, which is the tool declared first rather than the one the
@@ -58,6 +64,9 @@ public static class ExobiologyCapability
             new("unsold exobiology", "get_unsold_exobiology"),
             new("reset unsold exobiology", ResetTool),
             new("reset the exobiology total", ResetTool),
+            new("what has been found on this body", EarlierFindsTool),
+            new("what has been found here", EarlierFindsTool),
+            new("earlier finds on this body", EarlierFindsTool),
         ],
         Tools =
         [
@@ -82,6 +91,27 @@ public static class ExobiologyCapability
                     },
                 ],
                 Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), arguments))),
+            },
+            new ToolDefinition
+            {
+                Name = EarlierFindsTool,
+                Description =
+                    "What other Commanders have already logged on a body, from Canonn: each biological "
+                    + "variant and how many finds there are of it, most first. Needs the setting Earlier "
+                    + "biology finds from Canonn.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "body",
+                        Type = ToolParameterType.String,
+                        Description =
+                            "The body name, or its short form such as \"7 b\". Leave out for the body the "
+                            + "Commander is at, or else the most recently scanned body that has biology on it.",
+                    },
+                ],
+                Handler = (arguments, cancellationToken) =>
+                    EarlierAsync(commander(), settings, community, earlier, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -286,6 +316,92 @@ public static class ExobiologyCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    // ------------------------------------------------------- the earlier finds
+
+    private static async Task<ToolResult> EarlierAsync(
+        CommanderGameState? state,
+        Configuration.SettingsService settings,
+        ICommunityBiology? community,
+        EarlierFinds? store,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!settings.Current.Knowledge.CommunityBiology)
+        {
+            return ToolResult.Ok(
+                "Earlier biology finds are off. Turn on Earlier biology finds from Canonn in Settings to ask.");
+        }
+
+        if (state is null)
+        {
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
+        }
+
+        if (community is null || store is null)
+        {
+            return ToolResult.Ok("Earlier biology finds are not available in this build.");
+        }
+
+        var system = state.Location.StarSystem;
+
+        if (state.Location.SystemAddress is not { } address || string.IsNullOrEmpty(system))
+        {
+            return ToolResult.Ok("I do not know which system you are in, so I cannot ask about its bodies.");
+        }
+
+        var wanted = arguments.TryGetString("body", out var given) && !string.IsNullOrWhiteSpace(given)
+            ? given.Trim()
+            : null;
+
+        var name = wanted is not null
+            ? state.Bodies.Named(wanted)?.BodyName ?? wanted
+            : state.Location.Body ?? state.Bodies.MostRecentWithBiology?.BodyName;
+
+        if (name is null)
+        {
+            return ToolResult.Ok("Name a body, or go to one, and I will say what has been found on it.");
+        }
+
+        if (!name.StartsWith(system, StringComparison.OrdinalIgnoreCase))
+        {
+            name = $"{system} {name}";
+        }
+
+        if (!store.TryGet(address, out var finds))
+        {
+            try
+            {
+                finds = await community.SystemFindsAsync(system, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                return ToolResult.Ok("I could not reach Canonn just now.");
+            }
+
+            store.Set(address, finds);
+        }
+
+        var shortName = BiologyCallout.Short(name, system);
+
+        var variants = finds
+            .Where(find => string.Equals(find.Body, name, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(find => find.Name)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key, StringComparer.Ordinal)
+            .ToList();
+
+        if (variants.Count == 0)
+        {
+            return ToolResult.Ok($"Canonn has no earlier finds on {shortName}.");
+        }
+
+        var total = variants.Sum(group => group.Count());
+
+        return ToolResult.Ok(
+            $"Canonn has {total} earlier find{(total == 1 ? "" : "s")} on {shortName}: "
+            + string.Join(", ", variants.Select(group => $"{group.Key} {group.Count()}")) + ".");
     }
 
     // ----------------------------------------------------------- the sampling

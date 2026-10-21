@@ -356,6 +356,16 @@ body's conditions admit, with each one's value: a prediction from the conditions
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
 ```
 
+#### `get_earlier_finds`
+
+What other Commanders have logged on a body, from Canonn: each variant and how many finds there are
+of it, most first. Needs the Earlier biology finds from Canonn setting; with it off the answer says
+how to turn it on.
+
+```json
+{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the body the Commander is at, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
+```
+
 #### `get_sampling_progress`
 
 How many specimens you have taken on this body, how far you have moved since the last one, and what

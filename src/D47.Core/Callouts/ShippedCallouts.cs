@@ -81,6 +81,9 @@ public static class ShippedCallouts
         /// <summary>The service for earlier biology finds, or null while that setting is off.</summary>
         public Func<ICommunityBiology?> CommunityBiology { get; init; } = () => null;
 
+        /// <summary>The earlier finds already fetched, shared with the earlier finds tool.</summary>
+        public EarlierFinds EarlierFinds { get; init; } = new();
+
         public required Func<bool> StoryRunning { get; init; }
 
         public required StoryMissionAsides StoryAsides { get; init; }
@@ -321,6 +324,7 @@ public static class ShippedCallouts
 
                 case EarlierFindsCallout earlier:
                     earlier.Community = services.CommunityBiology;
+                    earlier.Store = services.EarlierFinds;
                     break;
 
                 case TradingModeCallout trading:
