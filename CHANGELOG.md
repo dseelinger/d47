@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A HOTAS switch position can now press a key chord, such as Ctrl+V, in whatever window is in front, whether Elite is running or not. It presses once on each flip into the position, and a momentary stick button counts as a switch, so a stick button can paste into a browser. A new setting, **Let a HOTAS switch press key chords in any window**, is off by default, and the AI cannot turn it on; while it is off, the switch's row says so. Until the switches page can pick a chord, it is set by adding a `chord` to the position in `data\switches.json`. Alt+F4 and Win+L are refused. If Windows refuses the keystroke, D47 says so.
+
 An owned ship's page gains a **Copy as SLEF** button beside **Promote**. It puts the ship as it is fitted now on the clipboard, with its modules, engineering and modifiers, for pasting into an outfitting website's import. It uses the loadout live where you are aboard and the remembered one otherwise. A ship whose modules d47 has not seen yet says so on the line under the heading and leaves the clipboard alone. An intended hull has no button. It works on the desktop window and the headset's big panel, and there is no voice phrase or tool for it.
 
 A ship build's page gains an **Import from clipboard** button beside **Promote**. With a SLEF loadout for the same hull on the clipboard, it replaces the build's slot plans with the loadout's. Where the build already plans slots it asks first, giving the counts; **Keep this plan** changes nothing. Text that is not a loadout, or a loadout for another hull, is reported on the line under the heading and changes nothing. It works on the desktop window and the headset's big panel, and there is no voice phrase or tool for it.

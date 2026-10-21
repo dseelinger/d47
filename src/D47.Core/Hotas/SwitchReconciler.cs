@@ -70,13 +70,15 @@ public sealed record SwitchState
 /// The headset view, for a position that names one. Carried out off duty as well: with no <paramref name="Say"/>
 /// it is one press of Shift+Win+D, with one it is only something to say.
 /// </param>
+/// <param name="Chord">The key chord, for a position that names one, pressed once in whatever window is in front.</param>
 public readonly record struct PendingReconcile(
     string Switch,
     string Label,
     IReadOnlyList<InputStep> Steps,
     string? Say = null,
     string? Destination = null,
-    HeadsetView? View = null);
+    HeadsetView? View = null,
+    KeyChord? Chord = null);
 
 /// <summary>Everything the reconciler needs from outside, per poll.</summary>
 public readonly record struct SwitchTick
@@ -94,6 +96,9 @@ public readonly record struct SwitchTick
 
     /// <summary>Whether the Commander has let a switch change the headset view.</summary>
     public bool HeadsetEnabled { get; init; }
+
+    /// <summary>Whether the Commander has let a switch press key chords in any window.</summary>
+    public bool ChordsEnabled { get; init; }
 
     /// <summary>
     /// Every page a surface has registered, in bar order — the vocabulary a <see
@@ -420,6 +425,11 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         if (position.View is { } view)
         {
             return ReconcileHeadset(tick, mapping, position, view, flipped, ready);
+        }
+
+        if (position.Chord is { } chord)
+        {
+            return ReconcileChord(tick, mapping, position, chord, flipped, ready);
         }
 
         if (!tick.Enabled)
@@ -961,6 +971,41 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
 
         _pending.Enqueue(new PendingReconcile(mapping.Name, Word(view), [], View: view));
         _viewWatching[mapping.Name] = new ViewWatch(view, showing);
+
+        return ready;
+    }
+
+    /// <summary>A position that names a key chord: one press per flip into it, with nothing read back.</summary>
+    private SwitchState ReconcileChord(
+        SwitchTick tick,
+        SwitchMapping mapping,
+        SwitchPosition position,
+        KeyChord chord,
+        bool flipped,
+        SwitchState ready)
+    {
+        if (!tick.ChordsEnabled)
+        {
+            return ready with
+            {
+                Health = SwitchHealth.Off,
+                Note = "Pressing key chords is off. Turn on Let a HOTAS switch press key chords in any window "
+                       + "to let this switch do it.",
+            };
+        }
+
+        if (!flipped)
+        {
+            return ready;
+        }
+
+        logger.LogInformation(
+            "Switch {Name} moved to {Position}; pressing {Chord}",
+            mapping.Name,
+            position.Describe(),
+            chord.Describe());
+
+        _pending.Enqueue(new PendingReconcile(mapping.Name, chord.Describe(), [], Chord: chord));
 
         return ready;
     }

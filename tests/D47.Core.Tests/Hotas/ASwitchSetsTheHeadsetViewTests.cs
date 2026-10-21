@@ -304,8 +304,7 @@ public class ASwitchSetsTheHeadsetViewTests
         Assert.Equal("Let a HOTAS switch change the headset view", row.Label);
         Assert.Equal(
             "When you flip a switch position that names a headset view, D47 reads which view Virtual Desktop is "
-            + "showing and presses Shift+Win+D only if it is the other one. It is the one key D47 sends while "
-            + "Elite is not the window in front. Off until you turn it on.",
+            + "showing and presses Shift+Win+D only if it is the other one. Off until you turn it on.",
             row.Help);
         Assert.True(row.Protected);
         Assert.Null(row.AppliesWhen);

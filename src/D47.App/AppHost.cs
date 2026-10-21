@@ -2088,7 +2088,8 @@ public sealed class AppHost : IDisposable
             "controllers", () => new HotasControllers(loggerFactory.CreateLogger<HotasControllers>()));
         var headsetView = new D47.Vr.VirtualDesktopView();
         var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>(), headsetView);
-        var headsetKey = new HeadsetViewKey(headsetView, loggerFactory.CreateLogger<HeadsetViewKey>());
+        var chordSender = new ChordSender(loggerFactory.CreateLogger<ChordSender>());
+        var headsetKey = new HeadsetViewKey(headsetView, loggerFactory.CreateLogger<HeadsetViewKey>(), chordSender);
 
         // What the tick reads the controllers through, so no tick calls into Windows.Gaming.Input.
         var sampledControllers = new ControllerSampler(
@@ -2231,6 +2232,7 @@ public sealed class AppHost : IDisposable
             GameInput = gameInput,
             Gate = gate,
             HeadsetKey = headsetKey,
+            Chords = chordSender,
             HeardAt = heardAt,
             Injector = injector,
             InputTrace = inputTrace,
@@ -3824,8 +3826,9 @@ public sealed class AppHost : IDisposable
                     // Gated by key injection as well as by its own row.
                     Enabled = settings.Current.Actions.Keyboard && settings.Current.Actions.Switches,
 
-                    // Its own row alone: the one key it sends goes to Virtual Desktop.
+                    // Their own rows alone: neither sends to Elite.
                     HeadsetEnabled = settings.Current.Actions.HeadsetView,
+                    ChordsEnabled = settings.Current.Actions.SwitchChords,
                     Destinations = panel.Destinations,
                     Showing = panel.Showing,
                 },
@@ -4081,7 +4084,7 @@ public sealed class AppHost : IDisposable
 
         // After the autonomous drain and for the same reason it exists: the tick is synchronous and a key
         // press is not.
-        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput, services.HeadsetKey));
+        tick.Add("switch-drain", _ => host.CarryOutReconciles(reconciler, gameInput, services.HeadsetKey, services.Chords));
     }
 
     private static void StartRunning(AppHost host, FoundationParts foundations, LoopParts loop, ServiceParts services, bool startTicking)
@@ -4388,6 +4391,8 @@ public sealed class AppHost : IDisposable
         public required ListenGate Gate { get; init; }
 
         public required HeadsetViewKey HeadsetKey { get; init; }
+
+        public required ChordSender Chords { get; init; }
 
         public required System.Runtime.CompilerServices.StrongBox<DateTimeOffset?> HeardAt { get; init; }
 
@@ -5334,7 +5339,8 @@ public sealed class AppHost : IDisposable
     private void ShowSwitches(string? against) => Panel.SwitchesText = against;
 
     /// <summary>Carries out whatever the reconciler decided this tick.</summary>
-    private void CarryOutReconciles(SwitchReconciler reconciler, IGameInput input, HeadsetViewKey headsetKey)
+    private void CarryOutReconciles(
+        SwitchReconciler reconciler, IGameInput input, HeadsetViewKey headsetKey, ChordSender chords)
     {
         var drained = reconciler.Drain();
 
@@ -5355,6 +5361,11 @@ public sealed class AppHost : IDisposable
         if (route.Headset.Count > 0)
         {
             CarryOutHeadsetViews(route.Headset, headsetKey, reconciler);
+        }
+
+        if (route.Chords.Count > 0)
+        {
+            CarryOutChords(route.Chords, chords);
         }
 
         var pending = route.Game;
@@ -5436,6 +5447,48 @@ public sealed class AppHost : IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "A headset view could not be set");
+            }
+            finally
+            {
+                _acting.Release();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Presses the key chords decided this tick in whatever window is in front, off duty as well, under
+    /// <c>_acting</c> so a held modifier is not combined with keys sent to Elite.
+    /// </summary>
+    private void CarryOutChords(IReadOnlyList<PendingReconcile> pending, ChordSender chords)
+    {
+        _ = Task.Run(async () =>
+        {
+            await _acting.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var reconcile in pending)
+                {
+                    var refused = chords.Press(reconcile.Chord!);
+
+                    _logger.LogInformation(
+                        "Switch {Name} pressed {Chord}: {Outcome}",
+                        reconcile.Switch,
+                        reconcile.Label,
+                        refused ?? "done");
+
+                    if (refused is not null)
+                    {
+                        await Voice.AnnounceAsync(new Announcement(
+                            reconcile.Switch,
+                            $"I could not press {reconcile.Label} from {reconcile.Switch}. {refused}"))
+                            .ConfigureAwait(false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "A key chord could not be pressed");
             }
             finally
             {

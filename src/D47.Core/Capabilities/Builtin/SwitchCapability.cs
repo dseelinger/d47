@@ -36,6 +36,8 @@ public static class SwitchCapability
 
     public const string HeadsetViewKey = "actions.headsetView";
 
+    public const string ChordsKey = "actions.switchChords";
+
     public const string ListKey = "switches.list";
 
     public static CapabilityDescriptor Create(SwitchSurface surface, Func<bool> keyboardEnabled) => new()
@@ -48,7 +50,7 @@ public static class SwitchCapability
         Examples = ["which switches disagree", "check my switches"],
         Keywords = ["which switches disagree", "check my switches", "switch state"],
         Display = new CapabilityDisplay { PanelTitle = "HOTAS switches", Order = 64 },
-        Settings = [EnabledRow(keyboardEnabled), HeadsetViewRow(), ListRow(surface)],
+        Settings = [EnabledRow(keyboardEnabled), HeadsetViewRow(), ChordsRow(), ListRow(surface)],
         Tools =
         [
             // Argument-free, so the model-free keyword router reaches it with nothing in the path — which is
@@ -187,8 +189,7 @@ public static class SwitchCapability
         Advanced = true,
         Label = "Let a HOTAS switch change the headset view",
         Help = "When you flip a switch position that names a headset view, D47 reads which view Virtual "
-               + "Desktop is showing and presses Shift+Win+D only if it is the other one. It is the one key "
-               + "D47 sends while Elite is not the window in front. Off until you turn it on.",
+               + "Desktop is showing and presses Shift+Win+D only if it is the other one. Off until you turn it on.",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "off",
         DocsAnchor = "switching-the-headset-view",
@@ -202,6 +203,31 @@ public static class SwitchCapability
         {
             Read = s => s.Actions.HeadsetView ? "true" : "false",
             Write = (s, v) => s with { Actions = s.Actions with { HeadsetView = v is "true" } },
+        },
+    };
+
+    /// <summary>Protected, and not behind key injection: a chord goes to whatever window is in front.</summary>
+    private static SettingRow ChordsRow() => new()
+    {
+        Key = ChordsKey,
+        Advanced = true,
+        Label = "Let a HOTAS switch press key chords in any window",
+        Help = "When you flip a switch into a position that names a key chord, such as Ctrl+V, D47 presses it "
+               + "once in whatever window is in front, whether Elite is running or not. Nothing is read back, "
+               + "so a flip always presses. Off until you turn it on.",
+        Kind = SettingKind.Toggle,
+        DefaultDisplay = "off",
+        DocsAnchor = "pressing-a-key-chord",
+        Protected = true,
+        Commands =
+        [
+            new SettingCommandPhrase("let my switches press key chords", "true"),
+            new SettingCommandPhrase("stop my switches pressing key chords", "false"),
+        ],
+        Binding = new SettingBinding
+        {
+            Read = s => s.Actions.SwitchChords ? "true" : "false",
+            Write = (s, v) => s with { Actions = s.Actions with { SwitchChords = v is "true" } },
         },
     };
 

@@ -41,18 +41,20 @@ public static class RelativeTab
 /// </param>
 /// <param name="View">The headset view this position asks for, or null.</param>
 /// <param name="Target">The <see cref="SwitchTargets"/> id this position asks for, or null.</param>
+/// <param name="Chord">The key chord this position presses in whatever window is in front, or null.</param>
 public sealed record SwitchPosition(
     int? Button,
     string? Action = null,
     DesiredState State = DesiredState.On,
     string? Destination = null,
     HeadsetView? View = null,
-    string? Target = null)
+    string? Target = null,
+    KeyChord? Chord = null)
 {
     /// <summary>How the position reads in a report or on the panel.</summary>
     public string Describe() => Button is { } button ? $"button {button}" : "nothing held";
 
-    public bool IsAssigned => ReachesTheGame || ReachesThePanel || ReachesTheHeadset;
+    public bool IsAssigned => ReachesTheGame || ReachesThePanel || ReachesTheHeadset || PressesAChord;
 
     /// <summary>Whether this position can end in a key press.</summary>
     public bool ReachesTheGame => Action is { Length: > 0 } || Target is { Length: > 0 };
@@ -62,6 +64,9 @@ public sealed record SwitchPosition(
 
     /// <summary>Whether this position sets the headset view.</summary>
     public bool ReachesTheHeadset => View is HeadsetView.Vr or HeadsetView.Desktop;
+
+    /// <summary>Whether this position presses a key chord in whatever window is in front.</summary>
+    public bool PressesAChord => Chord is not null;
 }
 
 /// <summary>
@@ -132,9 +137,9 @@ public static class SwitchValidation
     /// <summary>The longest root key a destination may carry.</summary>
     public const int MaxDestinationLength = 80;
 
-    /// <summary>The refusal for a position that names more than one of an action, a page and a view.</summary>
+    /// <summary>The refusal for a position that names more than one of an action, a page, a view and a chord.</summary>
     public const string OneMeaning =
-        "A position means one thing: an action in Elite, a page of D47's panel, or a headset view.";
+        "A position means one thing: an action in Elite, a page of D47's panel, a headset view, or a key chord.";
 
     /// <summary>
     /// Every action a switch position may name: the ones Elite reports the state of, and no others.
@@ -193,7 +198,7 @@ public static class SwitchValidation
 
             // One meaning per position.
             if ((position.Action is { Length: > 0 } ? 1 : 0) + (position.Target is { Length: > 0 } ? 1 : 0)
-                + (position.ReachesThePanel ? 1 : 0) + (position.View is null ? 0 : 1) > 1)
+                + (position.ReachesThePanel ? 1 : 0) + (position.View is null ? 0 : 1) + (position.Chord is null ? 0 : 1) > 1)
             {
                 return OneMeaning;
             }
@@ -203,6 +208,16 @@ public static class SwitchValidation
                 if (SwitchTargets.Find(target) is null && FocusTargets.Find(target) is null && PipTargets.Find(target) is null)
                 {
                     return $"There is no switch target called '{target}'.";
+                }
+
+                continue;
+            }
+
+            if (position.Chord is { } chord)
+            {
+                if (KeyChord.Problem(chord) is { } refused)
+                {
+                    return refused;
                 }
 
                 continue;

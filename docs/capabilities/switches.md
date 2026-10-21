@@ -419,7 +419,7 @@ tabs, each steps from its own. While a dialog holds the panel the flip does noth
 position that names a tab step never reports a disagreement, and like a page it works with *Let a HOTAS
 switch operate the ship* off.
 
-A position means one thing: an action, a target, a page or a headset view. A page the panel does not have — a key
+A position means one thing: an action, a target, a page, a headset view or a key chord. A page the panel does not have — a key
 mistyped in the file, say — is reported on the row by name and never moved to. And a switch
 sitting on a page the panel is not showing is annunciated like any other stale switch:
 
@@ -443,9 +443,8 @@ uses the same rule here as everywhere else:
 - **What it needs.** **Let a HOTAS switch change the headset view** turned on, and Virtual Desktop
   streaming. It is off until you turn it on, and the AI cannot turn it on. It is not behind
   *Let D47 press keys in Elite* or *Let a HOTAS switch operate the ship*, and it works at the main
-  menu and in SteamVR Home: Virtual Desktop hears its shortcut whatever window is in front, so this
-  is the one key Directive 47 sends while Elite is not the window in front. It sends no other key.
-  It can also be set by saying:
+  menu and in SteamVR Home: Virtual Desktop hears its shortcut whatever window is in front. It can
+  also be set by saying:
 
 > "let my switches change the headset view"
 > "stop my switches changing the headset view"
@@ -465,6 +464,34 @@ While the row is on, a switch sitting in a view the headset is not showing is an
 other:
 
 > view switch: the headset is showing the desktop
+
+### Pressing a key chord
+
+A position may instead name a key chord: one key with any of Ctrl, Shift, Alt and Win held, such as
+Ctrl+V. It is for keys outside Elite — pasting into a browser, another program's hotkey — so it goes
+to whatever window is in front, whether Elite is running or not.
+
+- **What it presses.** The chord, once, on a flip into the position, including a flick too quick to
+  be held across two readings. Nothing on first seeing the switch, nothing while it stays there, and
+  nothing on the way out.
+- **What it reads.** Nothing. There is no state to read back, so a chord never disagrees with
+  anything, never pauses the switch, and is never "already there". A switch paused by one of its
+  other positions presses no chord until you press Resume.
+- **What it needs.** **Let a HOTAS switch press key chords in any window** turned on. It is off until
+  you turn it on, and the AI cannot turn it on. It is not behind *Let D47 press keys in Elite* or
+  *Let a HOTAS switch operate the ship*. It can also be set by saying:
+
+> "let my switches press key chords"
+> "stop my switches pressing key chords"
+
+While it is off, the switch's row on the HOTAS switches page says so. A momentary stick button is a
+two-position switch — nothing held, and the button — so a stick button can paste. Until the switches
+page can pick a chord, a chord is set by editing `data/switches.json`, as below; the page shows
+that position's action as nothing, and picking anything for it there, nothing included, removes the
+chord. Alt+F4 and Win+L are
+refused, and so is a modifier named as the key. If Windows refuses the keystroke, it is said:
+
+> I could not press Ctrl+V from paste button. Windows refused the keystroke.
 
 ### When a mapping stops fitting
 
@@ -590,6 +617,15 @@ reason**, and the rest of the file still loads.
         { "button": 10, "view": "vr" },
         { "button": 11, "view": "desktop" }
       ]
+    },
+    {
+      "name": "paste button",
+      "deviceId": "{wgi/nrid/X8QoL-2>1[]-...-mA7IX7-Ac}",
+      "device": "VID 0x4098 PID 0xBD65, 32 buttons, 0 hats, 7 axes",
+      "positions": [
+        { "button": null },
+        { "button": 3, "chord": { "key": "Key_V", "modifiers": "ctrl" } }
+      ]
     }
   ]
 }
@@ -599,7 +635,10 @@ A page is its own `destination` field, never a prefix on `action` — a statemen
 position means rather than a naming rule a rename would silently break. The keys are the ones the
 panel registers: `transcript.conversation`, `transcript.technical`, `transcript.log`, the
 roots of every other tab, and the fixed pages below them, such as `stories` for the Catalogue.
-A headset view is its own `view` field too, `vr` or `desktop`.
+A headset view is its own `view` field too, `vr` or `desktop`. A key chord is its own `chord` field:
+`key` is one of the keyboard names Elite's bindings use, such as `Key_V` or `Key_F13`, and
+`modifiers` lists any of `ctrl`, `shift`, `alt` and `win`, separated by commas, such as
+`"ctrl, shift"`.
 
 ### What it does not do
 

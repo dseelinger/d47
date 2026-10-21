@@ -410,6 +410,9 @@ public sealed record ActionSettings
     /// <summary>Whether a mapped HOTAS switch may change the headset view.</summary>
     public bool HeadsetView { get; init; }
 
+    /// <summary>Whether a mapped HOTAS switch may press a key chord in whatever window is in front.</summary>
+    public bool SwitchChords { get; init; }
+
     /// <summary>Whether "take us out" may walk the left panel to the launch button (Phase 52).</summary>
     public bool TakeUsOut { get; init; } = true;
 

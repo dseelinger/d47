@@ -742,6 +742,7 @@ public sealed class SwitchPage : DialogPage
                 position.Action = string.Empty;
                 position.Destination = string.Empty;
                 position.View = null;
+                position.Chord = null;
             }
             else if (id == HeadsetId)
             {
@@ -749,12 +750,14 @@ public sealed class SwitchPage : DialogPage
                 position.Target = string.Empty;
                 position.Destination = string.Empty;
                 position.View ??= D47.Core.Vr.HeadsetView.Vr;
+                position.Chord = null;
             }
             else
             {
                 position.Action = id;
                 position.Target = string.Empty;
                 position.View = null;
+                position.Chord = null;
 
                 if (id.Length > 0)
                 {
@@ -871,6 +874,7 @@ public sealed class SwitchPage : DialogPage
             position.Action = string.Empty;
             position.Target = string.Empty;
             position.View = null;
+            position.Chord = null;
         }
 
         redraw();
@@ -935,6 +939,7 @@ public sealed class SwitchPage : DialogPage
                     State = position.State == DesiredState.Off ? "off" : "on",
                     Destination = position.Destination ?? string.Empty,
                     View = position.View,
+                    Chord = position.Chord,
                 }),
             ],
         };
@@ -952,7 +957,8 @@ public sealed class SwitchPage : DialogPage
                     position.State == "off" ? DesiredState.Off : DesiredState.On,
                     position.Destination.Length == 0 ? null : position.Destination,
                     position.View,
-                    position.Target.Length == 0 ? null : position.Target)),
+                    position.Target.Length == 0 ? null : position.Target,
+                    position.Chord)),
             ],
         };
     }
@@ -971,5 +977,8 @@ public sealed class SwitchPage : DialogPage
         public string Destination { get; set; } = string.Empty;
 
         public D47.Core.Vr.HeadsetView? View { get; set; }
+
+        /// <summary>A chord set in the file, kept until anything is picked for this position.</summary>
+        public KeyChord? Chord { get; set; }
     }
 }

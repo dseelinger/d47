@@ -179,7 +179,8 @@ public class SwitchMappingTests
                 new SwitchPosition(9)));
 
         Assert.Equal(
-            "A position means one thing: an action in Elite, a page of D47's panel, or a headset view.", problem);
+            "A position means one thing: an action in Elite, a page of D47's panel, a headset view, or a key chord.",
+            problem);
     }
 
     [Fact]
@@ -305,6 +306,52 @@ public class SwitchStoreTests
         var mapping = Assert.Single(store.Switches);
         Assert.Equal([HeadsetView.Vr, HeadsetView.Desktop], mapping.Positions.Select(position => position.View));
         Assert.All(mapping.Positions, position => Assert.Null(position.Action));
+    }
+
+    [Fact]
+    public void AChordPositionIsSavedAsItsOwnFieldAndReadBack()
+    {
+        var store = Store();
+        var chord = new KeyChord("Key_V", ChordModifiers.Ctrl | ChordModifiers.Shift);
+
+        store.Save([
+            new SwitchMapping
+            {
+                Name = "paste button",
+                DeviceId = "{wgi/nrid/stick}",
+                Positions = [new SwitchPosition(null), new SwitchPosition(3, Chord: chord)],
+            },
+        ]);
+
+        var text = _files.ReadText(Path_)!;
+        Assert.Contains("\"key\": \"Key_V\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"modifiers\": \"ctrl, shift\"", text, StringComparison.Ordinal);
+
+        Assert.True(store.Poll());
+
+        var mapping = Assert.Single(store.Switches);
+        Assert.Null(mapping.Positions[0].Chord);
+        Assert.Equal(chord, mapping.Positions[1].Chord);
+    }
+
+    [Fact]
+    public void AHandWrittenChordWithNoModifiersReadsAsAPlainKey()
+    {
+        _files.WriteText(Path_, """
+            {
+              "switches": [
+                { "name": "paste button", "deviceId": "d", "positions": [
+                    { "button": null },
+                    { "button": 3, "chord": { "key": "Key_F13" } } ] }
+              ]
+            }
+            """);
+
+        var store = Store();
+
+        Assert.True(store.Poll());
+        Assert.Empty(store.Problems);
+        Assert.Equal(new KeyChord("Key_F13"), Assert.Single(store.Switches).Positions[1].Chord);
     }
 
     [Fact]
