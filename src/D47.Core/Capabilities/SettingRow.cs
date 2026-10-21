@@ -395,6 +395,12 @@ public sealed record SettingRow
     /// </summary>
     public bool Protected { get; init; }
 
+    /// <summary>Whether the model-free router can change this row from speech.</summary>
+    public bool HasVoiceRoute => Commands.Count > 0 || ValuesBySound is not null;
+
+    /// <summary>Whether the settings page draws the protected bar: protected, and no voice route.</summary>
+    public bool ShowsProtectedBar => Protected && !HasVoiceRoute;
+
     /// <summary>Whose setting this is: the installation's, or the Commander's who is flying (Phase 44).</summary>
     public SettingScope Scope { get; init; }
 

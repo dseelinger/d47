@@ -766,7 +766,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     /// <summary>What a protected row's bar means, said once per page rather than on every row (#333).</summary>
     internal const string ProtectedLegend =
-        "Rows with a bar like this one are protected — D47 will not change them on your say-so alone.";
+        "Rows with a bar like this one are protected — these cannot be changed via a voice command, but the others can.";
 
     /// <summary>Marks the page head, for a test to find it.</summary>
     public const string PageHeadName = "PageHead";
@@ -1285,7 +1285,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             crumb.Text = $"{active.AreaTitle(active.ActiveArea).ToUpperInvariant()} ›";
             _marker.Paint(title, section.Title.ToUpperInvariant(), _query);
 
-            legend.IsVisible = _rows.Any(row => row.Row.Protected && row.Section == active.ActiveSection);
+            legend.IsVisible = _rows.Any(row => row.Row.ShowsProtectedBar && row.Section == active.ActiveSection);
 
             order.Add(head);
 
@@ -1652,7 +1652,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             // Fixed columns on every row, so every label, every control and every reset gutter sits at one x
             // down the page whichever rows the filter leaves showing.
             grid = RowColumns(caption, control, resetButton);
-            line = RowFrame(grid, row.Protected);
+            line = RowFrame(grid, row.ShowsProtectedBar);
         }
 
         Control body = grid;
