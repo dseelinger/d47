@@ -51,6 +51,7 @@ public sealed record RoutingSurface(
     // On this body (#555): the live position, and what an unmapped planet would pay if mapped.
     Func<GameStatus>? Status = null,
     Func<long, int, long?>? WorthIfMapped = null,
+    D47.Core.Capabilities.Builtin.SurfaceMarks? SurfaceMarks = null,
 
     // Unsold data (#556): the two ledgers, read once history has been set up.
     Func<ExobiologyLedger?>? Exobiology = null,

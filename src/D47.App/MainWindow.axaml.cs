@@ -314,6 +314,7 @@ public partial class MainWindow : Window
                 // On this body (#555).
                 Status: () => host.LiveStatus,
                 WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body),
+                SurfaceMarks: host.SurfaceMarks,
 
                 // Unsold data (#556).
                 Exobiology: () => host.History.Exobiology,

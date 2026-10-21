@@ -644,6 +644,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The same store, for the panel page that lists, renames and deletes a bookmark (#490).</summary>
     public BookmarkStore? Bookmarks => _bookmarks;
 
+    public SurfaceMarks SurfaceMarks { get; private set; } = new();
+
     /// <summary>Every phrase already in use, for the panel page's rename prompt (#490).</summary>
     public Func<IReadOnlyCollection<string>> BookmarkPhrasesTaken { get; private set; } = () => [];
 
@@ -1495,6 +1497,7 @@ public sealed class AppHost : IDisposable
             Autonomous = autonomous,
             BackfillGoals = BackfillGoals,
             Bookmarks = bookmarks,
+            SurfaceMarks = new SurfaceMarks(),
             SavedSearches = savedSearches,
             SearchHistory = searchHistory,
             SquadronFactions = squadronFactions,
@@ -2244,7 +2247,7 @@ public sealed class AppHost : IDisposable
         var autonomous = stores.Autonomous;
         var backfillGoals = stores.BackfillGoals;
         var bookmarks = stores.Bookmarks;
-        var surfaceMarks = new SurfaceMarks();
+        var surfaceMarks = stores.SurfaceMarks;
         var savedSearches = stores.SavedSearches;
         var searchHistory = stores.SearchHistory;
         var callouts = stores.Callouts;
@@ -3554,6 +3557,7 @@ public sealed class AppHost : IDisposable
         history.Changed += host.ShowHistory;
         host._loadouts = loadouts;
         host._bookmarks = bookmarks;
+        host.SurfaceMarks = stores.SurfaceMarks;
 
         host.BookmarkPhrasesTaken = () => late.Router is null
             ? []
@@ -4135,6 +4139,8 @@ public sealed class AppHost : IDisposable
         public required Action BackfillGoals { get; init; }
 
         public required BookmarkStore Bookmarks { get; init; }
+
+        public required SurfaceMarks SurfaceMarks { get; init; }
 
         public required D47.Core.Knowledge.SavedSearchStore SavedSearches { get; init; }
 

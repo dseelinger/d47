@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -38,14 +39,18 @@ public sealed class BodyPage : UserControl
     private readonly Func<string, string?>? _offDuty;
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
+    private readonly SurfaceMarks? _marks;
     private readonly Border _distance = new();
+    private readonly StackPanel _bearings = new() { Spacing = 2 };
 
     private Snapshot? _seen;
     private Distance? _distanceSeen;
+    private IReadOnlyList<BearingRow> _bearingsSeen = [];
 
-    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null)
+    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null, SurfaceMarks? marks = null)
     {
         _offDuty = offDuty;
+        _marks = marks;
         _state = state;
         _status = status;
         _worthIfMapped = worthIfMapped;
@@ -80,13 +85,21 @@ public sealed class BodyPage : UserControl
             return true;
         }
 
+        var moved = false;
+
         if (Measure(now) != _distanceSeen)
         {
             DrawDistance(now);
-            return true;
+            moved = true;
         }
 
-        return changed;
+        if (!Bearings(now).SequenceEqual(_bearingsSeen))
+        {
+            DrawBearings(now);
+            moved = true;
+        }
+
+        return moved || changed;
     }
 
     /// <summary>A distance as the page prints it: <c>340 M</c>.</summary>
@@ -150,6 +163,85 @@ public sealed class BodyPage : UserControl
 
     private static GenusProgress? Current(Snapshot snapshot) => snapshot.Sampling?.InProgress.FirstOrDefault();
 
+    /// <summary>One saved point as the bearings block shows it: its label and the text after it.</summary>
+    private readonly record struct BearingRow(string Label, string Text);
+
+    private const string NoPositionText = "No position";
+
+    private static readonly string[] Points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+    /// <summary>The live position when it is on the body the page shows.</summary>
+    private SurfaceFix? Here(Snapshot snapshot)
+    {
+        var live = _status?.Invoke();
+        var name = BodyName(snapshot);
+
+        return live is { HasPosition: true, PlanetRadius: { } radius }
+               && (live.BodyName is null || name is null || string.Equals(live.BodyName, name, StringComparison.OrdinalIgnoreCase))
+            ? new SurfaceFix(live.Latitude!.Value, live.Longitude!.Value, radius)
+            : null;
+    }
+
+    /// <summary>The ship, each valid mark and the last specimen of each open set on the body shown; empty with none.</summary>
+    private IReadOnlyList<BearingRow> Bearings(Snapshot snapshot)
+    {
+        if (_state() is not { } state
+            || snapshot.Target is not { } target
+            || state.Surface.Body != (target.System, target.Body))
+        {
+            return [];
+        }
+
+        var points = new List<(string Label, SurfaceFix At)>();
+
+        if (state.Surface.Ship is { } ship)
+        {
+            points.Add(("SHIP", ship));
+        }
+
+        foreach (var mark in _marks?.Valid(state.Surface) ?? [])
+        {
+            points.Add((mark.Name.ToUpperInvariant(), mark.At));
+        }
+
+        foreach (var set in snapshot.Sampling?.InProgress ?? [])
+        {
+            if (set.LastAt is { } last)
+            {
+                points.Add(($"SAMPLE · {(set.Species ?? set.Genus).ToUpperInvariant()}", last));
+            }
+        }
+
+        if (points.Count == 0)
+        {
+            return [];
+        }
+
+        if (_offDuty?.Invoke(OffDutyNote.Position) is { } offDuty)
+        {
+            return [new BearingRow(string.Empty, offDuty)];
+        }
+
+        var here = Here(snapshot);
+
+        return [.. points.Select(point => new BearingRow(point.Label, here is { } now ? Describe(now, point.At) : NoPositionText))];
+    }
+
+    private static string Describe(SurfaceFix here, SurfaceFix at)
+    {
+        var metres = here.MetresTo(at);
+
+        if (metres < 2)
+        {
+            return "HERE";
+        }
+
+        var bearing = here.BearingTo(at);
+        var degrees = (int)Math.Round(bearing) % 360;
+
+        return $"{degrees}° {Points[(int)Math.Round(((bearing % 360) + 360) % 360 / 45) % 8]} · {Metres(metres)}";
+    }
+
     private Distance Measure(Snapshot snapshot)
     {
         if (Current(snapshot) is not { } genus)
@@ -164,13 +256,7 @@ public sealed class BodyPage : UserControl
             return new Distance(null, colony, true, offDuty);
         }
 
-        var live = _status?.Invoke();
-        var name = BodyName(snapshot);
-
-        var here = live is { HasPosition: true, PlanetRadius: { } radius }
-                   && (live.BodyName is null || name is null || string.Equals(live.BodyName, name, StringComparison.OrdinalIgnoreCase))
-            ? new SurfaceFix(live.Latitude!.Value, live.Longitude!.Value, radius)
-            : (SurfaceFix?)null;
+        var here = Here(snapshot);
 
         var metres = genus.LastAt is { } last && here is { } now ? (long?)Math.Round(last.MetresTo(now)) : null;
 
@@ -194,6 +280,7 @@ public sealed class BodyPage : UserControl
                 TitleText.Context("On this body · your scan")));
             _body.Children.Add(Note(Empty));
             _distanceSeen = null;
+            _bearingsSeen = [];
             return;
         }
 
@@ -225,6 +312,10 @@ public sealed class BodyPage : UserControl
         {
             _distanceSeen = null;
         }
+
+        _bearings.Margin = new Thickness(0, 10, 0, 0);
+        _body.Children.Add(_bearings);
+        DrawBearings(snapshot);
 
         _body.Children.Add(Group("On this body", "Each genus, and what you've finished."));
         _body.Children.Add(Genera(snapshot));
@@ -335,6 +426,47 @@ public sealed class BodyPage : UserControl
         Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         _distance.Child = new StackPanel { Children = { slab, hint } };
+    }
+
+    private void DrawBearings(Snapshot snapshot)
+    {
+        var rows = Bearings(snapshot);
+        _bearingsSeen = rows;
+        _bearings.Children.Clear();
+
+        foreach (var row in rows)
+        {
+            _bearings.Children.Add(BearingSlab(row));
+        }
+    }
+
+    private static Control BearingSlab(BearingRow row)
+    {
+        var text = new TextBlock
+        {
+            FontSize = TypeScale.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        if (row.Label.Length == 0)
+        {
+            text.Text = row.Text;
+            Themed(text, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        }
+        else
+        {
+            var label = new Run(row.Label + " · ") { FontFamily = Fonts.ChromeFamily, FontWeight = FontWeight.Bold };
+            Themed(label, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+            var value = new Run(row.Text) { FontFamily = new FontFamily(Fonts.MonoFamily) };
+            Themed(value, TextElement.ForegroundProperty, row.Text == NoPositionText ? ThemeManager.GreyKey : ThemeManager.AKey);
+            text.Inlines = [label, value];
+        }
+
+        var slab = new Border { Height = TypeScale.MinimumTarget, Padding = new Thickness(14, 0), Child = text };
+        Themed(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return slab;
     }
 
     private static string Ordinal(int n) => n switch
