@@ -10,8 +10,8 @@ unreadable, unknown or outside the accepted tokens falls back to the defaults an
 values go on a command line, so nothing else is allowed through. The advisor is "opus" or "none". A lane with no issue left to start
 prints nothing on stdout and exits 1.
 
-The directory is the main checkout, or the issue's worktree when the issue has a lane or a lane
-worktree already exists. The worktree is created here, from local main on branch issue/<N>, so a
+The directory is the main checkout, or, when the triage state has lanes, the issue's worktree when
+the issue has a lane or a lane worktree already exists. The worktree is created here, from local main on branch issue/<N>, so a
 lane session starts inside it and never in the main checkout. When it cannot be created, nothing
 is printed on stdout and the exit code is 1.
 
@@ -176,7 +176,7 @@ def main():
     entry = ((state or {}).get('issues') or {}).get(str(number))
     laned = isinstance(entry, dict) and bool(entry.get('lane'))
     directory = REPO
-    if laned or lanes_running():
+    if (state or {}).get('lanes') and (laned or lanes_running()):
         directory, why = worktree(number)
         if directory is None:
             sys.stderr.write(why + '\n')

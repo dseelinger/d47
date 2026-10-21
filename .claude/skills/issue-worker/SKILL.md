@@ -1,7 +1,7 @@
 ---
 name: issue-worker
 description: >-
-  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. An issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
@@ -27,22 +27,30 @@ It is a default, not a fixture: `/claude-voice off` stops it and the work carrie
 ## One issue, one checkout
 
 By default there is one checkout and work runs sequentially — no worktrees, no branches, no
-parallel issues. `main` is fixed forward: nothing runs on push, there are no PRs, and a mistake is
-a follow-up commit rather than a revert.
+parallel issues. Work in the main checkout on `main`, commit there, and take one issue at a time.
+`main` is fixed forward: nothing runs on push, there are no PRs, and a mistake is a follow-up
+commit rather than a revert.
 
-Two cases put the work in a worktree instead, both covered by **Lanes** below:
+Worktrees exist only for lanes. A plain `/triage` or `/triage overnight` writes no `lanes` object
+to the main checkout's `.claude/triage-state.json`; when that object is missing, or the file is,
+work in the main checkout whatever `git worktree list` shows. A worktree left under
+`.claude/worktrees/` by an earlier lanes run is not a lane running now.
 
-- the issue's entry in the main checkout's `.claude/triage-state.json` has a `lane`;
+When the triage state has a `lanes` object, two cases put the work in a worktree, both covered by
+**Lanes** below:
+
+- the issue's entry has a `lane`;
 - `git worktree list` shows a worktree under `.claude/worktrees/`. Lanes are running and merging
   into `main`, so an issue outside them goes through a worktree too, or its uncommitted edits sit
   in the tree the lanes fast-forward.
 
-**Settle this before reading the issue, and do not skip it for a small change.** A one-line
-rename edited in the main checkout blocks every lane's merge just as a large change does. Run:
+**Settle this before reading the issue, and do not skip it for a small change.** While lanes run,
+a one-line rename edited in the main checkout blocks every lane's merge just as a large change
+does. Run:
 
 ```bash
 git rev-parse --show-toplevel; git worktree list
-python -c "import json,sys; e=json.load(open(sys.argv[1]))['issues'].get(sys.argv[2]); print('lane', e['lane'] if e and e.get('lane') else 'none')" "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json" <N>
+python -c "import json,os,sys; p=sys.argv[1]; s=json.load(open(p)) if os.path.isfile(p) else {}; e=(s.get('issues') or {}).get(sys.argv[2]); print('lanes', 'yes' if s.get('lanes') else 'no', 'lane', e['lane'] if e and e.get('lane') else 'none')" "$(git worktree list | head -1 | cut -d' ' -f1)/.claude/triage-state.json" <N>
 ```
 
 The file is pretty-printed, so a line-based `grep` for the entry finds nothing; read it as JSON.
@@ -50,9 +58,10 @@ The file is pretty-printed, so a line-based `grep` for the entry finds nothing; 
 - The top level is already `.claude/worktrees/<N>`: the Issue key created the worktree and started
   this session in it. Work there, and land it through **Merging into main** whether or not the
   issue has a lane.
-- Either case above holds and the top level is the main checkout: create the worktree as
-  **The worktree** says and enter it before the next tool call.
-- Neither holds: work in the main checkout.
+- `lanes no`: work in the main checkout.
+- `lanes yes`, either case above holds, and the top level is the main checkout: create the worktree
+  as **The worktree** says and enter it before the next tool call.
+- `lanes yes` and neither case holds: work in the main checkout.
 
 If the worktree cannot be created, stop and say why. Never fall back to editing the main checkout.
 
