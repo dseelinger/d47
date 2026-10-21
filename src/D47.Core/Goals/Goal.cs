@@ -99,6 +99,9 @@ public sealed record GoalStanding
     /// <summary>The name of the rank above the current one, or null at the top or on an arc that is not a rank.</summary>
     public string? NextRank { get; init; }
 
+    /// <summary>The Powerplay merit total the pledge reported, or null where the journal has not said.</summary>
+    public long? Merits { get; init; }
+
     /// <summary>The goal's segments and the Commander's place in them, or null on a goal that has none.</summary>
     public GoalTrack? Track { get; init; }
 

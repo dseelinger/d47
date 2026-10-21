@@ -23,6 +23,10 @@ public static class GoalTrackBar
 
     private const double LabelStartLimit = 0.6;
 
+    private const double TickHeld = 10;
+
+    private const double TickToCome = 6;
+
     /// <summary>The percent of the whole that <paramref name="share"/> is, rounded; "&lt;1%" for a share that rounds to nothing.</summary>
     public static string Percent(double share)
     {
@@ -61,6 +65,11 @@ public static class GoalTrackBar
     public static Control Build(GoalTrack track, double height, PowerplayBenefits? benefits = null)
     {
         ArgumentNullException.ThrowIfNull(track);
+
+        if (benefits is not null)
+        {
+            return Powerplay(track, height, benefits);
+        }
 
         var columns = Columns(track);
         var labels = new Grid { ColumnDefinitions = columns, ClipToBounds = true };
@@ -102,11 +111,6 @@ public static class GoalTrackBar
         root.Children.Add(labels);
         root.Children.Add(segments);
 
-        if (benefits is not null)
-        {
-            root.Children.Add(Ticks(benefits));
-        }
-
         if (Caption(track) is { } caption)
         {
             var line = new TextBlock
@@ -129,17 +133,22 @@ public static class GoalTrackBar
         return root;
     }
 
-    /// <summary>A 2px tick under the track at each rank that gives a perk, a rebuy cut or a module, and a legend.</summary>
-    private static Control Ticks(PowerplayBenefits benefits)
+    /// <summary>
+    /// The Powerplay track: a title and key, a tick above the track at each rank that gives a perk, a rebuy cut or a
+    /// module, the track, and the chapter ranges under it.
+    /// </summary>
+    private static Control Powerplay(GoalTrack track, double height, PowerplayBenefits benefits)
     {
         var whole = (double)(PowerplayRanks.MeritsNeeded(PowerplayRanks.LastTabulatedRank) ?? 1);
-        var strip = new Canvas { Height = 2, Margin = new Thickness(0, 2, 0, 0) };
+        var strip = new Canvas { Height = TickHeld, Margin = new Thickness(0, 6, 0, 2) };
         var placed = new List<(Border Tick, double At)>();
 
         foreach (var rank in benefits.TickRanks)
         {
-            var tick = new Border { Width = 2, Height = 2 };
-            Themed(tick, Border.BackgroundProperty, rank <= benefits.Rank ? ThemeManager.AKey : ThemeManager.WhiteKey);
+            var held = rank <= benefits.Rank;
+            var tick = new Border { Width = 2, Height = held ? TickHeld : TickToCome };
+            Themed(tick, Border.BackgroundProperty, held ? ThemeManager.AKey : ThemeManager.GreyKey);
+            Canvas.SetTop(tick, TickHeld - tick.Height);
             strip.Children.Add(tick);
             placed.Add((tick, (PowerplayRanks.MeritsNeeded(rank) ?? 0) / whole));
         }
@@ -152,16 +161,85 @@ public static class GoalTrackBar
             }
         };
 
-        var legend = new TextBlock
+        var segments = new Grid { ColumnDefinitions = Columns(track), Height = height };
+        var labels = new Grid { ColumnDefinitions = Columns(track), ClipToBounds = true, Margin = new Thickness(0, 3, 0, 0) };
+        var current = track.CurrentChapter;
+        var drawn = new List<(TextBlock Label, int First, int Last, bool Always)>();
+
+        foreach (var chapter in track.Chapters)
         {
-            Text = "Ticks mark a perk, a rebuy cut or a module: held, then to come.",
-            FontSize = TypeScale.Meta,
-            Margin = new Thickness(0, 4, 0, 0),
+            var label = new TextBlock
+            {
+                Text = chapter.Label,
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.MetaSmall,
+                TextWrapping = TextWrapping.NoWrap,
+            };
+
+            Themed(label, TextBlock.ForegroundProperty, chapter == current ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+            Grid.SetColumn(label, chapter.First * 2);
+            Grid.SetColumnSpan(label, chapter.Count * 2 - 1);
+            labels.Children.Add(label);
+            drawn.Add((label, chapter.First * 2, (chapter.First + chapter.Count) * 2 - 2, chapter == current));
+        }
+
+        for (var index = 0; index < track.Segments.Count; index++)
+        {
+            var segment = Segment(track, index);
+            Grid.SetColumn(segment, index * 2);
+            segments.Children.Add(segment);
+        }
+
+        labels.SizeChanged += (_, _) => DropLabelsThatDoNotFit(labels, drawn);
+
+        var root = new StackPanel { Spacing = 0, Children = { TitleAndKey(), strip, segments, labels } };
+        AutomationProperties.SetName(root, "Progress " + Whole(track));
+
+        return root;
+    }
+
+    private static Control TitleAndKey()
+    {
+        var title = Chrome($"Ranks 2–{PowerplayRanks.LastTabulatedRank} · width is merits", TypeScale.MetaSmall);
+
+        var key = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Center };
+        key.Children.Add(Swatch("Perk held", ThemeManager.AKey, TickHeld));
+        key.Children.Add(Swatch("Perk to come", ThemeManager.GreyKey, TickToCome));
+        key.Children.Add(Swatch("You", ThemeManager.CyanKey, TickHeld));
+        Grid.SetColumn(key, 1);
+
+        return new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { title, key } };
+    }
+
+    private static Control Swatch(string text, string key, double height)
+    {
+        var mark = new Border { Width = 2, Height = height, VerticalAlignment = VerticalAlignment.Center };
+        Themed(mark, Border.BackgroundProperty, key);
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+            Children = { mark, Chrome(text, TypeScale.MetaSmall) },
+        };
+    }
+
+    private static TextBlock Chrome(string text, double size)
+    {
+        var block = new TextBlock
+        {
+            Text = text.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = size,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = size * Fonts.ChromeTracking,
+            TextWrapping = TextWrapping.NoWrap,
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Themed(legend, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        return new StackPanel { Children = { strip, legend } };
+        return block;
     }
 
     private static ColumnDefinitions Columns(GoalTrack track)

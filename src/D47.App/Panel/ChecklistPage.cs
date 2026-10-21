@@ -96,7 +96,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     private readonly Func<DateTimeOffset> _now;
 
     /// <summary>The goals, rebuilt with the page because a goal's figure moves with the journal.</summary>
-    private readonly StackPanel _arcs = new() { Spacing = 2 };
+    private readonly StackPanel _arcs = new() { Spacing = 2, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Stretch };
 
     /// <summary>The goals mode: the height below the bar, scrolling only when the goals are taller.</summary>
     private readonly ScrollViewer _band = new()
@@ -186,6 +186,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     /// <summary>Which arc is open, by key.</summary>
     private string? _openArc;
+
+    private bool _allRanksShown;
 
     /// <param name="crumb">The level this page draws: the Checklist root, <see cref="AllLists"/>, or a
     /// <see cref="ListCrumb"/>.</param>
@@ -1148,7 +1150,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     /// <summary>
     /// One arc: what it is, how far along, how long it has run. Open, its head is the only part filled with A,
-    /// and below it sit the track, the figures, the chapters and what to do about it.
+    /// and below it, on Slab, sit the figures, the track, what the ranks give and what to do about it.
     /// </summary>
     private Control Arc(D47.Core.Goals.GoalStanding standing)
     {
@@ -1164,6 +1166,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         press.PointerPressed += (_, _) =>
         {
             _openArc = open ? null : standing.Arc.Key;
+            _allRanksShown = false;
             Rebuild();
         };
 
@@ -1187,18 +1190,32 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         if (track is not null)
         {
-            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight, standing.Benefits));
-
             if (standing.Arc.Kind != D47.Core.Goals.GoalKind.Story)
             {
-                body.Children.Add(Cells(standing, track));
+                body.Children.Add(Figures(standing, track));
             }
 
-            body.Children.Add(Chapters(track));
+            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight, standing.Benefits));
 
             if (standing.Benefits is { } benefits)
             {
-                body.Children.Add(PowerplayBenefitsView.Build(benefits));
+                if (benefits.Closeup is { } closeup)
+                {
+                    body.Children.Add(PowerplayCloseupView.Build(
+                        closeup,
+                        benefits.Rank,
+                        standing.Merits is null ? null : track.Fill,
+                        standing.Merits));
+                }
+
+                body.Children.Add(PowerplayBenefitsView.Build(
+                    benefits,
+                    _allRanksShown,
+                    () =>
+                    {
+                        _allRanksShown = true;
+                        Rebuild();
+                    }));
             }
         }
         else if (CountTrack(standing) is { } count)
@@ -1210,7 +1227,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         var ground = ListRow.Dress(new Border { Child = body, Padding = new Thickness(12, 10) }, selected: false);
         ground.MinHeight = 0;
-        Themed(ground, Border.BackgroundProperty, ThemeManager.Tile2Key);
+        Themed(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         var card = new StackPanel { Spacing = 0, Children = { press, ground } };
         AutomationProperties.SetName(card, standing.Arc.Name);
@@ -1258,35 +1275,70 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         return new DockPanel { Children = { percent, name } };
     }
 
-    /// <summary>Rank, the percent into it, the next rank and the ranks to go, as four tiles.</summary>
-    private static Control Cells(D47.Core.Goals.GoalStanding standing, D47.Core.Goals.GoalTrack track)
+    /// <summary>Rank, the percent into it, the next rank and the ranks to go, as four figures with no tile behind them.</summary>
+    private static Control Figures(D47.Core.Goals.GoalStanding standing, D47.Core.Goals.GoalTrack track)
     {
-        var rank = standing.Arc.Key == D47.Core.Goals.GoalCatalogue.Powerplay
-            ? $"Rank {standing.Have}"
+        var powerplay = standing.Benefits is not null;
+        var next = standing.Have is { } rank ? (int)rank + 1 : 0;
+
+        var rankName = powerplay
+            ? standing.Have?.ToString(CultureInfo.CurrentCulture) ?? "—"
             : track.IsDone ? standing.Arc.Top ?? "—" : track.Segments[track.Current].Name;
+
+        var known = powerplay ? standing.Merits is not null : track.Fill is not null;
 
         var into = track.IsDone
             ? "—"
-            : track.Fill is { } fill ? ((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%" : "not known yet";
+            : known && track.Fill is { } fill ? ((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%" : "not known yet";
 
         var toGo = standing.Have is { } have && standing.Need is { } need
             ? Math.Max(0, need - have).ToString("N0", CultureInfo.CurrentCulture)
             : "not known yet";
 
-        var cells = new Grid { ColumnDefinitions = new ColumnDefinitions("*,2,*,2,*,2,*") };
-        var values = new[] { ("Rank", rank), ("Into this rank", into), ("Next rank", standing.NextRank ?? "—"), ("Ranks to go", toGo) };
+        (string Label, string Value, bool Chrome, string Key, string Sub)[] figures;
 
-        for (var index = 0; index < values.Length; index++)
+        if (powerplay)
         {
-            var cell = Cell(values[index].Item1, values[index].Item2);
-            Grid.SetColumn(cell, index * 2);
-            cells.Children.Add(cell);
+            var top = D47.Core.Goals.GoalCatalogue.PowerplayTop;
+            var floor = D47.Core.Knowledge.PowerplayRanks.MeritsNeeded((int)(standing.Have ?? 0)) ?? 0;
+            var span = (D47.Core.Knowledge.PowerplayRanks.MeritsNeeded(next) ?? floor) - floor;
+
+            var done = standing.Merits is { } merits && !track.IsDone
+                ? $"{Math.Clamp(merits - floor, 0, span).ToString("N0", CultureInfo.CurrentCulture)} / {span.ToString("N0", CultureInfo.CurrentCulture)} merits"
+                : string.Empty;
+
+            figures =
+            [
+                ("Rank", rankName, true, ThemeManager.WhiteKey, $"of {top}"),
+                (track.IsDone ? "To rank" : $"To rank {next}", into, false, ThemeManager.CyanKey, done),
+                ("Merits", standing.Merits?.ToString("N0", CultureInfo.CurrentCulture) ?? "not known yet", false, ThemeManager.WhiteKey, $"of {(D47.Core.Knowledge.PowerplayRanks.MeritsNeeded(top) ?? 0).ToString("N0", CultureInfo.CurrentCulture)} for rank {top}"),
+                ("Ranks to go", toGo, false, ThemeManager.WhiteKey, $"to rank {top}"),
+            ];
+        }
+        else
+        {
+            figures =
+            [
+                ("Rank", rankName, true, ThemeManager.WhiteKey, standing.Arc.Top is { } topRank ? $"of {topRank}" : string.Empty),
+                ("Into this rank", into, false, ThemeManager.CyanKey, string.Empty),
+                ("Next rank", standing.NextRank ?? "—", true, ThemeManager.WhiteKey, string.Empty),
+                ("Ranks to go", toGo, false, ThemeManager.WhiteKey, standing.Arc.Top is { } toRank ? $"to {toRank}" : string.Empty),
+            ];
         }
 
-        return cells;
+        var strip = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
+
+        for (var index = 0; index < figures.Length; index++)
+        {
+            var figure = Figure(figures[index].Label, figures[index].Value, figures[index].Chrome, figures[index].Key, figures[index].Sub);
+            Grid.SetColumn(figure, index);
+            strip.Children.Add(figure);
+        }
+
+        return strip;
     }
 
-    private static Control Cell(string label, string value)
+    private static Control Figure(string label, string value, bool chrome, string key, string sub)
     {
         var name = new TextBlock
         {
@@ -1300,69 +1352,26 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var reading = ListRow.NameInk(new TextBlock
+        var reading = new TextBlock
         {
             Text = value,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
+            FontFamily = new FontFamily(chrome ? Fonts.ChromeFamily : Fonts.MonoFamily),
+            FontSize = chrome ? TypeScale.Title : TypeScale.Readout,
             TextWrapping = TextWrapping.Wrap,
-        });
-
-        var cell = new Border { Padding = new Thickness(8, 6), Child = new StackPanel { Spacing = 2, Children = { name, reading } } };
-        Themed(cell, Border.BackgroundProperty, ThemeManager.TileKey);
-
-        return cell;
-    }
-
-    /// <summary>One row per segment: a tick once passed, its name, the percent into it if current, its share of the goal.</summary>
-    private static Control Chapters(D47.Core.Goals.GoalTrack track)
-    {
-        var list = new StackPanel { Spacing = 2 };
-
-        for (var index = 0; index < track.Segments.Count; index++)
-        {
-            var row = new DockPanel { Margin = new Thickness(0, 1) };
-
-            row.Children.Add(Figure(GoalTrackBar.Percent(track.ShareOf(index)), ThemeManager.GreyKey));
-
-            if (index == track.Current && track.Fill is { } fill)
-            {
-                row.Children.Add(Figure(((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%", ThemeManager.CyanKey));
-            }
-
-            var sign = new TextBlock { Text = index < track.Current ? Met.Glyph : string.Empty, Width = 16 };
-            Themed(sign, TextBlock.ForegroundProperty, Met.Key);
-            DockPanel.SetDock(sign, Dock.Left);
-            row.Children.Add(sign);
-
-            row.Children.Add(ListRow.NameInk(new TextBlock
-            {
-                Text = track.Segments[index].Name,
-                FontSize = TypeScale.Small,
-                TextWrapping = TextWrapping.Wrap,
-            }));
-
-            list.Children.Add(row);
-        }
-
-        return list;
-    }
-
-    private static TextBlock Figure(string text, string key)
-    {
-        var figure = new TextBlock
-        {
-            Text = text,
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = TypeScale.Small,
-            Width = 52,
-            TextAlignment = TextAlignment.Right,
         };
 
-        Themed(figure, TextBlock.ForegroundProperty, key);
-        DockPanel.SetDock(figure, Dock.Right);
+        Themed(reading, TextBlock.ForegroundProperty, key);
 
-        return figure;
+        var panel = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 8, 0), Children = { name, reading } };
+
+        if (sub.Length > 0)
+        {
+            var line = new TextBlock { Text = sub, FontSize = TypeScale.Meta, TextWrapping = TextWrapping.Wrap };
+            Themed(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            panel.Children.Add(line);
+        }
+
+        return panel;
     }
 
     /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>

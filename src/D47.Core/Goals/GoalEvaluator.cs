@@ -150,6 +150,7 @@ public static class GoalEvaluator
             Started = mark?.Started,
             Note = $"rank {pledge.Rank} of {GoalCatalogue.PowerplayTop} with {pledge.Power}",
             Rung = track.Fill,
+            Merits = pledge.Merits,
             NextRank = pledge.Rank < GoalCatalogue.PowerplayTop ? $"Rank {pledge.Rank + 1}" : null,
             Track = track,
             Benefits = PowerplayBenefits.For(pledge.Power, pledge.Rank),

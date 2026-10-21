@@ -12,14 +12,25 @@ public sealed record BenefitRow(int Rank, string Name, string? Old, string? New,
     public string Change => IsModule ? "MODULE" : Old is null ? New! : Old + " → " + New;
 }
 
-/// <summary>A stretch of ranks still ahead, with the rows that change something and a note on its mini care packages.</summary>
+/// <summary>
+/// A stretch of ranks still ahead, with the rows that change something and a note on its mini care packages.
+/// <see cref="FirstAhead"/> is the first rank of the stretch not yet held.
+/// </summary>
 public sealed record BenefitChapter(
     string Label,
     bool IsCurrent,
     int Merits,
     double Share,
     IReadOnlyList<BenefitRow> Rows,
-    string? CarePackages);
+    string? CarePackages,
+    int FirstAhead,
+    int Last);
+
+/// <summary>Everything one rank gives, as short phrases; empty for a rank that gives nothing.</summary>
+public sealed record CloseupRank(int Rank, IReadOnlyList<string> Rewards);
+
+/// <summary>Every rank of the chapter the Commander is climbing through, with what each gives.</summary>
+public sealed record Closeup(string Label, int First, int Last, IReadOnlyList<CloseupRank> Ranks);
 
 /// <summary>What a Power's ranks give: what is held at a rank and what comes after it.</summary>
 public sealed record PowerplayBenefits(
@@ -31,7 +42,8 @@ public sealed record PowerplayBenefits(
     IReadOnlyList<int> CarePackageRanks,
     bool HasDecal,
     IReadOnlyList<BenefitChapter> ToCome,
-    IReadOnlyList<int> TickRanks)
+    IReadOnlyList<int> TickRanks,
+    Closeup? Closeup)
 {
     /// <summary>The benefits for a pledged Power at a rank, or null where the table does not know the Power.</summary>
     public static PowerplayBenefits? For(string? power, int rank)
@@ -81,7 +93,41 @@ public sealed record PowerplayBenefits(
             held.Where(r => r.Kind == PowerplayRewardKind.CarePackage).Select(r => r.Rank).ToList(),
             held.Any(r => r.Kind == PowerplayRewardKind.Decal),
             Chapters(rewards, rank, name),
-            rewards.Where(IsLasting).Select(r => r.Rank).Distinct().ToList());
+            rewards.Where(IsLasting).Select(r => r.Rank).Distinct().ToList(),
+            rank >= PowerplayRanks.LastTabulatedRank ? null : CloseupFor(rewards, rank, name));
+    }
+
+    private static Closeup CloseupFor(IReadOnlyList<PowerplayReward> rewards, int rank, string power)
+    {
+        var (from, to) = Spans().First(span => rank >= span.From - 1 && rank < span.To);
+
+        var ranks = Enumerable.Range(from, to - from + 1)
+            .Select(at => new CloseupRank(at, rewards.Where(r => r.Rank == at).Select(r => Words(r, power)).OfType<string>().ToList()))
+            .ToList();
+
+        return new Closeup($"{from}–{to}", from, to, ranks);
+    }
+
+    private static string? Words(PowerplayReward reward, string power) => reward.Kind switch
+    {
+        PowerplayRewardKind.CarePackage => "Mini care package",
+        PowerplayRewardKind.Module => PowerplayWording.ModuleName(reward),
+        PowerplayRewardKind.RebuyOwnTerritory => PowerplayWording.SignedPercent(reward.Value) + " rebuy in territory",
+        PowerplayRewardKind.Perk or PowerplayRewardKind.RebuyRival =>
+            PowerplayWording.SignedPercent(reward.Value) + " " + PowerplayWording.BenefitName(reward, power),
+        _ => null,
+    };
+
+    private static List<(int From, int To)> Spans()
+    {
+        var spans = new List<(int From, int To)> { (2, 10) };
+
+        for (var start = 11; start <= 91; start += 10)
+        {
+            spans.Add((start, start + 9));
+        }
+
+        return spans;
     }
 
     private static bool IsLasting(PowerplayReward reward) =>
@@ -93,13 +139,7 @@ public sealed record PowerplayBenefits(
     private static List<BenefitChapter> Chapters(IReadOnlyList<PowerplayReward> rewards, int rank, string power)
     {
         var chapters = new List<BenefitChapter>();
-        var spans = new List<(int From, int To)> { (2, 10) };
-
-        for (var start = 11; start <= 91; start += 10)
-        {
-            spans.Add((start, start + 9));
-        }
-
+        var spans = Spans();
         var whole = PowerplayRanks.MeritsNeeded(PowerplayRanks.LastTabulatedRank) ?? 1;
 
         foreach (var (from, to) in spans)
@@ -146,7 +186,9 @@ public sealed record PowerplayBenefits(
                 merits,
                 merits / (double)whole,
                 rows,
-                note));
+                note,
+                firstAhead,
+                to));
         }
 
         return chapters;

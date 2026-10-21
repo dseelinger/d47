@@ -15,6 +15,9 @@ public static class TypeScale
     /// <summary>The Catalogue's filter sentence.</summary>
     public const double Sentence = 22;
 
+    /// <summary>A figure in mono on a goal's strip.</summary>
+    public const double Readout = 24;
+
     /// <summary>A group heading.</summary>
     public const double Heading = 21;
 

@@ -211,7 +211,7 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         Assert.Contains("NEXT RANK", texts);
         Assert.Contains("Elite V", texts);
         Assert.Contains("RANKS TO GO", texts);
-        Assert.Equal(12, open.GetVisualDescendants().OfType<TextBlock>().Count(text => text.Text == "✓"));
+        Assert.DoesNotContain("✓", texts);
 
         _window!.CaptureRenderedFrame()!.SaveCapture("goals-mode-open.png");
     }
