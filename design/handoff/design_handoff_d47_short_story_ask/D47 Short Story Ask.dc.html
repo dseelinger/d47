@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Short Story ask prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Saira';src:url('../../../assets/fonts/Saira-Medium.ttf') format('truetype');font-weight:500}
+@font-face{font-family:'Saira';src:url('../../../assets/fonts/Saira-SemiBold.ttf') format('truetype');font-weight:600}
+@font-face{font-family:'Sintony';src:url('../../../assets/fonts/Sintony-Regular.ttf') format('truetype');font-weight:400}
+@font-face{font-family:'JetBrains Mono';src:url('../../../assets/fonts/JetBrainsMono-Regular.ttf') format('truetype');font-weight:400}
+body{margin:0}
+[data-d47-theme='elite'],[data-d47-theme='elite-palette']{--d47-bg:#070606;--d47-bar:#0F0D0C;--d47-slab:#232120;--d47-white:#EDE9E3;--d47-grey:#A09B94;--d47-grey2:#6E6A65;--d47-a:#FF7A1A;--d47-knock:#140800;--d47-brown:#6B2F00;--d47-cyan:#33D6E8;--d47-blue:#1FA8F5;--d47-yellow:#F5D426;--d47-red:#F0343F;--d47-warn:#FFA41C;--d47-glow-tab:0 0 10px color-mix(in oklab,var(--d47-a) 55%,transparent);--d47-glow-title:0 0 12px color-mix(in oklab,var(--d47-a) 55%,transparent);--d47-glow-mark:0 0 6px var(--d47-a),0 0 16px color-mix(in oklab,var(--d47-a) 60%,transparent)}
+[data-d47-theme='dark']{--d47-bg:#1E1E1E;--d47-bar:#2D2D2D;--d47-slab:#252526;--d47-white:#D4D4D4;--d47-grey:#9D9D9D;--d47-grey2:#606060;--d47-a:#3794FF;--d47-knock:#0B1F33;--d47-brown:#1C4A7E;--d47-cyan:#4EC9B0;--d47-blue:#569CD6;--d47-yellow:#DCDCAA;--d47-red:#F48771;--d47-warn:#CCA700;--d47-glow-tab:none;--d47-glow-title:none;--d47-glow-mark:none}
+[data-d47-theme='light']{--d47-bg:#F4F1EB;--d47-bar:#E6E1D8;--d47-slab:#E4DFD6;--d47-white:#1C1917;--d47-grey:#5E5852;--d47-grey2:#9E9993;--d47-a:#B84E00;--d47-knock:#FFFFFF;--d47-brown:#E7B9A3;--d47-cyan:#007C8A;--d47-blue:#0B6BCB;--d47-yellow:#8A6D00;--d47-red:#C8192B;--d47-warn:#A04A00;--d47-glow-tab:none;--d47-glow-title:none;--d47-glow-mark:none}
+[data-d47-theme]{--d47-tile:color-mix(in oklab,var(--d47-a) 20%,var(--d47-bg));--d47-tile2:color-mix(in oklab,var(--d47-a) 30%,var(--d47-bg));--d47-line:color-mix(in oklab,var(--d47-a) 55%,var(--d47-bg));--d47-line2:color-mix(in oklab,var(--d47-a) 28%,var(--d47-bg));--d47-warn-ground:color-mix(in oklab,var(--d47-warn) 12%,var(--d47-bg))}
+.d47-root{box-sizing:border-box;min-height:900px;display:flex;flex-direction:column;background:var(--d47-bg);color:var(--d47-white);font-family:'Sintony',system-ui,sans-serif;border:1px solid var(--d47-line)}
+.t{height:44px;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px;box-sizing:border-box;background:var(--d47-tile);color:var(--d47-a);font-family:'Saira',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border:0;border-radius:0;cursor:pointer;white-space:nowrap}
+.t:hover,.t.is-hover{background:var(--d47-tile2)}
+.t.on{background:var(--d47-a);color:var(--d47-knock)}
+.t:disabled{background:var(--d47-slab);color:var(--d47-grey2);cursor:default}
+.tab{font-size:15px;padding:0 22px}
+.tab.on{box-shadow:var(--d47-glow-tab)}
+.bare{background:none}
+.sub{height:44px;display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;font-family:'Saira',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--d47-a);cursor:pointer;border-bottom:2px solid transparent;box-sizing:border-box}
+.sub.on{color:var(--d47-white);border-bottom-color:var(--d47-a)}
+.crumb-sep{color:var(--d47-grey);font-family:'Saira',system-ui,sans-serif;font-size:13px}
+.lbl{font-family:'Saira',system-ui,sans-serif;font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-grey)}
+.rowlbl{height:44px;display:flex;align-items:center}
+.hint{font-size:13px;line-height:1.4;color:var(--d47-grey)}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.grid{display:grid;grid-template-columns:120px minmax(0,1fr);column-gap:24px;row-gap:20px;align-items:start}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+.stack8{display:flex;flex-direction:column;gap:8px}
+.check{justify-content:flex-start;color:var(--d47-white);font-family:'Sintony',system-ui,sans-serif;font-weight:400;font-size:15px;letter-spacing:0;text-transform:none}
+.box{width:16px;height:16px;box-sizing:border-box;border:1px solid var(--d47-a);display:flex;align-items:center;justify-content:center;flex:none;font-size:12px;line-height:1;color:var(--d47-knock)}
+.box.on{background:var(--d47-a)}
+.brief{flex:1 1 auto;min-width:0;justify-content:flex-start;padding:0 14px;font-family:'Sintony',system-ui,sans-serif;font-weight:400;font-size:15px;letter-spacing:0;text-transform:none;color:var(--d47-white);overflow:hidden;text-overflow:ellipsis}
+.brief.empty{color:var(--d47-grey)}
+.win{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;color:var(--d47-grey);font-size:16px;cursor:pointer}
+.notice{display:flex;flex-direction:column;gap:10px;padding:14px 16px;background:var(--d47-warn-ground);border-left:3px solid var(--d47-warn)}
+.notice .head{font-family:'Saira',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--d47-warn)}
+.track{height:8px;background:var(--d47-tile)}
+.fill{height:8px;background:var(--d47-a)}
+</style>
+</helmet>
+<div class="d47-root" data-d47-theme="{{theme}}">
+
+  <sc-if value="{{desktop}}" hint-placeholder-val="{{true}}">
+  <header style="height: 44px; display: flex; align-items: center; gap: 16px; padding-left: 16px; background: var(--d47-bar); border-bottom: 1px solid var(--d47-line);">
+    <span aria-hidden="true" style="width: 11px; height: 11px; background: var(--d47-a); transform: rotate(45deg); box-shadow: var(--d47-glow-mark);"></span>
+    <span style="font-family: 'Saira', sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 0.12em; text-shadow: var(--d47-glow-title);">DIRECTIVE 47</span>
+    <span class="mono" style="font-size: 12px; color: var(--d47-grey);">0.1.0</span>
+    <span style="flex-grow: 1;"></span>
+    <button class="t bare" type="button">HELP</button>
+    <button class="t bare" type="button" style="color: var(--d47-white);">CMDR JOHN DEPARAGON ▼</button>
+    <div style="display: flex;">
+      <button class="win" type="button" aria-label="Minimise">—</button>
+      <button class="win" type="button" aria-label="Maximise">□</button>
+      <button class="win" type="button" aria-label="Close">✕</button>
+    </div>
+  </header>
+  </sc-if>
+
+  <div style="padding: 24px 32px 48px; display: flex; flex-direction: column; flex-grow: 1;">
+    <div style="display: flex; gap: 24px; align-items: flex-start;">
+      <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;">
+        <nav aria-label="Tabs" style="display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 2px solid var(--d47-a);">
+          <button class="t tab" type="button">TRANSCRIPT</button>
+          <button class="t tab" type="button">SEARCH</button>
+          <button class="t tab on" type="button">STORIES</button>
+          <button class="t tab" type="button">COMMANDER</button>
+          <button class="t tab" type="button">ASSET MGMT</button>
+          <button class="t tab" type="button">NAVIGATION</button>
+          <button class="t tab" type="button">SETTINGS</button>
+        </nav>
+        <div style="height: 57px; display: flex; align-items: center; border-bottom: 1px solid var(--d47-a);">
+          <h1 style="margin: 0; font-family: 'Saira', sans-serif; font-weight: 600; font-size: 28px; letter-spacing: 0.04em; text-shadow: var(--d47-glow-title);">STORIES</h1>
+        </div>
+        <sc-if value="{{ask}}" hint-placeholder-val="{{true}}">
+          <nav aria-label="Stories" style="display: flex; gap: 36px; padding-left: 2px;">
+            <button class="sub" type="button">YOUR STORIES</button>
+            <button class="sub" type="button">CATALOGUE</button>
+            <button class="sub on" type="button" aria-current="page">SHORT STORY</button>
+            <button class="sub" type="button">STORY BENCH</button>
+          </nav>
+        </sc-if>
+        <sc-if value="{{follows}}" hint-placeholder-val="{{false}}">
+          <nav aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 12px; padding-left: 2px;">
+            <button class="sub" type="button">YOUR STORIES</button>
+            <span class="crumb-sep" aria-hidden="true">›</span>
+            <button class="sub" type="button">THE LONG HAUL</button>
+            <span class="crumb-sep" aria-hidden="true">›</span>
+            <span class="sub" style="color: var(--d47-white); cursor: default;" aria-current="page">NEXT CHAPTER</span>
+          </nav>
+        </sc-if>
+      </div>
+      <div class="lbl" style="width: 104px; height: 104px; flex: none; background: var(--d47-slab); display: flex; align-items: center; justify-content: center; font-size: 11px;">AVATAR</div>
+    </div>
+
+    <main style="max-width: 900px; width: 100%; padding-top: 32px; display: flex; flex-direction: column; gap: 28px;">
+      <sc-if value="{{ask}}" hint-placeholder-val="{{true}}">
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: var(--d47-grey);">D47 writes a story for you to fly, then waits for your yes. GO on its own is a complete ask.</p>
+      </sc-if>
+      <sc-if value="{{follows}}" hint-placeholder-val="{{false}}">
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: var(--d47-grey);">D47 writes the story that follows The Long Haul, from how it ended, then waits for your yes.</p>
+      </sc-if>
+
+      <sc-if value="{{shut}}" hint-placeholder-val="{{false}}">
+        <section class="notice" aria-label="Can't write a story yet">
+          <span class="head">CAN'T WRITE A STORY YET</span>
+          <span style="font-size: 15px; line-height: 1.5; color: var(--d47-white);">{{shutWhy}}</span>
+          <div style="display: flex;"><button class="t" type="button">OPEN SETTINGS</button></div>
+        </section>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="grid">
+        <div class="lbl rowlbl" id="reach-l">REACH</div>
+        <div class="stack8">
+          <div class="seg" role="radiogroup" aria-labelledby="reach-l">
+            <sc-for list="{{reaches}}" as="r" hint-placeholder-count="3">
+              <button class="t {{r.cls}}" type="button" role="radio" aria-checked="{{r.checked}}" onClick="{{r.pick}}">{{r.label}}</button>
+            </sc-for>
+          </div>
+          <span class="hint">Each leg of the story is up to about <span class="mono" style="font-size: 12px;">{{radius}}</span> ly.</span>
+        </div>
+
+        <div class="lbl rowlbl" id="length-l">LENGTH</div>
+        <div class="stack8">
+          <div class="seg" role="radiogroup" aria-labelledby="length-l">
+            <sc-for list="{{lengths}}" as="l" hint-placeholder-count="3">
+              <button class="t {{l.cls}}" type="button" role="radio" aria-checked="{{l.checked}}" onClick="{{l.pick}}">{{l.label}}</button>
+            </sc-for>
+          </div>
+          <span class="hint">{{lengthHint}}</span>
+        </div>
+
+      </div>
+
+      <sc-if value="{{hasChoice}}" hint-placeholder-val="{{true}}">
+        <div class="grid">
+          <div class="lbl rowlbl">SHIP</div>
+          <div style="display: flex; align-items: center; column-gap: 16px; row-gap: 8px; flex-wrap: wrap;">
+            <button class="t check" type="button" role="checkbox" aria-checked="{{shipAria}}" onClick="{{toggleShip}}">
+              <span class="box {{boxCls}}" aria-hidden="true">{{tick}}</span>
+              This ship only
+            </button>
+            <span class="hint">{{shipHint}}</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <div class="grid">
+        <div class="lbl rowlbl">BRIEF</div>
+        <div class="stack8">
+          <div style="display: flex; gap: 2px;">
+            <button class="t brief {{briefCls}}" type="button" aria-label="Brief" onClick="{{enterBrief}}">{{briefText}}</button>
+            <sc-if value="{{hasBrief}}" hint-placeholder-val="{{false}}">
+              <button class="t" type="button" onClick="{{clearBrief}}">CLEAR</button>
+            </sc-if>
+          </div>
+          <span class="hint">Optional. Press it to say it, or type it.</span>
+        </div>
+      </div>
+      </div>
+
+      <div class="grid" style="padding-top: 20px; border-top: 1px solid var(--d47-line2);">
+        <span></span>
+        <div style="display: flex; gap: 2px;">
+          <button class="t" type="button" style="width: 200px;" disabled="{{goOff}}" onClick="{{go}}">GO</button>
+          <sc-if value="{{writing}}" hint-placeholder-val="{{false}}">
+            <button class="t" type="button" style="width: 200px;" onClick="{{stop}}">STOP</button>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{writing}}" hint-placeholder-val="{{false}}">
+        <div class="grid">
+          <span></span>
+          <div class="stack8" role="group" aria-label="Writing the story">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px;">
+              <span style="font-size: 15px; color: var(--d47-white);">Writing the outline…</span>
+              <span class="mono" style="font-size: 12px; color: var(--d47-a);">0:24</span>
+            </div>
+            <div class="track" role="progressbar" aria-label="Writing the story" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100"><div class="fill" style="width: 38%;"></div></div>
+            <span class="hint">Usually ready in about <span class="mono" style="font-size: 12px;">45</span> seconds.</span>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["elite","dark","light","elite-palette"],"default":"elite"},"state":{"editor":"enum","options":["ready","writing","shut-model","shut-galaxy"],"default":"ready"},"follows":{"editor":"boolean","default":false},"hasChoice":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const h = {};
+    try {
+      String(window.location.hash || '').replace(/^#/, '').split('&').forEach((kv) => {
+        const [k, v] = kv.split('=');
+        if (k) h[k] = v === undefined ? '1' : decodeURIComponent(v);
+      });
+    } catch (e) {}
+    this.hash = h;
+    this.state = {
+      reach: Number(h.reach ?? 0),
+      length: Number(h.length ?? 1),
+      ship: h.ship === '1',
+      brief: h.brief === '1' ? 'A courier job that turns out to be something else' : '',
+      phase: h.state ?? null
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const h = this.hash;
+    const phase = s.phase ?? this.props.state ?? 'ready';
+    const writing = phase === 'writing';
+    const shut = phase === 'shut-model' || phase === 'shut-galaxy';
+    const follows = h.follows ? h.follows === '1' : (this.props.follows ?? false);
+    const hasChoice = h.noships === '1' ? false : (this.props.hasChoice ?? true);
+    const reachLabels = ['NEAR HERE', "A SESSION'S FLYING", 'ANYWHERE'];
+    const radii = ['135', '540', '1,500'];
+    const lengthLabels = ['SHORT', 'AN EVENING', 'LONG'];
+    const lengthHints = [
+      'Three objectives: setup, turn, resolution.',
+      'Five objectives: setup, catalyst, midpoint, all is lost, finale.',
+      'Eight objectives or more.'
+    ];
+    return {
+      theme: h.theme ?? this.props.theme ?? 'elite',
+      desktop: h.headset !== '1',
+      ask: !follows,
+      follows,
+      shut,
+      shutWhy: phase === 'shut-galaxy'
+        ? "A short story needs galaxy search, so the story's places can be checked. It is off in Settings."
+        : 'A short story needs a language model, and none is configured.',
+      reaches: reachLabels.map((label, i) => ({
+        label, cls: s.reach === i ? 'on' : '', checked: s.reach === i ? 'true' : 'false',
+        pick: () => this.setState({ reach: i })
+      })),
+      radius: radii[s.reach],
+      lengths: lengthLabels.map((label, i) => ({
+        label, cls: s.length === i ? 'on' : '', checked: s.length === i ? 'true' : 'false',
+        pick: () => this.setState({ length: i })
+      })),
+      lengthHint: lengthHints[s.length],
+      hasChoice,
+      shipAria: s.ship ? 'true' : 'false',
+      boxCls: s.ship ? 'on' : '',
+      tick: s.ship ? '✓' : '',
+      shipHint: s.ship ? 'Only the ship you are flying now.' : 'Any ship you own may be part of it.',
+      toggleShip: () => this.setState({ ship: !s.ship }),
+      hasBrief: s.brief.length > 0,
+      briefCls: s.brief.length > 0 ? '' : 'empty',
+      briefText: s.brief.length > 0 ? s.brief : 'A theme, a mood, a place it must include. Empty is fine.',
+      enterBrief: () => this.setState({ brief: 'A courier job that turns out to be something else' }),
+      clearBrief: () => this.setState({ brief: '' }),
+      writing,
+      goOff: writing || shut,
+      go: () => this.setState({ phase: 'writing' }),
+      stop: () => this.setState({ phase: 'ready' })
+    };
+  }
+}
+</script>
+</body>
+</html>
