@@ -101,11 +101,12 @@ public static class AdventureContext
                 }
             }
 
-            if (standing.CurrentBeat is { } current)
+            if (standing.CurrentBeat is { } current && standing.CurrentObjective is { } step)
             {
                 var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
-                var reason = string.IsNullOrWhiteSpace(current.Reason) ? string.Empty : $" Reason: {current.Reason.Trim()}";
-                Line(block, $"Now: {current.Title}{function}", $"waiting to {current.Trigger.Describe()}.{reason}");
+                var place = current.Steps.Count > 1 ? $", step {standing.CurrentStep + 1} of {current.Steps.Count}" : string.Empty;
+                var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
+                Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{reason}");
             }
 
             Line(block, "Stuck", Stuck(standing, shortStoryByVoice));

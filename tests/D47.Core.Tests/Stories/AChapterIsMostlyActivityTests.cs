@@ -6,7 +6,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>From chapter two on, no more than two of a story chapter's beats are arrive, dock, land or scan.</summary>
+/// <summary>Any story chapter may travel as much as it needs; a refused chapter tells the Commander only that it could not be written.</summary>
 public sealed class AChapterIsMostlyActivityTests
 {
     private const string ThreeTravelBeats = """
@@ -19,23 +19,20 @@ public sealed class AChapterIsMostlyActivityTests
         ]}
         """;
 
-    [Fact]
-    public async Task AChapterAfterTheFirstWithThreeTravelBeatsIsRefused()
-    {
-        var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)));
-
-        var outcome = await Generate(provider, chapter: 2);
-
-        Assert.Contains("The chapter has 3 travel objectives (arrive, dock, land or scan); from chapter two on, no more than 2 may be.", outcome.Refusal);
-        Assert.Contains("no more than two of the chapter's objectives may be", provider.Requests[1].Prompt.History[0].Text);
-    }
+    private const string ABeaconInTheMiddle = """
+        {"opening": "Again.", "reply": "Here.", "beats": [
+          {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Back."},
+          {"title": "The Bounties", "function": "midpoint", "kind": "bounty", "count": 3, "line": "Paid."},
+          {"title": "The Beacon", "function": "all is lost", "kind": "beacon", "line": "Lit."},
+          {"title": "The Ore", "function": "finale", "kind": "mine", "count": 20, "line": "Refined."}
+        ]}
+        """;
 
     [Fact]
     public async Task ARefusedChapterTellsTheCommanderOnlyThatItCouldNotBeWritten()
     {
         var provider = new RoundScriptedLlmProvider(
-            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ThreeTravelBeats, 1)));
+            RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ABeaconInTheMiddle), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ABeaconInTheMiddle, 3)), RoundScriptedLlmProvider.Saying(Repairs.Replacing(ABeaconInTheMiddle, 3)));
 
         var outcome = await Generate(provider, chapter: 2);
 
@@ -44,18 +41,19 @@ public sealed class AChapterIsMostlyActivityTests
         Assert.DoesNotContain("Objective 1", outcome.Message);
         Assert.DoesNotContain("credits at the last load", outcome.Message);
         Assert.DoesNotContain("Try again in a moment", outcome.Message);
-        Assert.Contains("travel objectives", outcome.Refusal);
-        Assert.Contains("travel objectives", provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("\"beacon\" objective", outcome.Refusal);
+        Assert.Contains("\"beacon\" objective", provider.Requests[2].Prompt.History[0].Text);
     }
 
     [Fact]
-    public async Task ChapterOneMayTravel()
+    public async Task AnyChapterMayTravel()
     {
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(ThreeTravelBeats));
 
-        var outcome = await Generate(provider, chapter: 1);
+        var outcome = await Generate(provider, chapter: 2);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.DoesNotContain("no more than two", provider.Requests[1].Prompt.History[0].Text, StringComparison.Ordinal);
     }
 
     private static Task<AdventureOutcome> Generate(RoundScriptedLlmProvider provider, int chapter) =>

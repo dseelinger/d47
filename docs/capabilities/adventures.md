@@ -722,8 +722,13 @@ later chapter have you buy and board it. A chapter is sized to finish in one to 
 in one session in a story shorter than three months. A longer undertaking, such as engineering, saving
 for a ship or a run of ranks, carries on across chapters.
 
-**Activity, not only travel.** From chapter two on, no more than two of a chapter's objectives may be arrive,
-dock, land or scan. A chapter with more is refused.
+**Activity, not only travel.** From chapter two on, a chapter is a story of activity, not only travel. It may
+have as many arrive, dock, land or scan objectives as it needs.
+
+**Steps.** An objective can take several steps, in order, each with its own place or activity. The objective's
+lines are spoken when its last step is done. After any earlier step your core says it was done and what the next
+step is, for example "Next: collect 3 bounties." Change objective, Mark done and Never ask this act on the step you
+are on. A chapter has as many steps as its story needs.
 
 **The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter

@@ -158,7 +158,7 @@ internal sealed class StoryRecords(
 
             // Stored rather than derived later: a story edited after a beat has fired would otherwise
             // re-describe what the Commander did with the trigger it has now.
-            Trigger = reached?.Trigger.Describe(),
+            Trigger = reached?.Steps[^1].Trigger.Describe(),
         });
     }
 
@@ -182,7 +182,7 @@ internal sealed class StoryRecords(
             Text = announcement.Text,
             At = now,
             Title = story?.CurrentBeat?.Title,
-            Trigger = story?.CurrentBeat?.Trigger.Describe(),
+            Trigger = story?.CurrentTrigger?.Describe(),
         });
     }
 }

@@ -53,9 +53,9 @@ public static class AdventureNudge
         var adventure = standing.Adventure;
         var text = new StringBuilder($"The story: {adventure.Name}.");
 
-        if (standing.CurrentBeat is { } next)
+        if (standing.CurrentTrigger is { } next)
         {
-            text.Append(CultureInfo.InvariantCulture, $" Where it waits: {next.Trigger.Describe()}.");
+            text.Append(CultureInfo.InvariantCulture, $" Where it waits: {next.Describe()}.");
         }
 
         if (lightYears is { } distance)
@@ -83,7 +83,7 @@ public static class AdventureNudge
     {
         ArgumentNullException.ThrowIfNull(standing);
 
-        return standing.CurrentBeat?.Trigger is { Kind: not TriggerKind.Rank, System: { Length: > 0 } system }
+        return standing.CurrentTrigger is { Kind: not TriggerKind.Rank, System: { Length: > 0 } system }
             ? system
             : null;
     }

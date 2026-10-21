@@ -78,7 +78,7 @@ public static class StoryRecap
             Title = adventure.Name,
             Premise = adventure.Spine?.Premise,
             Fired = Fired(adventure, standing.Fired.Count, _ => null),
-            HandOff = standing.CurrentBeat is { } beat ? HandOff(beat.Trigger, standing.Counted) : null,
+            HandOff = standing.CurrentTrigger is { } trigger ? HandOff(trigger, standing.Counted) : null,
         };
     }
 

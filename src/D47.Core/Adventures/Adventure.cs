@@ -506,13 +506,31 @@ public sealed record AdventureBeat
     /// <summary>Its place in the structure — setup, catalyst, midpoint, all is lost, finale.</summary>
     public string? Function { get; init; }
 
-    /// <summary>What is at a travel beat's place that matters to the story; said in the hand-off, before arrival.</summary>
-    public string? Reason { get; init; }
+    /// <summary>What the Commander does to reach this beat, in order; the beat fires when its last step does.</summary>
+    public IReadOnlyList<BeatStep> Steps { get; init; } = [];
 
-    public required AdventureTrigger Trigger { get; init; }
+    /// <summary>The first step's trigger; setting it replaces that step's trigger and keeps the rest.</summary>
+    public AdventureTrigger Trigger
+    {
+        get => FirstStep.Trigger;
+        init => Steps = [FirstStep with { Trigger = value }, .. Steps.Skip(1)];
+    }
 
-    /// <summary>Events that fail the chapter while this beat is the one it waits on; none counts to a total.</summary>
-    public IReadOnlyList<AdventureTrigger> FailsOn { get; init; } = [];
+    /// <summary>The first step's events that fail the chapter; setting it replaces them and keeps the rest.</summary>
+    public IReadOnlyList<AdventureTrigger> FailsOn
+    {
+        get => FirstStep.FailsOn;
+        init => Steps = [FirstStep with { FailsOn = value }, .. Steps.Skip(1)];
+    }
+
+    /// <summary>What is at the first step's place that matters to the story; said in the hand-off, before arrival.</summary>
+    public string? Reason
+    {
+        get => FirstStep.Reason;
+        init => Steps = [FirstStep with { Reason = value }, .. Steps.Skip(1)];
+    }
+
+    private BeatStep FirstStep => Steps.Count > 0 ? Steps[0] : new BeatStep();
 
     /// <summary>What is said when this beat is reached, in order: one line, or up to <see cref="AdventureLimits.MaxLinesPerBeat"/>.</summary>
     public IReadOnlyList<AdventureLine> Lines { get; init; } = [];
@@ -535,12 +553,30 @@ public sealed record AdventureBeat
         other is not null
         && Title == other.Title
         && Function == other.Function
-        && Reason == other.Reason
-        && Trigger == other.Trigger
-        && FailsOn.SequenceEqual(other.FailsOn)
+        && Steps.SequenceEqual(other.Steps)
         && Lines.SequenceEqual(other.Lines);
 
-    public override int GetHashCode() => HashCode.Combine(Title, Function, Reason, Trigger, FailsOn.Count, Lines.Count > 0 ? Lines[0] : null);
+    public override int GetHashCode() => HashCode.Combine(Title, Function, Steps.Count, Steps.Count > 0 ? Steps[0] : null, Lines.Count > 0 ? Lines[0] : null);
+
+    /// <summary>The first step's hand-off.</summary>
+    public string HandOff() => FirstStep.HandOff();
+}
+
+/// <summary>One thing to do within a beat: a trigger, the events that fail the chapter while it is the one waited on, and a reason.</summary>
+public sealed record BeatStep
+{
+    public AdventureTrigger Trigger { get; init; } = new() { Kind = TriggerKind.Arrive };
+
+    /// <summary>Events that fail the chapter while this step is the one it waits on; none counts to a total.</summary>
+    public IReadOnlyList<AdventureTrigger> FailsOn { get; init; } = [];
+
+    /// <summary>What is at a travel step's place that matters to the story; said in the hand-off, before arrival.</summary>
+    public string? Reason { get; init; }
+
+    public bool Equals(BeatStep? other) =>
+        other is not null && Trigger == other.Trigger && Reason == other.Reason && FailsOn.SequenceEqual(other.FailsOn);
+
+    public override int GetHashCode() => HashCode.Combine(Trigger, Reason, FailsOn.Count);
 
     /// <summary>The trigger's hand-off, followed by the reason when there is one.</summary>
     public string HandOff() =>
@@ -636,6 +672,9 @@ public sealed record Adventure
     /// <summary>The index of the first beat the last replacement wrote.</summary>
     public int? RewrittenFrom { get; init; }
 
+    /// <summary>The step of <see cref="RewrittenFrom"/> the last replacement began at; steps before it were kept.</summary>
+    public int RewrittenStep { get; init; }
+
     /// <summary>
     /// The draft before the last revision, kept on a generated adventure that has not begun so Put it
     /// back costs a press and not a model call.
@@ -654,7 +693,7 @@ public sealed record Adventure
     /// </summary>
     public IReadOnlyList<AdventureTold> Told { get; init; } = [];
 
-    /// <summary>The beats fired without their journal event, by the story bench or the Commander, oldest first; the fold counts each as a fire at its time.</summary>
+    /// <summary>The steps fired without their journal event, by the story bench or the Commander, oldest first; the fold counts each as a fire at its time.</summary>
     public IReadOnlyList<AdventureStep> Stepped { get; init; } = [];
 
     public bool IsBegun => AcceptedAt is not null;
@@ -679,8 +718,8 @@ public sealed record AdventureEnding(string Name, DateTimeOffset At, string Reas
     public const string Failed = "Failed";
 }
 
-/// <summary>A beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>
-public sealed record AdventureStep(int Beat, DateTimeOffset At, string? By = null);
+/// <summary>A step of a beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>
+public sealed record AdventureStep(int Beat, DateTimeOffset At, string? By = null, int Step = 0);
 
 /// <summary>Bounds, so a hand-edited file cannot be a novel and a model cannot be asked for one.</summary>
 public static class AdventureLimits

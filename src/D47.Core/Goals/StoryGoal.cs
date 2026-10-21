@@ -54,8 +54,8 @@ public static class StoryGoal
             ? $"Paused at {place}"
             : story.IsOff ? $"Switched off at {place}" : place;
 
-        var now = story.State == StoryState.Running && chapter is { Adventure.IsActive: true, CurrentBeat: { } beat }
-            ? beat.Trigger.Progress(chapter.Counted)?.Replace(": ", ", ", StringComparison.Ordinal) ?? beat.Trigger.Describe()
+        var now = story.State == StoryState.Running && chapter is { Adventure.IsActive: true, CurrentTrigger: { } trigger }
+            ? trigger.Progress(chapter.Counted)?.Replace(": ", ", ", StringComparison.Ordinal) ?? trigger.Describe()
             : null;
 
         return now is null ? note : $"{note}. Now: {Lower(now)}";

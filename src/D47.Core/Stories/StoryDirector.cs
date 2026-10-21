@@ -33,10 +33,19 @@ public sealed record ObjectiveProposal(
     AdventureBeat Current,
     Adventure Draft,
     string Reply,
-    IReadOnlyList<AdventureRemark> Exchange)
+    IReadOnlyList<AdventureRemark> Exchange,
+    int Step = 0)
 {
-    /// <summary>The objectives that would replace the current one and those after it.</summary>
-    public IReadOnlyList<AdventureBeat> Beats => [.. Draft.Beats.Skip(From)];
+    /// <summary>The trigger of the step the Commander is on.</summary>
+    public AdventureTrigger Trigger => Current.Steps[Math.Min(Step, Current.Steps.Count - 1)].Trigger;
+
+    /// <summary>Whether only the step the Commander is on is replaced, because its objective has several.</summary>
+    public bool ReplacesStep => Current.Steps.Count > 1 && Draft.Beats.ElementAtOrDefault(From)?.Steps.Count > 0;
+
+    /// <summary>The objectives that would replace the current one and those after it; the one step that would replace a step of several.</summary>
+    public IReadOnlyList<AdventureBeat> Beats => ReplacesStep
+        ? [Draft.Beats[From] with { Steps = [Draft.Beats[From].Steps[0]] }]
+        : [.. Draft.Beats.Skip(From)];
 }
 
 /// <summary>A proposal, or the refusal saying why none was written.</summary>
@@ -336,11 +345,11 @@ public sealed class StoryDirector(
         }
     }
 
-    /// <summary>The beat of the running story's chapter that <see cref="RefuseBeatAsync"/> would replace, or null.</summary>
+    /// <summary>The beat of the running story's chapter that <see cref="RefuseBeatAsync"/> would replace, narrowed to the step it waits on, or null.</summary>
     public AdventureBeat? RefusableBeat(string? frontierId) =>
         stories.Current(frontierId) is { State: StoryState.Running, CurrentChapter: { } key }
         && book.Standing(frontierId, key) is { IsRefusable: true } standing
-            ? standing.CurrentBeat
+            ? standing.CurrentStepBeat
             : null;
 
     /// <summary>Raised when a LoadGame changes whether the game runs with Odyssey.</summary>
@@ -789,7 +798,7 @@ public sealed class StoryDirector(
             var from = standing.Current;
             var beat = standing.CurrentBeat!;
             var trimmed = remark.Trim();
-            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Remark: trimmed, Exchange: exchange), null);
+            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Remark: trimmed, Exchange: exchange, Step: standing.CurrentStep), null);
             var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
 
             if (outcome.Draft is not { } draft)
@@ -803,7 +812,7 @@ public sealed class StoryDirector(
             }
 
             var proposal = new ObjectiveProposal(
-                null, null, null, key, from, beat, draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)]);
+                null, null, null, key, from, beat, draft, outcome.Reply ?? string.Empty, [.. exchange, new AdventureRemark(trimmed, outcome.Reply)], standing.CurrentStep);
 
             lock (_gate)
             {
@@ -879,10 +888,10 @@ public sealed class StoryDirector(
         try
         {
             var from = standing.Current;
-            var trigger = standing.CurrentBeat!.Trigger;
+            var trigger = standing.CurrentTrigger!;
             var barred = Bars?.Barred(frontierId) ?? [];
             var replaced = RefusedActivities.Key(trigger.Kind, trigger.MissionFamily);
-            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from), replaced is null ? barred : [.. barred.Union([replaced])]);
+            var ask = ShortStoryAsk(frontierId, new AdventureRewrite(standing.Adventure, from, Step: standing.CurrentStep), replaced is null ? barred : [.. barred.Union([replaced])]);
             var outcome = await write(ask, Clock(), cancellationToken).ConfigureAwait(false);
 
             if (outcome.Draft is not { } draft)
@@ -890,7 +899,7 @@ public sealed class StoryDirector(
                 return outcome.Message ?? "Nothing came back.";
             }
 
-            if (book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock()) is { } replacement)
+            if (Replace(frontierId, key, standing, draft) is { } replacement)
             {
                 return replacement;
             }
@@ -977,7 +986,7 @@ public sealed class StoryDirector(
             return "There is no such story.";
         }
 
-        if (!standing.Adventure.IsActive || standing.CurrentBeat is not { } current)
+        if (!standing.Adventure.IsActive || standing.CurrentBeat is null)
         {
             return "That story is not waiting on an objective.";
         }
@@ -1010,10 +1019,10 @@ public sealed class StoryDirector(
             return "A different objective is being written.";
         }
 
-        if (current.Trigger.Kind == TriggerKind.Beacon)
+        if (standing.CurrentTrigger is { Kind: TriggerKind.Beacon } beacon)
         {
             return "The beacon scan is the one objective the journal has to show. "
-                   + (string.IsNullOrWhiteSpace(current.Trigger.System) ? "Scan the beacon." : $"Scan the beacon in {current.Trigger.System}.");
+                   + (string.IsNullOrWhiteSpace(beacon.System) ? "Scan the beacon." : $"Scan the beacon in {beacon.System}.");
         }
 
         return null;
@@ -1022,19 +1031,20 @@ public sealed class StoryDirector(
     private string? ApplyHeldAdventure(string? frontierId, ObjectiveProposal proposal)
     {
         if (!StillWaitingOn(frontierId, proposal.ChapterKey, proposal.From)
-            || book.Standing(frontierId, proposal.ChapterKey)?.CurrentBeat is not { } beat
+            || book.Standing(frontierId, proposal.ChapterKey) is not { CurrentBeat: { } beat, CurrentTrigger: { } trigger } waiting
+            || waiting.CurrentStep != proposal.Step
             || beat.Title != proposal.Current.Title
-            || beat.Trigger.Describe() != proposal.Current.Trigger.Describe())
+            || trigger.Describe() != proposal.Trigger.Describe())
         {
             return "The story has moved on from that objective.";
         }
 
-        if (book.ReplaceBeats(frontierId, proposal.ChapterKey, proposal.From, [.. proposal.Draft.Beats.Skip(proposal.From)], Clock()) is { } refusal)
+        if (Replace(frontierId, proposal.ChapterKey, waiting, proposal.Draft) is { } refusal)
         {
             return refusal;
         }
 
-        if (RefusedActivities.Key(proposal.Current.Trigger.Kind, proposal.Current.Trigger.MissionFamily) is { } replaced)
+        if (RefusedActivities.Key(proposal.Trigger.Kind, proposal.Trigger.MissionFamily) is { } replaced)
         {
             Bars?.Count(frontierId, replaced);
         }
@@ -1042,6 +1052,16 @@ public sealed class StoryDirector(
         DiscardAdventureObjective(frontierId, proposal.ChapterKey);
         logger.LogInformation("{Adventure}: beat {Beat} was changed by the Commander", proposal.Draft.Name, proposal.From + 1);
         return null;
+    }
+
+    /// <summary>Replaces what <paramref name="standing"/> waits on from <paramref name="draft"/>: its current step when the beat has several, otherwise the beat and those after it.</summary>
+    private string? Replace(string? frontierId, string key, AdventureStanding standing, Adventure draft)
+    {
+        var from = standing.Current;
+
+        return standing.CurrentBeat is { Steps.Count: > 1 } && draft.Beats.ElementAtOrDefault(from)?.Steps.FirstOrDefault() is { } step
+            ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, step, Clock())
+            : book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock());
     }
 
     private bool StillWaitingOn(string? frontierId, string key, int from) =>
@@ -1128,7 +1148,7 @@ public sealed class StoryDirector(
         var chapter = at.Standing.Adventure;
         var from = at.Standing.Current;
         var now = Clock();
-        var ask = await RewriteAskAsync(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange), now, cancellationToken).ConfigureAwait(false);
+        var ask = await RewriteAskAsync(frontierId, at.Story, secret, chapter, new AdventureRewrite(chapter, from, Remark: remark, Exchange: exchange, Step: at.Standing.CurrentStep), now, cancellationToken).ConfigureAwait(false);
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
         if (outcome.Draft is not { } draft)
@@ -1174,8 +1194,9 @@ public sealed class StoryDirector(
         if (book.Standing(frontierId, proposal.ChapterKey) is not { IsDone: false } standing
             || standing.Current != proposal.From
             || standing.CurrentBeat is not { } beat
+            || standing.CurrentStep != proposal.Step
             || beat.Title != proposal.Current.Title
-            || beat.Trigger.Describe() != proposal.Current.Trigger.Describe())
+            || standing.CurrentTrigger!.Describe() != proposal.Trigger.Describe())
         {
             return "The story has moved on from that objective.";
         }
@@ -1187,7 +1208,7 @@ public sealed class StoryDirector(
 
         var draft = StoryIntroductions.Introduce(proposal.Draft, still, secret, Gender(), proposal.From);
 
-        if (book.ReplaceBeats(frontierId, proposal.ChapterKey, proposal.From, [.. draft.Beats.Skip(proposal.From)], Clock()) is { } refusal)
+        if (Replace(frontierId, proposal.ChapterKey, standing, draft) is { } refusal)
         {
             return refusal;
         }
@@ -1197,7 +1218,7 @@ public sealed class StoryDirector(
             stories.Save(frontierId, still with { ChangedChapters = [.. still.ChangedChapters, proposal.ChapterKey] });
         }
 
-        if (RefusedActivities.Key(proposal.Current.Trigger.Kind, proposal.Current.Trigger.MissionFamily) is { } replaced)
+        if (RefusedActivities.Key(proposal.Trigger.Kind, proposal.Trigger.MissionFamily) is { } replaced)
         {
             Bars?.Count(frontierId, replaced);
         }
@@ -1237,7 +1258,7 @@ public sealed class StoryDirector(
 
         if (TryRewritable(frontierId, out var at, out _)
             && journalEvent.Timestamp >= at.Story.PickedAt
-            && at.Beat.Trigger is { Kind: TriggerKind.Dock } trigger
+            && at.Standing.CurrentTrigger is { Kind: TriggerKind.Dock } trigger
             && trigger.MarketId == market
             && Claim(frontierId))
         {
@@ -1249,7 +1270,7 @@ public sealed class StoryDirector(
         {
             if (standing.Adventure is { StoryId: null, AcceptedAt: { } accepted } adventure
                 && journalEvent.Timestamp >= accepted
-                && standing.CurrentBeat?.Trigger is { Kind: TriggerKind.Dock } beat
+                && standing.CurrentTrigger is { Kind: TriggerKind.Dock } beat
                 && beat.MarketId == market
                 && ClaimAdventure(frontierId, adventure.Key))
             {
@@ -1283,7 +1304,7 @@ public sealed class StoryDirector(
     {
         var refusal = await rewrite.ConfigureAwait(false);
         var said = refusal is null
-            ? book.Standing(frontierId, key)?.CurrentBeat?.HandOff()
+            ? book.Standing(frontierId, key)?.CurrentObjective?.HandOff()
             : $"A different objective could not be written. {refusal}";
 
         if (said is not null)
@@ -1316,7 +1337,7 @@ public sealed class StoryDirector(
             var ask = new AdventureAsk(
                 AdventureReach.Session,
                 Chapter: adventure.Follows is { } follows ? book.ChapterOf(frontierId, follows) : null,
-                Rewrite: new AdventureRewrite(adventure, from, closedMarketId));
+                Rewrite: new AdventureRewrite(adventure, from, closedMarketId, Step: standing.CurrentStep));
 
             var outcome = await write(ask, Clock(), CancellationToken.None).ConfigureAwait(false);
 
@@ -1325,7 +1346,7 @@ public sealed class StoryDirector(
                 return outcome.Message ?? "Nothing came back.";
             }
 
-            if (book.ReplaceBeats(frontierId, adventure.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
+            if (Replace(frontierId, adventure.Key, standing, draft) is { } refusal)
             {
                 return refusal;
             }
@@ -1445,10 +1466,10 @@ public sealed class StoryDirector(
 
         var chapter = standing.Adventure;
         var from = standing.Current;
-        var refusedKey = closedMarketId is null ? RefusedActivities.Key(beat.Trigger.Kind, beat.Trigger.MissionFamily) : null;
+        var refusedKey = closedMarketId is null && standing.CurrentTrigger is { } refusedTrigger ? RefusedActivities.Key(refusedTrigger.Kind, refusedTrigger.MissionFamily) : null;
         var refused = refusedKey is null || story.Refused.Contains(refusedKey) ? story.Refused : [.. story.Refused, refusedKey];
         var now = Clock();
-        var ask = await RewriteAskAsync(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId), now, cancellationToken).ConfigureAwait(false);
+        var ask = await RewriteAskAsync(frontierId, story with { Refused = refused }, secret, chapter, new AdventureRewrite(chapter, from, closedMarketId, Step: standing.CurrentStep), now, cancellationToken).ConfigureAwait(false);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -1466,7 +1487,7 @@ public sealed class StoryDirector(
 
         draft = StoryIntroductions.Introduce(draft, still, secret, Gender(), from);
 
-        if (book.ReplaceBeats(frontierId, chapter.Key, from, [.. draft.Beats.Skip(from)], Clock()) is { } refusal)
+        if (Replace(frontierId, chapter.Key, standing, draft) is { } refusal)
         {
             return refusal;
         }
@@ -1495,7 +1516,7 @@ public sealed class StoryDirector(
         var number = story.Chapters.Count;
         var finaleChapter = story.FinaleChapter;
         var stage = finaleChapter is null ? StoryClues.Stage(before) : StoryStage.Finale;
-        var beaconBeat = chapter.Beats[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
+        var beaconBeat = chapter.Beats[^1].Steps[^1].Trigger is { Kind: TriggerKind.Beacon, SystemAddress: { } address } trigger
             ? new AdventureBeacon(address, trigger.System ?? GuardianCores.Beacons.GetValueOrDefault(address) ?? string.Empty)
             : null;
         var reach = story.BeaconScanAt is null && beaconBeat is null
@@ -1538,12 +1559,13 @@ public sealed class StoryDirector(
     {
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var held = chapter.Beats
-            .Select((beat, index) => (Beat: beat, Index: index, Row: ChapterActivities.Find(beat.Trigger.Kind, beat.Trigger.MissionFamily, beat.Trigger.Organic)))
+            .SelectMany((beat, index) => beat.Steps.Select(step => (Trigger: step.Trigger, Index: index)))
+            .Select(step => (step.Trigger, step.Index, Row: ChapterActivities.Find(step.Trigger.Kind, step.Trigger.MissionFamily, step.Trigger.Organic)))
             .Where(slot => slot.Row is not null)
             .ToList();
         var others = held
             .Where(slot => slot.Index != rewrite.From)
-            .Select(slot => new DrawnActivity(slot.Row!.Kind, slot.Row.Family, slot.Beat.Trigger.Count ?? slot.Row.Min) { Organic = slot.Beat.Trigger.Organic, PlaceBefore = slot.Row.PlaceBefore })
+            .Select(slot => new DrawnActivity(slot.Row!.Kind, slot.Row.Family, slot.Trigger.Count ?? slot.Row.Min) { Organic = slot.Trigger.Organic, PlaceBefore = slot.Row.PlaceBefore })
             .ToList();
 
         if (rewrite is { Remark: null, ClosedMarketId: null } && held.Any(slot => slot.Index == rewrite.From))
@@ -2071,7 +2093,7 @@ public sealed class StoryDirector(
                     .Select(index => StoryClues.Text(secret, story.Pacing, index))
                     .Where(clue => !string.IsNullOrWhiteSpace(clue))
                     .Select(clue => StorySecret.ForCommander(clue!, commander, Gender()))],
-            HandOff = current is { Adventure.IsAbandoned: false, CurrentBeat: { } beat } ? StoryRecap.HandOff(beat.Trigger, current.Counted) : null,
+            HandOff = current is { Adventure.IsAbandoned: false, CurrentTrigger: { } trigger } ? StoryRecap.HandOff(trigger, current.Counted) : null,
             Paused = story.State == StoryState.Paused,
         };
     }

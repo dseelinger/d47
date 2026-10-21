@@ -189,109 +189,119 @@ public static class AdventureValidation
                 }
             }
 
-            foreach (var fail in beat.FailsOn)
+            if (beat.Steps.Count == 0)
             {
-                problems.AddRange(FailsOnProblems(where, fail));
+                problems.Add($"{where} has no step.");
             }
 
-            if (!Enum.IsDefined(beat.Trigger.Kind))
+            foreach (var (step, stepIndex) in beat.Steps.Select((step, stepIndex) => (step, stepIndex)))
             {
-                problems.Add($"{where} names a trigger that is not one of {string.Join(", ", Kinds)}.");
-                continue;
-            }
+                var stepWhere = beat.Steps.Count > 1 ? $"{where}, step {(stepIndex + 1).ToString(CultureInfo.InvariantCulture)}" : where;
 
-            if (beat.Trigger.IsCounted)
-            {
-                problems.AddRange(CountedProblems(where, beat.Trigger));
-                continue;
-            }
+                foreach (var fail in step.FailsOn)
+                {
+                    problems.AddRange(FailsOnProblems(stepWhere, fail));
+                }
 
-            switch (beat.Trigger.Kind)
-            {
-                case TriggerKind.Rank:
-                    if (Careers.Match(beat.Trigger.Career) is null)
-                    {
-                        problems.Add(
-                            $"{where} names a career \"{beat.Trigger.Career ?? string.Empty}\"; the careers are "
-                            + string.Join(", ", Careers.Keys.Select(Careers.Word)) + ".");
-                    }
+                if (!Enum.IsDefined(step.Trigger.Kind))
+                {
+                    problems.Add($"{stepWhere} names a trigger that is not one of {string.Join(", ", Kinds)}.");
+                    continue;
+                }
 
-                    if (beat.Trigger.Rank is not (>= 1 and <= RankStanding.Elite))
-                    {
-                        problems.Add($"{where} names rank {beat.Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; ranks run 1 to {RankStanding.Elite}.");
-                    }
+                if (step.Trigger.IsCounted)
+                {
+                    problems.AddRange(CountedProblems(stepWhere, step.Trigger));
+                    continue;
+                }
 
-                    break;
+                switch (step.Trigger.Kind)
+                {
+                    case TriggerKind.Rank:
+                        if (Careers.Match(step.Trigger.Career) is null)
+                        {
+                            problems.Add(
+                                $"{stepWhere} names a career \"{step.Trigger.Career ?? string.Empty}\"; the careers are "
+                                + string.Join(", ", Careers.Keys.Select(Careers.Word)) + ".");
+                        }
 
-                case TriggerKind.Board:
-                    if (string.IsNullOrWhiteSpace(beat.Trigger.ShipType))
-                    {
-                        problems.Add($"{where} boards no ship: it names no ship type.");
-                    }
-                    else if (EliteSpecifications.HullName(beat.Trigger.ShipType) is null)
-                    {
-                        problems.Add($"{where} names a ship \"{beat.Trigger.ShipType.Trim()}\" that d47 has no name for.");
-                    }
+                        if (step.Trigger.Rank is not (>= 1 and <= RankStanding.Elite))
+                        {
+                            problems.Add($"{stepWhere} names rank {step.Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; ranks run 1 to {RankStanding.Elite}.");
+                        }
 
-                    break;
+                        break;
 
-                case TriggerKind.Arrive:
-                    if (beat.Trigger.SystemAddress is null && string.IsNullOrWhiteSpace(beat.Trigger.System))
-                    {
-                        problems.Add($"{where} arrives nowhere: it names no system.");
-                    }
+                    case TriggerKind.Board:
+                        if (string.IsNullOrWhiteSpace(step.Trigger.ShipType))
+                        {
+                            problems.Add($"{stepWhere} boards no ship: it names no ship type.");
+                        }
+                        else if (EliteSpecifications.HullName(step.Trigger.ShipType) is null)
+                        {
+                            problems.Add($"{stepWhere} names a ship \"{step.Trigger.ShipType.Trim()}\" that d47 has no name for.");
+                        }
 
-                    break;
+                        break;
 
-                case TriggerKind.Dock:
-                    if (beat.Trigger.MarketId is null && string.IsNullOrWhiteSpace(beat.Trigger.Station))
-                    {
-                        problems.Add($"{where} docks nowhere: it names no station.");
-                    }
+                    case TriggerKind.Arrive:
+                        if (step.Trigger.SystemAddress is null && string.IsNullOrWhiteSpace(step.Trigger.System))
+                        {
+                            problems.Add($"{stepWhere} arrives nowhere: it names no system.");
+                        }
 
-                    break;
+                        break;
 
-                case TriggerKind.Land:
-                case TriggerKind.Scan:
-                    if ((beat.Trigger.SystemAddress is null || beat.Trigger.BodyId is null)
-                        && string.IsNullOrWhiteSpace(beat.Trigger.Body))
-                    {
-                        problems.Add($"{where} names no body.");
-                    }
+                    case TriggerKind.Dock:
+                        if (step.Trigger.MarketId is null && string.IsNullOrWhiteSpace(step.Trigger.Station))
+                        {
+                            problems.Add($"{stepWhere} docks nowhere: it names no station.");
+                        }
 
-                    break;
+                        break;
 
-                case TriggerKind.Beacon:
-                    if (beat.Trigger.SystemAddress is not { } beacon || !GuardianCores.Beacons.ContainsKey(beacon))
-                    {
-                        problems.Add($"{where} waits for a Guardian beacon scan in a system with no Guardian beacon.");
-                    }
+                    case TriggerKind.Land:
+                    case TriggerKind.Scan:
+                        if ((step.Trigger.SystemAddress is null || step.Trigger.BodyId is null)
+                            && string.IsNullOrWhiteSpace(step.Trigger.Body))
+                        {
+                            problems.Add($"{stepWhere} names no body.");
+                        }
 
-                    break;
+                        break;
 
-                case TriggerKind.Engineer:
-                    problems.AddRange(EngineerProblems(where, beat.Trigger));
-                    break;
+                    case TriggerKind.Beacon:
+                        if (step.Trigger.SystemAddress is not { } beacon || !GuardianCores.Beacons.ContainsKey(beacon))
+                        {
+                            problems.Add($"{stepWhere} waits for a Guardian beacon scan in a system with no Guardian beacon.");
+                        }
 
-                case TriggerKind.Unlock:
-                    problems.AddRange(UnlockProblems(where, beat.Trigger, null));
-                    break;
+                        break;
 
-                case TriggerKind.Pledge:
-                    problems.AddRange(PledgeProblems(where, beat.Trigger));
-                    break;
+                    case TriggerKind.Engineer:
+                        problems.AddRange(EngineerProblems(stepWhere, step.Trigger));
+                        break;
 
-                case TriggerKind.PowerRank:
-                    problems.AddRange(PowerRankProblems(where, beat.Trigger));
-                    break;
+                    case TriggerKind.Unlock:
+                        problems.AddRange(UnlockProblems(stepWhere, step.Trigger, null));
+                        break;
 
-                case TriggerKind.Reach:
-                    if (beat.Trigger.JumpRange is not > 0)
-                    {
-                        problems.Add($"{where} waits for a ship that can reach the beacon but names no jump range.");
-                    }
+                    case TriggerKind.Pledge:
+                        problems.AddRange(PledgeProblems(stepWhere, step.Trigger));
+                        break;
 
-                    break;
+                    case TriggerKind.PowerRank:
+                        problems.AddRange(PowerRankProblems(stepWhere, step.Trigger));
+                        break;
+
+                    case TriggerKind.Reach:
+                        if (step.Trigger.JumpRange is not > 0)
+                        {
+                            problems.Add($"{stepWhere} waits for a ship that can reach the beacon but names no jump range.");
+                        }
+
+                        break;
+                }
             }
         }
 
@@ -472,9 +482,9 @@ public static class AdventureValidation
         {
             var beat = adventure.Beats[index];
 
-            if (!beat.Trigger.IsResolved)
+            foreach (var step in beat.Steps.Where(step => !step.Trigger.IsResolved))
             {
-                reasons.Add($"{Where(index, beat)} — {beat.Trigger.Describe()} — is not yet a real place d47 can recognise.");
+                reasons.Add($"{Where(index, beat)} — {step.Trigger.Describe()} — is not yet a real place d47 can recognise.");
             }
         }
 
@@ -484,25 +494,27 @@ public static class AdventureValidation
     /// <summary>A scan beat placed after a landing on, or an earlier scan of, the same body.</summary>
     internal static IEnumerable<string> ScansOutOfOrder(IReadOnlyList<AdventureBeat> beats)
     {
-        for (var index = 0; index < beats.Count; index++)
-        {
-            var beat = beats[index];
+        var steps = beats.SelectMany((beat, index) => beat.Steps.Select(step => (Beat: beat, Index: index, step.Trigger))).ToList();
 
-            if (beat.Trigger.Kind != TriggerKind.Scan)
+        for (var index = 0; index < steps.Count; index++)
+        {
+            var scan = steps[index];
+
+            if (scan.Trigger.Kind != TriggerKind.Scan)
             {
                 continue;
             }
 
             for (var earlier = 0; earlier < index; earlier++)
             {
-                var before = beats[earlier];
+                var before = steps[earlier];
 
-                if (before.Trigger.Kind is not (TriggerKind.Land or TriggerKind.Scan) || !SameBody(before.Trigger, beat.Trigger))
+                if (before.Trigger.Kind is not (TriggerKind.Land or TriggerKind.Scan) || !SameBody(before.Trigger, scan.Trigger))
                 {
                     continue;
                 }
 
-                yield return ScanOutOfOrder(Where(index, beat), beat.Trigger, Where(earlier, before), before.Trigger.Kind);
+                yield return ScanOutOfOrder(Where(scan.Index, scan.Beat), scan.Trigger, Where(before.Index, before.Beat), before.Trigger.Kind);
                 break;
             }
         }

@@ -248,7 +248,7 @@ public sealed partial class StoryBench
             return Writing;
         }
 
-        if (director.Book.Standing(frontierId, key)?.CurrentBeat is not { Trigger: { Kind: TriggerKind.Beacon } beacon })
+        if (director.Book.Standing(frontierId, key)?.CurrentTrigger is not { Kind: TriggerKind.Beacon } beacon)
         {
             return director.Book.Step(frontierId, key, now);
         }

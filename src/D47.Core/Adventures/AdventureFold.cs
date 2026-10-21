@@ -8,6 +8,9 @@ namespace D47.Core.Adventures;
 /// <summary>A <c>failsOn</c> trigger matched: the beat the chapter was waiting on, when, and why. <paramref name="Live"/> is set when the book found it announcing.</summary>
 public sealed record AdventureFailure(int Beat, DateTimeOffset At, string Reason, bool Live = false);
 
+/// <summary>One step of a beat that fired: which, when, and the journal event kind or source that fired it.</summary>
+public sealed record StepFire(int Beat, int Step, DateTimeOffset At, string By);
+
 /// <summary>
 /// Where one adventure stands, computed rather than read (Phase 47, "Progress is derived, and an
 /// adventure counts forward only").
@@ -22,13 +25,16 @@ public sealed record AdventureStanding
     /// <summary>The journal event kind that fired each beat in <see cref="Fired"/>, in the same order, or the source of a step.</summary>
     public IReadOnlyList<string> FiredBy { get; init; } = [];
 
+    /// <summary>Every step that fired so far, oldest first; a beat's last step is the one that fired the beat.</summary>
+    public IReadOnlyList<StepFire> StepFires { get; init; } = [];
+
     /// <summary>When each <c>LoadGame</c> since acceptance was written, oldest first.</summary>
     public IReadOnlyList<DateTimeOffset> Loads { get; init; } = [];
 
     /// <summary>The system the Commander is in, from the last <c>FSDJump</c>, <c>Location</c> or <c>CarrierJump</c> folded, acceptance or not.</summary>
     public long? SystemAddress { get; init; }
 
-    /// <summary>The running total toward the current beat when it is counted: events, or tons sold or refined.</summary>
+    /// <summary>The running total toward the current step when it is counted: events, or tons sold or refined.</summary>
     public int Counted { get; init; }
 
     /// <summary>The last suit mods, ship cosmetics and fleet carrier system seen for each suit, weapon, ship and carrier, for <see cref="AdventureWatch"/>.</summary>
@@ -56,6 +62,23 @@ public sealed record AdventureStanding
 
     public AdventureBeat? CurrentBeat =>
         Adventure.IsBegun && !IsDone && !IsFailed && Current < Adventure.Beats.Count ? Adventure.Beats[Current] : null;
+
+    /// <summary>The index within the current beat of the step the story is waiting on.</summary>
+    public int CurrentStep => StepFires.Count(fire => fire.Beat == Current);
+
+    /// <summary>The step the story is waiting on.</summary>
+    public BeatStep? CurrentObjective =>
+        CurrentBeat is { Steps.Count: > 0 } beat ? beat.Steps[Math.Min(CurrentStep, beat.Steps.Count - 1)] : null;
+
+    /// <summary>The current beat narrowed to the step the story is waiting on, or null.</summary>
+    public AdventureBeat? CurrentStepBeat =>
+        CurrentBeat is { } beat && CurrentObjective is { } step ? beat with { Steps = [step] } : null;
+
+    /// <summary>The trigger of the step the story is waiting on.</summary>
+    public AdventureTrigger? CurrentTrigger => CurrentObjective?.Trigger;
+
+    /// <summary>Whether the step the story is waiting on is its beat's last.</summary>
+    public bool OnLastStep => CurrentBeat is { } beat && CurrentStep >= beat.Steps.Count - 1;
 
     public AdventureBeat? LastBeat => Fired.Count > 0 ? Adventure.Beats[Fired.Count - 1] : null;
 
@@ -109,7 +132,7 @@ public sealed record AdventureStanding
 
     /// <summary>Whether a story chapter is waiting on a beat the Commander may refuse: any but the beacon scan that ends act one.</summary>
     public bool IsRefusable =>
-        Adventure is { StoryId: not null, IsActive: true } && CurrentBeat is { Trigger.Kind: not TriggerKind.Beacon };
+        Adventure is { StoryId: not null, IsActive: true } && CurrentTrigger is { Kind: not TriggerKind.Beacon };
 
     /// <summary>Whether a begun, unfinished short story is waiting on a beat the Commander may replace.</summary>
     public bool IsShortStoryRefusable =>
@@ -130,11 +153,14 @@ public sealed record AdventureStanding
     }
 
     /// <summary>What the Commander did to reach where they are — the last beat's trigger, in words.</summary>
-    public string? LastTrigger() => LastBeat?.Trigger.Describe();
+    public string? LastTrigger() =>
+        CurrentBeat is { } beat && CurrentStep > 0 && CurrentStep <= beat.Steps.Count
+            ? beat.Steps[CurrentStep - 1].Trigger.Describe()
+            : LastBeat?.Steps.LastOrDefault()?.Trigger.Describe();
 
     /// <summary>What the story is waiting for the Commander to do next, in words.</summary>
     public string? NextTrigger() =>
-        Adventure.IsActive && CurrentBeat is { } current ? current.Trigger.Progress(Counted) ?? current.Trigger.Describe() : null;
+        Adventure.IsActive && CurrentTrigger is { } current ? current.Progress(Counted) ?? current.Describe() : null;
 
     /// <summary>The last thing the ship's AI actually said about this story, beat or aside.</summary>
     public AdventureTold? LastSaid() => Adventure.Told.Count > 0 ? Adventure.Told[^1] : null;
@@ -584,12 +610,14 @@ public static class AdventureFold
         }
 
         // A replaced beat counts only what happens after the replacement.
-        if (adventure.RewrittenFrom is { } from && standing.Current >= from && journalEvent.Timestamp < adventure.RewrittenAt)
+        if (BeforeRewrite(standing) && journalEvent.Timestamp < adventure.RewrittenAt)
         {
             return standing;
         }
 
-        if (FailedOn(current, standing, journalEvent, observation, world) is { } failing)
+        var step = standing.CurrentObjective!;
+
+        if (FailedOn(step, standing, journalEvent, observation, world) is { } failing)
         {
             return standing with
             {
@@ -597,31 +625,53 @@ public static class AdventureFold
             };
         }
 
-        if (current.Trigger.Kind == TriggerKind.Conflict)
+        var trigger = step.Trigger;
+
+        if (trigger.Kind == TriggerKind.Conflict)
         {
-            return ApplyConflict(standing, current.Trigger, journalEvent, world);
+            return ApplyConflict(standing, trigger, journalEvent, world);
         }
 
-        var watched = IsWatched(current.Trigger.Kind);
-        var gained = Gained(current.Trigger, journalEvent, observation, world);
+        var watched = IsWatched(trigger.Kind);
+        var gained = Gained(trigger, journalEvent, observation, world);
 
-        if (watched ? gained == 0 || !current.Trigger.IsResolved : !Matches(current.Trigger, journalEvent, standing.SystemAddress))
+        if (watched ? gained == 0 || !trigger.IsResolved : !Matches(trigger, journalEvent, standing.SystemAddress))
         {
             return standing;
         }
 
-        if (current.Trigger.IsCounted)
+        if (trigger.IsCounted)
         {
-            var total = (int)Math.Min((long)standing.Counted + (watched ? gained : Amount(current.Trigger, journalEvent)), int.MaxValue);
+            var total = (int)Math.Min((long)standing.Counted + (watched ? gained : Amount(trigger, journalEvent)), int.MaxValue);
 
-            if (total < current.Trigger.Count)
+            if (total < trigger.Count)
             {
                 return standing with { Counted = total };
             }
         }
 
-        return standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0 };
+        return Fire(standing, journalEvent.Timestamp, journalEvent.Kind);
     }
+
+    /// <summary>The standing with the step it waits on fired at <paramref name="at"/> by <paramref name="by"/>; the beat fires with its last step.</summary>
+    private static AdventureStanding Fire(AdventureStanding standing, DateTimeOffset at, string by)
+    {
+        var last = standing.OnLastStep;
+        var fire = new StepFire(standing.Current, standing.CurrentStep, at, by);
+
+        return standing with
+        {
+            StepFires = [.. standing.StepFires, fire],
+            Fired = last ? [.. standing.Fired, at] : standing.Fired,
+            FiredBy = last ? [.. standing.FiredBy, by] : standing.FiredBy,
+            Counted = 0,
+        };
+    }
+
+    /// <summary>Whether the step the standing waits on is at or after the position the last replacement began at.</summary>
+    private static bool BeforeRewrite(AdventureStanding standing) =>
+        standing.Adventure.RewrittenFrom is { } from
+        && (standing.Current > from || (standing.Current == from && standing.CurrentStep >= standing.Adventure.RewrittenStep));
 
     private static bool IsWatched(TriggerKind kind) =>
         kind is TriggerKind.SuitMod or TriggerKind.Livery or TriggerKind.CarrierJump or TriggerKind.Discover or TriggerKind.Footfall;
@@ -631,8 +681,8 @@ public static class AdventureFold
             ? world?.IsFirstFootfall(journalEvent) == true ? 1 : 0
             : IsWatched(trigger.Kind) ? AdventureWatch.Amount(trigger, observation) : 0;
 
-    /// <summary>The first of the beat's <c>failsOn</c> triggers this event would count toward, as evaluated with a count of one.</summary>
-    private static AdventureTrigger? FailedOn(AdventureBeat beat, AdventureStanding standing, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world)
+    /// <summary>The first of the step's <c>failsOn</c> triggers this event would count toward, as evaluated with a count of one.</summary>
+    private static AdventureTrigger? FailedOn(BeatStep beat, AdventureStanding standing, JournalEvent journalEvent, AdventureObservation observation, AdventureWorld? world)
     {
         foreach (var fail in beat.FailsOn)
         {
@@ -666,12 +716,12 @@ public static class AdventureFold
 
         foreach (var step in adventure.Stepped.Where(step => step.At <= upTo).OrderBy(step => step.At))
         {
-            if (standing.IsDone || step.Beat != standing.Current)
+            if (standing.IsDone || step.Beat != standing.Current || step.Step != standing.CurrentStep)
             {
                 continue;
             }
 
-            if (adventure.RewrittenFrom is { } from && step.Beat >= from && step.At < adventure.RewrittenAt)
+            if (BeforeRewrite(standing) && step.At < adventure.RewrittenAt)
             {
                 continue;
             }
@@ -682,9 +732,9 @@ public static class AdventureFold
         return standing;
     }
 
-    /// <summary>The standing with its current beat fired at <paramref name="at"/> by <paramref name="by"/>, the bench when null.</summary>
+    /// <summary>The standing with its current step fired at <paramref name="at"/> by <paramref name="by"/>, the bench when null.</summary>
     public static AdventureStanding Stepped(AdventureStanding standing, DateTimeOffset at, string? by = null) =>
-        standing with { Fired = [.. standing.Fired, at], FiredBy = [.. standing.FiredBy, by ?? BenchSource], Counted = 0, Side = null };
+        Fire(standing, at, by ?? BenchSource) with { Side = null };
 
     /// <summary>The <see cref="AdventureStanding.FiredBy"/> of a beat the bench fired.</summary>
     public const string BenchSource = "Bench";
@@ -709,7 +759,7 @@ public static class AdventureFold
 
         return total < trigger.Count
             ? standing with { Counted = total, Side = contribution.Side, Parts = parts }
-            : standing with { Fired = [.. standing.Fired, journalEvent.Timestamp], FiredBy = [.. standing.FiredBy, journalEvent.Kind], Counted = 0, Side = null, Parts = parts };
+            : Fire(standing, journalEvent.Timestamp, journalEvent.Kind) with { Side = null, Parts = parts };
     }
 
     private static bool SamePart(ConflictPart a, ConflictPart b) =>

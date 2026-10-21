@@ -305,7 +305,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (standing.NextTrigger() is { } next)
         {
-            body.Children.Add(Trigger($"Next: {next}.", Here(), standing.CurrentBeat?.Trigger.System, Copy()));
+            body.Children.Add(Trigger($"Next: {next}.", Here(), standing.CurrentTrigger?.System, Copy()));
         }
 
         if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
@@ -491,14 +491,14 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (next is not null)
         {
-            page.Children.Add(Trigger(Sentence(next), Here(), standing.CurrentBeat?.Trigger.System, Copy()));
+            page.Children.Add(Trigger(Sentence(next), Here(), standing.CurrentTrigger?.System, Copy()));
         }
 
         var drawnFor = _surface.Commander();
         var row = Buttons();
 
         if (!rewriting
-            && ShipObjectiveButtons.For(_surface, standing.CurrentBeat?.Trigger, _nav, _prompts) is { } ship)
+            && ShipObjectiveButtons.For(_surface, standing.CurrentTrigger, _nav, _prompts) is { } ship)
         {
             row.Children.Add(ship);
         }
@@ -1386,7 +1386,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
                 if (told.Trigger is { Length: > 0 } trigger)
                 {
-                    var system = told.Beat >= 0 && told.Beat < adventure.Beats.Count ? adventure.Beats[told.Beat].Trigger.System : null;
+                    var system = told.Beat >= 0 && told.Beat < adventure.Beats.Count ? adventure.Beats[told.Beat].Steps[^1].Trigger.System : null;
                     stack.Children.Add(Trigger(Sentence(trigger), here, system, copy));
                 }
             }

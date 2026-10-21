@@ -112,19 +112,22 @@ public static class AdventureMention
         {
             yield return beat.Title;
 
-            if (beat.Trigger.System is { } system)
+            foreach (var trigger in beat.Steps.Select(step => step.Trigger))
             {
-                yield return system;
-            }
+                if (trigger.System is { } system)
+                {
+                    yield return system;
+                }
 
-            if (beat.Trigger.Station is { } station)
-            {
-                yield return station;
-            }
+                if (trigger.Station is { } station)
+                {
+                    yield return station;
+                }
 
-            if (beat.Trigger.Body is { } body)
-            {
-                yield return body;
+                if (trigger.Body is { } body)
+                {
+                    yield return body;
+                }
             }
         }
     }

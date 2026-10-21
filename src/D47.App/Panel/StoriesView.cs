@@ -549,7 +549,7 @@ public sealed class StoriesView : UserControl, IPageSummary
     private static D47.Core.Adventures.AdventureBeat? RefusableBeat(AdventureSurface surface, StoryDirector director, string? commander, string? adventureKey) =>
         adventureKey is null
             ? director.RefusableBeat(commander)
-            : surface.Book.Standing(commander, adventureKey) is { IsShortStoryRefusable: true } standing ? standing.CurrentBeat : null;
+            : surface.Book.Standing(commander, adventureKey) is { IsShortStoryRefusable: true } standing ? standing.CurrentStepBeat : null;
 
     private static void Discard(StoryDirector director, string? commander, string? adventureKey)
     {
@@ -613,7 +613,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         group.Children.Add(AdventuresPage.Trigger(AdventuresPage.Sentence(next), _surface.State()?.Location?.StarSystem));
 
         var ship = ShipObjectiveButtons.For(
-            _surface, _surface.Book.Standing(commander, chapterKey)?.CurrentBeat?.Trigger, _nav, _prompts);
+            _surface, _surface.Book.Standing(commander, chapterKey)?.CurrentTrigger, _nav, _prompts);
 
         group.Children.Add(ship is null ? AdventuresPage.Buttons(change, refuse) : AdventuresPage.Buttons(ship, change, refuse));
         return group;

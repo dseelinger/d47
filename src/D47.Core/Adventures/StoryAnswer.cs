@@ -121,7 +121,13 @@ internal static class StoryAnswer
         "{" + (objective ? "\"objective\": number, " : string.Empty) + "\"title\": string, \"function\": string, \"kind\": "
         + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
         + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
-        + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string") + "}";
+        + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string")
+        + (objective ? string.Empty : ", \"then\": [" + StepShape(kinds, ships) + "]") + "}";
+
+    private static string StepShape(IReadOnlyList<string> kinds, IReadOnlyList<string>? ships) =>
+        "{\"kind\": " + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
+        + string.Concat(BeatFields.Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
+        + "}";
 
     internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null)
     {
@@ -129,7 +135,7 @@ internal static class StoryAnswer
         {
             ("opening", speakers is not null ? Lines(speakers) : Text()),
             ("reply", Text()),
-            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object(Beat(speakers, kinds, ships)) }),
+            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object([.. Beat(speakers, kinds, ships), ("then", new JsonObject { ["type"] = "array", ["items"] = Object(Step(kinds, ships)) })]) }),
         };
 
         if (destination)
@@ -167,12 +173,23 @@ internal static class StoryAnswer
         {
             ("title", Text()),
             ("function", Text()),
-            ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
         };
-        beat.AddRange(BeatFields.Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
+        beat.AddRange(Step(kinds, ships));
         beat.Add(speakers is not null ? ("lines", Lines(speakers)) : ("line", Text()));
 
         return beat;
+    }
+
+    /// <summary>A step's fields: its kind and the fields that kind uses.</summary>
+    private static List<(string, JsonNode)> Step(IReadOnlyList<string> kinds, IReadOnlyList<string>? ships)
+    {
+        var step = new List<(string, JsonNode)>
+        {
+            ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(kinds.Select(kind => (JsonNode)JsonValue.Create(kind)!).ToArray()) }),
+        };
+        step.AddRange(BeatFields.Select(field => (field.Name, field.Name == "ship" && ships is not null ? Hulls(ships) : Of(field.Shape))));
+
+        return step;
     }
 
     private static JsonObject Destination() => Object([("system", Text()), ("body", Text())]);

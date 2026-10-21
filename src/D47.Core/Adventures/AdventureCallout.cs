@@ -28,6 +28,9 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>The hand-off after a beat whose line is not the ship's, said by the ship.</summary>
     public const string HandOffPrefix = "adventure-handoff.";
 
+    /// <summary>The hand-off to the next step after a step that is not its beat's last, keyed <c>adventure-step.&lt;story&gt;.&lt;beat&gt;.&lt;step&gt;</c>.</summary>
+    public const string StepPrefix = "adventure-step.";
+
     /// <summary>The line said when a chapter fails, keyed <c>adventure-failed.&lt;story&gt;</c>.</summary>
     public const string FailedPrefix = "adventure-failed.";
 
@@ -152,7 +155,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             var families = book.Active(commander)
                 .Where(standing => !book.IsSilenced(commander, standing.Adventure, context.Now))
-                .Select(standing => standing.CurrentBeat?.Trigger)
+                .Select(standing => standing.CurrentTrigger)
                 .Where(trigger => trigger is { Kind: TriggerKind.Mission } && MissionFamilies.IsIllegal(trigger.MissionFamily))
                 .Select(trigger => trigger!.MissionFamily)
                 .ToList();
@@ -216,13 +219,14 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             // Stamped with the tick rather than the journal's time, so the settle is measured from when d47
             // learned of it rather than from a timestamp that may be a file flush behind.
+            _waiting.RemoveAll(other => other.IsStep && other.FrontierId == moment.FrontierId && other.Adventure.Key == moment.Adventure.Key && other.Position < moment.Position);
             _waiting.Add(moment with { At = context.Now });
 
             // And the acknowledgement, now, with no settle and no model behind it — see <see
             // cref="AdventureAcks"/> for why it is split off from the beat at all.
             if (!moment.IsOpening && !moment.IsFailure)
             {
-                yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}", AdventureAcks.Pick(_acks++))
+                yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}{(moment.Step is { } step ? "." + step.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty)}", AdventureAcks.Pick(_acks++))
                 {
                     Urgency = CalloutUrgency.Routine,
                 };
@@ -271,7 +275,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             {
                 var superseded = _waiting.Any(other => other.FrontierId == moment.FrontierId
                     && other.Adventure.Key == moment.Adventure.Key
-                    && other.Beat > moment.Beat);
+                    && other.Position > moment.Position);
 
                 if (superseded || moment.HandOff is not { } held)
                 {
@@ -279,10 +283,23 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                     continue;
                 }
 
-                yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
+                yield return new Announcement(moment.IsStep ? moment.Key : $"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
                 {
                     Urgency = CalloutUrgency.Routine,
                 };
+
+                continue;
+            }
+
+            if (moment.IsStep)
+            {
+                if (moment.HandOff is { } next)
+                {
+                    yield return new Announcement(moment.Key, next)
+                    {
+                        Urgency = CalloutUrgency.Routine,
+                    };
+                }
 
                 continue;
             }
