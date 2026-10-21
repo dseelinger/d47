@@ -1,8 +1,10 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
+
+public sealed record RegionRun(double X0, double X1, double Z0, double Z1, int RegionId);
 
 /// <summary>
 /// Places a position in one of the 42 codex regions, ported from klightspeed/EliteDangerousRegionMap's
@@ -17,7 +19,66 @@ public static class GalacticRegions
     private const int Scale = 83;
     private const int GridsPerLy = 4096;
 
+    private const double CellLy = (double)GridsPerLy / Scale;
+
     private static readonly Lazy<Map> Loaded = new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<IReadOnlyList<RegionRun>> AllRuns = new(BuildRuns, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>The galaxy the grid covers, in light years.</summary>
+    public static (double X0, double Z0, double X1, double Z1) Extent
+    {
+        get
+        {
+            var map = Loaded.Value;
+            var width = map.Rows.Count == 0 ? 0 : map.Rows.Max(row => row.Sum(run => run.Span));
+
+            return (X0, Z0, X0 + width * CellLy, Z0 + map.Rows.Count * CellLy);
+        }
+    }
+
+    /// <summary>Every run of cells with a region, row by row.</summary>
+    public static IReadOnlyList<RegionRun> Runs() => AllRuns.Value;
+
+    /// <summary>The centre of the region's cell nearest the mean of its cells, or null for an unknown number.</summary>
+    public static StarPosition? LabelAt(int regionId)
+    {
+        double sumX = 0, sumZ = 0, count = 0;
+
+        foreach (var run in AllRuns.Value.Where(run => run.RegionId == regionId))
+        {
+            var cells = (run.X1 - run.X0) / CellLy;
+
+            sumX += (run.X0 + run.X1) / 2 * cells;
+            sumZ += (run.Z0 + run.Z1) / 2 * cells;
+            count += cells;
+        }
+
+        if (count == 0)
+        {
+            return null;
+        }
+
+        var meanX = sumX / count;
+        var meanZ = sumZ / count;
+        StarPosition? best = null;
+        var bestDistance = double.MaxValue;
+
+        foreach (var run in AllRuns.Value.Where(run => run.RegionId == regionId))
+        {
+            var cz = (run.Z0 + run.Z1) / 2;
+            var firstCell = Math.Clamp(Math.Round((meanX - run.X0) / CellLy - 0.5), 0, Math.Round((run.X1 - run.X0) / CellLy) - 1);
+            var cx = run.X0 + (firstCell + 0.5) * CellLy;
+            var distance = (cx - meanX) * (cx - meanX) + (cz - meanZ) * (cz - meanZ);
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = new StarPosition(cx, 0, cz);
+            }
+        }
+
+        return best;
+    }
 
     /// <summary>The codex region this position falls in, or null outside the map.</summary>
     public static string? Find(StarPosition position)
@@ -56,6 +117,32 @@ public static class GalacticRegions
             .Where(pair => string.Equals(pair.Value, name.Trim(), StringComparison.OrdinalIgnoreCase))
             .Select(pair => (int?)pair.Key)
             .FirstOrDefault();
+
+    private static IReadOnlyList<RegionRun> BuildRuns()
+    {
+        var runs = new List<RegionRun>();
+        var rows = Loaded.Value.Rows;
+
+        for (var pz = 0; pz < rows.Count; pz++)
+        {
+            var rx = 0;
+
+            foreach (var (span, regionId) in rows[pz])
+            {
+                if (regionId != 0)
+                {
+                    runs.Add(new RegionRun(
+                        X0 + rx * CellLy, X0 + (rx + span) * CellLy,
+                        Z0 + pz * CellLy, Z0 + (pz + 1) * CellLy,
+                        regionId));
+                }
+
+                rx += span;
+            }
+        }
+
+        return runs;
+    }
 
     private sealed record Map(
         IReadOnlyDictionary<int, string> Names,
