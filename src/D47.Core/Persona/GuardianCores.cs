@@ -129,6 +129,14 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
         return journalEvent.Kind == "DataScanned" && systemAddress is { } address && Beacons.ContainsKey(address);
     }
 
+    /// <summary>Whether the event is a scan of a tourist beacon.</summary>
+    public static bool IsTouristBeaconScan(JournalEvent journalEvent)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        return journalEvent.Kind == "DataScanned" && journalEvent.Raw.String("Type") == "$Datascan_TouristBeacon;";
+    }
+
     /// <summary>Every core available: the host for tests, the designer and the replay harness.</summary>
     public static GuardianCores AllAwake() => new();
 

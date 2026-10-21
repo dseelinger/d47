@@ -1509,7 +1509,7 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.Append(TriggerConfirms.Section(Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach)).Select(kind => kind.ToString().ToLowerInvariant())));
+        text.Append(TriggerConfirms.Section(Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site)).Select(kind => kind.ToString().ToLowerInvariant())));
         text.AppendLine("Write the ending so that the last objective's trigger confirms it.");
         text.AppendLine();
         text.AppendLine(
@@ -2645,6 +2645,7 @@ public sealed class AdventureGenerator(
             TriggerKind.Board => $"board: {Ship ?? "?"}",
             TriggerKind.Beacon => "beacon",
             TriggerKind.Reach => "reach",
+            TriggerKind.Site => "site",
             _ => $"arrive: {System ?? "?"}",
         };
     }
@@ -3427,7 +3428,7 @@ public sealed class AdventureGenerator(
     /// <summary>Travel beats a story chapter after the first may have.</summary>
     public const int MostTravel = 2;
 
-    private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan;
+    private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site;
 
     /// <summary>The refusal for an illegal mission beat that does not directly follow an arrive or dock in an Anarchy system, or null.</summary>
     private static async Task<string?> IllegalOutsideAnarchyAsync(

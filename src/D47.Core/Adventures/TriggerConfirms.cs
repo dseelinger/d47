@@ -51,6 +51,7 @@ internal static class TriggerConfirms
         [TriggerKind.Claim] = "a system was claimed for colonisation — not what will be built",
         [TriggerKind.Unlock] = "a tech broker row was unlocked — not who supplied the parts",
         [TriggerKind.Pledge] = "the Commander pledged to a Power — not what the Power asked or promised",
+        [TriggerKind.Site] = "the ship came to a Guardian site, or a tourist beacon was scanned in that system — not what is there or what it holds",
         [TriggerKind.PowerRank] = "a Power rank was reached — not what it was earned for",
     };
 

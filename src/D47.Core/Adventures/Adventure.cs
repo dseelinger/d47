@@ -156,11 +156,20 @@ public enum TriggerKind
 
     /// <summary>A <c>PowerplayRank</c> event whose rank is at least <see cref="AdventureTrigger.Rank"/>.</summary>
     PowerRank,
+
+    /// <summary>A Guardian site or tourist beacon, named by <see cref="AdventureTrigger.Filter"/>. Not counted, not authorable.</summary>
+    Site,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
 public sealed record AdventureTrigger
 {
+    /// <summary><see cref="Filter"/> of a <see cref="TriggerKind.Site"/> at a Guardian ruin or structure.</summary>
+    public const string GuardianSite = "guardian";
+
+    /// <summary><see cref="Filter"/> of a <see cref="TriggerKind.Site"/> at a tourist beacon.</summary>
+    public const string TouristSite = "tourist";
+
     public required TriggerKind Kind { get; init; }
 
     public long? SystemAddress { get; init; }
@@ -199,6 +208,9 @@ public sealed record AdventureTrigger
     /// <summary>The cargo, item, genus, category, signal, wreck or source type, the tech broker row an unlock beat waits for, the Power a pledge beat waits for, the suit mod, the name of what is rescued, or the war type (<c>war</c>, <c>civilwar</c> or <c>election</c>), that a counted beat is limited to.</summary>
     public string? Filter { get; init; }
 
+    /// <summary>For a tourist <see cref="TriggerKind.Site"/>: the beacon's name, as the signal index shows it.</summary>
+    public string? SiteName { get; init; }
+
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
     public bool? Organic { get; init; }
 
@@ -218,7 +230,7 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank) && !IsOnceKind(kind);
+        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank or TriggerKind.Site) && !IsOnceKind(kind);
 
     /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
     public static bool IsOnceKind(TriggerKind kind) =>
@@ -241,6 +253,12 @@ public sealed record AdventureTrigger
         TriggerKind.Pledge => Filter is null || Knowledge.GalaxyFilters.Powers.Contains(Filter),
         TriggerKind.PowerRank => Rank is > 0,
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
+        TriggerKind.Site => Filter switch
+        {
+            GuardianSite => SystemAddress is not null && BodyId is not null,
+            TouristSite => SystemAddress is not null,
+            _ => false,
+        },
         TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim => true,
         _ => false,
     };
@@ -256,6 +274,9 @@ public sealed record AdventureTrigger
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         TriggerKind.Reach => $"fit out a ship that can reach the beacon in {System?.Trim() ?? "the Guardian beacon's system"}",
         TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
+        TriggerKind.Site => Filter == GuardianSite
+            ? $"fly to the Guardian site on {Body ?? Address(SystemAddress, BodyId)}{In()}"
+            : $"scan the tourist beacon {SiteName?.Trim()}{In()}",
         TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
         TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",
         TriggerKind.Mission => $"complete {Counted(Missions(one: true), Missions(one: false))}{For()}",
@@ -351,6 +372,7 @@ public sealed record AdventureTrigger
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
         TriggerKind.Beacon => $"Next: {Describe()} with the ship's data-link scanner.",
+        TriggerKind.Site when Filter == TouristSite => $"Next: {Describe()} with the ship's data-link scanner.",
         TriggerKind.Reach =>
             $"Next: {Describe()}: a jump range of at least {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years and a fuel scoop. Arriving there in any ship also counts.",
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",

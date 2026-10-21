@@ -51,7 +51,7 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
 
         Assert.Contains("The ending must be something the last objective confirms.", prompt);
 
-        foreach (var kind in Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach)))
+        foreach (var kind in Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site)))
         {
             Assert.Contains($"- \"{kind.ToString().ToLowerInvariant()}\": {TriggerConfirms.Of(kind)}", prompt);
         }

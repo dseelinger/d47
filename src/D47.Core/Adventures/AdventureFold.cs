@@ -262,6 +262,19 @@ public static class AdventureFold
                 systemAddress == trigger.SystemAddress
                 && GuardianCores.IsBeaconScan(journalEvent, systemAddress),
 
+            TriggerKind.Site => trigger.Filter switch
+            {
+                AdventureTrigger.GuardianSite =>
+                    journalEvent.Kind is "ApproachSettlement"
+                    && raw.String("Name") is { } name && name.StartsWith("$Ancient", StringComparison.Ordinal)
+                    && raw.Long("SystemAddress") == trigger.SystemAddress
+                    && raw.Int("BodyID") == trigger.BodyId,
+                AdventureTrigger.TouristSite =>
+                    GuardianCores.IsTouristBeaconScan(journalEvent)
+                    && systemAddress == trigger.SystemAddress,
+                _ => false,
+            },
+
             TriggerKind.Bounty => journalEvent.Kind is "Bounty",
 
             TriggerKind.Bond =>

@@ -411,6 +411,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     MissionFamily = beat.Trigger.MissionFamily?.Trim(),
                     Commodity = beat.Trigger.Commodity?.Trim(),
                     Filter = beat.Trigger.Filter?.Trim(),
+                    SiteName = beat.Trigger.SiteName?.Trim(),
                     Organic = beat.Trigger.Organic,
                     New = beat.Trigger.New,
                     Engineer = beat.Trigger.Engineer?.Trim(),
@@ -513,6 +514,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     MissionFamily = beat.Trigger.MissionFamily,
                     Commodity = beat.Trigger.Commodity,
                     Filter = beat.Trigger.Filter,
+                    SiteName = beat.Trigger.SiteName,
                     Organic = beat.Trigger.Organic,
                     New = beat.Trigger.New,
                     Engineer = beat.Trigger.Engineer,
@@ -679,5 +681,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Engineer { get; set; }
 
         public string? Stage { get; set; }
+
+        public string? SiteName { get; set; }
     }
 }

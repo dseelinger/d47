@@ -201,7 +201,7 @@ Open the Short Story page and the entry for a brief; committing the brief asks f
 
 ### What an objective can be
 
-Thirty-seven triggers, and every one is a comparison on a structured field rather than on a name:
+Thirty-nine triggers, and every one is a comparison on a structured field rather than on a name:
 
 | Trigger | Matched on | Never on |
 |---|---|---|
@@ -245,6 +245,8 @@ Thirty-seven triggers, and every one is a comparison on a structured field rathe
 | First footfall | a `Disembark` onto a body whose `Scan` said `WasFootfalled` false, each body once | a body already walked on, or a second disembark there |
 | Discover a body | `Scan` events with `WasDiscovered` false, each body once, optionally one class: `Earthlike body`, `Water world`, `Ammonia world`, `Gas giant with water based life`, `Gas giant with ammonia based life`, or `N` for a neutron star | a scan of a body already discovered, or any other class |
 | Deliver to construction sites | the `Amount` of each `Contributions` entry in a `ColonisationContribution`, optionally of one commodity `Name` | a `MarketSell` at a construction site's market |
+| Fly to a Guardian site | an `ApproachSettlement` whose `Name` starts with `$Ancient`, in the objective's system and body ids | a settlement of another name, or on another body |
+| Scan a tourist beacon | a `DataScanned` of type `$Datascan_TouristBeacon;` while in the objective's system id | any other data scan type, or a scan in another system |
 | Claim a system | a `ColonisationSystemClaim` event | anything else |
 | Unlock at a tech broker | a `TechnologyBroker` event whose `ItemsUnlocked` holds a module symbol of one tech broker item, such as `Guardian FSD Booster` | an unlock of another item, or an item the Commander is known to have unlocked already |
 | Pledge to a Power | a `PowerplayJoin` event, for the named Power or for any Power when none is named | a join to another Power, or a `PowerplayDefect` |
@@ -252,9 +254,9 @@ Thirty-seven triggers, and every one is a comparison on a structured field rathe
 | Work for a faction | `+` marks in the `FactionEffects` of a `MissionCompleted` for one faction, optionally in one `SystemAddress`; `++++` counts as four | anything else |
 
 Only a stock story's chapter one uses the beacon trigger, as its last objective, and you cannot add one on the
-form.
+form. The two site objectives are not authorable either.
 
-Every trigger after the seventh is counted except the engineer stage, the beacon-reach objective, the tech broker unlock, the PowerPlay pledge and rank, and the once kinds (carrier buy, squadron, squadron founding and system claim), which each fire once. A counted objective fires when its total reaches its count, and only what happens
+Every trigger after the seventh is counted except the engineer stage, the beacon-reach objective, the tech broker unlock, the PowerPlay pledge and rank, the site objectives, and the once kinds (carrier buy, squadron, squadron founding and system claim), which each fire once. A counted objective fires when its total reaches its count, and only what happens
 after the objective before it has fired counts. It has no place of its own; a chapter that needs it done
 somewhere puts an arrive or dock objective there first. The card shows the running total, such as "Kill bonds
 for LTT 7786 Labour: 3 of 8", and a catch-up after d47 was closed rebuilds it from the journal. These
