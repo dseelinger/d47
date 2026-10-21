@@ -256,6 +256,80 @@ public sealed class ShipPlanService(
         return true;
     }
 
+    /// <summary>
+    /// Replaces a build's slot plans with an imported loadout's and forgets its priority moves; changes
+    /// nothing where the hull differs. With <paramref name="dropMet"/> on an owned ship, slots already
+    /// met by what is fitted are left out and counted.
+    /// </summary>
+    public string Import(string buildId, LoadoutImport imported, bool dropMet)
+    {
+        if (store.Find(buildId) is not { } build)
+        {
+            return "There is no such build.";
+        }
+
+        if (imported.Refusal is { } refusal)
+        {
+            return refusal;
+        }
+
+        var hull = EliteSpecifications.Ship(build.Hull)?.Symbol ?? build.Hull;
+
+        if (!string.Equals(hull, imported.Hull, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"That loadout is for a {EliteSpecifications.HullSaid(imported.Hull ?? string.Empty)}, "
+                   + $"and this build is for a {build.HullName}. Nothing was changed.";
+        }
+
+        var slots = imported.Slots;
+        var met = 0;
+
+        if (dropMet && build.ShipId is { } shipId)
+        {
+            var fitted = FittedModules(shipId);
+
+            slots =
+            [
+                .. slots.Where(plan =>
+                {
+                    var module = fitted.FirstOrDefault(candidate =>
+                        string.Equals(candidate.Slot, plan.Slot, StringComparison.OrdinalIgnoreCase));
+
+                    if (Outstanding(plan, module))
+                    {
+                        return true;
+                    }
+
+                    met++;
+                    return false;
+                }),
+            ];
+        }
+
+        Replace(build with
+        {
+            Slots = slots,
+            PriorityMoves = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase),
+        });
+
+        var said = $"Planned {Count(slots.Count, "slot")} from the loadout.";
+
+        if (met > 0)
+        {
+            said += $" {Count(met, "slot")} already matched what is fitted and {(met == 1 ? "was" : "were")} left out.";
+        }
+
+        if (imported.Unread.Count > 0)
+        {
+            said += $" I could not read {Count(imported.Unread.Count, "part")}: {string.Join("; ", imported.Unread)}.";
+        }
+
+        return said;
+    }
+
+    private static string Count(int count, string noun) =>
+        $"{count.ToString(CultureInfo.InvariantCulture)} {noun}{(count == 1 ? string.Empty : "s")}";
+
     /// <summary>Takes a slot's plan out, leaving the rest of the build alone.</summary>
     public bool Clear(string buildId, string slot)
     {
