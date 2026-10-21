@@ -503,6 +503,18 @@ else is sent: no key, no Commander name, no position and nothing else from your 
 
 Pictures you save yourself are kept in the same folder and never leave this PC.
 
+To make your own, say "take a picture" in game, then open the entry's page in the main window (Commander,
+Ledgers, Codex, the region, the entry) and press **Choose a picture**. The captures are listed newest first,
+those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
+drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
+**Save** keeps a 768 by 768 picture, the capture it was cut from and the square, in `data\codex-pictures\local`;
+**Cancel** keeps nothing.
+
+With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the kept
+capture with the saved square, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
+is no stock one, deletes your picture and its capture. These are in the main window only; the big panel shows
+the picture and none of them. An entry in a region D47 cannot name has none of them.
+
 **Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
 pictures you saved yourself, even for stock pictures already on disk, which are kept.
 

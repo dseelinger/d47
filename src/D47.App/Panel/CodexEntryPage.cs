@@ -22,11 +22,13 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private readonly CodexPictureSet? _pictures;
     private readonly CodexTable _table;
     private readonly bool _headset;
+    private readonly PanelNavigator? _nav;
     private readonly StackPanel _body = new();
 
     private CodexLedger? _seenLedger;
     private string? _seenSystem;
     private CodexPictureKey? _pending;
+    private string? _failure;
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
@@ -35,8 +37,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         string name,
         CodexPictureSet? pictures,
         bool headset = false,
-        CodexTable? table = null)
+        CodexTable? table = null,
+        PanelNavigator? nav = null)
     {
+        _nav = nav;
         _state = state;
         _entryId = entryId;
         _regionId = regionId;
@@ -80,10 +84,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             _pictures.Store.Arrived += Arrived;
         }
 
-        if (_pending is not null)
-        {
-            Draw();
-        }
+        Draw();
     }
 
     protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -139,6 +140,14 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
     private StackPanel PictureColumn(CodexEntryView view)
     {
+        var column = PictureOf(view);
+        AddActions(column);
+
+        return column;
+    }
+
+    private StackPanel PictureOf(CodexEntryView view)
+    {
         var column = new StackPanel { Width = Side, Spacing = 10, VerticalAlignment = VerticalAlignment.Top };
         var square = new Border { Width = Side, Height = Side };
         RoutingKit.Themed(square, Border.BackgroundProperty, ThemeManager.SlabKey);
@@ -176,6 +185,71 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         column.Children.Add(Hint(_pictures?.StockOn == false ? CodexModel.StockOffText : CodexModel.NoPictureText));
 
         return column;
+    }
+
+    /// <summary>The picture actions: main window only, and only for a region D47 can name.</summary>
+    private void AddActions(StackPanel column)
+    {
+        if (_headset || _nav is not { } nav || _pictures is not { } pictures || _regionId is not { } region)
+        {
+            return;
+        }
+
+        var key = new CodexPictureKey(_entryId, region);
+        var store = pictures.Store;
+        var own = store.HasLocal(key);
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+
+        Button Tile(string name, string label, Action press)
+        {
+            var button = new Button { Name = name, Content = label, Margin = new Thickness(0, 0, Gaps.Tile, Gaps.Tile) };
+            button.Click += (_, _) => press();
+            actions.Children.Add(button);
+
+            return button;
+        }
+
+        void Choose() => nav.Drill(CodexPage.ChooseCrumb(key));
+
+        if (!own)
+        {
+            Tile("CodexChoose", "Choose a picture", Choose);
+            column.Children.Add(actions);
+
+            return;
+        }
+
+        if (store.HasLocalSource(key))
+        {
+            Tile("CodexRecrop", "Re-crop", () => nav.Drill(CodexPage.CropCrumb(key, kept: true)));
+        }
+
+        Tile("CodexReplace", "Replace", Choose);
+
+        var stock = store.StockRows().Any(row => row.Key == key);
+        Tile(
+            stock ? "CodexUseStock" : "CodexRemoveMine",
+            stock ? "Use the stock picture" : "Remove my picture",
+            () =>
+            {
+                try
+                {
+                    store.RemoveLocal(key);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _failure = $"Your picture could not be removed: {ex.Message}";
+                }
+
+                Draw();
+            });
+        column.Children.Add(actions);
+
+        if (_failure is not null)
+        {
+            column.Children.Add(Hint(_failure));
+            _failure = null;
+        }
     }
 
     private Image Pic(string name, Bitmap source) => new()

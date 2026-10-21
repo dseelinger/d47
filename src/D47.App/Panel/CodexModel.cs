@@ -161,6 +161,28 @@ public static class CodexModel
 
     public const string FetchingText = "Fetching the picture.";
 
+    public const string ChooseWord = "Choose a picture";
+
+    public const string CropWord = "Crop";
+
+    public const string NoCapturesText = "No captures yet. Say \"take a picture\" in game to take one.";
+
+    public const string TakenWithHead = "Taken with this entry";
+
+    public const string OtherCapturesHead = "Other captures";
+
+    public const string UnknownSystemText = "Unknown system";
+
+    public const string CaptureGoneText = "The capture could not be read.";
+
+    public const string SmallestSquareText = "Smallest square";
+
+    /// <summary>The crop readout: the square's side, its position and the size it is saved at.</summary>
+    public static string CropReadout(CropSquare square) =>
+        string.Create(
+            CultureInfo.InvariantCulture,
+            $"SQUARE {square.Side} × {square.Side} · AT {square.X}, {square.Y} · SAVED AT {CropSquare.SavedSide} × {CropSquare.SavedSide}");
+
     public const string NotHereText = "Not on your record in this region.";
 
     public const string LoggedHereHead = "Logged in this region";

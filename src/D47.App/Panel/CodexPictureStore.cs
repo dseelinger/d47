@@ -111,6 +111,38 @@ public sealed class CodexPictureStore
     /// <summary>The bytes of the Commander's own picture; null when there is none.</summary>
     public byte[]? Local(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.FileName));
 
+    /// <summary>The capture the Commander's picture was cut from; null when it is not kept.</summary>
+    public byte[]? LocalSource(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.SourceFileName));
+
+    /// <summary>Whether the capture the Commander's picture was cut from is kept.</summary>
+    public bool HasLocalSource(CodexPictureKey key) => _files.Stat(Path.Combine(_folder, LocalFolder, key.SourceFileName)) is not null;
+
+    /// <summary>The square the Commander's picture was cut with; null when it is not kept.</summary>
+    public CropSquare? LocalCrop(CodexPictureKey key) => CropSquare.Parse(_files.ReadText(Path.Combine(_folder, LocalFolder, key.CropFileName)));
+
+    /// <summary>Whether the Commander has a picture of their own for <paramref name="key"/>.</summary>
+    public bool HasLocal(CodexPictureKey key) => LocalKeys().Contains(key);
+
+    /// <summary>Keeps the picture, its source and its square; the picture is written last, so it appears only when the rest is kept.</summary>
+    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop)
+    {
+        var folder = Path.Combine(_folder, LocalFolder);
+
+        _files.WriteBytes(Path.Combine(folder, key.SourceFileName), source);
+        _files.WriteText(Path.Combine(folder, key.CropFileName), crop.Write());
+        _files.WriteBytes(Path.Combine(folder, key.FileName), picture);
+    }
+
+    /// <summary>Deletes the Commander's picture, its source and its square.</summary>
+    public void RemoveLocal(CodexPictureKey key)
+    {
+        var folder = Path.Combine(_folder, LocalFolder);
+
+        _files.Delete(Path.Combine(folder, key.FileName));
+        _files.Delete(Path.Combine(folder, key.SourceFileName));
+        _files.Delete(Path.Combine(folder, key.CropFileName));
+    }
+
     /// <summary>The fetch started for <paramref name="key"/>; true when the picture landed.</summary>
     public Task<bool> Fetched(CodexPictureKey key) => _asked.TryGetValue(key, out var task) ? task : Task.FromResult(false);
 

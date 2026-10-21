@@ -130,6 +130,9 @@ public static class EgressDisclosure
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
+    /// <summary>The pictures the Commander takes in game and the codex pictures made from them, kept on this PC.</summary>
+    public const string CodexCaptures = "codexcaptures";
+
     /// <summary>Elite's screenshots, copied as JPEG into a D47 folder on this PC.</summary>
     public const string Screenshots = "screenshots";
 
@@ -174,6 +177,7 @@ public static class EgressDisclosure
         Diagnostics,
         JournalFiles,
         ChosenPictures,
+        CodexCaptures,
         Screenshots,
         OwnVoice,
         CustomVoices,
@@ -213,6 +217,7 @@ public static class EgressDisclosure
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
+        CodexCaptures => "Your captures and codex pictures",
         Screenshots => "Your screenshots",
         OwnVoice => "Your recorded voice",
         CustomVoices => "Your custom voices",
@@ -628,6 +633,11 @@ public static class EgressDisclosure
             ChosenPictures,
             NameOf(ChosenPictures),
             "A picture you choose for yourself, a hired pilot or a story's character is kept in data\\pictures on this PC and never sent anywhere."),
+
+        CodexCaptures => EgressEntry.Silent(
+            CodexCaptures,
+            NameOf(CodexCaptures),
+            "Pictures you take by saying \"take a picture\" are kept in data\\captures, and the codex pictures you save are kept in data\\codex-pictures\\local, on this PC. They are never sent anywhere."),
 
         Screenshots => EgressEntry.Silent(
             Screenshots,

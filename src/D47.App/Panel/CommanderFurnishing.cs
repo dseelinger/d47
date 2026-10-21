@@ -189,9 +189,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
         var choice = new CodexChoice();
+        var work = new CodexPictureWork();
 
         _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
-            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset)
+            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav)
+            : CodexPage.PictureOf(crumb.Key) is { } picture
+            ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsDiscoveries(crumb.Key)
             ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav)
             : CodexPage.IsRegion(crumb.Key)
@@ -200,6 +203,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
     }
+
+    private Control PicturePage(string crumb, CodexPictureKey picture, CodexPictureSet pictures, CodexPictureWork work) =>
+        CodexPage.IsChoose(crumb)
+            ? new CodexChoosePage(picture, pictures, host.Nav, work)
+            : new CodexCropPage(picture, pictures, host.Nav, work, CodexPage.IsRecrop(crumb));
 
     /// <summary>Furnishes the Ledgers root, once, and declares <paramref name="ledger"/> under it as a page that fills the strip.</summary>
     private void DeclareLedger(NavCrumb ledger)
@@ -296,7 +304,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
-        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

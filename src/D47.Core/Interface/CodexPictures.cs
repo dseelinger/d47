@@ -12,6 +12,12 @@ public readonly partial record struct CodexPictureKey(long EntryId, int RegionId
     /// <summary>The stored file name, <c>&lt;entryId&gt;-&lt;regionId&gt;.jpg</c>.</summary>
     public string FileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.jpg");
 
+    /// <summary>The kept capture the picture was cropped from, <c>&lt;entryId&gt;-&lt;regionId&gt;.source.jpg</c>.</summary>
+    public string SourceFileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.source.jpg");
+
+    /// <summary>The square cut from the source, <c>&lt;entryId&gt;-&lt;regionId&gt;.crop.json</c>.</summary>
+    public string CropFileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.crop.json");
+
     /// <summary>Reads back a name <see cref="FileName"/> wrote; false for any other name.</summary>
     public static bool TryParse(string? fileName, out CodexPictureKey key)
     {

@@ -3600,7 +3600,8 @@ public sealed class AppHost : IDisposable
             host.CodexPictures,
             () => settings.Current.Ui.CodexPictures,
             files,
-            paths.ShippedCodexPlaceholders);
+            paths.ShippedCodexPlaceholders,
+            paths.Captures);
         host.StoryRatings = storyRatings;
         host.StoryBench = stores.StoryBench;
         endingAnswer.Answer = host.Narration.AnswerEnding;

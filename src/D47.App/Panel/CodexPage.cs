@@ -19,6 +19,12 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string EntryPrefix = "codex-entry-";
 
+    private const string ChoosePrefix = "codex-choose-";
+
+    private const string CropPrefix = "codex-crop-";
+
+    private const string RecropPrefix = "codex-recrop-";
+
     public const string SummaryText = "The codex entries you have logged, from your journals.";
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
@@ -126,6 +132,43 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         };
 
     public static bool IsEntry(string key) => key.StartsWith(EntryPrefix, StringComparison.Ordinal);
+
+    /// <summary>The crumb of the page that lists the captures to cut a picture from.</summary>
+    public static NavCrumb ChooseCrumb(CodexPictureKey key) => new(ChoosePrefix + Tail(key), CodexModel.ChooseWord) { Whole = true };
+
+    /// <summary>The crumb of the crop page, reached from the choice, or from Re-crop when <paramref name="kept"/>.</summary>
+    public static NavCrumb CropCrumb(CodexPictureKey key, bool kept) =>
+        new((kept ? RecropPrefix : CropPrefix) + Tail(key), CodexModel.CropWord) { Whole = true };
+
+    public static bool IsChoose(string key) => key.StartsWith(ChoosePrefix, StringComparison.Ordinal);
+
+    public static bool IsCrop(string key) =>
+        key.StartsWith(CropPrefix, StringComparison.Ordinal) || key.StartsWith(RecropPrefix, StringComparison.Ordinal);
+
+    /// <summary>Whether the key is a Choose a picture or a Crop page.</summary>
+    public static bool IsPicturePage(string key) => IsChoose(key) || IsCrop(key);
+
+    /// <summary>Whether a crop crumb is the Re-crop one, which cuts from the kept source.</summary>
+    public static bool IsRecrop(string key) => key.StartsWith(RecropPrefix, StringComparison.Ordinal);
+
+    /// <summary>The picture a Choose or Crop crumb is for; null when the key is not one.</summary>
+    public static CodexPictureKey? PictureOf(string key)
+    {
+        var prefix = new[] { ChoosePrefix, CropPrefix, RecropPrefix }.FirstOrDefault(p => key.StartsWith(p, StringComparison.Ordinal));
+
+        if (prefix is null || key[prefix.Length..].Split('-') is not [var region, var entry]
+            || !int.TryParse(region, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var regionId)
+            || !long.TryParse(entry, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var entryId))
+        {
+            return null;
+        }
+
+        return new CodexPictureKey(entryId, regionId);
+    }
+
+    private static string Tail(CodexPictureKey key) =>
+        key.RegionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "-"
+        + key.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>The region number and EntryID an entry crumb is for; null when the key is not one.</summary>
     public static (int? RegionId, long EntryId)? EntryOf(string key)
