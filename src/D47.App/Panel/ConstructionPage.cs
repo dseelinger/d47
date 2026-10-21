@@ -16,12 +16,41 @@ namespace D47.App.Panel;
 
 /// <summary>What Asset Mgmt › Construction reads and drives.</summary>
 /// <param name="LookupsEnabled">Whether “Look things up in the galaxy” is on, which the market search needs.</param>
+/// <param name="Plans">The planner's plan held for each system; empty while the planner is off.</param>
+/// <param name="Want">Asks for a system's plan; returns at once.</param>
 public sealed record ConstructionSurface(
     Func<CommanderGameState?> State,
     Func<DateTimeOffset> Now,
     CapabilityRegistry? Registry,
     SourcingBoard? Sourcing,
-    Func<bool> LookupsEnabled);
+    Func<bool> LookupsEnabled,
+    Func<IReadOnlyDictionary<string, SystemPlan>>? Plans = null,
+    Action<string, DateTimeOffset>? Want = null);
+
+/// <summary>A planner site with no depot seen, in the system it is planned for.</summary>
+internal sealed record PlannedRow(string System, PlannedSite Site, DateTimeOffset FetchedAt)
+{
+    public string Key => $"{System}|{Site.SiteId}";
+
+    public string Title =>
+        !string.IsNullOrWhiteSpace(Site.Name) ? Site.Name.Trim()
+        : ConstructionPage.TypeTitle(Site.BuildType) ?? "Planned site";
+
+    public string Status => Site.Status == PlanStatus.Build ? "building" : "planned";
+}
+
+/// <summary>Compares the plans held by reference, so a redraw follows a new plan and nothing else.</summary>
+internal sealed class PlanIdentity(IReadOnlyList<SystemPlan> plans)
+{
+    private readonly IReadOnlyList<SystemPlan> _plans = plans;
+
+    public override bool Equals(object? other) =>
+        other is PlanIdentity then
+        && _plans.Count == then._plans.Count
+        && _plans.Zip(then._plans).All(pair => ReferenceEquals(pair.First, pair.Second));
+
+    public override int GetHashCode() => _plans.Count;
+}
 
 /// <summary>Asset Mgmt › Construction: every site still being built, beside the selected site's needs and its last market search (#828).</summary>
 public sealed class ConstructionPage : UserControl, IPageSummary
@@ -84,6 +113,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private long? _selected;
     private bool _stacked;
     private object? _seen;
+    private string? _plannedKey;
 
     public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false)
     {
@@ -123,12 +153,13 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     /// <summary>Shows one site's detail.</summary>
     public void Select(long marketId)
     {
-        if (_selected == marketId)
+        if (_selected == marketId && _plannedKey is null)
         {
             return;
         }
 
         _selected = marketId;
+        _plannedKey = null;
 
         if (_inFlight is null)
         {
@@ -136,6 +167,105 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         }
 
         Draw();
+    }
+
+    /// <summary>Shows one planned site's detail, by its key.</summary>
+    internal void SelectPlanned(string key)
+    {
+        if (_plannedKey == key)
+        {
+            return;
+        }
+
+        _plannedKey = key;
+
+        if (_inFlight is null)
+        {
+            _status.Clear();
+        }
+
+        Draw();
+    }
+
+    /// <summary>The planner's build type as a title: <c>coriolis</c> is <c>Coriolis</c>.</summary>
+    internal static string? TypeTitle(string? buildType) =>
+        string.IsNullOrWhiteSpace(buildType)
+            ? null
+            : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(buildType.Trim().Replace('_', ' ').Replace('-', ' ').ToLowerInvariant());
+
+    /// <summary>How long ago a plan was read: <c>under a minute</c>, <c>5 minutes</c>, <c>3 hours</c>, <c>2 days</c>.</summary>
+    public static string Ago(TimeSpan age) =>
+        age < TimeSpan.FromMinutes(1) ? "under a minute"
+        : age < TimeSpan.FromHours(1) ? Plural((int)age.TotalMinutes, "minute")
+        : age < TimeSpan.FromDays(2) ? Plural((int)age.TotalHours, "hour")
+        : Plural((int)age.TotalDays, "day");
+
+    private static string Plural(int count, string unit) => count == 1 ? $"1 {unit}" : $"{Number(count)} {unit}s";
+
+    /// <summary>The planner's sites in the Commander's systems that match no depot d47 has seen.</summary>
+    internal static IReadOnlyList<PlannedRow> Planned(
+        ColonisationSites sites, IReadOnlyDictionary<string, SystemPlan> plans)
+    {
+        if (plans.Count == 0)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. Systems(sites)
+                .Where(plans.ContainsKey)
+                .SelectMany(system => plans[system].Sites
+                    .Where(site => site.Status is PlanStatus.Plan or PlanStatus.Build
+                        && !(site.MarketId is { } marketId && sites.ById(marketId) is not null))
+                    .Select(site => new PlannedRow(system, site, plans[system].FetchedAt))),
+        ];
+    }
+
+    /// <summary>The planner's site for a depot, and when its plan was read.</summary>
+    internal static (PlannedSite Site, DateTimeOffset FetchedAt)? PlanFor(
+        long marketId, IReadOnlyDictionary<string, SystemPlan> plans)
+    {
+        foreach (var plan in plans.Values)
+        {
+            if (plan.Sites.FirstOrDefault(site => site.MarketId == marketId) is { } site)
+            {
+                return (site, plan.FetchedAt);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The needs with the planner's lower figures in place of the depot's, and whether any was used.</summary>
+    internal static (IReadOnlyList<ConstructionNeeds> Needs, bool UsedPlanner) WithPlan(
+        IReadOnlyList<ConstructionNeeds> needs, ConstructionSite site, PlannedSite? plan)
+    {
+        var merged = PlannedNeeds.Merge(site, plan).ToDictionary(need => need.Symbol, StringComparer.Ordinal);
+        var used = false;
+
+        var result = needs
+            .Select(need =>
+            {
+                if (need.Resource.Symbol is not { } symbol
+                    || !merged.TryGetValue(symbol, out var planned)
+                    || planned.Planner is not { } figure
+                    || figure >= need.Remaining)
+                {
+                    return need;
+                }
+
+                used = true;
+
+                return need with
+                {
+                    Remaining = figure,
+                    ToBuy = Math.Max(0, figure - need.InHold - (need.OnCarrier ?? 0)),
+                };
+            })
+            .ToList();
+
+        return (result, used);
     }
 
     /// <summary>The title line: how many sites are building, how many are stale, and the carrier's state.</summary>
@@ -235,6 +365,16 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     private void OnPosted() => Dispatcher.UIThread.Post(Draw);
 
+    internal static readonly IReadOnlyDictionary<string, SystemPlan> NoPlans = new Dictionary<string, SystemPlan>();
+
+    private IReadOnlyDictionary<string, SystemPlan> Plans() => _surface.Plans?.Invoke() ?? NoPlans;
+
+    private static IEnumerable<string> Systems(ColonisationSites sites) =>
+        sites.Claims.Select(claim => claim.StarSystem)
+            .Concat(sites.All.Select(site => site.StarSystem).OfType<string>())
+            .Where(system => system.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
     private object Stamp()
     {
         var state = _surface.State();
@@ -242,6 +382,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         return (
             state?.Colonisation,
+            new PlanIdentity([.. (_surface.Plans?.Invoke() ?? NoPlans).Values]),
             state?.Hold,
             state?.Carrier,
             state?.Location.StarSystem,
@@ -270,29 +411,59 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         var current = sites.Current(now);
         var stale = sites.NotSeenSince(now);
 
+        foreach (var system in Systems(sites))
+        {
+            _surface.Want?.Invoke(system, now);
+        }
+
+        var planned = Planned(sites, Plans());
+
         Detach(_search);
         Detach(_cancel);
         Detach(_status);
 
-        if (current.Count + stale.Count == 0)
+        if (current.Count + stale.Count + planned.Count == 0)
         {
             Content = Empty(sites.IsKnown, carrier);
             return;
         }
 
-        if (_selected is not { } id || !current.Concat(stale).Any(site => site.MarketId == id))
+        var chosen = planned.FirstOrDefault(row => row.Key == _plannedKey);
+
+        if (chosen is null && current.Count + stale.Count == 0)
         {
-            _selected = (current.Count > 0 ? current[0] : stale[0]).MarketId;
+            chosen = planned[0];
         }
 
-        var selected = current.Concat(stale).First(site => site.MarketId == _selected);
+        _plannedKey = chosen?.Key;
 
-        var list = List(current, stale, now);
-        var hint = Hint($"Say: “what does {SiteName(selected)} still need”");
-        hint.Margin = new Thickness(0, 14, 0, 0);
-        var left = new StackPanel { Children = { list, hint } };
+        ConstructionSite? selected = null;
 
-        var detail = Detail(state!, selected, stale.Contains(selected), now);
+        if (chosen is null)
+        {
+            if (_selected is not { } id || !current.Concat(stale).Any(site => site.MarketId == id))
+            {
+                _selected = (current.Count > 0 ? current[0] : stale[0]).MarketId;
+            }
+
+            selected = current.Concat(stale).First(site => site.MarketId == _selected);
+        }
+
+        var left = new StackPanel { Children = { List(current, stale, planned, now) } };
+        StackPanel detail;
+
+        if (selected is null)
+        {
+            detail = PlannedDetail(state!, chosen!, now);
+        }
+        else
+        {
+            var hint = Hint($"Say: “what does {SiteName(selected)} still need”");
+            hint.Margin = new Thickness(0, 14, 0, 0);
+            left.Children.Add(hint);
+
+            detail = Detail(state!, selected, stale.Contains(selected), now);
+        }
 
         Control panes;
 
@@ -346,18 +517,22 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
     }
 
-    private StackPanel List(IReadOnlyList<ConstructionSite> current, IReadOnlyList<ConstructionSite> stale, DateTimeOffset now)
+    private StackPanel List(
+        IReadOnlyList<ConstructionSite> current,
+        IReadOnlyList<ConstructionSite> stale,
+        IReadOnlyList<PlannedRow> planned,
+        DateTimeOffset now)
     {
         var list = new StackPanel();
 
-        void Group(string head, IReadOnlyList<ConstructionSite> sites, bool old)
+        void Group<T>(string head, IReadOnlyList<T> items, Func<T, Button> row)
         {
-            if (sites.Count == 0)
+            if (items.Count == 0)
             {
                 return;
             }
 
-            var heading = ListRow.Head($"{head} · {Number(sites.Count)}");
+            var heading = ListRow.Head($"{head} · {Number(items.Count)}");
 
             if (list.Children.Count > 0)
             {
@@ -368,35 +543,45 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
             var rows = new StackPanel { Spacing = Gaps.Tile };
 
-            foreach (var site in sites)
+            foreach (var item in items)
             {
-                rows.Children.Add(Row(site, old, now));
+                rows.Children.Add(row(item));
             }
 
             list.Children.Add(rows);
         }
 
-        Group("Building", current, old: false);
-        Group("Not seen since", stale, old: true);
+        var plans = Plans();
+
+        Group("Building", current, site => Row(site, old: false, now, plans));
+        Group("Not seen since", stale, site => Row(site, old: true, now, plans));
+        Group("Planned", planned, PlannedButton);
 
         return list;
     }
 
-    private Button Row(ConstructionSite site, bool old, DateTimeOffset now)
+    private Button PlannedButton(PlannedRow row) =>
+        RowButton(
+            row.Key,
+            row.Title,
+            string.Join(" · ", new[] { TypeTitle(row.Site.BuildType), row.Site.BodyName, row.System }.OfType<string>().Where(part => part.Length > 0)),
+            row.Status,
+            row.Key == _plannedKey,
+            dim: false,
+            () => SelectPlanned(row.Key));
+
+    private Button Row(ConstructionSite site, bool old, DateTimeOffset now, IReadOnlyDictionary<string, SystemPlan> plans)
     {
-        var selected = site.MarketId == _selected;
-
-        var name = ListRow.Name(new TextBlock
-        {
-            Text = site.StationName ?? site.StarSystem ?? "Construction site",
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        });
-
         var parts = new List<string>();
 
         if (site.StarSystem is { } system && site.StationName is not null)
         {
             parts.Add(system);
+        }
+
+        if (PlanFor(site.MarketId, plans) is { } match)
+        {
+            parts.AddRange(new[] { TypeTitle(match.Site.BuildType), match.Site.BodyName }.OfType<string>().Where(part => part.Length > 0));
         }
 
         parts.Add($"{Percent(site.Progress)} built");
@@ -406,17 +591,27 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             parts.Add($"seen {Seen(site.SeenAt, now)}");
         }
 
-        var sub = ListRow.Sub(new TextBlock
-        {
-            Text = string.Join(" · ", parts),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        });
+        return RowButton(
+            site.MarketId,
+            site.StationName ?? site.StarSystem ?? "Construction site",
+            string.Join(" · ", parts),
+            old ? Day(site.SeenAt) : Outstanding(site),
+            site.MarketId == _selected && _plannedKey is null,
+            dim: old,
+            () => Select(site.MarketId));
+    }
+
+    private static Button RowButton(object tag, string nameText, string subText, string asideText, bool selected, bool dim, Action click)
+    {
+        var name = ListRow.Name(new TextBlock { Text = nameText, TextTrimming = TextTrimming.CharacterEllipsis });
+
+        var sub = ListRow.Sub(new TextBlock { Text = subText, TextTrimming = TextTrimming.CharacterEllipsis });
 
         var left = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, sub } };
 
         var aside = ListRow.SecondaryInk(new TextBlock
         {
-            Text = old ? Day(site.SeenAt) : Outstanding(site),
+            Text = asideText,
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = ListRow.AsideSize,
             Margin = new Thickness(12, 0, 0, 0),
@@ -428,7 +623,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         var button = new Button
         {
-            Tag = site.MarketId,
+            Tag = tag,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Content = new Grid
             {
@@ -438,9 +633,9 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
 
         ListRow.Dress(button, selected);
-        button.Classes.Set(ListRow.DimClass, old && !selected);
+        button.Classes.Set(ListRow.DimClass, dim && !selected);
 
-        button.Click += (_, _) => Select(site.MarketId);
+        button.Click += (_, _) => click();
 
         return button;
     }
@@ -450,52 +645,18 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         var detail = new StackPanel();
         var station = site.StationName ?? site.StarSystem ?? "Construction site";
 
+        var plans = Plans();
+        var match = PlanFor(site.MarketId, plans);
+
         var crumb = TitleText.Context($"Construction › {station}");
         crumb.Margin = new Thickness(0, 10, 0, 10);
         detail.Children.Add(crumb);
 
-        var title = TitleText.Build(station, 24, TitleRank.Screen);
-        title.TextWrapping = TextWrapping.Wrap;
-
-        TextBlock? system = null;
-
-        if (site.StarSystem is { } named && site.StationName is not null)
-        {
-            system = new TextBlock
-            {
-                Text = named,
-                FontFamily = Fonts.ChromeFamily,
-                FontSize = TypeScale.Tip,
-                FontWeight = FontWeight.Medium,
-                TextWrapping = TextWrapping.Wrap,
-            };
-            Themed(system, TextBlock.ForegroundProperty, Here(named, state) ? ThemeManager.CyanKey : ThemeManager.AKey);
-        }
-
-        Control? copy = site.StarSystem is { } copied && _copy is { } clipboard ? CopyGlyph.For(copied, clipboard) : null;
-
-        var heading = new StackPanel { Spacing = 2, Children = { title } };
-
-        if (system is not null)
-        {
-            heading.Children.Add(system);
-        }
-
-        var titleRow = new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
-            ColumnSpacing = 16,
-            Children = { heading },
-        };
-
-        if (copy is not null)
-        {
-            copy.VerticalAlignment = VerticalAlignment.Bottom;
-            Grid.SetColumn(copy, 1);
-            titleRow.Children.Add(copy);
-        }
-
-        detail.Children.Add(titleRow);
+        detail.Children.Add(TitleRow(
+            station,
+            site.StarSystem is { } named && site.StationName is not null ? named : null,
+            match is { } found ? BuildLine(found.Site) : null,
+            state));
 
         if (old)
         {
@@ -530,12 +691,119 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         cells.Margin = new Thickness(0, 14, 0, 0);
         detail.Children.Add(cells);
 
-        var needs = ConstructionNeeds.For(site, state.Hold, state.Carrier);
+        var (needs, usedPlanner) = WithPlan(ConstructionNeeds.For(site, state.Hold, state.Carrier), site, match?.Site);
 
-        detail.Children.Add(Needs(needs, state.Carrier));
+        var note = usedPlanner && match is { } read
+            ? $"Some figures are from Raven Colonial, read {Ago(now - read.FetchedAt)} ago."
+            : null;
+
+        detail.Children.Add(Needs(needs, state.Carrier, note));
         detail.Children.Add(LastSearch(site, station));
 
         return detail;
+    }
+
+    private StackPanel PlannedDetail(CommanderGameState state, PlannedRow row, DateTimeOffset now)
+    {
+        var detail = new StackPanel();
+
+        var crumb = TitleText.Context($"Construction › {row.Title}");
+        crumb.Margin = new Thickness(0, 10, 0, 10);
+        detail.Children.Add(crumb);
+
+        detail.Children.Add(TitleRow(row.Title, row.System, null, state));
+
+        var none = Chrome("—", TypeScale.Small, ThemeManager.Grey2Key);
+
+        var cells = DataGrid(
+        [
+            Block("Build type", TypeTitle(row.Site.BuildType) is { } type ? Mono(type, TypeScale.Body, ThemeManager.WhiteKey) : none),
+            Block("Body", row.Site.BodyName is { Length: > 0 } body ? Mono(body, TypeScale.Body, ThemeManager.WhiteKey) : Chrome("—", TypeScale.Small, ThemeManager.Grey2Key)),
+            Block("Status", Mono(row.Site.Status == PlanStatus.Build ? "Building" : "Planned", TypeScale.Body, ThemeManager.WhiteKey)),
+        ], columns: _stacked ? 2 : 3);
+        cells.Margin = new Thickness(0, 14, 0, 0);
+        detail.Children.Add(cells);
+
+        if (row.Site.Status == PlanStatus.Build)
+        {
+            var resources = row.Site.Needed
+                .Where(pair => pair.Value > 0)
+                .Select(pair => new ConstructionResource(NameFor(pair.Key, state), pair.Value, 0) { Symbol = pair.Key })
+                .ToList();
+            var stand = new ConstructionSite(row.Site.MarketId ?? 0) { Resources = resources };
+
+            detail.Children.Add(Needs(
+                ConstructionNeeds.For(stand, state.Hold, state.Carrier),
+                state.Carrier,
+                $"These figures are from Raven Colonial, read {Ago(now - row.FetchedAt)} ago."));
+        }
+        else
+        {
+            var wait = Prose(
+                "Not started. D47 has no figures for it until it is being built.", TypeScale.Small, ThemeManager.GreyKey);
+            wait.Margin = new Thickness(0, 14, 0, 0);
+            detail.Children.Add(wait);
+        }
+
+        return detail;
+    }
+
+    private static string NameFor(string symbol, CommanderGameState state)
+    {
+        var seen = state.Colonisation.All
+            .SelectMany(site => site.Resources)
+            .FirstOrDefault(resource => string.Equals(resource.Symbol, symbol, StringComparison.Ordinal));
+
+        return seen?.Name ?? (symbol.Length == 0 ? symbol : char.ToUpperInvariant(symbol[0]) + symbol[1..]);
+    }
+
+    private static string? BuildLine(PlannedSite site) =>
+        string.Join(" · ", new[] { TypeTitle(site.BuildType), site.BodyName }.OfType<string>().Where(part => part.Length > 0)) is { Length: > 0 } line
+            ? line
+            : null;
+
+    private Grid TitleRow(string name, string? systemName, string? line, CommanderGameState state)
+    {
+        var title = TitleText.Build(name, 24, TitleRank.Screen);
+        title.TextWrapping = TextWrapping.Wrap;
+
+        var heading = new StackPanel { Spacing = 2, Children = { title } };
+
+        if (systemName is not null)
+        {
+            var system = new TextBlock
+            {
+                Text = systemName,
+                FontFamily = Fonts.ChromeFamily,
+                FontSize = TypeScale.Tip,
+                FontWeight = FontWeight.Medium,
+                TextWrapping = TextWrapping.Wrap,
+            };
+            Themed(system, TextBlock.ForegroundProperty, Here(systemName, state) ? ThemeManager.CyanKey : ThemeManager.AKey);
+            heading.Children.Add(system);
+        }
+
+        if (line is not null)
+        {
+            heading.Children.Add(Mono(line, TypeScale.Small, ThemeManager.GreyKey));
+        }
+
+        var titleRow = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 16,
+            Children = { heading },
+        };
+
+        if (systemName is not null && _copy is { } clipboard)
+        {
+            var copy = CopyGlyph.For(systemName, clipboard);
+            copy.VerticalAlignment = VerticalAlignment.Bottom;
+            Grid.SetColumn(copy, 1);
+            titleRow.Children.Add(copy);
+        }
+
+        return titleRow;
     }
 
     private static Border CarrierCell(CarrierState carrier)
@@ -553,12 +821,22 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return Block("Carrier", value);
     }
 
-    private Control Needs(IReadOnlyList<ConstructionNeeds> needs, CarrierState carrier)
+    private Control Needs(IReadOnlyList<ConstructionNeeds> needs, CarrierState carrier, string? plannerNote = null)
     {
         var toBuy = needs.Sum(need => need.ToBuy);
         var section = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
 
         section.Children.Add(RoutingKit.Section("Needs", Mono($"to buy {Tonnes(toBuy)}", TypeScale.Small, ThemeManager.AKey)));
+
+        if (plannerNote is not null)
+        {
+            section.Children.Add(new Notice(NoticeLevel.Warning)
+            {
+                Label = "Planner figures",
+                Text = plannerNote,
+                Margin = new Thickness(0, 0, 0, 8),
+            });
+        }
 
         if (needs.Count == 0)
         {

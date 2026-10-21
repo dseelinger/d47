@@ -245,7 +245,9 @@ public partial class MainWindow : Window
                 () => DateTimeOffset.Now,
                 host.Capabilities,
                 host.Sourcing,
-                () => host.Settings.Current.Knowledge.GalaxySearch);
+                () => host.Settings.Current.Knowledge.GalaxySearch,
+                () => host.ColonisationPlans?.Snapshot ?? ConstructionPage.NoPlans,
+                (system, now) => host.ColonisationPlans?.Want(system, now));
 
             Panel.EnableLoadout(
                 host.Ships,
