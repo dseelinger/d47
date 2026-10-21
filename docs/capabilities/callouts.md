@@ -883,6 +883,30 @@ bodies you have mapped, so Universal Cartographics pays more than it, for the st
 you scanned without mapping. The line waits for the Detailed scan Elite writes straight after the
 mapping, since that is where the body's class and mass come from.
 
+#### Notable bodies {#notable-bodies}
+
+When you scan a body with a rare trait, in the FSS, the discovery scan or the Detailed Surface
+Scanner:
+
+```text
+Smojue EB-O d6-37 AB 1 b: a moon of a moon, on a highly eccentric orbit.
+```
+
+Each trait is said once per body, at most three to a line, rarest first. A later scan can complete a
+trait of a body scanned earlier, such as the ringed parent of a moon or the second body of a
+binary, and then that body is said again with the new trait. Bodies in the journal backlog are
+recorded and not said. Each trait has its own switch under the callout:
+
+- **Colliding binary**: two bodies sharing a barycentre whose orbits touch at their closest.
+- **Shepherd moon**: a moon whose orbit lies inside its parent's rings.
+- **Moon of a moon**: a body with two planets among its parents.
+- **Eccentric orbit**: an eccentricity of 0.8 or more.
+- **Fast rotator**: not tidally locked, turning once in under six hours.
+- **Wide rings**: a ring wider than ten times the body's radius.
+- **Premium FSD injection materials**: a landable body with at least five of the six materials
+  for the premium FSD injection, naming the one it lacks.
+- **Landable with an atmosphere**: starts off.
+
 #### High-value biology {#biology}
 
 When you scan a landable body the FSS has already counted biological signals on:

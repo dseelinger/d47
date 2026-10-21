@@ -625,6 +625,25 @@ public sealed record CalloutSettings
     /// <summary>A body just mapped with the DSS: its estimated value and the unsold total (#527).</summary>
     public bool Mapping { get; init; } = true;
 
+    /// <summary>A scanned body's notable traits, said on its scan.</summary>
+    public bool NotableBodies { get; init; } = true;
+
+    public bool NotableCollidingBinary { get; init; } = true;
+
+    public bool NotableShepherdMoon { get; init; } = true;
+
+    public bool NotableNestedMoon { get; init; } = true;
+
+    public bool NotableEccentricOrbit { get; init; } = true;
+
+    public bool NotableFastRotator { get; init; } = true;
+
+    public bool NotableWideRings { get; init; } = true;
+
+    public bool NotablePremiumFsdInjection { get; init; } = true;
+
+    public bool NotableLandableAtmosphere { get; init; }
+
     /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
     public bool Biology { get; init; } = true;
 

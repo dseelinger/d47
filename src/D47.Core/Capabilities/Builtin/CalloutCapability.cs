@@ -42,6 +42,15 @@ public static class CalloutCapability
     public const string FootfallKey = "callouts.footfall";
     public const string FootfallApproachKey = "callouts.footfallApproach";
     public const string MappingKey = "callouts.mapping";
+    public const string NotableBodiesKey = "callouts.notableBodies";
+    public const string NotableCollidingBinaryKey = "callouts.notableCollidingBinary";
+    public const string NotableShepherdMoonKey = "callouts.notableShepherdMoon";
+    public const string NotableNestedMoonKey = "callouts.notableNestedMoon";
+    public const string NotableEccentricOrbitKey = "callouts.notableEccentricOrbit";
+    public const string NotableFastRotatorKey = "callouts.notableFastRotator";
+    public const string NotableWideRingsKey = "callouts.notableWideRings";
+    public const string NotablePremiumFsdInjectionKey = "callouts.notablePremiumFsdInjection";
+    public const string NotableLandableAtmosphereKey = "callouts.notableLandableAtmosphere";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
@@ -397,6 +406,96 @@ public static class CalloutCapability
                 "mapped bodies",
                 s => s.Callouts.Mapping,
                 (s, v) => s with { Callouts = s.Callouts with { Mapping = v } }),
+
+            Toggle(
+                NotableBodiesKey,
+                "Notable bodies",
+                "A scanned body's notable traits, said when you scan it or when a later scan completes one.",
+                "notable-bodies",
+                "notable bodies",
+                s => s.Callouts.NotableBodies,
+                (s, v) => s with { Callouts = s.Callouts with { NotableBodies = v } }),
+
+            Toggle(
+                NotableCollidingBinaryKey,
+                "Colliding binaries",
+                "A pair of bodies whose orbits would touch.",
+                "notable-bodies",
+                "colliding binaries",
+                s => s.Callouts.NotableCollidingBinary,
+                (s, v) => s with { Callouts = s.Callouts with { NotableCollidingBinary = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableShepherdMoonKey,
+                "Shepherd moons",
+                "A moon orbiting inside its parent's rings.",
+                "notable-bodies",
+                "shepherd moons",
+                s => s.Callouts.NotableShepherdMoon,
+                (s, v) => s with { Callouts = s.Callouts with { NotableShepherdMoon = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableNestedMoonKey,
+                "Moons of moons",
+                "A moon whose parent is itself a moon.",
+                "notable-bodies",
+                "moons of moons",
+                s => s.Callouts.NotableNestedMoon,
+                (s, v) => s with { Callouts = s.Callouts with { NotableNestedMoon = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableEccentricOrbitKey,
+                "Eccentric orbits",
+                "An orbit with an eccentricity of 0.8 or more.",
+                "notable-bodies",
+                "eccentric orbits",
+                s => s.Callouts.NotableEccentricOrbit,
+                (s, v) => s with { Callouts = s.Callouts with { NotableEccentricOrbit = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableFastRotatorKey,
+                "Fast rotators",
+                "A body that is not tidally locked and turns in under six hours.",
+                "notable-bodies",
+                "fast rotators",
+                s => s.Callouts.NotableFastRotator,
+                (s, v) => s with { Callouts = s.Callouts with { NotableFastRotator = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableWideRingsKey,
+                "Wide rings",
+                "A ring wider than ten times the body's radius.",
+                "notable-bodies",
+                "wide rings",
+                s => s.Callouts.NotableWideRings,
+                (s, v) => s with { Callouts = s.Callouts with { NotableWideRings = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotablePremiumFsdInjectionKey,
+                "Premium FSD injection materials",
+                "A landable body with five or six of the six materials for the premium FSD injection.",
+                "notable-bodies",
+                "premium FSD injection bodies",
+                s => s.Callouts.NotablePremiumFsdInjection,
+                (s, v) => s with { Callouts = s.Callouts with { NotablePremiumFsdInjection = v } },
+                appliesWhen: s => s.Callouts.NotableBodies),
+
+            Toggle(
+                NotableLandableAtmosphereKey,
+                "Landable with an atmosphere",
+                "A landable body with an atmosphere. Off until you turn it on.",
+                "notable-bodies",
+                "landable bodies with an atmosphere",
+                s => s.Callouts.NotableLandableAtmosphere,
+                (s, v) => s with { Callouts = s.Callouts with { NotableLandableAtmosphere = v } },
+                defaultOn: false,
+                appliesWhen: s => s.Callouts.NotableBodies),
 
             Toggle(
                 BiologyKey,

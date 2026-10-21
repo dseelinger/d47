@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When you scan a body with a rare trait, D47 says so: a colliding binary, a shepherd moon, a moon of a moon, an eccentric orbit, a fast spin, very wide rings, or five or six of the premium FSD injection materials. Each trait has its own switch, and landable with an atmosphere is off until you turn it on.
+
 A story beat reached in combat no longer loses its hand-off. The beat's line is still not said late, but once the ship is out of danger you hear where to go next.
 
 A story objective can now send you to a Guardian ruin or structure, which it meets when you approach the site, or to a tourist beacon, which it meets when you scan it in the beacon's system. No story asks for either yet.

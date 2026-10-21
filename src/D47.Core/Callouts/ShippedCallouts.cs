@@ -155,6 +155,7 @@ public static class ShippedCallouts
             .Add(new FootfallCallout())
             .Add(new FootfallApproachCallout())
             .Add(new MappingCallout { Ledger = sources.Cartography })
+            .Add(new NotableBodyCallout())
             .Add(new UnsoldDataAtRiskCallout(sources.Cartography, sources.Exobiology))
             .Add(new OutstandingCrimesCallout(sources.Crimes))
             .Add(surveyedBiology)
@@ -347,6 +348,19 @@ public static class ShippedCallouts
     /// (#139). <paramref name="now"/> lets the engine tell a callout switched off seconds after it
     /// spoke from one switched off an hour later (#162).
     /// </summary>
+    internal static bool NotableCriterion(CalloutSettings callouts, D47.Core.Knowledge.NotableKind kind) => kind switch
+    {
+        D47.Core.Knowledge.NotableKind.CollidingBinary => callouts.NotableCollidingBinary,
+        D47.Core.Knowledge.NotableKind.ShepherdMoon => callouts.NotableShepherdMoon,
+        D47.Core.Knowledge.NotableKind.NestedMoon => callouts.NotableNestedMoon,
+        D47.Core.Knowledge.NotableKind.EccentricOrbit => callouts.NotableEccentricOrbit,
+        D47.Core.Knowledge.NotableKind.FastRotator => callouts.NotableFastRotator,
+        D47.Core.Knowledge.NotableKind.WideRings => callouts.NotableWideRings,
+        D47.Core.Knowledge.NotableKind.PremiumFsdInjection => callouts.NotablePremiumFsdInjection,
+        D47.Core.Knowledge.NotableKind.LandableAtmosphere => callouts.NotableLandableAtmosphere,
+        _ => false,
+    };
+
     public static void Apply(CalloutEngine engine, SettingsService settings, DateTimeOffset now)
     {
         var callouts = settings.Current.Callouts;
@@ -375,6 +389,7 @@ public static class ShippedCallouts
         engine.SetEnabled("footfall-approach", callouts.FootfallApproach, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);
+        engine.SetEnabled("notable-bodies", callouts.NotableBodies, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);
@@ -428,6 +443,10 @@ public static class ShippedCallouts
 
                 case CarrierPayrollCallout payroll:
                     payroll.CaptainName = () => settings.Current.Speech.CarrierCaptainName;
+                    break;
+
+                case NotableBodyCallout notable:
+                    notable.Criterion = kind => NotableCriterion(settings.Current.Callouts, kind);
                     break;
 
                 case BiologyCallout biology:
