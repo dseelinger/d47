@@ -75,8 +75,13 @@ public static class EgressDisclosure
     /// <summary>A picture of the screen, sent to the language model with the question that asked for it.</summary>
     public const string Screen = "screen";
 
+    private const string CanonnHost = "us-central1-canonn-api-236217.cloudfunctions.net";
+
     /// <summary>Fetching the catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlaces = "notableplaces";
+
+    /// <summary>Asking Canonn for the biology logged in the system you map a body in.</summary>
+    public const string CommunityBiology = "communitybiology";
 
     /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
@@ -121,6 +126,7 @@ public static class EgressDisclosure
         SpeechRecognition,
         GalaxySearch,
         NotablePlaces,
+        CommunityBiology,
         CommunityGoals,
         BgsTick,
         SignalIndex,
@@ -151,6 +157,7 @@ public static class EgressDisclosure
         SpeechRecognition => "Speech recognition",
         GalaxySearch => "Galaxy search",
         NotablePlaces => "Notable places",
+        CommunityBiology => "Earlier biology finds",
         CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
         SignalIndex => "Signal index",
@@ -259,6 +266,19 @@ public static class EgressDisclosure
                 + "stops from the galaxy search alone.",
                 summary: "Notable places are off, so no catalogue is fetched; a short story's stops come "
                     + "from galaxy search alone."),
+        CommunityBiology => settings.Knowledge.CommunityBiology
+            ? new EgressEntry(
+                CommunityBiology,
+                NameOf(CommunityBiology),
+                CanonnHost,
+                "The name of the system you are in, when you map a body there that has biological signals. "
+                + "No commander name, key or identifier goes with it. Each system is asked at most once a session.",
+                Active: true,
+                Summary: "The name of the system you map a biology body in. Nothing else about you goes with it.")
+            : EgressEntry.Silent(
+                CommunityBiology,
+                NameOf(CommunityBiology),
+                "Earlier biology finds are off, so no system name is sent to Canonn."),
 
         // The key is the switch, and deliberately the only one.
         CommunityGoals => inaraKeyPresent

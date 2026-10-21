@@ -300,6 +300,7 @@ public static class SettingsLayout
                                 E("callouts.notableLandableAtmosphere", under: true),
                                 E("callouts.biologyValue"),
                                 E("callouts.surveyedBiology"),
+                                E("callouts.earlierFinds"),
                                 E("callouts.biologyThreshold", under: true),
                                 E("callouts.sampling"),
                                 E("callouts.samplingRange"),
@@ -582,7 +583,7 @@ public static class SettingsLayout
                     [],
                     false,
                     [
-                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("journal.codexPictures"), E("knowledge.inaraKey")]),
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("knowledge.communityBiology"), E("journal.codexPictures"), E("knowledge.inaraKey")]),
                     ]),
                 new SettingsPlace(
                     "turn-fails",

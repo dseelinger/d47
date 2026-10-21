@@ -78,6 +78,9 @@ public static class ShippedCallouts
 
         public required ITradePlanService Trade { get; init; }
 
+        /// <summary>The service for earlier biology finds, or null while that setting is off.</summary>
+        public Func<ICommunityBiology?> CommunityBiology { get; init; } = () => null;
+
         public required Func<bool> StoryRunning { get; init; }
 
         public required StoryMissionAsides StoryAsides { get; init; }
@@ -160,6 +163,7 @@ public static class ShippedCallouts
             .Add(new UnsoldDataAtRiskCallout(sources.Cartography, sources.Exobiology))
             .Add(new OutstandingCrimesCallout(sources.Crimes))
             .Add(surveyedBiology)
+            .Add(new EarlierFindsCallout(loggers.CreateLogger<EarlierFindsCallout>()))
             .Add(biology)
             .Add(new GeologyCallout())
             .Add(new RegionFirstCallout())
@@ -315,6 +319,10 @@ public static class ShippedCallouts
                     surveyed.Galaxy = () => services.Settings.Current.Knowledge.GalaxySearch ? galaxy : null;
                     break;
 
+                case EarlierFindsCallout earlier:
+                    earlier.Community = services.CommunityBiology;
+                    break;
+
                 case TradingModeCallout trading:
                     trading.Trade = () => services.Settings.Current.Knowledge.GalaxySearch ? trade : null;
                     break;
@@ -398,6 +406,7 @@ public static class ShippedCallouts
         engine.SetEnabled("geology", callouts.Geology, now);
         engine.SetEnabled("region-first", callouts.RegionFirst, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
+        engine.SetEnabled("earlier-finds", callouts.EarlierFinds, now);
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);
         engine.SetEnabled("core-asteroid", callouts.CoreAsteroid, now);

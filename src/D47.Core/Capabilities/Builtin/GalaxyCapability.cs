@@ -867,6 +867,26 @@ public static class GalaxyCapability
             },
             new SettingRow
             {
+                Key = CommunityBiologyKey,
+                Label = "Earlier biology finds from Canonn",
+                Help =
+                    "Lets d47 ask Canonn which biology other Commanders logged in a system, when you map a body "
+                    + "there that has biological signals. Only the system's name is sent, once a session for each "
+                    + "system. Off by default; see [Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "earlier-biology-finds-from-canonn",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.CommunityBiology ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { CommunityBiology = v == "true" },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = BgsTickKey,
                 Label = "BGS tick time",
                 Help =
@@ -918,6 +938,9 @@ public static class GalaxyCapability
 
     /// <summary>The catalogue of notable places a generated adventure may draw on (Phase 47).</summary>
     public const string NotablePlacesKey = "knowledge.notablePlaces";
+
+    /// <summary>Asking Canonn for the biology logged in a system.</summary>
+    public const string CommunityBiologyKey = "knowledge.communityBiology";
 
     /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
     public const string BgsTickKey = "knowledge.bgsTick";

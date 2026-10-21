@@ -241,6 +241,9 @@ public sealed record KnowledgeSettings
     /// </summary>
     public bool NotablePlaces { get; init; }
 
+    /// <summary>Whether d47 may ask Canonn which biology other Commanders logged in a system you map a body in.</summary>
+    public bool CommunityBiology { get; init; }
+
     /// <summary>Whether d47 may ask tick.infomancer.uk for the time of the last BGS tick.</summary>
     public bool BgsTick { get; init; }
 
@@ -664,6 +667,12 @@ public sealed record CalloutSettings
     /// <see cref="KnowledgeSettings.GalaxySearch"/>.
     /// </summary>
     public bool SurveyedBiology { get; init; } = true;
+
+    /// <summary>
+    /// On mapping a body with biology, the variants Canonn has earlier finds of there. Needs
+    /// <see cref="KnowledgeSettings.CommunityBiology"/>.
+    /// </summary>
+    public bool EarlierFinds { get; init; } = true;
 
     /// <summary>The least value, in credits, the two biology callouts say.</summary>
     public long BiologyThreshold { get; init; } = 10_000_000;

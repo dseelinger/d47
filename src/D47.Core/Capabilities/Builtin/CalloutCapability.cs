@@ -57,6 +57,7 @@ public static class CalloutCapability
     public const string RegionFirstKey = "callouts.regionFirst";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
+    public const string EarlierFindsKey = "callouts.earlierFinds";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
     public const string TradingModeKey = "callouts.tradingMode";
     public const string TradingModeMinHoldKey = "callouts.tradingModeMinHold";
@@ -549,6 +550,17 @@ public static class CalloutCapability
                 s => s.Callouts.SurveyedBiology,
                 (s, v) => s with { Callouts = s.Callouts with { SurveyedBiology = v } },
                 appliesWhen: s => s.Knowledge.GalaxySearch),
+
+            Toggle(
+                EarlierFindsKey,
+                "Earlier biology finds on mapping",
+                "On mapping a body with biology, the variants Canonn has earlier finds of there. Needs "
+                + "earlier biology finds from Canonn.",
+                "earlier-finds",
+                "earlier biology finds",
+                s => s.Callouts.EarlierFinds,
+                (s, v) => s with { Callouts = s.Callouts with { EarlierFinds = v } },
+                appliesWhen: s => s.Knowledge.CommunityBiology),
 
             Toggle(
                 TradingModeKey,

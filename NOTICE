@@ -74,7 +74,8 @@ which remains Frontier's in every case.
     Dumpr                  from the codex extracts Dumpr writes daily, which its README allows
                            third-party tools to use. The table lists the codex entries reported in
                            each galactic region; the names are Frontier's game data under the rules
-                           quoted above. The app never contacts Canonn; only the generator does.
+                           quoted above. With Earlier biology finds on, the app asks
+                           Canonn's query API for the codex entries logged in the system you are in.
 
     taleden/EDSY           Code CC BY-NC 4.0. Its header states that the Elite
                            Dangerous game logic and data in the file remain the

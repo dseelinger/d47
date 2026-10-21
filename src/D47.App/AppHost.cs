@@ -3059,6 +3059,9 @@ public sealed class AppHost : IDisposable
         var notablePlaces = new D47.Knowledge.GecNotablePlacesService(
             loggerFactory.CreateLogger<D47.Knowledge.GecNotablePlacesService>());
 
+        var communityBiology = new D47.Knowledge.CanonnBiologyService(
+            loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>());
+
         // What writes an adventure, once, for the Commander to agree to.
         var adventureGenerator = new D47.Core.Adventures.AdventureGenerator(
             () => turns.Provider,
@@ -3156,6 +3159,7 @@ public sealed class AppHost : IDisposable
             Settings = settings,
             Galaxy = galaxy,
             Trade = tradePlanner,
+            CommunityBiology = () => settings.Current.Knowledge.CommunityBiology ? communityBiology : null,
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,

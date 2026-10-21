@@ -175,6 +175,17 @@ With this off, a generated short story still works, choosing its stops from the 
 the model's own knowledge. With galaxy search off, no short story can be generated at all, because
 the places in a story have to be real and this is the thing that checks.
 
+### Earlier biology finds from Canonn {#earlier-biology-finds-from-canonn}
+
+A setting off by default, and a host of its own. With it on, mapping a body that has biological
+signals sends the name of the system you are in to Canonn's query API at
+`us-central1-canonn-api-236217.cloudfunctions.net`, which answers with the codex entries other
+Commanders logged there. Nothing else goes with it: no Commander name, key or identifier. A system
+is asked at most once a session, and never on arrival. The
+[earlier finds callout](callouts.md#earlier-finds) says what comes back.
+
+With this off, nothing is sent to Canonn.
+
 ### BGS tick time {#bgs-tick-time}
 
 A third setting, off by default, and a third host. While it is on and Elite is running, d47 asks

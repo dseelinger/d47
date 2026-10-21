@@ -981,6 +981,24 @@ scan it, and a body that callout has already named is left out here.
 The lookup sends the system's address to spansh.co.uk on every jump while this callout is on. The
 **Privacy and egress** section of the panel lists it under galaxy search.
 
+#### Earlier biology finds on mapping {#earlier-finds}
+
+When you map a body with biological signals and [earlier biology finds from Canonn](galaxy.md#earlier-biology-finds-from-canonn)
+is on, the Science Officer names the variants other Commanders have logged on it:
+
+```text
+Canonn has earlier finds on this body: Bacterium Aurasus - Green, Stratum Tectonicas - Lime, Osseus Fractus - Indigo and two more.
+```
+
+The variants with the most finds come first. Up to three are named and the rest are a count. A body
+with no finds says nothing, and each body is named once a session. The line is said once the answer
+arrives, if you are still in that system. It does nothing while earlier biology finds from Canonn
+is off. The setting is "Earlier biology finds on mapping", on by default.
+
+Directive 47 asks when a body with biology is mapped, not on arrival, so the name of a system you
+only pass through is not sent. One request covers the system, and a system is asked at most once a
+session. The **Privacy and egress** section of the panel lists it as Earlier biology finds.
+
 #### Trading Mode {#trading-mode}
 
 When you are docked with a route plotted and [galaxy search](galaxy.md) is on:
