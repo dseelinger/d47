@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The journal pane now says where a screenshot was taken: "Screenshot taken at A 1, Example Sector AB-C d1-23", or "Screenshot taken in <system>" when the event names no body. A screenshot with no place still reads "Screenshot taken".
+
 You can now ask whether you have met a Commander before. Say "have I met this commander" and D47 lists your encounters with the Commander you targeted most recently this session, newest first: when, the system, their ship where known, and what happened; with no target this session it lists the ten Commanders you met most recently. "Have I met Arden Vale before" does the same for a name, at most ten encounters with the total. It reads your journals only, never includes message text, and says when older journals are still being read. The AI model can ask too; doing so sends that Commander's name and your encounters with them, and **Privacy and egress** now says so. "Have I met this commander" is answered on this machine.
 
 When you target a Commander you met in an earlier game session, your core now says so: who, how long ago, where, and the most notable thing that happened, for example "Commander Arden Vale — you met three weeks ago in Shinrarta Dezhra; they assaulted you." It speaks once per Commander per game session, not for a first meeting, not while you are under threat, and not until the journal history has been read after a start. The **Commanders met before** callout switch turns it off. The name is spoken by your ship's voice provider, and **Privacy and egress** now says so.

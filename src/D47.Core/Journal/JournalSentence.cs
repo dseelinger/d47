@@ -388,7 +388,11 @@ public static class JournalSentence
                 null => "Game mode changed",
             },
             "NewCommander" => "New Commander created",
-            "Screenshot" => "Screenshot taken",
+            "Screenshot" => Named(raw, "System") is { } shot
+                ? EliteScreenshot.ShortBody(shot, Named(raw, "Body")) is { } shotBody
+                    ? $"Screenshot taken at {shotBody}, {shot}"
+                    : $"Screenshot taken in {shot}"
+                : "Screenshot taken",
             "Statistics" => "Statistics reported",
             "Cargo" => "Cargo reported",
             "Materials" => "Material inventory reported",
