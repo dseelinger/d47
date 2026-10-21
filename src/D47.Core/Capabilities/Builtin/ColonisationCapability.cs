@@ -116,9 +116,9 @@ public static class ColonisationCapability
             {
                 Name = "find_colonisation_candidates",
                 Description =
-                    "Unpopulated systems within claim range that hold the bodies a colony wants: how "
-                    + "many bodies, of what kinds, how many can be landed on, which have rings, and how "
-                    + "far apart they are. No index outside the game can see a claim, so these are "
+                    "Unpopulated systems within claim range that hold the bodies a colony wants, best "
+                    + "colony first with the reasons: how many bodies, of what kinds, how many can be "
+                    + "landed on, which have rings, and how far apart they are. No index outside the game can see a claim, so these are "
                     + "systems to check in the System Colonisation Contact.",
                 Parameters =
                 [
@@ -626,12 +626,6 @@ public static class ColonisationCapability
 
     // ------------------------------------------------------------ candidates
 
-    /// <summary>
-    /// How many matching systems are looked at in detail before the shortlist is cut to what was asked
-    /// for.
-    /// </summary>
-    private const int DetailPool = 12;
-
     private static async Task<ToolResult> CandidatesAsync(
         IGalaxyService? galaxy,
         Configuration.SettingsService? settings,
@@ -690,25 +684,32 @@ public static class ColonisationCapability
             .Where(system => system.KnownPlanets > 0)
             .Where(system => query.Subtype is null || system.Holds(query.Subtype))
             .Where(system => !query.Terraformable || system.Terraformable > 0)
-            .OrderBy(system => system.Distance ?? double.MaxValue)
             .ToList();
 
-        // How many to fetch the body shape for.
-        var pool = matched.Take(query.NeedsBodyDetail ? DetailPool : query.Size).ToList();
+        // The systems to fetch bodies for, best scan score first.
+        var pool = ColonisationRanking.Shortlist(matched).ToList();
 
         var detail = new Dictionary<string, SystemBodies>(StringComparer.Ordinal);
+        var bodies = new Dictionary<string, IReadOnlyList<BodySummary>>(StringComparer.Ordinal);
         var detailFailed = false;
 
         if (pool.Count > 0)
         {
             try
             {
-                detail = Fold(await galaxy.FindBodiesAsync(
+                var found = await galaxy.FindBodiesAsync(
                     BodyQuery.ForSystems(
                         query.ReferenceSystem,
                         [.. pool.Select(system => system.Name)],
                         query.MaxDistance),
-                    cancellationToken).ConfigureAwait(false));
+                    cancellationToken).ConfigureAwait(false);
+
+                detail = Fold(found);
+
+                foreach (var group in found.Bodies.GroupBy(body => body.SystemName, StringComparer.Ordinal))
+                {
+                    bodies[group.Key] = [.. group];
+                }
             }
             catch (GalaxyUnavailableException)
             {
@@ -725,7 +726,7 @@ public static class ColonisationCapability
                 && (!query.Rings || shape.Rings.Count > 0))];
         }
 
-        var candidates = pool.Take(query.Size).ToList();
+        var candidates = ColonisationRanking.Rank(pool, bodies).Take(query.Size).ToList();
 
         // Whether the search was made from somewhere a claim can actually be registered.
         var fromEmpty = scan.Systems.Any(system =>
@@ -787,7 +788,7 @@ public static class ColonisationCapability
         int unpopulated,
         int taken,
         int unsurveyed,
-        IReadOnlyList<ColonisationSystem> candidates,
+        IReadOnlyList<RankedColonisationSystem> candidates,
         IReadOnlyDictionary<string, SystemBodies> detail,
         bool detailFailed,
         bool fromEmpty)
@@ -831,9 +832,9 @@ public static class ColonisationCapability
         report.AppendLine(
             $"{unpopulated} of the {scan.Total} systems within {Distance(query.MaxDistance)} of {from} are "
             + $"unpopulated. {(candidates.Count == 1 ? "One is" : $"{candidates.Count} are")} worth a look, "
-            + "nearest first:");
+            + "best colony first:");
 
-        foreach (var system in candidates)
+        foreach (var (system, _, reasons) in candidates)
         {
             report.AppendLine();
             report.Append(system.Name);
@@ -844,6 +845,11 @@ public static class ColonisationCapability
             }
 
             report.AppendLine($", {system.BodyCount} bod{(system.BodyCount == 1 ? "y" : "ies")}.");
+
+            if (reasons.Count > 0)
+            {
+                report.AppendLine($"  Ranked for {string.Join(", ", reasons)}.");
+            }
 
             if (detail.TryGetValue(system.Name, out var shape))
             {
@@ -903,6 +909,7 @@ public static class ColonisationCapability
                 + "figures above — the systems and their bodies are still right.");
         }
 
+        report.AppendLine(BuildSlots);
         report.AppendLine(CannotSay);
 
         return report.ToString().TrimEnd();
@@ -943,6 +950,10 @@ public static class ColonisationCapability
     /// Said on every candidate answer, in full, because the thing it rules out is exactly what a
     /// Commander will otherwise assume they have been told.
     /// </summary>
+    private const string BuildSlots =
+        "Before claiming, check the build slots and where the primary port goes in the system map; no "
+        + "index carries either.";
+
     private const string CannotSay =
         "None of this says a system is free. A claim lasts 24 hours, lives on Frontier's servers, and is "
         + "visible only to the Commander who made it — no index outside the game holds one, so I cannot "

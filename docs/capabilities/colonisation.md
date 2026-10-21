@@ -469,8 +469,16 @@ fleet carrier is taken off it.
 
 #### `find_colonisation_candidates`
 
-Unpopulated systems within claim range that hold the bodies a colony wants, and the sentence saying
-what that does not mean.
+Unpopulated systems within claim range, best colony first, each with the reasons it ranks there,
+and the sentence saying what that does not mean.
+
+The order is a score worked out in code from the bodies: Earth-like and water worlds count most, then
+landable ground (rocky, rocky ice, high metal content and metal-rich bodies count twice), rings
+(metallic and metal rich count double, as do Pristine or Major reserves), terraforming candidates,
+biological signals, the number of bodies and the share of bodies within 2,000 ls of arrival. Ties go
+to the nearer system. The body search is skipped when it fails, and the order then rests on the scan
+alone. Every answer ends by telling the Commander to check the build slots and where the primary port
+goes in the system map before claiming, because no index carries either.
 
 ```json
 {"type":"object","properties":{"body_type":{"type":"string","description":"A kind of planet the system must hold \u2014 for example \u0022Earth-like world\u0022 or \u0022Class I gas giant\u0022."},"landable":{"type":"integer","description":"At least this many bodies that can be landed on."},"limit":{"type":"integer","description":"How many to return, 1 to 5. Default 3."},"max_distance":{"type":"number","description":"How far to look, in light years. Defaults to 15, the furthest a claim reaches, and capped there."},"near":{"type":"string","description":"Search out from this system. Defaults to where the Commander is, which is where they would claim from."},"rings":{"type":"boolean","description":"Only systems with a ringed body in them."},"terraformable":{"type":"boolean","description":"Only systems with at least one terraforming candidate."}},"required":[],"additionalProperties":false}
