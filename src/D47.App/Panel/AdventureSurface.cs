@@ -1,4 +1,5 @@
 using D47.Core.Adventures;
+using D47.Core.Capabilities;
 using D47.Core.Journal;
 using D47.Core.Messages;
 
@@ -6,7 +7,7 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// Everything the Stories tab reads and the few things it may do (Phase 47). <see cref="Recap"/> has the Narrator say the story
-/// so far, of the short story with the key given or else the story under way, returning a refusal or null.
+/// so far, of the short story with the key given or else the story under way, returning a refusal or null. <see cref="Choose"/> runs the protected choose tool as the Commander for the option at the position given, from zero.
 /// </summary>
 public sealed record AdventureSurface(
     AdventureBook Book,
@@ -32,7 +33,8 @@ public sealed record AdventureSurface(
     Func<string?, string?>? Recap = null,
     D47.Core.Stories.StoryBench? Bench = null,
     Func<IReadOnlyList<D47.Core.Ships.FleetEntry>>? Fleet = null,
-    Func<string, D47.Core.Ships.ShipBuild?>? Intend = null)
+    Func<string, D47.Core.Ships.ShipBuild?>? Intend = null,
+    Func<int, Task<ToolResult>>? Choose = null)
 {
     /// <summary>The short story being written, shared by the desktop window and the VR big panel.</summary>
     public ShortStoryWriting Writing { get; init; } = new();

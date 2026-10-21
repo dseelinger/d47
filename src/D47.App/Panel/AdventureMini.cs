@@ -1,6 +1,9 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using D47.App.Theming;
@@ -114,6 +117,8 @@ public sealed class AdventureMini : UserControl
             _body.Children.Add(Row("Next", next, here));
         }
 
+        AddChoice(standing);
+
         if (standing.LastSaid() is { } said)
         {
             _body.Children.Add(AdventuresPage.Text(
@@ -124,6 +129,66 @@ public sealed class AdventureMini : UserControl
         {
             _body.Children.Add(new AdventureThinking());
         }
+    }
+
+    /// <summary>The open choice as 44 px tiles with the phrase to say, or once made the option chosen.</summary>
+    private void AddChoice(AdventureStanding standing)
+    {
+        if (standing.OpenChoice is { } choice)
+        {
+            for (var index = 0; index < choice.Options.Count; index++)
+            {
+                _body.Children.Add(OptionTile(index, choice.Options[index].Label));
+            }
+
+            _body.Children.Add(AdventuresPage.Text(BeatOption.Saying(choice.Options), TypeScale.Caption, ThemeManager.GreyKey));
+        }
+        else if (standing.InChoice
+            && standing.Chosen.TryGetValue(standing.Current, out var chosen)
+            && standing.CurrentBeat?.Steps[0].Options.ElementAtOrDefault(chosen) is { } option)
+        {
+            _body.Children.Add(Row("Chosen", $"option {(chosen + 1).ToString(CultureInfo.InvariantCulture)}, {option.Label}", null));
+        }
+    }
+
+    /// <summary>
+    /// One option: its number and label. A pressed border rather than a button, because an output-only mini surface hides every
+    /// button; the ray presses it in the headset and the desktop mini panel is click-through.
+    /// </summary>
+    private Border OptionTile(int index, string label)
+    {
+        var number = new TextBlock
+        {
+            Text = (index + 1).ToString(CultureInfo.InvariantCulture),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        AdventuresPage.Themed(number, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        var text = new TextBlock
+        {
+            Text = label,
+            FontSize = TypeScale.Small,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        AdventuresPage.Themed(text, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("24,*"), ColumnSpacing = 8 };
+
+        Grid.SetColumn(text, 1);
+        grid.Children.Add(number);
+        grid.Children.Add(text);
+
+        var tile = ListRow.Dress(new Border { Child = grid, MinHeight = TypeScale.MinimumTarget, Background = Brushes.Transparent });
+
+        AutomationProperties.SetName(tile, BeatOption.Phrase(index));
+        tile.PointerPressed += (_, _) => _ = AdventuresPage.ChooseOption(_surface, index);
+
+        return tile;
     }
 
     /// <summary>A trigger with its word in front, both in A so the pair reads as one.</summary>

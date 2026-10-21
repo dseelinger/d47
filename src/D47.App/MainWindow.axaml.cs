@@ -229,7 +229,15 @@ public partial class MainWindow : Window
                     host.Narration.Recap,
                     host.StoryBench,
                     host.Ships.Fleet,
-                    hull => host.Ships.Intend(hull));
+                    hull => host.Ships.Intend(hull),
+                    option => host.Capabilities.InvokeAsync(
+                        AdventureCapability.ChooseTool,
+                        new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
+                        {
+                            ["option"] = (option + 1).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        }),
+                        CancellationToken.None,
+                        ToolCaller.Commander));
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);

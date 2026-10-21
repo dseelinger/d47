@@ -475,8 +475,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     {
         var rewriting = _surface.Stories?.IsRewriting(_surface.Commander()) == true;
         var next = standing.NextTrigger();
+        var choice = !rewriting && _surface.Choose is not null ? standing.OpenChoice : null;
 
-        if (next is null && !rewriting)
+        if (next is null && !rewriting && choice is null)
         {
             return;
         }
@@ -495,6 +496,12 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         var drawnFor = _surface.Commander();
+
+        if (choice is not null)
+        {
+            page.Children.Add(ChoiceButtons(choice));
+        }
+
         var row = Buttons();
 
         if (!rewriting
@@ -534,6 +541,42 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             row.Margin = new Thickness(0, 6, 0, 0);
             page.Children.Add(row);
         }
+    }
+
+    /// <summary>One 44 px button per option of the open choice; a press runs the same protected tool as the phrase.</summary>
+    private WrapPanel ChoiceButtons(BeatStep choice)
+    {
+        var row = Buttons();
+        row.Margin = new Thickness(0, 6, 0, 0);
+
+        for (var index = 0; index < choice.Options.Count; index++)
+        {
+            var option = index;
+            var button = new Button
+            {
+                Content = $"{(option + 1).ToString(CultureInfo.InvariantCulture)} · {choice.Options[option].Label}",
+                MinHeight = TypeScale.MinimumTarget,
+            };
+
+            AutomationProperties.SetName(button, BeatOption.Phrase(option));
+            button.Click += (_, _) => _ = ChooseOption(_surface, option);
+            row.Children.Add(button);
+        }
+
+        return row;
+    }
+
+    /// <summary>Runs the choose tool for the option at <paramref name="option"/>, from zero, and says what it answered.</summary>
+    internal static async Task ChooseOption(AdventureSurface surface, int option)
+    {
+        if (surface.Choose is not { } choose)
+        {
+            return;
+        }
+
+        var result = await choose(option).ConfigureAwait(true);
+
+        surface.Say(result.Spoken);
     }
 
     /// <summary>Asks whether to mark the objective <paramref name="standing"/> is waiting on done, and on yes fires it; says why it cannot.</summary>
