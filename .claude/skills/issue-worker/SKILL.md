@@ -94,21 +94,24 @@ dotnet build d47.slnx -c Debug      # must be 0 warnings, 0 errors
 `#pragma warning disable` or `SuppressMessage` anywhere in `src/`; adding the first one is a
 deliberate act and needs the maintainer's agreement, not a workaround you reach for at the end.
 
-During issue work, run only the unit tests for the area you changed, plus the integration tests
-that the change affects. A unit test does not cross a process boundary or touch the file system, and runs in under a second;
+During issue work, run every Core unit test, the `D47.App.Tests` unit tests for the area you
+changed, and the integration tests that the change affects. A unit test does not cross a process boundary or touch the file system, and runs in under a second;
 an integration test does either. Every integration test carries `[Trait("Category", "Integration")]`
-(a `Category=Gate` test is one by definition). Filter by the area, with both categories excluded, in
-each project the diff touches:
+(a `Category=Gate` test is one by definition). Run the Core command on every issue, and the App
+command, filtered by the area with both categories excluded, when the diff touches the App:
 
 ```bash
-dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate"
+dotnet test tests/D47.Core.Tests --filter "Category!=Integration"
 dotnet test tests/D47.App.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate"
 ```
 
+Core is not filtered by area because its whole-tree checks carry no trait, and its unit tests
+take about a minute.
+
 An integration test is affected when the code it reaches across the boundary is code the diff
-changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do not run a whole test project unfiltered, and never
-`dotnet test d47.slnx`: the whole suite, `D47.App.Tests` included, is the release gate and runs
-in `/pre-release` and `tools/release.ps1`.
+changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do not run
+`D47.App.Tests` unfiltered, and never `dotnet test d47.slnx`: the whole suite, all of
+`D47.App.Tests` included, is the release gate and runs in `/pre-release` and `tools/release.ps1`.
 
 Before committing, also run the gate tests. They check the whole tree against a list or a rule — a
 journal event dispatched on must be in `HandledEvents.ActedOn`, `AppHost.cs` call sites are
@@ -138,6 +141,21 @@ CLAUDE.md has the full set. These are the ones a change trips over:
 - **The docs gate.** A registered capability needs a page under `docs/capabilities/`, the page must
   quote real code, and it must quote the capability's current tool schema. Change a tool schema and
   `DocumentationGateTests` fails until the page follows.
+- **A new setting or capability is placed.** Each of these has been missed once:
+  - a new setting needs a row in `src/D47.Core/Configuration/SettingsLayout.cs`, in a place with
+    no more than `MostEntriesPerPlace` (14) entries unless the place is in `TotalLimitExceptions`;
+  - a new capability needs a `Display`: a `CapabilityDisplay` with `PanelTitle` and an `Order` no
+    other drawn section uses, and `ShowOnPanel = false` when it has no panel section. The default,
+    drawn at `Order` 100, sorts below About (99) and fails `AboutIsTheBottomOfThePageTests`;
+  - a new capability needs a leaf in `src/D47.Core/Help/HelpTaxonomy.cs`, or its id in `Unspoken`,
+    with no level over `MostAtOnce` (6) entries;
+  - a new switch that sends data off the machine is turned off in
+    `ModelChoiceTests.EverySwitchableDestinationCanStillBeTurnedOffWithListeningConfigured`
+    (`tests/D47.Core.Tests/Listening/ModelChoiceTests.cs`).
+- **Never make two real timers race in a test.** Use a `TimeProvider` — `ManualTime`, as
+  `tests/D47.Core.Tests/Adventures/ASlowOrSilentStoryCallIsStoppedTests.cs` does — or make one
+  timer far longer than the other. An area filter does not catch this: the test fails only when
+  many tests run at once.
 - **Find the repository root with `d47.slnx`.** Not with a documentation file.
 
 ## House style
@@ -339,8 +357,8 @@ never be followed by a merge in the same command.
      not resolve it. `git rebase --abort`, so the branch holds the commit as it was before the
      rebase, and stop.
 
-2. Run the checks again on the rebased tree — the build, the area filters, the affected integration
-   tests and both gate filters — because other lanes' work is now under
+2. Run the checks again on the rebased tree — the build, the unit-test commands, the affected
+   integration tests and both gate filters — because other lanes' work is now under
    the change. If any fails, stop. Do not fix it in this session: the failure comes from the
    combination with another lane's work, which is the maintainer's to judge.
 
