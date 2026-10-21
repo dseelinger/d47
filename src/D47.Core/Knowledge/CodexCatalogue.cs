@@ -71,6 +71,9 @@ public sealed class CodexTable
 
     public IReadOnlyCollection<CodexEntry> All => _entries.Values;
 
+    /// <summary>The numbers of the regions with at least one entry.</summary>
+    public IReadOnlyCollection<int> Regions => _byRegion.Keys;
+
     public CodexEntry? Entry(long entryId) => _entries.GetValueOrDefault(entryId);
 
     /// <summary>The entries reported in the region, most systems first.</summary>

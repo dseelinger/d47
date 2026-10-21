@@ -13,8 +13,18 @@ public enum CodexPeriod
     Everything,
 }
 
-/// <summary>One region of the regions table.</summary>
-public sealed record CodexRegionRow(int? RegionId, string Name, bool Named, int Entries, int New, int Logged, string Detail);
+/// <summary>One region of the regions table. <c>Recorded</c> and <c>Known</c> are the Discoveries figures, null for a region D47 cannot name; <c>Other</c> marks a region with no entries in the period.</summary>
+public sealed record CodexRegionRow(
+    int? RegionId,
+    string Name,
+    bool Named,
+    int Entries,
+    int New,
+    int Logged,
+    string Detail,
+    int? Recorded = null,
+    int? Known = null,
+    bool Other = false);
 
 /// <summary>What the Codex page draws for one period, history state and search.</summary>
 public sealed record CodexRootView(
@@ -28,7 +38,10 @@ public sealed record CodexRootView(
     int Logged,
     int Regions,
     IReadOnlyList<CodexRegionRow> Rows,
-    string? Empty);
+    string? Empty,
+    IReadOnlyList<CodexRegionRow> Others,
+    int OtherRegions,
+    string OtherLine);
 
 /// <summary>One entry of a region's table. <c>Origin</c> says why no earlier entry is shown for an entry already logged.</summary>
 public sealed record CodexEntryRow(
@@ -110,6 +123,10 @@ public static class CodexModel
     public const string NoRegionMatchText = "No codex entry, system or region in this period matches that search.";
 
     public const string NoEntryMatchText = "No codex entry or system in this region and period matches that search.";
+
+    public const string OtherRegionsHead = "Other regions";
+
+    public const string OtherRegionsOpenLine = "Open one to see what is left to discover.";
 
     public const string Placeholder = "Search entry, system or region";
 
@@ -232,10 +249,25 @@ public static class CodexModel
     public static string Place(string? system, string? body, double? latitude, double? longitude) =>
         new CodexEntryRow(string.Empty, system, false, BodyOf(system, body), PositionOf(latitude, longitude), default, false, null, null).Place;
 
-    /// <summary>The regions with entries in the period, most entries first, kept by the search.</summary>
+    /// <summary>"Nothing logged this trip. Open one to see what is left to discover."</summary>
+    public static string OtherRegionsLine(CodexPeriod period) =>
+        period switch
+        {
+            CodexPeriod.Trip => "Nothing logged this trip.",
+            CodexPeriod.Session => "Nothing logged this session.",
+            _ => "Nothing on record.",
+        } + " " + OtherRegionsOpenLine;
+
+    /// <summary>The regions with entries in the period, most entries first, kept by the search; then the codex table's other regions.</summary>
     public static CodexRootView Regions(
-        CodexLedger ledger, CodexPeriod period, DateTimeOffset now, HistoryState history, string? query = null)
+        CodexLedger ledger,
+        CodexPeriod period,
+        DateTimeOffset now,
+        HistoryState history,
+        string? query = null,
+        CodexTable? table = null)
     {
+        table ??= CodexCatalogue.Table;
         var slice = ledger.Since(Start(ledger, period), null);
         var from = Start(ledger, period);
         var items = ledger.Entries.Where(entry => from is null || entry.At >= from).ToList();
@@ -260,8 +292,39 @@ public static class CodexModel
                 group.Count(),
                 group.Count(entry => entry.IsNew),
                 group.Select(entry => entry.EntryId).Distinct().Count(),
-                byName ? Subcategories(group) : $"{Number(hits)} of {Number(group.Count())} entries match"));
+                byName ? Subcategories(group) : $"{Number(hits)} of {Number(group.Count())} entries match",
+                group.Key is { } id && GalacticRegions.NameOf(id) is not null ? CodexDiscoveries.For(ledger, table, id).Logged.Count : null,
+                group.Key is { } known && GalacticRegions.NameOf(known) is not null ? table.InRegion(known).Count : null));
         }
+
+        var inPeriod = items.Select(entry => entry.RegionId).ToHashSet();
+        var others = new List<CodexRegionRow>();
+
+        foreach (var id in table.Regions.Where(id => !inPeriod.Contains(id)))
+        {
+            if (GalacticRegions.NameOf(id) is not { } name
+                || (!string.IsNullOrEmpty(text) && !name.Contains(text, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var found = CodexDiscoveries.For(ledger, table, id);
+            var last = ledger.Entries.Where(entry => entry.RegionId == id).Select(entry => (DateTimeOffset?)entry.At).Max();
+
+            others.Add(new CodexRegionRow(
+                id,
+                name,
+                true,
+                0,
+                0,
+                0,
+                last is { } at ? "Last logged " + Date(at) : "Nothing on record",
+                found.Logged.Count,
+                found.Known.Count,
+                true));
+        }
+
+        var otherTotal = table.Regions.Count(id => !inPeriod.Contains(id) && GalacticRegions.NameOf(id) is not null);
 
         return new CodexRootView(
             history is HistoryState.Pending or HistoryState.Running,
@@ -274,7 +337,10 @@ public static class CodexModel
             slice.Logged,
             slice.ByRegion.Count,
             [.. rows.OrderByDescending(row => row.Entries).ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase)],
-            slice.Entries == 0 ? EmptyText(ledger, period) : null);
+            slice.Entries == 0 ? EmptyText(ledger, period) : null,
+            [.. others.OrderByDescending(row => row.Recorded).ThenBy(row => row.Name, StringComparer.OrdinalIgnoreCase)],
+            otherTotal,
+            OtherRegionsLine(period));
     }
 
     /// <summary>The region's entries in the period, grouped by category and subcategory, largest group first and newest entry first within it.</summary>
@@ -400,6 +466,7 @@ public static class CodexModel
         SortColumn<CodexRegionRow>.Figure("New", row => (long?)row.New, SortDirection.Descending) with { Second = "New to codex" },
         SortColumn<CodexRegionRow>.Figure("Logged", row => (long?)row.Logged, SortDirection.Descending) with { Second = "Distinct" },
         SortColumn<CodexRegionRow>.Figure("Entries", row => (long?)row.Entries, SortDirection.Descending) with { Second = "Scans" },
+        SortColumn<CodexRegionRow>.Figure("Discoveries", row => (long?)row.Recorded, SortDirection.Descending) with { Second = "Of known · whole record" },
         SortColumn<CodexRegionRow>.Plain(string.Empty),
     ];
 

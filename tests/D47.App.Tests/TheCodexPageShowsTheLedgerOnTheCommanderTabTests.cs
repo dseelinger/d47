@@ -257,13 +257,15 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
     }
 
     [AvaloniaFact]
-    public void ANothingPeriodSaysSoWithNoStripAndNoSortHeader()
+    public void ANothingPeriodSaysSoWithNoStripAndSortsOnlyTheOtherRegions()
     {
         var (window, page) = Open(() => Root(State(Lines[0], Lines[1], Lines[2]), HistoryState.Done));
 
         Assert.True(Shows(page, "No codex entries since you sold exploration data on 3 October."));
         Assert.DoesNotContain(In<Control>(page), control => control.Name?.StartsWith("CodexStrip.", StringComparison.Ordinal) == true);
-        Assert.DoesNotContain(In<Button>(page), button => button.Name?.StartsWith("CodexHead", StringComparison.Ordinal) == true);
+        Assert.Contains(In<Button>(page), button => button.Name == "CodexRegion.18");
+        Assert.True(Shows(page, "OTHER REGIONS"));
+        Assert.Contains(In<Button>(page), button => button.Name?.StartsWith("CodexHead", StringComparison.Ordinal) == true);
 
         window.Close();
     }

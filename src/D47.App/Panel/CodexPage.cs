@@ -21,8 +21,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
 
-    private static readonly string[] PanelColumns = ["*", "150", "150", "150", "16"];
-    private static readonly string[] HeadsetColumns = ["*", "100", "100", "100", "16"];
+    private static readonly string[] PanelColumns = ["*", "120", "120", "120", "150", "16"];
+    private static readonly string[] HeadsetColumns = ["*", "80", "80", "80", "110", "16"];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -77,7 +77,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         remove { }
     }
 
-    public bool Filters => Build() is { Running: false, Regions: > 0 };
+    public bool Filters => Build() is { Running: false } view && (view.Regions > 0 || view.OtherRegions > 0);
 
     public string FilterPlaceholder => CodexModel.Placeholder;
 
@@ -184,25 +184,52 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         if (view.Empty is { } empty)
         {
             _body.Children.Add(CreditsKit.Message(empty));
-            return;
+        }
+        else
+        {
+            _body.Children.Add(CodexKit.Strip(view.Entries, view.New, view.Logged, "Regions", view.Regions));
+
+            if (shown > 0)
+            {
+                _body.Children.Add(Table(view.Rows));
+            }
+            else if (view.Others.Count == 0)
+            {
+                _body.Children.Add(CreditsKit.Message(CodexModel.NoRegionMatchText));
+            }
         }
 
-        _body.Children.Add(CodexKit.Strip(view.Entries, view.New, view.Logged, "Regions", view.Regions));
+        if (view.Others.Count > 0)
+        {
+            var others = view.Others.Count == view.OtherRegions
+                ? CodexModel.RegionCount(view.OtherRegions)
+                : $"{CodexModel.Number(view.Others.Count)} of {CodexModel.RegionCount(view.OtherRegions)}";
 
-        if (shown == 0)
+            _body.Children.Add(new StackPanel
+            {
+                Margin = new Thickness(0, 14, 0, 0),
+                Spacing = Gaps.Tile,
+                Children =
+                {
+                    StarSystemPage.GroupHead(CodexModel.OtherRegionsHead, CodexKit.Line(view.OtherLine), others),
+                    Table(view.Others, view.Rows.Count == 0),
+                },
+            });
+        }
+        else if (view.Empty is not null && !string.IsNullOrEmpty(_query))
         {
             _body.Children.Add(CreditsKit.Message(CodexModel.NoRegionMatchText));
-            return;
         }
-
-        _body.Children.Add(Table(view.Rows));
     }
 
-    private StackPanel Table(IReadOnlyList<CodexRegionRow> rows)
+    private StackPanel Table(IReadOnlyList<CodexRegionRow> rows, bool header = true)
     {
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+        if (header)
+        {
+            table.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+        }
 
         foreach (var row in _head.Sort(rows))
         {
@@ -224,10 +251,25 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         CreditsKit.Place(grid, 0, NameOf(row));
-        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.Number(row.New), TypeScale.Small, ThemeManager.BlueKey, right: true));
-        CreditsKit.Place(grid, 2, CreditsKit.Mono(CodexModel.Number(row.Logged), TypeScale.Small, ThemeManager.AKey, right: true));
-        CreditsKit.Place(grid, 3, CreditsKit.Mono(CodexModel.Number(row.Entries), TypeScale.Small, ThemeManager.AKey, right: true));
-        CreditsKit.Place(grid, 4, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+        CreditsKit.Place(grid, 1, PeriodFigure(row, row.New, ThemeManager.BlueKey));
+        CreditsKit.Place(grid, 2, PeriodFigure(row, row.Logged, ThemeManager.AKey));
+        CreditsKit.Place(grid, 3, PeriodFigure(row, row.Entries, ThemeManager.AKey));
+
+        if (row is { Recorded: { } recorded, Known: { } known })
+        {
+            CreditsKit.Place(grid, 4, new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Children =
+                {
+                    CreditsKit.Mono(CodexModel.Number(recorded), TypeScale.Small, ThemeManager.WhiteKey, right: true),
+                    CreditsKit.Mono(" / " + CodexModel.Number(known), TypeScale.Small, ThemeManager.GreyKey, right: true),
+                },
+            });
+        }
+
+        CreditsKit.Place(grid, 5, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
 
         var button = ListRow.Dress(new Button
         {
@@ -242,6 +284,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
         return button;
     }
+
+    private static TextBlock PeriodFigure(CodexRegionRow row, int value, string key) =>
+        row.Other
+            ? CreditsKit.Mono("—", TypeScale.Small, ThemeManager.Grey2Key, right: true)
+            : CreditsKit.Mono(CodexModel.Number(value), TypeScale.Small, key, right: true);
 
     private static StackPanel NameOf(CodexRegionRow row)
     {
