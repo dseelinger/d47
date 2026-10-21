@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using D47.Core.Listening;
 using Microsoft.Extensions.Logging;
@@ -337,10 +337,10 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         requested && loaded is RuntimeLibrary.Cuda or RuntimeLibrary.Cuda12 or RuntimeLibrary.Vulkan;
 
     /// <summary>One processor, optionally primed with the names to expect (remediation.md 10, item 17).</summary>
-    private static WhisperProcessor Processor(WhisperFactory factory, string? prompt)
+    internal static WhisperProcessor Processor(WhisperFactory factory, string? prompt, string language = "en")
     {
         var builder = factory.CreateBuilder()
-            .WithLanguage("en")
+            .WithLanguage(language)
 
             // Or whisper.cpp uses four (#182).
             .WithThreads(ThreadsFor(Environment.ProcessorCount))
@@ -531,6 +531,10 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         }
     }
 
+    /// <summary>The no-speech probe's processor: four threads flat, no prompt.</summary>
+    internal static WhisperProcessor Probe(WhisperFactory factory, string language = "en") =>
+        factory.CreateBuilder().WithLanguage(language).WithThreads(4).WithProbabilities().Build();
+
     /// <summary>The probe's own load, lazy, from the folder the models are in.</summary>
     private bool EnsureProbe(string folder)
     {
@@ -563,7 +567,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
         // Four threads flat: the probe's cost is already ~350 ms on tiny weights, and it runs beside the main
         // pass, which is the one the thread budget was measured for.
         _probeFactory = WhisperFactory.FromPath(path, new WhisperFactoryOptions());
-        _probe = _probeFactory.CreateBuilder().WithLanguage("en").WithThreads(4).WithProbabilities().Build();
+        _probe = Probe(_probeFactory);
         _probeFrom = path;
 
         _logger.LogInformation("No-speech probe loaded from {File}", ProbeFileName);
