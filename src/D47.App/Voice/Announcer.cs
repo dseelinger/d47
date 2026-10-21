@@ -147,7 +147,7 @@ public sealed class Announcer : IDisposable
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.ShipName), written.Key, picture);
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.Current.Name), written.Key, picture);
         return clip;
     }
 

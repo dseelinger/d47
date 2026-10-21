@@ -7,16 +7,12 @@ using D47.Core.Persona;
 
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>Which companion character is aboard (Phase 11, "Personas" and "Ship AI Naming").</summary>
+/// <summary>Which companion character is aboard (Phase 11, "Personas").</summary>
 public static class PersonaCapability
 {
     public const string Id = "persona";
 
     public const string PersonaKey = "persona.id";
-
-    public const string ShipNameKey = "persona.shipName";
-
-    public const string KeepShipNameKey = "persona.keepShipName";
 
     public const string IntroductionsKey = "persona.introductions";
 
@@ -84,15 +80,15 @@ public static class PersonaCapability
             {
                 Name = "state_identity",
                 Description =
-                    "Answer who you are. The name the Commander calls this core, in one "
+                    "Answer who you are. The name of this core, in one "
                     + "sentence, and nothing else — no status, no list of what else is available.",
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok($"I am {host.ShipName}.")),
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok($"I am {host.Current.Name}.")),
             },
             new ToolDefinition
             {
                 Name = "describe_persona",
                 Description =
-                    "Report which core is currently active, what the Commander calls it, and which "
+                    "Report which core is currently active and which "
                     + "other cores are available to switch to.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(Describe(host, settings.Current, ships))),
             },
@@ -130,55 +126,6 @@ public static class PersonaCapability
             {
                 Read = s => host.Cores.Admit(PersonaCatalog.Resolve(s.Persona.Id)).Id,
                 Write = WriteCoreAboard,
-            },
-        },
-        new SettingRow
-        {
-            Key = ShipNameKey,
-            Advanced = true,
-            Label = "Name it answers to",
-            Help = "What you call your core. Empty uses the core's own name.",
-            Kind = SettingKind.Text,
-
-            // Follows the persona rather than being pinned, which is the requirement: "defaults to Persona's
-            // name".
-            DefaultDisplaySource = s => PersonaCatalog.Resolve(s.Persona.Id).Name,
-            DocsAnchor = "ship-ai-name",
-
-            // Deliberately not protected, unlike the row above. "Call yourself Fred" is a harmless thing to
-            // be able to say to a companion, it changes no state anything depends on, and refusing it would
-            // be protecting the Commander from a nickname.
-            Binding = new SettingBinding
-            {
-                Read = s => s.Persona.ShipName,
-                Write = (s, v) => s with { Persona = s.Persona with { ShipName = Blank(v) } },
-            },
-        },
-        new SettingRow
-        {
-            Key = KeepShipNameKey,
-            Advanced = true,
-            Label = "Keep the name when you switch cores",
-            Help =
-                "On, the name above stays whoever is aboard. Off, changing core clears it and "
-                + "the new core answers to its own name.",
-            Kind = SettingKind.Toggle,
-            DefaultDisplay = "On",
-            DocsAnchor = "keep-ship-ai-name",
-
-            // Only applies when there is a name to keep.
-            AppliesWhen = s => !string.IsNullOrWhiteSpace(s.Persona.ShipName),
-
-            // Not protected, for the reason the name itself is not: the worst a hostile message can achieve
-            // here is that a nickname does or does not survive a switch it cannot make, since the row that
-            // changes core is protected.
-            Binding = new SettingBinding
-            {
-                Read = s => s.Persona.KeepShipName ? "true" : "false",
-                Write = (s, v) => s with
-                {
-                    Persona = s.Persona with { KeepShipName = v is null || bool.TryParse(v, out var on) && on },
-                },
             },
         },
         ..HumorRows(),
@@ -621,26 +568,11 @@ public static class PersonaCapability
 
     private static string Letters(string text) => new([.. text.ToLowerInvariant().Where(char.IsAsciiLetterLower)]);
 
-    /// <summary>
-    /// Puts a core aboard, and takes the ship AI's name with it or leaves it behind, according to the
-    /// row above.
-    /// </summary>
-    private static D47Settings WriteCoreAboard(D47Settings settings, string? value)
-    {
-        var incoming = PersonaCatalog.Knows(value) ? value! : PersonaCatalog.DefaultId;
-        var switching = !string.Equals(incoming, settings.Persona.Id, StringComparison.Ordinal);
-
-        return settings with
+    private static D47Settings WriteCoreAboard(D47Settings settings, string? value) =>
+        settings with
         {
-            Persona = settings.Persona with
-            {
-                Id = incoming,
-                ShipName = switching && !settings.Persona.KeepShipName ? null : settings.Persona.ShipName,
-            },
+            Persona = settings.Persona with { Id = PersonaCatalog.Knows(value) ? value! : PersonaCatalog.DefaultId },
         };
-    }
-
-    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string Describe(PersonaHost host, D47Settings settings, ShipCoreService? ships)
     {
@@ -648,11 +580,6 @@ public static class PersonaCapability
         var current = host.Current;
 
         report.AppendLine($"Active core: {current.Name} — {current.Tagline}");
-
-        if (!string.Equals(host.ShipName, current.Name, StringComparison.Ordinal))
-        {
-            report.AppendLine($"The Commander calls you {host.ShipName}.");
-        }
 
         report.AppendLine(settings.Llm.PersonalityEnabled
             ? "Personality is on."

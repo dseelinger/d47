@@ -71,7 +71,7 @@ public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<Set
             throw new SettingsLoadException(paths.SettingsFile, "the file contained only null");
         }
 
-        settings = settings with { Speech = GuardianVoiceFromBools(settings.Speech) };
+        settings = settings with { Speech = GuardianVoiceFromBools(settings.Speech), Persona = WithoutShipName(settings.Persona) };
 
         // Named, not refused (#368).
         var kept = new List<string>();
@@ -260,6 +260,20 @@ public sealed class SettingsStore(AppPaths paths, IFileSystem files, ILogger<Set
 
         logger.LogInformation("Loaded settings from {Path}", paths.SettingsFile);
         return settings;
+    }
+
+    /// <summary>Drops the core nickname keys, which no build reads, so they are not named as unknown.</summary>
+    private static PersonaSettings WithoutShipName(PersonaSettings persona)
+    {
+        if (persona.Extra is not { Count: > 0 } extra)
+        {
+            return persona;
+        }
+
+        var removed = extra.Remove("shipName");
+        removed |= extra.Remove("keepShipName");
+
+        return removed ? persona with { Extra = extra.Count > 0 ? extra : null } : persona;
     }
 
     /// <summary>The Guardian voice effects that were saved as a bool apiece, by id.</summary>

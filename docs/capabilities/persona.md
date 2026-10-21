@@ -22,21 +22,18 @@ nav_order: 121
 <p class="intro">Three steps to a core that sounds like yours.</p>
 <section>
 <h2><span class="num">1</span> Pick a core.</h2>
-<p class="say">Pick a core, and set a ship name and the personality switch.</p>
+<p class="say">Pick a core, and set the personality switch.</p>
 <p class="expect">The Core page shows your core, and the voice changes to match it.</p>
-<svg viewBox="0 0 880 308" role="img" aria-label="Core">
- <rect x="20" y="16" width="840" height="268" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
+<svg viewBox="0 0 880 252" role="img" aria-label="Core">
+ <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Core</text>
  <rect x="44" y="70" width="792" height="42" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="68" y="98" font-size="16" fill="var(--text)">Core</text>
  <text x="812" y="98" text-anchor="end" font-size="16" fill="var(--text)">one of eleven</text>
  <rect x="44" y="126" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="154" font-size="16" fill="var(--text)">Ship name</text>
- <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">what you call it</text>
- <rect x="44" y="182" width="792" height="42" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
- <text x="68" y="210" font-size="16" fill="var(--text)">Personality</text>
- <text x="812" y="210" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
- <text x="44" y="278" font-size="15" fill="var(--text-muted)">Eleven Guardian cores. Each one behaves as though the other ten do not exist.</text>
+ <text x="68" y="154" font-size="16" fill="var(--text)">Personality</text>
+ <text x="812" y="154" text-anchor="end" font-size="16" fill="var(--text-muted)">on</text>
+ <text x="44" y="222" font-size="15" fill="var(--text-muted)">Eleven Guardian cores. Each one behaves as though the other ten do not exist.</text>
 </svg>
 </section>
 <section>
@@ -457,34 +454,6 @@ misspelt transcription such as "switch to Quora" still reaches Cora, and it reac
 wrote yourself. A word that only sounds like a core, such as "switch to carrier", is asked about
 first ("Did you mean 'Cora'?"), and a name that sounds equally like two cores offers both.
 
-#### Name it answers to {#ship-ai-name}
-
-What you call your core. Leave it empty and it is the core's own name, which means it
-follows when you switch.
-
-Set it to something else and the core is told — it does not simply answer to a new label. Several
-of them have opinions about their designation, and one of them shortened his himself because
-there was nobody left to say the whole thing to.
-
-This row *is* reachable by the model, unlike the one above. "Call yourself Fred" changes nothing
-anything depends on, and refusing it would be protecting you from a nickname.
-
-#### Keep the name when you switch cores {#keep-ship-ai-name}
-
-On out of the box: the name you gave stays whoever is aboard, because naming your core names
-the *ship's* AI and eleven cores answering to it is the point.
-
-Turn it off for the other reading, which is equally coherent — these are eleven separate
-characters and a name belongs to the one you gave it to. Changing core then clears the name and
-the new core answers to its own.
-
-Off **clears** the name rather than keeping it and ignoring it, so the row above always says what
-you will actually be answered by. A stored name that no longer applies is how a panel ends up
-showing "Fred" while your companion says "I am Cora".
-
-The row only appears while there is a name to keep. With the name empty, every core already uses
-its own and there is nothing for this to decide.
-
 #### Introductions
 
 A core introduces itself the first time you ever pick it. After that it is silent unless it has
@@ -589,8 +558,7 @@ name only.
 
 #### `state_identity`
 
-Answers "who are you" with the name and nothing else — `I am Warden.`, or `I am Fred.` when you
-have named the core yourself. Takes no arguments.
+Answers "who are you" with the core's name and nothing else — `I am Warden.` Takes no arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -603,7 +571,7 @@ name got a status report and a list of the ten it was not.
 
 #### `describe_persona`
 
-Reports which core is active, what the Commander calls it, and what else is available. Takes
+Reports which core is active and what else is available. Takes
 no arguments.
 
 ```json

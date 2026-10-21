@@ -33,22 +33,11 @@ public sealed record Persona(
     /// The whole prompt block: shared preamble, then this core's voice, then the standing instructions
     /// restated last.
     /// </summary>
-    /// <param name="shipName">What the Commander calls this AI.</param>
-    public string RenderBlock(string? shipName = null)
+    public string RenderBlock()
     {
         var block = new System.Text.StringBuilder(Stock ? StockPreamble : PersonaCatalog.Preamble);
 
         block.Append("\n\n").Append(Body.Trim());
-
-        if (!string.IsNullOrWhiteSpace(shipName) && !string.Equals(shipName, Name, StringComparison.Ordinal))
-        {
-            block
-                .Append("\n\nThe Commander does not call you ")
-                .Append(Name)
-                .Append(". They have named you ")
-                .Append(shipName.Trim())
-                .Append(". Answer to it.");
-        }
 
         block.Append("\n\n").Append(Stock ? StockStandingInstructions : StandingInstructions);
 

@@ -143,7 +143,7 @@ public sealed class DebriefHost(
 
                 // What this installation answers to, so "hey Warden, stop calling it that" reads as an
                 // instruction rather than as a sentence beginning with a name.
-                [personas.Current.Name, settings.Current.Persona.ShipName ?? string.Empty],
+                [personas.Current.Name],
                 frontierId);
 
             logger.LogInformation(

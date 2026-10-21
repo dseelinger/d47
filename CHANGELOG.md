@@ -18,6 +18,8 @@ Cores by ship now names each bound ship as the Ship dropdown does, from your fle
 
 The Forget this ship's core button is gone from Cores by ship. To unbind a ship, pick it in the Ship row and choose Nobody for its core.
 
+The Ship name group is gone from Core and Character: Name it answers to and Keep the name when you switch cores. Every core answers to its own name, and a name saved earlier is dropped when the settings load.
+
 The Ship picker under Core and character shows each ship's core beside it, or NO CORE in grey, and marks the ship you are in with "· aboard" in cyan. With no ship picked, the Ship row shows the ship you are in, and the row under it binds that ship. That row now reads "Core for" and the ship's name.
 
 A story objective can now take several steps. Each step has its own place or activity, and the objective's lines are spoken when its last step is done. After a step that is not the last, your core says it was done and what the next step is, for example "Next: collect 3 bounties." Change objective, Mark done and Never ask this act on the step you are on, and Change objective replaces only that step. A chapter can have as many steps as its story needs, and from chapter two on it may have any number of arrive, dock, land or scan objectives. Stories you already have load unchanged.

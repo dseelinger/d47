@@ -79,24 +79,7 @@ public class PersonaCatalogTests
         foreach (var persona in PersonaCatalog.Shipped)
         {
             Assert.Equal(persona.RenderBlock(), persona.RenderBlock());
-            Assert.Equal(persona.RenderBlock("Fred"), persona.RenderBlock("Fred"));
         }
-    }
-
-    [Fact]
-    public void ANameTheCommanderChoseIsStatedRatherThanSubstituted()
-    {
-        var warden = PersonaCatalog.Warden;
-
-        var renamed = warden.RenderBlock("Fred");
-
-        // Told, not swapped: several cores have opinions about their designation, and one of them shortened
-        // his own because there was nobody left to say the whole thing to.
-        Assert.Contains("Warden", renamed, StringComparison.Ordinal);
-        Assert.Contains("They have named you Fred", renamed, StringComparison.Ordinal);
-
-        // The core's own name is not a rename, so it adds nothing.
-        Assert.Equal(warden.RenderBlock(), warden.RenderBlock("Warden"));
     }
 }
 
@@ -104,24 +87,6 @@ public class PersonaCatalogTests
 public class PersonaHostTests
 {
     private static PersonaSettings Choose(string id) => new() { Id = id };
-
-    [Fact]
-    public void TheShipNameDefaultsToTheCoreAndFollowsIt()
-    {
-        var host = new PersonaHost(PersonaCatalog.Warden);
-
-        Assert.Equal("Warden", host.ShipName);
-
-        host.Apply(Choose("cora"));
-        Assert.Equal("Cora", host.ShipName);
-
-        host.Apply(Choose("cora") with { ShipName = "Fred" });
-        Assert.Equal("Fred", host.ShipName);
-
-        // Cleared, and it goes back to following rather than to the core that was aboard when it was set.
-        host.Apply(Choose("kex") with { ShipName = null });
-        Assert.Equal("Kex", host.ShipName);
-    }
 
     [Fact]
     public void EachCoreKeepsItsOwnTranscript()
@@ -497,19 +462,6 @@ public class PersonaIsNotTheModelsToChangeTests
         }
 
         Assert.Equal("kex", surface.Settings.Current.Persona.Id);
-    }
-
-    [Fact]
-    public void TheModelMayStillBeGivenANickname()
-    {
-        // The row above is protected; this one deliberately is not. "Call yourself Fred" changes nothing
-        // anything depends on, and refusing it would be protecting the Commander from a nickname.
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        Assert.False(surface.Settings.Find(PersonaCapability.ShipNameKey)!.Protected);
-        Assert.True(surface.Settings.Apply(PersonaCapability.ShipNameKey, "Fred", SettingsCaller.Model).Ok);
-        Assert.Equal("Fred", surface.Settings.Current.Persona.ShipName);
     }
 
     [Fact]

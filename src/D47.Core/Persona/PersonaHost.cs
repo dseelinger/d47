@@ -57,8 +57,6 @@ public sealed class PersonaHost
     /// </summary>
     private readonly IIntroductionMemory? _memory;
 
-    private string? _shipNameOverride;
-
     /// <summary>Which Guardian cores may be aboard; a core still asleep is stood in for by the stock core.</summary>
     private readonly GuardianCores _cores;
 
@@ -105,13 +103,6 @@ public sealed class PersonaHost
     public event Action<PersonaChanged>? Changed;
 
     /// <summary>
-    /// What the Commander calls the ship's AI: their own name for it, or the core's own (Phase 11,
-    /// "Ship AI Naming").
-    /// </summary>
-    public string ShipName =>
-        string.IsNullOrWhiteSpace(_shipNameOverride) ? Current.Name : _shipNameOverride.Trim();
-
-    /// <summary>
     /// The shown Commander's transcript with the current core. Conversations held before any Commander was
     /// shown go to the first Commander shown, as the same lists.
     /// </summary>
@@ -125,9 +116,9 @@ public sealed class PersonaHost
 
     /// <summary>The persona block for the assembled prompt, or null when personality is off.</summary>
     public string? RenderBlock(bool personalityEnabled) =>
-        personalityEnabled ? Current.RenderBlock(_shipNameOverride) : null;
+        personalityEnabled ? Current.RenderBlock() : null;
 
-    /// <summary>Applies the persona and ship-name settings.</summary>
+    /// <summary>Applies the persona settings.</summary>
     /// <param name="away">How long the incoming core has been off, for its gap reaction.</param>
     /// <param name="telemetryDelta">
     /// What changed aboard while it was away, already rendered.
@@ -140,8 +131,6 @@ public sealed class PersonaHost
         string? telemetryDelta = null,
         PersonaSwitch cause = PersonaSwitch.Selected)
     {
-        _shipNameOverride = settings.ShipName;
-
         var incoming = _cores.Admit(PersonaCatalog.Resolve(settings.Id));
 
         if (ReferenceEquals(incoming, Current))

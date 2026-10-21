@@ -149,7 +149,7 @@ public sealed class AppHost : IDisposable
         Installer = installer;
         Turns = turns;
         Personas = personas;
-        Panel.ShipNameSource = () => personas.ShipName;
+        Panel.ShipNameSource = () => personas.Current.Name;
         Panel.ShipPictureSource = () => ShipPicture;
         Panel.CommanderPictureSource = () => CommanderPicture;
         Panel.CarrierPictureSource = SpeakerPicture;
@@ -214,7 +214,7 @@ public sealed class AppHost : IDisposable
             prompted: PanelRouting.Prompted,
             properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), NamesToHear(personas)),
             recorder: () => AudioRecorder,
-            shipName: () => personas.ShipName,
+            shipName: () => personas.Current.Name,
             withheld: turns.IsLogEntry,
             panel: Panel,
             gate,
@@ -808,7 +808,7 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The names that address the ship's AI: the core's name, then "D47".</summary>
     private static IReadOnlyList<string> ShipAiNames(PersonaHost personas) =>
-        personas.ShipName is { Length: > 0 } name ? [name, ShipAiAddressing.CallSign] : [ShipAiAddressing.CallSign];
+        [personas.Current.Name, ShipAiAddressing.CallSign];
 
     /// <summary>
     /// The ship AI's names, then every core's, for the transcriber to expect. Not names that address the ship
@@ -5693,7 +5693,7 @@ public sealed class AppHost : IDisposable
         () => CrewSeats,
         () => [.. Speech.VoiceIds().Select(id => (id, Speech.VoiceLabelFor(id)))],
         () => D47.Core.Audio.VoiceGroups.ProviderFor(Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
-        () => [Personas.ShipName, .. new[] { Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]);
+        () => [Personas.Current.Name, .. new[] { Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]);
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
     internal const string CastSampleSentence = "This is the voice you will hear me speak in.";

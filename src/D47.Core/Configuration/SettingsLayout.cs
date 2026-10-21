@@ -170,10 +170,6 @@ public static class SettingsLayout
                                 E("persona.coreHumorPercent", under: true),
                             ]),
                         G(
-                            "Ship name",
-                            "What you call your core, and whether the name follows it across a core switch.",
-                            [E("persona.shipName"), E("persona.keepShipName")]),
-                        G(
                             "A core per ship",
                             "Which core answers you, bound per ship.",
                             [

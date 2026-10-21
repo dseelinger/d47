@@ -346,12 +346,6 @@ public sealed record PersonaSettings
     /// <summary>A core id from <see cref="D47.Core.Persona.PersonaCatalog"/>.</summary>
     public string Id { get; init; } = D47.Core.Persona.PersonaCatalog.DefaultId;
 
-    /// <summary>What the Commander calls the ship's AI.</summary>
-    public string? ShipName { get; init; }
-
-    /// <summary>Whether a name the Commander gave the ship's AI survives a change of core.</summary>
-    public bool KeepShipName { get; init; } = true;
-
     /// <summary>How funny the cores may be, 0 (none) to 10.</summary>
     public int CoreHumor { get; init; }
 

@@ -47,29 +47,4 @@ public class WhoAreYouTests
 
         Assert.Equal("I am Cora.", await AskAsync(surface, "who are you"));
     }
-
-    [Fact]
-    public async Task AShipAiNameTheCommanderSetIsWhatItAnswersWith()
-    {
-        var install = new MemoryInstall();
-        var personas = new PersonaHost();
-        var surface = TestSurface.For(install, personas: personas);
-
-        personas.Apply(new PersonaSettings { Id = "cora", ShipName = "Fred" });
-
-        Assert.Equal("I am Fred.", await AskAsync(surface, "who are you"));
-    }
-
-    [Fact]
-    public async Task AShipAiNameOfNothingButSpacesIsNoName()
-    {
-        // Whitespace is not a name.
-        var install = new MemoryInstall();
-        var personas = new PersonaHost();
-        var surface = TestSurface.For(install, personas: personas);
-
-        personas.Apply(new PersonaSettings { Id = "kex", ShipName = "   " });
-
-        Assert.Equal("I am Kex.", await AskAsync(surface, "who are you"));
-    }
 }
