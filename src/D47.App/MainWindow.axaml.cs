@@ -315,6 +315,7 @@ public partial class MainWindow : Window
                 Status: () => host.LiveStatus,
                 WorthIfMapped: (system, body) => host.History.Cartography?.IfMapped(system, body),
                 SurfaceMarks: host.SurfaceMarks,
+                EarlierFinds: () => host.Settings.Current.Knowledge.CommunityBiology ? host.EarlierFinds : null,
 
                 // Unsold data (#556).
                 Exobiology: () => host.History.Exobiology,

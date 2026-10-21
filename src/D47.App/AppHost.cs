@@ -646,6 +646,8 @@ public sealed class AppHost : IDisposable
 
     public SurfaceMarks SurfaceMarks { get; private set; } = new();
 
+    public D47.Core.Knowledge.EarlierFinds EarlierFinds { get; private set; } = new();
+
     /// <summary>Every phrase already in use, for the panel page's rename prompt (#490).</summary>
     public Func<IReadOnlyCollection<string>> BookmarkPhrasesTaken { get; private set; } = () => [];
 
@@ -3565,6 +3567,7 @@ public sealed class AppHost : IDisposable
         host._loadouts = loadouts;
         host._bookmarks = bookmarks;
         host.SurfaceMarks = stores.SurfaceMarks;
+        host.EarlierFinds = services.EarlierFinds;
 
         host.BookmarkPhrasesTaken = () => late.Router is null
             ? []

@@ -14,6 +14,8 @@ Say "mark this spot", "mark this location" or "mark my position" and D47 saves w
 
 The On this body page lists each saved point under the distance block, such as "SHIP · 140° SE · 1,240 M": your ship, each mark and your last sample of each genus being sampled. The rows follow your position, say "No position" when the game gives none, and disappear at liftoff or when you leave the body. The VR panel shows the same rows.
 
+With Earlier biology finds from Canonn on, the On this body page also lists the nearest earlier find of each variant on the body under the saved points, such as "AURASUS GREEN · 210° SW · 2,400 M", nearest first. It shows five and counts the rest, says "No position" when the game gives none, and reads only the finds already fetched, so it sends nothing. The big panel in the headset shows the same rows.
+
 D47 now reads the direction you are facing from Elite's Status.json, in degrees, when Elite writes it. Nothing uses it yet.
 
 A new setting, Codex pictures, controls whether D47 fetches stock codex pictures from a GitHub release. It is on by default. D47 fetches the list when a codex page first wants a picture in a session and each picture when a page first shows it, and keeps them in `data\codex-pictures`. Only the picture's file name goes with the request, which gives its codex entry and region. Off, nothing is fetched and only pictures you saved yourself are used. No page shows a picture yet.

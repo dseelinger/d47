@@ -40,6 +40,7 @@ public sealed class BodyPage : UserControl
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly SurfaceMarks? _marks;
+    private readonly Func<EarlierFinds?>? _earlier;
     private readonly Border _distance = new();
     private readonly StackPanel _bearings = new() { Spacing = 2 };
 
@@ -47,8 +48,9 @@ public sealed class BodyPage : UserControl
     private Distance? _distanceSeen;
     private IReadOnlyList<BearingRow> _bearingsSeen = [];
 
-    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null, SurfaceMarks? marks = null)
+    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null, SurfaceMarks? marks = null, Func<EarlierFinds?>? earlier = null)
     {
+        _earlier = earlier;
         _offDuty = offDuty;
         _marks = marks;
         _state = state;
@@ -182,7 +184,9 @@ public sealed class BodyPage : UserControl
             : null;
     }
 
-    /// <summary>The ship, each valid mark and the last specimen of each open set on the body shown; empty with none.</summary>
+    private const int MostFinds = 5;
+
+    /// <summary>The ship, each valid mark, the last specimen of each open set and the nearest earlier find of each variant on the body shown; empty with none.</summary>
     private IReadOnlyList<BearingRow> Bearings(Snapshot snapshot)
     {
         if (_state() is not { } state
@@ -212,7 +216,10 @@ public sealed class BodyPage : UserControl
             }
         }
 
-        if (points.Count == 0)
+        var here = Here(snapshot);
+        var finds = EarlierVariants(target, BodyName(snapshot), here);
+
+        if (points.Count == 0 && finds.Count == 0)
         {
             return [];
         }
@@ -222,9 +229,56 @@ public sealed class BodyPage : UserControl
             return [new BearingRow(string.Empty, offDuty)];
         }
 
-        var here = Here(snapshot);
+        var rows = points.Select(point => new BearingRow(point.Label, here is { } now ? Describe(now, point.At) : NoPositionText)).ToList();
 
-        return [.. points.Select(point => new BearingRow(point.Label, here is { } now ? Describe(now, point.At) : NoPositionText))];
+        if (here is { } fix)
+        {
+            finds = [.. finds.OrderBy(find => fix.MetresTo(find.At))];
+        }
+
+        rows.AddRange(finds.Take(MostFinds).Select(find => new BearingRow(find.Label, here is { } now ? Describe(now, find.At) : NoPositionText)));
+
+        if (finds.Count > MostFinds)
+        {
+            rows.Add(new BearingRow(string.Empty, $"and {finds.Count - MostFinds} more earlier finds"));
+        }
+
+        return rows;
+    }
+
+    /// <summary>The earlier find of each variant on the body that is nearest the live position, else the first; empty with Canonn off or no finds.</summary>
+    private List<(string Label, SurfaceFix At)> EarlierVariants(Target target, string? bodyName, SurfaceFix? here)
+    {
+        if (_earlier?.Invoke() is not { } store
+            || bodyName is null
+            || !store.TryGet(target.System, out var finds))
+        {
+            return [];
+        }
+
+        var variants = new Dictionary<string, (string Label, SurfaceFix At)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var find in finds.Where(find => string.Equals(find.Body, bodyName, StringComparison.OrdinalIgnoreCase)))
+        {
+            var at = new SurfaceFix(find.Latitude, find.Longitude, here?.RadiusMetres ?? 0);
+
+            if (!variants.TryGetValue(find.Name, out var seen) || (here is { } now && now.MetresTo(at) < now.MetresTo(seen.At)))
+            {
+                variants[find.Name] = (VariantLabel(find.Name), at);
+            }
+        }
+
+        return [.. variants.Values];
+    }
+
+    /// <summary>"Bacterium Aurasus - Green" as <c>AURASUS GREEN</c>: the species without its genus, then the colour.</summary>
+    internal static string VariantLabel(string name)
+    {
+        var parts = name.Split(" - ", 2, StringSplitOptions.TrimEntries);
+        var words = parts[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var species = words.Length > 1 ? string.Join(' ', words[1..]) : parts[0];
+
+        return (parts.Length > 1 ? $"{species} {parts[1]}" : species).ToUpperInvariant();
     }
 
     private static string Describe(SurfaceFix here, SurfaceFix at)

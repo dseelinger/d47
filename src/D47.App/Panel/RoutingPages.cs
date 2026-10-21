@@ -52,6 +52,7 @@ public sealed record RoutingSurface(
     Func<GameStatus>? Status = null,
     Func<long, int, long?>? WorthIfMapped = null,
     D47.Core.Capabilities.Builtin.SurfaceMarks? SurfaceMarks = null,
+    Func<D47.Core.Knowledge.EarlierFinds?>? EarlierFinds = null,
 
     // Unsold data (#556): the two ledgers, read once history has been set up.
     Func<ExobiologyLedger?>? Exobiology = null,
