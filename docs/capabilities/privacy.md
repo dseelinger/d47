@@ -160,6 +160,12 @@ time that comes back; d47 keeps only that time, and only when it falls in a plau
 **BGS tick time** under Outside sources in Settings ([Galaxy search](galaxy.md#bgs-tick-time)) turns it on; it is off
 by default.
 
+**GalNet news** — `cms.zaonce.net`, Frontier's GalNet server, for the newest articles at startup and every
+hour while d47 runs, and for up to two years of older articles the first time. Nothing about you goes with
+it: no key, no Commander name and nothing from your journal. The articles are kept in `data\galnet.json`
+on this PC. **GalNet news** under Outside sources in Settings ([Galaxy search](galaxy.md#galnet-news)) turns
+it on; it is off by default. With it off, nothing is requested and articles already kept stay on this PC.
+
 **Signal index** — `github.com`, which redirects to GitHub's asset storage, from the `signals-1`
 release. When you search for a signal and the copy in `data\signals` is missing or more than 20
 hours old, D47 downloads the daily index of signals Commanders have uploaded to EDDN: one file,
@@ -385,7 +391,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-communitygoals} {#egress-bgstick} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-communitygoals} {#egress-bgstick} {#egress-galnet} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
 {#egress-hullart} {#egress-codexpictures} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

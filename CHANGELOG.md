@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new **GalNet news** setting under Outside sources, off by default, keeps a copy of GalNet on this PC. With it on, D47 asks Frontier's GalNet server (cms.zaonce.net) for the newest articles at startup and every hour while it runs, and the first time it reads back up to two years. Nothing about you goes with the request. The articles are kept in `data\galnet.json` and never deleted; turning the setting off stops the requests and keeps what is there. **Privacy and egress** lists GalNet news. Nothing reads the articles yet.
+
 You can now ask "who's online", "who is online", "which friends are online" or "any friends online". D47 names up to three friends Elite has reported online since it started, newest report first, and counts the rest, for example "Reported online since Elite started: Arcturus, Vega, Rigel and four others." Elite does not write a line for most friends who leave, so this is who has been reported, not who is online now. With Elite closed it says so. Answered on this machine; the AI model can ask too, which sends the names to your language model.
 
 Your core now says when a friend comes online: "Arcturus is online.", or for several, "Arcturus, Vega, Rigel and two others are online.", with at most three names. A burst of arrivals within five seconds is one line. The restatement Elite writes after login stays quiet, and a friend is said again only if their last report is over thirty minutes old. Going offline is not said, because Elite does not write it for most friends who leave. The names are spoken by your ship's voice provider. A new **Friends online** setting turns it off.

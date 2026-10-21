@@ -423,6 +423,7 @@ public sealed class AppHost : IDisposable
     private ModelCatalogRefresher? _modelCatalog;
 
     private D47.Knowledge.InfomancerBgsTickSource? _bgsTickSource;
+    private D47.Knowledge.FrontierGalNetSource? _galNetSource;
 
     private D47.Knowledge.EddnUploader? _eddnUploader;
 
@@ -430,6 +431,8 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
+
+    public GalNetWatch? GalNet { get; private set; }
 
     /// <summary>The colonisation planner's plans read this session.</summary>
     public ColonisationPlans? ColonisationPlans { get; private set; }
@@ -4102,6 +4105,19 @@ public sealed class AppHost : IDisposable
 
         tick.Add("bgs-tick", context => bgsTick.Poll(context.Now));
 
+        host._galNetSource = new D47.Knowledge.FrontierGalNetSource(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.FrontierGalNetSource>());
+        var galNet = host.GalNet = new GalNetWatch(
+            host._galNetSource,
+            new GalNetArchive(
+                foundations.Paths.GalNet,
+                foundations.Files,
+                foundations.LoggerFactory.CreateLogger<GalNetArchive>()),
+            () => settings.Current.Knowledge.GalNet,
+            foundations.LoggerFactory.CreateLogger<GalNetWatch>());
+
+        tick.Add("galnet", context => galNet.Poll(context.Now));
+
         // Built whether or not the switch is on; it sends nothing while off.
         host._colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
             foundations.LoggerFactory.CreateLogger<D47.Knowledge.RavenColonialPlanService>());
@@ -6416,6 +6432,7 @@ public sealed class AppHost : IDisposable
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();
+        _galNetSource?.Dispose();
         _eddnUploader?.Dispose();
         _colonisationPlanService?.Dispose();
 

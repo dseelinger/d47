@@ -907,6 +907,27 @@ public static class GalaxyCapability
             },
             new SettingRow
             {
+                Key = GalNetKey,
+                Label = "GalNet news",
+                Help =
+                    "Lets d47 fetch GalNet articles from Frontier's server, cms.zaonce.net, at startup and "
+                    + "every hour while it runs, and keep them on this PC. The first time it fetches up to two "
+                    + "years of older articles. Nothing about you goes with the request. Off by default; see "
+                    + "[Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "galnet-news",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.GalNet ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { GalNet = v == "true" },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = SignalIndexKey,
                 Label = "Signal index",
                 Help =
@@ -972,6 +993,8 @@ public static class GalaxyCapability
 
     /// <summary>Reading the time of the last BGS tick from tick.infomancer.uk.</summary>
     public const string BgsTickKey = "knowledge.bgsTick";
+
+    public const string GalNetKey = "knowledge.galNet";
 
     /// <summary>Downloading the daily signal index.</summary>
     public const string SignalIndexKey = "knowledge.signalIndex";

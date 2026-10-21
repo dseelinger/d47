@@ -199,6 +199,17 @@ when it is a UTC time no more than five minutes ahead of now, no more than seven
 earlier than the tick it already holds; anything else is ignored and the held time stays. The time
 is kept across restarts.
 
+### GalNet news {#galnet-news}
+
+Off by default, with a host of its own. While it is on, d47 asks Frontier's GalNet server at
+`cms.zaonce.net` for the newest articles when it starts and every hour while it runs, whether or not
+Elite is running. The first time, it also reads back up to two years of older articles. Nothing about
+you goes with the request: no key, no Commander name and nothing from your journal.
+
+The articles are kept in `data\galnet.json` on this PC and never pruned. An article Frontier edits
+replaces the kept copy. A fetch that fails leaves the file as it was. Turning the setting off stops the
+requests; the kept articles stay.
+
 ### Signal index {#signal-index}
 
 A fourth setting, off by default. While it is on, a signal search can also answer from a daily

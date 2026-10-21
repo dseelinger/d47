@@ -66,6 +66,11 @@ public static class EgressDisclosure
 
     public const string BgsTickHost = "tick.infomancer.uk";
 
+    /// <summary>Fetching GalNet articles from Frontier.</summary>
+    public const string GalNet = "galnet";
+
+    public const string GalNetHost = "cms.zaonce.net";
+
     /// <summary>Downloading the daily index of FSS signals.</summary>
     public const string SignalIndex = "signalindex";
 
@@ -144,6 +149,7 @@ public static class EgressDisclosure
         CommunityBiology,
         CommunityGoals,
         BgsTick,
+        GalNet,
         SignalIndex,
         Eddn,
         UpdateCheck,
@@ -179,6 +185,7 @@ public static class EgressDisclosure
         CommunityBiology => "Earlier biology finds",
         CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
+        GalNet => "GalNet news",
         SignalIndex => "Signal index",
         Eddn => "EDDN",
         WebSearch => "Web search",
@@ -352,6 +359,22 @@ public static class EgressDisclosure
                 BgsTick,
                 NameOf(BgsTick),
                 "BGS tick time is off, so nothing is requested and d47 does not know when the tick happened."),
+
+        GalNet => settings.Knowledge.GalNet
+            ? new EgressEntry(
+                GalNet,
+                NameOf(GalNet),
+                GalNetHost,
+                "One request to Frontier's GalNet server, cms.zaonce.net, for the newest articles at startup and "
+                + "every hour while d47 runs, and for up to two years of older articles the first time. Nothing "
+                + "about you goes with it: no key, no Commander name and nothing from your journal.",
+                Active: true,
+                Summary: "One request for the newest GalNet articles at startup and every hour, and up to two "
+                    + "years of older ones the first time. Nothing about you goes with it.")
+            : EgressEntry.Silent(
+                GalNet,
+                NameOf(GalNet),
+                "GalNet news is off, so nothing is requested. Articles already kept stay on this machine."),
 
         SignalIndex => settings.Knowledge.SignalIndex
             ? new EgressEntry(
