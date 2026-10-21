@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Cores by ship now names each bound ship as the Ship dropdown does, from your fleet as it is now. A ship you renamed in game shows its new name without being bound again, and no entry shows a ship id unless nothing else is known about that ship.
+
 A story objective can now take several steps. Each step has its own place or activity, and the objective's lines are spoken when its last step is done. After a step that is not the last, your core says it was done and what the next step is, for example "Next: collect 3 bounties." Change objective, Mark done and Never ask this act on the step you are on, and Change objective replaces only that step. A chapter can have as many steps as its story needs, and from chapter two on it may have any number of arrive, dock, land or scan objectives. Stories you already have load unchanged.
 
 A story step can now follow one named mission. A step takes a mission of a family, optionally for a faction and at a station, and later steps go to that mission's destination, complete it or abandon it. Only the mission the first step took counts: redirecting it does not complete it, and abandoning it while the story waits for its completion fails the chapter, as does completing it while the story waits for its abandonment. The ship does not yet offer these steps when it writes a story.

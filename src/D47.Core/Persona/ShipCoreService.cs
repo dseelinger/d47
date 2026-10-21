@@ -300,8 +300,10 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
                    + "who is answering you.";
         }
 
+        var fleet = Fleet().ToDictionary(entry => entry.ShipId, entry => entry.Said);
+
         var said = bindings.Select(binding =>
-            $"{Named(binding)}: {PersonaCatalog.Resolve(binding.Core).Name}");
+            $"{Named(binding, fleet)}: {PersonaCatalog.Resolve(binding.Core).Name}");
 
         var problems = store.Problems;
 
@@ -311,14 +313,16 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
               + $"Refused: {string.Join("; ", problems.Select(problem => $"{problem.Where} — {problem.Reason}"))}";
     }
 
-    /// <summary>A stored binding as a person reads it, falling back to the id it is keyed on.</summary>
-    private static string Named(ShipCoreBinding binding) =>
-        (binding.Name, binding.Hull) switch
-        {
-            ({ } name, _) => name,
-            (null, { } hull) => $"{Knowledge.EliteSpecifications.HullSaid(hull)} {binding.ShipId}",
-            _ => $"ship {binding.ShipId}",
-        };
+    /// <summary>A bound ship as the Ship dropdown names it, else from the stored text, else its id.</summary>
+    private static string Named(ShipCoreBinding binding, Dictionary<int, string> fleet) =>
+        fleet.TryGetValue(binding.ShipId, out var current)
+            ? current
+            : (binding.Name, binding.Hull) switch
+            {
+                ({ Length: > 0 } name, _) => name,
+                (_, { Length: > 0 } hull) => Knowledge.EliteSpecifications.HullSaid(hull),
+                _ => $"ship {binding.ShipId}",
+            };
 
     private static string Describe(ShipLoadout ship) => ship.Describe() ?? "This ship";
 
