@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your core now remarks when a notable ship hails nearby: a wedding or funeral convoy, nomads, a refugee flotilla fleeing a war, a tour liner, a protester, a propagandist or a security academy training flight. It speaks once per kind per game session, whether or not NPC messages are read aloud. With personality on the core says it in its own voice; with it off, the line is said as written. The remark carries only the kind of ship, never its name or what it said. A new **Notable ships** setting turns it off.
+
 Each screenshot you take in Elite is now copied as a JPEG into `Frontier Developments\Elite Dangerous\D47` under Pictures, named with the local time, the system and the body, such as `2026-10-12 19-40-03 Shinrarta Dezhra.jpg`. A second screenshot in the same second and place adds ` (2)`. D47 waits up to two minutes for a high-resolution screenshot to finish writing, and skips one that does not arrive. Elite's BMP is left where it is, unchanged. Screenshots taken before D47 started are not copied.
 
 There is a new **Convert Elite's screenshots** setting, on by default, with a **Saved to** line showing the D47 folder inside Elite's pictures folder where the JPEG copies go. Saying "stop converting my screenshots" or "start converting my screenshots" changes it; the AI model cannot. **Privacy and egress** lists **Your screenshots**: the copies stay on this PC, and D47 says that a synced Pictures folder, as OneDrive can be, uploads them.

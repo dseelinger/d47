@@ -232,6 +232,7 @@ public static class SettingsLayout
                                 E("callouts.sessionLength"),
                                 E("callouts.sessionLengthHours", under: true),
                                 E("callouts.domain"),
+                                E("callouts.notableShips"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),
                             ]),

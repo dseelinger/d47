@@ -1367,6 +1367,15 @@ own voice, keeping every figure and adding nothing. Warden and every core you wr
 and say nothing here. Choosing a core never switches this row on or off, and it is silent with
 personality off.
 
+#### Notable ships {#notable-ships}
+
+The core aboard remarks when a notable ship hails nearby ([#1444](https://github.com/dseelinger/d47/issues/1444)):
+a wedding or funeral convoy, a nomad convoy, a refugee flotilla fleeing a war, a tour liner, a protester,
+a propagandist or a security academy training flight. It reads the ship's own message key, so it speaks
+whether or not NPC messages are read aloud, once per kind per game session. The remark names the kind and
+nothing from the message. With personality off the authored line is said as written. **Notable ships** in
+the callout settings turns it off.
+
 ### Settings
 
 #### Speak without being asked {#enabled}

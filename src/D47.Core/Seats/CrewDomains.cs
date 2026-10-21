@@ -93,6 +93,7 @@ public static class CrewDomains
         "community-goal-expiry",
         "colonisation",
         "outstanding-crimes",
+        "notable-ships",
     };
 
     /// <summary>

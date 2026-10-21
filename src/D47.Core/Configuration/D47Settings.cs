@@ -810,6 +810,9 @@ public sealed record CalloutSettings
     /// <summary>A remark on the subject the core aboard pays attention to (#611). Choosing a core never changes it.</summary>
     public bool Domain { get; init; } = true;
 
+    /// <summary>A remark when a notable ship hails nearby, once per kind per session (#1444).</summary>
+    public bool NotableShips { get; init; } = true;
+
     /// <summary>The day the Elite week turns, UTC (#332).</summary>
     public DayOfWeek WeekBoundaryDay { get; init; } = DayOfWeek.Thursday;
 

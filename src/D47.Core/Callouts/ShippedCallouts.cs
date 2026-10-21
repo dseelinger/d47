@@ -289,7 +289,8 @@ public static class ShippedCallouts
                     ? here.StationName
                     : null,
                 DockedStationAllegiance = () => gameState.Active?.Location.StationAllegiance,
-            });
+            })
+            .Add(new NotableShipCallout());
 
         // Elite echoes what you send back to you on the channel it went out on.
 
@@ -437,6 +438,7 @@ public static class ShippedCallouts
         engine.SetEnabled("docking", callouts.DockingPad, now);
         engine.SetEnabled("station-damage", callouts.StationDamage, now);
         engine.SetEnabled("domain", callouts.Domain, now);
+        engine.SetEnabled("notable-ships", callouts.NotableShips, now);
         engine.SetEnabled("carrier-fuel", callouts.CarrierFuel, now);
         engine.SetEnabled("carrier-upkeep", callouts.CarrierUpkeep, now);
         engine.SetEnabled("carrier-payroll", callouts.CarrierPayroll, now);

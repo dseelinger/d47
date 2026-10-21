@@ -86,6 +86,7 @@ public static class CalloutCapability
     public const string MissionsKey = "callouts.missions";
     public const string RemindersKey = "callouts.reminders";
     public const string DomainKey = "callouts.domain";
+    public const string NotableShipsKey = "callouts.notableShips";
     public const string RouteEveryKey = "callouts.routeEveryNJumps";
     public const string LongJumpSecondsKey = "callouts.longJumpSeconds";
     public const string HomeSystemKey = "callouts.homeSystem";
@@ -829,6 +830,16 @@ public static class CalloutCapability
                 "core remarks",
                 s => s.Callouts.Domain,
                 (s, v) => s with { Callouts = s.Callouts with { Domain = v } }),
+
+            Toggle(
+                NotableShipsKey,
+                "Notable ships",
+                "A remark from the core aboard when a notable ship passes: a wedding or funeral convoy, nomads, "
+                + "a refugee flotilla, a tour liner, a protester or propagandist, a training flight. Once per kind per session.",
+                "notable-ships",
+                "notable ships",
+                s => s.Callouts.NotableShips,
+                (s, v) => s with { Callouts = s.Callouts with { NotableShips = v } }),
 
             Toggle(
                 AmbientKey,

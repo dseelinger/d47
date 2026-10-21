@@ -283,6 +283,23 @@ public static class FlavourBriefs
             };
         }
 
+        // A notable ship has hailed nearby (#1444). The kind and the authored line are all it carries.
+        if (announcement.Key.StartsWith(NotableShipCallout.KeyPrefix, StringComparison.Ordinal)
+            && NotableShipCallout.KindOf(announcement.Text) is { } kind)
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    $"A {kind} has just passed close by. Make one short remark about it in your own voice, "
+                    + $"from this: \"{announcement.Text}\" Add no facts: no names, no reason it is here, "
+                    + "nothing about who is aboard. One or two sentences. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
         // A figure in the subject the core aboard pays attention to (#611).
         if (announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal))
         {
