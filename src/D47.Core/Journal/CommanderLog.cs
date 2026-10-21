@@ -320,7 +320,8 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
         }
     }
 
-    private static string? PilotNameOf(string pilotName)
+    /// <summary>The Commander named in a <c>ShipTargeted</c> pilot name, or null for an NPC.</summary>
+    public static string? PilotNameOf(string pilotName)
     {
         if (!pilotName.Contains("$cmdr_decorate", StringComparison.OrdinalIgnoreCase))
         {

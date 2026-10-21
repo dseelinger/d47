@@ -249,6 +249,20 @@ text would mean matching on a string somebody else chose. The ids come from a fi
 chatter is considered, and **nothing the message says is repeated, shown, or passed to the language
 model** — the spoken line is chosen by which id arrived and is otherwise a constant.
 
+#### Commanders met before {#met-before}
+
+When you target another Commander you met in an earlier game session, your core says who, how long ago,
+where, and the most notable thing that happened, in this order: they killed you, you killed them, they
+interdicted you, you interdicted them, a crime against you, a wing together, messages, a target. It speaks
+once per Commander per game session. A first meeting, a Commander met only in this session, and any time you
+are under threat are silent; the Commander is not marked as told, so a later target speaks. Nothing is said
+until the journal history has been read after a start. The Commander's name goes to the voice provider that
+speaks for your ship.
+
+```text
+Commander Arden Vale — you met three weeks ago in Shinrarta Dezhra; they assaulted you.
+```
+
 #### Notable kills {#kills}
 
 When you destroy a ship, your core remarks on it if the kill is a notable one:

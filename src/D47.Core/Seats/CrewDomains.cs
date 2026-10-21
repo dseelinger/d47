@@ -46,6 +46,7 @@ public static class CrewDomains
         ["danger"] = CrewRole.SecurityOfficer,
         ["announced-attack"] = CrewRole.SecurityOfficer,
         ["kills"] = CrewRole.SecurityOfficer,
+        ["met-before"] = CrewRole.SecurityOfficer,
         ["rival-territory"] = CrewRole.SecurityOfficer,
 
         ["route"] = CrewRole.Navigation,

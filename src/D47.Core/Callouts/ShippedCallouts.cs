@@ -39,6 +39,8 @@ public static class ShippedCallouts
 
         public required GameStateStore GameState { get; init; }
 
+        public required CommanderLog CommanderLog { get; init; }
+
         public required ExobiologyLedger Exobiology { get; init; }
 
         public required CartographyLedger Cartography { get; init; }
@@ -119,6 +121,7 @@ public static class ShippedCallouts
             // Above everything except danger itself (Phase 15).
             .Add(new AnnouncedAttackCallout())
             .Add(new KillCallout())
+            .Add(new MetBeforeCallout(sources.CommanderLog))
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
             .Add(new RebuyCallout())
@@ -391,6 +394,7 @@ public static class ShippedCallouts
         engine.SetEnabled("limpets", callouts.Limpets, now);
         engine.SetEnabled("announced-attack", callouts.AnnouncedAttack, now);
         engine.SetEnabled("kills", callouts.Kills, now);
+        engine.SetEnabled("met-before", callouts.MetBefore, now);
         engine.SetEnabled("rebuy", callouts.Rebuy, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);

@@ -1478,6 +1478,7 @@ public sealed class AppHost : IDisposable
                 Settings = settings,
                 Loggers = loggerFactory,
                 Checklists = checklists,
+                CommanderLog = commanderLog,
                 Lore = lore,
                 LoreVisits = loreVisits,
                 Adventures = adventureBook,

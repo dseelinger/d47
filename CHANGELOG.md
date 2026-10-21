@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When you target a Commander you met in an earlier game session, your core now says so: who, how long ago, where, and the most notable thing that happened, for example "Commander Arden Vale — you met three weeks ago in Shinrarta Dezhra; they assaulted you." It speaks once per Commander per game session, not for a first meeting, not while you are under threat, and not until the journal history has been read after a start. The **Commanders met before** callout switch turns it off. The name is spoken by your ship's voice provider, and **Privacy and egress** now says so.
+
 A Commander's log now quotes your captain's log entries. Entries whose time falls inside the log's range are added word for word under **In your own words**, after D47's text and before **Sources**, oldest first, each with its time and system. A log with no entries in range has no such section. The entries are added to the file only: they are never sent to the AI model, the price quoted for the log is unchanged, and no sentence in D47's text cites them.
 
 You can now export your log entries. Say "export my log entries" and every entry for the Commander flying is written, oldest first, to `data\captains-log\<Frontier id>\captains-log-<date>.md`, each as a heading with its date in the game's calendar, a line with the system, body, station, ship and position where known, and the text. A second export the same day is written as `-2` rather than over the first, and D47 says how many entries and where the file is. The AI model cannot export them.

@@ -63,6 +63,7 @@ public static class CalloutCapability
     public const string TradingModeMinHoldKey = "callouts.tradingModeMinHold";
     public const string AnnouncedAttackKey = "callouts.announcedAttack";
     public const string KillsKey = "callouts.kills";
+    public const string MetBeforeKey = "callouts.metBefore";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
     public const string PowerplayMeritsKey = "callouts.powerplayMerits";
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
@@ -592,6 +593,16 @@ public static class CalloutCapability
                 "kills",
                 s => s.Callouts.Kills,
                 (s, v) => s with { Callouts = s.Callouts with { Kills = v } }),
+
+            Toggle(
+                MetBeforeKey,
+                "Commanders met before",
+                "A Commander you target who you met in an earlier game session: when, where and what happened, "
+                + "once per Commander per session and never while you are under threat.",
+                "met-before",
+                "commanders met before",
+                s => s.Callouts.MetBefore,
+                (s, v) => s with { Callouts = s.Callouts with { MetBefore = v } }),
 
             Toggle(
                 RivalTerritoryKey,

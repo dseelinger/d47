@@ -868,6 +868,13 @@ public static class EgressDisclosure
             what.Append("Cast members the story did not pin are spoken by the ship's provider, so their lines, the story's sealed text, go there too. ");
         }
 
+        if (settings.Callouts is { Enabled: true, MetBefore: true }
+            && speaking.FirstOrDefault(pair => pair.Slot.Group == Audio.VoiceGroup.Aboard) is { Provider: { } aboard }
+            && aboard.Speaks)
+        {
+            what.Append($"A line saying you met a Commander before carries that Commander's name to {aboard.Name}. ");
+        }
+
         var providers = speaking.Select(pair => pair.Provider).Concat(cast.Select(line => line.Provider)).ToList();
 
         // Each service's own disclosure, once, whichever slots and characters reached it.

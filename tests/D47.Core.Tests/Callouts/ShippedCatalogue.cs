@@ -38,6 +38,7 @@ public static class ShippedCatalogue
                 Ledger = new CommodityLedger(),
                 CommunityGoal = new CommunityGoalSearch(),
                 GameState = surface.GameState,
+                CommanderLog = new CommanderLog(files, NullLogger.Instance),
                 Exobiology = new ExobiologyLedger(Path.Combine(data, "unsold-data.json"), files, NullLogger<ExobiologyLedger>.Instance),
                 Cartography = new CartographyLedger(Path.Combine(data, "unsold-data.json"), files, NullLogger<CartographyLedger>.Instance),
                 Crimes = new OutstandingCrimes(files, NullLogger<OutstandingCrimes>.Instance),

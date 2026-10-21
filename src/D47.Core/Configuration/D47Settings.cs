@@ -584,6 +584,9 @@ public sealed record CalloutSettings
     /// <summary>A notable kill.</summary>
     public bool Kills { get; init; } = true;
 
+    /// <summary>A targeted Commander met in an earlier game session.</summary>
+    public bool MetBefore { get; init; } = true;
+
     /// <summary>Flying in a rival Power's space (Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 
