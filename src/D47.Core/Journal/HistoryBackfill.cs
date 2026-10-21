@@ -74,6 +74,9 @@ public sealed class HistoryBackfill
     /// <summary>The scanned FSS signals, folded the same way.</summary>
     public SignalSightings? Signals { get; init; }
 
+    /// <summary>The Commanders met, folded the same way.</summary>
+    public CommanderLog? MetCommanders { get; init; }
+
     /// <summary>Each Commander's arrivals, folded the same way.</summary>
     public TravelLog? Travel { get; init; }
 
@@ -354,6 +357,15 @@ public sealed class HistoryBackfill
                 Timed("signal backfill", () =>
                 {
                     signals.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (MetCommanders is { } commanders)
+            {
+                Timed("commander log backfill", () =>
+                {
+                    commanders.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

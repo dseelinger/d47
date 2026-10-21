@@ -1100,6 +1100,10 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.SignalSightings>());
 
+        var commanderLog = new D47.Core.Journal.CommanderLog(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.CommanderLog>());
+
         var travelLog = new D47.Core.Journal.TravelLog(
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.TravelLog>());
@@ -1124,6 +1128,7 @@ public sealed class AppHost : IDisposable
             Activities = activities,
             Mail = mail,
             Signals = signalSightings,
+            MetCommanders = commanderLog,
             Travel = travelLog,
             Step = StartupTimer.Step,
         };
@@ -1551,6 +1556,7 @@ public sealed class AppHost : IDisposable
             Markets = markets,
             Memories = memories,
             SignalSightings = signalSightings,
+            CommanderLog = commanderLog,
             TravelLog = travelLog,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
@@ -1690,6 +1696,7 @@ public sealed class AppHost : IDisposable
             crimes.Apply(events, inGame);
             activities.Apply(events, inGame);
             signalSightings.Apply(events);
+            stores.CommanderLog.Apply(events);
             stores.TravelLog.Apply(events);
 
             if (!context.IsFirst)
@@ -4282,6 +4289,8 @@ public sealed class AppHost : IDisposable
         public required MailLedger Mail { get; init; }
 
         public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
+
+        public required D47.Core.Journal.CommanderLog CommanderLog { get; init; }
 
         public required D47.Core.Journal.TravelLog TravelLog { get; init; }
 
