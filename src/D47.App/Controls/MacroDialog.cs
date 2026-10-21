@@ -11,11 +11,15 @@ namespace D47.App.Controls;
 /// <summary>Authoring macros (Phase 10, "Macros": invocation is by voice; authoring is not).</summary>
 public sealed class MacroDialog : ModalDialog
 {
+    private const string ChordWord = "Key chord";
+
     private static readonly string[] States = ["toggle", "on", "off"];
 
     /// <summary>Everything except the fire groups, which macros may not reach.</summary>
     private static readonly string[] Allowed =
         [.. GameActions.All.Where(a => a.Group != GameActions.Weapons).Select(a => a.Id)];
+
+    private static readonly string[] Choices = [.. Allowed, ChordWord];
 
     private readonly MacroStore _store;
     private readonly List<MutableMacro> _macros;
@@ -171,13 +175,43 @@ public sealed class MacroDialog : ModalDialog
 
     private Control BuildStep(MutableMacro macro, MutableStep step)
     {
-        var (actionView, action) = Choice.Build(Allowed, Array.IndexOf(Allowed, step.Action));
+        var (actionView, action) = Choice.Build(
+            Choices, step.Chord is null ? Array.IndexOf(Choices, step.Action) : Choices.Length - 1);
         actionView.Width = 200;
-        action.SelectionChanged += (_, _) => step.Action = action.SelectedItem ?? step.Action;
 
         var (stateView, state) = Choice.Build(States, Array.IndexOf(States, step.State));
         stateView.Width = 100;
         state.SelectionChanged += (_, _) => step.State = state.SelectedItem ?? step.State;
+
+        var chordPicker = new ChordPicker { Chord = step.Chord ?? ChordPicker.Default, VerticalAlignment = VerticalAlignment.Top };
+        chordPicker.Changed += (_, changed) => step.Chord = changed;
+
+        var slot = new Avalonia.Controls.Panel { VerticalAlignment = VerticalAlignment.Top };
+
+        void ShowSlot()
+        {
+            slot.Children.Clear();
+            slot.Children.Add(step.Chord is null ? stateView : chordPicker);
+        }
+
+        action.SelectionChanged += (_, _) =>
+        {
+            if (action.SelectedItem == ChordWord)
+            {
+                step.Action = string.Empty;
+                step.Chord ??= ChordPicker.Default;
+                chordPicker.Chord = step.Chord;
+            }
+            else
+            {
+                step.Action = action.SelectedItem ?? step.Action;
+                step.Chord = null;
+            }
+
+            ShowSlot();
+        };
+
+        ShowSlot();
 
         var pause = new NumericUpDown
         {
@@ -206,7 +240,7 @@ public sealed class MacroDialog : ModalDialog
         {
             ItemSpacing = Gaps.Tile,
             LineSpacing = Gaps.Tile,
-            Children = { actionView, stateView, pause, up, down, drop },
+            Children = { actionView, slot, pause, up, down, drop },
         };
     }
 
@@ -258,6 +292,7 @@ public sealed class MacroDialog : ModalDialog
                 mutable.Steps.Add(new MutableStep
                 {
                     Action = step.Action,
+                    Chord = step.Chord,
                     State = step.State.ToString().ToLowerInvariant(),
                     PauseMs = step.PauseMs,
                 });
@@ -277,7 +312,8 @@ public sealed class MacroDialog : ModalDialog
                     "off" => DesiredState.Off,
                     _ => DesiredState.Toggle,
                 },
-                step.PauseMs))],
+                step.PauseMs,
+                step.Chord))],
         };
     }
 
@@ -288,5 +324,7 @@ public sealed class MacroDialog : ModalDialog
         public string State { get; set; } = "toggle";
 
         public int PauseMs { get; set; } = 250;
+
+        public KeyChord? Chord { get; set; }
     }
 }

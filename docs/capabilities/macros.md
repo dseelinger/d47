@@ -216,6 +216,24 @@ week. It is refused by name, with the reason, in the editor and in "what macros 
 
 One bad macro does not cost you the others. The rest of the file still loads.
 
+### Key chords
+
+A step can press a key chord instead of an action: Ctrl+V, or Shift+Win+D for a virtual desktop
+switch. In the editor, pick **Key chord** in the step's action list; the on / off / toggle row
+becomes the chord's modifiers and key. In the file a chord step has no action:
+
+```json
+{ "chord": { "key": "Key_V", "modifiers": "ctrl" }, "pauseMs": 100 }
+```
+
+A chord goes to Elite only. The keys are sent while Elite is in front and you are in the game, and
+the macro stops if either stops being true. Programs with global hotkeys still hear them.
+
+Because a chord is not one of Elite's own bindings, the AI never runs a macro that holds one. Say
+its name yourself. The AI is told only about the macros without chords, and if it asks for a chord
+macro anyway it is refused and nothing is sent. A chord to any window belongs on a
+[HOTAS switch](switches.md) position instead.
+
 ### It stops before it starts
 
 Every step is checked before any of them is sent. If the fourth action is on your joystick, the
@@ -257,5 +275,15 @@ The model-free route needs the same trick from the other end: descriptors are re
 never mutated, so macro phrases reach the keyword router through a function it consults rather
 than through the descriptor. A macro name never enters a schema, so nothing about caching is
 affected by letting that source change.
+
+#### `run_key_macro`
+
+Run one of the Commander's macros that presses key chords outside Elite's bindings. Only the
+Commander can run it. `run_macro` refuses a macro holding a chord, and the keyword router sends
+that macro's name here instead.
+
+```json
+{"type":"object","properties":{"name":{"type":"string","description":"The macro's name, as the Commander wrote it."}},"required":["name"],"additionalProperties":false}
+```
 
 </details>

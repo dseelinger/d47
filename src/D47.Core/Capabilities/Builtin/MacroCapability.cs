@@ -11,6 +11,8 @@ public static class MacroCapability
 
     public const string ListKey = "macros.list";
 
+    public const string KeyMacroTool = "run_key_macro";
+
     public static CapabilityDescriptor Create(MacroStore store, ActionSurface actions) => new()
     {
         Id = Id,
@@ -49,7 +51,28 @@ public static class MacroCapability
                     },
                 ],
                 SendsInput = true,
-                Handler = (arguments, cancellationToken) => Run(arguments, store, actions, cancellationToken),
+                Handler = (arguments, cancellationToken) => Run(arguments, store, actions, false, cancellationToken),
+            },
+
+            new ToolDefinition
+            {
+                Name = KeyMacroTool,
+                Description =
+                    "Run one of the Commander's macros that presses key chords outside Elite's bindings. "
+                    + "Only the Commander can run it.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "name",
+                        Type = ToolParameterType.String,
+                        Description = "The macro's name, as the Commander wrote it.",
+                        Required = true,
+                    },
+                ],
+                SendsInput = true,
+                Protected = true,
+                Handler = (arguments, cancellationToken) => Run(arguments, store, actions, true, cancellationToken),
             },
         ],
     };
@@ -58,20 +81,20 @@ public static class MacroCapability
     public static IEnumerable<DynamicCommand> Phrases(MacroStore store) =>
         store.Macros.SelectMany(macro => new[]
         {
-            Command(macro.Name),
-            Command($"run {macro.Name}"),
+            Command(macro, macro.Name),
+            Command(macro, $"run {macro.Name}"),
         });
 
-    private static DynamicCommand Command(string phrase) => new(
+    private static DynamicCommand Command(Macro macro, string phrase) => new(
         phrase,
         Id,
-        "run_macro",
+        macro.HoldsChord ? KeyMacroTool : "run_macro",
         new Dictionary<string, string>(StringComparer.Ordinal) { ["name"] = phrase.StartsWith("run ", StringComparison.OrdinalIgnoreCase) ? phrase[4..] : phrase });
 
     /// <summary>The live half, for prompt position 7.</summary>
     public static string? Live(MacroStore store)
     {
-        var names = store.Macros.Select(macro => macro.Name).ToArray();
+        var names = store.Macros.Where(macro => !macro.HoldsChord).Select(macro => macro.Name).ToArray();
 
         return names.Length == 0
             ? null
@@ -118,7 +141,9 @@ public static class MacroCapability
             foreach (var macro in store.Macros)
             {
                 var steps = string.Join(", ", macro.Steps.Select(step =>
-                    step.State == DesiredState.Toggle
+                    step.Chord is { } chord
+                        ? chord.Describe()
+                        : step.State == DesiredState.Toggle
                         ? step.Action
                         : $"{step.Action} {step.State.ToString().ToLowerInvariant()}"));
 
@@ -139,6 +164,7 @@ public static class MacroCapability
         ToolArguments arguments,
         MacroStore store,
         ActionSurface actions,
+        bool commanderOnly,
         CancellationToken cancellationToken)
     {
         if (!actions.Enabled())
@@ -158,6 +184,12 @@ public static class MacroCapability
             return ToolResult.Error($"There is no macro called \"{name.Trim()}\".");
         }
 
+        if (macro.HoldsChord && !commanderOnly)
+        {
+            return ToolResult.Error(
+                $"\"{macro.Name}\" presses keys outside Elite's bindings, so the Commander runs it by saying its name.");
+        }
+
         var binds = actions.Binds();
         var context = actions.Context;
         var steps = new List<InputStep>();
@@ -165,6 +197,18 @@ public static class MacroCapability
         // Resolved as a whole before any of it is sent.
         foreach (var step in macro.Steps)
         {
+            if (step.Chord is { } chord)
+            {
+                steps.AddRange(chord.Steps());
+
+                if (step.PauseMs > 0)
+                {
+                    steps.Add(InputStep.Wait(TimeSpan.FromMilliseconds(step.PauseMs)));
+                }
+
+                continue;
+            }
+
             var action = GameActions.Find(step.Action)!;
             var reach = ActionReachability.Resolve(action, binds, context);
 

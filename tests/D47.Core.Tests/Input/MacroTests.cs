@@ -326,4 +326,127 @@ public class MacroTests
 
         Assert.Equal(before.All[0].ToolSchemas, after.All[0].ToolSchemas);
     }
+
+    private static readonly KeyChord Paste = new("Key_V", ChordModifiers.Ctrl);
+
+    private MacroStore ChordStore()
+    {
+        var store = Store();
+        store.Save([
+            new Macro { Name = "paste it", Steps = [new MacroStep("lights", DesiredState.On, 0), new MacroStep(Chord: Paste, PauseMs: 100), new MacroStep("lights", DesiredState.On, 0)] },
+            new Macro { Name = "plain", Steps = [new MacroStep("lights", DesiredState.On, 0)] },
+        ]);
+        store.Poll([]);
+        return store;
+    }
+
+    private static ToolArguments Named(string name) => new(new Dictionary<string, string> { ["name"] = name });
+
+    [Fact]
+    public void AStepWithAnActionAndAChordIsRefused()
+    {
+        var macro = new Macro { Name = "both", Steps = [new MacroStep("lights", Chord: Paste)] };
+
+        Assert.Contains("both an action and a key chord", MacroValidation.Problem(macro, []), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AStepWithARefusedChordIsRefused()
+    {
+        var macro = new Macro { Name = "close", Steps = [new MacroStep(Chord: new KeyChord("Key_F4", ChordModifiers.Alt))] };
+
+        Assert.Contains("closes the window", MacroValidation.Problem(macro, []), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AMacroOfAnActionAChordAndAPauseSendsThemInOrder()
+    {
+        var store = ChordStore();
+        var input = new RecordingGameInput();
+        var registry = CapabilityRegistry.Build([
+            MacroCapability.Create(store, Actions(Binds(("ShipSpotLightToggle", "Key_Insert")), input))]);
+
+        var result = await registry.InvokeAsync(
+            MacroCapability.KeyMacroTool, Named("paste it"), TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+
+        var light = InputSequence.Tap(new EliteBinding("ShipSpotLightToggle", "Primary", "Keyboard", "Key_Insert"));
+        InputStep[] expected = [.. light, .. Paste.Steps(), InputStep.Wait(TimeSpan.FromMilliseconds(100)), .. light];
+        Assert.Equal(expected, input.Steps);
+    }
+
+    [Fact]
+    public async Task RunMacroRefusesAChordMacroAndSendsNothing()
+    {
+        var store = ChordStore();
+        var input = new RecordingGameInput();
+        var registry = CapabilityRegistry.Build([
+            MacroCapability.Create(store, Actions(Binds(("ShipSpotLightToggle", "Key_Insert")), input))]);
+
+        var result = await registry.InvokeAsync(
+            "run_macro", Named("paste it"), caller: ToolCaller.Model, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsError);
+        Assert.Contains("presses keys outside Elite's bindings, so the Commander runs it by saying its name", result.Content, StringComparison.Ordinal);
+        Assert.Empty(input.Steps);
+    }
+
+    [Fact]
+    public async Task OnlyTheCommanderRunsAKeyMacro()
+    {
+        var store = ChordStore();
+        var input = new RecordingGameInput();
+        var registry = CapabilityRegistry.Build([
+            MacroCapability.Create(store, Actions(Binds(("ShipSpotLightToggle", "Key_Insert")), input))]);
+
+        var refused = await registry.InvokeAsync(
+            MacroCapability.KeyMacroTool, Named("paste it"), caller: ToolCaller.Model, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(refused.IsError);
+        Assert.Empty(input.Steps);
+
+        var ran = await registry.InvokeAsync(
+            MacroCapability.KeyMacroTool, Named("paste it"), caller: ToolCaller.Commander, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(ran.IsError);
+        Assert.NotEmpty(input.Steps);
+    }
+
+    [Fact]
+    public void SayingAChordMacroReachesTheKeyMacroTool()
+    {
+        var store = ChordStore();
+        var registry = CapabilityRegistry.Build([MacroCapability.Create(store, ActionSurface.Inert)]);
+        var router = new KeywordRouter(registry, () => MacroCapability.Phrases(store));
+
+        foreach (var utterance in new[] { "paste it", "run paste it" })
+        {
+            Assert.Equal(MacroCapability.KeyMacroTool, router.MatchToolCommand(utterance)?.ToolName);
+        }
+
+        Assert.Equal("run_macro", router.MatchToolCommand("plain")?.ToolName);
+    }
+
+    [Fact]
+    public void TheLiveBlockLeavesChordMacrosOut()
+    {
+        var live = MacroCapability.Live(ChordStore());
+
+        Assert.Contains("plain", live, StringComparison.Ordinal);
+        Assert.DoesNotContain("paste it", live, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AChordStepSurvivesSavingAndTheListNamesIt()
+    {
+        var store = ChordStore();
+        var registry = CapabilityRegistry.Build([MacroCapability.Create(store, ActionSurface.Inert)]);
+
+        Assert.Equal(Paste, Assert.Single(store.Macros, macro => macro.Name == "paste it").Steps[1].Chord);
+
+        var list = await registry.InvokeAsync("list_macros", ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("paste it: lights on, Ctrl+V, lights on", list.Content, StringComparison.Ordinal);
+    }
 }
