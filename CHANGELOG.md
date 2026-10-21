@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-A new setting, **Read colonisation plans from Raven Colonial**, under Outside sources, is off by default. While it is on, d47 may ask Raven Colonial for the plan of a system you are building in, by system name and never by Commander name. The Privacy and egress section lists it as "nothing sent" while it is off. Nothing uses the plans yet.
+A new setting, **Read colonisation plans from Raven Colonial**, under Outside sources, is off by default. While it is on, d47 may ask Raven Colonial for the plan of a system you are building in, by system name and never by Commander name. The Privacy and egress section lists it as "nothing sent" while it is off. While it is on, d47 reads the plan of every system you have claimed or are building in when the setting is turned on or d47 starts, and again when you dock at a construction site there; the plans are kept until d47 closes and never written to disk. Nothing uses the plans yet.
 
 Finding somewhere to colonise now lists the best colony first instead of the nearest. Each system is scored from its bodies — Earth-like and water worlds, landable rocky ground, metallic rings with rich reserves, terraforming candidates, biology, size and how close the bodies sit to arrival — and the answer says why each one ranks where it does. Every answer reminds you to check the build slots and the primary port's site in the system map before claiming, since no index has them.
 

@@ -3,6 +3,7 @@ using System.Text;
 using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using PlannedNeeds = D47.Core.Engineers.PlannedNeeds;
 
 namespace D47.Core.Checklists;
 

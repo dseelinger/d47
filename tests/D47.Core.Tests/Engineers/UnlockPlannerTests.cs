@@ -4,6 +4,7 @@ using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Loadout;
 using D47.Core.Ships;
+using PlannedNeeds = D47.Core.Engineers.PlannedNeeds;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

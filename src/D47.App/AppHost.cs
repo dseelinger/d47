@@ -425,8 +425,13 @@ public sealed class AppHost : IDisposable
 
     private D47.Knowledge.EddnUploader? _eddnUploader;
 
+    private D47.Knowledge.RavenColonialPlanService? _colonisationPlanService;
+
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
+
+    /// <summary>The colonisation planner's plans read this session.</summary>
+    public ColonisationPlans? ColonisationPlans { get; private set; }
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -4055,6 +4060,17 @@ public sealed class AppHost : IDisposable
 
         tick.Add("bgs-tick", context => bgsTick.Poll(context.Now));
 
+        // Built whether or not the switch is on; it sends nothing while off.
+        host._colonisationPlanService = new D47.Knowledge.RavenColonialPlanService(
+            foundations.LoggerFactory.CreateLogger<D47.Knowledge.RavenColonialPlanService>());
+        var colonisationPlans = host.ColonisationPlans = new ColonisationPlans(
+            host._colonisationPlanService,
+            () => settings.Current.Knowledge.ColonisationPlanner,
+            () => gameState.Active,
+            foundations.LoggerFactory.CreateLogger<ColonisationPlans>());
+
+        tick.Add("colonisation-plans", context => colonisationPlans.Poll(context.Now));
+
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
 
@@ -6300,6 +6316,7 @@ public sealed class AppHost : IDisposable
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();
         _eddnUploader?.Dispose();
+        _colonisationPlanService?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

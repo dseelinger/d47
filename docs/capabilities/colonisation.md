@@ -433,8 +433,12 @@ attached. It asks by system name, for systems your journal already names, and ne
 
 What goes out is those system names and the project ids the planner returns for them. No key and no
 Commander name go with it. What comes back includes other Commanders' names and notes; d47 counts the
-Commanders and carriers and leaves the names and notes where they are. Nothing is kept between
-requests yet.
+Commanders and carriers and leaves the names and notes where they are.
+
+With the setting on, d47 asks for every system you have claimed or have an unfinished construction
+site in, once when the setting is turned on or d47 starts, and again when you dock at a depot there,
+at most every two minutes. A failed request is not repeated for ten minutes. The plans are kept until
+d47 closes and are never written to disk.
 
 This is a different host from galaxy search and has its own switch, so using one does not turn on the
 other. The Privacy and egress section lists it as "nothing sent" while it is off.
