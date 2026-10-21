@@ -386,34 +386,12 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             {
                 var at = written.Count > 1 ? $"beat {index + 1} step {stepIndex + 1}" : $"beat {index + 1}";
 
-                if (!AdventureValidation.TryKind(step.Trigger?.Kind, out var kind))
+                if (FromStep(step, at, where, problems) is not { } read)
                 {
-                    problems.Add(new AdventureProblem(
-                        where,
-                        $"{at} names a trigger \"{step.Trigger?.Kind ?? string.Empty}\"; the kinds are "
-                        + string.Join(", ", AdventureValidation.Kinds)));
                     return null;
                 }
 
-                var failsOn = new List<AdventureTrigger>();
-
-                foreach (var fail in step.FailsOn ?? [])
-                {
-                    if (!AdventureValidation.TryKind(fail.Kind, out var failKind))
-                    {
-                        problems.Add(new AdventureProblem(where, $"{at} names a failsOn \"{fail.Kind ?? string.Empty}\"; the kinds are " + string.Join(", ", AdventureValidation.Kinds)));
-                        return null;
-                    }
-
-                    failsOn.Add(FromTrigger(fail, failKind));
-                }
-
-                steps.Add(new BeatStep
-                {
-                    Trigger = FromTrigger(step.Trigger!, kind),
-                    FailsOn = [.. failsOn],
-                    Reason = string.IsNullOrWhiteSpace(step.Reason) ? null : step.Reason.Trim(),
-                });
+                steps.Add(read);
             }
 
             beats.Add(new AdventureBeat
@@ -463,8 +441,11 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
-            Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null && Math.Max(step.Step ?? 0, 0) < beats[step.Beat!.Value].Steps.Count)
+            Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null && Math.Max(step.Step ?? 0, 0) < beats[step.Beat!.Value].MostSteps)
                 .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value, string.Equals(step.By?.Trim(), CommanderStep, StringComparison.Ordinal) ? AdventureFold.CommanderSource : null, Math.Max(step.Step ?? 0, 0)))],
+            Choices = [.. (record.Choices ?? []).Where(choice => choice is { Beat: >= 0, Option: >= 0, At: not null } && choice.Beat < beats.Count && choice.Option < (beats[choice.Beat!.Value].Steps.FirstOrDefault()?.Options.Count ?? 0))
+                .Select(choice => new AdventureChoice(choice.Beat!.Value, choice.Option!.Value, choice.At!.Value))],
+            Offered = record.Offered is { Beat: >= 0, At: not null } offered ? new AdventureOffer(offered.Beat!.Value, offered.At.Value) : null,
         };
 
         var refusals = AdventureValidation.Problems(adventure);
@@ -477,6 +458,75 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         return adventure;
     }
+
+    /// <summary>One step as written, with its options, or null with a problem added when a kind is not one d47 knows.</summary>
+    private static BeatStep? FromStep(StepDefRecord step, string at, string where, List<AdventureProblem> problems)
+    {
+        if (!AdventureValidation.TryKind(step.Trigger?.Kind, out var kind))
+        {
+            problems.Add(new AdventureProblem(
+                where,
+                $"{at} names a trigger \"{step.Trigger?.Kind ?? string.Empty}\"; the kinds are "
+                + string.Join(", ", AdventureValidation.Kinds)));
+            return null;
+        }
+
+        var failsOn = new List<AdventureTrigger>();
+
+        foreach (var fail in step.FailsOn ?? [])
+        {
+            if (!AdventureValidation.TryKind(fail.Kind, out var failKind))
+            {
+                problems.Add(new AdventureProblem(where, $"{at} names a failsOn \"{fail.Kind ?? string.Empty}\"; the kinds are " + string.Join(", ", AdventureValidation.Kinds)));
+                return null;
+            }
+
+            failsOn.Add(FromTrigger(fail, failKind));
+        }
+
+        var options = new List<BeatOption>();
+
+        foreach (var (option, optionIndex) in (step.Options ?? []).Select((option, optionIndex) => (option, optionIndex)))
+        {
+            var optionSteps = new List<BeatStep>();
+
+            foreach (var (optionStep, stepIndex) in (option.Steps ?? []).Select((optionStep, stepIndex) => (optionStep, stepIndex)))
+            {
+                if (FromStep(optionStep, $"{at} option {optionIndex + 1} step {stepIndex + 1}", where, problems) is not { } read)
+                {
+                    return null;
+                }
+
+                optionSteps.Add(read);
+            }
+
+            options.Add(new BeatOption
+            {
+                Label = option.Label?.Trim() ?? string.Empty,
+                Steps = optionSteps,
+                Ending = string.IsNullOrWhiteSpace(option.Ending) ? null : option.Ending.Trim(),
+                EndingLine = string.IsNullOrWhiteSpace(option.EndingLine) ? null : option.EndingLine.Trim(),
+            });
+        }
+
+        return new BeatStep
+        {
+            Trigger = FromTrigger(step.Trigger!, kind),
+            FailsOn = [.. failsOn],
+            Reason = string.IsNullOrWhiteSpace(step.Reason) ? null : step.Reason.Trim(),
+            Options = options,
+        };
+    }
+
+    private static StepDefRecord ToStep(BeatStep step) => new()
+    {
+        Trigger = ToTrigger(step.Trigger),
+        FailsOn = step.FailsOn.Count > 0 ? [.. step.FailsOn.Select(ToTrigger)] : null,
+        Reason = step.Reason,
+        Options = step.Options.Count > 0
+            ? [.. step.Options.Select(option => new OptionRecord { Label = option.Label, Steps = option.Steps.Count > 0 ? [.. option.Steps.Select(ToStep)] : null, Ending = option.Ending, EndingLine = option.EndingLine })]
+            : null,
+    };
 
     private static AdventureTrigger FromTrigger(TriggerRecord record, TriggerKind kind) => new()
     {
@@ -558,12 +608,10 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             {
                 Title = beat.Title,
                 Function = beat.Function,
-                Reason = beat.Steps.Count > 1 ? null : beat.Reason,
-                Trigger = beat.Steps.Count > 1 ? null : ToTrigger(beat.Trigger),
-                FailsOn = beat.Steps.Count > 1 || beat.FailsOn.Count == 0 ? null : [.. beat.FailsOn.Select(ToTrigger)],
-                Steps = beat.Steps.Count > 1
-                    ? [.. beat.Steps.Select(step => new StepDefRecord { Trigger = ToTrigger(step.Trigger), FailsOn = step.FailsOn.Count > 0 ? [.. step.FailsOn.Select(ToTrigger)] : null, Reason = step.Reason })]
-                    : null,
+                Reason = Listed(beat) ? null : beat.Reason,
+                Trigger = Listed(beat) ? null : ToTrigger(beat.Trigger),
+                FailsOn = Listed(beat) || beat.FailsOn.Count == 0 ? null : [.. beat.FailsOn.Select(ToTrigger)],
+                Steps = Listed(beat) ? [.. beat.Steps.Select(ToStep)] : null,
                 Line = beat.Lines.Count == 1 ? beat.Line : null,
                 Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
                 Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker, Introduces = line.Introduces })],
@@ -579,7 +627,12 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
         Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, Step = step.Step > 0 ? step.Step : null, At = step.At, By = step.By == AdventureFold.CommanderSource ? CommanderStep : null })] : null,
+        Choices = adventure.Choices.Count > 0 ? [.. adventure.Choices.Select(choice => new ChoiceRecord { Beat = choice.Beat, Option = choice.Option, At = choice.At })] : null,
+        Offered = adventure.Offered is { } offered ? new OfferRecord { Beat = offered.Beat, At = offered.At } : null,
     };
+
+    /// <summary>Whether a beat is written as a list of steps: it has more than one, or one with options.</summary>
+    private static bool Listed(AdventureBeat beat) => beat.Steps.Count > 1 || beat.Steps.Any(step => step.Options.Count > 0);
 
     private sealed class Document
     {
@@ -635,6 +688,37 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? StoryId { get; set; }
 
         public List<StepRecord>? Stepped { get; set; }
+
+        public List<ChoiceRecord>? Choices { get; set; }
+
+        public OfferRecord? Offered { get; set; }
+    }
+
+    private sealed class ChoiceRecord
+    {
+        public int? Beat { get; set; }
+
+        public int? Option { get; set; }
+
+        public DateTimeOffset? At { get; set; }
+    }
+
+    private sealed class OfferRecord
+    {
+        public int? Beat { get; set; }
+
+        public DateTimeOffset? At { get; set; }
+    }
+
+    private sealed class OptionRecord
+    {
+        public string? Label { get; set; }
+
+        public List<StepDefRecord>? Steps { get; set; }
+
+        public string? Ending { get; set; }
+
+        public string? EndingLine { get; set; }
     }
 
     /// <summary>The <see cref="StepRecord.By"/> written for a step the Commander marked; a step without one is the bench's.</summary>
@@ -685,7 +769,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         public List<TriggerRecord>? FailsOn { get; set; }
 
-        /// <summary>Written instead of <see cref="Trigger"/>, <see cref="FailsOn"/> and <see cref="Reason"/> when a beat has more than one step.</summary>
+        /// <summary>Written instead of <see cref="Trigger"/>, <see cref="FailsOn"/> and <see cref="Reason"/> when a beat has more than one step, or one with options.</summary>
         public List<StepDefRecord>? Steps { get; set; }
 
         public string? Line { get; set; }
@@ -703,6 +787,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public List<TriggerRecord>? FailsOn { get; set; }
 
         public string? Reason { get; set; }
+
+        public List<OptionRecord>? Options { get; set; }
     }
 
     private sealed class LineRecord

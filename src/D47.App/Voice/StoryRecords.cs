@@ -162,6 +162,15 @@ internal sealed class StoryRecords(
         });
     }
 
+    /// <summary>The offer of a story's choice, once said: from then the Commander can choose.</summary>
+    internal void RecordOffer(Announcement announcement)
+    {
+        if (D47.Core.Adventures.AdventureCallout.Offer(announcement.Key) is var (key, beat))
+        {
+            adventures.Offered(gameState.Active?.Identity.FrontierId, key, beat, DateTimeOffset.Now);
+        }
+    }
+
     /// <summary>A spoken nudge, posted to Messages from the narrator and kept on the story's feed.</summary>
     internal void RecordNudge(Announcement announcement, SpokenClip? spoken)
     {

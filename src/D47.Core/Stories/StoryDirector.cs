@@ -978,6 +978,34 @@ public sealed class StoryDirector(
         return null;
     }
 
+    /// <summary>Whether a story is waiting on a choice the Commander can make now, for the phrases that make it.</summary>
+    public bool ChoiceOpen(string? frontierId) => Choosing(frontierId) is not null;
+
+    /// <summary>Chooses option <paramref name="option"/>, from zero, of the open choice: the running story's chapter's, or with none the one short story's.</summary>
+    public AdventureChoiceOutcome Choose(string? frontierId, int option, DateTimeOffset now) =>
+        Choosing(frontierId) is { } standing
+            ? book.Choose(frontierId, standing.Adventure.Key, option, now)
+            : AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
+
+    /// <summary>The standing whose choice is open: the running story's chapter, or with none the one short story waiting on a choice; null when neither is.</summary>
+    private AdventureStanding? Choosing(string? frontierId)
+    {
+        if (Switching)
+        {
+            return null;
+        }
+
+        if (stories.Current(frontierId) is { CurrentChapter: { } chapter } && IsRunning(frontierId) && !WithoutOdyssey(frontierId)
+            && book.Standing(frontierId, chapter) is { OpenChoice: not null } running)
+        {
+            return running;
+        }
+
+        var open = book.Standings(frontierId).Where(standing => standing.Adventure.StoryId is null && standing.OpenChoice is not null).ToList();
+
+        return open.Count == 1 ? open[0] : null;
+    }
+
     /// <summary>Why the objective of the chapter or short story <paramref name="key"/> cannot be marked done now, or null.</summary>
     public string? MarkDoneRefusal(string? frontierId, string key)
     {
@@ -1102,6 +1130,10 @@ public sealed class StoryDirector(
         else if (standing.IsDone || standing.CurrentBeat is null)
         {
             refusal = "That story is done.";
+        }
+        else if (standing.InChoice)
+        {
+            refusal = AdventureStanding.ChoiceRefusal;
         }
         else
         {
@@ -1395,6 +1427,10 @@ public sealed class StoryDirector(
                  || standing.CurrentBeat is not { } beat)
         {
             refusal = "The story is not waiting on an objective.";
+        }
+        else if (standing.InChoice)
+        {
+            refusal = AdventureStanding.ChoiceRefusal;
         }
         else if (!standing.IsRefusable)
         {
@@ -1697,7 +1733,8 @@ public sealed class StoryDirector(
             return null;
         }
 
-        if (story.State != StoryState.Running || story.IsWithoutOdyssey || standing is not { IsDone: true } || WriteFailed(frontierId) || IsWriting(frontierId))
+        if (story.State != StoryState.Running || story.IsWithoutOdyssey || standing is not { IsDone: true } || standing is { Reached: not null, Adventure.IsEnded: false }
+            || WriteFailed(frontierId) || IsWriting(frontierId))
         {
             return null;
         }
@@ -1723,11 +1760,11 @@ public sealed class StoryDirector(
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
     }
 
-    /// <summary>Hands each chapter the fold failed and no ending is stored for to the pool once; null when there is none.</summary>
+    /// <summary>Hands each chapter the fold failed or ended in an option's ending, and no ending is stored for, to the pool once; null when there is none.</summary>
     private Task<string?>? StoreFailures(string? frontierId)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
-        var failing = book.Failing(frontierId);
+        var failing = book.Unstored(frontierId);
         List<string> keys = [];
 
         lock (_gate)
@@ -1752,7 +1789,7 @@ public sealed class StoryDirector(
             {
                 try
                 {
-                    if (book.Fail(frontierId, key) is { } refusal)
+                    if (book.StoreEnding(frontierId, key) is { } refusal)
                     {
                         logger.LogWarning("The ending of {Key} was not stored for {Commander}: {Refusal}", key, commander, refusal);
                     }

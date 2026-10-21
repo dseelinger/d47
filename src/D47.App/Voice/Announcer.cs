@@ -234,6 +234,7 @@ public sealed class Announcer : IDisposable
 
                         // What the Commander actually heard about a story, kept (asked for 2026-08-22).
                         Records.RecordAdventure(announcement, spoken);
+                        Records.RecordOffer(announcement);
                         Records.RecordNudge(announcement, spoken);
                         Records.RecordClue(announcement, spoken);
                         Records.RecordReaction(announcement, spoken);

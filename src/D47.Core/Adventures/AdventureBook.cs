@@ -8,17 +8,26 @@ namespace D47.Core.Adventures;
 /// One beat reached, one step of a beat done, or an opening spoken, waiting to be said (Phase 47, "The ship's AI tells it, and
 /// the authored beat is the floor").
 /// </summary>
-/// <param name="Beat">The beat index, <c>-1</c> for the opening, or <see cref="FailedBeat"/>.</param>
-/// <param name="Reason">Why a chapter failed, for a <see cref="FailedBeat"/> moment.</param>
+/// <param name="Beat">The beat index, <c>-1</c> for the opening, <see cref="FailedBeat"/> or <see cref="EndingBeat"/>.</param>
+/// <param name="Reason">Why a chapter failed, for a <see cref="FailedBeat"/> moment; the ending's line, for an <see cref="EndingBeat"/> one.</param>
 /// <param name="Step">The step of <paramref name="Beat"/> that was done, for a moment that is a step and not the whole beat.</param>
-public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int Beat, DateTimeOffset At, string? Reason = null, int? Step = null)
+/// <param name="Chosen">The option chosen in <paramref name="Beat"/>, which decides the step after <paramref name="Step"/>.</param>
+public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int Beat, DateTimeOffset At, string? Reason = null, int? Step = null, int? Chosen = null)
 {
     /// <summary>The <see cref="Beat"/> of the line said when a chapter fails.</summary>
     public const int FailedBeat = -2;
 
+    /// <summary>The <see cref="Beat"/> of the line said when a chapter ends in an option's ending.</summary>
+    public const int EndingBeat = -3;
+
     public bool IsOpening => Beat == -1;
 
     public bool IsFailure => Beat == FailedBeat;
+
+    public bool IsEnding => Beat == EndingBeat;
+
+    /// <summary>Whether the beat this one hands over to begins with a choice, which this moment's lines offer.</summary>
+    public bool OffersChoice => Next is { OpensWithChoice: true };
 
     /// <summary>A step that is not its beat's last: it has no lines, only the hand-off to the next step.</summary>
     public bool IsStep => Step is not null;
@@ -29,7 +38,7 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>What is said, in order: the opening's lines, or the beat's.</summary>
     public IReadOnlyList<AdventureLine> Lines => IsStep
         ? []
-        : IsFailure
+        : IsFailure || IsEnding
         ? [new AdventureLine { Text = Reason ?? string.Empty }]
         : IsOpening
             ? Adventure.OpeningLines.Count > 0 ? Adventure.OpeningLines : [new AdventureLine { Text = $"{Adventure.Name} begins." }]
@@ -38,16 +47,16 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
     /// <summary>The first line.</summary>
     public string Line => Lines.Count > 0 ? Lines[0].Text : string.Empty;
 
-    public string Title => IsOpening || IsFailure ? Adventure.Name : Adventure.Beats[Beat].Title;
+    public string Title => IsOpening || IsFailure || IsEnding ? Adventure.Name : Adventure.Beats[Beat].Title;
 
     /// <summary>The step this one hands over to, after a step that is not its beat's last.</summary>
-    public BeatStep? NextStep => IsStep ? Adventure.Beats[Beat].Steps.ElementAtOrDefault(Step!.Value + 1) : null;
+    public BeatStep? NextStep => IsStep ? Adventure.Beats[Beat].StepsWith(Chosen).ElementAtOrDefault(Step!.Value + 1) : null;
 
     /// <summary>Who says <see cref="Line"/>: a story's speaker id, or null for the ship.</summary>
     public string? Speaker => Lines.Count > 0 ? Lines[0].Speaker : null;
 
     /// <summary>The beat this one hands over to — the first, after the opening — or null after the last.</summary>
-    public AdventureBeat? Next => IsFailure || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);
+    public AdventureBeat? Next => IsFailure || IsEnding || IsStep ? null : Adventure.Beats.ElementAtOrDefault(Beat + 1);
 
     /// <summary>Where the Commander goes next, said with the line rather than waited for; after a step, the next step.</summary>
     public string? HandOff => IsStep ? NextStep is { } step ? $"Next: {step.HandOff()}" : null : Next?.HandOff();
@@ -71,6 +80,8 @@ public sealed record AdventureMoment(string FrontierId, Adventure Adventure, int
         ? $"{AdventureCallout.StepPrefix}{Adventure.Key}.{Beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}.{Step!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
         : IsFailure
         ? $"{AdventureCallout.FailedPrefix}{Adventure.Key}"
+        : IsEnding
+        ? $"{AdventureCallout.EndedPrefix}{Adventure.Key}"
         : $"{AdventureCallout.KeyPrefix}{Adventure.Key}.{(IsOpening ? "opening" : Beat.ToString(System.Globalization.CultureInfo.InvariantCulture))}";
 }
 
@@ -425,7 +436,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         foreach (var known in store.Commanders)
         {
-            foreach (var adventure in store.For(known).Where(adventure => adventure.Stepped.Count > 0))
+            foreach (var adventure in store.For(known).Where(adventure => adventure.Stepped.Count > 0 || adventure.Choices.Count > 0))
             {
                 var standing = StandingOf(state, known, adventure);
 
@@ -510,7 +521,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
         // Told is cleared with the stamp: a story begun again is being told again, and the feed the Commander
         // reads is what happened this time round rather than a splice of two runs.
-        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Ending = null, RewrittenAt = null, RewrittenFrom = null, RewrittenStep = 0, Previous = null, Told = [], Stepped = [] };
+        var begun = adventure with { AcceptedAt = now, AbandonedAt = null, Ending = null, RewrittenAt = null, RewrittenFrom = null, RewrittenStep = 0, Previous = null, Told = [], Stepped = [], Choices = [], Offered = null };
 
         if (store.Save(commander, begun) is { } refusal)
         {
@@ -542,6 +553,8 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             RewrittenAt = at,
             RewrittenFrom = from,
             RewrittenStep = 0,
+            Choices = [.. adventure.Choices.Where(choice => choice.Beat < from)],
+            Offered = adventure.Offered is { } offered && offered.Beat < from ? offered : null,
         });
     }
 
@@ -583,6 +596,11 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                     return "The story has moved on from that objective.";
                 }
 
+                if (standing.InChoice)
+                {
+                    return AdventureStanding.ChoiceRefusal;
+                }
+
                 rewritten = build(adventure);
             }
 
@@ -599,7 +617,14 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
             lock (_gate)
             {
-                _fold.Standings[StandingKey(commander, key)] = StandingOf(_fold, commander, rewritten) with { Adventure = rewritten, Counted = 0 };
+                var before = StandingOf(_fold, commander, rewritten);
+
+                _fold.Standings[StandingKey(commander, key)] = before with
+                {
+                    Adventure = rewritten,
+                    Counted = 0,
+                    Chosen = before.Chosen.Where(pair => pair.Key < from).ToDictionary(pair => pair.Key, pair => pair.Value),
+                };
 
                 // A walk under way would bring back the count this just reset.
                 if (_walking)
@@ -660,10 +685,14 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             {
                 return $"{adventure.Name} is still being told.";
             }
+
+            if (standing.CurrentObjective is { IsChoice: true } choice)
+            {
+                return $"{adventure.Name} is waiting on a choice. {choice.HandOff()}";
+            }
         }
 
         var step = new AdventureStep(standing.Current, now, by, standing.CurrentStep);
-        var wasLast = standing.OnLastStep;
         var stepped = adventure with { Stepped = [.. adventure.Stepped.Where(known => known.Beat != step.Beat || known.Step != step.Step), step] };
 
         if (AdventureValidation.Problems(stepped) is { Count: > 0 } problems)
@@ -687,13 +716,10 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 return $"{adventure.Name} has moved on from that objective.";
             }
 
-            _fold.Standings[StandingKey(commander, key)] = AdventureFold.Stepped(current, now, by) with { Adventure = stepped };
-            _moments.Enqueue(new AdventureMoment(commander, stepped, step.Beat, now, Step: wasLast ? null : step.Step));
+            var after = AdventureFold.Stepped(current, now, by) with { Adventure = stepped };
 
-            if (wasLast)
-            {
-                Stir(commander, key);
-            }
+            _fold.Standings[StandingKey(commander, key)] = after;
+            Announce(commander, current, after, now);
 
             if (_walking)
             {
@@ -747,10 +773,126 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
     }
 
     /// <summary>
-    /// Stores the ending of a chapter whose standing a <c>failsOn</c> trigger failed. Saves outside the gate, then updates the
-    /// standing. Returns a refusal or null.
+    /// Records that the offer of the choice beginning beat <paramref name="beat"/> was said at <paramref name="at"/>, when the story is
+    /// waiting on that choice; from then the choice can be made.
     /// </summary>
-    public string? Fail(string? frontierId, string key)
+    public void Offered(string? frontierId, string key, int beat, DateTimeOffset at)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        if (store.Find(commander, key) is not { IsActive: true } adventure)
+        {
+            return;
+        }
+
+        lock (_gate)
+        {
+            if (StandingOf(_fold, commander, adventure) is not { InChoice: true, CurrentStep: 0 } standing || standing.Current != beat)
+            {
+                return;
+            }
+        }
+
+        if (store.Save(commander, adventure with { Offered = new AdventureOffer(beat, at) }) is { } refusal)
+        {
+            logger.LogWarning("Could not record that the choice in {Name} was offered: {Refusal}", adventure.Name, refusal);
+        }
+    }
+
+    /// <summary>
+    /// Makes the d47 event <see cref="AdventureChoice.EventName"/>: the Commander chose <paramref name="option"/>, from zero, of the open
+    /// choice in story <paramref name="key"/>. Stores it so a walk applies it again in order with the journal.
+    /// </summary>
+    public AdventureChoiceOutcome Choose(string? frontierId, string key, int option, DateTimeOffset now)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        if (store.Find(commander, key) is not { IsActive: true } adventure)
+        {
+            return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
+        }
+
+        BeatStep choice;
+        int beat;
+
+        lock (_gate)
+        {
+            if (StandingOf(_fold, commander, adventure) is not { OpenChoice: { } open } standing)
+            {
+                return AdventureChoiceOutcome.Refused(AdventureChoiceOutcome.NoChoice);
+            }
+
+            choice = open;
+            beat = standing.Current;
+        }
+
+        if (option < 0 || option >= choice.Options.Count)
+        {
+            return AdventureChoiceOutcome.Refused($"There is no option {(option + 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}. {choice.HandOff()}");
+        }
+
+        var made = new AdventureChoice(beat, option, now);
+        var chosen = adventure with { Choices = [.. adventure.Choices.Where(known => known.Beat != beat), made] };
+
+        if (store.Save(commander, chosen) is { } refusal)
+        {
+            return AdventureChoiceOutcome.Refused(refusal);
+        }
+
+        chosen = store.Find(commander, key) ?? chosen;
+        BeatStep? next = null;
+
+        lock (_gate)
+        {
+            var current = StandingOf(_fold, commander, adventure);
+
+            if (current.OpenChoice is null || current.Current != beat)
+            {
+                return AdventureChoiceOutcome.Refused($"{adventure.Name} has moved on from that choice.");
+            }
+
+            var after = AdventureFold.Chose(current, option, now) with { Adventure = chosen };
+            _fold.Standings[StandingKey(commander, key)] = after;
+
+            // The next step's hand-off is the reply; a beat or an ending the choice itself reaches is said as usual.
+            if (after.Fired.Count != current.Fired.Count || after.Reached is not null)
+            {
+                Announce(commander, current, after, now);
+            }
+            else
+            {
+                next = after.CurrentObjective;
+                Logged(current, after, now);
+            }
+
+            if (_walking)
+            {
+                _generation++;
+                _needsCatchUp = true;
+            }
+        }
+
+        logger.LogInformation(
+            "d47 event {Event}: {Story} beat {Beat} option {Option} ({Label}) at {At}",
+            AdventureChoice.EventName,
+            key,
+            beat + 1,
+            option + 1,
+            choice.Options[option].Label,
+            now);
+
+        StirringChanged?.Invoke();
+
+        var reply = $"You chose to {choice.Options[option].Label.Trim()}.";
+
+        return new AdventureChoiceOutcome(null, next is null ? reply : $"{reply} {next.HandOff()}");
+    }
+
+    /// <summary>
+    /// Stores the ending of a chapter whose standing a <c>failsOn</c> trigger failed, or whose chosen option reached its own ending. Saves
+    /// outside the gate, then updates the standing. Returns a refusal or null.
+    /// </summary>
+    public string? StoreEnding(string? frontierId, string key)
     {
         var commander = frontierId ?? AdventureStore.NoCommander;
 
@@ -764,21 +906,29 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
             return $"{adventure.Name} is not under way.";
         }
 
-        AdventureFailure failure;
+        AdventureEnding ending;
 
         lock (_gate)
         {
-            if (StandingOf(_fold, commander, adventure).Failure is not { } found)
-            {
-                return $"{adventure.Name} has not failed.";
-            }
+            var standing = StandingOf(_fold, commander, adventure);
 
-            failure = found;
+            if (standing.Failure is { } failure)
+            {
+                ending = new AdventureEnding(AdventureEnding.Failed, failure.At, failure.Reason);
+            }
+            else if (standing.Reached is { } reached)
+            {
+                ending = reached;
+            }
+            else
+            {
+                return $"{adventure.Name} has not ended.";
+            }
         }
 
-        var failed = adventure with { Ending = new AdventureEnding(AdventureEnding.Failed, failure.At, failure.Reason) };
+        var ended = adventure with { Ending = ending };
 
-        if (store.Save(commander, failed) is { } refusal)
+        if (store.Save(commander, ended) is { } refusal)
         {
             return refusal;
         }
@@ -787,16 +937,16 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         {
             if (_fold.Standings.TryGetValue(StandingKey(commander, key), out var standing))
             {
-                _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = store.Find(commander, key) ?? failed };
+                _fold.Standings[StandingKey(commander, key)] = standing with { Adventure = store.Find(commander, key) ?? ended };
             }
         }
 
         return null;
     }
 
-    /// <summary>The failed standings of this Commander whose ending is not stored yet.</summary>
-    public IReadOnlyList<AdventureStanding> Failing(string? frontierId) =>
-        [.. Standings(frontierId).Where(standing => standing.Failure is not null && standing.Adventure is { IsActive: true })];
+    /// <summary>The standings of this Commander that failed or reached an option's ending and whose ending is not stored yet.</summary>
+    public IReadOnlyList<AdventureStanding> Unstored(string? frontierId) =>
+        [.. Standings(frontierId).Where(standing => (standing.Failure is not null || standing.Reached is not null) && standing.Adventure is { IsActive: true })];
 
     /// <summary>I do not want this record.</summary>
     public bool Remove(string? frontierId, string key)
@@ -939,41 +1089,83 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
                 continue;
             }
 
-            if (after.StepFires.Count == before.StepFires.Count)
-            {
-                continue;
-            }
-
-            if (after.Fired.Count == before.Fired.Count)
-            {
-                // Nothing records a step hand-off as told, so it does not hold the story as being told.
-                if (announce)
-                {
-                    _moments.Enqueue(new AdventureMoment(commander, adventure, before.Current, journalEvent.Timestamp, Step: after.StepFires[^1].Step));
-                }
-
-                logger.LogInformation("Adventure {Name} did step {Step} of beat {Beat}", adventure.Name, after.StepFires[^1].Step + 1, before.Current + 1);
-                continue;
-            }
-
             if (announce)
             {
-                _moments.Enqueue(new AdventureMoment(commander, adventure, after.Fired.Count - 1, journalEvent.Timestamp));
-
-                // From here until the line is said or dropped, the tab has something to animate.
-                Stir(commander, adventure.Key);
+                Announce(commander, before, after, journalEvent.Timestamp);
             }
+            else
+            {
+                Logged(before, after, journalEvent.Timestamp);
+            }
+        }
 
+        state.Seen[commander] = AdventureWatch.Observe(Seen(state, commander), journalEvent).Seen;
+    }
+
+    /// <summary>Queues and logs what <paramref name="after"/> reached beyond <paramref name="before"/>: an option's ending, a beat, or a step's hand-off. Under the gate.</summary>
+    private void Announce(string commander, AdventureStanding before, AdventureStanding after, DateTimeOffset at)
+    {
+        var adventure = after.Adventure;
+
+        if (after.Reached is not null && before.Reached is null)
+        {
+            DropMoments(commander, adventure.Key);
+            _moments.Enqueue(new AdventureMoment(commander, adventure, AdventureMoment.EndingBeat, at, EndingLine(after)));
+            _stirring.Remove(StandingKey(commander, adventure.Key));
+        }
+        else if (after.StepFires.Count == before.StepFires.Count)
+        {
+            return;
+        }
+        else if (after.Fired.Count == before.Fired.Count)
+        {
+            // Nothing records a step hand-off as told, so it does not hold the story as being told.
+            _moments.Enqueue(new AdventureMoment(
+                commander, adventure, before.Current, at, Step: after.StepFires[^1].Step, Chosen: after.Chosen.TryGetValue(before.Current, out var chosen) ? chosen : null));
+        }
+        else
+        {
+            _moments.Enqueue(new AdventureMoment(commander, adventure, after.Fired.Count - 1, at));
+
+            // From here until the line is said or dropped, the tab has something to animate.
+            Stir(commander, adventure.Key);
+        }
+
+        Logged(before, after, at);
+    }
+
+    private void Logged(AdventureStanding before, AdventureStanding after, DateTimeOffset at)
+    {
+        var adventure = after.Adventure;
+
+        if (after.Reached is { } reached && before.Reached is null)
+        {
+            logger.LogInformation("Adventure {Name} ended in {Ending} at beat {Beat}", adventure.Name, reached.Name, after.Current + 1);
+        }
+        else if (after.StepFires.Count == before.StepFires.Count)
+        {
+            return;
+        }
+        else if (after.Fired.Count == before.Fired.Count)
+        {
+            logger.LogInformation("Adventure {Name} did step {Step} of beat {Beat}", adventure.Name, after.StepFires[^1].Step + 1, before.Current + 1);
+        }
+        else
+        {
             logger.LogInformation(
                 "Adventure {Name} reached beat {Beat} ({Title}) at {When}",
                 adventure.Name,
                 after.Fired.Count,
                 adventure.Beats[after.Fired.Count - 1].Title,
-                journalEvent.Timestamp);
+                at);
         }
-
-        state.Seen[commander] = AdventureWatch.Observe(Seen(state, commander), journalEvent).Seen;
     }
+
+    /// <summary>The line of the option whose ending <paramref name="standing"/> reached.</summary>
+    private static string? EndingLine(AdventureStanding standing) =>
+        standing.Adventure.Beats.ElementAtOrDefault(standing.Current) is { OpensWithChoice: true } beat && standing.Chosen.TryGetValue(standing.Current, out var chosen)
+            ? beat.Steps[0].Options.ElementAtOrDefault(chosen)?.EndingLine
+            : null;
 
     /// <summary>Drops the lines of a story that are waiting out their settle window. Under the gate.</summary>
     private void DropMoments(string commander, string key)

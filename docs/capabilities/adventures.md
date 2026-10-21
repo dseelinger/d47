@@ -979,6 +979,37 @@ Mark the objective the Commander's story is waiting on as done, as if the journa
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
+### Choices
+
+An objective can begin with a choice of two or three options. The ship or a character offers it in the line
+before, never the Narrator, and d47 then says the phrases as written: "Say choose option one to fight, or choose
+option two to flee." Say "choose option one", "choose option two" or "choose option three". The phrases work only
+while a choice is waiting and its offer has been said; at any other time they do nothing. A line that offers a
+choice and comes due in combat waits until the ship is out of danger and is then said in full. If the offer was
+never said, because d47 was closed or the story was off when it came due, it is said again.
+
+Then do what the option asks. Before you choose, completing or abandoning a mission an option refers to fails the
+chapter. After you choose, doing what only another option asks for, such as abandoning the mission you chose to
+complete, fails it too. An option either rejoins the chapter or ends it in a named ending of its own, which is
+said when its steps are done; the next chapter is written from the ending you reached.
+
+The choice is stored in `data/adventures.json` with its time, so a restart applies it again in order with your
+journal. While the story is on an objective that begins with a choice, Change objective and Never ask this are
+refused, and Mark done works only once you have chosen. The model is refused this tool. The ship does not yet write
+choices into the stories it writes; a choice runs only in a story file that holds one.
+
+```csharp
+public static AdventureStanding Chose(AdventureStanding standing, int option, DateTimeOffset at)
+```
+
+#### `choose_story_option`
+
+Choose one of the options a story chapter offers, by the number the offer gave it, from one. The Commander must then do what the option asks. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{"option":{"type":"integer","description":"The option\u0027s number in the offer, from one."}},"required":["option"],"additionalProperties":false}
+```
+
 ### Pausing the story
 
 Clear **Story on**, on the Stories page, on the chapter's page or on the mini panel, or say "pause the story", and the
@@ -1155,7 +1186,7 @@ count toward the 40 stories of your own that the file holds.
 
 ### What it does not do yet
 
-- **Branching.** One current objective, and only it can match; an objective that would match out of order is
-  ignored rather than banked.
+- **Branching**, beyond a choice the Commander makes. One current objective, and only it can match; an objective
+  that would match out of order is ignored rather than banked.
 - **Importing** somebody else's story. The store file is already the format, so this is a copy
   and a validate when it comes.

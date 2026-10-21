@@ -65,6 +65,41 @@ public sealed class AFailedShortStoryIsWrittenAgainTests
     }
 
     [Fact]
+    public async Task TheNextChapterAfterAnOptionsEndingIsWrittenFromThatEnding()
+    {
+        var route = First();
+        var ended = route with
+        {
+            Beats =
+            [
+                route.Beats[0],
+                route.Beats[1] with
+                {
+                    Steps =
+                    [
+                        new BeatStep
+                        {
+                            Trigger = new AdventureTrigger { Kind = TriggerKind.Choice },
+                            Options = [new BeatOption { Label = "fight" }, new BeatOption { Label = "flee", Ending = "Gone to ground", EndingLine = "Nobody follows." }],
+                        },
+                    ],
+                },
+            ],
+            Ending = new AdventureEnding("Gone to ground", Accepted.AddMinutes(4), "At \"The Survey\" the Commander chose to flee and did it."),
+        };
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Spine), RoundScriptedLlmProvider.Saying(Beats));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short, Chapter: AdventureChapter.Of([ended], "first")), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var prompt = provider.Requests[0].Prompt.History[0].Text;
+        Assert.Contains("It ended in the ending \"Gone to ground\", one of its own: At \"The Survey\" the Commander chose to flee and did it. Write the next chapter from that ending.", prompt);
+        Assert.Contains("What was said when it ended: Nobody follows.", prompt);
+    }
+
+    [Fact]
     public async Task AFailedFirstChapterIsWrittenAgainWithNothingBeforeIt()
     {
         var failed = Failed() with { Follows = null };

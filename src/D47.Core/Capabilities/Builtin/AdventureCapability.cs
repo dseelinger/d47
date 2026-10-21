@@ -38,6 +38,8 @@ public static class AdventureCapability
 
     public const string RecapTool = "recap_story";
 
+    public const string ChooseTool = "choose_story_option";
+
     public const string StoryDownloadsKey = "adventures.storyDownloads";
 
     public const string StoryRatingsKey = "adventures.storyRatings";
@@ -92,6 +94,15 @@ public static class AdventureCapability
 
         /// <summary>Opens the entry that takes the Commander's words for a different objective.</summary>
         public Func<string?> ChangeObjective { get; set; } = () => NoStory;
+    }
+
+    /// <summary>Says whether a story is waiting on a choice and chooses an option of it, from zero. The app sets it once the story exists.</summary>
+    public sealed class StoryChoice
+    {
+        public Func<bool> IsOpen { get; set; } = () => false;
+
+        public Func<int, Adventures.AdventureChoiceOutcome> Choose { get; set; } =
+            _ => Adventures.AdventureChoiceOutcome.Refused(Adventures.AdventureChoiceOutcome.NoChoice);
     }
 
     /// <summary>Writes the Narrator's recap of the story under way, or null when no story is under way. The app sets it once the story exists.</summary>
@@ -229,7 +240,8 @@ public static class AdventureCapability
         BeatRefusal? beatRefusal = null,
         AdventureDesk? desk = null,
         StoryRecapper? recapper = null,
-        ObjectiveMark? objectiveMark = null) => new()
+        ObjectiveMark? objectiveMark = null,
+        StoryChoice? storyChoice = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -237,8 +249,8 @@ public static class AdventureCapability
         Summary =
             "Stories the Commander flies, advanced by "
             + "their own journal. Driven from the Stories tab; nothing here is callable by the "
-            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on, change it in their own words or mark it done, and "
-            + "ask the Narrator for the story so far.",
+            + "model. The Commander can pause and resume a running story by voice, refuse the objective it is waiting on, change it in their own words or mark it done, "
+            + "choose an option when a chapter offers a choice, and ask the Narrator for the story so far.",
 
         // The phrases that genuinely work.
         Examples =
@@ -256,6 +268,7 @@ public static class AdventureCapability
             RefuseBeatPhrase,
             ChangeObjectivePhrase,
             MarkDonePhrase,
+            "choose option one",
             "ask for a short story",
             "change the short story",
             "accept the short story",
@@ -342,6 +355,7 @@ public static class AdventureCapability
             Desk(ChangeObjectiveTool, "Open the entry where the Commander says what they would rather do instead of the story chapter's current objective; the core then proposes a replacement for them to use, keep or reword.", [ChangeObjectivePhrase, "change the objective"], "What would you rather do?", desk, d => d.ChangeObjective, _ => null),
             Recap(recapper),
             Mark(objectiveMark),
+            Choose(storyChoice),
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change),
             Draft(AcceptDraftTool, "Accept the Commander's draft short story, as the Accept button does.", ["accept the short story", "accept the adventure"], "The short story is accepted.", desk, d => d.Accept),
             Draft(RejectDraftTool, "Reject the Commander's draft short story and remove it, as the Decline button does.", ["reject the short story", "reject the adventure"], "The draft is removed.", desk, d => d.Reject),
@@ -425,6 +439,52 @@ public static class AdventureCapability
                 ? ToolResult.Error(refusal)
                 : ToolResult.Ok("That objective is marked done.")),
     };
+
+    private static ToolDefinition Choose(StoryChoice? storyChoice)
+    {
+        var choice = storyChoice ?? new StoryChoice();
+
+        return new ToolDefinition
+        {
+            Name = ChooseTool,
+            Description =
+                "Choose one of the options a story chapter offers, by the number the offer gave it, from one. The Commander must then do what "
+                + "the option asks. The Commander's choice alone.",
+            Parameters =
+            [
+                new ToolParameter
+                {
+                    Name = "option",
+                    Type = ToolParameterType.Integer,
+                    Description = "The option's number in the offer, from one.",
+                    Required = true,
+                },
+            ],
+            Commands =
+            [
+                .. Adventures.BeatOption.Numbers.Select((_, index) => new ToolCommandPhrase(
+                    Adventures.BeatOption.Phrase(index),
+                    new Dictionary<string, string>(StringComparer.Ordinal) { ["option"] = (index + 1).ToString(CultureInfo.InvariantCulture) })
+                {
+                    When = () => choice.IsOpen(),
+                }),
+            ],
+
+            // The choice is the Commander's and decides how the story goes; the model is refused.
+            Protected = true,
+            Handler = (arguments, _) =>
+            {
+                if (!arguments.TryGetInt32("option", out var number))
+                {
+                    return Task.FromResult(ToolResult.Error("Say which option you choose, by its number."));
+                }
+
+                var outcome = choice.Choose(number - 1);
+
+                return Task.FromResult(outcome.Refusal is { } refusal ? ToolResult.Error(refusal) : ToolResult.Ok(outcome.Reply));
+            },
+        };
+    }
 
     private static ToolDefinition Recap(StoryRecapper? recapper) => new()
     {

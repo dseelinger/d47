@@ -882,7 +882,39 @@ public sealed class AdventureGenerator(
                 $"{Unplayed}{Capital(Where(objective, offset))} says a recording, call or message is played or heard, and nobody in it says that person's words. "
                 + "Give the person's words a line of their own, given to them, in the same place, or leave the recording out."));
 
-        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson, .. unplayed] };
+        var narratedOffers = NarratedOffers(spoken, story, ask)
+            .Select(objective => Charged(
+                objective,
+                $"{Capital(Where(objective, offset))} begins with a choice, and the line before it, which offers the choice, would be read by the narrator. "
+                + "The narrator never offers anything: give the last line before the choice to the ship or a character."));
+
+        return spoken with { Refusals = [.. resolved.Refusals, .. unknown, .. selfNamed, .. firstPerson, .. unplayed, .. narratedOffers] };
+    }
+
+    /// <summary>The objectives that begin with a choice whose offering line, the last line before it, the narrator would read.</summary>
+    private static IEnumerable<int> NarratedOffers(Resolved spoken, AdventureStory story, AdventureAsk ask)
+    {
+        bool Narrated(string? speaker) =>
+            speaker == Stories.StorySpeaker.Narrator || (story.CoreIsStock && (speaker is null || speaker == Stories.StorySpeaker.Ship));
+
+        IReadOnlyList<AdventureLine> before = ask.Rewrite is { } rewrite
+            ? rewrite.From > 0 ? rewrite.Chapter.Beats[rewrite.From - 1].Lines : rewrite.Chapter.OpeningLines
+            : spoken.Opening;
+
+        for (var position = 0; position < spoken.Beats.Count; position++)
+        {
+            var joins = position < spoken.Joins.Count && spoken.Joins[position];
+
+            if (!joins && spoken.Beats[position].OpensWithChoice && (before.Count == 0 || Narrated(before[^1].Speaker)))
+            {
+                yield return position < spoken.Stood.Count ? spoken.Stood[position] : position;
+            }
+
+            if (!joins)
+            {
+                before = spoken.Beats[position].Lines;
+            }
+        }
     }
 
     private const string NarratorAsItself = "The narrator speaks as itself: ";
@@ -1734,6 +1766,17 @@ public sealed class AdventureGenerator(
         text.AppendLine($"Stake: {previous.Spine?.Stake}");
         text.AppendLine($"Turn: {previous.Spine?.Turn}");
         text.AppendLine($"Ending: {previous.Spine?.Ending}");
+
+        if (previous.Ending is { Name: not AdventureEnding.Failed } reached)
+        {
+            text.AppendLine($"It ended in the ending \"{reached.Name}\", one of its own: {reached.Reason} Write the next chapter from that ending.");
+
+            if (previous.Beats.SelectMany(beat => beat.Steps).SelectMany(step => step.Options).FirstOrDefault(option => option.Ending == reached.Name)?.EndingLine is { } said)
+            {
+                text.AppendLine($"What was said when it ended: {said}");
+            }
+        }
+
         text.AppendLine("Objectives: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
         text.AppendLine("What those objectives asked for: " + string.Join("; ", previous.Beats.Select((beat, index) => $"{index + 1}. {string.Join(", then ", beat.Steps.Select(step => step.Trigger.Describe()))}")));
 
@@ -2851,6 +2894,9 @@ public sealed class AdventureGenerator(
         /// <summary>The name the model gave a mission, for the mission kinds.</summary>
         public string? Handle { get; init; }
 
+        /// <summary>For a choice: its options as the model wrote them.</summary>
+        public IReadOnlyList<ReadOption> Options { get; init; } = [];
+
         /// <summary>The title, marked when this is a further step.</summary>
         public string Named => Continues ? $"{Title}, a further step" : Title;
 
@@ -2883,9 +2929,13 @@ public sealed class AdventureGenerator(
             TriggerKind.Beacon => "beacon",
             TriggerKind.Reach => "reach",
             TriggerKind.Site => "site",
+            TriggerKind.Choice => $"choice: {string.Join(" / ", Options.Select(option => option.Label ?? "?"))}",
             _ => $"arrive: {System ?? "?"}",
         };
     }
+
+    /// <summary>One option of a choice as the model wrote it.</summary>
+    private sealed record ReadOption(string? Label, IReadOnlyList<ReadBeat> Steps, string? Ending, string? EndingLine);
 
     private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination);
 
@@ -3007,8 +3057,26 @@ public sealed class AdventureGenerator(
             ReadLines(element))
         {
             Handle = Text(element, "handle"),
+            Options = kind == TriggerKind.Choice ? ReadOptions(element) : [],
         };
     }
+
+    /// <summary>A choice's options: each a label, the steps in its "then", and an "ending" with the "line" said when it is reached.</summary>
+    private static IReadOnlyList<ReadOption> ReadOptions(JsonElement element) =>
+        element.TryGetProperty("options", out var options) && options.ValueKind == JsonValueKind.Array
+            ?
+            [
+                .. options.EnumerateArray()
+                    .Where(option => option.ValueKind == JsonValueKind.Object)
+                    .Select(option => new ReadOption(
+                        Text(option, "label"),
+                        option.TryGetProperty("then", out var then) && then.ValueKind == JsonValueKind.Array
+                            ? [.. then.EnumerateArray().Select(ReadBeatFrom).OfType<ReadBeat>()]
+                            : [],
+                        Text(option, "ending"),
+                        Text(option, "line") ?? Text(option, "endingLine"))),
+            ]
+            : [];
 
     /// <summary>The opening's lines: the <c>opening</c> list a story chapter is asked for, or the single <c>opening</c> and <c>openingSpeaker</c>.</summary>
     private static IReadOnlyList<AdventureLine> ReadOpening(JsonElement root)
@@ -3226,6 +3294,7 @@ public sealed class AdventureGenerator(
             var stoodBefore = lastStood;
             lastStood = null;
             AdventureTrigger? trigger = null;
+            IReadOnlyList<BeatOption> options = [];
 
             if (beat.Kind == TriggerKind.Beacon)
             {
@@ -3380,6 +3449,26 @@ public sealed class AdventureGenerator(
                     trigger = written;
                 }
             }
+            else if (beat.Kind == TriggerKind.Choice)
+            {
+                var problems = new List<string>();
+
+                if (beat.Continues)
+                {
+                    problems.Add($"{where} is a choice written as a further step; a choice is the first step of its objective, offered by the line before it.");
+                }
+
+                options = [.. beat.Options.Select((option, at) => OptionOf($"{where}, option {(at + 1).ToString(CultureInfo.InvariantCulture)}", option, problems))];
+
+                if (problems.Count > 0)
+                {
+                    problems.ForEach(problem => Refuse(index, problem));
+                }
+                else
+                {
+                    trigger = new AdventureTrigger { Kind = TriggerKind.Choice };
+                }
+            }
             else if (AdventureTrigger.IsOnceKind(beat.Kind))
             {
                 trigger = new AdventureTrigger { Kind = beat.Kind };
@@ -3532,8 +3621,7 @@ public sealed class AdventureGenerator(
                 {
                     Title = beat.Title,
                     Function = beat.Function,
-                    Reason = IsTravel(trigger.Kind) ? beat.Reason : null,
-                    Trigger = trigger,
+                    Steps = [new BeatStep { Trigger = trigger, Reason = IsTravel(trigger.Kind) ? beat.Reason : null, Options = options }],
                     Lines = beat.Lines,
                 });
             }
@@ -3782,6 +3870,56 @@ public sealed class AdventureGenerator(
     }
 
     private static bool IsTravel(TriggerKind kind) => kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Site;
+
+    /// <summary>
+    /// One option of a choice as it stands: its steps are mission, counted or one-event objectives and never places, a mission step
+    /// names no station, and the problems with any of them go in <paramref name="problems"/>.
+    /// </summary>
+    private static BeatOption OptionOf(string where, ReadOption option, List<string> problems)
+    {
+        var steps = new List<BeatStep>();
+
+        foreach (var (step, at) in option.Steps.Select((step, at) => (step, at)))
+        {
+            var stepWhere = $"{where}, step {(at + 1).ToString(CultureInfo.InvariantCulture)}";
+            var written = step.Written();
+            var before = problems.Count;
+
+            if (AdventureTrigger.IsMissionHandleKind(step.Kind))
+            {
+                problems.AddRange(AdventureValidation.MissionFamilyProblems(stepWhere, written));
+
+                if (string.IsNullOrWhiteSpace(written.Handle))
+                {
+                    problems.Add($"{stepWhere} names no mission handle.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(written.Station))
+                {
+                    problems.Add($"{stepWhere} names a station; an option's steps are things to do, not places to go.");
+                }
+            }
+            else if (AdventureTrigger.IsCountedKind(step.Kind))
+            {
+                problems.AddRange(AdventureValidation.CountedProblems(stepWhere, written));
+            }
+            else if (AdventureTrigger.IsOnceKind(step.Kind))
+            {
+                written = new AdventureTrigger { Kind = step.Kind };
+            }
+            else
+            {
+                problems.Add($"{stepWhere} is a \"{step.Kind.ToString().ToLowerInvariant()}\" objective; an option's steps are missions, counted or one-event objectives, not places or choices.");
+            }
+
+            if (problems.Count == before)
+            {
+                steps.Add(new BeatStep { Trigger = written });
+            }
+        }
+
+        return new BeatOption { Label = option.Label ?? string.Empty, Steps = steps, Ending = option.Ending, EndingLine = option.EndingLine };
+    }
 
     /// <summary>The refusal for an illegal mission beat that does not directly follow an arrive or dock in an Anarchy system, or null.</summary>
     private static async Task<string?> IllegalOutsideAnarchyAsync(

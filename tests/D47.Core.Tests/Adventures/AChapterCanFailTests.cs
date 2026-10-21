@@ -124,7 +124,7 @@ public sealed class AChapterCanFailTests
         Begun(Failing(0, Bounty));
         _book.Observe(BountyAt(At(1)), "F1");
 
-        Assert.Null(_book.Fail("F1", Key));
+        Assert.Null(_book.StoreEnding("F1", Key));
 
         _book = Book();
         _book.Store.Poll();
@@ -153,16 +153,16 @@ public sealed class AChapterCanFailTests
         _book.WalkAgain();
         _book.CatchUp([path]);
 
-        Assert.Single(_book.Failing("F1"));
+        Assert.Single(_book.Unstored("F1"));
         Assert.Empty(_book.Drain());
 
-        Assert.Null(_book.Fail("F1", Key));
-        Assert.Empty(_book.Failing("F1"));
+        Assert.Null(_book.StoreEnding("F1", Key));
+        Assert.Empty(_book.Unstored("F1"));
 
         _book.WalkAgain();
         _book.CatchUp([path]);
 
-        Assert.Empty(_book.Failing("F1"));
+        Assert.Empty(_book.Unstored("F1"));
         Assert.Empty(_book.Drain());
         Assert.StartsWith("The Lantern Route: failed.", _book.Standing("F1", Key)!.Describe(At(3)), StringComparison.Ordinal);
     }
@@ -212,7 +212,7 @@ public sealed class AChapterCanFailTests
     {
         Begun(Failing(0, Bounty));
         _book.Observe(BountyAt(At(1)), "F1");
-        Assert.Null(_book.Fail("F1", Key));
+        Assert.Null(_book.StoreEnding("F1", Key));
 
         Assert.Equal(["Write the next chapter", "Remove"], _book.Standing("F1", Key)!.ReadingButtons());
     }
@@ -222,7 +222,7 @@ public sealed class AChapterCanFailTests
     {
         Begun(Failing(0, Bounty) with { StoryId = "a-story" });
         _book.Observe(BountyAt(At(1)), "F1");
-        Assert.Null(_book.Fail("F1", Key));
+        Assert.Null(_book.StoreEnding("F1", Key));
 
         Assert.Empty(_book.Standing("F1", Key)!.ReadingButtons());
     }

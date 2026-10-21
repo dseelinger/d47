@@ -2242,6 +2242,7 @@ public sealed class AppHost : IDisposable
         var storyRecapper = new AdventureCapability.StoryRecapper();
         var beatRefusal = new AdventureCapability.BeatRefusal();
         var objectiveMark = new AdventureCapability.ObjectiveMark();
+        var storyChoice = new AdventureCapability.StoryChoice();
         var adventureDesk = new AdventureCapability.AdventureDesk();
 
         return new ServiceParts
@@ -2311,6 +2312,7 @@ public sealed class AppHost : IDisposable
             VisitedStars = visitedStars,
             SignalIndexStore = signalIndexStore,
             StorySwitch = storySwitch,
+            StoryChoice = storyChoice,
             Switches = switches,
             TimersAndAlarms = timersAndAlarms,
             TradePlanner = tradePlanner,
@@ -2853,6 +2855,7 @@ public sealed class AppHost : IDisposable
                 adventureDesk: adventureDesk,
                 storyRecapper: storyRecapper,
                 objectiveMark: objectiveMark,
+                storyChoice: services.StoryChoice,
                 journalReminders: journalReminders,
                 captainsLog: captainsLog,
                 miningTargets: miningTargets,
@@ -3227,6 +3230,8 @@ public sealed class AppHost : IDisposable
         storySwitch.Set = on => storyDirector.SetOn(gameState.Active?.Identity.FrontierId, on, DateTimeOffset.Now);
         beatRefusal.Refuse = cancellationToken => storyDirector.RefuseBeatAsync(gameState.Active?.Identity.FrontierId, cancellationToken);
         objectiveMark.Mark = () => storyDirector.MarkObjectiveDone(gameState.Active?.Identity.FrontierId, DateTimeOffset.Now);
+        services.StoryChoice.IsOpen = () => storyDirector.ChoiceOpen(gameState.Active?.Identity.FrontierId);
+        services.StoryChoice.Choose = option => storyDirector.Choose(gameState.Active?.Identity.FrontierId, option, DateTimeOffset.Now);
         adventureDesk.HasDraft = () => adventureBook.Standings(gameState.Active?.Identity.FrontierId).Any(standing => standing.Adventure.IsDraft);
 
         storyClue.Due = now => storyDirector.ClueDue(gameState.Active?.Identity.FrontierId, now);
@@ -4581,6 +4586,8 @@ public sealed class AppHost : IDisposable
         public required D47.App.Panel.SignalIndexStore SignalIndexStore { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.StorySwitch StorySwitch { get; init; }
+
+        public required D47.Core.Capabilities.Builtin.AdventureCapability.StoryChoice StoryChoice { get; init; }
 
         public required SwitchStore Switches { get; init; }
 

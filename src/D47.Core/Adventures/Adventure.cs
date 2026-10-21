@@ -171,6 +171,9 @@ public enum TriggerKind
 
     /// <summary>A <c>MissionAbandoned</c> or <c>MissionFailed</c> for the mission bound to <see cref="AdventureTrigger.Handle"/>. Not counted, not authorable.</summary>
     MissionAbandon,
+
+    /// <summary>The Commander says which of the step's <see cref="BeatStep.Options"/> they choose: the d47 event <see cref="AdventureChoice.EventName"/>, never a journal event. Not counted, not authorable.</summary>
+    Choice,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -245,7 +248,7 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank or TriggerKind.Site) && !IsOnceKind(kind) && !IsMissionHandleKind(kind);
+        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank or TriggerKind.Site or TriggerKind.Choice) && !IsOnceKind(kind) && !IsMissionHandleKind(kind);
 
     /// <summary>Whether this kind takes part in one named mission.</summary>
     public static bool IsMissionHandleKind(TriggerKind kind) =>
@@ -280,7 +283,7 @@ public sealed record AdventureTrigger
             TouristSite => SystemAddress is not null,
             _ => false,
         },
-        TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim => true,
+        TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim or TriggerKind.Choice => true,
         _ => false,
     };
 
@@ -339,6 +342,7 @@ public sealed record AdventureTrigger
         TriggerKind.MissionDestination => $"go to the destination of the {Handle?.Trim()} mission",
         TriggerKind.MissionComplete => $"complete the {Handle?.Trim()} mission",
         TriggerKind.MissionAbandon => $"abandon the {Handle?.Trim()} mission",
+        TriggerKind.Choice => "say which option you choose",
         _ => Kind.ToString(),
     };
 
@@ -585,6 +589,26 @@ public sealed record AdventureBeat
 
     /// <summary>The first step's hand-off.</summary>
     public string HandOff() => FirstStep.HandOff();
+
+    /// <summary>Whether this beat begins with a choice, which the line before it offers.</summary>
+    public bool OpensWithChoice => Steps.Count > 0 && Steps[0].IsChoice;
+
+    /// <summary>
+    /// The steps the Commander does with <paramref name="option"/> chosen: the choice, then the option's steps, then the rest of the
+    /// beat unless the option ends the chapter. With no option chosen, or no choice, <see cref="Steps"/>.
+    /// </summary>
+    public IReadOnlyList<BeatStep> StepsWith(int? option)
+    {
+        if (!OpensWithChoice || option is not { } chosen || Steps[0].Options.ElementAtOrDefault(chosen) is not { } picked)
+        {
+            return Steps;
+        }
+
+        return [Steps[0], .. picked.Steps, .. picked.Ending is null ? Steps.Skip(1) : []];
+    }
+
+    /// <summary>The most steps this beat can have, whichever option is chosen.</summary>
+    public int MostSteps => OpensWithChoice ? Steps[0].Options.Select((_, index) => StepsWith(index).Count).DefaultIfEmpty(Steps.Count).Max() : Steps.Count;
 }
 
 /// <summary>One thing to do within a beat: a trigger, the events that fail the chapter while it is the one waited on, and a reason.</summary>
@@ -598,14 +622,60 @@ public sealed record BeatStep
     /// <summary>What is at a travel step's place that matters to the story; said in the hand-off, before arrival.</summary>
     public string? Reason { get; init; }
 
+    /// <summary>For a <see cref="TriggerKind.Choice"/> step: its options, two or three, in the order they are numbered.</summary>
+    public IReadOnlyList<BeatOption> Options { get; init; } = [];
+
+    public bool IsChoice => Trigger.Kind == TriggerKind.Choice;
+
     public bool Equals(BeatStep? other) =>
-        other is not null && Trigger == other.Trigger && Reason == other.Reason && FailsOn.SequenceEqual(other.FailsOn);
+        other is not null && Trigger == other.Trigger && Reason == other.Reason && FailsOn.SequenceEqual(other.FailsOn) && Options.SequenceEqual(other.Options);
 
-    public override int GetHashCode() => HashCode.Combine(Trigger, Reason, FailsOn.Count);
+    public override int GetHashCode() => HashCode.Combine(Trigger, Reason, FailsOn.Count, Options.Count);
 
-    /// <summary>The trigger's hand-off, followed by the reason when there is one.</summary>
-    public string HandOff() =>
-        string.IsNullOrWhiteSpace(Reason) ? Trigger.HandOff() : $"{Trigger.HandOff()} {Reason.Trim()}";
+    /// <summary>The trigger's hand-off, followed by the reason when there is one; for a choice, the phrase that chooses each option.</summary>
+    public string HandOff() => IsChoice
+        ? BeatOption.Saying(Options)
+        : string.IsNullOrWhiteSpace(Reason) ? Trigger.HandOff() : $"{Trigger.HandOff()} {Reason.Trim()}";
+}
+
+/// <summary>One option of a choice: a short label, the steps it asks for, and the named ending it ends the chapter in, or none to rejoin the chapter.</summary>
+public sealed record BeatOption
+{
+    /// <summary>The spoken numbers of the options, from the first.</summary>
+    public static readonly IReadOnlyList<string> Numbers = ["one", "two", "three"];
+
+    public const int MaxLabelLength = 40;
+
+    public required string Label { get; init; }
+
+    public IReadOnlyList<BeatStep> Steps { get; init; } = [];
+
+    /// <summary>The name of the ending the chapter ends in once this option's steps are done, or null when the chapter carries on.</summary>
+    public string? Ending { get; init; }
+
+    /// <summary>What is said when this option's ending is reached.</summary>
+    public string? EndingLine { get; init; }
+
+    public bool Equals(BeatOption? other) =>
+        other is not null && Label == other.Label && Ending == other.Ending && EndingLine == other.EndingLine && Steps.SequenceEqual(other.Steps);
+
+    public override int GetHashCode() => HashCode.Combine(Label, Ending, Steps.Count);
+
+    /// <summary>The phrase that chooses the option at <paramref name="index"/>, from zero: "choose option two".</summary>
+    public static string Phrase(int index) => $"choose option {Numbers[index]}";
+
+    /// <summary>"Say choose option one to fight, or choose option two to flee."</summary>
+    public static string Saying(IReadOnlyList<BeatOption> options)
+    {
+        var each = options.Take(Numbers.Count).Select((option, index) => $"{Phrase(index)} to {option.Label.Trim()}").ToList();
+
+        return each.Count switch
+        {
+            0 => "Say which option you choose.",
+            1 => $"Say {each[0]}.",
+            _ => $"Say {string.Join(", ", each.SkipLast(1))}, or {each[^1]}.",
+        };
+    }
 }
 
 /// <summary>One line of a beat and who says it.</summary>
@@ -721,6 +791,12 @@ public sealed record Adventure
     /// <summary>The steps fired without their journal event, by the story bench or the Commander, oldest first; the fold counts each as a fire at its time.</summary>
     public IReadOnlyList<AdventureStep> Stepped { get; init; } = [];
 
+    /// <summary>The choices the Commander made, oldest first; the fold applies each at its time, in order with the journal.</summary>
+    public IReadOnlyList<AdventureChoice> Choices { get; init; } = [];
+
+    /// <summary>When the offer of a choice was last said; the choice can be made only after it.</summary>
+    public AdventureOffer? Offered { get; init; }
+
     public bool IsBegun => AcceptedAt is not null;
 
     public bool IsAbandoned => AbandonedAt is not null;
@@ -745,6 +821,24 @@ public sealed record AdventureEnding(string Name, DateTimeOffset At, string Reas
 
 /// <summary>A step of a beat fired without its journal event at <paramref name="At"/>; <paramref name="By"/> is the <see cref="AdventureStanding.FiredBy"/> it records, the bench when null.</summary>
 public sealed record AdventureStep(int Beat, DateTimeOffset At, string? By = null, int Step = 0);
+
+/// <summary>The d47 event <see cref="EventName"/>: the Commander chose <paramref name="Option"/>, from zero, of the choice that begins beat <paramref name="Beat"/>.</summary>
+public sealed record AdventureChoice(int Beat, int Option, DateTimeOffset At)
+{
+    /// <summary>The event's fixed name, and the <see cref="AdventureStanding.FiredBy"/> of the step it fires.</summary>
+    public const string EventName = "ChoiceMade";
+}
+
+/// <summary>The offer of the choice that begins beat <paramref name="Beat"/> was said at <paramref name="At"/>.</summary>
+public sealed record AdventureOffer(int Beat, DateTimeOffset At);
+
+/// <summary>What choosing did: a refusal, or what to say back.</summary>
+public sealed record AdventureChoiceOutcome(string? Refusal, string Reply)
+{
+    public const string NoChoice = "No story is waiting on a choice.";
+
+    public static AdventureChoiceOutcome Refused(string refusal) => new(refusal, refusal);
+}
 
 /// <summary>Bounds, so a hand-edited file cannot be a novel and a model cannot be asked for one.</summary>
 public static class AdventureLimits

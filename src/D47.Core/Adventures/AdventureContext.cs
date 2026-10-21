@@ -104,7 +104,8 @@ public static class AdventureContext
             if (standing.CurrentBeat is { } current && standing.CurrentObjective is { } step)
             {
                 var function = string.IsNullOrWhiteSpace(current.Function) ? string.Empty : $" ({current.Function})";
-                var place = current.Steps.Count > 1 ? $", step {standing.CurrentStep + 1} of {current.Steps.Count}" : string.Empty;
+                var steps = standing.StepsOf(standing.Current).Count;
+                var place = steps > 1 ? $", step {standing.CurrentStep + 1} of {steps}" : string.Empty;
                 var reason = string.IsNullOrWhiteSpace(step.Reason) ? string.Empty : $" Reason: {step.Reason.Trim()}";
                 Line(block, $"Now: {current.Title}{function}{place}", $"waiting to {step.Trigger.Describe()}.{reason}");
             }

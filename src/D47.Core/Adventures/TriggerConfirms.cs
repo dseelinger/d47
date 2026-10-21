@@ -57,6 +57,7 @@ internal static class TriggerConfirms
         [TriggerKind.MissionDestination] = "the ship came to the mission's destination — not that the mission was done or what waited there",
         [TriggerKind.MissionComplete] = "that mission was handed in as completed — not how it went or what it paid",
         [TriggerKind.MissionAbandon] = "that mission was abandoned, expired or failed — not why",
+        [TriggerKind.Choice] = "the Commander said which option they chose — not that they did it",
     };
 
     /// <summary>The kinds that have an entry.</summary>

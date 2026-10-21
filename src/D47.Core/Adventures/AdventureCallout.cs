@@ -37,6 +37,15 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>A beat's second or third line, keyed <c>adventure-line.&lt;story&gt;.&lt;beat&gt;.&lt;line&gt;</c>.</summary>
     public const string LinePrefix = "adventure-line.";
 
+    /// <summary>The line said when a chapter ends in an option's ending, keyed <c>adventure-ended.&lt;story&gt;</c>.</summary>
+    public const string EndedPrefix = "adventure-ended.";
+
+    /// <summary>
+    /// The phrases that choose each option, said as written after the line that offers the choice, keyed
+    /// <c>adventure-offer.&lt;story&gt;.&lt;beat&gt;</c> with the beat the choice begins.
+    /// </summary>
+    public const string OfferPrefix = "adventure-offer.";
+
     public const string BackstoryLine =
         "The story has turned. Your Backstory still describes where it began, and it is yours to change.";
 
@@ -61,6 +70,20 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     /// <summary>Beats that came due in danger; once clear they say only their hand-off.</summary>
     private readonly HashSet<AdventureMoment> _held = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>When this session last yielded or queued each choice's offer, and how many times, by commander, story and beat.</summary>
+    private readonly Dictionary<string, (DateTimeOffset At, int Times)> _offering = new(StringComparer.Ordinal);
+
+    /// <summary>How often the stories are looked over for a choice whose offer was never said.</summary>
+    private static readonly TimeSpan OfferCheck = TimeSpan.FromSeconds(5);
+
+    /// <summary>How long an offer that was yielded may go unrecorded as said before it is offered again.</summary>
+    public TimeSpan OfferRetry { get; set; } = TimeSpan.FromMinutes(3);
+
+    /// <summary>How many times a session offers one choice.</summary>
+    private const int MostOffers = 3;
+
+    private DateTimeOffset? _offerChecked;
 
     /// <summary>Missions already warned about this session.</summary>
     private readonly HashSet<long> _warned = [];
@@ -130,6 +153,68 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             ? (rest[..beatDot], index, line)
             : null;
     }
+
+    /// <summary>The announcement key of the offer of the choice that begins beat <paramref name="beat"/> of story <paramref name="key"/>.</summary>
+    public static string OfferKey(string key, int beat) =>
+        $"{OfferPrefix}{key}.{beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+    /// <summary>Which story and which beat's choice an offer announcement is, or null for anything else.</summary>
+    public static (string Key, int Beat)? Offer(string? announcementKey)
+    {
+        if (announcementKey is null || !announcementKey.StartsWith(OfferPrefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = announcementKey[OfferPrefix.Length..];
+        var dot = rest.LastIndexOf('.');
+
+        return dot > 0 && int.TryParse(rest[(dot + 1)..], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var beat)
+            ? (rest[..dot], beat)
+            : null;
+    }
+
+    /// <summary>
+    /// Queues, due now, the lines offering each choice with no offer recorded as said, unless a line of that story is waiting, the offer
+    /// was yielded or queued within <see cref="OfferRetry"/>, or this session has offered it <see cref="MostOffers"/> times.
+    /// </summary>
+    private void OfferAgain(CalloutContext context, string? commander)
+    {
+        var who = commander ?? AdventureStore.NoCommander;
+
+        foreach (var standing in book.Audible(commander, context.Now))
+        {
+            if (standing is not { InChoice: true, CurrentStep: 0, OpenChoice: null })
+            {
+                continue;
+            }
+
+            var key = standing.Adventure.Key;
+            var offer = StoryOffer(who, key, standing.Current);
+            var last = _offering.GetValueOrDefault(offer);
+
+            if (_waiting.Any(moment => moment.FrontierId == who && moment.Adventure.Key == key)
+                || last.Times >= MostOffers
+                || (last.Times > 0 && context.Now - last.At < OfferRetry))
+            {
+                continue;
+            }
+
+            _offering[offer] = (context.Now, last.Times + 1);
+            Log.LogInformation("Offering the choice in beat {Beat} of {Story} again", standing.Current + 1, key);
+            _waiting.Add(new AdventureMoment(who, standing.Adventure, standing.Current - 1, context.Now - Settle));
+        }
+    }
+
+    /// <summary>Notes that the offer of a choice was yielded now, so it is not offered again before <see cref="OfferRetry"/>.</summary>
+    private void Offering(string commander, string key, int beat, DateTimeOffset now)
+    {
+        var offer = StoryOffer(commander, key, beat);
+
+        _offering[offer] = (now, Math.Max(_offering.GetValueOrDefault(offer).Times, 1));
+    }
+
+    private static string StoryOffer(string commander, string key, int beat) => $"{commander}\n{key}\n{beat.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
 
     /// <summary>
     /// Says once per mission that a settlement is a crime scene for it: the current beat is an illegal
@@ -238,6 +323,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             yield return warning;
         }
 
+        if (!openingsOnly && (_offerChecked is not { } checkedAt || context.Now - checkedAt >= OfferCheck))
+        {
+            _offerChecked = context.Now;
+            OfferAgain(context, commander);
+        }
+
         if (_waiting.Count == 0)
         {
             yield break;
@@ -271,7 +362,8 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 continue;
             }
 
-            if (wasHeld)
+            // A beat that offers a choice, and a chapter's ending, are said in full once clear.
+            if (wasHeld && !moment.OffersChoice && !moment.IsEnding)
             {
                 var superseded = _waiting.Any(other => other.FrontierId == moment.FrontierId
                     && other.Adventure.Key == moment.Adventure.Key
@@ -286,6 +378,19 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 yield return new Announcement(moment.IsStep ? moment.Key : $"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
                 {
                     Urgency = CalloutUrgency.Routine,
+                };
+
+                continue;
+            }
+
+            if (moment.IsEnding)
+            {
+                var narrated = StockCoreAboard();
+
+                yield return new Announcement(moment.Key, moment.Reason ?? $"{moment.Adventure.Name} has ended.")
+                {
+                    Urgency = CalloutUrgency.Routine,
+                    Voice = narrated ? Audio.VoiceRole.Narrator : Audio.VoiceRole.ShipAi,
                 };
 
                 continue;
@@ -321,13 +426,15 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             // A ship line that ends the beat carries where to go next, as one text: the hand-off is part of what the
             // model is told to keep when it says this in the core's voice, and what plays when there is no model.
+            // An offer's phrases are their own announcement, which no model rewords.
             var lines = moment.Lines;
+            var offers = moment.OffersChoice;
 
             for (var index = 0; index < lines.Count; index++)
             {
                 var last = index == lines.Count - 1;
 
-                yield return new Announcement(moment.LineKey(index), last && IsShips(lines[index]) ? moment.Spoken(index) : lines[index].Text)
+                yield return new Announcement(moment.LineKey(index), last && IsShips(lines[index]) && !offers ? moment.Spoken(index) : lines[index].Text)
                 {
                     Urgency = CalloutUrgency.Routine,
 
@@ -338,7 +445,17 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 };
             }
 
-            if (lines.Count > 0 && !IsShips(lines[^1]) && moment.HandOff is { } handOff)
+            if (offers && moment.HandOff is { } offer)
+            {
+                Offering(moment.FrontierId, moment.Adventure.Key, moment.Beat + 1, context.Now);
+
+                yield return new Announcement(OfferKey(moment.Adventure.Key, moment.Beat + 1), offer)
+                {
+                    Urgency = CalloutUrgency.Routine,
+                    WhileAnotherFlies = moment.IsOpening,
+                };
+            }
+            else if (lines.Count > 0 && !IsShips(lines[^1]) && moment.HandOff is { } handOff)
             {
                 yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", handOff)
                 {

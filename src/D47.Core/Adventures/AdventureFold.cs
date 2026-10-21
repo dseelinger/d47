@@ -61,10 +61,46 @@ public sealed record AdventureStanding
     /// <summary>Set by the fold when a <c>failsOn</c> trigger matched; the book stores it as the adventure's ending.</summary>
     public AdventureFailure? Failure { get; init; }
 
+    /// <summary>The option chosen at each beat that begins with a choice, by beat index.</summary>
+    public IReadOnlyDictionary<int, int> Chosen { get; init; } = new Dictionary<int, int>();
+
+    /// <summary>Set by the fold when the steps of an option with an ending of its own are done; the book stores it as the adventure's ending.</summary>
+    public AdventureEnding? Reached { get; init; }
+
+    /// <summary>The named ending of an option the chapter ended in, stored or not; never <see cref="AdventureEnding.Failed"/>.</summary>
+    public AdventureEnding? Ended => Reached ?? (Adventure.Ending is { Name: not AdventureEnding.Failed } stored ? stored : null);
+
     /// <summary>The index of the beat the story is waiting on.</summary>
     public int Current => Fired.Count;
 
-    public bool IsDone => Adventure.IsBegun && Fired.Count >= Adventure.Beats.Count && Adventure.Beats.Count > 0;
+    /// <summary>Whether the chapter ran to its last beat or ended in an option's ending.</summary>
+    public bool IsDone => Adventure.IsBegun && (Ended is not null || (Fired.Count >= Adventure.Beats.Count && Adventure.Beats.Count > 0));
+
+    /// <summary>The steps of beat <paramref name="beat"/> with the option chosen there, if any.</summary>
+    public IReadOnlyList<BeatStep> StepsOf(int beat) =>
+        Adventure.Beats.ElementAtOrDefault(beat)?.StepsWith(Chosen.TryGetValue(beat, out var option) ? option : null) ?? [];
+
+    /// <summary>The choice the Commander can make now: the current beat begins with one, none is made, and its offer was said since it became current.</summary>
+    public BeatStep? OpenChoice =>
+        InChoice
+        && CurrentBeat is { } beat
+        && CurrentStep == 0
+        && Adventure.Offered is { } offer
+        && offer.Beat == Current
+        && offer.At >= ChoiceSince
+            ? beat.Steps[0]
+            : null;
+
+    /// <summary>When the current beat became current: the last beat's fire, the acceptance, or a later replacement of it.</summary>
+    private DateTimeOffset ChoiceSince
+    {
+        get
+        {
+            var since = LastFiredAt ?? Adventure.AcceptedAt ?? DateTimeOffset.MinValue;
+
+            return Adventure is { RewrittenFrom: { } from, RewrittenAt: { } rewritten } && from <= Current && rewritten > since ? rewritten : since;
+        }
+    }
 
     /// <summary>Whether a <c>failsOn</c> trigger matched, stored or not.</summary>
     public bool IsFailed => Failure is not null || Adventure.IsFailed;
@@ -77,7 +113,7 @@ public sealed record AdventureStanding
 
     /// <summary>The step the story is waiting on.</summary>
     public BeatStep? CurrentObjective =>
-        CurrentBeat is { Steps.Count: > 0 } beat ? beat.Steps[Math.Min(CurrentStep, beat.Steps.Count - 1)] : null;
+        CurrentBeat is not null && StepsOf(Current) is { Count: > 0 } steps ? steps[Math.Min(CurrentStep, steps.Count - 1)] : null;
 
     /// <summary>The current beat narrowed to the step the story is waiting on, or null.</summary>
     public AdventureBeat? CurrentStepBeat =>
@@ -87,17 +123,17 @@ public sealed record AdventureStanding
     public AdventureTrigger? CurrentTrigger => CurrentObjective?.Trigger;
 
     /// <summary>Whether the step the story is waiting on is its beat's last.</summary>
-    public bool OnLastStep => CurrentBeat is { } beat && CurrentStep >= beat.Steps.Count - 1;
+    public bool OnLastStep => CurrentBeat is not null && CurrentStep >= StepsOf(Current).Count - 1;
 
     public AdventureBeat? LastBeat => Fired.Count > 0 ? Adventure.Beats[Fired.Count - 1] : null;
 
     public DateTimeOffset? LastFiredAt => Fired.Count > 0 ? Fired[^1] : null;
 
-    /// <summary>Derived — the last beat's fire time — and never written.</summary>
-    public DateTimeOffset? FinishedAt => IsDone ? Fired[^1] : null;
+    /// <summary>Derived — the last beat's fire time, or when an option's ending was reached — and never written.</summary>
+    public DateTimeOffset? FinishedAt => IsDone ? Ended?.At ?? Fired[^1] : null;
 
     /// <summary>Whether the turn (the beat whose function says so) has fired, for the spoiler rule.</summary>
-    public bool TurnReached => Reached("midpoint", "turn");
+    public bool TurnReached => FunctionReached("midpoint", "turn");
 
     public bool EndingReached => IsDone;
 
@@ -141,11 +177,17 @@ public sealed record AdventureStanding
 
     /// <summary>Whether a story chapter is waiting on a beat the Commander may refuse: any but the beacon scan that ends act one.</summary>
     public bool IsRefusable =>
-        Adventure is { StoryId: not null, IsActive: true } && CurrentTrigger is { Kind: not TriggerKind.Beacon };
+        Adventure is { StoryId: not null, IsActive: true } && CurrentTrigger is { Kind: not TriggerKind.Beacon } && !InChoice;
 
     /// <summary>Whether a begun, unfinished short story is waiting on a beat the Commander may replace.</summary>
     public bool IsShortStoryRefusable =>
-        Adventure is { StoryId: null, IsActive: true } && CurrentBeat is not null;
+        Adventure is { StoryId: null, IsActive: true } && CurrentBeat is not null && !InChoice;
+
+    /// <summary>Whether the story is waiting on a beat that begins with a choice, whose steps cannot be replaced, refused or marked done one by one.</summary>
+    public bool InChoice => Adventure.IsActive && CurrentBeat is { OpensWithChoice: true };
+
+    /// <summary>Why an objective of a beat that begins with a choice cannot be changed.</summary>
+    public const string ChoiceRefusal = "That objective is part of a choice, so it cannot be changed or refused.";
 
     /// <summary>How far through, as a count (asked for 2026-08-22).</summary>
     public string? Step()
@@ -156,15 +198,15 @@ public sealed record AdventureStanding
         }
 
         var of = Adventure.Beats.Count;
-        var at = Math.Min(Fired.Count + (IsDone ? 0 : 1), of);
+        var at = Math.Min(Fired.Count + (IsDone && Ended is null ? 0 : 1), of);
 
         return $"Step {at.ToString(CultureInfo.InvariantCulture)} of {of.ToString(CultureInfo.InvariantCulture)}";
     }
 
     /// <summary>What the Commander did to reach where they are — the last beat's trigger, in words.</summary>
     public string? LastTrigger() =>
-        CurrentBeat is { } beat && CurrentStep > 0 && CurrentStep <= beat.Steps.Count
-            ? beat.Steps[CurrentStep - 1].Trigger.Describe()
+        CurrentBeat is not null && StepsOf(Current) is var steps && CurrentStep > 0 && CurrentStep <= steps.Count
+            ? steps[CurrentStep - 1].Trigger.Describe()
             : LastBeat?.Steps.LastOrDefault()?.Trigger.Describe();
 
     /// <summary>What the story is waiting for the Commander to do next, in words.</summary>
@@ -194,7 +236,7 @@ public sealed record AdventureStanding
 
         if (IsDone)
         {
-            return "finished";
+            return Ended is { } ended ? $"ended: {ended.Name}" : "finished";
         }
 
         return CurrentBeatTitle() ?? "under way";
@@ -234,7 +276,7 @@ public sealed record AdventureStanding
         function is not null
         && new[] { "midpoint", "turn", "all is lost" }.Any(word => function.Contains(word, StringComparison.OrdinalIgnoreCase));
 
-    private bool Reached(params string[] functions)
+    private bool FunctionReached(params string[] functions)
     {
         for (var index = 0; index < Fired.Count && index < Adventure.Beats.Count; index++)
         {
@@ -667,7 +709,9 @@ public static class AdventureFold
 
         var step = standing.CurrentObjective!;
 
-        if ((FailedOn(step, standing, journalEvent, observation, world) ?? ImpliedFailure(step.Trigger, standing, journalEvent)) is { } failing)
+        if ((FailedOn(step, standing, journalEvent, observation, world)
+             ?? ImpliedFailure(step.Trigger, standing, journalEvent)
+             ?? ChoiceFailure(standing, journalEvent)) is { } failing)
         {
             return standing with
             {
@@ -718,19 +762,82 @@ public static class AdventureFold
         return standing with { Handles = new Dictionary<string, MissionBinding>(standing.Handles) { [handle.Trim()] = binding } };
     }
 
-    /// <summary>The standing with the step it waits on fired at <paramref name="at"/> by <paramref name="by"/>; the beat fires with its last step.</summary>
+    /// <summary>
+    /// The standing with the step it waits on fired at <paramref name="at"/> by <paramref name="by"/>; the beat fires with its last step,
+    /// unless the option chosen in it has an ending of its own, which the chapter then ends in.
+    /// </summary>
     private static AdventureStanding Fire(AdventureStanding standing, DateTimeOffset at, string by)
     {
         var last = standing.OnLastStep;
         var fire = new StepFire(standing.Current, standing.CurrentStep, at, by);
+        var ending = last ? OptionEnding(standing, at) : null;
+        var beat = last && ending is null;
 
         return standing with
         {
             StepFires = [.. standing.StepFires, fire],
-            Fired = last ? [.. standing.Fired, at] : standing.Fired,
-            FiredBy = last ? [.. standing.FiredBy, by] : standing.FiredBy,
+            Fired = beat ? [.. standing.Fired, at] : standing.Fired,
+            FiredBy = beat ? [.. standing.FiredBy, by] : standing.FiredBy,
+            Reached = ending ?? standing.Reached,
             Counted = 0,
         };
+    }
+
+    /// <summary>The ending of the option chosen in the current beat, reached at <paramref name="at"/>, or null when it has none.</summary>
+    private static AdventureEnding? OptionEnding(AdventureStanding standing, DateTimeOffset at) =>
+        standing.CurrentBeat is { OpensWithChoice: true } beat
+        && standing.Chosen.TryGetValue(standing.Current, out var chosen)
+        && beat.Steps[0].Options.ElementAtOrDefault(chosen) is { Ending: { Length: > 0 } name } option
+            ? new AdventureEnding(name.Trim(), at, $"At \"{beat.Title}\" the Commander chose to {option.Label.Trim()} and did it.")
+            : null;
+
+    /// <summary>The standing with option <paramref name="option"/> of the choice it waits on chosen at <paramref name="at"/>.</summary>
+    public static AdventureStanding Chose(AdventureStanding standing, int option, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(standing);
+
+        var chosen = standing with { Chosen = new Dictionary<int, int>(standing.Chosen) { [standing.Current] = option } };
+
+        return Fire(chosen, at, AdventureChoice.EventName) with { Side = null };
+    }
+
+    /// <summary>
+    /// A bound mission's outcome that rules the chapter out at a choice: before choosing, any outcome of a mission an option refers to;
+    /// while the chosen option's steps run, an outcome only another option asks for.
+    /// </summary>
+    private static AdventureTrigger? ChoiceFailure(AdventureStanding standing, JournalEvent journalEvent)
+    {
+        if (standing.CurrentBeat is not { OpensWithChoice: true } beat)
+        {
+            return null;
+        }
+
+        var options = beat.Steps[0].Options;
+        IEnumerable<AdventureTrigger> ruledOut;
+
+        if (!standing.Chosen.TryGetValue(standing.Current, out var chosen))
+        {
+            ruledOut = options
+                .SelectMany(option => Outcomes(option))
+                .SelectMany(outcome => new[] { outcome with { Kind = TriggerKind.MissionComplete }, outcome with { Kind = TriggerKind.MissionAbandon } });
+        }
+        else if (options.ElementAtOrDefault(chosen) is { } picked && standing.CurrentStep <= picked.Steps.Count)
+        {
+            var kept = Outcomes(picked).Select(OutcomeKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            ruledOut = options.Where((_, index) => index != chosen).SelectMany(Outcomes).Where(outcome => !kept.Contains(OutcomeKey(outcome)));
+        }
+        else
+        {
+            return null;
+        }
+
+        return ruledOut.FirstOrDefault(outcome => Matches(outcome, journalEvent, standing.SystemAddress, standing));
+
+        static IEnumerable<AdventureTrigger> Outcomes(BeatOption option) =>
+            option.Steps.Select(step => step.Trigger).Where(trigger => trigger is { Kind: TriggerKind.MissionComplete or TriggerKind.MissionAbandon, Handle.Length: > 0 });
+
+        static string OutcomeKey(AdventureTrigger outcome) => $"{outcome.Kind}\n{outcome.Handle!.Trim()}";
     }
 
     /// <summary>Whether the step the standing waits on is at or after the position the last replacement began at.</summary>
@@ -782,24 +889,42 @@ public static class AdventureFold
         return Matches(other, journalEvent, standing.SystemAddress, standing) ? other : null;
     }
 
-    /// <summary>The steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>
+    /// <summary>
+    /// The steps and choices at or before <paramref name="upTo"/> applied in time order, each to the beat it names when the standing is
+    /// waiting on it.
+    /// </summary>
     public static AdventureStanding ApplySteps(AdventureStanding standing, DateTimeOffset upTo)
     {
         var adventure = standing.Adventure;
 
-        if (adventure.Stepped.Count == 0 || !adventure.IsActive)
+        if ((adventure.Stepped.Count == 0 && adventure.Choices.Count == 0) || !adventure.IsActive)
         {
             return standing;
         }
 
-        foreach (var step in adventure.Stepped.Where(step => step.At <= upTo).OrderBy(step => step.At))
+        var due = adventure.Stepped.Where(step => step.At <= upTo).Select(step => (step.At, Step: (AdventureStep?)step, Choice: (AdventureChoice?)null))
+            .Concat(adventure.Choices.Where(choice => choice.At <= upTo).Select(choice => (choice.At, Step: (AdventureStep?)null, Choice: (AdventureChoice?)choice)))
+            .OrderBy(entry => entry.At);
+
+        foreach (var (at, step, choice) in due)
         {
-            if (standing.IsDone || step.Beat != standing.Current || step.Step != standing.CurrentStep)
+            if (standing.IsDone || standing.IsFailed || (BeforeRewrite(standing) && at < adventure.RewrittenAt))
             {
                 continue;
             }
 
-            if (BeforeRewrite(standing) && step.At < adventure.RewrittenAt)
+            if (choice is { } made)
+            {
+                if (made.Beat == standing.Current && standing.CurrentStep == 0 && standing.CurrentObjective is { IsChoice: true } offered && made.Option < offered.Options.Count)
+                {
+                    standing = Chose(standing, made.Option, made.At);
+                }
+
+                continue;
+            }
+
+            // A choice is made only by choosing.
+            if (step!.Beat != standing.Current || step.Step != standing.CurrentStep || standing.CurrentObjective is { IsChoice: true })
             {
                 continue;
             }

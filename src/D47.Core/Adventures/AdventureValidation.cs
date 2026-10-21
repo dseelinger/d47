@@ -68,7 +68,7 @@ public static class AdventureValidation
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
          "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank", "site",
-         "missiontaken", "missiondestination", "missioncomplete", "missionabandon"];
+         "missiontaken", "missiondestination", "missioncomplete", "missionabandon", "choice"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> CodexFilters { get; } = ["Biology", "StellarBodies", "Civilisations", "Guardian"];
@@ -152,6 +152,7 @@ public static class AdventureValidation
 
         problems.AddRange(ScansOutOfOrder(adventure.Beats));
         problems.AddRange(MissionHandleProblems(adventure.Beats));
+        problems.AddRange(ChoiceProblems(adventure.Beats, adventure.OpeningLines));
 
         for (var index = 0; index < adventure.Beats.Count; index++)
         {
@@ -330,9 +331,9 @@ public static class AdventureValidation
             yield return $"{where} has a failsOn with a count; the first matching event fails the chapter.";
         }
 
-        if (trigger.Kind == TriggerKind.Conflict)
+        if (trigger.Kind is TriggerKind.Conflict or TriggerKind.Choice)
         {
-            yield return $"{where} has a failsOn of the conflict kind, which cannot fail a chapter.";
+            yield return $"{where} has a failsOn of the {trigger.Kind.ToString().ToLowerInvariant()} kind, which cannot fail a chapter.";
             yield break;
         }
 
@@ -429,32 +430,181 @@ public static class AdventureValidation
         {
             var where = Where(index, beats[index]);
 
-            foreach (var trigger in beats[index].Steps.Select(step => step.Trigger).Where(trigger => AdventureTrigger.IsMissionHandleKind(trigger.Kind)))
+            foreach (var step in beats[index].Steps)
             {
-                if (string.IsNullOrWhiteSpace(trigger.Handle))
+                // A mission an option takes is the option's alone: no other option, and nothing after the choice, can count on it.
+                foreach (var (option, at) in step.Options.Select((option, at) => (option, at)))
                 {
-                    yield return $"{where} names no mission handle.";
-                }
-                else if (trigger.Kind == TriggerKind.MissionTaken)
-                {
-                    if (!taken.TryAdd(trigger.Handle.Trim(), trigger))
+                    foreach (var problem in HandleProblems($"{where}, option {(at + 1).ToString(CultureInfo.InvariantCulture)}", option.Steps, new Dictionary<string, AdventureTrigger>(taken, StringComparer.OrdinalIgnoreCase)))
                     {
-                        yield return $"{where} takes the mission \"{trigger.Handle.Trim()}\" again; a handle names one mission.";
+                        yield return problem;
                     }
                 }
-                else if (!taken.TryGetValue(trigger.Handle.Trim(), out var binds))
+
+                foreach (var problem in HandleProblems(where, [step], taken))
                 {
-                    yield return $"{where} refers to the mission \"{trigger.Handle.Trim()}\" before any objective takes it.";
-                }
-                else if (trigger.Kind == TriggerKind.MissionDestination && !MissionFamilies.CarriesDestination(binds.MissionFamily))
-                {
-                    yield return $"{where} goes to the destination of the mission \"{trigger.Handle.Trim()}\", but "
-                        + (string.IsNullOrWhiteSpace(binds.MissionFamily) ? "it takes a mission of any family" : $"{binds.MissionFamily.Trim()} missions do not name a destination")
-                        + $"; name one of {string.Join(", ", MissionFamilies.WithDestination)}.";
+                    yield return problem;
                 }
             }
         }
     }
+
+    /// <summary>The handle problems of <paramref name="steps"/> in order, with the missions taken before them in <paramref name="taken"/>, which it adds to.</summary>
+    private static IEnumerable<string> HandleProblems(string where, IEnumerable<BeatStep> steps, Dictionary<string, AdventureTrigger> taken)
+    {
+        foreach (var trigger in steps.Select(step => step.Trigger).Where(trigger => AdventureTrigger.IsMissionHandleKind(trigger.Kind)))
+        {
+            if (string.IsNullOrWhiteSpace(trigger.Handle))
+            {
+                yield return $"{where} names no mission handle.";
+            }
+            else if (trigger.Kind == TriggerKind.MissionTaken)
+            {
+                if (!taken.TryAdd(trigger.Handle.Trim(), trigger))
+                {
+                    yield return $"{where} takes the mission \"{trigger.Handle.Trim()}\" again; a handle names one mission.";
+                }
+            }
+            else if (!taken.TryGetValue(trigger.Handle.Trim(), out var binds))
+            {
+                yield return $"{where} refers to the mission \"{trigger.Handle.Trim()}\" before any objective takes it.";
+            }
+            else if (trigger.Kind == TriggerKind.MissionDestination && !MissionFamilies.CarriesDestination(binds.MissionFamily))
+            {
+                yield return $"{where} goes to the destination of the mission \"{trigger.Handle.Trim()}\", but "
+                    + (string.IsNullOrWhiteSpace(binds.MissionFamily) ? "it takes a mission of any family" : $"{binds.MissionFamily.Trim()} missions do not name a destination")
+                    + $"; name one of {string.Join(", ", MissionFamilies.WithDestination)}.";
+            }
+        }
+    }
+
+    /// <summary>
+    /// What is wrong with the choices of a chapter: one that is not the first step of its objective or that the narrator offers, too few or
+    /// too many options, a missing or long label, an option step that travels or is a choice, options on a step that is not a choice, or
+    /// an ending that is unnamed, unsaid, named twice or named as the failure.
+    /// </summary>
+    public static IEnumerable<string> ChoiceProblems(IReadOnlyList<AdventureBeat> beats, IReadOnlyList<AdventureLine> opening)
+    {
+        var endings = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 0; index < beats.Count; index++)
+        {
+            var beat = beats[index];
+            var where = Where(index, beat);
+
+            foreach (var (step, stepIndex) in beat.Steps.Select((step, stepIndex) => (step, stepIndex)))
+            {
+                if (!step.IsChoice)
+                {
+                    if (step.Options.Count > 0)
+                    {
+                        yield return $"{where} has options on a step that is not a choice.";
+                    }
+
+                    continue;
+                }
+
+                if (stepIndex > 0)
+                {
+                    yield return $"{where} offers a choice at step {(stepIndex + 1).ToString(CultureInfo.InvariantCulture)}; a choice is the first step of its objective, offered by the line before it.";
+                }
+                else if ((index > 0 ? beats[index - 1].Lines : opening).LastOrDefault()?.Speaker == Stories.StorySpeaker.Narrator)
+                {
+                    yield return $"{where} begins with a choice that the narrator offers; the narrator never offers anything, so the line before it is the ship's or a character's.";
+                }
+
+                if (step.Options.Count is < 2 or > 3)
+                {
+                    yield return $"{where} offers {step.Options.Count.ToString(CultureInfo.InvariantCulture)} options; a choice offers two or three.";
+                }
+
+                foreach (var (option, at) in step.Options.Select((option, at) => (option, at)))
+                {
+                    var optionWhere = $"{where}, option {(at + 1).ToString(CultureInfo.InvariantCulture)}";
+
+                    if (string.IsNullOrWhiteSpace(option.Label))
+                    {
+                        yield return $"{optionWhere} has no label.";
+                    }
+                    else if (option.Label.Trim().Length > BeatOption.MaxLabelLength)
+                    {
+                        yield return $"{optionWhere}'s label is {option.Label.Trim().Length.ToString(CultureInfo.InvariantCulture)} characters; at most {BeatOption.MaxLabelLength.ToString(CultureInfo.InvariantCulture)}.";
+                    }
+
+                    foreach (var optionStep in option.Steps)
+                    {
+                        if (optionStep.IsChoice || optionStep.Options.Count > 0)
+                        {
+                            yield return $"{optionWhere} offers a choice of its own; an option's steps cannot.";
+                        }
+                        else if (IsPlace(optionStep.Trigger.Kind) || optionStep.Trigger is { Kind: TriggerKind.MissionTaken, Station.Length: > 0 })
+                        {
+                            yield return $"{optionWhere} sends the Commander to a place ({optionStep.Trigger.Describe()}); an option's steps are things to do, not places to go.";
+                        }
+                        else if (optionStep.Trigger.IsCounted)
+                        {
+                            foreach (var problem in CountedProblems(optionWhere, optionStep.Trigger))
+                            {
+                                yield return problem;
+                            }
+                        }
+                        else if (optionStep.Trigger.Kind == TriggerKind.MissionTaken)
+                        {
+                            foreach (var problem in MissionFamilyProblems(optionWhere, optionStep.Trigger))
+                            {
+                                yield return problem;
+                            }
+                        }
+                        else if (!AdventureTrigger.IsMissionHandleKind(optionStep.Trigger.Kind) && !AdventureTrigger.IsOnceKind(optionStep.Trigger.Kind))
+                        {
+                            yield return $"{optionWhere} is a \"{optionStep.Trigger.Kind.ToString().ToLowerInvariant()}\" step; an option's steps are missions, counted or one-event objectives.";
+                        }
+
+                        foreach (var problem in optionStep.FailsOn.SelectMany(fail => FailsOnProblems(optionWhere, fail)))
+                        {
+                            yield return problem;
+                        }
+                    }
+
+                    if (option.Ending is null)
+                    {
+                        if (option.EndingLine is not null)
+                        {
+                            yield return $"{optionWhere} has an ending line but no ending.";
+                        }
+
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(option.Ending) || option.Ending.Trim().Length > AdventureLimits.MaxTitleLength)
+                    {
+                        yield return $"{optionWhere}'s ending needs a name of at most {AdventureLimits.MaxTitleLength.ToString(CultureInfo.InvariantCulture)} characters.";
+                    }
+                    else if (string.Equals(option.Ending.Trim(), AdventureEnding.Failed, StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield return $"{optionWhere}'s ending is named \"{AdventureEnding.Failed}\", which is the failure's.";
+                    }
+                    else if (!endings.Add(option.Ending.Trim()))
+                    {
+                        yield return $"{optionWhere}'s ending \"{option.Ending.Trim()}\" is named by another option too.";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(option.EndingLine))
+                    {
+                        yield return $"{optionWhere} ends the chapter but has no line to say when it does.";
+                    }
+                    else if (option.EndingLine.Trim().Length > AdventureLimits.MaxLineLength)
+                    {
+                        yield return $"{optionWhere}'s ending line is {option.EndingLine.Trim().Length.ToString(CultureInfo.InvariantCulture)} characters; at most {AdventureLimits.MaxLineLength.ToString(CultureInfo.InvariantCulture)}.";
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Whether a kind waits on the Commander being at a place.</summary>
+    private static bool IsPlace(TriggerKind kind) =>
+        kind is TriggerKind.Arrive or TriggerKind.Dock or TriggerKind.Land or TriggerKind.Scan or TriggerKind.Beacon or TriggerKind.Reach or TriggerKind.Site;
 
     /// <summary>What is wrong with an engineer trigger: no engineer, an engineer the directory does not know, or a stage that is not <c>Invited</c> or <c>Unlocked</c>.</summary>
     public static IEnumerable<string> EngineerProblems(string where, AdventureTrigger trigger)

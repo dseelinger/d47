@@ -238,6 +238,9 @@ public static class BuiltinCapabilities
         // Marks the objective a story is waiting on done.
         AdventureCapability.ObjectiveMark? objectiveMark = null,
 
+        // Chooses an option of the choice a story chapter offers.
+        AdventureCapability.StoryChoice? storyChoice = null,
+
         // The Commander's journal reminders (#643).
         Reminders.JournalReminderStore? journalReminders = null,
 
@@ -381,7 +384,7 @@ public static class BuiltinCapabilities
             colonisationProgress),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
-        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark),
+        AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark, storyChoice),
 
         SystemNameCapability.Create(() => gameState.Active),
         LoreCapability.Create(
