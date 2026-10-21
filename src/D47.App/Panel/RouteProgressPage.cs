@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Theming;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -14,6 +15,7 @@ public sealed class RouteProgressPage : UserControl
 {
     private readonly Func<NavRoute> _route;
     private readonly Func<string?> _here;
+    private readonly Func<StarPosition?>? _position;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<string, string?>? _offDuty;
 
@@ -29,14 +31,23 @@ public sealed class RouteProgressPage : UserControl
 
     private readonly StackPanel _hops = new() { Spacing = 2 };
 
+    private readonly RouteMapView _map = new()
+    {
+        IsVisible = false,
+        VerticalAlignment = VerticalAlignment.Top,
+        Margin = new Thickness(0, 0, 20, 0),
+    };
+
     private readonly TextBlock _kept = RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
 
     public RouteProgressPage(
         Func<NavRoute> route,
         Func<string?> here,
         Func<string, Task<bool>>? copy = null,
-        Func<string, string?>? offDuty = null)
+        Func<string, string?>? offDuty = null,
+        Func<StarPosition?>? position = null)
     {
+        _position = position;
         _offDuty = offDuty;
         _route = route;
         _here = here;
@@ -85,12 +96,19 @@ public sealed class RouteProgressPage : UserControl
 
         root.Children.Add(header);
         root.Children.Add(footer);
-        root.Children.Add(new ScrollViewer
+
+        var body = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star)] };
+        var list = new ScrollViewer
         {
             Content = _hops,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        });
+        };
+
+        Grid.SetColumn(list, 1);
+        body.Children.Add(_map);
+        body.Children.Add(list);
+        root.Children.Add(body);
 
         Content = root;
 
@@ -106,6 +124,7 @@ public sealed class RouteProgressPage : UserControl
         var progress = RouteProgress.For(route, here);
 
         _hops.Children.Clear();
+        _map.IsVisible = false;
         ShowKept();
 
         if (!route.IsPlotted)
@@ -171,6 +190,17 @@ public sealed class RouteProgressPage : UserControl
             _aside.IsVisible = false;
         }
 
+        var layout = RouteMapLayout.For(
+            RouteMapStop.From(route),
+            progress.Index,
+            progress.OffRoute ? _position?.Invoke() : null);
+
+        if (layout is not null)
+        {
+            _map.Show(layout, here);
+            _map.IsVisible = true;
+        }
+
         for (var index = 0; index < route.Hops.Count; index++)
         {
             _hops.Children.Add(Row(route.Hops[index], index, progress, here));
@@ -205,8 +235,8 @@ public sealed class RouteProgressPage : UserControl
             [
                 new ColumnDefinition(28, GridUnitType.Pixel),
                 new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(110, GridUnitType.Pixel),
-                new ColumnDefinition(170, GridUnitType.Pixel),
+                new ColumnDefinition(_map.IsVisible ? 90 : 110, GridUnitType.Pixel),
+                new ColumnDefinition(_map.IsVisible ? 130 : 170, GridUnitType.Pixel),
             ],
             MinHeight = 44,
         };

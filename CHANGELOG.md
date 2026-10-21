@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Progress page draws the route Elite plotted as a map to the left of the hop list, in the window and on the big panel. A grey line runs behind you and an orange one ahead, with squares at the start and the destination, your own system in Cyan, and marks on neutron stars, white dwarfs, black holes and stars that cannot be scooped, with a key under the map. Off the route, your position is drawn when the journal has one. With no route, fewer than two positioned hops, or another Commander showing, the page has no map and keeps its full-width list.
+
 Each navy on the Standing page lists what its ranks unlock: ships and the Sol and Achenar permits already unlocked with the rank that gave them, the next rank that unlocks something and how many ranks away it is, and everything later.
 
 The open Powerplay goal lists what your Power's ranks give. Held at your rank shows each perk and rebuy cut at its latest value and the rank it last changed at, the modules unlocked (or the first one and its rank), your mini care packages and the rank decal. Still to come lists, chapter by chapter, each rank that adds or improves a perk, rebuy cut or module, as old → new, with the chapter's merits and share of the climb. Small ticks under the track mark those ranks. The voice answer for Powerplay ranks is worded as before.

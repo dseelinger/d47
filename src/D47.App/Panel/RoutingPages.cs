@@ -168,7 +168,12 @@ public static class RoutingPages
         return crumb.Key switch
         {
             PlanRoot => Plan(surface, nav),
-            ProgressKey => new RouteProgressPage(surface.Route, surface.Here, Copy(surface), surface.OffDuty),
+            ProgressKey => new RouteProgressPage(
+                surface.Route,
+                surface.Here,
+                Copy(surface),
+                surface.OffDuty,
+                () => surface.Commander?.Invoke()?.Location.StarPos),
             MarketRoot => Market(surface),
             BestCargoRoot => BestCargo(surface, nav),
             TradeRoot => Trade(surface, nav),
