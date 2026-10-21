@@ -15,10 +15,22 @@ public sealed class ChapterOneEndsAtABeaconTests
     [Fact]
     public void TheNearestBeaconIsMeasuredFromWhereTheCommanderIs()
     {
-        Assert.Equal((BeaconAddress, Beacon), GuardianCores.NearestBeacon(StarPosition.Origin));
-        Assert.Equal((BeaconAddress, Beacon), GuardianCores.NearestBeacon(null));
+        Assert.Equal("IC 2391 Sector CQ-Y c16", GuardianCores.NearestBeacon(StarPosition.Origin).Name);
+        Assert.Equal("IC 2391 Sector CQ-Y c16", GuardianCores.NearestBeacon(null).Name);
+        Assert.Equal((BeaconAddress, Beacon), GuardianCores.NearestBeacon(BeyondTheBeacon(10)));
         Assert.Equal("NGC 2451A Sector LX-U d2-25", GuardianCores.NearestBeacon(new StarPosition(726, -163, -171)).Name);
         Assert.Equal(GuardianCores.Beacons.Keys.Order(), GuardianCores.BeaconPositions.Keys.Order());
+        Assert.Equal(28, GuardianCores.Beacons.Count);
+    }
+
+    [Fact]
+    public void AScanInAnyOfTheTwentyEightSystemsCountsAsABeaconScan()
+    {
+        var scan = AdventureFixtures.Event("""{ "timestamp":"2026-09-30T12:00:00Z", "event":"DataScanned", "Type":"$Datascan_AncientBeacon;" }""");
+
+        Assert.True(GuardianCores.IsBeaconScan(scan, 84926173882));
+        Assert.True(GuardianCores.IsBeaconScan(scan, 319849220451));
+        Assert.False(GuardianCores.IsBeaconScan(scan, 1));
     }
 
     [Trait("Category", "Integration")]

@@ -281,7 +281,7 @@ internal sealed class StoryFixtures : IDisposable
     public string? Backstory { get; set; }
 
     /// <summary>Where the Commander is, for the nearest beacon.</summary>
-    public StarPosition Here { get; set; } = StarPosition.Origin;
+    public StarPosition Here { get; set; } = BeyondTheBeacon(10);
 
     /// <summary>
     /// Whether the writer is sent the activities drawn for a chapter. Off, a chapter is written as if none were drawn, because a
@@ -357,12 +357,12 @@ internal sealed class StoryFixtures : IDisposable
         return state;
     }
 
-    /// <summary>A point this many light years above the test beacon, out of the galactic plane.</summary>
+    /// <summary>A point this many light years from the test beacon, nearer to it than to any other beacon.</summary>
     public static StarPosition BeyondTheBeacon(double lightYears)
     {
         var beacon = GuardianCores.BeaconPositions[BeaconAddress];
 
-        return beacon with { Y = beacon.Y + lightYears };
+        return beacon with { Z = beacon.Z + lightYears };
     }
 
     public static JournalEvent DataScanned(DateTimeOffset at) =>
