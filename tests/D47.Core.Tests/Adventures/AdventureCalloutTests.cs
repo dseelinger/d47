@@ -106,25 +106,51 @@ public class AdventureCalloutTests
         Assert.Equal("adventure.the-lantern-route.opening", Assert.Single(callout.Examine(At(Accepted.AddMinutes(3), []))).Key);
     }
 
+    private static readonly string LanternHandOff =
+        "Next: scan The Quiet Field A 2 in The Quiet Field — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.";
+
+    private static GameStatus Interdicted(DateTimeOffset at) => GameStatus.Unknown with
+    {
+        Flags = StatusFlags.InMainShip | StatusFlags.BeingInterdicted,
+        ReadAt = at,
+    };
+
     [Fact]
-    public void ABeatDueMidDangerIsDroppedAndNotSaidLate()
+    public void ABeatDueMidDangerSaysOnlyItsHandOffOnceClear()
     {
         var (book, callout) = Wired();
         var reached = Accepted.AddMinutes(1);
 
         callout.Examine(At(reached, [Jump(Lantern, reached)])).ToList();
 
-        var interdicted = GameStatus.Unknown with
-        {
-            Flags = StatusFlags.InMainShip | StatusFlags.BeingInterdicted,
-            ReadAt = reached,
-        };
+        Assert.Empty(callout.Examine(At(reached.AddSeconds(30), [], Interdicted(reached))));
+        Assert.Empty(callout.Examine(At(reached.AddSeconds(40), [], Interdicted(reached))));
 
-        Assert.Empty(callout.Examine(At(reached.AddSeconds(30), [], interdicted)));
-        Assert.Empty(callout.Examine(At(reached.AddMinutes(5), [])));
+        var said = Assert.Single(callout.Examine(At(reached.AddMinutes(5), [])));
 
-        // Still in the context: the fold moved, only the speaking was dropped.
+        Assert.Equal("adventure-handoff.the-lantern-route.0", said.Key);
+        Assert.Equal(LanternHandOff, said.Text);
+        Assert.Empty(callout.Examine(At(reached.AddMinutes(6), [])));
+
+        // Still in the context: the fold moved.
         Assert.Single(book.Standing("F1", "the-lantern-route")!.Fired);
+    }
+
+    [Fact]
+    public void ANewerBeatReachedWhileAnEarlierOneIsHeldSaysOnlyTheNewerHandOff()
+    {
+        var (_, callout) = Wired();
+        var from = Accepted.AddMinutes(1);
+        var route = WholeRoute(Accepted);
+
+        callout.Examine(At(from, [route[0], route[1]])).ToList();
+
+        Assert.Empty(callout.Examine(At(from.AddSeconds(30), [], Interdicted(from))));
+
+        var said = Assert.Single(callout.Examine(At(from.AddMinutes(2), [])));
+
+        Assert.Equal("adventure-handoff.the-lantern-route.1", said.Key);
+        Assert.Equal("Next: dock at Maren Anchorage in Dyson's Hollow.", said.Text);
     }
 
     [Fact]

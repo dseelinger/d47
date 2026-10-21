@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story beat reached in combat no longer loses its hand-off. The beat's line is still not said late, but once the ship is out of danger you hear where to go next.
+
 A story objective can now send you to a Guardian ruin or structure, which it meets when you approach the site, or to a tourist beacon, which it meets when you scan it in the beacon's system. No story asks for either yet.
 
 The story writer is now given the unvisited Guardian sites and tourist beacons within reach, from the galaxy search and the signal index, and may send a chapter to one of them. The signal index is fetched when a chapter is written as well as when you search for a signal, and only while the Signal index setting is on.

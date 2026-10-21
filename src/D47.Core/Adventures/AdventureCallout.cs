@@ -1,5 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D47.Core.Adventures;
 
@@ -44,7 +46,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     /// <summary>How long a reached beat waits before it is said.</summary>
     public TimeSpan Settle { get; set; } = TimeSpan.FromSeconds(20);
 
+    public ILogger Log { get; init; } = NullLogger.Instance;
+
     private readonly List<AdventureMoment> _waiting = [];
+
+    /// <summary>Beats that came due in danger; once clear they say only their hand-off.</summary>
+    private readonly HashSet<AdventureMoment> _held = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Missions already warned about this session.</summary>
     private readonly HashSet<long> _warned = [];
@@ -235,7 +242,18 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
         foreach (var moment in due)
         {
+            if (inDanger && !moment.IsOpening)
+            {
+                if (_held.Add(moment))
+                {
+                    Log.LogInformation("Holding beat {Beat} of {Story} until the ship is out of danger", moment.Beat, moment.Adventure.Key);
+                }
+
+                continue;
+            }
+
             _waiting.Remove(moment);
+            var wasHeld = _held.Remove(moment);
 
             if (book.IsSilenced(moment.FrontierId, moment.Adventure, context.Now) || (openingsOnly && !moment.IsOpening))
             {
@@ -243,11 +261,23 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                 continue;
             }
 
-            if (inDanger && !moment.IsOpening)
+            if (wasHeld)
             {
-                // Dropped rather than spoken late — and the tab is told, or its "d47 is composing" animation
-                // runs until something else happens to clear it.
-                book.Quiet(moment.FrontierId, moment.Adventure.Key);
+                var superseded = _waiting.Any(other => other.FrontierId == moment.FrontierId
+                    && other.Adventure.Key == moment.Adventure.Key
+                    && other.Beat > moment.Beat);
+
+                if (superseded || moment.HandOff is not { } held)
+                {
+                    book.Quiet(moment.FrontierId, moment.Adventure.Key);
+                    continue;
+                }
+
+                yield return new Announcement($"{HandOffPrefix}{moment.Key[KeyPrefix.Length..]}", held)
+                {
+                    Urgency = CalloutUrgency.Routine,
+                };
+
                 continue;
             }
 

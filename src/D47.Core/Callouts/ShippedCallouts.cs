@@ -222,6 +222,7 @@ public static class ShippedCallouts
                 HasBackstory = () => !string.IsNullOrWhiteSpace(settings.Current.Llm.AboutMe),
                 NudgeBackstory = () => settings.Current.Callouts.BackstoryNudge,
                 Held = sources.StoryOpening,
+                Log = loggers.CreateLogger<D47.Core.Adventures.AdventureCallout>(),
             })
 
             // Invented chatter (#244): the marker only — the app composes the exchange, and with no model the
