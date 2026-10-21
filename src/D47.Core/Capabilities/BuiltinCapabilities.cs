@@ -199,6 +199,9 @@ public static class BuiltinCapabilities
         // Pauses, resumes or skips the ambient music; null where nothing plays it.
         Func<Audio.MusicAction, string>? controlMusic = null,
 
+        // The planner's plan for each colonisation system, where one is composed.
+        Func<D47.Core.Knowledge.ColonisationPlans?>? colonisationPlans = null,
+
         // What the music is playing, and a way to be told when that changes.
         Func<Audio.MusicState>? musicState = null,
         Func<Action, Action>? watchMusic = null,
@@ -357,7 +360,8 @@ public static class BuiltinCapabilities
             // "where do I buy tritium" cost one pull between them (Phase 50).
             trade,
             sourcing,
-            now),
+            now,
+            colonisationPlans),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
         AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark),

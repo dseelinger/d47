@@ -31,7 +31,8 @@ public static class ColonisationCapability
         Configuration.SettingsService? settings = null,
         ITradePlanService? trade = null,
         SourcingBoard? sourcing = null,
-        Func<DateTimeOffset>? now = null) => new()
+        Func<DateTimeOffset>? now = null,
+        Func<ColonisationPlans?>? plans = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -70,7 +71,8 @@ public static class ColonisationCapability
                 Description =
                     "Every construction site this Commander's journal has reported: where it is, how "
                     + "far along it is, how many commodities are still outstanding, and when they last "
-                    + "saw it. Those figures are as of that visit, not live.",
+                    + "saw it. Those figures are as of that visit, not live. Where a plan is read from "
+                    + "Raven Colonial, also the planned and building sites no depot has been seen for.",
                 Parameters =
                 [
                     new ToolParameter
@@ -82,7 +84,8 @@ public static class ColonisationCapability
                             + "finished site cannot be hauled to.",
                     },
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Sites(commander(), arguments, Now(now)))),
+                Handler = (arguments, cancellationToken) =>
+                    SitesAsync(commander(), settings, plans?.Invoke(), arguments, Now(now), cancellationToken),
             },
             new ToolDefinition
             {
@@ -91,8 +94,10 @@ public static class ColonisationCapability
                     "The hauling list for one construction site: every commodity still outstanding, how "
                     + "much is left of each, how much of it is already in the cargo hold, and how many "
                     + "trips the ship's capacity implies. Can also say where to buy the whole list. Names "
-                    + "a site by its station or system; with no name, the only site under construction, or "
-                    + "a list to choose from if there are several.",
+                    + "a site by its station or system, or by the name or build type of a planned site; "
+                    + "with no name, the only site under construction, or a list to choose from if there "
+                    + "are several. Where a plan is read from Raven Colonial, its figures are given beside "
+                    + "the depot's.",
                 Parameters =
                 [
                     new ToolParameter
@@ -100,8 +105,8 @@ public static class ColonisationCapability
                         Name = "site",
                         Type = ToolParameterType.String,
                         Description =
-                            "The station or system name of the site. Leave out when only one is under "
-                            + "construction.",
+                            "The station or system name of the site, or the name or build type of a "
+                            + "planned site. Leave out when only one is under construction.",
                     },
                     new ToolParameter
                     {
@@ -112,7 +117,7 @@ public static class ColonisationCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     NeedsAsync(
-                        commander(), settings, trade, sourcing, now, arguments, cancellationToken),
+                        commander(), settings, trade, sourcing, plans?.Invoke(), now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -207,21 +212,51 @@ public static class ColonisationCapability
 
     private static DateTimeOffset Now(Func<DateTimeOffset>? now) => now?.Invoke() ?? DateTimeOffset.UtcNow;
 
-    private static string Sites(CommanderGameState? state, ToolArguments arguments, DateTimeOffset now)
+    private static async Task<ToolResult> SitesAsync(
+        CommanderGameState? state,
+        Configuration.SettingsService? settings,
+        ColonisationPlans? plans,
+        ToolArguments arguments,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
     {
         if (state is null)
         {
-            return "No Elite Dangerous journal has been detected yet.";
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
+        var read = await PlanReading
+            .ReadAsync(
+                plans,
+                settings is not null && !settings.Current.Knowledge.ColonisationPlanner,
+                PlanReading.SystemsOf(state.Colonisation),
+                now,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return ToolResult.Ok(Sites(state, arguments, now, read));
+    }
+
+    private static string Sites(CommanderGameState state, ToolArguments arguments, DateTimeOffset now, PlanReading read)
+    {
         var finished = arguments.TryGetBoolean("include_finished", out var all) && all;
 
         var sites = finished ? state.Colonisation.All : state.Colonisation.Current(now);
         var stale = finished ? [] : state.Colonisation.NotSeenSince(now);
 
-        if (sites.Count == 0 && stale.Count == 0)
+        var seen = state.Colonisation.All.Select(site => site.MarketId).ToHashSet();
+
+        var unseen = read.Systems
+            .Select(plan => (plan.SystemName, Sites: plan.Sites
+                .Where(planned => PlanReading.Live(planned) && (planned.MarketId is not { } id || !seen.Contains(id)))
+                .ToList()))
+            .Where(system => system.Sites.Count > 0)
+            .OrderBy(system => system.SystemName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (sites.Count == 0 && stale.Count == 0 && unseen.Count == 0)
         {
-            return Nothing(state, finished);
+            return JoinNote(Nothing(state, finished), read);
         }
 
         var report = new StringBuilder();
@@ -256,6 +291,11 @@ public static class ColonisationCapability
 
             report.AppendLine($"  {Capitalise(string.Join(", ", line))}.");
             report.AppendLine($"  Seen {Stamp(site.SeenAt)}.");
+
+            if (read.For(site) is { } planned)
+            {
+                report.AppendLine($"  Planner: {PlanReading.Describe(planned)}.");
+            }
         }
 
         if (stale.Count > 0)
@@ -266,11 +306,30 @@ public static class ColonisationCapability
                 + $"not since {Stamp(stale[0].SeenAt)}.");
         }
 
+        if (unseen.Count > 0)
+        {
+            report.AppendLine();
+            report.AppendLine("Planned or building in Raven Colonial's plan, with no depot of yours seen:");
+
+            foreach (var (system, planned) in unseen)
+            {
+                report.AppendLine(system);
+
+                foreach (var site in planned)
+                {
+                    report.AppendLine($"  {PlanReading.Clip(site.Name)} — {PlanReading.Describe(site)}.");
+                }
+            }
+        }
+
         report.AppendLine();
         report.AppendLine(Freshness);
 
-        return report.ToString().TrimEnd();
+        return JoinNote(report.ToString().TrimEnd(), read);
     }
+
+    private static string JoinNote(string answer, PlanReading read) =>
+        read.Note() is { } note ? answer + Environment.NewLine + note : answer;
 
     // ------------------------------------------------------------------ needs
 
@@ -280,6 +339,7 @@ public static class ColonisationCapability
         Configuration.SettingsService? settings,
         ITradePlanService? trade,
         SourcingBoard? board,
+        ColonisationPlans? plans,
         Func<DateTimeOffset>? now,
         ToolArguments arguments,
         CancellationToken cancellationToken)
@@ -295,10 +355,60 @@ public static class ColonisationCapability
 
         var at = Now(now);
 
-        if (Choose(state, wanted, at) is not { } site)
+        var chosen = Choose(state, wanted, at);
+
+        // A site the journal names needs only its own system's plan; otherwise every system is searched.
+        var read = await PlanReading
+            .ReadAsync(
+                plans,
+                settings is not null && !settings.Current.Knowledge.ColonisationPlanner,
+                chosen is not null ? [chosen.StarSystem] : PlanReading.SystemsOf(state.Colonisation),
+                at,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        PlannedSite? planned = null;
+        string? plannedSystem = null;
+
+        if (chosen is null && wanted is not null)
         {
-            return ToolResult.Ok(Ambiguous(state, wanted, at));
+            var found = read.Systems
+                .SelectMany(plan => plan.Sites
+                    .Where(candidate => PlanReading.Live(candidate) && PlanReading.Matches(candidate, wanted))
+                    .Select(candidate => (plan.SystemName, Site: candidate)))
+                .ToList();
+
+            if (found.Count > 1)
+            {
+                return ToolResult.Ok(JoinNote(
+                    $"{found.Count} planned sites match \"{PlanReading.Clip(wanted)}\" — "
+                    + string.Join("; ", found.Select(match =>
+                        $"{PlanReading.Clip(match.Site.Name)} ({PlanReading.Describe(match.Site)}), {match.SystemName}"))
+                    + ". Which one?",
+                    read));
+            }
+
+            if (found.Count == 1)
+            {
+                (plannedSystem, planned) = found[0];
+                chosen = planned.MarketId is { } id ? state.Colonisation.ById(id) : null;
+            }
         }
+
+        if (chosen is null && planned is not null)
+        {
+            return ToolResult.Ok(JoinNote(PlannerOnly(plannedSystem!, planned), read));
+        }
+
+        if (chosen is not { } site)
+        {
+            return ToolResult.Ok(JoinNote(Ambiguous(state, wanted, at), read));
+        }
+
+        var merged = PlannedNeeds
+            .Merge(site, read.For(site))
+            .Where(need => need.Symbol.Length > 0)
+            .ToDictionary(need => need.Symbol, StringComparer.Ordinal);
 
         var report = new StringBuilder();
 
@@ -320,10 +430,19 @@ public static class ColonisationCapability
             report.AppendLine();
             report.AppendLine(Freshness);
 
-            return ToolResult.Ok(report.ToString().TrimEnd());
+            return ToolResult.Ok(JoinNote(report.ToString().TrimEnd(), read));
         }
 
-        var needs = ConstructionNeeds.For(site, state.Hold, state.Carrier);
+        var needs = ConstructionNeeds.For(site, state.Hold, state.Carrier)
+            .Select(need => need.Resource.Symbol is { } symbol && merged.TryGetValue(symbol, out var both)
+                && both.Remaining < need.Remaining
+                    ? need with
+                    {
+                        Remaining = both.Remaining,
+                        ToBuy = Math.Max(0, both.Remaining - need.InHold - (need.OnCarrier ?? 0)),
+                    }
+                    : need)
+            .ToList();
         var left = needs.Sum(need => need.Remaining);
         var aboard = needs.Sum(need => Math.Min(need.Remaining, need.InHold));
         var toBuy = needs.Sum(need => need.ToBuy);
@@ -339,6 +458,21 @@ public static class ColonisationCapability
         {
             var resource = need.Resource;
             var detail = new List<string> { $"{Tonnes(need.Remaining)} left" };
+
+            if (resource.Symbol is { } figured && merged.TryGetValue(figured, out var figures))
+            {
+                if (figures.Planner is { } byPlanner && byPlanner != figures.Depot)
+                {
+                    detail[0] = byPlanner < figures.Depot
+                        ? $"{Tonnes(byPlanner)} left by the planner; your last docking said {Number(figures.Depot)}"
+                        : $"{Tonnes(figures.Depot)} left by your last docking; the planner says {Number(byPlanner)}";
+                }
+
+                if (figures.OnLinkedCarriers > 0)
+                {
+                    detail.Add($"{Tonnes(figures.OnLinkedCarriers)} on linked carriers");
+                }
+            }
 
             // Capped at what is still wanted.
             if (need.InHold > 0)
@@ -376,6 +510,12 @@ public static class ColonisationCapability
             report.AppendLine(line);
         }
 
+        if (read.For(site) is { } project)
+        {
+            report.AppendLine();
+            report.AppendLine(Project(project));
+        }
+
         report.AppendLine();
 
         foreach (var line in Logistics(state, site, left, aboard, toBuy))
@@ -394,7 +534,52 @@ public static class ColonisationCapability
         report.AppendLine();
         report.AppendLine(Freshness);
 
-        return ToolResult.Ok(report.ToString().TrimEnd());
+        return ToolResult.Ok(JoinNote(report.ToString().TrimEnd(), read));
+    }
+
+    /// <summary>Counts only: the planner's Commanders and carriers are never named.</summary>
+    private static string Project(PlannedSite project) =>
+        $"The planner's project has {project.Commanders} Commander{(project.Commanders == 1 ? "" : "s")} and "
+        + $"{project.LinkedCarriers} linked carrier{(project.LinkedCarriers == 1 ? "" : "s")}. Its figures are "
+        + "Raven Colonial's, and the lower of the planner's and your last docking's is counted.";
+
+    /// <summary>A planned site no depot of the Commander's has been seen for: the planner's figures alone.</summary>
+    private static string PlannerOnly(string system, PlannedSite planned)
+    {
+        var report = new StringBuilder();
+
+        report.AppendLine(
+            $"{PlanReading.Clip(planned.Name)} in {system} — {PlanReading.Describe(planned)}. I have seen no depot "
+            + "for it, so everything here is the planner's alone.");
+
+        if (planned.Status != PlanStatus.Build)
+        {
+            report.AppendLine("It is only planned, so the planner lists nothing outstanding yet.");
+        }
+        else if (planned.Needed.Count == 0)
+        {
+            report.AppendLine("The planner lists nothing outstanding.");
+        }
+        else
+        {
+            report.AppendLine(
+                $"{planned.Needed.Count} commodit{(planned.Needed.Count == 1 ? "y" : "ies")} outstanding, "
+                + $"{Tonnes(planned.Needed.Values.Sum())} in all:");
+
+            foreach (var (symbol, left) in planned.Needed.OrderByDescending(pair => pair.Value))
+            {
+                var onCarriers = planned.OnLinkedCarriers.GetValueOrDefault(symbol);
+
+                report.AppendLine(
+                    $"  {PlanReading.Clip(symbol)} — {Tonnes(left)} left"
+                    + (onCarriers > 0 ? $", {Tonnes(onCarriers)} on linked carriers." : "."));
+            }
+        }
+
+        report.AppendLine();
+        report.AppendLine(Project(planned));
+
+        return report.ToString().TrimEnd();
     }
 
     /// <summary>Which stations between them carry the whole list (Phase 50).</summary>

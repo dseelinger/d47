@@ -382,9 +382,8 @@ a better source; it is structural, and it was measured before this was built.
 `ColonisationSystemClaim` carries a system, an address and a timestamp, and there is **no expiry
 field** — Frontier's 24 hours is a published rule rather than a number in the file. There is **no
 release or expiry event** either, so a claim lapsing is written nowhere at all. And nothing outside
-the game holds one: the most complete live service in the ecosystem is Raven Colonial, whose API is
-nineteen endpoints across projects, Commanders, carriers and systems, and **the word "claim" appears
-in none of them**. It is not an oversight. A claim is server-side state that produces exactly one
+the game holds one: the most complete live service in the ecosystem is Raven Colonial, whose API
+covers projects, Commanders, carriers and systems, and **no endpoint records a claim**. It is not an oversight. A claim is server-side state that produces exactly one
 journal line on one machine, and crowd-fed indexes are built from journal lines — there is no line
 to send.
 
@@ -440,6 +439,20 @@ site in, once when the setting is turned on or d47 starts, and again when you do
 at most every two minutes. A failed request is not repeated for ten minutes. The plans are kept until
 d47 closes and are never written to disk.
 
+With a plan held, `get_construction_sites` and `get_construction_needs` read it:
+
+- `get_construction_sites` adds the planner's build type and body to a site you have docked at, and
+  lists the planned and building sites no depot of yours has been seen for. A site name or build
+  type from the planner is cut to 60 characters.
+- `get_construction_needs` counts the lower of the planner's figure and your last docking's for each
+  commodity, and gives both where they differ. It adds the tonnes on linked carriers per commodity
+  and the number of Commanders and carriers on the project, as counts. The `site` argument also
+  matches a planner site's name or build type; for one you have not docked at, the needs are the
+  planner's alone and the answer says so.
+- Notes, links and Commander names are never passed on. A build type is spoken title-cased.
+- With the setting off, or Raven Colonial unreachable, both answer from the journal and say the plan
+  could not be read. Neither fetches from the tick.
+
 This is a different host from galaxy search and has its own switch, so using one does not turn on the
 other. The Privacy and egress section lists it as "nothing sent" while it is off.
 
@@ -483,7 +496,7 @@ Commander's own disk. The shopping list is worked out from that figure alone, an
 fleet carrier is taken off it.
 
 ```json
-{"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site. Leave out when only one is under construction."},"where_to_buy":{"type":"boolean","description":"Also work out which nearby stations between them stock the whole list."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"site":{"type":"string","description":"The station or system name of the site, or the name or build type of a planned site. Leave out when only one is under construction."},"where_to_buy":{"type":"boolean","description":"Also work out which nearby stations between them stock the whole list."}},"required":[],"additionalProperties":false}
 ```
 
 #### `find_colonisation_candidates`

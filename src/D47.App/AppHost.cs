@@ -2784,6 +2784,7 @@ public sealed class AppHost : IDisposable
                 openAudioFolder: () => System.Diagnostics.Process.Start(
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
+                colonisationPlans: () => late.Host?.ColonisationPlans,
                 musicState: () => late.Host?.Music.State ?? new MusicState(null, false, false),
                 watchMusic: refresh =>
                 {
