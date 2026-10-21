@@ -9,6 +9,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
     public JournalLocation Location { get; private set; } = JournalLocation.Unknown;
 
+    /// <summary>The body the Commander is at and where their ship landed on it.</summary>
+    public SurfacePoints Surface { get; private set; } = SurfacePoints.None;
+
     /// <summary>What the Commander is flying, and its metrics.</summary>
     public ShipLoadout Ship { get; private set; } = ShipLoadout.Unknown;
 
@@ -170,6 +173,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     [
         new(nameof(Identity), "your Commander name", state => state.Identity),
         new(nameof(Location), "your location", state => state.Location),
+        new(nameof(Surface), "your parked ship", state => state.Surface),
         new(nameof(Ship), "your ship", state => state.Ship),
         new(nameof(Loadouts), "your remembered ships", state => state.Loadouts),
         new(nameof(OnFoot), "your on-foot loadout", state => state.OnFoot),
@@ -265,6 +269,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         }
 
         Location = Location.Apply(journalEvent);
+        Surface = Surface.Apply(journalEvent);
         Ship = Ship.Apply(journalEvent);
 
         // After Ship and in one place, so every route that changes the flown ship is remembered by the same

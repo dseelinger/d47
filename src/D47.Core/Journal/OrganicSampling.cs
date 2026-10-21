@@ -33,6 +33,20 @@ public readonly record struct SurfaceFix(double Latitude, double Longitude, doub
         return 2 * radius * Math.Asin(Math.Min(1, Math.Sqrt(a)));
     }
 
+    /// <summary>Initial great-circle bearing to the other point, in degrees from 0 to 360, north 0 and east 90.</summary>
+    public double BearingTo(SurfaceFix other)
+    {
+        var lat1 = Radians(Latitude);
+        var lat2 = Radians(other.Latitude);
+        var dLon = Radians(other.Longitude - Longitude);
+
+        var y = Math.Sin(dLon) * Math.Cos(lat2);
+        var x = Math.Cos(lat1) * Math.Sin(lat2) - Math.Sin(lat1) * Math.Cos(lat2) * Math.Cos(dLon);
+        var degrees = Math.Atan2(y, x) * 180 / Math.PI;
+
+        return (degrees + 360) % 360;
+    }
+
     private static double Radians(double degrees) => degrees * Math.PI / 180;
 }
 
