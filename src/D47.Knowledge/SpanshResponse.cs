@@ -125,6 +125,8 @@ internal static class SpanshResponse
 
         var waypoints = new List<RouteWaypoint>();
         var totalJumps = 0;
+        RouteEndpoint? start = null;
+        var first = true;
 
         foreach (var jump in result.Items("system_jumps"))
         {
@@ -133,8 +135,16 @@ internal static class SpanshResponse
 
             if (jumps == 0)
             {
+                if (first && Endpoint(jump, "system") is { } origin)
+                {
+                    start = origin;
+                }
+
+                first = false;
                 continue;
             }
+
+            first = false;
 
             waypoints.Add(new RouteWaypoint(
                 String(jump, "system") ?? "an unnamed system",
@@ -143,6 +153,7 @@ internal static class SpanshResponse
                 Boolean(jump, "neutron_star"))
             {
                 DistanceJumped = Number(jump, "distance_jumped"),
+                Position = Position(jump),
             });
         }
 
@@ -151,7 +162,10 @@ internal static class SpanshResponse
             String(result, "destination_system") ?? "the destination",
             Number(result, "distance") ?? 0,
             totalJumps,
-            waypoints);
+            waypoints)
+        {
+            Start = start,
+        };
     }
 
     /// <summary>A Road to Riches route.</summary>
@@ -163,8 +177,10 @@ internal static class SpanshResponse
         }
 
         var stops = new List<RichesStop>();
+        var entries = result.EnumerateArray().ToList();
+        var kept = new List<JsonElement>();
 
-        foreach (var stop in result.EnumerateArray())
+        foreach (var stop in entries)
         {
             var bodies = new List<RichesBody>();
 
@@ -182,14 +198,24 @@ internal static class SpanshResponse
 
             if (bodies.Count > 0)
             {
+                kept.Add(stop);
                 stops.Add(new RichesStop(
                     String(stop, "name") ?? "an unnamed system",
                     stop.Int("jumps") ?? 0,
-                    bodies));
+                    bodies)
+                {
+                    Position = Position(stop),
+                });
             }
         }
 
-        return new RichesRoute(stops);
+        var (start, end) = Ends(entries, kept);
+
+        return new RichesRoute(stops)
+        {
+            Start = start,
+            End = end,
+        };
     }
 
     /// <summary>An exobiology plot (Phase 18, "Find the exobiology").</summary>
@@ -201,8 +227,10 @@ internal static class SpanshResponse
         }
 
         var stops = new List<ExobiologyStop>();
+        var entries = result.EnumerateArray().ToList();
+        var kept = new List<JsonElement>();
 
-        foreach (var stop in result.EnumerateArray())
+        foreach (var stop in entries)
         {
             var bodies = new List<ExobiologyBody>();
 
@@ -232,14 +260,24 @@ internal static class SpanshResponse
 
             if (bodies.Count > 0)
             {
+                kept.Add(stop);
                 stops.Add(new ExobiologyStop(
                     String(stop, "name") ?? "an unnamed system",
                     stop.Int("jumps") ?? 0,
-                    bodies));
+                    bodies)
+                {
+                    Position = Position(stop),
+                });
             }
         }
 
-        return new ExobiologyRoute(stops);
+        var (start, end) = Ends(entries, kept);
+
+        return new ExobiologyRoute(stops)
+        {
+            Start = start,
+            End = end,
+        };
     }
 
     /// <summary>A fleet carrier route.</summary>
@@ -263,10 +301,34 @@ internal static class SpanshResponse
             Flag(jump, "is_system_pristine"),
             Flag(jump, "is_desired_destination"))
         {
-            Position = Number(jump, "x") is { } x && Number(jump, "y") is { } y && Number(jump, "z") is { } z
-                ? new StarPosition(x, y, z)
-                : null,
+            Position = Position(jump),
         })]);
+    }
+
+    private static StarPosition? Position(JsonElement element) =>
+        Number(element, "x") is { } x && Number(element, "y") is { } y && Number(element, "z") is { } z
+            ? new StarPosition(x, y, z)
+            : null;
+
+    private static RouteEndpoint? Endpoint(JsonElement element, string nameProperty) =>
+        Position(element) is { } position
+            ? new RouteEndpoint(String(element, nameProperty) ?? "an unnamed system", position)
+            : null;
+
+    /// <summary>The first and last entries of a plot, where the reader dropped them and they carry a position.</summary>
+    private static (RouteEndpoint? Start, RouteEndpoint? End) Ends(List<JsonElement> entries, List<JsonElement> kept)
+    {
+        if (entries.Count == 0)
+        {
+            return (null, null);
+        }
+
+        var first = entries[0];
+        var last = entries[^1];
+        var start = kept.Contains(first) ? null : Endpoint(first, "name");
+        var end = entries.Count > 1 && !kept.Contains(last) ? Endpoint(last, "name") : null;
+
+        return (start, end);
     }
 
     /// <summary>A boolean spansh writes as true, false, 1 or 0.</summary>

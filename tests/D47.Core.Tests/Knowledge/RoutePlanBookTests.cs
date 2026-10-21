@@ -407,6 +407,42 @@ public class RoutePlanBookTests : IDisposable
     }
 
     [Fact]
+    public void PositionsSurviveSaveAndLoadAndAbsentOnesStayNull()
+    {
+        var files = new MemoryFileSystem();
+        var path = "plans/route-plans.json";
+        var origin = new RouteEndpoint("Sol", StarPosition.Origin);
+
+        var written = new RoutePlanBook(path, files, NullLogger<RoutePlanBook>.Instance);
+        written.Record(
+            new PlottedRoute("Sol", "Colonia", 22_000, 168, [new RouteWaypoint("A", 10, 1, true) { Position = new StarPosition(1, 2, 3) }])
+            {
+                Start = origin,
+            },
+            "with",
+            At);
+        written.Record(new RichesRoute([new RichesStop("B", 1, [])]) { Start = origin, End = origin }, "riches", At);
+        written.Record(new ExobiologyRoute([new ExobiologyStop("C", 1, []) { Position = new StarPosition(4, 5, 6) }]), "bare", At);
+
+        var read = new RoutePlanBook(path, files, NullLogger<RoutePlanBook>.Instance);
+        read.Load();
+
+        var jump = read.Last(RoutePlanKind.Jump)!.Jump!;
+        Assert.Equal(origin, jump.Start);
+        Assert.Equal(new StarPosition(1, 2, 3), jump.Waypoints[0].Position);
+
+        var riches = read.Last(RoutePlanKind.Riches)!.Riches!;
+        Assert.Equal(origin, riches.Start);
+        Assert.Equal(origin, riches.End);
+        Assert.Null(riches.Stops[0].Position);
+
+        var exobiology = read.Last(RoutePlanKind.Exobiology)!.Exobiology!;
+        Assert.Null(exobiology.Start);
+        Assert.Null(exobiology.End);
+        Assert.Equal(new StarPosition(4, 5, 6), exobiology.Stops[0].Position);
+    }
+
+    [Fact]
     public void AReachedStopSurvivesLoad()
     {
         var written = Book();

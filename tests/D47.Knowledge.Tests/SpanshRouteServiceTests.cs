@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -185,6 +186,125 @@ public class SpanshRouteServiceTests
         var stop = Assert.Single(riches!.Stops);
         Assert.Equal("Aries Dark Region FW-W d1-59", stop.System);
         Assert.Equal(971_799, riches.TotalValue);
+    }
+
+    [Fact]
+    public async Task ANeutronPlotKeepsThePositionOfEveryStopAndTheOrigin()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":{"source_system":"Sol","destination_system":"Colonia",
+                 "system_jumps":[{"system":"Sol","jumps":0,"x":0,"y":0,"z":0},
+                                 {"system":"PSR J1752-2806","jumps":10,"neutron_star":true,"x":-10.96875,"y":-6.84375,"z":407.28125},
+                                 {"system":"Nowhere","jumps":2,"x":1,"y":2}]}}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        var route = await service.PlotAsync(Route(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(new RouteEndpoint("Sol", new StarPosition(0, 0, 0)), route!.Start);
+        Assert.Equal(new StarPosition(-10.96875, -6.84375, 407.28125), route.Waypoints[0].Position);
+        Assert.Null(route.Waypoints[1].Position);
+    }
+
+    [Fact]
+    public async Task ARichesLoopKeepsItsStartAndReturnAndTheSameStops()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"Sol","jumps":1,"bodies":[],"x":0,"y":0,"z":0},
+                  {"name":"LTT 18046","jumps":2,"x":9.0625,"y":28.0625,"z":-45.6875,"bodies":[
+                    {"name":"LTT 18046 3","subtype":"Ammonia world","estimated_mapping_value":628192}]},
+                  {"name":"Sol","jumps":2,"bodies":[],"x":0,"y":0,"z":0}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(RichesQuery.TryParse("Sol", 50, 500, 10, 500_000, 10_000, true, out var query, out _));
+
+        var riches = await service.PlotRichesAsync(query, TestContext.Current.CancellationToken);
+
+        var stop = Assert.Single(riches!.Stops);
+        Assert.Equal(new StarPosition(9.0625, 28.0625, -45.6875), stop.Position);
+        Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), riches.Start);
+        Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), riches.End);
+        Assert.Equal(2, riches.TotalJumps);
+    }
+
+    [Fact]
+    public async Task ARichesStopMissingAnAxisHasNoPosition()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"LTT 18046","jumps":2,"x":9,"y":28,"bodies":[
+                    {"name":"LTT 18046 3","estimated_mapping_value":628192}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(RichesQuery.TryParse("Sol", 50, 500, 10, 500_000, 10_000, false, out var query, out _));
+
+        var riches = await service.PlotRichesAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Null(Assert.Single(riches!.Stops).Position);
+        Assert.Null(riches.Start);
+        Assert.Null(riches.End);
+    }
+
+    [Fact]
+    public async Task AnExobiologyLoopKeepsItsStartAndReturnAndTheSameStops()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"Sol","jumps":1,"bodies":[],"x":0,"y":0,"z":0},
+                  {"name":"Opet","jumps":3,"x":5,"y":6,"z":7,"bodies":[
+                    {"name":"Opet 7 b","landmark_value":100,"landmarks":[]}]},
+                  {"name":"Sol","jumps":3,"bodies":[],"x":0,"y":0,"z":0}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 3, 1_000_000, 10_000, true, out var query, out _));
+
+        var route = await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        var stop = Assert.Single(route!.Stops);
+        Assert.Equal(new StarPosition(5, 6, 7), stop.Position);
+        Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), route.Start);
+        Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), route.End);
+    }
+
+    [Fact]
+    public async Task AnExobiologyAnswerOfOneEntryHasNoEnd()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """{"status":"ok","result":[{"name":"Sol","jumps":1,"bodies":[],"x":0,"y":0,"z":0}]}"""));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 3, 1_000_000, 10_000, false, out var query, out _));
+
+        var route = await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Empty(route!.Stops);
+        Assert.NotNull(route.Start);
+        Assert.Null(route.End);
     }
 
     [Fact]

@@ -1,4 +1,9 @@
+using D47.Core.Journal;
+
 namespace D47.Core.Knowledge;
+
+/// <summary>A system the plotter answered with that is not a stop: the origin, or the return of a loop.</summary>
+public sealed record RouteEndpoint(string System, StarPosition Position);
 
 /// <summary>One system on a plotted route.</summary>
 /// <param name="System">The system to set as the next destination.</param>
@@ -17,6 +22,9 @@ public sealed record RouteWaypoint(string System, int Jumps, double? DistanceLef
 
     /// <summary>Light years flown on the leg that reaches this waypoint, or null on a plan saved before #236.</summary>
     public double? DistanceJumped { get; init; }
+
+    /// <summary>The plotter's x, y, z, or null where the answer lacks them.</summary>
+    public StarPosition? Position { get; init; }
 }
 
 /// <summary>A plotted route between two systems.</summary>
@@ -25,7 +33,11 @@ public sealed record PlottedRoute(
     string Destination,
     double TotalDistance,
     int TotalJumps,
-    IReadOnlyList<RouteWaypoint> Waypoints);
+    IReadOnlyList<RouteWaypoint> Waypoints)
+{
+    /// <summary>The origin, which the waypoints leave out.</summary>
+    public RouteEndpoint? Start { get; init; }
+}
 
 /// <summary>One body worth scanning, on a Road to Riches stop.</summary>
 public sealed record RichesBody(string Name, string? Subtype)
@@ -38,10 +50,19 @@ public sealed record RichesBody(string Name, string? Subtype)
     public bool Terraformable { get; init; }
 }
 
-public sealed record RichesStop(string System, int Jumps, IReadOnlyList<RichesBody> Bodies);
+public sealed record RichesStop(string System, int Jumps, IReadOnlyList<RichesBody> Bodies)
+{
+    public StarPosition? Position { get; init; }
+}
 
 public sealed record RichesRoute(IReadOnlyList<RichesStop> Stops)
 {
+    /// <summary>The first system of the answer, when it is not a stop.</summary>
+    public RouteEndpoint? Start { get; init; }
+
+    /// <summary>The last system of the answer, when it is not a stop and not the first.</summary>
+    public RouteEndpoint? End { get; init; }
+
     public long TotalValue => Stops.SelectMany(stop => stop.Bodies).Sum(body => body.MappingValue ?? 0);
 
     public int TotalJumps => Stops.Sum(stop => stop.Jumps);
@@ -67,11 +88,19 @@ public sealed record ExobiologyBody(string Name, string? Subtype)
 
 public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<ExobiologyBody> Bodies)
 {
+    public StarPosition? Position { get; init; }
+
     public long Value => Bodies.Sum(body => body.LandmarkValue);
 }
 
 public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
 {
+    /// <summary>The first system of the answer, when it is not a stop.</summary>
+    public RouteEndpoint? Start { get; init; }
+
+    /// <summary>The last system of the answer, when it is not a stop and not the first.</summary>
+    public RouteEndpoint? End { get; init; }
+
     public long TotalValue => Stops.Sum(stop => stop.Value);
 
     public int TotalJumps => Stops.Sum(stop => stop.Jumps);
