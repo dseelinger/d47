@@ -78,7 +78,8 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
                 : new Dictionary<string, SystemPlan>(StringComparer.OrdinalIgnoreCase);
     }
 
-    private static (Window Window, ConstructionPage Page) Open(Held plans, double width = 1280, double height = 900, bool headset = false)
+    private static (Window Window, ConstructionPage Page) Open(
+        Held plans, double width = 1280, double height = 900, bool headset = false, Action<string>? browse = null)
     {
         var state = State();
 
@@ -93,6 +94,11 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
                 () => false,
                 () => plans.Snapshot,
                 (system, _) => plans.Wanted.Add(system)));
+
+        if (browse is not null)
+        {
+            panel.EnableHelp(browse);
+        }
 
         var window = new Window
         {
@@ -264,6 +270,85 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
         Capture(window, "construction-planned-site-headset.png");
         Assert.True(Shows(page, "PLANNED · 2"));
 
+        window.Close();
+    }
+
+    private static Button? PlannerButton(ConstructionPage page) =>
+        page.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == "PlannerLink");
+
+    [AvaloniaFact]
+    public void ADepotWhosePlannedSiteHasABuildIdOpensTheProject()
+    {
+        var opened = new List<string>();
+        var (window, page) = Open(new Held(Plan(Now.AddMinutes(-5))), browse: opened.Add);
+
+        var button = PlannerButton(page);
+        Assert.NotNull(button);
+        Assert.Equal("https://ravencolonial.com/#build=secret-build-id", button.Tag);
+        Assert.Equal("Opens this project on Raven Colonial, in your browser", ToolTip.GetTip(button));
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal(["https://ravencolonial.com/#build=secret-build-id"], opened);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ADepotWithNoPlannedSiteOpensTheSystem()
+    {
+        var opened = new List<string>();
+        var (window, page) = Open(new Held(null), browse: opened.Add);
+
+        var button = PlannerButton(page);
+        Assert.NotNull(button);
+        Assert.Equal($"Opens {Home} on Raven Colonial, in your browser", ToolTip.GetTip(button));
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal([ConstructionPage.PlannerUrl(Home)], opened);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void APlannedSiteWithNoBuildIdOpensTheSystem()
+    {
+        var opened = new List<string>();
+        var (window, page) = Open(new Held(Plan(Now.AddMinutes(-5))), browse: opened.Add);
+
+        page.SelectPlanned($"{Home}|b");
+        Dispatcher.UIThread.RunJobs();
+
+        var button = PlannerButton(page);
+        Assert.NotNull(button);
+        Assert.Equal($"Opens {Home} on Raven Colonial, in your browser", ToolTip.GetTip(button));
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal([ConstructionPage.PlannerUrl(Home)], opened);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void APlannedSiteWithABuildIdOpensItsProject()
+    {
+        using var look = AppLook.Put();
+        var opened = new List<string>();
+        var plan = Plan(Now.AddMinutes(-5));
+        plan = plan with { Sites = [plan.Sites[0] with { MarketId = 3900000050 }, .. plan.Sites.Skip(1)] };
+        var (window, page) = Open(new Held(plan), browse: opened.Add);
+
+        page.SelectPlanned($"{Home}|a");
+        Dispatcher.UIThread.RunJobs();
+
+        var button = PlannerButton(page);
+        Assert.NotNull(button);
+        Assert.Equal("Opens this project on Raven Colonial, in your browser", ToolTip.GetTip(button));
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal(["https://ravencolonial.com/#build=secret-build-id"], opened);
+
+        Capture(window, "construction-planned-site-project-link.png");
         window.Close();
     }
 }

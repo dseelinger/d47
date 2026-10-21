@@ -660,7 +660,8 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             station,
             site.StarSystem is { } named && site.StationName is not null ? named : null,
             match is { } found ? BuildLine(found.Site) : null,
-            state));
+            state,
+            match?.Site.BuildId));
 
         if (old)
         {
@@ -715,7 +716,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         crumb.Margin = new Thickness(0, 10, 0, 10);
         detail.Children.Add(crumb);
 
-        detail.Children.Add(TitleRow(row.Title, row.System, null, state));
+        detail.Children.Add(TitleRow(row.Title, row.System, null, state, row.Site.BuildId));
 
         var none = Chrome("—", TypeScale.Small, ThemeManager.Grey2Key);
 
@@ -766,10 +767,13 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             ? line
             : null;
 
-    /// <summary>The Raven Colonial planner's page for a system.</summary>
-    public static string PlannerUrl(string systemName) => "https://ravencolonial.com/#sys=" + Uri.EscapeDataString(systemName);
+    /// <summary>The Raven Colonial planner's page for a project when its build id is given, otherwise for a system.</summary>
+    public static string PlannerUrl(string systemName, string? buildId = null) =>
+        buildId is { Length: > 0 }
+            ? "https://ravencolonial.com/#build=" + Uri.EscapeDataString(buildId)
+            : "https://ravencolonial.com/#sys=" + Uri.EscapeDataString(systemName);
 
-    private Grid TitleRow(string name, string? systemName, string? line, CommanderGameState state)
+    private Grid TitleRow(string name, string? systemName, string? line, CommanderGameState state, string? buildId = null)
     {
         var title = TitleText.Build(name, 24, TitleRank.Screen);
         title.TextWrapping = TextWrapping.Wrap;
@@ -807,10 +811,12 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         if (systemName is not null && _browse is { } browse)
         {
             var planner = Glyphs.Quiet(
-                new Button { Name = "PlannerLink", VerticalAlignment = VerticalAlignment.Center, Tag = PlannerUrl(systemName) },
+                new Button { Name = "PlannerLink", VerticalAlignment = VerticalAlignment.Center, Tag = PlannerUrl(systemName, buildId) },
                 PlannerLabel,
-                $"Opens {systemName} on Raven Colonial, in your browser");
-            planner.Click += (_, _) => OpenPlanner(browse, systemName);
+                buildId is { Length: > 0 }
+                    ? "Opens this project on Raven Colonial, in your browser"
+                    : $"Opens {systemName} on Raven Colonial, in your browser");
+            planner.Click += (_, _) => OpenPlanner(browse, PlannerUrl(systemName, buildId));
             actions.Children.Add(planner);
         }
 
@@ -830,11 +836,11 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         return titleRow;
     }
 
-    private static void OpenPlanner(Action<string> browse, string systemName)
+    private static void OpenPlanner(Action<string> browse, string url)
     {
         try
         {
-            browse(PlannerUrl(systemName));
+            browse(url);
         }
         catch (Exception)
         {

@@ -448,6 +448,14 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
     public void ThePlannerAddressEscapesTheSystemName(string system, string url) =>
         Assert.Equal(url, ConstructionPage.PlannerUrl(system));
 
+    [Theory]
+    [InlineData("HIP 47126", "abc-123", "https://ravencolonial.com/#build=abc-123")]
+    [InlineData("HIP 47126", "a b/c", "https://ravencolonial.com/#build=a%20b%2Fc")]
+    [InlineData("HIP 47126", null, "https://ravencolonial.com/#sys=HIP%2047126")]
+    [InlineData("HIP 47126", "", "https://ravencolonial.com/#sys=HIP%2047126")]
+    public void ThePlannerAddressNamesTheProjectWhenItHasABuildId(string system, string? buildId, string url) =>
+        Assert.Equal(url, ConstructionPage.PlannerUrl(system, buildId));
+
     private static Button? PlannerButton(PanelView panel) =>
         Page(panel).GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == "PlannerLink");
 
