@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Discoveries page under a region's Codex is one flat table of every entry the codex table lists for the region, with Category and Sub-category columns and a Status of MISSING or ON RECORD. A sentence above it, "Show MISSING entries in ALL CATEGORIES", filters by status, category and, for a category with several, sub-category. It opens on Missing, so it lists what it did before. Category and Sub-category sort by category and then sub-category, and Clear filters resets the three.
+
 The Short Story and Next chapter forms are redrawn: labelled Reach, Length, Ship and Brief rows with a hint under each, the brief as a tile with a Clear tile beside it, Go under a rule, and a warning with Open settings when asking is shut. The page title is gone.
 
 The protected bar on a settings row now appears only where no voice command can change the row, so the Core row has none. The legend reads "Rows with a bar like this one are protected — these cannot be changed via a voice command, but the others can." and shows only on a page that has a barred row.

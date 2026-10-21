@@ -86,20 +86,24 @@ public sealed record CodexRegionView(
     IReadOnlyList<CodexGroup> Groups,
     string? Empty);
 
-/// <summary>One codex entry not on the record, with the systems that reported it in the region.</summary>
-public sealed record CodexMissingRow(long EntryId, string Name, int Systems);
+/// <summary>One codex entry the table lists for the region, with the systems that reported it there.</summary>
+public sealed record CodexMissingRow(long EntryId, string Name, string Category, string SubCategory, int Systems, bool OnRecord);
 
-/// <summary>The missing entries of one category and subcategory; <c>Known</c> counts every entry the table lists under it.</summary>
-public sealed record CodexMissingGroup(string Label, IReadOnlyList<CodexMissingRow> Rows, int Known)
+/// <summary>Which of a region's known entries the Discoveries page lists.</summary>
+public enum CodexStatusFilter
 {
-    public int Count => Rows.Count;
-
-    public bool Equals(CodexMissingGroup? other) => other is not null && Label == other.Label && Known == other.Known && Rows.SequenceEqual(other.Rows);
-
-    public override int GetHashCode() => HashCode.Combine(Label, Rows.Count);
+    Missing,
+    OnRecord,
+    All,
 }
 
-/// <summary>What a region's Discoveries page draws for one ledger, table, history state and search.</summary>
+/// <summary>The Discoveries page's filters; a null category or subcategory is All.</summary>
+public sealed record CodexDiscoveryFilter(CodexStatusFilter Status = CodexStatusFilter.Missing, string? Category = null, string? SubCategory = null)
+{
+    public bool IsDefault => this == new CodexDiscoveryFilter();
+}
+
+/// <summary>What a region's Discoveries page draws for one ledger, table, history state, filter and search.</summary>
 public sealed record CodexDiscoveriesView(
     bool Running,
     bool Failed,
@@ -109,9 +113,13 @@ public sealed record CodexDiscoveriesView(
     int Missing,
     int Subcategories,
     int Uncovered,
-    int Shown,
-    IReadOnlyList<CodexMissingGroup> Groups,
-    string? Empty);
+    IReadOnlyList<CodexMissingRow> Rows,
+    IReadOnlyList<string> Categories,
+    IReadOnlyList<string> SubCategories,
+    string? Empty)
+{
+    public int Shown => Rows.Count;
+}
 
 /// <summary>What one entry's page draws: the entry's facts and each time it was logged in the region, newest first.</summary>
 public sealed record CodexEntryView(
@@ -141,7 +149,7 @@ public static class CodexModel
 
     public const string Placeholder = "Search entry, system or region";
 
-    public const string DiscoveriesPlaceholder = "Search missing entry";
+    public const string DiscoveriesPlaceholder = "Search entry";
 
     public const string DiscoveriesCrumbWord = "Discoveries";
 
@@ -151,9 +159,14 @@ public static class CodexModel
 
     public const string DiscoveriesLine = "Every entry the codex table lists for this region, against everything on your record.";
 
-    public const string DiscoveriesGroupLine = "Known in this region and not on your record, most reported first.";
+    public static string DiscoveriesGroupLine(CodexStatusFilter status) => status switch
+    {
+        CodexStatusFilter.Missing => "Known in this region and not on your record, most reported first.",
+        CodexStatusFilter.OnRecord => "Known in this region and on your record, most reported first.",
+        _ => "Every entry known in this region, most reported first.",
+    };
 
-    public const string NoMissingMatchText = "No missing codex entry in this region matches that search.";
+    public const string NoMissingMatchText = "No codex entry in this region matches those filters and that search.";
 
     public const string NoPictureText = "No picture of this entry yet.";
 
@@ -499,28 +512,42 @@ public static class CodexModel
         + CodexDiscoveries.Coverage
         + (uncovered > 0 ? $" You logged {Number(uncovered)} more here that the codex table does not list." : string.Empty);
 
-    /// <summary>The region's entries from <paramref name="table"/> that the whole ledger does not hold, grouped by category and subcategory, the group with most missing first and the most reported entry first within it.</summary>
+    /// <summary>The region's entries from <paramref name="table"/> that <paramref name="filter"/> and the search keep, most reported first.</summary>
     public static CodexDiscoveriesView Discoveries(
-        CodexLedger ledger, CodexTable table, int regionId, HistoryState history, string? query = null)
+        CodexLedger ledger, CodexTable table, int regionId, HistoryState history, CodexDiscoveryFilter? filter = null, string? query = null)
     {
+        filter ??= new CodexDiscoveryFilter();
+
         var found = CodexDiscoveries.For(ledger, table, regionId);
         var text = query?.Trim();
-        var totals = found.Known
-            .GroupBy(item => GroupLabel(item.Entry))
-            .ToDictionary(group => group.Key, group => group.Count());
-
-        var kept = found.Missing
-            .Where(item => string.IsNullOrEmpty(text) || item.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+        var categories = found.Known
+            .Select(item => item.Entry.Category)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var subCategories = filter.Category is null
+            ? []
+            : found.Known
+                .Where(item => string.Equals(item.Entry.Category, filter.Category, StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Entry.SubCategory)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-        var groups = kept
-            .GroupBy(item => GroupLabel(item.Entry))
-            .Select(group => new CodexMissingGroup(
-                group.Key,
-                [.. group.Select(item => new CodexMissingRow(item.Entry.EntryId, item.Entry.Name, item.Systems))],
-                totals[group.Key]))
-            .OrderByDescending(group => group.Count)
-            .ThenBy(group => group.Label, StringComparer.OrdinalIgnoreCase)
+        var rows = found.Known
+            .Where(item => filter.Status switch
+            {
+                CodexStatusFilter.Missing => item.Logged is null,
+                CodexStatusFilter.OnRecord => item.Logged is not null,
+                _ => true,
+            })
+            .Where(item => filter.Category is null || string.Equals(item.Entry.Category, filter.Category, StringComparison.OrdinalIgnoreCase))
+            .Where(item => filter.SubCategory is null || string.Equals(item.Entry.SubCategory, filter.SubCategory, StringComparison.OrdinalIgnoreCase))
+            .Where(item => string.IsNullOrEmpty(text) || item.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.Systems)
+            .ThenBy(item => item.Entry.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(item => new CodexMissingRow(
+                item.Entry.EntryId, item.Entry.Name, item.Entry.Category, item.Entry.SubCategory, item.Systems, item.Logged is not null))
             .ToList();
 
         return new CodexDiscoveriesView(
@@ -532,20 +559,26 @@ public static class CodexModel
             found.Missing.Count,
             found.Missing.Select(item => GroupLabel(item.Entry)).Distinct().Count(),
             found.Uncovered.Count,
-            kept.Count,
-            groups,
+            rows,
+            categories,
+            subCategories,
             found.Known.Count == 0
                 ? $"The codex table lists no entries for {RegionName(regionId)}."
-                : found.Missing.Count == 0 ? "Every entry the codex table lists for this region is on your record." : null);
+                : found.Missing.Count == 0 && filter.Status == CodexStatusFilter.Missing ? "Every entry the codex table lists for this region is on your record." : null);
     }
 
-    /// <summary>The missing entries table's columns; the default order is most reported first.</summary>
+    /// <summary>The Discoveries table's columns; the default order is most reported first.</summary>
     public static IReadOnlyList<SortColumn<CodexMissingRow>> MissingHeads() =>
     [
         SortColumn<CodexMissingRow>.Text("Entry", row => row.Name) with { Second = "Codex name" },
+        SortColumn<CodexMissingRow>.Text("Category", row => row.Category, row => row.SubCategory) with { Second = "Then sub-category" },
+        SortColumn<CodexMissingRow>.Text("Sub-category", row => row.Category, row => row.SubCategory) with { Second = "Within category" },
         SortColumn<CodexMissingRow>.Figure("Reported in", row => (long?)row.Systems, SortDirection.Descending) with { Second = "Systems" },
-        SortColumn<CodexMissingRow>.Plain("Status") with { Second = "Not on your record" },
+        SortColumn<CodexMissingRow>.Plain("Status") with { Second = "Whole record" },
     ];
+
+    /// <summary>The index of "Reported in" in <see cref="MissingHeads"/>, the column the default order follows.</summary>
+    public const int MissingDefaultColumn = 3;
 
     /// <summary>The regions table's columns.</summary>
     public static IReadOnlyList<SortColumn<CodexRegionRow>> RegionHeads() =>

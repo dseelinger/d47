@@ -11,11 +11,11 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Ledgers › Codex › a region › Discoveries: the entries the codex table lists for the region that the whole record lacks.</summary>
+/// <summary>Commander › Ledgers › Codex › a region › Discoveries: the entries the codex table lists for the region, missing or on the record, under a status, category and sub-category filter.</summary>
 public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterablePage
 {
-    private static readonly string[] PanelColumns = ["*", "200", "200"];
-    private static readonly string[] HeadsetColumns = ["*", "130", "150"];
+    private static readonly string[] PanelColumns = ["*", "210", "150", "120", "110"];
+    private static readonly string[] HeadsetColumns = ["*", "180", "130", "110", "100"];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -23,12 +23,13 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private readonly CodexTable _table;
     private readonly bool _headset;
     private readonly PanelNavigator? _nav;
-    private readonly SortHeader<CodexMissingRow> _head = new("CodexMissingHead", CodexModel.MissingHeads(), new SortOrder(1, SortDirection.Descending));
+    private readonly SortHeader<CodexMissingRow> _head = new("CodexMissingHead", CodexModel.MissingHeads(), new SortOrder(CodexModel.MissingDefaultColumn, SortDirection.Descending));
+    private readonly CodexDiscoveryFilters _filters = new();
     private readonly StackPanel _top = new();
     private readonly ItemsControl _list;
     private readonly ScrollViewer _scroll;
 
-    private IReadOnlyList<object> _shown = [];
+    private IReadOnlyList<CodexMissingRow> _shown = [];
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private string _query = string.Empty;
@@ -49,17 +50,13 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _headset = headset;
 
         _head.Changed += Draw;
+        _filters.Changed += (_, _) => Draw();
 
         _list = new ItemsControl
         {
             Name = "CodexMissingRows",
             ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel()),
-            ItemTemplate = new FuncDataTemplate<object>((item, _) => item switch
-            {
-                CodexMissingGroup group => GroupView(group),
-                CodexMissingRow row => RowView(row),
-                _ => null,
-            }),
+            ItemTemplate = new FuncDataTemplate<object>((item, _) => item is CodexMissingRow row ? RowView(row) : null),
         };
 
         _scroll = new ScrollViewer
@@ -88,7 +85,13 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         remove { }
     }
 
-    public bool Filters => Build() is { Running: false, Missing: > 0 };
+    public bool Filters => Build() is { Running: false, Known: > 0 };
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _head.Reset();
+    }
 
     public string FilterPlaceholder => CodexModel.DiscoveriesPlaceholder;
 
@@ -119,7 +122,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     }
 
     private CodexDiscoveriesView Build() =>
-        CodexModel.Discoveries(_state()?.CodexLedger ?? CodexLedger.None, _table, _regionId ?? -1, _history(), _query);
+        CodexModel.Discoveries(_state()?.CodexLedger ?? CodexLedger.None, _table, _regionId ?? -1, _history(), _filters.Filter, _query);
 
     private void Draw()
     {
@@ -145,23 +148,28 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         }
 
         var name = CodexModel.RegionName(_regionId);
-        var count = view.Shown == view.Missing
-            ? $"{CodexModel.Number(view.Missing)} missing"
-            : $"{CodexModel.Number(view.Shown)} of {CodexModel.Number(view.Missing)} missing";
 
         _top.Children.Add(StarSystemPage.GroupHead(
-            "Discoveries · " + name, CodexKit.Line(CodexModel.DiscoveriesGroupLine), count));
+            "Discoveries · " + name, CodexKit.Line(CodexModel.DiscoveriesGroupLine(_filters.Filter.Status))));
+        _top.Children.Add(CodexKit.Strip(Strip(view)));
 
-        if (view.Empty is { } empty)
+        if (view.Known == 0)
         {
-            _top.Children.Add(CodexKit.Strip(Strip(view)));
-            _top.Children.Add(CreditsKit.Message(empty));
+            _top.Children.Add(CreditsKit.Message(view.Empty!));
             Rows([]);
             return;
         }
 
-        _top.Children.Add(CodexKit.Strip(Strip(view)));
+        _filters.Show(view.Categories, view.SubCategories, view.Shown, view.Known);
+        _top.Children.Add(_filters);
         _top.Children.Add(Note(CodexModel.DiscoveriesNote(view.OnRecordSince, view.Uncovered)));
+
+        if (view.Empty is { } empty)
+        {
+            _top.Children.Add(CreditsKit.Message(empty));
+            Rows([]);
+            return;
+        }
 
         if (view.Shown == 0)
         {
@@ -172,15 +180,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
         _top.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => HorizontalAlignment.Left));
 
-        var items = new List<object>();
-
-        foreach (var group in view.Groups)
-        {
-            items.Add(group);
-            items.AddRange(_head.Sort(group.Rows));
-        }
-
-        Rows(items);
+        Rows(_head.Sort(view.Rows));
     }
 
     private static StripCell[] Strip(CodexDiscoveriesView view) =>
@@ -209,7 +209,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     }
 
     /// <summary>Shows <paramref name="items"/>, leaving the list and its scroll position alone when they are the items already shown.</summary>
-    private void Rows(IReadOnlyList<object> items)
+    private void Rows(IReadOnlyList<CodexMissingRow> items)
     {
         _scroll.IsVisible = items.Count > 0;
 
@@ -228,30 +228,20 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         ColumnSpacing = _headset ? 12 : 16,
     };
 
-    private static DockPanel GroupView(CodexMissingGroup group)
-    {
-        var count = CreditsKit.Mono(
-            $"{CodexModel.Number(group.Count)} of {CodexModel.Number(group.Known)} missing", TypeScale.Small, ThemeManager.GreyKey, right: true);
-        DockPanel.SetDock(count, Dock.Right);
-
-        return new DockPanel
-        {
-            Margin = new Thickness(14, 12, 14, 4),
-            Children = { count, CreditsKit.Label(group.Label) },
-        };
-    }
-
     private Button RowView(CodexMissingRow row)
     {
         var grid = NewGrid();
         grid.VerticalAlignment = VerticalAlignment.Center;
 
-        var status = CreditsKit.Line("MISSING", Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.GreyKey);
+        var status = CreditsKit.Line(
+            row.OnRecord ? "ON RECORD" : "MISSING", Fonts.ChromeFamily, TypeScale.Meta, row.OnRecord ? ThemeManager.BlueKey : ThemeManager.GreyKey);
         status.FontWeight = Avalonia.Media.FontWeight.SemiBold;
 
         CreditsKit.Place(grid, 0, CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.Number(row.Systems), TypeScale.Small, ThemeManager.AKey, right: false));
-        CreditsKit.Place(grid, 2, status);
+        CreditsKit.Place(grid, 1, CreditsKit.Line(row.Category, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
+        CreditsKit.Place(grid, 2, CreditsKit.Line(row.SubCategory, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
+        CreditsKit.Place(grid, 3, CreditsKit.Mono(CodexModel.Number(row.Systems), TypeScale.Small, ThemeManager.AKey, right: false));
+        CreditsKit.Place(grid, 4, status);
 
         var button = ListRow.Dress(new Button
         {
