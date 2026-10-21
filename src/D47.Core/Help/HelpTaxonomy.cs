@@ -85,6 +85,10 @@ public static class HelpTaxonomy
                     "Bring Elite Dangerous to the front, so flight commands can be sent again.",
                     "focus"),
                 HelpNode.Leaf(
+                    "Surface guidance",
+                    "Mark where you stand on a body, and hear which way your ship, a mark or your last sample lies.",
+                    "surface-guidance"),
+                HelpNode.Leaf(
                     "Acting on its own",
                     "What D47 will do to your ship without being asked, all off until you turn it on.",
                     "autonomous-actions")),
@@ -273,10 +277,17 @@ public static class HelpTaxonomy
                 "Crew",
                 "Report the pilots you have hired, who is on duty, and how to talk to them.",
                 "crew"),
-            HelpNode.Leaf(
-                "Commander's log",
-                "Turn a session, or a week, into a readable log, written from the journal and nothing else.",
-                "logbook"),
+            HelpNode.Category(
+                "Logs",
+                "The log D47 writes from your journal, and the one you keep in your own words.",
+                HelpNode.Leaf(
+                    "Commander's log",
+                    "Turn a session, or a week, into a readable log, written from the journal and nothing else.",
+                    "logbook"),
+                HelpNode.Leaf(
+                    "Captain's log",
+                    "Keep log entries word for word with where you were, and read, find, export or delete them later.",
+                    "captains-log")),
             HelpNode.Leaf(
                 "Goals",
                 "Track the campaigns that take months, derive their progress from the journal, and say what to do about one today.",

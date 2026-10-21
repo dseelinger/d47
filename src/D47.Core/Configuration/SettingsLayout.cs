@@ -83,7 +83,7 @@ public static class SettingsLayout
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
     /// Level/Mute/Duck for all five audio channels rather than collapsing them into one family entry, beside
     /// the output device (19 entries, the mixer rows Advanced); <c>callouts</c> holds the callouts switch and
-    /// the plans and reminders toggles (18 entries, the week rows Advanced); <c>exploring</c> holds the
+    /// the plans and reminders toggles (25 entries, the week rows Advanced); <c>exploring</c> holds the
     /// exploration and exobiology callout toggles (17 entries); <c>chatter</c> holds the scene chatter row
     /// beside NPC chatter as well as the seven messages rows, the accent and NPC humor rows, the carrier
     /// captain and the fighter pilot (19 entries, the chatter rows Advanced).
@@ -227,6 +227,7 @@ public static class SettingsLayout
                                 E("callouts.powerplayCycle"),
                                 E("callouts.bgsTick"),
                                 E("callouts.friendsOnline"),
+                                E("callouts.metBefore"),
                                 E("callouts.galNet"),
                                 E("callouts.serverStatus"),
                                 E("callouts.missions"),

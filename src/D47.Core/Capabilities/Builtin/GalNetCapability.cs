@@ -26,6 +26,7 @@ public static class GalNetCapability
         Id = Id,
         Group = "Knowledge",
         Name = "GalNet",
+        Display = new CapabilityDisplay { PanelTitle = "GalNet", Order = 47, ShowOnPanel = false },
         Summary = "Search the GalNet articles kept on this PC and read one aloud.",
         Examples = ["what's on galnet", "read the latest galnet article"],
         Tools =

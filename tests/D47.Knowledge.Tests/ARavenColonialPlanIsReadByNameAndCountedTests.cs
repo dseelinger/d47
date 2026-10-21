@@ -198,20 +198,26 @@ public class ARavenColonialPlanIsReadByNameAndCountedTests
     [Fact]
     public async Task ATimeoutIsUnavailableButACancelledCallIsNot()
     {
-        var hang = new HangingHandler();
-        using var service = new RavenColonialPlanService(
+        using var timesOut = new RavenColonialPlanService(
             NullLogger<RavenColonialPlanService>.Instance,
-            new HttpClient(hang),
+            new HttpClient(new HangingHandler()),
             now: null,
             budget: TimeSpan.FromMilliseconds(50));
 
         await Assert.ThrowsAsync<ColonisationPlanUnavailableException>(
-            () => service.SystemAsync("Sys A", CancellationToken.None));
+            () => timesOut.SystemAsync("Sys A", CancellationToken.None));
+
+        // The budget is far longer than the caller's 50 ms, so the caller's cancellation is the one that fires.
+        using var outlasts = new RavenColonialPlanService(
+            NullLogger<RavenColonialPlanService>.Instance,
+            new HttpClient(new HangingHandler()),
+            now: null,
+            budget: TimeSpan.FromMinutes(5));
 
         using var cancelled = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => service.SystemAsync("Sys A", cancelled.Token));
+            () => outlasts.SystemAsync("Sys A", cancelled.Token));
     }
 
     private sealed class HangingHandler : HttpMessageHandler
