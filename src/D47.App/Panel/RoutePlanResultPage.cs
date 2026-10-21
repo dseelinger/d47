@@ -91,8 +91,8 @@ public sealed class RoutePlanResultPage : UserControl
         _map.IsVisible = false;
 
         if (offDuty is null
-            && plan.Carrier is { } route
-            && RouteMapLayout.For(RouteMapStop.From(route), plan.Reached ?? -1, null) is { } layout)
+            && MapStops(plan) is { } stops
+            && RouteMapLayout.For(stops, RouteMapStop.ReachedIndex(plan), null) is { } layout)
         {
             _map.Show(layout, null);
             _map.IsVisible = true;
@@ -116,6 +116,15 @@ public sealed class RoutePlanResultPage : UserControl
             _stack.Children.Add(row);
         }
     }
+
+    private static IReadOnlyList<RouteMapStop>? MapStops(StoredRoutePlan plan) => plan switch
+    {
+        { Jump: { } jump } => RouteMapStop.From(jump),
+        { Riches: { } riches } => RouteMapStop.From(riches),
+        { Exobiology: { } exobiology } => RouteMapStop.From(exobiology),
+        { Carrier: { } carrier } => RouteMapStop.From(carrier),
+        _ => null,
+    };
 
     private static string Heading(StoredRoutePlan plan) => plan switch
     {

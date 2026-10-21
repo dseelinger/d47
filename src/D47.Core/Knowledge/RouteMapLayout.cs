@@ -35,6 +35,68 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
             waypoint.Position,
             waypoint.MustRestock ? RouteStopMarks.Restock : RouteStopMarks.None))];
 
+    public static IReadOnlyList<RouteMapStop> From(PlottedRoute route) =>
+        Around(
+            route.Start,
+            route.Waypoints.Select(waypoint => new RouteMapStop(
+                waypoint.System,
+                waypoint.Position,
+                waypoint.IsNeutron ? RouteStopMarks.Neutron : RouteStopMarks.None)),
+            null);
+
+    public static IReadOnlyList<RouteMapStop> From(RichesRoute route) =>
+        Around(
+            route.Start,
+            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, RouteStopMarks.None)),
+            route.End);
+
+    public static IReadOnlyList<RouteMapStop> From(ExobiologyRoute route) =>
+        Around(
+            route.Start,
+            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, RouteStopMarks.None)),
+            route.End);
+
+    /// <summary>The index in the map's stop list of the stop <c>plan.Reached</c> names, or -1.</summary>
+    public static int ReachedIndex(StoredRoutePlan plan)
+    {
+        if (plan.Reached is not { } reached)
+        {
+            return -1;
+        }
+
+        var start = plan switch
+        {
+            { Jump: { } jump } => jump.Start,
+            { Riches: { } riches } => riches.Start,
+            { Exobiology: { } exobiology } => exobiology.Start,
+            _ => null,
+        };
+
+        return start is null ? reached : reached + 1;
+    }
+
+    private static IReadOnlyList<RouteMapStop> Around(
+        RouteEndpoint? start,
+        IEnumerable<RouteMapStop> stops,
+        RouteEndpoint? end)
+    {
+        List<RouteMapStop> all = [];
+
+        if (start is not null)
+        {
+            all.Add(new RouteMapStop(start.System, start.Position, RouteStopMarks.None));
+        }
+
+        all.AddRange(stops);
+
+        if (end is not null)
+        {
+            all.Add(new RouteMapStop(end.System, end.Position, RouteStopMarks.None));
+        }
+
+        return all;
+    }
+
     private static RouteStopMarks NavMarks(string? starClass)
     {
         var marks = RouteStopMarks.None;

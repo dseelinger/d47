@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A saved neutron, Road to Riches or exobiology plan's result page draws the same map as a carrier plan, in the window and on the big panel. The start is drawn first and, on a loop, the return closes it. A plan saved before positions were read, and a trade plan, keep the page as it was.
+
 A carrier route's result page draws the route as a map to the left of its stops, in the window and on the big panel. Reached stops are drawn behind you, the stops where the tank and hold run out of tritium get a Blue ringed mark, keyed OUT OF TRITIUM, and a route whose stops have no positions keeps the page as it was.
 
 The Progress page draws the route Elite plotted as a map to the left of the hop list, in the window and on the big panel. A grey line runs behind you and an orange one ahead, with squares at the start and the destination, your own system in Cyan, and marks on neutron stars, white dwarfs, black holes and stars that cannot be scooped, with a key under the map. Off the route, your position is drawn when the journal has one. With no route, fewer than two positioned hops, or another Commander showing, the page has no map and keeps its full-width list.
