@@ -120,6 +120,9 @@ public sealed class Amount : ContentControl
 
     public decimal? Maximum { get; set; }
 
+    /// <summary>Disables the arrow past an end of the range once the value is there.</summary>
+    public bool DisablesAtEnds { get; set; }
+
     /// <summary>The numeric format the value is shown and written in.</summary>
     public string Format { get; set; } = "0";
 
@@ -296,6 +299,9 @@ public sealed class Amount : ContentControl
     private void Sync()
     {
         _ink?.Dispose();
+
+        _previous.IsEnabled = !(DisablesAtEnds && Value is { } low && Minimum is { } min && low <= min);
+        _next.IsEnabled = !(DisablesAtEnds && Value is { } high && Maximum is { } max && high >= max);
 
         if (Value is { } value)
         {

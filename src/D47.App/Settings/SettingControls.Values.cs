@@ -627,8 +627,13 @@ internal sealed partial class SettingControls
             Unit = row.Unit,
             Minimum = row.Minimum is { } low ? (decimal)low : null,
             Maximum = row.Maximum is { } high ? (decimal)high : null,
+            DisablesAtEnds = row.ScaleEnds is not null,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
+
+        var scale = row.ScaleEnds is { } ends
+            ? new ScaleTrack(ends.Low, ends.High, (int)(row.Minimum ?? 0), (int)(row.Maximum ?? 10))
+            : null;
 
         amount.ValueCommitted += (_, _) =>
         {
@@ -641,7 +646,7 @@ internal sealed partial class SettingControls
             }
         };
 
-        return (amount, () =>
+        void Refresh()
         {
             amount.Value = decimal.TryParse(
                 host.Settings.Read(row.Key),
@@ -651,7 +656,19 @@ internal sealed partial class SettingControls
                 ? parsed
                 : null;
             amount.Placeholder = row.DefaultDisplayFor(host.Settings.Current);
-        });
+            scale?.Show(amount.Value is { } shown ? (int)shown : (int)(row.Minimum ?? 0));
+        }
+
+        if (scale is null)
+        {
+            return (amount, Refresh);
+        }
+
+        var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, HorizontalAlignment = HorizontalAlignment.Right };
+        line.Children.Add(scale);
+        line.Children.Add(amount);
+
+        return (line, Refresh);
     }
 
     private (Control, Action) BuildLevel(SettingRow row, StatusLine message)

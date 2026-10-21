@@ -511,14 +511,11 @@ Humor has a level and a frequency for each of three groups: **Core humor** (the 
 **NPC humor** (chatter, hails and the canned lines d47 rewords) and **Carrier crew humor** (your
 carrier's captain and tower).
 
-- **Level, 0 to 10.** 0 is no humor, and greys out the frequency row beneath it. 10 is as funny as
+- **Level, 0 to 10.** 0 is serious, and greys out the frequency row beneath it. 10 is as funny as
   a stand-up comedian.
 - **Frequency, a percentage.** The share of that group's lines that get humor. d47 decides, not
   the model: it rolls for each line the model writes and adds the humor instruction only when the
   roll hits. It does not apply to lines spoken as written.
-- **Levels 1 to 6 are restrained.** The level sets how much humor a line gets and the speaker's character sets the kind, with hard bans on similes and
-  comparisons, puns, whimsy, zany exaggeration, exclamation marks and "…" pauses for comic effect.
-  **From 7 the bans lift**: puns, comparisons and absurdity are allowed.
 - **Laughter.** When a line gets humor and its voice performs delivery notes (ElevenLabs v4 Turbo
   or v3), the model is offered `[laughs]` and `[chuckles]` as well. Any other voice has them
   stripped.

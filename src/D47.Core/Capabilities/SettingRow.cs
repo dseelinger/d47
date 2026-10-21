@@ -281,6 +281,9 @@ public sealed record SettingRow
 
     public double? Maximum { get; init; }
 
+    /// <summary>The words at the low and high end of a number row's range; the row draws a track between them.</summary>
+    public (string Low, string High)? ScaleEnds { get; init; }
+
     /// <summary>How this row's number is written, derived from its step rather than declared twice.</summary>
     public string NumberFormat => Step switch
     {

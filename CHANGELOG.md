@@ -10,6 +10,8 @@
 
 Introductions, Cores of your own and Cores by ship no longer print a whole list. Each states a count, names the first three and counts the rest. Introductions names no core, and its Forget introductions button is red and greyed out while none have introduced themselves. The own-cores button reads Write a core with none and Your cores otherwise. Lines `ship-cores.json` refused show as a warning under Cores by ship instead of a sentence in it.
 
+Humor is one scale from 0 (serious) to 10 (comedian). The three level rows draw a ten-segment track between SERIOUS and COMEDIAN, and the model no longer gets a ban list up to 6 or a lift at 7: every level gets its grade, and the speaker's character decides the kind of humor.
+
 Cores by ship now names each bound ship as the Ship dropdown does, from your fleet as it is now. A ship you renamed in game shows its new name without being bound again, and no entry shows a ship id unless nothing else is known about that ship.
 
 The Ship picker under Core and character shows each ship's core beside it, or NO CORE in grey, and marks the ship you are in with "· aboard" in cyan. With no ship picked, the Ship row shows the ship you are in, and the row under it binds that ship. That row now reads "Core for" and the ship's name.

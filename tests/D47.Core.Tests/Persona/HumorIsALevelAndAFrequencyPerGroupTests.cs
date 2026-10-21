@@ -61,12 +61,48 @@ public class HumorIsALevelAndAFrequencyPerGroupTests
     public void NoLevelCallsItsHumorDry(int level) =>
         Assert.DoesNotContain("dry", Humor.ForLine(level, canBeDirected: true)!, StringComparison.OrdinalIgnoreCase);
 
-    [Fact]
-    public void TheBansHoldUpToSixAndLiftAtSeven()
+    [Theory]
+    [InlineData(2, "At most one light touch of humor; the rest is plain.")]
+    [InlineData(4, "An occasional touch of humor, brief.")]
+    [InlineData(6, "Humor is welcome: one clear joke, well timed.")]
+    [InlineData(8, "Openly funny: one or two jokes.")]
+    [InlineData(10, "As funny as a stand-up comedian: aim to make the Commander laugh out loud.")]
+    public void EachBandStatesItsGradeAndTheSentencesThatHoldAtEveryLevel(int level, string grade)
     {
-        Assert.Contains(Humor.Bans, Humor.ForLine(6, canBeDirected: false)!, StringComparison.Ordinal);
-        Assert.DoesNotContain(Humor.Bans, Humor.ForLine(7, canBeDirected: false)!, StringComparison.Ordinal);
-        Assert.NotEqual(Humor.Describe(6, false), Humor.Describe(7, false));
+        var described = Humor.Describe(level, canBeDirected: false)!;
+
+        Assert.StartsWith(grade, described, StringComparison.Ordinal);
+        Assert.Contains("The humor is the speaker's own: their character decides", described, StringComparison.Ordinal);
+        Assert.EndsWith("Never at the Commander's expense. Every fact stays exactly true.", described, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    public void NoLevelNamesAKindOfHumor(int level)
+    {
+        var settings = new PersonaSettings { NpcHumor = level, NpcHumorPercent = 100 };
+        var texts = new[]
+        {
+            Humor.ForLine(level, canBeDirected: true)!,
+            NpcChatter.WithHumor("Scene.", null, settings, Rolling(0), canBeDirected: true),
+        };
+
+        foreach (var text in texts)
+        {
+            foreach (var word in new[] { "pun", "simile", "comparison", "whimsy" })
+            {
+                Assert.DoesNotContain(word, text, StringComparison.OrdinalIgnoreCase);
+            }
+        }
     }
 
     [Fact]

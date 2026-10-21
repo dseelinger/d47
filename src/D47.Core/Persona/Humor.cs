@@ -29,17 +29,6 @@ public static class Humor
     /// <summary>The highest level.</summary>
     public const int Top = 10;
 
-    /// <summary>The highest level that keeps <see cref="Bans"/>.</summary>
-    public const int DryUpTo = 6;
-
-    /// <summary>What levels 1 to 6 forbid.</summary>
-    public const string Bans =
-        "The humor is the speaker's own: their character decides what they find funny and how "
-        + "they say it. Never decoration. Hard bans, no exceptions: no similes and no borrowed "
-        + "images — the moment \"like\" or \"as if\" is about to introduce a comparison, cut the "
-        + "comparison and state the plain fact. No puns, no "
-        + "whimsy, no zany exaggeration, no exclamation marks, and no \"...\" pauses for comic effect.";
-
     /// <summary>Added on a hit when the voice performs delivery notes.</summary>
     public const string Laughter =
         "Where a line is funny, a delivery note can carry the laugh: [laughs], [chuckles], "
@@ -47,7 +36,8 @@ public static class Humor
 
     /// <summary>Holds for every level.</summary>
     private const string Limits =
-        "Never at the Commander's expense. Every fact stays exactly true.";
+        "The humor is the speaker's own: their character decides what they find funny and how "
+        + "they say it. Never at the Commander's expense. Every fact stays exactly true.";
 
     /// <summary>What the model may do at one level, without framing, or null at 0.</summary>
     public static string? Describe(int level, bool canBeDirected)
@@ -62,19 +52,11 @@ public static class Humor
             1 or 2 => "At most one light touch of humor; the rest is plain.",
             3 or 4 => "An occasional touch of humor, brief.",
             5 or 6 => "Humor is welcome: one clear joke, well timed.",
-            7 or 8 =>
-                "Openly funny. Puns, comparisons and absurd exaggeration are allowed; one or two jokes.",
-            _ =>
-                "As funny as a stand-up comedian: aim to make the Commander laugh out loud. Puns, "
-                + "comparisons, absurdity and comic timing are all allowed.",
+            7 or 8 => "Openly funny: one or two jokes.",
+            _ => "As funny as a stand-up comedian: aim to make the Commander laugh out loud.",
         };
 
         var text = $"{grade} {Limits}";
-
-        if (level <= DryUpTo)
-        {
-            text += " " + Bans;
-        }
 
         if (canBeDirected)
         {

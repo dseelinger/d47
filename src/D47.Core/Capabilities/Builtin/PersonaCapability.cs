@@ -253,8 +253,7 @@ public static class PersonaCapability
         HumorLevel(
             CoreHumorKey,
             "Core humor",
-            "How funny the core may be, from 0 (none) to 10 (comedian). Up to 6 the humor is "
-            + "restrained: no puns, comparisons or whimsy. From 7 those are allowed. COVAS ignores it.",
+            "How funny the core may be, from 0 (serious) to 10 (comedian). COVAS ignores it.",
             s => s.CoreHumor,
             (p, v) => p with { CoreHumor = v },
             [new SettingCommandPhrase("humor on", "3"), new SettingCommandPhrase("humor off", "0")]),
@@ -269,7 +268,7 @@ public static class PersonaCapability
             NpcHumorKey,
             "NPC humor",
             "How funny NPCs may be - chatter, hails, and the canned lines d47 rewords - from 0 "
-            + "(none) to 10 (comedian).",
+            + "(serious) to 10 (comedian).",
             s => s.NpcHumor,
             (p, v) => p with { NpcHumor = v },
             []),
@@ -283,7 +282,7 @@ public static class PersonaCapability
         HumorLevel(
             CarrierHumorKey,
             "Carrier crew humor",
-            "How funny your carrier's captain and tower may be, from 0 (none) to 10 (comedian).",
+            "How funny your carrier's captain and tower may be, from 0 (serious) to 10 (comedian).",
             s => s.CarrierHumor,
             (p, v) => p with { CarrierHumor = v },
             []),
@@ -314,6 +313,7 @@ public static class PersonaCapability
         Group = "Humor",
         Minimum = 0,
         Maximum = Humor.Top,
+        ScaleEnds = ("Serious", "Comedian"),
         Commands = commands,
         Binding = new SettingBinding
         {
