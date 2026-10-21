@@ -95,7 +95,7 @@ public static class EliteKeys
         "Insert", "Delete", "Home", "End", "PageUp", "PageDown",
         "UpArrow", "DownArrow", "LeftArrow", "RightArrow",
         "Numpad_Divide", "Numpad_Enter", "RightAlt", "RightControl",
-        "NumLock", "PrintScreen",
+        "NumLock", "PrintScreen", "LeftWin", "RightWin",
     };
 
     /// <summary>
