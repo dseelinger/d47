@@ -48,7 +48,7 @@ public sealed class AMarketEventBecomesACommodityMessageTests
 
     private static EddnEnvelope? Compose(string? file, string[] lines, bool test = false)
     {
-        var composer = new EddnComposer("anon", "1.2.3", () => file, test);
+        var composer = new EddnComposer(() => "anon", "1.2.3", () => file, test);
         EddnEnvelope? last = null;
 
         foreach (var line in lines)
@@ -171,7 +171,7 @@ public sealed class AMarketEventBecomesACommodityMessageTests
     [Fact]
     public void TheComposerFoldsTheSystemFromLocationsAndJumps()
     {
-        var composer = new EddnComposer("anon", "1.2.3", () => null);
+        var composer = new EddnComposer(() => "anon", "1.2.3", () => null);
 
         composer.Compose(Event(Location));
         composer.Compose(Event(

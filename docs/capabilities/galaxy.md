@@ -214,6 +214,28 @@ The data backups taken when a new build starts leave `data\signals` out.
 
 With this off, nothing is downloaded and a signal search answers from your own scans alone.
 
+### Share with EDDN {#eddn}
+
+A setting in **Sharing**, under **Outside sources**, off by default. While it is on, opening a
+station's commodity market while d47 is running sends that market's prices to EDDN, the relay the
+galaxy sites read, so other Commanders' searches see them. Each commodity's buy and sell price,
+stock and demand goes, with the station, its market id and its system, the game's version and
+build, whether Horizons and Odyssey are running, and a random number made on this PC for your
+Commander.
+
+Your Commander name does not go. The random number stands in for it, one per Commander, kept in
+`data\eddn-uploaders.json`; it is not the donation number and not the story-ratings number. Not
+your Frontier ID, credits, cargo, ship or any key goes either. Only what happens while d47 is
+running is sent: journals read from before it started, a market opened more than five minutes
+ago, and anything while Elite runs a different Commander than the one shown are never sent. A
+Debug build sends to EDDN's test schemas.
+
+Messages are sent in the background, from a queue of at most 100. A refusal is not tried again;
+a timeout or a server error is tried again no sooner than 60 seconds later, up to three tries in
+all. Nothing is written to disk. The model cannot turn the setting on. If another program already
+sends your game data to EDDN, leave this off: sending it twice adds nothing. With it off, nothing
+is sent.
+
 ### Why the filters are checked here rather than there
 
 The search service **ignores filter keys it does not recognise**. It does not reject them or

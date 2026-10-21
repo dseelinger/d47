@@ -37,6 +37,7 @@ public sealed class AppPaths
         CrewSeatsFile = Path.Combine(Data, "crew-seats.json");
         VrActions = Path.Combine(Data, "vr-actions");
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
+        EddnUploadersFile = Path.Combine(Data, "eddn-uploaders.json");
         Donations = Path.Combine(Data, "donations");
         Ships = Path.Combine(Data, "ships");
         Stories = Path.Combine(Data, "stories");
@@ -105,6 +106,9 @@ public sealed class AppPaths
     /// donation is made.
     /// </summary>
     public string DonorTokenFile { get; }
+
+    /// <summary>The random EDDN uploader number of each Commander, keyed by Frontier ID.</summary>
+    public string EddnUploadersFile { get; }
 
     /// <summary>
     /// The Commander's own copy of every donation they have made (#175) — what was shown, what was

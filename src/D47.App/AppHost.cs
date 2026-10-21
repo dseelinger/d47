@@ -423,6 +423,8 @@ public sealed class AppHost : IDisposable
 
     private D47.Knowledge.InfomancerBgsTickSource? _bgsTickSource;
 
+    private D47.Knowledge.EddnUploader? _eddnUploader;
+
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
 
@@ -1560,6 +1562,13 @@ public sealed class AppHost : IDisposable
         };
     }
 
+    private static bool EddnTestSchemas =>
+#if DEBUG
+        true;
+#else
+        BuildInfo.IsLocal;
+#endif
+
     private static LoopParts PrimeGameLoop(FoundationParts foundations, StoreParts stores)
     {
         var files = foundations.Files;
@@ -1594,6 +1603,21 @@ public sealed class AppHost : IDisposable
         var status = stores.Status;
 
         var feed = new JournalFeed();
+
+        var eddn = new D47.Knowledge.EddnUploader(
+            () => foundations.Settings.Current.Contribution.Eddn,
+            loggerFactory.CreateLogger<D47.Knowledge.EddnUploader>());
+        eddn.Start();
+
+        var uploaderIds = new D47.Core.Contribution.EddnUploaderIds(files, foundations.Paths.EddnUploadersFile);
+        var eddnContribution = new D47.Core.Contribution.EddnContribution(
+            new D47.Core.Contribution.EddnComposer(
+                () => gameState.InGame?.Identity.FrontierId is { Length: > 0 } frontierId ? uploaderIds.For(frontierId) : null,
+                BuildInfo.Semantic,
+                () => files.ReadText(Path.Combine(journalDirectory, "Market.json")),
+                useTestSchemas: EddnTestSchemas),
+            eddn,
+            () => foundations.Settings.Current.Contribution.Eddn);
 
         // The ~4-10 Hz loop.
         var tick = new TickLoop(loggerFactory.CreateLogger<TickLoop>());
@@ -1630,6 +1654,9 @@ public sealed class AppHost : IDisposable
 
             // The commodity board the Commander is standing in front of, if they have opened one (Phase 36).
             markets.Poll(gameState.InGame?.Location.StarPos);
+
+            // Every event folds in, the backlog included; only a live one from the Commander shown is sent.
+            eddnContribution.Apply(events, context.Now, context.IsFirst, offDuty);
 
             // Before the callouts and inside this subscriber, so a verdict recomputed from this tick's events
             // is announced on this tick rather than the next.
@@ -1755,6 +1782,7 @@ public sealed class AppHost : IDisposable
         {
             Feed = feed,
             Tick = tick,
+            Eddn = eddn,
         };
     }
 
@@ -4010,6 +4038,7 @@ public sealed class AppHost : IDisposable
 
         // After ambience, so it reads this tick's running state.
         var viewState = foundations.ViewState;
+        host._eddnUploader = loop.Eddn;
         host._bgsTickSource = new D47.Knowledge.InfomancerBgsTickSource(
             foundations.LoggerFactory.CreateLogger<D47.Knowledge.InfomancerBgsTickSource>());
         var bgsTick = host.BgsTick = new BgsTickWatch(
@@ -4273,6 +4302,8 @@ public sealed class AppHost : IDisposable
         public required JournalFeed Feed { get; init; }
 
         public required TickLoop Tick { get; init; }
+
+        public required D47.Knowledge.EddnUploader Eddn { get; init; }
     }
 
     private sealed record ServiceParts
@@ -6264,6 +6295,7 @@ public sealed class AppHost : IDisposable
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();
+        _eddnUploader?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

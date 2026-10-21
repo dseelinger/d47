@@ -5,9 +5,10 @@ using D47.Core.Journal;
 namespace D47.Core.Contribution;
 
 /// <summary>Builds EDDN messages from journal events. Holds the game state the headers need.</summary>
+/// <param name="uploaderId">Returns the random number standing for the Commander, or null when there is none; read only when a message is built.</param>
 /// <param name="readMarket">Returns the text of <c>Market.json</c>, or null when it cannot be read.</param>
 public sealed class EddnComposer(
-    string uploaderId,
+    Func<string?> uploaderId,
     string softwareVersion,
     Func<string?> readMarket,
     bool useTestSchemas = false)
@@ -26,6 +27,14 @@ public sealed class EddnComposer(
     public long? SystemAddress { get; private set; }
 
     public StarPosition? StarPos { get; private set; }
+
+    /// <summary>Folds the event into the state and builds nothing.</summary>
+    public void Observe(JournalEvent journalEvent)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        Fold(journalEvent);
+    }
 
     /// <summary>Folds the event into the state, then returns the message it calls for, or null.</summary>
     public EddnEnvelope? Compose(JournalEvent journalEvent)
@@ -76,6 +85,11 @@ public sealed class EddnComposer(
 
     private EddnEnvelope? ComposeCommodity(JournalEvent marketEvent)
     {
+        if (uploaderId() is not { Length: > 0 } uploader)
+        {
+            return null;
+        }
+
         var text = readMarket();
 
         if (string.IsNullOrWhiteSpace(text))
@@ -152,7 +166,7 @@ public sealed class EddnComposer(
             message["timestamp"] = timestamp;
             message["commodities"] = commodities;
 
-            return new EddnEnvelope(SchemaRef(CommoditySchema), Header(), message);
+            return new EddnEnvelope(SchemaRef(CommoditySchema), Header(uploader), message);
         }
     }
 
@@ -222,9 +236,9 @@ public sealed class EddnComposer(
         return commodity;
     }
 
-    private JsonObject Header() => new()
+    private JsonObject Header(string uploader) => new()
     {
-        ["uploaderID"] = uploaderId,
+        ["uploaderID"] = uploader,
         ["softwareName"] = SoftwareName,
         ["softwareVersion"] = softwareVersion,
         ["gameversion"] = _gameVersion,

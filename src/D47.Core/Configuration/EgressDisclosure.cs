@@ -66,6 +66,11 @@ public static class EgressDisclosure
     /// <summary>Downloading the daily index of FSS signals.</summary>
     public const string SignalIndex = "signalindex";
 
+    public const string EddnHost = "eddn.edcd.io";
+
+    /// <summary>Sending the market prices the game shows to EDDN.</summary>
+    public const string Eddn = "eddn";
+
     /// <summary>Rewording the recap of the last session at launch.</summary>
     public const string Recap = "recap";
 
@@ -130,6 +135,7 @@ public static class EgressDisclosure
         CommunityGoals,
         BgsTick,
         SignalIndex,
+        Eddn,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -161,6 +167,7 @@ public static class EgressDisclosure
         CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
         SignalIndex => "Signal index",
+        Eddn => "EDDN",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -334,6 +341,26 @@ public static class EgressDisclosure
                 SignalIndex,
                 NameOf(SignalIndex),
                 "The signal index is off, so no index is fetched and a signal search answers from your own scans alone."),
+
+        Eddn => settings.Contribution.Eddn
+            ? new EgressEntry(
+                Eddn,
+                NameOf(Eddn),
+                EddnHost,
+                "When you open a station's commodity market, every commodity's buy and sell price, stock and "
+                + "demand, with the station, its market id and its system. With it go the game's version and "
+                + "build, whether Horizons and Odyssey are running, and a random number made on this PC for "
+                + "your Commander. EDDN republishes it to anyone listening and replaces that number before it "
+                + "does. Nothing personal goes with it: not your Commander name, your Frontier ID, your "
+                + "credits, your cargo, your ship or any key. Only what happens while d47 is running is sent, "
+                + "never journals it reads from before it started.",
+                Active: true,
+                Summary: "A station's market prices when you open its commodity board, with a random number "
+                    + "made on this PC for your Commander.")
+            : EgressEntry.Silent(
+                Eddn,
+                NameOf(Eddn),
+                "Sharing with EDDN is off, so nothing is sent."),
 
         HullArt => settings.Ui.HullArt
             ? new EgressEntry(

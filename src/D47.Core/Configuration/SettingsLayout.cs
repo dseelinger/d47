@@ -74,9 +74,10 @@ public static class SettingsLayout
     /// <summary>
     /// Place ids where <see cref="MostShownPerPlace"/> is exceeded today: <c>updates</c> holds every row
     /// <see cref="Capabilities.Builtin.AboutCapability"/> declares, which the issue's own arrangement table
-    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown).
+    /// names only 8 of but the acceptance rule requires all of (11 entries, none Advanced, so 11 shown);
+    /// <c>look-up</c> holds the eight outside-source rows and the Share with EDDN row beside them (9 shown).
     /// </summary>
-    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates"];
+    public static readonly IReadOnlyList<string> ShownLimitExceptions = ["updates", "look-up"];
 
     /// <summary>
     /// Place ids where <see cref="MostEntriesPerPlace"/> is exceeded today: <c>sounds</c> spells out
@@ -584,6 +585,7 @@ public static class SettingsLayout
                     false,
                     [
                         G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("knowledge.communityBiology"), E("journal.codexPictures"), E("knowledge.inaraKey")]),
+                        G("Sharing", "What D47 sends to community sites.", [E("contribution.eddn")]),
                     ]),
                 new SettingsPlace(
                     "turn-fails",

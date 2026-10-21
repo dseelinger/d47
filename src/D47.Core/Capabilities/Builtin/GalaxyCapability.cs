@@ -926,6 +926,29 @@ public static class GalaxyCapability
                     },
                 },
             },
+            new SettingRow
+            {
+                Key = EddnKey,
+                Label = "Share with EDDN",
+                Help =
+                    "Sends the market prices your game shows you to EDDN, the relay the galaxy sites read, so "
+                    + "other Commanders' searches see them. Your Commander name is not sent; a random number "
+                    + "made on this PC for your Commander stands in for it. If another program already sends "
+                    + "your game data to EDDN, leave this off: sending it twice adds nothing. Off by default; "
+                    + "see [Privacy](privacy).",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                Protected = true,
+                DocsAnchor = "eddn",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Contribution.Eddn ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Contribution = s.Contribution with { Eddn = v == "true" },
+                    },
+                },
+            },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
@@ -947,6 +970,9 @@ public static class GalaxyCapability
 
     /// <summary>Downloading the daily signal index.</summary>
     public const string SignalIndexKey = "knowledge.signalIndex";
+
+    /// <summary>Sending market prices to EDDN.</summary>
+    public const string EddnKey = "contribution.eddn";
 
     private static readonly IReadOnlyDictionary<string, string> NoArguments =
         new Dictionary<string, string>(StringComparer.Ordinal);

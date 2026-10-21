@@ -169,6 +169,12 @@ nothing from your journal, and the search itself happens on this machine.
 **Signal index** under Outside sources in Settings ([Galaxy search](galaxy.md#signal-index)) turns it
 on; it is off by default. With it off, a signal search answers from your own scans alone.
 
+**EDDN** — `eddn.edcd.io`. When you open a station's commodity market, D47 sends its prices,
+with the station, its system, the game's version and a random number made on this PC for your Commander.
+Your Commander name, Frontier ID, credits, cargo and ship do not go, and nothing from journals read
+before D47 started is sent. **Share with EDDN** under Sharing in Settings ([Galaxy search](galaxy.md#eddn))
+turns it on; it is off by default, and the model cannot turn it on.
+
 **Update check** — `api.github.com` once at startup, for the latest release tag. Pressing
 **Update now** adds one more transfer: the build itself, from GitHub's release downloads, which
 redirect to their asset storage — so the bytes arrive from `objects.githubusercontent.com`. That
@@ -376,7 +382,7 @@ that cannot be undone.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-bgstick} {#egress-signalindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-communitygoals} {#egress-bgstick} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
 {#egress-hullart} {#egress-codexpictures} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-ownvoice} {#egress-customvoices}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

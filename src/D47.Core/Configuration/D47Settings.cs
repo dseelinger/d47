@@ -71,6 +71,8 @@ public sealed record D47Settings
 
     public KnowledgeSettings Knowledge { get; init; } = new();
 
+    public ContributionSettings Contribution { get; init; } = new();
+
     /// <summary>The checklist's own settings (#255).</summary>
     public ChecklistSettings Checklists { get; init; } = new();
 
@@ -249,6 +251,17 @@ public sealed record KnowledgeSettings
 
     /// <summary>Whether d47 may download the daily index of FSS signals from the <c>signals-1</c> release.</summary>
     public bool SignalIndex { get; init; }
+}
+
+/// <summary>What d47 may send to community sites.</summary>
+public sealed record ContributionSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>Whether d47 may send the market prices the game shows to EDDN.</summary>
+    public bool Eddn { get; init; }
 }
 
 /// <summary>The checklist's own settings (#255).</summary>

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A new setting, **Share with EDDN**, under Sharing in Outside sources, is off by default. While it is on, opening a station's commodity market sends its prices to EDDN, the relay the galaxy sites read, with a random number made on this PC for your Commander and not your Commander name. Nothing from journals read before D47 started is sent, and the model cannot turn the setting on. The Privacy and egress section lists EDDN as "nothing sent" while it is off.
+
 Say "which way to the nearest earlier find" or "guide me to the nearest earlier find" on a body and D47 gives the distance and bearing to the nearest spot where another Commander logged a biology entry there, such as "The nearest earlier Bacterium Aurasus - Green find is 2.4 kilometres away, bearing 210, south-west." Name a variant, such as "which way to the nearest Aurasus", to limit it to that variant. It uses the finds already fetched from Canonn for the system and sends nothing. Your own samples still answer to a plain "which way to my last sample".
 
 Say "mark this spot", "mark this location" or "mark my position" and D47 saves where you stand on the body as "mark 1", "mark 2" and so on, answering "Marked as mark 1." Marks last until you leave the body and are not kept across a restart. Say "where is my ship", "which way to my last sample" or "which way to my mark", or "which way to" a mark's name, and D47 gives the distance and compass bearing, such as "Your ship is 1.2 kilometres away, bearing 140, south-east." When Elite reports the way you face, it adds where the point lies, such as "It is ahead on your right." Nothing leaves your machine.
