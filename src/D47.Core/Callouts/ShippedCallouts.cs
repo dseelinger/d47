@@ -375,6 +375,10 @@ public static class ShippedCallouts
                     session.StockCoreAboard = services.StockCoreAboard;
                     break;
 
+                case D47.Core.Adventures.AdventureCallout adventure:
+                    adventure.StockCoreAboard = services.StockCoreAboard;
+                    break;
+
                 case NarratorCallout narrator:
                     narrator.StoryRunning = services.StoryRunning;
                     narrator.StoryAsides = services.StoryAsides;

@@ -90,7 +90,7 @@ public sealed record AdventureStanding
         {
             buttons.Add("Begin again");
         }
-        else if (adventure.IsFailed && !story)
+        else if (IsFailed && !story)
         {
             buttons.Add("Write the next chapter");
         }

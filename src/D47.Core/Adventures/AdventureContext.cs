@@ -39,7 +39,7 @@ public static class AdventureContext
         ArgumentNullException.ThrowIfNull(standings);
         ArgumentNullException.ThrowIfNull(personaName);
 
-        var active = standings.Where(standing => standing.Adventure.IsActive && !standing.IsDone).ToList();
+        var active = standings.Where(standing => standing.Adventure.IsActive && !standing.IsDone && !standing.IsFailed).ToList();
 
         if (active.Count == 0)
         {

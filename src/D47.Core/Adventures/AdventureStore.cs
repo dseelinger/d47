@@ -386,6 +386,19 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 return null;
             }
 
+            var failsOn = new List<AdventureTrigger>();
+
+            foreach (var fail in beat.FailsOn ?? [])
+            {
+                if (!AdventureValidation.TryKind(fail.Kind, out var failKind))
+                {
+                    problems.Add(new AdventureProblem(where, $"beat {index + 1} names a failsOn \"{fail.Kind ?? string.Empty}\"; the kinds are " + string.Join(", ", AdventureValidation.Kinds)));
+                    return null;
+                }
+
+                failsOn.Add(FromTrigger(fail, failKind));
+            }
+
             beats.Add(new AdventureBeat
             {
                 Title = beat.Title?.Trim() ?? string.Empty,
@@ -395,7 +408,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
                     : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
                 Trigger = FromTrigger(beat.Trigger!, kind),
-                FailsOn = [.. (beat.FailsOn ?? []).Where(fail => AdventureValidation.TryKind(fail.Kind, out _)).Select(fail => FromTrigger(fail, Enum.Parse<TriggerKind>(fail.Kind!.Trim(), ignoreCase: true)))],
+                FailsOn = [.. failsOn],
             });
         }
 

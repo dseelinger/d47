@@ -50,7 +50,8 @@ public sealed record AdventureAsk(
     StoryProgress? Progress = null,
     int Draft = 1,
     AdventureOutline? Outline = null,
-    IReadOnlyList<string>? Barred = null);
+    IReadOnlyList<string>? Barred = null,
+    AdventureChapter? Failed = null);
 
 /// <summary>A draft's name and spine, kept for the next draft to write its objectives against.</summary>
 public sealed record AdventureOutline(string Name, AdventureSpine Spine);
@@ -1641,7 +1642,12 @@ public sealed class AdventureGenerator(
 
         if (ask.Chapter is { } chapter)
         {
-            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story));
+            AppendChapter(text, chapter, facts, !IsDrawn(ask.Story), ask.Failed is not null);
+        }
+
+        if (ask.Failed is { } failed)
+        {
+            AppendFailed(text, failed);
         }
 
         if (ask.Story is { } story)
@@ -1679,7 +1685,7 @@ public sealed class AdventureGenerator(
     /// The chapter before in full — spine, beat titles and what was said — the <see cref="EarlierChaptersShown"/>
     /// before that as name and premise only, and how many came before those.
     /// </summary>
-    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied)
+    private static void AppendChapter(StringBuilder text, AdventureChapter chapter, Facts facts, bool varied, bool replacing = false)
     {
         var previous = chapter.Previous;
 
@@ -1753,6 +1759,11 @@ public sealed class AdventureGenerator(
         AppendNotables(text, chapter);
         AppendStandings(text, chapter, facts.Standings);
 
+        if (replacing)
+        {
+            return;
+        }
+
         text.AppendLine();
         text.AppendLine(
             "Write the next chapter, not a retelling. Its want follows from that chapter's turn and ending, and its "
@@ -1763,6 +1774,25 @@ public sealed class AdventureGenerator(
         {
             AppendVariety(text, chapter);
         }
+    }
+
+    /// <summary>The attempt at this chapter that failed, why, and what is asked of the chapter that takes its place.</summary>
+    private static void AppendFailed(StringBuilder text, AdventureChapter failed)
+    {
+        var attempt = failed.Previous;
+
+        text.AppendLine();
+        text.AppendLine("An earlier attempt at this chapter failed:");
+        text.AppendLine($"Title: {attempt.Name}");
+        text.AppendLine($"Premise: {attempt.Spine?.Premise}");
+        text.AppendLine($"Want: {attempt.Spine?.Want}");
+        text.AppendLine("Objectives: " + string.Join("; ", attempt.Beats.Select((beat, index) => $"{index + 1}. {beat.Title}")));
+        text.AppendLine($"Why it failed: {attempt.Ending?.Reason}");
+        AppendNotables(text, failed);
+        text.AppendLine();
+        text.AppendLine(
+            "Write a chapter that takes its place, written from what the Commander did. Do not retell the failed "
+            + "chapter or ask for its objectives again; let what happened shape this chapter's want and stake.");
     }
 
     /// <summary>Whether the chapter is written around drawn activities.</summary>
@@ -2336,6 +2366,11 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine();
             AppendVariety(text, chapter);
+        }
+
+        if (ask.Failed is { } failedAttempt)
+        {
+            AppendFailed(text, failedAttempt);
         }
 
         text.AppendLine();

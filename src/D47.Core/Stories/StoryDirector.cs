@@ -68,6 +68,9 @@ public sealed class StoryDirector(
 
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
+
+    /// <summary>Failed chapters whose ending is being stored on the pool, by commander and key.</summary>
+    private readonly HashSet<string> _failing = new(StringComparer.Ordinal);
     private readonly Dictionary<string, StoryProgress> _progress = new(StringComparer.Ordinal);
 
     /// <summary>Commanders whose last chapter could not be written; the tick does not retry until WriteNextAsync is called.</summary>
@@ -1072,6 +1075,10 @@ public sealed class StoryDirector(
         {
             refusal = "That story was abandoned.";
         }
+        else if (standing.Adventure.IsFailed)
+        {
+            refusal = "That story failed.";
+        }
         else if (standing.IsDone || standing.CurrentBeat is null)
         {
             refusal = "That story is done.";
@@ -1629,12 +1636,24 @@ public sealed class StoryDirector(
     /// </summary>
     public Task<string?>? Tick(string? frontierId, DateTimeOffset now)
     {
+        if (!Switching && StoreFailures(frontierId) is { } storing)
+        {
+            return storing;
+        }
+
         if (Switching || stories.Current(frontierId) is not { } story || story.CurrentChapter is not { } key)
         {
             return null;
         }
 
         var standing = book.Standing(frontierId, key);
+
+        if (story.State == StoryState.Running && standing is { Adventure.IsFailed: true })
+        {
+            return story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId)
+                ? null
+                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+        }
 
         if (story.State == StoryState.Running && standing is { Adventure.IsActive: true } && LostAVoice(frontierId, story, now))
         {
@@ -1680,6 +1699,53 @@ public sealed class StoryDirector(
         }
 
         return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+    }
+
+    /// <summary>Hands each chapter the fold failed and no ending is stored for to the pool once; null when there is none.</summary>
+    private Task<string?>? StoreFailures(string? frontierId)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+        var failing = book.Failing(frontierId);
+        List<string> keys = [];
+
+        lock (_gate)
+        {
+            foreach (var standing in failing)
+            {
+                if (_failing.Add(AdventureClaim(frontierId, standing.Adventure.Key)))
+                {
+                    keys.Add(standing.Adventure.Key);
+                }
+            }
+        }
+
+        if (keys.Count == 0)
+        {
+            return null;
+        }
+
+        return Task.Run(() =>
+        {
+            foreach (var key in keys)
+            {
+                try
+                {
+                    if (book.Fail(frontierId, key) is { } refusal)
+                    {
+                        logger.LogWarning("The ending of {Key} was not stored for {Commander}: {Refusal}", key, commander, refusal);
+                    }
+                }
+                finally
+                {
+                    lock (_gate)
+                    {
+                        _failing.Remove(AdventureClaim(frontierId, key));
+                    }
+                }
+            }
+
+            return (string?)null;
+        });
     }
 
     /// <summary>
@@ -2415,22 +2481,35 @@ public sealed class StoryDirector(
             return new($"The hidden layer of {story.Title} is missing from this build.");
         }
 
-        if (story.FinaleChapter >= story.Pacing.FinaleChapters)
+        var replacing = story.CurrentChapter is { } failedKey && book.Store.Find(frontierId, failedKey) is { IsFailed: true };
+
+        if (!replacing && story.FinaleChapter >= story.Pacing.FinaleChapters)
         {
             return new($"{story.Title} has had its last chapter.");
         }
 
         story = WithBar(frontierId, story);
-        var number = story.Chapters.Count + 1;
+        var number = replacing ? story.Chapters.Count : story.Chapters.Count + 1;
         AdventureChapter? previous = null;
+        AdventureChapter? failed = null;
 
-        if (story.CurrentChapter is not null
+        if (replacing)
+        {
+            failed = ChapterAt(frontierId, story, story.Chapters.Count - 1);
+            previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
+
+            if (failed is null || (story.Chapters.Count > 1 && previous is null))
+            {
+                return new("The chapter before is no longer on file.");
+            }
+        }
+        else if (story.CurrentChapter is not null
             && (previous = ChapterAt(frontierId, story, story.Chapters.Count - 1)) is null)
         {
             return new("The chapter before is no longer on file.");
         }
 
-        var finaleFrom = story.FinaleFrom ?? (StoryClues.FinaleDue(story, now) ? number : null);
+        var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (StoryClues.FinaleDue(story, now) ? number : null);
         var finaleChapter = number - finaleFrom + 1;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
         var reach = story.BeaconScanAt is null
@@ -2439,9 +2518,9 @@ public sealed class StoryDirector(
 
         var game = Game();
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
-        var sinceBeacon = SinceBeacon(frontierId, story) + 1;
+        var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
-        var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
+        var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var slots = story.BeaconScanAt is null
@@ -2456,7 +2535,7 @@ public sealed class StoryDirector(
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
                 FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.Of(game?.Location.StarPos) is not null || home is not null) ? 1 : 0),
-                ChapterDraw.Seed(story.Id, number),
+                ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
                 NeverCompleted()) is { Count: > 0 } drawn
@@ -2484,7 +2563,8 @@ public sealed class StoryDirector(
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
-            Outline: outline);
+            Outline: outline,
+            Failed: failed);
 
         var outcome = await write(ask, now, cancellationToken).ConfigureAwait(false);
 
@@ -2504,7 +2584,7 @@ public sealed class StoryDirector(
         var key = UniqueKey(frontierId, still, draft.Key);
 
         // The opening and the narrated scan are said before chapter one, introducing whoever speaks in them.
-        var saidFirst = number == 1 ? (secret.Opening ?? []).Append(secret.Scan).OfType<StoryLine>().Select(line => line.Speaker) : [];
+        var saidFirst = number == 1 && !replacing ? (secret.Opening ?? []).Append(secret.Scan).OfType<StoryLine>().Select(line => line.Speaker) : [];
         draft = StoryIntroductions.Introduce(draft, still with { Introduced = [.. still.Introduced, .. saidFirst] }, secret, Gender());
 
         if ((book.Write(frontierId, draft with { Key = key, StoryId = story.Id }) ?? book.Begin(frontierId, key, now)) is { } refusal)
@@ -2514,14 +2594,30 @@ public sealed class StoryDirector(
 
         stories.Save(frontierId, still with
         {
-            Chapters = [.. still.Chapters, key],
+            Chapters = [.. replacing ? still.Chapters.SkipLast(1) : still.Chapters, key],
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
         });
         logger.LogInformation("{Title}: chapter {Number}, {Name}, begins", story.Title, number, draft.Name);
+
+        if (failed is not null)
+        {
+            ArchiveFailed(frontierId, still, failed.Previous);
+        }
+
         ArchiveChapters(frontierId);
         return new(null);
+    }
+
+    /// <summary>Moves a failed chapter the replacement has taken the place of to the archive under this run, and off the adventure file.</summary>
+    private void ArchiveFailed(string? frontierId, Story story, Adventure failed)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+        var standing = book.Standing(frontierId, failed.Key);
+
+        Archive.Append(new ArchivedChapter(commander, story.Id, story.PickedAt, failed, standing?.Fired ?? [], standing?.FiredBy ?? []));
+        book.Remove(frontierId, failed.Key);
     }
 
     private AdventureStory Asked(
@@ -2621,10 +2717,12 @@ public sealed class StoryDirector(
     /// <summary>The hidden layer with every name token resolved for this Commander.</summary>
     private StorySecret? Hidden(string id) => catalog().Secret(id)?.For(Gender());
 
-    /// <summary>A key used by no adventure on file and no chapter of the story, archived ones included.</summary>
+    /// <summary>A key used by no adventure on file and no chapter of the story, archived ones and this run's failed ones included.</summary>
     private string UniqueKey(string? frontierId, Story story, string wanted)
     {
-        var existing = book.Store.For(frontierId).Select(adventure => adventure.Key).Concat(story.Chapters).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existing = book.Store.For(frontierId).Select(adventure => adventure.Key).Concat(story.Chapters)
+            .Concat(Archive.For(frontierId).Where(chapter => chapter.Of(story)).Select(chapter => chapter.Adventure.Key))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var key = string.IsNullOrWhiteSpace(wanted) ? "chapter" : wanted;
         var candidate = key;
         var suffix = 2;

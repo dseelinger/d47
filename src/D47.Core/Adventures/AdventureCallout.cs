@@ -44,7 +44,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
     public Func<bool> NudgeBackstory { get; init; } = () => true;
 
     /// <summary>Whether the core aboard is a stock core, whose Narrator tells a failure instead of the ship.</summary>
-    public Func<bool> CoreIsStock { get; init; } = () => false;
+    public Func<bool> StockCoreAboard { get; set; } = () => false;
 
     /// <summary>Whether a Commander's reached beats wait, unsaid, behind lines that must be said first.</summary>
     public Func<string?, bool> Held { get; init; } = _ => false;
@@ -243,7 +243,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                        && (context.Status.Has(StatusFlags.InDanger) || context.Status.Has(StatusFlags.BeingInterdicted));
 
         var due = _waiting
-            .Where(moment => (moment.IsOpening || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
+            .Where(moment => (moment.IsOpening || moment.IsFailure || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
             .ToList();
 
         foreach (var moment in due)
@@ -289,7 +289,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             if (moment.IsFailure)
             {
-                var narrated = CoreIsStock();
+                var narrated = StockCoreAboard();
 
                 yield return new Announcement(
                     moment.Key,

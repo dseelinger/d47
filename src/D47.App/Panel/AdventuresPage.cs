@@ -226,9 +226,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         var drafts = standings.Where(standing => standing.Adventure.IsDraft).ToList();
-        var live = standings.Where(standing => !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone).ToList();
+        var live = standings.Where(standing => !standing.Adventure.IsDraft && standing.Adventure.IsActive && !standing.IsDone && !standing.IsFailed).ToList();
         var unbegun = standings.Where(standing => !standing.Adventure.IsDraft && !standing.Adventure.IsBegun).ToList();
-        var aside = standings.Where(standing => standing.Adventure.IsAbandoned || standing.IsDone).ToList();
+        var aside = standings.Where(standing => standing.Adventure.IsAbandoned || standing.Adventure.IsEnded || standing.IsFailed || standing.IsDone).ToList();
 
         foreach (var standing in drafts)
         {
@@ -826,15 +826,26 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             }
 
             AdventureChapter? chapter = null;
+            AdventureChapter? failed = null;
 
-            if (follows is not null
-                && (chapter = _surface.Book.ChapterOf(_surface.Commander(), follows)) is null)
+            if (follows is not null)
             {
-                status.Fail("That story is no longer on file.");
-                return;
+                chapter = _surface.Book.ChapterOf(_surface.Commander(), follows);
+
+                if (chapter is null)
+                {
+                    status.Fail("That story is no longer on file.");
+                    return;
+                }
+
+                if (chapter.Previous.IsFailed)
+                {
+                    failed = chapter;
+                    chapter = chapter.Previous.Follows is { } before ? _surface.Book.ChapterOf(_surface.Commander(), before) : null;
+                }
             }
 
-            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter);
+            var ask = new AdventureAsk(reach, length, thisShipOnly, string.IsNullOrWhiteSpace(brief) ? null : brief, chapter) { Failed = failed };
 
             status.Clear();
 
