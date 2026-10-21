@@ -1055,6 +1055,7 @@ public static class EgressDisclosure
                 + JournalEventSent
                 + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
                 + " " + TypedChecklistLineSent
+                + " " + CommanderLogSent
                 + (narration is null ? string.Empty : $" {narration} to that address each time it narrates.")
                 + (scenes ? $" {SceneChatter} to that address, whatever Who knows about it is set to." : string.Empty)
                 + " When the server at that address is LM Studio, D47 also asks it which models are loaded and, before writing a story, "
@@ -1080,6 +1081,7 @@ public static class EgressDisclosure
             + " " + JournalEventSent
             + (settings.Debrief.Enabled ? " " + DebriefRewordingSent : string.Empty)
             + " " + TypedChecklistLineSent
+            + " " + CommanderLogSent
             + (commander is null ? string.Empty : $" Every turn also carries {commander}.")
             + (narration is null ? string.Empty : $" {narration} each time it narrates.")
             + (scenes ? $" {SceneChatter}, whatever Who knows about it is set to." : string.Empty),
@@ -1159,6 +1161,11 @@ public static class EgressDisclosure
     internal const string TypedChecklistLineSent =
         "A line typed into the checklist's Add box is sent once, on its own, to ask whether D47 can tick it from "
         + "the journal.";
+
+    internal const string CommanderLogSent =
+        "Asking about a Commander you have met sends that Commander's name and your encounters with them: when, "
+        + "where, their ship and what happened. \"Have I met this commander\" with no name is answered on this "
+        + "machine and sends none of it.";
 
     private const string JournalName = "your Commander name from the journal";
 

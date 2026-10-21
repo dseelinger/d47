@@ -202,6 +202,9 @@ public static class BuiltinCapabilities
         // The planner's plan for each colonisation system, where one is composed.
         Func<D47.Core.Knowledge.ColonisationPlans?>? colonisationPlans = null,
 
+        // The Commanders this Commander has met, for the commander-log tool.
+        Journal.CommanderLog? commanderLog = null,
+
         // What the music is playing, and a way to be told when that changes.
         Func<Audio.MusicState>? musicState = null,
         Func<Action, Action>? watchMusic = null,
@@ -498,6 +501,7 @@ public static class BuiltinCapabilities
             () => gameState.Active,
             gameStatus,
             now ?? (() => DateTimeOffset.MinValue)),
+        CommanderLogCapability.Create(commanderLog, () => gameState.Active?.Identity.FrontierId ?? string.Empty),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

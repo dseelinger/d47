@@ -150,6 +150,10 @@ public static class HelpTaxonomy
                     "Say what is notable about a system on arrival, and remember what you tell me about one.",
                     "lore"),
                 HelpNode.Leaf(
+                    "Commanders met",
+                    "Ask whether you have met a Commander before, and where and how.",
+                    "commander-log"),
+                HelpNode.Leaf(
                     "Exobiology",
                     "Plot a circuit through known biology, and read back what your own surface scan found on the body you are at.",
                     "exobiology"),
