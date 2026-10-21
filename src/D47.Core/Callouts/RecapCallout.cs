@@ -1,4 +1,6 @@
 using D47.Core.Logbook;
+using D47.Core.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
@@ -27,8 +29,8 @@ public sealed class RecapCallout : ICallout
     public Func<bool> StockCoreAboard { get; set; } = () => false;
 
     /// <summary>
-    /// Asked once, on the first live tick, to prepare the line for the session that started before the
-    /// instant given. Must not block: the caller answers later through <see cref="Supply"/>.
+    /// Asked once, on the first live tick, to prepare the line for the sessions before the instant given
+    /// (the launch). Must not block: the caller answers later through <see cref="Supply"/>.
     /// </summary>
     public Action<DateTimeOffset>? Prepare { get; set; }
 
@@ -52,7 +54,7 @@ public sealed class RecapCallout : ICallout
         if (_firstLiveTick == default)
         {
             _firstLiveTick = context.Now;
-            Prepare?.Invoke(context.State?.Session.StartedAt ?? context.Now);
+            Prepare?.Invoke(context.Now);
             yield break;
         }
 
@@ -92,10 +94,44 @@ public sealed class RecapCallout : ICallout
     }
 
     /// <summary>
+    /// The recap for launch at <paramref name="launch"/>: the session still running, when it holds
+    /// anything, else the session before it. Null for nothing to say.
+    /// </summary>
+    public static string? ComposeAt(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(fileSystem);
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+
+        var logger = loggerFactory.CreateLogger<RecapCallout>();
+        var builder = new LogDigestBuilder(fileSystem, loggerFactory.CreateLogger<LogDigestBuilder>());
+        var (latest, ended) = LogRanges.ReadSession(fileSystem, launch, files, logger);
+
+        if (latest is null)
+        {
+            return null;
+        }
+
+        if (ended)
+        {
+            return Compose(builder.Build(files, latest));
+        }
+
+        if (Compose(builder.Build(files, latest), inProgress: true) is { } running)
+        {
+            return running;
+        }
+
+        return LogRanges.PreviousSession(fileSystem, latest.From, files, logger) is { } range
+            ? Compose(builder.Build(files, range))
+            : null;
+    }
+
+    /// <summary>
     /// The plain line for a digest of the last session — where it ended, the ship, and its most notable
     /// mishap or progress — or null when it holds nothing beyond its opening and closing.
     /// </summary>
-    public static string? Compose(LogDigest digest)
+    public static string? Compose(LogDigest digest, bool inProgress = false)
     {
         ArgumentNullException.ThrowIfNull(digest);
 
@@ -127,7 +163,7 @@ public sealed class RecapCallout : ICallout
             parts.Add($"{(parts.Count > 0 ? "and earlier you " : "you ")}{Clause(notable.Statement)}");
         }
 
-        return parts.Count == 0 ? null : $"Last session {string.Join(", ", parts)}.";
+        return parts.Count == 0 ? null : $"{(inProgress ? "Earlier this session" : "Last session")} {string.Join(", ", parts)}.";
     }
 
     /// <summary>

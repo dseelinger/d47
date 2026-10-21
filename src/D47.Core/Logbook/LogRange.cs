@@ -206,6 +206,13 @@ public static class LogRanges
     /// before that instant to the last event before it, or null where no earlier <c>LoadGame</c> is in reach.
     /// </summary>
     public static LogRange? PreviousSession(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
+        => ReadSession(fileSystem, before, files, logger).Range;
+
+    /// <summary>
+    /// <see cref="PreviousSession"/> with whether the session's last event was a <c>Shutdown</c>, which
+    /// separates a session still running at <paramref name="before"/> from one already over.
+    /// </summary>
+    public static (LogRange? Range, bool Ended) ReadSession(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -215,6 +222,7 @@ public static class LogRanges
 
         DateTimeOffset? from = null;
         DateTimeOffset? to = null;
+        var ended = false;
 
         foreach (var file in candidates.Skip(Math.Max(0, candidates.Count - LookBack)))
         {
@@ -236,6 +244,7 @@ public static class LogRanges
                     }
 
                     to = parsed.Timestamp;
+                    ended = parsed.Kind == "Shutdown";
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -244,9 +253,11 @@ public static class LogRanges
             }
         }
 
-        return from is { } start && to is { } end
-            ? new LogRange { Span = LogSpan.Between, From = start, To = end, Label = "the last session" }
-            : null;
+        return (
+            from is { } start && to is { } end
+                ? new LogRange { Span = LogSpan.Between, From = start, To = end, Label = "the last session" }
+                : null,
+            ended);
     }
 
     /// <summary>

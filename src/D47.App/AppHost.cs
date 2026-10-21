@@ -3128,7 +3128,7 @@ public sealed class AppHost : IDisposable
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
             BgsLastTick = () => late.Host?.BgsTick?.Last,
-            ComposeRecap = before => ComposeRecap(files, before, JournalsOnDisk(journalDirectory, logger), loggerFactory),
+            ComposeRecap = launch => ComposeRecap(files, launch, JournalsOnDisk(journalDirectory, logger), loggerFactory),
         });
 
         var pairing = new VoicePairer(
@@ -6051,22 +6051,16 @@ public sealed class AppHost : IDisposable
         return sawTheFile ? false : null;
     }
 
-    /// <summary>The plain recap of the session before <paramref name="before"/>, or null for none.</summary>
-    private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset before, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
+    /// <summary>The plain recap for a launch at <paramref name="launch"/>, or null for none.</summary>
+    private static string? ComposeRecap(IFileSystem fileSystem, DateTimeOffset launch, IReadOnlyList<string> files, ILoggerFactory loggerFactory)
     {
-        var logger = loggerFactory.CreateLogger<RecapCallout>();
-
         try
         {
-            return D47.Core.Logbook.LogRanges.PreviousSession(fileSystem, before, files, logger) is { } range
-                ? RecapCallout.Compose(new D47.Core.Logbook.LogDigestBuilder(
-                    fileSystem,
-                    loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()).Build(files, range))
-                : null;
+            return RecapCallout.ComposeAt(fileSystem, launch, files, loggerFactory);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            logger.LogWarning(ex, "Could not read the journals for the last session recap");
+            loggerFactory.CreateLogger<RecapCallout>().LogWarning(ex, "Could not read the journals for the last session recap");
             return null;
         }
     }

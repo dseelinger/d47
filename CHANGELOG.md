@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When d47 restarts while Elite is running, the startup recap now covers what you have flown since logging in and opens "Earlier this session". Before, it described the session before that one and could name a station you left long ago. If you have only logged in, it still recaps the session before.
+
 A system name at the start of a body name is spoken as written: "Nobody has set foot on Eotienses ABC 2 c" is no longer read as "on it ABC 2 c".
 
 A body in a populated system is no longer a first footfall, whatever its scan says. Elite writes `WasFootfalled:false` on some of those bodies, and d47 used to announce a first footfall there, credit a first-footfall objective and price an organic analysis at five times. It now does none of the three.
