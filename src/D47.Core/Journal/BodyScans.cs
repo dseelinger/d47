@@ -23,6 +23,37 @@ public sealed record BodyScan(string BodyName)
 
     public bool Landable { get; init; }
 
+    /// <summary>The <c>Parents</c> array, nearest first; kind is Planet, Star, Null or Ring as written.</summary>
+    public IReadOnlyList<(string Kind, int BodyId)> Parents { get; init; } = [];
+
+    /// <summary>Metres.</summary>
+    public double? SemiMajorAxis { get; init; }
+
+    public double? Eccentricity { get; init; }
+
+    /// <summary>Seconds.</summary>
+    public double? OrbitalPeriod { get; init; }
+
+    /// <summary>Seconds; negative for a retrograde spin.</summary>
+    public double? RotationPeriod { get; init; }
+
+    /// <summary>Radians.</summary>
+    public double? AxialTilt { get; init; }
+
+    /// <summary>Metres.</summary>
+    public double? Radius { get; init; }
+
+    public double? MassEM { get; init; }
+
+    public bool TidalLock { get; init; }
+
+    public string? TerraformState { get; init; }
+
+    public IReadOnlyList<(string Name, double Percent)> Materials { get; init; } = [];
+
+    /// <summary>Rings and belts; radii in metres.</summary>
+    public IReadOnlyList<(string Name, string RingClass, double InnerRad, double OuterRad)> Rings { get; init; } = [];
+
     /// <summary>Null when the scan carried no <c>WasFootfalled</c> field at all.</summary>
     public bool? WasFootfalled { get; init; }
 
@@ -58,6 +89,9 @@ public sealed record BodyScans
 
     public BodyScan? For(long systemAddress, int bodyId) =>
         Bodies.GetValueOrDefault(new BodyKey(systemAddress, bodyId));
+
+    public IReadOnlyList<BodyScan> InSystem(long systemAddress) =>
+        [.. Bodies.Where(entry => entry.Key.SystemAddress == systemAddress).Select(entry => entry.Value)];
 
     public BodyScans Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {
@@ -103,6 +137,18 @@ public sealed record BodyScans
             SurfaceTemperature = journalEvent.Double("SurfaceTemperature"),
             SurfacePressure = journalEvent.Double("SurfacePressure"),
             Landable = journalEvent.Bool("Landable"),
+            Parents = ParentsOf(journalEvent),
+            SemiMajorAxis = journalEvent.Double("SemiMajorAxis"),
+            Eccentricity = journalEvent.Double("Eccentricity"),
+            OrbitalPeriod = journalEvent.Double("OrbitalPeriod"),
+            RotationPeriod = journalEvent.Double("RotationPeriod"),
+            AxialTilt = journalEvent.Double("AxialTilt"),
+            Radius = journalEvent.Double("Radius"),
+            MassEM = journalEvent.Double("MassEM"),
+            TidalLock = journalEvent.Bool("TidalLock"),
+            TerraformState = journalEvent.String("TerraformState"),
+            Materials = MaterialsOf(journalEvent),
+            Rings = RingsOf(journalEvent),
             WasFootfalled = FootfallFlag(journalEvent, Populated.Contains(systemAddress)),
             SeenAt = journalEvent.Timestamp,
             FootfallTakenAt = existing?.FootfallTakenAt,
@@ -139,6 +185,29 @@ public sealed record BodyScans
             },
         };
     }
+
+    private static List<(string Kind, int BodyId)> ParentsOf(JournalEvent scan) =>
+    [
+        .. scan.Items("Parents")
+            .Where(parent => parent.ValueKind == JsonValueKind.Object)
+            .SelectMany(parent => parent.EnumerateObject())
+            .Where(entry => entry.Value.TryGetInt32(out _))
+            .Select(entry => (entry.Name, entry.Value.GetInt32())),
+    ];
+
+    private static List<(string Name, double Percent)> MaterialsOf(JournalEvent scan) =>
+    [
+        .. scan.Items("Materials")
+            .Where(material => material.String("Name") is not null && material.Double("Percent") is not null)
+            .Select(material => (material.String("Name")!, material.Double("Percent")!.Value)),
+    ];
+
+    private static List<(string Name, string RingClass, double InnerRad, double OuterRad)> RingsOf(JournalEvent scan) =>
+    [
+        .. scan.Items("Rings")
+            .Where(ring => ring.String("Name") is not null && ring.Double("InnerRad") is not null && ring.Double("OuterRad") is not null)
+            .Select(ring => (ring.String("Name")!, ring.String("RingClass") ?? "", ring.Double("InnerRad")!.Value, ring.Double("OuterRad")!.Value)),
+    ];
 
     /// <summary>True or false where the journal wrote the flag, null where it omitted it entirely.</summary>
     private static bool? NullableBool(JournalEvent journalEvent, string property) =>
