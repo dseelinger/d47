@@ -26,6 +26,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private CreditTransactionsPage? _creditTransactions;
     private CodexPage? _codex;
     private CodexRegionPage? _codexRegion;
+    private CodexDiscoveriesPage? _codexDiscoveries;
     private CommandersPage? _commanders;
     private D47.App.Controls.JournalClock? _commanderClock;
 
@@ -187,8 +188,10 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         var headset = host.Headset;
         var choice = new CodexChoice();
 
-        _codexBuild = crumb => CodexPage.IsRegion(crumb.Key)
-            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset)
+        _codexBuild = crumb => CodexPage.IsDiscoveries(crumb.Key)
+            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset)
+            : CodexPage.IsRegion(crumb.Key)
+            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav)
             : _codex = new CodexPage(state, history, now, choice, host.Nav, headset);
 
         DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
@@ -263,10 +266,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
-        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf))
+        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf))
         {
             changed |= _codex?.Tick() ?? false;
             changed |= _codexRegion?.Tick() ?? false;
+            changed |= _codexDiscoveries?.Tick() ?? false;
         }
 
         if (_commanders is { } commanders && root == CommandersPage.RootKey)
@@ -287,7 +291,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
-        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

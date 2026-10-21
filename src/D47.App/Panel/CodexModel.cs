@@ -71,6 +71,33 @@ public sealed record CodexRegionView(
     IReadOnlyList<CodexGroup> Groups,
     string? Empty);
 
+/// <summary>One codex entry not on the record, with the systems that reported it in the region.</summary>
+public sealed record CodexMissingRow(string Name, int Systems);
+
+/// <summary>The missing entries of one category and subcategory; <c>Known</c> counts every entry the table lists under it.</summary>
+public sealed record CodexMissingGroup(string Label, IReadOnlyList<CodexMissingRow> Rows, int Known)
+{
+    public int Count => Rows.Count;
+
+    public bool Equals(CodexMissingGroup? other) => other is not null && Label == other.Label && Known == other.Known && Rows.SequenceEqual(other.Rows);
+
+    public override int GetHashCode() => HashCode.Combine(Label, Rows.Count);
+}
+
+/// <summary>What a region's Discoveries page draws for one ledger, table, history state and search.</summary>
+public sealed record CodexDiscoveriesView(
+    bool Running,
+    bool Failed,
+    DateTimeOffset? OnRecordSince,
+    int Known,
+    int Logged,
+    int Missing,
+    int Subcategories,
+    int Uncovered,
+    int Shown,
+    IReadOnlyList<CodexMissingGroup> Groups,
+    string? Empty);
+
 /// <summary>The rows behind Commander › Ledgers › Codex, built from a <see cref="CodexLedger"/> (#1290).</summary>
 public static class CodexModel
 {
@@ -85,6 +112,20 @@ public static class CodexModel
     public const string NoEntryMatchText = "No codex entry or system in this region and period matches that search.";
 
     public const string Placeholder = "Search entry, system or region";
+
+    public const string DiscoveriesPlaceholder = "Search missing entry";
+
+    public const string DiscoveriesCrumbWord = "Discoveries";
+
+    public const string DiscoveriesRowLine = "The entries known in this region that are not on your record. Whole record, not this trip.";
+
+    public const string DiscoveriesNoRegionLine = "D47 has no region number for these entries, so it cannot list what is left to discover.";
+
+    public const string DiscoveriesLine = "Every entry the codex table lists for this region, against everything on your record.";
+
+    public const string DiscoveriesGroupLine = "Known in this region and not on your record, most reported first.";
+
+    public const string NoMissingMatchText = "No missing codex entry in this region matches that search.";
 
     private const string Minus = "−";
 
@@ -294,6 +335,64 @@ public static class CodexModel
             slice.Entries == 0 ? EmptyText(ledger, period, name) : null);
     }
 
+    /// <summary>"708 missing · 38 of 746 on record": the figures on the region page's Discoveries row.</summary>
+    public static string DiscoveriesFigures(CodexDiscoveries found) =>
+        $"{Number(found.Missing.Count)} missing · {Number(found.Logged.Count)} of {Number(found.Known.Count)} on record";
+
+    /// <summary>"An entry logged before 2025-03-13 reads as missing." followed by the coverage sentence and the count the table does not list.</summary>
+    public static string DiscoveriesNote(DateTimeOffset? since, int uncovered) =>
+        (since is { } at ? $"An entry logged before {Date(at)} reads as missing. " : "An entry logged before your record starts reads as missing. ")
+        + CodexDiscoveries.Coverage
+        + (uncovered > 0 ? $" You logged {Number(uncovered)} more here that the codex table does not list." : string.Empty);
+
+    /// <summary>The region's entries from <paramref name="table"/> that the whole ledger does not hold, grouped by category and subcategory, the group with most missing first and the most reported entry first within it.</summary>
+    public static CodexDiscoveriesView Discoveries(
+        CodexLedger ledger, CodexTable table, int regionId, HistoryState history, string? query = null)
+    {
+        var found = CodexDiscoveries.For(ledger, table, regionId);
+        var text = query?.Trim();
+        var totals = found.Known
+            .GroupBy(item => GroupLabel(item.Entry))
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var kept = found.Missing
+            .Where(item => string.IsNullOrEmpty(text) || item.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var groups = kept
+            .GroupBy(item => GroupLabel(item.Entry))
+            .Select(group => new CodexMissingGroup(
+                group.Key,
+                [.. group.Select(item => new CodexMissingRow(item.Entry.Name, item.Systems))],
+                totals[group.Key]))
+            .OrderByDescending(group => group.Count)
+            .ThenBy(group => group.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new CodexDiscoveriesView(
+            history is HistoryState.Pending or HistoryState.Running,
+            history is HistoryState.Failed or HistoryState.Stopped,
+            ledger.OnRecordSince,
+            found.Known.Count,
+            found.Logged.Count,
+            found.Missing.Count,
+            found.Missing.Select(item => GroupLabel(item.Entry)).Distinct().Count(),
+            found.Uncovered.Count,
+            kept.Count,
+            groups,
+            found.Known.Count == 0
+                ? $"The codex table lists no entries for {RegionName(regionId)}."
+                : found.Missing.Count == 0 ? "Every entry the codex table lists for this region is on your record." : null);
+    }
+
+    /// <summary>The missing entries table's columns; the default order is most reported first.</summary>
+    public static IReadOnlyList<SortColumn<CodexMissingRow>> MissingHeads() =>
+    [
+        SortColumn<CodexMissingRow>.Text("Entry", row => row.Name) with { Second = "Codex name" },
+        SortColumn<CodexMissingRow>.Figure("Reported in", row => (long?)row.Systems, SortDirection.Descending) with { Second = "Systems" },
+        SortColumn<CodexMissingRow>.Plain("Status") with { Second = "Not on your record" },
+    ];
+
     /// <summary>The regions table's columns.</summary>
     public static IReadOnlyList<SortColumn<CodexRegionRow>> RegionHeads() =>
     [
@@ -340,6 +439,8 @@ public static class CodexModel
     private static bool Matches(CodexLogEntry entry, string text) =>
         entry.Name?.Contains(text, StringComparison.OrdinalIgnoreCase) == true
         || entry.System?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string GroupLabel(CodexEntry entry) => $"{entry.Category} · {entry.SubCategory}";
 
     private static string Label(CodexLogEntry entry) => entry.Category is null
         ? entry.SubCategory ?? Other

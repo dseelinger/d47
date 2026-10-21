@@ -552,7 +552,8 @@ logged. `region` is a codex region by name, or `here` (the default) for the regi
 first line gives how many entries are known, logged and missing; then the missing count by subcategory and the
 three most-reported missing entries by name, with a count of the rest. Logged means the entry was logged in
 that region anywhere in the record, not in a period. The answer says when the record starts, because an entry
-logged before the oldest journal reads as missing, and that stars and planets are not covered.
+logged before the oldest journal reads as missing, and ends with the coverage line:
+"Stars, Thargoid sites and planets other than the green gas giants are not covered."
 
 ```json
 {"type":"object","properties":{"region":{"type":"string","description":"The codex region, by name, or here for the region the Commander is in. Default here."}},"required":[],"additionalProperties":false}

@@ -13,6 +13,8 @@ public sealed record CodexDiscoveries(
     IReadOnlyList<CodexDiscoveryItem> Missing,
     IReadOnlyList<CodexLogEntry> Uncovered)
 {
+    public const string Coverage = "Stars, Thargoid sites and planets other than the green gas giants are not covered.";
+
     /// <summary>
     /// Compares the region's catalogue entries with the whole ledger. An entry is logged when its (entry, region)
     /// pair is anywhere in the ledger. Missing entries are ordered by reported systems, most first. Uncovered are

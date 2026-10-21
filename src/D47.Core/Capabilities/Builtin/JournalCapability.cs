@@ -2020,14 +2020,14 @@ public static class JournalCapability
         text.AppendLine();
         text.Append(
             $"The record runs {OnRecord(active.CodexLedger)}, so an entry logged before then reads as missing. "
-            + "Stars and planets are not covered");
+            + CodexDiscoveries.Coverage);
 
         if (discoveries.Uncovered.Count > 0)
         {
-            text.Append($"; you logged {number(discoveries.Uncovered.Count)} more here that the table does not list");
+            text.Append($" You logged {number(discoveries.Uncovered.Count)} more here that the codex table does not list.");
         }
 
-        return text + "." + unfinished;
+        return text + unfinished;
     }
 
     private static string DescribeBodyGeology(GameStateStore gameState, HistoryState history, ToolArguments arguments)

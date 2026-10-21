@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On Commander › Ledgers › Codex, a region's page has a Discoveries row that opens a page listing the codex entries the codex table knows for that region and your record lacks. It shows how many are missing, on record and known, and groups the missing ones by category and subcategory, most reported first. The figures cover your whole record, not the period. The Codex Discoveries answer now ends "Stars, Thargoid sites and planets other than the green gas giants are not covered."
+
 The codex answer that says which entries are known in your region and which you have not logged is now called Codex Discoveries. Ask "codex discoveries", "my codex discoveries", "what codex entries am I missing" or "missing codex entries". "Codex checklist" no longer answers, so it is no longer confused with Commander › Checklist.
 
 Ask "what geology is here" or "likely geology" and D47 lists the geological features the body could hold, from its class and volcanism, and says whether each is in your codex for the region you are in. Name a body to ask about another one; otherwise it answers for the latest body you saw with geological signals.

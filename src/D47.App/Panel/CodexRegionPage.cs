@@ -8,6 +8,7 @@ using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -23,6 +24,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly int? _regionId;
     private readonly bool _headset;
+    private readonly PanelNavigator? _nav;
+    private readonly CodexTable _table;
     private readonly SortHeader<CodexEntryRow> _head = new("CodexEntryHead", CodexModel.EntryHeads());
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _periodRow;
@@ -43,7 +46,9 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         CodexChoice choice,
         int? regionId,
-        bool headset = false)
+        bool headset = false,
+        PanelNavigator? nav = null,
+        CodexTable? table = null)
     {
         _state = state;
         _history = history;
@@ -51,6 +56,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _regionId = regionId;
         _headset = headset;
+        _nav = nav;
+        _table = table ?? CodexCatalogue.Table;
 
         _periodRow = CodexKit.PeriodRow(_period);
         _head.Changed += Draw;
@@ -189,11 +196,13 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         if (view.Empty is { } empty)
         {
             _top.Children.Add(CreditsKit.Message(empty));
+            _top.Children.Add(DiscoveriesRow());
             Rows([]);
             return;
         }
 
         _top.Children.Add(CodexKit.Strip(view.Entries, view.New, view.Logged, "Subcategories", view.Subcategories));
+        _top.Children.Add(DiscoveriesRow());
 
         if (view.Shown == 0)
         {
@@ -213,6 +222,47 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         }
 
         Rows(items);
+    }
+
+    private Control DiscoveriesRow()
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
+        var named = _regionId is not null;
+
+        CreditsKit.Place(grid, 0, new StackPanel
+        {
+            Children =
+            {
+                CreditsKit.Label("Discoveries"),
+                RoutingKit.Ink(
+                    named ? CodexModel.DiscoveriesRowLine : CodexModel.DiscoveriesNoRegionLine,
+                    TypeScale.Small,
+                    ThemeManager.GreyKey,
+                    wrap: true),
+            },
+        });
+
+        if (_regionId is { } id)
+        {
+            var found = CodexDiscoveries.For(_state()?.CodexLedger ?? CodexLedger.None, _table, id);
+            CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.DiscoveriesFigures(found), TypeScale.Small, ThemeManager.AKey, right: true));
+            CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+        }
+
+        var button = ListRow.Dress(new Button
+        {
+            Name = "CodexDiscoveries",
+            Content = grid,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            Margin = new Thickness(0, 0, 0, 8),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            IsEnabled = named,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, "Discoveries");
+        button.Click += (_, _) => _nav?.Drill(CodexPage.DiscoveriesCrumb(_regionId));
+
+        return button;
     }
 
     /// <summary>Shows <paramref name="items"/>, leaving the list and its scroll position alone when they are the items already shown.</summary>

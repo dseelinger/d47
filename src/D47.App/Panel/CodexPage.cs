@@ -15,6 +15,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string RegionPrefix = "codex-region-";
 
+    private const string DiscoveriesPrefix = "codex-discoveries-";
+
     public const string SummaryText = "The codex entries you have logged, from your journals.";
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
@@ -91,6 +93,23 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     /// <summary>The region number a region crumb is for; null for the unnumbered region.</summary>
     public static int? RegionOf(string key) =>
         int.TryParse(key[RegionPrefix.Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id)
+            ? id
+            : null;
+
+    /// <summary>The crumb of a region's Discoveries page.</summary>
+    public static NavCrumb DiscoveriesCrumb(int? regionId) =>
+        new(
+            DiscoveriesPrefix + (regionId?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"),
+            CodexModel.DiscoveriesCrumbWord)
+        {
+            Whole = true,
+        };
+
+    public static bool IsDiscoveries(string key) => key.StartsWith(DiscoveriesPrefix, StringComparison.Ordinal);
+
+    /// <summary>The region number a Discoveries crumb is for; null for the unnumbered region.</summary>
+    public static int? DiscoveriesOf(string key) =>
+        int.TryParse(key[DiscoveriesPrefix.Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id)
             ? id
             : null;
 

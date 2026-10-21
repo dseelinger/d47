@@ -14,7 +14,10 @@ public sealed class CodexChoice
     public int Period { get; set; } = (int)CodexPeriod.Trip;
 }
 
-/// <summary>The controls the two Codex pages share.</summary>
+/// <summary>One cell of a Codex strip: the label, the figure, the figure's ink and the line under it.</summary>
+internal readonly record struct StripCell(string Label, int Value, string Key, string Line);
+
+/// <summary>The controls the Codex pages share.</summary>
 internal static class CodexKit
 {
     public static Segment PeriodSegment() => new Segment
@@ -78,26 +81,34 @@ internal static class CodexKit
     };
 
     /// <summary>Four read-only cells on Slab: Entries, New, Logged and <paramref name="last"/>.</summary>
-    public static Grid Strip(int entries, int added, int logged, string lastLabel, int last)
+    public static Grid Strip(int entries, int added, int logged, string lastLabel, int last) => Strip(
+        new StripCell("Entries", entries, ThemeManager.AKey, "codex scans"),
+        new StripCell("New", added, ThemeManager.BlueKey, "new to your codex"),
+        new StripCell("Logged", logged, ThemeManager.AKey, "distinct entries"),
+        new StripCell(lastLabel, last, ThemeManager.AKey, "with entries"));
+
+    /// <summary>Read-only cells on Slab, side by side.</summary>
+    public static Grid Strip(params StripCell[] cells)
     {
         var strip = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
+            ColumnDefinitions = new ColumnDefinitions(string.Join(',', cells.Select(_ => "*"))),
             ColumnSpacing = Gaps.Tile,
             Margin = new Thickness(0, 10, 0, 10),
         };
 
-        Cell(strip, 0, "Entries", entries, ThemeManager.AKey, "codex scans");
-        Cell(strip, 1, "New", added, ThemeManager.BlueKey, "new to your codex");
-        Cell(strip, 2, "Logged", logged, ThemeManager.AKey, "distinct entries");
-        Cell(strip, 3, lastLabel, last, ThemeManager.AKey, "with entries");
+        for (var i = 0; i < cells.Length; i++)
+        {
+            Cell(strip, i, cells[i]);
+        }
 
         return strip;
     }
 
-    private static void Cell(Grid strip, int column, string label, int value, string key, string line)
+    private static void Cell(Grid strip, int column, StripCell cell)
     {
-        var cell = new Border
+        var (label, value, key, line) = cell;
+        var border = new Border
         {
             Name = "CodexStrip." + label,
             Padding = new Thickness(12, 8),
@@ -111,8 +122,8 @@ internal static class CodexKit
                 },
             },
         };
-        RoutingKit.Themed(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
-        Grid.SetColumn(cell, column);
-        strip.Children.Add(cell);
+        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+        Grid.SetColumn(border, column);
+        strip.Children.Add(border);
     }
 }

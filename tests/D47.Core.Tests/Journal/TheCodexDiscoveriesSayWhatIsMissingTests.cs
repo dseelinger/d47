@@ -114,6 +114,14 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
     }
 
     [Fact]
+    public async Task TheAnswerEndsWithTheCoverageSentence()
+    {
+        var said = await Ask(Store(Entry(1, 18)), "{\"region\":\"" + GalacticRegions.NameOf(18) + "\"}");
+
+        Assert.Contains(CodexDiscoveries.Coverage, said);
+    }
+
+    [Fact]
     public async Task AnUnknownRegionIsRefused()
     {
         Assert.Equal(
