@@ -329,6 +329,27 @@ public class ExobiologyCapabilityTests
         Assert.Contains("6,904,100 cr", result.Content, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ThePlotCountsTheJumpsBackToTheStart()
+    {
+        var routes = new FakeRoutes
+        {
+            Route = new ExobiologyRoute(
+                [new ExobiologyStop("Opet", 2, [new ExobiologyBody("Opet 7 b", "Rocky body") { LandmarkValue = 100 }])])
+            {
+                UnlistedJumps = 2,
+            },
+        };
+
+        var result = await Ask(
+            Store("""{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}"""),
+            "plot_exobiology_route",
+            "{}",
+            routes);
+
+        Assert.Contains("4 jumps", result.Content, StringComparison.Ordinal);
+    }
+
     /// <summary>A plotted route is kept as the last exobiology plan, headlined the way Road to Riches is.</summary>
     [Fact]
     public async Task APlottedRouteIsKeptAsTheLastExobiologyPlan()

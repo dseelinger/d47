@@ -10,6 +10,8 @@
 
 When d47 restarts while Elite is running, the startup recap now covers what you have flown since logging in and opens "Earlier this session". Before, it described the session before that one and could name a station you left long ago. If you have only logged in, it still recaps the session before.
 
+A Road to Riches or exobiology loop now counts the jumps back to the start in its total. Before, a loop answered with 1, 2 and 2 jumps was reported as 2 jumps where it takes 4. The Road to Riches answer says "including the jumps back to" the start system instead of "and back". A plan saved earlier keeps its old total until you plot again.
+
 A system name at the start of a body name is spoken as written: "Nobody has set foot on Eotienses ABC 2 c" is no longer read as "on it ABC 2 c".
 
 A body in a populated system is no longer a first footfall, whatever its scan says. Elite writes `WasFootfalled:false` on some of those bodies, and d47 used to announce a first footfall there, credit a first-footfall objective and price an organic analysis at five times. It now does none of the three.

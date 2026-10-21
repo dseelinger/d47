@@ -65,7 +65,10 @@ public sealed record RichesRoute(IReadOnlyList<RichesStop> Stops)
 
     public long TotalValue => Stops.SelectMany(stop => stop.Bodies).Sum(body => body.MappingValue ?? 0);
 
-    public int TotalJumps => Stops.Sum(stop => stop.Jumps);
+    /// <summary>The jumps on the answer's entries that are not stops, other than the first; on a loop, the leg back.</summary>
+    public int UnlistedJumps { get; init; }
+
+    public int TotalJumps => Stops.Sum(stop => stop.Jumps) + UnlistedJumps;
 }
 
 /// <summary>
@@ -103,7 +106,10 @@ public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
 
     public long TotalValue => Stops.Sum(stop => stop.Value);
 
-    public int TotalJumps => Stops.Sum(stop => stop.Jumps);
+    /// <summary>The jumps on the answer's entries that are not stops, other than the first; on a loop, the leg back.</summary>
+    public int UnlistedJumps { get; init; }
+
+    public int TotalJumps => Stops.Sum(stop => stop.Jumps) + UnlistedJumps;
 }
 
 /// <summary>A validated exobiology plot.</summary>

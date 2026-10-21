@@ -215,6 +215,7 @@ internal static class SpanshResponse
         {
             Start = start,
             End = end,
+            UnlistedJumps = UnlistedJumps(entries, kept),
         };
     }
 
@@ -277,6 +278,7 @@ internal static class SpanshResponse
         {
             Start = start,
             End = end,
+            UnlistedJumps = UnlistedJumps(entries, kept),
         };
     }
 
@@ -314,6 +316,10 @@ internal static class SpanshResponse
         Position(element) is { } position
             ? new RouteEndpoint(String(element, nameProperty) ?? "an unnamed system", position)
             : null;
+
+    /// <summary>The jumps on the dropped entries other than the first.</summary>
+    private static int UnlistedJumps(List<JsonElement> entries, List<JsonElement> kept) =>
+        entries.Skip(1).Where(entry => !kept.Contains(entry)).Sum(entry => entry.Int("jumps") ?? 0);
 
     /// <summary>The first and last entries of a plot, where the reader dropped them and they carry a position.</summary>
     private static (RouteEndpoint? Start, RouteEndpoint? End) Ends(List<JsonElement> entries, List<JsonElement> kept)

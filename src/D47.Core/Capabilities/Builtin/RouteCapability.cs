@@ -547,7 +547,7 @@ public static class RouteCapability
             $"{route.Stops.Count} stop{(route.Stops.Count == 1 ? "" : "s")} from {query.From}, "
             + $"{bodies} bodies worth mapping, about "
             + $"{route.TotalValue.ToString("N0", CultureInfo.InvariantCulture)} credits over "
-            + $"{route.TotalJumps} jumps{(query.Loop ? " and back" : "")}.");
+            + $"{route.TotalJumps} jumps{(query.Loop ? $", including the jumps back to {query.From}" : "")}.");
 
         foreach (var stop in route.Stops.Take(StopsSpoken))
         {

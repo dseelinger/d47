@@ -234,7 +234,7 @@ public class SpanshRouteServiceTests
         Assert.Equal(new StarPosition(9.0625, 28.0625, -45.6875), stop.Position);
         Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), riches.Start);
         Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), riches.End);
-        Assert.Equal(2, riches.TotalJumps);
+        Assert.Equal(4, riches.TotalJumps);
     }
 
     [Fact]
@@ -285,6 +285,54 @@ public class SpanshRouteServiceTests
         Assert.Equal(new StarPosition(5, 6, 7), stop.Position);
         Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), route.Start);
         Assert.Equal(new RouteEndpoint("Sol", StarPosition.Origin), route.End);
+    }
+
+    [Fact]
+    public async Task ALoopCountsTheJumpsBackToTheStart()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"Sol","jumps":1,"bodies":[]},
+                  {"name":"Opet","jumps":2,"bodies":[{"name":"Opet 7 b","landmark_value":100,"landmarks":[]}]},
+                  {"name":"Sol","jumps":2,"bodies":[]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(ExobiologyQuery.TryParse(
+            "Sol", 50, 200, 3, 1_000_000, 10_000, true, out var query, out _));
+
+        var route = await service.PlotExobiologyAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Single(route!.Stops);
+        Assert.Equal(2, route.UnlistedJumps);
+        Assert.Equal(4, route.TotalJumps);
+    }
+
+    [Fact]
+    public async Task APlotThatIsNotALoopCountsTheStopsJumpsAlone()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[
+                  {"name":"Sol","jumps":1,"bodies":[]},
+                  {"name":"LTT 18046","jumps":2,"bodies":[
+                    {"name":"LTT 18046 3","estimated_mapping_value":628192}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(RichesQuery.TryParse("Sol", 50, 500, 10, 500_000, 10_000, false, out var query, out _));
+
+        var riches = await service.PlotRichesAsync(query, TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, riches!.UnlistedJumps);
+        Assert.Equal(2, riches.TotalJumps);
     }
 
     [Fact]

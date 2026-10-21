@@ -690,6 +690,28 @@ public class RouteCapabilityTests
     }
 
     [Fact]
+    public async Task ARichesLoopNamesTheJumpsBackToTheStart()
+    {
+        var install = new MemoryInstall();
+        var (registry, routes, _, _) = Build(install);
+
+        routes.Riches = new RichesRoute(
+            [new RichesStop("Aries Dark Region FW-W d1-59", 2, [new RichesBody("A 4", "Water world")])])
+        {
+            UnlistedJumps = 2,
+        };
+
+        var result = await registry.InvokeAsync(
+            "plot_exploration_route",
+            Args(("from", "Sol"), ("loop", "true")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("over 4 jumps, including the jumps back to Sol.", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain(" and back", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task PlottingIsOffWithTheGalaxySearchAndSaysWhichSettingItIs()
     {
         var install = new MemoryInstall();
