@@ -1659,6 +1659,7 @@ public sealed class AppHost : IDisposable
             var inGame = gameState.InGame?.Identity.FrontierId;
             var shown = gameState.Shown(events);
 
+            feed.Events = events;
             feed.Arrived = shown;
 
             feed.EliteMusic.Observe(events);
@@ -1784,6 +1785,16 @@ public sealed class AppHost : IDisposable
                 gameState.Pick(picked);
             }
         });
+
+        // Every Commander's screenshots are copied; the place they fall back to is the shown Commander's, and none
+        // while Elite runs another.
+        var screenshots = new ScreenshotConverter(files, EliteScreenshot.Folder(), loggerFactory.CreateLogger<ScreenshotConverter>());
+
+        tick.Add("screenshots", context => screenshots.Observe(
+            feed.Events,
+            context.IsFirst,
+            foundations.Settings.Current.Screenshots.Convert,
+            gameState.IsOffDuty ? JournalLocation.Unknown : gameState.Active?.Location ?? JournalLocation.Unknown));
 
         // A story under way is caught up before the priming tick replays the current session (Phase 47): the
         // walk is bounded to the files since the earliest acceptance, so with nothing under way it reads
@@ -4161,6 +4172,9 @@ public sealed class AppHost : IDisposable
     /// <summary>What the journal tick leaves for the subscribers registered after the host exists.</summary>
     private sealed class JournalFeed
     {
+        /// <summary>This tick's journal events, whichever Commander they are for.</summary>
+        public IReadOnlyList<JournalEvent> Events { get; set; } = [];
+
         /// <summary>This tick's journal events for the Commander shown.</summary>
         public IReadOnlyList<JournalEvent> Arrived { get; set; } = [];
 

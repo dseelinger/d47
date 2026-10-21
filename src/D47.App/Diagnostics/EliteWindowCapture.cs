@@ -31,7 +31,7 @@ public sealed class EliteWindowCapture(
     private const float JpegQuality = 0.85f;
 
     /// <summary>The JPEG quality a picture kept on disk is encoded at.</summary>
-    private const float FullJpegQuality = 0.92f;
+    internal const float FullJpegQuality = 0.92f;
 
     private readonly Lock _gate = new();
 
@@ -162,17 +162,16 @@ public sealed class EliteWindowCapture(
     internal static ScreenPicture FullJpeg(SoftwareBitmap bitmap, string source) =>
         Jpeg(bitmap, source, (bitmap.PixelWidth, bitmap.PixelHeight), FullJpegQuality);
 
-    private static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source, (int Width, int Height) size, float quality)
+    private static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source, (int Width, int Height) size, float quality) =>
+        new(Encode(bitmap, BitmapEncoder.JpegEncoderId, JpegOptions(quality), size), size.Width, size.Height, source);
+
+    /// <summary>The encoder options for a JPEG at <paramref name="quality"/>, from 0 to 1.</summary>
+    internal static BitmapPropertySet JpegOptions(float quality) => new()
     {
-        var options = new BitmapPropertySet
-        {
-            ["ImageQuality"] = new BitmapTypedValue(quality, PropertyType.Single),
-        };
+        ["ImageQuality"] = new BitmapTypedValue(quality, PropertyType.Single),
+    };
 
-        return new ScreenPicture(Encode(bitmap, BitmapEncoder.JpegEncoderId, options, size), size.Width, size.Height, source);
-    }
-
-    private static byte[] Encode(
+    internal static byte[] Encode(
         SoftwareBitmap bitmap,
         Guid encoderId,
         BitmapPropertySet? options,

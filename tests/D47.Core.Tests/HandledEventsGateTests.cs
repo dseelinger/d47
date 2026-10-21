@@ -23,7 +23,6 @@ public sealed class HandledEventsGateTests
         "src/D47.Core/Journal/JournalSentence.cs",
         "src/D47.Core/Journal/JournalLog.cs",
         "src/D47.Core/Journal/JournalEventGrounding.cs",
-        "src/D47.Core/Journal/EliteScreenshot.cs",
     ];
 
     private static readonly Lazy<Survey> Surveyed = new(Survey.Run);

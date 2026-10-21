@@ -74,5 +74,10 @@ public string Name(DateTime localTime, int copy)
 }
 ```
 
+A copy is made when the journal reports the screenshot, so one taken before D47 started is not
+copied. D47 waits up to two minutes for Elite to finish writing the BMP, which takes a while for a
+high-resolution screenshot, and skips one that does not arrive in that time or is moved away first.
+Screenshots are copied one at a time, at their own size.
+
 This capability has no tools. It is separate from the pictures of the window that
 [Screen](screen.md) shows the AI model, which are never written to disk.

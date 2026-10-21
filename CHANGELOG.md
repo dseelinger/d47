@@ -8,7 +8,9 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-There is a new **Convert Elite's screenshots** setting, on by default, with a **Saved to** line showing the D47 folder inside Elite's pictures folder where JPEG copies will go. Saying "stop converting my screenshots" or "start converting my screenshots" changes it; the AI model cannot. **Privacy and egress** lists **Your screenshots**: the copies stay on this PC, and D47 says that a synced Pictures folder, as OneDrive can be, uploads them. The copies themselves are not written yet.
+Each screenshot you take in Elite is now copied as a JPEG into `Frontier Developments\Elite Dangerous\D47` under Pictures, named with the local time, the system and the body, such as `2026-10-12 19-40-03 Shinrarta Dezhra.jpg`. A second screenshot in the same second and place adds ` (2)`. D47 waits up to two minutes for a high-resolution screenshot to finish writing, and skips one that does not arrive. Elite's BMP is left where it is, unchanged. Screenshots taken before D47 started are not copied.
+
+There is a new **Convert Elite's screenshots** setting, on by default, with a **Saved to** line showing the D47 folder inside Elite's pictures folder where the JPEG copies go. Saying "stop converting my screenshots" or "start converting my screenshots" changes it; the AI model cannot. **Privacy and egress** lists **Your screenshots**: the copies stay on this PC, and D47 says that a synced Pictures folder, as OneDrive can be, uploads them.
 
 The journal pane now says where a screenshot was taken: "Screenshot taken at A 1, Example Sector AB-C d1-23", or "Screenshot taken in <system>" when the event names no body. A screenshot with no place still reads "Screenshot taken".
 
