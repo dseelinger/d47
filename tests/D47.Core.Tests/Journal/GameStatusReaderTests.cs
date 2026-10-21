@@ -85,6 +85,22 @@ public class GameStatusReaderTests
 
         Assert.Null(status.LegalState);
     }
+
+    [Fact]
+    public void TheHeadingIsReadInDegrees()
+    {
+        var status = Read("""{ "timestamp":"2026-10-21T10:00:00Z", "event":"Status", "Flags":16777224, "Latitude":-12.5, "Longitude":33.25, "Heading":271 }""");
+
+        Assert.Equal(271, status.Heading);
+    }
+
+    [Fact]
+    public void NoHeadingReadsAsNull()
+    {
+        var status = Read("""{ "timestamp":"2026-10-21T10:00:00Z", "event":"Status", "Flags":16777224, "Latitude":-12.5, "Longitude":33.25 }""").Heading;
+
+        Assert.Null(status);
+    }
 }
 
 [Trait("Category", "Integration")]

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 now reads the direction you are facing from Elite's Status.json, in degrees, when Elite writes it. Nothing uses it yet.
+
 A new setting, Codex pictures, controls whether D47 fetches stock codex pictures from a GitHub release. It is on by default. D47 fetches the list when a codex page first wants a picture in a session and each picture when a page first shows it, and keeps them in `data\codex-pictures`. Only the picture's file name goes with the request, which gives its codex entry and region. Off, nothing is fetched and only pictures you saved yourself are used. No page shows a picture yet.
 
 Say "take a picture", "take a picture of this" or "save a picture" and D47 saves a full-size picture of Elite's window, or of the headset's left eye, to the captures folder in your data folder, with a note beside it of the system, body, codex region and the codex entries you logged in the last ten minutes. It answers "Picture taken." and names up to three of those entries. It works with Let the model look at the screen off, the model cannot ask for it, and the newest 100 pictures are kept.

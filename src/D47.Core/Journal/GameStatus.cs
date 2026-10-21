@@ -160,6 +160,9 @@ public sealed record GameStatus
     /// </summary>
     public double? PlanetRadius { get; init; }
 
+    /// <summary>The direction the ship, SRV or Commander on foot faces, in degrees, or null where absent.</summary>
+    public double? Heading { get; init; }
+
     /// <summary>Whether a position is actually being reported, rather than merely flagged.</summary>
     public bool HasPosition => Latitude is not null && Longitude is not null;
 
@@ -262,6 +265,7 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
                 Longitude = root.Double("Longitude"),
                 Altitude = root.Double("Altitude"),
                 PlanetRadius = root.Double("PlanetRadius"),
+                Heading = root.Double("Heading"),
 
                 ReadAt = new DateTimeOffset(written, TimeSpan.Zero),
             };
