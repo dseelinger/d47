@@ -41,7 +41,7 @@ Triage is a report. You are the session that stays open after it.
   did not merge, or a lane still working.
 - **"Should these run in lanes?"** Run `/triage lanes` and reason from its lanes the same way:
   recommend which lanes to start, not a lane order of your own.
-- **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `under-speced` for
+- **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `needs-architect` for
   the Architect, rather than pushing on with an effort level that no longer fits. Any title you
   propose for a split-off issue is seven words or fewer.
 
@@ -55,7 +55,7 @@ recommendation.
 
 ## Eligibility
 
-Eligible issues are the open ones that are **not** `under-speced`, **not** `design`, and
+Eligible issues are the open ones that are **not** `needs-architect`, **not** `design`, and
 that the maintainer either opened or labelled `Vetted`. `/triage` applies this; know it so you can
 answer "why isn't #N on the list" without re-running anything.
 

@@ -132,7 +132,7 @@ method when its class also has rendering tests.
 CLAUDE.md has the full set. These are the ones a change trips over:
 
 - **Layering.** Core depends on nothing; no spoke references another spoke. If the fix seems to
-  need one to, it is a design question — stop and say so.
+  need one to, it is a question for the Architect — stop and say so.
 - **Ticking.** A tick is synchronous and must not block. Awaitable work goes to the pool through a
   queue. Nothing fails to compile when you get this wrong; it stalls push-to-talk instead.
 - **Generated data is generated.** `src/D47.Core/Knowledge/*.tsv` and `MaterialGrades.g.cs` come
@@ -247,7 +247,7 @@ name from this list:
 - a second subsystem
 
 This list is shared with `/new-issue`, which splits issues on the same items. Name what the issue
-actually is: two issues, a design question for the Architect, or the same issue at a higher effort.
+actually is: two issues, a question for the Architect, or the same issue at a higher effort.
 An issue that grew one of these is not the issue that was ranked.
 
 ## Lanes

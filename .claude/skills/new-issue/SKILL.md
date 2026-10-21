@@ -138,8 +138,8 @@ of them with a smaller change is one the issue worker will hand back.
 
 Split only when the honest answer is that it is two jobs. When it is:
 
-- Say which part is the **build** and which is the **design**. A question like "how do we express
-  this in a generated table" is a decision, not a task: that one is `under-speced`, for the Architect.
+- Say which part is the **build** and which is the **decision**. A question like "how do we express
+  this in a generated table" is a decision, not a task: that one is `needs-architect`, for the Architect.
 - Make the small one land first and stand alone. It must not wait on the large one, and it must
   need no rework when the large one lands. Say so in both bodies.
 - Cross-reference them by number after filing, in the body of each.
@@ -156,7 +156,7 @@ maintainer filed, and the eligibility test is "either `dseelinger` opened it, or
 
 **Never ask the maintainer to add `Vetted` to an issue you filed on their instruction.** That label
 is for an issue somebody else opened on the repository, which he has reviewed and approved for
-design, architecture or implementation. Asking him to
+Claude Design, architecture or implementation. Asking him to
 vet his own request back to him is noise, and it implies work from a stranger could be scheduled
 without him — it cannot, and that is the point of the label.
 
@@ -200,7 +200,7 @@ if you want it checked.
   will get long. Only what you verified.
 - **`### Not this issue`** — the neighbouring work it will be confused with.
 - **One label that already exists**: `bug`, `change-request`, `enhancement`, `documentation`,
-  `accessibility`, `data-accuracy`, `under-speced`, `design`, `vr`. Do not invent one. `design`
+  `accessibility`, `data-accuracy`, `needs-architect`, `design`, `vr`. Do not invent one. `design`
   means Claude Design has to draw it first.
 
 Write the body to a file and pass `--body-file`. A heredoc mangles backslashes and long bodies.

@@ -85,7 +85,7 @@ CLAUDE.md's "Comments and doc comments are terse" section names three more failu
 same lines and slip through for the same reason. Report them **under a separate heading** so they
 stay distinguishable from mannered prose:
 
-- **Decision logs.** Why an alternative was rejected, what the design used to be.
+- **Decision logs.** Why an alternative was rejected, what the code used to be.
 - **Historical commentary.** "This used to...", "no longer...", "the previous approach...".
 - **Doc comments that restate the signature.** `<param>`/`<returns>` adding nothing to the name.
 

@@ -62,7 +62,7 @@ proves the profile was parsed, and both were believed here and were wrong:
 - keys still present in the file after a quit — an unread file survives untouched too
 - the file still being pretty-printed rather than the app's compact style
 
-Ask the maintainer to look at the deck. There is no file-level substitute. To show a design without
+Ask the maintainer to look at the deck. There is no file-level substitute. To show a key layout without
 making them squint at the hardware, paste the tiles onto a dark contact sheet and send that.
 
 ## Where things are

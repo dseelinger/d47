@@ -28,8 +28,8 @@ gh issue list --state open --limit 300 --json number,title,labels,author,created
 
 Keep an issue only if **all** of these hold:
 
-- It does not carry `under-speced` or `design`. Both label descriptions say so outright —
-  `under-speced` needs a pass through `/architect`, and `design` needs Claude Design before it can
+- It does not carry `needs-architect` or `design`. Both label descriptions say so outright —
+  `needs-architect` needs a pass through `/architect`, and `design` needs Claude Design before it can
   be built. Neither is implementable as written.
 - Either `dseelinger` opened it, or it carries `Vetted`. Anything else is unvetted.
 
@@ -135,7 +135,7 @@ pair `sonnet` with `high`: work that needs more than `sonnet medium` with an `op
 `opus high`.
 
 `low` only for a change whose diff you could write from the title. `xhigh` or `max` where the issue
-is a design question wearing a bug's clothes — flag those as candidates for the `under-speced` label
+is an architecture question filed as a bug — flag those as candidates for the `needs-architect` label
 instead of picking an effort for them.
 
 Never go below `medium` on anything in `src/`. `TreatWarningsAsErrors` is on and there is no
@@ -398,5 +398,5 @@ Say it was written in one line at the end of the report, with the issue count. N
 ## What this does not do
 
 It files nothing, labels nothing, closes nothing and starts no work. Applying a `Vetted` label or
-moving an issue to `under-speced` is the maintainer's, and a triage that edits the queue it just read
+moving an issue to `needs-architect` is the maintainer's, and a triage that edits the queue it just read
 cannot be run twice.
