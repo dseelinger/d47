@@ -347,16 +347,6 @@ public class ShipCoreWatchTests
         Assert.Empty(service.Store.Bindings);
     }
 
-    [Fact]
-    public void ForgettingSaysSoWhetherOrNotThereWasAnything()
-    {
-        var state = State(12);
-        var service = Service(state, ("F1", 12, "sentinel"));
-
-        Assert.Contains("Sentinel", service.Forget(), StringComparison.Ordinal);
-        Assert.Contains("was not bound", service.Forget(), StringComparison.Ordinal);
-    }
-
     /// <summary>Runs a whole settle window through, in the ticks the app would.</summary>
     private static ShipCoreSwitch? Settled(ShipCoreService service)
     {

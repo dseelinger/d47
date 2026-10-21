@@ -242,26 +242,6 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
         return $"{persona.Name} now flies {Describe(ship)}.";
     }
 
-    /// <summary>Unbinds the ship the Commander is in, and says what happened.</summary>
-    public string Forget()
-    {
-        var state = game();
-
-        if (state?.Ship.ShipId is not { } shipId)
-        {
-            return "I do not know which ship you are in yet — nothing has said so this session.";
-        }
-
-        var was = For(shipId);
-
-        if (!store.Forget(Fid, shipId))
-        {
-            return $"{Describe(state.Ship)} was not bound to a core.";
-        }
-
-        return $"{Describe(state.Ship)} no longer asks for {PersonaCatalog.Resolve(was!.Core).Name}. "
-               + "Whoever is aboard stays aboard.";
-    }
 
     /// <summary>What the ship they are in is bound to.</summary>
     public string DescribeCurrent()

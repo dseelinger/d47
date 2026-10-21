@@ -469,8 +469,6 @@ public static class PersonaCapability
                 + "can tell which ship is which.",
             Kind = SettingKind.Info,
             DocsAnchor = "cores-by-ship",
-            PressLabel = "Forget this ship's core",
-            Press = () => ships.Forget(),
             Binding = new SettingBinding { Read = _ => ships.Status().Block },
             Note = _ => ships.Status().Second,
             Problems = () => [.. ships.Store.Problems.Select(problem => (problem.Where, problem.Reason))],

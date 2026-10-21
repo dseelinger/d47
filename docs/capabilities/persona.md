@@ -567,9 +567,9 @@ Not reachable by the model.
 #### Cores by ship {#cores-by-ship}
 
 How many ships have a core, out of your fleet, and the first three by name ("9 of 23 ships have a
-core: Cold Iron with Warden, Long Odds with Cora, Brass Halo with Analyst Prime and 6 more"), and
-the button that forgets the one you are in. Before the fleet has been read it counts the bound
-ships and says to dock somewhere with a shipyard.
+core: Cold Iron with Warden, Long Odds with Cora, Brass Halo with Analyst Prime and 6 more").
+Before the fleet has been read it counts the bound ships and says to dock somewhere with a
+shipyard. To unbind a ship, pick it in the **Ship** row and choose Nobody for its core.
 
 A line the file refused — a core that does not exist, a ship bound twice — is reported in a
 warning under the row, with each line's place and reason, rather than silently dropped.
