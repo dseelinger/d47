@@ -386,6 +386,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     Func<string, Task<bool>>? IPanelTabHost.Copy => _copy;
 
+    Action<string>? IPanelTabHost.Browse => _openHelp;
+
     SpeakerPortraits? IPanelTabHost.Portraits => _portraits;
 
     Func<string?>? IPanelTabHost.CommanderName => _commanderName;

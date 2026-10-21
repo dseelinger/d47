@@ -59,6 +59,8 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     public const string NeedsTool = "get_construction_needs";
 
+    public const string PlannerLabel = "RAVEN COLONIAL";
+
     public const string SearchLabel = "Search markets";
 
     public const string Covered = "✓ COVERED";
@@ -104,6 +106,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private readonly ConstructionSurface _surface;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly bool _headset;
+    private readonly Action<string>? _browse;
 
     private readonly Button _search = new() { Content = SearchLabel };
     private readonly Button _cancel = new() { Content = "Cancel", IsVisible = false };
@@ -115,9 +118,10 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private object? _seen;
     private string? _plannedKey;
 
-    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false)
+    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false, Action<string>? browse = null)
     {
         _surface = surface;
+        _browse = browse;
         _copy = copy;
         _headset = headset;
         _stacked = headset;
@@ -762,6 +766,9 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             ? line
             : null;
 
+    /// <summary>The Raven Colonial planner's page for a system.</summary>
+    public static string PlannerUrl(string systemName) => "https://ravencolonial.com/#sys=" + Uri.EscapeDataString(systemName);
+
     private Grid TitleRow(string name, string? systemName, string? line, CommanderGameState state)
     {
         var title = TitleText.Build(name, 24, TitleRank.Screen);
@@ -795,15 +802,44 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             Children = { heading },
         };
 
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Bottom };
+
+        if (systemName is not null && _browse is { } browse)
+        {
+            var planner = Glyphs.Quiet(
+                new Button { Name = "PlannerLink", VerticalAlignment = VerticalAlignment.Center, Tag = PlannerUrl(systemName) },
+                PlannerLabel,
+                $"Opens {systemName} on Raven Colonial, in your browser");
+            planner.Click += (_, _) => OpenPlanner(browse, systemName);
+            actions.Children.Add(planner);
+        }
+
         if (systemName is not null && _copy is { } clipboard)
         {
             var copy = CopyGlyph.For(systemName, clipboard);
-            copy.VerticalAlignment = VerticalAlignment.Bottom;
-            Grid.SetColumn(copy, 1);
-            titleRow.Children.Add(copy);
+            copy.VerticalAlignment = VerticalAlignment.Center;
+            actions.Children.Add(copy);
+        }
+
+        if (actions.Children.Count > 0)
+        {
+            Grid.SetColumn(actions, 1);
+            titleRow.Children.Add(actions);
         }
 
         return titleRow;
+    }
+
+    private static void OpenPlanner(Action<string> browse, string systemName)
+    {
+        try
+        {
+            browse(PlannerUrl(systemName));
+        }
+        catch (Exception)
+        {
+        // Nothing to say and nowhere to say it.
+        }
     }
 
     private static Border CarrierCell(CarrierState carrier)

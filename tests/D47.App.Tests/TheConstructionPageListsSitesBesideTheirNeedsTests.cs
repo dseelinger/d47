@@ -159,7 +159,8 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         SourcingBoard? board = null,
         CapabilityRegistry? registry = null,
         bool lookups = true,
-        bool onFoot = false)
+        bool onFoot = false,
+        Action<string>? browse = null)
     {
         var root = TestSurface.MemoryFolder("d47-construction-page-tests");
         var checklists = new ChecklistService(
@@ -182,6 +183,12 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableCopy(new NoClipboard());
+
+        if (browse is not null)
+        {
+            panel.EnableHelp(browse);
+        }
+
         panel.EnableLoadout(
             ships,
             checklists,
@@ -429,6 +436,47 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         Press(Rows(panel)[1]);
         Capture(window, $"assets-construction-stale-{theme}.png");
 
+        window.Close();
+    }
+
+    [Theory]
+    [InlineData("HIP 47126", "https://ravencolonial.com/#sys=HIP%2047126")]
+    [InlineData("Wolf 359", "https://ravencolonial.com/#sys=Wolf%20359")]
+    [InlineData("Sol", "https://ravencolonial.com/#sys=Sol")]
+    [InlineData("Col 285 Sector VX-W b16-6", "https://ravencolonial.com/#sys=Col%20285%20Sector%20VX-W%20b16-6")]
+    [InlineData("Barnard's Star", "https://ravencolonial.com/#sys=Barnard%27s%20Star")]
+    public void ThePlannerAddressEscapesTheSystemName(string system, string url) =>
+        Assert.Equal(url, ConstructionPage.PlannerUrl(system));
+
+    private static Button? PlannerButton(PanelView panel) =>
+        Page(panel).GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == "PlannerLink");
+
+    [AvaloniaFact]
+    public void ASiteWithASystemOffersItOnRavenColonialAndTheClickOpensIt()
+    {
+        var opened = new List<string>();
+        var (window, panel) = Open(State(Reconciled), browse: opened.Add);
+
+        var button = PlannerButton(panel);
+        Assert.NotNull(button);
+        Assert.Equal(ConstructionPage.PlannerLabel, button.Content);
+
+        Press(button);
+
+        Assert.Equal([ConstructionPage.PlannerUrl("HIP 47126")], opened);
+
+        Capture(window, "assets-construction-planner-link.png");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void APageWithNoOpenerDrawsNoRavenColonialButton()
+    {
+        var (window, panel) = Open(State(Reconciled));
+
+        Assert.Null(PlannerButton(panel));
+
+        Capture(window, "assets-construction-no-planner-link.png");
         window.Close();
     }
 }

@@ -21,6 +21,9 @@ internal interface IPanelTabHost
 
     Func<string, Task<bool>>? Copy { get; }
 
+    /// <summary>Opens an address in the Commander's browser, or null where this surface has none.</summary>
+    Action<string>? Browse { get; }
+
     SpeakerPortraits? Portraits { get; }
 
     Func<string?>? CommanderName { get; }
