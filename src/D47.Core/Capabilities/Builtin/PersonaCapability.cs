@@ -389,11 +389,12 @@ public static class PersonaCapability
             ChoiceLabel = key => ships.Fleet()
                 .FirstOrDefault(entry => Keyed(entry.ShipId) == key)
                 .Said ?? key,
+            ChoiceStatus = (_, key) => ShipStatus(ships, key),
             WhyNoChoices = _ =>
                 "I have not seen your fleet yet. Dock somewhere with a shipyard and I will read it.",
             Binding = new SettingBinding
             {
-                Read = settings => settings.Persona.ShipCoreShip is var id and not 0 ? Keyed(id) : null,
+                Read = settings => ShipShown(settings, ships) is var id and not 0 ? Keyed(id) : null,
                 Write = (settings, value) => settings with
                 {
                     Persona = settings.Persona with
@@ -408,6 +409,10 @@ public static class PersonaCapability
             Key = ShipCoreKey,
             Advanced = true,
             Label = "Core for that ship",
+            LabelFor = settings => ShipShown(settings, ships) is var id and not 0
+                && ships.Fleet().FirstOrDefault(entry => entry.ShipId == id).Said is { Length: > 0 } said
+                    ? $"Core for {said}"
+                    : "Core for that ship",
             Help =
                 "A ship can have its own core, so changing ship changes who answers "
                 + "you. Nothing is bound until you say so, and boarding a ship you have not bound "
@@ -435,7 +440,7 @@ public static class PersonaCapability
             Refuses = (_, id) => id == Nobody ? null : WhyAsleep(host, id),
             Binding = new SettingBinding
             {
-                Read = settings => settings.Persona.ShipCoreShip is var id and not 0
+                Read = settings => ShipShown(settings, ships) is var id and not 0
                     ? ships.For(id)?.Core ?? Nobody
                     : null,
 
@@ -443,7 +448,7 @@ public static class PersonaCapability
                 // ship-cores.json, not here.
                 Write = (settings, value) =>
                 {
-                    if (settings.Persona.ShipCoreShip is var id and not 0)
+                    if (ShipShown(settings, ships) is var id and not 0)
                     {
                         ships.BindTo(id, value == Nobody ? null : value);
                     }
@@ -471,6 +476,27 @@ public static class PersonaCapability
             Problems = () => [.. ships.Store.Problems.Select(problem => (problem.Where, problem.Reason))],
         },
     ];
+
+    /// <summary>The ship the Ship row shows: the Commander's pick, else the ship aboard, else 0.</summary>
+    private static int ShipShown(D47Settings settings, ShipCoreService ships) =>
+        settings.Persona.ShipCoreShip is not 0 and var picked ? picked : ships.CurrentShipId ?? 0;
+
+    /// <summary>A ship's bound core, or NO CORE; the ship aboard reads "· ABOARD" in cyan.</summary>
+    private static ChoiceStatus? ShipStatus(ShipCoreService ships, string key)
+    {
+        if (!int.TryParse(key, CultureInfo.InvariantCulture, out var id))
+        {
+            return null;
+        }
+
+        var core = ships.For(id) is { } binding ? PersonaCatalog.Resolve(binding.Core).Name : null;
+
+        return ships.CurrentShipId == id
+            ? new ChoiceStatus(core is null ? "NO CORE · aboard" : $"{core} · aboard", ChoiceTone.Cyan)
+            : core is null
+                ? new ChoiceStatus("NO CORE", ChoiceTone.Grey)
+                : new ChoiceStatus(core, ChoiceTone.Accent);
+    }
 
     /// <summary>The status drawn under a core the running story holds back.</summary>
     private static ChoiceStatus? Locked(PersonaHost host, string id) =>

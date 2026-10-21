@@ -74,6 +74,8 @@ public enum ChoiceTone
     Yellow,
     White,
     Red,
+    Accent,
+    Cyan,
 }
 
 /// <summary>A short line of live state drawn under one choice — "PAID · KEY STORED".</summary>
@@ -108,6 +110,9 @@ public sealed record SettingRow
     public required string Key { get; init; }
 
     public required string Label { get; init; }
+
+    /// <summary>The caption drawn for the row, computed from the settings; <see cref="Label"/> still names it for search and reset.</summary>
+    public Func<D47Settings, string>? LabelFor { get; init; }
 
     /// <summary>The short form.</summary>
     public required string Help { get; init; }
@@ -408,6 +413,9 @@ public sealed record SettingRow
     /// </summary>
     public string? WhyNoChoicesFor(D47Settings settings) =>
         ChoicesFor(settings).Count > 0 ? null : WhyNoChoices?.Invoke(settings);
+
+    /// <summary>The caption to draw: <see cref="LabelFor"/> where set, else <see cref="Label"/>.</summary>
+    public string CaptionFor(D47Settings settings) => LabelFor?.Invoke(settings) ?? Label;
 
     public bool Applies(D47Settings settings) => AppliesWhen?.Invoke(settings) ?? true;
 

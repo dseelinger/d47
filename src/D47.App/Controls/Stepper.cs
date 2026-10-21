@@ -286,6 +286,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
             ChoiceTone.Yellow => Theming.ThemeManager.YellowKey,
             ChoiceTone.White => Theming.ThemeManager.WhiteKey,
             ChoiceTone.Red => Theming.ThemeManager.RedKey,
+            ChoiceTone.Accent => Theming.ThemeManager.AKey,
+            ChoiceTone.Cyan => Theming.ThemeManager.CyanKey,
             _ => Theming.ThemeManager.GreyKey,
         });
 }

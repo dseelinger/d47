@@ -207,6 +207,8 @@ public sealed class PickerChoice : INotifyPropertyChanged
             Raise(nameof(StatusIsYellow));
             Raise(nameof(StatusIsWhite));
             Raise(nameof(StatusIsRed));
+            Raise(nameof(StatusIsAccent));
+            Raise(nameof(StatusIsCyan));
             Raise(nameof(Size));
             Raise(nameof(CanRetry));
         }
@@ -232,6 +234,10 @@ public sealed class PickerChoice : INotifyPropertyChanged
     public bool StatusIsWhite => Tone == ChoiceTone.White;
 
     public bool StatusIsRed => Tone == ChoiceTone.Red;
+
+    public bool StatusIsAccent => Tone == ChoiceTone.Accent;
+
+    public bool StatusIsCyan => Tone == ChoiceTone.Cyan;
 
     /// <summary>The row uses this voice now.</summary>
     public bool InUse { get; init; }

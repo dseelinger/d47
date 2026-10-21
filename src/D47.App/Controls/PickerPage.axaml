@@ -128,6 +128,12 @@
         <Style Selector="TextBlock.status.red">
           <Setter Property="Foreground" Value="{DynamicResource D47.Red}" />
         </Style>
+        <Style Selector="TextBlock.status.accent">
+          <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+        </Style>
+        <Style Selector="TextBlock.status.cyan">
+          <Setter Property="Foreground" Value="{DynamicResource D47.Cyan}" />
+        </Style>
         <Style Selector="TextBlock.tag">
           <Setter Property="Foreground" Value="{DynamicResource D47.Cyan}" />
         </Style>
@@ -200,6 +206,8 @@
                        Classes.yellow="{Binding StatusIsYellow}"
                        Classes.white="{Binding StatusIsWhite}"
                        Classes.red="{Binding StatusIsRed}"
+                       Classes.accent="{Binding StatusIsAccent}"
+                       Classes.cyan="{Binding StatusIsCyan}"
                        Text="{Binding Status}"
                        IsVisible="{Binding Status, Converter={x:Static ObjectConverters.IsNotNull}}"
                        Margin="12,0,0,0"

@@ -1519,6 +1519,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             };
         }
 
+        if (row.LabelFor is not null)
+        {
+            var captionBefore = refresh;
+
+            refresh = () =>
+            {
+                captionBefore();
+                label.Text = row.CaptionFor(_settings!.Current);
+            };
+        }
+
         var caption = new StackPanel { Spacing = 0 };
 
         if (under && !row.PageTop)
