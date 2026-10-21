@@ -518,6 +518,31 @@ the picture and none of them. An entry in a region D47 cannot name has none of t
 **Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
 pictures you saved yourself, even for stock pictures already on disk, which are kept.
 
+### Codex publish token {#codex-publish-token}
+
+This is for the maintainer of the stock codex pictures. The stock pictures are files on releases of the
+public repository `dseelinger/d47-codex-pictures`, listed by `index.json` on the release `codex-pictures-1`.
+With a token, a codex entry's page in the main window can put a picture on that list for every Commander, or
+take one off it.
+
+To make the token, create a fine-grained personal access token on GitHub with access to the repository
+`dseelinger/d47-codex-pictures` only and the permission **Contents: Read and write**. Paste it into **Codex
+publish token** in the advanced settings, where it is stored encrypted for this Windows account. Without a
+stored token, Directive 47 reads the environment variable `D47_CODEX_PUBLISH_TOKEN`. The repository needs at
+least one commit, such as a README, before the first publish, because GitHub cannot tag an empty repository.
+
+**Publish** shows when your own picture for the entry and region is the one on show. It uploads the picture
+to the highest-numbered `codex-pictures-N` release with fewer than 1000 files, creating the next one when
+none has room, then adds the picture to `index.json`, and deletes the stock picture it replaced. Your picture
+is then deleted from this PC, so the page shows the stock picture every install now sees; the kept capture and
+square stay, so **Re-crop** still works.
+
+**Unpublish** shows when there is a stock picture for the entry and region. It asks first, then takes the
+picture off `index.json` and deletes it from the release. Pictures Commanders saved themselves are kept.
+
+One publish or unpublish runs at a time. A failure stops at the step it reached, shows GitHub's message,
+and changes no file on this PC. Neither button shows on the big panel or without a token.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

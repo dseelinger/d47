@@ -3,10 +3,13 @@ using D47.Core.Storage;
 
 namespace D47.App.Panel;
 
-/// <summary>What the codex entry page draws pictures from: the store, the stock setting, the shipped family placeholders and the captures to cut a picture from.</summary>
-public sealed class CodexPictureSet(CodexPictureStore store, Func<bool> stockOn, IFileSystem files, string placeholders, string? captures = null)
+/// <summary>What the codex entry page draws pictures from: the store, the stock setting, the shipped family placeholders, the captures to cut a picture from and the maintainer's publisher.</summary>
+public sealed class CodexPictureSet(
+    CodexPictureStore store, Func<bool> stockOn, IFileSystem files, string placeholders, string? captures = null, CodexPicturePublisher? publisher = null)
 {
     public CodexPictureStore Store => store;
+
+    public CodexPicturePublisher? Publisher => publisher;
 
     public bool StockOn => stockOn();
 

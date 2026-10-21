@@ -680,6 +680,12 @@ public static class SettingsLayout
                                 E("screenshots.convert"),
                                 E("screenshots.folder"),
                             ]),
+                        G(
+                            "Codex publishing",
+                            "The maintainer's token for publishing stock codex pictures to every Commander.",
+                            [
+                                E(Capabilities.Builtin.JournalCapability.CodexPublishTokenKey),
+                            ]),
                     ]),
             ]),
         new SettingsArea(

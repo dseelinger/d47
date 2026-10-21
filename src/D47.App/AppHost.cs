@@ -3601,7 +3601,13 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Ui.CodexPictures,
             files,
             paths.ShippedCodexPlaceholders,
-            paths.Captures);
+            paths.Captures,
+            new CodexPicturePublisher(
+                host.CodexPictures,
+                () => D47.Core.Interface.CodexPublishToken.Resolve(
+                    host.Secrets.TryGet(D47.Core.Interface.CodexPublishToken.SecretName, out var stored) ? stored : null, Environment.GetEnvironmentVariable),
+                () => D47.Core.Interface.CodexPublishToken.Present(host.Secrets.Names.Contains(D47.Core.Interface.CodexPublishToken.SecretName), Environment.GetEnvironmentVariable),
+                loggerFactory.CreateLogger<CodexPicturePublisher>()));
         host.StoryRatings = storyRatings;
         host.StoryBench = stores.StoryBench;
         endingAnswer.Answer = host.Narration.AnswerEnding;

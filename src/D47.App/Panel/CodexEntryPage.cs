@@ -23,6 +23,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private readonly CodexTable _table;
     private readonly bool _headset;
     private readonly PanelNavigator? _nav;
+    private readonly Func<string, Task<bool>> _confirm;
     private readonly StackPanel _body = new();
 
     private CodexLedger? _seenLedger;
@@ -38,9 +39,11 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         CodexPictureSet? pictures,
         bool headset = false,
         CodexTable? table = null,
-        PanelNavigator? nav = null)
+        PanelNavigator? nav = null,
+        Func<string, Task<bool>>? confirm = null)
     {
         _nav = nav;
+        _confirm = confirm ?? AskAsync;
         _state = state;
         _entryId = entryId;
         _regionId = regionId;
@@ -82,6 +85,11 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         if (_pictures is not null)
         {
             _pictures.Store.Arrived += Arrived;
+
+            if (_pictures.Publisher is { } publisher)
+            {
+                publisher.Changed += PublishChanged;
+            }
         }
 
         Draw();
@@ -94,6 +102,11 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         if (_pictures is not null)
         {
             _pictures.Store.Arrived -= Arrived;
+
+            if (_pictures.Publisher is { } publisher)
+            {
+                publisher.Changed -= PublishChanged;
+            }
         }
     }
 
@@ -106,6 +119,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             Dispatcher.UIThread.Post(Draw);
         }
     }
+
+    private void PublishChanged() => Dispatcher.UIThread.Post(Draw);
 
     private void Draw()
     {
@@ -141,7 +156,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private StackPanel PictureColumn(CodexEntryView view)
     {
         var column = PictureOf(view);
-        AddActions(column);
+        AddActions(column, view);
 
         return column;
     }
@@ -188,7 +203,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     }
 
     /// <summary>The picture actions: main window only, and only for a region D47 can name.</summary>
-    private void AddActions(StackPanel column)
+    private void AddActions(StackPanel column, CodexEntryView view)
     {
         if (_headset || _nav is not { } nav || _pictures is not { } pictures || _regionId is not { } region)
         {
@@ -211,39 +226,66 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         void Choose() => nav.Drill(CodexPage.ChooseCrumb(key));
 
+        var stock = store.StockRows().Any(row => row.Key == key);
+
         if (!own)
         {
             Tile("CodexChoose", "Choose a picture", Choose);
-            column.Children.Add(actions);
-
-            return;
         }
-
-        if (store.HasLocalSource(key))
+        else
         {
-            Tile("CodexRecrop", "Re-crop", () => nav.Drill(CodexPage.CropCrumb(key, kept: true)));
+            if (store.HasLocalSource(key))
+            {
+                Tile("CodexRecrop", "Re-crop", () => nav.Drill(CodexPage.CropCrumb(key, kept: true)));
+            }
+
+            Tile("CodexReplace", "Replace", Choose);
+
+            Tile(
+                stock ? "CodexUseStock" : "CodexRemoveMine",
+                stock ? "Use the stock picture" : "Remove my picture",
+                () =>
+                {
+                    try
+                    {
+                        store.RemoveLocal(key);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        _failure = $"Your picture could not be removed: {ex.Message}";
+                    }
+
+                    Draw();
+                });
         }
 
-        Tile("CodexReplace", "Replace", Choose);
+        var publisher = pictures.Publisher is { HasToken: true } present ? present : null;
 
-        var stock = store.StockRows().Any(row => row.Key == key);
-        Tile(
-            stock ? "CodexUseStock" : "CodexRemoveMine",
-            stock ? "Use the stock picture" : "Remove my picture",
-            () =>
+        if (publisher is not null)
+        {
+            var idle = publisher.Doing is null;
+
+            if (own)
             {
-                try
-                {
-                    store.RemoveLocal(key);
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    _failure = $"Your picture could not be removed: {ex.Message}";
-                }
+                Tile("CodexPublish", "Publish", () => _ = publisher.Publish(key)).IsEnabled = idle;
+            }
 
-                Draw();
-            });
+            if (stock)
+            {
+                Tile("CodexUnpublish", "Unpublish", () => _ = UnpublishAsync(publisher, key, view.Name)).IsEnabled = idle;
+            }
+        }
+
         column.Children.Add(actions);
+
+        if (publisher?.Doing is { } doing)
+        {
+            column.Children.Add(Hint(doing));
+        }
+        else if (publisher?.Last is { Failure: { } failed } last && last.Key == key)
+        {
+            column.Children.Add(Hint(failed));
+        }
 
         if (_failure is not null)
         {
@@ -251,6 +293,25 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             _failure = null;
         }
     }
+
+    /// <summary>The question Unpublish asks before it sends anything.</summary>
+    public static string UnpublishQuestion(string entry, int regionId) =>
+        $"Remove the stock picture of {entry} in {GalacticRegions.NameOf(regionId) ?? CodexModel.NoRegionName} for every Commander? "
+        + "Pictures they saved themselves are kept.";
+
+    private async Task UnpublishAsync(CodexPicturePublisher publisher, CodexPictureKey key, string entry)
+    {
+        if (await _confirm(UnpublishQuestion(entry, key.RegionId)).ConfigureAwait(true))
+        {
+            _ = publisher.Unpublish(key);
+        }
+    }
+
+    private async Task<bool> AskAsync(string question) =>
+        TopLevel.GetTopLevel(this) is Window owner
+        && await new ConfirmDialog("Unpublish", question, confirmLabel: "Unpublish", declineLabel: "Keep it", destructive: true)
+            .AskAsync(owner)
+            .ConfigureAwait(true);
 
     private Image Pic(string name, Bitmap source) => new()
     {

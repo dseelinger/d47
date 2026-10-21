@@ -315,3 +315,33 @@ public static class CodexPictures
             : new CodexPictureChoice(CodexPictureSource.Stock, otherStock.Key, true, otherStock);
     }
 }
+
+/// <summary>The maintainer's token for publishing stock codex pictures: the stored secret, else the environment variable.</summary>
+public static class CodexPublishToken
+{
+    public const string SecretName = "codex-publish-token";
+
+    public const string Variable = "D47_CODEX_PUBLISH_TOKEN";
+
+    /// <summary>The stored token, else <see cref="Variable"/>; null when neither holds one.</summary>
+    public static string? Resolve(string? stored, Func<string, string?> environment)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+
+        if (!string.IsNullOrWhiteSpace(stored))
+        {
+            return stored;
+        }
+
+        var fromEnvironment = environment(Variable);
+        return string.IsNullOrWhiteSpace(fromEnvironment) ? null : fromEnvironment.Trim();
+    }
+
+    /// <summary>Whether a token is stored or in <see cref="Variable"/>.</summary>
+    public static bool Present(bool stored, Func<string, string?> environment)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+
+        return stored || !string.IsNullOrWhiteSpace(environment(Variable));
+    }
+}

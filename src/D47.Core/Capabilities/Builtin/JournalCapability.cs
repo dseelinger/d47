@@ -20,6 +20,8 @@ public static class JournalCapability
 
     public const string CodexPicturesKey = "journal.codexPictures";
 
+    public const string CodexPublishTokenKey = "journal.codexPublishToken";
+
     /// <param name="history">
     /// How far the walk over older journals has got, so a fleet question says that rather than reporting
     /// an absence the walk has not ruled out (#148).
@@ -165,6 +167,21 @@ public static class JournalCapability
                             Ui = s.Ui with { CodexPictures = bool.TryParse(v, out var on) && on },
                         },
                     },
+                },
+                new SettingRow
+                {
+                    Key = CodexPublishTokenKey,
+                    Advanced = true,
+                    Label = "Codex publish token",
+                    Help =
+                        "For the maintainer of the stock codex pictures. With a token here, a codex entry's page in the main window "
+                        + "offers Publish and Unpublish, which put a picture on, or take it off, the stock pictures every Commander sees.\n\n"
+                        + "It is a fine-grained GitHub token with contents write on dseelinger/d47-codex-pictures only. It is stored "
+                        + "encrypted for this Windows account and is write-only. Without one here, D47 reads "
+                        + "D47_CODEX_PUBLISH_TOKEN from the environment.",
+                    Kind = SettingKind.Secret,
+                    SecretName = Interface.CodexPublishToken.SecretName,
+                    DocsAnchor = "codex-publish-token",
                 },
             ],
             Tools =

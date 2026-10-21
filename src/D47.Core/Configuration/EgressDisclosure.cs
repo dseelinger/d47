@@ -118,6 +118,9 @@ public static class EgressDisclosure
     /// <summary>Fetching the list of stock codex pictures and the pictures a codex page shows.</summary>
     public const string CodexPictures = "codexpictures";
 
+    /// <summary>Publishing and unpublishing stock codex pictures with the maintainer's token.</summary>
+    public const string CodexPublish = "codexpublish";
+
     /// <summary>Fetching the avatar clips of the core aboard.</summary>
     public const string AvatarClips = "avatarclips";
 
@@ -170,6 +173,7 @@ public static class EgressDisclosure
         HullArt,
         AvatarClips,
         CodexPictures,
+        CodexPublish,
         StockStories,
         StoryRatings,
         SpeechModels,
@@ -211,6 +215,7 @@ public static class EgressDisclosure
         ChatterboxVoices => "Chatterbox voices",
         HullArt => "Hull pictures",
         CodexPictures => "Codex pictures",
+        CodexPublish => "Codex picture publishing",
         AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
         StoryRatings => "Story ratings",
@@ -234,6 +239,7 @@ public static class EgressDisclosure
     /// <c>LlmProviderCapabilities.SupportsWebSearch</c> says.
     /// </param>
     /// <param name="imagesAvailable">Whether the model in use reads pictures.</param>
+    /// <param name="codexPublishTokenPresent">Whether a codex publish token is stored or in the environment.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
@@ -241,7 +247,8 @@ public static class EgressDisclosure
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
-        IReadOnlyList<RunningStoryVoice>? runningStory = null) => id switch
+        IReadOnlyList<RunningStoryVoice>? runningStory = null,
+        bool codexPublishTokenPresent = false) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
@@ -504,6 +511,20 @@ public static class EgressDisclosure
                 CodexPictures,
                 NameOf(CodexPictures),
                 "Stock codex pictures are off, so nothing is fetched and a codex page shows only pictures you saved yourself."),
+
+        CodexPublish => codexPublishTokenPresent
+            ? new EgressEntry(
+                CodexPublish,
+                NameOf(CodexPublish),
+                "api.github.com and uploads.github.com",
+                "When you press Publish or Unpublish: the picture, its codex entry and region, and your publish token, "
+                + "to dseelinger/d47-codex-pictures. Nothing else goes with it.",
+                Active: true,
+                Summary: "When you press Publish or Unpublish: the picture, its codex entry and region, and your publish token. Nothing else goes with it.")
+            : EgressEntry.Silent(
+                CodexPublish,
+                NameOf(CodexPublish),
+                "No codex publish token is stored, so nothing is published."),
 
         AvatarClips => settings.Ui.AvatarClips
             ? new EgressEntry(
@@ -1070,8 +1091,9 @@ public static class EgressDisclosure
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
-        IReadOnlyList<RunningStoryVoice>? runningStory = null) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory))];
+        IReadOnlyList<RunningStoryVoice>? runningStory = null,
+        bool codexPublishTokenPresent = false) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
@@ -1080,9 +1102,10 @@ public static class EgressDisclosure
         bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
-        IReadOnlyList<RunningStoryVoice>? runningStory = null)
+        IReadOnlyList<RunningStoryVoice>? runningStory = null,
+        bool codexPublishTokenPresent = false)
     {
-        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory);
+        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

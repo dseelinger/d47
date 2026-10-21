@@ -143,6 +143,34 @@ public sealed class CodexPictureStore
         _files.Delete(Path.Combine(folder, key.CropFileName));
     }
 
+    /// <summary>
+    /// Keeps a picture just published as <paramref name="row"/> and the index that lists it, then deletes the
+    /// Commander's picture of that key; its source and square stay.
+    /// </summary>
+    public void Published(CodexPictureRow row, byte[] picture, string index, IReadOnlyList<CodexPictureRow> rows)
+    {
+        _files.WriteBytes(StockPath(row.Asset), picture);
+        AcceptIndex(index, rows);
+        _files.Delete(Path.Combine(_folder, LocalFolder, row.Key.FileName));
+    }
+
+    /// <summary>Keeps the index written without <paramref name="row"/> and deletes its picture from <c>stock\</c>.</summary>
+    public void Unpublished(CodexPictureRow row, string index, IReadOnlyList<CodexPictureRow> rows)
+    {
+        AcceptIndex(index, rows);
+        _files.Delete(StockPath(row.Asset));
+    }
+
+    private void AcceptIndex(string index, IReadOnlyList<CodexPictureRow> rows)
+    {
+        _files.WriteText(StockPath(CodexPictureIndex.IndexName), index);
+
+        lock (_gate)
+        {
+            _rows = rows;
+        }
+    }
+
     /// <summary>The fetch started for <paramref name="key"/>; true when the picture landed.</summary>
     public Task<bool> Fetched(CodexPictureKey key) => _asked.TryGetValue(key, out var task) ? task : Task.FromResult(false);
 
