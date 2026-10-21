@@ -163,13 +163,11 @@ public static class AcquisitionGuide
 
             "arx-early-access" => new Gating([AcquisitionMethod.Shipyard], "ARX early access only"),
 
-            { } requirement when requirement.StartsWith("empire:", StringComparison.Ordinal)
-                && int.TryParse(requirement["empire:".Length..], out var rank) =>
-                new Gating([AcquisitionMethod.Shipyard], $"Empire rank {NavalRanks.EmpireName(rank)}"),
-
-            { } requirement when requirement.StartsWith("federation:", StringComparison.Ordinal)
-                && int.TryParse(requirement["federation:".Length..], out var rank) =>
-                new Gating([AcquisitionMethod.Shipyard], $"Federal navy rank {NavalRanks.FederationName(rank)}"),
+            _ when NavalRanks.Gate(ship.Requirement) is { } gate => new Gating(
+                [AcquisitionMethod.Shipyard],
+                gate.Navy == Navy.Empire
+                    ? $"Empire rank {NavalRanks.EmpireName(gate.Rank)}"
+                    : $"Federal navy rank {NavalRanks.FederationName(gate.Rank)}"),
 
             _ => new Gating([AcquisitionMethod.Shipyard], null),
         };

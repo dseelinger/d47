@@ -209,4 +209,43 @@ public class TheStandingScreenFillsFromAZeroMarkTests
 
         window.Close();
     }
+
+    private const string LowRanks =
+        """{"event":"Rank","Combat":0,"Trade":0,"Explore":0,"Soldier":0,"Exobiologist":0,"Empire":2,"Federation":1,"CQC":0}""";
+
+    [AvaloniaFact]
+    public void ANavyListsWhatItHasUnlockedAndWhatComesNext()
+    {
+        var (window, panel, _) = Open(LowRanks);
+
+        Assert.True(Shows(panel, "UNLOCKED · 0"));
+        Assert.True(Shows(panel, "Nothing yet. Master unlocks the first one."));
+        Assert.True(Shows(panel, "NEXT · MASTER"));
+        Assert.True(Shows(panel, "1 RANK AWAY"));
+        Assert.True(Shows(panel, "NEXT · MIDSHIPMAN"));
+        Assert.True(Shows(panel, "2 RANKS AWAY"));
+        Assert.True(Shows(panel, "LATER · 3"));
+        Assert.True(Shows(panel, "SQUIRE · 4"));
+        Assert.Equal(Published(ThemeManager.AKey), Ink(Text(panel, "NEXT · MASTER").Foreground));
+
+        if (Environment.GetEnvironmentVariable("D47_CAPTURES") == "1")
+        {
+            using var frame = window.CaptureRenderedFrame()!;
+            frame.SaveCapture("commander-standing-unlocks.png");
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ATopRankedNavyDrawsNoNextOrLater()
+    {
+        var (window, panel, _) = Open(Rank);
+
+        Assert.True(Shows(panel, "UNLOCKED · 4"));
+        Assert.False(Shows(panel, "LATER"));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text?.StartsWith("NEXT") == true);
+
+        window.Close();
+    }
 }

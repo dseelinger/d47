@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each navy on the Standing page lists what its ranks unlock: ships and the Sol and Achenar permits already unlocked with the rank that gave them, the next rank that unlocks something and how many ranks away it is, and everything later.
+
 The open Powerplay goal lists what your Power's ranks give. Held at your rank shows each perk and rebuy cut at its latest value and the rank it last changed at, the modules unlocked (or the first one and its rank), your mini care packages and the rank decal. Still to come lists, chapter by chapter, each rank that adds or improves a perk, rebuy cut or module, as old → new, with the chapter's merits and share of the climb. Small ticks under the track mark those ranks. The voice answer for Powerplay ranks is worded as before.
 
 A goal on the Goals page is drawn as one segmented track instead of two bars: one segment per rank on a career or navy ladder, per Powerplay stretch (sized by the merits it takes) and per line of a story, grouped into chapters labelled with their share of the goal. Passed segments are solid, the current one is filled to its percent with a Cyan marker, and its name and percent sit under the track. The goal's percent is at the right of its name. A Powerplay goal's percent is now its merits over 775,000.

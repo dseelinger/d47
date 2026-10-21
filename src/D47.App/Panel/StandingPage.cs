@@ -25,6 +25,8 @@ public sealed class StandingPage : UserControl
     /// <summary>The top of a navy ladder, as <see cref="NavalRanks"/> numbers it.</summary>
     public const int NavyTop = 14;
 
+    private const double UnlockRowHeight = 36;
+
     private static readonly (string Key, string Label)[] Powers =
     [
         ("Empire", "Empire"),
@@ -141,12 +143,12 @@ public sealed class StandingPage : UserControl
 
         _body.Children.Add(rows);
 
-        _body.Children.Add(Group("Navy ranks", "Your rank in each navy and how far you are towards the next one."));
+        _body.Children.Add(Group("Navy ranks", "Your rank in each navy, what it has unlocked and what the next ranks unlock."));
 
         var ranks = state?.Ranks ?? RankState.Empty;
         var navies = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 2 };
-        var imperial = NavyCell("Imperial navy", ranks.For("Empire"), NavalRanks.EmpireName);
-        var federal = NavyCell("Federal navy", ranks.For("Federation"), NavalRanks.FederationName);
+        var imperial = NavyCell("Imperial navy", Navy.Empire, ranks.For("Empire"));
+        var federal = NavyCell("Federal navy", Navy.Federation, ranks.For("Federation"));
         Grid.SetColumn(federal, 1);
         navies.Children.Add(imperial);
         navies.Children.Add(federal);
@@ -239,8 +241,10 @@ public sealed class StandingPage : UserControl
         return row;
     }
 
-    private static Control NavyCell(string label, RankStanding? standing, Func<int, string?> named)
+    private static Control NavyCell(string label, Navy navy, RankStanding? standing)
     {
+        Func<int, string?> named = rank => NavalRanks.Name(navy, rank);
+
         var caption = new TextBlock
         {
             Text = label.ToUpperInvariant(),
@@ -282,18 +286,167 @@ public sealed class StandingPage : UserControl
             : standing.Rank >= NavyTop ? 1
             : (standing.Percent ?? 0) / 100.0;
 
-        var cell = new Border
+        var content = new StackPanel
         {
-            Padding = new Thickness(14, 12),
-            Child = new StackPanel
-            {
-                Spacing = 6,
-                Children = { caption, line, Gauge.Track(fill, Gauge.FillKey(GaugeFill.Progress)) },
-            },
+            Spacing = 6,
+            Children = { caption, line, Gauge.Track(fill, Gauge.FillKey(GaugeFill.Progress)) },
         };
+
+        if (standing is not null)
+        {
+            content.Children.Add(UnlockLists(navy, standing.Rank));
+        }
+
+        var cell = new Border { Padding = new Thickness(14, 12), Child = content };
         Themed(cell, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return cell;
+    }
+
+    /// <summary>The unlocked, next and later lists under a navy's bar.</summary>
+    private static Control UnlockLists(Navy navy, int rank)
+    {
+        var unlocks = NavalRanks.UnlocksFor(navy, rank);
+        var rankName = (int at) => NavalRanks.Name(navy, at) ?? $"Rank {at}";
+        var lists = new StackPanel { Margin = new Thickness(0, 10, 0, 0), Spacing = 2 };
+        Grid.SetIsSharedSizeScope(lists, true);
+
+        lists.Children.Add(UnlockHeading("UNLOCKED", unlocks.Unlocked.Count, ThemeManager.GreyKey, null));
+
+        if (unlocks.Unlocked.Count == 0)
+        {
+            var first = unlocks.NextRank is { } at ? rankName(at) : rankName(NavyTop);
+            lists.Children.Add(Prose($"Nothing yet. {first} unlocks the first one."));
+        }
+
+        foreach (var unlock in unlocks.Unlocked)
+        {
+            lists.Children.Add(UnlockRow(unlock, rankName(unlock.Rank), true, true));
+        }
+
+        if (rank >= NavyTop)
+        {
+            return lists;
+        }
+
+        if (unlocks.NextRank is { } nextRank)
+        {
+            var away = nextRank - rank;
+            lists.Children.Add(UnlockHeading(
+                $"NEXT · {rankName(nextRank).ToUpperInvariant()}",
+                null,
+                ThemeManager.AKey,
+                $"{away} {(away == 1 ? "RANK" : "RANKS")} AWAY"));
+
+            foreach (var unlock in unlocks.Next)
+            {
+                lists.Children.Add(UnlockRow(unlock, null, false, true));
+            }
+        }
+
+        lists.Children.Add(UnlockHeading("LATER", unlocks.Later.Count, ThemeManager.GreyKey, null));
+
+        if (unlocks.Later.Count == 0 && unlocks.LastRank is { } last)
+        {
+            lists.Children.Add(Prose($"{rankName(last)} is the last rank that unlocks anything."));
+        }
+
+        foreach (var unlock in unlocks.Later)
+        {
+            lists.Children.Add(UnlockRow(unlock, rankName(unlock.Rank), false, false));
+        }
+
+        return lists;
+    }
+
+    private static Control UnlockHeading(string text, int? count, string key, string? right)
+    {
+        var heading = new TextBlock
+        {
+            Text = count is { } n ? $"{text} · {n}" : text,
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Themed(heading, TextBlock.ForegroundProperty, key);
+
+        var line = new DockPanel { Margin = new Thickness(0, 10, 0, 2) };
+
+        if (right is not null)
+        {
+            var away = new TextBlock
+            {
+                Text = right,
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.Meta,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Themed(away, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            DockPanel.SetDock(away, Dock.Right);
+            line.Children.Add(away);
+        }
+
+        line.Children.Add(heading);
+
+        return line;
+    }
+
+    private static Control Prose(string text)
+    {
+        var block = new TextBlock { Text = text, FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
+        Themed(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        return block;
+    }
+
+    private static Control UnlockRow(NavyUnlock unlock, string? rankName, bool held, bool named)
+    {
+        var grid = new Grid
+        {
+            Height = UnlockRowHeight,
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(held ? 22 : 0, GridUnitType.Pixel),
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto) { MinWidth = 64 },
+                new ColumnDefinition(GridLength.Auto) { SharedSizeGroup = "rank" },
+            ],
+        };
+
+        TextBlock Cell(string text, string key, int column, bool mono = false, bool right = false)
+        {
+            var block = new TextBlock
+            {
+                Text = text,
+                FontFamily = mono ? new FontFamily(Fonts.MonoFamily) : Fonts.ChromeFamily,
+                FontSize = mono ? TypeScale.Meta : TypeScale.Control,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = right ? TextAlignment.Right : TextAlignment.Left,
+                Margin = column >= 2 ? new Thickness(12, 0, 0, 0) : default,
+            };
+            Themed(block, TextBlock.ForegroundProperty, key);
+            Grid.SetColumn(block, column);
+            grid.Children.Add(block);
+
+            return block;
+        }
+
+        if (held)
+        {
+            Cell("✓", ThemeManager.BlueKey, 0);
+        }
+
+        Cell(unlock.Name, named ? ThemeManager.WhiteKey : ThemeManager.GreyKey, 1).TextTrimming = TextTrimming.CharacterEllipsis;
+        Cell(unlock.Kind.ToString().ToUpperInvariant(), ThemeManager.GreyKey, 2, mono: true);
+
+        if (rankName is not null)
+        {
+            Cell($"{rankName.ToUpperInvariant()} · {unlock.Rank}", ThemeManager.GreyKey, 3, mono: true, right: true);
+        }
+
+        return grid;
     }
 
     private static void Themed(StyledElement target, AvaloniaProperty property, string key) =>
