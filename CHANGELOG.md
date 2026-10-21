@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A body in a populated system is no longer a first footfall, whatever its scan says. Elite writes `WasFootfalled:false` on some of those bodies, and d47 used to announce a first footfall there, credit a first-footfall objective and price an organic analysis at five times. It now does none of the three.
+
 The Guardian beacon list now has all 28 systems that carry a Guardian Beacon signal, up from seven. Scanning the beacon in any of the other 21 now wakes the cores and ends a story's act one, and a story sends you to the beacon nearest you, not the nearest of seven.
 
 A story or short story is now checked before you see it: a second model call reads each objective's lines against what that objective can observe and writes again any objective whose lines claim more, such as a mission line that calls its target clean or an ending that says you broke off a fight. The call goes to the provider that wrote the draft, so no new data leaves your machine.

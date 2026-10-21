@@ -67,6 +67,8 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
     /// <summary>Every <c>WasFootfalled</c> a scan has reported, per body, with when it was reported.</summary>
     private readonly Dictionary<(long System, int Body), Dictionary<DateTimeOffset, bool>> _footfalls = [];
 
+    private readonly HashSet<long> _populated = [];
+
     private readonly Dictionary<string, DateTimeOffset> _resets = new(StringComparer.Ordinal);
 
     private string? _current;
@@ -283,6 +285,9 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"SellOrganicData\"", StringComparison.Ordinal)
         || line.Contains("\"ScanType\":\"Analyse\"", StringComparison.Ordinal)
         || (line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal)
@@ -300,11 +305,18 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
 
                 return;
 
+            case "FSDJump" or "Location" or "CarrierJump":
+                if (BodyScans.PopulationOf(journalEvent) is { } entry)
+                {
+                    _ = entry.Populated ? _populated.Add(entry.SystemAddress) : _populated.Remove(entry.SystemAddress);
+                }
+
+                return;
+
             case "Scan":
                 if (journalEvent.Long("SystemAddress") is { } system
                     && journalEvent.Int("BodyID") is { } body
-                    && journalEvent.Raw.TryGetProperty("WasFootfalled", out var flag)
-                    && flag.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    && BodyScans.FootfallFlag(journalEvent, _populated.Contains(system)) is { } taken)
                 {
                     if (!_footfalls.TryGetValue((system, body), out var seen))
                     {
@@ -313,7 +325,7 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
                     }
 
                     // Two scans in one second keep the true, as FirstFootfall does across seconds.
-                    seen[journalEvent.Timestamp] = flag.ValueKind == JsonValueKind.True
+                    seen[journalEvent.Timestamp] = taken
                         || seen.GetValueOrDefault(journalEvent.Timestamp);
                 }
 

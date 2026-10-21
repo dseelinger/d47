@@ -49,14 +49,21 @@ public sealed record AdventureWorld
             return this with { Bodies = Bodies.Apply(journalEvent) };
         }
 
-        if (journalEvent.Kind is not ("FSDJump" or "Location" or "CarrierJump") || journalEvent.String("StarSystem") is not { Length: > 0 } name)
+        if (!BodyScans.IsSystemEntry(journalEvent))
         {
             return this;
         }
 
+        var withBodies = this with { Bodies = Bodies.Apply(journalEvent) };
+
+        if (journalEvent.String("StarSystem") is not { Length: > 0 } name)
+        {
+            return withBodies;
+        }
+
         var names = journalEvent.Raw.Long("SystemAddress") is { } address ? Names.SetItem(address, name) : Names;
 
-        return this with { System = name, Names = names, Standings = Standings.Apply(journalEvent) };
+        return withBodies with { System = name, Names = names, Standings = Standings.Apply(journalEvent) };
     }
 
     /// <summary>Whether <paramref name="journalEvent"/> is a <c>Disembark</c> that took the first footfall on its body.</summary>

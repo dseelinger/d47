@@ -41,6 +41,21 @@ public sealed record BodyScans
 
     private IReadOnlyDictionary<BodyKey, BodyScan> Bodies { get; init; } = new Dictionary<BodyKey, BodyScan>();
 
+    private IReadOnlySet<long> Populated { get; init; } = new HashSet<long>();
+
+    /// <summary>Whether <paramref name="journalEvent"/> is a jump or location event, which says if its system is populated.</summary>
+    public static bool IsSystemEntry(JournalEvent journalEvent) => journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump";
+
+    /// <summary>The <c>WasFootfalled</c> flag of a scan, true wherever the system is populated, since no first footfall is awarded there.</summary>
+    public static bool? FootfallFlag(JournalEvent scan, bool populated) =>
+        populated ? true : NullableBool(scan, "WasFootfalled");
+
+    /// <summary>The population of a system-entry event, or null when it carries no system address.</summary>
+    public static (long SystemAddress, bool Populated)? PopulationOf(JournalEvent journalEvent) =>
+        IsSystemEntry(journalEvent) && journalEvent.Long("SystemAddress") is { } address
+            ? (address, journalEvent.Long("Population") is > 0)
+            : null;
+
     public BodyScan? For(long systemAddress, int bodyId) =>
         Bodies.GetValueOrDefault(new BodyKey(systemAddress, bodyId));
 
@@ -48,8 +63,22 @@ public sealed record BodyScans
     {
         "Scan" => ApplyScan(journalEvent),
         "Disembark" => ApplyDisembark(journalEvent),
+        "FSDJump" or "Location" or "CarrierJump" => ApplyEntry(journalEvent),
         _ => this,
     };
+
+    private BodyScans ApplyEntry(JournalEvent journalEvent)
+    {
+        if (PopulationOf(journalEvent) is not { } entry || Populated.Contains(entry.SystemAddress) == entry.Populated)
+        {
+            return this;
+        }
+
+        var set = new HashSet<long>(Populated);
+        _ = entry.Populated ? set.Add(entry.SystemAddress) : set.Remove(entry.SystemAddress);
+
+        return this with { Populated = set };
+    }
 
     private BodyScans ApplyScan(JournalEvent journalEvent)
     {
@@ -74,7 +103,7 @@ public sealed record BodyScans
             SurfaceTemperature = journalEvent.Double("SurfaceTemperature"),
             SurfacePressure = journalEvent.Double("SurfacePressure"),
             Landable = journalEvent.Bool("Landable"),
-            WasFootfalled = NullableBool(journalEvent, "WasFootfalled"),
+            WasFootfalled = FootfallFlag(journalEvent, Populated.Contains(systemAddress)),
             SeenAt = journalEvent.Timestamp,
             FootfallTakenAt = existing?.FootfallTakenAt,
         };
