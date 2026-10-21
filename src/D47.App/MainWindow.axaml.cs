@@ -479,11 +479,18 @@ public partial class MainWindow : Window
         // Last, so it wraps whatever ZoomHost left behind rather than being zoomed along with the panel
         // (#286). HELP and the pre-release badge sit in this window's title bar; the headset's panel keeps its own.
         var (badge, help) = Panel.MoveChromeToTitleBar();
-        Control beforeButtons = _switcher is null
-            ? help
-            : new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { help, _switcher } };
+        var beforeButtonsRow = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Children = { ServerStatus, help } };
+        if (_switcher is not null)
+        {
+            beforeButtonsRow.Children.Add(_switcher);
+        }
+
+        Control beforeButtons = beforeButtonsRow;
         CaptionStrip.Apply(this, afterVersion: badge, beforeButtons: beforeButtons);
     }
+
+    /// <summary>The game server readout in the title bar, left of HELP; hidden until given a state.</summary>
+    public ServerStatusReadout ServerStatus { get; } = new();
 
     /// <summary>What the panel is showing.</summary>
     public PanelViewModel Model => _model;
