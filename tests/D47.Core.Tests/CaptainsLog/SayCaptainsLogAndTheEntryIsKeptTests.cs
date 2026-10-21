@@ -127,14 +127,14 @@ public class SayCaptainsLogAndTheEntryIsKeptTests
     }
 
     [Fact]
-    public async Task TheOpeningAloneIsNotSavedAndTellsTheCommanderWhatToSay()
+    public async Task TheOpeningAloneIsNotSavedAndAnswersGoAhead()
     {
         var bench = new Bench();
 
         var said = await bench.SaidAsync("captain's log");
 
         Assert.Empty(bench.Store.For(Commander));
-        Assert.Equal("Say the entry after 'captain's log'.", said);
+        Assert.Equal("Go ahead.", said);
         Assert.Equal(0, bench.Model.CallCount);
     }
 

@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
 using Microsoft.Extensions.Logging;
@@ -116,6 +116,11 @@ public sealed class TurnLoop(
     /// <summary>A phrase being taught by voice, waiting on the Commander's next reply; null when none is.</summary>
     private Teaching? _teaching;
 
+    /// <summary>When a bare "captain's log" was heard; the next utterance within <see cref="LogHeldFor"/> is the entry.</summary>
+    private TimeSpan? _logOpenedAt;
+
+    private static readonly TimeSpan LogHeldFor = TimeSpan.FromMinutes(2);
+
     /// <summary>The "did you mean" choices put while a phrase is being taught.</summary>
     private readonly OfferWindow _teachingChoices = new();
 
@@ -125,6 +130,10 @@ public sealed class TurnLoop(
     /// <summary>Replies that end a teaching exchange at any step.</summary>
     private static readonly HashSet<string> CancelsTeaching =
         new(["cancel", "cancel that", "never mind", "nevermind", "forget it"], StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Replies that, as the held utterance, save no log entry.</summary>
+    private static readonly HashSet<string> CancelsLogEntry =
+        new(["cancel", "cancel that", "never mind", "nevermind"], StringComparer.OrdinalIgnoreCase);
 
     /// <summary>How hard to try before saying so out loud.</summary>
     public RetryPolicy Retry { get; set; } = RetryPolicy.Default;
@@ -537,6 +546,38 @@ public sealed class TurnLoop(
             }
 
             yield break;
+        }
+
+        // 0.3. The utterance after a bare "captain's log", read before addressed lines, learned phrases or any route.
+        if (_logOpenedAt is { } logOpenedAt)
+        {
+            _logOpenedAt = null;
+
+            if (_clock.Now - logOpenedAt <= LogHeldFor && capabilities.Find(Capabilities.Builtin.CaptainsLogCapability.Id) is not null)
+            {
+                ToolResult answer;
+
+                if (CancelsLogEntry.Contains(KeywordRouter.Utterance(input)))
+                {
+                    answer = ToolResult.Ok("Not logged.");
+                }
+                else
+                {
+                    answer = await capabilities
+                        .InvokeAsync(
+                            Capabilities.Builtin.CaptainsLogCapability.AddTool,
+                            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["text"] = input }),
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                foreach (var turnEvent in LogAnswered(answer))
+                {
+                    yield return turnEvent;
+                }
+
+                yield break;
+            }
         }
 
         // 0.4. Addressed to the ship's AI by name.
@@ -1331,6 +1372,21 @@ public sealed class TurnLoop(
         return probe.Read(input) is not OfferReading.Unrelated;
     }
 
+    private IEnumerable<TurnEvent> LogAnswered(ToolResult answer)
+    {
+        yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+        Said(answer.Spoken, Capabilities.Builtin.CaptainsLogCapability.Asked);
+
+        yield return new TurnEvent.TextDelta(answer.Spoken);
+        yield return new TurnEvent.Completed(new TurnResult(
+            answer.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+            TurnRoute.ActionCommand,
+            answer.Spoken,
+            Effort: null,
+            Cost: null));
+    }
+
     private IEnumerable<TurnEvent> Offered(string text, string input, TurnOutcome outcome = TurnOutcome.Answered)
     {
         yield return new TurnEvent.Routed(TurnRoute.Offer, Effort: null);
@@ -1387,28 +1443,29 @@ public sealed class TurnLoop(
             && CaptainsLog.CaptainsLogPhrase.Read(input) is { } logged)
         {
             routing.Handled = true;
-            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
 
-            var answer = logged switch
+            ToolResult answer;
+
+            if (logged is CaptainsLog.CaptainsLogReading.Entry entry)
             {
-                CaptainsLog.CaptainsLogReading.Entry entry => await capabilities
+                answer = await capabilities
                     .InvokeAsync(
                         Capabilities.Builtin.CaptainsLogCapability.AddTool,
                         new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["text"] = entry.Text }),
                         cancellationToken)
-                    .ConfigureAwait(false),
-                _ => ToolResult.Ok(CaptainsLog.CaptainsLogPhrase.NoEntry),
-            };
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                _logOpenedAt = _clock.Now;
+                answer = ToolResult.Ok(CaptainsLog.CaptainsLogPhrase.GoAhead);
+            }
 
-            Said(answer.Spoken, Capabilities.Builtin.CaptainsLogCapability.Asked);
+            foreach (var turnEvent in LogAnswered(answer))
+            {
+                yield return turnEvent;
+            }
 
-            yield return new TurnEvent.TextDelta(answer.Spoken);
-            yield return new TurnEvent.Completed(new TurnResult(
-                answer.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
-                TurnRoute.ActionCommand,
-                answer.Spoken,
-                Effort: null,
-                Cost: null));
             yield break;
         }
 

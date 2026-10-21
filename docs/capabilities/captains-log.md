@@ -21,14 +21,14 @@ nav_order: 159
 </svg>
 </section>
 <section>
-<h2><span class="num">!</span> The entry needs words after the phrase.</h2>
-<p class="say">Say the entry in the same breath as "captain's log".</p>
-<p class="expect">"Captain's log" alone saves nothing; D47 says "Say the entry after 'captain's log'."</p>
-<svg viewBox="0 0 880 176" role="img" aria-label="The opening phrase alone is not saved">
+<h2><span class="num">2</span> Or say the phrase alone, then the entry.</h2>
+<p class="say">Say "captain's log", wait for "Go ahead.", then say the entry.</p>
+<p class="expect">The next thing you say is kept word for word, even a command. "Cancel" or "never mind" saves nothing and D47 says "Not logged."; two minutes of silence drops the opening.</p>
+<svg viewBox="0 0 880 176" role="img" aria-label="The opening phrase alone holds the next utterance">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">captain's log</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="118" font-size="16" fill="var(--text-muted)">Nothing is saved without an entry.</text>
+ <text x="20" y="118" font-size="16" fill="var(--text-muted)">The next utterance is the entry.</text>
 </svg>
 </section>
 </div></div>

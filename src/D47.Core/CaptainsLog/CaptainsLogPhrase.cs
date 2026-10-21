@@ -20,7 +20,10 @@ public abstract record CaptainsLogReading
 /// <summary>The model-free grammar for "captain's log, …" and "log entry, …".</summary>
 public static partial class CaptainsLogPhrase
 {
-    /// <summary>Said when the opening phrase arrives with no entry.</summary>
+    /// <summary>Said when the opening phrase arrives with no entry; the next utterance is the entry.</summary>
+    public const string GoAhead = "Go ahead.";
+
+    /// <summary>Said when an entry is empty.</summary>
     public const string NoEntry = "Say the entry after 'captain's log'.";
 
     /// <summary>The utterance read as a log entry, or null when it does not open with the phrase.</summary>
