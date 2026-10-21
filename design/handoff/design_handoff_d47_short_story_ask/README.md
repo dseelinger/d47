@@ -1,6 +1,6 @@
 # Handoff: the Short Story ask form (2026-10-21)
 
-Build issue: none filed yet.
+Build issue: [#1458](https://github.com/dseelinger/d47/issues/1458).
 Canvas: https://claude.ai/artifact/6YvF7CHt22p8cNP3ndNeh6 (private to the maintainer). Option A was chosen; option B (the ask as a sentence) was not.
 This handoff departs from option A on the canvas: the brief is a tile that opens the voice entry, not a text field, and it adds CLEAR, the reach hint and the shut Notice. Where they differ, this handoff is right.
 
