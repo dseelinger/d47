@@ -77,6 +77,7 @@ Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtime
 Source: "..\src\D47.App\bin\Release\publish\ships\*"; DestDir: "{app}\ships"; Flags: ignoreversion
 ; The speaker portraits the Conversation page shows.
 Source: "..\src\D47.App\bin\Release\publish\portraits\*"; DestDir: "{app}\portraits"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\src\D47.App\bin\Release\publish\codex-placeholders\*"; DestDir: "{app}\codex-placeholders"; Flags: ignoreversion
 ; The Chatterbox reference clips and voices.tsv.
 Source: "..\src\D47.App\bin\Release\publish\voices\chatterbox\*"; DestDir: "{app}\voices\chatterbox"; Flags: ignoreversion
 

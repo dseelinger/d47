@@ -56,6 +56,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\assets\codex-placeholders\*.jpg"
+          Link="codex-placeholders\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\assets\voices\chatterbox\*"
           Link="voices\chatterbox\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />

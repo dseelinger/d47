@@ -123,6 +123,7 @@ public partial class App(AppHost? host) : Application
                 activities: host.Activities,
                 construction: window?.Construction,
                 commanders: host.Commanders,
+                codexPictures: host.CodexPictureSet,
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
                 crewSeats: host.CrewSeatsHost,

@@ -22,6 +22,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private readonly int? _regionId;
     private readonly CodexTable _table;
     private readonly bool _headset;
+    private readonly PanelNavigator? _nav;
     private readonly SortHeader<CodexMissingRow> _head = new("CodexMissingHead", CodexModel.MissingHeads(), new SortOrder(1, SortDirection.Descending));
     private readonly StackPanel _top = new();
     private readonly ItemsControl _list;
@@ -37,8 +38,10 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         Func<HistoryState> history,
         int? regionId,
         CodexTable? table = null,
-        bool headset = false)
+        bool headset = false,
+        PanelNavigator? nav = null)
     {
+        _nav = nav;
         _state = state;
         _history = history;
         _regionId = regionId;
@@ -238,7 +241,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         };
     }
 
-    private Border RowView(CodexMissingRow row)
+    private Button RowView(CodexMissingRow row)
     {
         var grid = NewGrid();
         grid.VerticalAlignment = VerticalAlignment.Center;
@@ -250,15 +253,18 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.Number(row.Systems), TypeScale.Small, ThemeManager.AKey, right: false));
         CreditsKit.Place(grid, 2, status);
 
-        var border = new Border
+        var button = ListRow.Dress(new Button
         {
+            Name = "CodexMissing." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Content = grid,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 6),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = grid,
-        };
-        RoutingKit.Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
+            Margin = new Thickness(0, 0, 0, Gaps.Tile),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
+        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.EntryId, row.Name));
 
-        return border;
+        return button;
     }
 }

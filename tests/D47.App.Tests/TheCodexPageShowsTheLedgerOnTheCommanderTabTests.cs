@@ -284,7 +284,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         var choice = new CodexChoice { Period = (int)CodexPeriod.Everything };
         var (window, page) = Open(() => Region(State([.. lines]), 18, choice));
 
-        var drawn = In<Border>(In<ItemsControl>(page).First(list => list.Name == "CodexRows")).Count(border => border.MinHeight >= 44);
+        var drawn = In<Button>(In<ItemsControl>(page).First(list => list.Name == "CodexRows")).Count(button => button.MinHeight >= 44);
 
         Assert.InRange(drawn, 1, 100);
         Assert.True(Shows(page, "3,000 ENTRIES"));

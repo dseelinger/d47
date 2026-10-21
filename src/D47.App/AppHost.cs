@@ -559,6 +559,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Fetches stock codex pictures and lists the Commander's own.</summary>
     public CodexPictureStore? CodexPictures { get; private set; }
 
+    public CodexPictureSet? CodexPictureSet { get; private set; }
+
     /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
     public StoryRatingClient? StoryRatings { get; private set; }
 
@@ -3594,6 +3596,11 @@ public sealed class AppHost : IDisposable
             paths.CodexPictures,
             () => settings.Current.Ui.CodexPictures,
             loggerFactory.CreateLogger<CodexPictureStore>());
+        host.CodexPictureSet = new CodexPictureSet(
+            host.CodexPictures,
+            () => settings.Current.Ui.CodexPictures,
+            files,
+            paths.ShippedCodexPlaceholders);
         host.StoryRatings = storyRatings;
         host.StoryBench = stores.StoryBench;
         endingAnswer.Answer = host.Narration.AnswerEnding;

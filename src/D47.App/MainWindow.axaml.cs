@@ -174,7 +174,7 @@ public partial class MainWindow : Window
             FollowServerStatus(host.ServerStatus);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
-            Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
+            Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet);
             Panel.EnableCommanders(host.Commanders);
 
             // The title bar's Commander switcher, desktop only: the headset has no title bar.

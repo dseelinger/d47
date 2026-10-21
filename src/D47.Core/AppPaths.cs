@@ -52,6 +52,7 @@ public sealed class AppPaths
         LastBuildFile = Path.Combine(Data, "last-build.txt");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
+        ShippedCodexPlaceholders = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "codex-placeholders");
     }
 
     /// <summary>Where this build writes.</summary>
@@ -158,6 +159,9 @@ public sealed class AppPaths
 
     /// <summary>The speaker portraits that came with the build, read-only, beside the executable.</summary>
     public string ShippedPortraits { get; }
+
+    /// <summary>The codex family placeholders that came with the build, read-only, beside the executable.</summary>
+    public string ShippedCodexPlaceholders { get; }
 
     public void EnsureCreated()
     {

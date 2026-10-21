@@ -12,7 +12,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Ledgers › Codex › a region: one row per entry in the period, grouped by subcategory (#1290).</summary>
+/// <summary>Commander › Ledgers › Codex › a region: one pressable row per entry in the period, grouped by subcategory (#1290).</summary>
 public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 {
     private static readonly string[] PanelColumns = ["*", "360", "160", "200"];
@@ -297,7 +297,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         };
     }
 
-    private Border RowView(CodexEntryRow row)
+    private Button RowView(CodexEntryRow row)
     {
         var grid = NewGrid();
         grid.VerticalAlignment = VerticalAlignment.Center;
@@ -307,19 +307,22 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         CreditsKit.Place(grid, 2, CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false));
         CreditsKit.Place(grid, 3, StatusCell(row));
 
-        var border = new Border
+        var button = ListRow.Dress(new Button
         {
+            Name = "CodexEntry." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Content = grid,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 6),
             Margin = new Thickness(0, 0, 0, Gaps.Tile),
-            Child = grid,
-        };
-        RoutingKit.Themed(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
+        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.EntryId, row.Name));
 
-        return border;
+        return button;
     }
 
-    private static StackPanel SystemCell(CodexEntryRow row)
+    internal static StackPanel SystemCell(CodexEntryRow row)
     {
         var cell = new StackPanel();
 

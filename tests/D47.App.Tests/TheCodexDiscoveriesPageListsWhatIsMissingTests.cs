@@ -202,10 +202,10 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         Assert.Contains("1 of 1 missing", drawn, StringComparer.OrdinalIgnoreCase);
         Assert.Equal(3, drawn.Count(text => text == "MISSING"));
 
-        var rows = In<Border>(Rows(page)).Where(border => border.MinHeight >= 44 && border.BorderThickness.Bottom == 1).ToList();
+        var rows = In<Button>(Rows(page)).Where(button => button.Name?.StartsWith("CodexMissing.", StringComparison.Ordinal) == true).ToList();
 
         Assert.Equal(3, rows.Count);
-        Assert.All(rows, row => Assert.Null(row.Background));
+        Assert.All(rows, row => Assert.True(row.MinHeight >= 44));
 
         if (TestSurface.CapturesWanted)
         {

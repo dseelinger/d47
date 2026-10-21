@@ -27,6 +27,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private CodexPage? _codex;
     private CodexRegionPage? _codexRegion;
     private CodexDiscoveriesPage? _codexDiscoveries;
+    private CodexEntryPage? _codexEntry;
     private CommandersPage? _commanders;
     private D47.App.Controls.JournalClock? _commanderClock;
 
@@ -183,13 +184,16 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     public void EnableCodex(
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<D47.Core.Journal.HistoryState> history,
-        Func<DateTimeOffset> now)
+        Func<DateTimeOffset> now,
+        CodexPictureSet? pictures = null)
     {
         var headset = host.Headset;
         var choice = new CodexChoice();
 
-        _codexBuild = crumb => CodexPage.IsDiscoveries(crumb.Key)
-            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset)
+        _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
+            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset)
+            : CodexPage.IsDiscoveries(crumb.Key)
+            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav)
             : CodexPage.IsRegion(crumb.Key)
             ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav)
             : _codex = new CodexPage(state, history, now, choice, host.Nav, headset);
@@ -266,8 +270,9 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
-        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf))
+        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf) || CodexPage.IsEntry(leaf))
         {
+            changed |= _codexEntry?.Tick() ?? false;
             changed |= _codex?.Tick() ?? false;
             changed |= _codexRegion?.Tick() ?? false;
             changed |= _codexDiscoveries?.Tick() ?? false;
@@ -291,7 +296,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
-        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

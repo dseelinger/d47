@@ -17,6 +17,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string DiscoveriesPrefix = "codex-discoveries-";
 
+    private const string EntryPrefix = "codex-entry-";
+
     public const string SummaryText = "The codex entries you have logged, from your journals.";
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
@@ -112,6 +114,30 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         int.TryParse(key[DiscoveriesPrefix.Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id)
             ? id
             : null;
+
+    /// <summary>The crumb of one entry's page in a region, named for the entry.</summary>
+    public static NavCrumb EntryCrumb(int? regionId, long entryId, string name) =>
+        new(
+            EntryPrefix + (regionId?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none") + "-"
+            + entryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            name)
+        {
+            Whole = true,
+        };
+
+    public static bool IsEntry(string key) => key.StartsWith(EntryPrefix, StringComparison.Ordinal);
+
+    /// <summary>The region number and EntryID an entry crumb is for; null when the key is not one.</summary>
+    public static (int? RegionId, long EntryId)? EntryOf(string key)
+    {
+        if (!IsEntry(key) || key[EntryPrefix.Length..].Split('-') is not [var region, var entry]
+            || !long.TryParse(entry, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var entryId))
+        {
+            return null;
+        }
+
+        return (int.TryParse(region, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id) ? id : null, entryId);
+    }
 
     public void Filter(string? query)
     {

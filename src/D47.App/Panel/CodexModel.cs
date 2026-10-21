@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.App.Theming;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -45,6 +46,7 @@ public sealed record CodexRootView(
 
 /// <summary>One entry of a region's table. <c>Origin</c> says why no earlier entry is shown for an entry already logged.</summary>
 public sealed record CodexEntryRow(
+    long EntryId,
     string Name,
     string? System,
     bool IsHere,
@@ -85,7 +87,7 @@ public sealed record CodexRegionView(
     string? Empty);
 
 /// <summary>One codex entry not on the record, with the systems that reported it in the region.</summary>
-public sealed record CodexMissingRow(string Name, int Systems);
+public sealed record CodexMissingRow(long EntryId, string Name, int Systems);
 
 /// <summary>The missing entries of one category and subcategory; <c>Known</c> counts every entry the table lists under it.</summary>
 public sealed record CodexMissingGroup(string Label, IReadOnlyList<CodexMissingRow> Rows, int Known)
@@ -110,6 +112,15 @@ public sealed record CodexDiscoveriesView(
     int Shown,
     IReadOnlyList<CodexMissingGroup> Groups,
     string? Empty);
+
+/// <summary>What one entry's page draws: the entry's facts and each time it was logged in the region, newest first.</summary>
+public sealed record CodexEntryView(
+    long EntryId,
+    string Name,
+    string? Category,
+    string? SubCategory,
+    string? PlaceholderFile,
+    IReadOnlyList<CodexEntryRow> Loggings);
 
 /// <summary>The rows behind Commander › Ledgers › Codex, built from a <see cref="CodexLedger"/> (#1290).</summary>
 public static class CodexModel
@@ -143,6 +154,16 @@ public static class CodexModel
     public const string DiscoveriesGroupLine = "Known in this region and not on your record, most reported first.";
 
     public const string NoMissingMatchText = "No missing codex entry in this region matches that search.";
+
+    public const string NoPictureText = "No picture of this entry yet.";
+
+    public const string StockOffText = "No picture of this entry. Stock codex pictures are off.";
+
+    public const string FetchingText = "Fetching the picture.";
+
+    public const string NotHereText = "Not on your record in this region.";
+
+    public const string LoggedHereHead = "Logged in this region";
 
     private const string Minus = "−";
 
@@ -247,7 +268,7 @@ public static class CodexModel
 
     /// <summary>"A 4 c · 12.4512, −108.2231": the body, then the position.</summary>
     public static string Place(string? system, string? body, double? latitude, double? longitude) =>
-        new CodexEntryRow(string.Empty, system, false, BodyOf(system, body), PositionOf(latitude, longitude), default, false, null, null).Place;
+        new CodexEntryRow(0, string.Empty, system, false, BodyOf(system, body), PositionOf(latitude, longitude), default, false, null, null).Place;
 
     /// <summary>"Nothing logged this trip. Open one to see what is left to discover."</summary>
     public static string OtherRegionsLine(CodexPeriod period) =>
@@ -401,6 +422,51 @@ public static class CodexModel
             slice.Entries == 0 ? EmptyText(ledger, period, name) : null);
     }
 
+    /// <summary>"Your picture", "Stock picture", and " · from Outer Orion Spur" for a picture from another region.</summary>
+    public static string PictureLine(CodexPictureChoice choice) =>
+        (choice.Source == CodexPictureSource.Local ? "Your picture" : "Stock picture")
+        + (choice.FromOtherRegion ? " · from " + RegionName(choice.RegionId) : string.Empty);
+
+    /// <summary>The entry's facts and the times it was logged in <paramref name="regionId"/>, newest first.</summary>
+    public static CodexEntryView EntryPage(
+        CodexLedger ledger,
+        CodexTable table,
+        long entryId,
+        int? regionId,
+        string fallbackName,
+        string? currentSystem,
+        Func<long, int, string?> bodyName)
+    {
+        var all = ledger.Entries;
+        var firsts = new Dictionary<(long, int?), int>();
+
+        for (var i = 0; i < all.Count; i++)
+        {
+            firsts.TryAdd((all[i].EntryId, all[i].RegionId), i);
+        }
+
+        var here = all
+            .Select((entry, index) => (Entry: entry, Index: index))
+            .Where(item => item.Entry.EntryId == entryId && item.Entry.RegionId == regionId)
+            .Reverse()
+            .OrderByDescending(item => item.Entry.At)
+            .Select(item => Row(item.Entry, item.Index, all, firsts, currentSystem, bodyName, ledger.IsWhole))
+            .ToList();
+
+        var logged = all.LastOrDefault(entry => entry.EntryId == entryId);
+        var known = table.Entry(entryId);
+
+        return new CodexEntryView(
+            entryId,
+            logged?.Name ?? known?.Name ?? fallbackName,
+            logged?.Category ?? known?.Category,
+            logged?.SubCategory ?? known?.SubCategory,
+            logged is not null
+                ? CodexFamilies.FileOfSymbol(logged.SubCategorySymbol)
+                : CodexFamilies.FileOfTableName(known?.SubCategory),
+            here);
+    }
+
     /// <summary>"708 missing · 38 of 746 on record": the figures on the region page's Discoveries row.</summary>
     public static string DiscoveriesFigures(CodexDiscoveries found) =>
         $"{Number(found.Missing.Count)} missing · {Number(found.Logged.Count)} of {Number(found.Known.Count)} on record";
@@ -429,7 +495,7 @@ public static class CodexModel
             .GroupBy(item => GroupLabel(item.Entry))
             .Select(group => new CodexMissingGroup(
                 group.Key,
-                [.. group.Select(item => new CodexMissingRow(item.Entry.Name, item.Systems))],
+                [.. group.Select(item => new CodexMissingRow(item.Entry.EntryId, item.Entry.Name, item.Systems))],
                 totals[group.Key]))
             .OrderByDescending(group => group.Count)
             .ThenBy(group => group.Label, StringComparer.OrdinalIgnoreCase)
@@ -492,6 +558,7 @@ public static class CodexModel
         var first = firsts[(entry.EntryId, entry.RegionId)];
 
         return new CodexEntryRow(
+            entry.EntryId,
             entry.Name ?? $"Entry {entry.EntryId}",
             entry.System,
             currentSystem is not null && string.Equals(entry.System, currentSystem, StringComparison.OrdinalIgnoreCase),

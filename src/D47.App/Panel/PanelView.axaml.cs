@@ -617,9 +617,13 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableCredits(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>
         _commander.EnableCredits(state, history, now);
 
-    /// <summary>Gives this surface the Codex page and the region page below it.</summary>
-    public void EnableCodex(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>
-        _commander.EnableCodex(state, history, now);
+    /// <summary>Gives this surface the Codex page and the region, Discoveries and entry pages below it.</summary>
+    public void EnableCodex(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        Func<D47.Core.Journal.HistoryState> history,
+        Func<DateTimeOffset> now,
+        CodexPictureSet? pictures = null) =>
+        _commander.EnableCodex(state, history, now, pictures);
 
     /// <summary>Gives this surface Commander › Commanders, after Ledgers.</summary>
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);

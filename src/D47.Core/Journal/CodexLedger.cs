@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
 
-/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse.</summary>
+/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse. <c>SubCategorySymbol</c> is the raw symbol, which does not change with the game's language.</summary>
 public sealed record CodexLogEntry(
     DateTimeOffset At,
     long EntryId,
@@ -18,7 +18,8 @@ public sealed record CodexLogEntry(
     int? BodyId,
     double? Latitude,
     double? Longitude,
-    bool IsNew);
+    bool IsNew,
+    string? SubCategorySymbol = null);
 
 /// <summary>Entries logged in one region.</summary>
 public sealed record CodexRegionTotal(int? RegionId, int Count);
@@ -187,5 +188,6 @@ public sealed record CodexLedger
         e.Int("BodyID"),
         e.Double("Latitude"),
         e.Double("Longitude"),
-        e.Bool("IsNewEntry"));
+        e.Bool("IsNewEntry"),
+        e.String("SubCategory"));
 }

@@ -89,23 +89,27 @@ public sealed class CodexPictureStore
     /// The path of <paramref name="row"/>'s picture when it is on disk and matches the row. Otherwise null, and
     /// the picture is fetched once per session; <see cref="Arrived"/> follows when it lands.
     /// </summary>
-    public string? Picture(CodexPictureRow row)
+    public string? Picture(CodexPictureRow row) => Stock(row) is null ? null : StockPath(row.Asset);
+
+    /// <summary>The bytes of <see cref="Picture"/>; null under the same conditions.</summary>
+    public byte[]? Stock(CodexPictureRow row)
     {
         if (!_allowed())
         {
             return null;
         }
 
-        var path = StockPath(row.Asset);
-
-        if (_files.ReadBytes(path) is { } bytes && CodexPictureIndex.Matches(row, bytes))
+        if (_files.ReadBytes(StockPath(row.Asset)) is { } bytes && CodexPictureIndex.Matches(row, bytes))
         {
-            return path;
+            return bytes;
         }
 
         _asked.GetOrAdd(row.Key, _ => Task.Run(() => FetchPictureAsync(row)));
         return null;
     }
+
+    /// <summary>The bytes of the Commander's own picture; null when there is none.</summary>
+    public byte[]? Local(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.FileName));
 
     /// <summary>The fetch started for <paramref name="key"/>; true when the picture landed.</summary>
     public Task<bool> Fetched(CodexPictureKey key) => _asked.TryGetValue(key, out var task) ? task : Task.FromResult(false);
