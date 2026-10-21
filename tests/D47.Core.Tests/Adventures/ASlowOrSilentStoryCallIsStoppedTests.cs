@@ -138,7 +138,7 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
             .DraftAsync(new AdventureAsk(Length: AdventureLength.Short), Now, again.Add, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.Calls);
+        Assert.Equal(4, provider.Calls);
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: false)], again);
     }
 

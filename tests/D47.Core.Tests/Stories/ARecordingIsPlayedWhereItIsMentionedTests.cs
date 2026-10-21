@@ -61,11 +61,12 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(alone: "The first recording has been played twice, and stopped halfway both times."),
-            Repairs.Replacing(Written(alone: "The anchorage is quiet."), 2)));
+            Repairs.Replacing(Written(alone: "The anchorage is quiet."), 2),
+            NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "A recording is mentioned and not played: Objective 2",
             fixtures.Provider.Requests[2].Prompt.History[0].Text,
@@ -86,31 +87,31 @@ public sealed class ARecordingIsPlayedWhereItIsMentionedTests
     [Fact]
     public async Task ARecordingPlayedBesideTheSpeakersOwnLineIsNotRefused()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "A recording plays from the chip.")));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "A recording plays from the chip."), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task ARecordingMentionedButNotPlayedIsNotRefused()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(alone: "Nobody can say when the recordings were made. The Commander plays the long game.")));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(alone: "Nobody can say when the recordings were made. The Commander plays the long game."), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task HearingTheShipsVoiceIsNotRefused()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(alone: "The Commander hears the ship's voice confirm the jump.")));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(alone: "The Commander hears the ship's voice confirm the jump."), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]

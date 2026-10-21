@@ -14,6 +14,7 @@ public sealed class AStoppedStoryGivesTheBackstoryBackTests
         {
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
         })]));
 
     [Fact]

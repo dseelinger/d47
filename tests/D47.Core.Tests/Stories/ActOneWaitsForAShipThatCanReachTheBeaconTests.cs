@@ -86,8 +86,10 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeatsWithABeacon)))
+            RoundScriptedLlmProvider.Saying(NextBeatsWithABeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected)))
         {
             Here = BeyondTheBeacon(686),
         };
@@ -124,6 +126,6 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         var second = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal(TriggerKind.Beacon, second.Beats[^1].Trigger.Kind);
-        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains(Secret.Beats.BreakIntoTwo!, fixtures.Provider.Requests[3].Prompt.History[0].Text);
     }
 }

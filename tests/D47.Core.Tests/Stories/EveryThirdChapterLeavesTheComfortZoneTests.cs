@@ -51,9 +51,9 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
     {
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats),
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats),
-                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats)),
+                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected),
+                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected),
+                RoundScriptedLlmProvider.Saying(NextSpine), RoundScriptedLlmProvider.Saying(NextBeats), RoundScriptedLlmProvider.Saying(NothingObjected)),
             card: Card with { Length = "2-weeks" });
         CommanderGameState? game = null;
         fixtures.Director.Game = () => game;
@@ -71,7 +71,7 @@ public sealed class EveryThirdChapterLeavesTheComfortZoneTests
 
         Assert.Equal(TriggerKind.Mission, first.Kind);
         Assert.StartsWith("Mission_Passenger", first.Family);
-        Assert.Contains($"whose family is exactly {first.Family}", fixtures.Provider.Requests[4].Prompt.History[0].Text);
+        Assert.Contains($"whose family is exactly {first.Family}", fixtures.Provider.Requests[6].Prompt.History[0].Text);
     }
 
     [Fact]

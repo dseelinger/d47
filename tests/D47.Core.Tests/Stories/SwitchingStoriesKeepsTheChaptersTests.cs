@@ -14,8 +14,10 @@ public sealed class SwitchingStoriesKeepsTheChaptersTests
     private static StoryFixtures Fixtures() => new(new RoundScriptedLlmProvider(
         RoundScriptedLlmProvider.Saying(Spine),
         RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+        RoundScriptedLlmProvider.Saying(NothingObjected),
         RoundScriptedLlmProvider.Saying(Spine),
-        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon)));
+        RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+        RoundScriptedLlmProvider.Saying(NothingObjected)));
 
     [Fact]
     public async Task SwitchingAbandonsTheOldStoryAndKeepsItsChapter()

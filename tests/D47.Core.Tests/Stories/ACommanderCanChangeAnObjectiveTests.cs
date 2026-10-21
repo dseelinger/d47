@@ -120,12 +120,12 @@ public sealed class ACommanderCanChangeAnObjectiveTests
     [Fact]
     public async Task AFurtherRemarkRevisesWithTheEarlierRoundsInTheExchange()
     {
-        using var fixtures = AtTheBond(ABountyAndADock, ABountyAgain);
+        using var fixtures = AtTheBond(ABountyAndADock, NothingObjected, ABountyAgain);
 
         var first = await fixtures.Director.ReviseObjectiveAsync("F1", "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         var second = await fixtures.Director.ReviseObjectiveAsync("F1", "Make it three.", first.Proposal!.Exchange, TestContext.Current.CancellationToken);
 
-        var prompt = fixtures.Provider.Requests[1].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[2].Prompt.History[0].Text;
 
         Assert.Contains("Commander: I would rather hunt a bounty.", prompt);
         Assert.Contains("You: The bonds were there to put you in a wing.", prompt);

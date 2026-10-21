@@ -48,10 +48,10 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(2, provider.CallCount);
+        Assert.Equal(3, provider.CallCount);
 
         // Both turns see the same list: the spine is anchored to real places before the beats are.
-        foreach (var request in provider.Requests)
+        foreach (var request in provider.Requests.Take(2))
         {
             var instruction = request.Prompt.History[0].Text;
             Assert.Contains("Real places within reach", instruction);
@@ -109,7 +109,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
 
         Assert.All(
             provider.Requests,
@@ -130,7 +130,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
         Assert.Contains(outcome.Notes, note => note.StartsWith("Rewrote 1 objective", StringComparison.Ordinal));
 
         var retry = provider.Requests[2].Prompt.History[0].Text;
@@ -166,7 +166,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
         Assert.Contains(
             "Objective 3 (Disposition) scans Ossen's Lantern 2 a after Objective 2 (The Consignee) lands on it; a body is scanned on the way in, before any landing, so the scan must come before the landing or be of another body.",
             provider.Requests[2].Prompt.History[0].Text);
@@ -239,7 +239,7 @@ public sealed class AdventureGeneratorTests
             new AdventureAsk(Length: AdventureLength.Short, Brief: "a quiet trading story"), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
         Assert.Contains("which the Commander's brief does not name", provider.Requests[2].Prompt.History[0].Text);
     }
 

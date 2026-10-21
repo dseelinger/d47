@@ -109,6 +109,9 @@ internal sealed class StoryFixtures : IDisposable
          "stake": "Whether a tool can want.", "turn": "It asked before.", "ending": "It is answered."}
         """;
 
+    /// <summary>The fidelity step's answer when no objective states more than its trigger confirms.</summary>
+    public const string NothingObjected = """{"objections": []}""";
+
     public const string BeatsToTheBeacon = """
         {"opening": "Factory settings, holding.", "reply": "Here it is.", "beats": [
           {"title": "The Lantern", "function": "setup", "kind": "arrive", "reason": "Someone there knows about the burst.", "system": "Ossen's Lantern", "line": "Scoop here."},

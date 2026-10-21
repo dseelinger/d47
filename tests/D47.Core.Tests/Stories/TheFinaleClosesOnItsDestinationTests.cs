@@ -65,8 +65,10 @@ public sealed class TheFinaleClosesOnItsDestinationTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(StoryFixtures.Spine),
             RoundScriptedLlmProvider.Saying(StoryFixtures.BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(StoryFixtures.NothingObjected),
             RoundScriptedLlmProvider.Saying(StoryFixtures.NextSpine),
-            RoundScriptedLlmProvider.Saying(Beats(Arrive("Ossen's Lantern"), destination: ("Ossen's Lantern", "Ossen's Lantern 2 a")))));
+            RoundScriptedLlmProvider.Saying(Beats(Arrive("Ossen's Lantern"), destination: ("Ossen's Lantern", "Ossen's Lantern 2 a"))),
+            RoundScriptedLlmProvider.Saying(StoryFixtures.NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", StoryFixtures.Id, StoryFixtures.Now, CancellationToken.None));
 

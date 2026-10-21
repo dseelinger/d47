@@ -24,6 +24,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
         {
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(beats),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
         })]),
         card: card ?? ThreeMonths);
 
@@ -197,7 +198,7 @@ public sealed class ALongStoryRemembersAnEarlierScanTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         Assert.DoesNotContain("The beacon calls.", fixtures.Stories.Current("F1")!.PublicLayer, StringComparison.Ordinal);
-        Assert.All(fixtures.Provider.Requests, request => Assert.Contains(RememberedSentence, request.Prompt.History[0].Text, StringComparison.Ordinal));
+        Assert.All(fixtures.Provider.Requests.Take(2), request => Assert.Contains(RememberedSentence, request.Prompt.History[0].Text, StringComparison.Ordinal));
     }
 
     [Fact]

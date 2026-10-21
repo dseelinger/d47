@@ -20,7 +20,7 @@ public sealed class AChapterAfterTheScanKnowsTheBeaconIsDoneTests
 
         Assert.True((await Generator(provider).GenerateAsync(ask, Now, CancellationToken.None)).Succeeded);
 
-        return [.. provider.Requests.Select(request => request.Prompt.History[0].Text)];
+        return [.. provider.Requests.Select(request => request.Prompt.History[0].Text).Where(prompt => !prompt.StartsWith("You are checking", StringComparison.Ordinal))];
     }
 
     [Fact]

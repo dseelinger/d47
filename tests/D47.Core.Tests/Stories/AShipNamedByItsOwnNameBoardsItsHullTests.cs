@@ -60,7 +60,7 @@ public sealed class AShipNamedByItsOwnNameBoardsItsHullTests
         var (result, provider) = Generate(Beats("flamebrand "));
 
         Assert.True(result.Succeeded, result.Refusal);
-        Assert.Equal(2, provider.CallCount);
+        Assert.Equal(3, provider.CallCount);
 
         var board = result.Draft!.Beats[0].Trigger;
         Assert.Equal(TriggerKind.Board, board.Kind);

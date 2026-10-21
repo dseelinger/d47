@@ -32,6 +32,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         {
             yield return RoundScriptedLlmProvider.Saying(NamedSpine($"{prefix} {number}", premise ?? $"{prefix} premise {number}."));
             yield return RoundScriptedLlmProvider.Saying(number == 1 ? first : NextBeats);
+            yield return RoundScriptedLlmProvider.Saying(NothingObjected);
         }
     }
 
@@ -94,8 +95,8 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
         using var fixtures = Fixtures(15);
         await FlyTo(fixtures, 15);
 
-        // Chapter n's spine is request 2(n − 1).
-        var prompt = fixtures.Provider.Requests[28].Prompt.History[0].Text;
+        // Chapter n's spine is request 3(n − 1).
+        var prompt = fixtures.Provider.Requests[42].Prompt.History[0].Text;
 
         Assert.Contains("Title: Chapter 14", prompt);
 
@@ -145,6 +146,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
             .. Rounds(3, "Old"),
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsElsewhere),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             .. Rounds(4, "Old", "A new premise.", first: BeatsElsewhere),
         ]));
 
@@ -160,7 +162,7 @@ public sealed class FinishedChaptersMoveToTheArchiveTests
 
         // The rerun's chapters carry the earlier run's names, and so its keys.
         var story = fixtures.Stories.Current("F1")!;
-        var prompt = fixtures.Provider.Requests[^2].Prompt.History[0].Text;
+        var prompt = fixtures.Provider.Requests[^3].Prompt.History[0].Text;
 
         Assert.Equal(StoryChaptersOnFile(fixtures), story.Chapters.TakeLast(2));
         Assert.Contains("- Old 1: A new premise.", prompt);

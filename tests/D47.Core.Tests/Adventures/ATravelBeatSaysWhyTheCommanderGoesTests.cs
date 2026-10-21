@@ -52,13 +52,14 @@ public sealed class ATravelBeatSaysWhyTheCommanderGoesTests : IDisposable
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(noReason),
-            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)));
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(GoodBeats, 2)),
+            RoundScriptedLlmProvider.Saying(Stories.StoryFixtures.NothingObjected));
 
         var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
 
         var first = provider.Requests[1].Prompt.History[0].Text;
         Assert.Contains("\"reason\": string|null", first);

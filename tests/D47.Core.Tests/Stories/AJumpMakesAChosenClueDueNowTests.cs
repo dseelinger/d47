@@ -148,8 +148,10 @@ public sealed class AJumpMakesAChosenClueDueNowTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeats)));
+            RoundScriptedLlmProvider.Saying(NextBeats),
+            RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 

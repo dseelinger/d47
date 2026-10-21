@@ -82,11 +82,12 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var (fixtures, refusal) = await PickAsync(Scripted(
             Written(narrated: "Nobody aboard but me, and I'll say so."),
-            Repairs.Replacing(Written(narrated: "Nobody is aboard but the Commander."), 1)));
+            Repairs.Replacing(Written(narrated: "Nobody is aboard but the Commander."), 1),
+            NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
         Assert.Contains(
             "The narrator speaks as itself: Objective 1 is read by the narrator",
             fixtures.Provider.Requests[2].Prompt.History[0].Text,
@@ -110,13 +111,13 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var noSpeaker = Written(opening: FirstPersonOpening).Replace("\"openingSpeaker\": \"narrator\", ", string.Empty, StringComparison.Ordinal);
 
-        var (own, _) = await PickAsync(Scripted(noSpeaker));
+        var (own, _) = await PickAsync(Scripted(noSpeaker, NothingObjected));
         using var ownFixtures = own;
-        var (stock, _) = await PickAsync(Scripted(noSpeaker, Repairs.ReplacingOpening(Written())), stock: true);
+        var (stock, _) = await PickAsync(Scripted(noSpeaker, Repairs.ReplacingOpening(Written()), NothingObjected), stock: true);
         using var stockFixtures = stock;
 
-        Assert.Equal(2, ownFixtures.Provider.Requests.Count);
-        Assert.Equal(3, stockFixtures.Provider.Requests.Count);
+        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -124,47 +125,47 @@ public sealed class TheNarratorNeverSpeaksAsItselfTests
     {
         var ship = Written(ship: "We should get to the anchorage.");
 
-        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Repairs.Replacing(Written(), 2)), stock: true);
+        var (stock, stockRefusal) = await PickAsync(Scripted(ship, Repairs.Replacing(Written(), 2), NothingObjected), stock: true);
         using var stockFixtures = stock;
-        var (own, ownRefusal) = await PickAsync(Scripted(ship));
+        var (own, ownRefusal) = await PickAsync(Scripted(ship, NothingObjected));
         using var ownFixtures = own;
 
         Assert.Null(stockRefusal);
         Assert.Null(ownRefusal);
-        Assert.Equal(3, stockFixtures.Provider.Requests.Count);
+        Assert.Equal(4, stockFixtures.Provider.Requests.Count);
         Assert.Contains("The narrator speaks as itself: Objective 2 is read", stockFixtures.Provider.Requests[2].Prompt.History[0].Text, StringComparison.Ordinal);
-        Assert.Equal(2, ownFixtures.Provider.Requests.Count);
+        Assert.Equal(3, ownFixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task AFirstPersonCastLineIsNotRefused()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(cast: "I'm Ren. Nobody told me you were coming. We close at six.")));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(cast: "I'm Ren. Nobody told me you were coming. We close at six."), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
         Assert.Equal("dock-hand", Chapter(fixtures).Beats[0].Lines[1].Speaker);
     }
 
     [Fact]
     public async Task AFirstPersonWordInsideAnotherWordOrAnotherCaseIsNotRefused()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "The mist rises. i is a letter. Meet Misha at the museum, and the USS Meridian waits.")));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "The mist rises. i is a letter. Meet Misha at the museum, and the USS Meridian waits."), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
     public async Task ACurlyApostropheDoesNotHideTheFirstPerson()
     {
-        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Repairs.Replacing(Written(), 1)));
+        var (fixtures, refusal) = await PickAsync(Scripted(Written(narrated: "Standing by. I’ll play it."), Repairs.Replacing(Written(), 1), NothingObjected));
         using var _ = fixtures;
 
         Assert.Null(refusal);
-        Assert.Equal(3, fixtures.Provider.Requests.Count);
+        Assert.Equal(4, fixtures.Provider.Requests.Count);
     }
 
     [Fact]

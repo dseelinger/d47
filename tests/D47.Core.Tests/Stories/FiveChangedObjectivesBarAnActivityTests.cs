@@ -169,7 +169,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 
     private static StoryFixtures AtTheBond()
     {
-        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(ABountyAndADock), RoundScriptedLlmProvider.Saying(ABountyAndADock)));
+        var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(ABountyAndADock), RoundScriptedLlmProvider.Saying(NothingObjected), RoundScriptedLlmProvider.Saying(ABountyAndADock), RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         fixtures.Stories.Save("F1", new Story
         {

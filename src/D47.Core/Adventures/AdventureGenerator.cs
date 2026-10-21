@@ -547,7 +547,13 @@ public sealed class AdventureGenerator(
         Asked? unusedRepair = null;
         var offset = ask.Rewrite?.From ?? 0;
 
-        var resolved = await CheckAsync(read).ConfigureAwait(false);
+        var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return AdventureOutcome.Stopped;
+        }
+
         LogRefusals(ask, "first", beatsAsked.Step, resolved.Refusals);
 
         if (resolved.Refusals.Count > 0)
@@ -588,7 +594,13 @@ public sealed class AdventureGenerator(
             var before = resolved.Refusals;
 
             read = spliced;
-            resolved = Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced, offset);
+            resolved = await HoldToWhatTheyConfirmAsync(Blame(await CheckAsync(read).ConfigureAwait(false), before, replaced, offset), read).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return AdventureOutcome.Stopped;
+            }
+
             LogRefusals(ask, $"repair {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
@@ -635,6 +647,114 @@ public sealed class AdventureGenerator(
 
         async Task<Resolved> CheckAsync(ReadAnswer answer) =>
             Speakers(await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), answer, ask);
+
+        // Asked only of a draft the dry run found nothing in; a refused objective is written again before its lines are read.
+        async Task<Resolved> HoldToWhatTheyConfirmAsync(Resolved dryRun, ReadAnswer answer)
+        {
+            if (dryRun.Refusals.Count > 0 || cancellationToken.IsCancellationRequested)
+            {
+                return dryRun;
+            }
+
+            var objections = await FidelityAsync(ask, facts, spine, answer.Beats, offset, cancellationToken).ConfigureAwait(false);
+
+            return objections.Count == 0 ? dryRun : dryRun with { Refusals = objections };
+        }
+    }
+
+    /// <summary>
+    /// One call reading each objective's lines, and the ending against the last objective, against what its trigger confirms;
+    /// a refusal for each objective whose lines state something else. A reply that cannot be read objects to nothing.
+    /// </summary>
+    private async Task<IReadOnlyList<Refusal>> FidelityAsync(
+        AdventureAsk ask,
+        Facts facts,
+        AdventureSpine spine,
+        IReadOnlyList<ReadBeat> beats,
+        int offset,
+        CancellationToken cancellationToken)
+    {
+        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, offset), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+
+        if (asked.Json is null)
+        {
+            logger.LogInformation("Draft {Draft}, fidelity step not read: {Why}", ask.Draft, asked.Why);
+
+            return [];
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(asked.Json);
+
+            if (!document.RootElement.TryGetProperty("objections", out var list) || list.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var refusals = new List<Refusal>();
+            var seen = new HashSet<int>();
+
+            foreach (var objection in list.EnumerateArray())
+            {
+                var index = (Integer(objection, "objective") ?? 0) - offset - 1;
+
+                if (index < 0 || index >= beats.Count || !seen.Add(index))
+                {
+                    continue;
+                }
+
+                var reason = Text(objection, "reason") ?? "its lines state something its trigger does not confirm";
+                var number = (index + offset + 1).ToString(CultureInfo.InvariantCulture);
+
+                refusals.Add(new Refusal($"Objective {number} ({beats[index].Title}) states something its trigger does not confirm: {reason}", [index]));
+            }
+
+            return refusals;
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static StoryCall FidelityInstruction(Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, int offset)
+    {
+        var text = new StringBuilder();
+
+        text.AppendLine(
+            "You are checking a draft of a story the Commander will fly in Elite Dangerous. Each objective waits for one event in the "
+            + "Commander's journal, its trigger. When the trigger fires, the objective's lines are spoken as written. Below, each objective "
+            + "has what its trigger confirms, then its lines.");
+        text.AppendLine();
+        text.AppendLine(
+            "A line may state only what its objective confirms, what the game state below shows, or what a character claims in their own "
+            + "voice (\"the patron calls it a rescue\"). The story's ending is spoken by the last objective and must be something that "
+            + "objective confirms. List each objective whose lines state, as fact, something outside that. A line that only sets a "
+            + "scene or a mood states nothing to check.");
+        text.AppendLine();
+        text.Append(facts.Describe());
+        text.AppendLine();
+        text.AppendLine($"The story's ending: {spine.Ending}");
+        text.AppendLine();
+        text.AppendLine("Objectives:");
+
+        foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
+        {
+            var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
+
+            text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind)}");
+            text.AppendLine($"   Lines: {Quoted(beat.Lines)}");
+        }
+
+        text.AppendLine();
+        text.AppendLine(
+            "Answer with one JSON object and nothing else: " + StoryAnswer.FidelityShape
+            + ". \"objective\" is the objective's number and \"reason\" is one plain sentence saying what the lines state that the trigger does not confirm. "
+            + "Use an empty list when every objective stands.");
+
+        return new StoryCall(text.ToString(), StoryAnswer.FidelitySchema());
     }
 
     /// <summary>Rounds of replacements a draft's refused objectives get before the draft fails.</summary>
@@ -1256,6 +1376,7 @@ public sealed class AdventureGenerator(
     private const string SpineStep = "spine";
     private const string BeatsStep = "beats";
     private const string RepairStep = "replacements";
+    private const string FidelityStep = "fidelity";
 
     /// <summary>One model call: the step it served, the model asked, the reply, and the JSON object read out of it.</summary>
     private sealed record Asked(string Step, string Model, FlavourReply Reply, string? Json)
@@ -1387,6 +1508,9 @@ public sealed class AdventureGenerator(
             text.AppendLine("The Commander gave no brief. Write what you, as yourself, would care to tell.");
         }
 
+        text.AppendLine();
+        text.Append(TriggerConfirms.Section(Enum.GetValues<TriggerKind>().Where(kind => kind is not (TriggerKind.Beacon or TriggerKind.Reach)).Select(kind => kind.ToString().ToLowerInvariant())));
+        text.AppendLine("Write the ending so that the last objective's trigger confirms it.");
         text.AppendLine();
         text.AppendLine(
             "Answer with one JSON object and nothing else, with these string fields: \"name\" (the story's title, a few "
@@ -2161,6 +2285,7 @@ public sealed class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine("Rules for the places: only real systems, stations and bodies. Prefer the notable places listed, the real places within reach listed, and places in the game state. Do not invent names, and do not name a place from memory that is not on those lists unless you are certain it is within reach. Never use a system that needs a permit, such as Shinrarta Dezhra or Sol, unless the Commander is already in it. Keep each hop within the reach stated. Under \"this ship only\", every stop must suit the ship the Commander is in; otherwise any ship they own may be named in the prose as the one to take.");
+        text.Append(TriggerConfirms.Section(kinds));
         text.AppendLine("Rules for the lines: show the place and what is in it; never tell the Commander what they feel. Two to four sentences each, spoken in a cockpit. Foreshadow the turn and the ending in the earlier objectives' lines — you know how it ends and the voice that will read these lines to the Commander does not, so anything the Commander is to suspect early must be in the line itself. The opening is said when they agree to the story and before the first objective; the last objective's line is the ending.");
         text.AppendLine("Write every line plainly, whoever says it. Do not use a metaphor or an image where a direct statement would do. Do not end a line on an aphorism or a moral (\"That will hold.\", \"It will keep.\"). Do not repeat the spine's premise, want, stake, turn or ending as a line.");
         text.AppendLine("A line never gives the Commander a task. The only thing they can do is fly to the next objective, and the game has no way to find, meet, question or watch a person — so a line may say what somebody did, signed or left behind, but never \"ask the clerk\", \"find the pilot\" or \"see what their face does\". What the Commander does next is always the next objective's place, and the line may point them at it.");

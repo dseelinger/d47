@@ -113,6 +113,7 @@ public sealed class ChapterOneEndsAtABeaconTests
         [
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             .. EveryDraft(NextSpine, NextBeatsWithABeacon, Repairs.Replacing(NextBeatsWithABeacon, 2), Repairs.Replacing(NextBeatsWithABeacon, 2)),
         ]));
 
@@ -124,6 +125,6 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Equal(StoryDirector.NoDraftStood, refusal);
         Assert.Contains("Objective 2 (The Beacon Again) is a \"beacon\" objective", fixtures.LastRefusal);
         Assert.Single(fixtures.Stories.Current("F1")!.Chapters);
-        Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[2].Prompt.History[0].Text);
+        Assert.DoesNotContain("\"beacon\"", fixtures.Provider.Requests[3].Prompt.History[0].Text);
     }
 }

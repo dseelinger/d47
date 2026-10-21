@@ -36,8 +36,10 @@ public sealed class TheFinaleWaitsForAYearTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeatsNamingTheEnd)));
+            RoundScriptedLlmProvider.Saying(NextBeatsNamingTheEnd),
+            RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
@@ -53,7 +55,7 @@ public sealed class TheFinaleWaitsForAYearTests
         Assert.Equal(2, story.FinaleFrom);
         Assert.Equal(1, story.FinaleChapter);
         Assert.Equal(1, fixtures.Asks[^1].Story!.FinaleChapter);
-        Assert.Contains("this is finale chapter 1 of 4.", fixtures.Provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains("this is finale chapter 1 of 4.", fixtures.Provider.Requests[3].Prompt.History[0].Text);
 
         // Due as the chapter begins, with no new session.
         var due = fixtures.Director.ClueDue("F1", later);

@@ -12,6 +12,7 @@ internal static class StoryAnswer
     internal const string SpineName = "story_spine";
     internal const string BeatsName = "story_beats";
     internal const string ReplacementsName = "story_replacements";
+    internal const string FidelityName = "story_fidelity";
 
     internal static readonly IReadOnlyList<string> SpineFields = ["name", "premise", "want", "stake", "turn", "ending"];
 
@@ -82,6 +83,17 @@ internal static class StoryAnswer
 
     internal static LlmResponseSchema SpineSchema() =>
         new(SpineName, Object(SpineFields.Select(field => (field, (JsonNode)Text()))).ToJsonString());
+
+    internal const string FidelityShape = "{\"objections\": [{\"objective\": number, \"reason\": string}]}";
+
+    internal static LlmResponseSchema FidelitySchema() =>
+        new(
+            FidelityName,
+            Object([("objections", new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = Object([("objective", new JsonObject { ["type"] = "integer" }), ("reason", Text())]),
+            })]).ToJsonString());
 
     /// <summary>The answer's JSON shape as the instruction states it.</summary>
     internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null) =>

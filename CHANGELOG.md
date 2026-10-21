@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story or short story is now checked before you see it: a second model call reads each objective's lines against what that objective can observe and writes again any objective whose lines claim more, such as a mission line that calls its target clean or an ending that says you broke off a fight. The call goes to the provider that wrote the draft, so no new data leaves your machine.
+
 A story or short story objective can ask for new codex entries, which count only the first time you log an entry in a region, and for Xenological (Civilisations) or Guardian codex entries. The Guardian beacon scan counts toward the Guardian objective.
 
 When you did a story objective and the journal missed it, press Mark done under NEXT on a story chapter's page or a short story's page, or say "mark this objective done", "mark the objective done" or "this objective is done". The button asks first; the phrase does not. The objective fires as if the journal had shown it: its lines are told, and a chapter's last objective moves the story on to the next chapter. The phrase marks the running story's chapter, or with no story running the one short story under way; with two or more short stories it names them and asks you to use the button on the right page. The Guardian beacon scan cannot be marked done. The logbook names a marked objective as marked done by the Commander.

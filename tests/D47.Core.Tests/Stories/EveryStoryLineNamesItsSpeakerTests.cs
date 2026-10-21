@@ -257,7 +257,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]
@@ -328,7 +328,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         Assert.True(reopened.Poll());
         var chapter = reopened.Find("F1", key)!;
 
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
         Assert.Equal(["harrow", StorySpeaker.Narrator], chapter.OpeningLines.Select(line => line.Speaker));
         Assert.Equal("This is Harrow. Two seven four, minus eleven, plus forty-one.", chapter.Opening);
         Assert.Equal(StorySpeaker.Narrator, chapter.SpeakerOf(-1, 1));
@@ -388,7 +388,7 @@ public sealed class EveryStoryLineNamesItsSpeakerTests
         var chapter = fixtures.Book.Store.Find("F1", fixtures.Stories.Current("F1")!.CurrentChapter!)!;
 
         Assert.Equal("harrow", chapter.Beats[0].Speaker);
-        Assert.Equal(2, fixtures.Provider.Requests.Count);
+        Assert.Equal(3, fixtures.Provider.Requests.Count);
     }
 
     [Fact]

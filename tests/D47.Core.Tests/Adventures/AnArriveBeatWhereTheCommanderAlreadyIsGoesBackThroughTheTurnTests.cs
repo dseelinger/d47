@@ -68,7 +68,7 @@ public sealed class AnArriveBeatWhereTheCommanderAlreadyIsGoesBackThroughTheTurn
             .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
 
         return provider.Requests[2].Prompt.History[0].Text;
     }

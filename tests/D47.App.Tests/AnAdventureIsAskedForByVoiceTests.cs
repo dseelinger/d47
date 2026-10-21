@@ -135,7 +135,7 @@ public class AnAdventureIsAskedForByVoiceTests
         hold.SetResult();
         Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
 
-        Assert.Equal(2, model!.Asked.Count);
+        Assert.Equal(3, model!.Asked.Count);
         Assert.Single(book.Store.For("F1"));
     }
 

@@ -103,7 +103,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(3, fixtures.Provider.CallCount);
+        Assert.Equal(4, fixtures.Provider.CallCount);
         Assert.Null(fixtures.Asks[0].Outline);
         Assert.NotNull(fixtures.Asks[1].Outline);
     }
@@ -120,7 +120,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(5, fixtures.Provider.CallCount);
+        Assert.Equal(6, fixtures.Provider.CallCount);
         Assert.NotNull(fixtures.Asks[1].Outline);
         Assert.Null(fixtures.Asks[2].Outline);
     }
@@ -135,7 +135,7 @@ public sealed class AFailedDraftIsWrittenAgainTests
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
-        Assert.Equal(3, fixtures.Provider.CallCount);
+        Assert.Equal(4, fixtures.Provider.CallCount);
         Assert.Null(fixtures.Asks[1].Outline);
     }
 }

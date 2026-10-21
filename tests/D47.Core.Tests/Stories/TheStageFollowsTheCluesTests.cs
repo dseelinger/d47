@@ -55,8 +55,10 @@ public sealed class TheStageFollowsTheCluesTests
         using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying(Spine),
             RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+            RoundScriptedLlmProvider.Saying(NothingObjected),
             RoundScriptedLlmProvider.Saying(NextSpine),
-            RoundScriptedLlmProvider.Saying(NextBeats)));
+            RoundScriptedLlmProvider.Saying(NextBeats),
+            RoundScriptedLlmProvider.Saying(NothingObjected)));
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
         fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
@@ -64,7 +66,7 @@ public sealed class TheStageFollowsTheCluesTests
 
         Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(200), CancellationToken.None));
 
-        var brief = fixtures.Provider.Requests[2].Prompt.History[0].Text;
+        var brief = fixtures.Provider.Requests[3].Prompt.History[0].Text;
 
         Assert.Contains("The story stands at Midpoint.", brief);
         Assert.Contains($"- midpoint: {Secret.Beats.Midpoint}", brief);

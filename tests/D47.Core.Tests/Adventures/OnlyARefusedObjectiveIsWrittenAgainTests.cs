@@ -52,7 +52,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(3, provider.CallCount);
+        Assert.Equal(4, provider.CallCount);
 
         // The same objectives written in one answer, with nothing to repair, are what the kept ones must equal.
         var control = await Write(Scripted(Spliced(ThirdTooFar, Bounties)));
@@ -104,7 +104,7 @@ public sealed class OnlyARefusedObjectiveIsWrittenAgainTests
         var outcome = await Write(provider);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal(4, provider.CallCount);
+        Assert.Equal(5, provider.CallCount);
         Assert.Contains(
             "Objective 3 (The Far Column) is 21886 light years from the previous stop; the reach is 80.",
             provider.Requests[3].Prompt.History[0].Text);

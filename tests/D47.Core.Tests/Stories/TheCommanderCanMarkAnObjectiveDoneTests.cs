@@ -95,7 +95,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     [Fact]
     public async Task MarkingAChaptersLastBeatDoneMovesTheStoryOn()
     {
-        using var fixtures = Fixtures(Spine, BeatsToTheBeacon, NextSpine, NextBeats, NextSpine, NextBeats);
+        using var fixtures = Fixtures(Spine, BeatsToTheBeacon, NothingObjected, NextSpine, NextBeats, NothingObjected, NextSpine, NextBeats, NothingObjected);
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, TestContext.Current.CancellationToken));
 
         fixtures.Finish("F1", Assert.Single(fixtures.Stories.Current("F1")!.Chapters), Now);

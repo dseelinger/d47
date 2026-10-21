@@ -40,7 +40,7 @@ public class AShortStoryIsWrittenAgainAsAChapterIsTests
         Until(() => book.Store.Find("F1", "the-unrecoverable-column") is not null);
 
         Assert.True(book.Store.Find("F1", "the-unrecoverable-column")?.IsDraft);
-        Assert.Equal(3, model.Asked.Count);
+        Assert.Equal(4, model.Asked.Count);
         Assert.Equal([StoryDirector.WritingAgainLine(2, told: true), "Here it is."], said);
 
         var beats = model.Asked[2];

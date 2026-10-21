@@ -74,7 +74,11 @@ public sealed class CarriersMegashipsAndConstructionSitesAreNeverStoryStopsTests
         foreach (var request in provider.Requests)
         {
             var instruction = request.Prompt.History[0].Text;
-            Assert.Contains("- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)" + Environment.NewLine, instruction);
+
+            if (!instruction.StartsWith("You are checking", StringComparison.Ordinal))
+            {
+                Assert.Contains("- Dyson's Hollow (12 ly): stations Maren Anchorage (large pad)" + Environment.NewLine, instruction);
+            }
 
             foreach (var station in NotStops)
             {
