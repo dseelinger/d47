@@ -84,6 +84,8 @@ import re
 import urllib.request
 from pathlib import Path
 
+from curated_ships import ARX_EARLY_ACCESS
+
 FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 
 CORIOLIS_RAW = "https://raw.githubusercontent.com/EDCD/coriolis-data/master/"
@@ -321,6 +323,11 @@ def build_ships(
 
     built, missing = [], []
 
+    unknown_arx = sorted(ARX_EARLY_ACCESS - {row["symbol"].lower() for row in shipyard})
+    if unknown_arx:
+        raise SystemExit(
+            f"ARX_EARLY_ACCESS in tools/curated_ships.py names a symbol not in shipyard.csv: {', '.join(unknown_arx)}")
+
     for identity in shipyard:
         symbol = identity["symbol"].lower()
 
@@ -358,7 +365,7 @@ def build_ships(
             ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
             ",".join(str(size) for size in slots.get("internal") or []
                      if isinstance(size, int) and size),
-            requirement(ship) if ship else "",
+            "arx-early-access" if symbol in ARX_EARLY_ACCESS else requirement(ship) if ship else "",
         ])
 
     # A hull no source measures cannot be keyed to anything the journal writes, so its

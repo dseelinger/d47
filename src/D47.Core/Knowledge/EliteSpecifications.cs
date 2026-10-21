@@ -56,7 +56,7 @@ public sealed record ShipSpecification
 
     /// <summary>
     /// <c>empire:&lt;n&gt;</c> or <c>federation:&lt;n&gt;</c> for a naval rank gate, <c>early-adoption</c>
-    /// for a Horizons early-adoption hull, null otherwise.
+    /// for a Horizons early-adoption hull, <c>arx-early-access</c> for a hull sold for ARX only, null otherwise.
     /// </summary>
     public string? Requirement { get; init; }
 }

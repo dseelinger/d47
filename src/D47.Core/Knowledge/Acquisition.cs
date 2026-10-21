@@ -155,11 +155,13 @@ public static class AcquisitionGuide
         return new Index(names, byName);
     }
 
-    private static Acquisition Ship(ShipSpecification ship)
+    internal static Acquisition Ship(ShipSpecification ship)
     {
         var gating = ship.Requirement switch
         {
             "early-adoption" => new Gating([AcquisitionMethod.Unobtainable], "Horizons early adoption only"),
+
+            "arx-early-access" => new Gating([AcquisitionMethod.Shipyard], "ARX early access only"),
 
             { } requirement when requirement.StartsWith("empire:", StringComparison.Ordinal)
                 && int.TryParse(requirement["empire:".Length..], out var rank) =>
