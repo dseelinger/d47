@@ -687,6 +687,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The signals the Commander's journals have shown.</summary>
     public D47.Core.Journal.SignalSightings? SignalSightings { get; private set; }
 
+    /// <summary>Each Commander's arrivals, with their positions.</summary>
+    public D47.Core.Journal.TravelLog? TravelLog { get; private set; }
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -1075,6 +1078,10 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.SignalSightings>());
 
+        var travelLog = new D47.Core.Journal.TravelLog(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.TravelLog>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -1095,6 +1102,7 @@ public sealed class AppHost : IDisposable
             Activities = activities,
             Mail = mail,
             Signals = signalSightings,
+            Travel = travelLog,
             Step = StartupTimer.Step,
         };
 
@@ -1519,6 +1527,7 @@ public sealed class AppHost : IDisposable
             Markets = markets,
             Memories = memories,
             SignalSightings = signalSightings,
+            TravelLog = travelLog,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
             MessageStore = messageStore,
@@ -1628,6 +1637,7 @@ public sealed class AppHost : IDisposable
             crimes.Apply(events, inGame);
             activities.Apply(events, inGame);
             signalSightings.Apply(events);
+            stores.TravelLog.Apply(events);
 
             if (!context.IsFirst)
             {
@@ -3596,6 +3606,7 @@ public sealed class AppHost : IDisposable
         host.SavedSearches = stores.SavedSearches;
         host.SearchHistory = stores.SearchHistory;
         host.SignalSightings = stores.SignalSightings;
+        host.TravelLog = stores.TravelLog;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
 
@@ -4164,6 +4175,8 @@ public sealed class AppHost : IDisposable
         public required MailLedger Mail { get; init; }
 
         public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
+
+        public required D47.Core.Journal.TravelLog TravelLog { get; init; }
 
         public required D47.Core.Knowledge.MarketBook MarketBook { get; init; }
 

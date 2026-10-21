@@ -74,6 +74,9 @@ public sealed class HistoryBackfill
     /// <summary>The scanned FSS signals, folded the same way.</summary>
     public SignalSightings? Signals { get; init; }
 
+    /// <summary>Each Commander's arrivals, folded the same way.</summary>
+    public TravelLog? Travel { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -351,6 +354,15 @@ public sealed class HistoryBackfill
                 Timed("signal backfill", () =>
                 {
                     signals.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Travel is { } travel)
+            {
+                Timed("travel backfill", () =>
+                {
+                    travel.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }
