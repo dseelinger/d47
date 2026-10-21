@@ -47,6 +47,8 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         public DateTimeOffset? BgsTick { get; set; }
 
+        public IReadOnlyList<GalNetArticle> GalNetArrived { get; set; } = [];
+
         public List<DateTimeOffset> RecapAsked { get; } = [];
 
         public T Shipped<T>() => Engine.Callouts.OfType<T>().Single();
@@ -66,6 +68,7 @@ public sealed class EveryLateServiceReachesItsCalloutTests
             StoryAsides = new StoryMissionAsides(),
             StockCoreAboard = () => wired!.StockCore,
             BgsLastTick = () => wired!.BgsTick,
+            GalNetArrived = () => wired!.GalNetArrived,
             ComposeRecap = before =>
             {
                 wired!.RecapAsked.Add(before);
@@ -147,6 +150,20 @@ public sealed class EveryLateServiceReachesItsCalloutTests
 
         wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { BgsTick = false } });
         Assert.Null(callout.LastTick());
+    }
+
+    [Fact]
+    public void GalNetHeadlinesAreReadOnlyWhileTheirKnowledgeSettingIsOn()
+    {
+        var wired = Connected();
+        var callout = wired.Shipped<GalNetCallout>();
+        wired.GalNetArrived = [new GalNetArticle("a", "Title", ["Body."], Start, "3311")];
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalNet = true } });
+        Assert.Single(callout.Arrived());
+
+        wired.Settings.Replace("test", current => current with { Knowledge = current.Knowledge with { GalNet = false } });
+        Assert.Empty(callout.Arrived());
     }
 
     [Fact]

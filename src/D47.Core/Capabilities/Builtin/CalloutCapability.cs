@@ -70,6 +70,7 @@ public static class CalloutCapability
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
+    public const string GalNetKey = "callouts.galNet";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -652,6 +653,16 @@ public static class CalloutCapability
                 s => s.Callouts.BgsTick,
                 (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } },
                 appliesWhen: s => s.Knowledge.BgsTick),
+
+            Toggle(
+                GalNetKey,
+                "GalNet headlines",
+                "When new GalNet articles arrive, says their headlines. Needs GalNet news under Outside sources.",
+                "galnet",
+                "GalNet headlines",
+                s => s.Callouts.GalNet,
+                (s, v) => s with { Callouts = s.Callouts with { GalNet = v } },
+                appliesWhen: s => s.Knowledge.GalNet),
 
             Toggle(
                 FriendsOnlineKey,

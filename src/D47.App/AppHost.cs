@@ -3250,6 +3250,7 @@ public sealed class AppHost : IDisposable
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
             BgsLastTick = () => late.Host?.BgsTick?.Last,
+            GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ComposeRecap = launch => ComposeRecap(files, launch, JournalsOnDisk(journalDirectory, logger), loggerFactory),
         });
 

@@ -87,6 +87,7 @@ public static class CrewDomains
         "powerplay-cycle",
         "bgs-tick",
         "friends",
+        "galnet",
         "ring-hotspots",
         "unsold-data-at-risk",
         "reminders",

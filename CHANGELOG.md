@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Your core now says the headlines of new GalNet articles as they arrive: "GalNet: Faulcon DeLacy Announces Anaconda Mk II.", or for several, "New on GalNet: …" with the three newest titles and, past three, a count. It never reads the article itself. It needs the **GalNet news** setting under Outside sources, and a new **GalNet headlines** setting turns the callout off. Articles that arrive while it is off are not said later.
+
 A new **GalNet news** setting under Outside sources, off by default, keeps a copy of GalNet on this PC. With it on, D47 asks Frontier's GalNet server (cms.zaonce.net) for the newest articles at startup and every hour while it runs, and the first time it reads back up to two years. Nothing about you goes with the request. The articles are kept in `data\galnet.json` and never deleted; turning the setting off stops the requests and keeps what is there. **Privacy and egress** lists GalNet news. Nothing reads the articles yet.
 
 You can now ask "who's online", "who is online", "which friends are online" or "any friends online". D47 names up to three friends Elite has reported online since it started, newest report first, and counts the rest, for example "Reported online since Elite started: Arcturus, Vega, Rigel and four others." Elite does not write a line for most friends who leave, so this is who has been reported, not who is online now. With Elite closed it says so. Answered on this machine; the AI model can ask too, which sends the names to your language model.

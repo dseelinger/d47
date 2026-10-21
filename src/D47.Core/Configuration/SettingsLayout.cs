@@ -227,6 +227,7 @@ public static class SettingsLayout
                                 E("callouts.powerplayCycle"),
                                 E("callouts.bgsTick"),
                                 E("callouts.friendsOnline"),
+                                E("callouts.galNet"),
                                 E("callouts.missions"),
                                 E("callouts.outstandingCrimes"),
                                 E("callouts.reminders"),

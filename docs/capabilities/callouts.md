@@ -602,6 +602,21 @@ than thirty minutes old, so the restatement Elite writes shortly after login sta
 said during the startup replay. The names are spoken by your ship's voice provider. Turn this one off
 with the `friends` row.
 
+#### GalNet headlines {#galnet}
+
+When new GalNet articles arrive, the headlines, newest first and never the articles. Needs **GalNet news**
+under Outside sources.
+
+```text
+GalNet: Faulcon DeLacy Announces Anaconda Mk II.
+```
+
+Two or three articles are *"New on GalNet: {title}; {title}; and {title}."* More than three are a count and
+the three newest: *"Five new GalNet articles. The latest: {title}; {title}; and {title}."* An article counts
+as new when it is new to the archive, so a restart does not repeat a headline, and articles published while
+d47 was closed are said at the next start. Nothing is said for the first backfill, and articles that arrive
+while this is off are not said when it is switched back on. Turn this one off with the `galnet` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.
