@@ -1,4 +1,5 @@
-﻿using D47.Core.Configuration;
+﻿using D47.Core.Audio;
+using D47.Core.Configuration;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -29,7 +30,9 @@ public static class CommsCapability
         ActionSurface actions,
         Func<bool> enabled,
         MailLedger? mail = null,
-        Func<string?>? commander = null) => new()
+        Func<string?>? commander = null,
+        FriendRoster? friends = null,
+        Func<bool>? gameRunning = null) => new()
     {
         Id = Id,
         Group = "Acting on the game",
@@ -83,10 +86,65 @@ public static class CommsCapability
                 ],
                 Handler = (_, _) => Task.FromResult(ReadMail(mail, commander?.Invoke())),
             },
+            new ToolDefinition
+            {
+                Name = "get_friends_online",
+                Description =
+                    "Say which friends the journal has reported online since Elite started, newest report first. "
+                    + "Elite does not report most friends leaving, so this is not who is online now.",
+                Commands =
+                [
+                    new ToolCommandPhrase("who's online", NoArguments),
+                    new ToolCommandPhrase("who is online", NoArguments),
+                    new ToolCommandPhrase("which friends are online", NoArguments),
+                    new ToolCommandPhrase("any friends online", NoArguments),
+                ],
+                Handler = (_, _) => Task.FromResult(FriendsOnline(friends, gameRunning)),
+            },
         ],
     };
 
     private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
+
+    private static ToolResult FriendsOnline(FriendRoster? friends, Func<bool>? gameRunning)
+    {
+        if (friends is null)
+        {
+            return ToolResult.Ok("I am not keeping track of friends in this configuration.");
+        }
+
+        if (gameRunning is not null && !gameRunning())
+        {
+            return ToolResult.Ok("Elite isn't running, so no friends are reported online.");
+        }
+
+        var names = friends.Online
+            .OrderByDescending(pair => pair.Value)
+            .Select(pair => pair.Key)
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            return ToolResult.Ok("No friends have been reported online since Elite started.");
+        }
+
+        const string lead = "Reported online since Elite started: ";
+
+        if (names.Count <= 3)
+        {
+            return ToolResult.Ok(lead + Join(names) + ".");
+        }
+
+        var others = SpokenNumbers.Expand($"{names.Count - 3} others");
+
+        return ToolResult.Ok($"{lead}{names[0]}, {names[1]}, {names[2]} and {others}.");
+    }
+
+    private static string Join(List<string> names) => names.Count switch
+    {
+        1 => names[0],
+        _ => string.Join(", ", names.Take(names.Count - 1)) + " and " + names[^1],
+    };
 
     private static ToolResult ReadMail(MailLedger? mail, string? commander)
     {

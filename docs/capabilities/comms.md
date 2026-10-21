@@ -187,6 +187,16 @@ or failed, promotions, squadron promotions and community goal rewards. It paraph
 journal and cannot see the inbox itself, so the comms panel has the true count. Asking again says
 nothing new until more arrives.
 
+### Ask who is online
+
+> "who's online"
+> "which friends are online"
+> "any friends online"
+
+D47 names up to three friends Elite has reported online since it started, newest report first, and
+counts the rest. Elite does not write a line for most friends who leave, so this is who has been
+reported, not who is online now. With Elite closed it says so.
+
 ### It needs the keyboard too
 
 Sending a message means opening the chat box, which means pressing a key. So this needs **Let
@@ -213,6 +223,14 @@ opens the chat box is still a scancode, because that one is a binding.
 #### `read_mail`
 
 Say what the journal shows has arrived as inbox mail since the Commander last asked: missions completed or failed, promotions, squadron promotions and community goal rewards. It cannot see the inbox itself.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `get_friends_online`
+
+Say which friends the journal has reported online since Elite started, newest report first. Elite does not report most friends leaving, so this is not who is online now.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

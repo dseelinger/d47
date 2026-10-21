@@ -259,6 +259,9 @@ public static class BuiltinCapabilities
         // The unannounced mail ledger (#618).
         Journal.MailLedger? mail = null,
 
+        // The friends reported online this game launch.
+        Journal.FriendRoster? friends = null,
+
         // Where every galaxy search answer is posted.
         Knowledge.GalaxySearchBoard? searches = null,
 
@@ -423,7 +426,9 @@ public static class BuiltinCapabilities
             actions,
             () => settings.Current.Actions.Chat,
             mail,
-            () => gameState.Active?.Identity.FrontierId),
+            () => gameState.Active?.Identity.FrontierId,
+            friends,
+            () => gameState.IsGameRunning),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         ClockCapability.Create(now, zone),

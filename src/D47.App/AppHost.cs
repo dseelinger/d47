@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -2849,6 +2849,7 @@ public sealed class AppHost : IDisposable
                 activities: activities,
                 cargo: cargoBoard,
                 mail: mail,
+                friends: stores.Friends,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
                 visitedStars: visitedStars,
