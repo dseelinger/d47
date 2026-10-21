@@ -39,6 +39,11 @@ public sealed record BodyBiology(string BodyName)
         Signals.Where(signal => signal.Type.Contains("Biological", StringComparison.OrdinalIgnoreCase))
             .Sum(signal => signal.Count);
 
+    /// <summary>How many geological signals the scan counted.</summary>
+    public int GeologicalCount =>
+        Signals.Where(signal => signal.Type.Contains("Geological", StringComparison.OrdinalIgnoreCase))
+            .Sum(signal => signal.Count);
+
     public bool HasBiology => BiologicalCount > 0 || Genera.Count > 0;
 }
 

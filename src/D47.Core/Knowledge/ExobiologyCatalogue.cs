@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace D47.Core.Knowledge;
 
@@ -94,9 +93,9 @@ public static class ExobiologyCatalogue
     /// </summary>
     public static IReadOnlyList<ExobiologyEntry> Possible(BodyConditions body, string? region = null)
     {
-        var planetType = NormalisePlanetType(body.PlanetClass);
-        var atmosphere = NormaliseAtmosphere(body.Atmosphere);
-        var volcanism = NormaliseVolcanism(body.Volcanism);
+        var planetType = BodyConditionFold.NormalisePlanetType(body.PlanetClass);
+        var atmosphere = BodyConditionFold.NormaliseAtmosphere(body.Atmosphere);
+        var volcanism = BodyConditionFold.NormaliseVolcanism(body.Volcanism);
 
         return
         [
@@ -116,50 +115,6 @@ public static class ExobiologyCatalogue
         var margin = (high - low) * BandMargin;
 
         return value >= low - margin && value <= high + margin;
-    }
-
-    // ---------------------------------------------------------- normalisation
-    //
-    // The one fold shared with tools/gen-exobiology.py's normalise_planet_type, normalise_atmosphere and
-    // normalise_volcanism. Spansh and the journal name the same condition in different words; this is
-    // applied to Spansh's words when the table is generated and to the journal's words here, so neither
-    // side has to agree with the other's spelling.
-
-    private static readonly Regex Letters = new("[a-z]+", RegexOptions.Compiled);
-
-    private static string NormalisePlanetType(string? raw) =>
-        string.Concat(Letters.Matches((raw ?? string.Empty).ToLowerInvariant())
-            .Select(match => match.Value == "world" ? "body" : match.Value));
-
-    private static readonly HashSet<string> AtmosphereStopwords =
-        new(StringComparer.Ordinal) { "thin", "thick", "hot", "atmosphere" };
-
-    private static string NormaliseAtmosphere(string? raw)
-    {
-        var text = (raw ?? string.Empty).Trim().ToLowerInvariant();
-
-        if (text.Length == 0 || text == "no atmosphere")
-        {
-            return "none";
-        }
-
-        text = text.Replace("sulphur", "sulfur", StringComparison.Ordinal);
-
-        return string.Concat(Letters.Matches(text).Select(match => match.Value)
-            .Where(word => !AtmosphereStopwords.Contains(word)));
-    }
-
-    private static string NormaliseVolcanism(string? raw)
-    {
-        var text = (raw ?? string.Empty).Trim().ToLowerInvariant();
-
-        if (text.Length == 0 || text == "no volcanism")
-        {
-            return "none";
-        }
-
-        return string.Concat(Letters.Matches(text).Select(match => match.Value)
-            .Where(word => word != "volcanism"));
     }
 
     // -------------------------------------------------------------- loading

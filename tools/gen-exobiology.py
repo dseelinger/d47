@@ -45,74 +45,44 @@ agree with the other's spelling, only with the same function.
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 
+from body_conditions import (
+    CATEGORICAL_THRESHOLD,
+    PAGE_SIZE,
+    PAUSE,
+    fetch,
+    normalise_atmosphere,
+    normalise_planet_type,
+    normalise_volcanism,
+    categorical,
+    search as search_page,
+)
 from curated_exobiology import COLONY_DISTANCES, CURATED_VALUES
 
-SEARCH = "https://spansh.co.uk/api/bodies/search"
+AGENT = "d47-gen-exobiology"
 FIELD_VALUES = "https://spansh.co.uk/api/bodies/field_values/landmark_subtype?q="
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Exobiology.tsv"
-
-PAGE_SIZE = 250
-
-# A column stays in a row's categorical list once it is seen on at least this share of the
-# bodies sampled for that species — frequent enough to be a real constraint rather than one
-# outlying survey.
-CATEGORICAL_THRESHOLD = 0.02
 
 # The band each species' gravity, temperature and pressure ranges are learned from.
 PERCENTILE_LOW = 1
 PERCENTILE_HIGH = 99
 
-PAUSE = 0.3
-
 COLUMNS_BEFORE_COLONY = 14
-
-
-def fetch(url: str, payload: dict[str, object] | None = None) -> dict[str, object]:
-    data = json.dumps(payload).encode("utf-8") if payload is not None else None
-    headers = {"User-Agent": "d47-gen-exobiology"}
-
-    if data is not None:
-        headers["Content-Type"] = "application/json"
-
-    request = urllib.request.Request(url, data=data, headers=headers)
-
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
-            if attempt == 2:
-                raise
-            time.sleep(2 * (attempt + 1))
-
-    raise AssertionError("unreachable")
 
 
 def candidate_names() -> list[str]:
     """Every landmark subtype spansh has indexed — species and non-biological alike."""
-    found = fetch(FIELD_VALUES)
+    found = fetch(FIELD_VALUES, agent=AGENT)
     return sorted(set(found.get("values", [])) | set(CURATED_VALUES))
 
 
 def search(name: str, page: int) -> list[dict[str, object]]:
-    body = fetch(SEARCH, {
-        "filters": {"landmark_subtype": {"value": [name]}},
-        "sort": [],
-        "size": PAGE_SIZE,
-        "page": page,
-    })
-    results = body.get("results", [])
-    assert isinstance(results, list)
-    return results
+    return search_page(name, page, AGENT)
 
 
 def sample(name: str) -> tuple[str, int, list[dict[str, object]]] | str | None:
@@ -152,35 +122,6 @@ def sample(name: str) -> tuple[str, int, list[dict[str, object]]] | str | None:
     return str(landmark["type"]), value, bodies
 
 
-# ------------------------------------------------------------------ normalisation
-
-
-def normalise_planet_type(raw: str | None) -> str:
-    words = ["body" if word == "world" else word for word in re.findall(r"[a-z]+", (raw or "").lower())]
-    return "".join(words)
-
-
-def normalise_atmosphere(raw: str | None) -> str:
-    text = (raw or "").strip().lower()
-
-    if text in ("", "no atmosphere"):
-        return "none"
-
-    text = text.replace("sulphur", "sulfur")
-    stopwords = {"thin", "thick", "hot", "atmosphere"}
-
-    return "".join(word for word in re.findall(r"[a-z]+", text) if word not in stopwords)
-
-
-def normalise_volcanism(raw: str | None) -> str:
-    text = (raw or "").strip().lower()
-
-    if text in ("", "no volcanism"):
-        return "none"
-
-    return "".join(word for word in re.findall(r"[a-z]+", text) if word != "volcanism")
-
-
 # ------------------------------------------------------------------ aggregation
 
 
@@ -194,16 +135,6 @@ def percentile(values: list[float], pct: float) -> float:
     low, high = int(at), min(int(at) + 1, len(ordered) - 1)
 
     return ordered[low] + (ordered[high] - ordered[low]) * (at - low)
-
-
-def categorical(values: list[str], threshold: float) -> list[str]:
-    counts: dict[str, int] = {}
-
-    for value in values:
-        counts[value] = counts.get(value, 0) + 1
-
-    kept = [value for value, count in counts.items() if count / len(values) >= threshold]
-    return sorted(kept)
 
 
 def row(name: str, genus: str, value: int, bodies: list[dict[str, object]]) -> list[str]:
@@ -299,8 +230,8 @@ def main() -> int:
         "# condition ranges. Game data is Frontier's, used under their media usage rules;",
         "# see NOTICE. Categorical columns keep a value seen on at least 2% of the sampled bodies; numeric",
         "# ranges are the 1st-99th percentile. Atmosphere, planet type and volcanism are normalised — see",
-        "# normalise_planet_type, normalise_atmosphere and normalise_volcanism in this file, mirrored in",
-        "# ExobiologyCatalogue's private NormalisePlanetType, NormaliseAtmosphere and NormaliseVolcanism,",
+        "# normalise_planet_type, normalise_atmosphere and normalise_volcanism in tools/body_conditions.py,",
+        "# mirrored in BodyConditionFold's NormalisePlanetType, NormaliseAtmosphere and NormaliseVolcanism,",
         "# which apply the same fold to a live journal Scan. colony_distance, in metres per genus, comes from",
         "# COLONY_DISTANCES in tools/curated_exobiology.py: ArtemisScannerTracker's organicinfo.py,",
         "# HerzbubeWiki's EDExobiology page and EDCoPilot's spoken callouts.",
