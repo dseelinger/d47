@@ -87,7 +87,7 @@ public sealed record CodexRegionView(
     string? Empty);
 
 /// <summary>One codex entry the table lists for the region, with the systems that reported it there.</summary>
-public sealed record CodexMissingRow(long EntryId, string Name, string Category, string SubCategory, int Systems, bool OnRecord);
+public sealed record CodexMissingRow(long EntryId, string Name, string Category, string SubCategory, int Systems, bool OnRecord, string? PlaceholderFile = null);
 
 /// <summary>Which of a region's known entries the Discoveries page lists.</summary>
 public enum CodexStatusFilter
@@ -547,7 +547,15 @@ public static class CodexModel
             .OrderByDescending(item => item.Systems)
             .ThenBy(item => item.Entry.Name, StringComparer.OrdinalIgnoreCase)
             .Select(item => new CodexMissingRow(
-                item.Entry.EntryId, item.Entry.Name, item.Entry.Category, item.Entry.SubCategory, item.Systems, item.Logged is not null))
+                item.Entry.EntryId,
+                item.Entry.Name,
+                item.Entry.Category,
+                item.Entry.SubCategory,
+                item.Systems,
+                item.Logged is not null,
+                item.Logged is { } logged
+                    ? CodexFamilies.FileOfSymbol(logged.SubCategorySymbol)
+                    : CodexFamilies.FileOfTableName(item.Entry.SubCategory)))
             .ToList();
 
         return new CodexDiscoveriesView(
@@ -570,6 +578,7 @@ public static class CodexModel
     /// <summary>The Discoveries table's columns; the default order is most reported first.</summary>
     public static IReadOnlyList<SortColumn<CodexMissingRow>> MissingHeads() =>
     [
+        SortColumn<CodexMissingRow>.Plain(string.Empty),
         SortColumn<CodexMissingRow>.Text("Entry", row => row.Name) with { Second = "Codex name" },
         SortColumn<CodexMissingRow>.Text("Category", row => row.Category, row => row.SubCategory) with { Second = "Then sub-category" },
         SortColumn<CodexMissingRow>.Text("Sub-category", row => row.Category, row => row.SubCategory) with { Second = "Within category" },
@@ -578,7 +587,7 @@ public static class CodexModel
     ];
 
     /// <summary>The index of "Reported in" in <see cref="MissingHeads"/>, the column the default order follows.</summary>
-    public const int MissingDefaultColumn = 3;
+    public const int MissingDefaultColumn = 4;
 
     /// <summary>The regions table's columns.</summary>
     public static IReadOnlyList<SortColumn<CodexRegionRow>> RegionHeads() =>

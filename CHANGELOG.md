@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each row of the Discoveries page under a region's Codex has a 44 px square picture at its left: your own picture for the entry, else its stock picture if that is already downloaded, else the placeholder for its family. Drawing the list downloads nothing; a stock picture shows once you have opened the entry's page and it has downloaded. The picture column has no heading and does not sort.
+
 The Discoveries page under a region's Codex is one flat table of every entry the codex table lists for the region, with Category and Sub-category columns and a Status of MISSING or ON RECORD. A sentence above it, "Show MISSING entries in ALL CATEGORIES", filters by status, category and, for a category with several, sub-category. It opens on Missing, so it lists what it did before. Category and Sub-category sort by category and then sub-category, and Clear filters resets the three.
 
 The Short Story and Next chapter forms are redrawn: labelled Reach, Length, Ship and Brief rows with a hint under each, the brief as a tile with a Clear tile beside it, Go under a rule, and a warning with Open settings when asking is shut. The page title is gone.

@@ -108,6 +108,10 @@ public sealed class CodexPictureStore
         return null;
     }
 
+    /// <summary>The bytes of <paramref name="row"/>'s picture when it is on disk and matches; null otherwise. Never starts a fetch.</summary>
+    public byte[]? StockOnDisk(CodexPictureRow row) =>
+        _allowed() && _files.ReadBytes(StockPath(row.Asset)) is { } bytes && CodexPictureIndex.Matches(row, bytes) ? bytes : null;
+
     /// <summary>The bytes of the Commander's own picture; null when there is none.</summary>
     public byte[]? Local(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.FileName));
 
