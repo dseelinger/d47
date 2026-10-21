@@ -19,7 +19,8 @@ public sealed class ShipsMode(
     Func<bool>? hullArt = null,
     BuildTalk? talk = null,
     Func<GameStatus>? status = null,
-    Func<Task<string?>>? clipboardText = null) : ILoadoutMode
+    Func<Task<string?>>? clipboardText = null,
+    Func<string, Task<bool>>? setClipboardText = null) : ILoadoutMode
 {
     /// <summary>A row for a ship the journal reports and nothing has planned for yet.</summary>
     private const string Unplanned = "new:";
@@ -1087,6 +1088,33 @@ public sealed class ShipsMode(
         offer.Read is { } read && Resolve(item) is { } build
             ? ships.Import(build.Id, read, checklists.RemoveFulfilled)
             : offer.Refusal ?? "That build is not there any more.";
+
+    public string? ExportLabel(string item) =>
+        setClipboardText is not null && Resolve(item) is { IsOwned: true } ? "Copy as SLEF" : null;
+
+    public async Task<string> Export(string item)
+    {
+        if (setClipboardText is null)
+        {
+            return "There is no clipboard to write to here.";
+        }
+
+        if (Resolve(item) is not { IsOwned: true } build)
+        {
+            return "That ship is not there any more.";
+        }
+
+        if (Picture(build) is not { } seen || seen.Loadout.Modules.Count == 0)
+        {
+            return "I have not seen this ship's modules yet. Board it once and I will remember them.";
+        }
+
+        var text = SlefWriter.Write(seen.Loadout, BuildInfo.Semantic);
+
+        return await setClipboardText(text).ConfigureAwait(true)
+            ? "Copied the ship as SLEF."
+            : "The clipboard could not be written to.";
+    }
 
     private static string Count(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 

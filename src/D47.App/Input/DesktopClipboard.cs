@@ -29,6 +29,29 @@ public sealed class DesktopClipboard(ILogger<DesktopClipboard> logger)
         }
     }
 
+    /// <summary>Puts text on the clipboard, answering whether it landed.</summary>
+    public static async Task<bool> WriteTextAsync(string text)
+    {
+        try
+        {
+            return await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                if (Avalonia.Application.Current?.ApplicationLifetime
+                    is not IClassicDesktopStyleApplicationLifetime { MainWindow.Clipboard: { } clipboard })
+                {
+                    return false;
+                }
+
+                await clipboard.SetTextAsync(text).ConfigureAwait(true);
+                return true;
+            }).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     public async Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default)
     {
         try

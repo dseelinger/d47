@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+An owned ship's page gains a **Copy as SLEF** button beside **Promote**. It puts the ship as it is fitted now on the clipboard, with its modules, engineering and modifiers, for pasting into an outfitting website's import. It uses the loadout live where you are aboard and the remembered one otherwise. A ship whose modules d47 has not seen yet says so on the line under the heading and leaves the clipboard alone. An intended hull has no button. It works on the desktop window and the headset's big panel, and there is no voice phrase or tool for it.
+
 A ship build's page gains an **Import from clipboard** button beside **Promote**. With a SLEF loadout for the same hull on the clipboard, it replaces the build's slot plans with the loadout's. Where the build already plans slots it asks first, giving the counts; **Keep this plan** changes nothing. Text that is not a loadout, or a loadout for another hull, is reported on the line under the heading and changes nothing. It works on the desktop window and the headset's big panel, and there is no voice phrase or tool for it.
 
 On the desktop, the Construction page's site detail gains a **RAVEN COLONIAL** button beside the copy glyph for the site's system. It opens that system on Raven Colonial in your browser. D47 sends nothing when you click it; your browser asks Raven Colonial. The headset's page has no button, since it cannot open a browser.

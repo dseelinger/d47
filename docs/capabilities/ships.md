@@ -239,6 +239,20 @@ and a rescan that finds no journals at all changes nothing rather than emptying 
 folder that has moved reads exactly like a fleet that has been sold, and only one of those should
 be believed.
 
+### Copying a ship out
+
+An owned ship's page has a **Copy as SLEF** press beside **Promote**. It puts the ship as it is fitted
+now on the clipboard, for pasting into an outfitting website's import: the loadout live while you are
+aboard, the one last remembered otherwise. A hull you only intend has no press, since a plan can leave
+slots open and a site needs every slot filled. A ship whose modules d47 has not seen says so on the
+line under the heading and leaves the clipboard alone. Nothing is sent anywhere; the clipboard is local.
+
+The text is a one-element SLEF array whose `data` has the shape of the journal's `Loadout` event:
+
+```csharp
+public static string Write(ShipLoadout loadout, string appVersion)
+```
+
 ### One build per ship
 
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this

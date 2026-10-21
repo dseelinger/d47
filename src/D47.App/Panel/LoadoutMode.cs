@@ -393,6 +393,12 @@ public interface ILoadoutMode
     /// <summary>Replaces the item's plan with a read import, and says what happened.</summary>
     string Import(string item, LoadoutImportOffer offer) => offer.Refusal ?? string.Empty;
 
+    /// <summary>The label for copying the item out to the clipboard, or null where this item has none.</summary>
+    string? ExportLabel(string item) => null;
+
+    /// <summary>Puts the item on the clipboard, and says what happened.</summary>
+    Task<string> Export(string item) => Task.FromResult("That cannot be copied.");
+
     /// <summary>What is actually there, from the journal.</summary>
     IReadOnlyList<LoadoutLine> Fitted(string item, string slot);
 
