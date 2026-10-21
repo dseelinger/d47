@@ -29,6 +29,9 @@ public class SettingsByVoiceTests
         ["contribution.eddn"] =
             "Turning it on sends the Commander's market data to a public relay, and a misheard phrase "
             + "must not be able to start that. Set on the panel only.",
+        ["knowledge.colonisationProgress"] =
+            "Turning it on sends the Commander's deliveries under their Commander name to Raven Colonial, "
+            + "and a misheard phrase must not be able to start that. Set on the panel only.",
         ["llm.endpoint"] =
             "A URL. There is no closed set of them, and a misheard host is a silent misconfiguration.",
         ["persona.shipCoreShip"] =

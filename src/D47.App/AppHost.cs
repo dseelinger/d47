@@ -429,6 +429,7 @@ public sealed class AppHost : IDisposable
     private D47.Knowledge.EddnUploader? _eddnUploader;
 
     private D47.Knowledge.RavenColonialPlanService? _colonisationPlanService;
+    private D47.Knowledge.RavenColonialPlanWriter? _colonisationPlanWriter;
 
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
@@ -439,6 +440,8 @@ public sealed class AppHost : IDisposable
 
     /// <summary>The colonisation planner's plans read this session.</summary>
     public ColonisationPlans? ColonisationPlans { get; private set; }
+
+    public ColonisationProgress? ColonisationProgress { get; private set; }
 
     /// <summary>What a turn sounds like.</summary>
     public VoicePipeline Voice { get; }
@@ -2828,6 +2831,7 @@ public sealed class AppHost : IDisposable
                     new System.Diagnostics.ProcessStartInfo(paths.Audio) { UseShellExecute = true }),
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
                 colonisationPlans: () => late.Host?.ColonisationPlans,
+                colonisationProgress: () => late.Host?.ColonisationProgress,
                 commanderLog: stores.CommanderLog,
                 musicState: () => late.Host?.Music.State ?? new MusicState(null, false, false),
                 watchMusic: refresh =>
@@ -4143,6 +4147,31 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<ColonisationPlans>());
 
         tick.Add("colonisation-plans", context => colonisationPlans.Poll(context.Now));
+
+        // The writer is built only once both switches are found on.
+        var colonisationProgress = host.ColonisationProgress = new ColonisationProgress(
+            () => host._colonisationPlanWriter = new D47.Knowledge.RavenColonialPlanWriter(
+                () => foundations.Secrets.TryGet(ColonisationCapability.KeySecretName, out var key) ? key : null),
+            colonisationPlans,
+            () => settings.Current,
+            () => foundations.Secrets.Has(ColonisationCapability.KeySecretName),
+            foundations.LoggerFactory.CreateLogger<PlanWriteQueue>());
+
+        settings.Changed += change =>
+        {
+            if (change.Key == ColonisationCapability.KeyRow)
+            {
+                colonisationProgress.KeyChanged();
+            }
+        };
+
+        tick.Add("colonisation-progress", context => colonisationProgress.Tick(
+            context.IsFirst,
+            gameState.IsOffDuty,
+            gameState.Active?.Identity.Name,
+            feed.Arrived,
+            marketId => gameState.Active?.Colonisation.All.FirstOrDefault(site => site.MarketId == marketId)?.StarSystem,
+            context.Now));
 
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
@@ -6451,6 +6480,7 @@ public sealed class AppHost : IDisposable
         _serverStatusSource?.Dispose();
         _eddnUploader?.Dispose();
         _colonisationPlanService?.Dispose();
+        _colonisationPlanWriter?.Dispose();
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

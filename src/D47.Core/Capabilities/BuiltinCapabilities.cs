@@ -201,6 +201,7 @@ public static class BuiltinCapabilities
 
         // The planner's plan for each colonisation system, where one is composed.
         Func<D47.Core.Knowledge.ColonisationPlans?>? colonisationPlans = null,
+        Func<D47.Core.Knowledge.ColonisationProgress?>? colonisationProgress = null,
 
         // The Commanders this Commander has met, for the commander-log tool.
         Journal.CommanderLog? commanderLog = null,
@@ -373,7 +374,8 @@ public static class BuiltinCapabilities
             trade,
             sourcing,
             now,
-            colonisationPlans),
+            colonisationPlans,
+            colonisationProgress),
 
         // At the end of the run of ledgers, which is where the Commander put the tab itself (Phase 47).
         AdventureCapability.Create(storySwitch, endingAnswer, beatRefusal, adventureDesk, storyRecapper, objectiveMark),

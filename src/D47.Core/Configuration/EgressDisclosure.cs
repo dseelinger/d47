@@ -58,6 +58,9 @@ public static class EgressDisclosure
     /// <summary>Reading colonisation plans from Raven Colonial.</summary>
     public const string ColonisationPlanner = "colonisationplanner";
 
+    /// <summary>Sending the Commander's live colonisation progress to Raven Colonial.</summary>
+    public const string ColonisationProgress = "colonisationprogress";
+
     /// <summary>Listing community goals running where the Commander has not been.</summary>
     public const string CommunityGoals = "communitygoals";
 
@@ -150,6 +153,7 @@ public static class EgressDisclosure
         SpeechRecognition,
         GalaxySearch,
         ColonisationPlanner,
+        ColonisationProgress,
         NotablePlaces,
         CommunityBiology,
         CommunityGoals,
@@ -187,6 +191,7 @@ public static class EgressDisclosure
         SpeechRecognition => "Speech recognition",
         GalaxySearch => "Galaxy search",
         ColonisationPlanner => "Colonisation plans",
+        ColonisationProgress => "Colonisation progress",
         NotablePlaces => "Notable places",
         CommunityBiology => "Earlier biology finds",
         CommunityGoals => "Community goals",
@@ -296,6 +301,21 @@ public static class EgressDisclosure
                 ColonisationPlanner,
                 NameOf(ColonisationPlanner),
                 "Colonisation plans are off, so no system name is sent to the planner."),
+        ColonisationProgress => settings.Knowledge is { ColonisationPlanner: true, ColonisationProgress: true }
+            ? new EgressEntry(
+                ColonisationProgress,
+                NameOf(ColonisationProgress),
+                "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
+                "Your Raven Colonial key and the Commander name it belongs to. For each construction site you "
+                + "deliver to that already has a project on the planner: the tonnes you deliver, what the depot "
+                + "says is still needed, and that the site is complete when it completes. Only what happens while "
+                + "d47 is running; nothing from older journals.",
+                Active: true,
+                Summary: "Your deliveries and each site's remaining needs, sent with your planner key.")
+            : EgressEntry.Silent(
+                ColonisationProgress,
+                NameOf(ColonisationProgress),
+                "Colonisation progress is not sent to the planner."),
         NotablePlaces => settings.Knowledge.NotablePlaces
             ? new EgressEntry(
                 NotablePlaces,

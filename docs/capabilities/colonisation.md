@@ -456,6 +456,46 @@ With a plan held, `get_construction_sites` and `get_construction_needs` read it:
 This is a different host from galaxy search and has its own switch, so using one does not turn on the
 other. The Privacy and egress section lists it as "nothing sent" while it is off.
 
+### Send my colonisation progress to Raven Colonial {#send-colonisation-progress-to-raven-colonial}
+
+A second setting, off by default, and greyed out while reading plans is off: d47 finds each site's
+project through the plan it read, so turning reading off also stops the sending. The model cannot
+turn it on; the settings panel can.
+
+Raven Colonial asks that only one app sends your colonisation progress. If another app you run
+already does, leave this off or turn it off there.
+
+While it is on, d47 sends three things for a construction site that already has a project on the
+planner:
+
+- the tonnes you deliver, as you deliver them, under the Commander name the key belongs to;
+- what the depot says is still needed, each time you dock there;
+- that the site is complete, when it completes.
+
+A site with no project on the planner gets nothing; d47 does not create projects. Only what happens
+while d47 is running is sent. Deliveries from older journals, from the journal replayed when d47
+starts, or from before d47 was running are never sent. The next docking's figures correct whatever
+the planner missed.
+
+#### Raven Colonial key {#raven-colonial-key}
+
+Sending needs your Raven Colonial key. Get your key from https://ravencolonial.com/user after signing
+in to Raven Colonial. It is stored encrypted for this Windows account and never shown back.
+
+When the key is entered or the switch turns on, d47 asks Raven Colonial which Commander the key
+belongs to. It sends only while the Commander shown in d47 has that name, so an alt's deliveries never
+reach another Commander's projects. The line under the switch says which of these holds:
+
+- "Sending as CMDR *name*"
+- "This key belongs to CMDR *name*, so nothing is sent for CMDR *shown*"
+- "Raven Colonial refused the key"
+- "Could not ask Raven Colonial whose key this is at *time*", asked again a minute later
+- "Last write failed at *time*: *reason*"
+- "No Raven Colonial key is set"
+
+Nothing about it is spoken. The Privacy and egress section lists "Colonisation progress" with the key,
+the Commander name and the figures above while it is on, and "nothing sent" while it is off.
+
 ### What this does not do
 
 **Planning** — an objective, which facilities to build and in what order — is not here. It lives on

@@ -15,6 +15,12 @@ public static class ColonisationCapability
 
     public const string PlannerKey = "knowledge.colonisationPlanner";
 
+    public const string ProgressKey = "knowledge.colonisationProgress";
+
+    public const string KeyRow = "knowledge.ravenColonialKey";
+
+    public const string KeySecretName = "ravencolonial.apiKey";
+
     /// <summary><param name="commander"> The active Commander, or null before any journal has been read.</summary>
     /// <param name="commander">
     /// The active Commander, or null before any journal has been read.
@@ -32,7 +38,8 @@ public static class ColonisationCapability
         ITradePlanService? trade = null,
         SourcingBoard? sourcing = null,
         Func<DateTimeOffset>? now = null,
-        Func<ColonisationPlans?>? plans = null) => new()
+        Func<ColonisationPlans?>? plans = null,
+        Func<ColonisationProgress?>? progress = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -203,6 +210,54 @@ public static class ColonisationCapability
                         Knowledge = s.Knowledge with { ColonisationPlanner = v == "true" },
                     },
                 },
+            },
+            new SettingRow
+            {
+                Key = ProgressKey,
+                Label = "Send my colonisation progress to Raven Colonial",
+                Help =
+                    "Sends what you deliver to a construction site, and what it still needs, to that site's "
+                    + "project on Raven Colonial as it happens. Needs reading plans on, and a Raven Colonial key. "
+                    + "Raven Colonial asks that only one app sends your colonisation progress. If another app you "
+                    + "run already does, leave this off or turn it off there.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                Protected = true,
+                DisabledWhen = s => !s.Knowledge.ColonisationPlanner,
+                Note = s => s.Knowledge is { ColonisationPlanner: true, ColonisationProgress: true }
+                    ? progress?.Invoke()?.Note
+                    : null,
+                Watch = refresh =>
+                {
+                    if (progress?.Invoke() is not { } watched)
+                    {
+                        return () => { };
+                    }
+
+                    watched.Changed += refresh;
+                    return () => watched.Changed -= refresh;
+                },
+                EgressId = Configuration.EgressDisclosure.ColonisationProgress,
+                DocsAnchor = "send-colonisation-progress-to-raven-colonial",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.ColonisationProgress ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { ColonisationProgress = v == "true" },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = KeyRow,
+                Label = "Raven Colonial key",
+                Help =
+                    "Get your key from https://ravencolonial.com/user after signing in to Raven Colonial. It is "
+                    + "stored encrypted for this Windows account and never shown back.",
+                Kind = SettingKind.Secret,
+                SecretName = KeySecretName,
+                DocsAnchor = "raven-colonial-key",
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Colonisation", Order = 54 },

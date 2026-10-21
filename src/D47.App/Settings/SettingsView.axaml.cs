@@ -1550,12 +1550,26 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
             var shownBefore = refresh;
 
+            void ShowNote()
+            {
+                note.Text = noteSource(_settings!.Current);
+                note.IsVisible = note.Text is not null;
+            }
+
             refresh = () =>
             {
                 shownBefore();
-                note.Text = noteSource(_settings!.Current);
-                note.IsVisible = note.Text is not null;
+                ShowNote();
             };
+
+            // A press row subscribes its own Watch to the whole row.
+            if (row is { Watch: { } watch, Press: null, PressAsync: null })
+            {
+                Action? unwatch = null;
+
+                note.AttachedToVisualTree += (_, _) => unwatch = watch(() => Dispatcher.UIThread.Post(ShowNote));
+                note.DetachedFromVisualTree += (_, _) => unwatch?.Invoke();
+            }
         }
 
         if (row is { ValueAsHint: true, Binding: { } hinted })
