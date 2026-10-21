@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A goal on the Goals page is drawn as one segmented track instead of two bars: one segment per rank on a career or navy ladder, per Powerplay stretch (sized by the merits it takes) and per line of a story, grouped into chapters labelled with their share of the goal. Passed segments are solid, the current one is filled to its percent with a Cyan marker, and its name and percent sit under the track. The goal's percent is at the right of its name. A Powerplay goal's percent is now its merits over 775,000.
+
+An open goal fills only its head with the accent. Below it, on a darker tile, are the larger track, Rank, Into this rank, Next rank and Ranks to go, and a list of every segment with its share, then the step and buttons. The labels and bars on an open goal can be read; before, they were grey or orange on orange.
+
 Each row of the Discoveries page under a region's Codex has a 44 px square picture at its left: your own picture for the entry, else its stock picture if that is already downloaded, else the placeholder for its family. Drawing the list downloads nothing; a stock picture shows once you have opened the entry's page and it has downloaded. The picture column has no heading and does not sort.
 
 The Discoveries page under a region's Codex is one flat table of every entry the codex table lists for the region, with Category and Sub-category columns and a Status of MISSING or ON RECORD. A sentence above it, "Show MISSING entries in ALL CATEGORIES", filters by status, category and, for a category with several, sub-category. It opens on Missing, so it lists what it did before. Category and Sub-category sort by category and then sub-category, and Clear filters resets the three.

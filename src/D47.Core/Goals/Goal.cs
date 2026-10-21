@@ -97,10 +97,15 @@ public sealed record GoalStanding
     /// <summary>The name of the rank above the current one, or null at the top or on an arc that is not a rank.</summary>
     public string? NextRank { get; init; }
 
+    /// <summary>The goal's segments and the Commander's place in them, or null on a goal that has none.</summary>
+    public GoalTrack? Track { get; init; }
+
     /// <summary>0 to 1 over the whole arc, or null where either half is unknown.</summary>
-    public double? Fraction => Have is { } have && Need is { } need && need > 0
-        ? Math.Clamp((have + (Rung ?? 0)) / need, 0, 1)
-        : null;
+    public double? Fraction => Track is { } track
+        ? track.Whole
+        : Have is { } have && Need is { } need && need > 0
+            ? Math.Clamp((have + (Rung ?? 0)) / need, 0, 1)
+            : null;
 
     /// <summary>How long it has been running, against the instant it is asked at.</summary>
     public TimeSpan? Age(DateTimeOffset now) => Started is { } started && started <= now ? now - started : null;

@@ -159,22 +159,61 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         Assert.True(bottom >= page.Bounds.Height - 15, $"the goals stop {page.Bounds.Height - bottom} pixels above the page's foot");
     }
 
+    private static Border Card(PanelView panel, string name) =>
+        panel.GetVisualDescendants()
+            .OfType<Border>()
+            .First(border => AutomationProperties.GetName(border) == name);
+
     [AvaloniaFact]
-    public void EliteIVAtFiftySixPercentDrawsTheLadderAndTheRung()
+    public void EliteIVAtFiftySixPercentDrawsOneTrackAndNoSecondBar()
     {
         var (panel, _) = Open();
 
         Toggle(panel);
 
-        var card = panel.GetVisualDescendants()
-            .OfType<Border>()
-            .First(border => AutomationProperties.GetName(border) == "Elite V in Trade");
+        var texts = Card(panel, "Elite V in Trade").GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
 
-        var texts = card.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
-
-        Assert.Equal(2, texts.Count(text => text == "TO ELITE V"));
+        Assert.Contains("ELITE IV · 56%", texts);
         Assert.Contains("96%", texts);
-        Assert.Contains("56%", texts);
+        Assert.DoesNotContain("TO ELITE V", texts);
+        Assert.Single(texts, text => text is not null && text.StartsWith("TO ELITE V", StringComparison.Ordinal));
+        Assert.Contains(texts, text => text is not null && text.StartsWith("TO ELITE ·", StringComparison.Ordinal));
+    }
+
+    [AvaloniaFact]
+    public void AnOpenGoalFillsOnlyItsHeadWithA()
+    {
+        using var look = AppLook.Put();
+
+        var (panel, _) = Open(height: 1200);
+
+        Toggle(panel);
+
+        var head = Card(panel, "Elite V in Trade");
+        var center = head.TranslatePoint(new Point(head.Bounds.Width / 2, head.Bounds.Height / 2), _window!)!.Value;
+
+        _window!.MouseDown(center, Avalonia.Input.MouseButton.Left);
+        _window!.MouseUp(center, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        var open = panel.GetVisualDescendants().OfType<StackPanel>()
+            .First(stack => AutomationProperties.GetName(stack) == "Elite V in Trade");
+
+        var filled = open.GetVisualDescendants().OfType<Border>()
+            .Where(border => border.Classes.Contains("d47-row") && border.Classes.Contains("selected"))
+            .ToList();
+
+        Assert.Single(filled);
+        Assert.InRange(filled[0].Bounds.Height, 50, 60);
+
+        var texts = open.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
+
+        Assert.Contains("NEXT RANK", texts);
+        Assert.Contains("Elite V", texts);
+        Assert.Contains("RANKS TO GO", texts);
+        Assert.Equal(12, open.GetVisualDescendants().OfType<TextBlock>().Count(text => text.Text == "✓"));
+
+        _window!.CaptureRenderedFrame()!.SaveCapture("goals-mode-open.png");
     }
 
     [AvaloniaTheory]

@@ -42,6 +42,7 @@ public static class StoryGoal
             Source = GoalSource.Live,
             Started = story.PickedAt,
             Note = finished ? null : Note(story, story.CurrentChapter is { } key ? chapter(key) : null),
+            Track = GoalTrack.Story(story.Pacing, finished ? story.Pacing.Lines : story.CluesGiven),
             IsDone = finished,
         };
     }

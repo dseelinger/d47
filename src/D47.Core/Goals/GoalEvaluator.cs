@@ -59,6 +59,7 @@ public static class GoalEvaluator
                 Note = live.Describe(),
                 Rung = Rung(live),
                 NextRank = live.NextName(),
+                Track = GoalTrack.Ladder(career, live.Rank, Rung(live), arc.Top!),
                 IsDone = live.IsMaxRank,
             };
         }
@@ -75,6 +76,7 @@ public static class GoalEvaluator
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
                 NextRank = new RankStanding(career, (int)mined).NextName(),
+                Track = GoalTrack.Ladder(career, (int)mined, null, arc.Top!),
                 IsDone = mined >= RankStanding.EliteTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
@@ -96,6 +98,7 @@ public static class GoalEvaluator
                 Note = live.Describe(),
                 Rung = Rung(live),
                 NextRank = live.NextName(),
+                Track = GoalTrack.Ladder(career, live.Rank, Rung(live), arc.Top!),
                 IsDone = live.Rank >= GoalCatalogue.NavyTop,
             };
         }
@@ -112,6 +115,7 @@ public static class GoalEvaluator
                 Started = mark.Started,
                 Note = new RankStanding(career, (int)mined).Describe(),
                 NextRank = new RankStanding(career, (int)mined).NextName(),
+                Track = GoalTrack.Ladder(career, (int)mined, null, arc.Top!),
                 IsDone = mined >= GoalCatalogue.NavyTop,
             }
             : new GoalStanding { Arc = arc, Source = GoalSource.Unknown, Started = mark?.Started };
@@ -134,6 +138,9 @@ public static class GoalEvaluator
             };
         }
 
+        // A pledge that has not said its merits is placed at the start of its rank.
+        var track = GoalTrack.Powerplay(pledge.Merits ?? PowerplayRanks.MeritsNeeded(pledge.Rank) ?? 0);
+
         return new GoalStanding
         {
             Arc = arc,
@@ -142,6 +149,9 @@ public static class GoalEvaluator
             Source = GoalSource.Live,
             Started = mark?.Started,
             Note = $"rank {pledge.Rank} of {GoalCatalogue.PowerplayTop} with {pledge.Power}",
+            Rung = track.Fill,
+            NextRank = pledge.Rank < GoalCatalogue.PowerplayTop ? $"Rank {pledge.Rank + 1}" : null,
+            Track = track,
             IsDone = pledge.Rank >= GoalCatalogue.PowerplayTop,
         };
     }

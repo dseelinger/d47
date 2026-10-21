@@ -1147,87 +1147,218 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     }
 
     /// <summary>
-    /// One arc: what it is, how far along, how long it has run — and, when open, what to do about it.
+    /// One arc: what it is, how far along, how long it has run. Open, its head is the only part filled with A,
+    /// and below it sit the track, the figures, the chapters and what to do about it.
     /// </summary>
     private Control Arc(D47.Core.Goals.GoalStanding standing)
     {
         var open = standing.Arc.Key == _openArc;
-        var body = new StackPanel { Spacing = 2 };
+        var track = standing.Track;
 
-        body.Children.Add(Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false));
+        var head = new StackPanel { Spacing = 2 };
+        head.Children.Add(NameLine(standing));
+        head.Children.Add(ListRow.Sub(new TextBlock { Text = Caption(standing), TextWrapping = TextWrapping.Wrap }));
 
-        // The figure, then the bars — and no bar at all where the fraction is unknown.
-        body.Children.Add(ListRow.Sub(new TextBlock { Text = Caption(standing), TextWrapping = TextWrapping.Wrap }));
+        var press = ListRow.Dress(new Border { Child = head }, selected: open);
 
-        foreach (var bar in Bars(standing))
-        {
-            bar.Margin = new Thickness(0, 4, 0, 0);
-            body.Children.Add(bar);
-        }
-
-        if (open)
-        {
-            body.Children.Add(Step(standing));
-        }
-
-        var card = ListRow.Dress(new Border { Child = body }, selected: open);
-
-        AutomationProperties.SetName(card, standing.Arc.Name);
-
-        card.PointerPressed += (_, _) =>
+        press.PointerPressed += (_, _) =>
         {
             _openArc = open ? null : standing.Arc.Key;
             Rebuild();
         };
 
+        if (!open)
+        {
+            if (track is not null)
+            {
+                head.Children.Add(Spaced(GoalTrackBar.Build(track, GoalTrackBar.RowHeight)));
+            }
+            else if (CountTrack(standing) is { } count)
+            {
+                head.Children.Add(Spaced(count));
+            }
+
+            AutomationProperties.SetName(press, standing.Arc.Name);
+
+            return press;
+        }
+
+        var body = new StackPanel { Spacing = 8 };
+
+        if (track is not null)
+        {
+            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight));
+
+            if (standing.Arc.Kind != D47.Core.Goals.GoalKind.Story)
+            {
+                body.Children.Add(Cells(standing, track));
+            }
+
+            body.Children.Add(Chapters(track));
+        }
+        else if (CountTrack(standing) is { } count)
+        {
+            body.Children.Add(count);
+        }
+
+        body.Children.Add(Step(standing));
+
+        var ground = ListRow.Dress(new Border { Child = body, Padding = new Thickness(12, 10) }, selected: false);
+        ground.MinHeight = 0;
+        Themed(ground, Border.BackgroundProperty, ThemeManager.Tile2Key);
+
+        var card = new StackPanel { Spacing = 0, Children = { press, ground } };
+        AutomationProperties.SetName(card, standing.Arc.Name);
+
         return card;
     }
 
-    /// <summary>
-    /// A rank goal's ladder bar and rung bar, each labelled; any other goal's single bar, unlabelled. A finished
-    /// goal draws a full ladder and no rung.
-    /// </summary>
-    private static IEnumerable<Control> Bars(D47.Core.Goals.GoalStanding standing)
+    /// <summary>A count goal's single unsegmented track; null where the figure is unknown.</summary>
+    private static Control? CountTrack(D47.Core.Goals.GoalStanding standing)
     {
-        var ladder = standing.IsDone ? 1 : standing.Fraction;
+        var fill = standing.IsDone ? 1 : standing.Fraction;
 
-        if (standing.Arc.Top is not { } top)
-        {
-            if (ladder is { } only)
-            {
-                yield return D47.App.Controls.Gauge.Track(only, ThemeManager.AKey);
-            }
-
-            yield break;
-        }
-
-        if (ladder is { } fraction)
-        {
-            yield return Labelled($"To {top}", Percent(fraction), fraction);
-        }
-
-        if (standing.IsDone || standing.NextRank is not { } next)
-        {
-            yield break;
-        }
-
-        yield return standing.Rung is { } rung
-            ? Labelled($"To {next}", Percent(rung), rung)
-            : D47.App.Controls.Gauge.Heading($"To {next}", "not known yet", ThemeManager.GreyKey);
+        return fill is { } known && standing.Arc.Top is null
+            ? D47.App.Controls.Gauge.Track(known, ThemeManager.AKey)
+            : null;
     }
 
-    private static StackPanel Labelled(string label, string value, double fill) => new()
+    private static Control Spaced(Control control)
     {
-        Spacing = 2,
-        Children =
-        {
-            D47.App.Controls.Gauge.Heading(label, value, ThemeManager.AKey),
-            D47.App.Controls.Gauge.Track(fill, ThemeManager.AKey),
-        },
-    };
+        control.Margin = new Thickness(0, 4, 0, 0);
+        return control;
+    }
 
-    private static string Percent(double fraction) =>
-        ((int)Math.Floor(fraction * 100)).ToString(CultureInfo.InvariantCulture) + "%";
+    /// <summary>The goal's name, led by a tick once done, with its whole percent in mono at the right.</summary>
+    private static Control NameLine(D47.Core.Goals.GoalStanding standing)
+    {
+        var name = Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false);
+
+        if (standing.Track is not { } track)
+        {
+            return name;
+        }
+
+        var percent = ListRow.NameInk(new TextBlock
+        {
+            Text = GoalTrackBar.Whole(track),
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = ListRow.NameSize,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+        });
+
+        DockPanel.SetDock(percent, Dock.Right);
+
+        return new DockPanel { Children = { percent, name } };
+    }
+
+    /// <summary>Rank, the percent into it, the next rank and the ranks to go, as four tiles.</summary>
+    private static Control Cells(D47.Core.Goals.GoalStanding standing, D47.Core.Goals.GoalTrack track)
+    {
+        var rank = standing.Arc.Key == D47.Core.Goals.GoalCatalogue.Powerplay
+            ? $"Rank {standing.Have}"
+            : track.IsDone ? standing.Arc.Top ?? "—" : track.Segments[track.Current].Name;
+
+        var into = track.IsDone
+            ? "—"
+            : track.Fill is { } fill ? ((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%" : "not known yet";
+
+        var toGo = standing.Have is { } have && standing.Need is { } need
+            ? Math.Max(0, need - have).ToString("N0", CultureInfo.CurrentCulture)
+            : "not known yet";
+
+        var cells = new Grid { ColumnDefinitions = new ColumnDefinitions("*,2,*,2,*,2,*") };
+        var values = new[] { ("Rank", rank), ("Into this rank", into), ("Next rank", standing.NextRank ?? "—"), ("Ranks to go", toGo) };
+
+        for (var index = 0; index < values.Length; index++)
+        {
+            var cell = Cell(values[index].Item1, values[index].Item2);
+            Grid.SetColumn(cell, index * 2);
+            cells.Children.Add(cell);
+        }
+
+        return cells;
+    }
+
+    private static Control Cell(string label, string value)
+    {
+        var name = new TextBlock
+        {
+            Text = label.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.MetaSmall,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Themed(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var reading = ListRow.NameInk(new TextBlock
+        {
+            Text = value,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var cell = new Border { Padding = new Thickness(8, 6), Child = new StackPanel { Spacing = 2, Children = { name, reading } } };
+        Themed(cell, Border.BackgroundProperty, ThemeManager.TileKey);
+
+        return cell;
+    }
+
+    /// <summary>One row per segment: a tick once passed, its name, the percent into it if current, its share of the goal.</summary>
+    private static Control Chapters(D47.Core.Goals.GoalTrack track)
+    {
+        var list = new StackPanel { Spacing = 2 };
+
+        for (var index = 0; index < track.Segments.Count; index++)
+        {
+            var row = new DockPanel { Margin = new Thickness(0, 1) };
+
+            row.Children.Add(Figure(GoalTrackBar.Percent(track.ShareOf(index)), ThemeManager.GreyKey));
+
+            if (index == track.Current && track.Fill is { } fill)
+            {
+                row.Children.Add(Figure(((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%", ThemeManager.CyanKey));
+            }
+
+            var sign = new TextBlock { Text = index < track.Current ? Met.Glyph : string.Empty, Width = 16 };
+            Themed(sign, TextBlock.ForegroundProperty, Met.Key);
+            DockPanel.SetDock(sign, Dock.Left);
+            row.Children.Add(sign);
+
+            row.Children.Add(ListRow.NameInk(new TextBlock
+            {
+                Text = track.Segments[index].Name,
+                FontSize = TypeScale.Small,
+                TextWrapping = TextWrapping.Wrap,
+            }));
+
+            list.Children.Add(row);
+        }
+
+        return list;
+    }
+
+    private static TextBlock Figure(string text, string key)
+    {
+        var figure = new TextBlock
+        {
+            Text = text,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            Width = 52,
+            TextAlignment = TextAlignment.Right,
+        };
+
+        Themed(figure, TextBlock.ForegroundProperty, key);
+        DockPanel.SetDock(figure, Dock.Right);
+
+        return figure;
+    }
 
     /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>
     private string Caption(D47.Core.Goals.GoalStanding standing)
