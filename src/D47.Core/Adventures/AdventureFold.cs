@@ -11,6 +11,9 @@ public sealed record AdventureFailure(int Beat, DateTimeOffset At, string Reason
 /// <summary>One step of a beat that fired: which, when, and the journal event kind or source that fired it.</summary>
 public sealed record StepFire(int Beat, int Step, DateTimeOffset At, string By);
 
+/// <summary>The mission a <see cref="TriggerKind.MissionTaken"/> step bound: its id and where it goes.</summary>
+public sealed record MissionBinding(long MissionId, string? DestinationSystem, string? DestinationStation);
+
 /// <summary>
 /// Where one adventure stands, computed rather than read (Phase 47, "Progress is derived, and an
 /// adventure counts forward only").
@@ -33,6 +36,12 @@ public sealed record AdventureStanding
 
     /// <summary>The system the Commander is in, from the last <c>FSDJump</c>, <c>Location</c> or <c>CarrierJump</c> folded, acceptance or not.</summary>
     public long? SystemAddress { get; init; }
+
+    /// <summary>The market the Commander is docked at, from <c>Docked</c> and <c>Location</c>, or null in flight.</summary>
+    public long? MarketId { get; init; }
+
+    /// <summary>The missions the steps taken so far bound, by <see cref="AdventureTrigger.Handle"/>.</summary>
+    public IReadOnlyDictionary<string, MissionBinding> Handles { get; init; } = new Dictionary<string, MissionBinding>();
 
     /// <summary>The running total toward the current step when it is counted: events, or tons sold or refined.</summary>
     public int Counted { get; init; }
@@ -256,7 +265,7 @@ public static class AdventureFold
     /// Whether one journal event is what this trigger waits for, with the Commander in
     /// <paramref name="systemAddress"/>. For a counted trigger, whether the event counts toward it.
     /// </summary>
-    public static bool Matches(AdventureTrigger trigger, JournalEvent journalEvent, long? systemAddress = null)
+    public static bool Matches(AdventureTrigger trigger, JournalEvent journalEvent, long? systemAddress = null, AdventureStanding? standing = null)
     {
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(journalEvent);
@@ -335,6 +344,28 @@ public static class AdventureFold
                 journalEvent.Kind is "MissionCompleted"
                 && SameFaction(trigger.Faction, raw.String("Faction"))
                 && MissionFamilies.Counts(trigger.MissionFamily, raw.String("Name")),
+
+            TriggerKind.MissionTaken =>
+                journalEvent.Kind is "MissionAccepted"
+                && raw.Long("MissionID") is not null
+                && SameFaction(trigger.Faction, raw.String("Faction"))
+                && MissionFamilies.Counts(trigger.MissionFamily, raw.String("Name"))
+                && (trigger.MarketId is null || standing?.MarketId == trigger.MarketId),
+
+            TriggerKind.MissionDestination =>
+                Bound(trigger, standing) is { } destination
+                && (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+                        && Named(destination.DestinationSystem, raw.String("StarSystem"))
+                    || journalEvent.Kind is "Docked" && Named(destination.DestinationStation, raw.String("StationName"))
+                    || journalEvent.Kind is "ApproachSettlement" && Named(destination.DestinationStation, raw.String("Name"))),
+
+            TriggerKind.MissionComplete =>
+                journalEvent.Kind is "MissionCompleted" && Bound(trigger, standing) is { } done && raw.Long("MissionID") == done.MissionId,
+
+            TriggerKind.MissionAbandon =>
+                journalEvent.Kind is "MissionAbandoned" or "MissionFailed"
+                && Bound(trigger, standing) is { } dropped
+                && raw.Long("MissionID") == dropped.MissionId,
 
             TriggerKind.Sell =>
                 journalEvent.Kind is "MarketSell"
@@ -477,6 +508,12 @@ public static class AdventureFold
         ? raw.Items("BioData").Sum(entry => (entry.Long("Value") ?? 0) + (entry.Long("Bonus") ?? 0))
         : raw.Long("TotalEarnings") ?? 0;
 
+    private static MissionBinding? Bound(AdventureTrigger trigger, AdventureStanding? standing) =>
+        trigger.Handle is { } handle && standing?.Handles.TryGetValue(handle.Trim(), out var binding) == true ? binding : null;
+
+    private static bool Named(string? wanted, string? actual) =>
+        !string.IsNullOrWhiteSpace(wanted) && string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);
+
     private static bool SameFaction(string? wanted, string? actual) =>
         string.IsNullOrWhiteSpace(wanted) || string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);
 
@@ -558,6 +595,19 @@ public static class AdventureFold
             standing = standing with { SystemAddress = arrived };
         }
 
+        var market = journalEvent.Kind switch
+        {
+            "Docked" => journalEvent.Raw.Long("MarketID"),
+            "Location" => journalEvent.Raw.Bool("Docked") ? journalEvent.Raw.Long("MarketID") : null,
+            "Undocked" or "FSDJump" => null,
+            _ => standing.MarketId,
+        };
+
+        if (market != standing.MarketId)
+        {
+            standing = standing with { MarketId = market };
+        }
+
         if (world is not null && standing.Parts.Any(part => !part.Ended) && journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump")
         {
             standing = standing with { Parts = [.. standing.Parts.Select(part => Ended(part, world))] };
@@ -617,7 +667,7 @@ public static class AdventureFold
 
         var step = standing.CurrentObjective!;
 
-        if (FailedOn(step, standing, journalEvent, observation, world) is { } failing)
+        if ((FailedOn(step, standing, journalEvent, observation, world) ?? ImpliedFailure(step.Trigger, standing, journalEvent)) is { } failing)
         {
             return standing with
             {
@@ -635,7 +685,7 @@ public static class AdventureFold
         var watched = IsWatched(trigger.Kind);
         var gained = Gained(trigger, journalEvent, observation, world);
 
-        if (watched ? gained == 0 || !trigger.IsResolved : !Matches(trigger, journalEvent, standing.SystemAddress))
+        if (watched ? gained == 0 || !trigger.IsResolved : !Matches(trigger, journalEvent, standing.SystemAddress, standing))
         {
             return standing;
         }
@@ -650,7 +700,22 @@ public static class AdventureFold
             }
         }
 
-        return Fire(standing, journalEvent.Timestamp, journalEvent.Kind);
+        var fired = Fire(standing, journalEvent.Timestamp, journalEvent.Kind);
+
+        return trigger.Kind == TriggerKind.MissionTaken ? Bind(fired, trigger, journalEvent) : fired;
+    }
+
+    /// <summary>The standing with the accepted mission bound to the trigger's handle.</summary>
+    private static AdventureStanding Bind(AdventureStanding standing, AdventureTrigger trigger, JournalEvent accepted)
+    {
+        if (Mission.Of(accepted) is not { } mission || trigger.Handle is not { } handle)
+        {
+            return standing;
+        }
+
+        var binding = new MissionBinding(mission.Id, mission.DestinationSystem, mission.DestinationStation);
+
+        return standing with { Handles = new Dictionary<string, MissionBinding>(standing.Handles) { [handle.Trim()] = binding } };
     }
 
     /// <summary>The standing with the step it waits on fired at <paramref name="at"/> by <paramref name="by"/>; the beat fires with its last step.</summary>
@@ -695,13 +760,26 @@ public static class AdventureFold
 
             if (IsWatched(trigger.Kind)
                 ? trigger.IsResolved && Gained(trigger, journalEvent, observation, world) > 0
-                : Matches(trigger, journalEvent, standing.SystemAddress))
+                : Matches(trigger, journalEvent, standing.SystemAddress, standing))
             {
                 return trigger;
             }
         }
 
         return null;
+    }
+
+    /// <summary>The other outcome of a bound mission when this event brings it about while the step waits on one outcome.</summary>
+    private static AdventureTrigger? ImpliedFailure(AdventureTrigger waiting, AdventureStanding standing, JournalEvent journalEvent)
+    {
+        if (waiting.Kind is not (TriggerKind.MissionComplete or TriggerKind.MissionAbandon))
+        {
+            return null;
+        }
+
+        var other = waiting with { Kind = waiting.Kind == TriggerKind.MissionComplete ? TriggerKind.MissionAbandon : TriggerKind.MissionComplete };
+
+        return Matches(other, journalEvent, standing.SystemAddress, standing) ? other : null;
     }
 
     /// <summary>The steps at or before <paramref name="upTo"/> applied, each to the beat it names when the standing is waiting on it.</summary>

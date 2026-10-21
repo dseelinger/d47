@@ -159,6 +159,18 @@ public enum TriggerKind
 
     /// <summary>A Guardian site or tourist beacon, named by <see cref="AdventureTrigger.Filter"/>. Not counted, not authorable.</summary>
     Site,
+
+    /// <summary>A <c>MissionAccepted</c> of one family, optionally for one faction and at one station, that binds <see cref="AdventureTrigger.Handle"/>. Not counted, not authorable.</summary>
+    MissionTaken,
+
+    /// <summary>Arriving at the destination of the mission bound to <see cref="AdventureTrigger.Handle"/>. Not counted, not authorable.</summary>
+    MissionDestination,
+
+    /// <summary>A <c>MissionCompleted</c> for the mission bound to <see cref="AdventureTrigger.Handle"/>. Not counted, not authorable.</summary>
+    MissionComplete,
+
+    /// <summary>A <c>MissionAbandoned</c> or <c>MissionFailed</c> for the mission bound to <see cref="AdventureTrigger.Handle"/>. Not counted, not authorable.</summary>
+    MissionAbandon,
 }
 
 /// <summary>Where a beat lands on the galaxy.</summary>
@@ -202,6 +214,9 @@ public sealed record AdventureTrigger
     /// <summary>A prefix of the mission's <c>Name</c>, such as <c>Mission_Courier</c>.</summary>
     public string? MissionFamily { get; init; }
 
+    /// <summary>For the mission kinds: the story's name for one mission; a <see cref="TriggerKind.MissionTaken"/> step binds it and the later steps refer to it.</summary>
+    public string? Handle { get; init; }
+
     /// <summary>The commodity sold or refined, compared as a folded symbol.</summary>
     public string? Commodity { get; init; }
 
@@ -230,7 +245,11 @@ public sealed record AdventureTrigger
     public bool IsCounted => IsCountedKind(Kind);
 
     public static bool IsCountedKind(TriggerKind kind) =>
-        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank or TriggerKind.Site) && !IsOnceKind(kind);
+        kind >= TriggerKind.Bounty && kind is not (TriggerKind.Engineer or TriggerKind.Reach or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank or TriggerKind.Site) && !IsOnceKind(kind) && !IsMissionHandleKind(kind);
+
+    /// <summary>Whether this kind takes part in one named mission.</summary>
+    public static bool IsMissionHandleKind(TriggerKind kind) =>
+        kind is TriggerKind.MissionTaken or TriggerKind.MissionDestination or TriggerKind.MissionComplete or TriggerKind.MissionAbandon;
 
     /// <summary>Whether this kind is met by one event and carries nothing else.</summary>
     public static bool IsOnceKind(TriggerKind kind) =>
@@ -252,6 +271,8 @@ public sealed record AdventureTrigger
         TriggerKind.Unlock => Knowledge.TechBrokerCatalogue.ForName(Filter) is not null,
         TriggerKind.Pledge => Filter is null || Knowledge.GalaxyFilters.Powers.Contains(Filter),
         TriggerKind.PowerRank => Rank is > 0,
+        TriggerKind.MissionTaken => !string.IsNullOrWhiteSpace(Handle) && (string.IsNullOrWhiteSpace(Station) || MarketId is not null),
+        TriggerKind.MissionDestination or TriggerKind.MissionComplete or TriggerKind.MissionAbandon => !string.IsNullOrWhiteSpace(Handle),
         TriggerKind.Beacon => SystemAddress is { } address && GuardianCores.Beacons.ContainsKey(address),
         TriggerKind.Site => Filter switch
         {
@@ -314,6 +335,10 @@ public sealed record AdventureTrigger
         TriggerKind.Unlock => UnlockWord(),
         TriggerKind.Pledge => string.IsNullOrWhiteSpace(Filter) ? "pledge to a Power" : $"pledge to {Filter.Trim()}",
         TriggerKind.PowerRank => $"reach PowerPlay rank {Rank}",
+        TriggerKind.MissionTaken => $"take one {Missions(one: true)}{For()}{At()}",
+        TriggerKind.MissionDestination => $"go to the destination of the {Handle?.Trim()} mission",
+        TriggerKind.MissionComplete => $"complete the {Handle?.Trim()} mission",
+        TriggerKind.MissionAbandon => $"abandon the {Handle?.Trim()} mission",
         _ => Kind.ToString(),
     };
 

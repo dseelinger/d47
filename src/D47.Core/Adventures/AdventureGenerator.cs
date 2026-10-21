@@ -2848,6 +2848,9 @@ public sealed class AdventureGenerator(
         /// <summary>Whether this is a further step of the objective before it and not an objective of its own.</summary>
         public bool Continues { get; init; }
 
+        /// <summary>The name the model gave a mission, for the mission kinds.</summary>
+        public string? Handle { get; init; }
+
         /// <summary>The title, marked when this is a further step.</summary>
         public string Named => Continues ? $"{Title}, a further step" : Title;
 
@@ -2865,10 +2868,12 @@ public sealed class AdventureGenerator(
             Engineer = Engineer,
             Stage = Stage,
             Rank = Kind == TriggerKind.PowerRank ? Rank : null,
+            Handle = Handle,
+            Station = AdventureTrigger.IsMissionHandleKind(Kind) ? Station : null,
         };
 
         /// <summary>The trigger as the model wrote it, for showing the model its own draft back.</summary>
-        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank ? Written().Describe() : Kind switch
+        public string Describe() => AdventureTrigger.IsCountedKind(Kind) || AdventureTrigger.IsOnceKind(Kind) || AdventureTrigger.IsMissionHandleKind(Kind) || Kind is TriggerKind.Engineer or TriggerKind.Unlock or TriggerKind.Pledge or TriggerKind.PowerRank ? Written().Describe() : Kind switch
         {
             TriggerKind.Rank => $"rank: {Careers.Word(Careers.Match(Career) ?? Career)} {Rank?.ToString(CultureInfo.InvariantCulture) ?? "?"}",
             TriggerKind.Dock => $"dock: {Station ?? "?"} in {System ?? "?"}",
@@ -2999,7 +3004,10 @@ public sealed class AdventureGenerator(
             Flag(element, "new"),
             Text(element, "engineer"),
             Text(element, "stage"),
-            ReadLines(element));
+            ReadLines(element))
+        {
+            Handle = Text(element, "handle"),
+        };
     }
 
     /// <summary>The opening's lines: the <c>opening</c> list a story chapter is asked for, or the single <c>opening</c> and <c>openingSpeaker</c>.</summary>
@@ -3333,6 +3341,39 @@ public sealed class AdventureGenerator(
                 else if (written.Rank <= (facts.Pledge?.Rank ?? 0))
                 {
                     Refuse(index, $"{where} waits for PowerPlay rank {written.Rank}, which the Commander already holds; ask for a higher rank.");
+                }
+                else
+                {
+                    trigger = written;
+                }
+            }
+            else if (AdventureTrigger.IsMissionHandleKind(beat.Kind))
+            {
+                var written = beat.Written();
+                var problems = AdventureValidation.MissionFamilyProblems(where, written).ToList();
+
+                if (string.IsNullOrWhiteSpace(written.Handle))
+                {
+                    problems.Add($"{where} names no mission handle.");
+                }
+
+                if (problems.Count == 0 && beat.Kind == TriggerKind.MissionTaken && !string.IsNullOrWhiteSpace(written.Station))
+                {
+                    var place = await resolver.ResolveAsync(TriggerKind.Dock, beat.System, beat.Station, beat.Body, where, facts.NeedsPad(ask.ThisShipOnly), cancellationToken).ConfigureAwait(false);
+
+                    if (place.Trigger is { } docked)
+                    {
+                        written = written with { MarketId = docked.MarketId, SystemAddress = docked.SystemAddress, System = docked.System, Station = docked.Station };
+                    }
+                    else
+                    {
+                        problems.Add(place.Refusal!);
+                    }
+                }
+
+                if (problems.Count > 0)
+                {
+                    problems.ForEach(problem => Refuse(index, problem));
                 }
                 else
                 {

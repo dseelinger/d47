@@ -156,7 +156,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             var families = book.Active(commander)
                 .Where(standing => !book.IsSilenced(commander, standing.Adventure, context.Now))
                 .Select(standing => standing.CurrentTrigger)
-                .Where(trigger => trigger is { Kind: TriggerKind.Mission } && MissionFamilies.IsIllegal(trigger.MissionFamily))
+                .Where(trigger => trigger is { Kind: TriggerKind.Mission or TriggerKind.MissionTaken } && MissionFamilies.IsIllegal(trigger.MissionFamily))
                 .Select(trigger => trigger!.MissionFamily)
                 .ToList();
 

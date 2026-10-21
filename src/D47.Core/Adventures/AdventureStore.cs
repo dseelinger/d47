@@ -493,6 +493,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Count = record.Count,
         Faction = record.Faction?.Trim(),
         MissionFamily = record.MissionFamily?.Trim(),
+        Handle = record.Handle?.Trim(),
         Commodity = record.Commodity?.Trim(),
         Filter = record.Filter?.Trim(),
         SiteName = record.SiteName?.Trim(),
@@ -518,6 +519,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Count = trigger.Count,
         Faction = trigger.Faction,
         MissionFamily = trigger.MissionFamily,
+        Handle = trigger.Handle,
         Commodity = trigger.Commodity,
         Filter = trigger.Filter,
         SiteName = trigger.SiteName,
@@ -739,6 +741,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Faction { get; set; }
 
         public string? MissionFamily { get; set; }
+
+        public string? Handle { get; set; }
 
         public string? Commodity { get; set; }
 

@@ -41,6 +41,21 @@ public static class MissionFamilies
 
     public const string IllegalMarker = "Illegal";
 
+    /// <summary>Families whose <c>MissionAccepted</c> names a destination, as the fixture journals show.</summary>
+    public static IReadOnlyList<string> WithDestination { get; } =
+    [
+        "Mission_Courier",
+        "Mission_Delivery",
+        "Mission_Massacre",
+        "Mission_Assassinate",
+        "Mission_OnFoot_Collect",
+    ];
+
+    /// <summary>Whether a mission of this family names a destination when accepted.</summary>
+    public static bool CarriesDestination(string? family) =>
+        !string.IsNullOrWhiteSpace(family)
+        && WithDestination.Any(known => family.Trim().StartsWith(known, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>Whether a mission name or a family is a crime against its target.</summary>
     public static bool IsIllegal(string? name) =>
         name is not null

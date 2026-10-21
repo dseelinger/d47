@@ -53,6 +53,10 @@ internal static class TriggerConfirms
         [TriggerKind.Pledge] = "the Commander pledged to a Power — not what the Power asked or promised",
         [TriggerKind.Site] = "the ship came to a Guardian site, or a tourist beacon was scanned in that system — not what is there or what it holds",
         [TriggerKind.PowerRank] = "a Power rank was reached — not what it was earned for",
+        [TriggerKind.MissionTaken] = "a mission of this family was accepted, at the station if one is named — not what it will involve",
+        [TriggerKind.MissionDestination] = "the ship came to the mission's destination — not that the mission was done or what waited there",
+        [TriggerKind.MissionComplete] = "that mission was handed in as completed — not how it went or what it paid",
+        [TriggerKind.MissionAbandon] = "that mission was abandoned, expired or failed — not why",
     };
 
     /// <summary>The kinds that have an entry.</summary>

@@ -105,6 +105,10 @@ public static class RefusedActivities
         TriggerKind.Unlock => "unlock technology at a tech broker",
         TriggerKind.Pledge => "pledge to a Power",
         TriggerKind.PowerRank => "rise through a Power's ranks",
+        TriggerKind.MissionTaken => "take missions",
+        TriggerKind.MissionDestination => "fly a mission to its destination",
+        TriggerKind.MissionComplete => "complete a mission they took",
+        TriggerKind.MissionAbandon => "abandon a mission they took",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }

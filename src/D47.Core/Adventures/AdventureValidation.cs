@@ -67,7 +67,8 @@ public static class AdventureValidation
     public static IReadOnlyList<string> Kinds { get; } =
         ["arrive", "dock", "land", "scan", "rank", "board", "beacon", "bounty", "bond", "mission", "sell", "mine",
          "onfoot", "collect", "organic", "map", "signal", "wreck", "codex", "datasale", "salvage", "uss", "rescue", "engineer", "srv", "crew", "suitmod", "livery",
-         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank", "site"];
+         "carrierbuy", "carrierjump", "wing", "multicrew", "squadron", "squadronfound", "conflict", "faction", "reach", "boost", "discover", "footfall", "contribute", "claim", "unlock", "pledge", "powerrank", "site",
+         "missiontaken", "missiondestination", "missioncomplete", "missionabandon"];
 
     /// <summary>The stars a boost beat may be limited to.</summary>
     public static IReadOnlyList<string> CodexFilters { get; } = ["Biology", "StellarBodies", "Civilisations", "Guardian"];
@@ -150,6 +151,7 @@ public static class AdventureValidation
         }
 
         problems.AddRange(ScansOutOfOrder(adventure.Beats));
+        problems.AddRange(MissionHandleProblems(adventure.Beats));
 
         for (var index = 0; index < adventure.Beats.Count; index++)
         {
@@ -294,6 +296,10 @@ public static class AdventureValidation
                         problems.AddRange(PowerRankProblems(stepWhere, step.Trigger));
                         break;
 
+                    case TriggerKind.MissionTaken:
+                        problems.AddRange(MissionFamilyProblems(stepWhere, step.Trigger));
+                        break;
+
                     case TriggerKind.Reach:
                         if (step.Trigger.JumpRange is not > 0)
                         {
@@ -386,7 +392,21 @@ public static class AdventureValidation
             yield return $"{where} names the codex filter \"{trigger.Filter.Trim()}\"; the filters are {string.Join(", ", CodexFilters)}.";
         }
 
-        if (trigger.Kind == TriggerKind.Mission && trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))
+        if (trigger.Kind == TriggerKind.Mission)
+        {
+            foreach (var problem in MissionFamilyProblems(where, trigger))
+            {
+                yield return problem;
+            }
+        }
+    }
+
+    /// <summary>What is wrong with the mission family a trigger names: one that does not start with <c>Mission_</c>, or one that is set aside.</summary>
+    public static IEnumerable<string> MissionFamilyProblems(string where, AdventureTrigger trigger)
+    {
+        ArgumentNullException.ThrowIfNull(trigger);
+
+        if (trigger.MissionFamily is { } family && !string.IsNullOrWhiteSpace(family))
         {
             if (!family.Trim().StartsWith(MissionFamilies.Prefix, StringComparison.Ordinal))
             {
@@ -396,6 +416,42 @@ public static class AdventureValidation
             {
                 yield return $"{where} names the mission family {family.Trim()}, which is set aside; no objective uses "
                     + string.Join(", ", MissionFamilies.SetAside.Select(entry => entry.Family)) + ".";
+            }
+        }
+    }
+
+    /// <summary>What is wrong with the mission handles of a chapter: a step without one, a handle taken twice, one used before its step, or a destination for a family whose accept names none.</summary>
+    public static IEnumerable<string> MissionHandleProblems(IReadOnlyList<AdventureBeat> beats)
+    {
+        var taken = new Dictionary<string, AdventureTrigger>(StringComparer.OrdinalIgnoreCase);
+
+        for (var index = 0; index < beats.Count; index++)
+        {
+            var where = Where(index, beats[index]);
+
+            foreach (var trigger in beats[index].Steps.Select(step => step.Trigger).Where(trigger => AdventureTrigger.IsMissionHandleKind(trigger.Kind)))
+            {
+                if (string.IsNullOrWhiteSpace(trigger.Handle))
+                {
+                    yield return $"{where} names no mission handle.";
+                }
+                else if (trigger.Kind == TriggerKind.MissionTaken)
+                {
+                    if (!taken.TryAdd(trigger.Handle.Trim(), trigger))
+                    {
+                        yield return $"{where} takes the mission \"{trigger.Handle.Trim()}\" again; a handle names one mission.";
+                    }
+                }
+                else if (!taken.TryGetValue(trigger.Handle.Trim(), out var binds))
+                {
+                    yield return $"{where} refers to the mission \"{trigger.Handle.Trim()}\" before any objective takes it.";
+                }
+                else if (trigger.Kind == TriggerKind.MissionDestination && !MissionFamilies.CarriesDestination(binds.MissionFamily))
+                {
+                    yield return $"{where} goes to the destination of the mission \"{trigger.Handle.Trim()}\", but "
+                        + (string.IsNullOrWhiteSpace(binds.MissionFamily) ? "it takes a mission of any family" : $"{binds.MissionFamily.Trim()} missions do not name a destination")
+                        + $"; name one of {string.Join(", ", MissionFamilies.WithDestination)}.";
+                }
             }
         }
     }
