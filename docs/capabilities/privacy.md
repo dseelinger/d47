@@ -172,6 +172,7 @@ on; it is off by default. With it off, a signal search answers from your own sca
 **EDDN** — `eddn.edcd.io`. When you open a station's commodity market, D47 sends its prices,
 with the station, its system, the game's version and a random number made on this PC for your Commander.
 Opening its outfitting or shipyard sends the names of the modules and ships it sells.
+The signals and body counts your scanner finds go too.
 Your Commander name, Frontier ID, credits, cargo and ship do not go, and nothing from journals read
 before D47 started is sent. **Share with EDDN** under Sharing in Settings ([Galaxy search](galaxy.md#eddn))
 turns it on; it is off by default, and the model cannot turn it on.

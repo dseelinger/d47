@@ -8,7 +8,7 @@ public sealed class EddnContribution(EddnComposer composer, IEddnSink sink, Func
     /// <summary>The oldest an event may be, against the tick's clock, and still be sent.</summary>
     public static readonly TimeSpan MaxAge = TimeSpan.FromMinutes(5);
 
-    /// <summary>Every event is folded; a message is built only for a live event, with the setting on, while the shown Commander flies.</summary>
+    /// <summary>Every event is folded; a message is built only for a live event, with the setting on, while the shown Commander flies. A run of signals idle for ten seconds is closed on any tick.</summary>
     public void Apply(IReadOnlyList<JournalEvent> events, DateTimeOffset now, bool isFirst, bool offDuty)
     {
         var send = !isFirst && !offDuty && enabled();
@@ -17,7 +17,7 @@ public sealed class EddnContribution(EddnComposer composer, IEddnSink sink, Func
         {
             if (send && now - journalEvent.Timestamp <= MaxAge)
             {
-                if (composer.Compose(journalEvent) is { } envelope)
+                foreach (var envelope in composer.ComposeAll(journalEvent, now))
                 {
                     sink.Post(envelope);
                 }
@@ -26,6 +26,11 @@ public sealed class EddnContribution(EddnComposer composer, IEddnSink sink, Func
             {
                 composer.Observe(journalEvent);
             }
+        }
+
+        if (send && composer.Flush(now) is { } closed)
+        {
+            sink.Post(closed);
         }
     }
 }

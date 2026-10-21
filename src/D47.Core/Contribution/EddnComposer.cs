@@ -23,6 +23,32 @@ public sealed class EddnComposer(
     private const string OutfittingSchema = "https://eddn.edcd.io/schemas/outfitting/2";
     private const string ShipyardSchema = "https://eddn.edcd.io/schemas/shipyard/2";
     private const string JournalSchema = "https://eddn.edcd.io/schemas/journal/1";
+    private const string FssDiscoveryScanSchema = "https://eddn.edcd.io/schemas/fssdiscoveryscan/1";
+    private const string FssSignalDiscoveredSchema = "https://eddn.edcd.io/schemas/fsssignaldiscovered/1";
+    private const string FssBodySignalsSchema = "https://eddn.edcd.io/schemas/fssbodysignals/1";
+    private const string FssAllBodiesFoundSchema = "https://eddn.edcd.io/schemas/fssallbodiesfound/1";
+    private const string ScanBaryCentreSchema = "https://eddn.edcd.io/schemas/scanbarycentre/1";
+
+    /// <summary>How long after its last signal a run of FSSSignalDiscovered events is closed.</summary>
+    public static readonly TimeSpan RunIdle = TimeSpan.FromSeconds(10);
+
+    private static readonly string[] SignalKeys =
+    [
+        "timestamp", "SignalName", "SignalType", "IsStation", "USSType", "SpawningState", "SpawningFaction",
+        "SpawningPower", "OpposingPower", "ThreatLevel",
+    ];
+
+    private static readonly string[] DiscoveryScanKeys = ["timestamp", "event", "SystemName", "SystemAddress", "BodyCount", "NonBodyCount"];
+
+    private static readonly string[] BodySignalsKeys = ["timestamp", "event", "SystemAddress", "BodyID", "BodyName", "Signals"];
+
+    private static readonly string[] AllBodiesFoundKeys = ["timestamp", "event", "SystemName", "SystemAddress", "Count"];
+
+    private static readonly string[] BaryCentreKeys =
+    [
+        "timestamp", "event", "SystemAddress", "BodyID", "SemiMajorAxis", "Eccentricity",
+        "OrbitalInclination", "Periapsis", "OrbitalPeriod", "AscendingNode", "MeanAnomaly",
+    ];
 
     private static readonly string[] FactionRemovals = ["MyReputation", "HappiestSystem", "HomeSystem", "SquadronFaction"];
 
@@ -34,6 +60,8 @@ public sealed class EddnComposer(
     private string _gameBuild = "";
     private bool? _horizons;
     private bool? _odyssey;
+    private readonly List<JournalEvent> _run = [];
+    private DateTimeOffset _runLastSignal;
 
     public string? StarSystem { get; private set; }
 
@@ -47,15 +75,62 @@ public sealed class EddnComposer(
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         Fold(journalEvent);
+        _run.Clear();
     }
 
-    /// <summary>Folds the event into the state, then returns the message it calls for, or null.</summary>
+    /// <summary>Folds the event into the state, then returns the message it calls for, or null. Runs of FSSSignalDiscovered are not handled here.</summary>
     public EddnEnvelope? Compose(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         Fold(journalEvent);
 
+        return ComposeOwn(journalEvent);
+    }
+
+    /// <summary>
+    /// Folds the event, then returns the messages it calls for. A FSSSignalDiscovered event joins the open run;
+    /// any other event first closes the run, whose message comes before the event's own.
+    /// </summary>
+    public IReadOnlyList<EddnEnvelope> ComposeAll(JournalEvent journalEvent, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(journalEvent);
+
+        var before = CurrentLocation;
+        Fold(journalEvent);
+
+        var messages = new List<EddnEnvelope>();
+
+        if (journalEvent.Kind == "FSSSignalDiscovered")
+        {
+            if (Eligible)
+            {
+                _run.Add(journalEvent);
+                _runLastSignal = now;
+            }
+
+            return messages;
+        }
+
+        if (CloseRun(before) is { } run)
+        {
+            messages.Add(run);
+        }
+
+        if (ComposeOwn(journalEvent) is { } own)
+        {
+            messages.Add(own);
+        }
+
+        return messages;
+    }
+
+    /// <summary>Closes the open run when its last signal is at least <see cref="RunIdle"/> old, and returns its message.</summary>
+    public EddnEnvelope? Flush(DateTimeOffset now) =>
+        _run.Count > 0 && now - _runLastSignal >= RunIdle ? CloseRun(CurrentLocation) : null;
+
+    private EddnEnvelope? ComposeOwn(JournalEvent journalEvent)
+    {
         if (!Eligible)
         {
             return null;
@@ -71,6 +146,10 @@ public sealed class EddnComposer(
             "FSDJump" => ComposeJournal(journalEvent, JumpRemovals, true, false),
             "Location" => ComposeJournal(journalEvent, LocationRemovals, true, false),
             "CarrierJump" => ComposeJournal(journalEvent, [.. JumpRemovals, .. LocationRemovals], true, false),
+            "FSSDiscoveryScan" => ComposeFss(journalEvent, FssDiscoveryScanSchema, DiscoveryScanKeys, false),
+            "FSSBodySignals" => ComposeFss(journalEvent, FssBodySignalsSchema, BodySignalsKeys, true),
+            "FSSAllBodiesFound" => ComposeFss(journalEvent, FssAllBodiesFoundSchema, AllBodiesFoundKeys, false),
+            "ScanBaryCentre" => ComposeFss(journalEvent, ScanBaryCentreSchema, BaryCentreKeys, true),
             _ => null,
         };
     }
@@ -262,6 +341,125 @@ public sealed class EddnComposer(
         }
 
         return new EddnEnvelope(SchemaRef(JournalSchema), Header(uploader), message);
+    }
+
+    private (long Address, string Name, StarPosition Position)? CurrentLocation =>
+        SystemAddress is { } address && StarSystem is { } name && StarPos is { } position ? (address, name, position) : null;
+
+    private EddnEnvelope? ComposeFss(JournalEvent journalEvent, string schema, string[] keys, bool addsStarSystem)
+    {
+        if (uploaderId() is not { Length: > 0 } uploader
+            || CurrentLocation is not { } location
+            || journalEvent.Long("SystemAddress") != location.Address
+            || Pick(journalEvent.Raw, keys) is not { } message)
+        {
+            return null;
+        }
+
+        if (addsStarSystem)
+        {
+            message["StarSystem"] = location.Name;
+        }
+
+        message["StarPos"] = new JsonArray(location.Position.X, location.Position.Y, location.Position.Z);
+
+        return Finish(schema, uploader, message);
+    }
+
+    /// <summary>Copies the named properties of the event, with every _Localised key removed.</summary>
+    private static JsonObject? Pick(JsonElement raw, string[] keys)
+    {
+        if (JsonNode.Parse(raw.GetRawText()) is not JsonObject source)
+        {
+            return null;
+        }
+
+        var picked = new JsonObject();
+
+        foreach (var key in keys)
+        {
+            if (source[key] is { } value)
+            {
+                source.Remove(key);
+                picked[key] = value;
+            }
+        }
+
+        RemoveLocalised(picked);
+
+        return picked;
+    }
+
+    private EddnEnvelope Finish(string schema, string uploader, JsonObject message)
+    {
+        if (_horizons is { } horizons)
+        {
+            message["horizons"] = horizons;
+        }
+
+        if (_odyssey is { } odyssey)
+        {
+            message["odyssey"] = odyssey;
+        }
+
+        return new EddnEnvelope(SchemaRef(schema), Header(uploader), message);
+    }
+
+    /// <summary>
+    /// Empties the run and builds its message at the location, before or after the closing event, whose address the
+    /// first signal carries. Signals from another system, and mission targets, are left out.
+    /// </summary>
+    private EddnEnvelope? CloseRun((long Address, string Name, StarPosition Position)? before)
+    {
+        var run = _run.ToList();
+        _run.Clear();
+
+        if (run.Count == 0 || uploaderId() is not { Length: > 0 } uploader)
+        {
+            return null;
+        }
+
+        var first = run[0].Long("SystemAddress");
+
+        var location = before is { } earlier && earlier.Address == first ? earlier
+            : CurrentLocation is { } later && later.Address == first ? later
+            : ((long Address, string Name, StarPosition Position)?)null;
+
+        if (location is not { } here)
+        {
+            return null;
+        }
+
+        var signals = new JsonArray();
+
+        foreach (var signal in run)
+        {
+            if (signal.Long("SystemAddress") != here.Address
+                || signal.String("USSType") == "$USS_Type_MissionTarget;"
+                || Pick(signal.Raw, SignalKeys) is not { } entry)
+            {
+                continue;
+            }
+
+            signals.Add(entry);
+        }
+
+        if (signals.Count == 0)
+        {
+            return null;
+        }
+
+        var message = new JsonObject
+        {
+            ["timestamp"] = signals[0]!["timestamp"]?.DeepClone(),
+            ["event"] = "FSSSignalDiscovered",
+            ["SystemAddress"] = here.Address,
+            ["StarSystem"] = here.Name,
+            ["StarPos"] = new JsonArray(here.Position.X, here.Position.Y, here.Position.Z),
+            ["signals"] = signals,
+        };
+
+        return Finish(FssSignalDiscoveredSchema, uploader, message);
     }
 
     /// <summary>Adds the folded system's name and position when the event is in that system; false when it is not or none is known.</summary>
