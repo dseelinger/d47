@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A system name at the start of a body name is spoken as written: "Nobody has set foot on Eotienses ABC 2 c" is no longer read as "on it ABC 2 c".
+
 A body in a populated system is no longer a first footfall, whatever its scan says. Elite writes `WasFootfalled:false` on some of those bodies, and d47 used to announce a first footfall there, credit a first-footfall objective and price an organic analysis at five times. It now does none of the three.
 
 The Guardian beacon list now has all 28 systems that carry a Guardian Beacon signal, up from seven. Scanning the beacon in any of the other 21 now wakes the cores and ends a story's act one, and a story sends you to the beacon nearest you, not the nearest of seven.

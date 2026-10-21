@@ -158,4 +158,18 @@ public class SpokenReferentTests
             "Arrived in it. No stations in it.",
             referent.Speak("Arrived in LTT 7786. No stations in LTT 7786.", ["LTT 7786"], Start + TimeSpan.FromSeconds(9)));
     }
+
+    [Theory]
+    [InlineData("Nobody has set foot on Eotienses ABC 2 c.", "Nobody has set foot on Eotienses ABC 2 c.")]
+    [InlineData("Eotienses is unexplored.", "It is unexplored.")]
+    [InlineData("Eotienses 2 has biology.", "Eotienses 2 has biology.")]
+    [InlineData("Docked in Eotienses and refuelled.", "Docked in it and refuelled.")]
+    public void ABodyNameKeepsItsSystemName(string line, string spoken)
+    {
+        var referent = new SpokenReferent();
+
+        referent.Speak("Arrived in Eotienses.", ["Eotienses"], Start);
+
+        Assert.Equal(spoken, referent.Speak(line, ["Eotienses"], Start + TimeSpan.FromSeconds(20)));
+    }
 }

@@ -57,7 +57,7 @@ public sealed class SpokenReferent
 
     private static string Replace(string text, string name, bool skipFirst)
     {
-        var at = text.IndexOf(name, StringComparison.OrdinalIgnoreCase);
+        var at = Find(text, name, 0);
 
         if (at < 0)
         {
@@ -66,7 +66,7 @@ public sealed class SpokenReferent
 
         if (skipFirst)
         {
-            at = text.IndexOf(name, at + name.Length, StringComparison.OrdinalIgnoreCase);
+            at = Find(text, name, at + name.Length);
 
             if (at < 0)
             {
@@ -83,13 +83,32 @@ public sealed class SpokenReferent
             built.Append(FollowsAPlace(text, at) ? text.Substring(at, name.Length) : Fitted(text, at, Pronoun));
 
             from = at + name.Length;
-            at = text.IndexOf(name, from, StringComparison.OrdinalIgnoreCase);
+            at = Find(text, name, from);
         }
 
         built.Append(text, from, text.Length - from);
 
         return built.ToString();
     }
+
+    /// <summary>The next place the name stands on its own, not as the start of a body name.</summary>
+    private static int Find(string text, string name, int from)
+    {
+        var at = text.IndexOf(name, from, StringComparison.OrdinalIgnoreCase);
+
+        while (at >= 0 && StartsABodyName(text, at + name.Length))
+        {
+            at = text.IndexOf(name, at + name.Length, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return at;
+    }
+
+    /// <summary>True when a body designation (a digit or upper-case letter) follows after one space.</summary>
+    private static bool StartsABodyName(string text, int end) =>
+        end + 1 < text.Length
+        && text[end] == ' '
+        && (char.IsDigit(text[end + 1]) || char.IsUpper(text[end + 1]));
 
     /// <summary>True for "&lt;Name&gt; in/at &lt;system&gt;", where "it" would point at the name before it.</summary>
     private static bool FollowsAPlace(string text, int at)
