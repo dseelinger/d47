@@ -123,6 +123,9 @@ public static class EgressDisclosure
     /// <summary>The Commander's custom Chatterbox voices, kept on this PC and sent nowhere.</summary>
     public const string CustomVoices = "customvoices";
 
+    /// <summary>The Commander's spoken log entries, kept on this PC.</summary>
+    public const string CaptainsLog = "captainslog";
+
     /// <summary>Every disclosure d47 makes, in a fixed order.</summary>
     public static IReadOnlyList<string> Ids { get; } =
     [
@@ -154,6 +157,7 @@ public static class EgressDisclosure
         ChosenPictures,
         OwnVoice,
         CustomVoices,
+        CaptainsLog,
         Donation,
     ];
 
@@ -188,6 +192,7 @@ public static class EgressDisclosure
         ChosenPictures => "Pictures you chose",
         OwnVoice => "Your recorded voice",
         CustomVoices => "Your custom voices",
+        CaptainsLog => "Captain's log",
         // "Shared", not "Donated" (#239): the Commander's word for the act on every surface they see.
         Donation => "Shared excerpts and journals",
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
@@ -535,6 +540,8 @@ public static class EgressDisclosure
             + "data\\messages\\, encrypted the same way, and deleting the recording deletes those clips.",
             summary: "Kept on this PC, encrypted for your Windows user, and never sent anywhere."),
 
+        CaptainsLog => CaptainsLogDisclosure(settings),
+
         CustomVoices => EgressEntry.Silent(
             CustomVoices,
             NameOf(CustomVoices),
@@ -698,6 +705,31 @@ public static class EgressDisclosure
             $"{provider.Name} receives {Picture}",
             Active: true,
             Summary: $"{provider.Name} receives one picture of your screen with the question that asked for it.");
+    }
+
+    private static EgressEntry CaptainsLogDisclosure(D47Settings settings)
+    {
+        var hearing = Listening.SttProviderCatalog.Selected(settings.Listening.Provider);
+        var speaking = Speech.LocalVoiceStandIn.Live(Audio.TtsProviderCatalog.Selected(
+            Audio.VoiceGroups.ProviderFor(settings.Speech, Audio.VoiceGroup.Aboard)));
+
+        var heard = hearing.Hosted
+            ? $"{hearing.Name}, which does not run on this PC"
+            : $"{hearing.Name}, which runs on this PC";
+
+        var read = !speaking.Speaks
+            ? "no voice is selected, so nothing is read back"
+            : Audio.TtsProviderCatalog.IsLocal(speaking.Id)
+                ? $"{speaking.Name}, which runs on this PC"
+                : $"{speaking.Name}, which does not run on this PC";
+
+        return EgressEntry.Silent(
+            CaptainsLog,
+            NameOf(CaptainsLog),
+            "Log entries are kept in data\\captains-log.json on this PC and never sent anywhere by D47. The words "
+            + $"pass through the speech recognition provider selected, {heard}, as you speak them, and through "
+            + $"the text-to-speech provider selected, {read}, when they are read back.",
+            summary: $"Kept on this PC. Heard by {hearing.Name} as you speak; read back by {(speaking.Speaks ? speaking.Name : "no voice")}.");
     }
 
     /// <summary>The hearing model and the Chatterbox voice model, each fetched once when selected and absent.</summary>

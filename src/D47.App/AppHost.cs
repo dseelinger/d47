@@ -1026,6 +1026,13 @@ public sealed class AppHost : IDisposable
 
         journalReminders.Poll();
 
+        var captainsLog = new D47.Core.CaptainsLog.CaptainsLogStore(
+            Path.Combine(paths.Data, "captains-log.json"),
+            files,
+            loggerFactory.CreateLogger<D47.Core.CaptainsLog.CaptainsLogStore>());
+
+        captainsLog.Load();
+
         var standingWarnings = new D47.Core.Callouts.StandingWarnings();
 
         var miningTargets = new D47.Core.Mining.MiningTargetStore(
@@ -1531,6 +1538,7 @@ public sealed class AppHost : IDisposable
             Journal = journal,
             JournalDirectory = journalDirectory,
             JournalReminders = journalReminders,
+            CaptainsLog = captainsLog,
             Kit = kit,
             LastFoundSystem = lastFoundSystem,
             LearnedPhrases = learnedPhrases,
@@ -2310,6 +2318,7 @@ public sealed class AppHost : IDisposable
         var handInOffer = stores.HandInOffer;
         var history = stores.History;
         var journalReminders = stores.JournalReminders;
+        var captainsLog = stores.CaptainsLog;
         var lastFoundSystem = stores.LastFoundSystem;
         var learnedPhrases = stores.LearnedPhrases;
         var lore = stores.Lore;
@@ -2806,6 +2815,7 @@ public sealed class AppHost : IDisposable
                 storyRecapper: storyRecapper,
                 objectiveMark: objectiveMark,
                 journalReminders: journalReminders,
+                captainsLog: captainsLog,
                 miningTargets: miningTargets,
                 crimes: crimes,
                 liveStatus: () => status.Current,
@@ -4252,6 +4262,8 @@ public sealed class AppHost : IDisposable
         public required string JournalDirectory { get; init; }
 
         public required D47.Core.Reminders.JournalReminderStore JournalReminders { get; init; }
+
+        public required D47.Core.CaptainsLog.CaptainsLogStore CaptainsLog { get; init; }
 
         public required KitStore Kit { get; init; }
 

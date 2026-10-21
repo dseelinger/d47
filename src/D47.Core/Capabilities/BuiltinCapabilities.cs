@@ -237,6 +237,9 @@ public static class BuiltinCapabilities
         // The Commander's journal reminders (#643).
         Reminders.JournalReminderStore? journalReminders = null,
 
+        // The Commander's spoken log entries.
+        CaptainsLog.CaptainsLogStore? captainsLog = null,
+
         // The Commander's mining target, which the prospector callout reads (#607).
         Mining.MiningTargetStore? miningTargets = null,
 
@@ -488,6 +491,13 @@ public static class BuiltinCapabilities
             gameStatus,
             now ?? (() => DateTimeOffset.MinValue),
             earlierFinds),
+
+        CaptainsLogCapability.Create(
+            captainsLog,
+            () => gameState.Active?.Identity.FrontierId ?? string.Empty,
+            () => gameState.Active,
+            gameStatus,
+            now ?? (() => DateTimeOffset.MinValue)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

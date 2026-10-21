@@ -1383,6 +1383,35 @@ public sealed class TurnLoop(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // 0. Free text the declared phrases below cannot capture.
+        if (capabilities.Find(Capabilities.Builtin.CaptainsLogCapability.Id) is not null
+            && CaptainsLog.CaptainsLogPhrase.Read(input) is { } logged)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var answer = logged switch
+            {
+                CaptainsLog.CaptainsLogReading.Entry entry => await capabilities
+                    .InvokeAsync(
+                        Capabilities.Builtin.CaptainsLogCapability.AddTool,
+                        new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["text"] = entry.Text }),
+                        cancellationToken)
+                    .ConfigureAwait(false),
+                _ => ToolResult.Ok(CaptainsLog.CaptainsLogPhrase.NoEntry),
+            };
+
+            Said(answer.Spoken, Capabilities.Builtin.CaptainsLogCapability.Asked);
+
+            yield return new TurnEvent.TextDelta(answer.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                answer.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                answer.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         if (capabilities.Find(Capabilities.Builtin.RemindersCapability.Id) is not null
             && Reminders.JournalReminderPhrase.Read(input, timersRegistered: capabilities.Find(Capabilities.Builtin.UtilitiesCapability.Id) is not null)
                 is { } reminder
