@@ -40,6 +40,19 @@ public sealed record KeyChord(string Key, ChordModifiers Modifiers = ChordModifi
         return string.Join('+', parts);
     }
 
+    /// <summary>The modifiers in <see cref="Describe"/>'s order and spelling, or "None".</summary>
+    public static string DescribeModifiers(ChordModifiers modifiers) =>
+        modifiers == ChordModifiers.None
+            ? "None"
+            : string.Join('+', ModifierKeys.Where(m => modifiers.HasFlag(m.Flag)).Select(m => m.Name));
+
+    /// <summary>Every keyboard symbol a chord may use as its key: all of <see cref="EliteKeys"/>' keys but the modifiers.</summary>
+    public static IReadOnlyList<string> KeySymbols { get; } =
+        [.. EliteKeys.KeyboardSymbols.Where(symbol => !ModifierSymbols.Contains(symbol))];
+
+    /// <summary>A key symbol without its <c>Key_</c> prefix.</summary>
+    public static string NameOf(string key) => KeyName(key);
+
     /// <summary>Modifiers down, the key tapped, modifiers up in reverse; empty for a chord with a problem.</summary>
     public IReadOnlyList<InputStep> Steps()
     {

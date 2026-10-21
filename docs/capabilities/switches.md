@@ -485,11 +485,12 @@ to whatever window is in front, whether Elite is running or not.
 > "stop my switches pressing key chords"
 
 While it is off, the switch's row on the HOTAS switches page says so. A momentary stick button is a
-two-position switch — nothing held, and the button — so a stick button can paste. Until the switches
-page can pick a chord, a chord is set by editing `data/switches.json`, as below; the page shows
-that position's action as nothing, and picking anything for it there, nothing included, removes the
-chord. Alt+F4 and Win+L are
-refused, and so is a modifier named as the key. If Windows refuses the keystroke, it is said:
+two-position switch — nothing held, and the button — so a stick button can paste. On the HOTAS
+switches page, choose **Key chord** under **Outside Elite** in a position's Action list. Two lists
+replace ON / OFF: the modifiers, from None to Ctrl+Shift+Alt+Win, and the key. A new chord starts at
+Ctrl+V. Picking any other action removes the chord. It can also be set by editing `data/switches.json`,
+as below. Alt+F4 and Win+L are refused, and so is a modifier named as the key; the page shows the
+refusal and does not save. If Windows refuses the keystroke, it is said:
 
 > I could not press Ctrl+V from paste button. Windows refused the keystroke.
 

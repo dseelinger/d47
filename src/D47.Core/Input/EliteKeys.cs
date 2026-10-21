@@ -89,6 +89,9 @@ public static class EliteKeys
         ["PrintScreen"] = 0x2C, ["ScrollLock"] = 0x91, ["Pause"] = 0x13, ["NumLock"] = 0x90,
     };
 
+    /// <summary>Every keyboard symbol with its <c>Key_</c> prefix, in the order the table lists them.</summary>
+    public static IEnumerable<string> KeyboardSymbols => KeyboardCodes.Keys.Select(name => "Key_" + name);
+
     /// <summary>Symbols whose scancode needs the extended-key prefix.</summary>
     private static readonly HashSet<string> Extended = new(StringComparer.OrdinalIgnoreCase)
     {

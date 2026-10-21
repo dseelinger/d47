@@ -31,6 +31,11 @@ public sealed class SwitchPage : DialogPage
 
     private const string HeadsetWord = "Headset view (Virtual Desktop)";
 
+    /// <summary>The action picker's value for the key chord entry.</summary>
+    private const string ChordId = "chord";
+
+    private const string ChordWord = "Key chord";
+
     /// <summary>Marks the cyan bar on the row for the position the switch is in.</summary>
     public const string HeldBarName = "SwitchHeldBar";
 
@@ -393,6 +398,12 @@ public sealed class SwitchPage : DialogPage
 
     private void Save()
     {
+        if (ChordRefusals().Count > 0)
+        {
+            ShowProblems();
+            return;
+        }
+
         _store.Save([.. _switches.Select(mapping => mapping.ToMapping())]);
 
         // Re-read rather than trusting what was just written, so what the panel shows next is the validated
@@ -408,16 +419,19 @@ public sealed class SwitchPage : DialogPage
 
     private void ShowProblems()
     {
-        if (_store.Problems.Count == 0)
-        {
-            _problems.IsVisible = false;
-            return;
-        }
+        var lines = _store.Problems.Select(problem => $"{problem.Name}: {problem.Reason}").Concat(ChordRefusals()).ToList();
 
-        _problems.IsVisible = true;
-        _problems.Text = string.Join(
-            "\n", _store.Problems.Select(problem => $"{problem.Name}: {problem.Reason}"));
+        _problems.IsVisible = lines.Count > 0;
+        _problems.Text = string.Join("\n", lines);
     }
+
+    /// <summary>One line for each chord on the page that cannot be sent, naming its switch.</summary>
+    private List<string> ChordRefusals() =>
+    [
+        .. _switches.SelectMany(mapping => mapping.Positions
+            .Where(position => position.Chord is not null && KeyChord.Problem(position.Chord) is not null)
+            .Select(position => $"{mapping.Name.Trim()}: {KeyChord.Problem(position.Chord!)}")),
+    ];
 
     private void Rebuild()
     {
@@ -683,6 +697,9 @@ public sealed class SwitchPage : DialogPage
         pageButton.Classes.Add(ListRow.Class);
         AutomationProperties.SetName(pageButton, "Page");
 
+        ChordPicker? chordPicker = null;
+        var stateCell = new Avalonia.Controls.Panel { VerticalAlignment = VerticalAlignment.Top, Children = { state } };
+
         void Draw()
         {
             var named = Assignable.FirstOrDefault(known => known.Id == position.Action);
@@ -699,8 +716,11 @@ public sealed class SwitchPage : DialogPage
                 new InlinePickerOption(TargetPrefix + pips.Id, pips.Name, ThemeManager.WhiteKey)));
             entries.Add(new InlinePickerHeading("Headset"));
             entries.Add(new InlinePickerOption(HeadsetId, HeadsetWord, ThemeManager.WhiteKey));
+            entries.Add(new InlinePickerHeading("Outside Elite"));
+            entries.Add(new InlinePickerOption(ChordId, ChordWord, ThemeManager.WhiteKey));
 
             var headset = position.View is not null;
+            var chord = position.Chord is not null;
             var target = SwitchTargets.Find(position.Target);
             var focus = FocusTargets.Find(position.Target);
             var split = PipTargets.Find(position.Target);
@@ -709,11 +729,36 @@ public sealed class SwitchPage : DialogPage
 
             action.Show(
                 entries,
-                headset ? HeadsetId : targetId is null ? position.Action : TargetPrefix + targetId,
-                headset ? HeadsetWord : targetName ?? named.Name ?? NothingWord,
-                headset || targetId is not null || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
+                chord ? ChordId : headset ? HeadsetId : targetId is null ? position.Action : TargetPrefix + targetId,
+                chord ? ChordWord : headset ? HeadsetWord : targetName ?? named.Name ?? NothingWord,
+                chord || headset || targetId is not null || named.Name is not null ? ThemeManager.WhiteKey : ThemeManager.GreyKey,
                 null);
 
+            if (position.Chord is { } held)
+            {
+                if (chordPicker is null)
+                {
+                    chordPicker = new ChordPicker();
+                    chordPicker.Changed += (_, changed) =>
+                    {
+                        position.Chord = changed;
+                        ShowProblems();
+                    };
+                }
+
+                chordPicker.Chord = held;
+
+                if (!stateCell.Children.Contains(chordPicker))
+                {
+                    stateCell.Children.Add(chordPicker);
+                }
+            }
+            else if (chordPicker is not null)
+            {
+                stateCell.Children.Remove(chordPicker);
+            }
+
+            state.IsVisible = !chord;
             state.IsEnabled = headset || (position.Action.Length > 0 && targetId is null);
 
             var choices = headset ? Views : States;
@@ -752,6 +797,14 @@ public sealed class SwitchPage : DialogPage
                 position.View ??= D47.Core.Vr.HeadsetView.Vr;
                 position.Chord = null;
             }
+            else if (id == ChordId)
+            {
+                position.Action = string.Empty;
+                position.Target = string.Empty;
+                position.Destination = string.Empty;
+                position.View = null;
+                position.Chord ??= ChordPicker.Default;
+            }
             else
             {
                 position.Action = id;
@@ -766,6 +819,7 @@ public sealed class SwitchPage : DialogPage
             }
 
             Draw();
+            ShowProblems();
         };
 
         state.SelectionChanged += (_, _) =>
@@ -811,7 +865,7 @@ public sealed class SwitchPage : DialogPage
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
 
-        foreach (var (cell, column) in new (Control, int)[] { (bar, 0), (buttonCell, 1), (action, 2), (state, 3), (pageButton, 4) })
+        foreach (var (cell, column) in new (Control, int)[] { (bar, 0), (buttonCell, 1), (action, 2), (stateCell, 3), (pageButton, 4) })
         {
             Grid.SetColumn(cell, column);
             row.Children.Add(cell);
