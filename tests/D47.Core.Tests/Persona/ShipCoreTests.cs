@@ -413,7 +413,7 @@ public class ShipCoreWatchTests
         state.Apply(Event(
             """{"timestamp":"2026-08-19T09:05:00Z","event":"Loadout","Ship":"python","ShipID":7,"ShipName":"Good Idea","Modules":[]}"""));
 
-        var listed = service.DescribeAll();
+        var listed = service.Status().Block;
 
         Assert.Contains("Good Idea", listed);
         Assert.DoesNotContain("Bad Idea", listed);
@@ -426,7 +426,7 @@ public class ShipCoreWatchTests
         var service = Service(state, ("F1", 9, "quartermaster"));
         service.Store.Bind(new ShipCoreBinding("F1", 8, "quartermaster", "anaconda"));
 
-        var listed = service.DescribeAll();
+        var listed = service.Status().Block;
 
         Assert.DoesNotContain("8", listed);
         Assert.Contains("ship 9", listed);

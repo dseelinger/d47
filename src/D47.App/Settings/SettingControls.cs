@@ -101,6 +101,25 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
         var (control, refresh) = BuildControl(row, message);
 
+        if (row.Problems is { } problems)
+        {
+            var notice = new Notice(NoticeLevel.Warning, inline: true) { Name = $"Refused_{row.Key.Replace('.', '_')}" };
+
+            void Refused()
+            {
+                var lines = problems();
+
+                notice.IsVisible = lines.Count > 0;
+                notice.Label = $"{lines.Count} {(lines.Count == 1 ? "LINE" : "LINES")} REFUSED IN SHIP-CORES.JSON";
+                notice.Text = "Those ships keep whoever is aboard. Fix the lines in the file, or bind the ships again here.";
+                notice.Detail = string.Join(Environment.NewLine, lines.Select(line => $"{line.Where} — {line.Reason}"));
+            }
+
+            Refused();
+
+            return new SettingControl(control, () => { refresh(); Refused(); }) { Below = notice };
+        }
+
         return new SettingControl(control, refresh);
     }
 
@@ -615,6 +634,23 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             Children = { press, bar },
         };
 
+        // The introductions status is plain text on the button's line, not a block above it.
+        if (row.Key == PersonaCapability.IntroductionsKey && inset is Border { Child: { } plain } block)
+        {
+            block.Child = null;
+            plain.VerticalAlignment = VerticalAlignment.Center;
+            pressed.VerticalAlignment = VerticalAlignment.Center;
+
+            var line = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 16,
+                Children = { plain, pressed },
+            };
+
+            return (line, refresh);
+        }
+
         // Nothing to read means nothing to show above the button, so the inset stays out (#78).
         var stack = row.Binding?.Read is null
             ? new StackPanel { Spacing = 8, Children = { pressed } }
@@ -765,10 +801,18 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         var open = new Button
         {
             Name = "OpenOwnPersonas",
-            Content = "Write a core",
+            Content = OwnButtonLabel(),
             FontSize = TypeScale.Body,
             Padding = new Thickness(8, 4),
             HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        var showSummary = refresh;
+
+        refresh = () =>
+        {
+            showSummary();
+            open.Content = OwnButtonLabel();
         };
 
         open.Click += async (_, _) =>
@@ -787,6 +831,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
         return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh);
     }
+
+    private static string OwnButtonLabel() => PersonaCapability.OwnNames().Count == 0 ? "Write a core" : "Your cores";
 
     /// <summary>What Custom voices holds, plus the way into the page.</summary>
     private (Control, Action) BuildCustomVoices(SettingRow row)

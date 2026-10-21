@@ -36,17 +36,21 @@ public class IntroductionsRowTests
         host.View.Reveal(PersonaCapability.Id);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Cora, Kex", Disclosures(host.View));
+        Assert.Contains("Every core introduces itself again", Disclosures(host.View));
 
         var forget = host.View.GetVisualDescendants()
             .OfType<Button>()
             .Single(button => button.Name == "Press_persona_introductions");
+
+        Assert.True(forget.IsEnabled);
+        Assert.Contains(SettingsView.DestructiveClass, forget.Classes);
 
         forget.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(personas.Introduced);
         Assert.Contains("No core has introduced itself yet", Disclosures(host.View));
+        Assert.False(forget.IsEnabled);
 
         host.Close();
     }

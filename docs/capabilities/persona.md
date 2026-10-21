@@ -496,8 +496,9 @@ lines back. Which cores are spent is kept in `data/view-state.json` beside the r
 left the panel; it is not part of your settings, and nothing you said to a core is stored with it.
 
 **Forget introductions** puts all eleven back to their first line at once. Nothing else is
-touched: transcripts, voices and the core aboard stay exactly as they were. The row states which
-cores are spent before you press it, and states that none are afterwards.
+touched: transcripts, voices and the core aboard stay exactly as they were. The row counts the
+cores that have introduced themselves ("7 have so far") without naming them, and says that none
+have afterwards. The button is red, and greyed out while none have.
 
 The core currently aboard is forgotten with the rest, but hearing it again means switching away
 and back — selecting the core that is already running is not a switch, and never has been.
@@ -540,7 +541,8 @@ Every other group starts at 0.
 
 #### Cores of your own {#cores-of-your-own}
 
-The cores you wrote, named, and the button that opens the editor. See
+How many cores you wrote and the first three by name ("5 of your own: Vesper, Halcyon, Old Tam
+and 2 more"), and the button that opens the editor: WRITE A CORE with none, YOUR CORES otherwise. See
 [And you can write your own](#and-you-can-write-your-own) above for what writing one involves and
 what is supplied for you.
 
@@ -567,9 +569,13 @@ Not reachable by the model.
 
 #### Cores by ship {#cores-by-ship}
 
-Every ship you have bound and what it flies with, and the button that forgets the one you are in.
-A line the file refused — a core that does not exist, a ship bound twice — is reported here
-rather than silently dropped.
+How many ships have a core, out of your fleet, and the first three by name ("9 of 23 ships have a
+core: Cold Iron with Warden, Long Odds with Cora, Brass Halo with Analyst Prime and 6 more"), and
+the button that forgets the one you are in. Before the fleet has been read it counts the bound
+ships and says to dock somewhere with a shipyard.
+
+A line the file refused — a core that does not exist, a ship bound twice — is reported in a
+warning under the row, with each line's place and reason, rather than silently dropped.
 
 ### Personality off
 

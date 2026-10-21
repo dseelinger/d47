@@ -199,7 +199,10 @@ public static class PersonaCapability
 
             // Info, so the model cannot reach it — same reason the persona row above is protected, and here
             // it comes free rather than as a flag.
-            Binding = new SettingBinding { Read = _ => Introductions(host) },
+            Binding = new SettingBinding { Read = _ => Introductions(host).Block },
+            Note = _ => Introductions(host).Second,
+            Destructive = true,
+            PressEnabled = _ => host.Introduced.Count > 0,
         },
         new SettingRow
         {
@@ -463,7 +466,9 @@ public static class PersonaCapability
             DocsAnchor = "cores-by-ship",
             PressLabel = "Forget this ship's core",
             Press = () => ships.Forget(),
-            Binding = new SettingBinding { Read = _ => ships.DescribeAll() },
+            Binding = new SettingBinding { Read = _ => ships.Status().Block },
+            Note = _ => ships.Status().Second,
+            Problems = () => [.. ships.Store.Problems.Select(problem => (problem.Where, problem.Reason))],
         },
     ];
 
@@ -490,25 +495,14 @@ public static class PersonaCapability
     }
 
     /// <summary>What the introductions row states.</summary>
-    private static string Introductions(PersonaHost host)
-    {
-        var introduced = host.Introduced;
+    private static StatusText Introductions(PersonaHost host) => StatusRows.Introductions(host.Introduced.Count);
 
-        return introduced.Count == 0
-            ? "No core has introduced itself yet. Every one of them still has its first line waiting."
-            : $"Already introduced: {string.Join(", ", introduced.Select(p => p.Name))}. "
-              + "Selecting one of those again gets its gap reaction instead.";
-    }
+    /// <summary>The names of the cores the Commander wrote, in the editor's order.</summary>
+    public static IReadOnlyList<string> OwnNames() =>
+        Persona.PersonaCatalog.Own?.Invoke().Select(core => core.Name).ToArray() ?? [];
 
     /// <summary>What the own-cores row reads.</summary>
-    public static string SummariseOwn()
-    {
-        var names = Persona.PersonaCatalog.Own?.Invoke().Select(core => core.Name).ToArray() ?? [];
-
-        return names.Length == 0
-            ? "None yet. A core needs a name and a paragraph saying what it is like."
-            : $"{names.Length} of your own: {string.Join(", ", names)}.";
-    }
+    public static string SummariseOwn() => StatusRows.OwnCores(OwnNames());
 
     /// <summary>The closed phrase set that reaches this row without a model.</summary>
     private static IEnumerable<SettingCommandPhrase> SelectionPhrases(Persona.Persona persona)

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Introductions, Cores of your own and Cores by ship no longer print a whole list. Each states a count, names the first three and counts the rest. Introductions names no core, and its Forget introductions button is red and greyed out while none have introduced themselves. The own-cores button reads Write a core with none and Your cores otherwise. Lines `ship-cores.json` refused show as a warning under Cores by ship instead of a sentence in it.
+
 Cores by ship now names each bound ship as the Ship dropdown does, from your fleet as it is now. A ship you renamed in game shows its new name without being bound again, and no entry shows a ship id unless nothing else is known about that ship.
 
 A story objective can now take several steps. Each step has its own place or activity, and the objective's lines are spoken when its last step is done. After a step that is not the last, your core says it was done and what the next step is, for example "Next: collect 3 bounties." Change objective, Mark done and Never ask this act on the step you are on, and Change objective replaces only that step. A chapter can have as many steps as its story needs, and from chapter two on it may have any number of arrive, dock, land or scan objectives. Stories you already have load unchanged.
