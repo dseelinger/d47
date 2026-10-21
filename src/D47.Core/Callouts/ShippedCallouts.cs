@@ -161,6 +161,7 @@ public static class ShippedCallouts
             .Add(new OutstandingCrimesCallout(sources.Crimes))
             .Add(surveyedBiology)
             .Add(biology)
+            .Add(new GeologyCallout())
             .Add(tradingMode)
             .Add(new ProspectorCallout { Target = () => sources.MiningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new CoreAsteroidCallout())
@@ -393,6 +394,7 @@ public static class ShippedCallouts
         engine.SetEnabled("notable-bodies", callouts.NotableBodies, now);
         engine.SetEnabled("body-value", callouts.BodyValue, now);
         engine.SetEnabled("biology", callouts.Biology, now);
+        engine.SetEnabled("geology", callouts.Geology, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);
         engine.SetEnabled("prospector", callouts.Prospector, now);

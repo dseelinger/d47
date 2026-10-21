@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When you scan a landable body with geological signals, D47 names up to three of its likely geological features that are not in your codex for the region you are in, such as "B 3 could have water ice fumaroles or water ice geysers, not in your codex for this region". It waits until your codex history has loaded and says each body once. The switch is "Geology missing from your codex" in the callout settings.
+
 When you first scan a planet that would pay 500,000 credits or more if you mapped it, D47 names it and says about what mapping it pays, such as "a terraformable high metal content world, about 2.4 million if mapped". Stars and bodies you mapped before scanning are left out. The callout and its credit threshold are in the callout settings.
 
 When you scan a body with a rare trait, D47 says so: a colliding binary, a shepherd moon, a moon of a moon, an eccentric orbit, a fast spin, very wide rings, or five or six of the premium FSD injection materials. Each trait has its own switch, and landable with an atmosphere is off until you turn it on.

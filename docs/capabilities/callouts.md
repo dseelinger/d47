@@ -937,6 +937,18 @@ counted signals, highest first. It speaks when that best case reaches the
 gives a range drawn from those genera alone. It is what the biology could fetch at best, not what the
 body is worth: the species actually there may be the cheapest of its genus.
 
+#### Geology missing from your codex {#geology}
+
+When you scan a landable body the FSS has counted geological signals on, and its likely features
+include some you have not logged in the codex for the region you are in:
+
+```text
+B 3 could have water ice fumaroles or water ice geysers, not in your codex for this region.
+```
+
+It names up to three, in table order, and counts the rest. It says nothing until your codex history
+has loaded, and speaks once per body.
+
 #### Surveyed biology on arrival {#surveyed-biology}
 
 When you arrive in a system and [galaxy search](galaxy.md) is on:

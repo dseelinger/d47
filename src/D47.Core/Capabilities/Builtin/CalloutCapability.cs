@@ -53,6 +53,7 @@ public static class CalloutCapability
     public const string NotableWideRingsKey = "callouts.notableWideRings";
     public const string NotablePremiumFsdInjectionKey = "callouts.notablePremiumFsdInjection";
     public const string NotableLandableAtmosphereKey = "callouts.notableLandableAtmosphere";
+    public const string GeologyKey = "callouts.geology";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
@@ -517,6 +518,15 @@ public static class CalloutCapability
                 "high-value biology",
                 s => s.Callouts.Biology,
                 (s, v) => s with { Callouts = s.Callouts with { Biology = v } }),
+
+            Toggle(
+                GeologyKey,
+                "Geology missing from your codex",
+                "A landable body's likely geological features you have not logged in this region, said when you scan it.",
+                "geology",
+                "missing geology",
+                s => s.Callouts.Geology,
+                (s, v) => s with { Callouts = s.Callouts with { Geology = v } }),
 
             Toggle(
                 SurveyedBiologyKey,

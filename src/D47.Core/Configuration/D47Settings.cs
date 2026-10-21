@@ -653,6 +653,9 @@ public sealed record CalloutSettings
     /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
     public bool Biology { get; init; } = true;
 
+    /// <summary>A landable body's likely geological features missing from the codex for this region, said on its scan.</summary>
+    public bool Geology { get; init; } = true;
+
     /// <summary>
     /// On arrival, the bodies Spansh has surveyed biology on that reach <see cref="BiologyThreshold"/>. Needs
     /// <see cref="KnowledgeSettings.GalaxySearch"/>.
