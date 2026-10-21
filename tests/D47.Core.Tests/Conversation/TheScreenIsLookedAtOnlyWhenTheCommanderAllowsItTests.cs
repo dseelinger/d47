@@ -23,6 +23,14 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
             Taken++;
             return result;
         }
+
+        public int TakenFull { get; private set; }
+
+        public ScreenCaptureResult TakeFull()
+        {
+            TakenFull++;
+            return result;
+        }
     }
 
     private static FakeCapture Picture(string source = ScreenPictures.FromWindow) =>
@@ -105,7 +113,7 @@ public class TheScreenIsLookedAtOnlyWhenTheCommanderAllowsItTests
         var install = new MemoryInstall();
         var settings = Settings(install, lookAtScreen: false);
 
-        var tool = Assert.Single(ScreenCapability.Create(settings, Picture()).Tools);
+        var tool = Assert.Single(ScreenCapability.Create(settings, Picture()).Tools, t => t.Name == ScreenCapability.ToolName);
         Assert.False(tool.Protected);
         Assert.True(tool.ReturnsImage);
         Assert.Empty(tool.Parameters);

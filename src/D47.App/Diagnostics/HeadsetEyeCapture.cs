@@ -41,7 +41,11 @@ public sealed class HeadsetEyeCapture(
         return Eye(eye.Runtime, eye.Adapter, crop: false, bitmap => EliteWindowCapture.Save(bitmap, path, width));
     }
 
-    public ScreenCaptureResult Take()
+    public ScreenCaptureResult Take() => Take(full: false);
+
+    public ScreenCaptureResult TakeFull() => Take(full: true);
+
+    private ScreenCaptureResult Take(bool full)
     {
         if (Headset(out var source) is not { } eye)
         {
@@ -51,7 +55,7 @@ public sealed class HeadsetEyeCapture(
             }
 
             Source(ScreenPictures.FromWindow);
-            return window.Take();
+            return full ? window.TakeFull() : window.Take();
         }
 
         ScreenPicture? picture = null;
@@ -59,7 +63,9 @@ public sealed class HeadsetEyeCapture(
             eye.Runtime,
             eye.Adapter,
             crop: true,
-            bitmap => picture = EliteWindowCapture.Jpeg(bitmap, ScreenPictures.FromHeadset));
+            bitmap => picture = full
+                ? EliteWindowCapture.FullJpeg(bitmap, ScreenPictures.FromHeadset)
+                : EliteWindowCapture.Jpeg(bitmap, ScreenPictures.FromHeadset));
 
         return new ScreenCaptureResult(picture, refused);
     }

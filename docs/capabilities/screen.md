@@ -116,6 +116,23 @@ picture is Elite's window, or the headset's left eye while SteamVR is showing El
 There is no fixed phrase for it. The model decides to look when your question is about something
 on screen and the game state it was given does not answer it.
 
+### Take a picture to keep
+
+> "take a picture"
+> "take a picture of this"
+> "save a picture"
+
+Saves a full-size picture of Elite's window, or of the headset's left eye cut to the part inside the
+lens mask, to `data\captures`. It is not scaled down, and no model sees it. It works with Let the
+model look at the screen off, and the model cannot call it: only the phrases above reach it.
+
+Each picture is a `capture-<date>-<time>.jpg` with a `.json` note of the same name: the time, where
+the picture came from, its size, the system and body, the codex region number, and the codex entries
+logged in the ten minutes before it. D47 answers "Picture taken." and, when the note lists entries,
+"Noted with" the names of up to three of them and "and N more" for the rest. The newest 100 pictures
+are kept; the oldest go as new ones arrive. A refused capture, such as Elite being minimised, saves
+nothing and says why.
+
 ### Off by default
 
 [Let the model look at the screen](conversation.md#let-the-model-look-at-the-screen) is off until
@@ -158,7 +175,19 @@ includes them. That line also names the picture, as `PICTURE OF ELITE'S WINDOW` 
 
 Takes a picture through `IScreenCapture` on the thread pool and returns it as the result's image.
 Takes no arguments, and is not protected. It returns an error, with no picture, while the setting
-is off or when the capture refuses, for example because Elite is minimised.
+is off or when the capture refuses, for example because Elite is minimised. The picture is never
+written to disk.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `take_picture`
+
+Takes a full-size picture through `IScreenCapture.TakeFull` on the thread pool and writes it and its
+`PictureNote` to `AppPaths.Captures`. Takes no arguments, and is protected: the model is refused it.
+It is not gated by the setting. When the capture refuses it writes nothing and answers
+`No picture was taken: ` and the refusal.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

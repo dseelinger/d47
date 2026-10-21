@@ -45,6 +45,7 @@ public sealed class AppPaths
         AvatarClips = Path.Combine(Data, "avatar-clips");
         BindingProfiles = Path.Combine(Data, "binding-profiles");
         Backups = Path.Combine(Data, "backups");
+        Captures = Path.Combine(Data, "captures");
         LastBuildFile = Path.Combine(Data, "last-build.txt");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
@@ -133,6 +134,9 @@ public sealed class AppPaths
 
     /// <summary>The zips of the data folder taken when a different build first opens it.</summary>
     public string Backups { get; }
+
+    /// <summary>The full-size pictures of the screen the Commander asked for, each with a JSON note.</summary>
+    public string Captures { get; }
 
     /// <summary>The build that last opened the data folder.</summary>
     public string LastBuildFile { get; }

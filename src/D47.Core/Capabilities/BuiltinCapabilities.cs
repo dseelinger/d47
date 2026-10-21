@@ -462,7 +462,14 @@ public static class BuiltinCapabilities
 
         BindingProfilesCapability.Create(bindingProfiles),
 
-        ScreenCapability.Create(settings, screen),
+        ScreenCapability.Create(
+            settings,
+            screen,
+            new PictureKeeping(
+                files ?? new Storage.DiskFileSystem(),
+                paths.Captures,
+                () => gameState.Active,
+                now ?? (() => DateTimeOffset.MinValue))),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

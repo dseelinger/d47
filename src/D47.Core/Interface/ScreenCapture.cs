@@ -8,6 +8,9 @@ public sealed record ScreenCaptureResult(ScreenPicture? Picture, string? Refusal
 public interface IScreenCapture
 {
     ScreenCaptureResult Take();
+
+    /// <summary>The same source as <see cref="Take"/> at its own size, encoded at JPEG quality 0.92. Blocks longer than <see cref="Take"/>.</summary>
+    ScreenCaptureResult TakeFull();
 }
 
 /// <summary>Where a picture of the screen comes from.</summary>

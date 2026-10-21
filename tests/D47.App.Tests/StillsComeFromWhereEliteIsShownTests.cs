@@ -32,6 +32,12 @@ public class StillsComeFromWhereEliteIsShownTests
             Asked.Add("take");
             return refusal is null ? new(WindowPicture, null) : new(null, refusal);
         }
+
+        public ScreenCaptureResult TakeFull()
+        {
+            Asked.Add("take full");
+            return refusal is null ? new(WindowPicture, null) : new(null, refusal);
+        }
     }
 
     [Theory]

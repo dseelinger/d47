@@ -204,6 +204,8 @@ public class SteamVrLiveTests
         public string? Capture(string path) => "the headset capture fell back to the window";
 
         public ScreenCaptureResult Take() => new(null, "the headset capture fell back to the window");
+
+        public ScreenCaptureResult TakeFull() => Take();
     }
 
     /// <summary>

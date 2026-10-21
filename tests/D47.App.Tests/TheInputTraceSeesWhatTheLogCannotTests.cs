@@ -59,6 +59,8 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         }
 
         public D47.Core.Interface.ScreenCaptureResult Take() => new(null, refusal);
+
+        public D47.Core.Interface.ScreenCaptureResult TakeFull() => new(null, refusal);
     }
 
     private InputTraceWriter Writer(

@@ -30,6 +30,9 @@ public sealed class EliteWindowCapture(
     /// <summary>The JPEG quality a picture of the screen is encoded at.</summary>
     private const float JpegQuality = 0.85f;
 
+    /// <summary>The JPEG quality a picture kept on disk is encoded at.</summary>
+    private const float FullJpegQuality = 0.92f;
+
     private readonly Lock _gate = new();
 
     private IDirect3DDevice? _device;
@@ -40,6 +43,14 @@ public sealed class EliteWindowCapture(
     {
         ScreenPicture? picture = null;
         var refused = Frame(bitmap => picture = Jpeg(bitmap, ScreenPictures.FromWindow));
+
+        return new ScreenCaptureResult(picture, refused);
+    }
+
+    public ScreenCaptureResult TakeFull()
+    {
+        ScreenPicture? picture = null;
+        var refused = Frame(bitmap => picture = FullJpeg(bitmap, ScreenPictures.FromWindow));
 
         return new ScreenCaptureResult(picture, refused);
     }
@@ -144,18 +155,21 @@ public sealed class EliteWindowCapture(
     }
 
     /// <summary>A bitmap to a JPEG scaled down to <see cref="ScreenPictures.Fit"/>, written nowhere.</summary>
-    internal static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source)
-    {
-        var (fitWidth, fitHeight) = ScreenPictures.Fit(bitmap.PixelWidth, bitmap.PixelHeight);
+    internal static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source) =>
+        Jpeg(bitmap, source, ScreenPictures.Fit(bitmap.PixelWidth, bitmap.PixelHeight), JpegQuality);
 
+    /// <summary>A bitmap to a JPEG at its own size, written nowhere.</summary>
+    internal static ScreenPicture FullJpeg(SoftwareBitmap bitmap, string source) =>
+        Jpeg(bitmap, source, (bitmap.PixelWidth, bitmap.PixelHeight), FullJpegQuality);
+
+    private static ScreenPicture Jpeg(SoftwareBitmap bitmap, string source, (int Width, int Height) size, float quality)
+    {
         var options = new BitmapPropertySet
         {
-            ["ImageQuality"] = new BitmapTypedValue(JpegQuality, PropertyType.Single),
+            ["ImageQuality"] = new BitmapTypedValue(quality, PropertyType.Single),
         };
 
-        var bytes = Encode(bitmap, BitmapEncoder.JpegEncoderId, options, (fitWidth, fitHeight));
-
-        return new ScreenPicture(bytes, fitWidth, fitHeight, source);
+        return new ScreenPicture(Encode(bitmap, BitmapEncoder.JpegEncoderId, options, size), size.Width, size.Height, source);
     }
 
     private static byte[] Encode(

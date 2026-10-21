@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Say "take a picture", "take a picture of this" or "save a picture" and D47 saves a full-size picture of Elite's window, or of the headset's left eye, to the captures folder in your data folder, with a note beside it of the system, body, codex region and the codex entries you logged in the last ten minutes. It answers "Picture taken." and names up to three of those entries. It works with Let the model look at the screen off, the model cannot ask for it, and the newest 100 pictures are kept.
+
 On Commander › Ledgers › Codex, the regions table has a Discoveries column showing the entries on your record against the entries known for each region, such as "38 / 746", the same under every period. Under the table, Other regions lists every region the codex table knows that has no entries in the period, with the date you last logged there or "Nothing on record". Open one to see its page and what is left to discover. The sort headings order both lists, and the search filters the other regions by name.
 
 On Commander › Ledgers › Codex, a region's page has a Discoveries row that opens a page listing the codex entries the codex table knows for that region and your record lacks. It shows how many are missing, on record and known, and groups the missing ones by category and subcategory, most reported first. The figures cover your whole record, not the period. The Codex Discoveries answer now ends "Stars, Thargoid sites and planets other than the green gas giants are not covered."

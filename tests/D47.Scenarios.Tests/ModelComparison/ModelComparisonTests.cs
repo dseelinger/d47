@@ -216,6 +216,8 @@ public class ModelComparisonTests
     /// <summary>A fixed picture of the screen, from a JPEG on disk.</summary>
     private sealed class FileScreen(string path) : IScreenCapture
     {
+        public ScreenCaptureResult TakeFull() => Take();
+
         public ScreenCaptureResult Take()
         {
             var jpeg = File.ReadAllBytes(path);
