@@ -2,6 +2,7 @@ using System.Globalization;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -54,6 +55,8 @@ public class SurfaceGuidanceTests
 
         public SurfaceMarks Marks { get; } = new();
 
+        public EarlierFinds Earlier { get; } = new();
+
         public string StatusJson { get; private set; } = "{}";
 
         public DateTimeOffset Now { get; set; } = At("10:30:00");
@@ -90,7 +93,7 @@ public class SurfaceGuidanceTests
             reader.Poll();
 
             return CapabilityRegistry.Build(
-                [SurfaceGuidanceCapability.Create(Marks, () => State, () => reader.Current, () => Now)]);
+                [SurfaceGuidanceCapability.Create(Marks, () => State, () => reader.Current, () => Now, Earlier)]);
         }
 
         public async Task<ToolResult> Run(string tool, string? key = null, string? value = null)
@@ -101,6 +104,20 @@ public class SurfaceGuidanceTests
 
             return await Registry().InvokeAsync(
                 tool, new ToolArguments(arguments), TestContext.Current.CancellationToken);
+        }
+
+        public Scene OnBody(string bodyName) =>
+            Journal(
+                Line(
+                    "09:00:00",
+                    "Location",
+                    "\"StarSystem\":\"Sys\",\"SystemAddress\":2175107336563,\"BodyID\":37,\"Body\":\""
+                    + bodyName + "\",\"Docked\":false"));
+
+        public Scene Finds(params EarlierFind[] finds)
+        {
+            Earlier.Set(2175107336563, finds);
+            return this;
         }
 
         public Task<ToolResult> Mark(string? name = null) =>
@@ -336,5 +353,80 @@ public class SurfaceGuidanceTests
 
         Assert.Equal(2, tools.Count);
         Assert.All(tools, tool => Assert.False(tool.Protected));
+    }
+
+    private static EarlierFind Found(string body, string name, double latitude, double longitude) =>
+        new(body, 1, name, latitude, longitude);
+
+    [Fact]
+    public async Task TheNearestEarlierFindIsGivenAtTheBearingAndDistanceTheSurfaceMathGives()
+    {
+        var scene = new Scene().Landed().OnBody("Sys 1 a").Standing(0, 0.01).Finds(
+            Found("Sys 1 a", "Bacterium Aurasus - Green", -0.02, 0.01),
+            Found("Sys 1 a", "Bacterium Aurasus - Green", 0.005, 0.01));
+
+        var result = await scene.Way("nearest Aurasus");
+
+        Assert.False(result.IsError);
+        Assert.Equal(
+            Expected("The nearest earlier Bacterium Aurasus - Green find", Fix(0, 0.01), Fix(0.005, 0.01)),
+            result.Content);
+    }
+
+    [Fact]
+    public async Task NearestWithNoNameUsesAnyVariantAndAddsTheRelativeWording()
+    {
+        var scene = new Scene().Landed().OnBody("Sys 1 a").Standing(0, 0, heading: 90).Finds(
+            Found("Sys 1 a", "Fonticulua Campestris", 0, 0.02),
+            Found("Sys 1 a", "Bacterium Aurasus - Green", 0, 0.01));
+
+        var result = await scene.Way("nearest");
+
+        Assert.StartsWith("The nearest earlier Bacterium Aurasus - Green find is", result.Content);
+        Assert.EndsWith("bearing 90, east. It is ahead.", result.Content);
+    }
+
+    [Fact]
+    public async Task AFindOnAnotherBodyIsNeverUsed()
+    {
+        var scene = new Scene().Landed().OnBody("Sys 1 a").Standing(0, 0).Finds(
+            Found("Sys 1 b", "Bacterium Aurasus - Green", 0, 0.001));
+
+        var result = await scene.Way("nearest Bacterium");
+
+        Assert.Equal("Canonn has no earlier Bacterium find on this body.", result.Content);
+    }
+
+    [Fact]
+    public async Task NearestWithNothingMatchingSaysSo()
+    {
+        var scene = new Scene().Landed().OnBody("Sys 1 a").Standing(0, 0).Finds(
+            Found("Sys 1 a", "Fonticulua Campestris", 0, 0.001));
+
+        Assert.Equal(
+            "Canonn has no earlier Bacterium find on this body.", (await scene.Way("nearest Bacterium")).Content);
+        Assert.Equal("Canonn has no earlier find on this body.", (await new Scene().Landed().Standing(0, 0).Way("nearest")).Content);
+    }
+
+    [Fact]
+    public async Task APlainGenusStillMeansTheCommandersOwnSpecimen()
+    {
+        var scene = new Scene().Landed().OnBody("Sys 1 a").Standing(0, 0).Finds(
+            Found("Sys 1 a", "Bacterium Aurasus - Green", 0, 0.001));
+        scene.State.Apply(Parse(Sample("10:10:00", "Log")), Fix(0, 0.004));
+
+        var result = await scene.Way("Bacterium");
+
+        Assert.StartsWith("Your last Bacterium sample is", result.Content);
+    }
+
+    [Fact]
+    public void TheNearestEarlierFindHasModelFreePhrases()
+    {
+        var tool = new Scene().Registry().Find(SurfaceGuidanceCapability.Id)!.Descriptor.Tools
+            .Single(candidate => candidate.Name == SurfaceGuidanceCapability.BearingTool);
+
+        Assert.Contains(tool.Commands, command => command.Phrase == "which way to the nearest earlier find");
+        Assert.Contains(tool.Commands, command => command.Phrase == "guide me to the nearest earlier find");
     }
 }

@@ -119,7 +119,21 @@ With no target D47 uses the ship, then the newest mark, then the last specimen o
 set. The compass bearing is always given. The wording relative to the way you face is added only
 when Status.json has a heading. It uses eight 45-degree sectors centred on straight ahead: ahead,
 ahead on your right, on your right, behind you on your right, behind you, and the three on the left.
-A point on another body is never used. A spoken list of points names at most three.
+A point on another body is never used.
+
+### Ask for the nearest earlier find
+
+> "which way to the nearest earlier find"
+> "guide me to the nearest earlier find"
+> "which way to the nearest Aurasus"
+
+With Earlier biology finds from Canonn on and the finds for this system already fetched, D47 picks
+the find on this body nearest your position and gives it in the same wording, such as "The nearest
+earlier Bacterium Aurasus - Green find is 2.4 kilometres away, bearing 210, south-west." A name
+after "nearest" must appear in the variant name and goes through the model. Without a match D47
+says "Canonn has no earlier Bacterium find on this body." The spot is where another Commander logged
+the entry, not a specimen. This tool sends no request. A plain genus without "nearest" still means
+your own last sample. A spoken list of points names at most three.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
@@ -136,10 +150,10 @@ Optional `name`; refuses without a position. Not protected.
 #### `get_surface_bearing`
 
 Gives the bearing and distance to the ship, a mark, or a genus or species being sampled. Optional
-`to`. Not protected.
+`to`; `nearest <name>` picks the nearest earlier find from the `EarlierFinds` store. Not protected.
 
 ```json
-{"type":"object","properties":{"to":{"type":"string","description":"ship, the name of a mark, or a genus or species being sampled. Optional."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"to":{"type":"string","description":"ship, the name of a mark, a genus or species being sampled, or \u0022nearest \u003Cname\u003E\u0022 for the nearest earlier find. Optional."}},"required":[],"additionalProperties":false}
 ```
 
 </details>

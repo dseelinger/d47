@@ -482,7 +482,8 @@ public static class BuiltinCapabilities
             surfaceMarks ?? new Builtin.SurfaceMarks(),
             () => gameState.Active,
             gameStatus,
-            now ?? (() => DateTimeOffset.MinValue)),
+            now ?? (() => DateTimeOffset.MinValue),
+            earlierFinds),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

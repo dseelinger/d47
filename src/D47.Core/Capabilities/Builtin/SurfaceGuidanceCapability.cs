@@ -1,6 +1,7 @@
 using System.Globalization;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -37,7 +38,8 @@ public static class SurfaceGuidanceCapability
         SurfaceMarks marks,
         Func<CommanderGameState?> commander,
         Func<GameStatus>? status,
-        Func<DateTimeOffset> now) => new()
+        Func<DateTimeOffset> now,
+        EarlierFinds? earlier = null) => new()
     {
         Id = Id,
         Group = "Acting on the game",
@@ -77,8 +79,10 @@ public static class SurfaceGuidanceCapability
                 Name = BearingTool,
                 Description =
                     "Give the bearing and distance from the Commander's live position to a saved point on this "
-                    + "body: the ship, a mark, or a genus or species being sampled. Without a target it uses the "
-                    + "ship, then the newest mark, then the last specimen of the newest open set.",
+                    + "body: the ship, a mark, or a genus or species being sampled. \"nearest <name>\" gives the "
+                    + "nearest earlier find on this body whose variant name contains <name>, from Canonn's records; "
+                    + "\"nearest\" alone matches any variant. Without a target it uses the ship, then the newest "
+                    + "mark, then the last specimen of the newest open set.",
                 Parameters =
                 [
                     new ToolParameter
@@ -86,7 +90,8 @@ public static class SurfaceGuidanceCapability
                         Name = "to",
                         Type = ToolParameterType.String,
                         Description =
-                            "ship, the name of a mark, or a genus or species being sampled. Optional.",
+                            "ship, the name of a mark, a genus or species being sampled, or \"nearest <name>\" for the "
+                            + "nearest earlier find. Optional.",
                         Required = false,
                     },
                 ],
@@ -97,8 +102,10 @@ public static class SurfaceGuidanceCapability
                     Way("guide me to my ship", "ship"),
                     Way("which way to my last sample", "sample"),
                     Way("which way to my mark", "mark"),
+                    Way("which way to the nearest earlier find", "nearest"),
+                    Way("guide me to the nearest earlier find", "nearest"),
                 ],
-                Handler = (arguments, _) => Task.FromResult(Bearing(marks, commander(), status, arguments)),
+                Handler = (arguments, _) => Task.FromResult(Bearing(marks, commander(), status, earlier, arguments)),
             },
         ],
     };
@@ -165,11 +172,21 @@ public static class SurfaceGuidanceCapability
         SurfaceMarks marks,
         CommanderGameState? commander,
         Func<GameStatus>? status,
+        EarlierFinds? earlier,
         ToolArguments arguments)
     {
         var surface = commander?.Surface ?? SurfacePoints.None;
         var valid = marks.Valid(surface);
         var points = Points(commander, valid);
+
+        var to = arguments.TryGetString("to", out var asked) && !string.IsNullOrWhiteSpace(asked)
+            ? asked.Trim()
+            : null;
+
+        if (to is not null && NearestWanted(to, points) is { } variant)
+        {
+            return NearestFind(commander, status, earlier, variant);
+        }
 
         if (points.Count == 0)
         {
@@ -181,10 +198,6 @@ public static class SurfaceGuidanceCapability
             return ToolResult.Error(NoPositionToGuide);
         }
 
-        var to = arguments.TryGetString("to", out var asked) && !string.IsNullOrWhiteSpace(asked)
-            ? asked.Trim()
-            : null;
-
         var target = Resolve(to, points);
 
         if (target is null)
@@ -195,6 +208,83 @@ public static class SurfaceGuidanceCapability
         var here = new SurfaceFix(live.Latitude!.Value, live.Longitude!.Value, live.PlanetRadius!.Value);
 
         return ToolResult.Ok(Describe(target, here, live.Heading));
+    }
+
+    /// <summary>The variant name after "nearest" (empty for any), or null when <paramref name="to"/> is not a nearest request.</summary>
+    private static string? NearestWanted(string to, List<Point> points)
+    {
+        if (points.Any(point => point.Kind == PointKind.Mark && Same(point.Name, to)))
+        {
+            return null;
+        }
+
+        const string Word = "nearest";
+
+        if (!to.StartsWith(Word, StringComparison.OrdinalIgnoreCase)
+            || (to.Length > Word.Length && !char.IsWhiteSpace(to[Word.Length])))
+        {
+            return null;
+        }
+
+        var name = to[Word.Length..].Trim();
+
+        return name.ToLowerInvariant() is "earlier find" or "earlier finds" or "find" or "finds" or "earlier"
+            ? string.Empty
+            : name;
+    }
+
+    private static ToolResult NearestFind(
+        CommanderGameState? commander,
+        Func<GameStatus>? status,
+        EarlierFinds? earlier,
+        string variant)
+    {
+        var label = variant.Length > 0 ? $"{variant} " : string.Empty;
+        var none = ToolResult.Ok($"Canonn has no earlier {label}find on this body.");
+
+        if (commander is null || commander.Surface.Body is not { } body || earlier is null
+            || !earlier.TryGet(body.SystemAddress, out var finds)
+            || BodyName(commander, body) is not { } bodyName)
+        {
+            return none;
+        }
+
+        if (status?.Invoke() is not { HasPosition: true, PlanetRadius: > 0 } live)
+        {
+            return ToolResult.Error(NoPositionToGuide);
+        }
+
+        var here = new SurfaceFix(live.Latitude!.Value, live.Longitude!.Value, live.PlanetRadius!.Value);
+
+        var nearest = finds
+            .Where(find => Same(find.Body, bodyName)
+                           && find.Name.Contains(variant, StringComparison.OrdinalIgnoreCase))
+            .Select(find => (Find: find, At: new SurfaceFix(find.Latitude, find.Longitude, here.RadiusMetres)))
+            .OrderBy(candidate => here.MetresTo(candidate.At))
+            .FirstOrDefault();
+
+        if (nearest.Find is null)
+        {
+            return none;
+        }
+
+        var target = new Point(
+            PointKind.Find, "that earlier find", $"The nearest earlier {nearest.Find.Name} find", nearest.At);
+
+        return ToolResult.Ok(Describe(target, here, live.Heading));
+    }
+
+    private static string? BodyName(CommanderGameState commander, (long SystemAddress, int BodyId) body)
+    {
+        if (commander.Location.Body is { } current && commander.Location.BodyId == body.BodyId
+            && commander.Location.SystemAddress == body.SystemAddress)
+        {
+            return current;
+        }
+
+        return commander.Bodies.All
+            .FirstOrDefault(known => known.SystemAddress == body.SystemAddress && known.BodyId == body.BodyId)
+            ?.BodyName;
     }
 
     /// <summary>Every saved point on the body, in the order the default answer prefers them.</summary>
@@ -311,6 +401,7 @@ public static class SurfaceGuidanceCapability
         Ship,
         Mark,
         Sample,
+        Find,
     }
 
     private sealed record Point(PointKind Kind, string Name, string Subject, SurfaceFix At, GenusProgress? Set = null);
