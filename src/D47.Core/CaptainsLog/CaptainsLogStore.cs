@@ -41,7 +41,7 @@ public sealed class CaptainsLogStore(string path, IFileSystem files, ILogger<Cap
 
     public string Path => path;
 
-    /// <summary>Raised when an entry is added.</summary>
+    /// <summary>Raised when an entry is added or deleted.</summary>
     public event Action? Changed;
 
     public void Load()
@@ -90,11 +90,39 @@ public sealed class CaptainsLogStore(string path, IFileSystem files, ILogger<Cap
     /// <summary>Adds an entry. False when it could not be written.</summary>
     public bool Add(string frontierId, CaptainsLogEntry entry)
     {
+        if (!Replace(frontierId, entries => [.. entries, entry]))
+        {
+            return false;
+        }
+
+        logger.LogInformation("Saved a captain's log entry");
+        Changed?.Invoke();
+
+        return true;
+    }
+
+    /// <summary>Deletes an entry. False when it could not be written or was not there.</summary>
+    public bool Remove(string frontierId, string entryId)
+    {
+        if (!For(frontierId).Any(entry => entry.Id == entryId)
+            || !Replace(frontierId, entries => [.. entries.Where(entry => entry.Id != entryId)]))
+        {
+            return false;
+        }
+
+        logger.LogInformation("Deleted a captain's log entry");
+        Changed?.Invoke();
+
+        return true;
+    }
+
+    private bool Replace(string frontierId, Func<IReadOnlyList<CaptainsLogEntry>, IReadOnlyList<CaptainsLogEntry>> change)
+    {
         lock (_writeGate)
         {
             var merged = new Dictionary<string, IReadOnlyList<CaptainsLogEntry>>(_byCommander, StringComparer.Ordinal)
             {
-                [frontierId] = [.. For(frontierId), entry],
+                [frontierId] = change(For(frontierId)),
             };
 
             var document = new Document
@@ -117,9 +145,6 @@ public sealed class CaptainsLogStore(string path, IFileSystem files, ILogger<Cap
                 _byCommander = merged;
             }
         }
-
-        logger.LogInformation("Saved a captain's log entry");
-        Changed?.Invoke();
 
         return true;
     }

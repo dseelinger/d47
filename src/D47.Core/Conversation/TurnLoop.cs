@@ -1384,11 +1384,36 @@ public sealed class TurnLoop(
         return probe.Read(input) is not OfferReading.Unrelated;
     }
 
-    private IEnumerable<TurnEvent> LogAnswered(ToolResult answer)
+    private static Dictionary<string, string> FindArguments(CaptainsLog.CaptainsLogReading.Find find)
+    {
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (find.Span is not null)
+        {
+            arguments["span"] = find.Span;
+        }
+
+        if (find.System is not null)
+        {
+            arguments["system"] = find.System;
+        }
+
+        if (find.Words is not null)
+        {
+            arguments["words"] = find.Words;
+        }
+
+        return arguments;
+    }
+
+    private IEnumerable<TurnEvent> LogAnswered(
+        ToolResult answer,
+        string asked = Capabilities.Builtin.CaptainsLogCapability.Asked,
+        string? recorded = null)
     {
         yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
 
-        Said(answer.Spoken, Capabilities.Builtin.CaptainsLogCapability.Asked);
+        Said(recorded ?? answer.Spoken, asked);
 
         yield return new TurnEvent.TextDelta(answer.Spoken);
         yield return new TurnEvent.Completed(new TurnResult(
@@ -1457,6 +1482,8 @@ public sealed class TurnLoop(
             routing.Handled = true;
 
             ToolResult answer;
+            var asked = Capabilities.Builtin.CaptainsLogCapability.Asked;
+            string? recorded = null;
 
             if (logged is CaptainsLog.CaptainsLogReading.Entry entry)
             {
@@ -1467,13 +1494,42 @@ public sealed class TurnLoop(
                         cancellationToken)
                     .ConfigureAwait(false);
             }
-            else
+            else if (logged is CaptainsLog.CaptainsLogReading.Empty)
             {
                 _logOpenedAt = _clock.Now;
                 answer = ToolResult.Ok(CaptainsLog.CaptainsLogPhrase.GoAhead);
             }
+            else
+            {
+                (var tool, var toolArguments) = logged switch
+                {
+                    CaptainsLog.CaptainsLogReading.DeleteLast => (Capabilities.Builtin.CaptainsLogCapability.DeleteTool, new Dictionary<string, string>(StringComparer.Ordinal)),
+                    CaptainsLog.CaptainsLogReading.Count => (Capabilities.Builtin.CaptainsLogCapability.FindTool, new Dictionary<string, string>(StringComparer.Ordinal) { ["count_only"] = "true" }),
+                    CaptainsLog.CaptainsLogReading.Find find => (Capabilities.Builtin.CaptainsLogCapability.FindTool, FindArguments(find)),
+                    _ => throw new InvalidOperationException("Unhandled captain's log reading."),
+                };
 
-            foreach (var turnEvent in LogAnswered(answer))
+                answer = await capabilities
+                    .InvokeAsync(tool, new ToolArguments(toolArguments), cancellationToken)
+                    .ConfigureAwait(false);
+
+                switch (logged)
+                {
+                    case CaptainsLog.CaptainsLogReading.Find:
+                        asked = Capabilities.Builtin.CaptainsLogCapability.AskedForRead(answer);
+                        recorded = $"{char.ToUpperInvariant(asked[0])}{asked[1..]}.";
+                        break;
+                    case CaptainsLog.CaptainsLogReading.Count:
+                        asked = "count captain's log entries";
+                        break;
+                    default:
+                        asked = "delete captain's log entry";
+                        recorded = answer.IsError ? answer.Spoken : "Deleted a captain's log entry.";
+                        break;
+                }
+            }
+
+            foreach (var turnEvent in LogAnswered(answer, asked, recorded))
             {
                 yield return turnEvent;
             }

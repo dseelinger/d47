@@ -70,6 +70,23 @@ log for."
 
 "Captain's log entries" is not an entry; it is reserved for reading entries back.
 
+### Reading them back
+
+These phrases are read without the model, so the words of an entry never leave this PC for a
+provider. Matches are read newest first, at most three, each opened by its date in the game's
+calendar and its system. More than three ends with "and four more on the Captain's log page."
+
+- "read my last log entry"
+- "read today's log entries", "read yesterday's log entries", "read this week's log entries",
+  "read this session's log entries"
+- "read log entries from Sol", "read log entries in Sol"
+- "read log entries about Colonia", where every word has to appear in the entry
+- "how many log entries"
+- "delete my last log entry", which says which one went by its date and first words
+
+"Captain's log entries from Sol" is a search, not an entry. The model cannot read entries, so
+"what did I note about Colonia" does not work; "read log entries about Colonia" does.
+
 ### Where the words go
 
 D47 sends entries nowhere. The words pass through the speech recognition provider you have
@@ -79,8 +96,8 @@ this PC.
 
 ### Only you write them
 
-The tool is protected: the AI is not offered it and is refused if it asks, so it cannot write an
-entry in your name.
+The tools are protected: the AI is not offered them and is refused if it asks, so it cannot write,
+read or delete an entry in your name.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
@@ -92,6 +109,24 @@ known now. Reached only by saying "captain's log".
 
 ```json
 {"type":"object","properties":{"text":{"type":"string","description":"The entry, as the Commander said it."}},"required":["text"],"additionalProperties":false}
+```
+
+#### `find_log_entries`
+
+Read the Commander's captain's log entries back, newest first, at most three in full. Reached only
+by the read phrases above.
+
+```json
+{"type":"object","properties":{"count_only":{"type":"boolean","description":"Say how many entries match instead of reading them."},"span":{"type":"string","description":"Which entries by time; all when omitted.","enum":["all","last","today","yesterday","week","session"]},"system":{"type":"string","description":"Only entries made in this star system."},"words":{"type":"string","description":"Only entries whose text holds every one of these words."}},"required":[],"additionalProperties":false}
+```
+
+#### `delete_log_entry`
+
+Delete the Commander's newest captain's log entry. Reached only by saying "delete my last log
+entry".
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
 </details>

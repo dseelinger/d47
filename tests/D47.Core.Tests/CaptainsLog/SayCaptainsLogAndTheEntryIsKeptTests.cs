@@ -123,7 +123,7 @@ public class SayCaptainsLogAndTheEntryIsKeptTests
     [InlineData("captain's logistics")]
     public void ReadingBackIsNotTakenAsAnEntry(string input)
     {
-        Assert.Null(CaptainsLogPhrase.Read(input));
+        Assert.IsNotType<CaptainsLogReading.Entry>(CaptainsLogPhrase.Read(input));
     }
 
     [Fact]
