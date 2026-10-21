@@ -27,6 +27,7 @@ public static class CrewDomains
         ["discovery"] = CrewRole.ScienceOfficer,
         ["biology"] = CrewRole.ScienceOfficer,
         ["geology"] = CrewRole.ScienceOfficer,
+        ["region-first"] = CrewRole.ScienceOfficer,
         ["surveyed-biology"] = CrewRole.ScienceOfficer,
         ["mapping"] = CrewRole.ScienceOfficer,
         ["notable-bodies"] = CrewRole.ScienceOfficer,

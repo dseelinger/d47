@@ -949,6 +949,21 @@ B 3 could have water ice fumaroles or water ice geysers, not in your codex for t
 It names up to three, in table order, and counts the rest. It says nothing until your codex history
 has loaded, and speaks once per body.
 
+#### Possible region firsts {#region-first}
+
+When you log a new organic codex entry that the Canonn table shipped in this build does not list for
+the region you are in:
+
+```text
+Canonn has no report of Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.
+```
+
+If the table has no report of the entry in any region, it says "anywhere" and "a first in the galaxy"
+instead. It says nothing when the region is listed, for geology entries, for an entry you had already
+logged in that region, or for a repeat in the same session. It waits until your codex history has
+loaded. The table is only as current as the build, so the line says "may be". Nothing leaves your
+machine.
+
 #### Surveyed biology on arrival {#surveyed-biology}
 
 When you arrive in a system and [galaxy search](galaxy.md) is on:

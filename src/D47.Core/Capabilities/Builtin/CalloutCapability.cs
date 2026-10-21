@@ -54,6 +54,7 @@ public static class CalloutCapability
     public const string NotablePremiumFsdInjectionKey = "callouts.notablePremiumFsdInjection";
     public const string NotableLandableAtmosphereKey = "callouts.notableLandableAtmosphere";
     public const string GeologyKey = "callouts.geology";
+    public const string RegionFirstKey = "callouts.regionFirst";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
     public const string BiologyThresholdKey = "callouts.biologyThreshold";
@@ -527,6 +528,16 @@ public static class CalloutCapability
                 "missing geology",
                 s => s.Callouts.Geology,
                 (s, v) => s with { Callouts = s.Callouts with { Geology = v } }),
+
+            Toggle(
+                RegionFirstKey,
+                "Possible region firsts",
+                "A new organic codex entry the Canonn table in this build has no report of, in this region or "
+                + "anywhere, said when you log it.",
+                "region-first",
+                "region firsts",
+                s => s.Callouts.RegionFirst,
+                (s, v) => s with { Callouts = s.Callouts with { RegionFirst = v } }),
 
             Toggle(
                 SurveyedBiologyKey,
