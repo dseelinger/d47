@@ -42,6 +42,8 @@ public static class CalloutCapability
     public const string FootfallKey = "callouts.footfall";
     public const string FootfallApproachKey = "callouts.footfallApproach";
     public const string MappingKey = "callouts.mapping";
+    public const string BodyValueKey = "callouts.bodyValue";
+    public const string BodyValueThresholdKey = "callouts.bodyValueThreshold";
     public const string NotableBodiesKey = "callouts.notableBodies";
     public const string NotableCollidingBinaryKey = "callouts.notableCollidingBinary";
     public const string NotableShepherdMoonKey = "callouts.notableShepherdMoon";
@@ -406,6 +408,16 @@ public static class CalloutCapability
                 "mapped bodies",
                 s => s.Callouts.Mapping,
                 (s, v) => s with { Callouts = s.Callouts with { Mapping = v } }),
+
+            Toggle(
+                BodyValueKey,
+                "Valuable bodies",
+                "A planet worth mapping, said when you first scan it, with about what mapping it pays. "
+                + "The threshold is below.",
+                "body-value",
+                "valuable bodies",
+                s => s.Callouts.BodyValue,
+                (s, v) => s with { Callouts = s.Callouts with { BodyValue = v } }),
 
             Toggle(
                 NotableBodiesKey,
@@ -1112,6 +1124,33 @@ public static class CalloutCapability
                         LimpetPercent = int.TryParse(v, out var percent) && percent is >= 0 and <= 100
                             ? percent
                             : s.Callouts.LimpetPercent,
+                    },
+                },
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = BodyValueThresholdKey,
+            Advanced = true,
+            Label = "Call out bodies from (credits)",
+            Help = "The least a planet would pay if mapped efficiently before it is said when scanned.",
+            Kind = SettingKind.Number,
+            DefaultDisplay = "500000",
+            DocsAnchor = "body-value-threshold",
+            AppliesWhen = s => s.Callouts is { Enabled: true, BodyValue: true },
+            Binding = new SettingBinding
+            {
+                Read = s => s.Callouts.BodyValueThreshold.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Callouts = s.Callouts with
+                    {
+                        BodyValueThreshold =
+                            long.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var credits)
+                            && credits >= 0
+                                ? credits
+                                : s.Callouts.BodyValueThreshold,
                     },
                 },
             },

@@ -156,6 +156,7 @@ public static class ShippedCallouts
             .Add(new FootfallApproachCallout())
             .Add(new MappingCallout { Ledger = sources.Cartography })
             .Add(new NotableBodyCallout())
+            .Add(new BodyValueCallout { Ledger = sources.Cartography })
             .Add(new UnsoldDataAtRiskCallout(sources.Cartography, sources.Exobiology))
             .Add(new OutstandingCrimesCallout(sources.Crimes))
             .Add(surveyedBiology)
@@ -390,6 +391,7 @@ public static class ShippedCallouts
         engine.SetEnabled("discovery", callouts.Discovery, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);
         engine.SetEnabled("notable-bodies", callouts.NotableBodies, now);
+        engine.SetEnabled("body-value", callouts.BodyValue, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("trading-mode", callouts.TradingMode, now);
@@ -447,6 +449,10 @@ public static class ShippedCallouts
 
                 case NotableBodyCallout notable:
                     notable.Criterion = kind => NotableCriterion(settings.Current.Callouts, kind);
+                    break;
+
+                case BodyValueCallout bodyValue:
+                    bodyValue.Threshold = () => settings.Current.Callouts.BodyValueThreshold;
                     break;
 
                 case BiologyCallout biology:

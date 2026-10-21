@@ -29,6 +29,7 @@ public static class CrewDomains
         ["surveyed-biology"] = CrewRole.ScienceOfficer,
         ["mapping"] = CrewRole.ScienceOfficer,
         ["notable-bodies"] = CrewRole.ScienceOfficer,
+        ["body-value"] = CrewRole.ScienceOfficer,
         ["emissions"] = CrewRole.ScienceOfficer,
         ["footfall"] = CrewRole.ScienceOfficer,
         ["footfall-approach"] = CrewRole.ScienceOfficer,

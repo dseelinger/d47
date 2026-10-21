@@ -644,6 +644,12 @@ public sealed record CalloutSettings
 
     public bool NotableLandableAtmosphere { get; init; }
 
+    /// <summary>A planet worth at least <see cref="BodyValueThreshold"/> if mapped, said on its first scan.</summary>
+    public bool BodyValue { get; init; } = true;
+
+    /// <summary>The least value, in credits, a scanned planet is said at.</summary>
+    public long BodyValueThreshold { get; init; } = 500_000;
+
     /// <summary>A landable body whose biology could reach <see cref="BiologyThreshold"/>, said on its scan.</summary>
     public bool Biology { get; init; } = true;
 

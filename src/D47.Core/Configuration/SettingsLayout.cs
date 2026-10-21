@@ -285,6 +285,8 @@ public static class SettingsLayout
                                 E("callouts.footfall"),
                                 E("callouts.footfallApproach"),
                                 E("callouts.mapping"),
+                                E("callouts.bodyValue"),
+                                E("callouts.bodyValueThreshold", under: true),
                                 E("callouts.notableBodies"),
                                 E("callouts.notableCollidingBinary", under: true),
                                 E("callouts.notableShepherdMoon", under: true),

@@ -883,6 +883,21 @@ bodies you have mapped, so Universal Cartographics pays more than it, for the st
 you scanned without mapping. The line waits for the Detailed scan Elite writes straight after the
 mapping, since that is where the body's class and mass come from.
 
+#### Valuable bodies {#body-value}
+
+When you scan a planet that would pay at least the [threshold](#body-value-threshold) if you mapped
+it efficiently:
+
+```text
+Eorl Aod YK-D c40 2: a terraformable high metal content world, about 2.4 million if mapped.
+```
+
+It speaks on the first scan of a body in a session, of any kind, once per body. A body you map
+before scanning it is left to the [mapped body](#mapping) line. Stars and belt clusters say nothing.
+The figure is an estimate and includes the first-discovery and first-mapping bonuses when the scan
+shows nobody has them, so a body someone else has mapped is worth less and may fall under the
+threshold. Bodies in the journal backlog are recorded and not said.
+
 #### Notable bodies {#notable-bodies}
 
 When you scan a body with a rare trait, in the FSS, the discovery scan or the Detailed Surface
@@ -1316,6 +1331,11 @@ In seconds, counted from entering hyperspace.
 
 In credits, default 10,000,000. The least best case the [high-value biology](#biology) callout says,
 and the least surveyed value the [surveyed biology](#surveyed-biology) callout says.
+
+#### Valuable bodies threshold {#body-value-threshold}
+
+In credits, default 500,000. The least a planet would pay if mapped efficiently before the
+[valuable bodies](#body-value) callout says it when scanned.
 
 #### Trading Mode hold {#trading-mode-min-hold}
 
