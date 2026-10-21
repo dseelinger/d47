@@ -107,9 +107,10 @@ public static class JournalCapability
                 new("my earnings", "get_credit_ledger"),
                 new("codex ledger", "get_codex_ledger"),
                 new("codex entries", "get_codex_ledger"),
-                new("codex checklist", "get_codex_checklist"),
-                new("what codex entries am i missing", "get_codex_checklist"),
-                new("missing codex entries", "get_codex_checklist"),
+                new("codex discoveries", "get_codex_discoveries"),
+                new("my codex discoveries", "get_codex_discoveries"),
+                new("what codex entries am i missing", "get_codex_discoveries"),
+                new("missing codex entries", "get_codex_discoveries"),
                 new("geology on this body", "get_body_geology"),
                 new("what geology is here", "get_body_geology"),
                 new("likely geology", "get_body_geology"),
@@ -359,7 +360,7 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
-                    Name = "get_codex_checklist",
+                    Name = "get_codex_discoveries",
                     Description =
                         "Report the codex entries known in a region, how many the Commander has logged and how many are "
                         + "missing, by subcategory, with the most-reported missing ones named.",
@@ -372,9 +373,9 @@ public static class JournalCapability
                             Description = "The codex region, by name, or here for the region the Commander is in. Default here.",
                         },
                     ],
-                    Commands = Asking(CodexChecklistQuestions),
+                    Commands = Asking(CodexDiscoveriesQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                        DescribeCodexChecklist(gameState, state(), arguments))),
+                        DescribeCodexDiscoveries(gameState, state(), arguments))),
                 },
                 new ToolDefinition
                 {
@@ -654,9 +655,9 @@ public static class JournalCapability
         "codex ledger", "my codex ledger", "codex entries", "my codex entries",
     ];
 
-    private static readonly string[] CodexChecklistQuestions =
+    private static readonly string[] CodexDiscoveriesQuestions =
     [
-        "codex checklist", "my codex checklist", "what codex entries am i missing", "missing codex entries",
+        "codex discoveries", "my codex discoveries", "what codex entries am i missing", "missing codex entries",
     ];
 
     private static readonly string[] BodyGeologyQuestions =
@@ -1957,7 +1958,7 @@ public static class JournalCapability
             : (null, null, $"I do not know a region called {asked}.");
     }
 
-    private static string DescribeCodexChecklist(GameStateStore gameState, HistoryState history, ToolArguments arguments)
+    private static string DescribeCodexDiscoveries(GameStateStore gameState, HistoryState history, ToolArguments arguments)
     {
         if (history is HistoryState.Pending or HistoryState.Running)
         {
@@ -1980,19 +1981,19 @@ public static class JournalCapability
         var unfinished = history is HistoryState.Failed or HistoryState.Stopped
             ? " Reading the journal history did not finish, so this is only what the live journal shows."
             : string.Empty;
-        var checklist = CodexChecklist.For(active.CodexLedger, CodexCatalogue.Table, id);
+        var discoveries = CodexDiscoveries.For(active.CodexLedger, CodexCatalogue.Table, id);
 
-        if (checklist.Known.Count == 0)
+        if (discoveries.Known.Count == 0)
         {
             return $"The codex table lists no entries for {regionName}.{unfinished}";
         }
 
         var number = (int count) => count.ToString("N0", CultureInfo.InvariantCulture);
         var text = new StringBuilder(
-            $"In {regionName}, {number(checklist.Known.Count)} codex {(checklist.Known.Count == 1 ? "entry is" : "entries are")} known: "
-            + $"{number(checklist.Logged.Count)} logged, {number(checklist.Missing.Count)} missing.");
+            $"In {regionName}, {number(discoveries.Known.Count)} codex {(discoveries.Known.Count == 1 ? "entry is" : "entries are")} known: "
+            + $"{number(discoveries.Logged.Count)} logged, {number(discoveries.Missing.Count)} missing.");
 
-        var bySubcategory = checklist.Known
+        var bySubcategory = discoveries.Known
             .GroupBy(item => item.Entry.SubCategory)
             .Select(group => (Name: group.Key.ToLowerInvariant(), Missing: group.Count(item => item.Logged is null), Total: group.Count()))
             .Where(group => group.Missing > 0)
@@ -2007,12 +2008,12 @@ public static class JournalCapability
             text.Append(CodexTop("Missing by kind", bySubcategory, string.Empty));
         }
 
-        if (checklist.Missing.Count > 0)
+        if (discoveries.Missing.Count > 0)
         {
             text.AppendLine();
             text.Append(CodexTop(
                 "Most reported missing",
-                [.. checklist.Missing.Select(item => item.Entry.Name)],
+                [.. discoveries.Missing.Select(item => item.Entry.Name)],
                 string.Empty));
         }
 
@@ -2021,9 +2022,9 @@ public static class JournalCapability
             $"The record runs {OnRecord(active.CodexLedger)}, so an entry logged before then reads as missing. "
             + "Stars and planets are not covered");
 
-        if (checklist.Uncovered.Count > 0)
+        if (discoveries.Uncovered.Count > 0)
         {
-            text.Append($"; you logged {number(checklist.Uncovered.Count)} more here that the table does not list");
+            text.Append($"; you logged {number(discoveries.Uncovered.Count)} more here that the table does not list");
         }
 
         return text + "." + unfinished;

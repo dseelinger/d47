@@ -8,7 +8,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Journal;
 
-public class TheCodexChecklistSaysWhatIsMissingTests
+public class TheCodexDiscoveriesSayWhatIsMissingTests
 {
     private const string Commander =
         """{"timestamp":"2026-07-03T09:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""";
@@ -55,7 +55,7 @@ public class TheCodexChecklistSaysWhatIsMissingTests
     {
         var capability = JournalCapability.Create(store, () => history);
         var result = await CapabilityRegistry.Build([capability]).InvokeAsync(
-            "get_codex_checklist", ToolArguments.FromJson(json), TestContext.Current.CancellationToken);
+            "get_codex_discoveries", ToolArguments.FromJson(json), TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
 
@@ -65,38 +65,38 @@ public class TheCodexChecklistSaysWhatIsMissingTests
     [Fact]
     public void TheRegionCountsKnownLoggedAndMissing()
     {
-        var checklist = CodexChecklist.For(Ledger(Entry(1, 18), Entry(5, 18, "Vents")), CodexTable.Parse(Table), 18);
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(1, 18), Entry(5, 18, "Vents")), CodexTable.Parse(Table), 18);
 
-        Assert.Equal(5, checklist.Known.Count);
-        Assert.Equal([1L, 5L], checklist.Logged.Select(item => item.Entry.EntryId).Order());
-        Assert.Equal(3, checklist.Missing.Count);
-        Assert.All(checklist.Logged, item => Assert.NotNull(item.Logged));
+        Assert.Equal(5, discoveries.Known.Count);
+        Assert.Equal([1L, 5L], discoveries.Logged.Select(item => item.Entry.EntryId).Order());
+        Assert.Equal(3, discoveries.Missing.Count);
+        Assert.All(discoveries.Logged, item => Assert.NotNull(item.Logged));
     }
 
     [Fact]
     public void AnEntryLoggedInAnotherRegionIsStillMissingHere()
     {
-        var checklist = CodexChecklist.For(Ledger(Entry(1, 3)), CodexTable.Parse(Table), 18);
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(1, 3)), CodexTable.Parse(Table), 18);
 
-        Assert.Empty(checklist.Logged);
-        Assert.Contains(checklist.Missing, item => item.Entry.EntryId == 1);
+        Assert.Empty(discoveries.Logged);
+        Assert.Contains(discoveries.Missing, item => item.Entry.EntryId == 1);
     }
 
     [Fact]
     public void MissingEntriesAreOrderedByReportedSystems()
     {
-        var checklist = CodexChecklist.For(Ledger(Entry(5, 18, "Vents")), CodexTable.Parse(Table), 18);
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(5, 18, "Vents")), CodexTable.Parse(Table), 18);
 
-        Assert.Equal([2L, 3L, 1L, 4L], checklist.Missing.Select(item => item.Entry.EntryId));
+        Assert.Equal([2L, 3L, 1L, 4L], discoveries.Missing.Select(item => item.Entry.EntryId));
     }
 
     [Fact]
     public void AnEntryTheTableDoesNotListIsUncoveredNotMissing()
     {
-        var checklist = CodexChecklist.For(Ledger(Entry(900, 18, "Stars")), CodexTable.Parse(Table), 18);
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(900, 18, "Stars")), CodexTable.Parse(Table), 18);
 
-        Assert.Equal(5, checklist.Missing.Count);
-        Assert.Equal([900L], checklist.Uncovered.Select(entry => entry.EntryId));
+        Assert.Equal(5, discoveries.Missing.Count);
+        Assert.Equal([900L], discoveries.Uncovered.Select(entry => entry.EntryId));
     }
 
     [Fact]
@@ -129,23 +129,32 @@ public class TheCodexChecklistSaysWhatIsMissingTests
     }
 
     [Theory]
-    [InlineData("codex checklist")]
     [InlineData("what codex entries am i missing")]
     [InlineData("missing codex entries")]
-    public void QuestionsReachTheChecklistTool(string asked)
+    public void QuestionsReachTheDiscoveriesTool(string asked)
     {
         var match = new KeywordRouter(TestSurface.For(new MemoryInstall()).Registry).Match(asked);
 
         Assert.NotNull(match);
-        Assert.Equal("get_codex_checklist", match!.ToolName);
+        Assert.Equal("get_codex_discoveries", match!.ToolName);
     }
 
     [Fact]
-    public void TheModelMayCallTheChecklistTool()
+    public void TheModelMayCallTheDiscoveriesTool()
     {
         var registry = TestSurface.For(new MemoryInstall()).Registry;
-        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == "get_codex_checklist");
+        var tool = registry.All.SelectMany(capability => capability.Descriptor.Tools).Single(tool => tool.Name == "get_codex_discoveries");
 
         Assert.False(tool.Protected);
+    }
+
+    [Theory]
+    [InlineData("codex checklist")]
+    [InlineData("my codex checklist")]
+    public void TheOldChecklistPhrasesNoLongerReachTheTool(string asked)
+    {
+        var match = new KeywordRouter(TestSurface.For(new MemoryInstall()).Registry).Match(asked);
+
+        Assert.NotEqual("get_codex_discoveries", match?.ToolName);
     }
 }

@@ -547,7 +547,7 @@ codex vouchers, which the journal values only when they are redeemed.
 {"type":"object","properties":{"period":{"type":"string","description":"Since the last sale of exploration data (trip), since this session began, or all of the record. Default trip.","enum":["trip","session","all"]},"region":{"type":"string","description":"Report only this codex region, by name, or here for the region the Commander is in."}},"required":[],"additionalProperties":false}
 ```
 
-`get_codex_checklist` answers which codex entries are known in a region and which the Commander has not
+`get_codex_discoveries` answers which codex entries are known in a region and which the Commander has not
 logged. `region` is a codex region by name, or `here` (the default) for the region the Commander is in. The
 first line gives how many entries are known, logged and missing; then the missing count by subcategory and the
 three most-reported missing entries by name, with a count of the rest. Logged means the entry was logged in

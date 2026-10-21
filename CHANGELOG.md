@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The codex answer that says which entries are known in your region and which you have not logged is now called Codex Discoveries. Ask "codex discoveries", "my codex discoveries", "what codex entries am I missing" or "missing codex entries". "Codex checklist" no longer answers, so it is no longer confused with Commander › Checklist.
+
 Ask "what geology is here" or "likely geology" and D47 lists the geological features the body could hold, from its class and volcanism, and says whether each is in your codex for the region you are in. Name a body to ask about another one; otherwise it answers for the latest body you saw with geological signals.
 
 When you scan a landable body with geological signals, D47 names up to three of its likely geological features that are not in your codex for the region you are in, such as "B 3 could have water ice fumaroles or water ice geysers, not in your codex for this region". It waits until your codex history has loaded and says each body once. The switch is "Geology missing from your codex" in the callout settings.
