@@ -275,7 +275,9 @@ public sealed class AdventureGenerator(
     SpendTracker? spend,
     PriceTable? prices,
     ILogger logger,
-    Func<string, string, ThinkingEffort?>? storyEffort = null)
+    Func<string, string, ThinkingEffort?>? storyEffort = null,
+    Func<ISignalIndexSource?>? signalIndex = null,
+    VisitedStarsBook? visited = null)
 {
     /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
     public const int SpineOutputCeiling = 16000;
@@ -646,7 +648,7 @@ public sealed class AdventureGenerator(
         };
 
         async Task<Resolved> CheckAsync(ReadAnswer answer) =>
-            Speakers(await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, cancellationToken).ConfigureAwait(false), answer, ask);
+            Speakers(await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, cancellationToken).ConfigureAwait(false), answer, ask);
 
         // Asked only of a draft the dry run found nothing in; a refused objective is written again before its lines are read.
         async Task<Resolved> HoldToWhatTheyConfirmAsync(Resolved dryRun, ReadAnswer answer)
@@ -1188,6 +1190,9 @@ public sealed class AdventureGenerator(
         /// <summary>Up to five Anarchy systems within reach, nearest first.</summary>
         public IReadOnlyList<SystemSummary> Anarchy { get; init; } = [];
 
+        /// <summary>The unvisited Guardian sites and tourist beacons within reach.</summary>
+        public Sites Sites { get; init; } = Sites.None;
+
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
     }
 
@@ -1199,6 +1204,7 @@ public sealed class AdventureGenerator(
         }
 
         var anarchy = await AnarchyAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
+        var sites = await SitesAsync(search, facts, here, cancellationToken, notes).ConfigureAwait(false);
 
         try
         {
@@ -1225,12 +1231,13 @@ public sealed class AdventureGenerator(
                 [.. bodies.Bodies.Where(body => !PermitSystemTable.Locked(body.SystemName))])
             {
                 Anarchy = anarchy,
+                Sites = sites,
             };
         }
         catch (GalaxyUnavailableException ex)
         {
             notes.Add($"The galaxy search could not list the places within reach ({ex.Message}), so the stops came from the model's own knowledge.");
-            return Candidates.None with { Anarchy = anarchy };
+            return Candidates.None with { Anarchy = anarchy, Sites = sites };
         }
     }
 
@@ -1258,6 +1265,152 @@ public sealed class AdventureGenerator(
         {
             notes.Add($"The galaxy search could not list Anarchy systems ({ex.Message}), so the story avoids illegal missions.");
             return [];
+        }
+    }
+
+    /// <summary>A tourist beacon from the signal index, listed by its system.</summary>
+    private sealed record TouristSite(long SystemAddress, string System, string Name, double LightYears);
+
+    /// <summary>The unvisited Guardian sites and tourist beacons within reach, nearest first.</summary>
+    private sealed record Sites(IReadOnlyList<BodySummary> Guardian, IReadOnlyList<TouristSite> Tourist)
+    {
+        public static readonly Sites None = new([], []);
+
+        public bool IsEmpty => Guardian.Count == 0 && Tourist.Count == 0;
+
+        /// <summary>The listed sites as a refusal names them.</summary>
+        public string Listed() => string.Join(
+            "; ",
+            Guardian.Select(body => $"Guardian site {body.Name} (\"filter\": \"guardian\", \"system\": \"{body.SystemName}\", \"body\": \"{body.Name}\")")
+                .Concat(Tourist.Select(site => $"tourist beacon {site.Name} (\"filter\": \"tourist\", \"system\": \"{site.System}\")")));
+    }
+
+    private const int SitesPerKind = 3;
+
+    private async Task<Sites> SitesAsync(IGalaxyService search, Facts facts, string here, CancellationToken cancellationToken, List<string> notes)
+    {
+        var frontierId = state()?.Identity.FrontierId;
+        var radius = facts.RadiusLightYears;
+        bool Visited(long address) => visited?.Find(frontierId, address).State == VisitState.Visited;
+
+        IReadOnlyList<BodySummary> guardian = [];
+
+        try
+        {
+            var found = await search.FindBodiesAsync(BodyQuery.LandableNear(here, radius, 20) with { Signal = "Guardian", Landable = null }, cancellationToken).ConfigureAwait(false);
+
+            guardian =
+            [
+                .. found.Bodies
+                    .Where(body => body is { SystemAddress: not null, BodyId: not null } && !PermitSystemTable.Locked(body.SystemName) && !Visited(body.SystemAddress.Value))
+                    .OrderBy(body => body.Distance ?? double.MaxValue)
+                    .Take(SitesPerKind),
+            ];
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            notes.Add($"The galaxy search could not list Guardian sites ({ex.Message}), so none was offered.");
+        }
+
+        IReadOnlyList<TouristSite> tourist = [];
+
+        if (signalIndex?.Invoke() is not { } source)
+        {
+            notes.Add("The signal index is off, so no tourist beacon was offered.");
+        }
+        else if (await source.GetAsync(cancellationToken).ConfigureAwait(false) is not { } index)
+        {
+            notes.Add("The signal index is missing, so no tourist beacon was offered.");
+        }
+        else if (facts.Position is { } position)
+        {
+            tourist = await Task.Run(
+                () => (IReadOnlyList<TouristSite>)[
+                    .. index.Within(position, radius)
+                        .Where(sighting => sighting.Kind == SignalKind.TouristBeacon && !PermitSystemTable.Locked(sighting.SystemName) && !Visited(sighting.SystemAddress))
+                        .Select(sighting => new TouristSite(sighting.SystemAddress, sighting.SystemName, sighting.SignalName, position.DistanceTo(sighting.Position)))
+                        .OrderBy(site => site.LightYears)
+                        .DistinctBy(site => site.SystemAddress)
+                        .Take(SitesPerKind),
+                ],
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return new Sites(guardian, tourist);
+    }
+
+    /// <summary>The sites within reach, or nothing when there are none.</summary>
+    private static void AppendSites(StringBuilder text, Sites sites)
+    {
+        if (sites.IsEmpty)
+        {
+            return;
+        }
+
+        text.AppendLine();
+        text.AppendLine("Sites within reach, nearest first, none visited yet (Guardian sites from the galaxy search, tourist beacons from the signal index):");
+
+        foreach (var body in sites.Guardian)
+        {
+            text.Append("- Guardian site: ").Append(body.Name).Append(", in ").Append(body.SystemName);
+            AppendLightYears(text, body.Distance);
+            text.AppendLine();
+        }
+
+        foreach (var site in sites.Tourist)
+        {
+            text.Append("- Tourist beacon: ").Append(site.Name).Append(", in ").Append(site.System);
+            AppendLightYears(text, site.LightYears);
+            text.AppendLine();
+        }
+    }
+
+    /// <summary>The trigger for the listed site a site beat names, or the refusal that names the listed sites.</summary>
+    private static (AdventureTrigger? Trigger, string? Refusal) SiteTrigger(ReadBeat beat, Sites sites, string where)
+    {
+        if (sites.IsEmpty)
+        {
+            return (null, $"{where} is a \"site\" objective, but no Guardian site or tourist beacon is listed within reach; make it another kind of objective.");
+        }
+
+        var filter = beat.Filter?.Trim();
+        var same = (string? a, string? b) => string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        if (string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
+            && sites.Guardian.FirstOrDefault(body => same(body.SystemName, beat.System) && same(body.Name, beat.Body)) is { } found)
+        {
+            return (new AdventureTrigger
+            {
+                Kind = TriggerKind.Site,
+                Filter = AdventureTrigger.GuardianSite,
+                SystemAddress = found.SystemAddress,
+                System = found.SystemName,
+                BodyId = found.BodyId,
+                Body = found.Name,
+            }, null);
+        }
+
+        if (string.Equals(filter, AdventureTrigger.TouristSite, StringComparison.OrdinalIgnoreCase)
+            && sites.Tourist.FirstOrDefault(site => same(site.System, beat.System)) is { } beacon)
+        {
+            return (new AdventureTrigger
+            {
+                Kind = TriggerKind.Site,
+                Filter = AdventureTrigger.TouristSite,
+                SystemAddress = beacon.SystemAddress,
+                System = beacon.System,
+                SiteName = beacon.Name,
+            }, null);
+        }
+
+        return (null, $"{where} is a \"site\" objective that is not one of the sites listed within reach. Use one of these, exactly as written: {sites.Listed()}.");
+    }
+
+    private static void AppendLightYears(StringBuilder text, double? lightYears)
+    {
+        if (lightYears is { } distance)
+        {
+            text.Append(" (").Append(distance.ToString("0", CultureInfo.InvariantCulture)).Append(" ly)");
         }
     }
 
@@ -1484,6 +1637,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendCandidates(text, candidates);
+        AppendSites(text, candidates.Sites);
 
         if (ask.Chapter is { } chapter)
         {
@@ -2166,6 +2320,7 @@ public sealed class AdventureGenerator(
         }
 
         AppendCandidates(text, candidates);
+        AppendSites(text, candidates.Sites);
         AppendAnarchy(text, candidates.Anarchy);
 
         if (ask.Story is { } story)
@@ -2193,7 +2348,7 @@ public sealed class AdventureGenerator(
 
         var ships = ask.Story is null ? BriefHulls(ask.Brief) : EliteSpecifications.HullNameList;
         var kinds = StoryAnswer.Kinds(
-            team, beacon is not null, reachAway is not null, ships.Count > 0, ask.Story?.Slots is { Count: > 0 } drawn ? [.. drawn.Select(slot => slot.Kind)] : null);
+            team, beacon is not null, reachAway is not null, ships.Count > 0, !candidates.Sites.IsEmpty, ask.Story?.Slots is { Count: > 0 } drawn ? [.. drawn.Select(slot => slot.Kind)] : null);
 
         text.AppendLine($"Each objective waits for exactly one of {Number(kinds.Count)} things, and nothing else exists:");
         text.AppendLine("- \"arrive\": the Commander's ship arrives in a named star system.");
@@ -2255,7 +2410,9 @@ public sealed class AdventureGenerator(
                 text.AppendLine(KindOf(line) == "mission" ? MissionLine(slots) : line);
             }
 
-            text.AppendLine("Every other objective is a place kind (arrive, dock, land or scan) or a milestone kind.");
+            text.AppendLine(candidates.Sites.IsEmpty
+                ? "Every other objective is a place kind (arrive, dock, land or scan) or a milestone kind."
+                : "Every other objective is a place kind (arrive, dock, land, scan or site) or a milestone kind.");
         }
         else
         {
@@ -2270,6 +2427,14 @@ public sealed class AdventureGenerator(
         AppendConflicts(text, facts.Standings);
         text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
         text.AppendLine("A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. None has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
+
+        if (!candidates.Sites.IsEmpty)
+        {
+            text.AppendLine(
+                "- \"site\": the Commander flies to a Guardian site, or scans a tourist beacon, from the sites within reach listed above and no other. "
+                + "\"filter\" is guardian or tourist, \"system\" is the listed system, and \"body\" is the listed body for a Guardian site and null for a tourist beacon. "
+                + "Like arrive, dock, land and scan, it is a place and has a \"reason\".");
+        }
 
         if (reachAway is not null)
         {
@@ -2890,6 +3055,7 @@ public sealed class AdventureGenerator(
         IReadOnlyList<NotablePlace> notable,
         AdventureAsk ask,
         bool steerIllegal,
+        Sites sites,
         CancellationToken cancellationToken)
     {
         var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId };
@@ -2955,6 +3121,43 @@ public sealed class AdventureGenerator(
                 else
                 {
                     Refuse(index, $"{where} is a \"reach\" objective; only a chapter whose Guardian beacon is out of reach may have one.");
+                }
+            }
+            else if (beat.Kind == TriggerKind.Site)
+            {
+                var (site, refusal) = SiteTrigger(beat, sites, where);
+
+                if (site is null)
+                {
+                    Refuse(index, refusal!);
+                }
+                else
+                {
+                    double? hop = null;
+
+                    if (previousSystem is not null && !string.Equals(previousSystem, site.System, StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            hop = await resolver.DistanceAsync(previousSystem, site.System!, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (GalaxyUnavailableException ex)
+                        {
+                            Refuse(index, $"{where} could not be measured: {ex.Message}");
+                            continue;
+                        }
+                    }
+
+                    if (hop is { } far && far > facts.RadiusLightYears)
+                    {
+                        Refuse(index, $"{where} is {far:0} light years from the previous stop; the reach is {facts.RadiusLightYears:0}.");
+                    }
+                    else
+                    {
+                        previousSystem = site.System;
+                        lastPlaced = index;
+                        trigger = site;
+                    }
                 }
             }
             else if (beat.Kind == TriggerKind.Engineer)

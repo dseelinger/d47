@@ -2089,6 +2089,14 @@ public sealed class AppHost : IDisposable
             new D47.Knowledge.SpanshGalaxyService(loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()),
             () => gameState.Active?.Pledge));
 
+        var visitedStars = new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files);
+        var signalIndexStore = new D47.App.Panel.SignalIndexStore(
+            paths.Signals,
+            files,
+            () => settings.Current.Knowledge.SignalIndex,
+            () => DateTimeOffset.UtcNow,
+            loggerFactory.CreateLogger<D47.App.Panel.SignalIndexStore>());
+
         var starSystems = new D47.Knowledge.SpanshStarSystemService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshStarSystemService>());
 
@@ -2205,6 +2213,8 @@ public sealed class AppHost : IDisposable
             Spend = spend,
             SpendLedger = spendLedger,
             StarSystems = starSystems,
+            VisitedStars = visitedStars,
+            SignalIndexStore = signalIndexStore,
             StorySwitch = storySwitch,
             Switches = switches,
             TimersAndAlarms = timersAndAlarms,
@@ -2304,6 +2314,8 @@ public sealed class AppHost : IDisposable
         var speech = services.Speech;
         var spend = services.Spend;
         var starSystems = services.StarSystems;
+        var visitedStars = services.VisitedStars;
+        var signalIndexStore = services.SignalIndexStore;
         var storySwitch = services.StorySwitch;
         var switches = services.Switches;
         var timersAndAlarms = services.TimersAndAlarms;
@@ -2747,17 +2759,12 @@ public sealed class AppHost : IDisposable
                 mail: mail,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
-                visitedStars: new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files),
+                visitedStars: visitedStars,
                 searchHistory: searchHistory,
                 squadronFactions: stores.SquadronFactions,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
-                signalIndex: new D47.App.Panel.SignalIndexStore(
-                    paths.Signals,
-                    files,
-                    () => settings.Current.Knowledge.SignalIndex,
-                    () => DateTimeOffset.UtcNow,
-                    loggerFactory.CreateLogger<D47.App.Panel.SignalIndexStore>()),
+                signalIndex: signalIndexStore,
                 pickCommander: feed.Picks.Enqueue,
                 standingWarnings: standingWarnings,
                 bindingProfiles: bindingProfiles,
@@ -2881,6 +2888,8 @@ public sealed class AppHost : IDisposable
         var beatRefusal = services.BeatRefusal;
         var galaxy = services.Galaxy;
         var llmAvailability = services.LlmAvailability;
+        var signalIndexStore = services.SignalIndexStore;
+        var visitedStars = services.VisitedStars;
         var macros = services.Macros;
         var objectiveMark = services.ObjectiveMark;
         var offers = services.Offers;
@@ -3052,7 +3061,9 @@ public sealed class AppHost : IDisposable
             spend,
             PriceTable.Default,
             loggerFactory.CreateLogger<D47.Core.Adventures.AdventureGenerator>(),
-            (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort);
+            (providerId, chosen) => ModelCatalogSource.Shared.TraitsFor(providerId, chosen).StoryEffort,
+            () => settings.Current.Knowledge.SignalIndex ? signalIndexStore : null,
+            visitedStars);
 
         // A stock story picked on the Stories page; each chapter is an adventure the generator writes.
         var storyDirector = new D47.Core.Stories.StoryDirector(
@@ -4352,6 +4363,10 @@ public sealed class AppHost : IDisposable
         public required SpendLedger SpendLedger { get; init; }
 
         public required D47.Knowledge.SpanshStarSystemService StarSystems { get; init; }
+
+        public required VisitedStarsBook VisitedStars { get; init; }
+
+        public required D47.App.Panel.SignalIndexStore SignalIndexStore { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.StorySwitch StorySwitch { get; init; }
 

@@ -10,6 +10,8 @@
 
 A story objective can now send you to a Guardian ruin or structure, which it meets when you approach the site, or to a tourist beacon, which it meets when you scan it in the beacon's system. No story asks for either yet.
 
+The story writer is now given the unvisited Guardian sites and tourist beacons within reach, from the galaxy search and the signal index, and may send a chapter to one of them. The signal index is fetched when a chapter is written as well as when you search for a signal, and only while the Signal index setting is on.
+
 When d47 restarts while Elite is running, the startup recap now covers what you have flown since logging in and opens "Earlier this session". Before, it described the session before that one and could name a station you left long ago. If you have only logged in, it still recaps the session before.
 
 A Road to Riches or exobiology loop now counts the jumps back to the start in its total. Before, a loop answered with 1, 2 and 2 jumps was reported as 2 jumps where it takes 4. The Road to Riches answer says "including the jumps back to" the start system instead of "and back". A plan saved earlier keeps its old total until you plot again.

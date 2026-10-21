@@ -37,4 +37,13 @@ public class TheEgressListNamesTheSignalIndexTests
         Assert.Contains("at most once in 20 hours", entry.What, StringComparison.Ordinal);
         Assert.Contains("no position, no key, no Commander name, no identifier", entry.What, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void OnItSaysTheIndexIsAlsoFetchedWhenAStoryChapterIsWritten()
+    {
+        var entry = Entry(on: true);
+
+        Assert.Contains("a story chapter is written", entry.What, StringComparison.Ordinal);
+        Assert.Contains("a story chapter is written", entry.Summary, StringComparison.Ordinal);
+    }
 }

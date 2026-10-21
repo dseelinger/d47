@@ -67,9 +67,11 @@ public sealed class AdventureGeneratorTests
         var stations = Assert.Single(galaxy.StationQueries, query => query.MaxDistance > 1);
         Assert.Equal("Oppi", stations.ReferenceSystem);
         Assert.Equal(80, stations.MaxDistance);
-        var bodies = Assert.Single(galaxy.BodyQueries, query => query.SystemNames.Count == 0);
+        var bodies = Assert.Single(galaxy.BodyQueries, query => query.SystemNames.Count == 0 && query.Signal is null);
         Assert.Equal(80, bodies.MaxDistance);
         Assert.True(bodies.Landable);
+        var guardian = Assert.Single(galaxy.BodyQueries, query => query.Signal == "Guardian");
+        Assert.Equal(80, guardian.MaxDistance);
     }
 
     /// <summary>
@@ -418,7 +420,7 @@ public sealed class AdventureGeneratorTests
     }
 
     /// <summary>A Commander in Oppi, where the 2026-08-22 report was made, holding Trade 7.</summary>
-    private static CommanderGameState State(int combat, string[] more)
+    internal static CommanderGameState State(int combat, string[] more)
     {
         var store = new GameStateStore();
 
@@ -455,6 +457,9 @@ public sealed class AdventureGeneratorTests
 
         /// <summary>Stations returned alongside the three every search knows.</summary>
         public IReadOnlyList<StationSummary> Extra { get; init; } = [];
+
+        /// <summary>Bodies a search for the Guardian surface signal returns.</summary>
+        public IReadOnlyList<BodySummary> GuardianBodies { get; init; } = [];
 
         public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
         {
@@ -495,6 +500,11 @@ public sealed class AdventureGeneratorTests
         public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken)
         {
             BodyQueries.Add(query);
+
+            if (query.Signal is not null)
+            {
+                return Task.FromResult(new BodySearchResult(query.ReferenceSystem, GuardianBodies.Count, GuardianBodies));
+            }
 
             IReadOnlyList<BodySummary> all =
             [

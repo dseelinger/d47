@@ -48,10 +48,10 @@ internal static class StoryAnswer
     ];
 
     /// <summary>
-    /// The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them.
+    /// The kinds one beats call offers: those always offered, board when a hull can be named, the team kinds, then beacon and reach when the story has them, and site when sites are listed.
     /// A drawn chapter offers, of the activity kinds, only <paramref name="drawn"/>.
     /// </summary>
-    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach, bool board, IReadOnlyCollection<TriggerKind>? drawn = null)
+    internal static IReadOnlyList<string> Kinds(IEnumerable<TriggerKind> team, bool beacon, bool reach, bool board, bool site, IReadOnlyCollection<TriggerKind>? drawn = null)
     {
         var kinds = new List<string>(AlwaysKinds);
         kinds.InsertRange(AlwaysKinds.Length - 2, team.Select(kind => kind.ToString().ToLowerInvariant()));
@@ -69,6 +69,11 @@ internal static class StoryAnswer
         if (reach)
         {
             kinds.Add("reach");
+        }
+
+        if (site)
+        {
+            kinds.Add("site");
         }
 
         if (drawn is not null)

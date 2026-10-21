@@ -297,13 +297,13 @@ public static class EgressDisclosure
                 NameOf(SignalIndex),
                 "github.com",
                 "A request for the daily index of signals Commanders have uploaded to EDDN, from the signals-1 "
-                + "release, made when you search for a signal and the copy in data\\signals is missing or more than "
+                + "release, made when you search for a signal or a story chapter is written and the copy in data\\signals is missing or more than "
                 + "20 hours old - one file, several megabytes, at most once in 20 hours. A request that fails is "
                 + "tried again on a later search, no sooner than an hour after. Nothing about you goes with it: no "
                 + "position, no key, no Commander name, no identifier and nothing from your journal. The search "
                 + "itself happens on this machine.",
                 Active: true,
-                Summary: "The daily signal index, at most once in 20 hours, when you search for a signal. Nothing "
+                Summary: "The daily signal index, at most once in 20 hours, when you search for a signal or a story chapter is written. Nothing "
                     + "about you goes with it.")
             : EgressEntry.Silent(
                 SignalIndex,
