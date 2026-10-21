@@ -584,7 +584,7 @@ public static class SettingsLayout
                     [],
                     false,
                     [
-                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("knowledge.communityBiology"), E("journal.codexPictures"), E("knowledge.inaraKey")]),
+                        G("Outside sources", "Where D47 may look for facts it does not already hold.", [E("llm.webSearch"), E("llm.lookAtScreen"), E("knowledge.galaxy"), E("knowledge.colonisationPlanner"), E("knowledge.bgsTick"), E("knowledge.signalIndex"), E("knowledge.communityBiology"), E("journal.codexPictures"), E("knowledge.inaraKey")]),
                         G("Sharing", "What D47 sends to community sites.", [E("contribution.eddn")]),
                     ]),
                 new SettingsPlace(

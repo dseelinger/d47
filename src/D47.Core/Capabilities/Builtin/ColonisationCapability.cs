@@ -13,6 +13,8 @@ public static class ColonisationCapability
 {
     public const string Id = "colonisation";
 
+    public const string PlannerKey = "knowledge.colonisationPlanner";
+
     /// <summary><param name="commander"> The active Commander, or null before any journal has been read.</summary>
     /// <param name="commander">
     /// The active Commander, or null before any journal has been read.
@@ -173,6 +175,29 @@ public static class ColonisationCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     CandidatesAsync(galaxy, settings, commander, arguments, cancellationToken),
+            },
+        ],
+        Settings =
+        [
+            new SettingRow
+            {
+                Key = PlannerKey,
+                Label = "Read colonisation plans from Raven Colonial",
+                Help =
+                    "Lets d47 read the plan Raven Colonial holds for a system you are building in. The names of "
+                    + "those systems leave this machine; your Commander name does not. Off by default; see "
+                    + "[Privacy](privacy) for exactly what is sent.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                DocsAnchor = "read-colonisation-plans-from-raven-colonial",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Knowledge.ColonisationPlanner ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Knowledge = s.Knowledge with { ColonisationPlanner = v == "true" },
+                    },
+                },
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Colonisation", Order = 54 },

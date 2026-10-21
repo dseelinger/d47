@@ -237,6 +237,9 @@ public sealed record KnowledgeSettings
     /// <summary>Whether d47 may reach the galaxy search.</summary>
     public bool GalaxySearch { get; init; }
 
+    /// <summary>Whether d47 may read colonisation plans from Raven Colonial.</summary>
+    public bool ColonisationPlanner { get; init; }
+
     /// <summary>
     /// Whether a generated adventure may fetch the catalogue of notable places from edastro.com (Phase
     /// 47).

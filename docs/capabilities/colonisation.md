@@ -424,6 +424,21 @@ This tool sorts by population instead and applies the rule to what comes back.
 "true" whenever it is present. Asking for `"false"` returned the same sixteen systems as `"true"`,
 and so did asking for `"banana"`. Neither flag is ever sent.
 
+### Read colonisation plans from Raven Colonial {#read-colonisation-plans-from-raven-colonial}
+
+A setting, off by default. While it is on, d47 can read the plan that Raven Colonial, the colonisation
+planner, holds for a system you are building in: each site's status, what each building project
+still needs, the tonnes on the carriers linked to it, and how many Commanders and carriers are
+attached. It asks by system name, for systems your journal already names, and never by Commander name.
+
+What goes out is those system names and the project ids the planner returns for them. No key and no
+Commander name go with it. What comes back includes other Commanders' names and notes; d47 counts the
+Commanders and carriers and leaves the names and notes where they are. Nothing is kept between
+requests yet.
+
+This is a different host from galaxy search and has its own switch, so using one does not turn on the
+other. The Privacy and egress section lists it as "nothing sent" while it is off.
+
 ### What this does not do
 
 **Planning** — an objective, which facilities to build and in what order — is not here. It lives on

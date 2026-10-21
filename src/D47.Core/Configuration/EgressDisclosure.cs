@@ -55,6 +55,9 @@ public static class EgressDisclosure
     /// <summary>Looking something up in the galaxy.</summary>
     public const string GalaxySearch = "galaxy";
 
+    /// <summary>Reading colonisation plans from Raven Colonial.</summary>
+    public const string ColonisationPlanner = "colonisationplanner";
+
     /// <summary>Listing community goals running where the Commander has not been.</summary>
     public const string CommunityGoals = "communitygoals";
 
@@ -130,6 +133,7 @@ public static class EgressDisclosure
         TextToSpeech,
         SpeechRecognition,
         GalaxySearch,
+        ColonisationPlanner,
         NotablePlaces,
         CommunityBiology,
         CommunityGoals,
@@ -162,6 +166,7 @@ public static class EgressDisclosure
         TextToSpeech => "Spoken replies",
         SpeechRecognition => "Speech recognition",
         GalaxySearch => "Galaxy search",
+        ColonisationPlanner => "Colonisation plans",
         NotablePlaces => "Notable places",
         CommunityBiology => "Earlier biology finds",
         CommunityGoals => "Community goals",
@@ -252,6 +257,21 @@ public static class EgressDisclosure
                 GalaxySearch,
                 NameOf(GalaxySearch),
                 "Galaxy search is off, so no system name and no search leaves this machine."),
+        ColonisationPlanner => settings.Knowledge.ColonisationPlanner
+            ? new EgressEntry(
+                ColonisationPlanner,
+                NameOf(ColonisationPlanner),
+                "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
+                "The names of the systems you have claimed for colonisation or docked at a construction site in, "
+                + "and the project ids the planner returns for them. Not your Commander name, no key, and "
+                + "nothing else from your journal. What comes back includes other Commanders' names and notes: "
+                + "d47 counts the Commanders and carriers rather than reading their names, and leaves the notes there.",
+                Active: true,
+                Summary: "The names of your colonisation systems, to read their plans. Nothing about you goes with it.")
+            : EgressEntry.Silent(
+                ColonisationPlanner,
+                NameOf(ColonisationPlanner),
+                "Colonisation plans are off, so no system name is sent to the planner."),
         NotablePlaces => settings.Knowledge.NotablePlaces
             ? new EgressEntry(
                 NotablePlaces,
