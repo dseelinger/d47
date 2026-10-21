@@ -31,6 +31,7 @@ public sealed class Listener : IDisposable
     private readonly Func<IReadOnlyList<string>> _properNouns;
     private readonly Func<AudioRecorder?> _recorder;
     private readonly Func<string> _shipName;
+    private readonly Func<string, bool> _withheld;
     private readonly PanelViewModel _panel;
     private readonly ListenGate _gate;
     private readonly EchoCanceller _echo;
@@ -69,6 +70,7 @@ public sealed class Listener : IDisposable
         Func<IReadOnlyList<string>> properNouns,
         Func<AudioRecorder?> recorder,
         Func<string> shipName,
+        Func<string, bool> withheld,
         PanelViewModel panel,
         ListenGate gate,
         EchoCanceller echo,
@@ -91,6 +93,7 @@ public sealed class Listener : IDisposable
         _properNouns = properNouns;
         _recorder = recorder;
         _shipName = shipName;
+        _withheld = withheld;
         _panel = panel;
         _gate = gate;
         _echo = echo;
@@ -358,7 +361,7 @@ public sealed class Listener : IDisposable
                     return;
                 }
 
-                _logger.LogInformation("Heard: {Text}", transcription.Text);
+                _logger.LogInformation("Heard: {Text}", _withheld(decision.Text) || _withheld(transcription.Text) ? "captain's log entry" : transcription.Text);
 
                 // What was heard, where it is not what gets asked.
                 if (!string.Equals(decision.Text, transcription.Text.Trim(), StringComparison.Ordinal))

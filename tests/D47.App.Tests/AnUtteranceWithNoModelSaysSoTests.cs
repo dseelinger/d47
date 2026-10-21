@@ -58,6 +58,7 @@ public sealed class AnUtteranceWithNoModelSaysSoTests : IDisposable
             properNouns: () => [],
             recorder: () => null,
             shipName: () => "Test",
+            withheld: _ => false,
             panel: new PanelViewModel(),
             gate,
             echo,

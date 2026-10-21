@@ -215,6 +215,7 @@ public sealed class AppHost : IDisposable
             properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), NamesToHear(personas)),
             recorder: () => AudioRecorder,
             shipName: () => personas.ShipName,
+            withheld: turns.IsLogEntry,
             panel: Panel,
             gate,
             echo,

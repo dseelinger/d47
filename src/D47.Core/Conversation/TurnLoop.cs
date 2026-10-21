@@ -121,6 +121,11 @@ public sealed class TurnLoop(
 
     private static readonly TimeSpan LogHeldFor = TimeSpan.FromMinutes(2);
 
+    /// <summary>True when the words are a captain's log entry, or the entry a bare "captain's log" is holding open.</summary>
+    public bool IsLogEntry(string input) =>
+        CaptainsLog.CaptainsLogPhrase.Read(input) is CaptainsLog.CaptainsLogReading.Entry
+        || (_logOpenedAt is { } openedAt && _clock.Now - openedAt <= LogHeldFor);
+
     /// <summary>The "did you mean" choices put while a phrase is being taught.</summary>
     private readonly OfferWindow _teachingChoices = new();
 
@@ -530,8 +535,15 @@ public sealed class TurnLoop(
 
             if (!string.Equals(corrected, input, StringComparison.Ordinal))
             {
-                logger.LogInformation(
-                    "Heard \"{Said}\" and read it as \"{Meant}\"", input, corrected);
+                if (IsLogEntry(input) || IsLogEntry(corrected))
+                {
+                    logger.LogInformation("Heard captain's log entry and read it as captain's log entry");
+                }
+                else
+                {
+                    logger.LogInformation(
+                        "Heard \"{Said}\" and read it as \"{Meant}\"", input, corrected);
+                }
 
                 input = corrected;
             }
