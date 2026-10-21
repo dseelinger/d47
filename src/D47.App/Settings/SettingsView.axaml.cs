@@ -135,6 +135,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         InitializeComponent();
 
+        // A press or a scroll anywhere on the view takes the landing mark off.
+        AddHandler(PointerPressedEvent, (_, _) => ClearLanding(), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerWheelChangedEvent, (_, _) => ClearLanding(), RoutingStrategies.Tunnel, handledEventsToo: true);
+
         _marker = new QueryMarker(this, id =>
         {
             var index = SectionHolding(id);
@@ -983,11 +987,23 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>
-    /// Opens the page holding a setting's row with that page's folded rows drawn, for a message naming the
-    /// row. A row not on this page changes nothing.
+    /// Opens the page holding a setting's row with that page's folded rows drawn, scrolls the row into view
+    /// and marks it, for a message naming the row. On a tab's strip it opens the strip first. A row not on
+    /// this view changes nothing.
     /// </summary>
     public void RevealRow(string key)
     {
+        if (_tabPlaceId is not null)
+        {
+            if (_rows.FirstOrDefault(view => string.Equals(view.Row.Key, key, StringComparison.Ordinal)) is { } onStrip)
+            {
+                ExpandTabStrip();
+                Land(MarkTarget(onStrip));
+            }
+
+            return;
+        }
+
         var index = SectionOf(key);
 
         if (index < 0)
@@ -998,6 +1014,99 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _revealedSections.Add(index);
 
         ShowPlace(index);
+
+        Land(MarkTarget(_rows.First(view => view.Section >= 0 && string.Equals(view.Row.Key, key, StringComparison.Ordinal))));
+    }
+
+    /// <summary>Opens a settings place by its id and marks its title. An id that names no place changes nothing.</summary>
+    public void RevealPlace(string placeId)
+    {
+        var index = _sections.FindIndex(section => string.Equals(section.PlaceId, placeId, StringComparison.Ordinal));
+
+        if (_tabPlaceId is not null || index < 0 || !_sift.Places[index].Exists)
+        {
+            return;
+        }
+
+        ShowPlace(index);
+        Land(_pageHead);
+    }
+
+    /// <summary>The tab place this view is the strip of, or null on the settings page.</summary>
+    internal string? TabPlaceId => _tabPlaceId;
+
+    /// <summary>A mixer cell is marked by its channel's table row; every other row by its own frame.</summary>
+    private Control MarkTarget(RowView view) =>
+        _mixers.SelectMany(mixer => mixer.Channels).FirstOrDefault(channel => channel.Views.Contains(view))?.Row
+        ?? view.Container;
+
+    /// <summary>The control a row is marked on, for a test to find it.</summary>
+    internal Control? FrameFor(string key) =>
+        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal)) is { } view
+            ? MarkTarget(view)
+            : null;
+
+    /// <summary>The control carrying the landing mark now, or null.</summary>
+    internal Control? LandedOn => _landing?.Target;
+
+    private (Control Target, AvaloniaProperty Property, IDisposable Ink, DispatcherTimer Timer)? _landing;
+
+    /// <summary>How long the mark on a landed row stays.</summary>
+    private static readonly TimeSpan LandingMarkLasts = TimeSpan.FromSeconds(2);
+
+    /// <summary>Scrolls <paramref name="target"/> into view once the page has been laid out, and marks it.</summary>
+    private void Land(Control? target)
+    {
+        ClearLanding();
+
+        if (target is null)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                ClearLanding();
+
+                var property = target switch
+                {
+                    Border => Border.BackgroundProperty,
+                    Avalonia.Controls.Panel => Avalonia.Controls.Panel.BackgroundProperty,
+                    TemplatedControl => TemplatedControl.BackgroundProperty,
+                    _ => null,
+                };
+
+                target.BringIntoView();
+
+                if (property is null)
+                {
+                    return;
+                }
+
+                var timer = new DispatcherTimer { Interval = LandingMarkLasts };
+                timer.Tick += (_, _) => ClearLanding();
+                timer.Start();
+
+                _landing = (target, property, Themed(target, property, ThemeManager.Tile2Key), timer);
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Takes the mark off the landed row.</summary>
+    private void ClearLanding()
+    {
+        if (_landing is not { } landing)
+        {
+            return;
+        }
+
+        var (target, property, ink, timer) = landing;
+
+        _landing = null;
+        timer.Stop();
+        ink.Dispose();
+        target.ClearValue(property);
     }
 
     private int SectionOf(string key) =>

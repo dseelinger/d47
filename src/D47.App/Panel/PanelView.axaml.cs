@@ -888,7 +888,21 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
         }
 
-        if (place.SettingKey is { } key)
+        var tabPlace = place.SettingKey is { } named
+            ? D47.Core.Configuration.SettingsLayout.Tabs.FirstOrDefault(
+                tab => tab.Entries.Any(entry => entry.Key == named || entry.Family?.Invoke(named) == true))
+            : null;
+
+        if (tabPlace is not null)
+        {
+            Nav.Show(tabPlace.RootKey);
+
+            if (tabPlace.Strip)
+            {
+                RevealOnStrip(tabPlace.Id, place.SettingKey!, retry: true);
+            }
+        }
+        else if (place.SettingKey is { } key)
         {
             Nav.Show(SettingsFurnishing.Root);
 
@@ -905,6 +919,31 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             Tab = place.Tab;
         }
+    }
+
+    /// <summary>
+    /// Reveals a row on the strip of tab place <paramref name="tabPlaceId"/> that this surface is showing. The
+    /// strip is built when its root first shows, so one that is not there yet is looked for once more.
+    /// </summary>
+    private void RevealOnStrip(string tabPlaceId, string key, bool retry)
+    {
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                var strip = this.GetVisualDescendants()
+                    .OfType<D47.App.Settings.SettingsView>()
+                    .FirstOrDefault(view => view.TabPlaceId == tabPlaceId);
+
+                if (strip is not null)
+                {
+                    strip.RevealRow(key);
+                }
+                else if (retry)
+                {
+                    RevealOnStrip(tabPlaceId, key, retry: false);
+                }
+            },
+            retry ? DispatcherPriority.Loaded : DispatcherPriority.Background);
     }
 
     /// <summary>
