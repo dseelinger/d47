@@ -558,6 +558,18 @@ logged before the oldest journal reads as missing, and that stars and planets ar
 {"type":"object","properties":{"region":{"type":"string","description":"The codex region, by name, or here for the region the Commander is in. Default here."}},"required":[],"additionalProperties":false}
 ```
 
+`get_body_geology` answers which geological features a body likely has, predicted from its class and
+volcanism, and whether each is in the Commander's codex for the current region. `body` is a body name or its
+short form; left out, it is the most recently seen body with geological signals. It says when the body has no
+geological signals, when the geology table has no feature for its class and volcanism, and when there is no
+scan of the body. When the region is known, each feature is marked logged or not logged and the answer says
+when the record starts, because an entry logged before then reads as not logged. It is a prediction: the codex
+entry on the surface decides.
+
+```json
+{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the most recently seen body that has geological signals."}},"required":[],"additionalProperties":false}
+```
+
 `get_ship` answers about the one being flown by default, and about any other ship the Commander
 owns when named — from the loadout last seen for it, dated, rather than refusing (#108):
 

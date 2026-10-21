@@ -64,6 +64,9 @@ public sealed record BodySignals
     /// <summary>The most recent scan that found biology, which is the "is this one worth it" case.</summary>
     public BodyBiology? MostRecentWithBiology => All.FirstOrDefault(body => body.HasBiology);
 
+    /// <summary>The most recent scan that counted geological signals.</summary>
+    public BodyBiology? MostRecentWithGeology => All.FirstOrDefault(body => body.GeologicalCount > 0);
+
     /// <summary>The body a name refers to.</summary>
     public BodyBiology? Named(string? spoken)
     {

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Callouts;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -109,6 +110,9 @@ public static class JournalCapability
                 new("codex checklist", "get_codex_checklist"),
                 new("what codex entries am i missing", "get_codex_checklist"),
                 new("missing codex entries", "get_codex_checklist"),
+                new("geology on this body", "get_body_geology"),
+                new("what geology is here", "get_body_geology"),
+                new("likely geology", "get_body_geology"),
                 new("combat stats", "get_combat_stats"),
                 new("combat statistics", "get_combat_stats"),
                 new("my kill stats", "get_combat_stats"),
@@ -374,6 +378,28 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
+                    Name = "get_body_geology",
+                    Description =
+                        "Which geological features a body likely has, predicted from its class and volcanism, and whether "
+                        + "the Commander has logged each in the codex for this region. A prediction: the codex entry on "
+                        + "the surface decides.",
+                    Parameters =
+                    [
+                        new ToolParameter
+                        {
+                            Name = "body",
+                            Type = ToolParameterType.String,
+                            Description =
+                                "The body name, or its short form such as \"7 b\". Leave out for the most recently seen "
+                                + "body that has geological signals.",
+                        },
+                    ],
+                    Commands = Asking(BodyGeologyQuestions),
+                    Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
+                        DescribeBodyGeology(gameState, state(), arguments))),
+                },
+                new ToolDefinition
+                {
                     Name = "get_credit_ledger",
                     Description =
                         "Report the credits the Commander earned and spent, by kind, from every journal on this PC, "
@@ -631,6 +657,11 @@ public static class JournalCapability
     private static readonly string[] CodexChecklistQuestions =
     [
         "codex checklist", "my codex checklist", "what codex entries am i missing", "missing codex entries",
+    ];
+
+    private static readonly string[] BodyGeologyQuestions =
+    [
+        "geology on this body", "what geology is here", "likely geology",
     ];
 
     private static readonly string[] CodexPeriods = ["trip", "session", "all"];
@@ -1996,6 +2027,88 @@ public static class JournalCapability
         }
 
         return text + "." + unfinished;
+    }
+
+    private static string DescribeBodyGeology(GameStateStore gameState, HistoryState history, ToolArguments arguments)
+    {
+        if (history is HistoryState.Pending or HistoryState.Running)
+        {
+            return "I have not finished reading the journal history yet.";
+        }
+
+        if (gameState.Active is not { } active)
+        {
+            return "I do not know which Commander is flying yet.";
+        }
+
+        var wanted = arguments.TryGetString("body", out var given) && !string.IsNullOrWhiteSpace(given)
+            ? given.Trim()
+            : null;
+        var body = wanted is not null ? active.Bodies.Named(wanted) : active.Bodies.MostRecentWithGeology;
+
+        if (body is null)
+        {
+            return wanted is not null
+                ? $"I have no scan of {wanted}, so I cannot say which geology it likely has."
+                : "I have not seen a body with geological signals.";
+        }
+
+        var name = BiologyCallout.Short(body.BodyName, active.Location.StarSystem);
+        var count = body.GeologicalCount;
+
+        if (count == 0)
+        {
+            return $"{name} shows no geological signals.";
+        }
+
+        var scan = body.SystemAddress is { } systemAddress && body.BodyId is { } bodyId
+            ? active.Scans.For(systemAddress, bodyId)
+            : null;
+
+        if (scan is null)
+        {
+            return $"I have no scan of {name}, so I cannot say which geology it likely has.";
+        }
+
+        var signals = $"{count} geological signal{(count == 1 ? string.Empty : "s")}";
+        var likely = GeologyCatalogue.Likely(scan);
+
+        if (likely.Count == 0)
+        {
+            return $"{name} has {signals}, but the geology table has no feature for its class and volcanism.";
+        }
+
+        var regionId = active.Location.StarPos is { } position && GalacticRegions.Find(position) is { } region
+            ? GalacticRegions.IdOf(region)
+            : null;
+        var ledger = active.CodexLedger;
+        var features = likely
+            .Select(feature =>
+            {
+                var plural = feature.Name.ToLowerInvariant() + "s";
+
+                return regionId is null
+                    ? plural
+                    : ledger.Logged.Contains((feature.EntryId, regionId))
+                        ? $"{plural}, logged in this region"
+                        : $"{plural}, not logged in this region";
+            })
+            .ToList();
+        var list = features.Count == 1
+            ? features[0]
+            : string.Join(", ", features[..^1]) + (regionId is null ? " and " : ", and ") + features[^1];
+        var text = $"{name} has {signals}. Likely: {list}.";
+
+        if (regionId is null)
+        {
+            return text;
+        }
+
+        text += $" The record runs {OnRecord(ledger)}, so an entry logged before then reads as not logged.";
+
+        return history is HistoryState.Failed or HistoryState.Stopped
+            ? text + " Reading the journal history did not finish, so this is only what the live journal shows."
+            : text;
     }
 
     private static string OnRecord(CodexLedger ledger) =>
