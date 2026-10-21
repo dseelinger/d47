@@ -587,6 +587,21 @@ A tick more than fifteen minutes old is said with its age, rounded to the neares
 gap stays quiet. A time within an hour after the one already said is treated as the same tick, revised.
 Turn this one off with the `bgs-tick` row.
 
+#### Friends online {#friends}
+
+When a friend comes online, once, with a five-second wait so a burst is one line. Going offline is
+not said: Elite writes `Offline` for only some friends who leave.
+
+```text
+Arcturus, Vega, Rigel and two others are online.
+```
+
+One name is *"Arcturus is online."*; two are *"Arcturus and Vega are online."* Three names are said at
+most, and the rest are a count. A friend already reported online is said again only when the last report is more
+than thirty minutes old, so the restatement Elite writes shortly after login stays quiet. Nothing is
+said during the startup replay. The names are spoken by your ship's voice provider. Turn this one off
+with the `friends` row.
+
 #### Checklist changes {#checklist}
 
 Two moments from your checklist, both of which happen while you are doing something else.

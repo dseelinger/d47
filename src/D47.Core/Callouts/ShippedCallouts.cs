@@ -67,6 +67,8 @@ public static class ShippedCallouts
 
         public required MiningTargetStore MiningTargets { get; init; }
 
+        public required FriendRoster Friends { get; init; }
+
         /// <summary>Whether a Commander's reached beats wait behind a story opening that must be said first.</summary>
         public required Func<string?, bool> StoryOpening { get; init; }
     }
@@ -204,6 +206,8 @@ public static class ShippedCallouts
                 LastSaidTick = () => sources.ViewState.Load().BgsTickSaidFor,
                 RememberSaidTick = tick => sources.ViewState.Save(sources.ViewState.Load() with { BgsTickSaidFor = tick }),
             })
+
+            .Add(new FriendsCallout(sources.Friends))
 
             // Phase 23.
             .Add(new LoreCallout(sources.Lore, sources.LoreVisits))
@@ -403,6 +407,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
+        engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
         engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);

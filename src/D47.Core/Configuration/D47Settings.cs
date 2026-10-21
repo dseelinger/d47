@@ -616,6 +616,9 @@ public sealed record CalloutSettings
     /// <summary>The BGS tick, said when the detector reports it.</summary>
     public bool BgsTick { get; init; } = true;
 
+    /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
+    public bool FriendsOnline { get; init; } = true;
+
     /// <summary>
     /// A checklist item the journal has just changed its mind about, the last unit a plan needed, and a
     /// watched line ticked by its event.

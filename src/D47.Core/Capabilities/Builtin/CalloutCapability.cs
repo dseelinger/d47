@@ -69,6 +69,7 @@ public static class CalloutCapability
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
+    public const string FriendsOnlineKey = "callouts.friendsOnline";
     public const string ChecklistKey = "callouts.checklist";
     public const string CommunityGoalSalesKey = "callouts.communityGoalSales";
 
@@ -651,6 +652,15 @@ public static class CalloutCapability
                 s => s.Callouts.BgsTick,
                 (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } },
                 appliesWhen: s => s.Knowledge.BgsTick),
+
+            Toggle(
+                FriendsOnlineKey,
+                "Friends online",
+                "When a friend comes online, says who. Going offline is not said.",
+                "friends",
+                "friends online",
+                s => s.Callouts.FriendsOnline,
+                (s, v) => s with { Callouts = s.Callouts with { FriendsOnline = v } }),
 
             Toggle(
                 ChecklistKey,
