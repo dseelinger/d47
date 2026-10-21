@@ -1,0 +1,105 @@
+{
+  "system": "Synuefe XO-P c22-17",
+  "codex": [
+    {
+      "body": "C 3 a",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "-61.213589",
+      "longitude": "-125.139503",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "77.249700",
+      "longitude": "31.539240",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "-0.494270",
+      "longitude": "-40.281090",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "19.647625",
+      "longitude": "135.882034",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "19.657822",
+      "longitude": "135.918610",
+      "scanned": "false"
+    },
+    {
+      "body": "D 3",
+      "english_name": "Roseum Brain Tree",
+      "entryid": 2100201,
+      "hud_category": "Biology",
+      "index_id": null,
+      "latitude": "-5.801260",
+      "longitude": "-68.657100",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Silicate Vapour Fumarole",
+      "entryid": 1400114,
+      "hud_category": "Geology",
+      "index_id": null,
+      "latitude": "-7.146490",
+      "longitude": "86.980110",
+      "scanned": "false"
+    },
+    {
+      "body": "C 3 a",
+      "english_name": "Silicate Vapour Fumarole",
+      "entryid": 1400114,
+      "hud_category": "Geology",
+      "index_id": null,
+      "latitude": "19.663153",
+      "longitude": "135.907104",
+      "scanned": "false"
+    },
+    {
+      "body": null,
+      "english_name": "Guardian Codex",
+      "entryid": 3200200,
+      "hud_category": "Guardian",
+      "index_id": 1,
+      "latitude": null,
+      "longitude": null,
+      "scanned": "false"
+    },
+    {
+      "body": null,
+      "english_name": "Guardian Codex",
+      "entryid": 3200200,
+      "hud_category": "Guardian",
+      "index_id": 1,
+      "latitude": null,
+      "longitude": null,
+      "scanned": "false"
+    }
+  ]
+}
