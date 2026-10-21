@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using D47.Core.Callouts;
+using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -16,6 +17,8 @@ public static class JournalCapability
     public const string Id = "journal";
 
     public const string ResetExplorationTool = "clear_unsold_exploration";
+
+    public const string CodexPicturesKey = "journal.codexPictures";
 
     /// <param name="history">
     /// How far the walk over older journals has got, so a fleet question says that rather than reporting
@@ -139,6 +142,31 @@ public static class JournalCapability
                 new("reset the exploration total", ResetExplorationTool),
             ],
             Display = new CapabilityDisplay { PanelTitle = "Location", Order = 20 },
+            Settings =
+            [
+                new SettingRow
+                {
+                    Key = CodexPicturesKey,
+                    Label = "Codex pictures",
+                    Help =
+                        "Stock pictures of codex entries are published as files on a GitHub release. "
+                        + "D47 fetches the list when a codex page first wants a picture in a session, and each picture when a page first shows it, "
+                        + "and keeps them in data\\codex-pictures.\n\n"
+                        + "Off, nothing is fetched and a codex page shows only pictures you saved yourself, even for stock pictures already on disk. "
+                        + "Files already on disk are kept.",
+                    Kind = SettingKind.Toggle,
+                    DocsAnchor = "codex-pictures",
+                    EgressId = EgressDisclosure.CodexPictures,
+                    Binding = new SettingBinding
+                    {
+                        Read = s => s.Ui.CodexPictures ? "true" : "false",
+                        Write = (s, v) => s with
+                        {
+                            Ui = s.Ui with { CodexPictures = bool.TryParse(v, out var on) && on },
+                        },
+                    },
+                },
+            ],
             Tools =
             [
                 new ToolDefinition

@@ -494,6 +494,18 @@ recognise is skipped and noted rather than breaking the read, and a field that i
 changed shape reads as absent rather than as zero — an invented figure in your game state is
 worse than a missing one.
 
+### Codex pictures {#codex-pictures}
+
+Stock pictures of codex entries are published as files on a GitHub release. Directive 47 fetches the list
+the first time a codex page wants a picture in a session, and each picture the first time a page shows it,
+and keeps them in `data\codex-pictures`. A picture's file name gives its codex entry and region; nothing
+else is sent: no key, no Commander name, no position and nothing else from your journal.
+
+Pictures you save yourself are kept in the same folder and never leave this PC.
+
+**Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
+pictures you saved yourself, even for stock pictures already on disk, which are kept.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

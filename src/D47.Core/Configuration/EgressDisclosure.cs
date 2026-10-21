@@ -89,6 +89,9 @@ public static class EgressDisclosure
     /// <summary>Fetching a hull's large art — the 4K picture, the turntable and the mesh (#289).</summary>
     public const string HullArt = "hullart";
 
+    /// <summary>Fetching the list of stock codex pictures and the pictures a codex page shows.</summary>
+    public const string CodexPictures = "codexpictures";
+
     /// <summary>Fetching the avatar clips of the core aboard.</summary>
     public const string AvatarClips = "avatarclips";
 
@@ -125,6 +128,7 @@ public static class EgressDisclosure
         ModelUpdates,
         HullArt,
         AvatarClips,
+        CodexPictures,
         StockStories,
         StoryRatings,
         SpeechModels,
@@ -156,6 +160,7 @@ public static class EgressDisclosure
         SpeechModels => "Speech model download",
         ChatterboxVoices => "Chatterbox voices",
         HullArt => "Hull pictures",
+        CodexPictures => "Codex pictures",
         AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
         StoryRatings => "Story ratings",
@@ -328,6 +333,20 @@ public static class EgressDisclosure
                 "Hull pictures are off, so nothing is fetched, fleet cards show no drawing, and a ship's "
                 + "own page and the carrier page show no picture and no turntable, even for a hull already on disk.",
                 summary: "Hull pictures are off, so nothing is fetched and no ship shows a picture."),
+
+        CodexPictures => settings.Ui.CodexPictures
+            ? new EgressEntry(
+                CodexPictures,
+                NameOf(CodexPictures),
+                "github.com",
+                "The list of stock codex pictures when a codex page first wants one in a session, and each picture when a page first shows it, kept on disk. "
+                + "A picture's file name gives its codex entry and region. Nothing else goes with it: no key, no Commander name, no position and nothing else from your journal.",
+                Active: true,
+                Summary: "The list of stock codex pictures, and each picture when a page first shows it. Nothing else goes with it.")
+            : EgressEntry.Silent(
+                CodexPictures,
+                NameOf(CodexPictures),
+                "Stock codex pictures are off, so nothing is fetched and a codex page shows only pictures you saved yourself."),
 
         AvatarClips => settings.Ui.AvatarClips
             ? new EgressEntry(

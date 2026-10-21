@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -538,6 +538,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Fetches stock stories from the stories release.</summary>
     public StoryDownloader? StoryDownloads { get; private set; }
+
+    /// <summary>Fetches stock codex pictures and lists the Commander's own.</summary>
+    public CodexPictureStore? CodexPictures { get; private set; }
 
     /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
     public StoryRatingClient? StoryRatings { get; private set; }
@@ -3477,6 +3480,11 @@ public sealed class AppHost : IDisposable
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
         host.StoryDownloads = storyDownloads;
+        host.CodexPictures = new CodexPictureStore(
+            files,
+            paths.CodexPictures,
+            () => settings.Current.Ui.CodexPictures,
+            loggerFactory.CreateLogger<CodexPictureStore>());
         host.StoryRatings = storyRatings;
         host.StoryBench = stores.StoryBench;
         endingAnswer.Answer = host.Narration.AnswerEnding;

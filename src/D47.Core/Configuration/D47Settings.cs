@@ -1141,6 +1141,9 @@ public sealed record UiSettings
     /// <summary>Whether the hull viewer draws through OpenGL rather than on the CPU.</summary>
     public bool HullGpu { get; init; }
 
+    /// <summary>Whether d47 fetches stock codex pictures from a GitHub release.</summary>
+    public bool CodexPictures { get; init; } = true;
+
     /// <summary>Whether d47 fetches the avatar clips of the core aboard.</summary>
     public bool AvatarClips { get; init; } = true;
 

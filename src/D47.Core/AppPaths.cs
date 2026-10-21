@@ -40,6 +40,7 @@ public sealed class AppPaths
         Donations = Path.Combine(Data, "donations");
         Ships = Path.Combine(Data, "ships");
         Stories = Path.Combine(Data, "stories");
+        CodexPictures = Path.Combine(Data, "codex-pictures");
         Signals = Path.Combine(Data, "signals");
         Pictures = Path.Combine(Data, "pictures");
         AvatarClips = Path.Combine(Data, "avatar-clips");
@@ -119,6 +120,9 @@ public sealed class AppPaths
 
     /// <summary>The stock stories downloaded after the install: <c>index.json</c> and one <c>.sealed</c> file per picked story.</summary>
     public string Stories { get; }
+
+    /// <summary>Codex pictures: <c>stock\</c> holds the fetched index and pictures, <c>local\</c> the Commander's own.</summary>
+    public string CodexPictures { get; }
 
     /// <summary>The daily signal index, <c>signals.tsv.gz</c>, downloaded when a signal search asks for it.</summary>
     public string Signals { get; }
