@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Inara API key setting is gone, and so is the request to Inara. Community goals come only from your journal: the board at each station you have docked at, and the answer says so. A key stored earlier is deleted the next time D47 starts, and Community goals no longer appears under Privacy and egress.
+
 Construction answers and the Construction page no longer name the planning service. Answers say "the colonisation planner", and the page's planner button reads PLANNER. The settings and the tooltips that open the website keep the name.
 
 The Search tab and the star system page no longer name the data service. Messages read "the galaxy search" or drop the source: "GALAXY SEARCH UNAVAILABLE", "Asking the galaxy search", "Last reported". The failure notice shows the time without the host name.

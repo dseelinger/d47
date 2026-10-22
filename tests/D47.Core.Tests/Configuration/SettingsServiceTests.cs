@@ -649,7 +649,7 @@ public class EgressDisclosureTests
         var settings = new D47Settings { Llm = new LlmSettings { WebSearch = true } };
 
         var report = EgressDisclosure.Describe(
-            settings, llmKeyPresent: true, inaraKeyPresent: false, searchAvailable: false);
+            settings, llmKeyPresent: true, searchAvailable: false);
 
         Assert.Contains("offers no search", report, StringComparison.Ordinal);
         Assert.DoesNotContain("penny", report, StringComparison.Ordinal);
@@ -664,27 +664,6 @@ public class EgressDisclosureTests
 
         Assert.True(entry.Active);
         Assert.Equal("https://gateway.example/v1", entry.Destination);
-    }
-
-    [Fact]
-    public void CommunityGoalsAreSilentUntilAKeyIsStored()
-    {
-        // The only row decided by a secret rather than by a setting.
-        var silent = EgressDisclosure.Entry(
-            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: true);
-
-        Assert.False(silent.Active);
-        Assert.Contains("No Inara API key is stored", silent.What, StringComparison.Ordinal);
-
-        var active = EgressDisclosure.Entry(
-            EgressDisclosure.CommunityGoals, new D47Settings(), llmKeyPresent: false, inaraKeyPresent: true);
-
-        Assert.True(active.Active);
-        Assert.Equal("inara.cz", active.Destination);
-
-        // The claim the request builder is tested against on the other side of the seam: the header may carry
-        // a Commander name and a Frontier ID, and this one carries neither.
-        Assert.Contains("nothing else", active.What, StringComparison.Ordinal);
     }
 
     [Fact]

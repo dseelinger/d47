@@ -42,7 +42,7 @@ public class HowHaveIDoneTests
 
         var registry = CapabilityRegistry.Build(
         [
-            CommunityGoalCapability.Create(() => state, null, () => Noon, ledger, new CommunityGoalSearch()),
+            CommunityGoalCapability.Create(() => state, () => Noon, ledger, new CommunityGoalSearch()),
             .. surface.Registry.All.Where(c => c.Descriptor.Id != CommunityGoalCapability.Id).Select(c => c.Descriptor),
         ]);
 
@@ -133,7 +133,7 @@ public class HowHaveIDoneTests
 
         var registry = CapabilityRegistry.Build(
         [
-            CommunityGoalCapability.Create(() => state, null, () => Noon, new CommodityLedger(), new CommunityGoalSearch()),
+            CommunityGoalCapability.Create(() => state, () => Noon, new CommodityLedger(), new CommunityGoalSearch()),
         ]);
 
         Assert.Equal("No Palladium sold today.", await AskAsync(registry, "today"));
@@ -147,7 +147,7 @@ public class HowHaveIDoneTests
 
         var registry = CapabilityRegistry.Build(
         [
-            CommunityGoalCapability.Create(() => null, null, () => Noon, new CommodityLedger(), new CommunityGoalSearch()),
+            CommunityGoalCapability.Create(() => null, () => Noon, new CommodityLedger(), new CommunityGoalSearch()),
         ]);
 
         var result = await registry.InvokeAsync(

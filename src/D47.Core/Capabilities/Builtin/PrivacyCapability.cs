@@ -81,11 +81,6 @@ public static class PrivacyCapability
             LlmProviderCatalog.Selected(settings.Current.Llm.Provider) is { KeySecretName: { } name }
             && settings.HasSecret(name);
 
-        // Asked separately because it is the one destination decided by a secret alone: there is no setting
-        // that turns Inara on, so the disclosure would read "nothing sent" forever if it only had settings to
-        // go on.
-        bool InaraKeyPresent() => settings.HasSecret(CommunityGoalCapability.KeySecretName);
-
         bool CodexPublishTokenPresent() =>
             Interface.CodexPublishToken.Present(settings.HasSecret(Interface.CodexPublishToken.SecretName), Environment.GetEnvironmentVariable);
 
@@ -122,17 +117,16 @@ public static class PrivacyCapability
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(
-                            settings.Current, KeyPresent(), InaraKeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent()))),
+                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent()))),
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, InaraKeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent),
+                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent),
         };
     }
 
     private static IReadOnlyList<SettingRow> BuildSettingRows(
         Func<bool> keyPresent,
-        Func<bool> inaraKeyPresent,
         Func<bool> searchAvailable,
         Memory.MemoryBook? memories,
         Diagnostics.Recording.RecordingLog? recording,
@@ -279,12 +273,12 @@ public static class PrivacyCapability
                 Read = s =>
                 {
                     var entry = EgressDisclosure.Entry(
-                        id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent());
+                        id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent());
                     return $"{entry.Line}\n{entry.Summary}";
                 },
             },
             DetailBinding = s => EgressDisclosure.Entry(
-                id, s, keyPresent(), inaraKeyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent()).What,
+                id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent()).What,
         }));
 
         return rows;

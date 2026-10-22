@@ -61,9 +61,6 @@ public static class EgressDisclosure
     /// <summary>Sending the Commander's live colonisation progress to Raven Colonial.</summary>
     public const string ColonisationProgress = "colonisationprogress";
 
-    /// <summary>Listing community goals running where the Commander has not been.</summary>
-    public const string CommunityGoals = "communitygoals";
-
     /// <summary>Asking the tick detector for the time of the last BGS tick.</summary>
     public const string BgsTick = "bgstick";
 
@@ -162,7 +159,6 @@ public static class EgressDisclosure
         ColonisationProgress,
         NotablePlaces,
         CommunityBiology,
-        CommunityGoals,
         BgsTick,
         GalNet,
         ServerStatus,
@@ -202,7 +198,6 @@ public static class EgressDisclosure
         ColonisationProgress => "Colonisation progress",
         NotablePlaces => "Notable places",
         CommunityBiology => "Earlier biology finds",
-        CommunityGoals => "Community goals",
         BgsTick => "BGS tick",
         GalNet => "GalNet news",
         ServerStatus => "Server status",
@@ -232,8 +227,6 @@ public static class EgressDisclosure
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
 
-    /// <summary><param name="inaraKeyPresent"> Whether the Commander has stored an Inara key.</summary>
-    /// <param name="inaraKeyPresent">Whether the Commander has stored an Inara key.</param>
     /// <param name="searchAvailable">
     /// Whether the provider and model in use offer a server-side web search — what
     /// <c>LlmProviderCapabilities.SupportsWebSearch</c> says.
@@ -244,7 +237,6 @@ public static class EgressDisclosure
         string id,
         D47Settings settings,
         bool llmKeyPresent,
-        bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
@@ -366,25 +358,6 @@ public static class EgressDisclosure
                 CommunityBiology,
                 NameOf(CommunityBiology),
                 "Earlier biology finds are off, so no system name is sent to Canonn."),
-
-        // The key is the switch, and deliberately the only one.
-        CommunityGoals => inaraKeyPresent
-            ? new EgressEntry(
-                CommunityGoals,
-                NameOf(CommunityGoals),
-                "inara.cz",
-                "Your Inara API key, and nothing else. The request asks for the current community goals and "
-                + "says nothing about you — not your Commander name, not your Frontier ID, not where you are "
-                + "and nothing from your journal. What comes back is treated as information rather than as "
-                + "an instruction, and the goal descriptions are left there rather than read.",
-                Active: true,
-                Summary: "Your Inara API key, to ask for the current community goals. Nothing else "
-                    + "about you goes with it.")
-            : EgressEntry.Silent(
-                CommunityGoals,
-                NameOf(CommunityGoals),
-                "No Inara API key is stored, so nothing is requested and community goals are read only from "
-                + "your own journal."),
 
         BgsTick => settings.Knowledge.BgsTick
             ? new EgressEntry(
@@ -1092,24 +1065,22 @@ public static class EgressDisclosure
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,
         bool llmKeyPresent,
-        bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent))];
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
         D47Settings settings,
         bool llmKeyPresent,
-        bool inaraKeyPresent = false,
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false)
     {
-        var entries = For(settings, llmKeyPresent, inaraKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent);
+        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

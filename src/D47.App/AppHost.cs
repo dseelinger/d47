@@ -894,6 +894,9 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<SecretStore>());
 
+        // A key stored for the retired community goal listing; nothing reads it now.
+        secrets.Remove("inara.apiKey");
+
         // The last of the three defences (#368), and the floor under the other two: while the file stands
         // refused, a change is applied in memory and never written, so one toggled row cannot replace a
         // configuration d47 could not read with the defaults it fell back to.
@@ -2207,13 +2210,6 @@ public sealed class AppHost : IDisposable
             commodities,
             marketBook);
 
-        // The key is read on every call rather than captured here, so pasting one in or clearing it takes
-        // effect without a restart — the same rule the galaxy service's setting follows.
-        var communityGoals = new D47.Knowledge.InaraCommunityGoalService(
-            () => secrets.TryGet(CommunityGoalCapability.KeySecretName, out var key) ? key : null,
-            version,
-            loggerFactory.CreateLogger<D47.Knowledge.InaraCommunityGoalService>());
-
         var buildingRegistry = StartupTimer.Step("capability registry");
 
         var ownVoice = new OwnVoice(paths.Data, files, new DpapiSecretProtector());
@@ -2262,7 +2258,6 @@ public sealed class AppHost : IDisposable
             Cancellation = cancellation,
             Clipboard = clipboard,
             ClipboardOffer = clipboardOffer,
-            CommunityGoals = communityGoals,
             Controllers = controllers,
             Coverage = coverage,
             CueLogger = cueLogger,
@@ -2383,7 +2378,6 @@ public sealed class AppHost : IDisposable
         var cancellation = services.Cancellation;
         var clipboard = services.Clipboard;
         var clipboardOffer = services.ClipboardOffer;
-        var communityGoals = services.CommunityGoals;
         var controllers = services.Controllers;
         var coverage = services.Coverage;
         var cues = services.Cues;
@@ -2618,7 +2612,6 @@ public sealed class AppHost : IDisposable
                 galaxy,
                 routePlanner,
                 tradePlanner,
-                communityGoals,
                 () => DateTimeOffset.Now,
 
                 // Late-bound like the surfaces above: the check is a real network call and the host that
@@ -4519,8 +4512,6 @@ public sealed class AppHost : IDisposable
         public required DesktopClipboard Clipboard { get; init; }
 
         public required ClipboardOffer ClipboardOffer { get; init; }
-
-        public required D47.Knowledge.InaraCommunityGoalService CommunityGoals { get; init; }
 
         public required HotasControllers Controllers { get; init; }
 

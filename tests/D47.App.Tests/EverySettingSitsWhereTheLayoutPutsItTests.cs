@@ -128,7 +128,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     }
 
     [AvaloniaTheory]
-    [InlineData(CommunityGoalCapability.KeyRow, "Outside sources")]
+    [InlineData("knowledge.bgsTick", "Outside sources")]
     public void TheSettingsSearchFindsARowMovedOntoThePage(string key, string place)
     {
         var host = Open(out _);

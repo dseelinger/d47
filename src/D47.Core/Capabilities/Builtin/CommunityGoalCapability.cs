@@ -14,19 +14,6 @@ public static class CommunityGoalCapability
 {
     public const string Id = "community-goals";
 
-    /// <summary>The Commander's own Inara key, in the secret store.</summary>
-    public const string KeySecretName = "inara.apiKey";
-
-    public const string KeyRow = "knowledge.inaraKey";
-
-    /// <summary>
-    /// <param name="listing"> The external listing, or null where none is composed — under the designer
-    /// and in a test that is not about it.
-    /// </summary>
-    /// <param name="listing">
-    /// The external listing, or null where none is composed — under the designer and in a test that is
-    /// not about it.
-    /// </param>
     /// <param name="now">
     /// Injected, because no Core component reads the clock — and because the whole correctness of this
     /// capability is a comparison against it.
@@ -38,7 +25,6 @@ public static class CommunityGoalCapability
     /// <param name="settings">Where the Elite week boundary is read from (#332).</param>
     public static CapabilityDescriptor Create(
         Func<CommanderGameState?> commander,
-        ICommunityGoalService? listing,
         Func<DateTimeOffset> now,
         CommodityLedger? ledger = null,
         CommunityGoalSearch? search = null,
@@ -69,8 +55,8 @@ public static class CommunityGoalCapability
                 Description =
                     "Community goals that are running: where each is flown, what tier it has reached, how "
                     + "many Commanders are contributing, and this Commander's own contribution and "
-                    + "percentile band. Goals the Commander has docked near come from their journal; the "
-                    + "rest need an Inara API key, and the answer says which is which.",
+                    + "percentile band. The goals come from the Commander's journal: the board at each "
+                    + "station they have docked at.",
                 Parameters =
                 [
                     new ToolParameter
@@ -88,8 +74,8 @@ public static class CommunityGoalCapability
                             + "Default false — an expired goal cannot be contributed to.",
                     },
                 ],
-                Handler = (arguments, cancellationToken) =>
-                    DescribeAsync(commander, listing, now, arguments, cancellationToken),
+                Handler = (arguments, _) =>
+                    Task.FromResult(Describe(commander, now, arguments)),
             },
             new ToolDefinition
             {
@@ -129,20 +115,6 @@ public static class CommunityGoalCapability
         ],
         Settings =
         [
-            new SettingRow
-            {
-                Key = KeyRow,
-                Advanced = true,
-                Label = "Inara API key",
-                Help =
-                    "Lets D47 see community goals running where you have not been. Without it, it sees only "
-                    + "the goals your own journal has reported. Your key is stored encrypted for this "
-                    + "Windows account and is write-only: D47 will never show it back to you. Get one from "
-                    + "your Inara profile, under API keys.",
-                Kind = SettingKind.Secret,
-                SecretName = KeySecretName,
-                DocsAnchor = "inara-api-key",
-            },
             new SettingRow
             {
                 Key = "callouts.weekBoundaryDay",
@@ -274,12 +246,10 @@ public static class CommunityGoalCapability
             + $"against {total.Cost:N0} cr the cargo cost.");
     }
 
-    private static async Task<ToolResult> DescribeAsync(
+    private static ToolResult Describe(
         Func<CommanderGameState?> commander,
-        ICommunityGoalService? listing,
         Func<DateTimeOffset> now,
-        ToolArguments arguments,
-        CancellationToken cancellationToken)
+        ToolArguments arguments)
     {
         var active = commander();
 
@@ -297,100 +267,44 @@ public static class CommunityGoalCapability
         var at = now();
         var board = active.CommunityGoals;
 
-        var mine = board.Goals
+        var goals = board.Goals
             .Where(goal => finished || goal.IsLive(at))
             .Where(goal => Matches(goal.Title, wanted))
             .OrderByDescending(goal => goal.SeenAt)
             .ToList();
 
-        IReadOnlyList<CommunityGoalListing> theirs = [];
-        string? listingFailure = null;
-
-        if (listing is { IsConfigured: true })
-        {
-            try
-            {
-                var report = await listing.RecentAsync(cancellationToken).ConfigureAwait(false);
-
-                theirs = report.Goals
-                    .Where(goal => finished || goal.Expiry is not { } expiry || expiry > at)
-                    .Where(goal => Matches(goal.Name, wanted))
-
-                    // Exact name only.
-                    .Where(goal => !mine.Any(seen => Same(seen.Title, goal.Name)))
-                    .ToList();
-            }
-            catch (CommunityGoalsUnavailableException ex)
-            {
-                // Not an error result.
-                listingFailure = ex.Message;
-            }
-        }
-
-        return ToolResult.Ok(Report(board, mine, theirs, listing, listingFailure, wanted, finished, at));
+        return ToolResult.Ok(Report(board, goals, wanted, finished, at));
     }
 
     private static string Report(
         CommunityGoalBoard board,
-        IReadOnlyList<CommunityGoal> mine,
-        IReadOnlyList<CommunityGoalListing> theirs,
-        ICommunityGoalService? listing,
-        string? listingFailure,
+        IReadOnlyList<CommunityGoal> goals,
         string? wanted,
         bool finished,
         DateTimeOffset at)
     {
         var report = new StringBuilder();
 
-        if (mine.Count == 0 && theirs.Count == 0)
+        if (goals.Count == 0)
         {
             report.AppendLine(Nothing(board, wanted, finished));
         }
         else
         {
-            if (mine.Count > 0)
-            {
-                report.AppendLine(
-                    $"{mine.Count} community goal{(mine.Count == 1 ? "" : "s")} from your journal:");
-
-                foreach (var goal in mine)
-                {
-                    report.AppendLine();
-                    report.Append(Describe(goal, at));
-                }
-            }
-
-            if (theirs.Count > 0)
-            {
-                if (mine.Count > 0)
-                {
-                    report.AppendLine();
-                }
-
-                report.AppendLine(
-                    $"{theirs.Count} more reported by Inara, which your journal has not seen. Nothing here "
-                    + "says anything about your own contribution:");
-
-                foreach (var goal in theirs)
-                {
-                    report.AppendLine();
-                    report.Append(Describe(goal, at));
-                }
-            }
-        }
-
-        if (listingFailure is not null)
-        {
-            report.AppendLine();
-            report.AppendLine(listingFailure);
-        }
-        else if (listing is null or { IsConfigured: false })
-        {
-            report.AppendLine();
             report.AppendLine(
-                "This is only what your journal has reported, which is the board at stations you have "
-                + "docked at. Goals running where you have not been need an Inara API key, in settings.");
+                $"{goals.Count} community goal{(goals.Count == 1 ? "" : "s")} from your journal:");
+
+            foreach (var goal in goals)
+            {
+                report.AppendLine();
+                report.Append(Describe(goal, at));
+            }
         }
+
+        report.AppendLine();
+        report.AppendLine(
+            "This is only what your journal has reported, which is the board at stations you have "
+            + "docked at.");
 
         return report.ToString().TrimEnd();
     }
@@ -496,72 +410,6 @@ public static class CommunityGoalCapability
         report.AppendLine($"  You: {string.Join(", ", standing)}.");
 
         report.AppendLine($"  Reported {Age(goal.SeenAt, at)}.");
-
-        return report.ToString();
-    }
-
-    private static string Describe(CommunityGoalListing goal, DateTimeOffset at)
-    {
-        var report = new StringBuilder();
-
-        report.AppendLine(goal.Name);
-
-        var line = new List<string>();
-
-        var where = (goal.StationName, goal.SystemName) switch
-        {
-            ({ } station, { } system) => $"{station}, {system}",
-            (null, { } system) => system,
-            ({ } station, null) => station,
-            _ => null,
-        };
-
-        if (where is not null)
-        {
-            line.Add(where);
-        }
-
-        line.Add(Deadline(goal.Expiry, at));
-
-        report.AppendLine($"  {string.Join(" — ", line)}");
-
-        if (goal.Objective is { Length: > 0 } objective)
-        {
-            report.AppendLine($"  {objective}");
-        }
-
-        var progress = new List<string>();
-
-        progress.Add(goal.TierReached is { } tier
-            ? goal.TopTier is { } top ? $"tier {tier} of {top}" : $"tier {tier}"
-            : "no tier reached yet");
-
-        if (goal.Contributors is { } contributors)
-        {
-            progress.Add($"{Number(contributors)} contributors");
-        }
-
-        if (goal.ContributionsTotal is { } total)
-        {
-            progress.Add($"{Number(total)} delivered");
-        }
-
-        if (goal.IsComplete)
-        {
-            progress.Add("met");
-        }
-
-        report.AppendLine($"  {Capitalise(string.Join(", ", progress))}.");
-
-        if (goal.Reward is { Length: > 0 } reward)
-        {
-            report.AppendLine($"  Reward: {reward}");
-        }
-
-        if (goal.LastUpdate is { } updated)
-        {
-            report.AppendLine($"  Inara last updated this {Age(updated, at)}.");
-        }
 
         return report.ToString();
     }

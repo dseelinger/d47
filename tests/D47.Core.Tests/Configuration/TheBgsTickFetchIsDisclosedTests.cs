@@ -37,10 +37,10 @@ public class TheBgsTickFetchIsDisclosedTests
     }
 
     [Fact]
-    public void ItSitsAfterCommunityGoals()
+    public void ItSitsAfterCommunityBiology()
     {
         var ids = EgressDisclosure.Ids.ToList();
 
-        Assert.Equal(ids.IndexOf(EgressDisclosure.CommunityGoals) + 1, ids.IndexOf(EgressDisclosure.BgsTick));
+        Assert.Equal(ids.IndexOf(EgressDisclosure.CommunityBiology) + 1, ids.IndexOf(EgressDisclosure.BgsTick));
     }
 }

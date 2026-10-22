@@ -7,47 +7,10 @@ using Xunit;
 
 namespace D47.Core.Tests.Knowledge;
 
-/// <summary>
-/// The model's view of community goals: what it is told with no key, with a key, and when the key is
-/// there but the site is not.
-/// </summary>
+/// <summary>The model's view of community goals: what the journal reported.</summary>
 public class CommunityGoalCapabilityTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-08-15T10:00:00Z");
-
-    /// <summary>A listing that answers from a script, and records that it was asked.</summary>
-    private sealed class FakeListing : ICommunityGoalService
-    {
-        public bool IsConfigured { get; set; } = true;
-
-        public int Calls { get; private set; }
-
-        public Exception? Throws { get; set; }
-
-        public IReadOnlyList<CommunityGoalListing> Goals { get; set; } =
-        [
-            new CommunityGoalListing
-            {
-                Name = "Rescue Operation in the Pleiades",
-                SystemName = "Pleiades Sector IR-W d1-55",
-                StationName = "The Oracle",
-                Expiry = Now.AddDays(2),
-                TierReached = 6,
-                Contributors = 2038,
-                ContributionsTotal = 40001,
-                Objective = "Deliver Occupied Escape Pods",
-            },
-        ];
-
-        public Task<CommunityGoalReport> RecentAsync(CancellationToken cancellationToken)
-        {
-            Calls++;
-
-            return Throws is not null
-                ? Task.FromException<CommunityGoalReport>(Throws)
-                : Task.FromResult(new CommunityGoalReport(Goals));
-        }
-    }
 
     private static CommanderGameState Commander(params string[] lines)
     {
@@ -75,8 +38,8 @@ public class CommunityGoalCapabilityTests
               "TierReached":"Tier 1", "PlayerPercentileBand":50, "Bonus":200000 } ] }
           """;
 
-    private static CapabilityRegistry Build(CommanderGameState? commander, ICommunityGoalService? listing) =>
-        CapabilityRegistry.Build([CommunityGoalCapability.Create(() => commander, listing, () => Now)]);
+    private static CapabilityRegistry Build(CommanderGameState? commander) =>
+        CapabilityRegistry.Build([CommunityGoalCapability.Create(() => commander, () => Now)]);
 
     private static async Task<ToolResult> Ask(
         CapabilityRegistry registry,
@@ -87,25 +50,22 @@ public class CommunityGoalCapabilityTests
             TestContext.Current.CancellationToken);
 
     [Fact]
-    public async Task WithNoKeyTheJournalStillAnswersAndTheAnswerSaysWhatItIs()
+    public async Task TheAnswerSaysItIsOnlyWhatTheJournalReported()
     {
- // A capability that is off is state, not a guard: the journal half needs nothing, so
-        // refusing the whole question for want of a key would be the tool dead-ending on a destination it
-        // does not need.
-        var registry = Build(Commander(Board()), listing: null);
+        var registry = Build(Commander(Board()));
 
         var result = await Ask(registry);
 
         Assert.False(result.IsError);
         Assert.Contains("Alliance Research Initiative", result.Content, StringComparison.Ordinal);
-        Assert.Contains("Inara API key", result.Content, StringComparison.Ordinal);
+        Assert.Contains("only what your journal has reported", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task AGoalThatHasExpiredIsNotOfferedAsSomethingToFlyFor()
     {
         // The failure this whole capability is shaped around.
-        var registry = Build(Commander(Board(expiry: "2026-08-11T16:00:00Z")), listing: null);
+        var registry = Build(Commander(Board(expiry: "2026-08-11T16:00:00Z")));
 
         var result = await Ask(registry);
 
@@ -116,7 +76,7 @@ public class CommunityGoalCapabilityTests
     [Fact]
     public async Task AskingForFinishedGoalsBringsThemBackSayingWhenTheyEnded()
     {
-        var registry = Build(Commander(Board(expiry: "2026-08-11T16:00:00Z")), listing: null);
+        var registry = Build(Commander(Board(expiry: "2026-08-11T16:00:00Z")));
 
         var result = await Ask(registry, ("include_finished", "true"));
 
@@ -127,7 +87,7 @@ public class CommunityGoalCapabilityTests
     [Fact]
     public async Task NothingHeardYetIsNotTheSameAnswerAsNoGoals()
     {
-        var registry = Build(Commander(), listing: null);
+        var registry = Build(Commander());
 
         var result = await Ask(registry);
 
@@ -137,7 +97,7 @@ public class CommunityGoalCapabilityTests
     [Fact]
     public async Task WithNoJournalAtAllItSaysSoRatherThanReportingAnEmptyBoard()
     {
-        var registry = Build(commander: null, listing: null);
+        var registry = Build(commander: null);
 
         var result = await Ask(registry);
 
@@ -145,97 +105,10 @@ public class CommunityGoalCapabilityTests
     }
 
     [Fact]
-    public async Task AStoredKeyBringsInGoalsTheJournalHasNeverSeenUnderTheirOwnHeading()
-    {
-        var listing = new FakeListing();
-        var registry = Build(Commander(Board()), listing);
-
-        var result = await Ask(registry);
-
-        Assert.Equal(1, listing.Calls);
-        Assert.Contains("Rescue Operation in the Pleiades", result.Content, StringComparison.Ordinal);
-
-        // Said out loud, because the figures beside an Inara goal are the galaxy's and not the Commander's,
-        // and a merged list would invite reading them as theirs.
-        Assert.Contains("Nothing here says anything about your own contribution", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task NoKeyMeansTheSiteIsNeverReached()
-    {
-        var listing = new FakeListing { IsConfigured = false };
-        var registry = Build(Commander(Board()), listing);
-
-        await Ask(registry);
-
-        Assert.Equal(0, listing.Calls);
-    }
-
-    [Fact]
-    public async Task AGoalTheJournalAlreadyKnowsIsNotListedTwice()
-    {
-        var listing = new FakeListing
-        {
-            Goals =
-            [
-                new CommunityGoalListing { Name = "Alliance Research Initiative", Expiry = Now.AddDays(3) },
-            ],
-        };
-
-        var registry = Build(Commander(Board()), listing);
-
-        var result = await Ask(registry);
-
-        var first = result.Content.IndexOf("Alliance Research Initiative", StringComparison.Ordinal);
-
-        Assert.True(first >= 0);
-        Assert.Equal(
-            -1,
-            result.Content.IndexOf("Alliance Research Initiative", first + 1, StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task ANameTheTwoSourcesSpellDifferentlyIsAllowedToAppearTwice()
-    {
-        // Deliberate.
-        var listing = new FakeListing
-        {
-            Goals =
-            [
-                new CommunityGoalListing { Name = "Alliance Research Initiative – Trade", Expiry = Now.AddDays(3) },
-            ],
-        };
-
-        var registry = Build(Commander(Board()), listing);
-
-        var result = await Ask(registry);
-
-        Assert.Contains("Alliance Research Initiative – Trade", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task TheSiteFailingDoesNotCostTheCommanderTheJournalHalf()
-    {
-        var listing = new FakeListing
-        {
-            Throws = new CommunityGoalsUnavailableException("Inara rejected the request. Check the API key."),
-        };
-
-        var registry = Build(Commander(Board()), listing);
-
-        var result = await Ask(registry);
-
-        Assert.False(result.IsError);
-        Assert.Contains("Alliance Research Initiative", result.Content, StringComparison.Ordinal);
-        Assert.Contains("Check the API key", result.Content, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task AskingForOneGoalByNameNarrowsToIt()
     {
         var registry = Build(
-            Commander(Board(), Board(id: 840, title: "Distant Worlds III")),
-            listing: null);
+            Commander(Board(), Board(id: 840, title: "Distant Worlds III")));
 
         var result = await Ask(registry, ("name", "distant"));
 
@@ -246,7 +119,7 @@ public class CommunityGoalCapabilityTests
     [Fact]
     public async Task TheCommandersOwnStandingIsReported()
     {
-        var registry = Build(Commander(Board()), listing: null);
+        var registry = Build(Commander(Board()));
 
         var result = await Ask(registry);
 

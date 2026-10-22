@@ -49,7 +49,6 @@ public class SettingsLayoutTests
             .SelectMany(place => place.Groups)
             .ToDictionary(group => group.Title, group => group.Entries.Select(entry => entry.Key).ToArray());
 
-        Assert.Contains("knowledge.inaraKey", groups["Outside sources"]);
         Assert.Contains("callouts.weekBoundaryDay", groups["Plans and reminders"]);
         Assert.Contains("callouts.weekBoundaryHourUtc", groups["Plans and reminders"]);
         Assert.DoesNotContain(SettingsLayout.Tabs, tab => tab.Id == "routing-community-goal");

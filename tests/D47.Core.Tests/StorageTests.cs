@@ -94,11 +94,11 @@ public class SecretStoreTests
         var install = new MemoryInstall();
 
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
-            .Set("inara.apiKey", "swordfish");
+            .Set("example.apiKey", "swordfish");
 
         var reopened = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
 
-        Assert.True(reopened.TryGet("inara.apiKey", out var value));
+        Assert.True(reopened.TryGet("example.apiKey", out var value));
         Assert.Equal("swordfish", value);
     }
 
@@ -108,7 +108,7 @@ public class SecretStoreTests
         var install = new MemoryInstall();
 
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
-            .Set("inara.apiKey", "swordfish");
+            .Set("example.apiKey", "swordfish");
 
         Assert.DoesNotContain("swordfish", install.Files.ReadText(install.Paths.SecretsFile), StringComparison.Ordinal);
     }
@@ -128,13 +128,13 @@ public class SecretStoreTests
     {
         var install = new MemoryInstall();
         new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance)
-            .Set("inara.apiKey", "swordfish");
+            .Set("example.apiKey", "swordfish");
 
         // Same file, but nothing can decrypt it now.
         var elsewhere = new SecretStore(install.Paths, new NeverUnprotects(), install.Files, NullLogger<SecretStore>.Instance);
 
-        Assert.False(elsewhere.TryGet("inara.apiKey", out _));
-        Assert.Contains("inara.apiKey", elsewhere.Names);
+        Assert.False(elsewhere.TryGet("example.apiKey", out _));
+        Assert.Contains("example.apiKey", elsewhere.Names);
     }
 
     [Fact]

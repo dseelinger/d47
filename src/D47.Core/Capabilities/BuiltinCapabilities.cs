@@ -57,10 +57,6 @@ public static class BuiltinCapabilities
         // somebody else queues (Phase 36).
         Knowledge.ITradePlanService? trade = null,
 
-        // Third of the same family, and the only one that needs a credential before it can do anything at
-        // all.
-        Knowledge.ICommunityGoalService? communityGoals = null,
-
         // The clock, injected because no Core component reads one.
         Func<DateTimeOffset>? now = null,
 
@@ -394,7 +390,6 @@ public static class BuiltinCapabilities
         ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus, plans, now, exobiology, communityBiology, earlierFinds),
         CommunityGoalCapability.Create(
             () => gameState.Active,
-            communityGoals,
             now ?? (() => DateTimeOffset.MinValue),
             ledger,
             communityGoalSearch,
