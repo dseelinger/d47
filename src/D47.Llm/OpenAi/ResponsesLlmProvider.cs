@@ -93,10 +93,11 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
         // not accept.
         for (var attempt = 0; ; attempt++)
         {
+            var before = EndpointDemotions.RefusedBy(_endpoint.BaseUrl);
             var sent = await SendAsync("/responses", BuildBody(request), SendsPicture(request), cancellationToken)
                 .ConfigureAwait(false);
 
-            if (sent.Refusal is { } rejected && attempt == 0 && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected))
+            if (sent.Refusal is { } rejected && attempt == 0 && EndpointDemotions.DemoteSent(_endpoint.BaseUrl, rejected, before))
             {
                 continue;
             }

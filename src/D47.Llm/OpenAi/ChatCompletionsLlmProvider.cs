@@ -77,6 +77,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IModelLoader, IDi
         // not accept.
         for (var attempt = 0; ; attempt++)
         {
+            Demotable[] before = [.. EndpointDemotions.RefusedBy(_endpoint.BaseUrl), .. EndpointDemotions.RefusedBy(_endpoint.BaseUrl, request.Model)];
             var sent = await SendAsync(
                     "/chat/completions",
                     request.Model,
@@ -87,7 +88,7 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IModelLoader, IDi
 
             if (sent.Refusal is { } rejected
                 && attempt == 0
-                && EndpointDemotions.Demote(_endpoint.BaseUrl, rejected, rejected == Demotable.Images ? request.Model : ""))
+                && EndpointDemotions.DemoteSent(_endpoint.BaseUrl, rejected, before, rejected == Demotable.Images ? request.Model : ""))
             {
                 continue;
             }

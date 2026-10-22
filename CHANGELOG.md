@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When two requests to the same model provider start at once and both are refused for a setting the model does not take, both are now retried without it. Before, only the first was, and the second failed with the provider's "Unsupported parameter" message.
+
 The Inara API key setting is gone, and so is the request to Inara. Community goals come only from your journal: the board at each station you have docked at, and the answer says so. A key stored earlier is deleted the next time D47 starts, and Community goals no longer appears under Privacy and egress.
 
 Construction answers and the Construction page no longer name the planning service. Answers say "the colonisation planner", and the page's planner button reads PLANNER. The settings and the tooltips that open the website keep the name.

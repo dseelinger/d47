@@ -40,6 +40,13 @@ internal static class EndpointDemotions
     public static bool Demote(string endpoint, Demotable what, string model = "") =>
         Refused.GetOrAdd(new Key(endpoint, model), _ => new ConcurrentDictionary<Demotable, bool>()).TryAdd(what, true);
 
+    /// <summary>
+    /// Records a refusal; true when <paramref name="what"/> was not demoted in <paramref name="before"/>, taken as the
+    /// request was built, so the request carried it and a retry without it is worth sending.
+    /// </summary>
+    public static bool DemoteSent(string endpoint, Demotable what, IReadOnlyCollection<Demotable> before, string model = "") =>
+        Demote(endpoint, what, model) || !before.Contains(what);
+
     /// <summary>Everything this endpoint has refused, for the settings surface to explain.</summary>
     public static IReadOnlyCollection<Demotable> RefusedBy(string endpoint, string model = "") =>
         Refused.TryGetValue(new Key(endpoint, model), out var refused) ? [.. refused.Keys] : [];

@@ -111,6 +111,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
         var thinkingBlocks = new Dictionary<long, PendingThinking>();
         var redactedBlocks = new Dictionary<long, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>();
 
+        var before = EndpointDemotions.RefusedBy(_endpoint, request.Model);
         var stream = _client.Messages.CreateStreaming(BuildParameters(request), cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
 
@@ -172,7 +173,7 @@ public sealed class AnthropicLlmProvider : ILlmProvider
                 // A refused "thinking off" says nothing about whether the model takes adaptive thinking.
                 else if (advanced == 0 && !demoted && refused is { } rejected
                     && !(rejected == Demotable.AdaptiveThinking && TurnsThinkingOff(request))
-                    && EndpointDemotions.Demote(_endpoint, rejected, request.Model))
+                    && EndpointDemotions.DemoteSent(_endpoint, rejected, before, request.Model))
                 {
                     demoted = true;
 
