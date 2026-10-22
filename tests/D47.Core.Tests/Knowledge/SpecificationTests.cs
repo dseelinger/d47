@@ -208,6 +208,15 @@ public class SpecificationTests
     }
 
     [Fact]
+    public void ACargoRackEdsyGivesNoMassWeighsNothing()
+    {
+        var rack = EliteSpecifications.Module("int_largecargorack_size6_class1");
+
+        Assert.NotNull(rack);
+        Assert.Equal(0, rack.Mass);
+    }
+
+    [Fact]
     public void TheAnacondaMkIIIsAnArxLargePadHullWithFourCrew()
     {
         var mkii = EliteSpecifications.Ship("anacondamkii");

@@ -1282,6 +1282,10 @@ def eddb_only_modules(
         if capacity := figure(cell, "cargocap"):
             row[21] = row[21] or f"capacity={capacity}"
 
+        # EDSY gives no cargo rack a mass; a cargo rack weighs nothing.
+        if mtype == "icr":
+            row[5] = row[5] or "0"
+
         extra[symbol] = row
 
     return extra
