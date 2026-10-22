@@ -59,7 +59,7 @@ public sealed class EveryRowSitsOnOneGridTests
         host.Close();
     }
 
-    /// <summary>A protected row draws its bar in A; every other row's bar is transparent.</summary>
+    /// <summary>A protected row with no voice route draws its bar in A; every other row's bar is transparent.</summary>
     [AvaloniaFact]
     public void OnlyAProtectedRowDrawsItsBar()
     {
@@ -68,7 +68,7 @@ public sealed class EveryRowSitsOnOneGridTests
         var host = Show(SettingsHost.Open(settings, viewState, paths, width: 1400), "voice-input");
 
         var protectedLabels = settings.RowsForPlace("voice-input")
-            .Where(row => row.Protected)
+            .Where(row => row.ShowsProtectedBar)
             .Select(row => row.Label)
             .ToHashSet();
 

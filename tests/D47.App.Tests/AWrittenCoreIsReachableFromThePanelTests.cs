@@ -54,7 +54,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         var button = host.View.GetVisualDescendants().OfType<Button>()
             .Single(found => found.Name == "OpenOwnPersonas");
 
-        Assert.Equal("Write a core", button.Content);
+        Assert.Equal("Your cores", button.Content);
 
         Assert.Contains(
             host.View.GetVisualDescendants().OfType<SelectableTextBlock>(),
