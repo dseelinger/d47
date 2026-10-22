@@ -190,6 +190,21 @@ constraint is subtle enough to need a paragraph, write a test that fails when it
 Tests are named as behavioural sentences — `ACancelledTurnIsNotAFailureTests`,
 `AStaleBuildSaysSoTests` — not `MethodName_Condition_Result`.
 
+## The chapter comparison
+
+When the commit changes `AdventureGenerator.cs`, `AdventureResolver.cs`, `AdventureValidation.cs`,
+`TriggerConfirms.cs` or `StoryAnswer.cs` under `src/D47.Core/Adventures/`, write six real chapters
+before committing, three on each model, all at the same time. This spends money; it is the only step
+that sets `D47_COMPARE=1`, and it is never part of a build or a `dotnet test` run.
+
+```bash
+D47_COMPARE=1 D47_COMPARE_PARALLEL=1 D47_COMPARE_STORY_MODELS=claude-sonnet-5-5,gpt-6-luna D47_COMPARE_STORY_EFFORTS=Medium D47_COMPARE_RUNS=3 D47_COMPARE_CAP=5.00 D47_COMPARE_OUT=<scratchpad>/compare D47_COMPARE_JOURNALS=<journals folder>   dotnet test tests/D47.Scenarios.Tests --filter "FullyQualifiedName~StoryChaptersAgainstEachModelAndEffort"
+```
+
+The pass mark is 5 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`). Below it, do
+not commit: stop and report the refusals from the files in `drafts`. The commit message gives the
+number written for each model and the run's wall time.
+
 ## The changelog
 
 A change that alters what a user sees, hears or can do gets a `CHANGELOG.md` entry **in the same

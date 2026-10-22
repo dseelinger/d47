@@ -75,7 +75,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
 {
     private readonly ILlmProvider _inner;
 
-    private readonly string _ledger;
+    private readonly string? _ledger;
 
     private readonly decimal _cap;
 
@@ -83,16 +83,31 @@ public sealed class MeteredLlmProvider : ILlmProvider
 
     private readonly List<MeteredRequest> _requests = [];
 
-    public MeteredLlmProvider(ILlmProvider inner, string ledger, decimal cap)
+    private decimal _spent;
+
+    /// <param name="ledger">The file every request is appended to, or null to keep none.</param>
+    public MeteredLlmProvider(ILlmProvider inner, string? ledger, decimal cap)
     {
         _inner = inner;
         _ledger = ledger;
         _cap = cap;
-        Spent = Banked(ledger);
+        _spent = ledger is null ? 0m : Banked(ledger);
     }
 
     /// <summary>Dollars in the ledger, this run and every earlier one.</summary>
-    public decimal Spent { get; private set; }
+    public decimal Spent
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _spent;
+            }
+        }
+    }
+
+    /// <summary>A view of this meter that shares its spend and cap but holds only the requests made through it.</summary>
+    public MeteredView View() => new(this);
 
     public string Id => _inner.Id;
 
@@ -103,18 +118,24 @@ public sealed class MeteredLlmProvider : ILlmProvider
     public LlmProviderCapabilities CapabilitiesFor(string model) => _inner.CapabilitiesFor(model);
 
     /// <summary>Takes the requests metered since the last call.</summary>
-    public IReadOnlyList<MeteredRequest> Drain()
+    public IReadOnlyList<MeteredRequest> Drain() => Drain(_requests);
+
+    private List<MeteredRequest> Drain(List<MeteredRequest> sink)
     {
         lock (_gate)
         {
-            var drained = _requests.ToList();
-            _requests.Clear();
+            var drained = sink.ToList();
+            sink.Clear();
             return drained;
         }
     }
 
-    public async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
+    public IAsyncEnumerable<LlmStreamEvent> StreamAsync(LlmRequest request, CancellationToken cancellationToken) =>
+        StreamAsync(request, _requests, cancellationToken);
+
+    private async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
         LlmRequest request,
+        List<MeteredRequest> sink,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (Spent >= _cap)
@@ -153,10 +174,11 @@ public sealed class MeteredLlmProvider : ILlmProvider
         }
 
         var elapsed = clock.ElapsedMilliseconds;
-        Record(request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput));
+        Record(sink, request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput));
     }
 
     private void Record(
+        List<MeteredRequest> sink,
         string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence)
     {
         var price = PublishedPrices.For(model, usage)
@@ -166,23 +188,50 @@ public sealed class MeteredLlmProvider : ILlmProvider
 
         lock (_gate)
         {
-            Spent += dollars;
-            _requests.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence));
+            _spent += dollars;
+            sink.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence));
 
-            File.AppendAllText(
-                _ledger,
-                JsonSerializer.Serialize(new
-                {
-                    at = DateTimeOffset.UtcNow,
-                    model,
-                    input = usage.InputTokens,
-                    cacheWrite = usage.CacheCreationInputTokens,
-                    cacheRead = usage.CacheReadInputTokens,
-                    output = usage.OutputTokens,
-                    webSearches = usage.WebSearchRequests,
-                    dollars,
-                }) + Environment.NewLine);
+            if (_ledger is not null)
+            {
+                File.AppendAllText(
+                    _ledger,
+                    JsonSerializer.Serialize(new
+                    {
+                        at = DateTimeOffset.UtcNow,
+                        model,
+                        input = usage.InputTokens,
+                        cacheWrite = usage.CacheCreationInputTokens,
+                        cacheRead = usage.CacheReadInputTokens,
+                        output = usage.OutputTokens,
+                        webSearches = usage.WebSearchRequests,
+                        dollars,
+                    }) + Environment.NewLine);
+            }
         }
+    }
+
+    /// <summary>One chapter's view of a <see cref="MeteredLlmProvider"/>: its requests alone, against the shared spend.</summary>
+    public sealed class MeteredView : ILlmProvider
+    {
+        private readonly MeteredLlmProvider _meter;
+
+        private readonly List<MeteredRequest> _own = [];
+
+        internal MeteredView(MeteredLlmProvider meter) => _meter = meter;
+
+        public string Id => _meter.Id;
+
+        public string DisplayName => _meter.DisplayName;
+
+        public string DefaultModel => _meter.DefaultModel;
+
+        public LlmProviderCapabilities CapabilitiesFor(string model) => _meter.CapabilitiesFor(model);
+
+        /// <summary>Takes the requests made through this view since the last call.</summary>
+        public IReadOnlyList<MeteredRequest> Drain() => _meter.Drain(_own);
+
+        public IAsyncEnumerable<LlmStreamEvent> StreamAsync(LlmRequest request, CancellationToken cancellationToken) =>
+            _meter.StreamAsync(request, _own, cancellationToken);
     }
 
     private static decimal Banked(string ledger)

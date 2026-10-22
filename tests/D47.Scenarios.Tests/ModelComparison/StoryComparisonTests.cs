@@ -30,8 +30,8 @@ public partial class StoryComparisonTests
 
     private static readonly ThinkingEffort[] DefaultEfforts = [ThinkingEffort.Low, ThinkingEffort.Medium, ThinkingEffort.High];
 
-    /// <summary>The calls one story can make: spine, beats, and two rounds of replacements.</summary>
-    private static readonly string[] Steps = ["spine", "beats", "replacements", "replacements"];
+    /// <summary>The calls one story can make: spine, beats, two rounds of replacements, and up to three fact checks.</summary>
+    private static readonly string[] Steps = ["spine", "beats", "replacements", "replacements", "fact check", "fact check", "fact check"];
 
     /// <summary>The most one story is assumed to cost: every call, each with this much input and a full output ceiling.</summary>
     private const int WorstInputTokens = 30_000;
@@ -69,12 +69,15 @@ public partial class StoryComparisonTests
         {
             var id = ProviderOf(model);
 
-            if (!clients.TryGetValue(id, out var client))
+            lock (clients)
             {
-                clients[id] = client = Compose(id);
-            }
+                if (!clients.TryGetValue(id, out var client))
+                {
+                    clients[id] = client = Compose(id);
+                }
 
-            return client;
+                return client;
+            }
         }
 
         ILlmProvider inner = dry
@@ -97,8 +100,7 @@ public partial class StoryComparisonTests
         var persona = PersonaCatalog.Resolve(Env("D47_COMPARE_PERSONA") ?? "warden");
         var runner = new ComparisonRunner(meter, Journal(Required("D47_COMPARE_JOURNALS")), services, persona);
         var world = runner.NewWorld();
-        var galaxy = new TimedGalaxy(services.Galaxy);
-        var places = new TimedNotablePlaces(new GecNotablePlacesService(NullLogger<GecNotablePlacesService>.Instance));
+        var notablePlaces = new GecNotablePlacesService(NullLogger<GecNotablePlacesService>.Instance);
 
         var label = Env("D47_COMPARE_LABEL") ?? "";
         var drafts = Path.Combine(output, "drafts");
@@ -116,7 +118,15 @@ public partial class StoryComparisonTests
         var results = Path.Combine(output, (dry ? "dry-" : "") + (chapters ? "chapters.jsonl" : "stories.jsonl"));
         var progress = Path.Combine(output, "stories-progress.log");
 
-        void Log(string line) => File.AppendAllText(progress, $"{DateTimeOffset.Now:HH:mm:ss} {line}{Environment.NewLine}");
+        var writing = new Lock();
+
+        void Log(string line)
+        {
+            lock (writing)
+            {
+                File.AppendAllText(progress, $"{DateTimeOffset.Now:HH:mm:ss} {line}{Environment.NewLine}");
+            }
+        }
 
         Log($"{kind}s; models {string.Join(", ", models)}; efforts {string.Join(", ", efforts)}; {runs} run(s); cap ${cap}; spent so far ${meter.Spent:0.0000}");
         Log($"commander {world.GameState.Active?.Identity.Name ?? "none"}");
@@ -132,53 +142,72 @@ public partial class StoryComparisonTests
         var chapterAsk = Env("D47_COMPARE_CHAPTER") == "6" ? ChapterSixAsk : ChapterAsk;
         var lastRefused = Env("D47_COMPARE_LAST_REFUSED");
 
-        // Run outermost, so a cap that stops the run still leaves every combination one story.
-        for (var run = 1; run <= runs; run++)
-        {
-            foreach (var model in models)
-            {
-                foreach (var effort in efforts)
-                {
-                    if (!dry && meter.Spent + WorstCase(model) > cap)
-                    {
-                        Log($"{model} {effort} #{run}: skipped, the worst case ${WorstCase(model):0.00} would pass the cap");
-                        continue;
-                    }
+        var reservations = new CapReservations(() => meter.Spent, cap);
 
-                    var ask = (chapters
-                        ? chapterAsk
-                        : new AdventureAsk(
-                            Reach: AdventureReach.NearHere,
-                            Length: Enum.Parse<AdventureLength>(Env("D47_COMPARE_LENGTH") ?? nameof(AdventureLength.Short)),
-                            Brief: Env("D47_COMPARE_BRIEF"))) with { LastDraftRefused = lastRefused };
-                    var record = await WriteOneAsync(meter, model, effort, run, persona, world, galaxy, places, ask, kind, label, drafts);
-                    File.AppendAllText(results, JsonSerializer.Serialize(record) + Environment.NewLine);
-                    Log($"{model} {effort} #{run}: {record.Outcome}{(record.FailingStep is null ? "" : $" at {record.FailingStep}")} "
-                        + $"in {record.TotalSeconds:0}s (galaxy {record.GalaxySeconds:0}s), ${record.Dollars:0.0000}, spent ${meter.Spent:0.0000}");
-                }
+        async Task WriteAsync(string model, ThinkingEffort effort, int run)
+        {
+            using var reservation = dry ? null : await reservations.ReserveAsync(WorstCase(model), Token);
+
+            if (!dry && reservation is null)
+            {
+                Log($"{model} {effort} #{run}: skipped, the worst case ${WorstCase(model):0.00} would pass the cap");
+                return;
+            }
+
+            var ask = (chapters
+                ? chapterAsk
+                : new AdventureAsk(
+                    Reach: AdventureReach.NearHere,
+                    Length: Enum.Parse<AdventureLength>(Env("D47_COMPARE_LENGTH") ?? nameof(AdventureLength.Short)),
+                    Brief: Env("D47_COMPARE_BRIEF"))) with { LastDraftRefused = lastRefused };
+            var record = await WriteOneAsync(
+                meter.View(), model, effort, run, persona, world, new TimedGalaxy(services.Galaxy), new TimedNotablePlaces(notablePlaces), ask, kind, label, drafts);
+
+            lock (writing)
+            {
+                File.AppendAllText(results, JsonSerializer.Serialize(record) + Environment.NewLine);
+            }
+
+            Log($"{model} {effort} #{run}: {record.Outcome}{(record.FailingStep is null ? "" : $" at {record.FailingStep}")} "
+                + $"in {record.TotalSeconds:0}s (galaxy {record.GalaxySeconds:0}s), ${record.Dollars:0.0000}, spent ${meter.Spent:0.0000}");
+        }
+
+        // Run outermost, so a cap that stops the run still leaves every combination one story.
+        var combinations = (
+            from run in Enumerable.Range(1, runs)
+            from model in models
+            from effort in efforts
+            select (model, effort, run)).ToList();
+
+        if (Env("D47_COMPARE_PARALLEL") == "1")
+        {
+            await Task.WhenAll(combinations.Select(combination => WriteAsync(combination.model, combination.effort, combination.run)));
+        }
+        else
+        {
+            foreach (var (model, effort, run) in combinations)
+            {
+                await WriteAsync(model, effort, run);
             }
         }
 
         Log($"done; spent ${meter.Spent:0.0000}");
     }
 
-    private static async Task<StoryRecord> WriteOneAsync(
-        MeteredLlmProvider meter,
+    internal static async Task<StoryRecord> WriteOneAsync(
+        MeteredLlmProvider.MeteredView meter,
         string model,
         ThinkingEffort effort,
         int run,
         Persona persona,
         ScenarioWorld world,
-        TimedGalaxy galaxy,
-        TimedNotablePlaces places,
+        TimedGalaxy? galaxy,
+        TimedNotablePlaces? places,
         AdventureAsk ask,
         string kind,
         string label,
-        string drafts)
+        string? drafts)
     {
-        meter.Drain();
-        galaxy.Reset();
-        places.Reset();
 
         var log = new RecordingLogger();
         var generator = new AdventureGenerator(
@@ -219,11 +248,15 @@ public partial class StoryComparisonTests
         var warnings = log.Entries.Where(entry => entry.Level >= LogLevel.Warning).Select(entry => entry.Message).ToList();
         var reason = warnings.FirstOrDefault(warning => warning.StartsWith("A story was not written", StringComparison.Ordinal));
         var capped = metered.Any(request => request.Failure?.Contains(" cap.", StringComparison.Ordinal) == true);
-        var draftFile = Path.Combine(
-            drafts,
-            $"{(label.Length > 0 ? label + "-" : "")}{(kind == "chapter" ? "chapter" : "story")}-{model.Replace('/', '_')}-{effort}-{run}-{DateTimeOffset.Now:HHmmss}.json");
+        var draftFile = drafts is null
+            ? null
+            : Path.Combine(
+                drafts,
+                $"{(label.Length > 0 ? label + "-" : "")}{(kind == "chapter" ? "chapter" : "story")}-{model.Replace('/', '_')}-{effort}-{run}-{DateTimeOffset.Now:HHmmss}.json");
 
-        File.WriteAllText(draftFile, JsonSerializer.Serialize(
+        if (draftFile is not null)
+        {
+            File.WriteAllText(draftFile, JsonSerializer.Serialize(
             new
             {
                 label,
@@ -239,6 +272,7 @@ public partial class StoryComparisonTests
                 notes = outcome?.Notes,
             },
             DraftJson));
+        }
 
         return new StoryRecord
         {
@@ -252,13 +286,13 @@ public partial class StoryComparisonTests
             Reason = reason,
             Refusal = outcome?.Refusal,
             ContextMessage = outcome?.ContextMessage,
-            DraftFile = Path.GetFileName(draftFile),
+            DraftFile = draftFile is null ? null : Path.GetFileName(draftFile),
             Warnings = warnings,
             Name = outcome?.Draft?.Name,
             Beats = outcome?.Draft?.Beats.Count ?? 0,
-            GalaxySeconds = galaxy.Seconds,
-            GalaxyCalls = galaxy.Calls,
-            NotablePlacesSeconds = places.Seconds,
+            GalaxySeconds = galaxy?.Seconds ?? 0,
+            GalaxyCalls = galaxy?.Calls ?? 0,
+            NotablePlacesSeconds = places?.Seconds ?? 0,
             Calls =
             [
                 .. metered.Select((request, at) => new StoryCall(
