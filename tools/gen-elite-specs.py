@@ -26,8 +26,9 @@ Two sources, joined on Frontier's own ids
 journal writes, and `outfitting.csv` maps a module id to its name, mount, class and
 rating. It carries no performance figures.
 
-`EDCD/coriolis-data` carries the figures — speed, boost, armour, shields, module mass,
-power draw, and the drive numbers a jump range is computed from. Its ship and module
+`EDCD/coriolis-data` carries the module figures — mass, power draw, and the drive numbers a
+jump range is computed from. A hull's speed, boost, armour, shields, hardness, mass and slot
+sizes come from EDSY first; see `build_ships`. Its ship and module
 entries each carry an `edID`, which is the same id, so the two join cleanly and the join
 is the check: a ship in one and not the other is a gap this script refuses to hide.
 
@@ -311,13 +312,11 @@ def build_ships(
     """Every hull `shipyard.csv` names, the naming authority driving the loop rather than
     being joined against it.
 
-    coriolis-data supplies the figures where its `edID` matches the id `shipyard.csv` gives
-    the same hull. Where it does not — either because coriolis-data has no file for the hull
-    at all, or because its file's own `edID` disagrees with `shipyard.csv`'s — EDSY's
-    `eddb.js` fills `speed`, `boost`, `armour`, `shields`, `hardness` and `hull_mass` by
-    symbol, the same `fdname` the journal writes. Neither source names every column: a hull
-    only EDSY measures still carries no manufacturer, pad, crew or slot sizes, because EDSY
-    is not asked for those here.
+    EDSY's `eddb.js`, matched by symbol, supplies `speed`, `boost`, `armour`, `shields`,
+    `hardness`, `hull_mass`, `hardpoints` and `internals`. coriolis-data, matched on the id
+    `shipyard.csv` gives the hull, supplies the other columns, and any of those eight EDSY
+    leaves blank. A hull coriolis-data does not match carries no manufacturer, pad, fuel,
+    crew, masslock or cost.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
 
@@ -334,11 +333,21 @@ def build_ships(
         ship = by_edid.get(int(identity["id"]))
         properties = (ship.get("properties") or {}) if ship else {}
         slots = (ship.get("slots") or {}) if ship else {}
-        figures = (edsy_hulls.get(symbol) or {}).get("figures") or {}
+        edsy = edsy_hulls.get(symbol) or {}
+        figures = edsy.get("figures") or {}
+        sizes = edsy.get("sizes") or {}
 
         def pick(coriolis_key: str, edsy_key: str) -> str:
+            if figures.get(edsy_key):
+                return figures[edsy_key]
             value = properties.get(coriolis_key)
-            return number(value) if value is not None else figures.get(edsy_key, "")
+            return number(value) if value is not None else ""
+
+        def sizes_of(edsy_group: str, coriolis_group: str) -> str:
+            # Sizes rather than counts. "3 large, 2 medium" is the answer to "what can
+            # it carry"; "5 hardpoints" is not.
+            found = sizes.get(edsy_group) or slots.get(coriolis_group) or []
+            return ",".join(str(size) for size in found if isinstance(size, int) and size)
 
         if ship is None and not any(figures.values()):
             missing.append(identity["name"])
@@ -359,12 +368,8 @@ def build_ships(
             number(properties.get("crew")),
             number(properties.get("masslock")),
             number(properties.get("hullCost")),
-
-            # Sizes rather than counts. "3 large, 2 medium" is the answer to "what can
-            # it carry"; "5 hardpoints" is not.
-            ",".join(str(size) for size in slots.get("hardpoints") or [] if size),
-            ",".join(str(size) for size in slots.get("internal") or []
-                     if isinstance(size, int) and size),
+            sizes_of("hardpoint", "hardpoints"),
+            sizes_of("internal", "internal"),
             "arx-early-access" if symbol in ARX_EARLY_ACCESS else requirement(ship) if ship else "",
         ])
 

@@ -11,31 +11,31 @@
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
 # Ships: 48. Modules: 1214, of which bulkheads 241. Known but unmeasured: 0.
-# Slots: 1247 across 48 hulls. Modules with no type: 17.
+# Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-09-22.
+# Built: 2026-10-22.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
 anaconda	Anaconda	Faulcon DeLacy	large	180	240	525	350	65	400	1.07	4	23	142456440	4,3,3,3,2,2,1,1	7,6,6,6,5,5,5,4,4,4,2,1	
 asp	Asp Explorer	Lakon	medium	250	340	210	140	52	280	0.63	2	11	6145793	2,2,1,1,1,1	6,5,3,3,3,2,2,1	
-asp_scout	Asp Scout	Lakon	medium	220	300	180	120	52	150	0.47	2	8	3819823	2,2,1,1	5,4,3,3,2,2,1	
+asp_scout	Asp Scout	Lakon	medium	270	360	180	120	52	140	0.47	2	8	3819823	2,2,1,1	5,4,3,3,2,2,1	
 belugaliner	Beluga Liner	Saud Kruger	large	200	280	280	280	60	950	0.81	4	18	79694761	2,2,2,2,2	6,6,6,6,5,5,4,3,3,3,3,1	
 cobramkiii	Cobra MkIII	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
 cobramkiv	Cobra MkIV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
-cobramkv	Cobra MkV	Faulcon DeLacy	small	291	412	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
-corsair	Corsair			280	355	270	235	65	265							
+cobramkv	Cobra MkV	Faulcon DeLacy	small	290	410	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
+corsair	Corsair			280	355	270	235	65	265					3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
 cutter	Imperial Cutter	Gutamaya	large	200	320	400	600	70	1100	1.16	4	27	200493413	4,3,3,2,2,2,2	8,8,6,6,6,5,5,4,3,1	empire:12
 diamondback	Diamondback Scout	Lakon	small	280	380	120	120	40	170	0.49	1	8	463926	2,2,1,1	3,3,3,2,1,1	
 diamondbackxl	Diamondback Explorer	Lakon	small	260	340	150	150	42	260	0.52	1	10	1638277	3,2,2	4,4,3,3,2,2,1,1	
 dolphin	Dolphin	Saud Kruger	small	250	350	110	110	35	140	0.5	1	9	1117906	1,1	5,4,4,3,2,2,2,1,1	
-eagle	Eagle	Core Dynamics	small	240	350	40	60	28	50	0.34	1	6	10947	1,1,1	3,2,1,1,1,1	
+eagle	Eagle	Core Dynamics	small	240	350	40	80	28	50	0.34	1	6	10947	1,1,1	3,2,1,1,1,1	
 empire_courier	Imperial Courier	Gutamaya	small	280	380	80	200	30	35	0.41	1	7	2484137	2,2,2	3,3,2,2,2,1,1,1	empire:3
 empire_eagle	Imperial Eagle	Gutamaya	small	300	400	60	80	28	50	0.37	1	6	73023	2,1,1	3,2,1,1,1,1	
-empire_trader	Imperial Clipper	Gutamaya	large	300	380	270	180	60	400	0.74	2	12	21116895	3,3,2,2	7,6,4,4,3,3,2,2,1	empire:7
-explorer_nx	Caspian Explorer			210	290	345	500	60	950							
+empire_trader	Imperial Clipper	Gutamaya	large	300	380	270	200	60	350	0.74	2	12	21116895	3,3,2,2	7,7,6,4,4,3,3,2,2,1	empire:7
+explorer_nx	Caspian Explorer			210	290	345	500	60	825					3,2,2,2,2,2,2	7,6,6,5,5,5,5,4,4,3,2,1,1,1	
 federation_corvette	Federal Corvette	Core Dynamics	large	200	260	370	555	70	900	1.13	4	24	183156068	4,4,3,2,2,1,1	7,7,7,6,6,5,5,4,4,3,1	federation:12
-federation_dropship	Federal Dropship	Core Dynamics	medium	180	300	300	200	60	580	0.83	2	14	13510106	3,2,2,2,2	6,5,5,4,3,3,2,1	federation:3
+federation_dropship	Federal Dropship	Core Dynamics	medium	200	300	300	200	60	500	0.83	2	14	13510106	3,2,2,2,2	6,6,5,5,4,3,3,2,1	federation:3
 federation_dropship_mkii	Federal Assault Ship	Core Dynamics	medium	210	350	300	200	60	480	0.72	2	14	19111109	3,3,2,2	5,5,4,3,2,2,1	federation:5
 federation_gunship	Federal Gunship	Core Dynamics	medium	170	280	350	250	60	580	0.82	2	14	34814912	3,2,2,2,2,1,1	6,6,5,2,2,1	federation:7
 ferdelance	Fer-de-Lance	Zorgon Peterson	medium	260	350	225	300	70	250	0.67	2	12	51242363	4,2,2,2,2	5,4,4,2,1,1	
@@ -43,26 +43,26 @@ hauler	Hauler	Zorgon Peterson	small	200	300	100	50	20	14	0.25	1	6	30308	1	3,3,2,
 independant_trader	Keelback	Lakon	medium	200	300	270	135	45	180	0.39	2	8	2946463	2,2,1,1	5,5,4,3,2,2,1	
 krait_light	Krait Phantom	Faulcon DeLacy	medium	250	350	180	200	55	270	0.63	2	14	35741519	3,3,2,2	6,5,5,5,3,3,3,2,1	
 krait_mkii	Krait MkII	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	44160710	3,3,3,2,2	6,6,5,5,4,3,3,2,1	
-lakonminer	Type-11 Prospector	Lakon	medium	272	367	350	275	58	320	0.77	3	16	66346710	{'class': 3, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'mvr': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},{'class': 2, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},{'class': 2, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},2,{'class': 1, 'name': 'Mining', 'eligible': {'abl': 1, 'ml': 1, 'pwa': 1, 'scl': 1, 'sdm': 1}},1,1,1	6,6,6,5,5,4,3,2,1,1	
+lakonminer	Type-11 Prospector	Lakon	medium	270	365	350	275	58	320	0.77	3	16	66346710	3,2,2,2,1,1,1,1	6,6,6,5,5,5,5,4,3,2,1,1	
 mamba	Mamba	Zorgon Peterson	medium	310	380	230	270	70	250	0.5	2	12	55442918	4,3,3,1,1	5,4,3,2,2,1	
-mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	230	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
-mediumtransport01	Lynx Highliner			285	350	350	200	55	260							
+mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	190	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
+mediumtransport01	Lynx Highliner			285	350	350	200	55	260					3,2,2,2,2	6,6,6,5,5,4,4,3,2,1	
 orca	Orca	Saud Kruger	large	300	380	220	220	55	290	0.79	2	16	47800723	3,2,2	6,5,5,5,4,3,2,2,1	
-panthermkii	Panther Clipper MkII	Zorgon Peterson	large	181	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
+panthermkii	Panther Clipper MkII	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,8,7,7,6,6,6,5,5,4,2,1	
 python	Python	Faulcon DeLacy	medium	230	300	260	260	65	350	0.83	2	17	55324684	3,3,3,2,2	6,6,6,5,5,4,3,3,2,1	
 python_nx	Python MkII	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
-sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	40	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
-smallcombat01_nx	Kestrel Mk II			270	360	70	225	55	190							
-type6	Type-6 Transporter	Lakon	medium	220	350	180	90	35	155	0.39	1	8	866622	1,1	5,5,4,4,3,2,2,1	
-type7	Type-7 Transporter	Lakon	large	180	300	340	155	54	350	0.52	1	10	16783094	1,1,1,1	6,6,6,5,5,5,3,3,2,1	
+sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	55	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
+smallcombat01_nx	Kestrel Mk II			270	360	70	225	55	190					3,3,3,1,1	5,4,3,2,2,2,1	
+type6	Type-6 Transporter	Lakon	medium	220	350	180	125	35	155	0.39	1	8	866622	1,1	6,5,5,4,4,3,2,2,1	
+type7	Type-7 Transporter	Lakon	large	180	300	340	156	54	300	0.52	1	10	16783094	1,1,1,1	7,6,6,6,6,5,5,5,3,3,2,1	
 type8	Type-8 Transporter	Lakon	medium	200	340	440	228	58	400	0.52	1	18	34820576	2,1,1,1,1,1	7,6,6,6,5,5,4,2,1	
 type9	Type-9 Heavy	Lakon	large	130	200	480	240	65	850	0.77	4	16	72116858	2,2,2,1,1	8,8,7,6,5,4,4,3,3,2,1	
-type9_military	Type-10 Defender	Lakon	large	179	219	580	320	75	1200	0.77	4	26	121334619	3,3,3,3,2,2,2,1,1	8,7,6,5,4,4,3,3,2,1	
+type9_military	Type-10 Defender	Lakon	large	180	220	580	320	75	1200	0.77	4	26	121334619	3,3,3,3,2,2,2,1,1	8,7,6,5,4,4,3,3,2,1	
 typex	Alliance Chieftain	Lakon	medium	230	330	280	200	65	400	0.77	2	13	18612476	3,3,2,1,1,1	6,5,4,2,2,1	
 typex_2	Alliance Crusader	Lakon	medium	180	300	300	200	65	500	0.77	4	13	22096565	3,2,2,1,1,1	6,5,3,3,2,2,1	
-typex_3	Alliance Challenger	Lakon	medium	204	310	300	220	65	450	0.77	2	13	29569804	3,2,2,2,1,1,1	6,6,3,3,2,2,1	
+typex_3	Alliance Challenger	Lakon	medium	200	310	300	220	65	450	0.77	2	13	29569804	3,2,2,2,1,1,1	6,6,3,3,2,2,1	
 viper	Viper MkIII	Faulcon DeLacy	small	320	400	70	105	35	50	0.41	1	7	96733	2,2,1,1	3,3,2,1,1,1	
-viper_mkiv	Viper MkIV	Faulcon DeLacy	small	270	340	150	150	35	190	0.46	1	7	312797	2,2,1,1	4,4,3,2,2,1,1,1	
+viper_mkiv	Viper MkIV	Faulcon DeLacy	small	280	360	150	160	35	190	0.46	1	7	312797	2,2,1,1	4,4,3,2,2,1,1,1	
 vulture	Vulture	Core Dynamics	small	210	340	160	240	55	230	0.57	2	10	4692214	3,3	5,4,2,1,1,1,1	
 [modules]
 symbol	name	class	rating	mount	mass	power	integrity	cost	optimal_mass	max_fuel	fuel_power	fuel_multiplier	hull_boost	kinetic_res	thermal_res	explosive_res	caustic_res	mtype	hulls	exact_size	figures	about	limit	entitlement	power_capacity	jump_boost
@@ -301,7 +301,7 @@ hpt_mininglaser_fixed_small	Mining Laser	1	D	Fixed	2	0.5	40	6800										hmtl		
 hpt_mininglaser_fixed_small_advanced	Mining Lance	1	D	Fixed	2	0.7	40	13600										hmtl			damage per second=8;damage type=thermal;damage=8;range=2000;damage falls off from=400;thermal load=6;distributor draw=1.75;armour piercing=18			ELITE_SPECIFIC_V_POWER_200120		
 hpt_mininglaser_turret_medium	Mining Laser	2	D	Turreted	2	0.75	51	32576										hmtl			damage per second=4;damage type=thermal;damage=4;range=500;damage falls off from=300;thermal load=4;distributor draw=3;armour piercing=18					
 hpt_mininglaser_turret_small	Mining Laser	1	D	Turreted	2	0.5	40	9400										hmtl			damage per second=2;damage type=thermal;damage=2;range=500;damage falls off from=300;thermal load=2;distributor draw=1.5;armour piercing=18					
-hpt_miningtoolv2_fixed_large	Mining Volley Repeater	3	C	Fixed	8	1.5	61	149910										hmtl	lakonminer		damage per second=6.0;damage type=thermal;damage=0.3;fire interval=0.05;range=500;damage falls off from=500;thermal load=0.4;distributor draw=2;armour piercing=18;clip=1;ammo=1;reload=4;shots per burst=1;burst rate=0					
+hpt_miningtoolv2_fixed_large	Mining Volley Repeater	3	C	Fixed	8	1.5	61	149910										hmtl	anacondamkii lakonminer		damage per second=6.0;damage type=thermal;damage=0.3;fire interval=0.05;range=500;damage falls off from=500;thermal load=0.4;distributor draw=2;armour piercing=18;clip=1;ammo=1;reload=4;shots per burst=1;burst rate=0					
 hpt_mkiiplasmashockautocannon_fixed_large	Mk II Plasma Shock Accelerator	3	B	Fixed	8	1.51	64	3051200										hpa	smallcombat01_nx		damage per second=108.35;damage type=60% absolute, 20% kinetic, 20% thermal;damage=13.9;fire interval=0.406;range=3000;damage falls off from=2500;thermal load=1.7;distributor draw=0.92;armour piercing=60;clip=18;ammo=0;reload=5;shots per burst=4;burst rate=28					
 hpt_mrascanner_size0_class1	Pulse Wave Analyser	0	E		1.3	0.2	24	13544										upwa			scan time=3;scan angle=15		upwa			
 hpt_mrascanner_size0_class2	Pulse Wave Analyser	0	D		1.3	0.4	24	40633										upwa			scan time=3;scan angle=15		upwa			
@@ -560,18 +560,18 @@ int_engine_size8_class4	Thrusters	8	B		256	9.9	180	54195495	3080									ct			mi
 int_engine_size8_class5	Thrusters	8	A		160	10.8	165	162586486	3360									ct			minimum mass=1680;maximum mass=5040;multiplier at minimum=0.96;multiplier at optimal=1;multiplier at maximum=1.16	Normal-space propulsion system.				
 int_expmodulestabiliser_size3_class3	Experimental Weapon Stabiliser	3	F		8	0		2000000										iex				Stabilises the stress typically applied to a ship's structural integrity by experimental weapons	iex			
 int_expmodulestabiliser_size5_class3	Experimental Weapon Stabiliser	5	F		20	0		4000000										iex				Stabilises the stress typically applied to a ship's structural integrity by experimental weapons	iex	ELITE_HORIZONS_V_EXPERIMENTALSTABILISER_SIZE5		
-int_fighterbay_size5_class1	Vessel Hangar	5	D		20	0.25	60	575643										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=1	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_fighterbay_size5_class1_free	Vessel Hangar (free)	5	D		20	0.25	60	0										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
-int_fighterbay_size6_class1	Vessel Hangar	6	D		40	0.35	80	1869340										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=2	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_fighterbay_size6_class1_free	Vessel Hangar (free)	6	D		40	0.35	80	0										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
-int_fighterbay_size7_class1	Vessel Hangar	7	D		60	0.35	120	2369320										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=2	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_fighterbay_size7_class1_free	Vessel Hangar (free)	7	D		60	0.35	120	0										ifh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
-int_fighterbaymk2_size5_class1	Mk II Vessel Hangar	5	D		10	0.25	60	794390										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
-int_fighterbaymk2_size5_class1_free	Mk II Vessel Hangar (free)	5	D		10	0.25	60	0										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
-int_fighterbaymk2_size6_class1	Mk II Vessel Hangar	6	D		20	0.35	80	2579690										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
-int_fighterbaymk2_size6_class1_free	Mk II Vessel Hangar (free)	6	D		20	0.35	80	0										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
-int_fighterbaymk2_size7_class1	Mk II Vessel Hangar	7	D		30	0.35	120	3269660										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
-int_fighterbaymk2_size7_class1_free	Mk II Vessel Hangar (free)	7	D		30	0.35	120	0										ifh	explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
+int_fighterbay_size5_class1	Vessel Hangar	5	D		20	0.25	60	575643										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=1	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_fighterbay_size5_class1_free	Vessel Hangar (free)	5	D		20	0.25	60	0										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
+int_fighterbay_size6_class1	Vessel Hangar	6	D		40	0.35	80	1869340										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=2	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_fighterbay_size6_class1_free	Vessel Hangar (free)	6	D		40	0.35	80	0										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
+int_fighterbay_size7_class1	Vessel Hangar	7	D		60	0.35	120	2369320										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2		fighter bays=2	A module designed to house ship launched vehicles.	ifh	ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_fighterbay_size7_class1_free	Vessel Hangar (free)	7	D		60	0.35	120	0										ifh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2				ifh	ELITE_V_MKIFIGHTERBAY_FREE		
+int_fighterbaymk2_size5_class1	Mk II Vessel Hangar	5	D		10	0.25	60	794390										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
+int_fighterbaymk2_size5_class1_free	Mk II Vessel Hangar (free)	5	D		10	0.25	60	0										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
+int_fighterbaymk2_size6_class1	Mk II Vessel Hangar	6	D		20	0.35	80	2579690										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
+int_fighterbaymk2_size6_class1_free	Mk II Vessel Hangar (free)	6	D		20	0.35	80	0										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
+int_fighterbaymk2_size7_class1	Mk II Vessel Hangar	7	D		30	0.35	120	3269660										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY		
+int_fighterbaymk2_size7_class1_free	Mk II Vessel Hangar (free)	7	D		30	0.35	120	0										ifh	anacondamkii explorer_nx lakonminer panthermkii				ifh	ELITE_V_MKIIFIGHTERBAY_FREE		
 int_fsdinterdictor_size1_class1	Frame Shift Drive Interdictor	1	E		1.3	0.14	32	12000										ifsdi				Used to pull targets out of supercruise.	ifsdi			
 int_fsdinterdictor_size1_class2	Frame Shift Drive Interdictor	1	D		0.5	0.18	24	36000										ifsdi				Used to pull targets out of supercruise.	ifsdi			
 int_fsdinterdictor_size1_class3	Frame Shift Drive Interdictor	1	C		1.3	0.23	40	108000										ifsdi				Used to pull targets out of supercruise.	ifsdi			
@@ -773,14 +773,14 @@ int_hyperdrive_size8_class2	Frame Shift Drive	8	D															cfsd
 int_hyperdrive_size8_class3	Frame Shift Drive	8	C															cfsd								
 int_hyperdrive_size8_class4	Frame Shift Drive	8	B															cfsd								
 int_hyperdrive_size8_class5	Frame Shift Drive	8	A															cfsd								
-int_largebuggybay_size2_class3	Large Planetary Vehicle Hangar	2	F															ipvh						ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size2_class3_free	Large Planetary Vehicle Hangar (free)	2	F																					ELITE_V_LARGEBUGGYBAY_FREE		
-int_largebuggybay_size4_class3	Large Planetary Vehicle Hangar	4	F															ipvh						ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size4_class3_free	Large Planetary Vehicle Hangar (free)	4	F																					ELITE_V_LARGEBUGGYBAY_FREE		
-int_largebuggybay_size6_class3	Large Planetary Vehicle Hangar	6	F															ipvh						ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F																					ELITE_V_LARGEBUGGYBAY_FREE		
-int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	panthermkii		capacity=192	Panther Clipper storage rack for use in automated cargo transfer system.				
-int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	panthermkii		capacity=384	Panther Clipper storage rack for use in automated cargo transfer system.				
+int_largebuggybay_size2_class3	Large Planetary Vehicle Hangar	2	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size2_class3_free	Large Planetary Vehicle Hangar (free)	2	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largebuggybay_size4_class3	Large Planetary Vehicle Hangar	4	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size4_class3_free	Large Planetary Vehicle Hangar (free)	4	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largebuggybay_size6_class3	Large Planetary Vehicle Hangar	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	anacondamkii panthermkii		capacity=192	Panther Clipper storage rack for use in automated cargo transfer system.				
+int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	anacondamkii panthermkii		capacity=384	Panther Clipper storage rack for use in automated cargo transfer system.				
 int_lifesupport_size1_class1	Life Support	1	E		1.3	0.32	32	517										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
 int_lifesupport_size1_class1_free	Life Support (free)	1	E																							
 int_lifesupport_size1_class2	Life Support	1	D		0.5	0.36	36	1293										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
@@ -842,12 +842,12 @@ int_mkii_passengercabin_size5_class2	MkII Business Class Passenger Cabin (size5)
 int_mkii_passengercabin_size6_class1	MkII Economy Class Passenger Cabin (size6)	5	D															ipc	mediumtransport01							
 int_mkii_passengercabin_size6_class2	MkII Business Class Passenger Cabin (size6)	5	C															ipc	mediumtransport01							
 int_mkiiagileboost_engine_size5_class5	Mk II Agile Boost Thrusters	5	A		20	6.29	106	6637629	840									ct	smallcombat01_nx		minimum mass=420;maximum mass=1260;multiplier at minimum=0.96;multiplier at optimal=1;multiplier at maximum=1.16	Normal-space propulsion system.				
-int_mkiilargebuggybay_size2_class3	Mk II Large Planetary Vehicle Hangar	2	F															ipvh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size2_class3_free	Mk II Large Planetary Vehicle Hangar (free)	2	F																					ELITE_V_LARGEBUGGYBAY_FREE		
-int_mkiilargebuggybay_size4_class3	Mk II Large Planetary Vehicle Hangar	4	F															ipvh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size4_class3_free	Mk II Large Planetary Vehicle Hangar (free)	4	F																					ELITE_V_LARGEBUGGYBAY_FREE		
-int_mkiilargebuggybay_size6_class3	Mk II Large Planetary Vehicle Hangar	6	F															ipvh	anaconda belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size6_class3_free	Mk II Large Planetary Vehicle Hangar (free)	6	F																					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size2_class3	Mk II Large Planetary Vehicle Hangar	2	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size2_class3_free	Mk II Large Planetary Vehicle Hangar (free)	2	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size4_class3	Mk II Large Planetary Vehicle Hangar	4	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size4_class3_free	Mk II Large Planetary Vehicle Hangar (free)	4	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size6_class3	Mk II Large Planetary Vehicle Hangar	6	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size6_class3_free	Mk II Large Planetary Vehicle Hangar (free)	6	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
 int_modulereinforcement_size1_class1	Module Reinforcement Package	1	E		2		77	5000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has high damage capacity but low absorption of module damage. I.e. it can absorb a small proportion of module damage each time over a long period before running out of damage capacity.				
 int_modulereinforcement_size1_class2	Module Reinforcement Package	1	D		1		70	15000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has low damage capacity but high absorption of module damage. I.e. it can absorb a large proportion of module damage each time over a short period before running out of damage capacity.				
 int_modulereinforcement_size2_class1	Module Reinforcement Package	2	E		4		115	12000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has high damage capacity but low absorption of module damage. I.e. it can absorb a small proportion of module damage each time over a long period before running out of damage capacity.				
@@ -1373,6 +1373,43 @@ anaconda	Slot09_Size4	optional	4
 anaconda	Slot10_Size4	optional	4	
 anaconda	Slot13_Size2	optional	2	
 anaconda	Slot14_Size1	optional	1	
+anacondamkii	HugeHardpoint1	hardpoint	4	
+anacondamkii	LargeHardpoint1	hardpoint	3	
+anacondamkii	LargeHardpoint2	hardpoint	3	
+anacondamkii	LargeHardpoint3	hardpoint	3	
+anacondamkii	LargeHardpoint4	hardpoint	3	
+anacondamkii	SmallHardpoint1	hardpoint	1	
+anacondamkii	SmallHardpoint2	hardpoint	1	
+anacondamkii	TinyHardpoint1	utility	0	
+anacondamkii	TinyHardpoint2	utility	0	
+anacondamkii	TinyHardpoint3	utility	0	
+anacondamkii	TinyHardpoint4	utility	0	
+anacondamkii	TinyHardpoint5	utility	0	
+anacondamkii	TinyHardpoint6	utility	0	
+anacondamkii	TinyHardpoint7	utility	0	
+anacondamkii	TinyHardpoint8	utility	0	
+anacondamkii	Armour	core	1	
+anacondamkii	PowerPlant	core	8	
+anacondamkii	MainEngines	core	7	
+anacondamkii	FrameShiftDrive	core	8	
+anacondamkii	LifeSupport	core	5	
+anacondamkii	PowerDistributor	core	8	
+anacondamkii	Radar	core	8	
+anacondamkii	FuelTank	core	6	
+anacondamkii	Military01	optional	5	military
+anacondamkii	Military02	optional	5	military
+anacondamkii	Slot01_Size8	optional	8	
+anacondamkii	Slot02_Size7	optional	7	
+anacondamkii	Slot03_Size7	optional	7	
+anacondamkii	Cargo01	optional	6	cft icr
+anacondamkii	Slot04_Size5	optional	5	
+anacondamkii	Slot05_Size5	optional	5	
+anacondamkii	Slot06_Size5	optional	5	
+anacondamkii	Slot07_Size4	optional	4	
+anacondamkii	Slot08_Size4	optional	4	
+anacondamkii	Slot09_Size3	optional	3	
+anacondamkii	Slot10_Size2	optional	2	
+anacondamkii	Slot11_Size1	optional	1	
 asp	MediumHardpoint1	hardpoint	2	
 asp	MediumHardpoint2	hardpoint	2	
 asp	SmallHardpoint1	hardpoint	1	
@@ -1405,6 +1442,7 @@ asp_scout	SmallHardpoint1	hardpoint	1
 asp_scout	SmallHardpoint2	hardpoint	1	
 asp_scout	TinyHardpoint1	utility	0	
 asp_scout	TinyHardpoint2	utility	0	
+asp_scout	TinyHardpoint3	utility	0	
 asp_scout	Armour	core	1	
 asp_scout	PowerPlant	core	4	
 asp_scout	MainEngines	core	4	
@@ -1730,7 +1768,8 @@ empire_trader	FrameShiftDrive	core	5
 empire_trader	LifeSupport	core	5	
 empire_trader	PowerDistributor	core	6	
 empire_trader	Radar	core	5	
-empire_trader	FuelTank	core	4	
+empire_trader	FuelTank	core	5	
+empire_trader	Slot00_Size7	optional	7	
 empire_trader	Slot01_Size7	optional	7	
 empire_trader	Slot02_Size6	optional	6	
 empire_trader	Slot03_Size4	optional	4	
@@ -1830,6 +1869,7 @@ federation_dropship	Radar	core	4
 federation_dropship	FuelTank	core	4	
 federation_dropship	Military01	optional	4	military
 federation_dropship	Military02	optional	4	military
+federation_dropship	Slot00_Size6	optional	6	
 federation_dropship	Slot01_Size6	optional	6	
 federation_dropship	Slot02_Size5	optional	5	
 federation_dropship	Slot03_Size5	optional	5	
@@ -2032,7 +2072,7 @@ lakonminer	Slot03_Size6	optional	6
 lakonminer	Slot04_Size5	optional	5	
 lakonminer	Slot05_Size5	optional	5	
 lakonminer	LimpetController01	optional	5	iclc idlc iftlc ihblc imlc inlc iplc irlc islc
-lakonminer	FighterBay01	optional	5	ifh
+lakonminer	FighterBay01	optional	5	ifh ipvh
 lakonminer	Slot06_Size4	optional	4	
 lakonminer	Slot07_Size3	optional	3	
 lakonminer	Slot08_Size2	optional	2	
@@ -2287,6 +2327,7 @@ type6	LifeSupport	core	2
 type6	PowerDistributor	core	3	
 type6	Radar	core	2	
 type6	FuelTank	core	4	
+type6	Slot00_Size6	optional	6	
 type6	Slot01_Size5	optional	5	
 type6	Slot02_Size5	optional	5	
 type6	Slot03_Size4	optional	4	
@@ -2311,6 +2352,8 @@ type7	LifeSupport	core	4
 type7	PowerDistributor	core	4	
 type7	Radar	core	3	
 type7	FuelTank	core	5	
+type7	Slot00_Size7	optional	7	
+type7	Slot00_Size6	optional	6	
 type7	Slot01_Size6	optional	6	
 type7	Slot02_Size6	optional	6	
 type7	Slot03_Size5	optional	6	
@@ -2566,8 +2609,15 @@ vulture	Slot08_Size1	optional	1
 [known-but-unmeasured]
 [known-but-unnamed]
 symbol	mtype
+anacondamkii_armour_grade1	cbh
+anacondamkii_armour_grade1_default	cbh
+anacondamkii_armour_grade2	cbh
+anacondamkii_armour_grade3	cbh
+anacondamkii_armour_mirrored	cbh
+anacondamkii_armour_reactive	cbh
 hpt_cannon_turret_huge	hc
 int_corrosionproofcargorack_size2_class1	icr
+int_largecargorack_size6_class1	icr
 int_passengercabin_size2_class0	ipc
 int_passengercabin_size3_class0	ipc
 int_passengercabin_size4_class0	ipc
