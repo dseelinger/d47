@@ -79,7 +79,7 @@ public class AskingWhatWasFoundOnABodyTests
         var answer = await Ask(Registry(new FakeCommunity(Finds()), new EarlierFinds()), """{"body":"C 3 a"}""");
 
         Assert.Equal(
-            "Canonn has 6 earlier finds on C 3 a: Stratum Tectonicas - Lime 3, Bacterium Aurasus - Green 2, "
+            "Commanders have logged 6 earlier finds on C 3 a: Stratum Tectonicas - Lime 3, Bacterium Aurasus - Green 2, "
             + "Osseus Fractus - Indigo 1.",
             answer);
     }
@@ -89,7 +89,7 @@ public class AskingWhatWasFoundOnABodyTests
     {
         var registry = Registry(new FakeCommunity(Finds()), new EarlierFinds(), body: $"{System} D 1");
 
-        Assert.Equal("Canonn has 1 earlier find on D 1: Fungoida Setisis - Emerald 1.", await Ask(registry));
+        Assert.Equal("Commanders have logged 1 earlier find on D 1: Fungoida Setisis - Emerald 1.", await Ask(registry));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class AskingWhatWasFoundOnABodyTests
     {
         var answer = await Ask(Registry(new FakeCommunity(Finds()), new EarlierFinds()), """{"body":"B 2"}""");
 
-        Assert.Equal("Canonn has no earlier finds on B 2.", answer);
+        Assert.Equal("No Commander has logged earlier finds on B 2.", answer);
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class AskingWhatWasFoundOnABodyTests
         var answer = await Ask(Registry(community, new EarlierFinds(), on: false), """{"body":"C 3 a"}""");
 
         Assert.Equal(
-            "Earlier biology finds are off. Turn on Earlier biology finds from Canonn in Settings to ask.",
+            "Earlier biology finds are off. Turn on Earlier biology finds in Settings to ask.",
             answer);
         Assert.Equal(0, community.Requests);
     }

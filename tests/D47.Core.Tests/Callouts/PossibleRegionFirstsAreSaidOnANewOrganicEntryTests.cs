@@ -71,7 +71,7 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
         var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
 
         Assert.Equal(
-            "Canonn has no report of Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.",
+            "No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.",
             said.Text);
     }
 
@@ -84,7 +84,7 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
         var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
 
         Assert.Equal(
-            "Canonn has no report of Fonticulua Fluctus - Yellow anywhere. It may be a first in the galaxy.",
+            "No Commander has reported Fonticulua Fluctus - Yellow anywhere. It may be a first in the galaxy.",
             said.Text);
     }
 

@@ -80,7 +80,7 @@ public static class SurfaceGuidanceCapability
                 Description =
                     "Give the bearing and distance from the Commander's live position to a saved point on this "
                     + "body: the ship, a mark, or a genus or species being sampled. \"nearest <name>\" gives the "
-                    + "nearest earlier find on this body whose variant name contains <name>, from Canonn's records; "
+                    + "nearest earlier find on this body whose variant name contains <name>, from other Commanders' logged finds; "
                     + "\"nearest\" alone matches any variant. Without a target it uses the ship, then the newest "
                     + "mark, then the last specimen of the newest open set.",
                 Parameters =
@@ -240,7 +240,7 @@ public static class SurfaceGuidanceCapability
         string variant)
     {
         var label = variant.Length > 0 ? $"{variant} " : string.Empty;
-        var none = ToolResult.Ok($"Canonn has no earlier {label}find on this body.");
+        var none = ToolResult.Ok($"No Commander has logged an earlier {label}find on this body.");
 
         if (commander is null || commander.Surface.Body is not { } body || earlier is null
             || !earlier.TryGet(body.SystemAddress, out var finds)

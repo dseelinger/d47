@@ -96,7 +96,7 @@ public static class ExobiologyCapability
             {
                 Name = EarlierFindsTool,
                 Description =
-                    "What other Commanders have already logged on a body, from Canonn: each biological "
+                    "What other Commanders have already logged on a body, from other Commanders' logged finds: each biological "
                     + "variant and how many finds there are of it, most first. Needs the setting Earlier "
                     + "biology finds from Canonn.",
                 Parameters =
@@ -331,7 +331,7 @@ public static class ExobiologyCapability
         if (!settings.Current.Knowledge.CommunityBiology)
         {
             return ToolResult.Ok(
-                "Earlier biology finds are off. Turn on Earlier biology finds from Canonn in Settings to ask.");
+                "Earlier biology finds are off. Turn on Earlier biology finds in Settings to ask.");
         }
 
         if (state is null)
@@ -377,7 +377,7 @@ public static class ExobiologyCapability
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                return ToolResult.Ok("I could not reach Canonn just now.");
+                return ToolResult.Ok("I could not reach the biology records just now.");
             }
 
             store.Set(address, finds);
@@ -394,13 +394,13 @@ public static class ExobiologyCapability
 
         if (variants.Count == 0)
         {
-            return ToolResult.Ok($"Canonn has no earlier finds on {shortName}.");
+            return ToolResult.Ok($"No Commander has logged earlier finds on {shortName}.");
         }
 
         var total = variants.Sum(group => group.Count());
 
         return ToolResult.Ok(
-            $"Canonn has {total} earlier find{(total == 1 ? "" : "s")} on {shortName}: "
+            $"Commanders have logged {total} earlier find{(total == 1 ? "" : "s")} on {shortName}: "
             + string.Join(", ", variants.Select(group => $"{group.Key} {group.Count()}")) + ".");
     }
 

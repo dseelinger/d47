@@ -131,7 +131,7 @@ With Earlier biology finds from Canonn on and the finds for this system already 
 the find on this body nearest your position and gives it in the same wording, such as "The nearest
 earlier Bacterium Aurasus - Green find is 2.4 kilometres away, bearing 210, south-west." A name
 after "nearest" must appear in the variant name and goes through the model. Without a match D47
-says "Canonn has no earlier Bacterium find on this body." The spot is where another Commander logged
+says "No Commander has logged an earlier Bacterium find on this body." The spot is where another Commander logged
 the entry, not a specimen. This tool sends no request. A plain genus without "nearest" still means
 your own last sample. A spoken list of points names at most three.
 

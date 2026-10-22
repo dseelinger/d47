@@ -358,7 +358,7 @@ body's conditions admit, with each one's value: a prediction from the conditions
 
 #### `get_earlier_finds`
 
-What other Commanders have logged on a body, from Canonn: each variant and how many finds there are
+What other Commanders have logged on a body, from other Commanders' logged finds: each variant and how many finds there are
 of it, most first. Needs the Earlier biology finds from Canonn setting; with it off the answer says
 how to turn it on.
 

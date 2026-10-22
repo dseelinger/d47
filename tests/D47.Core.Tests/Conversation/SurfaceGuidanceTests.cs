@@ -394,7 +394,7 @@ public class SurfaceGuidanceTests
 
         var result = await scene.Way("nearest Bacterium");
 
-        Assert.Equal("Canonn has no earlier Bacterium find on this body.", result.Content);
+        Assert.Equal("No Commander has logged an earlier Bacterium find on this body.", result.Content);
     }
 
     [Fact]
@@ -404,8 +404,8 @@ public class SurfaceGuidanceTests
             Found("Sys 1 a", "Fonticulua Campestris", 0, 0.001));
 
         Assert.Equal(
-            "Canonn has no earlier Bacterium find on this body.", (await scene.Way("nearest Bacterium")).Content);
-        Assert.Equal("Canonn has no earlier find on this body.", (await new Scene().Landed().Standing(0, 0).Way("nearest")).Content);
+            "No Commander has logged an earlier Bacterium find on this body.", (await scene.Way("nearest Bacterium")).Content);
+        Assert.Equal("No Commander has logged an earlier find on this body.", (await new Scene().Landed().Standing(0, 0).Way("nearest")).Content);
     }
 
     [Fact]

@@ -48,11 +48,11 @@ public sealed class RegionFirstCallout : ICallout
 
             if (regions is not { Count: > 0 })
             {
-                line = $"Canonn has no report of {name} anywhere. It may be a first in the galaxy.";
+                line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy.";
             }
             else if (!regions.ContainsKey(regionId) && region is { Length: > 0 })
             {
-                line = $"Canonn has no report of {name} in the {region}. It may be a first for the region.";
+                line = $"No Commander has reported {name} in the {region}. It may be a first for the region.";
             }
             else
             {

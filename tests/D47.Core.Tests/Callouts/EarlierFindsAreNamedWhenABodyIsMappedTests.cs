@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>Mapping a body with biology names the variants Canonn has earlier finds of there.</summary>
+/// <summary>Mapping a body with biology names the variants other Commanders have earlier finds of there.</summary>
 public class EarlierFindsAreNamedWhenABodyIsMappedTests
 {
     private const long Here = 1_000_200;
@@ -102,7 +102,7 @@ public class EarlierFindsAreNamedWhenABodyIsMappedTests
         await RunDispatched(dispatched);
 
         Assert.Equal(
-            ["Canonn has earlier finds on this body: Bacterium Aurasus - Green, Osseus Fractus - Indigo and Stratum Tectonicas - Lime."],
+            ["Commanders have logged earlier finds on this body: Bacterium Aurasus - Green, Osseus Fractus - Indigo and Stratum Tectonicas - Lime."],
             Said(callout.Examine(Context(state, false))));
         Assert.Equal([System], community.Asked);
     }
@@ -120,7 +120,7 @@ public class EarlierFindsAreNamedWhenABodyIsMappedTests
         await RunDispatched(dispatched);
 
         Assert.Equal(
-            ["Canonn has earlier finds on this body: A - Green, B - Lime, C - Indigo and two more."],
+            ["Commanders have logged earlier finds on this body: A - Green, B - Lime, C - Indigo and two more."],
             Said(callout.Examine(Context(state, false))));
     }
 
@@ -147,8 +147,8 @@ public class EarlierFindsAreNamedWhenABodyIsMappedTests
 
         Assert.Equal(
             [
-                "Canonn has earlier finds on this body: A - Green.",
-                "Canonn has earlier finds on this body: B - Lime.",
+                "Commanders have logged earlier finds on this body: A - Green.",
+                "Commanders have logged earlier finds on this body: B - Lime.",
             ],
             Said(callout.Examine(Context(state, false))).Order().ToList());
 

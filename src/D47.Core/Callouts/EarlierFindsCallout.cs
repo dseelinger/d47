@@ -125,7 +125,7 @@ public sealed class EarlierFindsCallout(ILogger<EarlierFindsCallout> logger) : I
             ? $"{string.Join(", ", names)} and {Count(variants.Count - Named)} more"
             : names.Count == 1 ? names[0] : $"{string.Join(", ", names[..^1])} and {names[^1]}";
 
-        return new Announcement($"earlier-finds.{address}.{body}", $"Canonn has earlier finds on this body: {text}.");
+        return new Announcement($"earlier-finds.{address}.{body}", $"Commanders have logged earlier finds on this body: {text}.");
     }
 
     private static string Count(int number) => number switch

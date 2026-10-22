@@ -10,7 +10,7 @@
 
 The Search tab and the star system page no longer name the data service. Messages read "the galaxy search" or drop the source: "GALAXY SEARCH UNAVAILABLE", "Asking the galaxy search", "Last reported". The failure notice shows the time without the host name.
 
-Spoken answers no longer name the data service. The arrival callout says "Commanders have surveyed biology here", and unknown systems are "No system is named X" or "There is no record of X".
+Spoken answers no longer name the data service. The arrival callout says "Commanders have surveyed biology here", and unknown systems are "No system is named X" or "There is no record of X". Earlier biology finds and first-in-region callouts say "No Commander has reported X" or "Commanders have logged N earlier finds" instead of naming the service. The "Earlier biology finds from Canonn" setting keeps its label.
 
 The session-length reminder now says to take a break: "You have been flying 4 hours, Commander. Time to take a break." The switch in Settings > Callouts is now called Break reminder. Its setting and hours choice are unchanged.
 
