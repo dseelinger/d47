@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Ships;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -516,7 +517,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                     Moment(
                         journalEvent,
                         LogFactKind.Fleet,
-                        $"Bought a {JournalJson.Spoken(journalEvent.Named("ShipType"))} for "
+                        $"Bought {IndefiniteArticle.With(JournalJson.Spoken(journalEvent.Named("ShipType")))} for "
                         + $"{Credits(journalEvent.Long("ShipPrice") ?? 0)}.");
                     break;
 
@@ -524,7 +525,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                     Moment(
                         journalEvent,
                         LogFactKind.Fleet,
-                        $"Sold a {JournalJson.Spoken(journalEvent.Named("ShipType"))} for "
+                        $"Sold {IndefiniteArticle.With(JournalJson.Spoken(journalEvent.Named("ShipType")))} for "
                         + $"{Credits(journalEvent.Long("ShipPrice") ?? 0)}.");
                     break;
 

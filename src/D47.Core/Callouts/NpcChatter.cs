@@ -4,6 +4,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
+using D47.Core.Ships;
 
 namespace D47.Core.Callouts;
 
@@ -641,7 +642,7 @@ public static partial class NpcChatter
         {
             ({ Length: > 0 } pilot, { Length: > 0 } ship) => $"{pilot}'s {ship}",
             ({ Length: > 0 } pilot, _) => pilot,
-            (_, { Length: > 0 } ship) => $"a {ship}",
+            (_, { Length: > 0 } ship) => IndefiniteArticle.With(ship),
             _ => null,
         };
 
@@ -769,7 +770,7 @@ public static partial class NpcChatter
 
     private static string CombatScene(FightSnapshot fight)
     {
-        var ship = fight.LastShip is { Length: > 0 } hull ? $"a {hull}" : "a ship";
+        var ship = fight.LastShip is { Length: > 0 } hull ? IndefiniteArticle.With(hull) : "a ship";
         var faction = fight.LastVictimFaction is { Length: > 0 } owner ? $" of {owner}" : string.Empty;
 
         var pilot = fight.LastVictim is { Length: > 0 } name && fight.Dead.Contains(name)
