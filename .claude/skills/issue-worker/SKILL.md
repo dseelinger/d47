@@ -194,14 +194,15 @@ Tests are named as behavioural sentences — `ACancelledTurnIsNotAFailureTests`,
 
 When the commit changes `AdventureGenerator.cs`, `AdventureResolver.cs`, `AdventureValidation.cs`,
 `TriggerConfirms.cs` or `StoryAnswer.cs` under `src/D47.Core/Adventures/`, write six real chapters
-before committing, three on each model, all at the same time. This spends money; it is the only step
-that sets `D47_COMPARE=1`, and it is never part of a build or a `dotnet test` run.
+before committing, three on each model, all at the same time, each model at the story effort the
+catalog gives it. This spends money; it is the only step that sets `D47_COMPARE=1`, and it is never
+part of a build or a `dotnet test` run. The keys come from the installed app's encrypted store.
 
 ```bash
-D47_COMPARE=1 D47_COMPARE_PARALLEL=1 D47_COMPARE_STORY_MODELS=claude-sonnet-5-5,gpt-6-luna D47_COMPARE_STORY_EFFORTS=Medium D47_COMPARE_RUNS=3 D47_COMPARE_CAP=5.00 D47_COMPARE_OUT=<scratchpad>/compare D47_COMPARE_JOURNALS=<journals folder>   dotnet test tests/D47.Scenarios.Tests --filter "FullyQualifiedName~StoryChaptersAgainstEachModelAndEffort"
+D47_COMPARE=1 D47_COMPARE_PARALLEL=1 D47_COMPARE_STORY_MODELS=claude-sonnet-5-5,gpt-6-luna D47_COMPARE_STORY_EFFORTS=Catalog D47_COMPARE_RUNS=3 D47_COMPARE_CAP=6.00 D47_COMPARE_OUT=<scratchpad>/compare D47_COMPARE_JOURNALS=<journals folder> D47_COMPARE_SECRETS_FROM="$LOCALAPPDATA/Programs/d47"   dotnet test tests/D47.Scenarios.Tests --filter "FullyQualifiedName~StoryChaptersAgainstEachModelAndEffort"
 ```
 
-The pass mark is 5 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`). Below it, do
+The pass mark is 6 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`). Below it, do
 not commit: stop and report the refusals from the files in `drafts`. The commit message gives the
 number written for each model and the run's wall time.
 

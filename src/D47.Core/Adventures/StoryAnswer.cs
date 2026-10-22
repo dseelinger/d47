@@ -100,7 +100,11 @@ internal static class StoryAnswer
     internal static LlmResponseSchema SpineSchema() =>
         new(SpineName, Object(SpineFields.Select(field => (field, (JsonNode)Text()))).ToJsonString());
 
-    internal const string FidelityShape = "{\"objections\": [{\"objective\": number, \"reason\": string}]}";
+    /// <summary>What an objection may say a quoted statement is: the three checked kinds, then the story's own fiction.</summary>
+    internal static readonly IReadOnlyList<string> StatementKinds = ["action", "history", "event", "fiction"];
+
+    internal const string FidelityShape =
+        "{\"objections\": [{\"objective\": number, \"quote\": string, \"kind\": \"action\" | \"history\" | \"event\" | \"fiction\", \"reason\": string}]}";
 
     internal static LlmResponseSchema FidelitySchema() =>
         new(
@@ -108,7 +112,12 @@ internal static class StoryAnswer
             Object([("objections", new JsonObject
             {
                 ["type"] = "array",
-                ["items"] = Object([("objective", new JsonObject { ["type"] = "integer" }), ("reason", Text())]),
+                ["items"] = Object([
+                    ("objective", new JsonObject { ["type"] = "integer" }),
+                    ("quote", Text()),
+                    ("kind", new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. StatementKinds.Select(kind => (JsonNode)JsonValue.Create(kind)!)]) }),
+                    ("reason", Text()),
+                ]),
             })]).ToJsonString());
 
     /// <summary>The answer's JSON shape as the instruction states it.</summary>

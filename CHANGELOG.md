@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Story chapters are written again. The check that reads a chapter's lines against its objectives now checks only what you did, where you have been and how a game event went. The story's cast, what they say, send or own, records in the story and events before it began are not checked, and the ending may recount what earlier objectives confirmed. In a stock story, the Guardian cores coming aboard at the beacon is no longer refused. An objective the check has passed is not refused by a later round, and a refused statement is deleted rather than reworded. Stories written with Claude Sonnet 5.5 use high effort, so they take longer and cost more. A chapter this check still refuses says "The story states what its objectives do not confirm" rather than "The story names places that cannot stand".
+
 When two requests to the same model provider start at once and both are refused for a setting the model does not take, both are now retried without it. Before, only the first was, and the second failed with the provider's "Unsupported parameter" message.
 
 The Inara API key setting is gone, and so is the request to Inara. Community goals come only from your journal: the board at each station you have docked at, and the answer says so. A key stored earlier is deleted the next time D47 starts, and Community goals no longer appears under Privacy and egress.

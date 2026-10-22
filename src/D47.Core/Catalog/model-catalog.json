@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "published": "2026-10-15",
+  "published": "2026-10-22",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
@@ -11,7 +11,7 @@
           "label": "Claude Sonnet 5.5",
           "offered": true,
           "price": { "input": 2, "output": 10, "cacheRead": 0.05, "cacheWrite": 1.25 },
-          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false, "canDisableThinking": false, "images": true }
+          "traits": { "operatorSystemMessages": true, "toolSearch": true, "minimumCacheablePrefix": 512, "basicWebSearchOnly": false, "legacyThinking": false, "canDisableThinking": false, "images": true, "storyEffort": "high" }
         },
         {
           "id": "claude-sonnet-5",

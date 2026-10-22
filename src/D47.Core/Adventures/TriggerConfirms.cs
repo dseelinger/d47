@@ -61,28 +61,38 @@ internal static class TriggerConfirms
         [TriggerKind.Event] = "that event happened as many times as the count, with those fields — not why, where, or what followed",
     };
 
+    private const string StockBeacon = "data was scanned from a Guardian beacon in that system, and the story's Guardian cores came aboard with it — not what the data says";
+
+    /// <summary>What a line may state as fact and what is the story's own; the story prompts and the fidelity check carry it verbatim.</summary>
+    internal const string Rule =
+        "What a line may state as fact: an objective fires when its trigger is seen in the journal, and the trigger sees only what is listed for its kind. "
+        + "Three things are checked: what the Commander did; where the Commander has been and their history with a place; and how a game event went "
+        + "(a mission's target or outcome, a fight, a trade, what a scan or site held). A line may state one of these as fact only where its objective "
+        + "confirms it or the game state given shows it. So a line never states a sum of credits the Commander was paid, a course or jump plotted, "
+        + "or a place, beacon or event the Commander has never visited, scanned or seen. The story's own fiction is not checked: who the cast are, what they say, send, offer, remember "
+        + "or own, documents and records in the story, and events before the story began. Objectives fire in order, so the ending may say where the "
+        + "story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms.";
+
     /// <summary>The kinds that have an entry.</summary>
     internal static IReadOnlyCollection<TriggerKind> Kinds => Entries.Keys;
 
-    internal static string Of(TriggerKind kind) => Entries[kind];
+    /// <summary>The entry for a kind; in a stock story the beacon's entry says the story's cores came aboard.</summary>
+    internal static string Of(TriggerKind kind, bool story = false) => story && kind == TriggerKind.Beacon ? StockBeacon : Entries[kind];
 
     /// <summary>The entry for a kind in the words an answer uses, or null when the word is no kind.</summary>
-    internal static string? Of(string word) =>
-        Enum.TryParse<TriggerKind>(word, ignoreCase: true, out var kind) && Entries.TryGetValue(kind, out var entry) ? entry : null;
+    internal static string? Of(string word, bool story = false) =>
+        Enum.TryParse<TriggerKind>(word, ignoreCase: true, out var kind) && Entries.ContainsKey(kind) ? Of(kind, story) : null;
 
-    /// <summary>The rule for lines and the entry for each of <paramref name="kinds"/>, in the words an answer uses.</summary>
-    internal static string Section(IEnumerable<string> kinds)
+    /// <summary>The rule and the entry for each of <paramref name="kinds"/>, in the words an answer uses.</summary>
+    internal static string Section(IEnumerable<string> kinds, bool story = false)
     {
         var text = new StringBuilder();
 
-        text.AppendLine(
-            "What a line may say as fact: an objective fires when its trigger is seen in the journal, and the trigger sees only what is listed below. "
-            + "A line may state only what its objective confirms, what the game state given shows, or what a character claims in their own voice "
-            + "(\"the patron calls it a rescue\"). The ending must be something the last objective confirms. What each kind confirms:");
+        text.AppendLine(Rule + " What each kind confirms:");
 
         foreach (var kind in kinds)
         {
-            if (Of(kind) is { } entry)
+            if (Of(kind, story) is { } entry)
             {
                 text.Append("- \"").Append(kind).Append("\": ").AppendLine(entry);
             }

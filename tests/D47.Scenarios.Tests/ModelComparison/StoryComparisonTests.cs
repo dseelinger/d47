@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using D47.Core.Adventures;
+using D47.Core.Catalog;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -55,7 +56,7 @@ public partial class StoryComparisonTests
         var cap = decimal.Parse(Env("D47_COMPARE_CAP") ?? "4.50", CultureInfo.InvariantCulture);
         var runs = int.Parse(Env("D47_COMPARE_RUNS") ?? "2", CultureInfo.InvariantCulture);
         var models = Env("D47_COMPARE_STORY_MODELS")?.Split(',') ?? DefaultModels;
-        var efforts = Env("D47_COMPARE_STORY_EFFORTS")?.Split(',').Select(Enum.Parse<ThinkingEffort>).ToArray() ?? DefaultEfforts;
+        var efforts = Env("D47_COMPARE_STORY_EFFORTS")?.Split(',') ?? [.. DefaultEfforts.Select(effort => effort.ToString())];
         var dry = Env("D47_COMPARE_DRY") == "1";
 
         foreach (var model in models)
@@ -177,7 +178,7 @@ public partial class StoryComparisonTests
             from run in Enumerable.Range(1, runs)
             from model in models
             from effort in efforts
-            select (model, effort, run)).ToList();
+            select (model, effort: EffortFor(model, effort), run)).Distinct().ToList();
 
         if (Env("D47_COMPARE_PARALLEL") == "1")
         {
@@ -475,6 +476,12 @@ public partial class StoryComparisonTests
         }
     }
 
+
+    /// <summary>The named effort, or for <c>Catalog</c> the story effort the app gives <paramref name="model"/>.</summary>
+    private static ThinkingEffort EffortFor(string model, string effort) =>
+        effort == "Catalog"
+            ? ModelCatalogSource.Shared.TraitsFor(ProviderOf(model), model).StoryEffort ?? ThinkingEffort.Medium
+            : Enum.Parse<ThinkingEffort>(effort);
 
     /// <summary>The most one story by <paramref name="model"/> can cost; throws for a model with no published price.</summary>
     private static decimal WorstCase(string model)
