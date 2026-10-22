@@ -417,7 +417,7 @@ public static class GalaxyCapability
                 Name = "describe_system",
                 Description =
                     "One star system's government, allegiance, economy, population, controlling faction, "
-                    + "Powerplay and stations, as Spansh last had them, and opens its page on the panel. "
+                    + "Powerplay and stations, as last reported, and opens its page on the panel. "
                     + "Leave 'system' out for the one the Commander is in.",
                 Parameters =
                 [
@@ -1698,8 +1698,8 @@ public static class GalaxyCapability
                 {
                     return ToolResult.Error(
                         matches.Count == 0
-                            ? $"Spansh has no system named {named}."
-                            : $"Spansh has no system named exactly {named}. Close names: "
+                            ? $"No system is named {named}."
+                            : $"No system is named exactly {named}. Close names: "
                               + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
                 }
 
@@ -1808,8 +1808,8 @@ public static class GalaxyCapability
                 {
                     return ToolResult.Error(
                         matches.Count == 0
-                            ? $"Spansh has no system named {asked}."
-                            : $"Spansh has no system named exactly {asked}. Close names: "
+                            ? $"No system is named {asked}."
+                            : $"No system is named exactly {asked}. Close names: "
                               + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
                 }
 
@@ -1948,8 +1948,8 @@ public static class GalaxyCapability
                 {
                     return ToolResult.Error(
                         matches.Count == 0
-                            ? $"Spansh has no system named {name}."
-                            : $"Spansh has no system named exactly {name}. Close names: "
+                            ? $"No system is named {name}."
+                            : $"No system is named exactly {name}. Close names: "
                               + $"{string.Join(", ", matches.Take(CloseSystemNames).Select(match => match.Name))}.");
                 }
 
@@ -1961,7 +1961,7 @@ public static class GalaxyCapability
 
             if (profile is null)
             {
-                return ToolResult.Error($"Spansh has no record of {name}.");
+                return ToolResult.Error($"There is no record of {name}.");
             }
 
             if (named is not null)
@@ -2041,7 +2041,7 @@ public static class GalaxyCapability
 
         if (profile.ReportedAt is { } reported)
         {
-            said.Append(" Spansh last had a report on ")
+            said.Append(" It was last reported on ")
                 .Append(reported.ToString("d MMMM yyyy", CultureInfo.InvariantCulture))
                 .Append('.');
         }

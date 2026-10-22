@@ -1029,7 +1029,7 @@ machine.
 When you arrive in a system and [galaxy search](galaxy.md) is on:
 
 ```text
-Spansh has surveyed biology here: 3 b at 15 million, 3 c at 12 million.
+Commanders have surveyed biology here: 3 b at 15 million, 3 c at 12 million.
 ```
 
 Directive 47 asks Spansh which bodies in the system have reported biology, and names those whose

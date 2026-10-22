@@ -10,6 +10,8 @@
 
 The Search tab and the star system page no longer name the data service. Messages read "the galaxy search" or drop the source: "GALAXY SEARCH UNAVAILABLE", "Asking the galaxy search", "Last reported". The failure notice shows the time without the host name.
 
+Spoken answers no longer name the data service. The arrival callout says "Commanders have surveyed biology here", and unknown systems are "No system is named X" or "There is no record of X".
+
 The session-length reminder now says to take a break: "You have been flying 4 hours, Commander. Time to take a break." The switch in Settings > Callouts is now called Break reminder. Its setting and hours choice are unchanged.
 
 A ship type that starts with a vowel now reads "an" in the recap, the logbook and NPC chatter: "an Anaconda Mk II", "an Imperial Clipper". A missing ship type reads "a ship".

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Callouts;
 
-/// <summary>On arrival, the bodies Spansh has surveyed biology on that reach the threshold.</summary>
+/// <summary>On arrival, the bodies Commanders have surveyed biology on that reach the threshold.</summary>
 public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logger) : ICallout
 {
     private readonly ConcurrentQueue<Arrival> _arrived = new();
@@ -101,7 +101,7 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
 
         return new Announcement(
             $"surveyed-biology.{arrival.SystemAddress}",
-            $"Spansh has surveyed biology here: {string.Join(", ", named)}.");
+            $"Commanders have surveyed biology here: {string.Join(", ", named)}.");
     }
 
     private readonly record struct Arrival(long SystemAddress, string? System, SystemBiology Biology);

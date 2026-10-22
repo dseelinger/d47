@@ -119,7 +119,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             out _,
             out var failure));
 
-        Assert.Equal("Stations can't be filtered by security: Spansh's station index doesn't carry it.", failure);
+        Assert.Equal("Stations can't be filtered by security: the station index doesn't carry it.", failure);
     }
 
     [Theory]
@@ -139,7 +139,7 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             out _,
             out var failure));
 
-        Assert.Equal($"{plural} can't be filtered by {filter}: Spansh's {singular} index doesn't carry it.", failure);
+        Assert.Equal($"{plural} can't be filtered by {filter}: the {singular} index doesn't carry it.", failure);
     }
 
     [Theory]

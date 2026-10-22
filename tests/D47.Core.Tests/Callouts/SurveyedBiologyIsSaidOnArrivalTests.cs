@@ -7,7 +7,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>On arrival, the bodies Spansh has surveyed biology on that reach the threshold.</summary>
+/// <summary>On arrival, the bodies Commanders have surveyed biology on that reach the threshold.</summary>
 public class SurveyedBiologyIsSaidOnArrivalTests
 {
     private const long Here = 1_000_200;
@@ -147,7 +147,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
 
         var said = Assert.Single(callout.Examine(Context(state, false)));
 
-        Assert.Equal("Spansh has surveyed biology here: 3 b at 15 million, 3 c at 12 million.", said.Text);
+        Assert.Equal("Commanders have surveyed biology here: 3 b at 15 million, 3 c at 12 million.", said.Text);
     }
 
     [Fact]
@@ -265,7 +265,7 @@ public class SurveyedBiologyIsSaidOnArrivalTests
 
         var said = Assert.Single(callout.Examine(Context(scanned, false)));
 
-        Assert.Equal("Spansh has surveyed biology here: 3 c at 12 million.", said.Text);
+        Assert.Equal("Commanders have surveyed biology here: 3 c at 12 million.", said.Text);
     }
 
     [Fact]

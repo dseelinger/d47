@@ -291,7 +291,7 @@ public static class GalaxyCriteria
             {
                 var (plural, singular) = Nouns(kind);
                 failure =
-                    $"{plural} can't be filtered by {filter.Name}: Spansh's {singular} index doesn't carry it.";
+                    $"{plural} can't be filtered by {filter.Name}: the {singular} index doesn't carry it.";
                 return false;
             }
 

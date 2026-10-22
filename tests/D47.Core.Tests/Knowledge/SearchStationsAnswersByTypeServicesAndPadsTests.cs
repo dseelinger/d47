@@ -134,7 +134,7 @@ public class SearchStationsAnswersByTypeServicesAndPadsTests
             out _,
             out var failure));
 
-        Assert.Equal($"Stations can't be filtered by {name}: Spansh's station index doesn't carry it.", failure);
+        Assert.Equal($"Stations can't be filtered by {name}: the station index doesn't carry it.", failure);
     }
 
     [Theory]

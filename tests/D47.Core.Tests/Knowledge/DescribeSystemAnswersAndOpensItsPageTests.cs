@@ -142,7 +142,7 @@ public class DescribeSystemAnswersAndOpensItsPageTests
         Assert.Equal(
             "LTT 7786: Democracy, Federation, Industrial economy, population 1,250,000. Controlled by Fixture Party, "
             + "in Boom. Powerplay: Felicia Winters, Fortified. Stations: 1 starport, 2 outposts. "
-            + "Spansh last had a report on 1 October 2026.",
+            + "It was last reported on 1 October 2026.",
             result.Content);
         Assert.Equal(PageRef.System(Ltt7786), result.Page);
     }
@@ -176,13 +176,13 @@ public class DescribeSystemAnswersAndOpensItsPageTests
 
         Assert.True(result.IsError);
         Assert.Equal(
-            "Spansh has no system named exactly LTT 7786. Close names: LTT 7787, LTT 7788, LTT 7789.",
+            "No system is named exactly LTT 7786. Close names: LTT 7787, LTT 7788, LTT 7789.",
             result.Content);
         Assert.Null(result.Page);
     }
 
     [Fact]
-    public async Task ASystemSpanshHasNoRecordOfOpensNothing()
+    public async Task ASystemWithNoRecordOpensNothing()
     {
         var systems = new FakeSystems();
         systems.Matches.Add(Match("LTT 7786", Ltt7786));
@@ -190,7 +190,17 @@ public class DescribeSystemAnswersAndOpensItsPageTests
         var result = await CallAsync(systems, new() { ["system"] = "LTT 7786" });
 
         Assert.True(result.IsError);
-        Assert.Equal("Spansh has no record of LTT 7786.", result.Content);
+        Assert.Equal("There is no record of LTT 7786.", result.Content);
+        Assert.Null(result.Page);
+    }
+
+    [Fact]
+    public async Task ANameWithNoMatchAtAllSaysNoSystemIsNamedThatAndOpensNothing()
+    {
+        var result = await CallAsync(new FakeSystems(), new() { ["system"] = "LTT 7786" });
+
+        Assert.True(result.IsError);
+        Assert.Equal("No system is named LTT 7786.", result.Content);
         Assert.Null(result.Page);
     }
 }

@@ -177,7 +177,7 @@ public class FindBodyAsksWhatInaraAsksTests
             out _,
             out var failure));
 
-        Assert.Equal("Bodies can't be filtered by allegiance: Spansh's body index doesn't carry it.", failure);
+        Assert.Equal("Bodies can't be filtered by allegiance: the body index doesn't carry it.", failure);
     }
 
     [Fact]
