@@ -749,6 +749,11 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 Panel.FocusAsk();
             }
+            else if (Matches(_host.Settings.Current.Hotkeys.Find, e))
+            {
+                e.Handled = true;
+                ToggleFind();
+            }
         }
 
         // Escape leaves the settings page for the one it covered up.
@@ -822,6 +827,30 @@ public partial class MainWindow : Window
     }
 
     private void OpenSettings() => Panel.Tab = PanelTab.Settings;
+
+    private FindDialog? _find;
+
+    /// <summary>Opens Find, or closes it when it is open. The index is built from the live settings each time it opens.</summary>
+    private void ToggleFind()
+    {
+        if (_find is { } open)
+        {
+            open.Close();
+            return;
+        }
+
+        if (_host is not { } host || ModalHost.For(this).Top is not null)
+        {
+            return;
+        }
+
+        var find = new PanelFind(Panel.Nav, host.Settings, Panel.TabWords);
+        var dialog = new FindDialog(find.Search, Panel.OpenFound, host.Settings.Current.Hotkeys.Find);
+
+        _find = dialog;
+        dialog.Closed += (_, _) => _find = null;
+        _ = dialog.Over(this);
+    }
 
     /// <summary>The rectangle this window remembers.</summary>
     private WindowPlacementMemory? _placement;

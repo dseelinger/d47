@@ -27,6 +27,8 @@ public static class InterfaceCapability
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
 
+    public const string FindHotkeyKey = "hotkeys.find";
+
     /// <summary>The flat mini panel, on or off (Phase 48).</summary>
     public const string OverlayKey = "ui.overlay.enabled";
 
@@ -125,6 +127,12 @@ public static class InterfaceCapability
                 "focus-ask",
                 s => s.Hotkeys.FocusAsk,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
+            HotkeyRow(
+                FindHotkeyKey,
+                "Find",
+                "find",
+                s => s.Hotkeys.Find,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { Find = v } }),
 
             // Seventy-five knobs is not a welcome (#60).
             new SettingRow

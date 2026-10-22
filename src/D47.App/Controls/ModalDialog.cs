@@ -12,4 +12,7 @@ public abstract class ModalDialog : HostedDialog
     {
         Focusable = true;
     }
+
+    /// <summary>Whether <see cref="Windowing.ModalHost"/> draws this dialog <see cref="Modal.TopOffset"/> below the top, not centred.</summary>
+    public virtual bool AnchoredToTop => false;
 }

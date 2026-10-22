@@ -317,6 +317,14 @@ so a question can span several lines before it is sent. Up walks back through wh
 and Down walks forward again, each only from the first or last line of the box; on any other line
 the arrows move the caret instead.
 
+#### Find {#find}
+
+Opens a box that searches every page, settings place, setting and help page at once. `Ctrl+K` out of the box.
+
+Type, and up to eight results appear, best first, each with its path and whether it is a page, a place, a setting or a help page. Up and Down move the selection, Enter or a click opens it, and Esc or pressing the key again closes the box and leaves the panel where it was. `Ctrl+F` still searches only the page you are on.
+
+The box is in the window only. The headset has no text keyboard, so ask there instead: "where is the push-to-talk setting".
+
 #### Show the overlay {#overlay}
 
 **The mini panel, on your monitor.** Off out of the box.

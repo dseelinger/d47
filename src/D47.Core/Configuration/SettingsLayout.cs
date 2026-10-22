@@ -748,6 +748,7 @@ public static class SettingsLayout
                                 E("ui.tabs"),
                                 E("hotkeys.openSettings"),
                                 E("hotkeys.focusAsk"),
+                                E("hotkeys.find"),
                             ]),
                     ]),
                 new SettingsPlace(

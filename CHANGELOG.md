@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ctrl+K opens Find, a box at the top of the window that searches every page, settings place, setting and help page at once. Results appear as you type, best first and at most eight, each with its path and whether it is a page, place, setting or help page. Up and Down move the selection, Enter or a click opens it, and Esc or Ctrl+K closes the box. Ctrl+F still searches the page you are on. The key is a row in Settings under Window › Look and keys.
+
 You can ask where a setting or page is: "where is the fuel setting", "where do I turn off hull pictures", "show me the ships page". The window and the headset's big panel both open it, scroll a setting into view and mark it, and the transcript gives its path. When places match equally well, nothing moves and the answer names up to three and asks which. A phrase that finds nothing, or does not name a setting or page, goes on to the model as before.
 
 A link to a setting, from a message or the error banner, now scrolls the row into view and marks it with the hover tile colour for two seconds, or until you press or scroll. A link to a row that lives on another tab, such as Hull pictures on Asset Mgmt › Ships, opens that tab and its settings strip and marks the row there. The same landing works on the headset panel.

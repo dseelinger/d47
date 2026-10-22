@@ -76,10 +76,16 @@ public sealed class ModalHost : Grid
             VerticalAlignment = VerticalAlignment.Center,
             Child = dialog,
         };
+        if (dialog.AnchoredToTop)
+        {
+            frame.VerticalAlignment = VerticalAlignment.Top;
+            frame.Margin = new Thickness(0, Modal.TopOffset - Modal.ScrimPadding, 0, 0);
+        }
+
         Themed(frame, Border.BorderBrushProperty, ThemeManager.AKey);
         Themed(frame, Border.BackgroundProperty, ThemeManager.BarKey);
 
-        var scrim = new Border { Name = ScrimName, Padding = new Thickness(24), Child = frame };
+        var scrim = new Border { Name = ScrimName, Padding = new Thickness(Modal.ScrimPadding), Child = frame };
         Themed(scrim, Border.BackgroundProperty, ThemeManager.ScrimKey);
         KeyboardNavigation.SetTabNavigation(scrim, KeyboardNavigationMode.Cycle);
 

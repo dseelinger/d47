@@ -20,6 +20,12 @@ public static class Modal
 
     public const double Inset = 20;
 
+    /// <summary>How far below the top of the window a top-anchored modal starts.</summary>
+    public const double TopOffset = 96;
+
+    /// <summary>The padding the scrim leaves around its frame.</summary>
+    public const double ScrimPadding = 24;
+
     /// <summary>The space between the blocks of a dialog's body.</summary>
     public const double BlockGap = 18;
 
