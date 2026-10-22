@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The opening greeting's second sentence varies between launches. It is one of ten, such as "Standing by." or "Let's fly.", instead of always "Ready to go.". With a persona on, the core keeps the picked sentence unless something real is worth naming.
+
 The transcript no longer opens with "Language model: ready." The "Language model: unavailable" line, with its reason, still appears when no model is available.
 
 The Navigation tab has a Galaxy map page, second after Plan, in the window and on the big panel. It draws Elite's 42 regions with their borders and names, every jump you have made as a line with a dot per system visited, the route Elite plotted (grey behind you, orange ahead, with the start, destination and star marks once the view is 6,400 ly across or closer) and your position. GALAXY, HERE and ROUTE frame the view; plus, minus and four arrows zoom and pan; 30 DAYS, 1 YEAR and ALL choose how far back the travels go; and TRAVELS, ROUTE and REGIONS switch each layer. On the desktop the mouse wheel zooms and a drag pans as well. Under the map are your system and region, the jumps and systems counted in the chosen range, and a key to what is drawn. On the big panel the system, region and counts sit beside the map and the key under the switches. While earlier journals are still being read, this session's jumps are drawn and the page says so. While another Commander is shown, their travels are drawn without a position or route, and HERE and ROUTE are greyed.

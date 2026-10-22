@@ -386,10 +386,10 @@ public static class FlavourBriefs
                 Instruction =
                     "The Commander has just sat down. Greet them once, in your own voice, from this: "
                     + $"\"{announcement.Text}\" Keep the first sentence's time of day. Finish the second "
-                    + "sentence — \"Ready to …\" — in a few words of your own, plainly, without reaching "
-                    + "for a synonym of \"ready\" dressed up in your usual words. Say what you are ready "
-                    + "for only if something real makes it worth naming — what is aboard, what the last "
-                    + "session ended with. Otherwise leave it at \"Ready to go.\" Two short sentences, "
+                    + "sentence in a few words of your own, plainly, without reaching for a synonym "
+                    + "dressed up in your usual words. Change it only if something real makes it worth "
+                    + "naming — what is aboard, what the last session ended with. Otherwise keep the "
+                    + "second sentence exactly as given. Two short sentences, "
                     + "nothing else: no facts, no questions, no remarks about the ship or the list.",
                 NeedsPersona = true,
 

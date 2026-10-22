@@ -1,4 +1,4 @@
-using D47.Core.Callouts;
+﻿using D47.Core.Callouts;
 using D47.Core.Journal;
 using Xunit;
 
@@ -64,6 +64,43 @@ public class ContinuityCalloutTests
         Assert.Empty(new ContinuityCallout().Examine(At(Evening, priming: true)));
     }
 
+    /// <summary>A whole minute is a multiple of ten seconds since the epoch, so the seconds added pick the line.</summary>
+    [Theory]
+    [InlineData(0, "Ready to go.")]
+    [InlineData(1, "Standing by.")]
+    [InlineData(2, "Ready when you are.")]
+    [InlineData(3, "All systems ready.")]
+    [InlineData(4, "Ready for orders.")]
+    [InlineData(5, "Let's get to work.")]
+    [InlineData(6, "Good to have you back.")]
+    [InlineData(7, "At your service.")]
+    [InlineData(8, "Let's fly.")]
+    [InlineData(9, "Standing by for orders.")]
+    [InlineData(19, "Standing by for orders.")]
+    public void TheSecondSentenceIsPickedFromTheSecondOfTheTime(int seconds, string expected)
+    {
+        Assert.Equal($"Good evening, Commander. {expected}", new ContinuityCallout().Compose(Evening.AddSeconds(seconds)));
+    }
+
+    [Fact]
+    public void EveryOneOfTheTenSentencesCanBeProduced()
+    {
+        var produced = Enumerable.Range(0, 10).Select(s => ContinuityCallout.SecondSentence(Evening.AddSeconds(s))).ToHashSet();
+
+        Assert.Equal(10, ContinuityCallout.SecondSentences.Count);
+        Assert.Equal(ContinuityCallout.SecondSentences.ToHashSet(), produced);
+    }
+
+    [Fact]
+    public void TheBriefNoLongerNamesReadyToGoAndKeepsTheGivenSentence()
+    {
+        var brief = FlavourBriefs.For(new Announcement(ContinuityCallout.Key, "Good evening, Commander. Let's fly."), personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.DoesNotContain("Ready to go", brief.Instruction.Replace("Good evening, Commander. Let's fly.", ""), StringComparison.Ordinal);
+        Assert.Contains("keep the second sentence exactly as given", brief.Instruction, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheLineWaitsForTheSettleWindowAndThenIsSaidExactlyOnce()
     {
@@ -89,7 +126,7 @@ public class ContinuityCalloutTests
         Assert.Empty(callout.Examine(At(Evening)));
 
         var launch = Assert.Single(callout.Examine(At(Evening.Add(callout.Settle))));
-        Assert.Equal("Good evening, Commander. Ready to go.", launch.Text);
+        Assert.Equal("Good evening, Commander. Let's fly.", launch.Text);
 
         var bob = new GameStateStore();
         Assert.True(JournalEvent.TryParse(
@@ -106,7 +143,7 @@ public class ContinuityCalloutTests
         Assert.Empty(callout.Examine(With(bob, later.Add(callout.Settle / 2))));
 
         var again = Assert.Single(callout.Examine(With(bob, later.Add(callout.Settle))));
-        Assert.Equal("Good evening, Commander Bob. Ready to go.", again.Text);
+        Assert.Equal("Good evening, Commander Bob. Let's fly.", again.Text);
 
         // And once only, until the next login.
         Assert.Empty(callout.Examine(With(bob, later.Add(callout.Settle).AddHours(2))));
@@ -130,7 +167,7 @@ public class ContinuityCalloutTests
         Assert.Empty(callout.Examine(With(alice, Evening)));
 
         var launch = Assert.Single(callout.Examine(With(alice, Evening.Add(callout.Settle))));
-        Assert.Equal("Good evening, Commander. Ready to go.", launch.Text);
+        Assert.Equal("Good evening, Commander. Let's fly.", launch.Text);
     }
 
     [Fact]
@@ -170,7 +207,7 @@ public class ContinuityCalloutTests
     }
 
     /// <summary>
-    /// With a persona on, the core finishes "Ready to …" in its own words and changes nothing else.
+    /// With a persona on, the core keeps the given second sentence unless something real is worth naming.
     /// </summary>
     [Fact]
     public void ACoreFinishesTheReadinessInCharacterAndKeepsTheTimeOfDay()
@@ -185,8 +222,7 @@ public class ContinuityCalloutTests
 
         Assert.Contains(announcement.Text, brief.Instruction, StringComparison.Ordinal);
         Assert.Contains("time of day", brief.Instruction, StringComparison.Ordinal);
-        Assert.Contains("Ready to", brief.Instruction, StringComparison.Ordinal);
-        Assert.Contains("no facts", brief.Instruction, StringComparison.Ordinal);
+                Assert.Contains("no facts", brief.Instruction, StringComparison.Ordinal);
     }
 
     [Fact]

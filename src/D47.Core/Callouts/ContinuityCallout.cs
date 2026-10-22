@@ -79,7 +79,26 @@ public sealed class ContinuityCallout : ICallout
     /// <see cref="Rearm"/>).
     /// </summary>
     public string Compose(DateTimeOffset now, string? name) =>
-        $"Good {TimeOfDay(now)}, {Journal.CommanderAddress.Said(name)}. Ready to go.";
+        $"Good {TimeOfDay(now)}, {Journal.CommanderAddress.Said(name)}. {SecondSentence(now)}";
+
+    /// <summary>The second sentences the greeting picks from.</summary>
+    public static readonly IReadOnlyList<string> SecondSentences =
+    [
+        "Ready to go.",
+        "Standing by.",
+        "Ready when you are.",
+        "All systems ready.",
+        "Ready for orders.",
+        "Let's get to work.",
+        "Good to have you back.",
+        "At your service.",
+        "Let's fly.",
+        "Standing by for orders.",
+    ];
+
+    /// <summary>The second sentence for a moment: the whole second of the supplied time, modulo the list length.</summary>
+    public static string SecondSentence(DateTimeOffset now) =>
+        SecondSentences[(int)(now.UtcTicks / TimeSpan.TicksPerSecond % SecondSentences.Count)];
 
     /// <summary>
     /// Morning until noon, afternoon until six, evening after — the three a person uses, on the

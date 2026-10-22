@@ -1114,9 +1114,12 @@ you want to know about your [checklist](checklists.md), ask; it is all still the
 It waits a few seconds after launch so the journal backlog has been folded, says its line once, and
 does not speak again for the life of the process. With a stock core such as COVAS aboard it is not said.
 
-The first sentence is written by Directive 47. Where a persona is on, the core finishes the second
-— *"Ready to reconcile the ledger"*, *"Ready to go, for the last time, again"* — in a few words of
-its own and changes nothing else; with personality off it is *"Ready to go."*
+The first sentence is written by Directive 47. The second is one of ten: *"Ready to go."*,
+*"Standing by."*, *"Ready when you are."*, *"All systems ready."*, *"Ready for orders."*,
+*"Let's get to work."*, *"Good to have you back."*, *"At your service."*, *"Let's fly."* and
+*"Standing by for orders."* The pick varies between launches. Where a persona is on, the core keeps
+the picked sentence unless something real is worth naming — *"Ready to reconcile the ledger"* — and
+changes nothing else; with personality off it is the picked sentence.
 
 #### Last session recap {#recap}
 
