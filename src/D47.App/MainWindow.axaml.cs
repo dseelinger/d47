@@ -565,13 +565,13 @@ public partial class MainWindow : Window
             errors.Add(status.Content);
         }
 
-        // Say plainly whether the model is available.
         var availability = _host.LlmAvailability;
-        _model.Append(
-            availability.Current == LlmAvailability.Available
-                ? "\nLanguage model: ready."
-                : $"\nLanguage model: unavailable. {availability.Reason} " +
-                  "Keyword commands still work — try \"where am I\" or \"status\".");
+        if (availability.Current != LlmAvailability.Available)
+        {
+            _model.Append(
+                $"\nLanguage model: unavailable. {availability.Reason} " +
+                "Keyword commands still work — try \"where am I\" or \"status\".");
+        }
 
         if (errors.Count > 0)
         {
