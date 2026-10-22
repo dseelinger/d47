@@ -36,6 +36,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         public TravelLog Travel { get; } = new(new MemoryFileSystem(), NullLogger.Instance);
 
+        public BookmarkStore Bookmarks { get; } = new("bookmarks.json", new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
+
         public string? OffDuty { get; set; }
     }
 
@@ -158,7 +160,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             new RoutePlanBook(Path.Combine(folder, "route-plans.json"), files, NullLogger<RoutePlanBook>.Instance),
             Commodities: new CommodityBoard(),
             Settings: TestSurface.Settings(),
-            Bookmarks: new BookmarkStore(Path.Combine(folder, "bookmarks.json"), files, NullLogger<BookmarkStore>.Instance),
+            Bookmarks: game.Bookmarks,
             Commander: () => game.Commander,
             Exobiology: () => null,
             Cargo: new BestCargoBoard(),
@@ -275,6 +277,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         using (surface)
         {
+            surface.Render();
+
             Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map.Bounds.Height);
 
             var top = page.TranslatePoint(default, panel)!.Value.Y;
@@ -650,5 +654,217 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         Tile(page, GalaxyMapPage.ClearSelection).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.False(page.StripShown);
+    }
+
+    private const string Bubble5 = "Bubble 5";
+    private const string Bubble9 = "Bubble 9";
+    private const string Bubble12 = "Bubble 12";
+
+    /// <summary>A bookmark, the carrier and two stored ships in visited systems, and one of each in a system never visited.</summary>
+    private static Game Keeping()
+    {
+        var game = Played();
+
+        game.Bookmarks.Add("F1", "Near the bar", Bubble5, Now);
+        game.Bookmarks.Add("F1", "Lost cause", "Nowhere Known", Now);
+
+        foreach (var line in new[]
+        {
+            """{"timestamp":"2026-10-21T11:00:00Z","event":"CarrierStats","CarrierID":3715429376,"CarrierType":"FleetCarrier","Callsign":"BNH-T2F","Name":"Sacred Fire","FuelLevel":792}""",
+            """{"timestamp":"2026-10-21T11:00:01Z","event":"CarrierLocation","CarrierType":"FleetCarrier","CarrierID":3715429376,"StarSystem":"Bubble 9","SystemAddress":1009,"BodyID":0}""",
+            """{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Wregoe TC-X b29-0","StationName":"Home Base","ShipsHere":[],"ShipsRemote":[{"ShipID":12,"ShipType":"cobramkv","ShipType_Localised":"Cobra MkV","Name":"Reaper","Value":1,"StarSystem":"Bubble 12"},{"ShipID":13,"ShipType":"python","ShipType_Localised":"Python","Value":1,"StarSystem":"Bubble 12"},{"ShipID":14,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}""",
+        })
+        {
+            game.Commander.Apply(Event(line));
+        }
+
+        return game;
+    }
+
+    private static Engineer BubbleEngineer() => EngineerDirectory.All
+        .Where(engineer => engineer.Position is not null && engineer.System is not null)
+        .MinBy(engineer => engineer.Position!.Value.DistanceTo(StarPosition.Origin))!;
+
+    private static void KeepCarrierIn(Game game, string system)
+    {
+        game.Commander.Apply(Event("""{"timestamp":"2026-10-21T11:00:00Z","event":"CarrierStats","CarrierID":3715429376,"CarrierType":"FleetCarrier","Callsign":"BNH-T2F","Name":"Sacred Fire"}"""));
+        game.Commander.Apply(Event("{\"timestamp\":\"2026-10-21T11:00:01Z\",\"event\":\"CarrierLocation\",\"CarrierType\":\"FleetCarrier\",\"CarrierID\":3715429376,\"StarSystem\":\"" + system + "\",\"SystemAddress\":1009,\"BodyID\":0}"));
+    }
+
+    [AvaloniaFact]
+    public void ABookmarkTheCarrierAndStoredShipsInVisitedSystemsAreDrawnAndSelectableInTheWindow()
+    {
+        var (window, _, page) = InWindow(Keeping());
+
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12));
+
+        TapMapInWindow(window, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9)!.Value);
+
+        Assert.Equal(Bubble9.ToUpperInvariant(), page.StripName);
+        Assert.Equal(["Your carrier: BNH-T2F"], page.StripKinds);
+
+        TapMapInWindow(window, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12)!.Value);
+
+        Assert.Equal(["Stored ships: Reaper and Python"], page.StripKinds);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("galaxy-map-window-markers.png");
+    }
+
+    [AvaloniaFact]
+    public void TheMarkersAreDrawnAndSelectableOnTheBigPanel()
+    {
+        var (surface, panel, page) = OnThePanel(Keeping());
+
+        using (surface)
+        {
+            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
+            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12));
+
+            surface.Render().SaveCapture("galaxy-map-panel-markers.png");
+
+            Assert.True(TapMapOnPanel(surface, panel, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5)!.Value));
+            Assert.Equal(Bubble5.ToUpperInvariant(), page.StripName);
+            Assert.Equal(["Bookmark: Near the bar"], page.StripKinds);
+
+            surface.Render().SaveCapture("galaxy-map-panel-markers-selected.png");
+        }
+    }
+
+    [AvaloniaFact]
+    public void ItemsInSystemsNeverVisitedAreNotDrawnAndTheCountLineSaysSo()
+    {
+        var (_, _, page) = InWindow(Keeping());
+
+        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+
+        page.BookmarkSwitch.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("1 stored ship is in a system you have not visited.", page.UnplacedLine);
+
+        page.ShipSwitch.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(string.Empty, page.UnplacedLine);
+    }
+
+    [AvaloniaFact]
+    public void TheCountLineNamesTheCarrierAndPluralsEachKind()
+    {
+        var game = Played();
+        game.Bookmarks.Add("F1", "A", "Nowhere Known", Now);
+        game.Bookmarks.Add("F1", "B", "Nowhere Else", Now);
+        KeepCarrierIn(game, "Nowhere Known");
+        game.Commander.Apply(Event("""{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"X","ShipsHere":[],"ShipsRemote":[{"ShipID":14,"ShipType":"anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}"""));
+        var (_, _, page) = InWindow(game);
+
+        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+
+        page.BookmarkSwitch.IsChecked = false;
+        page.ShipSwitch.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("Your carrier is in a system you have not visited.", page.UnplacedLine);
+    }
+
+    [AvaloniaFact]
+    public void EachSwitchHidesItsMarkers()
+    {
+        var (_, _, page) = InWindow(Keeping());
+
+        foreach (var (kind, system, box) in new[]
+        {
+            (GalaxyMapMarkKind.Bookmark, Bubble5, page.BookmarkSwitch),
+            (GalaxyMapMarkKind.Carrier, Bubble9, page.CarrierSwitch),
+            (GalaxyMapMarkKind.Ships, Bubble12, page.ShipSwitch),
+        })
+        {
+            box.IsChecked = false;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Null(page.Map.MarkScreenOf(kind, system));
+
+            box.IsChecked = true;
+            Dispatcher.UIThread.RunJobs();
+            Assert.NotNull(page.Map.MarkScreenOf(kind, system));
+        }
+
+        var engineer = BubbleEngineer();
+        page.Map.View(GalaxyViewport.Around(engineer.Position!.Value));
+
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+
+        page.EngineerSwitch.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+    }
+
+    [AvaloniaFact]
+    public void EngineersDrawAtSixThousandFourHundredLightYearsAndCloserAndTheLegendSaysSo()
+    {
+        var (_, _, page) = InWindow(Keeping());
+        var engineer = BubbleEngineer();
+
+        page.Map.View(GalaxyViewport.Around(engineer.Position!.Value) with { LightYearsAcross = 6_400 });
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+        Assert.False(page.Map.Drawn.EngineersHidden);
+
+        page.Map.View(page.Map.Viewport.ZoomOut());
+        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+        Assert.True(page.Map.Drawn.EngineersHidden);
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
+    }
+
+    [AvaloniaFact]
+    public void MarksInOneSystemAreOneRowAndOneTargetNamingEveryKind()
+    {
+        var game = Played();
+        game.Bookmarks.Add("F1", "Here too", Bubble9, Now);
+        KeepCarrierIn(game, Bubble9);
+        var (window, _, page) = InWindow(game);
+
+        var bookmark = page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble9)!.Value;
+        var carrier = page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9)!.Value;
+
+        Assert.Equal(14, carrier.X - bookmark.X, 6);
+        Assert.Equal(bookmark.Y, carrier.Y, 6);
+
+        TapMapInWindow(window, page, bookmark);
+
+        Assert.Equal(["Bookmark: Here too", "Your carrier: BNH-T2F"], page.StripKinds);
+    }
+
+    [AvaloniaFact]
+    public void AnotherCommandersCarrierIsNotDrawnAndItsSwitchIsDisabled()
+    {
+        var game = Keeping();
+        var (_, _, page) = InWindow(game);
+
+        Assert.True(page.CarrierSwitch.IsEnabled);
+
+        game.OffDuty = "Jameson";
+        Assert.True(page.Tick());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(page.CarrierSwitch.IsEnabled);
+        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+    }
+
+    [AvaloniaFact]
+    public void ABookmarkMadeFromTheStripAppearsAtOnceAndTheReplyKeepsTheSecondLine()
+    {
+        var game = Played();
+        var (window, _, page) = InWindow(game);
+
+        TapMapInWindow(window, page, MapPoint(page, Bubble5));
+        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+
+        Tile(page, GalaxyMapPage.Bookmark).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+        Assert.Equal($"Bookmarked {Bubble5}.", page.StripReply);
+        Assert.Empty(page.StripKinds);
     }
 }

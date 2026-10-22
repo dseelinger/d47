@@ -3,8 +3,10 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Conversation;
@@ -23,15 +25,20 @@ public sealed class GalaxyMapPage : UserControl
     public const double PanelMapHeight = 376;
     public const double SwitchRail = 152;
     public const double PadRail = 136;
+    private const double LegendBand = 24;
 
     public const string Reading = "Reading your earlier journals. The jumps from this session are drawn now.";
     public const string NoTravels = "No travels to draw yet. Your jumps show here as you make them.";
     public const string StopsHidden = "Zoom to 6,400 ly to see the route's stops.";
+    public const string EngineersHidden = "Zoom to 6,400 ly to see the engineers.";
+    public const string StopsAndEngineersHidden = "Zoom to 6,400 ly to see the route's stops and the engineers.";
     public const string NotVisited = "not visited";
     public const string YouAreHere = "You are here";
     public const string CentreHere = "Centre here";
     public const string Bookmark = "Bookmark";
     public const string ClearSelection = "Clear selection";
+
+    private const int MostNamed = 3;
 
     private const int Galaxy = 0;
     private const int Here = 1;
@@ -62,6 +69,10 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _travels = Switch("Travels");
     private readonly CheckBox _routeShown = Switch("Route");
     private readonly CheckBox _regions = Switch("Regions");
+    private readonly CheckBox _engineers;
+    private readonly CheckBox _bookmarkMarks;
+    private readonly CheckBox _carrierMark;
+    private readonly CheckBox _shipMarks;
     private readonly Button _zoomIn = Tile("+", "Zoom in", 20);
     private readonly Button _zoomOut = Tile("−", "Zoom out", 20);
     private readonly TextBlock _system = Chrome(TypeScale.ControlLarge, ThemeManager.CyanKey);
@@ -69,6 +80,8 @@ public sealed class GalaxyMapPage : UserControl
     private readonly TextBlock _region = RoutingKit.Tag(string.Empty, ThemeManager.GreyKey);
     private readonly TextBlock _note = RoutingKit.Prose(string.Empty);
     private readonly TextBlock _counts = RoutingKit.Prose(string.Empty);
+    private readonly TextBlock _unplaced = RoutingKit.Prose(string.Empty);
+    private readonly StackPanel _stripKinds = new() { Orientation = Orientation.Horizontal, Spacing = 18, Height = 20 };
     private readonly TextBlock _stripName = Chrome(14, ThemeManager.AKey);
     private readonly TextBlock _stripFacts = RoutingKit.Ink(string.Empty, 13, ThemeManager.GreyKey);
     private readonly TextBlock _stripResult = RoutingKit.Ink(string.Empty, 13, ThemeManager.GreyKey);
@@ -78,8 +91,12 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Button _clear = Press("✕", TypeScale.MinimumTarget);
     private readonly Border _strip = new() { IsVisible = false, Height = TypeScale.MinimumTarget };
     private Control[] _replaced = [];
+    private Border? _legendOverlay;
     private Control? _mark;
     private bool _stripCurrent;
+    private string? _stripFor;
+    private List<string> _kindWords = [];
+    private IReadOnlyList<GalaxyMapMark> _placed = [];
     private string? _current;
     private readonly WrapPanel _legend = new() { Orientation = Orientation.Horizontal, ItemSpacing = 14, LineSpacing = 4 };
 
@@ -108,9 +125,16 @@ public sealed class GalaxyMapPage : UserControl
         _bookmarks = bookmarks;
         _copy = copy;
 
+        _engineers = Marked("Engineers", GalaxyMapMarkKind.Engineer);
+        _bookmarkMarks = Marked("Bookmarks", GalaxyMapMarkKind.Bookmark);
+        _carrierMark = Marked("Carrier", GalaxyMapMarkKind.Carrier);
+        _shipMarks = Marked("Ships", GalaxyMapMarkKind.Ships);
+
         BuildStrip();
 
         _counts.MaxWidth = double.PositiveInfinity;
+        _unplaced.MaxWidth = double.PositiveInfinity;
+        _unplaced.IsVisible = false;
         _note.MaxWidth = double.PositiveInfinity;
         _note.TextWrapping = TextWrapping.NoWrap;
         _note.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -124,6 +148,10 @@ public sealed class GalaxyMapPage : UserControl
         _travels.IsCheckedChanged += (_, _) => Refresh();
         _routeShown.IsCheckedChanged += (_, _) => Refresh();
         _regions.IsCheckedChanged += (_, _) => Refresh();
+        _engineers.IsCheckedChanged += (_, _) => Refresh();
+        _bookmarkMarks.IsCheckedChanged += (_, _) => Refresh();
+        _carrierMark.IsCheckedChanged += (_, _) => Refresh();
+        _shipMarks.IsCheckedChanged += (_, _) => Refresh();
         _zoomIn.Click += (_, _) => Step(view => view.ZoomIn());
         _zoomOut.Click += (_, _) => Step(view => view.ZoomOut());
         _map.ViewportChanged += _ => Moved();
@@ -139,11 +167,59 @@ public sealed class GalaxyMapPage : UserControl
         Frame(_framing.SelectedIndex);
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_bookmarks is not null)
+        {
+            _bookmarks.Changed += OnBookmarksChanged;
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        if (_bookmarks is not null)
+        {
+            _bookmarks.Changed -= OnBookmarksChanged;
+        }
+    }
+
+    private void OnBookmarksChanged()
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Refresh();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(Refresh);
+        }
+    }
+
     internal GalaxyMapView Map => _map;
 
     internal Segment Framing => _framing;
 
     internal Segment Range => _range;
+
+    internal CheckBox EngineerSwitch => _engineers;
+
+    internal CheckBox BookmarkSwitch => _bookmarkMarks;
+
+    internal CheckBox CarrierSwitch => _carrierMark;
+
+    internal CheckBox ShipSwitch => _shipMarks;
+
+    /// <summary>The words about items the map could not place.</summary>
+    internal string UnplacedLine => _unplaced.IsVisible
+        ? string.Concat((_unplaced.Inlines ?? []).OfType<Run>().Select(run => run.Text))
+        : string.Empty;
+
+    /// <summary>The strip's second line, one entry per kind, as "Kind: names".</summary>
+    internal IReadOnlyList<string> StripKinds => _stripKinds.IsVisible ? _kindWords : [];
 
     /// <summary>The words under the map where the counts go.</summary>
     internal string CountLine => _counts.Inlines is { Count: > 0 } inlines
@@ -184,7 +260,7 @@ public sealed class GalaxyMapPage : UserControl
         var fid = commander?.Identity.FrontierId ?? string.Empty;
         var folded = log?.HistoryFolded ?? true;
 
-        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty);
+        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet);
     }
 
     /// <summary>Rebuilds what the map draws and the lines under it, keeping the viewport.</summary>
@@ -217,6 +293,11 @@ public sealed class GalaxyMapPage : UserControl
             _framing.SelectedIndex = -1;
         }
 
+        var placement = Place(log, commander, fid, offDuty is not null);
+
+        _placed = placement.Marks;
+        _carrierMark.IsEnabled = offDuty is null;
+
         _map.Show(new GalaxyMapScene(
             _regions.IsChecked == true,
             _travels.IsChecked == true ? travels : null,
@@ -224,13 +305,87 @@ public sealed class GalaxyMapPage : UserControl
             RouteProgress.For(route, here).Index,
             _position,
             here,
-            Named(steps, Since())));
+            Named(steps, Since()),
+            placement.Marks));
 
         Strip(_map.Selected);
 
         Where(offDuty, here);
         Counts(log, steps.Count, travels);
+        Unplaced(placement);
         Zoom();
+    }
+
+    private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, int Bookmarks, bool Carrier, int Ships);
+
+    /// <summary>
+    /// The markers whose switch is on, placed by the engineer's position or by where the Commander has been, and how
+    /// many items stand in a system with no position.
+    /// </summary>
+    private Placement Place(TravelLog? log, CommanderGameState? commander, string fid, bool anotherCommander)
+    {
+        var marks = new List<GalaxyMapMark>();
+        var bookmarks = 0;
+        var carrier = false;
+        var ships = 0;
+
+        StarPosition? PositionIn(string system) => log is null || fid.Length == 0 ? null : log.PositionOf(fid, system);
+
+        if (_engineers.IsChecked == true)
+        {
+            var named = EngineerDirectory.All.Where(engineer => engineer.Position is not null && !string.IsNullOrEmpty(engineer.System));
+
+            foreach (var system in named.GroupBy(engineer => engineer.System!, StringComparer.OrdinalIgnoreCase))
+            {
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Engineer, system.Key, system.First().Position!.Value, [.. system.Select(engineer => engineer.Name)]));
+            }
+        }
+
+        if (_bookmarkMarks.IsChecked == true && _bookmarks is not null && fid.Length > 0)
+        {
+            foreach (var system in _bookmarks.For(fid).GroupBy(bookmark => bookmark.System, StringComparer.OrdinalIgnoreCase))
+            {
+                if (PositionIn(system.Key) is { } at)
+                {
+                    marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Bookmark, system.Key, at, [.. system.Select(bookmark => bookmark.Name)]));
+                }
+                else
+                {
+                    bookmarks += system.Count();
+                }
+            }
+        }
+
+        if (_carrierMark.IsChecked == true && !anotherCommander && commander?.Carrier is { StarSystem: { Length: > 0 } carrierSystem } held)
+        {
+            if (PositionIn(carrierSystem) is { } at)
+            {
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Carrier, carrierSystem, at, [held.CallSign ?? held.Name ?? "Fleet carrier"]));
+            }
+            else
+            {
+                carrier = true;
+            }
+        }
+
+        if (_shipMarks.IsChecked == true && commander is not null)
+        {
+            var stored = commander.Fleet.Ships.Where(ship => ship.HasSystem && !ship.InTransit);
+
+            foreach (var system in stored.GroupBy(ship => ship.StarSystem, StringComparer.OrdinalIgnoreCase))
+            {
+                if (PositionIn(system.Key) is { } at)
+                {
+                    marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Ships, system.Key, at, [.. system.Select(ship => ship.Name ?? EliteSpecifications.HullSaid(ship.Type))]));
+                }
+                else
+                {
+                    ships += system.Count();
+                }
+            }
+        }
+
+        return new Placement(marks, bookmarks, carrier, ships);
     }
 
     private static IReadOnlyList<GalaxyMapStar> Named(IReadOnlyList<TravelStep> steps, DateTimeOffset? since)
@@ -311,10 +466,11 @@ public sealed class GalaxyMapPage : UserControl
         _stripName.VerticalAlignment = VerticalAlignment.Center;
         _stripFacts.VerticalAlignment = VerticalAlignment.Center;
 
-        var one = _headset
-            ? new StackPanel { Children = { _stripName, _stripFacts } }
-            : new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Height = 20, Children = { _stripName, _stripFacts } };
-        var words = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { one, _stripResult } };
+        _stripKinds.IsVisible = false;
+        _stripResult.Height = 20;
+
+        var one = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Height = 20, Children = { _stripName, _stripFacts } };
+        var words = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { one, _stripKinds, _stripResult } };
 
         var actions = new StackPanel
         {
@@ -339,7 +495,12 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>Shows what the selected system is and what can be done with it, and hides what the strip replaces.</summary>
     private void Strip(GalaxyMapStar? star)
     {
-        _stripResult.IsVisible = false;
+        if (star is null || !string.Equals(star.Name, _stripFor, StringComparison.OrdinalIgnoreCase))
+        {
+            _stripResult.IsVisible = false;
+        }
+
+        _stripFor = star?.Name;
         _stripFacts.IsVisible = true;
 
         foreach (var covered in _replaced)
@@ -360,7 +521,75 @@ public sealed class GalaxyMapPage : UserControl
         _copyHolder.Content = _copy is { } copy ? CopyGlyph.For(star.Name, copy) : null;
 
         _stripFacts.Inlines = [.. Facts(star)];
+        Kinds(star);
         _mark?.InvalidateVisual();
+    }
+
+    /// <summary>The strip's second line: what is marked in the selected system, a kind each, in mark order.</summary>
+    private void Kinds(GalaxyMapStar star)
+    {
+        _stripKinds.Children.Clear();
+        _kindWords = [];
+
+        foreach (var mark in _placed.Where(mark => string.Equals(mark.System, star.Name, StringComparison.OrdinalIgnoreCase)).OrderBy(mark => mark.Kind))
+        {
+            var label = RoutingKit.Tag(KindWord(mark), ThemeManager.GreyKey);
+            label.FontSize = TypeScale.MetaSmall;
+            label.FontWeight = FontWeight.Medium;
+            label.VerticalAlignment = VerticalAlignment.Center;
+
+            var names = Chrome(13, ThemeManager.WhiteKey);
+            names.Inlines = [.. Names(mark.Names)];
+            _kindWords.Add(KindWord(mark) + ": " + string.Concat(names.Inlines.OfType<Run>().Select(run => run.Text)));
+
+            _stripKinds.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { new Glyph(MarkDrawing(mark.Kind, () => true)) { Width = 14, Height = 14, VerticalAlignment = VerticalAlignment.Center }, label, names },
+            });
+        }
+
+        _stripKinds.IsVisible = _stripKinds.Children.Count > 0 && !_stripResult.IsVisible;
+    }
+
+    private static string KindWord(GalaxyMapMark mark) => mark.Kind switch
+    {
+        GalaxyMapMarkKind.Engineer => mark.Names.Count == 1 ? "Engineer" : "Engineers",
+        GalaxyMapMarkKind.Bookmark => mark.Names.Count == 1 ? "Bookmark" : "Bookmarks",
+        GalaxyMapMarkKind.Carrier => "Your carrier",
+        _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
+    };
+
+    /// <summary>Up to three names, then how many more.</summary>
+    private static IEnumerable<Run> Names(IReadOnlyList<string> names)
+    {
+        var shown = names.Take(MostNamed).ToList();
+        var more = names.Count - shown.Count;
+
+        for (var index = 0; index < shown.Count; index++)
+        {
+            yield return White(index == 0 ? shown[index] : index == shown.Count - 1 && more == 0 ? " and " + shown[index] : ", " + shown[index]);
+        }
+
+        if (more > 0)
+        {
+            yield return White(" and ");
+
+            var count = White(more.ToString("N0", CultureInfo.CurrentCulture));
+            count.FontFamily = new FontFamily(Fonts.MonoFamily);
+
+            yield return count;
+            yield return White(" more");
+        }
+    }
+
+    private static Run White(string text)
+    {
+        var run = new Run(text);
+        RoutingKit.Themed(run, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+
+        return run;
     }
 
     private IEnumerable<Run> Facts(GalaxyMapStar star)
@@ -430,7 +659,7 @@ public sealed class GalaxyMapPage : UserControl
             : $"{star.Name} is already bookmarked under that name. The Bookmarks page renames it.";
         RoutingKit.Themed(_stripResult, TextBlock.ForegroundProperty, added ? ThemeManager.BlueKey : ThemeManager.WhiteKey);
         _stripResult.IsVisible = true;
-        _stripFacts.IsVisible = !_headset;
+        _stripKinds.IsVisible = false;
     }
 
     private void Moved()
@@ -497,9 +726,62 @@ public sealed class GalaxyMapPage : UserControl
         ];
     }
 
+    /// <summary>"2 bookmarks, your carrier and 1 stored ship are in systems you have not visited."; no line when none is unplaced.</summary>
+    private void Unplaced(Placement placement)
+    {
+        var parts = new List<Run[]>();
+
+        if (placement.Bookmarks > 0)
+        {
+            parts.Add([Number(placement.Bookmarks), Ink(placement.Bookmarks == 1 ? " bookmark" : " bookmarks")]);
+        }
+
+        if (placement.Carrier)
+        {
+            parts.Add([Ink("your carrier")]);
+        }
+
+        if (placement.Ships > 0)
+        {
+            parts.Add([Number(placement.Ships), Ink(placement.Ships == 1 ? " stored ship" : " stored ships")]);
+        }
+
+        _unplaced.IsVisible = parts.Count > 0;
+
+        if (parts.Count == 0)
+        {
+            _unplaced.Inlines = null;
+            return;
+        }
+
+        if (parts[0][0].Text == "your carrier")
+        {
+            parts[0][0] = Ink("Your carrier");
+        }
+
+        var runs = new List<Run>();
+
+        for (var index = 0; index < parts.Count; index++)
+        {
+            if (index > 0)
+            {
+                runs.Add(Ink(index == parts.Count - 1 ? " and " : ", "));
+            }
+
+            runs.AddRange(parts[index]);
+        }
+
+        var single = placement.Bookmarks + (placement.Carrier ? 1 : 0) + placement.Ships == 1;
+
+        runs.Add(Ink(single ? " is in a system you have not visited." : " are in systems you have not visited."));
+        _unplaced.Text = null;
+        _unplaced.Inlines = [.. runs];
+    }
+
     private void Legend(GalaxyMapDrawn drawn)
     {
         _legend.Children.Clear();
+        _legendOverlay?.SetCurrentValue(Visual.IsVisibleProperty, true);
 
         if (drawn.Travels)
         {
@@ -539,13 +821,16 @@ public sealed class GalaxyMapPage : UserControl
             Entry(Word(kind), (context, ink) => RouteMarks.Star(context, ink, kind, new Point(11, 5), 0.7));
         }
 
-        if (drawn.StopsHidden)
+        if (drawn.StopsHidden || drawn.EngineersHidden)
         {
-            var hint = RoutingKit.Ink(StopsHidden, TypeScale.Meta, ThemeManager.Grey2Key, wrap: true);
+            var words = drawn.StopsHidden ? (drawn.EngineersHidden ? StopsAndEngineersHidden : StopsHidden) : EngineersHidden;
+            var hint = RoutingKit.Ink(words, TypeScale.Meta, ThemeManager.Grey2Key, wrap: true);
             hint.MaxWidth = _legend.MaxWidth;
             hint.VerticalAlignment = VerticalAlignment.Center;
             _legend.Children.Add(hint);
         }
+
+        _legendOverlay?.SetCurrentValue(Visual.IsVisibleProperty, _legend.Children.Count > 0);
     }
 
     private void Entry(string word, Action<DrawingContext, Func<string, IBrush>> draw)
@@ -598,8 +883,20 @@ public sealed class GalaxyMapPage : UserControl
 
         if (_headset)
         {
+            _legend.MaxWidth = 640;
+            _map.BottomInset = LegendBand;
+            _legendOverlay = new Border
+            {
+                IsHitTestVisible = false,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Padding = new Thickness(8, 3),
+                Child = _legend,
+            };
+            RoutingKit.Themed(_legendOverlay, Border.BackgroundProperty, ThemeManager.BgKey);
+
             _strip.VerticalAlignment = VerticalAlignment.Bottom;
-            grid.Children.Insert(1, _strip);
+            grid.Children.Insert(1, _legendOverlay);
+            grid.Children.Insert(2, _strip);
         }
 
         return grid;
@@ -634,7 +931,11 @@ public sealed class GalaxyMapPage : UserControl
         return tile;
     }
 
-    private StackPanel Switches() => new() { Spacing = 2, Children = { _travels, _routeShown, _regions } };
+    private StackPanel Switches() => new()
+    {
+        Spacing = 2,
+        Children = { _travels, _routeShown, _regions, _engineers, _bookmarkMarks, _carrierMark, _shipMarks },
+    };
 
     private Control WhereLine()
     {
@@ -689,15 +990,15 @@ public sealed class GalaxyMapPage : UserControl
 
         Place(page, Toolbar(), 0, 0);
         Place(page, body, 0, 1);
-        Place(page, new Grid { Children = { under, _strip } }, 0, 2);
+        Place(page, new StackPanel { Spacing = 10, Children = { new Grid { Children = { under, _strip } }, _unplaced } }, 0, 2);
 
         return page;
     }
 
     /// <summary>
     /// On the big panel the page has 435 px under the header: the line under the map goes in the pad rail and
-    /// the legend under the switches, so the map keeps its height. There is no room for the strip's own row, so
-    /// it covers the bottom of the map.
+    /// the legend is a band over the bottom of the map, so the map keeps its height. There is no room for the
+    /// strip's own row, so it covers the same band.
     /// </summary>
     private Control PanelLayout()
     {
@@ -708,11 +1009,15 @@ public sealed class GalaxyMapPage : UserControl
             text.MaxWidth = PadRail;
         }
 
-        _legend.MaxWidth = SwitchRail;
-
         var where = new StackPanel { Spacing = 2, Children = { _system, _region, _note } };
-        var pad = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), _counts, where } };
-        var side = new StackPanel { Spacing = 10, Children = { Switches(), _legend } };
+        _unplaced.TextWrapping = TextWrapping.Wrap;
+        _unplaced.TextTrimming = TextTrimming.None;
+        _unplaced.MaxWidth = PadRail;
+        _unplaced.FontSize = TypeScale.Meta;
+        _unplaced.Margin = new Thickness(0, 6, 0, 0);
+
+        var pad = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), _unplaced, _counts, where } };
+        var side = Switches();
         var body = new Grid
         {
             Height = PanelMapHeight,
@@ -730,7 +1035,7 @@ public sealed class GalaxyMapPage : UserControl
         Place(body, pad, 2, 0);
         Place(body, side, 4, 0);
 
-        _replaced = [_counts, where, _legend];
+        _replaced = [_counts, where, _legendOverlay!];
 
         return new StackPanel
         {
@@ -807,6 +1112,59 @@ public sealed class GalaxyMapPage : UserControl
 
         return box;
     }
+
+    private static CheckBox Marked(string label, GalaxyMapMarkKind kind)
+    {
+        var box = LabeledCheckBox.Caps(string.Empty);
+        box.IsChecked = true;
+        box.HorizontalAlignment = HorizontalAlignment.Stretch;
+        box.Classes.Add("composed");
+        AutomationProperties.SetName(box, label);
+
+        var text = new TextBlock { Text = label.ToUpperInvariant(), VerticalAlignment = VerticalAlignment.Center };
+        var mark = new Glyph(MarkDrawing(kind, () => box.IsEnabled)) { Width = 16, Height = 14, VerticalAlignment = VerticalAlignment.Center };
+
+        box.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == InputElement.IsEnabledProperty)
+            {
+                mark.InvalidateVisual();
+            }
+        };
+
+        DockPanel.SetDock(mark, Dock.Right);
+        box.Content = new DockPanel { Children = { mark, text } };
+
+        return box;
+    }
+
+    /// <summary>A marker's shape at the centre of a 16 by 14 glyph; grey while <paramref name="live"/> is false.</summary>
+    private static Action<DrawingContext, Func<string, IBrush>> MarkDrawing(GalaxyMapMarkKind kind, Func<bool> live) => (context, ink) =>
+    {
+        var (points, key) = kind switch
+        {
+            GalaxyMapMarkKind.Engineer => (new (double X, double Y)[] { (-1.5, -5.5), (1.5, -5.5), (1.5, -1.5), (5.5, -1.5), (5.5, 1.5), (1.5, 1.5), (1.5, 5.5), (-1.5, 5.5), (-1.5, 1.5), (-5.5, 1.5), (-5.5, -1.5), (-1.5, -1.5) }, ThemeManager.WhiteKey),
+            GalaxyMapMarkKind.Bookmark => (new (double X, double Y)[] { (-4, -5.5), (4, -5.5), (4, 5.5), (0, 2), (-4, 5.5) }, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
+            _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
+        };
+
+        var geometry = new StreamGeometry();
+
+        using (var open = geometry.Open())
+        {
+            open.BeginFigure(new Point(8 + points[0].X, 7 + points[0].Y), true);
+
+            foreach (var (x, y) in points.Skip(1))
+            {
+                open.LineTo(new Point(8 + x, 7 + y));
+            }
+
+            open.EndFigure(true);
+        }
+
+        context.DrawGeometry(ink(live() ? key : ThemeManager.Grey2Key), null, geometry);
+    };
 
     private static TextBlock Label(string text)
     {
