@@ -343,10 +343,17 @@ def build_ships(
             value = properties.get(coriolis_key)
             return number(value) if value is not None else ""
 
-        def sizes_of(edsy_group: str, coriolis_group: str) -> str:
+        def sizes_of(edsy_group: str, coriolis_group: str, unrestricted: bool = False) -> str:
             # Sizes rather than counts. "3 large, 2 medium" is the answer to "what can
-            # it carry"; "5 hardpoints" is not.
-            found = sizes.get(edsy_group) or slots.get(coriolis_group) or []
+            # it carry"; "5 hardpoints" is not. With `unrestricted`, a slot that takes only
+            # some module types is left out, in both sources.
+            found = sizes.get(edsy_group) or []
+            if found and unrestricted:
+                cells = edsy.get("restrict", {}).get(edsy_group) or []
+                found = [size for index, size in enumerate(found)
+                         if index >= len(cells) or not cells[index]]
+            elif not found:
+                found = slots.get(coriolis_group) or []
             return ",".join(str(size) for size in found if isinstance(size, int) and size)
 
         if ship is None and not any(figures.values()):
@@ -369,7 +376,7 @@ def build_ships(
             number(properties.get("masslock")),
             number(properties.get("hullCost")),
             sizes_of("hardpoint", "hardpoints"),
-            sizes_of("internal", "internal"),
+            sizes_of("internal", "internal", unrestricted=True),
             "arx-early-access" if symbol in ARX_EARLY_ACCESS else requirement(ship) if ship else "",
         ])
 

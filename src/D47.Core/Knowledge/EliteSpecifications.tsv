@@ -43,12 +43,12 @@ hauler	Hauler	Zorgon Peterson	small	200	300	100	50	20	14	0.25	1	6	30308	1	3,3,2,
 independant_trader	Keelback	Lakon	medium	200	300	270	135	45	180	0.39	2	8	2946463	2,2,1,1	5,5,4,3,2,2,1	
 krait_light	Krait Phantom	Faulcon DeLacy	medium	250	350	180	200	55	270	0.63	2	14	35741519	3,3,2,2	6,5,5,5,3,3,3,2,1	
 krait_mkii	Krait MkII	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	44160710	3,3,3,2,2	6,6,5,5,4,3,3,2,1	
-lakonminer	Type-11 Prospector	Lakon	medium	270	365	350	275	58	320	0.77	3	16	66346710	3,2,2,2,1,1,1,1	6,6,6,5,5,5,5,4,3,2,1,1	
+lakonminer	Type-11 Prospector	Lakon	medium	270	365	350	275	58	320	0.77	3	16	66346710	3,2,2,2,1,1,1,1	6,6,6,5,5,4,3,2,1,1	
 mamba	Mamba	Zorgon Peterson	medium	310	380	230	270	70	250	0.5	2	12	55442918	4,3,3,1,1	5,4,3,2,2,1	
 mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	190	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
-mediumtransport01	Lynx Highliner			285	350	350	200	55	260					3,2,2,2,2	6,6,6,5,5,4,4,3,2,1	
+mediumtransport01	Lynx Highliner			285	350	350	200	55	260					3,2,2,2,2	6,5,4,4,3,2,1	
 orca	Orca	Saud Kruger	large	300	380	220	220	55	290	0.79	2	16	47800723	3,2,2	6,5,5,5,4,3,2,2,1	
-panthermkii	Panther Clipper MkII	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,8,7,7,6,6,6,5,5,4,2,1	
+panthermkii	Panther Clipper MkII	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
 python	Python	Faulcon DeLacy	medium	230	300	260	260	65	350	0.83	2	17	55324684	3,3,3,2,2	6,6,6,5,5,4,3,3,2,1	
 python_nx	Python MkII	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
 sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	55	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
