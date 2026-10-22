@@ -188,7 +188,7 @@ public class GoalEvaluatorTests
     [Fact]
     public void AHullOutsideTheShipTableDoesNotCountTowardsTheCollection()
     {
-        var standing = Evaluate(GoalCatalogue.Ships, FleetOf(["adder", "anacondamkii"]), null);
+        var standing = Evaluate(GoalCatalogue.Ships, FleetOf(["adder", "notinthetable"]), null);
 
         Assert.Equal(1, standing.Have);
     }
