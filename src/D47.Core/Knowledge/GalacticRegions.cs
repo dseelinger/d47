@@ -6,6 +6,9 @@ namespace D47.Core.Knowledge;
 
 public sealed record RegionRun(double X0, double X1, double Z0, double Z1, int RegionId);
 
+/// <summary>A straight piece of a region border, in light years.</summary>
+public readonly record struct RegionEdge(double X0, double Z0, double X1, double Z1);
+
 /// <summary>
 /// Places a position in one of the 42 codex regions, ported from klightspeed/EliteDangerousRegionMap's
 /// <c>FindRegion</c> (MIT); see NOTICE.
@@ -23,6 +26,7 @@ public static class GalacticRegions
 
     private static readonly Lazy<Map> Loaded = new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<IReadOnlyList<RegionRun>> AllRuns = new(BuildRuns, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<IReadOnlyList<RegionEdge>> AllEdges = new(BuildEdges, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>The galaxy the grid covers, in light years.</summary>
     public static (double X0, double Z0, double X1, double Z1) Extent
@@ -38,6 +42,9 @@ public static class GalacticRegions
 
     /// <summary>Every run of cells with a region, row by row.</summary>
     public static IReadOnlyList<RegionRun> Runs() => AllRuns.Value;
+
+    /// <summary>Every cell edge where the region changes, outside the grid counting as no region.</summary>
+    public static IReadOnlyList<RegionEdge> Borders() => AllEdges.Value;
 
     /// <summary>The centre of the region's cell nearest the mean of its cells, or null for an unknown number.</summary>
     public static StarPosition? LabelAt(int regionId)
@@ -142,6 +149,68 @@ public static class GalacticRegions
         }
 
         return runs;
+    }
+
+    private static IReadOnlyList<RegionEdge> BuildEdges()
+    {
+        var rows = Loaded.Value.Rows;
+        var width = rows.Count == 0 ? 0 : rows.Max(row => row.Sum(run => run.Span));
+        var edges = new List<RegionEdge>();
+        var below = new int[width];
+        var above = new int[width];
+
+        for (var pz = 0; pz <= rows.Count; pz++)
+        {
+            Array.Clear(above);
+
+            if (pz < rows.Count)
+            {
+                var rx = 0;
+
+                foreach (var (span, regionId) in rows[pz])
+                {
+                    Array.Fill(above, regionId, rx, Math.Min(span, width - rx));
+                    rx += span;
+                }
+            }
+
+            var z = Z0 + pz * CellLy;
+            var start = -1;
+
+            for (var px = 0; px <= width; px++)
+            {
+                var differs = px < width && below[px] != above[px];
+
+                if (differs && start < 0)
+                {
+                    start = px;
+                }
+                else if (!differs && start >= 0)
+                {
+                    edges.Add(new RegionEdge(X0 + start * CellLy, z, X0 + px * CellLy, z));
+                    start = -1;
+                }
+            }
+
+            if (pz < rows.Count)
+            {
+                for (var px = 0; px <= width; px++)
+                {
+                    var left = px == 0 ? 0 : above[px - 1];
+                    var right = px == width ? 0 : above[px];
+
+                    if (left != right)
+                    {
+                        var x = X0 + px * CellLy;
+                        edges.Add(new RegionEdge(x, z, x, z + CellLy));
+                    }
+                }
+            }
+
+            (below, above) = (above, below);
+        }
+
+        return edges;
     }
 
     private sealed record Map(

@@ -74,6 +74,46 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
     }
 
     [AvaloniaFact]
+    public void TheGalaxyMapShowsNoPositionOrRouteForAnotherCommanderButTheirTravels()
+    {
+        var state = new CommanderGameState(new CommanderIdentity("F1", "Jameson"));
+        state.Apply(Event(0, """{"event":"Location","StarSystem":"Sol","SystemAddress":10477373803,"StarPos":[0,0,0]}"""));
+
+        var travel = new TravelLog(new MemoryFileSystem(), NullLogger.Instance);
+        travel.Fold(
+        [
+            """{"timestamp":"2026-10-12T09:00:00Z","event":"LoadGame","FID":"F1","Commander":"Jameson"}""",
+            """{"timestamp":"2026-10-12T09:01:00Z","event":"Location","StarSystem":"Sol","SystemAddress":1,"StarPos":[0,0,0]}""",
+            """{"timestamp":"2026-10-12T09:05:00Z","event":"FSDJump","StarSystem":"Alpha Centauri","SystemAddress":2,"StarPos":[3,0,3]}""",
+        ]);
+        travel.FoldHistory([]);
+
+        var duty = new Duty { Off = true };
+        var page = new GalaxyMapPage(() => travel, () => state, Route, () => "Sol", duty.Say, () => Start, headset: false);
+
+        TextOf(page);
+
+        Assert.Equal(0, page.Framing.SelectedIndex);
+        Assert.Equal(D47.Core.Knowledge.GalaxyViewport.WholeGalaxy, page.Map.Viewport);
+        Assert.Equal("CMDR Kestrel Vane is in the game; their position shows when they are the Commander shown.", page.NoteLine);
+        Assert.False(page.Map.Drawn.You);
+        Assert.False(page.Map.Drawn.Route);
+        Assert.True(page.Map.Drawn.Travels);
+        Assert.Equal("1 jump to 2 systems", page.CountLine);
+
+        var options = page.Framing.GetVisualDescendants().OfType<RadioButton>().ToList();
+        Assert.False(options[1].IsEnabled);
+        Assert.False(options[2].IsEnabled);
+
+        duty.Off = false;
+
+        Assert.True(page.Tick());
+        Assert.True(page.Map.Drawn.Route);
+        Assert.True(options[1].IsEnabled);
+        Assert.Equal(string.Empty, page.NoteLine);
+    }
+
+    [AvaloniaFact]
     public void ThePickedBackInGameCommanderGetsTheRoutePageOnTheNextRefresh()
     {
         var duty = new Duty { Off = true };

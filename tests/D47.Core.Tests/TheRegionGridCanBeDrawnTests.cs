@@ -54,4 +54,45 @@ public sealed class TheRegionGridCanBeDrawnTests
             Assert.True(run.Z0 >= z0 && run.Z1 <= z1 + 1e-6);
         });
     }
+
+    [Fact]
+    public void EveryBorderIsAStraightCellEdgeBetweenTwoRegions()
+    {
+        var borders = GalacticRegions.Borders();
+
+        Assert.NotEmpty(borders);
+
+        for (var i = 0; i < borders.Count; i += 53)
+        {
+            var edge = borders[i];
+            var midX = (edge.X0 + edge.X1) / 2;
+            var midZ = (edge.Z0 + edge.Z1) / 2;
+            const double Off = 5;
+
+            if (edge.Z0 == edge.Z1)
+            {
+                Assert.NotEqual(
+                    GalacticRegions.Find(new StarPosition(midX, 0, midZ - Off)),
+                    GalacticRegions.Find(new StarPosition(midX, 0, midZ + Off)));
+            }
+            else
+            {
+                Assert.Equal(edge.X0, edge.X1);
+                Assert.NotEqual(
+                    GalacticRegions.Find(new StarPosition(midX - Off, 0, midZ)),
+                    GalacticRegions.Find(new StarPosition(midX + Off, 0, midZ)));
+            }
+        }
+    }
+
+    [Fact]
+    public void NoBorderRunsThroughTheMiddleOfARegion()
+    {
+        var label = GalacticRegions.LabelAt(GalacticRegions.IdOf("Inner Orion Spur")!.Value)!.Value;
+
+        Assert.DoesNotContain(GalacticRegions.Borders(), edge =>
+            edge.Z0 == edge.Z1
+                ? Math.Abs(edge.Z0 - label.Z) < 1 && edge.X0 <= label.X && label.X <= edge.X1
+                : Math.Abs(edge.X0 - label.X) < 1 && edge.Z0 <= label.Z && label.Z <= edge.Z1);
+    }
 }

@@ -68,6 +68,9 @@ public sealed record Palette
     /// <summary><see cref="Cyan"/> at 7% onto <see cref="Bg"/>, in OKLab: the ground of the Commander's own turns.</summary>
     public Color CyanGround => Mix(Bg, Cyan, 0.07);
 
+    /// <summary><see cref="A"/> at 8% onto <see cref="Bg"/>, in OKLab: the galaxy map's region ground.</summary>
+    public Color MapGround => Mix(Bg, A, 0.08);
+
     /// <summary><see cref="Red"/> at 22% onto <see cref="Bg"/>, in OKLab: a destructive tile at rest.</summary>
     public Color RedTile => Mix(Bg, Red, 0.22);
 

@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Navigation tab: Plan, Bookmarks, Market, Best cargo, Trade route, On this body and Unsold data.</summary>
+/// <summary>The Navigation tab: Plan, Galaxy map, Bookmarks, Market, Best cargo, Trade route, On this body and Unsold data.</summary>
 internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteRequest carrierRoute)
 {
     private RouteProgressPage? _routeProgress;
@@ -13,6 +13,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;
     private RouteBestCargoPage? _bestCargo;
+    private GalaxyMapPage? _galaxyMap;
     
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
@@ -39,7 +40,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         bool trade = true,
         bool bookmarks = true,
         bool body = true,
-        bool unsold = true)
+        bool unsold = true,
+        bool galaxyMap = true)
     {
         var roots = new List<NavCrumb>();
 
@@ -48,6 +50,15 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         if (plan)
         {
             roots.Add(new NavCrumb(RoutingPages.PlanRoot, "Plan")
+            {
+                Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+            });
+        }
+
+        // Second, after Plan (#1406).
+        if (galaxyMap && surface.Travel is not null)
+        {
+            roots.Add(new NavCrumb(RoutingPages.GalaxyMapRoot, "Galaxy map")
             {
                 Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
             });
@@ -143,6 +154,18 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Registry);
                 }
 
+                if (crumb.Key == RoutingPages.GalaxyMapRoot && surface.Travel is { } travel)
+                {
+                    return _galaxyMap = new GalaxyMapPage(
+                        travel,
+                        surface.Commander ?? (() => null),
+                        surface.Route,
+                        surface.Here,
+                        surface.OffDuty,
+                        surface.Now,
+                        host.Headset);
+                }
+
                 var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
@@ -200,6 +223,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         var body = _bodyPage is { } bodyPage && host.Nav.RootKeyOf(PanelTab.Navigation) == BodyPage.RootKey && bodyPage.Tick();
         body |= _unsoldPage is { } unsoldPage && host.Nav.RootKeyOf(PanelTab.Navigation) == UnsoldPage.RootKey && unsoldPage.Tick();
         body |= _bestCargo is { } cargo && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.BestCargoRoot && cargo.Tick();
+        body |= _galaxyMap is { } map && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && map.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();

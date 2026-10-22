@@ -72,6 +72,12 @@ public sealed record RoutingSurface(
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
+
+    /// <summary>Each Commander's arrivals, for the Galaxy map; no map without it (#1406).</summary>
+    public Func<TravelLog?>? Travel { get; init; }
+
+    /// <summary>The time the Galaxy map's travel ranges count back from.</summary>
+    public Func<DateTimeOffset> Now { get; init; } = () => DateTimeOffset.Now;
 }
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>
@@ -120,6 +126,9 @@ public static class RoutingPages
 {
     /// <summary>Where a route comes from: the three planners.</summary>
     public const string PlanRoot = "routing.plan";
+
+    /// <summary>Where the Commander has been and is, and the plotted route, on a map of the galaxy (#1406).</summary>
+    public const string GalaxyMapRoot = "routing.galaxyMap";
 
     /// <summary>The route being flown, read from the file Elite writes locally: a level beside Plan.</summary>
     public const string ProgressKey = "routing.progress";

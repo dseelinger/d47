@@ -270,6 +270,24 @@ Asking for a kind with nothing stored says so rather than plotting anything, and
 past the last stop. Only an arrival moves the reached stop forward — asking for the next one
 again before then plots the same system again.
 
+### The Galaxy map page
+
+The **Navigation** tab's **Galaxy map** is d47's own drawing, not Elite's galaxy map. It draws the
+42 regions, every system you have arrived in, the route Elite plotted and where you are, top-down,
+from journals already on this machine. Nothing is fetched.
+
+- **GALAXY**, **HERE** and **ROUTE** frame the view: the whole galaxy, 400 ly around you, or the
+  plotted route. HERE needs your position and ROUTE a route with two positioned stops; without
+  them the button is greyed.
+- **+** and **−** zoom in steps from 100 ly to 102,400 ly across, and the four arrows move a quarter
+  of the view. On the desktop the mouse wheel and a drag do the same.
+- **30 DAYS**, **1 YEAR** and **ALL** choose how far back the travels go, and the line under the map
+  counts the jumps and systems in that range.
+- **TRAVELS**, **ROUTE** and **REGIONS** switch each layer off and on.
+
+Region names are drawn at 6,400 ly across and wider. The route's stops, the destination's name and
+your system's name are drawn at 6,400 ly and closer.
+
 ### Mining routes
 
 There are none, and that is a measurement rather than an omission: `api/mining/route` is a **404**.

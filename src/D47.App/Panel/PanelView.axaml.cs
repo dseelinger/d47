@@ -786,8 +786,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         bool trade = true,
         bool bookmarks = true,
         bool body = true,
-        bool unsold = true) =>
-        _navigation.EnableRouting(surface, plan, progress, market, bestCargo, trade, bookmarks, body, unsold);
+        bool unsold = true,
+        bool galaxyMap = true) =>
+        _navigation.EnableRouting(surface, plan, progress, market, bestCargo, trade, bookmarks, body, unsold, galaxyMap);
 
     /// <summary>
     /// Redraws the route being flown, from the host's tick, and says whether anything on it moved — the

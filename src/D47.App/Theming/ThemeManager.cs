@@ -38,6 +38,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary><see cref="Palette.CyanGround"/>.</summary>
     public const string CyanGroundKey = "D47.CyanGround";
 
+    /// <summary><see cref="Palette.MapGround"/>.</summary>
+    public const string MapGroundKey = "D47.MapGround";
+
     /// <summary><see cref="Palette.RedTile"/>.</summary>
     public const string RedTileKey = "D47.RedTile";
 
@@ -73,7 +76,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     public static IReadOnlyList<string> Roles { get; } =
     [
         .. Tokens,
-        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, RedTileKey, RedGroundKey, WarnGroundKey, YellowTrackKey,
+        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, MapGroundKey, RedTileKey, RedGroundKey, WarnGroundKey, YellowTrackKey,
     ];
 
     /// <summary>Each token key and its colour in <paramref name="palette"/>.</summary>
@@ -168,6 +171,7 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
 
         resources[ScrimKey] = Scrim();
         resources[CyanGroundKey] = new SolidColorBrush(palette.CyanGround);
+        resources[MapGroundKey] = new SolidColorBrush(palette.MapGround);
         resources[RedTileKey] = new SolidColorBrush(palette.RedTile);
         resources[RedGroundKey] = new SolidColorBrush(palette.RedGround);
         resources[WarnGroundKey] = new SolidColorBrush(palette.WarnGround);

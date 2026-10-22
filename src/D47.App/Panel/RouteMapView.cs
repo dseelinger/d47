@@ -24,16 +24,7 @@ public sealed class RouteMapView : Control
     private const double NameOffset = 16;
     private const double EdgeMargin = 4;
 
-    private enum Star
-    {
-        BlackHole,
-        Neutron,
-        WhiteDwarf,
-        NoFuel,
-        Restock,
-    }
-
-    private static readonly Star[] KeyOrder = [Star.Neutron, Star.WhiteDwarf, Star.BlackHole, Star.NoFuel, Star.Restock];
+    private static readonly RouteStar[] KeyOrder = [RouteStar.Neutron, RouteStar.WhiteDwarf, RouteStar.BlackHole, RouteStar.NoFuel, RouteStar.Restock];
 
     private RouteMapLayout? _layout;
     private string? _here;
@@ -67,14 +58,6 @@ public sealed class RouteMapView : Control
         return new Size(side, side + KeyHeight);
     }
 
-    private static Star? StarOf(RouteStopMarks marks) =>
-        marks.HasFlag(RouteStopMarks.BlackHole) ? Star.BlackHole
-        : marks.HasFlag(RouteStopMarks.Neutron) ? Star.Neutron
-        : marks.HasFlag(RouteStopMarks.WhiteDwarf) ? Star.WhiteDwarf
-        : marks.HasFlag(RouteStopMarks.NotScoopable) ? Star.NoFuel
-        : marks.HasFlag(RouteStopMarks.Restock) ? Star.Restock
-        : null;
-
     public override void Render(DrawingContext context)
     {
         base.Render(context);
@@ -106,22 +89,22 @@ public sealed class RouteMapView : Control
         Line(context, behind, ThemeManager.GreyKey);
         Line(context, ahead, ThemeManager.AKey);
 
-        var drawn = new List<(Star Kind, Point At)>();
+        var drawn = new List<(RouteStar Kind, Point At)>();
 
         for (var index = 0; index < points.Count; index++)
         {
-            if (StarOf(points[index].Marks) is not { } kind ||
+            if (RouteMarks.StarOf(points[index].Marks) is not { } kind ||
                 drawn.Any(mark => mark.Kind == kind && Distance(mark.At, placed[index]) <= NearestSameMark))
             {
                 continue;
             }
 
             drawn.Add((kind, placed[index]));
-            StarMark(context, kind, placed[index], 1);
+            RouteMarks.Star(context, Brush, kind, placed[index], 1);
         }
 
-        StartMark(context, placed[0]);
-        DestinationMark(context, placed[^1]);
+        RouteMarks.Start(context, Brush, placed[0]);
+        RouteMarks.Destination(context, Brush, placed[^1]);
 
         Point? you = hereIndex >= 0 ? placed[hereIndex]
             : layout.Commander is { } off ? At(off.X, off.Y)
@@ -141,7 +124,7 @@ public sealed class RouteMapView : Control
 
         if (you is { } at)
         {
-            YouMark(context, at);
+            RouteMarks.You(context, Brush, at);
         }
 
         context.DrawRectangle(
@@ -178,87 +161,6 @@ public sealed class RouteMapView : Control
         context.DrawGeometry(null, new Pen(Brush(key), 2, lineJoin: PenLineJoin.Round, lineCap: PenLineCap.Round), geometry);
     }
 
-    private void StarMark(DrawingContext context, Star kind, Point at, double scale)
-    {
-        using var _ = context.PushTransform(Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y));
-        var bg = Brush(ThemeManager.BgKey);
-        var white = Brush(ThemeManager.WhiteKey);
-
-        switch (kind)
-        {
-            case Star.Neutron:
-                context.DrawGeometry(bg, null, Polygon((0, -6.5), (6.5, 0), (0, 6.5), (-6.5, 0)));
-                context.DrawGeometry(white, null, Polygon((0, -5), (5, 0), (0, 5), (-5, 0)));
-                break;
-
-            case Star.WhiteDwarf:
-                context.DrawGeometry(bg, null, Polygon((0, -6.5), (6.5, 0), (0, 6.5), (-6.5, 0)));
-                context.DrawGeometry(null, new Pen(white, 1.5), Polygon((0, -5), (5, 0), (0, 5), (-5, 0)));
-                break;
-
-            case Star.BlackHole:
-                context.DrawRectangle(bg, null, new Rect(-6, -6, 12, 12));
-                context.DrawRectangle(null, new Pen(white, 1.5), new Rect(-4.5, -4.5, 9, 9));
-                context.DrawRectangle(white, null, new Rect(-1.5, -1.5, 3, 3));
-                break;
-
-            case Star.Restock:
-                context.DrawEllipse(bg, null, new Point(0, 0), 7, 7);
-                context.DrawEllipse(null, new Pen(Brush(ThemeManager.BlueKey), 2), new Point(0, 0), 5, 5);
-                context.DrawEllipse(Brush(ThemeManager.BlueKey), null, new Point(0, 0), 1.5, 1.5);
-                break;
-
-            default:
-                context.DrawGeometry(bg, null, Polygon((0, -7.5), (7.5, 6), (-7.5, 6)));
-                context.DrawGeometry(Brush(ThemeManager.WarnKey), null, Polygon((0, -5.5), (5.5, 4.5), (-5.5, 4.5)));
-                break;
-        }
-    }
-
-    private static StreamGeometry Polygon(params (double X, double Y)[] corners)
-    {
-        var geometry = new StreamGeometry();
-
-        using var open = geometry.Open();
-        open.BeginFigure(new Point(corners[0].X, corners[0].Y), true);
-
-        foreach (var (x, y) in corners.Skip(1))
-        {
-            open.LineTo(new Point(x, y));
-        }
-
-        open.EndFigure(true);
-
-        return geometry;
-    }
-
-    private void StartMark(DrawingContext context, Point at)
-    {
-        context.DrawRectangle(Brush(ThemeManager.BgKey), null, new Rect(at.X - 5, at.Y - 5, 10, 10));
-        context.DrawRectangle(null, new Pen(Brush(ThemeManager.AKey), 2), new Rect(at.X - 3.5, at.Y - 3.5, 7, 7));
-    }
-
-    private void DestinationMark(DrawingContext context, Point at)
-    {
-        context.DrawRectangle(Brush(ThemeManager.BgKey), null, new Rect(at.X - 9, at.Y - 9, 18, 18));
-        context.DrawRectangle(null, new Pen(Brush(ThemeManager.AKey), 1), new Rect(at.X - 8, at.Y - 8, 16, 16));
-        context.DrawRectangle(Brush(ThemeManager.AKey), null, new Rect(at.X - 4, at.Y - 4, 8, 8));
-    }
-
-    private void YouMark(DrawingContext context, Point at)
-    {
-        var cyan = Brush(ThemeManager.CyanKey);
-        var pen = new Pen(cyan, 1);
-
-        context.DrawRectangle(Brush(ThemeManager.BgKey), null, new Rect(at.X - 6, at.Y - 6, 12, 12));
-        context.DrawRectangle(cyan, null, new Rect(at.X - 4, at.Y - 4, 8, 8));
-
-        context.DrawLine(pen, new Point(at.X + 7, at.Y), new Point(at.X + 12, at.Y));
-        context.DrawLine(pen, new Point(at.X - 7, at.Y), new Point(at.X - 12, at.Y));
-        context.DrawLine(pen, new Point(at.X, at.Y + 7), new Point(at.X, at.Y + 12));
-        context.DrawLine(pen, new Point(at.X, at.Y - 7), new Point(at.X, at.Y - 12));
-    }
-
     /// <summary>Draws a name beside a mark unless it would overlap one already drawn; returns its box.</summary>
     private Rect DrawName(DrawingContext context, string name, Point at, string key, double side, List<Rect> taken)
     {
@@ -282,7 +184,7 @@ public sealed class RouteMapView : Control
         return box;
     }
 
-    private void Key(DrawingContext context, IReadOnlyList<Star> kinds, double side)
+    private void Key(DrawingContext context, IReadOnlyList<RouteStar> kinds, double side)
     {
         const double Glyph = 14;
         const double Between = 13;
@@ -302,19 +204,19 @@ public sealed class RouteMapView : Control
                 y += RowHeight;
             }
 
-            StarMark(context, kind, new Point(x + (Glyph / 2), y + (RowHeight / 2)), Glyph / 20);
+            RouteMarks.Star(context, Brush, kind, new Point(x + (Glyph / 2), y + (RowHeight / 2)), Glyph / 20);
             context.DrawText(text, new Point(x + Glyph + 6, y + ((RowHeight - text.Height) / 2)));
 
             x += width + Between;
         }
     }
 
-    private static string Word(Star kind) => kind switch
+    private static string Word(RouteStar kind) => kind switch
     {
-        Star.Neutron => "NEUTRON",
-        Star.WhiteDwarf => "WHITE DWARF",
-        Star.BlackHole => "BLACK HOLE",
-        Star.Restock => "OUT OF TRITIUM",
+        RouteStar.Neutron => "NEUTRON",
+        RouteStar.WhiteDwarf => "WHITE DWARF",
+        RouteStar.BlackHole => "BLACK HOLE",
+        RouteStar.Restock => "OUT OF TRITIUM",
         _ => "NO FUEL",
     };
 

@@ -80,6 +80,15 @@ public sealed class Segment : ContentControl, IChoiceControl
         set => SetValue(StatusesProperty, value);
     }
 
+    /// <summary>Greys out one option, which then cannot be chosen; the choice itself is left alone.</summary>
+    public void SetOptionEnabled(int index, bool enabled)
+    {
+        if (index >= 0 && index < _buttons.Count)
+        {
+            _buttons[index].IsEnabled = enabled;
+        }
+    }
+
     public string? SelectedItem =>
         SelectedIndex >= 0 && SelectedIndex < ItemsSource.Count ? ItemsSource[SelectedIndex] : null;
 
@@ -132,6 +141,13 @@ public sealed class Segment : ContentControl, IChoiceControl
             {
                 if (_syncing || button.IsChecked != true)
                 {
+                    return;
+                }
+
+                // A press that reaches a disabled option, as the headset's can, puts the choice back.
+                if (!button.IsEnabled)
+                {
+                    SyncChecked();
                     return;
                 }
 

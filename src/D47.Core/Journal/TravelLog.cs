@@ -134,6 +134,17 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
         }
     }
 
+    /// <summary>How many steps a Commander has; zero for one with none.</summary>
+    public int Count(string fid)
+    {
+        ArgumentNullException.ThrowIfNull(fid);
+
+        lock (_gate)
+        {
+            return _steps.TryGetValue(fid, out var steps) ? steps.Count : 0;
+        }
+    }
+
     /// <summary>The position of the latest visit to a system, by name without regard to case, or null.</summary>
     public StarPosition? PositionOf(string fid, string system)
     {
