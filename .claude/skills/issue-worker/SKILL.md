@@ -65,9 +65,23 @@ The file is pretty-printed, so a line-based `grep` for the entry finds nothing; 
 
 If the worktree cannot be created, stop and say why. Never fall back to editing the main checkout.
 
-Read the issue in full before touching anything. The titles in this repository state the cause as
-well as the defect, and the body usually names the file. Confirm that claim against the code — an
-issue written a month ago may name a line that has moved.
+Read the issue in full before touching anything, comments included:
+
+```bash
+gh issue view <number> --comments
+```
+
+The titles in this repository state the cause as well as the defect, and the body usually names the
+file. Confirm that claim against the code — an issue written a month ago may name a line that has
+moved.
+
+A Claude Design handoff is posted as a comment, not in the body, and links a canvas at
+`claude.ai/artifact/…`. Open each linked canvas with the Artifact tool: `read` it, then read the
+`project/*.dc.html` boards the change draws. The repo's design folders and docs do not hold
+handoffs, so a search of the tree finding nothing does not mean there is no design. When several
+comments specify the same thing, the newest wins. If the issue says a design exists and no comment
+links one, or a linked canvas will not open, stop and say so rather than designing the page
+yourself.
 
 ## Check what it needs first
 
