@@ -72,7 +72,7 @@ public sealed class TheSystemPageListsItsStationsTests
         Dispatcher.UIThread.RunJobs();
 
         panel.Tab = PanelTab.Search;
-        Until(() => Shows(panel, "LAST REPORT TO SPANSH"));
+        Until(() => Shows(panel, "LAST REPORTED"));
 
         return (panel, window, systems);
     }
@@ -359,7 +359,7 @@ public sealed class TheSystemPageListsItsStationsTests
         Until(() =>
         {
             Serve(headset);
-            return view.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "LAST REPORT TO SPANSH");
+            return view.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "LAST REPORTED");
         });
 
         Section(view, "Stations");

@@ -325,7 +325,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         Settle(world, 1);
 
         Type(panel, "LTT 778");
-        WaitToShow(panel, "No system is called “LTT 778”. Spansh has these close names.");
+        WaitToShow(panel, "No system is called “LTT 778”. Close names:");
 
         var options = Buttons(Page(panel))
             .Where(button => AutomationProperties.GetName(button)?.StartsWith("LTT 77", StringComparison.Ordinal) == true)
@@ -349,7 +349,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         Settle(world, 1);
 
         Type(panel, "Qwerty 12");
-        WaitToShow(panel, "Spansh has no system called “Qwerty 12”, and none with a close name.");
+        WaitToShow(panel, "No system is called “Qwerty 12”, and none has a close name.");
         NoRetry(panel);
 
         window.Close();
@@ -387,7 +387,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         world.Here = At("Sol", Sol);
         Assert.True(panel.TickSearch());
         Assert.False(pending.Task.IsCompleted);
-        WaitToShow(panel, "Asking Spansh for Sol. A populated system takes about two seconds.");
+        WaitToShow(panel, "Asking for Sol's record. A populated system takes about two seconds.");
 
         pending.SetResult(new StarSystemProfile { Name = "Sol", SystemAddress = Sol });
         WaitToShow(panel, "ECONOMY");
@@ -425,7 +425,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
 
         var (panel, window) = Shown(world);
 
-        WaitToShow(panel, "SPANSH DIDN'T ANSWER");
+        WaitToShow(panel, "THE GALAXY SEARCH DIDN'T ANSWER");
         Assert.True(Shows(panel, $"{StarSystemPage.Unreadable} {StarSystemPage.AsksAgain}"));
 
         window.Close();
@@ -463,7 +463,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
 
         var (panel, window) = Shown(world);
 
-        WaitToShow(panel, "SPANSH DIDN'T ANSWER");
+        WaitToShow(panel, "THE GALAXY SEARCH DIDN'T ANSWER");
         Assert.True(Shows(panel, $"I couldn't reach the system lookup — check the network connection. {StarSystemPage.AsksAgain}"));
         Assert.True(Shows(panel, "LTT 7786"));
         NoRetry(panel);
@@ -479,7 +479,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
 
         var (panel, window) = Shown(world);
 
-        WaitToShow(panel, "Spansh has no record of this system yet.");
+        WaitToShow(panel, "There is no record of this system yet.");
         Assert.True(Shows(panel, "LTT 7786"));
         NoRetry(panel);
 
@@ -514,7 +514,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(profile);
 
         var (panel, window) = Shown(world);
-        WaitToShow(panel, "LAST REPORT TO SPANSH");
+        WaitToShow(panel, "LAST REPORTED");
 
         Assert.True(Shows(panel, "YOUR SYSTEM · FOLLOWING YOU"));
         Assert.True(Shows(panel, "MINOR FACTIONS"));
@@ -532,7 +532,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         using var look = AppLook.Put();
         var profile = Ltt7786Profile();
 
-        Capture("system-overview-following.png", new World(), world => world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(profile), "LAST REPORT TO SPANSH");
+        Capture("system-overview-following.png", new World(), world => world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(profile), "LAST REPORTED");
 
         Capture(
             "system-typed.png",
@@ -547,14 +547,14 @@ public sealed class TheSystemPageFollowsTheCommanderTests
             panel => Type(panel, "LTT 7786"),
             "STAR SYSTEM");
 
-        Capture("system-loading.png", new World(), world => world.Systems.Profile = _ => new TaskCompletionSource<StarSystemProfile?>().Task, "Asking Spansh");
+        Capture("system-loading.png", new World(), world => world.Systems.Profile = _ => new TaskCompletionSource<StarSystemProfile?>().Task, "Asking for LTT 7786's record");
 
         Capture(
             "system-unavailable.png",
             new World(),
             world => world.Systems.Profile = _ => Task.FromException<StarSystemProfile?>(
                 new GalaxyUnavailableException("I couldn't reach the system lookup — check the network connection.")),
-            "SPANSH DIDN'T ANSWER");
+            "THE GALAXY SEARCH DIDN'T ANSWER");
 
         Capture("system-unrecorded.png", new World(), world => world.Systems.Profile = _ => Task.FromResult<StarSystemProfile?>(null), "no record");
 
@@ -565,9 +565,9 @@ public sealed class TheSystemPageFollowsTheCommanderTests
                 [Match("LTT 7786", 1), Match("LTT 7719", 2), Match("LTT 16422", 3), Match("LTT 9848", 4), Match("LTT 16741", 5)]),
             "ECONOMY",
             panel => Type(panel, "LTT 778"),
-            "close names");
+            "Close names:");
 
-        Capture("system-no-match.png", new World(), _ => { }, "ECONOMY", panel => Type(panel, "Qwerty 12"), "none with a close name");
+        Capture("system-no-match.png", new World(), _ => { }, "ECONOMY", panel => Type(panel, "Qwerty 12"), "none has a close name");
 
         Capture("system-lookups-off.png", new World { Enabled = false }, _ => { }, "LOOKUPS ARE OFF");
 
@@ -595,7 +595,7 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         Until(() =>
         {
             Serve(headset);
-            return view.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "LAST REPORT TO SPANSH");
+            return view.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "LAST REPORTED");
         }, () => $"{view.Tab} {world.Systems.AskedNow().Length} " + string.Join(" | ", view.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text)));
 
         Serve(headset);

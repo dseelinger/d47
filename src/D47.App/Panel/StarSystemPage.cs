@@ -41,20 +41,20 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 {
     public const string RootKey = "search.system";
 
-    public const string SummaryText = "A star system's record, as Spansh last had it.";
+    public const string SummaryText = "A star system's record, as last reported.";
 
     public const string NoJournal =
         "D47 hasn't read a journal yet, so it doesn't know which system you're in. Type a system's name to look it up.";
 
     public const string Unrecorded =
-        "Spansh has no record of this system yet. It has one once a Commander’s game reports the system to the galaxy databases.";
+        "There is no record of this system yet. There is one once a Commander’s game reports the system.";
 
     public const string AsksAgain =
         "D47 asks again when you open a system, or when you arrive somewhere new while it follows you.";
 
     public const double FieldWidth = 460;
 
-    public const string Unreadable = "Spansh's answer could not be read.";
+    public const string Unreadable = "The galaxy search's answer could not be read.";
 
     /// <summary>The most close names listed under the field.</summary>
     public const int CloseNames = 5;
@@ -504,13 +504,13 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
                 break;
 
             case View.NoMatch:
-                _body.Children.Add(Sentence($"Spansh has no system called “{_typed}”, and none with a close name.", ThemeManager.WhiteKey));
+                _body.Children.Add(Sentence($"No system is called “{_typed}”, and none has a close name.", ThemeManager.WhiteKey));
                 break;
 
             case View.Loading:
                 _body.Children.Add(Heading(null));
                 _body.Children.Add(Sentence(
-                    $"Asking Spansh for {_opened?.Name}. A populated system takes about two seconds.", ThemeManager.WhiteKey));
+                    $"Asking for {_opened?.Name}'s record. A populated system takes about two seconds.", ThemeManager.WhiteKey));
                 break;
 
             case View.Unavailable:
@@ -521,9 +521,8 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
                 _body.Children.Add(new Notice
                 {
-                    Label = "Spansh didn't answer",
+                    Label = "The galaxy search didn't answer",
                     Text = $"{_failure} {AsksAgain}",
-                    Detail = D47.Knowledge.SpanshStarSystemService.Host,
                     MaxWidth = 760,
                     HorizontalAlignment = HorizontalAlignment.Left,
                 });
@@ -603,7 +602,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         var list = new StackPanel { Spacing = Gaps.Tile };
 
         var hint = RoutingKit.Ink(
-            $"No system is called “{_typed}”. Spansh has these close names.", TypeScale.Small, ThemeManager.GreyKey, wrap: true);
+            $"No system is called “{_typed}”. Close names:", TypeScale.Small, ThemeManager.GreyKey, wrap: true);
         hint.Margin = new Thickness(10, 8, 10, 6);
         list.Children.Add(hint);
 
@@ -656,7 +655,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
 
     private static StackPanel Reported(DateTimeOffset at)
     {
-        var label = Caption("Last report to Spansh", ThemeManager.GreyKey);
+        var label = Caption("Last reported", ThemeManager.GreyKey);
         label.HorizontalAlignment = HorizontalAlignment.Right;
 
         var value = new TextBlock

@@ -73,7 +73,7 @@ public enum GalaxySearchView
 public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 {
     public const string LookupsOffText =
-        "Turn on “Look things up in the galaxy” in Settings and D47 will search Spansh for star systems, stations and bodies.";
+        "Turn on “Look things up in the galaxy” in Settings and D47 will search the galaxy for star systems, stations and bodies.";
 
     public const string RunName = "RunSearch";
 
@@ -211,13 +211,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     protected virtual string OffTip => "Turn on “Look things up in the galaxy” in Settings to search.";
 
     /// <summary>The label of the box drawn while a search runs.</summary>
-    protected virtual string RunningText => "Asking Spansh";
+    protected virtual string RunningText => "Asking the galaxy search";
 
     /// <summary>The label of the notice drawn when the tool refused the form.</summary>
     protected virtual string RefusedLabel => "FILTER REFUSED";
 
     /// <summary>Where the answer came from, in the footer stamp.</summary>
-    protected virtual string Origin => "SPANSH";
+    protected virtual string Origin => "GALAXY SEARCH";
 
     /// <summary>What the footer says to ask by voice; null for the page's first quick search.</summary>
     protected virtual string? SayPhrase => null;
@@ -776,9 +776,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
                 var unavailable = new Notice(NoticeLevel.Error)
                 {
-                    Label = "SPANSH UNAVAILABLE",
+                    Label = "GALAXY SEARCH UNAVAILABLE",
                     Text = Sentence,
-                    Detail = $"{D47.Knowledge.SpanshGalaxyService.Host.ToUpperInvariant()} · {_failure!.Value.At.ToString("HH:mm", CultureInfo.InvariantCulture)}",
+                    Detail = _failure!.Value.At.ToString("HH:mm", CultureInfo.InvariantCulture),
                 };
 
                 var again = _failure.Value.Arguments;

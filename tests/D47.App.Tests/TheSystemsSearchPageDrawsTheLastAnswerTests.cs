@@ -379,7 +379,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
         Assert.Equal(GalaxySearchView.Unavailable, page.View);
         Assert.Equal(Unreachable, page.Sentence);
-        Assert.Contains(panel.GetVisualDescendants().OfType<D47.App.Controls.Notice>(), notice => notice.Text == Unreachable && notice.Label == "SPANSH UNAVAILABLE");
+        Assert.Contains(panel.GetVisualDescendants().OfType<D47.App.Controls.Notice>(), notice => notice.Text == Unreachable && notice.Label == "GALAXY SEARCH UNAVAILABLE");
         Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => button.Name == GalaxySearchPage.RetryName);
 
         window.Close();

@@ -216,9 +216,8 @@ public sealed partial class StarSystemPage
             case Nearby.Failed:
                 group.Children.Add(new Notice
                 {
-                    Label = "Spansh didn't answer",
+                    Label = "The galaxy search didn't answer",
                     Text = _neighbourFailure,
-                    Detail = D47.Knowledge.SpanshStarSystemService.Host,
                     MaxWidth = 760,
                     HorizontalAlignment = HorizontalAlignment.Left,
                 });
@@ -232,7 +231,7 @@ public sealed partial class StarSystemPage
 
             default:
                 group.Children.Add(Sentence(
-                    $"Asking Spansh for Powerplay systems near {_opened?.Name}.", ThemeManager.WhiteKey));
+                    $"Asking for Powerplay systems near {_opened?.Name}.", ThemeManager.WhiteKey));
                 break;
         }
 

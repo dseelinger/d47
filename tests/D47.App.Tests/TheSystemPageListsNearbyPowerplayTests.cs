@@ -107,7 +107,7 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
         Dispatcher.UIThread.RunJobs();
 
         panel.Tab = PanelTab.Search;
-        Until(() => Shows(panel, "LAST REPORT TO SPANSH"));
+        Until(() => Shows(panel, "LAST REPORTED"));
 
         return (panel, window, systems);
     }
@@ -132,7 +132,7 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
     private static void OpenPowerplay(PanelView panel)
     {
         TheSystemPageListsItsStationsTests.Section(panel, "Powerplay");
-        Until(() => !Shows(panel, "Asking Spansh for Powerplay systems near LTT 7786."));
+        Until(() => !Shows(panel, "Asking for Powerplay systems near LTT 7786."));
     }
 
     private static List<Border> Rows(Control root) =>
@@ -294,7 +294,7 @@ public sealed class TheSystemPageListsNearbyPowerplayTests
     private static void OpenPowerplay2(PanelView panel, string name)
     {
         TheSystemPageListsItsStationsTests.Section(panel, "Powerplay");
-        Until(() => !Shows(panel, $"Asking Spansh for Powerplay systems near {name}."));
+        Until(() => !Shows(panel, $"Asking for Powerplay systems near {name}."));
     }
 
     [AvaloniaFact]
