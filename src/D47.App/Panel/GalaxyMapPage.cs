@@ -454,19 +454,27 @@ public sealed class GalaxyMapPage : UserControl
         var rail = new StackPanel { Spacing = 12, Children = { ZoomPair(), PanPad(), Switches() } };
         var body = new Grid
         {
-            Height = WindowMapHeight,
+            MinHeight = WindowMapHeight,
             ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(2, GridUnitType.Pixel), new ColumnDefinition(SwitchRail, GridUnitType.Pixel)],
         };
 
         Place(body, Framed(), 0, 0);
         Place(body, rail, 2, 0);
 
-        return new StackPanel
+        // The map takes the height the window leaves after the toolbar and the two lines under it.
+        var page = new Grid
         {
-            Spacing = 10,
+            RowSpacing = 10,
             Margin = new Thickness(0, 4, 0, 0),
-            Children = { Toolbar(), body, WhereLine(), _legend },
+            RowDefinitions = [new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star), new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Auto)],
         };
+
+        Place(page, Toolbar(), 0, 0);
+        Place(page, body, 0, 1);
+        Place(page, WhereLine(), 0, 2);
+        Place(page, _legend, 0, 3);
+
+        return page;
     }
 
     /// <summary>

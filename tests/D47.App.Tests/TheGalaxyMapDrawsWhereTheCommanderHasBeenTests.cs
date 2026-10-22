@@ -244,7 +244,14 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Assert.True(page.Map.Drawn.You);
         Assert.True(page.Map.Drawn.Destination);
         Assert.Equal("120 jumps to 123 systems", page.CountLine);
-        Assert.Equal(GalaxyMapPage.WindowMapHeight, page.Map.Bounds.Height);
+        Assert.True(page.Map.Bounds.Height >= GalaxyMapPage.WindowMapHeight);
+
+        var before = page.Map.Bounds.Height;
+        window.Height = 1200;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(before + 270, page.Map.Bounds.Height, 1);
+        window.Height = 930;
+        Dispatcher.UIThread.RunJobs();
 
         using (var here = window.CaptureRenderedFrame()!)
         {
