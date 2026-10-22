@@ -342,6 +342,10 @@ public partial class MainWindow : Window
 
                 // The Galaxy map's travels (#1406).
                 Travel = () => host.TravelLog,
+
+                // And its unvisited stars and the items it places from galaxy search (#1409).
+                Galaxy = () => host.Galaxy,
+                MapLookups = new GalaxyMapLookups(host.Loggers.CreateLogger<GalaxyMapLookups>()),
             };
 
             Panel.EnableRouting(Routing);

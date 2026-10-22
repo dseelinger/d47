@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
@@ -156,14 +157,14 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
     public async Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken)
     {
-        var origin = await CoordinatesAsync(from, cancellationToken).ConfigureAwait(false);
+        var origin = await PositionAsync(from, cancellationToken).ConfigureAwait(false);
 
         if (origin is null)
         {
             return null;
         }
 
-        var destination = await CoordinatesAsync(to, cancellationToken).ConfigureAwait(false);
+        var destination = await PositionAsync(to, cancellationToken).ConfigureAwait(false);
 
         if (destination is null)
         {
@@ -172,17 +173,10 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
         // Computed here rather than asked for, so that "how far" has one answer regardless of which endpoint
         // happens to be able to express the question (Phase 14).
-        var dx = destination.Value.X - origin.Value.X;
-        var dy = destination.Value.Y - origin.Value.Y;
-        var dz = destination.Value.Z - origin.Value.Z;
-
-        return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+        return origin.Value.DistanceTo(destination.Value);
     }
 
-    /// <summary>One system's position, found by name.</summary>
-    private async Task<(double X, double Y, double Z)?> CoordinatesAsync(
-        string system,
-        CancellationToken cancellationToken)
+    public async Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken)
     {
         if (!GalaxyQuery.TryParse(system, Nearest, size: 1, out var probe, out _))
         {
@@ -198,7 +192,9 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             cancellationToken,
             missingWhen: HttpStatusCode.BadRequest).ConfigureAwait(false);
 
-        return document is null ? null : SpanshResponse.ReadReferenceCoordinates(document);
+        return document is null || SpanshResponse.ReadReferenceCoordinates(document) is not { } at
+            ? null
+            : new StarPosition(at.X, at.Y, at.Z);
     }
 
     /// <summary>The narrowest search that still resolves a reference: one system, within one light year.</summary>

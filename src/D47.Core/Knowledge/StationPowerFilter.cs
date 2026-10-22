@@ -51,6 +51,9 @@ public sealed class StationPowerFilter(IGalaxyService inner, Func<PowerplayPledg
     public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
         inner.DistanceAsync(from, to, cancellationToken);
 
+    public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
+        inner.PositionAsync(system, cancellationToken);
+
     public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
         inner.FindBodiesAsync(query, cancellationToken);
 

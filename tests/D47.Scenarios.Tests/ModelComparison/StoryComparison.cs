@@ -135,6 +135,9 @@ public sealed class TimedGalaxy(IGalaxyService inner) : Timed, IGalaxyService
     public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.DistanceAsync(from, to, cancellationToken));
 
+    public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
+        TimeAsync(() => inner.PositionAsync(system, cancellationToken));
+
     public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
         TimeAsync(() => inner.FindStationsAsync(query, cancellationToken));
 

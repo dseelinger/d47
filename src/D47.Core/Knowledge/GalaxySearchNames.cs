@@ -42,6 +42,9 @@ public sealed class GalaxySearchNames(IGalaxyService inner) : IGalaxyService
     public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
         inner.DistanceAsync(from, to, cancellationToken);
 
+    public Task<D47.Core.Journal.StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
+        inner.PositionAsync(system, cancellationToken);
+
     public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
         inner.FindStationsAsync(query, cancellationToken);
 

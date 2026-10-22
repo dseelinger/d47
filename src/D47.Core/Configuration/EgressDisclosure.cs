@@ -286,6 +286,10 @@ public static class EgressDisclosure
                     : string.Empty)
                 + "While the Search tab's System page is open and following you, arriving in a system sends "
                 + "that system's address to spansh.co.uk, to read its record. "
+                + "While the Navigation tab's Galaxy map page is open, opening it and arriving in a system send that "
+                + "system's name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the "
+                + "names of systems holding your bookmarks, your carrier or your stored ships that you have never "
+                + "visited, one at a time, to find where they are. "
                 + "Typing three or more letters into a field that suggests system or faction names sends those letters "
                 + "to spansh.co.uk as you type. "
                 + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "

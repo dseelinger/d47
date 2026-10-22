@@ -78,6 +78,12 @@ public sealed record RoutingSurface(
 
     /// <summary>The time the Galaxy map's travel ranges count back from.</summary>
     public Func<DateTimeOffset> Now { get; init; } = () => DateTimeOffset.Now;
+
+    /// <summary>The galaxy service the Galaxy map asks for unvisited stars and item positions while lookups are on (#1409).</summary>
+    public Func<IGalaxyService?>? Galaxy { get; init; }
+
+    /// <summary>The Galaxy map's galaxy search answers, kept for the session and shared by every surface.</summary>
+    public GalaxyMapLookups MapLookups { get; init; } = new();
 }
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>

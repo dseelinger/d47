@@ -1,3 +1,5 @@
+using D47.Core.Journal;
+
 namespace D47.Core.Knowledge;
 
 /// <summary>One system, cut down to what can be said out loud.</summary>
@@ -10,6 +12,8 @@ public sealed record SystemSummary
 
     /// <summary>Light years from the query's reference system, when there was one.</summary>
     public double? Distance { get; init; }
+
+    public StarPosition? Position { get; init; }
 
     public string? Allegiance { get; init; }
 
@@ -86,6 +90,10 @@ public interface IGalaxyService
     /// far" has the same answer wherever it is asked from.
     /// </summary>
     Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken);
+
+    /// <summary>A system's position, found by name, or null where the service does not know it.</summary>
+    Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken) =>
+        Task.FromResult<StarPosition?>(null);
 
     /// <summary>Stations selling a named module or ship, nearest first (Phase 14, "Find Nearest").</summary>
     Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken);

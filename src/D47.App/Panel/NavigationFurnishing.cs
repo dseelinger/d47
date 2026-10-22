@@ -165,7 +165,9 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Now,
                         host.Headset,
                         surface.Bookmarks,
-                        surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null);
+                        surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null,
+                        () => surface.LookupsEnabled?.Invoke() == true ? surface.Galaxy?.Invoke() : null,
+                        surface.MapLookups);
                 }
 
                 var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts);

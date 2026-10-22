@@ -39,6 +39,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         public BookmarkStore Bookmarks { get; } = new("bookmarks.json", new MemoryFileSystem(), NullLogger<BookmarkStore>.Instance);
 
         public string? OffDuty { get; set; }
+
+        public bool GalaxySearch { get; set; }
+
+        public Spansh Galaxy { get; } = new();
+
+        public GalaxyMapLookups Lookups { get; } = new();
     }
 
     private static JournalEvent Event(string line)
@@ -158,6 +164,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             () => game.OffDuty is null ? game.Commander.Location.StarSystem : null,
             CapabilityRegistry.Build([]),
             new RoutePlanBook(Path.Combine(folder, "route-plans.json"), files, NullLogger<RoutePlanBook>.Instance),
+            LookupsEnabled: () => game.GalaxySearch,
             Commodities: new CommodityBoard(),
             Settings: TestSurface.Settings(),
             Bookmarks: game.Bookmarks,
@@ -168,6 +175,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         {
             Travel = () => game.Travel,
             Now = () => Now,
+            Galaxy = () => game.Galaxy,
+            MapLookups = game.Lookups,
         });
 
         panel.Tab = PanelTab.Navigation;
@@ -739,15 +748,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (_, _, page) = InWindow(Keeping());
 
-        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
 
         page.BookmarkSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("1 stored ship is in a system you have not visited.", page.UnplacedLine);
+        Assert.Equal("1 stored ship is in a system you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
 
         page.ShipSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(string.Empty, page.UnplacedLine);
+        Assert.Equal(GalaxyMapPage.GalaxySearchOff, page.UnplacedLine);
     }
 
     [AvaloniaFact]
@@ -760,12 +769,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Commander.Apply(Event("""{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"X","ShipsHere":[],"ShipsRemote":[{"ShipID":14,"ShipType":"anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}"""));
         var (_, _, page) = InWindow(game);
 
-        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
 
         page.BookmarkSwitch.IsChecked = false;
         page.ShipSwitch.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("Your carrier is in a system you have not visited.", page.UnplacedLine);
+        Assert.Equal("Your carrier is in a system you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
     }
 
     [AvaloniaFact]
@@ -866,5 +875,337 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
         Assert.Equal($"Bookmarked {Bubble5}.", page.StripReply);
         Assert.Empty(page.StripKinds);
+    }
+
+    /// <summary>Galaxy search as Spansh answers it: the reference and 99 systems within 25 ly of it, and positions for the systems it knows.</summary>
+    internal sealed class Spansh : IGalaxyService
+    {
+        private readonly List<string> _positions = [];
+        private int _calls;
+        private int _searches;
+
+        public int Calls => Volatile.Read(ref _calls);
+
+        public int Searches => Volatile.Read(ref _searches);
+
+        public IReadOnlyList<string> PositionsAsked
+        {
+            get
+            {
+                lock (_positions)
+                {
+                    return [.. _positions];
+                }
+            }
+        }
+
+        public Dictionary<string, StarPosition> Known { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public bool Failing { get; set; }
+
+        public static string Near(int index) => $"Wregoe Near {index}";
+
+        public static StarPosition NearAt(int index) => new(
+            Wregoe.X + (25 * Math.Sqrt(index / 99.0) * Math.Cos(index * 2.4)),
+            Wregoe.Y,
+            Wregoe.Z + (25 * Math.Sqrt(index / 99.0) * Math.Sin(index * 2.4)));
+
+        public Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _calls);
+            Interlocked.Increment(ref _searches);
+
+            if (Failing || query.Criteria.Count > 0 || query.Size != GalaxyQuery.MaxSize)
+            {
+                throw new GalaxyUnavailableException("Not the nearby search.");
+            }
+
+            IReadOnlyList<SystemSummary> systems =
+            [
+                new SystemSummary { Name = query.ReferenceSystem!, Distance = 0, Position = Wregoe },
+                .. Enumerable.Range(1, 99).Select(index => new SystemSummary { Name = Near(index), SystemAddress = 50_000 + index, Position = NearAt(index) }),
+            ];
+
+            return Task.FromResult(new GalaxySearchResult(query.ReferenceSystem, 100, systems));
+        }
+
+        public Task<StarPosition?> PositionAsync(string system, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _calls);
+
+            lock (_positions)
+            {
+                _positions.Add(system);
+            }
+
+            return Failing
+                ? throw new GalaxyUnavailableException("The galaxy search reported a server error.")
+                : Task.FromResult(Known.TryGetValue(system, out var at) ? at : (StarPosition?)null);
+        }
+
+        public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) => Unexpected<double?>();
+
+        public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) => Unexpected<StationSearchResult>();
+
+        public Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) => Unexpected<BodySearchResult>();
+
+        public Task<ColonisationScan> ScanForColonisationAsync(ColonisationQuery query, CancellationToken cancellationToken) => Unexpected<ColonisationScan>();
+
+        public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<SystemBiology>();
+
+        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => Unexpected<IReadOnlyList<BodySummary>>();
+
+        public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) => Unexpected<MissionStationScan>();
+
+        private Task<T> Unexpected<T>()
+        {
+            Interlocked.Increment(ref _calls);
+
+            throw new NotSupportedException();
+        }
+    }
+
+    /// <summary>A game with galaxy search on, a bookmark in a never-visited system Spansh knows and one in a system it does not.</summary>
+    private static Game Searching()
+    {
+        var game = Played();
+        game.GalaxySearch = true;
+        game.Galaxy.Known["Nowhere Known"] = new StarPosition(Wregoe.X + 12, Wregoe.Y, Wregoe.Z - 9);
+        game.Bookmarks.Add("F1", "Lost cause", "Nowhere Known", Now);
+        game.Bookmarks.Add("F1", "Lost for good", "Nowhere Else", Now);
+
+        return game;
+    }
+
+    /// <summary>Waits for every galaxy search request to land, then lets the page redraw from the tick.</summary>
+    private static void Landed(GalaxyMapPage page)
+    {
+        Assert.True(page.Lookups.Settled().Wait(TimeSpan.FromSeconds(10)));
+        page.Tick();
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void WithGalaxySearchOnTheWindowDrawsUnvisitedStarsAndPlacesABookmarkInASystemNeverVisited()
+    {
+        var game = Searching();
+        var (window, _, page) = InWindow(game);
+
+        Landed(page);
+
+        Assert.True(page.Map.Drawn.Unvisited);
+        Assert.NotNull(page.Map.ScreenOf(Spansh.Near(1)));
+        Assert.NotNull(page.Map.ScreenOf(Spansh.Near(99)));
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
+        Assert.True(page.UnvisitedSwitch.IsEnabled);
+        Assert.True(page.UnvisitedSwitch.IsChecked);
+        Assert.Equal("1 bookmark is in a system galaxy search does not know.", page.UnplacedLine);
+        Assert.Equal(["Nowhere Else", "Nowhere Known"], game.Galaxy.PositionsAsked.Order(StringComparer.Ordinal));
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("galaxy-map-window-unvisited.png");
+    }
+
+    [AvaloniaFact]
+    public void WithGalaxySearchOnTheBigPanelDrawsUnvisitedStarsAndPlacesABookmarkInASystemNeverVisited()
+    {
+        var game = Searching();
+        var (surface, _, page) = OnThePanel(game);
+
+        using (surface)
+        {
+            Landed(page);
+            surface.Render();
+
+            Assert.True(page.Map.Drawn.Unvisited);
+            Assert.NotNull(page.Map.ScreenOf(Spansh.Near(50)));
+            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
+            Assert.True(page.UnvisitedSwitch.Bounds.Bottom <= GalaxyMapPage.PanelMapHeight);
+
+            surface.Render().SaveCapture("galaxy-map-panel-unvisited.png");
+        }
+    }
+
+    [AvaloniaFact]
+    public void TheCommandersOwnSystemIsNotDrawnAsUnvisited()
+    {
+        var (_, _, page) = InWindow(Searching());
+
+        Landed(page);
+
+        Assert.Contains(Spansh.Near(1), page.Map.UnvisitedDrawn);
+        Assert.DoesNotContain("Wregoe TC-X b29-0", page.Map.UnvisitedDrawn, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [AvaloniaFact]
+    public void ATapOnAnUnvisitedStarSaysHowFarAwayItIsAndThatItIsNotVisited()
+    {
+        var (window, _, page) = InWindow(Searching());
+
+        Landed(page);
+        TapMapInWindow(window, page, MapPoint(page, Spansh.Near(99)));
+
+        var away = Spansh.NearAt(99).DistanceTo(Wregoe).ToString("N1", CultureInfo.CurrentCulture);
+
+        Assert.Equal(Spansh.Near(99).ToUpperInvariant(), page.StripName);
+        Assert.Equal($"{away} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("galaxy-map-window-unvisited-selected.png");
+    }
+
+    [AvaloniaFact]
+    public void UnvisitedStarsAreNotDrawnWiderThanSixThousandFourHundredLightYears()
+    {
+        var (_, _, page) = InWindow(Searching());
+
+        Landed(page);
+        page.Map.View(GalaxyViewport.Around(Wregoe) with { LightYearsAcross = 6_400 });
+        Assert.True(page.Map.Drawn.Unvisited);
+
+        page.Map.View(page.Map.Viewport.ZoomOut());
+        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.Null(page.Map.ScreenOf(Spansh.Near(1)));
+    }
+
+    [AvaloniaFact]
+    public void WithGalaxySearchOffNothingIsSentAndUnvisitedIsDisabledAndUnchecked()
+    {
+        var game = Searching();
+        game.GalaxySearch = false;
+        var (window, _, page) = InWindow(game);
+
+        Landed(page);
+
+        Assert.Equal(0, game.Galaxy.Calls);
+        Assert.False(page.UnvisitedSwitch.IsEnabled);
+        Assert.False(page.UnvisitedSwitch.IsChecked);
+        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.Equal("2 bookmarks are in systems you have not visited. " + GalaxyMapPage.PlacedWhenOn, page.UnplacedLine);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("galaxy-map-window-galaxy-search-off.png");
+    }
+
+    [AvaloniaFact]
+    public void ReopeningThePageInTheSameSystemAsksForNothingAgain()
+    {
+        var game = Searching();
+        var (_, panel, page) = InWindow(game);
+
+        Landed(page);
+        Assert.Equal(1, game.Galaxy.Searches);
+        Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
+
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        Dispatcher.UIThread.RunJobs();
+
+        var reopened = Page(panel);
+        Landed(reopened);
+
+        Assert.Equal(1, game.Galaxy.Searches);
+        Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
+        Assert.True(reopened.Map.Drawn.Unvisited);
+    }
+
+    [AvaloniaFact]
+    public void AnArrivalAsksAroundTheNewSystemOnce()
+    {
+        var game = Searching();
+        var (_, _, page) = InWindow(game);
+
+        Landed(page);
+        game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
+        Landed(page);
+        Landed(page);
+
+        Assert.Equal(2, game.Galaxy.Searches);
+    }
+
+    [AvaloniaFact]
+    public void UncheckingUnvisitedHidesTheStarsAndStopsTheNearbySearch()
+    {
+        var game = Searching();
+        var (_, _, page) = InWindow(game);
+
+        Landed(page);
+        page.UnvisitedSwitch.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(page.Map.Drawn.Unvisited);
+
+        game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
+        Landed(page);
+
+        Assert.Equal(1, game.Galaxy.Searches);
+        Assert.False(page.UnvisitedSwitch.IsChecked);
+
+        page.UnvisitedSwitch.IsChecked = true;
+        Landed(page);
+
+        Assert.Equal(2, game.Galaxy.Searches);
+    }
+
+    [AvaloniaFact]
+    public void AtMostTwentyFiveSystemsAreLookedUpPerOpening()
+    {
+        var game = Played();
+        game.GalaxySearch = true;
+
+        foreach (var index in Enumerable.Range(1, 27))
+        {
+            var system = $"Far {index:00}";
+            game.Bookmarks.Add("F1", system, system, Now);
+            game.Galaxy.Known[system] = new StarPosition(Wregoe.X + index, Wregoe.Y, Wregoe.Z);
+        }
+
+        var (_, panel, page) = InWindow(game);
+
+        Landed(page);
+
+        Assert.Equal(25, game.Galaxy.PositionsAsked.Count);
+        Assert.Equal("2 bookmarks are in systems not looked up yet. Open the map again to look them up.", page.UnplacedLine);
+
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot));
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        Dispatcher.UIThread.RunJobs();
+
+        var reopened = Page(panel);
+        Landed(reopened);
+
+        Assert.Equal(27, game.Galaxy.PositionsAsked.Count);
+        Assert.Equal(string.Empty, reopened.UnplacedLine);
+    }
+
+    [AvaloniaFact]
+    public void AFailedLookupLeavesTheItemCountedAsNotVisited()
+    {
+        var game = Searching();
+        game.Galaxy.Failing = true;
+        var (_, _, page) = InWindow(game);
+
+        Landed(page);
+
+        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.Equal("2 bookmarks are in systems you have not visited.", page.UnplacedLine);
+    }
+
+    [AvaloniaFact]
+    public void AnotherCommanderShownSendsNoNearbySearchButTheirItemsArePlaced()
+    {
+        var game = Searching();
+        game.OffDuty = "Jameson";
+        var (_, _, page) = InWindow(game);
+
+        Landed(page);
+
+        Assert.Equal(0, game.Galaxy.Searches);
+        Assert.False(page.UnvisitedSwitch.IsEnabled);
+        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
+        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
     }
 }

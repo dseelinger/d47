@@ -761,6 +761,9 @@ internal static class SpanshResponse
         Name = String(element, "name") ?? "an unnamed system",
         SystemAddress = Integer(element, "id64"),
         Distance = Number(element, "distance"),
+        Position = Number(element, "x") is { } x && Number(element, "y") is { } y && Number(element, "z") is { } z
+            ? new StarPosition(x, y, z)
+            : null,
         Allegiance = String(element, "allegiance"),
         Government = String(element, "government"),
         PrimaryEconomy = String(element, "primary_economy"),

@@ -37,6 +37,8 @@ public sealed class GalaxyMapPage : UserControl
     public const string CentreHere = "Centre here";
     public const string Bookmark = "Bookmark";
     public const string ClearSelection = "Clear selection";
+    public const string GalaxySearchOff = "Galaxy search draws the stars you have not visited, and it is off in Settings.";
+    public const string PlacedWhenOn = "Galaxy search places them, and it is off in Settings.";
 
     private const int MostNamed = 3;
 
@@ -62,6 +64,8 @@ public sealed class GalaxyMapPage : UserControl
     private readonly bool _headset;
     private readonly BookmarkStore? _bookmarks;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<IGalaxyService?> _galaxy;
+    private readonly GalaxyMapLookups _lookups;
 
     private readonly GalaxyMapView _map = new();
     private readonly Segment _framing = new() { ItemsSource = ["Galaxy", "Here", "Route"] };
@@ -73,6 +77,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _bookmarkMarks;
     private readonly CheckBox _carrierMark;
     private readonly CheckBox _shipMarks;
+    private readonly CheckBox _unvisited;
     private readonly Button _zoomIn = Tile("+", "Zoom in", 20);
     private readonly Button _zoomOut = Tile("−", "Zoom out", 20);
     private readonly TextBlock _system = Chrome(TypeScale.ControlLarge, ThemeManager.CyanKey);
@@ -97,6 +102,13 @@ public sealed class GalaxyMapPage : UserControl
     private string? _stripFor;
     private List<string> _kindWords = [];
     private IReadOnlyList<GalaxyMapMark> _placed = [];
+    private Placement _placement = new([], []);
+    private HashSet<string> _unvisitedNames = new(StringComparer.OrdinalIgnoreCase);
+    private bool _stripUnvisited;
+    private bool _unvisitedWanted = true;
+    private bool _settingUnvisited;
+    private bool _opened;
+    private string? _askedAround;
     private string? _current;
     private readonly WrapPanel _legend = new() { Orientation = Orientation.Horizontal, ItemSpacing = 14, LineSpacing = 4 };
 
@@ -113,7 +125,9 @@ public sealed class GalaxyMapPage : UserControl
         Func<DateTimeOffset> now,
         bool headset,
         BookmarkStore? bookmarks = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        Func<IGalaxyService?>? galaxy = null,
+        GalaxyMapLookups? lookups = null)
     {
         _travel = travel;
         _commander = commander;
@@ -124,11 +138,14 @@ public sealed class GalaxyMapPage : UserControl
         _headset = headset;
         _bookmarks = bookmarks;
         _copy = copy;
+        _galaxy = galaxy ?? (() => null);
+        _lookups = lookups ?? new GalaxyMapLookups();
 
-        _engineers = Marked("Engineers", GalaxyMapMarkKind.Engineer);
-        _bookmarkMarks = Marked("Bookmarks", GalaxyMapMarkKind.Bookmark);
-        _carrierMark = Marked("Carrier", GalaxyMapMarkKind.Carrier);
-        _shipMarks = Marked("Ships", GalaxyMapMarkKind.Ships);
+        _engineers = Marked("Engineers", live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
+        _bookmarkMarks = Marked("Bookmarks", live => MarkDrawing(GalaxyMapMarkKind.Bookmark, live));
+        _carrierMark = Marked("Carrier", live => MarkDrawing(GalaxyMapMarkKind.Carrier, live));
+        _shipMarks = Marked("Ships", live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
+        _unvisited = Marked("Unvisited", UnvisitedDrawing);
 
         BuildStrip();
 
@@ -152,6 +169,7 @@ public sealed class GalaxyMapPage : UserControl
         _bookmarkMarks.IsCheckedChanged += (_, _) => Refresh();
         _carrierMark.IsCheckedChanged += (_, _) => Refresh();
         _shipMarks.IsCheckedChanged += (_, _) => Refresh();
+        _unvisited.IsCheckedChanged += (_, _) => UnvisitedChanged();
         _zoomIn.Click += (_, _) => Step(view => view.ZoomIn());
         _zoomOut.Click += (_, _) => Step(view => view.ZoomOut());
         _map.ViewportChanged += _ => Moved();
@@ -175,11 +193,15 @@ public sealed class GalaxyMapPage : UserControl
         {
             _bookmarks.Changed += OnBookmarksChanged;
         }
+
+        Open();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
+
+        _opened = false;
 
         if (_bookmarks is not null)
         {
@@ -212,6 +234,10 @@ public sealed class GalaxyMapPage : UserControl
     internal CheckBox CarrierSwitch => _carrierMark;
 
     internal CheckBox ShipSwitch => _shipMarks;
+
+    internal CheckBox UnvisitedSwitch => _unvisited;
+
+    internal GalaxyMapLookups Lookups => _lookups;
 
     /// <summary>The words about items the map could not place.</summary>
     internal string UnplacedLine => _unplaced.IsVisible
@@ -252,15 +278,15 @@ public sealed class GalaxyMapPage : UserControl
     }
 
     /// <summary>
-    /// What a redraw depends on: the Commander, the route, where they are and the backfill; and their step count once
-    /// the backfill has finished, so the files it folds do not each redraw the map.
+    /// What a redraw depends on: the Commander, the route, where they are, the backfill and the galaxy search answers;
+    /// and their step count once the backfill has finished, so the files it folds do not each redraw the map.
     /// </summary>
     private object Key(TravelLog? log, CommanderGameState? commander, string? offDuty)
     {
         var fid = commander?.Identity.FrontierId ?? string.Empty;
         var folded = log?.HistoryFolded ?? true;
 
-        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet);
+        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet, _galaxy() is not null, _lookups.Generation);
     }
 
     /// <summary>Rebuilds what the map draws and the lines under it, keeping the viewport.</summary>
@@ -293,8 +319,15 @@ public sealed class GalaxyMapPage : UserControl
             _framing.SelectedIndex = -1;
         }
 
-        var placement = Place(log, commander, fid, offDuty is not null);
+        var galaxy = _galaxy();
 
+        AskAround(here, galaxy);
+        EnableUnvisited(galaxy is not null && offDuty is null);
+
+        var placement = _placement = Place(log, commander, fid, offDuty is not null, galaxy is not null);
+        var unvisited = _unvisited.IsChecked == true ? Unvisited(steps) : [];
+
+        _unvisitedNames = new HashSet<string>(unvisited.Select(star => star.Name), StringComparer.OrdinalIgnoreCase);
         _placed = placement.Marks;
         _carrierMark.IsEnabled = offDuty is null;
 
@@ -306,30 +339,104 @@ public sealed class GalaxyMapPage : UserControl
             _position,
             here,
             Named(steps, Since()),
-            placement.Marks));
+            placement.Marks,
+            unvisited));
 
         Strip(_map.Selected);
 
         Where(offDuty, here);
         Counts(log, steps.Count, travels);
-        Unplaced(placement);
+        Unplaced(placement, galaxy is not null);
         Zoom();
     }
 
-    private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, int Bookmarks, bool Carrier, int Ships);
+    /// <summary>The page being shown: asks for the stars around the Commander and the positions the map is missing.</summary>
+    private void Open()
+    {
+        _opened = true;
+        _askedAround = null;
+
+        Refresh();
+
+        if (_galaxy() is { } galaxy)
+        {
+            var missing = _placement.Unplaced
+                .Select(item => item.System)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase);
+
+            _lookups.AskPositions(galaxy, missing);
+            Refresh();
+        }
+    }
+
+    /// <summary>Asks for the systems nearest the Commander once per opening and arrival, while Unvisited is wanted.</summary>
+    private void AskAround(string? here, IGalaxyService? galaxy)
+    {
+        if (!_opened || string.Equals(here, _askedAround, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _askedAround = here;
+
+        if (here is not null && galaxy is not null && _unvisitedWanted)
+        {
+            _lookups.AskNearby(galaxy, here);
+        }
+    }
+
+    private void UnvisitedChanged()
+    {
+        if (_settingUnvisited)
+        {
+            return;
+        }
+
+        _unvisitedWanted = _unvisited.IsChecked == true;
+        _askedAround = null;
+        Refresh();
+    }
+
+    /// <summary>Unvisited is disabled and unchecked while it cannot draw anything, and shows the Commander's choice otherwise.</summary>
+    private void EnableUnvisited(bool usable)
+    {
+        _settingUnvisited = true;
+        _unvisited.IsEnabled = usable;
+        _unvisited.IsChecked = usable && _unvisitedWanted;
+        _settingUnvisited = false;
+    }
+
+    /// <summary>Every system galaxy search has answered with this session that is not in the Commander's travels.</summary>
+    private List<GalaxyMapStar> Unvisited(IReadOnlyList<TravelStep> steps)
+    {
+        var addresses = steps.Select(step => step.SystemAddress).ToHashSet();
+        var names = steps.Select(step => step.System).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return [.. _lookups.Nearby()
+            .Where(system => system.Position is not null
+                && !names.Contains(system.Name)
+                && (system.SystemAddress is not { } address || !addresses.Contains(address)))
+            .Select(system => new GalaxyMapStar(system.Name, system.Position!.Value))];
+    }
+
+    /// <summary>One kind of item in one system the map could not place.</summary>
+    private sealed record UnplacedItem(GalaxyMapMarkKind Kind, string System, int Count);
+
+    private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, IReadOnlyList<UnplacedItem> Unplaced);
 
     /// <summary>
-    /// The markers whose switch is on, placed by the engineer's position or by where the Commander has been, and how
-    /// many items stand in a system with no position.
+    /// The markers whose switch is on, placed by the engineer's position, by where the Commander has been or, with galaxy
+    /// search on, by a position it found; and the items standing in a system with no position.
     /// </summary>
-    private Placement Place(TravelLog? log, CommanderGameState? commander, string fid, bool anotherCommander)
+    private Placement Place(TravelLog? log, CommanderGameState? commander, string fid, bool anotherCommander, bool lookups)
     {
         var marks = new List<GalaxyMapMark>();
-        var bookmarks = 0;
-        var carrier = false;
-        var ships = 0;
+        var unplaced = new List<UnplacedItem>();
 
-        StarPosition? PositionIn(string system) => log is null || fid.Length == 0 ? null : log.PositionOf(fid, system);
+        StarPosition? PositionIn(string system) =>
+            (log is null || fid.Length == 0 ? null : log.PositionOf(fid, system))
+            ?? (lookups ? _lookups.PositionOf(system).At : null);
 
         if (_engineers.IsChecked == true)
         {
@@ -351,7 +458,7 @@ public sealed class GalaxyMapPage : UserControl
                 }
                 else
                 {
-                    bookmarks += system.Count();
+                    unplaced.Add(new UnplacedItem(GalaxyMapMarkKind.Bookmark, system.Key, system.Count()));
                 }
             }
         }
@@ -364,7 +471,7 @@ public sealed class GalaxyMapPage : UserControl
             }
             else
             {
-                carrier = true;
+                unplaced.Add(new UnplacedItem(GalaxyMapMarkKind.Carrier, carrierSystem, 1));
             }
         }
 
@@ -380,12 +487,12 @@ public sealed class GalaxyMapPage : UserControl
                 }
                 else
                 {
-                    ships += system.Count();
+                    unplaced.Add(new UnplacedItem(GalaxyMapMarkKind.Ships, system.Key, system.Count()));
                 }
             }
         }
 
-        return new Placement(marks, bookmarks, carrier, ships);
+        return new Placement(marks, unplaced);
     }
 
     private static IReadOnlyList<GalaxyMapStar> Named(IReadOnlyList<TravelStep> steps, DateTimeOffset? since)
@@ -458,6 +565,12 @@ public sealed class GalaxyMapPage : UserControl
                 context.DrawLine(pen, new Point(11 + (sx * 10), 11 + (sy * 10)), new Point(11 + (sx * 5), 11 + (sy * 10)));
             }
 
+            if (_stripUnvisited && !_stripCurrent)
+            {
+                context.DrawRectangle(null, new Pen(ink(ThemeManager.GreyKey), 1), new Rect(9.5, 9.5, 4, 4));
+                return;
+            }
+
             var side = _stripCurrent ? 6 : 3;
             context.DrawRectangle(ink(_stripCurrent ? ThemeManager.CyanKey : ThemeManager.AKey), null, new Rect(11 - (side / 2.0), 11 - (side / 2.0), side, side));
         })
@@ -515,6 +628,7 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         _stripCurrent = _current is not null && string.Equals(star.Name, _current, StringComparison.OrdinalIgnoreCase);
+        _stripUnvisited = _unvisitedNames.Contains(star.Name);
         _strip.IsVisible = true;
         _stripName.Text = star.Name.ToUpperInvariant();
         RoutingKit.Themed(_stripName, TextBlock.ForegroundProperty, _stripCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
@@ -726,56 +840,88 @@ public sealed class GalaxyMapPage : UserControl
         ];
     }
 
-    /// <summary>"2 bookmarks, your carrier and 1 stored ship are in systems you have not visited."; no line when none is unplaced.</summary>
-    private void Unplaced(Placement placement)
+    /// <summary>
+    /// What the map could not place, as "2 bookmarks, your carrier and 1 stored ship are in systems you have not
+    /// visited.", a sentence for each reason it could not; with galaxy search off, that galaxy search would place them.
+    /// </summary>
+    private void Unplaced(Placement placement, bool lookups)
     {
+        var runs = new List<Run>();
+
+        void Say(IReadOnlyList<UnplacedItem> items, string one, string many)
+        {
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            if (runs.Count > 0)
+            {
+                runs.Add(Ink(" "));
+            }
+
+            runs.AddRange(Sentence(items, one, many));
+        }
+
+        if (!lookups)
+        {
+            Say(placement.Unplaced, " is in a system you have not visited.", " are in systems you have not visited.");
+            runs.Add(Ink(runs.Count > 0 ? " " + PlacedWhenOn : GalaxySearchOff));
+        }
+        else
+        {
+            var states = placement.Unplaced.ToLookup(item => _lookups.PositionOf(item.System).State);
+
+            Say([.. states[GalaxyMapLookup.Waiting], .. states[GalaxyMapLookup.Failed]], " is in a system you have not visited.", " are in systems you have not visited.");
+            Say([.. states[GalaxyMapLookup.Unknown]], " is in a system galaxy search does not know.", " are in systems galaxy search does not know.");
+            Say(
+                [.. states[GalaxyMapLookup.NotAsked]],
+                " is in a system not looked up yet. Open the map again to look it up.",
+                " are in systems not looked up yet. Open the map again to look them up.");
+        }
+
+        _unplaced.IsVisible = runs.Count > 0;
+        _unplaced.Text = null;
+        _unplaced.Inlines = runs.Count > 0 ? [.. runs] : null;
+    }
+
+    /// <summary>"2 bookmarks, your carrier and 1 stored ship" and the ending for one item or several.</summary>
+    private static IEnumerable<Run> Sentence(IReadOnlyList<UnplacedItem> items, string one, string many)
+    {
+        var bookmarks = items.Where(item => item.Kind == GalaxyMapMarkKind.Bookmark).Sum(item => item.Count);
+        var carrier = items.Any(item => item.Kind == GalaxyMapMarkKind.Carrier);
+        var ships = items.Where(item => item.Kind == GalaxyMapMarkKind.Ships).Sum(item => item.Count);
         var parts = new List<Run[]>();
 
-        if (placement.Bookmarks > 0)
+        if (bookmarks > 0)
         {
-            parts.Add([Number(placement.Bookmarks), Ink(placement.Bookmarks == 1 ? " bookmark" : " bookmarks")]);
+            parts.Add([Number(bookmarks), Ink(bookmarks == 1 ? " bookmark" : " bookmarks")]);
         }
 
-        if (placement.Carrier)
+        if (carrier)
         {
-            parts.Add([Ink("your carrier")]);
+            parts.Add([Ink(parts.Count == 0 ? "Your carrier" : "your carrier")]);
         }
 
-        if (placement.Ships > 0)
+        if (ships > 0)
         {
-            parts.Add([Number(placement.Ships), Ink(placement.Ships == 1 ? " stored ship" : " stored ships")]);
+            parts.Add([Number(ships), Ink(ships == 1 ? " stored ship" : " stored ships")]);
         }
-
-        _unplaced.IsVisible = parts.Count > 0;
-
-        if (parts.Count == 0)
-        {
-            _unplaced.Inlines = null;
-            return;
-        }
-
-        if (parts[0][0].Text == "your carrier")
-        {
-            parts[0][0] = Ink("Your carrier");
-        }
-
-        var runs = new List<Run>();
 
         for (var index = 0; index < parts.Count; index++)
         {
             if (index > 0)
             {
-                runs.Add(Ink(index == parts.Count - 1 ? " and " : ", "));
+                yield return Ink(index == parts.Count - 1 ? " and " : ", ");
             }
 
-            runs.AddRange(parts[index]);
+            foreach (var run in parts[index])
+            {
+                yield return run;
+            }
         }
 
-        var single = placement.Bookmarks + (placement.Carrier ? 1 : 0) + placement.Ships == 1;
-
-        runs.Add(Ink(single ? " is in a system you have not visited." : " are in systems you have not visited."));
-        _unplaced.Text = null;
-        _unplaced.Inlines = [.. runs];
+        yield return Ink(bookmarks + (carrier ? 1 : 0) + ships == 1 ? one : many);
     }
 
     private void Legend(GalaxyMapDrawn drawn)
@@ -791,6 +937,11 @@ public sealed class GalaxyMapPage : UserControl
                 context.DrawRectangle(ink(ThemeManager.AKey), null, new Rect(-0.5, 6.5, 3, 3));
                 context.DrawRectangle(ink(ThemeManager.AKey), null, new Rect(19.5, 0.5, 3, 3));
             });
+        }
+
+        if (drawn.Unvisited)
+        {
+            Entry("Unvisited", (context, ink) => context.DrawRectangle(null, new Pen(ink(ThemeManager.GreyKey), 1), new Rect(9.5, 3.5, 4, 4)));
         }
 
         if (drawn.Route)
@@ -934,7 +1085,7 @@ public sealed class GalaxyMapPage : UserControl
     private StackPanel Switches() => new()
     {
         Spacing = 2,
-        Children = { _travels, _routeShown, _regions, _engineers, _bookmarkMarks, _carrierMark, _shipMarks },
+        Children = { _travels, _routeShown, _regions, _engineers, _bookmarkMarks, _carrierMark, _shipMarks, _unvisited },
     };
 
     private Control WhereLine()
@@ -965,7 +1116,7 @@ public sealed class GalaxyMapPage : UserControl
 
     private Control WindowLayout()
     {
-        var rail = new StackPanel { Spacing = 12, Children = { ZoomPair(), PanPad(), Switches() } };
+        var rail = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), Switches() } };
         var body = new Grid
         {
             MinHeight = WindowMapHeight,
@@ -1113,7 +1264,8 @@ public sealed class GalaxyMapPage : UserControl
         return box;
     }
 
-    private static CheckBox Marked(string label, GalaxyMapMarkKind kind)
+    /// <summary>A layer switch with its swatch on the right, drawn by <paramref name="swatch"/> from whether the switch is enabled.</summary>
+    private static CheckBox Marked(string label, Func<Func<bool>, Action<DrawingContext, Func<string, IBrush>>> swatch)
     {
         var box = LabeledCheckBox.Caps(string.Empty);
         box.IsChecked = true;
@@ -1122,7 +1274,7 @@ public sealed class GalaxyMapPage : UserControl
         AutomationProperties.SetName(box, label);
 
         var text = new TextBlock { Text = label.ToUpperInvariant(), VerticalAlignment = VerticalAlignment.Center };
-        var mark = new Glyph(MarkDrawing(kind, () => box.IsEnabled)) { Width = 16, Height = 14, VerticalAlignment = VerticalAlignment.Center };
+        var mark = new Glyph(swatch(() => box.IsEnabled)) { Width = 16, Height = 14, VerticalAlignment = VerticalAlignment.Center };
 
         box.PropertyChanged += (_, e) =>
         {
@@ -1165,6 +1317,10 @@ public sealed class GalaxyMapPage : UserControl
 
         context.DrawGeometry(ink(live() ? key : ThemeManager.Grey2Key), null, geometry);
     };
+
+    /// <summary>The unvisited mark, a 5 px square outline, at the centre of a 16 by 14 glyph; Grey2 while <paramref name="live"/> is false.</summary>
+    private static Action<DrawingContext, Func<string, IBrush>> UnvisitedDrawing(Func<bool> live) => (context, ink) =>
+        context.DrawRectangle(null, new Pen(ink(live() ? ThemeManager.GreyKey : ThemeManager.Grey2Key), 1), new Rect(5.5, 4.5, 4, 4));
 
     private static TextBlock Label(string text)
     {
