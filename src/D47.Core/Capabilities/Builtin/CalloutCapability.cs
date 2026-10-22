@@ -792,8 +792,8 @@ public static class CalloutCapability
 
             Toggle(
                 SessionLengthKey,
-                "Session length",
-                "A reminder once, when a session has run as long as you choose. It is a choice about your wellbeing, not a nag.",
+                "Break reminder",
+                "Reminds you to take a break once a session has run as long as you choose. Said once per session. Off by default.",
                 "session-length",
                 "how long I have been flying",
                 s => s.Callouts.SessionLength,
@@ -961,7 +961,7 @@ public static class CalloutCapability
             Key = SessionLengthHoursKey,
             Advanced = true,
             Label = "…after this many hours",
-            Help = "How long a session runs before the reminder above is said.",
+            Help = "How long a session runs before the break reminder is said.",
             Kind = SettingKind.Choice,
             Choices = ["2", "3", "4", "6"],
             DefaultDisplay = "4",

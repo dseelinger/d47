@@ -45,7 +45,7 @@ public sealed class SessionLengthCallout : ICallout
         }
 
         _spoken = true;
-        yield return new Announcement(Key, $"You have been flying {hours} hours, Commander.")
+        yield return new Announcement(Key, $"You have been flying {hours} hours, Commander. Time to take a break.")
         {
             Urgency = CalloutUrgency.Routine,
             Cooldown = TimeSpan.Zero,

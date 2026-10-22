@@ -1245,14 +1245,13 @@ The line is in the pilot's own voice and says only what the journal states. When
 and fly it yourself, the pilot says they have the ship instead. Nothing is said while no pilot is
 assigned to the fighter bay, and nothing is said on a timer while the fighter is out.
 
-#### Session length {#session-length}
+#### Break reminder {#session-length}
 
-A reminder, said once, when a session has run for the length you choose: 2, 3, 4 or 6 hours, 4 by
-default ([#641](https://github.com/dseelinger/d47/issues/641)). It is off by default. It is a choice
-about your wellbeing, not a nag.
+A reminder to take a break, said once, when a session has run for the length you choose: 2, 3, 4 or
+6 hours, 4 by default ([#641](https://github.com/dseelinger/d47/issues/641)). It is off by default.
 
 ```text
-You have been flying 4 hours, Commander.
+You have been flying 4 hours, Commander. Time to take a break.
 ```
 
 A session starts at the latest `LoadGame` in the journal and ends at `Shutdown`. Starting the game

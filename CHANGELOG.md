@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The session-length reminder now says to take a break: "You have been flying 4 hours, Commander. Time to take a break." The switch in Settings > Callouts is now called Break reminder. Its setting and hours choice are unchanged.
+
 A ship type that starts with a vowel now reads "an" in the recap, the logbook and NPC chatter: "an Anaconda Mk II", "an Imperial Clipper". A missing ship type reads "a ship".
 
 GalNet headlines at launch wait for the opening lines. The order is the greeting, the recap, then GalNet; headlines that arrive earlier are held and said right after the recap. With the recap off they follow the greeting, and with both off they are not held. A login by another Commander does not hold them again.

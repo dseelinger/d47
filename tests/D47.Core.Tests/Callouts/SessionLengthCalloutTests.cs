@@ -39,7 +39,7 @@ public class SessionLengthCalloutTests
         var said = Assert.Single(Say(callout, Start.AddHours(4)));
 
         Assert.Equal(SessionLengthCallout.Key, said.Key);
-        Assert.Equal("You have been flying 4 hours, Commander.", said.Text);
+        Assert.Equal("You have been flying 4 hours, Commander. Time to take a break.", said.Text);
         Assert.Empty(Say(callout, Start.AddHours(5)));
     }
 
@@ -83,7 +83,7 @@ public class SessionLengthCalloutTests
 
         var said = Assert.Single(Say(callout, Start.AddHours(2)));
 
-        Assert.Equal("You have been flying 2 hours, Commander.", said.Text);
+        Assert.Equal("You have been flying 2 hours, Commander. Time to take a break.", said.Text);
     }
 
     [Fact]
