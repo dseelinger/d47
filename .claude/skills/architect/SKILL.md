@@ -136,7 +136,11 @@ only what the plan left open.
 
 Add two things to each body that `/new-issue` does not know about:
 
-- **The needs-architect issue**, by number, and which of the other build issues have to land first.
+- **The needs-architect issue**, by number.
+- **The build order, as a `Needs first: #N.` line** at the top of every build issue that has to wait
+  for another. File in landing order so the numbers exist when the later bodies are written. "Lands
+  after #N" in prose is not read by `/triage` or `/issue-worker`, and they will build the issues out
+  of order.
 - **The decision and the alternative rejected**, in a paragraph of its own. This is the rationale
   the Output section says belongs in the issue.
 

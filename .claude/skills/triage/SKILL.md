@@ -72,20 +72,25 @@ is the same in both modes. Rank by, in this order:
 1. **Blocking.** A waiting issue ranks after every issue it needs, never before and never first.
    Where one of those is not in the queue — ineligible, or left out — the waiting issue is left out
    too and named in **Not now** with what it waits on.
-2. **Stories.** An issue labelled `stories` ranks ahead of every issue without it, and so does
-   every issue it needs, followed through the needs list until it ends: if a `stories` issue needs
-   #A and #A needs #B, both #A and #B move up with it, whatever their own labels. Rules 3 to 5 order issues within the prioritised set and within
-   the rest, never across the two. A `stories` issue left out under rule 1 goes in **Not now**
-   with the number that is not eligible, so the maintainer can see which issue to vet or specify.
-3. **Truth.** A `data-accuracy` issue or a crash outranks a nicety. d47 stating something untrue
+2. **Bugs.** An issue labelled `bug` ranks ahead of every issue without it, and so does every
+   issue it needs, followed through the needs list until it ends: if a `bug` issue needs #A and #A
+   needs #B, both #A and #B move up with it, whatever their own labels.
+3. **Stories.** Of the rest, an issue labelled `stories` ranks ahead of every issue without it,
+   and so does every issue it needs, followed the same way.
+
+   Rules 2 and 3 make three sets, in this order: bugs, stories, the rest. Rules 4 to 6 order issues
+   within each set, never across them. A `bug` or `stories` issue left out under rule 1 goes in
+   **Not now** with the number that is not eligible, so the maintainer can see which issue to vet
+   or specify.
+4. **Truth.** A `data-accuracy` issue or a crash outranks a nicety. d47 stating something untrue
    about Elite is the worst thing it does.
-4. **Adjacency.** Issues touching the same file or subsystem go consecutive, so one session's
+5. **Adjacency.** Issues touching the same file or subsystem go consecutive, so one session's
    context pays for several fixes. This is usually the strongest signal available.
-5. **Certainty.** A cheap, well-diagnosed fix before an expensive, vague one. Each fix is
+6. **Certainty.** A cheap, well-diagnosed fix before an expensive, vague one. Each fix is
    independently releasable, so certain work first is not a compromise.
 
-`needs-repro` sinks. The label means a lead, not a diagnosis, and the session's first hour goes to
-reproducing rather than fixing.
+`needs-repro` sinks to the end of its set. The label means a lead, not a diagnosis, and the
+session's first hour goes to reproducing rather than fixing.
 
 ## Release groups
 
@@ -102,7 +107,7 @@ A group is what ships under one version:
 
 - **2 to 5 issues.** Fewer wastes a release; more delays every fix in it behind the slowest.
 - **They share a subject**, so they fold into one CHANGELOG entry. An issue moved up only because
-  a `stories` issue needs it shares that issue's subject, and can go in its group.
+  a `bug` or `stories` issue needs it shares that issue's subject, and can go in its group.
 - **They take the same increment.** A group holding both a fix and a new capability is numbered
   by the capability, which makes the patches in it read as features. Split it instead. A single
   issue that adds or removes a capability is worth its own minor even though it is one issue.

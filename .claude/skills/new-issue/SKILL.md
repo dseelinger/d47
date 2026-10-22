@@ -191,6 +191,10 @@ if you want it checked.
 
 - **Title**: seven words or fewer. Count them before showing the text. The cause goes in the body,
   not after a colon.
+- **`Needs first: #N, #M.`** as the body's first line, when another issue has to land before this
+  one. It is the one form both `/triage` and `/issue-worker` read; "lands after #N" or any other
+  prose is invisible to both, and the issue can then be built out of order. An issue that names a
+  prerequisite only after it is filed gets the line added by an edit, shown like any other.
 - **A grounding paragraph** naming the code this rests on, with paths and symbols you have read.
   This is the part that stops it coming back.
 - **`### What is wanted`** — the decision, in the maintainer's terms.
