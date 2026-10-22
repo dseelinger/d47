@@ -918,8 +918,6 @@ public static class AdventureLimits
 
     public const int MaxLinesPerBeat = 3;
 
-    public const int MaxSpineLength = 700;
-
     /// <summary>How much of what was said is kept per story.</summary>
     public const int MaxTold = 60;
 

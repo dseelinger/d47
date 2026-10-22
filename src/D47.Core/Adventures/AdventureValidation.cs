@@ -126,21 +126,6 @@ public static class AdventureValidation
             problems.Add($"The opening's line is {opening.Text.Trim().Length} characters; at most {AdventureLimits.MaxLineLength}.");
         }
 
-        if (adventure.Spine is { } spine)
-        {
-            foreach (var (field, text) in new[]
-                     {
-                         ("premise", spine.Premise), ("want", spine.Want), ("stake", spine.Stake),
-                         ("turn", spine.Turn), ("ending", spine.Ending),
-                     })
-            {
-                if (text is { } value && value.Trim().Length > AdventureLimits.MaxSpineLength)
-                {
-                    problems.Add($"The {field} is {value.Trim().Length} characters; at most {AdventureLimits.MaxSpineLength}.");
-                }
-            }
-        }
-
         if (adventure.Beats.Count == 0)
         {
             problems.Add("A story needs at least one beat.");
