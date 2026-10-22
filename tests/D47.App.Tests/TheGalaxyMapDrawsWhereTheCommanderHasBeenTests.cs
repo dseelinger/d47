@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -516,5 +516,139 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         Assert.Equal("100 LY", GalaxyMapView.ScaleWords(400));
         Assert.Equal("25,600 LY", GalaxyMapView.ScaleWords(102_400));
+    }
+    private static string HopFour()
+    {
+        var down = 18 * 4;
+        var up = (14 * 4) + (8 * Math.Sin(4));
+
+        return Math.Sqrt((down * down) + (up * up)).ToString("N1", CultureInfo.CurrentCulture);
+    }
+
+    private static Point MapPoint(GalaxyMapPage page, string system) => page.Map.ScreenOf(system)!.Value;
+
+    private static void TapMapInWindow(Window window, GalaxyMapPage page, Point at)
+    {
+        var inWindow = page.Map.TranslatePoint(at, window)!.Value;
+        window.MouseDown(inWindow, Avalonia.Input.MouseButton.Left);
+        window.MouseUp(inWindow, Avalonia.Input.MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static bool TapMapOnPanel(OffscreenSurface surface, PanelView panel, GalaxyMapPage page, Point at)
+    {
+        var pressed = surface.Click(page.Map.TranslatePoint(at, panel)!.Value);
+        surface.Render();
+
+        return pressed;
+    }
+
+    [AvaloniaFact]
+    public void ATapOnAStarInTheWindowSelectsItAndATapOnNothingClearsIt()
+    {
+        var (window, _, page) = InWindow(Played());
+
+        Assert.False(page.StripShown);
+
+        TapMapInWindow(window, page, MapPoint(page, "Hop 4"));
+
+        Assert.True(page.StripShown);
+        Assert.Equal("HOP 4", page.StripName);
+        Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
+        Assert.Equal("Hop 4", page.Map.Selected!.Name);
+
+        using (var selected = window.CaptureRenderedFrame()!)
+        {
+            selected.SaveCapture("galaxy-map-window-selected.png");
+        }
+
+        TapMapInWindow(window, page, MapPoint(page, "Hop 4") + new Point(0, 60));
+        Assert.False(page.StripShown);
+        Assert.Null(page.Map.Selected);
+
+        TapMapInWindow(window, page, MapPoint(page, "Wregoe TC-X b29-0"));
+        Assert.Equal("WREGOE TC-X B29-0", page.StripName);
+        Assert.StartsWith($"{GalaxyMapPage.YouAreHere} · arrived once, last ", page.StripFacts);
+    }
+
+    [AvaloniaFact]
+    public void ATapOnAStarOnTheBigPanelSelectsItAndItsButtonsWorkByOneTap()
+    {
+        var game = Played();
+        var (surface, panel, page) = OnThePanel(game);
+
+        using (surface)
+        {
+            Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, "Hop 4")));
+            Assert.True(page.StripShown);
+            Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
+            Assert.Equal(TypeScale.MinimumTarget, Tile(page, GalaxyMapPage.CentreHere).Bounds.Height);
+            Assert.Equal(TypeScale.MinimumTarget, Tile(page, GalaxyMapPage.Bookmark).Bounds.Height);
+
+            surface.Render().SaveCapture("galaxy-map-panel-selected.png");
+
+            var star = page.Map.Selected!.At;
+            var across = page.Map.Viewport.LightYearsAcross;
+
+            Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.CentreHere)));
+            Assert.Equal(star.X, page.Map.Viewport.CentreX, 6);
+            Assert.Equal(star.Z, page.Map.Viewport.CentreZ, 6);
+            Assert.Equal(across, page.Map.Viewport.LightYearsAcross);
+            Assert.True(page.StripShown);
+
+            Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.Bookmark)));
+            Assert.Equal("Bookmarked Hop 4.", page.StripReply);
+
+            Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.Bookmark)));
+            Assert.Equal("Hop 4 is already bookmarked under that name. The Bookmarks page renames it.", page.StripReply);
+
+            surface.Render().SaveCapture("galaxy-map-panel-bookmarked.png");
+
+            Assert.Equal(TypeScale.MinimumTarget, page.StripControl.Bounds.Height);
+
+            var top = page.TranslatePoint(default, panel)!.Value.Y;
+            var lowest = page.GetVisualDescendants().OfType<Control>()
+                .Where(control => control.GetSelfAndVisualAncestors().TakeWhile(visual => visual != page).All(visual => visual.IsVisible) && control.Opacity > 0 && control.Bounds.Height > 0)
+                .Max(control => control.TranslatePoint(new Point(0, control.Bounds.Height), panel)!.Value.Y);
+            Assert.True(lowest <= top + page.Bounds.Height, $"The page starts at {top}, has {page.Bounds.Height} and draws down to {lowest}.");
+
+            Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.ClearSelection)));
+            Assert.False(page.StripShown);
+            Assert.Null(page.Map.Selected);
+
+            Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, "Hop 4") + new Point(20, -20)));
+            Assert.Equal("Hop 4", page.Map.Selected!.Name);
+
+            Assert.True(TapMapOnPanel(surface, panel, page, new Point(page.Map.Bounds.Width / 2, 8)));
+            Assert.False(page.StripShown);
+        }
+    }
+
+    [AvaloniaFact]
+    public void ASelectionSurvivesARedrawAndALayerSwitchedOffAndLosesOnlyItsBrackets()
+    {
+        var (window, _, page) = InWindow(Played());
+
+        TapMapInWindow(window, page, MapPoint(page, "Hop 4"));
+        page.Refresh();
+
+        Assert.True(page.StripShown);
+        Assert.Equal("Hop 4", page.Map.Selected!.Name);
+
+        Box(page, "Route").IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(page.StripShown);
+        Assert.Equal("Hop 4", page.Map.Selected!.Name);
+        Assert.Null(page.Map.ScreenOf("Hop 4"));
+
+        Box(page, "Route").IsChecked = true;
+        Option(page.Framing, "Galaxy").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(page.StripShown);
+
+        Tile(page, GalaxyMapPage.ClearSelection).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Assert.False(page.StripShown);
     }
 }

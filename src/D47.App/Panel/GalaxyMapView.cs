@@ -13,15 +13,20 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
+/// <summary>A system the map can select.</summary>
+public sealed record GalaxyMapStar(string Name, StarPosition At);
+
 /// <summary>What the galaxy map draws; a null part is not drawn.</summary>
 /// <param name="Reached">The index in <paramref name="Route"/> of the stop the Commander is on, or -1.</param>
+/// <param name="Visited">The systems drawn as visited, by name; selectable while <paramref name="Travels"/> is drawn.</param>
 public sealed record GalaxyMapScene(
     bool Regions,
     TravelPicture? Travels,
     IReadOnlyList<RouteMapStop>? Route,
     int Reached,
     StarPosition? Commander,
-    string? Here)
+    string? Here,
+    IReadOnlyList<GalaxyMapStar>? Visited = null)
 {
     public static GalaxyMapScene Empty { get; } = new(true, null, null, -1, null, null);
 }
@@ -44,11 +49,17 @@ public sealed record GalaxyMapDrawn(
 /// The galaxy top-down through a <see cref="GalaxyViewport"/> (#1406): Elite's regions, the Commander's travels,
 /// the plotted route and the Commander. Geometry is rebuilt when the scene, the viewport or the size changes.
 /// </summary>
-/// <remarks>On the desktop the wheel zooms one step and a drag pans; a press with no movement does nothing.</remarks>
+/// <remarks>
+/// On the desktop the wheel zooms one step and a drag pans. A press and release at one point, on the desktop or the
+/// big panel, selects the nearest visited system or route stop whose centre is inside a <see cref="TapSide"/> px square
+/// on the tap, or clears the selection. The selection stays while its system is not drawn.
+/// </remarks>
 public sealed class GalaxyMapView : Control
 {
     /// <summary>The widest view that draws route stops and system names, and the narrowest that draws region names.</summary>
     public const double DetailAcross = 6_400;
+
+    public const double TapSide = 44;
 
     private const double NameOffset = 16;
     private const double EdgeMargin = 4;
@@ -56,6 +67,9 @@ public sealed class GalaxyMapView : Control
     private const double Visited = 3;
     private const double ScaleInset = 12;
     private const double DragStart = 4;
+    private const double BracketHalf = 12;
+    private const double BracketLeg = 6;
+    private const double BracketGap = 8;
     private const int RegionNameWrap = 14;
     private const double NameGap = 2;
 
@@ -76,6 +90,9 @@ public sealed class GalaxyMapView : Control
     private string? _destination;
     private Size _builtFor;
     private bool _stale = true;
+    private IReadOnlyList<(GalaxyMapStar Star, Point At)> _targets = [];
+    private GalaxyMapStar? _selected;
+    private Point? _selectedAt;
 
     private Point? _pressedAt;
     private GalaxyViewport? _pressedView;
@@ -93,12 +110,34 @@ public sealed class GalaxyMapView : Control
     /// <summary>Raised when the wheel or a drag moves the view.</summary>
     public event Action<GalaxyViewport>? ViewportChanged;
 
+    /// <summary>Raised when a tap or <see cref="Clear"/> changes the selection.</summary>
+    public event Action<GalaxyMapStar?>? Picked;
+
     /// <summary>Raised after each rebuild, with what is in view.</summary>
     public event Action<GalaxyMapDrawn>? Redrawn;
 
     public GalaxyViewport Viewport => _viewport;
 
     public GalaxyMapDrawn Drawn { get; private set; } = GalaxyMapDrawn.Nothing;
+
+    public GalaxyMapStar? Selected => _selected;
+
+    public void Clear()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _selected = null;
+        _selectedAt = null;
+        InvalidateVisual();
+        Picked?.Invoke(null);
+    }
+
+    /// <summary>Where a selectable system is on the map now, or null when it is not selectable.</summary>
+    internal Point? ScreenOf(string name) =>
+        _targets.Where(target => string.Equals(target.Star.Name, name, StringComparison.OrdinalIgnoreCase)).Select(target => (Point?)target.At).FirstOrDefault();
 
     public void Show(GalaxyMapScene scene)
     {
@@ -183,6 +222,7 @@ public sealed class GalaxyMapView : Control
         }
 
         _stars = stars;
+        _targets = Targets(stops);
         _you = _scene.Commander is { } commander ? Screen(commander) : null;
         _destination = stops.Count >= 2 ? stops[^1].System : null;
 
@@ -196,7 +236,53 @@ public sealed class GalaxyMapView : Control
             RegionNames: _scene.Regions && Wide,
             Stars: [.. stars.Select(star => star.Kind).Distinct()]);
 
+        Reselect();
+
         Redrawn?.Invoke(Drawn);
+    }
+
+    /// <summary>The systems a tap can select: visited ones while travels are drawn, route stops while their marks are.</summary>
+    private List<(GalaxyMapStar Star, Point At)> Targets(List<RouteMapStop> stops)
+    {
+        var targets = new List<(GalaxyMapStar, Point)>();
+
+        if (_scene.Travels is not null && _scene.Visited is { } visited)
+        {
+            targets.AddRange(visited.Select(star => (star, Screen(star.At))));
+        }
+
+        if (_route.Count > 0 && Detailed)
+        {
+            targets.AddRange(stops.Select((stop, index) => (new GalaxyMapStar(stop.System, stop.Position!.Value), _route[index])));
+        }
+
+        return targets;
+    }
+
+    /// <summary>Follows the selected system to where it is drawn now; it has no mark while it is not drawn.</summary>
+    private void Reselect()
+    {
+        if (_selected is not { } was)
+        {
+            return;
+        }
+
+        var found = _targets.FirstOrDefault(target => string.Equals(target.Star.Name, was.Name, StringComparison.OrdinalIgnoreCase));
+
+        _selected = found.Star ?? was;
+        _selectedAt = found.Star is null ? null : found.At;
+    }
+
+    private void Pick(Point at)
+    {
+        var near = _targets.Where(target => Math.Abs(target.At.X - at.X) <= TapSide / 2 && Math.Abs(target.At.Y - at.Y) <= TapSide / 2).ToList();
+        var index = GalaxyMapHit.Nearest([.. near.Select(target => (target.At.X, target.At.Y))], (at.X, at.Y), double.MaxValue);
+
+        _selected = index is { } i ? near[i].Star : null;
+        _selectedAt = index is { } j ? near[j].At : null;
+
+        InvalidateVisual();
+        Picked?.Invoke(_selected);
     }
 
     private static StreamGeometry Legs(TravelPicture travels)
@@ -329,6 +415,19 @@ public sealed class GalaxyMapView : Control
         if (_you is { } you)
         {
             RouteMarks.You(context, Brush, you);
+        }
+
+        if (_selectedAt is { } picked && _selected is { } star)
+        {
+            Brackets(context, picked);
+
+            var named = string.Equals(star.Name, _scene.Here, StringComparison.OrdinalIgnoreCase)
+                || (Detailed && _route.Count > 0 && string.Equals(star.Name, _destination, StringComparison.OrdinalIgnoreCase));
+
+            if (!named)
+            {
+                SelectedName(context, star.Name, picked, size);
+            }
         }
 
         ScaleBar(context, size);
@@ -529,6 +628,41 @@ public sealed class GalaxyMapView : Control
         context.DrawGeometry(null, new Pen(Brush(key), 2, lineJoin: PenLineJoin.Round, lineCap: PenLineCap.Round), geometry);
     }
 
+    /// <summary>Four corner brackets round a 24 px square, white on a wider Bg halo.</summary>
+    private void Brackets(DrawingContext context, Point at)
+    {
+        var geometry = new StreamGeometry();
+
+        using (var open = geometry.Open())
+        {
+            foreach (var (sx, sy) in new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) })
+            {
+                open.BeginFigure(new Point(at.X + (sx * BracketHalf), at.Y + (sy * (BracketHalf - BracketLeg))), false);
+                open.LineTo(new Point(at.X + (sx * BracketHalf), at.Y + (sy * BracketHalf)));
+                open.LineTo(new Point(at.X + (sx * (BracketHalf - BracketLeg)), at.Y + (sy * BracketHalf)));
+                open.EndFigure(false);
+            }
+        }
+
+        context.DrawGeometry(null, new Pen(Brush(ThemeManager.BgKey), 3.5, lineCap: PenLineCap.Square), geometry);
+        context.DrawGeometry(null, new Pen(Brush(ThemeManager.WhiteKey), 1.5, lineCap: PenLineCap.Square), geometry);
+    }
+
+    /// <summary>The selected system's name beside its brackets, on the left near the right edge, kept inside the map.</summary>
+    private void SelectedName(DrawingContext context, string name, Point at, Size size)
+    {
+        var text = Text(name.ToUpperInvariant(), 12, ThemeManager.AKey, 0.72);
+        var x = at.X + BracketHalf + BracketGap;
+
+        if (x + text.Width > size.Width - BracketGap)
+        {
+            x = at.X - BracketHalf - BracketGap - text.Width;
+        }
+
+        var y = Math.Clamp(at.Y - (text.Height / 2), EdgeMargin, Math.Max(EdgeMargin, size.Height - EdgeMargin - text.Height));
+        text.Draw(context, new Point(x, y));
+    }
+
     /// <summary>Draws a system name beside its mark unless it would overlap one already drawn; returns its box.</summary>
     private Rect DrawName(DrawingContext context, string name, Point at, string key, Size size, List<Rect> taken)
     {
@@ -596,7 +730,7 @@ public sealed class GalaxyMapView : Control
     {
         base.OnPointerPressed(e);
 
-        if (PanelView.OnHeadset(this) || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             return;
         }
@@ -610,7 +744,7 @@ public sealed class GalaxyMapView : Control
     {
         base.OnPointerMoved(e);
 
-        if (_pressedAt is not { } from || _pressedView is not { } start)
+        if (PanelView.OnHeadset(this) || _pressedAt is not { } from || _pressedView is not { } start)
         {
             return;
         }
@@ -648,9 +782,16 @@ public sealed class GalaxyMapView : Control
             e.Pointer.Capture(null);
         }
 
+        var tapped = !_dragging && _pressedAt is { } from && Distance(from, e.GetPosition(this)) < DragStart;
+
         _pressedAt = null;
         _pressedView = null;
         _dragging = false;
+
+        if (tapped && e.InitialPressMouseButton == MouseButton.Left)
+        {
+            Pick(e.GetPosition(this));
+        }
     }
 
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)

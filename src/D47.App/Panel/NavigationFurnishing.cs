@@ -163,7 +163,9 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Here,
                         surface.OffDuty,
                         surface.Now,
-                        host.Headset);
+                        host.Headset,
+                        surface.Bookmarks,
+                        surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null);
                 }
 
                 var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts);
