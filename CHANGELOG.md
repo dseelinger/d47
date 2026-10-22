@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+You can ask where a setting or page is: "where is the fuel setting", "where do I turn off hull pictures", "show me the ships page". The window and the headset's big panel both open it, scroll a setting into view and mark it, and the transcript gives its path. When places match equally well, nothing moves and the answer names up to three and asks which. A phrase that finds nothing, or does not name a setting or page, goes on to the model as before.
+
 A link to a setting, from a message or the error banner, now scrolls the row into view and marks it with the hover tile colour for two seconds, or until you press or scroll. A link to a row that lives on another tab, such as Hull pictures on Asset Mgmt › Ships, opens that tab and its settings strip and marks the row there. The same landing works on the headset panel.
 
 A stock story chapter now sometimes ends on a step D47 draws from the events it can watch: a journal event with at most one value to match, or a tool you run by saying its first command phrase. The story's writer is told only that one step and writes its task. Refusing a step keeps that event, or that tool, out of the story from then on.

@@ -262,10 +262,12 @@ public partial class PanelView : UserControl, IPanelTabHost
         _tabs[PanelTab.Navigation] = NavigationTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
-        // The words the tab bar draws are the words a message names a tab by (#951).
-        var tabWords = _tabs.ToDictionary(pair => pair.Key, pair => pair.Value.Content as string ?? pair.Key.ToString());
+        // The words the tab bar draws are the words a message names a tab by (#951), in title case for a Find path.
+        TabWords = _tabs.ToDictionary(
+            pair => pair.Key,
+            pair => CultureInfo.InvariantCulture.TextInfo.ToTitleCase((pair.Value.Content as string ?? pair.Key.ToString()).ToLowerInvariant()));
 
-        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, tabWords), OpenPlace, SettingsFurnishing.Root);
+        _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, TabWords), OpenPlace, SettingsFurnishing.Root);
         Controls.PlaceLinks.SetLinker(this, _places);
 
         foreach (var (tab, button) in _tabs)
@@ -879,6 +881,43 @@ public partial class PanelView : UserControl, IPanelTabHost
                 DrawTranscript();
             }
         });
+    }
+
+    /// <summary>The words the tab bar draws, by tab.</summary>
+    public IReadOnlyDictionary<PanelTab, string> TabWords { get; }
+
+    /// <summary>Takes this surface to a Find result, closing any dialog page first. A result this surface lacks moves nothing.</summary>
+    public void OpenFound(PanelFindResult found)
+    {
+        if (found.Kind == PanelFindKind.SettingRow)
+        {
+            OpenPlace(new PanelPlace(0, 0, PanelTab.Settings, SettingKey: found.Target));
+            return;
+        }
+
+        while (Nav.Modal && GoBack())
+        {
+        }
+
+        switch (found.Kind)
+        {
+            case PanelFindKind.Page:
+                Nav.Show(found.Target);
+                break;
+
+            case PanelFindKind.SettingsPlace:
+                Nav.Show(SettingsFurnishing.Root);
+
+                // Posted, as for a row, because the page has no places until it has loaded.
+                Dispatcher.UIThread.Post(
+                    () => (_settings.Page as D47.App.Settings.SettingsView)?.RevealPlace(found.Target),
+                    DispatcherPriority.Loaded);
+                break;
+
+            case PanelFindKind.HelpPage:
+                HelpLevel.Open(Nav, found.Target);
+                break;
+        }
     }
 
     /// <summary>Takes this surface to a place a message names, closing any dialog page first, as <see cref="SettingsJump"/> does.</summary>

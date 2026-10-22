@@ -18,14 +18,21 @@ public enum PanelFindKind
 /// <param name="Title">A destination's word, a place's title, a row's label or an article's title.</param>
 /// <param name="Path">Where it sits, such as "Asset Mgmt › Ships".</param>
 /// <param name="Target">The destination key, place id, row key or capability id, by <paramref name="Kind"/>.</param>
-public sealed record PanelFindResult(PanelFindKind Kind, string Title, string Path, string Target);
+/// <param name="Rank">The step it matched at, 1 to 8; lower is better.</param>
+/// <param name="ReadOnly">A row that shows a value and has no control to change it.</param>
+public sealed record PanelFindResult(
+    PanelFindKind Kind, string Title, string Path, string Target, int Rank, bool ReadOnly = false)
+{
+    /// <summary>The path and the title, such as "Asset Mgmt › Ships › Hull pictures".</summary>
+    public string Where => Path + PanelFind.Separator + Title;
+}
 
 /// <summary>Searches the pages, settings and help the app has, computed from the sources each time (#1471).</summary>
 public sealed class PanelFind(
     PanelNavigator nav, SettingsService settings, IReadOnlyDictionary<PanelTab, string> tabWords)
 {
     private const string SettingsWord = "Settings";
-    private const string Separator = " › ";
+    internal const string Separator = " › ";
 
     /// <summary>The results for a query, best first; empty for a blank query.</summary>
     public IReadOnlyList<PanelFindResult> Search(string query)
@@ -45,9 +52,10 @@ public sealed class PanelFind(
                 .OrderBy(scored => scored.rank!.Value.Rank)
                 .ThenBy(scored => scored.rank!.Value.Run)
                 .ThenBy(scored => scored.candidate.Result.Kind)
+                .ThenBy(scored => scored.candidate.Result.ReadOnly)
                 .ThenBy(scored => scored.candidate.Result.Title.Length)
                 .ThenBy(scored => scored.candidate.Order)
-                .Select(scored => scored.candidate.Result),
+                .Select(scored => scored.candidate.Result with { Rank = scored.rank!.Value.Rank }),
         ];
     }
 
@@ -66,7 +74,7 @@ public sealed class PanelFind(
                 : tab + Separator + destination.Root.Word;
 
             yield return new Candidate(
-                new PanelFindResult(PanelFindKind.Page, destination.Word, path, destination.Key),
+                new PanelFindResult(PanelFindKind.Page, destination.Word, path, destination.Key, 0),
                 order++,
                 destination.Page.Spoken,
                 null);
@@ -93,7 +101,7 @@ public sealed class PanelFind(
                 var placePath = SettingsWord + Separator + area.Title;
 
                 yield return new Candidate(
-                    new PanelFindResult(PanelFindKind.SettingsPlace, place.Title, placePath, place.Id), order++, place.Terms, null);
+                    new PanelFindResult(PanelFindKind.SettingsPlace, place.Title, placePath, place.Id, 0), order++, place.Terms, null);
 
                 foreach (var (group, rows) in groups)
                 {
@@ -119,13 +127,13 @@ public sealed class PanelFind(
         {
             if (HelpLibrary.For(id) is { } article)
             {
-                yield return new Candidate(new PanelFindResult(PanelFindKind.HelpPage, article.Title, "Help", id), order++, [], null);
+                yield return new Candidate(new PanelFindResult(PanelFindKind.HelpPage, article.Title, "Help", id, 0), order++, [], null);
             }
         }
     }
 
     private static Candidate Row(SettingRow row, string path, int order) =>
-        new(new PanelFindResult(PanelFindKind.SettingRow, row.Label, path, row.Key), order, [], HelpLinks.Plain(row.Help));
+        new(new PanelFindResult(PanelFindKind.SettingRow, row.Label, path, row.Key, 0, row.Kind == SettingKind.Info), order, [], HelpLinks.Plain(row.Help));
 
     private string TabWord(PanelTab tab) =>
         tab == PanelTab.Settings ? SettingsWord

@@ -419,7 +419,14 @@ public partial class MainWindow : Window
             // The window leads: its tab carries to any surface that furnished the same one
             // (change-requests.md 34).
             host.PanelRouting.RouteNavigation(
-                Panel.Nav, move => ui.Post(move), leads: true, openSystem: address => Panel.OpenSystem(address));
+                Panel.Nav,
+                move => ui.Post(move),
+                leads: true,
+                openSystem: address => Panel.OpenSystem(address),
+                openFound: Panel.OpenFound);
+
+            // Searched from this surface's navigator; every surface resolves the result itself (#1473).
+            host.PanelRouting.RouteFind(new PanelFind(Panel.Nav, host.Settings, Panel.TabWords));
 
             host.PanelRouting.RoutePromptSurface(Panel.Prompts, move => ui.Post(move));
 
@@ -1049,6 +1056,14 @@ public partial class MainWindow : Window
         {
             _model.AskText = string.Empty;
             _model.Append($"\n\n> {input}\n{scrolled}\n");
+            return;
+        }
+
+        // And showing where a setting or page is, after the navigation and scroll phrases (#1473).
+        if (_host.PanelRouting.Find(input) is { } found)
+        {
+            _model.AskText = string.Empty;
+            _model.Append($"\n\n> {input}\n{found}\n");
             return;
         }
 

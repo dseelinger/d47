@@ -324,6 +324,22 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Opens this surface's System page on one system.</summary>
     public void OpenSystem(long systemAddress) => _dirty |= _view.OpenSystem(systemAddress);
 
+    /// <summary>
+    /// Takes this surface to a Find result. Redrawn once the posted reveal has run and again once its mark has
+    /// cleared, since neither moves the navigator.
+    /// </summary>
+    public void OpenFound(D47.Core.Interface.PanelFindResult found)
+    {
+        _view.OpenFound(found);
+        _dirty = true;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(Invalidate, Avalonia.Threading.DispatcherPriority.ApplicationIdle);
+        Avalonia.Threading.DispatcherTimer.RunOnce(Invalidate, LandingMarkCleared);
+    }
+
+    /// <summary>Longer than a settings row's landing mark lasts.</summary>
+    private static readonly TimeSpan LandingMarkCleared = TimeSpan.FromSeconds(2.5);
+
     /// <summary>Moves the page this surface is showing, for a spoken scroll (#34).</summary>
     public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step)
     {

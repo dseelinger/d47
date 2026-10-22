@@ -141,6 +141,9 @@ public sealed class VrHost : IDisposable
 
     public void OpenSystem(long systemAddress) => _panel.OpenSystem(systemAddress);
 
+    /// <summary>Takes the headset panel to a Find result. Call on the UI thread.</summary>
+    public void OpenFound(D47.Core.Interface.PanelFindResult found) => _panel.OpenFound(found);
+
     /// <summary>Builds the headset path and subscribes it to the tick loop.</summary>
     public static VrHost Start(
         PanelViewModel model,

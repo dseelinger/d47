@@ -22,6 +22,8 @@ public sealed class PanelRouting(
     private volatile PanelNavigator[] _navigators = [];
     private volatile (PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)[] _surfaces = [];
     private volatile Func<PanelScrollStep, PanelScrollOutcome>[] _scrollers = [];
+    private volatile (PanelNavigator Nav, Action<Action> Post, Action<PanelFindResult>? OpenFound)[] _finders = [];
+    private volatile PanelFind? _find;
     private volatile PanelSnapshot _panel = new([], null);
 
     /// <summary>Every page any surface offers and the one showing, read together.</summary>
@@ -47,15 +49,21 @@ public sealed class PanelRouting(
 
     /// <summary>
     /// Adds a surface's navigator to the ones a spoken phrase moves. <paramref name="post"/> is called from
-    /// the tick and must carry a dispatcher the surface captured on its own thread.
+    /// the tick and must carry a dispatcher the surface captured on its own thread. A surface with no
+    /// <paramref name="openFound"/> is moved by a Find phrase only when the result is a page.
     /// </summary>
     public void RouteNavigation(
-        PanelNavigator nav, Action<Action> post, bool leads = false, Action<long>? openSystem = null)
+        PanelNavigator nav,
+        Action<Action> post,
+        bool leads = false,
+        Action<long>? openSystem = null,
+        Action<PanelFindResult>? openFound = null)
     {
         lock (_registration)
         {
             _navigators = [.. _navigators, nav];
             _surfaces = [.. _surfaces, (nav, post, openSystem)];
+            _finders = [.. _finders, (nav, post, openFound)];
 
             // Mirrored before the snapshot is hooked, so the first snapshot already reads the surfaces agreeing.
             if (leads)
@@ -71,6 +79,9 @@ public sealed class PanelRouting(
         nav.Changed += (_, _) => SnapshotPanel();
         SnapshotPanel();
     }
+
+    /// <summary>Sets the index a spoken Find phrase searches (#1473).</summary>
+    public void RouteFind(PanelFind find) => _find = find;
 
     /// <summary>Adds a surface to the ones a spoken scroll moves (#34).</summary>
     public void RouteScrolling(Func<PanelScrollStep, PanelScrollOutcome> scroll)
@@ -167,6 +178,38 @@ public sealed class PanelRouting(
         }
 
         return said;
+    }
+
+    /// <summary>
+    /// Opens what a Find phrase named on every surface and says its path, or says which places tied; null when
+    /// the phrase was not a Find phrase or found nothing (#1473).
+    /// </summary>
+    public string? Find(string spoken)
+    {
+        if (_find is not { } find || PanelFindPhrases.Answer(spoken, find) is not { } answer)
+        {
+            return null;
+        }
+
+        if (answer.Open is { } found)
+        {
+            foreach (var (nav, post, openFound) in _finders)
+            {
+                post(() =>
+                {
+                    if (openFound is not null)
+                    {
+                        openFound(found);
+                    }
+                    else if (found.Kind == PanelFindKind.Page)
+                    {
+                        nav.Show(found.Target);
+                    }
+                });
+            }
+        }
+
+        return answer.Said;
     }
 
     private void SnapshotPanel()

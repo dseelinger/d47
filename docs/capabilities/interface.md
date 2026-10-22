@@ -460,9 +460,8 @@ Transcript   Search   Stories   Commander   Asset Mgmt   Navigation   Settings
 
 Engineers is a page of Asset Mgmt, and the checklist is a page of Commander.
 
-**The two surfaces carry the same tabs, Settings aside** — the headset has no browser to open the
-site in and no window to show a settings surface inside, so that tab is the window's alone. Every
-other tab reached the headset in its own turn, for its own reason. The checklist and Asset Mgmt were both
+**The two surfaces carry the same tabs**, Settings included: the headset builds its settings page
+the same way the window does. Each tab reached the headset in its own turn, for its own reason. The checklist and Asset Mgmt were both
 withdrawn on the Commander's own instruction, and the checklist went back first — what a Commander is
 working on is worth reading in the one place there is no other way to read it (Phase 39). Navigation
 followed it, every root of it: the plan forms were held back for wanting a keyboard, and their
@@ -508,6 +507,26 @@ trail behind it, rather than dropping you somewhere with nothing above.
 
 Drill state survives switching tabs, and a tab with more than one mode keeps a separate stack per
 mode — leave Ships halfway into a slot, look at something else, come back where you were.
+
+#### Finding a setting or page by saying so {#find-by-voice}
+
+Ask where a setting or page is, and every panel opens it — the window and the headset's big panel
+each scroll a setting into view and mark it. The answer is its path:
+
+```text
+where is the X setting          where are the X settings
+where do I change X             where do I set X
+where do I turn on X            where do I turn off X
+show me the X setting           show me the X settings          show me the X page
+open the X setting              open the X settings
+find the X setting              find the X settings             find the X page
+```
+
+"Where is the fuel setting" opens *Fuel and range* and answers "Settings › Your core › In flight ›
+Flight callouts › Fuel and range." When two or three places match equally well, nothing moves and
+the answer names them and asks which. A phrase that finds nothing goes to the model as any other
+question does, and so does anything not in the list above — "where is my Anaconda" is a question
+about the game. This only shows where a setting is and changes nothing.
 
 #### One design, one to three panes {#panes}
 

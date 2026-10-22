@@ -13,7 +13,7 @@ public class FindRanksPagesSettingsAndHelpTests
 {
     private static readonly Dictionary<PanelTab, string> Words = new() { [PanelTab.Assets] = "Asset Mgmt" };
 
-    private static (PanelFind Find, SettingsService Settings, PanelNavigator Nav) Build()
+    internal static (PanelFind Find, SettingsService Settings, PanelNavigator Nav) Build()
     {
         var install = new MemoryInstall();
         var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
