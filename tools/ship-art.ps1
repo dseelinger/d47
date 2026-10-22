@@ -81,6 +81,7 @@ $symbols = @{
     'alliance-chieftain'   = 'typex'
     'alliance-crusader'    = 'typex_2'
     'anaconda'             = 'anaconda'
+    'anaconda-mk2'         = 'anacondamkii'
     'asp-explorer'         = 'asp'
     'asp-scout'            = 'asp_scout'
     'beluga-liner'         = 'belugaliner'
