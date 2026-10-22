@@ -17,14 +17,36 @@ public sealed class GalNetCallout : ICallout
     /// <summary>The articles that arrived in the last poll, newest first; empty while GalNet news is off.</summary>
     public Func<IReadOnlyList<GalNetArticle>> Arrived { get; set; } = () => [];
 
+    /// <summary>Whether the opening lines are over; headlines wait until it is true, and it stays true once seen.</summary>
+    public Func<bool> OpeningDone { get; set; } = () => true;
+
+    private readonly List<GalNetArticle> _held = [];
+    private bool _open;
+
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
-        var arrived = Arrived();
-
-        if (context.IsPriming || arrived.Count == 0)
+        if (context.IsPriming)
         {
             yield break;
         }
+
+        foreach (var article in Arrived())
+        {
+            if (!_held.Contains(article))
+            {
+                _held.Add(article);
+            }
+        }
+
+        _open = _open || OpeningDone();
+
+        if (!_open || _held.Count == 0)
+        {
+            yield break;
+        }
+
+        var arrived = _held.OrderByDescending(article => article.Published).ToList();
+        _held.Clear();
 
         var titles = arrived.Take(TitlesSaid).Select(article => article.Title.Trim().TrimEnd('.')).ToList();
 

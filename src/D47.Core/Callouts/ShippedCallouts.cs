@@ -215,8 +215,6 @@ public static class ShippedCallouts
 
             .Add(new FriendsCallout(sources.Friends))
 
-            .Add(new GalNetCallout())
-
             .Add(new ServerStatusCallout())
 
             // Phase 23.
@@ -228,6 +226,9 @@ public static class ShippedCallouts
 
             // The last complete session, after the line above.
             .Add(new RecapCallout())
+
+            // After the opening lines, so headlines held for them are said on the recap's tick.
+            .Add(new GalNetCallout())
 
             // Getting into a game and leaving one (change-requests.md 29), which is a different event from
             // the line above: that one greets when d47 starts, and this one when the game does.
@@ -324,6 +325,9 @@ public static class ShippedCallouts
         var compose = services.ComposeRecap;
         var dispatch = services.Dispatch;
 
+        var continuityCallout = engine.Callouts.OfType<ContinuityCallout>().Single();
+        var recapCallout = engine.Callouts.OfType<RecapCallout>().Single();
+
         foreach (var callout in engine.Callouts)
         {
             switch (callout)
@@ -339,6 +343,9 @@ public static class ShippedCallouts
 
                 case GalNetCallout galNet:
                     galNet.Arrived = () => services.Settings.Current.Knowledge.GalNet ? services.GalNetArrived() : [];
+                    galNet.OpeningDone = () =>
+                        (!engine.IsEnabled(continuityCallout.Id) || continuityCallout.Opened)
+                        && (!engine.IsEnabled(recapCallout.Id) || recapCallout.Done);
                     break;
 
                 case ServerStatusCallout serverStatus:

@@ -615,7 +615,9 @@ Two or three articles are *"New on GalNet: {title}; {title}; and {title}."* More
 the three newest: *"Five new GalNet articles. The latest: {title}; {title}; and {title}."* An article counts
 as new when it is new to the archive, so a restart does not repeat a headline, and articles published while
 d47 was closed are said at the next start. Nothing is said for the first backfill, and articles that arrive
-while this is off are not said when it is switched back on. Turn this one off with the `galnet` row.
+while this is off are not said when it is switched back on. At launch, headlines wait for the opening lines: the
+greeting and the recap, when those are on. They are said right after the recap, or after the greeting when the
+recap is off. Turn this one off with the `galnet` row.
 
 #### Server status {#server-status}
 

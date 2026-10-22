@@ -25,6 +25,9 @@ public sealed class RecapCallout : ICallout
 
     public string Id => "recap";
 
+    /// <summary>Whether the line has been said, skipped or given up on.</summary>
+    public bool Done => _said;
+
     /// <summary>Whether the core aboard is a stock core; the line falls due and is not said.</summary>
     public Func<bool> StockCoreAboard { get; set; } = () => false;
 
