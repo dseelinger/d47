@@ -59,7 +59,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     public const string NeedsTool = "get_construction_needs";
 
-    public const string PlannerLabel = "RAVEN COLONIAL";
+    public const string PlannerLabel = "PLANNER";
 
     public const string SearchLabel = "Search markets";
 
@@ -699,7 +699,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         var (needs, usedPlanner) = WithPlan(ConstructionNeeds.For(site, state.Hold, state.Carrier), site, match?.Site);
 
         var note = usedPlanner && match is { } read
-            ? $"Some figures are from Raven Colonial, read {Ago(now - read.FetchedAt)} ago."
+            ? $"Some figures are from the planner, read {Ago(now - read.FetchedAt)} ago."
             : null;
 
         detail.Children.Add(Needs(needs, state.Carrier, note));
@@ -740,7 +740,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             detail.Children.Add(Needs(
                 ConstructionNeeds.For(stand, state.Hold, state.Carrier),
                 state.Carrier,
-                $"These figures are from Raven Colonial, read {Ago(now - row.FetchedAt)} ago."));
+                $"These figures are from the planner, read {Ago(now - row.FetchedAt)} ago."));
         }
         else
         {

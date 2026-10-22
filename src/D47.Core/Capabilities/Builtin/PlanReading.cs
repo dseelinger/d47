@@ -83,9 +83,9 @@ internal sealed class PlanReading
     /// <summary>One line saying why part of an answer comes from the journal alone, or null when nothing is missing.</summary>
     public string? Note() =>
         !Composed ? null
-        : SwitchedOff ? "Reading Raven Colonial's plans is switched off, so this is from your journal alone."
+        : SwitchedOff ? "Reading colonisation plans is switched off, so this is from your journal alone."
         : Missing.Count > 0
-            ? $"The plan could not be read from Raven Colonial for {string.Join(", ", Missing)}, so that part is "
+            ? $"The plan could not be read from the colonisation planner for {string.Join(", ", Missing)}, so that part is "
                 + "from your journal alone."
         : null;
 

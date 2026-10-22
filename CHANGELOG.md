@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Construction answers and the Construction page no longer name the planning service. Answers say "the colonisation planner", and the page's planner button reads PLANNER. The settings and the tooltips that open the website keep the name.
+
 The Search tab and the star system page no longer name the data service. Messages read "the galaxy search" or drop the source: "GALAXY SEARCH UNAVAILABLE", "Asking the galaxy search", "Last reported". The failure notice shows the time without the host name.
 
 Spoken answers no longer name the data service. The arrival callout says "Commanders have surveyed biology here", and unknown systems are "No system is named X" or "There is no record of X". Earlier biology finds and first-in-region callouts say "No Commander has reported X" or "Commanders have logged N earlier finds" instead of naming the service. The "Earlier biology finds from Canonn" setting keeps its label.

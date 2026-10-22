@@ -79,7 +79,7 @@ public static class ColonisationCapability
                     "Every construction site this Commander's journal has reported: where it is, how "
                     + "far along it is, how many commodities are still outstanding, and when they last "
                     + "saw it. Those figures are as of that visit, not live. Where a plan is read from "
-                    + "Raven Colonial, also the planned and building sites no depot has been seen for.",
+                    + "the colonisation planner, also the planned and building sites no depot has been seen for.",
                 Parameters =
                 [
                     new ToolParameter
@@ -103,7 +103,7 @@ public static class ColonisationCapability
                     + "trips the ship's capacity implies. Can also say where to buy the whole list. Names "
                     + "a site by its station or system, or by the name or build type of a planned site; "
                     + "with no name, the only site under construction, or a list to choose from if there "
-                    + "are several. Where a plan is read from Raven Colonial, its figures are given beside "
+                    + "are several. Where a plan is read from the colonisation planner, its figures are given beside "
                     + "the depot's.",
                 Parameters =
                 [
@@ -364,7 +364,7 @@ public static class ColonisationCapability
         if (unseen.Count > 0)
         {
             report.AppendLine();
-            report.AppendLine("Planned or building in Raven Colonial's plan, with no depot of yours seen:");
+            report.AppendLine("Planned or building in the colonisation planner, with no depot of yours seen:");
 
             foreach (var (system, planned) in unseen)
             {
@@ -596,7 +596,7 @@ public static class ColonisationCapability
     private static string Project(PlannedSite project) =>
         $"The planner's project has {project.Commanders} Commander{(project.Commanders == 1 ? "" : "s")} and "
         + $"{project.LinkedCarriers} linked carrier{(project.LinkedCarriers == 1 ? "" : "s")}. Its figures are "
-        + "Raven Colonial's, and the lower of the planner's and your last docking's is counted.";
+        + "the planner's, and the lower of the planner's and your last docking's is counted.";
 
     /// <summary>A planned site no depot of the Commander's has been seen for: the planner's figures alone.</summary>
     private static string PlannerOnly(string system, PlannedSite planned)

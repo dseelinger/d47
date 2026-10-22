@@ -143,7 +143,7 @@ public class ConstructionAnswersReadThePlanTests
 
             Assert.Equal(
                 today.Content + Environment.NewLine
-                + "The plan could not be read from Raven Colonial for Sys A, so that part is from your journal alone.",
+                + "The plan could not be read from the colonisation planner for Sys A, so that part is from your journal alone.",
                 without.Content);
         }
     }

@@ -177,7 +177,7 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
         Assert.False(Shows(page, "9,999"));
 
         var notice = Assert.Single(page.GetVisualDescendants().OfType<Notice>(), n => n.IsEffectivelyVisible);
-        Assert.Equal("Some figures are from Raven Colonial, read 5 minutes ago.", notice.Text);
+        Assert.Equal("Some figures are from the planner, read 5 minutes ago.", notice.Text);
 
         Capture(window, "construction-planner-figure-desktop.png");
         window.Close();
@@ -200,7 +200,7 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
         Assert.DoesNotContain(page.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, ConstructionPage.SearchLabel));
 
         var notice = Assert.Single(page.GetVisualDescendants().OfType<Notice>(), n => n.IsEffectivelyVisible);
-        Assert.Equal("These figures are from Raven Colonial, read 5 minutes ago.", notice.Text);
+        Assert.Equal("These figures are from the planner, read 5 minutes ago.", notice.Text);
 
         Capture(window, "construction-planned-site-desktop.png");
 
