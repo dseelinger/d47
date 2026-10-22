@@ -148,18 +148,18 @@ public class AHullIsPickedRatherThanGuessedTests
     {
         var (panel, ships, pick) = Asking();
 
-        Filter(panel).Text = "anac";
+        Filter(panel).Text = "manda";
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Anaconda"], Offered(pick));
-        Assert.Equal("Anaconda", pick.SelectedItem);
+        Assert.Equal(["Mandalay"], Offered(pick));
+        Assert.Equal("Mandalay", pick.SelectedItem);
         Assert.Empty(ships.Store.Builds);
 
         Filter(panel).Text = string.Empty;
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(Offered(pick).Count > 20, "Clearing the filter brings every hull back.");
-        Assert.Equal("Anaconda", pick.SelectedItem);
+        Assert.Equal("Mandalay", pick.SelectedItem);
     }
 
     /// <summary>The two controls a free-text prompt needs and a picker does not.</summary>

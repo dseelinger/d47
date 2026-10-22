@@ -479,9 +479,13 @@ public class BuildGaugeTests
     [Fact]
     public void AModuleWithNoMassInTheTableFallsBackRatherThanCountingItAsZero()
     {
-        // The Lynx Highliner's own bulkhead has no mass in the table (#386). Counting that as zero would
-        // derive a hull far heavier than the real one, so the whole hull mass has to fall back to the
-        // table instead of substituting zero for the one figure it cannot find.
+        // Needs the Lynx Highliner's bulkhead to have no mass in the table (#386). Counting that as zero
+        // would derive a hull far heavier than the real one, so the whole hull mass has to fall back to
+        // the table instead of substituting zero for the one figure it cannot find.
+        Assert.SkipWhen(
+            EliteSpecifications.Module("mediumtransport01_armour_grade1")!.Mass is not null,
+            "the Lynx Highliner's bulkhead has a mass; no bulkhead currently demonstrates this");
+
         var loadout = Flown(
             """
             {"timestamp":"2026-09-20T00:00:00Z","event":"Loadout","Ship":"mediumtransport01","ShipID":20,"UnladenMass":900.0,"MaxJumpRange":20.0,"CargoCapacity":0,"Modules":[

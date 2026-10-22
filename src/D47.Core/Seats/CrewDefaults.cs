@@ -9,6 +9,7 @@ public enum HullPurpose
     Exploration,
     Mining,
     Multipurpose,
+    Passenger,
 }
 
 /// <summary>The roster offered for a hull. Nothing is stored until the Commander accepts it.</summary>
@@ -21,6 +22,7 @@ public static class CrewDefaults
         [HullPurpose.Exploration] = [CrewRole.ScienceOfficer, CrewRole.Navigation, CrewRole.Helm],
         [HullPurpose.Mining] = [CrewRole.ScienceOfficer, CrewRole.Helm, CrewRole.FirstOfficer],
         [HullPurpose.Multipurpose] = [CrewRole.FirstOfficer, CrewRole.Navigation, CrewRole.SecurityOfficer],
+        [HullPurpose.Passenger] = [CrewRole.Comms, CrewRole.FirstOfficer, CrewRole.Navigation],
     };
 
     private static readonly Dictionary<string, HullPurpose> Purposes = Group(
@@ -29,13 +31,15 @@ public static class CrewDefaults
             "federation_dropship", "federation_dropship_mkii", "federation_gunship", "ferdelance", "mamba",
             "python_nx", "typex", "typex_3", "vulture", "federation_corvette", "type9_military", "typex_2",
         ]),
-        (HullPurpose.Trade, ["independant_trader", "orca", "belugaliner", "cutter", "panthermkii", "type9"]),
-        (HullPurpose.Exploration, ["asp", "asp_scout", "krait_light", "mandalay"]),
+        (HullPurpose.Trade, ["independant_trader", "cutter", "panthermkii", "type9"]),
+        (HullPurpose.Exploration, ["asp", "asp_scout", "krait_light", "mandalay", "explorer_nx"]),
         (HullPurpose.Mining, ["lakonminer"]),
         (HullPurpose.Multipurpose,
         [
             "adder", "cobramkiii", "cobramkiv", "empire_trader", "python", "cobramkv", "krait_mkii", "anaconda",
-        ]));
+            "anacondamkii", "corsair",
+        ]),
+        (HullPurpose.Passenger, ["mediumtransport01", "orca", "belugaliner"]));
 
     /// <summary>Four names per role. The offered one is picked from the ship id.</summary>
     private static readonly Dictionary<CrewRole, string[]> Names = new()

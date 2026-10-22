@@ -13,16 +13,21 @@ public class TheCommanderTakesOneSeatTests
     [InlineData("krait_mkii", 2)]
     [InlineData("cobramkiii", 1)]
     [InlineData("sidewinder", 0)]
+    [InlineData("corsair", 1)]
+    [InlineData("explorer_nx", 3)]
+    [InlineData("mediumtransport01", 1)]
+    [InlineData("smallcombat01_nx", 0)]
+    [InlineData("anacondamkii", 3)]
     public void AHullOffersItsCrewFigureLessOne(string hull, int seats) =>
         Assert.Equal(seats, CrewSeats.CountFor(hull));
 
     [Fact]
     public void AHullWithNoCrewFigureIsUnknownRatherThanZero()
     {
-        Assert.Null(CrewSeats.CountFor("corsair"));
-        Assert.Null(CrewSeats.CountFor("explorer_nx"));
-        Assert.Null(CrewSeats.CountFor("mediumtransport01"));
-        Assert.Null(CrewSeats.CountFor("smallcombat01_nx"));
+        var unknown = EliteSpecifications.Ships.FirstOrDefault(ship => ship.Crew is null);
+
+        Assert.SkipWhen(unknown is null, "every hull has a crew figure; no hull currently demonstrates this");
+        Assert.Null(CrewSeats.CountFor(unknown!.Symbol));
     }
 
     [Fact]
@@ -52,8 +57,14 @@ public class DefaultsFollowWhatTheHullIsForTests
     public void AHullWithNoSeatsIsOfferedNothing()
     {
         Assert.Empty(CrewDefaults.Offer("sidewinder", 1));
-        Assert.Empty(CrewDefaults.Offer("corsair", 1));
+        Assert.Empty(CrewDefaults.Offer("smallcombat01_nx", 1));
     }
+
+    [Fact]
+    public void APassengerLinerIsOfferedCommsFirstOfficerAndNavigation() =>
+        Assert.Equal(
+            [CrewRole.Comms, CrewRole.FirstOfficer, CrewRole.Navigation],
+            Roles("belugaliner", 1));
 
     [Fact]
     public void AHullOutsideThePurposeTableIsMultipurpose() =>
@@ -209,7 +220,7 @@ public class ASeatFileCannotOverfillAHullTests
 
         store.Save([
             new ShipSeats("F1", 1, "sidewinder", [Seat(CrewRole.Helm, "A")]),
-            new ShipSeats("F1", 2, "corsair", [Seat(CrewRole.Helm, "B")]),
+            new ShipSeats("F1", 2, "smallcombat01_nx", [Seat(CrewRole.Helm, "B")]),
         ]);
 
         Assert.Empty(store.For("F1", 1)!.Seats);

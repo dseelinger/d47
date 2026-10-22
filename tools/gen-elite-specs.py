@@ -89,6 +89,10 @@ from curated_ships import ARX_EARLY_ACCESS
 
 FDEV_IDS = "https://raw.githubusercontent.com/EDCD/FDevIDs/master/"
 
+# The branch of EDCD/FDevIDs#114, which adds the Anaconda Mk II. Its rows are read for ids
+# `FDEV_IDS` lacks. Set to None once the PR merges; the run says when that has happened.
+FDEV_IDS_PENDING = "https://raw.githubusercontent.com/bgol/FDevIDs/EDCD/"
+
 CORIOLIS_RAW = "https://raw.githubusercontent.com/EDCD/coriolis-data/master/"
 
 CORIOLIS_TREE = "https://api.github.com/repos/EDCD/coriolis-data/git/trees/master?recursive=1"
@@ -237,8 +241,20 @@ def fetch(url: str) -> bytes:
 
 
 def rows(name: str) -> list[dict]:
-    text = fetch(FDEV_IDS + name).decode("utf-8-sig")
-    return list(csv.DictReader(io.StringIO(text)))
+    """`name` from `FDEV_IDS`, plus any row of `FDEV_IDS_PENDING` whose id it lacks."""
+    def read(base: str) -> list[dict]:
+        return list(csv.DictReader(io.StringIO(fetch(base + name).decode("utf-8-sig"))))
+
+    found = read(FDEV_IDS)
+
+    if FDEV_IDS_PENDING:
+        known = {row["id"] for row in found}
+        pending = [row for row in read(FDEV_IDS_PENDING) if row["id"] not in known]
+        found += pending
+        print(f"{name}: {len(pending)} rows from FDEV_IDS_PENDING"
+              + ("" if pending else "; FDEV_IDS has them all, so set FDEV_IDS_PENDING to None"))
+
+    return found
 
 
 def number(value) -> str:
@@ -315,8 +331,8 @@ def build_ships(
     EDSY's `eddb.js`, matched by symbol, supplies `speed`, `boost`, `armour`, `shields`,
     `hardness`, `hull_mass`, `hardpoints` and `internals`. coriolis-data, matched on the id
     `shipyard.csv` gives the hull, supplies the other columns, and any of those eight EDSY
-    leaves blank. A hull coriolis-data does not match carries no manufacturer, pad, fuel,
-    crew, masslock or cost.
+    leaves blank. EDSY fills `pad` and `crew` where coriolis-data does not. A hull
+    coriolis-data does not match carries no manufacturer, fuel, masslock or cost.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
 
@@ -364,7 +380,7 @@ def build_ships(
             symbol,
             identity["name"],
             properties.get("manufacturer") or "",
-            PADS.get(properties.get("class"), ""),
+            PADS.get(properties.get("class")) or PADS.get(int(figures.get("class") or 0), ""),
             pick("speed", "topspd"),
             pick("boost", "bstspd"),
             pick("baseArmour", "armour"),
@@ -372,7 +388,7 @@ def build_ships(
             pick("hardness", "hardness"),
             pick("hullMass", "mass"),
             number(properties.get("reserveFuelCapacity")),
-            number(properties.get("crew")),
+            number(properties.get("crew")) or figures.get("crew", ""),
             number(properties.get("masslock")),
             number(properties.get("hullCost")),
             sizes_of("hardpoint", "hardpoints"),
@@ -719,8 +735,19 @@ def inherit_family_names(
     return left
 
 
+def hull_and_name(hull: str, name: str) -> str:
+    """`hull` then `name`, saying once the words where one ends as the other begins."""
+    hull_words, name_words = hull.split(), name.split()
+
+    for overlap in range(min(len(hull_words), len(name_words)), 0, -1):
+        if hull_words[-overlap:] == name_words[:overlap]:
+            return " ".join(hull_words + name_words[overlap:])
+
+    return f"{hull} {name}"
+
+
 def build_bulkheads(
-    documents: list[dict], outfitting: dict[int, dict]
+    documents: list[dict], outfitting: dict[int, dict], edsy_armour: dict[str, dict]
 ) -> tuple[list[list[str]], list[str], list[str]]:
     """Per-hull armour, from the ship files rather than from modules/.
 
@@ -729,7 +756,7 @@ def build_bulkheads(
     filled in, which is the only place either source says out loud that a module belongs to
     one hull. Both directions of the join come back, so neither can fail silently — a named
     bulkhead with no figures and a figure with no name are different problems, and only one
-    of them is survivable.
+    of them is survivable. EDSY's figures fill a bulkhead coriolis-data does not measure.
     """
     figures = {
         bulkhead.get("edID"): bulkhead
@@ -743,7 +770,7 @@ def build_bulkheads(
         if not identity["ship"]:
             continue
 
-        bulkhead = figures.pop(identifier, None)
+        bulkhead = figures.pop(identifier, None) or edsy_armour.get(identity["symbol"].lower())
 
         if bulkhead is None:
             unmeasured.append(identity["symbol"].lower())
@@ -755,7 +782,7 @@ def build_bulkheads(
             # The hull, then Frontier's name for the armour. Every ship has a
             # "Lightweight Alloy", and the outfitting screen can leave the hull unsaid
             # because the Commander is standing in it. A table cannot.
-            f"{identity['ship']} {identity['name']}",
+            hull_and_name(identity["ship"], identity["name"]),
 
             # Class and rating are placeholders in the id list — every bulkhead is class 1,
             # rated I on the old hulls and A, B or C on the new ones for the same five
@@ -995,8 +1022,7 @@ def edsy_number(text: str, key: str) -> str:
 def edsy_ships(database: str) -> dict[str, dict]:
     """Every hull EDSY declares, keyed by the symbol the journal writes.
 
-    `figures` carries the six performance numbers `build_ships` falls back to when
-    coriolis-data has no file for a hull, or the file it has does not join.
+    `figures` carries the hull figures `build_ships` reads; see there for which columns.
     """
     ships = {}
     block = section(database, "ship")
@@ -1030,10 +1056,41 @@ def edsy_ships(database: str) -> dict[str, dict]:
                 "shields": edsy_number(head, "shields"),
                 "mass": edsy_number(head, "mass"),
                 "hardness": edsy_number(head, "hardness"),
+                "class": edsy_number(head, "class"),
+                "crew": edsy_number(head, "crew"),
             },
         }
 
     return ships
+
+
+def edsy_bulkheads(database: str) -> dict[str, dict]:
+    """Every hull's armour EDSY declares, keyed by symbol, in coriolis-data's field names.
+
+    Mass and cost are on the hull's own armour entry; boost and resistances are on the generic
+    armour module it is keyed by, in percent. EDSY gives no caustic resistance.
+    """
+    generic = dict(entries(section(database, "module")))
+    armour = {}
+
+    for found in re.finditer(r"(\d+)\s*:\s*\{([^{}]*fdname\s*:\s*'(\w+_Armour_\w+)'[^{}]*)\}",
+                             section(database, "ship")):
+        local, shared = found.group(2), generic.get(int(found.group(1)), "")
+
+        def value(cell: str, key: str, scale: float = 1) -> float | None:
+            text = edsy_number(cell, key)
+            return round(float(text) / scale, 4) if text else None
+
+        armour[found.group(3).lower()] = {
+            "mass": value(local, "mass"),
+            "cost": value(local, "cost"),
+            "hullboost": value(shared, "hullbst", 100),
+            "kinres": value(shared, "kinres", 100),
+            "thermres": value(shared, "thmres", 100),
+            "explres": value(shared, "expres", 100),
+        }
+
+    return armour
 
 
 def edsy_groups(database: str) -> list[list[str]]:
@@ -1164,8 +1221,8 @@ def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, s
 def eddb_only_modules(
     database: str, types: dict[str, tuple[str, str, str, str]], unique: dict[str, list[str]]
 ) -> dict[str, list[str]]:
-    """Mass and power for a `cch` or `ifh` module neither `outfitting.csv` nor coriolis-data
-    measures, off EDSY's own module cell — the same one `edsy_modules` already reads for the
+    """Mass and power for a `cch`, `ifh` or `icr` module neither `outfitting.csv` nor
+    coriolis-data measures, and a cargo rack's capacity, off EDSY's own module cell — the same one `edsy_modules` already reads for the
     type. The cargo hatch, whose `fdid` is null, has no row at all yet and gets a full one,
     named from EDSY since nothing else names it. The Mk II vessel hangars and the `_free`
     fighter hangars already have a row and a real name — Frontier shipped them ahead of
@@ -1195,13 +1252,17 @@ def eddb_only_modules(
     extra = {}
 
     for symbol, (mtype, _, _, _) in types.items():
-        if mtype not in ("cch", "ifh"):
+        if mtype not in ("cch", "ifh", "icr"):
             continue
 
         cell = facts.get(symbol)
         existing = unique.get(symbol)
 
         if cell is None or (existing is not None and (existing[5] or existing[6])):
+            continue
+
+        # A cargo rack only takes figures; it never gains a row from EDSY alone.
+        if mtype == "icr" and existing is None:
             continue
 
         row = list(existing) if existing is not None else [
@@ -1217,6 +1278,9 @@ def eddb_only_modules(
         row[6] = figure(cell, "pwrdraw")
         row[7] = row[7] or figure(cell, "integ")
         row[8] = row[8] or figure(cell, "cost")
+
+        if capacity := figure(cell, "cargocap"):
+            row[21] = row[21] or f"capacity={capacity}"
 
         extra[symbol] = row
 
@@ -1320,7 +1384,8 @@ def main() -> None:
     generic, mismatched, unnamed, duplicated = build_modules(
         module_paths, outfitting, by_symbol)
     unnamed = inherit_family_names(generic, unnamed)
-    bulkheads, unmeasured, unkeyed_bulkheads = build_bulkheads(documents, outfitting)
+    bulkheads, unmeasured, unkeyed_bulkheads = build_bulkheads(
+        documents, outfitting, edsy_bulkheads(database))
 
     # One symbol can appear in more than one coriolis file. Last wins would be arbitrary;
     # sorting and de-duplicating on the key keeps the output stable between runs.

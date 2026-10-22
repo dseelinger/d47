@@ -10,7 +10,7 @@
 # modules/, and their names carry the hull because every hull has a
 # Lightweight Alloy. Class and rating are placeholders for armour and are dropped.
 # Game data is Frontier's, used under their media usage rules — see NOTICE.
-# Ships: 48. Modules: 1214, of which bulkheads 241. Known but unmeasured: 0.
+# Ships: 49. Modules: 1221, of which bulkheads 247. Known but unmeasured: 0.
 # Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
 # Built: 2026-10-22.
@@ -18,13 +18,14 @@
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1	
 anaconda	Anaconda	Faulcon DeLacy	large	180	240	525	350	65	400	1.07	4	23	142456440	4,3,3,3,2,2,1,1	7,6,6,6,5,5,5,4,4,4,2,1	
+anacondamkii	Anaconda Mk II		large	190	250	745	450	65	940		4			4,3,3,3,3,1,1	8,7,7,5,5,5,4,4,3,2,1	arx-early-access
 asp	Asp Explorer	Lakon	medium	250	340	210	140	52	280	0.63	2	11	6145793	2,2,1,1,1,1	6,5,3,3,3,2,2,1	
 asp_scout	Asp Scout	Lakon	medium	270	360	180	120	52	140	0.47	2	8	3819823	2,2,1,1	5,4,3,3,2,2,1	
 belugaliner	Beluga Liner	Saud Kruger	large	200	280	280	280	60	950	0.81	4	18	79694761	2,2,2,2,2	6,6,6,6,5,5,4,3,3,3,3,1	
 cobramkiii	Cobra MkIII	Faulcon DeLacy	small	280	400	120	80	35	180	0.49	2	8	208372	2,2,1,1	4,4,4,2,2,2,1,1	
 cobramkiv	Cobra MkIV	Faulcon DeLacy	small	200	300	120	120	35	210	0.51	2	8	623374	2,2,1,1,1	4,4,4,4,3,3,2,2,1,1	early-adoption
 cobramkv	Cobra MkV	Faulcon DeLacy	small	290	410	180	160	40	150	0.49	3	8	1477085	2,2,2,1,1	5,4,4,4,3,3,3,2,1	
-corsair	Corsair			280	355	270	235	65	265					3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
+corsair	Corsair		medium	280	355	270	235	65	265		2			3,3,3,2,2,2	6,6,6,5,5,5,4,3,2,1	
 cutter	Imperial Cutter	Gutamaya	large	200	320	400	600	70	1100	1.16	4	27	200493413	4,3,3,2,2,2,2	8,8,6,6,6,5,5,4,3,1	empire:12
 diamondback	Diamondback Scout	Lakon	small	280	380	120	120	40	170	0.49	1	8	463926	2,2,1,1	3,3,3,2,1,1	
 diamondbackxl	Diamondback Explorer	Lakon	small	260	340	150	150	42	260	0.52	1	10	1638277	3,2,2	4,4,3,3,2,2,1,1	
@@ -33,7 +34,7 @@ eagle	Eagle	Core Dynamics	small	240	350	40	80	28	50	0.34	1	6	10947	1,1,1	3,2,1,1
 empire_courier	Imperial Courier	Gutamaya	small	280	380	80	200	30	35	0.41	1	7	2484137	2,2,2	3,3,2,2,2,1,1,1	empire:3
 empire_eagle	Imperial Eagle	Gutamaya	small	300	400	60	80	28	50	0.37	1	6	73023	2,1,1	3,2,1,1,1,1	
 empire_trader	Imperial Clipper	Gutamaya	large	300	380	270	200	60	350	0.74	2	12	21116895	3,3,2,2	7,7,6,4,4,3,3,2,2,1	empire:7
-explorer_nx	Caspian Explorer			210	290	345	500	60	825					3,2,2,2,2,2,2	7,6,6,5,5,5,5,4,4,3,2,1,1,1	
+explorer_nx	Caspian Explorer		large	210	290	345	500	60	825		4			3,2,2,2,2,2,2	7,6,6,5,5,5,5,4,4,3,2,1,1,1	
 federation_corvette	Federal Corvette	Core Dynamics	large	200	260	370	555	70	900	1.13	4	24	183156068	4,4,3,2,2,1,1	7,7,7,6,6,5,5,4,4,3,1	federation:12
 federation_dropship	Federal Dropship	Core Dynamics	medium	200	300	300	200	60	500	0.83	2	14	13510106	3,2,2,2,2	6,6,5,5,4,3,3,2,1	federation:3
 federation_dropship_mkii	Federal Assault Ship	Core Dynamics	medium	210	350	300	200	60	480	0.72	2	14	19111109	3,3,2,2	5,5,4,3,2,2,1	federation:5
@@ -46,13 +47,13 @@ krait_mkii	Krait MkII	Faulcon DeLacy	medium	240	330	220	220	55	320	0.63	3	16	441
 lakonminer	Type-11 Prospector	Lakon	medium	270	365	350	275	58	320	0.77	3	16	66346710	3,2,2,2,1,1,1,1	6,6,6,5,5,4,3,2,1,1	
 mamba	Mamba	Zorgon Peterson	medium	310	380	230	270	70	250	0.5	2	12	55442918	4,3,3,1,1	5,4,3,2,2,1	
 mandalay	Mandalay	Zorgon Peterson	medium	280	350	230	220	55	190	0.52	2	11	16527192	2,2,2,2,1,1	6,5,4,4,3,3,2,1,1,1	
-mediumtransport01	Lynx Highliner			285	350	350	200	55	260					3,2,2,2,2	6,5,4,4,3,2,1	
+mediumtransport01	Lynx Highliner		medium	285	350	350	200	55	260		2			3,2,2,2,2	6,5,4,4,3,2,1	
 orca	Orca	Saud Kruger	large	300	380	220	220	55	290	0.79	2	16	47800723	3,2,2	6,5,5,5,4,3,2,2,1	
 panthermkii	Panther Clipper MkII	Zorgon Peterson	large	180	250	620	350	70	1200	1.16	4	27	286905678	3,3,2,2,2,2,1,1,1,1	8,7,6,6,6,5,5,4,2,1	
 python	Python	Faulcon DeLacy	medium	230	300	260	260	65	350	0.83	2	17	55324684	3,3,3,2,2	6,6,6,5,5,4,3,3,2,1	
 python_nx	Python MkII	Faulcon DeLacy	medium	256	345	280	335	70	450	0.83	2	17	64743724	3,3,3,3,2,2	6,4,3,2,1,1	
 sidewinder	Sidewinder	Faulcon DeLacy	small	220	320	60	55	20	25	0.3	1	6	4588	1,1	2,2,1,1,1,1	
-smallcombat01_nx	Kestrel Mk II			270	360	70	225	55	190					3,3,3,1,1	5,4,3,2,2,2,1	
+smallcombat01_nx	Kestrel Mk II		small	270	360	70	225	55	190		1			3,3,3,1,1	5,4,3,2,2,2,1	
 type6	Type-6 Transporter	Lakon	medium	220	350	180	125	35	155	0.39	1	8	866622	1,1	6,5,5,4,4,3,2,2,1	
 type7	Type-7 Transporter	Lakon	large	180	300	340	156	54	300	0.52	1	10	16783094	1,1,1,1	7,6,6,6,6,5,5,5,3,3,2,1	
 type8	Type-8 Transporter	Lakon	medium	200	340	440	228	58	400	0.52	1	18	34820576	2,1,1,1,1,1	7,6,6,6,5,5,4,2,1	
@@ -76,6 +77,12 @@ anaconda_armour_grade2	Anaconda Reinforced Alloy				30			58787780					1.52	-0.2	
 anaconda_armour_grade3	Anaconda Military Grade Composite				60			132272505					2.5	-0.2	0	-0.4	0	cbh	anaconda							
 anaconda_armour_mirrored	Anaconda Mirrored Surface Composite				60			312604021					2.5	-0.75	0.5	-0.5	0	cbh	anaconda							
 anaconda_armour_reactive	Anaconda Reactive Surface Composite				60			346406995					2.5	0.25	-0.4	0.2	0	cbh	anaconda							
+anacondamkii_armour_grade1	Anaconda Mk II Ablative Lightweight Alloys				15			19247940					0.8	-0.2	0	-0.4		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
+anacondamkii_armour_grade1_default	Anaconda Mk II Lightweight Alloy				0			0					0.8	-0.2	0	-0.4		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
+anacondamkii_armour_grade2	Anaconda Mk II Ablative Reinforced Alloys				30			153983540					1.52	-0.2	0	-0.4		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
+anacondamkii_armour_grade3	Anaconda Mk II Ablative Military Grade Composite				60			346462970					2.5	-0.2	0	-0.4		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
+anacondamkii_armour_mirrored	Anaconda Mk II Ablative Mirrored Surface Composite				60			818807470					2.5	-0.75	0.5	-0.5		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
+anacondamkii_armour_reactive	Anaconda Mk II Ablative Reactive Surface Composite				60			907348010					2.5	0.25	-0.4	0.2		cbh	anacondamkii					ELITE_V_ANACONDA_MKII		
 asp_armour_grade1	Asp Explorer Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	asp							
 asp_armour_grade2	Asp Explorer Reinforced Alloy				21			2664461					1.52	-0.2	0	-0.4	0	cbh	asp							
 asp_armour_grade3	Asp Explorer Military Grade Composite				42			5995038					2.5	-0.2	0	-0.4	0	cbh	asp							
@@ -779,6 +786,7 @@ int_largebuggybay_size4_class3	Large Planetary Vehicle Hangar	4	F															
 int_largebuggybay_size4_class3_free	Large Planetary Vehicle Hangar (free)	4	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
 int_largebuggybay_size6_class3	Large Planetary Vehicle Hangar	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
 int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largecargorack_size6_class1	Mk II Cargo Rack	6	D					587400										icr	anacondamkii panthermkii		capacity=96					
 int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	anacondamkii panthermkii		capacity=192	Panther Clipper storage rack for use in automated cargo transfer system.				
 int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	anacondamkii panthermkii		capacity=384	Panther Clipper storage rack for use in automated cargo transfer system.				
 int_lifesupport_size1_class1	Life Support	1	E		1.3	0.32	32	517										cls				Regulates habitable ship atmosphere and provides emergency reservoir for pilot's Remlock system.				
@@ -1189,11 +1197,11 @@ mandalay_armour_grade2	Mandalay Reinforced Alloy				19			6191367					1.52	-0.2	0
 mandalay_armour_grade3	Mandalay Military Grade Composite				38			13930575					2.5	-0.2	0	-0.4	0	cbh	mandalay					ELITE_V_MANDALAY		
 mandalay_armour_mirrored	Mandalay Mirrored Surface Composite				38			32922590					2.5	-0.75	0.5	-0.5	0	cbh	mandalay					ELITE_V_MANDALAY		
 mandalay_armour_reactive	Mandalay Reactive Surface Composite				38			36482626					2.5	0.25	-0.4	0.2	0	cbh	mandalay					ELITE_V_MANDALAY		
-mediumtransport01_armour_grade1	Lynx Highliner Lightweight Alloy																	cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
-mediumtransport01_armour_grade2	Lynx Highliner Reinforced Alloy																	cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
-mediumtransport01_armour_grade3	Lynx Highliner Military Grade Composite																	cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
-mediumtransport01_armour_mirrored	Lynx Highliner Mirrored Surface Composite																	cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
-mediumtransport01_armour_reactive	Lynx Highliner Reactive Surface Composite																	cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
+mediumtransport01_armour_grade1	Lynx Highliner Lightweight Alloy				0			0					0.8	-0.2	0	-0.4		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
+mediumtransport01_armour_grade2	Lynx Highliner Reinforced Alloy				26			27715790					1.52	-0.2	0	-0.4		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
+mediumtransport01_armour_grade3	Lynx Highliner Military Grade Composite				53			62360520					2.5	-0.2	0	-0.4		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
+mediumtransport01_armour_mirrored	Lynx Highliner Mirrored Surface Composite				53			147378700					2.5	-0.75	0.5	-0.5		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
+mediumtransport01_armour_reactive	Lynx Highliner Reactive Surface Composite				53			163315270					2.5	0.25	-0.4	0.2		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
 modularcargobaydoor	Cargo Hatch	1	H			0.6		0										cch								
 orca_armour_grade1	Orca Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	orca							
 orca_armour_grade2	Orca Reinforced Alloy				21			19415954					1.52	-0.2	0	-0.4	0	cbh	orca							
@@ -2609,15 +2617,8 @@ vulture	Slot08_Size1	optional	1
 [known-but-unmeasured]
 [known-but-unnamed]
 symbol	mtype
-anacondamkii_armour_grade1	cbh
-anacondamkii_armour_grade1_default	cbh
-anacondamkii_armour_grade2	cbh
-anacondamkii_armour_grade3	cbh
-anacondamkii_armour_mirrored	cbh
-anacondamkii_armour_reactive	cbh
 hpt_cannon_turret_huge	hc
 int_corrosionproofcargorack_size2_class1	icr
-int_largecargorack_size6_class1	icr
 int_passengercabin_size2_class0	ipc
 int_passengercabin_size3_class0	ipc
 int_passengercabin_size4_class0	ipc

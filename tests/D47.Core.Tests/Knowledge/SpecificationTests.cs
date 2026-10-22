@@ -177,14 +177,47 @@ public class SpecificationTests
     [Fact]
     public void ABulkheadNamedInTheIdListAndAbsentFromTheFiguresIsStillABulkhead()
     {
-        // Five of them, all the Lynx Highliner's.
-        var lynx = EliteSpecifications.Module("mediumtransport01_armour_grade1");
+        var unmeasured = EliteSpecifications.Modules.FirstOrDefault(
+            module => module.IsBulkhead && module.HullBoost is null);
+
+        Assert.SkipWhen(unmeasured is null, "every bulkhead has figures; none currently demonstrates this");
+        Assert.False(unmeasured!.IsDrive);
+        Assert.NotEqual(unmeasured.Symbol, unmeasured.Name);
+    }
+
+    [Fact]
+    public void ABulkheadCoriolisDoesNotMeasureTakesEdsysFigures()
+    {
+        var lynx = EliteSpecifications.Module("mediumtransport01_armour_grade2");
 
         Assert.NotNull(lynx);
         Assert.True(lynx.IsBulkhead);
-        Assert.False(lynx.IsDrive);
-        Assert.Null(lynx.HullBoost);
-        Assert.Equal("Lynx Highliner Lightweight Alloy", lynx.Name);
+        Assert.Equal("Lynx Highliner Reinforced Alloy", lynx.Name);
+        Assert.Equal(26, lynx.Mass);
+        Assert.Equal(1.52, lynx.HullBoost);
+    }
+
+    [Fact]
+    public void AnArmourNameSaysTheHullsMkIIOnce()
+    {
+        var reactive = EliteSpecifications.Module("anacondamkii_armour_reactive");
+
+        Assert.NotNull(reactive);
+        Assert.Equal("Anaconda Mk II Ablative Reactive Surface Composite", reactive.Name);
+        Assert.Equal(0.25, reactive.KineticResistance);
+    }
+
+    [Fact]
+    public void TheAnacondaMkIIIsAnArxLargePadHullWithFourCrew()
+    {
+        var mkii = EliteSpecifications.Ship("anacondamkii");
+
+        Assert.NotNull(mkii);
+        Assert.Equal("Anaconda Mk II", mkii.Name);
+        Assert.Equal("large", mkii.Pad);
+        Assert.Equal(4, mkii.Crew);
+        Assert.Equal(940, mkii.HullMass);
+        Assert.Equal("arx-early-access", mkii.Requirement);
     }
 
     [Fact]
