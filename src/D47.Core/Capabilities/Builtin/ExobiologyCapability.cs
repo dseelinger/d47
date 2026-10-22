@@ -97,8 +97,8 @@ public static class ExobiologyCapability
                 Name = EarlierFindsTool,
                 Description =
                     "What other Commanders have already logged on a body, from other Commanders' logged finds: each biological "
-                    + "variant and how many finds there are of it, most first. Needs the setting Earlier "
-                    + "biology finds from Canonn.",
+                    + "variant and how many finds there are of it, most first. Needs the Earlier "
+                    + "biology finds setting.",
                 Parameters =
                 [
                     new ToolParameter
