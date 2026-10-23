@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 reads your sticks, throttle and pedals through Windows HID, and stores each controller interface under its USB device name. Before, Windows gave the same stick a different id in each copy of D47, so a switch bound in one copy did not work in another. A binding also keeps working when you move the controller to another USB port.
+
 When the galaxy search fails while a story chapter is being checked, D47 waits a few seconds and asks again. If it fails a second time, the write stops with "The galaxy search is unavailable, so the chapter's places cannot be checked" and the search's own message, and no further draft is started. Before, the failure counted against the chapter as a refused objective and used up a repair round. Story chapters written with Claude Sonnet 5.5 also have more room to think, so a chapter no longer fails with "The model did not write the objectives" after about two minutes.
 
 A story's premise, want, stake, turn and ending no longer have a length limit. Before, a premise one character over 700 failed a draft that had passed every other check, and the next draft failed the same way.

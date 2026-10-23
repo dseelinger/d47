@@ -91,18 +91,18 @@ internal static class SelfTest
 
         // Cheapest of the three and the only one that touches no user data at all, so it runs first and its
         // answer stands even on a machine with no controllers.
-        using (var controllers = new Input.HotasControllers(loggers.CreateLogger<Input.HotasControllers>()))
+        using (var controllers = new Input.HidControllers(loggers.CreateLogger<Input.HidControllers>()))
         {
-            _ = controllers.Poll();
+            _ = controllers.IsSettled;
 
             if (controllers.Fault is { } fault)
             {
-                Report($@"SELFTEST FAIL: {fault} See data\logs for what the projection reported.");
+                Report($@"SELFTEST FAIL: {fault} See data\logs for what Raw Input reported.");
                 return ControllerProjectionFailedExitCode;
             }
 
             logger.LogInformation(
-                "Windows.Gaming.Input reachable; {Count} controller interface(s) reported so far",
+                "Raw Input and hid.dll reachable; {Count} controller interface(s) listed",
                 controllers.Interfaces);
         }
 
@@ -174,7 +174,7 @@ internal static class SelfTest
         Report(
             $"SELFTEST OK: {modelId} loaded and transcribed 1s of silence "
             + $"in {heard.Elapsed.TotalMilliseconds:0} ms, echo cancellation loaded, "
-            + "Windows.Gaming.Input activated, and the app composed.");
+            + "the game controllers listed through Raw Input, and the app composed.");
         return PassedExitCode;
     }
 

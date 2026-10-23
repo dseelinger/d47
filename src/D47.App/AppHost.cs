@@ -2130,16 +2130,15 @@ public sealed class AppHost : IDisposable
         var switches = new SwitchStore(
             Path.Combine(paths.Data, "switches.json"), files, loggerFactory.CreateLogger<SwitchStore>());
 
-        // The constructor only: the "Game controller added" lines arrive from Windows.Gaming.Input
-        // callbacks after it has returned.
+        // The constructor only: the controllers are first listed on the sampler thread.
         var controllers = StartupTimer.Time(
-            "controllers", () => new HotasControllers(loggerFactory.CreateLogger<HotasControllers>()));
+            "controllers", () => new HidControllers(loggerFactory.CreateLogger<HidControllers>()));
         var headsetView = new D47.Vr.VirtualDesktopView();
         var reconciler = new SwitchReconciler(loggerFactory.CreateLogger<SwitchReconciler>(), headsetView);
         var chordSender = new ChordSender(loggerFactory.CreateLogger<ChordSender>());
         var headsetKey = new HeadsetViewKey(headsetView, loggerFactory.CreateLogger<HeadsetViewKey>(), chordSender);
 
-        // What the tick reads the controllers through, so no tick calls into Windows.Gaming.Input.
+        // What the tick reads the controllers through, so no tick calls into hid.dll.
         var sampledControllers = new ControllerSampler(
             controllers, loggerFactory.CreateLogger<ControllerSampler>());
 
@@ -4513,7 +4512,7 @@ public sealed class AppHost : IDisposable
 
         public required ClipboardOffer ClipboardOffer { get; init; }
 
-        public required HotasControllers Controllers { get; init; }
+        public required HidControllers Controllers { get; init; }
 
         public required Coverage.CoverageRecorder? Coverage { get; init; }
 
@@ -6519,6 +6518,7 @@ public sealed class AppHost : IDisposable
         // closed file handle on the way out.
         _ticking?.Dispose();
         _controllerSampler?.Dispose();
+        (Controllers as IDisposable)?.Dispose();
         _audioWatch?.Dispose();
         _modelCatalog?.Dispose();
         _bgsTickSource?.Dispose();
