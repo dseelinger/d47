@@ -68,6 +68,10 @@ public sealed record ViewState
     /// <summary>Whether the Engineers tab has taken the on-foot engineers off its lists (#132).</summary>
     public bool EngineersOnFootHidden { get; init; }
 
+    /// <summary>The model picked for each fleet carrier, by callsign: a symbol from <c>CarrierModels</c>.</summary>
+    public IReadOnlyDictionary<string, string> CarrierHulls { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Engineers pinned before pins were per Commander; the first Commander shown takes them (#113).</summary>
     public IReadOnlyList<int> PinnedEngineers { get; init; } = [];
 

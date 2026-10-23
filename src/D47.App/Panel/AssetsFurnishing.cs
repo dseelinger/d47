@@ -131,7 +131,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             planCarrierRoute,
             host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture
                 ? new CarrierPictures(pictures, picture, () => host.Model?.CommanderPictureSource?.Invoke() is not null)
-                : null);
+                : null,
+            host.CarrierHulls);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
         host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);

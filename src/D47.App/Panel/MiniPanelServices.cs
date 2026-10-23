@@ -36,6 +36,8 @@ public sealed record MiniPanelServices
 
     public EngineerDirectoryMemory? EngineersMemory { get; init; }
 
+    public CarrierHullMemory? CarrierHulls { get; init; }
+
     public ConstructionSurface? Construction { get; init; }
 
     public AdventureSurface? Adventures { get; init; }
@@ -145,6 +147,11 @@ public sealed record MiniPanelServices
                     ? null
                     : () => BuildSettingsStrip(AdventuresPage.RootKey),
                 desk: AdventureDesk);
+        }
+
+        if (CarrierHulls is not null)
+        {
+            view.EnableCarrierHulls(CarrierHulls);
         }
 
         if (Ships is not null && Checklists is not null && gameState is not null)

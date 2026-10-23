@@ -400,6 +400,7 @@ public partial class MainWindow : Window
             // And the same window is the one with a mouse, which is the only thing the ask lets drag a pane
             // (Phase 55).
             Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));
+            Panel.EnableCarrierHulls(new CarrierHullMemory(host.ViewState));
 
             var spend = SpendDeskFor(host);
 

@@ -86,7 +86,10 @@ public static class LoadoutPages
         Func<string?, bool>? planCarrierRoute = null,
 
         // The captain's and tower's pictures, on Fleet › Carrier.
-        CarrierPictures? carrierPictures = null)
+        CarrierPictures? carrierPictures = null,
+
+        // Which model each fleet carrier is drawn as.
+        CarrierHullMemory? carrierHulls = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -111,6 +114,7 @@ public static class LoadoutPages
                 settingsStrip: carrierSettingsStrip?.Invoke(),
                 planRoute: planCarrierRoute,
                 pictures: carrierPictures,
+                hulls: carrierHulls,
                 hullPictures: modes.FirstOrDefault(mode => mode.ItemPrefix == ShipPrefix)?.Pictures ?? false);
         }
 

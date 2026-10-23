@@ -397,6 +397,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     PaneWidthMemory? IPanelTabHost.PaneWidths => _paneWidths;
 
+    CarrierHullMemory? IPanelTabHost.CarrierHulls => _carrierHulls;
+
     void IPanelTabHost.ShowSearch() => ShowSearch();
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1273,6 +1275,11 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// Where the Commander dragged the rules between panes, on the one surface that has a mouse (Phase
     /// 55).
     private PaneWidthMemory? _paneWidths;
+
+    private CarrierHullMemory? _carrierHulls;
+
+    /// <summary>Lets the Carrier page remember which model the Commander picked.</summary>
+    public void EnableCarrierHulls(CarrierHullMemory memory) => _carrierHulls = memory;
 
     /// <summary>Lets the mouse drag the rule between two panes, on every tab at once (Phase 55).</summary>
     public void EnableDraggablePanes(PaneWidthMemory memory)

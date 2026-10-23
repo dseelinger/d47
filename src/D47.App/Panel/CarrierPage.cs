@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -8,6 +9,7 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Audio;
+using D47.Core.Hulls;
 using D47.Core.Interface;
 using D47.Core.Journal;
 
@@ -50,7 +52,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
     private readonly Func<string?, bool>? _planRoute;
     private readonly StackPanel _body = new() { Spacing = 4 };
     private IDisposable? _sized;
-    private const string CarrierHull = "fleetcarrier";
+    private readonly CarrierHullMemory? _hulls;
 
     private readonly CarrierPictures? _pictures;
     private readonly bool _hullPictures;
@@ -71,8 +73,12 @@ public sealed class CarrierPage : UserControl, IPageChrome
         bool hullPictures = false,
 
         // The captain's and tower's pictures; the section is not drawn without them.
-        CarrierPictures? pictures = null)
+        CarrierPictures? pictures = null,
+
+        // Which model each carrier is drawn as; the Drake without it.
+        CarrierHullMemory? hulls = null)
     {
+        _hulls = hulls;
         _pictures = pictures;
         BarTool = PageChrome.ToolOf(settingsStrip);
         _hullPictures = hullPictures;
@@ -196,7 +202,22 @@ public sealed class CarrierPage : UserControl, IPageChrome
 
         var grid = StatTile.Grid(tiles, maxColumns: 3);
 
-        _body.Children.Add(!_mini && _hullPictures ? HullPicture.For(CarrierHull, grid) : grid);
+        if (!_mini && _hullPictures)
+        {
+            var model = CarrierModels.Default;
+
+            if (carrier.CallSign is { } callSign && _hulls is { } memory)
+            {
+                model = memory.Of(callSign);
+                _body.Children.Add(ModelChoice(callSign, memory, model));
+            }
+
+            _body.Children.Add(HullPicture.For(model, grid));
+        }
+        else
+        {
+            _body.Children.Add(grid);
+        }
 
         if (_planRoute is { } planRoute && !carrier.IsSquadron)
         {
@@ -226,6 +247,30 @@ public sealed class CarrierPage : UserControl, IPageChrome
 
             _body.Children.Add(age);
         }
+    }
+
+    private Segment ModelChoice(string callSign, CarrierHullMemory memory, string model)
+    {
+        var models = CarrierModels.All;
+        var segment = new Segment
+        {
+            ItemsSource = [.. models.Select(m => m.Label)],
+            SelectedIndex = models.ToList().FindIndex(m => m.Symbol == model),
+            Margin = new Thickness(0, 0, 0, 8),
+        };
+
+        AutomationProperties.SetName(segment, "Carrier model");
+
+        segment.SelectionChanged += (_, _) =>
+        {
+            if (segment.SelectedIndex is >= 0 && segment.SelectedIndex < models.Count)
+            {
+                memory.Remember(callSign, models[segment.SelectedIndex].Symbol);
+                Refresh();
+            }
+        };
+
+        return segment;
     }
 
     /// <summary>One picture chooser for the captain and one for the tower; not in the mini panel.</summary>

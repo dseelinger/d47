@@ -130,7 +130,8 @@ public partial class App(AppHost? host) : Application
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
-                historyState: () => host.History.State);
+                historyState: () => host.History.State,
+                carrierHulls: new Panel.CarrierHullMemory(host.ViewState));
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 
@@ -187,6 +188,7 @@ public partial class App(AppHost? host) : Application
                     HistoryState = () => host.History.State,
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
+                    CarrierHulls = new Panel.CarrierHullMemory(host.ViewState),
                     Construction = window?.Construction,
                     Adventures = window?.Adventures,
                     Routing = window?.Routing,

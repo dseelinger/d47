@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Carrier page now has a DRAKE / FORTUNE / NAUTILUS / VICTORY choice above the carrier's picture, shown when Hull pictures is on. The game does not say which model a carrier is, so you pick it; the choice is kept for that carrier's callsign and the picture changes to match. A carrier you have not picked for is drawn as the Drake.
+
 While D47 is working on a remark in TALK THROUGH THIS BUILD, the reply header shows a "Working" label with three dots lit in turn, as the Stories tab does, in place of the grey "working" text. The dots stop when the answer or the failure notice is drawn.
 
 While the game is not running, the Ships tab and the spoken fleet answer now list the ship you last flew, with the flying badge. Its page reads "You were flying it when you last logged out." The spoken answer says "Last flown" instead of "Currently flying". A ship since swapped into storage is not shown this way, and the first login replaces it with the live ship.

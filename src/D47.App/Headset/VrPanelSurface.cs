@@ -133,7 +133,10 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
-        Func<D47.Core.Journal.HistoryState>? historyState = null)
+        Func<D47.Core.Journal.HistoryState>? historyState = null,
+
+        // Which fleet carrier model each carrier is drawn as, on the window's record.
+        Panel.CarrierHullMemory? carrierHulls = null)
     {
         _dumpTo = dumpTo;
 
@@ -172,6 +175,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             HistoryState = historyState,
             OnFoot = onFoot,
             EngineersMemory = engineersMemory,
+            CarrierHulls = carrierHulls,
             Construction = construction,
             Adventures = adventures,
             Routing = routing,

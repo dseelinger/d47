@@ -22,6 +22,8 @@ internal sealed class HullPicture : Grid
     private static HullPictureSize _size = HullPictureSize.Beside;
 
     private readonly string? _hull;
+
+    internal string? Hull => _hull;
     private readonly Control? _beside;
     private readonly Image _fitted = new()
     {
