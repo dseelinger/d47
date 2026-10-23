@@ -25,6 +25,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     private (object?, object?, object?, string?, bool) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
     private D47.Core.Journal.ShipLoadout? _loadoutSeen;
+    private D47.Core.Journal.FleetRegistry? _fleetSeen;
     private D47.Core.Journal.CarrierState? _carrierSeen;
     private D47.Core.Journal.CarrierState? _squadronSeen;
     private D47.Core.Journal.CargoHold? _holdSeen;
@@ -280,6 +281,15 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             || !ReferenceEquals(stock.Colonisation, _planStock.Colonisation))
         {
             _planStock = stock;
+            mode.Invalidate();
+            changed = true;
+        }
+
+        var fleet = held?.Fleet;
+
+        if (!ReferenceEquals(fleet, _fleetSeen))
+        {
+            _fleetSeen = fleet;
             mode.Invalidate();
             changed = true;
         }

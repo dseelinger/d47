@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Ships page under Asset Management now follows the fleet while it is open. Ships the journal stores, buys or sells appear or disappear without leaving the tab, and the cards no longer read "not bought yet" for owned hulls when the journals finish loading after the window opens.
+
 On the five Search pages in the main window, you can now drag the boundary between the form and the answer to make the form wider or narrower. The width is remembered, and the same width applies to all five pages. The headset keeps its fixed layout.
 
 On the search pages, the saved and quick searches are now a START FROM dropdown at the top of the form, in the window and in the headset. Picking one fills the form and runs it. The button shows the search you picked until you change a field, press CLEAR, or another search arrives. While one of your own searches is shown, FORGET THIS SEARCH sits under the dropdown; the old ✕ is gone. The footer says the phrase for the search shown.

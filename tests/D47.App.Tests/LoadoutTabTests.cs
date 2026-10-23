@@ -630,6 +630,33 @@ public class LoadoutTabTests
         surface.Window.Close();
     }
 
+    private static IReadOnlyList<string?> CardNames(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<Button>().Select(AutomationProperties.GetName)];
+
+    [AvaloniaFact]
+    public void AShipStoredUnderAnOpenFleetPageAppears()
+    {
+        var surface = Open();
+
+        // The first tick records what it sees; only a later change can redraw the page.
+        surface.Panel.TickLoadout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.DoesNotContain(CardNames(surface.Panel), name => name is not null && name.StartsWith("Late Arrival (", StringComparison.Ordinal));
+
+        var stored = """{"timestamp":"2026-08-18T11:00:00Z","event":"StoredShips","StarSystem":"Shinrarta Dezhra","StationName":"Jameson Memorial","ShipsHere":[{"ShipID":7,"ShipType":"anaconda","ShipType_Localised":"Anaconda","Name":"Big Slow","Value":150000000},{"ShipID":9,"ShipType":"cobramkiii","ShipType_Localised":"Cobra Mk III","Name":"Late Arrival","Value":1000000}],"ShipsRemote":[]}""";
+
+        Assert.True(JournalEvent.TryParse(stored, NullLogger.Instance, out var parsed));
+        surface.In.State!.Apply(parsed!);
+
+        Assert.True(surface.Panel.TickLoadout());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(CardNames(surface.Panel), name => name is not null && name.StartsWith("Late Arrival (", StringComparison.Ordinal));
+
+        surface.Window.Close();
+    }
+
     /// <summary>The Commander in a different ship of the fleet, with that ship's loadout read.</summary>
     private static CommanderGameState Boarded(string hull, int shipId)
     {
