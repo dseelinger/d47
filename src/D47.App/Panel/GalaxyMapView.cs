@@ -1018,14 +1018,7 @@ public sealed class GalaxyMapView : Control
             e.Pointer.Capture(this);
         }
 
-        var scale = Math.Min(Bounds.Width, Bounds.Height) / start.LightYearsAcross;
-        var extent = GalacticRegions.Extent;
-
-        Move(start with
-        {
-            CentreX = Math.Clamp(start.CentreX - (moved.X / scale), extent.X0, extent.X1),
-            CentreZ = Math.Clamp(start.CentreZ + (moved.Y / scale), extent.Z0, extent.Z1),
-        });
+        Move(start.Dragged(moved.X, moved.Y, Bounds.Width, Bounds.Height));
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)

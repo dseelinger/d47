@@ -125,7 +125,7 @@ public class GalaxyViewportTests
     [Fact]
     public void AroundCentresOnThePositionAtFourHundredLightYears()
     {
-        Assert.Equal(new GalaxyViewport(25, -40, 400), GalaxyViewport.Around(At(25, -40, 5)));
+        Assert.Equal(new GalaxyViewport(25, -40, 400) { CentreY = 5 }, GalaxyViewport.Around(At(25, -40, 5)));
     }
 
     [Fact]
