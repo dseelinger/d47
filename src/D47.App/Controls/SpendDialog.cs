@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Audio;
 using D47.Core.Configuration;
@@ -44,12 +45,6 @@ public sealed class SpendDialog : ModalDialog
         FontSize = TypeScale.Subheading,
         TextWrapping = TextWrapping.NoWrap,
     };
-
-    /// <summary>The provider the drill-down is reading, kept across a redraw (#35).</summary>
-    private ProviderPick? _provider;
-
-    /// <summary>One entry in the provider picker: which kind, which id, and what to call it (#35).</summary>
-    private readonly record struct ProviderPick(SpendKind Kind, string ProviderId, string Label);
 
     public SpendDialog(
         TurnCost? turn,
@@ -93,22 +88,15 @@ public sealed class SpendDialog : ModalDialog
 
         _body.Children.Add(Estimates());
 
-        // **Two groups, one row each** (#227).
         _body.Children.Add(Section(
             "Now",
             [
                 TurnRow(_turn),
                 SessionRow(_session, _speech, _settings),
-                .. _ledger.Immediate(_zone).Select(window => WindowRow(window)),
                 .. ColdPrefixRow(_session),
             ]));
 
-        // Each calendar window beside its rolling twin: This week, Last 7 days, This month, Last 30 days.
-        _body.Children.Add(Section(
-            "Running totals",
-            [.. _ledger.Windows(_zone).Select(window => WindowRow(window))]));
-
-        _body.Children.Add(ByProviderSection());
+        _body.Children.Add(Section("Totals", [Totals()], "≥ means part of it has no rate"));
 
         if (_launchedAt is { } launched)
         {
@@ -245,7 +233,13 @@ public sealed class SpendDialog : ModalDialog
         Row(
             "Session",
             SessionDollars(session, speech, settings).ToString("C4"),
-            SessionDetail(session, speech, settings));
+            $"{session.TurnCount:N0} {(session.TurnCount == 1 ? "turn" : "turns")} · {BilledCharacters(speech):N0} chars");
+
+    /// <summary>Characters spoken through voice providers that charge.</summary>
+    private static long BilledCharacters(SpeechSpend speech) =>
+        speech.Charges
+            .Where(charge => TtsProviderCatalog.Selected(charge.ProviderId).Billed)
+            .Sum(charge => charge.Characters);
 
     /// <summary>The session's model turns and priced speech together (#432).</summary>
     public static decimal SessionDollars(SpendTracker session, SpeechSpend speech, D47Settings settings) =>
@@ -267,142 +261,189 @@ public sealed class SpendDialog : ModalDialog
         return detail;
     }
 
-    /// <summary>
-    /// One window's figure and the models behind it (#226). "nothing yet" sits in the details cell
-    /// rather than the money one, so an empty window does not put words in a column of amounts.
-    /// </summary>
-    /// <param name="cap">
-    /// The most shares to name before folding the rest into "and N more" — null reads every one, which
-    /// is what a drill-down whose entire job is completeness needs (#35).
-    /// </param>
-    private static Control WindowRow((SpendPeriod Period, SpendTotals Totals) window, int? cap = 6)
+    private const double FigureColumn = 86;
+
+    private static readonly string Dash = "—";
+
+    private static bool IsFree(SpendShare share) => share.Priced && share.Dollars == 0m;
+
+    private static string Money(decimal dollars) =>
+        dollars.ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
+
+    private readonly record struct FigureCell(string Text, string Key, string? Use = null);
+
+    /// <summary>One row per window total, then each charged provider with its models under it.</summary>
+    private Control Totals()
     {
-        var totals = window.Totals;
+        var windows = new List<(SpendPeriod Period, SpendTotals Totals)>([.. _ledger.Immediate(_zone), .. _ledger.Windows(_zone)]);
+        var charged = windows.Select(w => w.Totals.Shares.Where(share => !IsFree(share)).ToList()).ToList();
 
-        return totals.Any
-            ? Row(window.Period.Name, Amount(totals), Behind(totals, cap))
-            : Row(window.Period.Name, string.Empty, "nothing yet");
-    }
-
-    /// <summary>Every model and voice provider used in a window, most expensive first (#226).</summary>
-    private static string Behind(SpendTotals totals, int? cap = 6)
-    {
-        var most = cap ?? totals.Shares.Count;
-
-        var said = totals.Shares.Take(most).Select(share =>
+        if (charged.All(shares => shares.Count == 0))
         {
-            var what = share.Kind == SpendKind.Voice
-                ? $"{share.Name} {share.Characters:N0} chars"
-                : share.Name;
-
-            if (!share.Priced)
-            {
-                return $"{what} (no rate for it)";
-            }
-
-            return share.Dollars > 0m ? $"{what} {share.Dollars:C4}" : $"{what} (free)";
-        });
-
-        var line = string.Join(", ", said);
-
-        return totals.Shares.Count > most
-            ? $"{line}, and {totals.Shares.Count - most:N0} more"
-            : line;
-    }
-
-    /// <summary>
-    /// One provider read down every period, uncapped — the question "Now" and "Running totals" read
-    /// the other way round (#35).
-    /// </summary>
-    private Control ByProviderSection()
-    {
-        var stack = new StackPanel { Spacing = 4 };
-
-        var title = new TextBlock
-        {
-            Text = "By provider",
-            FontSize = TypeScale.Body,
-            FontWeight = FontWeight.SemiBold,
-        };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AKey);
-        stack.Children.Add(title);
-
-        var picks = Providers();
-
-        if (picks.Count == 0)
-        {
-            var empty = new TextBlock
-            {
-                Text = "nothing charged yet",
-                FontSize = TypeScale.Secondary,
-                TextWrapping = TextWrapping.Wrap,
-            };
+            var empty = new TextBlock { Text = "nothing charged yet", FontSize = TypeScale.Secondary };
             Themed(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            stack.Children.Add(empty);
-            return stack;
+            return empty;
         }
 
-        if (_provider is not { } chosen || !picks.Contains(chosen))
+        var stack = new StackPanel { Spacing = 0 };
+        stack.Children.Add(TableRow(null, [.. windows.Select(w => w.Period.Name)], head: true));
+
+        var total = windows.Select((w, i) => w.Totals.Complete && charged[i].Count == 0
+            ? new FigureCell(Dash, ThemeManager.Grey2Key)
+            : new FigureCell(
+                (w.Totals.Complete ? string.Empty : "≥ ") + Money(w.Totals.Dollars),
+                ThemeManager.WhiteKey)).ToList();
+        stack.Children.Add(TableRow(Label("All", ThemeManager.WhiteKey, 0, FontWeight.SemiBold), total));
+
+        var last = windows.Count - 1;
+
+        var providers = charged
+            .SelectMany(shares => shares)
+            .Select(share => (share.Kind, Provider: share.Provider.ToLowerInvariant()))
+            .Distinct()
+            .OrderByDescending(key => charged[last]
+                .Where(share => Is(share, key.Kind, key.Provider))
+                .Sum(share => share.Dollars))
+            .ThenBy(key => ProviderName(key.Kind, key.Provider), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (kind, provider) in providers)
         {
-            _provider = chosen = picks[0];
-        }
+            var own = charged
+                .Select(shares => shares.Where(share => Is(share, kind, provider)).ToList())
+                .ToList();
 
-        var labels = picks.Select(pick => pick.Label).ToList();
+            var cells = own.Select(shares => ProviderCell(kind, shares)).ToList();
 
-        // Every provider ever charged, which only grows — always a stepper (#274).
-        var (comboView, combo) = Choice.Build(labels, labels.IndexOf(chosen.Label), alwaysStepper: true);
-        comboView.Name = "SpendProviderPicker";
-        comboView.HorizontalAlignment = HorizontalAlignment.Left;
-        comboView.MinWidth = 220;
+            stack.Children.Add(TableRow(
+                Label(ProviderName(kind, provider), ThemeManager.WhiteKey, 0, FontWeight.Medium),
+                cells,
+                rule: true));
 
-        combo.SelectionChanged += (_, _) =>
-        {
-            if (combo.SelectedItem is { } label
-                && picks.FirstOrDefault(pick => pick.Label == label) is { } picked)
+            if (kind == SpendKind.Voice)
             {
-                _provider = picked;
-                Draw();
+                continue;
             }
-        };
 
-        stack.Children.Add(comboView);
+            var models = own
+                .SelectMany(shares => shares)
+                .Select(share => share.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(name => own[last].Where(share => share.Name == name).Sum(share => share.Dollars))
+                .ThenBy(name => name, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var period in _ledger.Windows(_zone))
-        {
-            var totals = _ledger.Provider(period.Period, chosen.Kind, chosen.ProviderId);
-            stack.Children.Add(WindowRow((period.Period, totals), cap: null));
+            foreach (var model in models)
+            {
+                var row = own.Select(shares => shares.FirstOrDefault(share => share.Name == model) is { } share
+                    ? share.Priced
+                        ? new FigureCell(Money(share.Dollars), ThemeManager.GreyKey)
+                        : new FigureCell("no rate", ThemeManager.GreyKey)
+                    : new FigureCell(Dash, ThemeManager.Grey2Key)).ToList();
+
+                stack.Children.Add(TableRow(Label(model, ThemeManager.GreyKey, 14), row));
+            }
         }
 
         return stack;
     }
 
-    /// <summary>
-    /// Every provider ever charged, most-recently-added-provider order collapsed into a stable
-    /// alphabetical one, disambiguated where a model provider and a voice provider share a name (#35).
-    /// </summary>
-    private List<ProviderPick> Providers()
+    private static bool Is(SpendShare share, SpendKind kind, string provider) =>
+        share.Kind == kind && string.Equals(share.Provider, provider, StringComparison.OrdinalIgnoreCase);
+
+    private static FigureCell ProviderCell(SpendKind kind, List<SpendShare> shares)
     {
-        var named = _ledger.ProvidersCharged
-            .Select(p => (p.Kind, p.ProviderId, Name: ProviderName(p.Kind, p.ProviderId)))
-            .ToList();
+        if (shares.Count == 0)
+        {
+            return new FigureCell(Dash, ThemeManager.Grey2Key);
+        }
 
-        var collides = named
-            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
-            .Where(group => group.Count() > 1)
-            .Select(group => group.Key)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var use = kind == SpendKind.Voice ? $"{shares.Sum(share => share.Characters):N0} ch" : null;
 
-        return
-        [
-            .. named
-                .Select(p => new ProviderPick(
-                    p.Kind,
-                    p.ProviderId,
-                    collides.Contains(p.Name)
-                        ? $"{p.Name} ({(p.Kind == SpendKind.Voice ? "voice" : "model")})"
-                        : p.Name))
-                .OrderBy(pick => pick.Label, StringComparer.OrdinalIgnoreCase),
-        ];
+        if (shares.All(share => !share.Priced))
+        {
+            return new FigureCell("no rate", ThemeManager.GreyKey, use);
+        }
+
+        var floor = shares.Any(share => !share.Priced) ? "≥ " : string.Empty;
+
+        return new FigureCell(floor + Money(shares.Sum(share => share.Dollars)), ThemeManager.AKey, use);
+    }
+
+    private static TextBlock Label(string text, string key, double indent, FontWeight weight = FontWeight.Normal)
+    {
+        var label = new TextBlock
+        {
+            Text = text,
+            FontSize = TypeScale.Secondary,
+            FontWeight = weight,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(indent, 0, 0, 0),
+        };
+        Themed(label, TextBlock.ForegroundProperty, key);
+        return label;
+    }
+
+    private static Control TableRow(Control? label, IReadOnlyList<string> heads, bool head) =>
+        TableRow(label, [.. heads.Select(text => new FigureCell(text.ToUpperInvariant(), ThemeManager.GreyKey))], head: true);
+
+    private static Control TableRow(Control? label, IReadOnlyList<FigureCell> cells, bool rule = false, bool head = false)
+    {
+        var grid = new Grid { ColumnDefinitions = [new ColumnDefinition(1, GridUnitType.Star)] };
+
+        foreach (var _ in cells)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(FigureColumn, GridUnitType.Pixel));
+        }
+
+        if (label is not null)
+        {
+            grid.Children.Add(label);
+        }
+
+        for (var i = 0; i < cells.Count; i++)
+        {
+            var cell = cells[i];
+
+            var figure = new TextBlock
+            {
+                Text = cell.Text,
+                FontSize = head ? TypeScale.Meta : TypeScale.Secondary,
+                FontFamily = new FontFamily(head ? Fonts.ChromeFamily : Fonts.MonoFamily),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                TextAlignment = TextAlignment.Right,
+                TextWrapping = head ? TextWrapping.Wrap : TextWrapping.NoWrap,
+            };
+            Themed(figure, TextBlock.ForegroundProperty, cell.Key);
+
+            Control content = figure;
+
+            if (cell.Use is { } use)
+            {
+                var uses = new TextBlock
+                {
+                    Text = use,
+                    FontSize = TypeScale.Meta,
+                    FontFamily = new FontFamily(Fonts.MonoFamily),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    TextWrapping = TextWrapping.NoWrap,
+                };
+                Themed(uses, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                content = new StackPanel { Children = { figure, uses } };
+            }
+
+            Grid.SetColumn(content, i + 1);
+            grid.Children.Add(content);
+        }
+
+        var border = new Border
+        {
+            Child = grid,
+            Padding = new Thickness(0, rule ? 8 : 2, 0, 2),
+            BorderThickness = new Thickness(0, rule ? 1 : 0, 0, 0),
+            Margin = new Thickness(0, rule ? 6 : 0, 0, 0),
+        };
+        Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
+
+        return border;
     }
 
     /// <summary>What each catalog calls a provider — the model provider's name where it is one.</summary>
@@ -410,17 +451,6 @@ public sealed class SpendDialog : ModalDialog
         kind == SpendKind.Voice
             ? TtsProviderCatalog.Selected(providerId).Name
             : LlmProviderCatalog.Selected(providerId).Name;
-
-    /// <summary>
-    /// The one thing in this window that asks the Commander to do something, so it keeps a row of its
-    /// own rather than being folded into a details cell beside token counts (#227).
-    /// </summary>
-    private static string Amount(SpendTotals totals)
-    {
-        var figure = totals.Dollars.ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
-
-        return totals.Complete ? figure : $"≥ {figure}";
-    }
 
     private static IReadOnlyList<Control> ColdPrefixRow(SpendTracker session) =>
         session.UnexplainedColdPrefixes > 0
@@ -451,14 +481,11 @@ public sealed class SpendDialog : ModalDialog
         return line;
     }
 
-    private static Control Section(string heading, IReadOnlyList<Control> rows)
+    private static Control Section(string heading, IReadOnlyList<Control> rows, string note = "")
     {
         var stack = new StackPanel { Spacing = 4 };
 
-        var title = new TextBlock { Text = heading, FontSize = TypeScale.Body, FontWeight = FontWeight.SemiBold };
-        Themed(title, TextBlock.ForegroundProperty, ThemeManager.AKey);
-
-        stack.Children.Add(title);
+        stack.Children.Add(StarSystemPage.GroupHead(heading, note));
 
         foreach (var row in rows)
         {

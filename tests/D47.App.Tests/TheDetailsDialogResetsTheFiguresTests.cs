@@ -204,7 +204,7 @@ public class TheDetailsDialogResetsTheFiguresTests : IDisposable
         var after = Words(dialog);
 
         Assert.DoesNotContain("1.4180", after, StringComparison.Ordinal);
-        Assert.Contains("nothing yet", after, StringComparison.Ordinal);
+        Assert.Contains("nothing charged yet", after, StringComparison.Ordinal);
 
         window.Close();
     }

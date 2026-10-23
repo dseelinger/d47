@@ -28,7 +28,7 @@ public class SpendDialogTests
 
     private static readonly DateTimeOffset Noon = new(2026, 8, 17, 12, 0, 0, TimeSpan.Zero);
 
-    private static SpendDialog Dialog(out SpendTracker session)
+    private static SpendDialog Dialog(out SpendTracker session, bool unpriced = false)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
@@ -69,6 +69,30 @@ public class SpendDialogTests
             Dollars = 0.0610m,
             Priced = true,
             Characters = 3_400,
+        });
+
+        if (unpriced)
+        {
+            ledger.Append(new SpendEntry
+            {
+                At = Noon.AddDays(-1),
+                Kind = SpendKind.Model,
+                ProviderId = "google",
+                Model = "gemini-3-flash-preview",
+                Priced = false,
+            });
+        }
+
+        // A priced $0 voice charge, which the dialog leaves out.
+        ledger.Append(new SpendEntry
+        {
+            At = Noon.AddDays(-1),
+            Kind = SpendKind.Voice,
+            ProviderId = "chatterbox",
+            Model = "Chatterbox",
+            Dollars = 0m,
+            Priced = true,
+            Characters = 290,
         });
 
         return new SpendDialog(
@@ -119,7 +143,7 @@ public class SpendDialogTests
             .ToList();
 
         var estimates = blocks.FindIndex(text => text.StartsWith("Estimates.", StringComparison.Ordinal));
-        var firstGroup = blocks.FindIndex(text => text == "Now");
+        var firstGroup = blocks.FindIndex(text => text == "NOW");
 
         Assert.True(estimates >= 0, "The spend dialog says nothing about the figures being estimates.");
         Assert.True(
@@ -141,21 +165,18 @@ public class SpendDialogTests
         var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        // Grid.Column is an attached property, not scoped to Row()'s grid: a segment or a stepper has its
-        // own internal column 1 for its own reasons (the value between the arrows, here), so their
-        // descendants are excluded rather than mistaken for a stray figure.
         var amounts = dialog.GetVisualDescendants().OfType<TextBlock>()
-            .Where(block => Grid.GetColumn(block) == 1 && block.TextWrapping == TextWrapping.NoWrap)
-            .Where(block => block.GetVisualAncestors().OfType<IChoiceControl>().Any() == false)
+            .Where(block => Grid.GetColumn(block.Parent as Control ?? block) is >= 1 and <= 5
+                || Grid.GetColumn(block) is >= 1 and <= 5)
+            .Where(block => block.TextWrapping == TextWrapping.NoWrap)
             .Select(block => block.Text ?? string.Empty)
-            .Where(text => text.Length > 0)
+            .Where(text => text.StartsWith('$') || text.StartsWith('≥'))
             .ToList();
 
         Assert.NotEmpty(amounts);
 
         foreach (var amount in amounts)
         {
-            Assert.DoesNotContain("—", amount, StringComparison.Ordinal);
             Assert.DoesNotContain("model", amount, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("voice", amount, StringComparison.OrdinalIgnoreCase);
 
@@ -179,9 +200,9 @@ public class SpendDialogTests
         window.Close();
     }
 
-    /// <summary>All five windows are named, whether or not anything was spent in them.</summary>
+    /// <summary>The five windows are the columns of one table, in order.</summary>
     [AvaloniaFact]
-    public void AllFiveRunningTotalsAreListedInTheirTwoGroups()
+    public void TheFiveWindowsAreTheColumnsOfOneTable()
     {
         var dialog = Dialog(out _);
         var window = dialog.Show();
@@ -190,30 +211,49 @@ public class SpendDialogTests
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
-        foreach (var name in new[] { "Today", "This week", "Last 7 days", "This month", "Last 30 days" })
-        {
-            Assert.Contains(name, blocks);
-        }
-
-        // Today is in the first group with the turn and the session, and every other window is below the
-        // second heading.
-        var now = blocks.IndexOf("Now");
-        var running = blocks.IndexOf("Running totals");
-
-        Assert.True(now >= 0 && running > now);
-        Assert.InRange(blocks.IndexOf("Turn"), now, running);
-        Assert.InRange(blocks.IndexOf("Session"), now, running);
-        Assert.InRange(blocks.IndexOf("Today"), now, running);
-
-        // The pairs, in order, and adjacent — which is the ask. Bounded by "By provider", since that
-        // section (#35) reads the same four names again, one at a time, further down.
-        var byProvider = blocks.IndexOf("By provider");
-        Assert.True(byProvider > running);
-
         Assert.Equal(
-            ["This week", "Last 7 days", "This month", "Last 30 days"],
-            blocks.Skip(running).Take(byProvider - running).Where(text =>
-                text is "This week" or "Last 7 days" or "This month" or "Last 30 days"));
+            ["TODAY", "THIS WEEK", "LAST 7 DAYS", "THIS MONTH", "LAST 30 DAYS"],
+            blocks.Where(text => text is "TODAY" or "THIS WEEK" or "LAST 7 DAYS" or "THIS MONTH" or "LAST 30 DAYS"));
+
+        Assert.DoesNotContain("Running totals", blocks);
+        Assert.DoesNotContain("By provider", blocks);
+        Assert.DoesNotContain(
+            dialog.GetVisualDescendants().OfType<Control>(),
+            control => control.Name == "SpendProviderPicker");
+
+        window.Close();
+    }
+
+    /// <summary>A provider that charged nothing is not listed, and the word free is not used.</summary>
+    [AvaloniaFact]
+    public void FreeProvidersAreNotListedAnywhere()
+    {
+        var dialog = Dialog(out _);
+        var window = dialog.Show();
+
+        var text = Words(dialog);
+
+        Assert.DoesNotContain("Chatterbox", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Edge", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("free", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ElevenLabs", text, StringComparison.Ordinal);
+
+        window.Close();
+    }
+
+    /// <summary>A model with no rate says so, and its window's total is a floor.</summary>
+    [AvaloniaFact]
+    public void AModelWithNoRateSaysSoAndMakesItsWindowsTotalAFloor()
+    {
+        var dialog = Dialog(out _, unpriced: true);
+        var window = dialog.Show();
+
+        var blocks = dialog.GetVisualDescendants().OfType<TextBlock>()
+            .Select(block => block.Text ?? string.Empty)
+            .ToList();
+
+        Assert.Contains("no rate", blocks);
+        Assert.Contains(blocks, text => text.StartsWith("≥ $", StringComparison.Ordinal));
 
         window.Close();
     }
@@ -235,9 +275,8 @@ public class SpendDialogTests
         Assert.Contains("cached", text, StringComparison.Ordinal);
         Assert.Contains("turn", text, StringComparison.OrdinalIgnoreCase);
 
-        // Voice is reported beside the model rather than on a surface of its own, so "what has this cost"
-        // keeps having one answer.
-        Assert.Contains("characters spoken", text, StringComparison.Ordinal);
+        // The session counts characters from billed voice providers only: elevenlabs spoke 298, edge 180.
+        Assert.Contains("1 turn · 298 chars", text, StringComparison.Ordinal);
         Assert.Contains("ElevenLabs", text, StringComparison.Ordinal);
 
         window.Close();
@@ -299,28 +338,9 @@ public class SpendDialogTests
         window.Close();
     }
 
-    /// <summary>
-    /// The two providers the fixture charged are both offered, disambiguated only where they collide,
-    /// and the chosen one reads down all four windows uncapped (#35).
-    /// </summary>
+    /// <summary>Nothing charged yet says so in place of the table.</summary>
     [AvaloniaFact]
-    public void ByProviderOffersEveryChargedProviderAndReadsItDownEachWindow()
-    {
-        var dialog = Dialog(out _);
-        var window = dialog.Show();
-        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-        var combo = dialog.GetVisualDescendants().OfType<D47.App.Controls.Stepper>()
-            .Single(box => box.Name == "SpendProviderPicker");
-
-        Assert.Equal(["Anthropic", "ElevenLabs"], combo.ItemsSource.OrderBy(x => x, StringComparer.Ordinal));
-
-        window.Close();
-    }
-
-    /// <summary>Nothing charged yet says so, rather than offering an empty picker (#35).</summary>
-    [AvaloniaFact]
-    public void ByProviderWithNothingChargedSaysSoInsteadOfAnEmptyPicker()
+    public void NothingChargedSaysSoInPlaceOfTheTable()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
@@ -339,10 +359,8 @@ public class SpendDialogTests
         var window = dialog.Show();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.DoesNotContain(
-            dialog.GetVisualDescendants().OfType<D47.App.Controls.Stepper>(),
-            box => box.Name == "SpendProviderPicker");
         Assert.Contains("nothing charged yet", Words(dialog), StringComparison.Ordinal);
+        Assert.DoesNotContain("LAST 30 DAYS", Words(dialog), StringComparison.Ordinal);
 
         window.Close();
     }

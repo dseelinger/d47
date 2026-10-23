@@ -217,11 +217,12 @@ number: one sentence has room to say why, and a three-letter suffix does not.
 The file is only ever appended to, so nothing that has already been written can be lost by a
 later crash. Delete it and the running totals start again from empty; nothing else is affected.
 
-**By provider** reads the ledger the other way round: pick a provider — ElevenLabs, say, or
-Anthropic — and its running totals are drawn down the same four windows, models rolled up under
-one figure where a provider answers with more than one. Nothing here is capped: the "and N more"
-that the details cells above use to stay short is dropped, because completeness is the whole point
-of asking about one provider.
+The totals are one table: the five windows are its columns, the first row is the total for each
+window, and below it each provider that charged anything is a row with its models indented under
+it, ordered by the last 30 days, highest first. A voice provider has no model rows; the characters
+it spoke sit under each figure. A cell with nothing charged shows a dash, a model with no
+published rate shows "no rate", and a total that includes one starts with "≥". Providers that
+charged nothing, such as Edge Neural and Chatterbox, are not listed.
 
 #### Starting the figures again {#reset}
 
