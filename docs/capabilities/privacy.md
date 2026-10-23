@@ -229,6 +229,13 @@ this PC for your Commander, which is not your donation identifier. Nothing else 
 Frontier ID, no Commander name, no key, no position and nothing from your journal. **Story ratings** in
 the Stories settings turns it off, and nothing is then fetched or sent.
 
+**Usage counts** {#usage-counts} — `d47-usage.dseelinger.workers.dev`. One report a day, sent the first
+time D47 runs after the day ends in UTC: for each tool used that day, its name, whether you or the
+language model asked for it, and how many times. Nothing else goes with it: no identifier of any kind,
+nothing you said, no Frontier ID, no Commander name, no key, no position and nothing from your journal.
+The counts not yet sent are in `data\usage-counts.json`. **Usage counts** in the Privacy and egress
+settings turns it off, and the counts not yet sent are then deleted.
+
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
 computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,
 `api.deepgram.com` or `api.elevenlabs.io` receives the audio of
@@ -398,7 +405,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
-{#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
+{#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

@@ -530,6 +530,7 @@ public class EgressDisclosureTests
  // And so does the hull art, which fetches a picture and a turntable from the release the
             // app updates itself from.
             Ui = new UiSettings { HullArt = false, CodexPictures = false, AvatarClips = false, StoryDownloads = false, StoryRatings = false },
+            Usage = new UsageSettings { Counts = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

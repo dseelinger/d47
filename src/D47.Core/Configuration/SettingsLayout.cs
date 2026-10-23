@@ -835,6 +835,7 @@ public static class SettingsLayout
                                 E("privacy.memory"),
                                 E("privacy.audioFlight"),
                                 E("privacy.donor"),
+                                E("privacy.usageCounts"),
                             ]),
                         G(
                             "What leaves this machine",

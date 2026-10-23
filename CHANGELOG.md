@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Privacy and egress settings now have a Usage counts switch, on by default, and the egress list names it. It says D47 will count how often each tool is used and send the counts once a day, with no identifier. Nothing is counted or sent yet.
+
 The Carrier page now has a DRAKE / FORTUNE / NAUTILUS / VICTORY choice above the carrier's picture, shown when Hull pictures is on. The game does not say which model a carrier is, so you pick it; the choice is kept for that carrier's callsign and the picture changes to match. A carrier you have not picked for is drawn as the Drake.
 
 While D47 is working on a remark in TALK THROUGH THIS BUILD, the reply header shows a "Working" label with three dots lit in turn, as the Stories tab does, in place of the grey "working" text. The dots stop when the answer or the failure notice is drawn.

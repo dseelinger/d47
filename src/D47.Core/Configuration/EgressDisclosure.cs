@@ -127,6 +127,9 @@ public static class EgressDisclosure
     /// <summary>Fetching stock stories' average ratings and sending the Commander's own stars.</summary>
     public const string StoryRatings = "storyratings";
 
+    /// <summary>Sending how often each tool was used, once a day, with no identifier.</summary>
+    public const string UsageCounts = "usagecounts";
+
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
@@ -172,6 +175,7 @@ public static class EgressDisclosure
         CodexPublish,
         StockStories,
         StoryRatings,
+        UsageCounts,
         SpeechModels,
         ChatterboxVoices,
         Diagnostics,
@@ -214,6 +218,7 @@ public static class EgressDisclosure
         AvatarClips => "Avatar animations",
         StockStories => "Stock stories",
         StoryRatings => "Story ratings",
+        UsageCounts => "Usage counts",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
@@ -553,6 +558,23 @@ public static class EgressDisclosure
                 NameOf(StoryRatings),
                 "Story ratings are off, so nothing is fetched or sent.",
                 summary: "Story ratings are off, so nothing is fetched or sent."),
+
+        UsageCounts => settings.Usage.Counts
+            ? new EgressEntry(
+                UsageCounts,
+                NameOf(UsageCounts),
+                UsageCountSettings.Address,
+                "One report a day, sent the first time D47 runs after the day ends in UTC: for each tool used that day, "
+                + "its name, whether you or the language model asked for it, and how many times. Nothing else goes with "
+                + "it: no identifier of any kind, nothing you said, no Frontier ID, no Commander name, no key, no "
+                + "position and nothing from your journal. The counts not yet sent are in data\\usage-counts.json.",
+                Active: true,
+                Summary: "Once a day, how many times each tool was used, with no identifier.")
+            : EgressEntry.Silent(
+                UsageCounts,
+                NameOf(UsageCounts),
+                "Usage counts are off, so nothing is counted or sent.",
+                summary: "Usage counts are off, so nothing is counted or sent."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(

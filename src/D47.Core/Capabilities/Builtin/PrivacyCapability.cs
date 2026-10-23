@@ -29,6 +29,8 @@ public static class PrivacyCapability
     /// </summary>
     public const string DonorKey = "privacy.donor";
 
+    public const string UsageCountsKey = "privacy.usageCounts";
+
     /// <summary>Throwing away what d47 worked out about the Commander from their journals (Phase 32).</summary>
 
     /// <summary>
@@ -165,6 +167,27 @@ public static class PrivacyCapability
                 },
             },
         };
+
+        rows.Add(new SettingRow
+        {
+            Key = UsageCountsKey,
+            Label = "Usage counts",
+            Help =
+                "D47 counts how often each tool is used and sends the counts once a day: the tool's name, whether "
+                + "you or the language model asked for it, and how many times. Nothing identifies you or this PC. "
+                + "Off, nothing is counted or sent, and counts not yet sent are deleted.",
+            Kind = SettingKind.Toggle,
+            DocsAnchor = "usage-counts",
+            EgressId = EgressDisclosure.UsageCounts,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Usage.Counts ? "true" : "false",
+                Write = (s, v) => s with
+                {
+                    Usage = s.Usage with { Counts = bool.TryParse(v, out var on) && on },
+                },
+            },
+        });
 
         // Emptying the memory store, here rather than in its own section (Phase 31, item 3: "which joins the
         // existing privacy capability rather than inventing a second place to look").

@@ -91,6 +91,9 @@ public sealed record D47Settings
     /// <summary>How a Commander's log is written when one is asked for (Phase 33).</summary>
     public LogbookSettings Logbook { get; init; } = new();
 
+    /// <summary>Whether d47 counts tool use and sends the counts once a day.</summary>
+    public UsageSettings Usage { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1358,6 +1361,22 @@ public sealed record DonationSettings
 
     /// <summary>The address a Commander once pasted in, before the build carried its own.</summary>
     public string? Endpoint { get; init; }
+}
+
+/// <summary>Whether d47 counts how often each tool is used and sends the counts once a day.</summary>
+public sealed record UsageSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public bool Counts { get; init; } = true;
+}
+
+/// <summary>Where usage counts are sent.</summary>
+public static class UsageCountSettings
+{
+    public const string Address = "https://d47-usage.dseelinger.workers.dev";
 }
 
 /// <summary>Where story ratings are fetched and votes sent.</summary>
