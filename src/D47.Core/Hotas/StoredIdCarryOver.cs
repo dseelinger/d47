@@ -21,12 +21,11 @@ public static class StoredIdCarryOver
     /// <summary>Whether a stored id is one of the old form.</summary>
     public static bool IsLegacy(string? id) => id?.StartsWith(LegacyPrefix, StringComparison.Ordinal) == true;
 
-    /// <summary>Every legacy id held by a switch or by the push-to-talk and cancel buttons.</summary>
+    /// <summary>Every legacy id held by a switch or a stick button.</summary>
     public static IReadOnlyList<string> LegacyIds(IReadOnlyList<SwitchMapping> stored, D47Settings settings) =>
     [
         .. stored.Select(mapping => mapping.DeviceId)
-            .Append(HotasButton.Parse(settings.Listening.PushToTalkButton)?.DeviceId)
-            .Append(HotasButton.Parse(settings.Speech.CancelButton)?.DeviceId)
+            .Concat(ButtonSlots.All.Select(slot => HotasButton.Parse(slot.Read(settings))?.DeviceId))
             .Where(IsLegacy)
             .Select(id => id!)
             .Distinct(StringComparer.Ordinal),
@@ -105,7 +104,7 @@ public static class StoredIdCarryOver
     ];
 
     /// <summary>
-    /// Takes one reading from each reader and writes the certain moves to the switch file and the two button
+    /// Takes one reading from each reader and writes the certain moves to the switch file and the stick button
     /// settings. Returns whether the readers had settled, so the caller can try again if not.
     /// </summary>
     public static bool Run(

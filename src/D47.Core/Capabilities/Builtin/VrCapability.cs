@@ -34,6 +34,14 @@ public static class VrCapability
 
     public const string ResizeHotkeyKey = "hotkeys.resizeHeadsetPanel";
 
+    public const string ZoomInButtonKey = "hotkeys.zoomHeadsetInButton";
+
+    public const string ZoomOutButtonKey = "hotkeys.zoomHeadsetOutButton";
+
+    public const string ResetZoomButtonKey = "hotkeys.resetHeadsetZoomButton";
+
+    public const string ResizeButtonKey = "hotkeys.resizeHeadsetPanelButton";
+
     /// <summary>The surface a placement row belongs to, as it appears in the key.</summary>
     public const string PanelSlot = "panel";
 

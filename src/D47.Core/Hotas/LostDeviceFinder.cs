@@ -30,7 +30,7 @@ public sealed record FoundDevice(string OldId, string NewId, string Device, stri
         stored.Count(mapping => Covers(mapping.DeviceId, mapping.Device, mapping.Name));
 
     /// <summary>
-    /// The settings with push-to-talk and cancel moved to the new id, keeping their button numbers. Only a
+    /// The settings with every stick button moved to the new id, keeping their button numbers. Only a
     /// found device whose text matched the stored one moves them; a switch that took its text from this flip
     /// has not shown the old and new ids to be the same interface.
     /// </summary>
@@ -44,19 +44,13 @@ public sealed record FoundDevice(string OldId, string NewId, string Device, stri
             return settings;
         }
 
-        var talk = Repoint(settings.Listening.PushToTalkButton);
-        var cancel = Repoint(settings.Speech.CancelButton);
-
-        if (talk is not null)
+        foreach (var slot in ButtonSlots.All)
         {
-            names.Add("push-to-talk");
-            settings = settings with { Listening = settings.Listening with { PushToTalkButton = talk } };
-        }
-
-        if (cancel is not null)
-        {
-            names.Add("cancel");
-            settings = settings with { Speech = settings.Speech with { CancelButton = cancel } };
+            if (Repoint(slot.Read(settings)) is { } repointed)
+            {
+                names.Add(slot.Named);
+                settings = slot.Write(settings, repointed);
+            }
         }
 
         moved = names;

@@ -364,9 +364,9 @@ public sealed class SwitchPage : DialogPage
 
             if (repointed.Count > 0)
             {
-                _settings.Replace(
-                    repointed[0] == "push-to-talk" ? ListeningCapability.PushToTalkButtonKey : ListeningCapability.CancelButtonKey,
-                    _ => next);
+                var slot = ButtonSlots.All.First(slot => slot.Named == repointed[0]);
+
+                _settings.Replace(slot.Key, _ => next);
 
                 // Replace does not report a write that failed.
                 if (_settings.Current == next)

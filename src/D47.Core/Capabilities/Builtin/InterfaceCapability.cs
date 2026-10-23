@@ -29,6 +29,12 @@ public static class InterfaceCapability
 
     public const string FindHotkeyKey = "hotkeys.find";
 
+    public const string OpenSettingsButtonKey = "hotkeys.openSettingsButton";
+
+    public const string FocusAskButtonKey = "hotkeys.focusAskButton";
+
+    public const string FindButtonKey = "hotkeys.findButton";
+
     /// <summary>The flat mini panel, on or off (Phase 48).</summary>
     public const string OverlayKey = "ui.overlay.enabled";
 
@@ -42,6 +48,10 @@ public static class InterfaceCapability
     public const string ShowOverlayHotkeyKey = "hotkeys.showOverlay";
 
     public const string MoveOverlayHotkeyKey = "hotkeys.moveOverlay";
+
+    public const string ShowOverlayButtonKey = "hotkeys.showOverlayButton";
+
+    public const string MoveOverlayButtonKey = "hotkeys.moveOverlayButton";
 
     private const string OverlayGroup = "The overlay";
 

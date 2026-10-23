@@ -1294,6 +1294,33 @@ public sealed record HotkeySettings
 
     /// <summary>Enters or leaves resize mode in the headset (#189).</summary>
     public string? ResizeHeadsetPanel { get; init; } = "Ctrl+Alt+S";
+
+    /// <summary>The stick button for <see cref="OpenSettings"/>, or null.</summary>
+    public string? OpenSettingsButton { get; init; }
+
+    /// <summary>The stick button for <see cref="FocusAsk"/>, or null.</summary>
+    public string? FocusAskButton { get; init; }
+
+    /// <summary>The stick button for <see cref="Find"/>, or null.</summary>
+    public string? FindButton { get; init; }
+
+    /// <summary>The stick button for <see cref="ShowOverlay"/>, or null.</summary>
+    public string? ShowOverlayButton { get; init; }
+
+    /// <summary>The stick button for <see cref="MoveOverlay"/>, or null.</summary>
+    public string? MoveOverlayButton { get; init; }
+
+    /// <summary>The stick button for <see cref="ZoomHeadsetIn"/>, or null.</summary>
+    public string? ZoomHeadsetInButton { get; init; }
+
+    /// <summary>The stick button for <see cref="ZoomHeadsetOut"/>, or null.</summary>
+    public string? ZoomHeadsetOutButton { get; init; }
+
+    /// <summary>The stick button for <see cref="ResetHeadsetZoom"/>, or null.</summary>
+    public string? ResetHeadsetZoomButton { get; init; }
+
+    /// <summary>The stick button for <see cref="ResizeHeadsetPanel"/>, or null.</summary>
+    public string? ResizeHeadsetPanelButton { get; init; }
 }
 
 public sealed record UpdateSettings
