@@ -1789,6 +1789,13 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
+        if (e.Key == Key.C && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift) && CopyButton.IsVisible)
+        {
+            e.Handled = true;
+            _ = CopyPage();
+            return;
+        }
+
         if (e.Key == Key.Escape && ClearSearch())
         {
             e.Handled = true;
@@ -3705,7 +3712,9 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     /// <summary>Copies the whole of the page being read (Phase 19, "Copy log").</summary>
-    private async void OnCopyClick(object? sender, RoutedEventArgs e)
+    private async void OnCopyClick(object? sender, RoutedEventArgs e) => await CopyPage();
+
+    private async Task CopyPage()
     {
         // Its own visual root's clipboard, which is a thing a control may ask for — unlike a window, a dialog
         // or a browser, none of which this view knows about.

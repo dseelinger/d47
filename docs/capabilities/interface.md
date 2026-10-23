@@ -710,6 +710,7 @@ runs across the whole page. Either way, **Copy** takes the lot.
 without the diagnostics, or with them, or the log file. A search query highlights on these pages
 rather than filtering, so it deliberately does not narrow what is copied — you asked for the log.
 The button says **Copied** for a moment, and says so if it could not.
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> does the same on the Transcript tab, and does nothing on the other tabs.
 
 ### The core's face {#avatar}
 

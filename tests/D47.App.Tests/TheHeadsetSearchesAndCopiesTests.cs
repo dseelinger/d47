@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -111,6 +112,38 @@ public class TheHeadsetSearchesAndCopiesTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Fixture Anchorage has fuel.", clipboard.Last, StringComparison.Ordinal);
+    }
+
+    [AvaloniaFact]
+    public void ControlShiftCPutsTheTranscriptOnTheClipboard()
+    {
+        var (panel, view, clipboard) = Headset(Said());
+        using var _disposable = panel;
+
+        Serve(panel);
+
+        PressKey(view, KeyModifiers.Control | KeyModifiers.Shift);
+
+        Assert.Contains("Fixture Anchorage has fuel.", clipboard.Last, StringComparison.Ordinal);
+    }
+
+    [AvaloniaFact]
+    public void ControlCAloneDoesNotCopyThePage()
+    {
+        var (panel, view, clipboard) = Headset(Said());
+        using var _disposable = panel;
+
+        Serve(panel);
+
+        PressKey(view, KeyModifiers.Control);
+
+        Assert.True(string.IsNullOrEmpty(clipboard.Last));
+    }
+
+    private static void PressKey(PanelView view, KeyModifiers modifiers)
+    {
+        view.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.C, KeyModifiers = modifiers, Source = view });
+        Dispatcher.UIThread.RunJobs();
     }
 
     [AvaloniaFact]
