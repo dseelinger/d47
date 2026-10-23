@@ -1254,7 +1254,7 @@ public sealed record HotkeySettings
 
     public string? FocusAsk { get; init; } = "Ctrl+L";
 
-    public string? Find { get; init; } = "Ctrl+K";
+    public string? Find { get; init; } = "Ctrl+Shift+F";
 
     /// <summary>
     /// Snaps every world-locked headset surface back in front of the Commander (Phase 9, "Re-anchor the

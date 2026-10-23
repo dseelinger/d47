@@ -4,11 +4,11 @@ using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
-/// <summary>Find is bound to Ctrl+K and its row sits after the ask box's under Look and keys (#1474).</summary>
+/// <summary>Find is bound to Ctrl+Shift+F and its row sits after the ask box's under Look and keys (#1474).</summary>
 public sealed class FindHasItsOwnKeyTests
 {
     [Fact]
-    public void FindDefaultsToCtrlK() => Assert.Equal("Ctrl+K", new HotkeySettings().Find);
+    public void FindDefaultsToCtrlShiftF() => Assert.Equal("Ctrl+Shift+F", new HotkeySettings().Find);
 
     [Fact]
     public void ItsRowFollowsTheAskBoxRowInLookAndKeys()

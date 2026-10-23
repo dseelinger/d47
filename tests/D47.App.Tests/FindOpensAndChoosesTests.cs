@@ -31,7 +31,7 @@ public sealed class FindOpensAndChoosesTests
         var window = new Window { Content = new Grid(), Width = 900, Height = 700 };
         window.Show();
 
-        var dialog = new FindDialog(Hits, opened.Add, "Ctrl+K");
+        var dialog = new FindDialog(Hits, opened.Add, "Ctrl+Shift+F");
         _ = dialog.Over(window);
         Jobs();
 
@@ -97,7 +97,7 @@ public sealed class FindOpensAndChoosesTests
         Assert.False(hint.IsVisible);
 
         dialog.Query = string.Empty;
-        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "CTRL+K");
+        Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "CTRL+SHIFT+F");
     }
 
     [AvaloniaFact]

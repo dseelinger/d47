@@ -1782,7 +1782,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
-        if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
             e.Handled = true;
             FocusSearch();

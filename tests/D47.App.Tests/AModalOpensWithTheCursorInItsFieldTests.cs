@@ -33,7 +33,7 @@ public sealed class AModalOpensWithTheCursorInItsFieldTests
     public void FindOpensWithTheCursorInItsField()
     {
         var window = Opened();
-        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+K");
+        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+Shift+F");
 
         _ = dialog.Over(window);
         Jobs();
@@ -47,7 +47,7 @@ public sealed class AModalOpensWithTheCursorInItsFieldTests
     public void TypingAfterFindOpensFillsTheQuery()
     {
         var window = Opened();
-        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+K");
+        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+Shift+F");
 
         _ = dialog.Over(window);
         Jobs();
@@ -82,7 +82,7 @@ public sealed class AModalOpensWithTheCursorInItsFieldTests
         before.Focus();
         Assert.Same(before, window.FocusManager!.GetFocusedElement());
 
-        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+K");
+        var dialog = new FindDialog(_ => [], _ => { }, "Ctrl+Shift+F");
 
         _ = dialog.Over(window);
         Jobs();
