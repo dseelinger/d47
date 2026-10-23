@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The last step of setup has a link, THE D47 DISCORD, that opens the community page in your browser.
+
 Once every 14 days, at a quiet moment, the core says one line pointing at the D47 Discord, and "D47 Discord" in the transcript is a link. The first mention comes 14 days after the first launch. It is said at least 10 minutes into a session, after 90 seconds docked, landed or in supercruise, and at most once per launch, whichever core is aboard. The row "Mention the Discord every two weeks" under Callouts turns it off.
 
 On a page of rows, Down and Up focus the first and last row, then step to the row below or above. In a grid of tiles they step down a column, and Left and Right move along a line. Enter or Space opens the focused row, which draws in Tile2. Down from the page search box focuses the first row the search left. On the Checklist, Stories, Adventures and Messages pages, and on the Materials tiles and rows and the Statistics rows, rows and cards can now take focus. Going back with Escape, the mouse Back button or Alt+Left puts focus back on the row you opened, or on the row now in its place if the list changed; a row opened by a click is not refocused.

@@ -62,7 +62,7 @@ is not stored. **SKIP SETUP** and Esc close it with every setting unchanged. Not
 6. **Talk button.** The button you hold to talk. The default is the Scroll Lock key, held to talk.
    A button on a stick or throttle is easier to reach in flight. Setup says when Elite already
    binds the same button or key to something else.
-7. **Ready.** Shows each choice. Select one to change it. **START** saves.
+7. **Ready.** Shows each choice. Select one to change it. **START** saves. A link under the summary opens the D47 Discord in your browser.
 
 Everything setup chooses can be changed later in Settings.
 

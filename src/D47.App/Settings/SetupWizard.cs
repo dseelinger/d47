@@ -970,6 +970,7 @@ public sealed class SetupWizard : ModalDialog
         stack.Children.Add(grid);
 
         stack.Children.Add(Help("Change any of this in Settings. Reopen this guide from About › Set up keys."));
+        stack.Children.Add(Link("THE D47 DISCORD ›", "Opens the community page in your browser", D47.Core.Interface.Community.Url));
 
         return stack;
     }
