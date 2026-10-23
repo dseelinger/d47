@@ -7,8 +7,6 @@ using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Catalog;
 using Microsoft.Extensions.Logging;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 
 namespace D47.Tts;
 
@@ -286,13 +284,16 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         {
             throw;
         }
-        catch (TtsException)
+        catch (TtsException ex)
         {
+            _logger.LogWarning(ex, "ElevenLabs sample of {Voice} ({VoiceId}) failed: {Reason}", voice.Name, voiceId, ex.Message);
             throw;
         }
         catch (Exception ex)
         {
-            throw new TtsException($"ElevenLabs' sample of {voice.Name} could not be played: {ex.Message}", ex);
+            var failure = new TtsException($"ElevenLabs' sample of {voice.Name} could not be played: {ex.Message}", ex);
+            _logger.LogWarning(ex, "ElevenLabs sample of {Voice} ({VoiceId}) failed: {Reason}", voice.Name, voiceId, ex.Message);
+            throw failure;
         }
     }
 
@@ -326,37 +327,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     }
 
     /// <summary>A sample's MP3 to <see cref="AudioFormat.Standard"/>: mono, 48 kHz, 16-bit.</summary>
-    internal static byte[] DecodePreview(byte[] mp3)
-    {
-        using var source = new MemoryStream(mp3);
-        using var reader = new Mp3FileReader(source);
-
-        var samples = reader.ToSampleProvider();
-
-        samples = samples.WaveFormat.Channels switch
-        {
-            1 => samples,
-            2 => new StereoToMonoSampleProvider(samples),
-            var channels => throw new TtsException($"ElevenLabs sent a sample with {channels} channels."),
-        };
-
-        if (samples.WaveFormat.SampleRate != AudioFormat.Standard.SampleRate)
-        {
-            samples = new WdlResamplingSampleProvider(samples, AudioFormat.Standard.SampleRate);
-        }
-
-        var pcm16 = new SampleToWaveProvider16(samples);
-        using var pcm = new MemoryStream();
-        var buffer = new byte[pcm16.WaveFormat.AverageBytesPerSecond];
-        int read;
-
-        while ((read = pcm16.Read(buffer, 0, buffer.Length)) > 0)
-        {
-            pcm.Write(buffer, 0, read);
-        }
-
-        return pcm.ToArray();
-    }
+    internal static byte[] DecodePreview(byte[] mp3) => SampleAudioDecoder.Decode(mp3);
 
     /// <summary>Numerals spelled out, and nothing else changed.</summary>
     public string Billable(string text) => SpokenNumbers.Expand(text);

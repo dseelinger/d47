@@ -18,6 +18,8 @@ The bar under a story write now estimates the time at the effort the app writes 
 
 A story that opens with a trip to a Guardian beacon puts COVAS aboard until the beacon is scanned, even when a core you made is chosen. Your core comes back after the scan.
 
+Hearing a voice's free sample under ElevenLabs no longer fails when ElevenLabs sends the sample as a WAV file, as it does for Zain, or as an MP3 that changes sample rate partway through. A sample that still cannot be played is now written to the log.
+
 F1 opens help for the page you are on, the same page the HELP button opens. F1 again closes help and shows the page you were on. F1 cannot be rebound.
 
 ? opens a list of every key the window answers to, grouped, with what each does and the key bound to it now. It opens when no text box has the cursor, so typing ? in the ask box or the page search box still types a question mark. Keys you can rebind are shown in orange with the Settings place that changes them, and a key with nothing bound reads Unbound. ? or Esc closes the list, and CHANGE KEYS closes it and opens Settings at Window.
