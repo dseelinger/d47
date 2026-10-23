@@ -106,6 +106,18 @@ public sealed class ARunningStoryHoldsTheCoresTests
     }
 
     [Fact]
+    public void AStoryOnItsWayToTheBeaconHoldsTheCommandersOwnCoreToo()
+    {
+        var own = new D47.Core.Persona.Persona("own.shipwright", "The Shipwright", "T", "B", "I", "R", new VoiceHint("V"));
+        var toTheBeacon = new CoreHold(HeldCores.All, "T");
+
+        Assert.True(GuardianCores.IsHeld(own, toTheBeacon));
+        Assert.False(GuardianCores.IsHeld(PersonaCatalog.Covas, toTheBeacon));
+        Assert.False(GuardianCores.IsHeld(own, new CoreHold(HeldCores.Heretic, "T")));
+        Assert.False(GuardianCores.IsHeld(own, CoreHold.None));
+    }
+
+    [Fact]
     public void AStoryScannedBeforeTheSystemsWereRecordedHoldsOnlyTheHeretic()
     {
         var story = new D47.Core.Stories.Story { Id = Id, Title = "T", PublicLayer = "P", PickedAt = Now, BeaconScanAt = Now };

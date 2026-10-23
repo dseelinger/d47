@@ -143,21 +143,24 @@ public sealed class GuardianCores(Func<CoreHold>? hold = null)
     /// <summary>What the current story holds back now.</summary>
     public CoreHold Hold => hold?.Invoke() ?? CoreHold.None;
 
-    /// <summary>Whether this core can be aboard. Anything that is not a Guardian core always can.</summary>
+    /// <summary>Whether this core can be aboard. The stock core always can.</summary>
     public bool IsAwake(Persona persona) => !IsHeld(persona, Hold);
 
     /// <summary>The core itself where it is available, and the stock core where it is held back.</summary>
     public Persona Admit(Persona persona) => IsAwake(persona) ? persona : PersonaCatalog.Covas;
 
-    /// <summary>Whether <paramref name="hold"/> keeps this core from being aboard.</summary>
+    /// <summary>
+    /// Whether <paramref name="hold"/> keeps this core from being aboard. Before the first beacon scan every core but the
+    /// stock one is held, the Commander's own cores included.
+    /// </summary>
     public static bool IsHeld(Persona persona, CoreHold hold)
     {
         ArgumentNullException.ThrowIfNull(persona);
 
-        return PersonaCatalog.IsGuardian(persona.Id) && hold.Cores switch
+        return hold.Cores switch
         {
-            HeldCores.All => true,
-            HeldCores.Heretic => persona.Unlockable,
+            HeldCores.All => !persona.Stock,
+            HeldCores.Heretic => PersonaCatalog.IsGuardian(persona.Id) && persona.Unlockable,
             _ => false,
         };
     }

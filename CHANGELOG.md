@@ -16,6 +16,8 @@ The last step of setup has a link, THE D47 DISCORD, that opens the community pag
 
 The bar under a story write now estimates the time at the effort the app writes stories at. For Claude Sonnet 5.5 it expects about two and a half minutes instead of under half a minute; for GPT-6 Luna, about a minute.
 
+A story that opens with a trip to a Guardian beacon puts COVAS aboard until the beacon is scanned, even when a core you made is chosen. Your core comes back after the scan.
+
 F1 opens help for the page you are on, the same page the HELP button opens. F1 again closes help and shows the page you were on. F1 cannot be rebound.
 
 ? opens a list of every key the window answers to, grouped, with what each does and the key bound to it now. It opens when no text box has the cursor, so typing ? in the ask box or the page search box still types a question mark. Keys you can rebind are shown in orange with the Settings place that changes them, and a key with nothing bound reads Unbound. ? or Esc closes the list, and CHANGE KEYS closes it and opens Settings at Window.
