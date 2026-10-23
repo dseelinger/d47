@@ -422,4 +422,17 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
 
         headsetWindow.Close();
     }
+
+    [AvaloniaFact]
+    public void AnAnswerOfOneUsesTheSingularNoun()
+    {
+        var world = new World();
+        world.Board.Post(new GalaxySearchPosting(GalaxySearchKind.Signals, new Dictionary<string, string>(StringComparer.Ordinal), null, new SignalSearchResult(null, 1, [new SignalFinding("Hazardous RES", "Alpha", 3, Now, false, 1001)]), "Signals found.", Now));
+        var (panel, window) = Shown(world);
+
+        Assert.Contains("1 SIGNAL", TextOf(panel));
+        Assert.DoesNotContain("1 SIGNALS", TextOf(panel));
+
+        window.Close();
+    }
 }

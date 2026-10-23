@@ -10,6 +10,8 @@
 
 D47 warns when Thargoids pull the ship out of a hyperspace jump, with the interdiction alarm. On a plotted route it says "Hyperdiction. Thargoids are pulling us out of the jump." partway through the tunnel. With no route plotted it says on arrival which system you were pulled out in and which one you were jumping to. The Danger row under Callouts turns it off.
 
+A galaxy search with exactly one result now says "1 station", "1 body", "1 signal" or "1 system" in the answer heading instead of the plural.
+
 A galaxy search whose match count reaches Spansh's limit of ten thousand now says "10,000 or more" instead of "10000", since the true number is higher. Station, body, "sell" and system answers all do this.
 
 Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.

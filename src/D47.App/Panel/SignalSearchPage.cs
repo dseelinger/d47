@@ -86,6 +86,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
     public override string Summary => SummaryText;
 
     protected override string Noun => "Signals";
+    protected override string NounOne => "Signal";
 
     protected override string OffSentence => NoSources;
 

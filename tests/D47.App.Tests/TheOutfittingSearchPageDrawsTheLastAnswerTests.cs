@@ -476,4 +476,17 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
 
         headsetWindow.Close();
     }
+
+    [AvaloniaFact]
+    public void AnAnswerOfOneUsesTheSingularNoun()
+    {
+        var world = new World();
+        world.Board.Post(new GalaxySearchPosting(GalaxySearchKind.Outfitting, new Dictionary<string, string>(StringComparer.Ordinal), TwoStations.Reference, TwoStations with { Total = 1, Stations = [TwoStations.Stations[0]] }, "Stations matched.", new DateTimeOffset(2026, 10, 10, 19, 42, 0, TimeSpan.Zero)));
+        var (panel, window) = Shown(world);
+
+        Assert.Contains("1 STATION", TextOf(panel));
+        Assert.DoesNotContain("1 STATIONS", TextOf(panel));
+
+        window.Close();
+    }
 }

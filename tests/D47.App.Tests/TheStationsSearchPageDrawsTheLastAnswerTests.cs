@@ -413,4 +413,17 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void AnAnswerOfOneUsesTheSingularNoun()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["material_trader"] = "Raw" }, TwoStations with { Total = 1, Stations = [TwoStations.Stations[0]] }));
+        var (panel, window) = Shown(world);
+
+        Assert.Contains("1 STATION", TextOf(panel));
+        Assert.DoesNotContain("1 STATIONS", TextOf(panel));
+
+        window.Close();
+    }
 }

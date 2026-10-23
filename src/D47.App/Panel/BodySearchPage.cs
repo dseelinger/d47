@@ -87,6 +87,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     public override string Summary => SummaryText;
 
     protected override string Noun => "Bodies";
+    protected override string NounOne => "Body";
 
     private static IReadOnlyList<(string Name, IReadOnlyList<string> Choices)> PickerChoices { get; } =
     [

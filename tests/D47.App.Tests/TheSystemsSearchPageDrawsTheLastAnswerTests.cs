@@ -729,4 +729,17 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         form.Render(view);
         form.SaveCapture("search-systems-headset-form.png");
     }
+
+    [AvaloniaFact]
+    public void AnAnswerOfOneUsesTheSingularNoun()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["allegiance"] = "Independent" }, TwoSystems with { Total = 1, Systems = [TwoSystems.Systems[0]] }));
+        var (panel, window) = Shown(world);
+
+        Assert.Contains("1 SYSTEM", TextOf(panel));
+        Assert.DoesNotContain("1 SYSTEMS", TextOf(panel));
+
+        window.Close();
+    }
 }

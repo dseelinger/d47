@@ -204,6 +204,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The plural noun the answer head counts in, upper case.</summary>
     protected abstract string Noun { get; }
 
+    /// <summary>The singular of <see cref="Noun"/>, upper case.</summary>
+    protected abstract string NounOne { get; }
+
     /// <summary>The sentence drawn while the page cannot search.</summary>
     protected virtual string OffSentence => LookupsOffText;
 
@@ -804,7 +807,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
 
             case GalaxySearchView.Answer:
-                block.Children.Add(Head($"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
+                block.Children.Add(Head(Count(last!) == 1 ? $"1 {NounOne}" : $"{Count(last!)} {Noun}", Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
                 AddNotes(block, last);
 
                 if (Table(last, _headset) is { } table)

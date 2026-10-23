@@ -107,6 +107,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     public override string Summary => SummaryText;
 
     protected override string Noun => "Systems";
+    protected override string NounOne => "System";
 
     /// <summary>
     /// Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer. A list of

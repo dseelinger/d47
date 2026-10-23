@@ -95,6 +95,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     public override string Summary => SummaryText;
 
     protected override string Noun => "Stations";
+    protected override string NounOne => "Station";
 
     /// <summary>The items the form asks for.</summary>
     public IReadOnlyList<OutfittingItem> Items => _items;

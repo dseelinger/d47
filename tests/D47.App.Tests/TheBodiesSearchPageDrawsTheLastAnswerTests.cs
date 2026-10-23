@@ -406,4 +406,17 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void AnAnswerOfOneUsesTheSingularNoun()
+    {
+        var world = new World(lookups: true);
+        world.Board.Post(Posting(new Dictionary<string, string> { ["landable"] = "true" }, TwoBodies with { Total = 1, Bodies = [TwoBodies.Bodies[0]] }));
+        var (panel, window) = Shown(world);
+
+        Assert.Contains("1 BODY", TextOf(panel));
+        Assert.DoesNotContain("1 BODIES", TextOf(panel));
+
+        window.Close();
+    }
 }

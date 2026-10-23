@@ -101,6 +101,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     public override string Summary => SummaryText;
 
     protected override string Noun => "Stations";
+    protected override string NounOne => "Station";
 
     /// <summary>The services the form asks for.</summary>
     public IReadOnlyList<string> Services => _services;
