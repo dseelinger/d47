@@ -163,7 +163,7 @@ public sealed class ShipPlanAdvisor(
             logger,
             cancellationToken,
             maxOutputTokens: OutputCeiling,
-            effort: ThinkingEffort.Medium,
+            effort: ThinkingEffort.High,
             sampling: LlmSampling.Lore).ConfigureAwait(false);
 
         return reply is null ? null : Adventures.AdventureGenerator.Unfence(reply);

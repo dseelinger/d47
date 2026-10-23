@@ -15,9 +15,6 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // Adventure generation.
         "() => turns.Model,",
 
-        // Advice on a ship's build, which the Commander waits on (#570).
-        "() => late.Host?.Turns.Model,",
-
         // The debrief's proposed wording.
         "Turns.Model,",
 
@@ -38,6 +35,17 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsImages;",
         "? ConversationCapability.PictureNote(Turns.Model ?? provider.DefaultModel)",
     ];
+
+    /// <summary>Advice on a ship's build runs on the high model, not the conversation model.</summary>
+    [Fact]
+    public void TheBuildAdvisorReadsTheHighModel()
+    {
+        var readers = CodeLinesContaining("Turns.HighModel")
+            .Where(line => !line.StartsWith("Turns.HighModel =", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Equal(["() => late.Host?.Turns.HighModel,"], readers);
+    }
 
     [Fact]
     public void TheConversationModelIsReadByExactlyTheCallsThatShouldReadIt()

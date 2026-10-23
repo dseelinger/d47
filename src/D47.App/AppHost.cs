@@ -1932,7 +1932,7 @@ public sealed class AppHost : IDisposable
         // The conversation about each build's plan (#570). Late-bound to the turn loop through `late.Host`.
         var buildAdvisor = new ShipPlanAdvisor(
             () => late.Host?.Turns.Provider,
-            () => late.Host?.Turns.Model,
+            () => late.Host?.Turns.HighModel,
             () => late.Host?.Personas.RenderBlock(settings.Current.Llm.PersonalityEnabled),
             () => CommanderStory.Compose(settings.Current.Llm.CharacterSheet, settings.Current.Llm.AboutMe, withStory: false),
             () => gameState.Active,
@@ -4757,6 +4757,7 @@ public sealed class AppHost : IDisposable
 
         // Resolved once, here, rather than at each of the eight call sites (Phase 54).
         Turns.BackgroundModel = BackgroundModels.Resolve(current);
+        Turns.HighModel = HighModels.Resolve(current);
 
         // What the Commander will pay for, kept apart from what the router thinks they asked for.
         Turns.EffortFloor = current.Llm.EffortFloor;

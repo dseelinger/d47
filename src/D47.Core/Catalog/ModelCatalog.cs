@@ -95,6 +95,8 @@ public sealed class ModelCatalog
 
     public string? BackgroundDefaultFor(string providerId) => Find(providerId)?.BackgroundDefault;
 
+    public string? HighDefaultFor(string providerId) => Find(providerId)?.HighDefault;
+
     /// <summary>The ids that appear in the picker, in catalog order.</summary>
     public IReadOnlyList<string> OfferedFor(string providerId) => Find(providerId)?.Offered ?? [];
 
@@ -259,7 +261,15 @@ public sealed class ModelCatalog
                 $"The model catalog's {providerId} default, {defaultModel}, is not an offered model.");
         }
 
-        return new Provider(defaultModel, OptionalString(element, "backgroundDefault"), offered, models);
+        var highDefault = OptionalString(element, "highDefault");
+
+        if (highDefault is not null && !offered.Contains(highDefault, StringComparer.Ordinal))
+        {
+            throw new FormatException(
+                $"The model catalog's {providerId} high default, {highDefault}, is not an offered model.");
+        }
+
+        return new Provider(defaultModel, OptionalString(element, "backgroundDefault"), highDefault, offered, models);
     }
 
     private static CatalogModel ReadModel(string providerId, JsonElement item)
@@ -337,6 +347,7 @@ public sealed class ModelCatalog
     private sealed record Provider(
         string? Default,
         string? BackgroundDefault,
+        string? HighDefault,
         IReadOnlyList<string> Offered,
         Dictionary<string, CatalogModel> Models);
 

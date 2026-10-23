@@ -376,7 +376,7 @@ if (mode.ImportLabel(item) is { Length: > 0 } importLabel)
 
 ### Talking through a build
 
-A ship's own page opens with **Talk through this build**. Type a remark into the field, or say it:
+A ship's own page opens with **Talk through this build**. It is answered by the catalog's high model for your provider (Claude Opus 5.5 or GPT-6 Astra) at High effort, or by your conversation model when you use a custom endpoint. Type a remark into the field, or say it:
 
 - a question about one slot, such as "why that thruster";
 - a critique, such as "is this build any good";

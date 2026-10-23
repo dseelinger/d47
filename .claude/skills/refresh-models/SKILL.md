@@ -36,7 +36,7 @@ List what differs from the file, one line each, with the page it was read from a
 - new models not in the catalog
 - changed prices
 - models the provider has retired or no longer lists
-- whether a provider's `default` or `backgroundDefault` should move
+- whether a provider's `default`, `backgroundDefault` or `highDefault` should move
 
 For each new Anthropic model, give the seven traits d47 sends on: `operatorSystemMessages`,
 `toolSearch`, `minimumCacheablePrefix`, `basicWebSearchOnly`, `legacyThinking`,
@@ -70,7 +70,7 @@ an earlier diff does not cover a changed one.
    ```
 
 3. Report the result. If a test fails, show its output and stop; do not edit tests to match.
-4. When the embedded copy's `default` or `backgroundDefault` changed, add a `CHANGELOG.md` entry
+4. When the embedded copy's `default`, `backgroundDefault` or `highDefault` changed, add a `CHANGELOG.md` entry
    under the current unreleased heading, since the next release ships that copy. A price or trait
    change that alters nothing the user sees needs none.
 

@@ -28,7 +28,7 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
     {
         var model = new ScriptedModel(replies);
 
-        return (new ShipPlanAdvisor(() => model, () => null, () => null, () => null, () => state, null, null, NullLogger.Instance), model);
+        return (new ShipPlanAdvisor(() => model, () => "high-model", () => null, () => null, () => state, null, null, NullLogger.Instance), model);
     }
 
     [Fact]
@@ -109,6 +109,8 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
         Assert.Equal(2, model.Requests.Count);
         Assert.Contains("MainEngines: 8A Thrusters does not fit Thrusters", model.Requests[1], StringComparison.Ordinal);
         Assert.Contains("FrameShiftDrive: there is no blueprint called Dirty Drive Tuning for Frame Shift Drive", model.Requests[1], StringComparison.Ordinal);
+        Assert.Equal(2, model.Calls.Count);
+        Assert.All(model.Calls, call => Assert.Equal(("high-model", ThinkingEffort.High), call));
         Assert.Equal(2, advice.Changes.Count);
         Assert.Empty(advice.Dropped);
     }
@@ -262,6 +264,8 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
     {
         public List<string> Requests { get; } = [];
 
+        public List<(string? Model, ThinkingEffort Effort)> Calls { get; } = [];
+
         public string Id => "scripted";
 
         public string DisplayName => "Scripted";
@@ -280,6 +284,7 @@ public class ABuildPlanIsDiscussedNotRewrittenTests(ITestOutputHelper output)
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            Calls.Add((request.Model, request.Effort));
             Requests.Add(string.Join("\n", request.Prompt.History.Select(message => message.ToString())));
             yield return new LlmStreamEvent.TextDelta(replies[Math.Min(Requests.Count, replies.Length) - 1]);
             yield return new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed);

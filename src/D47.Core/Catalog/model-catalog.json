@@ -1,10 +1,11 @@
 {
   "schema": 1,
-  "published": "2026-10-22",
+  "published": "2026-10-23",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
       "backgroundDefault": "claude-haiku-5-5",
+      "highDefault": "claude-opus-5-5",
       "models": [
         {
           "id": "claude-sonnet-5-5",
@@ -79,6 +80,7 @@
     "openai": {
       "default": "gpt-6.1-sol",
       "backgroundDefault": "gpt-6-luna",
+      "highDefault": "gpt-6-astra",
       "models": [
         { "id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6-sol", "label": "GPT-6 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },

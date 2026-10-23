@@ -375,6 +375,9 @@ public sealed class TurnLoop(
     /// </summary>
     public string? BackgroundModel { get; set; } = model;
 
+    /// <summary>The model for calls that reason across game data, such as talking through a build.</summary>
+    public string? HighModel { get; set; } = model;
+
     /// <summary>
     /// The least effort a turn may run at, or null for whatever <see cref="EffortRouter"/> answered
     /// (Phase 54).

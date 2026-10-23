@@ -21,6 +21,8 @@ public sealed record LlmProviderInfo
 
     public string? BackgroundDefaultModel => ModelCatalogSource.Shared.Current.BackgroundDefaultFor(Id);
 
+    public string? HighDefaultModel => ModelCatalogSource.Shared.Current.HighDefaultFor(Id);
+
     /// <summary>The models d47 knows about at <see cref="DefaultEndpoint"/>.</summary>
     public IReadOnlyList<string> Models => ModelCatalogSource.Shared.Current.OfferedFor(Id);
 

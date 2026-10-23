@@ -86,6 +86,13 @@ public class AModelCatalogItCannotUseIsRefusedTests
     }
 
     [Fact]
+    public void AHighDefaultThatIsNotOfferedIsRefused()
+    {
+        Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(highDefault: "model-c")));
+        Assert.Equal("model-b", ModelCatalog.Parse(Catalog(highDefault: "model-b")).HighDefaultFor("anthropic"));
+    }
+
+    [Fact]
     public void ADuplicateIdIsRefused()
     {
         Assert.Throws<FormatException>(() => ModelCatalog.Parse(Catalog(duplicate: true)));
@@ -101,6 +108,7 @@ public class AModelCatalogItCannotUseIsRefusedTests
     private static string Catalog(
         int schema = 1,
         string defaultModel = "model-a",
+        string? highDefault = null,
         bool unpricedOffered = false,
         bool duplicate = false,
         string? speech = "")
@@ -119,6 +127,7 @@ public class AModelCatalogItCannotUseIsRefusedTests
                 "anthropic": {
                   "default": "{{defaultModel}}",
                   "backgroundDefault": null,
+                  "highDefault": {{(highDefault is null ? "null" : $"\"{highDefault}\"")}},
                   "models": [
                     { "id": "model-a", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 } },
                     { "id": "model-b", "offered": true, "price": {{(unpricedOffered ? "null" : """{ "input": 4, "output": 20, "cacheRead": 0.05, "cacheWrite": 1.25 }""")}} },
