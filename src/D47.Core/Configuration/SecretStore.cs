@@ -85,6 +85,23 @@ public sealed class SecretStore
         return true;
     }
 
+    /// <summary>
+    /// Renames a secret without decrypting it, replacing any secret already under <paramref name="to"/>.
+    /// False when <paramref name="from"/> is absent.
+    /// </summary>
+    public bool Move(string from, string to)
+    {
+        if (!_ciphertext.Remove(from, out var encoded))
+        {
+            return false;
+        }
+
+        _ciphertext[to] = encoded;
+        Flush();
+        _logger.LogInformation("Moved secret {From} to {To}", from, to);
+        return true;
+    }
+
     private void Reload()
     {
         _ciphertext.Clear();

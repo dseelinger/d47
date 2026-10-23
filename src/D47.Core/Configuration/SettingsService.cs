@@ -123,7 +123,8 @@ public sealed class SettingsService
 
         foreach (var row in CommanderRows())
         {
-            if (!string.Equals(row.Binding?.Read(before), row.Binding?.Read(Current), StringComparison.Ordinal))
+            if (row.Kind == SettingKind.Secret
+                || !string.Equals(row.Binding?.Read(before), row.Binding?.Read(Current), StringComparison.Ordinal))
             {
                 Changed?.Invoke(new SettingsChanged(row.Key, Current));
             }
@@ -440,6 +441,24 @@ public sealed class SettingsService
     public bool HasSecret(string? secretName) =>
         secretName is not null && _secrets.Has(secretName);
 
+    /// <summary>Whether this row's secret is stored, for whoever is flying when the row is the Commander's.</summary>
+    public bool HasSecret(SettingRow row) => HasSecret(SecretNameFor(row));
+
+    /// <summary>
+    /// Whether this row's secret is stored, from the names alone, for whoever is flying when the row is the
+    /// Commander's.
+    /// </summary>
+    public bool HoldsSecret(SettingRow row) => SecretNameFor(row) is { } name && HoldsSecret(name);
+
+    /// <summary>
+    /// The name a secret row is stored under: its own for the installation, the flying Commander's for a
+    /// Commander row, and null for a Commander row before anyone has been identified.
+    /// </summary>
+    private string? SecretNameFor(SettingRow row) =>
+        row.Scope != SettingScope.Commander ? row.SecretName
+        : row.SecretName is { } secretName && _commanderFid is { } fid ? CommanderSecret.Name(secretName, fid)
+        : null;
+
     /// <summary>Writes settings that are not a row.</summary>
     public void Replace(string reason, Func<D47Settings, D47Settings> change)
     {
@@ -576,7 +595,12 @@ public sealed class SettingsService
 
     private SettingApplyResult ApplySecret(SettingRow row, string? value, SettingsCaller caller)
     {
-        var name = row.SecretName!;
+        if (SecretNameFor(row) is not { } name)
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Refused,
+                "No Commander has been identified yet. Start Elite Dangerous or pick a Commander, then set this key.");
+        }
 
         if (value is null)
         {

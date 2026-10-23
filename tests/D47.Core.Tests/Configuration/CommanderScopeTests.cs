@@ -61,7 +61,7 @@ public class CommanderScopeTests
             .ToList();
 
         var declared = rows
-            .Where(row => row.Scope == SettingScope.Commander)
+            .Where(row => row.Scope == SettingScope.Commander && row.Kind != SettingKind.Secret)
             .Select(row => row.Key)
             .Order(StringComparer.Ordinal)
             .ToList();
