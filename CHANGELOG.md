@@ -96,6 +96,8 @@ Ship specifications follow the 4.4.2.0 rebalance. The Sidewinder, Eagle, Viper M
 
 D47 knows the Anaconda Mk II: its speed, boost, armour, shields, mass, slots, large pad, four crew and ARX early access, its six armours with their mass, price, hull boost and resistances, and the 6D Mk II Cargo Rack's capacity of 96. Its seats are offered the Multipurpose crew. The Corsair, Caspian Explorer, Lynx Highliner and Kestrel Mk II now have a pad size and crew figure, and the Lynx Highliner's armour has its figures. A new Passenger crew, offering Comms, First Officer and Navigation, is offered on the Lynx Highliner, Orca and Beluga Liner; the Corsair is offered the Multipurpose crew and the Caspian Explorer the Exploration crew.
 
+Station and outfitting searches accept the Anaconda Mk II by name.
+
 A saved neutron, Road to Riches or exobiology plan's result page draws the same map as a carrier plan, in the window and on the big panel. The start is drawn first and, on a loop, the return closes it. A plan saved before positions were read, and a trade plan, keep the page as it was.
 
 A carrier route's result page draws the route as a map to the left of its stops, in the window and on the big panel. Reached stops are drawn behind you, the stops where the tank and hold run out of tritium get a Blue ringed mark, keyed OUT OF TRITIUM, and a route whose stops have no positions keeps the page as it was.

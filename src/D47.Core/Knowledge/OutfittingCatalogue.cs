@@ -6,7 +6,7 @@ public static class OutfittingCatalogue
     public static IReadOnlyList<string> Ships { get; } =
     [
         "Adder", "Alliance Challenger", "Alliance Chieftain", "Alliance Crusader", "Anaconda",
-        "Asp Explorer", "Asp Scout", "Beluga Liner", "Caspian Explorer", "Cobra MkIII",
+        "Anaconda Mk II", "Asp Explorer", "Asp Scout", "Beluga Liner", "Caspian Explorer", "Cobra MkIII",
         "Cobra MkIV", "Cobra MkV", "Corsair", "Diamondback Explorer", "Diamondback Scout",
         "Dolphin", "Eagle", "Federal Assault Ship", "Federal Corvette", "Federal Dropship",
         "Federal Gunship", "Fer-de-Lance", "Hauler", "Imperial Clipper", "Imperial Courier",

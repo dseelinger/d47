@@ -878,7 +878,7 @@ for."* — and echoes a non-default count that was honoured, the way the radius 
 halves of the tool obey it: the commodity search and the module-and-ship search take the same
 argument and now owe the same sentence.
 
-Module and ship names are **not** in the schema. There are 132 modules and 48 ships, and an
+Module and ship names are **not** in the schema. There are 132 modules and 49 ships, and an
 `enum` that large sits in prompt position 1 where one changed byte invalidates the whole cached
 prefix — several kilobytes paid for on every turn to answer a question asked once a session. So
 the parameter is free text and the name is matched against the real catalogue here, before a

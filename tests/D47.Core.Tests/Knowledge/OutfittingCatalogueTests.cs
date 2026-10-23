@@ -72,8 +72,9 @@ public class OutfittingCatalogueTests
     [Fact]
     public void TheCataloguesAreTheOnesTheServiceActuallyHas()
     {
-        // Read from the service's own field_values endpoints on 2026-08-14.
-        Assert.Equal(48, OutfittingCatalogue.Ships.Count);
+        // Read from the service's own field_values endpoints on 2026-08-14; "Anaconda Mk II" is
+        // added from the game's spelling before the service lists it (2026-10-22).
+        Assert.Equal(49, OutfittingCatalogue.Ships.Count);
         Assert.Equal(132, OutfittingCatalogue.Modules.Count);
     }
 }
