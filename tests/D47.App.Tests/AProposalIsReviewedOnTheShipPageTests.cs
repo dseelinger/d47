@@ -197,6 +197,41 @@ public class AProposalIsReviewedOnTheShipPageTests
     }
 
     [AvaloniaFact]
+    public async Task AReplyShowsThatD47IsWorkingUntilTheModelAnswers()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+
+        var answer = new TaskCompletionSource<BuildAdvice>();
+        var bench = Set(_ => answer.Task);
+        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId);
+        var window = Show(page);
+
+        var asking = bench.Talk.AskAsync(bench.BuildId, "Make it jump further.", InputSource.Typed, CancellationToken.None);
+        Dispatcher.UIThread.RunJobs();
+
+        var section = page.GetVisualDescendants().OfType<BuildTalkSection>().Single();
+        var pulse = Assert.Single(section.GetVisualDescendants().OfType<AdventureThinking>());
+
+        Assert.True(pulse.IsEffectivelyVisible);
+        Assert.Contains(BuildTalkSection.Working, Texts(section));
+
+        // Moved by the tick, three ticks to a step.
+        Assert.False(pulse.Beat());
+        Assert.False(pulse.Beat());
+        Assert.True(pulse.Beat());
+
+        answer.SetResult(await ThreeChanges(bench.Ships.Store.Find(bench.BuildId)!));
+        await asking;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(section.GetVisualDescendants().OfType<AdventureThinking>());
+        Assert.DoesNotContain(BuildTalkSection.Working, Texts(section));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task AFailedTurnSaysThePlanIsUnchangedAndOffersRetry()
     {
         using var kit = AppLook.ControlKit();

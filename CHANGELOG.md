@@ -22,6 +22,8 @@ A new Advanced setting, Model for complex tasks, under Provider and model, choos
 
 Talking through a ship's build now runs on the catalog's high model, Claude Opus 5.5 on Anthropic and GPT-6 Astra on OpenAI, at High effort, or on your conversation model with a custom endpoint. Each remark costs more than before.
 
+While D47 is answering a remark about a ship's build, its reply now shows "Working" with three dots that light in turn, in the window, the overlay and the headset. The dots stop when the answer arrives.
+
 The Ships page under Asset Management now follows the fleet while it is open. Ships the journal stores, buys or sells appear or disappear without leaving the tab, and the cards no longer read "not bought yet" for owned hulls when the journals finish loading after the window opens.
 
 On the five Search pages in the main window, you can now drag the boundary between the form and the answer to make the form wider or narrower. The width is remembered, and the same width applies to all five pages. The headset keeps its fixed layout.

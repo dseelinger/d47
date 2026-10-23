@@ -445,8 +445,8 @@ public partial class MainWindow : Window
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 
-            // And the "d47 is composing" animation on the Stories tab, by the same route again (asked for
-            // 2026-08-22).
+            // And the "d47 is composing" animation on the Stories tab and a ship page's build talk, by the same
+            // route again.
             host.Tick.Add("adventures", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickAdventures()));
 
