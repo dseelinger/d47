@@ -921,9 +921,28 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
     }
 
+    /// <summary>The places a turn's text names, with the community link where its source key is the community callout's.</summary>
+    private IReadOnlyList<PanelPlace> TurnPlaces(DrawnTurn turn)
+    {
+        var text = string.Concat(turn.Segments.Select(segment => segment.Text));
+        var places = _places.Find(text, turn.SettingKey);
+
+        return Community.Find(text, turn.SourceKey) is { } community
+            ? [.. places.Where(place => place.Start + place.Length <= community.Start || place.Start >= community.Start + community.Length)
+                .Append(community)
+                .OrderBy(place => place.Start)]
+            : places;
+    }
+
     /// <summary>Takes this surface to a place a message names, closing any dialog page first, as <see cref="SettingsJump"/> does.</summary>
     private void OpenPlace(PanelPlace place)
     {
+        if (place.Url is { } url && _openHelp is not null)
+        {
+            _openHelp(url);
+            return;
+        }
+
         while (Nav.Modal && GoBack())
         {
         }
@@ -3481,9 +3500,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         var prose = !turn.Marker && Page == TranscriptPage.Conversation;
 
         // Found in the text each time it is drawn, so a turn from before a restart links the same way.
-        var places = prose
-            ? _places.Find(string.Concat(turn.Segments.Select(segment => segment.Text)), turn.SettingKey)
-            : [];
+        var places = prose ? TurnPlaces(turn) : [];
 
         Controls.PlaceLinks.Begin(block, places, OpenPlace);
 

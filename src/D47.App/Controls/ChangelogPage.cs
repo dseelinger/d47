@@ -13,12 +13,6 @@ public sealed class ChangelogPage : DialogPage
     /// <summary>The changelog on GitHub, at the branch rather than at a tag.</summary>
     public const string OnlineUrl = "https://github.com/dseelinger/d47/blob/main/CHANGELOG.md";
 
-    /// <summary>
-    /// The community page, which is where the Discord invite lives — deliberately not the invite
-    /// itself.
-    /// </summary>
-    public const string CommunityUrl = "https://dseelinger.github.io/d47/community.html";
-
     public ChangelogPage(string text)
     {
         Title = "What changed";

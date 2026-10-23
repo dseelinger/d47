@@ -2763,7 +2763,7 @@ public sealed class AppHost : IDisposable
                     PendingUpdateVersion = () => late.Host?.PendingUpdateVersion,
 
                     ShowCommunity = () => System.Diagnostics.Process.Start(
-                        new System.Diagnostics.ProcessStartInfo(Controls.ChangelogPage.CommunityUrl)
+                        new System.Diagnostics.ProcessStartInfo(D47.Core.Interface.Community.Url)
                         {
                             UseShellExecute = true,
                         }),
