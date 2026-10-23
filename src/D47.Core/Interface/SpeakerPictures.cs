@@ -17,6 +17,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
     /// <summary>The Narrator's picture name.</summary>
     public const string Narrator = "narrator";
 
+    /// <summary>The shipped portrait every core the Commander wrote shares.</summary>
+    public const string CustomCore = "core.custom";
+
     public SpeakerPictures(IFileSystem files, AppPaths paths)
         : this(files, paths.Pictures, paths.ShippedPortraits, paths.Stories)
     {
@@ -76,7 +79,7 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
 
     /// <summary>
     /// The file to show for <paramref name="picture"/>, or null when none is on disk. A captain's or tower's
-    /// per-Commander name falls back to the shipped picture of its gender.
+    /// per-Commander name falls back to the shipped picture of its gender; a written core's to <see cref="CustomCore"/>.
     /// </summary>
     public string? Find(string? picture)
     {
@@ -85,7 +88,7 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
             return null;
         }
 
-        foreach (var file in IsCore(picture!) ? (string[])[Shipped(picture!), Default(picture!)] : [Chosen(picture!), Shipped(Gendered(picture!)), Default(picture!)])
+        foreach (var file in IsCore(picture!) ? (string[])[Shipped(ShippedCore(picture!)), Default(picture!)] : [Chosen(picture!), Shipped(Gendered(picture!)), Default(picture!)])
         {
             if (files.Stat(file) is not null)
             {
@@ -100,6 +103,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
         PerCommander().Match(picture) is { Success: true } match ? match.Groups[1].Value : picture;
 
     private static bool IsCore(string picture) => picture.StartsWith("core.", StringComparison.Ordinal);
+
+    private static string ShippedCore(string picture) =>
+        picture.StartsWith("core.own.", StringComparison.Ordinal) ? CustomCore : picture;
 
     /// <summary>
     /// The picture a line from <paramref name="speaker"/> carries: a primary member's always, another member's

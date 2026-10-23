@@ -1,9 +1,10 @@
+using D47.Core.Interface;
 using D47.Core.Persona;
 using Xunit;
 
 namespace D47.Core.Tests;
 
-/// <summary>Every shipped core, and the Captain and Tower in both versions, has a portrait in <c>assets\portraits</c>.</summary>
+/// <summary>Every shipped core, the custom core, and the Captain and Tower in both versions, has a portrait in <c>assets\portraits</c>.</summary>
 [Trait("Category", "Gate")]
 public sealed class EveryCoreShipsAPortraitTests
 {
@@ -53,7 +54,9 @@ public sealed class EveryCoreShipsAPortraitTests
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
 
-    private static IEnumerable<string> AllCores() => new[] { PersonaCatalog.Covas }.Concat(PersonaCatalog.Shipped).Select(core => core.Id);
+    private static IEnumerable<string> AllCores() =>
+        new[] { PersonaCatalog.Covas }.Concat(PersonaCatalog.Shipped).Select(core => core.Id)
+            .Append(SpeakerPictures.CustomCore["core.".Length..]);
 
     private static string Portrait(string name) => Path.Combine(Folder(), name + ".jpg");
 

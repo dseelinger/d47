@@ -31,6 +31,32 @@ public sealed class CoresAlwaysDrawTheirShippedPortraitTests
         Assert.False(_pictures.IsChosen(core));
     }
 
+    [Fact]
+    public void ACoreTheCommanderWroteDrawsTheCustomPortrait()
+    {
+        var core = SpeakerPictures.Core("own.my-core");
+        _install.Files.WriteBytes(_pictures.Shipped(SpeakerPictures.CustomCore), [1]);
+
+        Assert.Equal(_pictures.Shipped(SpeakerPictures.CustomCore), _pictures.Find(core));
+    }
+
+    [Fact]
+    public void ACoreTheCommanderWroteDrawsNothingWhenTheCustomPortraitIsNotInstalled()
+    {
+        Assert.Null(_pictures.Find(SpeakerPictures.Core("own.my-core")));
+    }
+
+    [Fact]
+    public void AChosenFileDoesNotShadowTheCustomPortrait()
+    {
+        var core = SpeakerPictures.Core("own.my-core");
+        _install.Files.WriteBytes(_pictures.Chosen(core), [1]);
+        _install.Files.WriteBytes(_pictures.Chosen(SpeakerPictures.CustomCore), [2]);
+        _install.Files.WriteBytes(_pictures.Shipped(SpeakerPictures.CustomCore), [3]);
+
+        Assert.Equal(_pictures.Shipped(SpeakerPictures.CustomCore), _pictures.Find(core));
+    }
+
     [Theory]
     [InlineData("commander.abc")]
     [InlineData("crew.7")]

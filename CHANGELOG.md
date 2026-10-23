@@ -22,6 +22,8 @@ The distance on the Stations, Outfitting and Signals search pages, and `max_dist
 
 Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.
 
+A core you wrote yourself now has a picture beside its lines in the conversation, the custom core's portrait. It had none.
+
 The Carrier Captain's portraits are new. Both captains wear a burgundy and black command tunic on a carrier bridge, in place of a naval cap and braid.
 
 The last step of setup has a link, THE D47 DISCORD, that opens the community page in your browser.
