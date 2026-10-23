@@ -3142,7 +3142,7 @@ public static class GalaxyCapability
             : null;
 
     /// <summary>Body results as prose, and it reads differently depending on what was asked.</summary>
-    private static string Describe(BodySearchResult result, BodyQuery query)
+    internal static string Describe(BodySearchResult result, BodyQuery query)
     {
         if (result.Bodies.Count == 0)
         {
@@ -3156,14 +3156,14 @@ public static class GalaxyCapability
             var among = Math.Min(result.Total, BodyQuery.RichestOf);
 
             report.Append(
-                $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched; here are the richest "
+                $"{GalaxyQuery.SayTotal(result.Total)} bod{(result.Total == 1 ? "y" : "ies")} matched; here are the richest "
                 + $"{result.Bodies.Count} in {query.Material} among the nearest {among}");
         }
         else
         {
             report.Append(result.Total == result.Bodies.Count
-                ? $"{result.Total} bod{(result.Total == 1 ? "y" : "ies")} matched"
-                : $"{result.Total} bodies matched; {Ranked(query.Sort, result.Bodies.Count)}");
+                ? $"{GalaxyQuery.SayTotal(result.Total)} bod{(result.Total == 1 ? "y" : "ies")} matched"
+                : $"{GalaxyQuery.SayTotal(result.Total)} bodies matched; {Ranked(query.Sort, result.Bodies.Count)}");
         }
 
         if (result.Reference is not null)
@@ -3316,7 +3316,7 @@ public static class GalaxyCapability
             : string.Empty;
 
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
-    private static string Describe(StationSearchResult result, StationQuery query)
+    internal static string Describe(StationSearchResult result, StationQuery query)
     {
         var wanted = Describe(query);
 
@@ -3328,8 +3328,8 @@ public static class GalaxyCapability
         var report = new StringBuilder();
 
         report.AppendLine(result.Total == result.Stations.Count
-            ? $"{result.Total} station{(result.Total == 1 ? "" : "s")} sell {wanted}."
-            : $"{result.Total} stations sell {wanted}; here are the nearest {result.Stations.Count}.");
+            ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} sell {wanted}."
+            : $"{GalaxyQuery.SayTotal(result.Total)} stations sell {wanted}; here are the nearest {result.Stations.Count}.");
 
         foreach (var station in result.Stations)
         {
@@ -3367,7 +3367,7 @@ public static class GalaxyCapability
     }
 
     /// <summary>A station search's answer: each station's place, type, largest pad and the asked-for services it has.</summary>
-    private static string DescribeStations(StationSearchResult result, StationQuery query)
+    internal static string DescribeStations(StationSearchResult result, StationQuery query)
     {
         if (result.Stations.Count == 0)
         {
@@ -3379,8 +3379,8 @@ public static class GalaxyCapability
         var report = new StringBuilder();
 
         report.Append(result.Total == result.Stations.Count
-            ? $"{result.Total} station{(result.Total == 1 ? "" : "s")} matched"
-            : $"{result.Total} stations matched; {Ranked(query.Sort, result.Stations.Count)}");
+            ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} matched"
+            : $"{GalaxyQuery.SayTotal(result.Total)} stations matched; {Ranked(query.Sort, result.Stations.Count)}");
 
         if (result.Reference is not null)
         {
@@ -3468,7 +3468,7 @@ public static class GalaxyCapability
         "Galaxy search is switched off, so I can't look that up. The Commander can turn it on in settings.";
 
     /// <summary>The result as prose.</summary>
-    private static string Describe(GalaxySearchResult result, GalaxyQuery query)
+    internal static string Describe(GalaxySearchResult result, GalaxyQuery query)
     {
         // Only a faction search names factions, and only a power search names powers, so other answers stay short.
         var asked = query.Criteria
@@ -3491,8 +3491,8 @@ public static class GalaxyCapability
         var report = new StringBuilder();
 
         report.Append(result.Total == result.Systems.Count
-            ? $"{result.Total} system{(result.Total == 1 ? "" : "s")} matched"
-            : $"{result.Total} systems matched; {Ranked(query.Sort, result.Systems.Count)}");
+            ? $"{GalaxyQuery.SayTotal(result.Total)} system{(result.Total == 1 ? "" : "s")} matched"
+            : $"{GalaxyQuery.SayTotal(result.Total)} systems matched; {Ranked(query.Sort, result.Systems.Count)}");
 
         if (result.Reference is not null)
         {

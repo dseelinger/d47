@@ -438,6 +438,13 @@ public sealed record GalaxyQuery
     /// <summary>The most results one search returns.</summary>
     public const int MaxSize = 100;
 
+    /// <summary>The match count Spansh stops at; a total at or above it is a lower bound.</summary>
+    public const int CountCeiling = 10_000;
+
+    /// <summary>A match total as spoken: exact below the ceiling, "10,000 or more" at it.</summary>
+    public static string SayTotal(int total) =>
+        total >= CountCeiling ? $"{CountCeiling:N0} or more" : total.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     private GalaxyQuery()
     {
     }
