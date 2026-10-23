@@ -3,7 +3,7 @@ using System.Globalization;
 namespace D47.Core.Hotas;
 
 /// <summary>One button on one controller (Phase 53).</summary>
-/// <param name="DeviceId">The <c>NonRoamableId</c>.</param>
+/// <param name="DeviceId">The <see cref="HidIdentity"/> of the interface.</param>
 /// <param name="Button">Zero-based index, as <see cref="HotasReading.Buttons"/> reports it.</param>
 public readonly record struct HotasButton(string DeviceId, int Button)
 {

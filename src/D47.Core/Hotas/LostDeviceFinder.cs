@@ -3,7 +3,7 @@ using D47.Core.Configuration;
 namespace D47.Core.Hotas;
 
 /// <summary>A lost device found again by flipping one of its switches.</summary>
-/// <param name="OldId">The <c>NonRoamableId</c> the switches were learned on.</param>
+/// <param name="OldId">The <see cref="HidIdentity"/> the switches were learned on.</param>
 /// <param name="NewId">The id the device has now.</param>
 /// <param name="Device">The found device's <see cref="HotasReading.Describe"/>.</param>
 /// <param name="Flipped">The stored name of the switch that was flipped.</param>

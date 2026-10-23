@@ -31,7 +31,7 @@ public sealed record CaptureResult
     /// <summary>The positions found, in the order they were walked.</summary>
     public IReadOnlyList<SwitchPosition> Positions { get; init; } = [];
 
-    /// <summary>The <c>NonRoamableId</c> the walk happened on.</summary>
+    /// <summary>The <see cref="HidIdentity"/> the walk happened on.</summary>
     public string DeviceId { get; init; } = string.Empty;
 
     public string Device { get; init; } = string.Empty;

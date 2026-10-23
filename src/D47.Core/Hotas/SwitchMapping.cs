@@ -77,7 +77,7 @@ public sealed record SwitchMapping
     /// <summary>What the Commander calls it.</summary>
     public required string Name { get; init; }
 
-    /// <summary>The <c>NonRoamableId</c> the walk happened on.</summary>
+    /// <summary>The <see cref="HidIdentity"/> the walk happened on.</summary>
     public required string DeviceId { get; init; }
 
     /// <summary>What the device looked like when the walk happened, for the row and the report.</summary>

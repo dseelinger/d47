@@ -6,7 +6,7 @@ namespace D47.Core.Hotas;
 /// </summary>
 public sealed record HotasReading
 {
-    /// <summary>The <c>NonRoamableId</c>.</summary>
+    /// <summary>The <see cref="HidIdentity"/> of the interface.</summary>
     public required string Id { get; init; }
 
     /// <summary>Reported for the capture report only.</summary>
