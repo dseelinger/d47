@@ -20,6 +20,8 @@ A galaxy search whose match count reaches Spansh's limit of ten thousand now say
 
 Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.
 
+The Carrier Captain's portraits are new. Both captains wear a burgundy and black command tunic on a carrier bridge, in place of a naval cap and braid.
+
 The last step of setup has a link, THE D47 DISCORD, that opens the community page in your browser.
 
 The bar under a story write now estimates the time at the effort the app writes stories at. For Claude Sonnet 5.5 it expects about two and a half minutes instead of under half a minute; for GPT-6 Luna, about a minute.
