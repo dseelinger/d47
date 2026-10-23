@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story or adventure rank objective can now name the Imperial Navy or the Federal Navy, up to King or Admiral, and reads "reach Baron in the Imperial Navy". The story writer is told your navy ranks by name.
+
 A story or adventure rank objective can now ask for Elite I to Elite V in Combat, Trade, Exploration, Mercenary and Exobiology, and reads "reach Elite III in Trade". CQC objectives still stop at Elite.
 
 Privacy and egress settings now have a Usage counts switch, on by default, and the egress list names it. It counts how often each tool is used and sends each finished day once, at startup and hourly, with no identifier. Turning it off empties the counts and deletes data\usage-counts.json. A test drive counts but never sends.

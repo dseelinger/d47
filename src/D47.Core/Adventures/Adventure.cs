@@ -351,6 +351,8 @@ public sealed record AdventureTrigger
         TriggerKind.Dock => $"dock at {Station ?? Market(MarketId)}{In()}",
         TriggerKind.Land => $"land on {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Scan => $"scan {Body ?? Address(SystemAddress, BodyId)}{In()}",
+        TriggerKind.Rank when Careers.IsNavy(Career) && Rank is { } navyRank && Careers.RankName(Career, navyRank) is { } navyName
+            => $"reach {navyName} in the {Careers.Word(Career)}",
         TriggerKind.Rank => Rank is { } rank && rank >= Journal.RankStanding.Elite
             ? $"reach {Journal.RankStanding.EliteName(rank)} in {Careers.Word(Career)}"
             : $"reach {Careers.Word(Career)} rank {Rank}",

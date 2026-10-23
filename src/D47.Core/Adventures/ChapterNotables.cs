@@ -56,7 +56,9 @@ public static class ChapterNotables
 
             case "Promotion":
                 return Careers.Keys.FirstOrDefault(key => raw.Int(key) is not null) is { } career
-                    ? new Notable(NotableKind.Promotion, at, $"Promoted to {Careers.Word(career)} rank {raw.Int(career)!.Value.ToString(CultureInfo.InvariantCulture)}.")
+                    ? new Notable(NotableKind.Promotion, at, Careers.IsNavy(career)
+                        ? $"Promoted to {Careers.RankName(career, raw.Int(career)!.Value)} in the {Careers.Word(career)}."
+                        : $"Promoted to {Careers.Word(career)} rank {raw.Int(career)!.Value.ToString(CultureInfo.InvariantCulture)}.")
                     : null;
 
             case "EngineerProgress":

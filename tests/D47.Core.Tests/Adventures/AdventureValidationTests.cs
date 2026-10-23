@@ -166,7 +166,7 @@ public class AdventureValidationTests
         Assert.Equal("Explore", Careers.Match("exploration"));
         Assert.Equal("Explore", Careers.Match("Explore"));
         Assert.Equal("Soldier", Careers.Match("Mercenary"));
-        Assert.Null(Careers.Match("Federation"));
+        Assert.Null(Careers.Match("Piracy"));
     }
 
     [Fact]

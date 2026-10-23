@@ -2548,7 +2548,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
-        text.AppendLine($"- \"rank\": the Commander is promoted to a rank in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now. Ranks run 1 to 13, where 8 is Elite and 9 to 13 are Elite I to Elite V; CQC runs 1 to 8.");
+        text.AppendLine($"- \"rank\": the Commander is promoted to a rank in a career or a navy — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now. Career ranks run 1 to 13, where 8 is Elite and 9 to 13 are Elite I to Elite V; CQC runs 1 to 8. A navy runs 1 to 14, up to King or Admiral. Higher navy ranks need promotion missions from that superpower's factions, so pair a navy rank objective with mission objectives for those factions.");
         if (ships.Count > 0)
         {
             var hulls = string.Join(", ", ships);
@@ -3681,7 +3681,7 @@ public sealed class AdventureGenerator(
 
                     if (held >= top)
                     {
-                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {RankStanding.EliteName(top)}; make it another career or another kind of objective.");
+                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {(Careers.IsNavy(career) ? Careers.RankName(career, top) : RankStanding.EliteName(top))}; make it another career or another kind of objective.");
                     }
                     else if (beat.Rank is not { } rank || rank <= held || rank > top)
                     {
@@ -4255,7 +4255,9 @@ public sealed class AdventureGenerator(
             {
                 text.AppendLine("- Ranks held: " + string.Join(", ", Ranks.Standings
                     .Where(standing => Careers.Keys.Contains(standing.Career, StringComparer.OrdinalIgnoreCase))
-                    .Select(standing => $"{Careers.Word(standing.Career)} {standing.Rank}")) + ".");
+                    .Select(standing => Careers.IsNavy(standing.Career)
+                        ? $"{Careers.Word(standing.Career)} {Careers.RankName(standing.Career, standing.Rank)}"
+                        : $"{Careers.Word(standing.Career)} {standing.Rank}")) + ".");
             }
 
             return text.ToString();

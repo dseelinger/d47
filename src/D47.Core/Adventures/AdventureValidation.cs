@@ -6,11 +6,20 @@ using D47.Core.Persona;
 
 namespace D47.Core.Adventures;
 
-/// <summary>The career ladders a rank beat may name, and how each is said.</summary>
+/// <summary>The career and navy ladders a rank beat may name, and how each is said.</summary>
 public static class Careers
 {
     /// <summary>The journal's own keys, which are what a <c>Promotion</c> event carries.</summary>
-    public static IReadOnlyList<string> Keys => RankState.Careers;
+    public static IReadOnlyList<string> Keys { get; } = [.. RankState.Careers, Empire, Federation];
+
+    public const string Empire = "Empire";
+
+    public const string Federation = "Federation";
+
+    /// <summary>Whether the key is the Imperial or the Federal navy rather than a career.</summary>
+    public static bool IsNavy(string? career) =>
+        string.Equals(career, Empire, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(career, Federation, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The journal's key for a spoken or typed career word, or null if it is not one.</summary>
     public static string? Match(string? text)
@@ -43,12 +52,22 @@ public static class Careers
         ["Merc"] = "Soldier",
         ["Mercenaries"] = "Soldier",
         ["Xenobiology"] = "Exobiologist",
+        ["Imperial"] = Empire,
+        ["Federal"] = Federation,
         ["Xenobiologist"] = "Exobiologist",
     };
 
-    /// <summary>The highest rank a rank objective may name: Elite V, or Elite for CQC.</summary>
+    /// <summary>The highest rank a rank objective may name: 14 for a navy, Elite V for a career, Elite for CQC.</summary>
     public static int TopRank(string? career) =>
-        string.Equals(career, "CQC", StringComparison.OrdinalIgnoreCase) ? RankStanding.Elite : RankStanding.EliteTop;
+        IsNavy(career) ? RankStanding.NavyTop
+        : string.Equals(career, "CQC", StringComparison.OrdinalIgnoreCase) ? RankStanding.Elite
+        : RankStanding.EliteTop;
+
+    /// <summary>The name of a rank on a ladder: a navy rank by its title, a career rank as <see cref="RankWord"/>.</summary>
+    public static string RankName(string? career, int rank) =>
+        string.Equals(career, Empire, StringComparison.OrdinalIgnoreCase) ? NavalRanks.EmpireName(rank) ?? RankWord(rank)
+        : string.Equals(career, Federation, StringComparison.OrdinalIgnoreCase) ? NavalRanks.FederationName(rank) ?? RankWord(rank)
+        : RankWord(rank);
 
     /// <summary>A rank in words: "Elite III" from 8 up, otherwise "rank 6".</summary>
     public static string RankWord(int rank) =>
@@ -60,6 +79,8 @@ public static class Careers
         "Explore" => "Exploration",
         "Soldier" => "Mercenary",
         "Exobiologist" => "Exobiology",
+        "Empire" => "Imperial Navy",
+        "Federation" => "Federal Navy",
         null => "an unknown career",
         _ => career,
     };

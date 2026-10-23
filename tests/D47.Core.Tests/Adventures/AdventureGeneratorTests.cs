@@ -314,7 +314,7 @@ public sealed class AdventureGeneratorTests
         var outcome = await Generator(provider, new Galaxy()).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("Objective 2 (The Column Will Not Balance) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC.", outcome.Refusal);
+        Assert.Contains("Objective 2 (The Column Will Not Balance) is a rank objective but names no career; \"career\" must be one of Combat, Trade, Exploration, Mercenary, Exobiology, CQC, Imperial Navy, Federal Navy.", outcome.Refusal);
         Assert.DoesNotContain("\"\"", outcome.Refusal);
     }
 

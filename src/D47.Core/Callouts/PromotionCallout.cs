@@ -46,7 +46,7 @@ public sealed class PromotionCallout : ICallout
 
                         yield return new Announcement(
                             KeyPrefix + ladder.ToLowerInvariant(),
-                            $"Promoted. {Careers.Word(ladder)}, {standing.Describe()}.");
+                            $"Promoted. {(Careers.IsNavy(ladder) ? ladder : Careers.Word(ladder))}, {standing.Describe()}.");
                     }
 
                     break;
