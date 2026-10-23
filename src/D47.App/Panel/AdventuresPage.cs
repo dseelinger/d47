@@ -313,7 +313,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             body.Children.Add(new AdventureThinking());
         }
 
-        card.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name));
+        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name)));
         return card;
     }
 

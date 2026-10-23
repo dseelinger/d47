@@ -283,7 +283,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         var row = Row(6, [.. parts]);
         var crumb = new NavCrumb(ReadPrefix + card.Id, card.Title) { Level = ReadPrefix };
 
-        row.PointerPressed += (_, _) => _nav.Drill(crumb);
+        ListRow.Opens(row, () => _nav.Drill(crumb));
         return row;
     }
 
@@ -681,7 +681,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         var row = Row([.. parts]);
 
         row.Margin = new Thickness(0, 0, 0, 10);
-        row.PointerPressed += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title) { Level = ReadPrefix });
+        ListRow.Opens(row, () => _nav.Drill(new NavCrumb(ReadPrefix + story.Id, story.Title) { Level = ReadPrefix }));
         return row;
     }
 
