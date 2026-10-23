@@ -112,8 +112,8 @@ public static class ShipsCapability
                 Name = "promote_ship_plan",
                 Description =
                     "Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and "
-                    + "one planned change produces the modification plus whatever unlocking and ranking "
-                    + "it needs.",
+                    + "each planned slot becomes a line for its blueprint and grade, plus a second line "
+                    + "when the slot names an experimental effect.",
                 Protected = true,
                 Parameters =
                 [

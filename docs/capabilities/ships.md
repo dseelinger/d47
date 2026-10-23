@@ -443,16 +443,18 @@ to do about it.
 
 #### `promote_ship_plan`
 
-Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and one planned
-change produces the modification plus whatever unlocking and ranking it needs.
+Offer a ship's build to the checklist. It is a proposal: the Commander accepts, and each planned
+slot becomes a line for its blueprint and grade, plus a second line when the slot names an
+experimental effect.
 
 ```json
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}
 ```
 
-**Promotion is one-to-many.** `EngineeringPlan` already emits an `EngineerAccess` step beside a
-modification, so promoting one planned change produces several lines — and each carries the slot
-that caused it in its intent, which is what lets a later revision find them again.
+**Promotion is one-to-many.** A slot produces a blueprint line and, when it names an experimental
+effect, an experimental line. These are the only two kinds. Each carries its slot in its intent,
+which is what lets a later revision find them again. Promotion adds no engineer unlock or rank
+lines.
 
 #### `drop_ship_plan`
 
