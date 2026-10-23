@@ -1,4 +1,4 @@
-﻿namespace D47.Core.Journal;
+namespace D47.Core.Journal;
 
 /// <summary>
 /// One Commander's derived state — everything Phase 7 knows about them, folded from the journal.
@@ -25,6 +25,16 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public ShipLoadout FlownShip => Ship.IsKnown
         ? Ship
         : (Loadouts.For(Ship.ShipId) ?? Loadouts.LastSeen)?.Loadout ?? Ship;
+
+    /// <summary>
+    /// The ship last seen, when the live journal has not named one and it is not stored since; null otherwise.
+    /// </summary>
+    public ShipLoadout? LastFlownShip =>
+        !Ship.IsKnown
+        && Loadouts.LastSeen?.Loadout is { IsKnown: true, ShipId: { } id } remembered
+        && !Fleet.Ships.Any(stored => stored.ShipId == id)
+            ? remembered
+            : null;
 
     /// <summary>Their fleet carrier, if they have one.</summary>
     public CarrierState Carrier { get; internal set; } = CarrierState.None;

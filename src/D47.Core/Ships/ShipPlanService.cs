@@ -16,7 +16,7 @@ namespace D47.Core.Ships;
 /// The journal's record of it, or null for a hull that is only intended.
 /// </param>
 /// <param name="IsActive">Whether this is the ship the Commander is sitting in.</param>
-public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsActive)
+public sealed record FleetEntry(ShipBuild? Build, StoredShip? Stored, bool IsActive, bool LastFlown = false)
 {
     /// <summary>
     /// Owned is derived and intended is authored, which is the same rule the checklist already draws
@@ -121,6 +121,25 @@ public sealed class ShipPlanService(
                     Here = true,
                 },
                 IsActive: true));
+
+            if (build is not null)
+            {
+                claimed.Add(build.Id);
+            }
+        }
+
+        else if (live?.LastFlownShip is { ShipId: { } lastId } last)
+        {
+            var build = builds.FirstOrDefault(candidate => candidate.ShipId == lastId);
+
+            entries.Add(new FleetEntry(
+                build,
+                new StoredShip(lastId, last.Type ?? "unknown", last.Name, live.Location.StarSystem ?? "unknown")
+                {
+                    Here = true,
+                },
+                IsActive: true,
+                LastFlown: true));
 
             if (build is not null)
             {

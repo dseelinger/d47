@@ -217,7 +217,7 @@ public sealed class ShipsMode(
         // does not, so "here" becomes the station it is parked at.
         if (entry?.Stored is { } stored)
         {
-            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive), entry.IsActive ? LoadoutTone.Here : LoadoutTone.Body)
+            lines.Add(new LoadoutLine(Whereabouts(stored, entry.IsActive, entry.LastFlown), entry.IsActive ? LoadoutTone.Here : LoadoutTone.Body)
             {
                 // The system, on the clipboard, for Elite's Galaxy Map search.
                 Copy = stored.HasSystem ? new LoadoutCopy(stored.StarSystem) : null,
@@ -265,8 +265,15 @@ public sealed class ShipsMode(
             : null;
 
     /// <summary>Where the ship is, in a sentence rather than in the row's one phrase.</summary>
-    private static string Whereabouts(StoredShip stored, bool active)
+    private static string Whereabouts(StoredShip stored, bool active, bool lastFlown)
     {
+        if (active && lastFlown)
+        {
+            return stored.HasSystem
+                ? $"You were flying it when you last logged out, in {stored.StarSystem}."
+                : "You were flying it when you last logged out.";
+        }
+
         if (active)
         {
             // The system too, so the copy glyph beside this line has something to be about — the ship under

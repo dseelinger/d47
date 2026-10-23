@@ -1269,6 +1269,10 @@ public static class JournalCapability
             {
                 report.AppendLine($"Currently flying {active.Ship.Describe()}.");
             }
+            else if (active.LastFlownShip is { } lastFlown)
+            {
+                report.AppendLine($"Last flown {lastFlown.Describe()}; you are logged out.");
+            }
 
             if (fleet.Ships.Count == 0)
             {
