@@ -780,6 +780,13 @@ public partial class MainWindow : Window
 
     private void OnTunnelKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.F1 && e.KeyModifiers == KeyModifiers.None && ModalHost.For(this).Top is null)
+        {
+            e.Handled = true;
+            Panel.ToggleHelp();
+            return;
+        }
+
         if (IsPushToTalk(e))
         {
             _pushToTalkHeld = true;

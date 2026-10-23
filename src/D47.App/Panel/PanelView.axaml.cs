@@ -1694,6 +1694,9 @@ public partial class PanelView : UserControl, IPanelTabHost
     public bool OpenHelp() =>
         OpenHelpFor(Tab == PanelTab.Transcript || Nav.Modal ? null : (PagePane.Child as IPageChrome)?.HelpTopic);
 
+    /// <summary>Opens help for the page showing, or closes it when it is showing.</summary>
+    public bool ToggleHelp() => HelpLevel.Showing(Nav) ? GoBack() : OpenHelp();
+
     /// <summary>
     /// The same, for a mark that is about something narrower than the tab it sits on — a settings
     /// card's question mark, which is about that capability rather than about Settings (asked for
@@ -1803,6 +1806,13 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         if (!_searchable)
         {
+            return;
+        }
+
+        if (e.Key == Key.F1 && e.KeyModifiers == KeyModifiers.None)
+        {
+            e.Handled = true;
+            ToggleHelp();
             return;
         }
 

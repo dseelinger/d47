@@ -35,7 +35,7 @@ nav_order: 100
 <section>
 <h2><span class="num">2</span> Or press HELP on any card.</h2>
 <p class="say">Press HELP on a settings card.</p>
-<p class="expect">The help page opens at that exact row, not at the top of the page.</p>
+<p class="expect">The help page opens at that exact row, not at the top of the page. F1 does what HELP does, and F1 again closes help.</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Any settings card">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Any settings card</text>
