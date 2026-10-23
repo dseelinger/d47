@@ -64,8 +64,8 @@ public sealed record GalaxyMapDrawn(
 }
 
 /// <summary>
-/// The galaxy top-down through a <see cref="GalaxyViewport"/> (#1406): Elite's regions, the Commander's travels,
-/// the plotted route and the Commander. Geometry is rebuilt when the scene, the viewport or the size changes.
+/// The galaxy through a <see cref="GalaxyViewport"/> at its heading and tilt (#1406): Elite's regions on the plane, the
+/// Commander's travels, the plotted route and the Commander. Geometry is rebuilt when the scene, the viewport or the size changes.
 /// </summary>
 /// <remarks>
 /// On the desktop the wheel zooms one step and a drag pans. A press and release at one point, on the desktop or the
@@ -111,12 +111,15 @@ public sealed class GalaxyMapView : Control
     private static Color? _groundColour;
     private static WriteableBitmap? _ground;
     private static StreamGeometry? _borders;
+    private static StreamGeometry? _angledBorders;
+    private static (double Heading, double Tilt) _angledFor;
     private static IReadOnlyList<(string Name, StarPosition At)>? _regionNames;
 
     private GalaxyMapScene _scene = GalaxyMapScene.Empty;
     private GalaxyViewport _viewport = GalaxyViewport.WholeGalaxy;
 
     private StreamGeometry? _legs;
+    private (double Heading, double Tilt) _legsFor;
     private StreamGeometry? _visited;
     private StreamGeometry? _unvisited;
     private IReadOnlyList<(GalaxyMapStar Star, Point At)> _unvisitedAt = [];
@@ -163,6 +166,9 @@ public sealed class GalaxyMapView : Control
     public GalaxyMapDrawn Drawn { get; private set; } = GalaxyMapDrawn.Nothing;
 
     public GalaxyMapStar? Selected => _selected;
+
+    /// <summary>Where You is drawn now, or null when the scene has no Commander.</summary>
+    internal Point? YouAt => _you;
 
     public void Clear()
     {
@@ -230,6 +236,11 @@ public sealed class GalaxyMapView : Control
 
     private bool Wide => _viewport.LightYearsAcross >= DetailAcross;
 
+    private (double Heading, double Tilt) Angles => (_viewport.Heading, _viewport.Tilt);
+
+    /// <summary>True at tilt 90, where the plane has no height on screen.</summary>
+    private bool EdgeOn => Math.Cos(_viewport.Tilt * Math.PI / 180) < 1e-6;
+
     private Point Screen(StarPosition at)
     {
         var (x, y) = _viewport.ToScreen(at, Bounds.Width, Bounds.Height);
@@ -258,9 +269,10 @@ public sealed class GalaxyMapView : Control
             _viewport = fitted;
         }
 
-        if (_scene.Travels is { } travels && _legs is null)
+        if (_scene.Travels is { } travels && (_legs is null || _legsFor != Angles))
         {
-            _legs = Legs(travels);
+            _legs = Legs(travels, _viewport);
+            _legsFor = Angles;
         }
 
         _visited = _scene.Travels is { } picture ? Squares(picture.Systems) : null;
@@ -419,7 +431,8 @@ public sealed class GalaxyMapView : Control
         Picked?.Invoke(_selected);
     }
 
-    private static StreamGeometry Legs(TravelPicture travels)
+    /// <summary>Every leg in the view's face coordinates at the viewport's angles.</summary>
+    private static StreamGeometry Legs(TravelPicture travels, GalaxyViewport viewport)
     {
         var geometry = new StreamGeometry();
 
@@ -427,11 +440,11 @@ public sealed class GalaxyMapView : Control
 
         foreach (var line in travels.Lines.Where(line => line.Count >= 2))
         {
-            open.BeginFigure(new Point(line[0].X, line[0].Z), false);
+            open.BeginFigure(Faced(viewport, line[0]), false);
 
             foreach (var at in line.Skip(1))
             {
-                open.LineTo(new Point(at.X, at.Z));
+                open.LineTo(Faced(viewport, at));
             }
 
             open.EndFigure(false);
@@ -503,19 +516,23 @@ public sealed class GalaxyMapView : Control
         context.DrawRectangle(Brush(ThemeManager.BgKey), null, new Rect(size));
 
         var scale = Scale;
+        var centre = _viewport.Face(new StarPosition(_viewport.CentreX, _viewport.CentreY, _viewport.CentreZ));
         var toScreen = new Matrix(
             scale, 0,
             0, -scale,
-            (size.Width / 2) - (_viewport.CentreX * scale),
-            (size.Height / 2) + (_viewport.CentreZ * scale));
+            (size.Width / 2) - (centre.Across * scale),
+            (size.Height / 2) + (centre.Up * scale));
 
         if (_scene.Regions)
         {
-            Ground(context, size);
-
-            using (context.PushTransform(toScreen))
+            if (!EdgeOn)
             {
-                context.DrawGeometry(null, new Pen(Brush(ThemeManager.Line2Key), 1 / scale), Borders());
+                Ground(context, size);
+
+                using (context.PushTransform(toScreen))
+                {
+                    context.DrawGeometry(null, new Pen(Brush(ThemeManager.Line2Key), 1 / scale), Borders(_viewport));
+                }
             }
 
             if (Wide)
@@ -611,6 +628,23 @@ public sealed class GalaxyMapView : Control
         var ground = GroundImage(colour);
         var extent = GalacticRegions.Extent;
 
+        if (_viewport.Heading != 0 || _viewport.Tilt != 0)
+        {
+            var cell = GroundCell();
+            var origin = Screen(new StarPosition(extent.X0, 0, extent.Z1));
+            var across = Screen(new StarPosition(extent.X0 + cell, 0, extent.Z1)) - origin;
+            var down = Screen(new StarPosition(extent.X0, 0, extent.Z1 - cell)) - origin;
+            var pixels = new Rect(0, 0, ground.PixelSize.Width, ground.PixelSize.Height);
+
+            using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.None }))
+            using (context.PushTransform(new Matrix(across.X, across.Y, down.X, down.Y, origin.X, origin.Y)))
+            {
+                context.DrawImage(ground, pixels, pixels);
+            }
+
+            return;
+        }
+
         var topLeft = Screen(new StarPosition(extent.X0, 0, extent.Z1));
         var bottomRight = Screen(new StarPosition(extent.X1, 0, extent.Z0));
         var whole = new Rect(topLeft, bottomRight);
@@ -645,7 +679,7 @@ public sealed class GalaxyMapView : Control
 
         var extent = GalacticRegions.Extent;
         var runs = GalacticRegions.Runs();
-        var cell = runs.Count == 0 ? 1 : runs[0].Z1 - runs[0].Z0;
+        var cell = GroundCell();
         var width = Math.Max(1, (int)Math.Round((extent.X1 - extent.X0) / cell));
         var height = Math.Max(1, (int)Math.Round((extent.Z1 - extent.Z0) / cell));
         var pixels = new int[width * height];
@@ -680,12 +714,35 @@ public sealed class GalaxyMapView : Control
         return bitmap;
     }
 
-    /// <summary>Every region border in galaxy coordinates, X across and Z up; built once.</summary>
-    private static StreamGeometry Borders()
+    /// <summary>The light years one ground pixel covers on each side.</summary>
+    private static double GroundCell()
     {
-        if (_borders is { } built)
+        var runs = GalacticRegions.Runs();
+
+        return runs.Count == 0 ? 1 : runs[0].Z1 - runs[0].Z0;
+    }
+
+    private static Point Faced(GalaxyViewport viewport, StarPosition at)
+    {
+        var (across, up) = viewport.Face(at);
+
+        return new Point(across, up);
+    }
+
+    /// <summary>Every region border in the view's face coordinates; the set at rest and the last turned set are kept.</summary>
+    private static StreamGeometry Borders(GalaxyViewport viewport)
+    {
+        var angles = (viewport.Heading, viewport.Tilt);
+        var atRest = angles == (0, 0);
+
+        if (atRest && _borders is { } still)
         {
-            return built;
+            return still;
+        }
+
+        if (!atRest && _angledBorders is { } turned && _angledFor == angles)
+        {
+            return turned;
         }
 
         var geometry = new StreamGeometry();
@@ -694,13 +751,20 @@ public sealed class GalaxyMapView : Control
         {
             foreach (var edge in GalacticRegions.Borders())
             {
-                open.BeginFigure(new Point(edge.X0, edge.Z0), false);
-                open.LineTo(new Point(edge.X1, edge.Z1));
+                open.BeginFigure(Faced(viewport, new StarPosition(edge.X0, 0, edge.Z0)), false);
+                open.LineTo(Faced(viewport, new StarPosition(edge.X1, 0, edge.Z1)));
                 open.EndFigure(false);
             }
         }
 
-        return _borders = geometry;
+        if (atRest)
+        {
+            return _borders = geometry;
+        }
+
+        _angledFor = angles;
+
+        return _angledBorders = geometry;
     }
 
     /// <summary>Each region's name and label point, largest region first.</summary>
