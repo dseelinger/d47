@@ -307,13 +307,13 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
-    public void SavedSaysThereAreNoQuickSearchesForBodies()
+    public void TheBodiesPageDrawsNoSavedSearchSectionWhenThereAreNone()
     {
         var world = new World(lookups: true);
         var (panel, window) = Shown(world);
 
-        Assert.Contains("No quick searches for bodies.", TextOf(panel));
-        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => button.Classes.Contains(GalaxySearchPage.SavedClass));
+        Assert.DoesNotContain("No quick searches for bodies.", TextOf(panel));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => button.IsEffectivelyVisible && Avalonia.Automation.AutomationProperties.GetName(button) == "Start from a saved search");
 
         window.Close();
     }

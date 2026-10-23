@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the search pages, the saved and quick searches are now a START FROM dropdown at the top of the form, in the window and in the headset. Picking one fills the form and runs it. The button shows the search you picked until you change a field, press CLEAR, or another search arrives. While one of your own searches is shown, FORGET THIS SEARCH sits under the dropdown; the old ✕ is gone. The footer says the phrase for the search shown.
+
 D47 warns when Thargoids pull the ship out of a hyperspace jump, with the interdiction alarm. On a plotted route it says "Hyperdiction. Thargoids are pulling us out of the jump." partway through the tunnel. With no route plotted it says on arrival which system you were pulled out in and which one you were jumping to. The Danger row under Callouts turns it off.
 
 In the Stations and Bodies answer tables, a system name is now cyan when it is the system you are in and the accent colour otherwise, as in the Outfitting, Signals and Systems tables. It was white.

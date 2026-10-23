@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Headset;
 using D47.App.Panel;
 using D47.Core.Capabilities;
@@ -193,6 +194,28 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static InlinePicker StartFrom(Control root) =>
+        root.GetVisualDescendants().OfType<InlinePicker>().First();
+
+    private static List<string> Picks(Control root)
+    {
+        var picker = StartFrom(root);
+        picker.IsOpen = true;
+        Dispatcher.UIThread.RunJobs();
+
+        return [.. picker.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains(InlinePicker.OptionClass)).Select(button => Avalonia.Automation.AutomationProperties.GetName(button) ?? string.Empty)];
+    }
+
+    private static void Pick(Control root, string name)
+    {
+        _ = Picks(root);
+        Press(StartFrom(root).GetVisualDescendants().OfType<Button>().Single(button =>
+            button.Classes.Contains(InlinePicker.OptionClass) && Avalonia.Automation.AutomationProperties.GetName(button) == name));
+    }
+
+    private static string PickerValue(Control root) =>
+        string.Concat(StartFrom(root).GetVisualDescendants().OfType<TextBlock>().Single(text => text.Name == "InlinePickerValue").Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
 
     private static Button Named(Control root, string name) =>
         root.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name);
@@ -447,19 +470,22 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Assert.Equal("search_systems", saved.Tool);
         Assert.Equal("Boom", saved.Arguments["state"]);
 
-        var tiles = panel.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains(GalaxySearchPage.SavedClass)).ToList();
-        var forgets = panel.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains(GalaxySearchPage.ForgetClass)).ToList();
+        Assert.Equal(["anarchy outbreak", "Frogs in boom"], Picks(panel));
+        Assert.False(Named(panel, GalaxySearchPage.ForgetName).IsVisible);
 
-        Assert.Equal(["anarchy outbreak", "Frogs in boom"], tiles.Select(tile => (string)tile.Tag!));
-        Assert.Equal(["Frogs in boom"], forgets.Select(tile => (string)tile.Tag!));
+        Pick(panel, "Frogs in boom");
 
-        Press(forgets.Single());
+        var forget = Named(panel, GalaxySearchPage.ForgetName);
+        Assert.True(forget.IsVisible);
+        Assert.Equal("Forget the Frogs in boom search", Avalonia.Automation.AutomationProperties.GetName(forget));
+
+        Press(forget);
         Press(Named(window.GetVisualDescendants().OfType<ForgetSearchDialog>().Single(), ForgetSearchDialog.ConfirmName));
 
         Assert.Empty(world.Store.All());
-        Assert.DoesNotContain(
-            panel.GetVisualDescendants().OfType<Button>(),
-            button => button.Classes.Contains(GalaxySearchPage.SavedClass) && (string?)button.Tag == "Frogs in boom");
+        Assert.DoesNotContain("Frogs in boom", Picks(panel));
+        Assert.Equal(GalaxySearchPage.NoPickText, PickerValue(panel));
+        Assert.False(Named(panel, GalaxySearchPage.ForgetName).IsVisible);
 
         window.Close();
     }
@@ -470,10 +496,33 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         var world = new World(lookups: true);
         var (panel, window) = Shown(world);
 
-        Press(panel.GetVisualDescendants().OfType<Button>().Single(button =>
-            button.Classes.Contains(GalaxySearchPage.SavedClass) && (string?)button.Tag == "anarchy outbreak"));
+        Pick(panel, "anarchy outbreak");
 
         Assert.Equal(new Dictionary<string, string> { ["government"] = "Anarchy", ["state"] = "Outbreak" }, Assert.Single(world.Asked));
+        Assert.Equal("Anarchy", Page(panel).FormArguments()["government"]);
+        Assert.Equal("anarchy outbreak", PickerValue(panel));
+        Assert.False(Named(panel, GalaxySearchPage.ForgetName).IsVisible);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThePickedNameGoesBackOnceTheFormIsEditedOrCleared()
+    {
+        var world = new World(lookups: true);
+        var (panel, window) = Shown(world);
+
+        Pick(panel, "anarchy outbreak");
+        Assert.Equal("anarchy outbreak", PickerValue(panel));
+
+        Page(panel).Tick();
+        Assert.Equal("anarchy outbreak", PickerValue(panel));
+
+        Pick(panel, "anarchy outbreak");
+        Press(Named(panel, GalaxySearchPage.ClearName));
+
+        Assert.Equal(GalaxySearchPage.NoPickText, PickerValue(panel));
+        Assert.False(Named(panel, GalaxySearchPage.ForgetName).IsVisible);
 
         window.Close();
     }
@@ -499,7 +548,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Assert.False(page.ShowsAnswer);
         Assert.True(Named(panel, GalaxySearchPage.RunName).IsEffectivelyVisible);
         Assert.True(Named(panel, GalaxySearchPage.ClearName).IsEffectivelyVisible);
-        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => button.IsEffectivelyVisible && button.Classes.Contains(GalaxySearchPage.SavedClass));
+        Assert.True(StartFrom(panel).IsEffectivelyVisible);
         Assert.Equal("Independent", page.FormArguments()["allegiance"]);
         Assert.DoesNotContain(Rows(panel), row => row.IsEffectivelyVisible);
 
@@ -535,8 +584,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         var world = new World(lookups: true);
         var (panel, window) = Shown(world, headset: true);
 
-        Press(panel.GetVisualDescendants().OfType<Button>().Single(button =>
-            button.Classes.Contains(GalaxySearchPage.SavedClass) && (string?)button.Tag == "anarchy outbreak"));
+        Pick(panel, "anarchy outbreak");
 
         Assert.True(Page(panel).ShowsAnswer);
         Assert.Equal(2, Rows(panel).Count);

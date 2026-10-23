@@ -408,7 +408,8 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         Typed(page, "6a fuel");
 
         var pressable = page.GetVisualDescendants()
-            .Where(control => control is Button or CheckBox or RadioButton && control.IsEffectivelyVisible && control.Bounds.Height > 0)
+            .Where(control => control is Button or CheckBox or RadioButton && control.IsEffectivelyVisible && control.Bounds.Height > 0
+                && !control.GetVisualAncestors().OfType<Avalonia.Controls.Primitives.ScrollBar>().Any())
             .ToList();
 
         Assert.NotEmpty(pressable);

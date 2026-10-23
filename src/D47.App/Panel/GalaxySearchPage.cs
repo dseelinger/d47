@@ -93,11 +93,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public const string OpenSettingName = "OpenTheSetting";
 
-    /// <summary>Marks a saved or quick search tile, for a test to find it by its name.</summary>
-    public const string SavedClass = "saved-search";
+    public const string ForgetName = "ForgetSearch";
 
-    /// <summary>Marks a FORGET tile beside one of the Commander's own searches.</summary>
-    public const string ForgetClass = "forget-search";
+    /// <summary>What the START FROM button shows while no saved or quick search is picked.</summary>
+    public const string NoPickText = "Choose a saved search";
 
     /// <summary>Marks a row of the answer table.</summary>
     public const string RowClass = "search-row";
@@ -114,7 +113,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private readonly Button _run = new() { Name = RunName, Content = "RUN SEARCH", Height = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Stretch };
     private readonly Button _clear = new() { Name = ClearName, Content = "CLEAR", Height = TypeScale.MinimumTarget };
     private readonly ContentControl _answer = new();
-    private readonly ContentControl _saved = new();
+    private readonly InlinePicker _startFrom = new() { Label = "Start from a saved search" };
+    private readonly Button _forget = new() { Name = ForgetName, Content = "FORGET THIS SEARCH", Height = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Left, Classes = { Settings.SettingsView.DestructiveClass } };
+    private readonly TextBlock _said = new() { TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap, VerticalAlignment = VerticalAlignment.Center };
+    private Control? _savedSection;
+    private string? _picked;
+    private bool _pickedIsOwn;
+    private IReadOnlyDictionary<string, string>? _pickedAt;
+    private bool _pickPosting;
     private readonly TextBlock _stamp = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0) };
 
     private Control? _form;
@@ -139,7 +145,20 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _history = new HistoryTile(searches);
 
         _run.Click += (_, _) => _ = RunAsync(FormArguments());
-        _clear.Click += (_, _) => ClearForm();
+        _clear.Click += (_, _) =>
+        {
+            ResetPick();
+            ClearForm();
+            Draw();
+        };
+        _startFrom.Picked += (_, name) => StartFrom(name);
+        _forget.Click += (_, _) =>
+        {
+            if (_picked is { } name)
+            {
+                Forget(name);
+            }
+        };
 
         ToolTip.SetShowOnDisabled(_run, true);
     }
@@ -168,6 +187,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         HistoryId = entry.Id;
         _fromHistory = posting;
+        ResetPick();
         _failure = null;
 
         FillForm(posting.Arguments);
@@ -237,6 +257,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     public bool Tick()
     {
         var tileChanged = _history.Refresh();
+
+        if (EditedSincePick())
+        {
+            ResetPick();
+            Draw();
+            return true;
+        }
 
         if (Equals(Stamp(), _seen))
         {
@@ -505,7 +532,19 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _fromHistory = null;
             HistoryId = null;
             _showingAnswer = true;
+
+            if (!_pickPosting)
+            {
+                ResetPick();
+            }
+
             FillFromLast();
+
+            if (_picked is not null)
+            {
+                _pickedAt = FormArguments();
+            }
+
             Draw();
         });
     }
@@ -546,6 +585,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     {
         _seen = Stamp();
         Follow();
+
+        if (EditedSincePick())
+        {
+            ResetPick();
+        }
+
         _showingAnswer ??= Latest is not null;
 
         var lookups = _lookupsEnabled();
@@ -570,7 +615,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _run.IsEnabled = lookups && _running is null;
         ToolTip.SetTip(_run, lookups ? null : OffTip);
 
-        _saved.Content = SavedBlock();
         DrawStamp(last);
         _answer.Content = AnswerBlock(last);
 
@@ -578,6 +622,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             Content = _headset ? HeadsetLayout() : Layout();
         }
+
+        DrawSaved();
 
         if (_formView is not null && _answerView is not null)
         {
@@ -588,13 +634,13 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private Grid HeadsetLayout()
     {
-        _form = BuildForm();
+        _form = FormWithSaved();
 
         var buttons = Buttons();
         var form = new DockPanel();
         DockPanel.SetDock(buttons, Dock.Bottom);
         form.Children.Add(buttons);
-        form.Children.Add(LoadoutPages.Scrolling(new StackPanel { Spacing = 14, Children = { _saved, _form } }));
+        form.Children.Add(LoadoutPages.Scrolling(_form));
 
         var answer = new DockPanel();
         var footer = Footer();
@@ -624,7 +670,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private Grid Layout()
     {
-        _form = BuildForm();
+        _form = FormWithSaved();
 
         var scroll = new ScrollViewer
         {
@@ -645,8 +691,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         DockPanel.SetDock(footer, Dock.Bottom);
         right.Children.Add(footer);
 
-        var top = new StackPanel { Spacing = 14, Children = { _saved, _answer } };
-        right.Children.Add(LoadoutPages.Scrolling(top));
+        right.Children.Add(LoadoutPages.Scrolling(_answer));
 
         var grid = new Grid
         {
@@ -660,88 +705,125 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         return grid;
     }
 
-    private Control SavedBlock()
+    private StackPanel FormWithSaved()
     {
-        var quick = QuickSearches.All.Where(search => search.Tool == Tool).ToList();
-        var yours = _searches.Saved is { } store
-            ? store.All().Where(search => search.Tool == Tool).ToList()
-            : [];
+        _savedSection = SystemSearchPage.Group("Saved search", SystemSearchPage.Labelled("Start from", _startFrom), _forget);
 
-        var block = new StackPanel { Spacing = 8 };
+        return new StackPanel { Spacing = 22, Children = { _savedSection, BuildForm() } };
+    }
 
-        block.Children.Add(ListRow.Head("Saved"));
+    private List<QuickSearch> QuickHere() => [.. QuickSearches.All.Where(search => search.Tool == Tool)];
 
-        if (quick.Count == 0)
+    private List<SavedSearch> YoursHere() =>
+        _searches.Saved is { } store ? [.. store.All().Where(search => search.Tool == Tool)] : [];
+
+    private void DrawSaved()
+    {
+        var quick = QuickHere();
+        var yours = YoursHere();
+
+        if (_picked is not null && _pickedIsOwn && !yours.Any(search => search.Name == _picked))
         {
-            block.Children.Add(NoQuick());
+            ResetPick();
         }
-        else
+
+        var entries = new List<InlinePickerEntry>();
+
+        if (quick.Count > 0)
         {
-            var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
-            row.Children.Add(Label("Quick", width: 56));
-
-            foreach (var search in quick)
-            {
-                row.Children.Add(SavedTile(search.Name, search.Arguments));
-            }
-
-            block.Children.Add(row);
+            entries.Add(new InlinePickerHeading("Quick"));
+            entries.AddRange(quick.Select(search => new InlinePickerOption(search.Name, search.Name, ThemeManager.WhiteKey)));
         }
 
         if (yours.Count > 0)
         {
-            var row = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
-            row.Children.Add(Label("Yours", width: 56));
-
-            foreach (var search in yours)
-            {
-                var forget = new Button
-                {
-                    Content = "✕",
-                    Width = TypeScale.MinimumTarget,
-                    Height = TypeScale.MinimumTarget,
-                    Padding = new Thickness(0),
-                    HorizontalContentAlignment = HorizontalAlignment.Center,
-                    Classes = { ForgetClass },
-                    Tag = search.Name,
-                };
-                Avalonia.Automation.AutomationProperties.SetName(forget, $"Forget the {search.Name} search");
-                forget.Click += (_, _) => Forget(search.Name);
-
-                row.Children.Add(new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = Gaps.Tile,
-                    Children = { SavedTile(search.Name, search.Arguments), forget },
-                });
-            }
-
-            block.Children.Add(row);
+            entries.Add(new InlinePickerHeading("Yours"));
+            entries.AddRange(yours.Select(search => new InlinePickerOption(search.Name, search.Name, ThemeManager.WhiteKey)));
         }
 
-        return block;
-    }
-
-    private TextBlock NoQuick()
-    {
-        var line = Prose($"No quick searches for {Noun.ToLowerInvariant()}.", TypeScale.Tip, ThemeManager.GreyKey);
-        line.VerticalAlignment = VerticalAlignment.Center;
-        return line;
-    }
-
-    private Button SavedTile(string name, IReadOnlyDictionary<string, string> arguments)
-    {
-        var tile = new Button
+        if (_savedSection is not null)
         {
-            Content = name.ToUpperInvariant(),
-            Height = TypeScale.MinimumTarget,
-            Classes = { SavedClass },
-            Tag = name,
-            IsEnabled = _lookupsEnabled() && _running is null,
-        };
+            _savedSection.IsVisible = entries.Count > 0;
+        }
 
-        tile.Click += (_, _) => _ = RunAsync(arguments);
-        return tile;
+        _startFrom.Show(entries, _picked ?? string.Empty, _picked ?? NoPickText, _picked is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, null);
+        _startFrom.IsEnabled = _lookupsEnabled() && _running is null;
+
+        _forget.IsVisible = _picked is not null && _pickedIsOwn;
+        Avalonia.Automation.AutomationProperties.SetName(_forget, $"Forget the {_picked} search");
+
+        _said.Text = SayText();
+    }
+
+    private string SayText()
+    {
+        if (_picked is { } name)
+        {
+            var phrase = _pickedIsOwn
+                ? SavedSearchPhrases.Of(name).First()
+                : QuickSearches.PhrasesOf(QuickHere().First(search => search.Name == name)).First();
+            return $"Say: “{phrase}”";
+        }
+
+        return SayPhrase is { } say ? $"Say: “{say}”"
+            : QuickHere().FirstOrDefault() is { } first
+                ? $"Say: “{QuickSearches.PhrasesOf(first).First()}”"
+                : string.Empty;
+    }
+
+    private void StartFrom(string name)
+    {
+        IReadOnlyDictionary<string, string> arguments;
+        bool own;
+
+        if (QuickHere().FirstOrDefault(search => search.Name == name) is { } quick)
+        {
+            arguments = quick.Arguments;
+            own = false;
+        }
+        else if (YoursHere().FirstOrDefault(search => search.Name == name) is { } mine)
+        {
+            arguments = mine.Arguments;
+            own = true;
+        }
+        else
+        {
+            return;
+        }
+
+        _picked = name;
+        _pickedIsOwn = own;
+        FillForm(arguments);
+        Follow();
+        _pickedAt = FormArguments();
+        _pickPosting = true;
+
+        Draw();
+        _ = RunPicked(arguments);
+    }
+
+    private async Task RunPicked(IReadOnlyDictionary<string, string> arguments)
+    {
+        await RunAsync(arguments).ConfigureAwait(true);
+        Dispatcher.UIThread.Post(() => _pickPosting = false);
+    }
+
+    private void ResetPick()
+    {
+        _picked = null;
+        _pickedIsOwn = false;
+        _pickedAt = null;
+    }
+
+    private bool EditedSincePick()
+    {
+        if (_picked is null || _pickedAt is not { } at)
+        {
+            return false;
+        }
+
+        var now = FormArguments();
+        return now.Count != at.Count || now.Any(pair => !at.TryGetValue(pair.Key, out var value) || value != pair.Value);
     }
 
     private Control AnswerBlock(GalaxySearchPosting? last)
@@ -951,15 +1033,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private Border Footer()
     {
-        var phrase = SayPhrase is { } say ? $"Say: “{say}”"
-            : QuickSearches.All.FirstOrDefault(search => search.Tool == Tool) is { } quick
-                ? $"Say: “{QuickSearches.PhrasesOf(quick).First()}”"
-                : string.Empty;
-
-        var said = Prose(phrase, TypeScale.Tip, ThemeManager.GreyKey);
-        said.TextTrimming = TextTrimming.CharacterEllipsis;
-        said.TextWrapping = TextWrapping.NoWrap;
-        said.VerticalAlignment = VerticalAlignment.Center;
+        Themed(_said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        _said.FontSize = TypeScale.Tip;
+        _said.FontFamily = Fonts.ProseFamily;
 
         Grid.SetColumn(_stamp, 1);
 
@@ -968,7 +1044,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             BorderThickness = new Thickness(0, 1, 0, 0),
             Padding = new Thickness(0, 10, 0, 0),
             Margin = new Thickness(0, 10, 0, 0),
-            Child = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { said, _stamp } },
+            Child = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { _said, _stamp } },
         };
         Themed(border, Border.BorderBrushProperty, ThemeManager.Line2Key);
 
