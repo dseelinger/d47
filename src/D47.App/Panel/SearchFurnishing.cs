@@ -82,7 +82,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 surface.OpenSettings,
-                host.Headset);
+                host.Headset)
+            {
+                PaneWidths = host.PaneWidths,
+            };
             ApplyPending();
 
             return _systems;
@@ -96,7 +99,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 () => surface.Here()?.StarSystem,
                 ChooseServices,
                 surface.OpenSettings,
-                host.Headset);
+                host.Headset)
+            {
+                PaneWidths = host.PaneWidths,
+            };
             ApplyPending();
 
             return _stations;
@@ -111,7 +117,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 OpenFound,
                 host.Copy,
                 surface.OpenSettings,
-                host.Headset);
+                host.Headset)
+            {
+                PaneWidths = host.PaneWidths,
+            };
             ApplyPending();
 
             return _outfitting;
@@ -124,7 +133,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 surface.LookupsEnabled,
                 () => surface.Here()?.StarSystem,
                 surface.OpenSettings,
-                host.Headset);
+                host.Headset)
+            {
+                PaneWidths = host.PaneWidths,
+            };
             ApplyPending();
 
             return _bodies;
@@ -139,7 +151,10 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 OpenFound,
                 host.Copy,
                 surface.OpenSettings,
-                host.Headset);
+                host.Headset)
+            {
+                PaneWidths = host.PaneWidths,
+            };
             ApplyPending();
 
             return _signals;

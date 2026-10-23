@@ -394,6 +394,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     Func<string?>? IPanelTabHost.CommanderName => _commanderName;
 
+    PaneWidthMemory? IPanelTabHost.PaneWidths => _paneWidths;
+
     void IPanelTabHost.ShowSearch() => ShowSearch();
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

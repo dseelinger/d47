@@ -25,4 +25,28 @@ public sealed class PaneWidthMemory(ViewStateStore store)
         store.Save(next);
         _cached = next;
     }
+
+    /// <summary>The Search form's remembered width in pixels, or null for the default.</summary>
+    public double? SearchFormWidth
+    {
+        get
+        {
+            _cached ??= store.Load();
+            return _cached.SearchFormWidth;
+        }
+    }
+
+    /// <summary>Records where the Search form was left.</summary>
+    public void RememberSearchForm(double width)
+    {
+        if (!double.IsFinite(width) || width <= 0)
+        {
+            return;
+        }
+
+        var next = store.Load() with { SearchFormWidth = width };
+
+        store.Save(next);
+        _cached = next;
+    }
 }

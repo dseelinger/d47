@@ -2,6 +2,8 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -74,6 +76,16 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 {
     public const string LookupsOffText =
         "Turn on “Look things up in the galaxy” in Settings and D47 will search the galaxy for star systems, stations and bodies.";
+
+    public const double DefaultFormWidth = 360;
+
+    public const double FormMinWidth = 300;
+
+    public const double FormMaxWidth = 720;
+
+    public const double AnswerMinWidth = 400;
+
+    private const double SplitterWidth = 28;
 
     public const string RunName = "RunSearch";
 
@@ -202,6 +214,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     public abstract GalaxySearchKind Kind { get; }
 
     public abstract string Summary { get; }
+
+    /// <summary>Where the form width is remembered; null where the host gives the form a fixed width.</summary>
+    public PaneWidthMemory? PaneWidths { get; init; }
 
     /// <summary>What is drawn where the answer goes.</summary>
     public GalaxySearchView View { get; private set; }
@@ -693,17 +708,62 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         right.Children.Add(LoadoutPages.Scrolling(_answer));
 
-        var grid = new Grid
+        var grid = new Grid { Margin = new Thickness(0, 16, 0, 0) };
+
+        if (PaneWidths is not { } memory)
         {
-            ColumnDefinitions = new ColumnDefinitions("360,*"),
-            ColumnSpacing = 28,
-            Margin = new Thickness(0, 16, 0, 0),
-            Children = { left, right },
+            grid.ColumnDefinitions = new ColumnDefinitions("360,*");
+            grid.ColumnSpacing = 28;
+            grid.Children.Add(left);
+            grid.Children.Add(right);
+            Grid.SetColumn(right, 1);
+
+            return grid;
+        }
+
+        grid.ColumnDefinitions.Add(new ColumnDefinition(FormWidth(memory.SearchFormWidth), GridUnitType.Pixel)
+        {
+            MinWidth = FormMinWidth,
+            MaxWidth = FormMaxWidth,
+        });
+        grid.ColumnDefinitions.Add(new ColumnDefinition(SplitterWidth, GridUnitType.Pixel));
+        grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star) { MinWidth = AnswerMinWidth });
+
+        var splitter = new GridSplitter
+        {
+            ResizeDirection = GridResizeDirection.Columns,
+            ResizeBehavior = GridResizeBehavior.PreviousAndNext,
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.SizeWestEast),
+            Template = new FuncControlTemplate<GridSplitter>(
+                (_, _) => new Border { Background = Brushes.Transparent }),
         };
-        Grid.SetColumn(right, 1);
+        splitter.DragCompleted += (_, _) => memory.RememberSearchForm(grid.ColumnDefinitions[0].ActualWidth);
+
+        var rule = new Border
+        {
+            Width = 1,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            IsHitTestVisible = false,
+        };
+        rule.Bind(Border.BackgroundProperty, rule.GetResourceObservable("D47.Line2"));
+
+        grid.Children.Add(left);
+        grid.Children.Add(splitter);
+        grid.Children.Add(rule);
+        grid.Children.Add(right);
+        Grid.SetColumn(splitter, 1);
+        Grid.SetColumn(rule, 1);
+        Grid.SetColumn(right, 2);
 
         return grid;
     }
+
+    /// <summary>The form column's width for a remembered value: clamped to the limits, or the default when unusable.</summary>
+    public static double FormWidth(double? remembered) =>
+        remembered is { } width && double.IsFinite(width) && width > 0
+            ? Math.Clamp(width, FormMinWidth, FormMaxWidth)
+            : DefaultFormWidth;
 
     private StackPanel FormWithSaved()
     {

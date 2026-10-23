@@ -125,6 +125,9 @@ public sealed record ViewState
     public IReadOnlyDictionary<int, IReadOnlyList<double>> PaneShares { get; init; } =
         new Dictionary<int, IReadOnlyList<double>>();
 
+    /// <summary>The width in pixels the Commander dragged the Search form to, or null for the default.</summary>
+    public double? SearchFormWidth { get; init; }
+
     /// <summary>Records a drag, as each pane's share of the strip at that pane count.</summary>
     public ViewState With(int panes, IReadOnlyList<double> shares)
     {

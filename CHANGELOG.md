@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the five Search pages in the main window, you can now drag the boundary between the form and the answer to make the form wider or narrower. The width is remembered, and the same width applies to all five pages. The headset keeps its fixed layout.
+
 On the search pages, the saved and quick searches are now a START FROM dropdown at the top of the form, in the window and in the headset. Picking one fills the form and runs it. The button shows the search you picked until you change a field, press CLEAR, or another search arrives. While one of your own searches is shown, FORGET THIS SEARCH sits under the dropdown; the old ✕ is gone. The footer says the phrase for the search shown.
 
 D47 warns when Thargoids pull the ship out of a hyperspace jump, with the interdiction alarm. On a plotted route it says "Hyperdiction. Thargoids are pulling us out of the jump." partway through the tunnel. With no route plotted it says on arrival which system you were pulled out in and which one you were jumping to. The Danger row under Callouts turns it off.

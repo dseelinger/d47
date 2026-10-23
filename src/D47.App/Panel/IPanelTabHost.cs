@@ -28,6 +28,9 @@ internal interface IPanelTabHost
 
     Func<string?>? CommanderName { get; }
 
+    /// <summary>Where dragged pane widths are remembered, or null where the surface has no mouse.</summary>
+    PaneWidthMemory? PaneWidths { get; }
+
     void Furnish(PanelTab tab, Func<NavCrumb, Control> build, params NavCrumb[] roots);
 
     void Forget(PanelTab tab, Func<string, bool> match);
