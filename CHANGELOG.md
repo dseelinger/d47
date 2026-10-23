@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On a page of rows, Down and Up focus the first and last row, then step to the row below or above. In a grid of tiles they step down a column, and Left and Right move along a line. Enter or Space opens the focused row, which draws in Tile2. Down from the page search box focuses the first row the search left. On the Checklist, list rows, arc heads and item cards can now take focus.
+
 Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar; the number of the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, and Alt+Left goes back, the same as Escape.
 
 On the Navigation tab's Galaxy map, the map takes keyboard focus when the page opens and when you click it. The arrow keys pan a quarter of the view, + and − zoom a step, and Home frames HERE. Ctrl with + or − still zooms the window.

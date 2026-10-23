@@ -4,6 +4,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -316,6 +317,16 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     public Control? BarTool => (Deepest as IPageChrome)?.BarTool;
 
     public string? HelpTopic => (Deepest as IPageChrome)?.HelpTopic;
+
+    /// <summary>The rightmost pane showing.</summary>
+    internal Control? DeepestPane => Deepest;
+
+    /// <summary>The pane showing that holds <paramref name="visual"/>, or null.</summary>
+    internal Control? PaneContaining(Visual visual) =>
+        _showing
+            .Select(key => _built.TryGetValue(key, out var pane) ? pane : null)
+            .OfType<Control>()
+            .FirstOrDefault(pane => ReferenceEquals(pane, visual) || pane.IsVisualAncestorOf(visual));
 
     /// <summary>The summary of the deepest level showing that has one.</summary>
     public string Summary =>

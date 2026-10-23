@@ -1787,6 +1787,11 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
+        if (RowKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
             e.Handled = true;
@@ -1805,6 +1810,130 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Up, Down, Left and Right with no modifiers move keyboard focus between the rows of the page showing. From a
+    /// row they go to the nearest row in that direction in the same pane; with nothing focused, or the focus on the
+    /// page, Down and Up take the first and last row of the rightmost pane; from the page search box on a tab other
+    /// than Transcript, Down takes the first row.
+    /// </summary>
+    private bool RowKey(KeyEventArgs e)
+    {
+        if (e.KeyModifiers != KeyModifiers.None
+            || e.Key is not (Key.Up or Key.Down or Key.Left or Key.Right)
+            || Nav.Modal
+            || !PagePane.IsVisible
+            || PagePane.Child is not DrillView strip)
+        {
+            return false;
+        }
+
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
+
+        if (focused is not null && IsRow(focused) && strip.PaneContaining(focused) is { } pane)
+        {
+            e.Handled = true;
+            Land(Neighbour(Rows(pane), focused, e.Key));
+            return true;
+        }
+
+        var nothing = focused is null
+            || ReferenceEquals(focused, PagePane)
+            || ReferenceEquals(focused, strip)
+            || ReferenceEquals(focused, this)
+            || focused is Window;
+        var fromNothing = nothing && e.Key is Key.Up or Key.Down;
+        var fromSearch = ReferenceEquals(focused, SearchInput) && Tab != PanelTab.Transcript && e.Key == Key.Down;
+
+        if (!fromNothing && !fromSearch)
+        {
+            return false;
+        }
+
+        if (strip.DeepestPane is not { } deepest || Rows(deepest) is not { Count: > 0 } rows)
+        {
+            return false;
+        }
+
+        var ordered = rows.OrderBy(row => Place(row).Top).ThenBy(row => Place(row).Left).ToList();
+        e.Handled = true;
+        Land(e.Key == Key.Up ? ordered[^1] : ordered[0]);
+        return true;
+    }
+
+    private static bool IsRow(Control control) =>
+        control.Focusable
+        && control.IsEffectivelyVisible
+        && control.IsEffectivelyEnabled
+        && (control.Classes.Contains(Theming.ListRow.Class) || control.Classes.Contains(Theming.ListRow.OpensClass));
+
+    private static List<Control> Rows(Control pane) =>
+        pane.GetVisualDescendants().OfType<Control>().Where(IsRow).ToList();
+
+    /// <summary>The row's rectangle in a coordinate space shared by every row on the page.</summary>
+    private Rect Place(Control row) =>
+        new(row.TranslatePoint(default, PagePane) ?? default, row.Bounds.Size);
+
+    /// <summary>
+    /// The nearest row in the direction of <paramref name="key"/>: among the rows wholly past the current row's
+    /// edge, the smallest gap along the key's axis, then the smallest distance between centres across it. Left and
+    /// Right consider only rows overlapping the current row's line. Null when there is none.
+    /// </summary>
+    private Control? Neighbour(List<Control> rows, Control from, Key key)
+    {
+        const double slack = 0.5;
+
+        var here = Place(from);
+        var vertical = key is Key.Up or Key.Down;
+        Control? best = null;
+        (double Gap, double Centre) bestScore = default;
+
+        foreach (var row in rows)
+        {
+            if (ReferenceEquals(row, from))
+            {
+                continue;
+            }
+
+            var there = Place(row);
+
+            var (gap, centre) = key switch
+            {
+                Key.Down => (there.Top - here.Bottom, Math.Abs(there.Center.X - here.Center.X)),
+                Key.Up => (here.Top - there.Bottom, Math.Abs(there.Center.X - here.Center.X)),
+                Key.Right => (there.Left - here.Right, Math.Abs(there.Center.Y - here.Center.Y)),
+                _ => (here.Left - there.Right, Math.Abs(there.Center.Y - here.Center.Y)),
+            };
+
+            var sameLine = vertical || (there.Top < here.Bottom - slack && there.Bottom > here.Top + slack);
+
+            if (gap < -slack || !sameLine)
+            {
+                continue;
+            }
+
+            var score = (Math.Round(Math.Max(gap, 0)), centre);
+
+            if (best is null || score.CompareTo(bestScore) < 0)
+            {
+                best = row;
+                bestScore = score;
+            }
+        }
+
+        return best;
+    }
+
+    private static void Land(Control? row)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        row.Focus(NavigationMethod.Directional);
+        row.BringIntoView();
     }
 
     /// <summary>

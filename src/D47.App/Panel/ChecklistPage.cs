@@ -841,7 +841,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         var row = ListRow.Dress(new Border { Child = grid, MinHeight = TypeScale.MinimumTarget });
 
         AutomationProperties.SetName(row, Spoken(list));
-        row.PointerPressed += (_, _) => _nav.Drill(ListCrumb(list));
+        ListRow.Opens(row, () => _nav.Drill(ListCrumb(list)));
 
         return row;
     }
@@ -1163,12 +1163,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         var press = ListRow.Dress(new Border { Child = head }, selected: open);
 
-        press.PointerPressed += (_, _) =>
+        ListRow.Opens(press, () =>
         {
             _openArc = open ? null : standing.Arc.Key;
             _allRanksShown = false;
             Rebuild();
-        };
+        });
 
         if (!open)
         {
@@ -1657,11 +1657,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         // Selecting is what grows the movers, so the whole card takes the press rather than a handle
         // somewhere on it.
-        card.PointerPressed += (_, _) =>
+        ListRow.Opens(card, () =>
         {
             _checklists.Select(selected ? null : item.Id);
             Rebuild();
-        };
+        });
 
         return card;
     }

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Input;
 using Avalonia.Media;
 
 namespace D47.App.Theming;
@@ -15,6 +16,9 @@ namespace D47.App.Theming;
 public static class ListRow
 {
     public const string Class = "d47-row";
+
+    /// <summary>Marks a row that takes keyboard focus and opens on a press, Enter or Space; set by <see cref="Opens"/>.</summary>
+    public const string OpensClass = "d47-row-opens";
 
     /// <summary>Marks the row as the chosen one; set and cleared by the screen that owns it.</summary>
     public const string SelectedClass = "selected";
@@ -53,6 +57,35 @@ public static class ListRow
         row.Classes.Add(Class);
         row.Classes.Set(SelectedClass, selected);
         return row;
+    }
+
+    /// <summary>
+    /// Makes <paramref name="target"/> a keyboard-focusable row that runs <paramref name="open"/> on a press, and on
+    /// Enter or Space with no modifiers while it has focus.
+    /// </summary>
+    public static T Opens<T>(T target, Action open)
+        where T : Control
+    {
+        target.Focusable = true;
+        target.Cursor = new Cursor(StandardCursorType.Hand);
+        target.Classes.Add(OpensClass);
+
+        target.PointerPressed += (_, e) =>
+        {
+            e.Handled = true;
+            open();
+        };
+
+        target.KeyDown += (_, e) =>
+        {
+            if (e.KeyModifiers == KeyModifiers.None && e.Key is Key.Enter or Key.Space)
+            {
+                e.Handled = true;
+                open();
+            }
+        };
+
+        return target;
     }
 
     /// <summary>Dresses <paramref name="row"/> as a pressable list row.</summary>

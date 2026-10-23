@@ -967,6 +967,9 @@
   <Style Selector="Border.d47-row:pointerover">
     <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
   </Style>
+  <Style Selector="Border.d47-row:focus-visible">
+    <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
+  </Style>
   <Style Selector="Border.d47-row.selected">
     <Setter Property="Background" Value="{DynamicResource D47.A}" />
     <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Knock}" />
