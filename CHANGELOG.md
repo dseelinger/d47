@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On the Navigation tab's Galaxy map, the map takes keyboard focus when the page opens and when you click it. The arrow keys pan a quarter of the view, + and − zoom a step, and Home frames HERE. Ctrl with + or − still zooms the window.
+
 On the Transcript tab, Ctrl+Shift+C copies the whole page, the same as the Copy button. Ctrl+C still copies only a selection.
 
 The spend window shows one table instead of Running totals and By provider. Today, This week, Last 7 days, This month and Last 30 days are its columns; the first row is the total, and each provider that charged something has a row with its models under it, highest Last 30 days first. A voice provider shows its characters under each figure. A model with no rate shows "no rate" and makes its window's total start with "≥". Providers that charged nothing, such as Edge Neural and Chatterbox, are no longer listed in this window. The session line reads "N turns · M chars", counting only voices that charge.

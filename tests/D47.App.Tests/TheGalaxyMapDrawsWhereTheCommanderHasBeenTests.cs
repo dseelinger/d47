@@ -185,6 +185,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         return panel;
     }
 
+    internal static (Window Window, PanelView Panel, GalaxyMapPage Page) Show() => InWindow(Played());
+
     private static (Window Window, PanelView Panel, GalaxyMapPage Page) InWindow(Game game)
     {
         var panel = Panel(game, headset: false);

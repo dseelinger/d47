@@ -12,6 +12,7 @@ using D47.App.Theming;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using Keys = Avalonia.Input.Key;
 
 namespace D47.App.Panel;
 
@@ -173,6 +174,9 @@ public sealed class GalaxyMapPage : UserControl
         _zoomIn.Click += (_, _) => Step(view => view.ZoomIn());
         _zoomOut.Click += (_, _) => Step(view => view.ZoomOut());
         _map.ViewportChanged += _ => Moved();
+        _map.Focusable = !_headset;
+        _map.KeyDown += OnMapKeyDown;
+        _map.PointerPressed += (_, _) => _map.Focus();
         _map.Picked += Strip;
         _clear.Click += (_, _) => _map.Clear();
         _centre.Click += (_, _) => CentreOnSelected();
@@ -195,6 +199,11 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         Open();
+
+        if (!_headset)
+        {
+            Dispatcher.UIThread.Post(() => _map.Focus());
+        }
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -545,6 +554,48 @@ public sealed class GalaxyMapPage : UserControl
 
         _map.View(to);
         Moved();
+    }
+
+    private void OnMapKeyDown(object? sender, KeyEventArgs e)
+    {
+        if ((e.KeyModifiers & ~KeyModifiers.Shift) != KeyModifiers.None)
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Keys.Left:
+                Step(view => view.Pan(-1, 0));
+                break;
+            case Keys.Right:
+                Step(view => view.Pan(1, 0));
+                break;
+            case Keys.Up:
+                Step(view => view.Pan(0, 1));
+                break;
+            case Keys.Down:
+                Step(view => view.Pan(0, -1));
+                break;
+            case Keys.OemPlus or Keys.Add:
+                Step(view => view.ZoomIn());
+                break;
+            case Keys.OemMinus or Keys.Subtract:
+                Step(view => view.ZoomOut());
+                break;
+            case Keys.Home:
+                if (_position is not null)
+                {
+                    _framing.SelectedIndex = Here;
+                    Frame(Here);
+                }
+
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true;
     }
 
     private void BuildStrip()

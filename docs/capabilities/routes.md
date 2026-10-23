@@ -281,6 +281,9 @@ from journals already on this machine. Nothing is fetched.
   them the button is greyed.
 - **+** and **−** zoom in steps from 100 ly to 102,400 ly across, and the four arrows move a quarter
   of the view. On the desktop the mouse wheel and a drag do the same.
+- On the desktop the map has keyboard focus when the page opens and when you click it. The arrow
+  keys pan a quarter of the view, **+** and **−** zoom a step, and **Home** frames HERE. Home does
+  nothing while HERE is greyed.
 - **30 DAYS**, **1 YEAR** and **ALL** choose how far back the travels go, and the line under the map
   counts the jumps and systems in that range.
 - **TRAVELS**, **ROUTE** and **REGIONS** switch each layer off and on.
