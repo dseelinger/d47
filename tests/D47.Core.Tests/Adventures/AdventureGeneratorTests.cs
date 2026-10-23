@@ -477,9 +477,18 @@ public sealed class AdventureGeneratorTests
                     ? 21886
                     : 12);
 
+        /// <summary>How many station lookups for a named system report the search down before one answers.</summary>
+        public int StationOutages { get; set; }
+
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             StationQueries.Add(query);
+
+            if (query.MaxDistance <= 1 && StationOutages > 0)
+            {
+                StationOutages--;
+                throw new GalaxyUnavailableException("The station search reported a server error.");
+            }
 
             IReadOnlyList<StationSummary> all =
             [

@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Adventures;
 
 /// <summary>
 /// A beats reply that stops at a token limit, as Gemma 4 E4B in LM Studio at its default 8192-token context does:
-/// 6084 prompt tokens and 2108 reply tokens fill the context long before the 16000-token ceiling (#1240).
+/// 6084 prompt tokens and 2108 reply tokens fill the context long before the beats ceiling (#1240).
 /// </summary>
 public sealed class ACutOffStoryNamesTheLimitItHitTests
 {

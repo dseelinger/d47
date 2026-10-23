@@ -29,6 +29,15 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
 
     private readonly Dictionary<string, (bool AtWar, DateTimeOffset? ReportedAt)> _wars = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>How long a galaxy call that failed waits before its one retry.</summary>
+    public static readonly TimeSpan OutageRetryDelay = TimeSpan.FromSeconds(3);
+
+    /// <summary>The clock <see cref="OutageRetryDelay"/> runs on.</summary>
+    public TimeProvider Time { get; init; } = TimeProvider.System;
+
+    /// <summary>The message of the galaxy failure that outlasted its retry, or null while every call has answered.</summary>
+    public string? Outage { get; private set; }
+
     /// <summary>A station whose docks are offline, which a dock beat may not name.</summary>
     public long? ClosedMarketId { get; init; }
 
@@ -58,7 +67,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
 
         try
         {
-            result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+            result = await CallAsync(() => galaxy.SearchAsync(query, cancellationToken), cancellationToken).ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException ex) when (ex.Message.Contains("no record", StringComparison.OrdinalIgnoreCase))
         {
@@ -169,7 +178,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                         return Resolution.Refused($"{where} docks nowhere: it names no station.");
                     }
 
-                    var stations = await galaxy.FindStationsAsync(StationQuery.Within(found.Name, station), cancellationToken).ConfigureAwait(false);
+                    var stations = await CallAsync(() => galaxy.FindStationsAsync(StationQuery.Within(found.Name, station), cancellationToken), cancellationToken).ConfigureAwait(false);
                     var match = stations.Stations.FirstOrDefault(candidate =>
                         string.Equals(candidate.SystemName, found.Name, StringComparison.OrdinalIgnoreCase)
                         && string.Equals(candidate.Name, station.Trim(), StringComparison.OrdinalIgnoreCase)
@@ -213,7 +222,7 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
                         return Resolution.Refused($"{where} names no body.");
                     }
 
-                    var bodies = await galaxy.FindBodiesAsync(BodyQuery.Within(found.Name), cancellationToken).ConfigureAwait(false);
+                    var bodies = await CallAsync(() => galaxy.FindBodiesAsync(BodyQuery.Within(found.Name), cancellationToken), cancellationToken).ConfigureAwait(false);
                     var match = MatchBody(bodies.Bodies, found.Name, body);
 
                     if (match?.BodyId is null)
@@ -248,7 +257,33 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
 
     /// <summary>Light years between two systems, or null where either is unknown.</summary>
     public Task<double?> DistanceAsync(string from, string to, CancellationToken cancellationToken) =>
-        galaxy.DistanceAsync(from, to, cancellationToken);
+        CallAsync(() => galaxy.DistanceAsync(from, to, cancellationToken), cancellationToken);
+
+    /// <summary>Runs a galaxy call, once more after <see cref="OutageRetryDelay"/> if it reports the service unavailable; a failure of the retry sets <see cref="Outage"/> and is rethrown.</summary>
+    private async Task<T> CallAsync<T>(Func<Task<T>> call, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await call().ConfigureAwait(false);
+        }
+        catch (GalaxyUnavailableException ex) when (!IsNoRecord(ex))
+        {
+            await Task.Delay(OutageRetryDelay, Time, cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                return await call().ConfigureAwait(false);
+            }
+            catch (GalaxyUnavailableException again) when (!IsNoRecord(again))
+            {
+                Outage = again.Message;
+                throw;
+            }
+        }
+    }
+
+    private static bool IsNoRecord(GalaxyUnavailableException ex) =>
+        ex.Message.Contains("no record", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// A body by its full name, or by the part after the system — a person writes "3 c" about as often

@@ -122,17 +122,29 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
     }
 
     [Fact]
-    public async Task ALastStopThatCannotBeMeasuredIsRefusedWithTheReason()
+    public async Task ALastStopThatCannotBeMeasuredBecauseTheSearchIsDownStopsTheWriteWithTheReason()
     {
-        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats), Saying(Repairs.Replacing(Beats, 1)), Saying(Repairs.Replacing(Beats, 1)));
+        var provider = new RoundScriptedLlmProvider(Saying(Spine), Saying(Beats));
+        var time = new ManualTime();
 
-        var outcome = await Generator(provider, new Galaxy { Down = true }, 588).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+        var task = Generator(provider, new Galaxy { Down = true }, 588, time).GenerateAsync(new AdventureAsk(Story: Chapter), Now, CancellationToken.None);
+
+        for (var pass = 0; pass < 200 && !task.IsCompleted; pass++)
+        {
+            time.Advance(AdventureResolver.OutageRetryDelay);
+            await Task.WhenAny(task, Task.Delay(10, TestContext.Current.CancellationToken));
+        }
+
+        var outcome = await task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("could not be measured against Sol: the service is down", outcome.Refusal);
+        Assert.False(outcome.Redraftable);
+        Assert.Contains("galaxy search is unavailable", outcome.Refusal);
+        Assert.Contains("the service is down", outcome.Refusal);
+        Assert.Equal(2, provider.CallCount);
     }
 
-    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears)
+    private static AdventureGenerator Generator(ILlmProvider provider, Galaxy galaxy, double lightYears, TimeProvider? time = null)
     {
         var store = new GameStateStore();
 
@@ -160,7 +172,10 @@ public sealed class AChapterOutsideTheBubbleWorksTowardSolTests
             () => null,
             null,
             null,
-            NullLogger.Instance);
+            NullLogger.Instance)
+        {
+            Time = time ?? TimeProvider.System,
+        };
     }
 
     private sealed class Galaxy : IGalaxyService

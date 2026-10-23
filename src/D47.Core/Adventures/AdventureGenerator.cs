@@ -285,8 +285,8 @@ public sealed class AdventureGenerator(
     /// <summary>Output ceiling for the spine turn; adaptive thinking spends from it too.</summary>
     public const int SpineOutputCeiling = 16000;
 
-    /// <summary>Output ceiling for each beats turn.</summary>
-    public const int BeatsOutputCeiling = 16000;
+    /// <summary>Output ceiling for each beats turn; adaptive thinking spends from it too.</summary>
+    public const int BeatsOutputCeiling = 32000;
 
     /// <summary>Overrides the effort every call asks for; null uses the catalog's story effort for the model, else Medium.</summary>
     public ThinkingEffort? Effort { get; init; }
@@ -553,11 +553,17 @@ public sealed class AdventureGenerator(
         var offset = ask.Rewrite?.From ?? 0;
         var passed = new HashSet<int>();
 
+        string? outage = null;
         var resolved = await HoldToWhatTheyConfirmAsync(await CheckAsync(read).ConfigureAwait(false), read).ConfigureAwait(false);
 
         if (cancellationToken.IsCancellationRequested)
         {
             return AdventureOutcome.Stopped;
+        }
+
+        if (outage is not null)
+        {
+            return GalaxyDown(outage, notes, started);
         }
 
         LogRefusals(ask, "first", beatsAsked.Step, resolved.Refusals);
@@ -608,6 +614,11 @@ public sealed class AdventureGenerator(
                 return AdventureOutcome.Stopped;
             }
 
+            if (outage is not null)
+            {
+                return GalaxyDown(outage, notes, started);
+            }
+
             LogRefusals(ask, $"repair {round.ToString(CultureInfo.InvariantCulture)}", again.Step, resolved.Refusals);
         }
 
@@ -654,8 +665,13 @@ public sealed class AdventureGenerator(
             Destination = ask.Story?.FinaleChapter == 1 ? resolved.Destination : null,
         };
 
-        async Task<Resolved> CheckAsync(ReadAnswer answer) =>
-            Speakers(await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, cancellationToken).ConfigureAwait(false), answer, ask);
+        async Task<Resolved> CheckAsync(ReadAnswer answer)
+        {
+            var dryRun = await DryRunAsync(answer.Beats, answer.Destination, facts, notable, ask, candidates.Anarchy.Count > 0, candidates.Sites, cancellationToken).ConfigureAwait(false);
+
+            outage ??= dryRun.Outage;
+            return Speakers(dryRun, answer, ask);
+        }
 
         // Asked only of a draft the dry run found nothing in; a refused objective is written again before its lines are read.
         // An objective the check has passed is not refused by a later round unless its group was replaced since.
@@ -854,6 +870,14 @@ public sealed class AdventureGenerator(
         }
 
         return Enumerable.Range(first, last - first + 1);
+    }
+
+    /// <summary>The write stops: the galaxy search is down, so no objective can be checked and another draft would meet the same outage.</summary>
+    private AdventureOutcome GalaxyDown(string cause, IReadOnlyList<string> notes, long started)
+    {
+        logger.LogWarning("A story was not written: the galaxy search is unavailable: {Cause} ({Seconds:F1}s since the write began)", cause, Stopwatch.GetElapsedTime(started).TotalSeconds);
+
+        return new AdventureOutcome(null, null, $"The galaxy search is unavailable, so the chapter's places cannot be checked: {cause} Try again in a few minutes.", notes);
     }
 
     private AdventureOutcome Failed(string? reply, string detail, IReadOnlyList<string> notes, long started, Asked? asked = null)
@@ -3267,6 +3291,9 @@ public sealed class AdventureGenerator(
 
         /// <summary>For each beat in <see cref="Beats"/>, whether it is a further step of the one before it.</summary>
         public IReadOnlyList<bool> Joins { get; init; } = [];
+
+        /// <summary>The galaxy search failure that outlasted its retry during the dry run; null when none did.</summary>
+        public string? Outage { get; init; }
     }
 
     /// <summary>
@@ -3357,7 +3384,7 @@ public sealed class AdventureGenerator(
         Sites sites,
         CancellationToken cancellationToken)
     {
-        var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId };
+        var resolver = new AdventureResolver(galaxy()!, facts.Standings) { ClosedMarketId = facts.ClosedMarketId, Time = Time };
         var unmet = new List<DrawnActivity>();
         var resolved = new List<AdventureBeat>();
         var refusals = new List<Refusal>();
@@ -3811,7 +3838,7 @@ public sealed class AdventureGenerator(
             }
         }
 
-        return new Resolved(resolved, refusals, destination) { Stood = stood, Joins = joins };
+        return new Resolved(resolved, refusals, destination) { Stood = stood, Joins = joins, Outage = resolver.Outage };
     }
 
     /// <summary>

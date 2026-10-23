@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+When the galaxy search fails while a story chapter is being checked, D47 waits a few seconds and asks again. If it fails a second time, the write stops with "The galaxy search is unavailable, so the chapter's places cannot be checked" and the search's own message, and no further draft is started. Before, the failure counted against the chapter as a refused objective and used up a repair round. Story chapters written with Claude Sonnet 5.5 also have more room to think, so a chapter no longer fails with "The model did not write the objectives" after about two minutes.
+
 A story's premise, want, stake, turn and ending no longer have a length limit. Before, a premise one character over 700 failed a draft that had passed every other check, and the next draft failed the same way.
 
 Story chapters are written again. The check that reads a chapter's lines against its objectives now checks only what you did, where you have been and how a game event went. The story's cast, what they say, send or own, records in the story and events before it began are not checked, and the ending may recount what earlier objectives confirmed. In a stock story, the Guardian cores coming aboard at the beacon is no longer refused. An objective the check has passed is not refused by a later round, and a refused statement is deleted rather than reworded. Stories written with Claude Sonnet 5.5 use high effort, so they take longer and cost more. A chapter this check still refuses says "The story states what its objectives do not confirm" rather than "The story names places that cannot stand".
