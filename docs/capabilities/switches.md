@@ -496,20 +496,28 @@ refusal and does not save. If Windows refuses the keystroke, it is said:
 
 ### When a mapping stops fitting
 
-A mapping is stored against the device's `NonRoamableId` — never against its vendor and product
-ids. This matters more than it sounds.
+A mapping is stored against the controller's HID collection and its button count, never against
+its vendor and product ids. This matters more than it sounds.
 
 Turning **4x32 mode** on or off on a WinWing throttle renumbers every button on it, while leaving
 the vendor and product ids completely unchanged. A mapping keyed on those would survive the
-change and silently press button 15 of a block that is no longer the same block. The non-roamable
-id changes, so instead the switch **fails closed**: the row says it needs reassigning, and
-nothing is pressed.
+change and silently press button 15 of a block that is no longer the same block. The button count
+changes, so instead the switch **fails closed**: the row says it needs reassigning, and nothing is
+pressed.
 
-Windows also gives a device a new id when the throttle is plugged into another USB port or the
-devices are found in a different order. The buttons are unchanged, so the switches do not need
-walking again. Open the HOTAS switches page and flip one of the switches that cannot find its
-device. Directive 47 finds the device it moved on and points every switch learned on the old id at
-the new one, writing the switch file at once. The card says
+Moving a controller to another USB port, and switching between the installed app and the test
+drive, no longer change the stored identity, so the switches do not need walking again.
+
+Bindings made before this change were stored under a `{wgi/nrid/…}` id that Windows gave to each
+copy of Directive 47 separately. At start-up, once the controllers have settled, Directive 47
+moves each of those ids to the controller's HID identity where the match is certain: the same
+vendor, product and shape, and, where several controllers look alike, held buttons that tell them
+apart. Switches, push-to-talk and cancel move together, and the log records each move.
+
+Where it is not certain, or the id belongs to the other copy of Directive 47, the switch keeps its
+old id and the flip finds it: open the HOTAS switches page and flip one of the switches that cannot
+find its device. Directive 47 finds the device it moved on and points every switch learned on the
+old id at the new one, writing the switch file at once. The card says
 "Found on VID 0x… PID 0x…, 32 buttons, … — 4 switches re-pointed." A throttle in 4x32 mode has one
 id per block, so flip one switch on each block. A device is accepted only when it describes itself
 the same way as the one the switch was learned on, and a 4x32 change alters the button count, so

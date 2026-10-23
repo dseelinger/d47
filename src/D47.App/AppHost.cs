@@ -4252,10 +4252,49 @@ public sealed class AppHost : IDisposable
 
             host._modelCatalog.Start();
             host._controllerSampler = sampledControllers.Start();
+            CarryStoredControllerIds(services, settings, loggerFactory.CreateLogger<AppHost>());
 
             host._ticking = StartupTimer.Time(
                 "tick driver", () => new TickDriver(tick, loggerFactory.CreateLogger<TickDriver>()).Start());
         }
+    }
+
+    /// <summary>Moves stored <c>NonRoamableId</c>s to HID identities once the controllers have settled; off the tick.</summary>
+    private static void CarryStoredControllerIds(ServiceParts services, SettingsService settings, Microsoft.Extensions.Logging.ILogger logger)
+    {
+        var switches = services.Switches;
+
+        switches.Poll();
+
+        if (D47.Core.Hotas.StoredIdCarryOver.LegacyIds(switches.Switches, settings.Current).Count == 0)
+        {
+            return;
+        }
+
+        var sampled = services.SampledControllers;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var raw = new HotasControllers(Microsoft.Extensions.Logging.Abstractions.NullLogger<HotasControllers>.Instance);
+                var give = System.Diagnostics.Stopwatch.StartNew();
+
+                while (give.Elapsed < TimeSpan.FromMinutes(2))
+                {
+                    if (D47.Core.Hotas.StoredIdCarryOver.Run(raw, sampled, switches, settings, logger))
+                    {
+                        return;
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Could not carry stored controller ids to HID identities");
+            }
+        });
     }
 
     /// <summary>Values composition reads through a closure before the stage that sets them has run.</summary>
