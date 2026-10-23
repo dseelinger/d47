@@ -77,7 +77,7 @@ public static partial class LogScrub
             {
                 Close();
 
-                var clock = TimeOnly.ParseExact(head.Groups["at"].Value, "HH:mm:ss", CultureInfo.InvariantCulture);
+                var clock = TimeOnly.ParseExact(head.Groups["at"].Value, ["HH:mm:ss.fff", "HH:mm:ss"], CultureInfo.InvariantCulture, DateTimeStyles.None);
                 var local = day.ToDateTime(clock, DateTimeKind.Unspecified);
 
                 // The hour that happens twice when the clocks go back is resolved to the first of the two,
@@ -184,7 +184,7 @@ public static partial class LogScrub
     /// The template <c>LoggingSetup</c> writes: the bracketed time and level, the component, then the
     /// message.
     /// </summary>
-    [GeneratedRegex(@"^\[(?<at>\d{2}:\d{2}:\d{2}) [A-Z]{3}\] [^:\r\n]*: (?<message>.*)$")]
+    [GeneratedRegex(@"^\[(?<at>\d{2}:\d{2}:\d{2}(?:\.\d{3})?) [A-Z]{3}\] [^:\r\n]*: (?<message>.*)$")]
     private static partial Regex Head();
 
     /// <summary>

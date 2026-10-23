@@ -1,26 +1,19 @@
 using D47.Core;
 using D47.Core.Diagnostics;
 using Serilog;
-using Serilog.Formatting.Compact;
 
 namespace D47.App.Logging;
 
-/// <summary>
-/// Two sinks, both files beside the executable: one human-readable, one newline-delimited JSON so an
-/// agent can parse a session (Phase 1).
-/// </summary>
+/// <summary>One readable log file beside the executable, and the console.</summary>
 public static class LoggingSetup
 {
     private const string HumanTemplate =
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+        "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
 
     /// <summary>How long the readable log is kept.</summary>
     public static readonly TimeSpan ReadableLogLife = TimeSpan.FromDays(90);
 
-    /// <summary>How long the machine-parsing copy is kept.</summary>
-    public static readonly TimeSpan MachineLogLife = TimeSpan.FromDays(14);
-
-    /// <summary>The most either sink may write in one day.</summary>
+    /// <summary>The most the log may write in one day.</summary>
     public const long MostBytesPerDay = 4L * 1024 * 1024;
 
     public static ILogger Create(AppPaths paths, SerilogVerbosityControl verbosity)
@@ -57,15 +50,6 @@ public static class LoggingSetup
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: null,
                     retainedFileTimeLimit: ReadableLogLife,
-                    shared: true);
-                sinks.File(
-                    new CompactJsonFormatter(),
-                    Path.Combine(paths.Logs, "d47-.jsonl"),
-                    fileSizeLimitBytes: MostBytesPerDay,
-                    rollOnFileSizeLimit: false,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: null,
-                    retainedFileTimeLimit: MachineLogLife,
                     shared: true);
                 sinks.Console(outputTemplate: HumanTemplate);
             })

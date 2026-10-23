@@ -27,23 +27,10 @@ public class TheRetentionPolicyTellsTheTruthTests
         var policy = Policy;
 
         Assert.Contains($"**{LoggingSetup.ReadableLogLife.Days} days**", policy, StringComparison.Ordinal);
-        Assert.Contains($"**{LoggingSetup.MachineLogLife.Days} days**", policy, StringComparison.Ordinal);
         Assert.Contains(
             $"**{LoggingSetup.MostBytesPerDay / (1024 * 1024)} MB** of any one day",
             policy,
             StringComparison.Ordinal);
-    }
-
-    /// <summary>The asymmetry is the rule, not the two numbers.</summary>
-    [Fact]
-    [Trait("Category", "Gate")]
-    public void TheReadableLogOutlivesTheMachineOne()
-    {
-        Assert.True(
-            LoggingSetup.ReadableLogLife > LoggingSetup.MachineLogLife,
-            "The readable log is the half a person and an excerpt both read, so it is the half "
-            + "whose reach is worth buying. Keeping the JSON copy as long or longer spends the "
-            + "bytes on the copy nobody opens.");
     }
 
     /// <summary>The audio recorder's ring is the sharpest number on the page — a rolling recording of the audio in somebody's home — and it must never be a number a person remembers to apply.</summary>
@@ -100,7 +87,7 @@ public class TheRetentionPolicyTellsTheTruthTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public void BothSinksStillWriteUnderTheirRetention()
+    public void TheOneLogSinkStillWrites()
     {
         var root = Path.Combine(Path.GetTempPath(), "d47-retention", Guid.NewGuid().ToString("n"));
 
@@ -109,7 +96,7 @@ public class TheRetentionPolicyTellsTheTruthTests
             var paths = new AppPaths(root);
             paths.EnsureCreated();
 
-            const string line = "a line that has to reach both files";
+            const string line = "a line that has to reach the file";
 
             var logger = LoggingSetup.Create(paths, new SerilogVerbosityControl());
             logger.Information(line);
@@ -118,7 +105,7 @@ public class TheRetentionPolicyTellsTheTruthTests
             // The line rather than the file, because a sink that failed to open still leaves the name behind
             // in some arrangements, and an empty log passes any check about existence.
             Assert.Contains(Text(paths.Logs, "d47-*.log"), text => text.Contains(line, StringComparison.Ordinal));
-            Assert.Contains(Text(paths.Logs, "d47-*.jsonl"), text => text.Contains(line, StringComparison.Ordinal));
+            Assert.Empty(Text(paths.Logs, "d47-*.jsonl"));
         }
         finally
         {

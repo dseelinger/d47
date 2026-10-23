@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+d47 now writes one log file a day, the readable `.log`, instead of that and a `.jsonl` copy. The `.jsonl` files left in `data\logs` by earlier versions are deleted the first time this version starts. Log lines now carry milliseconds, as in `[14:36:09.412 INF]`, and incident excerpts read both the old and the new form.
+
 The Ships page under Asset Management now follows the fleet while it is open. Ships the journal stores, buys or sells appear or disappear without leaving the tab, and the cards no longer read "not bought yet" for owned hulls when the journals finish loading after the window opens.
 
 On the five Search pages in the main window, you can now drag the boundary between the form and the answer to make the form wider or narrower. The width is remembered, and the same width applies to all five pages. The headset keeps its fixed layout.

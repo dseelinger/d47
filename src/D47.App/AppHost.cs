@@ -832,6 +832,7 @@ public sealed class AppHost : IDisposable
         Log.Logger = LoggingSetup.Create(paths, verbosity);
         var loggerFactory = new SerilogLoggerFactory(Log.Logger);
         var logger = loggerFactory.CreateLogger<AppHost>();
+        LegacyLogSweep.Run(files, paths.Logs, logger);
 
         // What the line the window logs measures from (#148).
         var startedLogging = System.Diagnostics.Stopwatch.GetTimestamp();

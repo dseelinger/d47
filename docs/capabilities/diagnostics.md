@@ -222,9 +222,8 @@ Ask for a part that does not exist and you are told what does, rather than nothi
 `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`. `Trace` is everything;
 `None` silences that part entirely.
 
-Both log files get the same detail — `d47-<date>.log` to read and `d47-<date>.jsonl` to search
-or hand to something that parses JSON. Turning a part up to `Trace` affects both, and `Trace`
-grows a log file quickly, so it is worth turning back down once you have what you needed.
+The log is one file a day, `d47-<date>.log`, and each line carries the time to the millisecond.
+`Trace` grows it quickly, so it is worth turning a part back down once you have what you needed.
 
 ### When part of D47 stops running
 

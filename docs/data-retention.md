@@ -30,7 +30,6 @@ runs, so there is data here that belongs to somebody else. Who holds it and on w
 | What | Where | Kept | What enforces it |
 |---|---|---|---|
 | The readable log | `data\logs\d47-*.log` | **90 days**, and at most **4 MB** of any one day | `LoggingSetup` |
-| The machine-parsing log | `data\logs\d47-*.jsonl` | **14 days**, and at most **4 MB** of any one day | `LoggingSetup` |
 | What d47 remembers about you | `data\memories.json` | **90 days** by default — the row says *Three months* — and *Never* is one of the choices | `MemoryStore.Expire`, on the tick |
 | Audio recorder clips | `data\flight\` | a rolling **200 MB**, oldest evicted first on every write | `RecordingLog` |
 | Recordings you pressed *keep* on | `data\flight\kept\` | **until the wipe**, and eviction never reaches them | `RecordingLog`, deliberately |
@@ -45,13 +44,12 @@ runs, so there is data here that belongs to somebody else. Who holds it and on w
 
 Three of those want a word.
 
-**The two logs are asymmetric on purpose.** The readable one is what a bug report quotes and what
-an incident excerpt cuts its log half out of, so its reach is worth buying; the JSON one is 63% of
-the bytes the two hold between them and nobody reads it. Ninety days of the readable log is about
-16 MB. The per-day ceiling is there because a time limit alone is not a bound — d47 has had a day
-with a runaway loop in it, and ninety days multiplied by an unbounded day is unbounded. A day that
-hits the ceiling stops rather than rolling on to a second file, so the pile cannot exceed 360 MB of
-`.log` and 56 MB of `.jsonl` however badly a day goes.
+**There is one log.** It is what a bug report quotes and what an incident excerpt cuts its log half
+out of. Ninety days of it is about 16 MB. The per-day ceiling is there because a time limit alone is
+not a bound — d47 has had a day with a runaway loop in it, and ninety days multiplied by an
+unbounded day is unbounded. A day that hits the ceiling stops rather than rolling on to a second
+file, so the pile cannot exceed 360 MB however badly a day goes. Earlier versions also wrote a
+`d47-*.jsonl` copy; d47 deletes those files at startup.
 
 **The audio recorder is the sharpest thing on this page and it is off unless you turn it on.**
 It exists only while `D47_RECORD_AUDIO=1` is set, and what it holds is a rolling recording of

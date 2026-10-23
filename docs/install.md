@@ -177,7 +177,6 @@ data\
   models\              speech models — only if you chose one and agreed to the download
   logs\
     d47-20260812.log     human-readable
-    d47-20260812.jsonl   the same events as newline-delimited JSON
 ```
 
 ### Finding it again
