@@ -11,7 +11,7 @@ public enum WriteStage
     Checking,
 }
 
-/// <summary>A model's typical seconds per stage at medium effort, and the total the Commander is told to expect.</summary>
+/// <summary>A model's typical seconds per stage at the catalog's story effort for the model, else medium, and the total the Commander is told to expect.</summary>
 public sealed record StoryPace(double Places, double Outline, double Objectives)
 {
     private static readonly StoryPace Other = new(5, 13, 22);
@@ -20,11 +20,11 @@ public sealed record StoryPace(double Places, double Outline, double Objectives)
 
     private static readonly Dictionary<string, StoryPace> Models = new(StringComparer.Ordinal)
     {
-        ["claude-sonnet-5-5"] = new(5, 6, 15),
+        ["claude-sonnet-5-5"] = new(5, 22, 122),
         ["claude-haiku-5-5"] = new(5, 12, 23),
         ["claude-opus-5-5"] = new(5, 26, 27),
         ["gpt-6.1-sol"] = new(5, 23, 25),
-        ["gpt-6-luna"] = new(5, 24, 22),
+        ["gpt-6-luna"] = new(5, 14, 47),
         ["gpt-5.6-terra"] = new(5, 9, 12),
     };
 

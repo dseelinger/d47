@@ -97,6 +97,13 @@ public sealed class StoryProgressTests
     }
 
     [Fact]
+    public void TheTotalForAModelWithACatalogStoryEffortIsAMeasuredChapterTime()
+    {
+        Assert.Equal(149, StoryPace.For("claude-sonnet-5-5").Total);
+        Assert.Equal(66, StoryPace.For("gpt-6-luna").Total);
+    }
+
+    [Fact]
     public void AModelNotInTheTableUsesTheLastRow()
     {
         Assert.Equal(new StoryPace(5, 13, 22), StoryPace.For("some-new-model"));
@@ -154,7 +161,7 @@ public sealed class StoryProgressTests
         Assert.Equal("That took too long. Trying again…", progress.Hint);
 
         progress.Enter(WriteStage.Outline, StoryPace.For("claude-sonnet-5-5"));
-        Assert.Equal("Usually ready in about 25 seconds.", progress.Hint);
+        Assert.Equal("Usually ready in about 150 seconds.", progress.Hint);
     }
 
     [Fact]
