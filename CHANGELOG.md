@@ -18,6 +18,8 @@ Once every 14 days, at a quiet moment, the core says one line pointing at the D4
 
 On a page of rows, Down and Up focus the first and last row, then step to the row below or above. In a grid of tiles they step down a column, and Left and Right move along a line. Enter or Space opens the focused row, which draws in Tile2. Down from the page search box focuses the first row the search left. On the Checklist, Stories, Adventures and Messages pages, and on the Materials tiles and rows and the Statistics rows, rows and cards can now take focus. Going back with Escape, the mouse Back button or Alt+Left puts focus back on the row you opened, or on the row now in its place if the list changed; a row opened by a click is not refocused.
 
+A selected row that has keyboard focus draws a 2 pixel Knock frame just inside its edge, so you can tell where focus is on the open arc and the selected item on the Checklist. A row you clicked, an unselected row and a disabled row draw no frame.
+
 Digit keys print as the digit and numpad digits as "Num 0" to "Num 9", so the headset reset-zoom key reads Ctrl+Alt+0 in Settings and the logs instead of Ctrl+Alt+D0. Stored settings are unchanged.
 
 Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar; the number of the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, and Alt+Left goes back, the same as Escape.
