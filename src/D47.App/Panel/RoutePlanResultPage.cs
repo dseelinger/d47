@@ -92,9 +92,9 @@ public sealed class RoutePlanResultPage : UserControl
 
         if (offDuty is null
             && MapStops(plan) is { } stops
-            && RouteMapLayout.For(stops, RouteMapStop.ReachedIndex(plan), null) is { } layout)
+            && stops.Count(stop => stop.Position is not null) >= 2)
         {
-            _map.Show(layout, null);
+            _map.Show(stops, RouteMapStop.ReachedIndex(plan), null, null);
             _map.IsVisible = true;
         }
 

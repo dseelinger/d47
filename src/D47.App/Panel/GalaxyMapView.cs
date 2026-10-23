@@ -131,6 +131,7 @@ public sealed class GalaxyMapView : Control
     private IReadOnlyList<DrawnMark> _marks = [];
     private GalaxyMapStar? _selected;
     private Point? _selectedAt;
+    private double? _fitInset;
 
     private Point? _pressedAt;
     private GalaxyViewport? _pressedView;
@@ -195,6 +196,13 @@ public sealed class GalaxyMapView : Control
         Invalidate();
     }
 
+    /// <summary>Frames the scene's route with <paramref name="inset"/> px clear each side at any width, refitted on resize.</summary>
+    public void Fit(double inset)
+    {
+        _fitInset = inset;
+        Invalidate();
+    }
+
     public void View(GalaxyViewport viewport)
     {
         _viewport = viewport;
@@ -216,7 +224,7 @@ public sealed class GalaxyMapView : Control
 
     private double Scale => Math.Min(Bounds.Width, Bounds.Height) / _viewport.LightYearsAcross;
 
-    private bool Detailed => _viewport.LightYearsAcross <= DetailAcross;
+    private bool Detailed => _fitInset is not null || _viewport.LightYearsAcross <= DetailAcross;
 
     private bool Wide => _viewport.LightYearsAcross >= DetailAcross;
 
@@ -240,6 +248,14 @@ public sealed class GalaxyMapView : Control
         _stale = false;
         _builtFor = Bounds.Size;
 
+        var stops = _scene.Route?.Where(stop => stop.Position is not null).ToList() ?? [];
+
+        if (_fitInset is { } inset
+            && GalaxyViewport.Fitted([.. stops.Select(stop => stop.Position!.Value)], Math.Min(Bounds.Width, Bounds.Height), inset) is { } fitted)
+        {
+            _viewport = fitted;
+        }
+
         if (_scene.Travels is { } travels && _legs is null)
         {
             _legs = Legs(travels);
@@ -251,11 +267,10 @@ public sealed class GalaxyMapView : Control
             : [];
         _unvisited = _unvisitedAt.Count > 0 ? Outlines(_unvisitedAt.Select(star => star.At)) : null;
 
-        var stops = _scene.Route?.Where(stop => stop.Position is not null).ToList() ?? [];
-        var reachedStop = _scene.Route is { } all && _scene.Reached >= 0 && _scene.Reached < all.Count ? all[_scene.Reached] : null;
-
         _route = stops.Count >= 2 ? [.. stops.Select(stop => Screen(stop.Position!.Value))] : [];
-        _hereIndex = reachedStop is null ? -1 : stops.IndexOf(reachedStop);
+        _hereIndex = _scene.Route is { } all && _scene.Reached >= 0 && _scene.Reached < all.Count && all[_scene.Reached].Position is not null
+            ? all.Take(_scene.Reached).Count(stop => stop.Position is not null)
+            : -1;
 
         var stars = new List<(RouteStar Kind, Point At)>();
 
@@ -582,7 +597,10 @@ public sealed class GalaxyMapView : Control
             }
         }
 
-        ScaleBar(context, size);
+        if (_fitInset is null)
+        {
+            ScaleBar(context, size);
+        }
     }
 
     private void Ground(DrawingContext context, Size size)

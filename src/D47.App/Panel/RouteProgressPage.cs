@@ -190,14 +190,11 @@ public sealed class RouteProgressPage : UserControl
             _aside.IsVisible = false;
         }
 
-        var layout = RouteMapLayout.For(
-            RouteMapStop.From(route),
-            progress.Index,
-            progress.OffRoute ? _position?.Invoke() : null);
+        var stops = RouteMapStop.From(route);
 
-        if (layout is not null)
+        if (stops.Count(stop => stop.Position is not null) >= 2)
         {
-            _map.Show(layout, here);
+            _map.Show(stops, progress.Index, progress.OffRoute ? _position?.Invoke() : null, here);
             _map.IsVisible = true;
         }
 

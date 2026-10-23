@@ -17,6 +17,9 @@ public class ARouteMapDrawsTheStartAndEndOfAPlanTests
     private static ExobiologyStop Exo(string name, double x) =>
         new(name, 1, []) { Position = new StarPosition(x, 0, 0) };
 
+    private static CarrierWaypoint CarrierStop(string name, bool restock) =>
+        new(name, 0, 0, 0, 0, restock, 0, 0, false, false, false) { Position = new StarPosition(1, 2, 3) };
+
     private static PlottedRoute Jump(RouteEndpoint? start) =>
         new("Sol", "Colonia", 100, 2, [Waypoint("A", 1, neutron: true), Waypoint("B", 2)]) { Start = start };
 
@@ -109,6 +112,48 @@ public class ARouteMapDrawsTheStartAndEndOfAPlanTests
     {
         var route = new RichesRoute([new RichesStop("A", 1, []), new RichesStop("B", 1, [])]);
 
-        Assert.Null(RouteMapLayout.For(RouteMapStop.From(route), -1, null));
+        var positions = RouteMapStop.From(route).Where(stop => stop.Position is not null).Select(stop => stop.Position!.Value).ToList();
+
+        Assert.Null(GalaxyViewport.Fitted(positions, 360, 20));
+    }
+
+    [Fact]
+    public void ANavRouteMarksItsStarClasses()
+    {
+        var route = new NavRoute
+        {
+            Hops =
+            [
+                new RouteHop("N", "N"),
+                new RouteHop("D", "DA"),
+                new RouteHop("H", "H"),
+                new RouteHop("W", "W"),
+                new RouteHop("G", "G"),
+                new RouteHop("U", null),
+                new RouteHop("Q", "Nonsense") { Position = (1, 2, 3) },
+            ],
+        };
+
+        var stops = RouteMapStop.From(route);
+
+        Assert.Equal(RouteStopMarks.Neutron | RouteStopMarks.NotScoopable, stops[0].Marks);
+        Assert.Equal(RouteStopMarks.WhiteDwarf | RouteStopMarks.NotScoopable, stops[1].Marks);
+        Assert.Equal(RouteStopMarks.BlackHole | RouteStopMarks.NotScoopable, stops[2].Marks);
+        Assert.Equal(RouteStopMarks.NotScoopable, stops[3].Marks);
+        Assert.Equal(RouteStopMarks.None, stops[4].Marks);
+        Assert.Equal(RouteStopMarks.None, stops[5].Marks);
+        Assert.Equal(RouteStopMarks.None, stops[6].Marks);
+        Assert.Equal(new StarPosition(1, 2, 3), stops[6].Position);
+        Assert.Null(stops[0].Position);
+    }
+
+    [Fact]
+    public void ACarrierRouteMarksOnlyItsRestocks()
+    {
+        var stops = RouteMapStop.From(new CarrierRoute([CarrierStop("A", false), CarrierStop("B", true)]));
+
+        Assert.Equal(RouteStopMarks.None, stops[0].Marks);
+        Assert.Equal(RouteStopMarks.Restock, stops[1].Marks);
+        Assert.Equal(new StarPosition(1, 2, 3), stops[1].Position);
     }
 }
