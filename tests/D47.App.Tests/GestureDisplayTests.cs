@@ -20,6 +20,11 @@ public class GestureDisplayTests
     [InlineData("Return", "Enter")]
     [InlineData("Escape", "Esc")]
     [InlineData("Scroll", "Scroll Lock")]
+    [InlineData("D0", "0")]
+    [InlineData("D5", "5")]
+    [InlineData("D9", "9")]
+    [InlineData("NumPad0", "Num 0")]
+    [InlineData("NumPad3", "Num 3")]
     public void AKeyIsShownAsWhatIsPrintedOnIt(string stored, string shown)
     {
         Assert.Equal(shown, Gestures.Describe(stored));
@@ -29,6 +34,7 @@ public class GestureDisplayTests
     [InlineData("Ctrl+Alt+X", "Ctrl+Alt+X")]
     [InlineData("Ctrl+Oem4", "Ctrl+[")]
     [InlineData("Ctrl+Shift+OemComma", "Ctrl+Shift+,")]
+    [InlineData("Ctrl+Alt+D0", "Ctrl+Alt+0")]
     public void ModifiersAreNamedAsPeopleSayThem(string stored, string shown)
     {
         Assert.Equal(shown, Gestures.Describe(stored));

@@ -439,12 +439,15 @@ public partial class DocumentationGateTests
     }
 
     /// <summary>"Ctrl+OemComma" is Avalonia's spelling and "Ctrl+," is the Commander's.</summary>
-    private static string Readable(string gesture) => gesture
+    private static string Readable(string gesture) => DigitKeyPattern().Replace(gesture, "${digit}")
         .Replace("OemComma", ",", StringComparison.Ordinal)
         .Replace("OemPeriod", ".", StringComparison.Ordinal)
         .Replace("OemQuestion", "/", StringComparison.Ordinal)
         .Replace("OemPlus", "=", StringComparison.Ordinal)
         .Replace("OemMinus", "-", StringComparison.Ordinal);
+
+    [GeneratedRegex(@"(?<![A-Za-z0-9])D(?<digit>[0-9])(?=\+|$)")]
+    private static partial Regex DigitKeyPattern();
 
     /// <summary>
     /// Gestures a page names as the default, in either voice the pages use: `Ctrl+L` out of the box, or

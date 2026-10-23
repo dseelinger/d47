@@ -353,7 +353,7 @@ the same as the overlay's own keys. Steps **Scale** up one rung on whichever pan
 
 #### Reset the headset panel's zoom {#hotkey-zoom-reset}
 
-`Ctrl+Alt+D0` out of the box, and it works **anywhere**. Puts **Scale** back to 100%.
+`Ctrl+Alt+0` out of the box, and it works **anywhere**. Puts **Scale** back to 100%.
 
 ### Settings
 
