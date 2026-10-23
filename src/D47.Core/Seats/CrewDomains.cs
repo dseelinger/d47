@@ -71,6 +71,7 @@ public static class CrewDomains
         "scenes",
         "session",
         "session-length",
+        "community",
         "adventure",
         "story-clue",
         "story-reaction",

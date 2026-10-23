@@ -1245,6 +1245,20 @@ The line is in the pilot's own voice and says only what the journal states. When
 and fly it yourself, the pilot says they have the ship instead. Nothing is said while no pilot is
 assigned to the fighter bay, and nothing is said on a timer while the fighter is out.
 
+#### Discord mention {#community}
+
+One line pointing at the D47 Discord, said once every 14 days. The first mention comes 14 days
+after the first launch with this row on.
+
+```text
+If you have a question or an idea for me, the D47 Discord is where the other Commanders are.
+```
+
+It waits for a quiet moment: at least 10 minutes into the session, and docked, landed or in
+supercruise for 90 seconds. It is said at most once per launch, and by whichever core is aboard.
+"D47 Discord" in the transcript is a link. The row is "Mention the Discord every two weeks", on by
+default.
+
 #### Break reminder {#session-length}
 
 A reminder to take a break, said once, when a session has run for the length you choose: 2, 3, 4 or

@@ -198,6 +198,12 @@ public static class ShippedCallouts
                 RememberExplainedDay = day => sources.ViewState.Save(sources.ViewState.Load() with { RivalExplainedOn = day }),
             })
 
+            .Add(new CommunityCallout
+            {
+                LastSaidDay = () => sources.ViewState.Load().CommunityMentionedOn,
+                RememberSaidDay = day => sources.ViewState.Save(sources.ViewState.Load() with { CommunityMentionedOn = day }),
+            })
+
             .Add(new PowerplayMeritsCallout())
             .Add(new PowerplaySalvageCallout())
             .Add(new PowerplayCycleCallout
@@ -432,6 +438,7 @@ public static class ShippedCallouts
         engine.SetEnabled("met-before", callouts.MetBefore, now);
         engine.SetEnabled("rebuy", callouts.Rebuy, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
+        engine.SetEnabled("community", callouts.Community, now);
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);

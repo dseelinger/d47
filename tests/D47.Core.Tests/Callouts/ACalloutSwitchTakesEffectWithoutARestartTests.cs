@@ -118,6 +118,27 @@ public class ACalloutSwitchTakesEffectWithoutARestartTests
     }
 
     [Fact]
+    public void TheDiscordMentionFollowsItsRowAndTheMasterSwitch()
+    {
+        var (engine, settings) = ShippedCatalogue.Build();
+        var now = DateTimeOffset.UnixEpoch;
+
+        Assert.True(engine.IsEnabled("community"));
+
+        Callouts(settings, callouts => callouts with { Community = false });
+        ShippedCallouts.Apply(engine, settings, now);
+        Assert.False(engine.IsEnabled("community"));
+
+        Callouts(settings, callouts => callouts with { Community = true });
+        ShippedCallouts.Apply(engine, settings, now);
+        Assert.True(engine.IsEnabled("community"));
+
+        Callouts(settings, callouts => callouts with { Enabled = false });
+        ShippedCallouts.Apply(engine, settings, now);
+        Assert.False(engine.Enabled);
+    }
+
+    [Fact]
     public void TheSessionLengthFollowsItsRow()
     {
         var (engine, settings) = ShippedCatalogue.Build();

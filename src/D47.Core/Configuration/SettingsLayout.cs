@@ -235,6 +235,7 @@ public static class SettingsLayout
                                 E("callouts.shipModes"),
                                 E("callouts.tradingMode"),
                                 E("callouts.tradingModeMinHold", under: true),
+                                E("callouts.community"),
                             ]),
                     ]),
                 new SettingsPlace(

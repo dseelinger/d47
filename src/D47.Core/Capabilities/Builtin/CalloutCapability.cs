@@ -65,6 +65,7 @@ public static class CalloutCapability
     public const string KillsKey = "callouts.kills";
     public const string MetBeforeKey = "callouts.metBefore";
     public const string RivalTerritoryKey = "callouts.rivalTerritory";
+    public const string CommunityKey = "callouts.community";
     public const string PowerplayMeritsKey = "callouts.powerplayMerits";
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
@@ -789,6 +790,15 @@ public static class CalloutCapability
                 "damaged stations",
                 s => s.Callouts.StationDamage,
                 (s, v) => s with { Callouts = s.Callouts with { StationDamage = v } }),
+
+            Toggle(
+                CommunityKey,
+                "Mention the Discord every two weeks",
+                "One line pointing at the D47 Discord, said at a quiet moment once every 14 days.",
+                "community",
+                "the Discord",
+                s => s.Callouts.Community,
+                (s, v) => s with { Callouts = s.Callouts with { Community = v } }),
 
             Toggle(
                 SessionLengthKey,

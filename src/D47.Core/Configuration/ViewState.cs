@@ -26,6 +26,9 @@ public sealed record ViewState
     /// </summary>
     public string? RivalExplainedOn { get; init; }
 
+    /// <summary>The local day (<c>yyyy-MM-dd</c>) the Discord line was last queued, or null.</summary>
+    public string? CommunityMentionedOn { get; init; }
+
     /// <summary>The start (<c>yyyy-MM-ddTHH</c>, UTC) of the Powerplay cycle its closing reminder was last said in, or null.</summary>
     public string? PowerplayCycleSaidFor { get; init; }
 

@@ -607,6 +607,9 @@ public sealed record CalloutSettings
     /// <summary>Flying in a rival Power's space (Phase 15).</summary>
     public bool RivalTerritory { get; init; } = true;
 
+    /// <summary>A line pointing at the D47 Discord, once every two weeks.</summary>
+    public bool Community { get; init; } = true;
+
     /// <summary>Which way the Powerplay merit modifier leans, on arriving in a system.</summary>
     public bool PowerplayMerits { get; init; } = true;
 
