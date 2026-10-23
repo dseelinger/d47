@@ -470,6 +470,9 @@ public sealed class StationSearchPage : GalaxySearchPage
         var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
         name.Text = station.Name;
 
+        var systemName = Value(station.SystemName);
+        Themed(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+
         var system = station.ControllingFaction is { } controlling
             ? station.State is { } state ? $"{controlling} · {state}" : controlling
             : Dash;
@@ -481,7 +484,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             Children =
             {
                 Cell(Pair(name, Sub(station.Type)), 0),
-                Cell(Pair(Value(station.SystemName), Sub(system)), 1),
+                Cell(Pair(systemName, Sub(system)), 1),
                 Cell(Right(Mono(station.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Value(LargestPad(station)), 3),
                 Cell(Right(Mono(station.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),

@@ -407,9 +407,12 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked"];
 
-    private static Control Row(BodySummary body, string? material, string columns, int shareColumn, int gravityColumn)
+    private Control Row(BodySummary body, string? material, string columns, int shareColumn, int gravityColumn)
     {
         var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
+
+        var system = Value(body.SystemName);
+        Themed(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var grid = new Grid
         {
@@ -418,7 +421,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             Children =
             {
                 Cell(Pair(name, Sub(body.Subtype)), 0),
-                Cell(Value(body.SystemName), 1),
+                Cell(system, 1),
                 Cell(Right(Mono(body.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Right(Mono(body.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 3),
                 Cell(Value(body.IsLandable ? "Yes" : "No"), 4),
