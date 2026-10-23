@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace D47.App.Theming;
 
@@ -87,6 +88,17 @@ public static class ListRow
 
         return target;
     }
+
+    /// <summary>True for a visible, enabled control that takes keyboard focus and is dressed as a row.</summary>
+    internal static bool IsFocusable(Control control) =>
+        control.Focusable
+        && control.IsEffectivelyVisible
+        && control.IsEffectivelyEnabled
+        && (control.Classes.Contains(Class) || control.Classes.Contains(OpensClass));
+
+    /// <summary>The focusable rows under <paramref name="pane"/>, in tree order.</summary>
+    internal static List<Control> Within(Control pane) =>
+        pane.GetVisualDescendants().OfType<Control>().Where(IsFocusable).ToList();
 
     /// <summary>Dresses <paramref name="row"/> as a pressable list row.</summary>
     public static Button Dress(Button row, bool selected = false)

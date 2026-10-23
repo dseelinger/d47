@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using D47.App.Theming;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -37,6 +38,12 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
     /// <summary>What each level drew, kept by crumb key.</summary>
     private readonly Dictionary<string, Control> _built = [];
+
+    /// <summary>The row that had focus when a deeper level was opened, and its place among the level's rows, by crumb key.</summary>
+    private readonly Dictionary<string, (Control Row, int Index)> _focusedRows = [];
+
+    /// <summary>How many levels the trail had at the last draw.</summary>
+    private int _depth;
 
     /// <summary>What is currently laid out, so a redraw that changes nothing does nothing.</summary>
     private IReadOnlyList<string> _showing = [];
@@ -142,6 +149,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
         if (trail.Count == 0)
         {
+            _depth = 0;
             Empty();
             _showing = [];
             Drawn?.Invoke(this, EventArgs.Empty);
@@ -154,9 +162,18 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         var visible = trail.Skip(first).ToList();
         var keys = visible.Select(crumb => crumb.Key).ToList();
 
+        var opened = trail.Count > _depth;
+        var wentBack = trail.Count < _depth;
+        _depth = trail.Count;
+
         if (_showing.SequenceEqual(keys))
         {
             return;
+        }
+
+        if (opened)
+        {
+            RememberFocusedRows();
         }
 
         _showing = keys;
@@ -221,7 +238,54 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             }
         }
 
+        if (wentBack)
+        {
+            RefocusRemembered(keys[^1]);
+        }
+
         Drawn?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Records, for each level showing, the row that has keyboard focus, and drops the record where none has.</summary>
+    private void RememberFocusedRows()
+    {
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
+
+        // A row focused by the pointer is not remembered: only one reached from the keyboard draws its focus.
+        if (focused is not null && !focused.Classes.Contains(":focus-visible"))
+        {
+            focused = null;
+        }
+
+        foreach (var key in _showing)
+        {
+            var at = focused is not null && _built.TryGetValue(key, out var pane) ? ListRow.Within(pane).IndexOf(focused) : -1;
+
+            if (at >= 0)
+            {
+                _focusedRows[key] = (focused!, at);
+            }
+            else
+            {
+                _focusedRows.Remove(key);
+            }
+        }
+    }
+
+    /// <summary>Focuses the remembered row of a level that is now the deepest, or the row at its place when that row is gone.</summary>
+    private void RefocusRemembered(string key)
+    {
+        if (!_focusedRows.Remove(key, out var kept) || !_built.TryGetValue(key, out var pane))
+        {
+            return;
+        }
+
+        var rows = ListRow.Within(pane);
+
+        if (rows.Count > 0)
+        {
+            (rows.Contains(kept.Row) ? kept.Row : rows[Math.Min(kept.Index, rows.Count - 1)]).Focus(NavigationMethod.Directional);
+        }
     }
 
     /// <summary>The grab area on one rule (Phase 55).</summary>
@@ -342,6 +406,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         foreach (var key in _built.Keys.Where(match).ToList())
         {
             _built.Remove(key);
+            _focusedRows.Remove(key);
         }
 
         _showing = [];
@@ -355,6 +420,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     public void Forget(string key)
     {
         _built.Remove(key);
+        _focusedRows.Remove(key);
         _showing = [];
         Draw();
     }

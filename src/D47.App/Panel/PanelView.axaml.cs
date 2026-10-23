@@ -1862,14 +1862,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         return true;
     }
 
-    private static bool IsRow(Control control) =>
-        control.Focusable
-        && control.IsEffectivelyVisible
-        && control.IsEffectivelyEnabled
-        && (control.Classes.Contains(Theming.ListRow.Class) || control.Classes.Contains(Theming.ListRow.OpensClass));
+    private static bool IsRow(Control control) => Theming.ListRow.IsFocusable(control);
 
-    private static List<Control> Rows(Control pane) =>
-        pane.GetVisualDescendants().OfType<Control>().Where(IsRow).ToList();
+    private static List<Control> Rows(Control pane) => Theming.ListRow.Within(pane);
 
     /// <summary>The row's rectangle in a coordinate space shared by every row on the page.</summary>
     private Rect Place(Control row) =>
