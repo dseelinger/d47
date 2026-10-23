@@ -4,7 +4,7 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Interdiction, shields, hull, heat and a full hold (Phase 8, "Call out danger without waiting for a
+/// Interdiction, hyperdiction, shields, hull, heat and a full hold (Phase 8, "Call out danger without waiting for a
 /// turn").
 /// </summary>
 public sealed class DangerCallout : ICallout
@@ -21,6 +21,10 @@ public sealed class DangerCallout : ICallout
     private bool _wasOverheating;
     private bool _wasBeingInterdicted;
     private bool _holdWasFull;
+
+    private long? _jumpingTo;
+    private string? _jumpingToName;
+    private bool _warnedOfHyperdiction;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -47,12 +51,63 @@ public sealed class DangerCallout : ICallout
             module.Item.StartsWith("int_shieldgenerator", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Transitions.</summary>
-    private static IEnumerable<Announcement> FromEvents(CalloutContext context)
+    private IEnumerable<Announcement> FromEvents(CalloutContext context)
     {
         foreach (var journalEvent in context.Events)
         {
             switch (journalEvent.Kind)
             {
+                case "StartJump" when journalEvent.String("JumpType") == "Hyperspace":
+                    _jumpingTo = journalEvent.Long("SystemAddress");
+                    _jumpingToName = journalEvent.String("StarSystem");
+                    _warnedOfHyperdiction = false;
+                    break;
+
+                // Mid-jump, Elite targets the next hop of the route; naming the system being flown to means
+                // the route did not advance because the ship is being pulled out.
+                case "FSDTarget" when _jumpingTo is { } flyingTo:
+                    if (journalEvent.Long("SystemAddress") is not { } targeted)
+                    {
+                        ForgetJump();
+                    }
+                    else if (targeted == flyingTo && !_warnedOfHyperdiction && !context.IsPriming)
+                    {
+                        _warnedOfHyperdiction = true;
+                        yield return Urgent(
+                            "danger.hyperdiction",
+                            "Hyperdiction. Thargoids are pulling us out of the jump.",
+                            AlertCue.Interdiction);
+                    }
+
+                    break;
+
+                case "FSDJump":
+                {
+                    var landed = journalEvent.Long("SystemAddress");
+                    var flewTo = _jumpingTo;
+                    var intendedName = _jumpingToName;
+                    var warned = _warnedOfHyperdiction;
+                    ForgetJump();
+
+                    if (flewTo is { } intended && landed is { } arrived && arrived != intended && !warned
+                        && !context.IsPriming)
+                    {
+                        var here = journalEvent.String("StarSystem") ?? "an unknown system";
+                        yield return Urgent(
+                            "danger.hyperdicted",
+                            intendedName is null
+                                ? $"Pulled out of hyperspace in {here}."
+                                : $"Pulled out of hyperspace in {here}, short of {intendedName}.",
+                            AlertCue.Interdiction);
+                    }
+
+                    break;
+                }
+
+                case "LoadGame" or "Location" or "Shutdown":
+                    ForgetJump();
+                    break;
+
                 case "Interdicted":
                 {
                     var by = journalEvent.String("Interdictor");
@@ -115,6 +170,13 @@ public sealed class DangerCallout : ICallout
                     break;
             }
         }
+    }
+
+    private void ForgetJump()
+    {
+        _jumpingTo = null;
+        _jumpingToName = null;
+        _warnedOfHyperdiction = false;
     }
 
     /// <summary>Conditions, each announced on the edge into the condition rather than while it holds.</summary>

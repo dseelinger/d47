@@ -201,7 +201,7 @@ public static class CalloutCapability
             Toggle(
                 DangerKey,
                 "Danger",
-                "Interdiction, shields down, hull damage, overheating and a full cargo hold.",
+                "Interdiction, hyperdiction, shields down, hull damage, overheating and a full cargo hold.",
                 "danger",
                 "danger",
                 s => s.Callouts.Danger,

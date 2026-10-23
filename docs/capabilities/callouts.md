@@ -181,11 +181,21 @@ Home system is Shinrarta Dezhra.
 
 #### Danger {#danger}
 
-Interdiction, shields down, hull damage, overheating, and a full cargo hold.
+Interdiction, hyperdiction, shields down, hull damage, overheating and a full cargo hold.
 
 Said once as it happens rather than repeatedly while it lasts — your shields going down is news;
 your shields still being down half a second later is not. Submitting to an interdiction was your
 decision and is not read back to you as an emergency.
+
+A hyperdiction is Thargoids pulling you out of a hyperspace jump. On a plotted route the warning
+comes partway through the tunnel, before you drop out:
+
+```text
+Hyperdiction. Thargoids are pulling us out of the jump.
+```
+
+With no route plotted, Elite writes nothing until you arrive, so the line comes then and names
+where you are and where you were going.
 
 An urgent warning cuts in rather than waiting its turn. A warning that arrives after Directive 47
 has finished reading you a commodity list has arrived too late to be one.
@@ -199,7 +209,7 @@ sentence has finished arriving. There are two, and which you hear tells you wher
 | Three pulses on one note | The ship is cooking itself | The throttle, not the trigger |
 
 Being *pulled out of supercruise* uses the same sound as the warning that one was coming, because
-it is the same situation a moment later.
+it is the same situation a moment later. A hyperdiction uses it too.
 
 The lines that are not emergencies stay quiet. A full cargo hold and the rebuy screen are worth
 saying and are not worth an alarm, so neither gets one.

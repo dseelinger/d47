@@ -61,6 +61,16 @@ public class EveryUrgentWarningIsMarkedTests
             """{"timestamp":"3311-01-01T00:00:00Z","event":"UnderAttack","Target":"You"}""",
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Died"}""",
         ])),
+        .. new DangerCallout().Examine(Context(events:
+        [
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Merope","SystemAddress":224644818084}""",
+            """{"timestamp":"3311-01-01T00:00:07Z","event":"FSDTarget","Name":"Merope","SystemAddress":224644818084}""",
+        ])),
+        .. new DangerCallout().Examine(Context(events:
+        [
+            """{"timestamp":"3311-01-01T00:00:00Z","event":"StartJump","JumpType":"Hyperspace","StarSystem":"Merope","SystemAddress":224644818084}""",
+            """{"timestamp":"3311-01-01T00:00:25Z","event":"FSDJump","StarSystem":"Pleiades Sector HR-W d1-36","SystemAddress":1247411145035}""",
+        ])),
     ];
 
     /// <summary>
@@ -90,8 +100,8 @@ public class EveryUrgentWarningIsMarkedTests
     {
         var said = FromEvents().Concat(FromStatus()).ToList();
 
-        // All eight, so a silently missing warning cannot make this pass by absence.
-        Assert.Equal(8, said.Count);
+        // All ten, so a silently missing warning cannot make this pass by absence.
+        Assert.Equal(10, said.Count);
 
         foreach (var announcement in said)
         {

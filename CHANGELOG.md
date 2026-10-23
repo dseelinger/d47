@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+D47 warns when Thargoids pull the ship out of a hyperspace jump, with the interdiction alarm. On a plotted route it says "Hyperdiction. Thargoids are pulling us out of the jump." partway through the tunnel. With no route plotted it says on arrival which system you were pulled out in and which one you were jumping to. The Danger row under Callouts turns it off.
+
 Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.
 
 The last step of setup has a link, THE D47 DISCORD, that opens the community page in your browser.
