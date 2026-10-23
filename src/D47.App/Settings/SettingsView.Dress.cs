@@ -93,6 +93,48 @@ public partial class SettingsView
         return (head, heading, note);
     }
 
+    /// <summary>Width of a bind row's key slot and of its controller button slot.</summary>
+    internal const double BindSlotWidth = 180;
+
+    /// <summary>Width of a bind row's BIND and CLEAR buttons.</summary>
+    internal const double BindButtonWidth = 96;
+
+    /// <summary>The KEY / CONTROLLER BUTTON captions over a group's bind rows, aligned with their slots.</summary>
+    internal static Grid BindColumnHeader()
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(LabelColumnWidth + RowColumnGap + RowBarWidth + RowHorizontalPadding, GridUnitType.Pixel),
+                new ColumnDefinition(BindSlotWidth, GridUnitType.Pixel),
+                new ColumnDefinition(Gaps.Tile, GridUnitType.Pixel),
+                new ColumnDefinition(BindSlotWidth, GridUnitType.Pixel),
+            ],
+            Margin = new Thickness(0, 8, 0, 0),
+            IsHitTestVisible = false,
+        };
+
+        AddCaption(grid, "KEY", 1);
+        AddCaption(grid, "CONTROLLER BUTTON", 3);
+
+        return grid;
+
+        static void AddCaption(Grid grid, string text, int column)
+        {
+            var caption = new TextBlock
+            {
+                Text = text,
+                FontSize = TypeScale.MetaSmall,
+                FontWeight = FontWeight.SemiBold,
+                Margin = new Thickness(12, 0, 0, 0),
+            };
+            Ink(caption, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            Grid.SetColumn(caption, column);
+            grid.Children.Add(caption);
+        }
+    }
+
     /// <summary>
     /// A compact row's columns: the caption, the control and the reset gutter, fixed so every row's
     /// columns line up down the page.

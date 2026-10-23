@@ -134,7 +134,7 @@ public class APickedVoiceShowsOnItsRowTests
         settings.Apply(key, "Ctrl+Shift+D", SettingsCaller.Panel);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotEqual("NONE", Bound());
+        Assert.NotEqual("UNBOUND", Bound());
 
         // The app's own unsubscribe.
         DetachOnly(host);
@@ -143,7 +143,7 @@ public class APickedVoiceShowsOnItsRowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(settings.Read(key));
-        Assert.Equal("NONE", Bound());
+        Assert.Equal("UNBOUND", Bound());
 
         host.Close();
     }

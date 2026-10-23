@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each bind row in Settings now draws a key slot and a controller button slot, 180 pixels wide each, then BIND and CLEAR, on one line that no longer wraps. An empty slot reads UNBOUND. A row with no button slot, or with no controller attached, keeps the button slot's space so BIND and CLEAR line up with the other rows. While BIND is listening, the slots that are listening read PRESS A KEY… and OR A BUTTON… in cyan. Each group of bind rows has a KEY / CONTROLLER BUTTON header over its first row.
+
 Each of the nine hotkeys on the Window, Overlay and Headset settings pages can now take a stick or throttle button as well as a key, as Push-to-talk and Cancel already could. Press BIND and press the button; giving it the same kind twice replaces that one, and CLEAR removes both. Open settings, Focus the ask box and Find answer the button only while the D47 window has focus, as their keys do. The overlay and headset buttons work while Elite has the foreground.
 
 A key or stick button that another action already holds is now refused. Binding it in Settings or the setup wizard says, for example, "Ctrl+L is already bound to Focus the ask box. Press another, or Esc." and keeps listening; asking by voice or text says to clear it there first. The other action keeps its binding.

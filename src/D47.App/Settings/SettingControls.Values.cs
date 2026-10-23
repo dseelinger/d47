@@ -820,18 +820,32 @@ internal sealed partial class SettingControls
     }
 
     /// <summary>
-    /// The one bind control (#217): a chip per bound key, or one reading NONE, then BIND and CLEAR, in a row
-    /// that wraps (#354). Chips are shown or hidden rather than rebuilt, so a capture in progress keeps its
-    /// own control.
+    /// The one bind control (#217): a key slot and a controller button slot at fixed widths, then BIND and
+    /// CLEAR, on one line. An empty slot reads UNBOUND. The button slot stays out of a row that has one
+    /// only while no controller is attached and nothing is bound to it, and its column stays reserved.
+    /// Slots are shown or hidden rather than rebuilt, so a capture in progress keeps its own control.
     /// </summary>
     private (Control, Action) BuildBind(SettingRow row, StatusLine message)
     {
-        var chips = row.BoundKeys.Select(_ => SettingsView.BindingChip()).ToList();
+        var slots = row.BoundKeys
+            .Select(key => (Stick: KindOf(key) == SettingKind.HotasButton, Chip: SettingsView.BindingChip()))
+            .ToList();
 
-        var bind = new Button { Content = "BIND" };
-        bind.Click += async (_, _) => await CaptureBindAsync(row, bind, message);
+        var bind = new Button { Content = "BIND", Width = SettingsView.BindButtonWidth };
+        var clear = new Button { Content = "CLEAR", Width = SettingsView.BindButtonWidth };
 
-        var clear = new Button { Content = "CLEAR" };
+        (bool Keys, bool Stick)? listening = null;
+        Action paint = () => { };
+
+        bind.Click += async (_, _) => await CaptureBindAsync(
+            row,
+            bind,
+            message,
+            state =>
+            {
+                listening = state;
+                paint();
+            });
 
         clear.Click += (_, _) =>
         {
@@ -841,15 +855,29 @@ internal sealed partial class SettingControls
             }
         };
 
-        var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, HorizontalAlignment = HorizontalAlignment.Right };
-        foreach (var (chip, _) in chips)
+        var grid = new Grid
         {
-            wrap.Children.Add(chip);
-        }
-        wrap.Children.Add(bind);
-        wrap.Children.Add(clear);
+            ColumnDefinitions = new ColumnDefinitions(
+                $"{SettingsView.BindSlotWidth},{SettingsView.BindSlotWidth},{SettingsView.BindButtonWidth},{SettingsView.BindButtonWidth}"),
+            ColumnSpacing = Gaps.Tile,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Width = (2 * SettingsView.BindSlotWidth) + (2 * SettingsView.BindButtonWidth) + (3 * Gaps.Tile),
+        };
 
-        return (wrap, () =>
+        foreach (var (stick, (chip, text)) in slots)
+        {
+            chip.Width = SettingsView.BindSlotWidth;
+            text.TextTrimming = TextTrimming.CharacterEllipsis;
+            Grid.SetColumn(chip, stick ? 1 : 0);
+            grid.Children.Add(chip);
+        }
+
+        Grid.SetColumn(bind, 2);
+        Grid.SetColumn(clear, 3);
+        grid.Children.Add(bind);
+        grid.Children.Add(clear);
+
+        paint = () =>
         {
             var said = BoundAs(row);
             var bound = said.Any(text => text is not null);
@@ -858,20 +886,29 @@ internal sealed partial class SettingControls
             // button that does nothing.
             var dead = row.Kind == SettingKind.HotasButton && services.Switches is null;
 
-            for (var i = 0; i < chips.Count; i++)
+            for (var i = 0; i < slots.Count; i++)
             {
-                var (chip, text) = chips[i];
-                var empty = !bound && i == 0;
+                var (stick, (chip, text)) = slots[i];
+                var empty = said[i] is null;
+                var heard = listening is { } state && (stick ? state.Stick : state.Keys);
 
-                chip.IsVisible = said[i] is not null || empty;
-                text.Text = empty ? (dead ? "NO CONTROLLERS" : "NONE") : said[i]?.ToUpperInvariant();
+                chip.IsVisible = !empty
+                                 || !stick
+                                 || row.Kind == SettingKind.HotasButton
+                                 || services.Switches is not null;
+
+                text.Text = heard
+                    ? (stick ? (listening!.Value.Keys ? "OR A BUTTON…" : "PRESS A BUTTON…") : "PRESS A KEY…")
+                    : empty ? (dead ? "NO CONTROLLERS" : "UNBOUND") : said[i]?.ToUpperInvariant();
                 text[!TextBlock.ForegroundProperty] = new DynamicResourceExtension(
-                    empty ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
+                    heard ? ThemeManager.CyanKey : empty ? ThemeManager.Grey2Key : ThemeManager.WhiteKey);
             }
 
             bind.IsEnabled = !dead;
             clear.IsEnabled = bound;
-        });
+        };
+
+        return (grid, paint);
     }
 
     /// <summary>
@@ -948,7 +985,11 @@ internal sealed partial class SettingControls
     }
 
     /// <summary>Binds by listening for a gesture, rather than by offering a list of key names.</summary>
-    private async Task CaptureBindAsync(SettingRow row, Button button, StatusLine message)
+    private async Task CaptureBindAsync(
+        SettingRow row,
+        Button button,
+        StatusLine message,
+        Action<(bool Keys, bool Stick)?> listening)
     {
         if (TopLevel.GetTopLevel(button) is not { } top)
         {
@@ -967,14 +1008,7 @@ internal sealed partial class SettingControls
 
         var stick = buttonKey is not null && services.Switches is not null;
 
-        var previous = button.Content;
-
-        button.Content = (keys, stick) switch
-        {
-            (true, true) => "Press a key or button…",
-            (true, false) => "Press a key…",
-            _ => "Press a button…",
-        };
+        listening((keys, stick));
 
         try
         {
@@ -993,7 +1027,7 @@ internal sealed partial class SettingControls
         }
         finally
         {
-            button.Content = previous;
+            listening(null);
             host.Refresh();
         }
     }

@@ -128,7 +128,7 @@ public class OneRowForPushToTalkTests
 
         Assert.Null(settings.Current.Listening.PushToTalkKey);
         Assert.Null(settings.Current.Listening.PushToTalkButton);
-        Assert.Equal(["NONE"], Chips(row));
+        Assert.Equal(["UNBOUND"], Chips(row));
 
         host.Close();
     }
@@ -159,9 +159,9 @@ public class OneRowForPushToTalkTests
 
     /// <summary>Which listeners are armed comes from the row.</summary>
     [AvaloniaTheory]
-    [InlineData(true, "Press a key or button…")]
-    [InlineData(false, "Press a key…")]
-    public void TheControlArmsTheStickOnlyWhenThereIsOne(bool controllers, string says)
+    [InlineData(true, new[] { "PRESS A KEY…", "OR A BUTTON…" })]
+    [InlineData(false, new[] { "PRESS A KEY…" })]
+    public void TheControlArmsTheStickOnlyWhenThereIsOne(bool controllers, string[] says)
     {
         var (settings, viewState, paths) = TestSurface.Create();
 
@@ -179,7 +179,8 @@ public class OneRowForPushToTalkTests
         bind.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(says, bind.Content as string);
+        Assert.Equal(says, Chips(row));
+        Assert.Equal("BIND", bind.Content as string);
 
         // Escape puts the capture down again, so the page is not left armed behind the test.
         host.Window.KeyPress(Avalonia.Input.Key.Escape, Avalonia.Input.RawInputModifiers.None,
@@ -353,7 +354,7 @@ public class OneRowForPushToTalkTests
         Assert.Equal("Ctrl+Alt+O", settings.Current.Hotkeys.ShowOverlay);
 
         // Still armed, so the Commander's next attempt is heard.
-        Assert.Equal("Press a key…", Bind(row).Content as string);
+        Assert.Equal(["PRESS A KEY…"], Chips(row));
 
         host.Window.KeyPress(Avalonia.Input.Key.Escape, Avalonia.Input.RawInputModifiers.None,
             Avalonia.Input.PhysicalKey.Escape, null);

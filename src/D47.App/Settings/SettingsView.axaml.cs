@@ -529,6 +529,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             // The group's toggles, as one grid of tiles where its first toggle falls.
             TileGrid? tiles = null;
 
+            // The KEY / CONTROLLER BUTTON captions sit over the group's first bind row and hide with it.
+            var headed = false;
+
             foreach (var entry in group.Entries)
             {
                 foreach (var row in settings.RowsForEntry(entry))
@@ -561,6 +564,15 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                     }
 
                     var view = BuildRow(owners[row.Key], row, entry.Under) with { Section = index, GroupIndex = groupIndex };
+
+                    if (!headed && row is { Kind: SettingKind.Hotkey or SettingKind.HotasButton, DrawnElsewhere: false })
+                    {
+                        headed = true;
+
+                        var header = BindColumnHeader();
+                        _bindHeaders[view.Container] = header;
+                        content.Children.Add(header);
+                    }
 
                     _rows.Add(view);
                     rows.Add(row);
@@ -641,6 +653,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         return new GroupView(section, group.Title, group.Help, container, heading, note, reset, slot);
     }
+
+    /// <summary>The column captions over a group's first bind row, by that row's container.</summary>
+    private readonly Dictionary<Control, Control> _bindHeaders = [];
 
     /// <summary>Marks a group's grid of toggle tiles, for a test to find it.</summary>
     public const string ToggleTilesName = "ToggleTiles";
@@ -1316,6 +1331,12 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 var shown = _sift.Rows[r].Shown;
 
                 row.Container.IsVisible = shown;
+
+                if (_bindHeaders.TryGetValue(row.Container, out var header))
+                {
+                    header.IsVisible = shown;
+                }
+
                 row.Refresh();
 
                 // Greyed out rather than absent: the setting still exists and still holds a value, it
