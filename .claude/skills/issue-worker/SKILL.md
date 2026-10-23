@@ -152,7 +152,7 @@ method when its class also has rendering tests.
 
 ## The rules that bite an implementer
 
-CLAUDE.md has the full set. These are the ones a change trips over:
+AGENTS.md has the full set. These are the ones a change trips over:
 
 - **Layering.** Core depends on nothing; no spoke references another spoke. If the fix seems to
   need one to, it is a question for the Architect — stop and say so.

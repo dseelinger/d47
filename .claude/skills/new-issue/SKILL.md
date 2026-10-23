@@ -186,7 +186,7 @@ shown with the text it applies to, not after the issue exists.
 ## The body
 
 The repository's form, in its writing style — literal, terse, no metaphor standing in for a
-statement. Read the CLAUDE.md writing rule before you write prose, and the `/prose` skill is there
+statement. Read the AGENTS.md writing rule before you write prose, and the `/prose` skill is there
 if you want it checked.
 
 - **Title**: seven words or fewer. Count them before showing the text. The cause goes in the body,

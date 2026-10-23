@@ -56,7 +56,7 @@ public class TheRoutingTabTests
 
     /// <summary>
     /// A tab nobody furnished is not drawn, and the headset furnishes nothing — which is the whole of
-    /// "desktop only" (CLAUDE.md: a tab is withdrawn from a surface by not making the call).
+    /// "desktop only".
     /// </summary>
     [AvaloniaFact]
     public void TheTabIsAbsentUntilAHostFurnishesIt()

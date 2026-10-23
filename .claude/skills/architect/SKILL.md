@@ -52,7 +52,7 @@ stop. Applying `Vetted` is the maintainer's, never yours.
 
 ## Plan within the rules
 
-Read CLAUDE.md before proposing anything. The constraints are not preferences:
+Read AGENTS.md before proposing anything. The constraints are not preferences:
 
 - **Layering.** `D47.Core` depends on nothing but logging abstractions and `ProtectedData`. Each
   spoke references only Core; no spoke references another spoke. `D47.App` references all seven and
@@ -165,7 +165,7 @@ For a plan you are settling:
 
 1. **The decision**, in a sentence or two.
 2. **Why**, including the alternative you rejected and what it would have cost. This is the one
-   place a rationale belongs — it goes in the issue, not in a code comment, where CLAUDE.md's rule
+   place a rationale belongs — it goes in the issue, not in a code comment, where AGENTS.md's rule
    against decision logs applies.
 3. **The build issues you filed**, each as its number, its title and a line on what it covers, with
    the order they have to land in.

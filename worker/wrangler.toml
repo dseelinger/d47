@@ -1,7 +1,7 @@
 # d47's donation endpoint (https://github.com/dseelinger/d47/issues/175).
 #
-# Deploying is one command — `wrangler deploy` from this folder — which is the bar CLAUDE.md
-# already holds the build to. What it cannot express is the two retention rules, which are bucket
+# Deploying is one command — `wrangler deploy` from this folder — which is the bar the build is
+# already held to. What it cannot express is the two retention rules, which are bucket
 # state rather than Worker configuration; those are in README.md, with the commands.
 
 name = "d47-donations"

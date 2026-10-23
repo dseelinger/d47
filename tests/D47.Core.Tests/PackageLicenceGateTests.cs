@@ -5,7 +5,7 @@ namespace D47.Core.Tests;
 
 /// <summary>
 /// The third gate: permissive licences only, no copyleft, verified across the transitive package graph
-/// rather than the direct references (CLAUDE.md, "No telemetry" / licences).
+/// rather than the direct references.
 /// </summary>
 [Trait("Category", "Gate")]
 public class PackageLicenceGateTests
@@ -50,7 +50,7 @@ public class PackageLicenceGateTests
              {problem}
 
              d47 ships permissive licences only, with no copyleft, and the rule covers the whole
-             transitive graph rather than the direct references (CLAUDE.md).
+             transitive graph rather than the direct references.
 
              It reached the build this way:
              {string.Join(Environment.NewLine, PathsTo(package).Select(path => "  " + path))}

@@ -8,7 +8,7 @@ model: sonnet
 You make the change you were given in the d47 repository and report what you did. You do not
 commit, push, or touch GitHub. The calling session reviews your work and commits it.
 
-Follow `CLAUDE.md`. The rules most often broken:
+Follow `AGENTS.md`. The rules most often broken:
 
 - **Layering.** `D47.Core` references no spoke; a spoke references only Core; only `D47.App`
   references spokes.

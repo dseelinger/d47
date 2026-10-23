@@ -5,7 +5,7 @@
 ; %LOCALAPPDATA%\Programs, which the Commander owns and can write to.
 ;
 ; The install directory is FIXED rather than versioned. Everything d47 writes lives in data\
-; beside the executable (CLAUDE.md), which is what makes the folder portable and what keeps
+; beside the executable, which is what makes the folder portable and what keeps
 ; settings, DPAPI secrets and several hundred megabytes of speech model together. Update
 ; frameworks that install into per-version folders — Squirrel, Velopack — move the executable
 ; on every update and would orphan that folder, so d47 keeps its own in-place updater and this

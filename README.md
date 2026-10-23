@@ -39,7 +39,7 @@ elevation.
 
 Eight projects: `D47.Core` holds the game logic and depends on no UI, audio hardware or vendor
 SDK; six spokes each implement one seam it declares (`D47.Audio`, `D47.Knowledge`, `D47.Llm`,
-`D47.Stt`, `D47.Tts`, `D47.Vr`); `D47.App` is the composition root and the UI. `CLAUDE.md` is the
+`D47.Stt`, `D47.Tts`, `D47.Vr`); `D47.App` is the composition root and the UI. `AGENTS.md` is the
 working guide to the tree.
 
 ## Attribution

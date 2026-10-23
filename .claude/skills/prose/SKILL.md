@@ -1,11 +1,11 @@
 ---
 name: prose
-description: Review the prose in a change against the CLAUDE.md writing style rule — comments, doc comments, the CHANGELOG entry, the commit message and any touched docs page. Flags metaphor and flourish standing in for direct statement, and offers a literal rewrite for each. Use when the user invokes /prose, or says "check the prose", "is this mannered", "review my comments for style", "did I write anything mannered".
+description: Review the prose in a change against the AGENTS.md writing style rule — comments, doc comments, the CHANGELOG entry, the commit message and any touched docs page. Flags metaphor and flourish standing in for direct statement, and offers a literal rewrite for each. Use when the user invokes /prose, or says "check the prose", "is this mannered", "review my comments for style", "did I write anything mannered".
 ---
 
 # Prose review
 
-CLAUDE.md states the rule this skill enforces:
+AGENTS.md states the rule this skill enforces:
 
 > Mannered prose substitutes metaphor and flourish for direct statement. [...] The phrases exist to
 > display the writer, not to convey the idea, and readers can tell. [...] It is also imprecise.
@@ -32,7 +32,7 @@ Do not review lines the diff did not touch. Pre-existing mannered prose is not t
 
 ## What the rule does not cover
 
-CLAUDE.md exempts **code identifiers and established technical terms**. So:
+AGENTS.md exempts **code identifiers and established technical terms**. So:
 
 - Type, method, field and variable names are out of scope, however figurative.
 - Test names are identifiers. `TwoUnpromptedVoicesKeepTheirDistanceTests` is the house convention,
@@ -81,7 +81,7 @@ Near misses that are correct as written, and must not be flagged:
 
 ## While you are here
 
-CLAUDE.md's "Comments and doc comments are terse" section names three more failures that reach the
+AGENTS.md's "Comments and doc comments are terse" section names three more failures that reach the
 same lines and slip through for the same reason. Report them **under a separate heading** so they
 stay distinguishable from mannered prose:
 
