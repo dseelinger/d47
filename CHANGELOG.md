@@ -12,6 +12,8 @@ When the galaxy search fails while a story chapter is being checked, D47 waits a
 
 A story's premise, want, stake, turn and ending no longer have a length limit. Before, a premise one character over 700 failed a draft that had passed every other check, and the next draft failed the same way.
 
+A box that opens over the window with a text field, such as Find (Ctrl+K) and the name box when you save a search, now opens with the cursor in the field, so you can type at once. Before, you had to click the field first.
+
 Story chapters are written again. The check that reads a chapter's lines against its objectives now checks only what you did, where you have been and how a game event went. The story's cast, what they say, send or own, records in the story and events before it began are not checked, and the ending may recount what earlier objectives confirmed. In a stock story, the Guardian cores coming aboard at the beacon is no longer refused. An objective the check has passed is not refused by a later round, and a refused statement is deleted rather than reworded. Stories written with Claude Sonnet 5.5 use high effort, so they take longer and cost more. A chapter this check still refuses says "The story states what its objectives do not confirm" rather than "The story names places that cannot stand".
 
 When two requests to the same model provider start at once and both are refused for a setting the model does not take, both are now retried without it. Before, only the first was, and the second failed with the provider's "Unsupported parameter" message.

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 
 namespace D47.App.Controls;
 
@@ -14,7 +15,7 @@ public abstract class HostedDialog : UserControl
     /// <summary>The title in the dialog's header.</summary>
     public string Title { get; protected set; } = string.Empty;
 
-    /// <summary>Raised the first time the dialog is on screen.</summary>
+    /// <summary>Raised once the dialog is on screen and laid out, so a handler can move focus.</summary>
     public event EventHandler? Opened;
 
     /// <summary>Raised once, when the dialog has left its host.</summary>
@@ -67,7 +68,7 @@ public abstract class HostedDialog : UserControl
         if (!_opened)
         {
             _opened = true;
-            OnOpened(EventArgs.Empty);
+            Dispatcher.UIThread.Post(() => OnOpened(EventArgs.Empty), DispatcherPriority.Loaded);
         }
     }
 }
