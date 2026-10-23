@@ -346,6 +346,8 @@ public sealed class AppHost : IDisposable
     /// <summary>Records what has been exercised by hand, when this process was asked to.</summary>
     public D47.App.Coverage.CoverageRecorder? CoverageRecorder { get; private set; }
 
+    public D47.App.Usage.UsageReporter? UsageReporter { get; private set; }
+
     /// <summary>
     /// Retains what crossed the audio boundary in both directions, when this process was asked to
     /// (#164).
@@ -3765,6 +3767,17 @@ public sealed class AppHost : IDisposable
         host.CoverageRecorder = coverage;
         coverage?.Follow(capabilities, settings);
 
+        var usage = new D47.App.Usage.UsageReporter(
+            Path.Combine(paths.Data, "usage-counts.json"),
+            files,
+            () => settings.Current.Usage.Counts,
+            () => DateTimeOffset.UtcNow,
+            canSend: !paths.IsTestDrive,
+            loggerFactory.CreateLogger<D47.App.Usage.UsageReporter>());
+        usage.Follow(capabilities);
+        settings.Changed += _ => usage.SettingsChanged();
+        host.UsageReporter = usage;
+
         var storyLogger = loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>();
 
         // On the pool: a tool can be run from any thread, the tick's included, and recording saves the adventures file.
@@ -6563,6 +6576,8 @@ public sealed class AppHost : IDisposable
         Debrief?.CancelRewording();
 
         CoverageRecorder?.Save();
+        UsageReporter?.Save();
+        UsageReporter?.Dispose();
 
         // The debrief, over what this session sounded like (#162).
         Debrief?.Run();
