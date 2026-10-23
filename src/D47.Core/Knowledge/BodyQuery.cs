@@ -206,6 +206,9 @@ public sealed record BodyQuery
     /// <summary>How many of the nearest bodies an order by material chooses from.</summary>
     public const int RichestOf = 50;
 
+    /// <summary>The furthest, in light years, a body search goes.</summary>
+    public const double MaxDistanceCeiling = 1000;
+
     /// <summary>Whether this asks about rings at all, which decides how the answer reads.</summary>
     public bool IsAboutRings => RingSignal is not null || RingType is not null || ReserveLevel is not null;
 
@@ -328,7 +331,7 @@ public sealed record BodyQuery
             // Wider than the station search allows, because a body search is often the one a Commander makes
             // from deep space where the nearest anything is a long way off, and still bounded because
             // unbounded is the galaxy.
-            MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 50, 1, 1000),
+            MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 50, 1, MaxDistanceCeiling),
             Size = orderByMaterial ? RichestOf : limit,
             Limit = limit,
         };
@@ -363,7 +366,7 @@ public sealed record BodyQuery
             ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             Material = material,
             Landable = true,
-            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 1000),
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, MaxDistanceCeiling),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -382,7 +385,7 @@ public sealed record BodyQuery
         {
             ReferenceSystem = referenceSystem.Trim(),
             Landable = true,
-            MaxDistance = Math.Clamp(maxDistance, 1, 1000),
+            MaxDistance = Math.Clamp(maxDistance, 1, MaxDistanceCeiling),
             Size = Math.Clamp(size, 1, 20),
         };
 
@@ -391,7 +394,7 @@ public sealed record BodyQuery
         {
             ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             SystemNames = names,
-            MaxDistance = Math.Clamp(maxDistance, 1, 1000),
+            MaxDistance = Math.Clamp(maxDistance, 1, MaxDistanceCeiling),
             Size = 500,
         };
 

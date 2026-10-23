@@ -28,7 +28,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Format = "#,0" };
+    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
     private readonly ShowUpTo _limit = new();
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
@@ -228,7 +228,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
         {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 1000);
+            _distance.Value = (decimal)Math.Clamp(distance, 1, BodyQuery.MaxDistanceCeiling);
         }
 
         if (int.TryParse(Get("limit"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit))

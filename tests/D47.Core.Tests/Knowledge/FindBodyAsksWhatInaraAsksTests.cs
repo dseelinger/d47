@@ -108,6 +108,47 @@ public class FindBodyAsksWhatInaraAsksTests
     }
 
     [Fact]
+    public async Task ARadiusPastTheCeilingIsSearchedAtTheCeilingAndTheAnswerSaysSo()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "5000"));
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Equal(1000, galaxy.LastQuery?.MaxDistance);
+        Assert.EndsWith(
+            "I searched 1,000 light years, the furthest a body search goes.",
+            result.Content,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ACappedSearchThatFindsNothingStillSaysSo()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+
+        galaxy.Result = new BodySearchResult("Sol", 0, []);
+
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "5000"));
+
+        Assert.EndsWith("the furthest a body search goes.", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ARadiusWithinTheCeilingGetsNoSuchSentence()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "800"));
+
+        Assert.Equal(800, galaxy.LastQuery?.MaxDistance);
+        Assert.DoesNotContain("the furthest a body search goes", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task VolcanismIsReadInTheCataloguesSpelling()
     {
         var install = new MemoryInstall();

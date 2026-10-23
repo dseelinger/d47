@@ -14,6 +14,8 @@ In the Stations and Bodies answer tables, a system name is now cyan when it is t
 
 The distance field on the Stations, Outfitting, Bodies and Signals search pages is now the full 220 px wide and shows a thousands separator, so 1000 reads "1,000". On the Stations and Bodies pages it has its own row, with SHOW UP TO below it.
 
+A body search for more than 1,000 light years is searched at 1,000, and the answer ends "I searched 1,000 light years, the furthest a body search goes." Beyond that radius the search takes too long to answer.
+
 A galaxy search with exactly one result now says "1 station", "1 body", "1 signal" or "1 system" in the answer heading instead of the plural.
 
 A galaxy search whose match count reaches Spansh's limit of ten thousand now says "10,000 or more" instead of "10000", since the true number is higher. Station, body, "sell" and system answers all do this.

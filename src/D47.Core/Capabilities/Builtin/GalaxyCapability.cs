@@ -737,7 +737,7 @@ public static class GalaxyCapability
                     {
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50.",
+                        Description = "How far to look, in light years. Default 50, at most 1,000.",
                     },
                     new ToolParameter
                     {
@@ -2626,6 +2626,10 @@ public static class GalaxyCapability
         _ => string.Empty,
     };
 
+    private static string DistanceCapped(double? asked) => asked > BodyQuery.MaxDistanceCeiling
+        ? $" I searched {BodyQuery.MaxDistanceCeiling:N0} light years, the furthest a body search goes."
+        : string.Empty;
+
     /// <summary>How old one quote is, in the words a Commander would use.</summary>
     private static string Age(CommodityOffer offer)
     {
@@ -2771,7 +2775,7 @@ public static class GalaxyCapability
         {
             var result = query.Keep(await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false));
 
-            var said = Describe(result, query);
+            var said = Describe(result, query) + DistanceCapped(Distance(arguments, "max_distance"));
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Bodies,
