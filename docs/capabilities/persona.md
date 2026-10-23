@@ -481,7 +481,8 @@ Humor has a level and a frequency for each of three groups: **Core humor** (the 
 carrier's captain and tower).
 
 - **Level, 0 to 10.** 0 is serious, and greys out the frequency row beneath it. 10 is as funny as
-  a stand-up comedian.
+  a stand-up comedian. Set it with the stepper, or by pressing or dragging across the bar; the bar
+  cannot set 0, so use the stepper's left arrow or the Left key.
 - **Frequency, a percentage.** The share of that group's lines that get humor. d47 decides, not
   the model: it rolls for each line the model writes and adds the humor instruction only when the
   roll hits. It does not apply to lines spoken as written.

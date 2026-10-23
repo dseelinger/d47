@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On Your core › Core and character, the Core humor, NPC humor and Carrier crew humor bars can be pressed and dragged like the Guardian effect bars. Pressing a segment sets that level. The stepper still works, and 0 is set with the stepper's left arrow or the Left key.
+
 On Your core › Its voice, the COVAS reverb checkbox, the line "Hear the COVAS reverb without paying for it." and the TEST button are now on one line under COVAS Voice. Before, TEST sat on a row of its own, labelled "Test", under the checkbox.
 
 The help under the Voice group on Your core › Its voice, the help under the Provider group on Providers › Speech synthesis, and the help on the Voice row now link to each other. Pressing "Providers › Speech synthesis" or "Your core › Its voice" opens that page. The Voice group's help also says that Speaking rate is shown only where the speech provider can change the pace.

@@ -646,6 +646,19 @@ internal sealed partial class SettingControls
             }
         };
 
+        if (scale is not null)
+        {
+            AutomationProperties.SetName(scale, $"{row.Label} level");
+
+            scale.ValueChanged += (_, _) =>
+            {
+                if (!host.Refreshing())
+                {
+                    host.Apply(row.Key, scale.Value.ToString(row.NumberFormat, CultureInfo.InvariantCulture), message);
+                }
+            };
+        }
+
         void Refresh()
         {
             amount.Value = decimal.TryParse(
@@ -664,9 +677,11 @@ internal sealed partial class SettingControls
             return (amount, Refresh);
         }
 
-        var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, HorizontalAlignment = HorizontalAlignment.Right };
-        line.Children.Add(scale);
+        var line = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), HorizontalAlignment = HorizontalAlignment.Stretch };
+        scale.Margin = new Thickness(12, 0, 0, 0);
+        Grid.SetColumn(scale, 1);
         line.Children.Add(amount);
+        line.Children.Add(scale);
 
         return (line, Refresh);
     }
