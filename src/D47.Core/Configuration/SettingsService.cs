@@ -563,6 +563,12 @@ public sealed class SettingsService
             return new SettingApplyResult(SettingApplyStatus.Unchanged, $"{row.Label} is already {Described(row, normalised)}.");
         }
 
+        if (normalised is { Length: > 0 } && HeldBy(row.Key, normalised) is { } holder)
+        {
+            return new SettingApplyResult(
+                SettingApplyStatus.Rejected, $"{AlreadyBound(holder, row, normalised)} Clear it there first.");
+        }
+
         var next = row.Binding.Write!(Current, normalised);
 
         try
@@ -592,6 +598,48 @@ public sealed class SettingsService
 
         return new SettingApplyResult(SettingApplyStatus.Applied, $"{row.Label} is now {Described(row, normalised)}.");
     }
+
+    /// <summary>The Hotkey or HotasButton row other than <paramref name="key"/> that holds <paramref name="value"/>, or null.</summary>
+    public SettingRow? HeldBy(string key, string value)
+    {
+        if (Find(key) is not { Kind: SettingKind.Hotkey or SettingKind.HotasButton } row
+            || string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return Sections
+            .SelectMany(section => section.Rows)
+            .FirstOrDefault(other =>
+                other.Kind == row.Kind
+                && !string.Equals(other.Key, row.Key, StringComparison.OrdinalIgnoreCase)
+                && other.Binding?.Read(Current) is { Length: > 0 } held
+                && SameBinding(row.Kind, held, value));
+    }
+
+    /// <summary>"Ctrl+L is already bound to Focus the ask box."</summary>
+    public string AlreadyBound(SettingRow holder, SettingRow row, string value) =>
+        $"{Described(row, value)} is already bound to {holder.Label}.";
+
+    private static bool SameBinding(SettingKind kind, string a, string b)
+    {
+        if (kind == SettingKind.HotasButton)
+        {
+            return Hotas.HotasButton.Parse(a) is { } left && Hotas.HotasButton.Parse(b) is { } right
+                ? left == right
+                : string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var first = Chord(a);
+        var second = Chord(b);
+
+        return first.Count == second.Count && first.SetEquals(second);
+    }
+
+    private static HashSet<string> Chord(string gesture) =>
+        new(
+            gesture.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+            StringComparer.OrdinalIgnoreCase);
 
     private SettingApplyResult ApplySecret(SettingRow row, string? value, SettingsCaller caller)
     {

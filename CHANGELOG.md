@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A key or stick button that another action already holds is now refused. Binding it in Settings or the setup wizard says, for example, "Ctrl+L is already bound to Focus the ask box. Press another, or Esc." and keeps listening; asking by voice or text says to clear it there first. The other action keeps its binding.
+
 Esc now ends a bind that listens only for a stick button, such as the push-to-talk button step in the setup wizard, and leaves the existing binding as it was. It also ends the capture after D47 has declined a button press.
 
 The Chatterbox voice and Local voice rows under Providers › Speech synthesis now show only when that provider is the Voice provider, or when another voice slot or a downloaded story uses it and its model is not yet downloaded. Once the model is installed they go away.

@@ -13,6 +13,37 @@ namespace D47.App.Settings;
 public static class BindCapture
 {
     /// <summary>
+    /// <see cref="RunAsync"/> again after each press <paramref name="refuse"/> gives a reason for, saying the
+    /// reason on <paramref name="message"/>; returns the first press nothing refused, or null on Esc.
+    /// </summary>
+    public static async Task<(string Key, string? Value)?> RunUntilFreeAsync(
+        TopLevel top,
+        string? keyKey,
+        bool bare,
+        string? buttonKey,
+        SwitchEditing? switches,
+        StatusLine message,
+        Func<string, string, string?> refuse,
+        CancellationToken cancel = default)
+    {
+        string? notice = null;
+
+        while (true)
+        {
+            var caught = await RunAsync(top, keyKey, bare, buttonKey, switches, message, cancel, notice);
+
+            if (caught is not { Value: { Length: > 0 } value } pressed
+                || refuse(pressed.Key, value) is not { } reason)
+            {
+                return caught;
+            }
+
+            notice = reason;
+            message.Fail(reason);
+        }
+    }
+
+    /// <summary>
     /// The setting key that caught and the value to store, or null when Esc or <paramref name="cancel"/>
     /// ended it. <paramref name="keyKey"/> arms the keyboard and <paramref name="buttonKey"/> the stick;
     /// <paramref name="bare"/> makes a modifier released on its own a binding.
@@ -24,7 +55,8 @@ public static class BindCapture
         string? buttonKey,
         SwitchEditing? switches,
         StatusLine message,
-        CancellationToken cancel = default)
+        CancellationToken cancel = default,
+        string? notice = null)
     {
         var captured = new TaskCompletionSource<(string Key, string? Value)?>();
         using var cancelled = cancel.Register(() => captured.TrySetResult(null));
@@ -81,7 +113,7 @@ public static class BindCapture
         }
 
         var walking = buttonKey is not null && switches is not null
-            ? Walk(switches, buttonKey, message, captured)
+            ? Walk(switches, buttonKey, message, captured, notice)
             : null;
 
         try
@@ -119,7 +151,8 @@ public static class BindCapture
         SwitchEditing editing,
         string key,
         StatusLine message,
-        TaskCompletionSource<(string Key, string? Value)?> captured)
+        TaskCompletionSource<(string Key, string? Value)?> captured,
+        string? notice)
     {
         var capture = new D47.Core.Hotas.ButtonCapture();
         var opened = editing.Now();
@@ -144,7 +177,14 @@ public static class BindCapture
 
             var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
 
-            message.Say(result.Says);
+            if (notice is not null && result.Stage is not (D47.Core.Hotas.ButtonCaptureStage.Captured or D47.Core.Hotas.ButtonCaptureStage.Declined))
+            {
+                message.Fail(notice);
+            }
+            else
+            {
+                message.Say(result.Says);
+            }
 
             if (result.Stage == D47.Core.Hotas.ButtonCaptureStage.Captured)
             {

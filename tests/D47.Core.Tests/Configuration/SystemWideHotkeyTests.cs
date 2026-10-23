@@ -31,7 +31,7 @@ public class SystemWideHotkeyTests
     }
 
     [Theory]
-    [InlineData("Ctrl+Alt+X")]
+    [InlineData("Ctrl+Alt+Q")]
     [InlineData("Ctrl+OemCloseBrackets")]
     [InlineData("Shift+F9")]
     public void AKeyWithAModifierIsAccepted(string gesture)

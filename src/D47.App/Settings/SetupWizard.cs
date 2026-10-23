@@ -809,13 +809,16 @@ public sealed class SetupWizard : ModalDialog
 
         var stick = key == ListeningCapability.PushToTalkButtonKey;
 
-        var caught = await BindCapture.RunAsync(
+        var caught = await BindCapture.RunUntilFreeAsync(
             top,
             stick ? null : key,
             bare: _settings.Find(key) is { SystemWide: false },
             stick ? key : null,
             _switches,
             message,
+            (bound, value) => _settings.HeldBy(bound, value) is { } holder && _settings.Find(bound) is { } row
+                ? $"{_settings.AlreadyBound(holder, row, value)} Press another, or Esc."
+                : null,
             cancel.Token);
 
         if (!ReferenceEquals(_capture, cancel))

@@ -978,7 +978,14 @@ internal sealed partial class SettingControls
 
         try
         {
-            if (await BindCapture.RunAsync(top, keys ? row.Key : null, bare, stick ? buttonKey : null, services.Switches, message)
+            if (await BindCapture.RunUntilFreeAsync(
+                    top,
+                    keys ? row.Key : null,
+                    bare,
+                    stick ? buttonKey : null,
+                    services.Switches,
+                    message,
+                    (key, value) => HeldMessage(key, value))
                 is { } caught)
             {
                 host.Apply(caught.Key, caught.Value, message);
@@ -990,4 +997,9 @@ internal sealed partial class SettingControls
             host.Refresh();
         }
     }
+
+    private string? HeldMessage(string key, string value) =>
+        host.Settings.HeldBy(key, value) is { } holder && host.Settings.Find(key) is { } bound
+            ? $"{host.Settings.AlreadyBound(holder, bound, value)} Press another, or Esc."
+            : null;
 }
