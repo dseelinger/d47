@@ -23,6 +23,7 @@
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Padding" Value="16,0" />
       <Setter Property="MinHeight" Value="44" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
       <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
       <Setter Property="Background" Value="{DynamicResource D47.Tile}" />
