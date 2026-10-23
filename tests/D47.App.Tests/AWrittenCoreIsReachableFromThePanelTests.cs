@@ -34,9 +34,9 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    /// <summary>The row names what is already written, and the button opens the editor.</summary>
+    /// <summary>The caption counts what is already written, no list is drawn, and the button opens the editor.</summary>
     [AvaloniaFact]
-    public void TheRowNamesTheCoresAndOffersTheEditor()
+    public void TheRowCountsTheCoresAndOffersTheEditor()
     {
         var store = Written();
 
@@ -54,11 +54,49 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         var button = host.View.GetVisualDescendants().OfType<Button>()
             .Single(found => found.Name == "OpenOwnPersonas");
 
-        Assert.Equal("Your cores", button.Content);
+        Assert.Equal("Manage", button.Content);
+
+        Assert.Equal("Custom cores (1)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+
+        Assert.DoesNotContain(
+            host.View.GetVisualDescendants().OfType<SelectableTextBlock>(),
+            text => text.Text?.Contains("Rusty", StringComparison.Ordinal) == true);
+
+        host.Close();
+    }
+
+    /// <summary>Writing the file while Settings is open moves the count, and with none the row says so.</summary>
+    [AvaloniaFact]
+    public void TheCountFollowsTheFileWhileSettingsIsOpen()
+    {
+        var store = Written();
+        store.Save([]);
+
+        var (settings, viewState, paths) = TestSurface.Create();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        var host = SettingsHost.Open(settings, viewState, paths, ownPersonas: store);
+
+        host.View.Reveal(D47.Core.Capabilities.Builtin.PersonaCapability.Id);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var button = host.View.GetVisualDescendants().OfType<Button>()
+            .Single(found => found.Name == "OpenOwnPersonas");
+
+        Assert.Equal("Custom cores (0)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+        Assert.Equal("Write a core", button.Content);
 
         Assert.Contains(
             host.View.GetVisualDescendants().OfType<SelectableTextBlock>(),
-            text => text.Text?.Contains("Rusty", StringComparison.Ordinal) == true);
+            text => text.Text?.StartsWith("None yet.", StringComparison.Ordinal) == true);
+
+        store.Save([new OwnPersona("own.rusty", "Rusty", "You are Rusty."), new OwnPersona("own.vesper", "Vesper", "You are Vesper.")]);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Custom cores (2)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+        Assert.Equal("Manage", button.Content);
 
         host.Close();
     }

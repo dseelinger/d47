@@ -155,7 +155,8 @@ public static class PersonaCapability
         {
             Key = OwnKey,
             Advanced = true,
-            Label = "Cores of your own",
+            Label = "Custom cores",
+            LabelFor = _ => $"Custom cores ({OwnNames().Count})",
             Help =
                 "Cores you wrote, which join the picker at the top of this section beside the "
                 + "cores that ship. One needs a name and a paragraph saying what it is like; "
@@ -164,7 +165,7 @@ public static class PersonaCapability
                 + "The file behind it is personas.json beside d47.exe, and the editor is a "
                 + "convenience over that file rather than an alternative to it.",
             Kind = SettingKind.Info,
-            DocsAnchor = "cores-of-your-own",
+            DocsAnchor = "custom-cores",
 
             // Info, so the model cannot reach it.
             Binding = new SettingBinding { Read = _ => SummariseOwn() },

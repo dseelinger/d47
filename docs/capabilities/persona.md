@@ -243,7 +243,7 @@ Or pick one from the settings panel.
 ### And you can write your own
 
 Eleven ship. The twelfth onwards is yours: a name, and a paragraph in your own words saying what
-it is like. **Cores of your own** under Settings opens the editor, and what you write joins the
+it is like. **Custom cores** under Settings opens the editor, and what you write joins the
 picker underneath the eleven — selectable, bindable to a ship, and paired with a voice exactly
 like the rest of the cast.
 
@@ -506,10 +506,10 @@ Every other group starts at 0.
 
 "Humor on" sets Core humor to 3; "humor off" sets it to 0.
 
-#### Cores of your own {#cores-of-your-own}
+#### Custom cores {#custom-cores}
 
-How many cores you wrote and the first three by name ("5 of your own: Vesper, Halcyon, Old Tam
-and 2 more"), and the button that opens the editor: WRITE A CORE with none, YOUR CORES otherwise. See
+The row's caption counts the cores you wrote ("Custom cores (2)"), and the button opens the
+editor: WRITE A CORE with none, MANAGE otherwise. With none, the row also says "None yet.". See
 [And you can write your own](#and-you-can-write-your-own) above for what writing one involves and
 what is supplied for you.
 

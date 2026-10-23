@@ -21,7 +21,7 @@ public static class StatusRows
     public static string OwnCores(IReadOnlyList<string> names) =>
         names.Count == 0
             ? "None yet. A core needs a name and a paragraph saying what it is like."
-            : $"{names.Count} of your own: {FirstThree(names)}";
+            : "";
 
     public const string NoShipHasACore =
         "No ship has its own core. Until one does, changing ship changes nothing about who answers you.";

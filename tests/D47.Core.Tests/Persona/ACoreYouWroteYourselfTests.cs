@@ -233,8 +233,9 @@ public class ACoreYouWroteYourselfTests : IDisposable
             .SelectMany(section => section.Rows)
             .Single(candidate => candidate.Key == D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey);
 
-        // Info, so the model cannot write it, and it states what is there before it is pressed.
+        // Info, so the model cannot write it, and the caption counts what is there before it is pressed.
         Assert.Equal(D47.Core.Capabilities.SettingKind.Info, row.Kind);
-        Assert.Contains("Rusty", row.Binding!.Read(surface.Settings.Current));
+        Assert.Equal("Custom cores (1)", row.CaptionFor(surface.Settings.Current));
+        Assert.Equal("", row.Binding!.Read(surface.Settings.Current));
     }
 }

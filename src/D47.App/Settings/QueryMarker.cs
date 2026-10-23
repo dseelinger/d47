@@ -13,11 +13,11 @@ namespace D47.App.Settings;
 internal sealed class QueryMarker(Control resources, Func<string, bool> openCapability)
 {
     public void Illuminate(
-        SettingRow row, TextBlock? label, TextBlock? spoken, TextBlock? help, TextBlock? keyLine, string query)
+        SettingRow row, string caption, TextBlock? label, TextBlock? spoken, TextBlock? help, TextBlock? keyLine, string query)
     {
         if (label is not null)
         {
-            Paint(label, row.Label, query);
+            Paint(label, caption, query);
         }
 
         if (spoken is not null)

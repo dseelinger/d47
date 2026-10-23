@@ -1329,7 +1329,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 // Only the survivors.
                 if (shown)
                 {
-                    _marker.Illuminate(row.Row, row.Label, row.Spoken, row.Help, row.KeyLine, _query);
+                    _marker.Illuminate(row.Row, row.Row.CaptionFor(_settings.Current), row.Label, row.Spoken, row.Help, row.KeyLine, _query);
                 }
             }
         }

@@ -812,6 +812,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         refresh = () =>
         {
             showSummary();
+            inset.IsVisible = PersonaCapability.OwnNames().Count == 0;
             open.Content = OwnButtonLabel();
         };
 
@@ -824,15 +825,23 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
             await panel.Open(new Controls.PersonaPage(services.OwnPersonas));
 
-            // The editor writes the file; this is what puts the new summary on the row without waiting for
-            // something else to notice.
-            refresh();
+            host.Refresh();
         };
 
-        return (new StackPanel { Spacing = 8, Children = { inset, open } }, refresh);
+        var stack = new StackPanel { Spacing = 8, Children = { inset, open } };
+
+        if (services.OwnPersonas is { } store)
+        {
+            void OnChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(host.Refresh);
+
+            stack.AttachedToVisualTree += (_, _) => store.Changed += OnChanged;
+            stack.DetachedFromVisualTree += (_, _) => store.Changed -= OnChanged;
+        }
+
+        return (stack, refresh);
     }
 
-    private static string OwnButtonLabel() => PersonaCapability.OwnNames().Count == 0 ? "Write a core" : "Your cores";
+    private static string OwnButtonLabel() => PersonaCapability.OwnNames().Count == 0 ? "Write a core" : "Manage";
 
     /// <summary>What Custom voices holds, plus the way into the page.</summary>
     private (Control, Action) BuildCustomVoices(SettingRow row)

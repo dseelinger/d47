@@ -27,11 +27,10 @@ public class StatusRowsTests
 
     [Theory]
     [InlineData(0, "None yet. A core needs a name and a paragraph saying what it is like.")]
-    [InlineData(1, "1 of your own: Vesper")]
-    [InlineData(3, "3 of your own: Vesper, Halcyon and Old Tam")]
-    [InlineData(5, "5 of your own: Vesper, Halcyon, Old Tam and 2 more")]
-    [InlineData(12, "12 of your own: Vesper, Halcyon, Old Tam and 9 more")]
-    public void OwnCoresNameTheFirstThreeAndCountTheRest(int count, string expected)
+    [InlineData(1, "")]
+    [InlineData(3, "")]
+    [InlineData(12, "")]
+    public void OwnCoresStateOnlyThatThereAreNone(int count, string expected)
     {
         string[] first = ["Vesper", "Halcyon", "Old Tam"];
         var names = Enumerable.Range(0, count).Select(i => i < 3 ? first[i] : $"Core {i}").ToList();

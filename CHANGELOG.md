@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+On Your core › Core and character, the "Cores of your own" row is now "Custom cores (N)", where N is how many cores you wrote. The list of names is gone. The button reads MANAGE once you have written one, and WRITE A CORE until then. The count updates when you close the editor or when personas.json changes.
+
 On Your core › Core and character, the Core humor, NPC humor and Carrier crew humor bars can be pressed and dragged like the Guardian effect bars. Pressing a segment sets that level. The stepper still works, and 0 is set with the stepper's left arrow or the Left key.
 
 On Your core › Its voice, the COVAS reverb checkbox, the line "Hear the COVAS reverb without paying for it." and the TEST button are now on one line under COVAS Voice. Before, TEST sat on a row of its own, labelled "Test", under the checkbox.
