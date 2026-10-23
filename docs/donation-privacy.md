@@ -95,8 +95,10 @@ stated use for one, and why there is no backend beyond the store that use needs.
   the window rather than a default you have to notice.
 - **Any audio at all.** Voice is biometric, and no donation has ever carried a recording. The audio
   audio recorder writes only to your own disk and its clips can never join a donation.
-- **Anything ambient.** No crash reporter, no analytics, no metrics endpoint, and the donation
-  endpoint keeps no request log — so there is no record anywhere of who reached it or when.
+- **Anything from your journal without a press.** No crash reporter and no analytics vendor, and
+  the donation endpoint keeps no request log — so there is no record anywhere of who reached it or
+  when. The one thing sent without a press is the daily usage count described on the privacy page:
+  tool names and numbers, with no identifier.
 
 ## How long it is kept
 

@@ -268,10 +268,12 @@ not going to be one*. There is one now, argued in
 that sentence — a donated journal history is 32.5 MB compressed followed by about 85 KB a day, and
 no manual route carries that or can be reached by a stranger.
 
-**It is not the no-telemetry rule bending.** That rule is about ambient collection: crash
-reporters, analytics SDKs, hosted logging, all of which send without anybody asking. A donation
-sends nothing at all until you have read a full description of it and pressed a button, every time
-— no standing consent, nothing remembered, no automatic upload — and the row above says so.
+**It is not like usage counts either.** Directive 47 sends one thing without being asked: once a
+day, how many times each tool was used, with no identifier and nothing from your journal
+([Usage counts](#usage-counts)). It is on by default and **Usage counts** in Privacy settings turns
+it off. A donation is different in kind: it sends nothing at all until you have read a full
+description of it and pressed a button, every time — no standing consent, nothing remembered, no
+automatic upload — and the row above says so.
 
 **The press is the switch.** The address ships in the build — Directive 47's own store, named in
 full by the disclosure row — and the send buttons are simply there. What was never true and still

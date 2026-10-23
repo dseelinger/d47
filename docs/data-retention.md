@@ -69,9 +69,11 @@ folder and it is gone; d47 never writes another until the next run you ask for o
 
 ## What this project has received
 
-Only what somebody deliberately donated, and only through the one route that can send anything —
-the review window, one payload at a time, after reading exactly what would leave. There is no
-second road: no crash reporter, no analytics, no request log at the endpoint.
+Apart from the daily usage count, only what somebody deliberately donated, and only through the
+one route that can send anything — the review window, one payload at a time, after reading exactly what would leave. There is no
+second road for journal data: no crash reporter, and no request log at the endpoint. The one thing
+sent without a press is the daily usage count, which holds tool names and numbers and nothing from a
+journal.
 
 | What | Where | Kept | What enforces it |
 |---|---|---|---|
@@ -79,6 +81,7 @@ second road: no crash reporter, no analytics, no request log at the endpoint.
 | A donated journal history | `corpus/<identifier>/` in the store | **indefinitely** — see below | nothing, deliberately |
 | A copy downloaded to be read | one folder on the holder's own machine | **until the object it came from leaves the store** | the utility that fetched it deletes it at the next listing that does not name it |
 | Which requests were made | nowhere | **not kept** | `observability` is off in `wrangler.toml` |
+| Usage counts | the `d47-usage` database | **indefinitely** | nothing, deliberately: a count carries no identifier, so no row can be traced to an installation or deleted for one |
 | Who donated | nowhere | **not kept** | there is no account, no email and no directory of identifiers — a donation carries a random per-installation token and nothing else |
 
 **Nothing donated has been committed to this repository, and a journal history never will be.** A

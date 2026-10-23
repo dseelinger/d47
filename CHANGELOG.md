@@ -10,6 +10,8 @@
 
 Privacy and egress settings now have a Usage counts switch, on by default, and the egress list names it. It counts how often each tool is used and sends each finished day once, at startup and hourly, with no identifier. Turning it off empties the counts and deletes data\usage-counts.json. A test drive counts but never sends.
 
+The privacy, data retention and donation privacy pages no longer say d47 has no analytics. They now say d47 sends one thing without being asked: once a day, how many times each tool was used, with no identifier and nothing from your journal. It is on by default, and Usage counts in Privacy settings turns it off.
+
 The Carrier page now has a DRAKE / FORTUNE / NAUTILUS / VICTORY choice above the carrier's picture, shown when Hull pictures is on. The game does not say which model a carrier is, so you pick it; the choice is kept for that carrier's callsign and the picture changes to match. A carrier you have not picked for is drawn as the Drake.
 
 While D47 is working on a remark in TALK THROUGH THIS BUILD, the reply header shows a "Working" label with three dots lit in turn, as the Stories tab does, in place of the grey "working" text. The dots stop when the answer or the failure notice is drawn.
