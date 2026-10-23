@@ -75,7 +75,24 @@ nav_order: 121
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Eleven Guardian cores. You pick one, and it does not know the other ten are there.</p>
 <section>
-<h2><span class="num">1</span> Eleven separate characters, not one with eleven costumes.</h2>
+<h2><span class="num">1</span> A core is the character that answers you.</h2>
+<svg viewBox="0 0 880 226" role="img" aria-label="Three kinds of core: COVAS, the eleven Guardian cores and custom cores, with one aboard at a time">
+ <rect x="20" y="36" width="260" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="150" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">COVAS</text>
+ <text x="150" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">the factory assistant, the default</text>
+ <rect x="310" y="36" width="260" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">GUARDIAN CORES</text>
+ <text x="440" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">the eleven that ship with D47</text>
+ <rect x="600" y="36" width="260" height="96" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="730" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CUSTOM CORES</text>
+ <text x="730" y="104" text-anchor="middle" font-size="15" fill="var(--text-muted)">the ones you write</text>
+ <rect x="20" y="156" width="840" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="440" y="190" text-anchor="middle" font-size="16" fill="var(--text)">One core is aboard at a time, and a ship can have its own.</text>
+</svg>
+<p class="body">A core is the character that answers you: its personality, how it talks, the voice it is paired with, and its own memory of your conversations.</p>
+</section>
+<section>
+<h2><span class="num">2</span> Eleven separate characters, not one with eleven costumes.</h2>
 <svg viewBox="0 0 880 252" role="img" aria-label="Five of the eleven cores, each with its own transcript, all reading one shared instrument panel">
  <rect x="20" y="30" width="156" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="98" y="60" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WARDEN</text>
@@ -100,7 +117,7 @@ nav_order: 121
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> A ship has its own AI core.</h2>
+<h2><span class="num">3</span> A ship has its own AI core.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Boarding a bound ship brings its core aboard without remarking on it">
  <text x="155" y="28" text-anchor="middle" font-size="15" fill="var(--text-muted)">YOU BOARD</text>
  <rect x="20" y="40" width="270" height="100" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
@@ -123,7 +140,7 @@ nav_order: 121
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> It only remarks on an absence worth remarking on.</h2>
+<h2><span class="num">4</span> It only remarks on an absence worth remarking on.</h2>
 <svg viewBox="0 0 880 262" role="img" aria-label="A core away under a month says nothing; one away a month or more is handed what changed">
  <rect x="20" y="44" width="400" height="176" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="82" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text-muted)">UNDER A MONTH</text>
@@ -140,7 +157,7 @@ nav_order: 121
 </svg>
 </section>
 <section>
-<h2><span class="num">4</span> Each core is given a voice that suits it.</h2>
+<h2><span class="num">5</span> Each core is given a voice that suits it.</h2>
 <svg viewBox="0 0 880 226" role="img" aria-label="A language model reads a core's description against the available voices and pairs them once">
  <rect x="20" y="36" width="210" height="96" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="125" y="74" text-anchor="middle" font-size="19" font-weight="800" fill="var(--text)">CORA</text>
@@ -176,6 +193,8 @@ nav_order: 121
 </div></div>
 
 ## The details
+
+A core is the character that answers you: its personality, how it talks, the voice it is paired with, and its own memory of your conversations. There are three kinds: COVAS, the ship's factory assistant and the default on a new install; the eleven Guardian cores that ship with D47; and custom cores you write. One core is aboard at a time, and a ship can have its own.
 
 Eleven Guardian intelligences, recovered from a structure and running in your ship. You pick one.
 They are not skins on the same character — each has its own reading of what it is for, its own

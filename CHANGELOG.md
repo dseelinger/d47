@@ -10,6 +10,8 @@
 
 The "Cores by ship" row on Your core is gone; the Ship dropdown already shows each ship's core. Lines in ship-cores.json that D47 refuses are no longer reported in the app, and a ship with a refused line keeps whoever is aboard.
 
+The Core help page now opens by saying what a core is: the character that answers you, in its three kinds (COVAS, the Guardian cores and custom cores).
+
 On Your core › Core and character, the "Cores of your own" row is now "Custom cores (N)", where N is how many cores you wrote. The list of names is gone. The button reads MANAGE once you have written one, and WRITE A CORE until then. The count updates when you close the editor or when personas.json changes.
 
 On Your core › Core and character, the Core humor, NPC humor and Carrier crew humor bars can be pressed and dragged like the Guardian effect bars. Pressing a segment sets that level. The stepper still works, and 0 is set with the stepper's left arrow or the Left key.
