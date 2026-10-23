@@ -937,6 +937,9 @@ public sealed record LlmSettings
     /// </summary>
     public string? BackgroundModel { get; init; }
 
+    /// <summary>Which model answers conversations that reason across game data, such as talking through a ship's build.</summary>
+    public string? HighModel { get; init; }
+
     /// <summary>
     /// The least effort any conversation turn may run at, or null for the router's own answer (Phase
     /// 54).

@@ -20,6 +20,7 @@ public static class ConversationCapability
 
     /// <summary>The model for calls the Commander is not waiting on (Phase 54).</summary>
     public const string BackgroundModelKey = "llm.backgroundModel";
+    public const string HighModelKey = "llm.highModel";
 
     public const string EffortFloorKey = "llm.effortFloor";
 
@@ -188,6 +189,11 @@ public static class ConversationCapability
                 report.AppendLine($"Background model: {background}");
             }
 
+            if (settings.Llm.HighModel is { Length: > 0 } high)
+            {
+                report.AppendLine($"High model: {high}");
+            }
+
             // Only when it is not the provider's own. "Endpoint: .anthropic.com" is a line that tells the
             // Commander where Anthropic is, which they knew.
             if (settings.Llm.Endpoint is { Length: > 0 } chosen)
@@ -280,6 +286,7 @@ public static class ConversationCapability
                             // its authored text with nothing on screen (Phase 54).
                             Model = null,
                             BackgroundModel = null,
+                            HighModel = null,
                         },
                     },
                 },
@@ -303,7 +310,7 @@ public static class ConversationCapability
                     // above states.
                     Write = (s, v) => s with
                     {
-                        Llm = s.Llm with { Endpoint = v, Model = null, BackgroundModel = null },
+                        Llm = s.Llm with { Endpoint = v, Model = null, BackgroundModel = null, HighModel = null },
                     },
                 },
             },
@@ -416,6 +423,36 @@ public static class ConversationCapability
                 {
                     Read = s => s.Llm.BackgroundModel,
                     Write = (s, v) => s with { Llm = s.Llm with { BackgroundModel = v } },
+                },
+            },
+            new()
+            {
+                Key = HighModelKey,
+                Advanced = true,
+                Label = "Model for complex tasks",
+                Help =
+                    "Answers Talk through this build on a ship's page, at high effort. A proposed change has "
+                    + "to fit the hull's slots, the engineering blueprints and the cost, so choose a strong "
+                    + "model; a weak one proposes changes that are wrong or refused. On a custom endpoint, "
+                    + "set it here, or build talk uses the conversation model.",
+                Kind = SettingKind.Choice,
+                DefaultDisplaySource = s => HighModels.DefaultFor(s) is { } named
+                    ? ModelCatalogSource.Shared.Current.LabelFor(s.Llm.Provider, named)
+                    : "(the conversation model)",
+                DocsAnchor = "high-model",
+                AllowsFreeText = true,
+                ChoiceSource = s =>
+                {
+                    var known = LlmProviderCatalog.Selected(s.Llm.Provider).ModelsFor(s.Llm.Endpoint);
+
+                    return known.Count > 0 ? known : endpointModels?.Invoke() ?? [];
+                },
+                ChoiceLabelSource = Describer,
+                AppliesWhen = s => LlmProviderCatalog.Selected(s.Llm.Provider).Id != LlmProviderCatalog.NoneId,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Llm.HighModel,
+                    Write = (s, v) => s with { Llm = s.Llm with { HighModel = v } },
                 },
             },
             new()

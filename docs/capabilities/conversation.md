@@ -451,6 +451,20 @@ It clears itself when you change provider or endpoint, exactly as the model row 
 belongs to the endpoint that serves it, and one carried across would fail on the first ambient
 remark, which is a failure nobody is watching for.
 
+#### Model for complex tasks {#high-model}
+
+Which model answers Talk through this build on a ship's page. Those conversations run at high effort.
+
+A build proposal has to fit the hull's slot table, the engineering blueprints and the costing at
+once, and a refused proposal is asked for a second time. A strong model gives better proposals and
+fewer retries.
+
+With Anthropic or OpenAI the default is the catalog's high model. Setting a cheaper one here lowers
+the cost per remark. On a custom or OpenAI-compatible endpoint the catalog names no high model, so
+build talk falls back to the conversation model; name the strongest model the endpoint offers here.
+
+It clears itself when you change provider or endpoint, as the model row does.
+
 #### Think at least this hard {#effort-floor}
 
 The least effort a question gets, however plain it looked.

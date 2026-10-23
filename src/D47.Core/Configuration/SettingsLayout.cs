@@ -517,6 +517,7 @@ public static class SettingsLayout
                                 E("llm.model"),
                                 E("llm.test"),
                                 E("llm.backgroundModel"),
+                                E("llm.highModel"),
                                 E("llm.effortFloor"),
                                 E("llm.effortCeiling"),
                                 E("models.refreshCatalog"),

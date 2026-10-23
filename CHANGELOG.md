@@ -12,6 +12,8 @@ The Chatterbox voice and Local voice rows under Providers › Speech synthesis n
 
 d47 now writes one log file a day, the readable `.log`, instead of that and a `.jsonl` copy. The `.jsonl` files left in `data\logs` by earlier versions are deleted the first time this version starts. Log lines now carry milliseconds, as in `[14:36:09.412 INF]`, and incident excerpts read both the old and the new form.
 
+A new Advanced setting, Model for complex tasks, under Provider and model, chooses the model that talks through a ship's build. On a custom endpoint it is the only way to name one. Changing provider or endpoint clears it.
+
 Talking through a ship's build now runs on the catalog's high model, Claude Opus 5.5 on Anthropic and GPT-6 Astra on OpenAI, at High effort, or on your conversation model with a custom endpoint. Each remark costs more than before.
 
 The Ships page under Asset Management now follows the fleet while it is open. Ships the journal stores, buys or sells appear or disappear without leaving the tab, and the cards no longer read "not bought yet" for owned hulls when the journals finish loading after the window opens.
