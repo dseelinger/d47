@@ -260,38 +260,6 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
             : $"{said} is not bound to a core, so whoever is aboard stays aboard.";
     }
 
-    /// <summary>This Commander's bindings as the Cores by ship row states them.</summary>
-    public StatusText Status()
-    {
-        var fid = Fid;
-
-        var bindings = store.Bindings
-            .Where(binding => string.Equals(binding.CommanderFid, fid, StringComparison.Ordinal))
-            .ToList();
-
-        var fleet = Fleet();
-        var said = fleet.ToDictionary(entry => entry.ShipId, entry => entry.Said);
-        var position = fleet.Select((entry, index) => (entry.ShipId, index)).ToDictionary(pair => pair.ShipId, pair => pair.index);
-
-        var named = bindings
-            .OrderBy(binding => position.GetValueOrDefault(binding.ShipId, int.MaxValue))
-            .Select(binding => $"{Named(binding, said)} with {PersonaCatalog.Resolve(binding.Core).Name}")
-            .ToList();
-
-        return StatusRows.ShipCores(named, fleet.Count == 0 ? null : fleet.Count);
-    }
-
-    /// <summary>A bound ship as the Ship dropdown names it, else from the stored text, else its id.</summary>
-    private static string Named(ShipCoreBinding binding, Dictionary<int, string> fleet) =>
-        fleet.TryGetValue(binding.ShipId, out var current)
-            ? current
-            : (binding.Name, binding.Hull) switch
-            {
-                ({ Length: > 0 } name, _) => name,
-                (_, { Length: > 0 } hull) => Knowledge.EliteSpecifications.HullSaid(hull),
-                _ => $"ship {binding.ShipId}",
-            };
-
     private static string Describe(ShipLoadout ship) => ship.Describe() ?? "This ship";
 
     private ShipCoreSwitch? Switch(int shipId, bool announce) =>

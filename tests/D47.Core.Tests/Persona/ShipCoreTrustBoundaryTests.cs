@@ -62,7 +62,7 @@ public class ShipCoreTrustBoundaryTests
     /// every caller rather than only to the model, because there is no value on them to write.
     /// </summary>
     [Fact]
-    public void TheRowsCannotBeWrittenEither()
+    public void TheRowsCannotBeWrittenByTheModel()
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
@@ -70,20 +70,12 @@ public class ShipCoreTrustBoundaryTests
         var persona = surface.Settings.Find(D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey);
         Assert.True(persona!.Protected);
 
-        // The read-only row keeps its shape: nothing to write and nothing to press wrongly.
-        var listing = surface.Settings.Find(
-            D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoresKey);
-
-        Assert.NotNull(listing);
-        Assert.Equal(SettingKind.Info, listing!.Kind);
-
- // The two that bind became dropdowns, so they are writable by somebody —
+        // The two that bind became dropdowns, so they are writable by somebody —
         // and the somebody is the Commander at the panel, never the model.
         foreach (var key in new[]
                  {
                      D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoreKey,
                      D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoreShipKey,
-                     D47.Core.Capabilities.Builtin.PersonaCapability.ShipCoresKey,
                  })
         {
             var row = surface.Settings.Find(key);
@@ -94,5 +86,13 @@ public class ShipCoreTrustBoundaryTests
 
             Assert.Equal(SettingApplyStatus.Refused, applied.Status);
         }
+    }
+
+    [Fact]
+    public void ThereIsNoCoresByShipRow()
+    {
+        var surface = TestSurface.For(new MemoryInstall());
+
+        Assert.Null(surface.Settings.Find("persona.shipCores"));
     }
 }

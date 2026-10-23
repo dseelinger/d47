@@ -101,25 +101,6 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
         var (control, refresh) = BuildControl(row, message);
 
-        if (row.Problems is { } problems)
-        {
-            var notice = new Notice(NoticeLevel.Warning, inline: true) { Name = $"Refused_{row.Key.Replace('.', '_')}" };
-
-            void Refused()
-            {
-                var lines = problems();
-
-                notice.IsVisible = lines.Count > 0;
-                notice.Label = $"{lines.Count} {(lines.Count == 1 ? "LINE" : "LINES")} REFUSED IN SHIP-CORES.JSON";
-                notice.Text = "Those ships keep whoever is aboard. Fix the lines in the file, or bind the ships again here.";
-                notice.Detail = string.Join(Environment.NewLine, lines.Select(line => $"{line.Where} — {line.Reason}"));
-            }
-
-            Refused();
-
-            return new SettingControl(control, () => { refresh(); Refused(); }) { Below = notice };
-        }
-
         return new SettingControl(control, refresh);
     }
 

@@ -393,35 +393,6 @@ public class ShipCoreWatchTests
         Assert.Null(service.Observe(TimeSpan.FromSeconds(1)));
     }
 
-    [Fact]
-    public void ARenamedShipIsListedUnderItsNewName()
-    {
-        var state = State(7);
-        var service = Service(state);
-        service.Bind("quartermaster");
-
-        state.Apply(Event(
-            """{"timestamp":"2026-08-19T09:05:00Z","event":"Loadout","Ship":"python","ShipID":7,"ShipName":"Good Idea","Modules":[]}"""));
-
-        var listed = service.Status().Block;
-
-        Assert.Contains("Good Idea", listed);
-        Assert.DoesNotContain("Bad Idea", listed);
-    }
-
-    [Fact]
-    public void ABoundShipOutsideTheFleetIsListedWithoutItsId()
-    {
-        var state = State(7);
-        var service = Service(state, ("F1", 9, "quartermaster"));
-        service.Store.Bind(new ShipCoreBinding("F1", 8, "quartermaster", "anaconda"));
-
-        var listed = service.Status().Block;
-
-        Assert.DoesNotContain("8", listed);
-        Assert.Contains("ship 9", listed);
-    }
-
     private static ShipCoreService Service(
         GameStateStore state,
         params (string Fid, int Ship, string Core)[] bound)

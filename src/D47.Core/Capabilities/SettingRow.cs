@@ -199,9 +199,6 @@ public sealed record SettingRow
     /// <summary>A line of live state shown under the row's label, or null when there is nothing to say.</summary>
     public Func<D47Settings, string?>? Note { get; init; }
 
-    /// <summary>Lines the row's source refused, read each time the row is drawn; drawn as a warning under the row.</summary>
-    public Func<IReadOnlyList<(string Where, string Reason)>>? Problems { get; init; }
-
     /// <summary>Whether the row applies at all right now.</summary>
     public Func<D47Settings, bool>? AppliesWhen { get; init; }
 

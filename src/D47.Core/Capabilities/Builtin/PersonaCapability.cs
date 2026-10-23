@@ -31,9 +31,6 @@ public static class PersonaCapability
     /// <summary>The row that reads what the ship the Commander is in flies with, and binds it.</summary>
     public const string ShipCoreKey = "persona.shipCore";
 
-    /// <summary>The row that reads every binding, and forgets the current ship's.</summary>
-    public const string ShipCoresKey = "persona.shipCores";
-
     /// <summary>The row that picks which ship the core row above is about.</summary>
     public const string ShipCoreShipKey = "persona.shipCoreShip";
 
@@ -404,22 +401,6 @@ public static class PersonaCapability
                     return settings;
                 },
             },
-        },
-        new SettingRow
-        {
-            Key = ShipCoresKey,
-            Advanced = true,
-            Label = "Cores by ship",
-            Help =
-                "Every ship you have bound, and what it flies with. The file behind it is "
-                + "ship-cores.json beside d47.exe, and it is meant to be readable — one line per "
-                + "ship, hand-editable, with the hull and the name written beside the id so you "
-                + "can tell which ship is which.",
-            Kind = SettingKind.Info,
-            DocsAnchor = "cores-by-ship",
-            Binding = new SettingBinding { Read = _ => ships.Status().Block },
-            Note = _ => ships.Status().Second,
-            Problems = () => [.. ships.Store.Problems.Select(problem => (problem.Where, problem.Reason))],
         },
     ];
 

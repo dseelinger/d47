@@ -175,7 +175,6 @@ public static class SettingsLayout
                             [
                                 E("persona.shipCoreShip"),
                                 E("persona.shipCore"),
-                                E("persona.shipCores"),
                             ]),
                     ]),
                 new SettingsPlace(
