@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using D47.Core.Adventures;
 using D47.Core.Conversation;
 using Xunit;
 
@@ -64,7 +65,15 @@ public sealed record MeteredRequest(
     string? Failure,
     LlmStopReason? StopReason = null,
     long? FirstOutputMilliseconds = null,
-    long LongestSilenceMilliseconds = 0);
+    long LongestSilenceMilliseconds = 0,
+    int MaxOutputTokens = 0)
+{
+    /// <summary>True when the app would have stopped this request for running past <see cref="AdventureGenerator.CallLimitFor"/>.</summary>
+    public bool RanOverLimit =>
+        MaxOutputTokens > 0
+        && !ModelComparisonTests.LocalModels.Contains(Model, StringComparer.Ordinal)
+        && Milliseconds > AdventureGenerator.CallLimitFor(MaxOutputTokens).TotalMilliseconds;
+}
 
 /// <summary>
 /// A provider that prices every request at <see cref="PublishedPrices"/>, appends it to a ledger that
@@ -174,12 +183,12 @@ public sealed class MeteredLlmProvider : ILlmProvider
         }
 
         var elapsed = clock.ElapsedMilliseconds;
-        Record(sink, request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput));
+        Record(sink, request.Model, usage ?? LlmUsage.None, elapsed, failure, stopReason, firstOutput, Math.Max(longestSilence, elapsed - lastOutput), request.MaxOutputTokens);
     }
 
     private void Record(
         List<MeteredRequest> sink,
-        string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence)
+        string model, LlmUsage usage, long milliseconds, string? failure, LlmStopReason? stopReason, long? firstOutput, long longestSilence, int maxOutputTokens)
     {
         var price = PublishedPrices.For(model, usage)
                     ?? throw new InvalidOperationException($"No published price for {model}; refusing to run unpriced.");
@@ -189,7 +198,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
         lock (_gate)
         {
             _spent += dollars;
-            sink.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence));
+            sink.Add(new MeteredRequest(model, usage, dollars, milliseconds, failure, stopReason, firstOutput, longestSilence, maxOutputTokens));
 
             if (_ledger is not null)
             {

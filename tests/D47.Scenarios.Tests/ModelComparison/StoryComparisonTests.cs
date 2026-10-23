@@ -195,6 +195,13 @@ public partial class StoryComparisonTests
         Log($"done; spent ${meter.Spent:0.0000}");
     }
 
+    /// <summary>"over limit" when a chapter was written but a call ran past what the app allows it.</summary>
+    internal static string OutcomeOf(bool capped, bool succeeded, IEnumerable<MeteredRequest> requests) =>
+        capped ? "cap"
+        : !succeeded ? "not written"
+        : requests.Any(request => request.RanOverLimit) ? "over limit"
+        : "written";
+
     internal static async Task<StoryRecord> WriteOneAsync(
         MeteredLlmProvider.MeteredView meter,
         string model,
@@ -282,7 +289,7 @@ public partial class StoryComparisonTests
             Model = model,
             Effort = effort.ToString(),
             Run = run,
-            Outcome = capped ? "cap" : outcome?.Succeeded == true ? "written" : "not written",
+            Outcome = OutcomeOf(capped, outcome?.Succeeded == true, metered),
             FailingStep = reason is null ? null : StepNamed().Match(reason) is { Success: true } match ? match.Groups[1].Value : null,
             Reason = reason,
             Refusal = outcome?.Refusal,

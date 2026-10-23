@@ -202,7 +202,7 @@ part of a build or a `dotnet test` run. The keys come from the installed app's e
 D47_COMPARE=1 D47_COMPARE_PARALLEL=1 D47_COMPARE_STORY_MODELS=claude-sonnet-5-5,gpt-6-luna D47_COMPARE_STORY_EFFORTS=Catalog D47_COMPARE_RUNS=3 D47_COMPARE_CAP=6.00 D47_COMPARE_OUT=<scratchpad>/compare D47_COMPARE_JOURNALS=<journals folder> D47_COMPARE_SECRETS_FROM="$LOCALAPPDATA/Programs/d47"   dotnet test tests/D47.Scenarios.Tests --filter "FullyQualifiedName~StoryChaptersAgainstEachModelAndEffort"
 ```
 
-The pass mark is 6 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`). Below it, do
+The pass mark is 6 of 6 chapters written (`"outcome":"written"` in `chapters.jsonl`); `"over limit"` is a failure. Below it, do
 not commit: stop and report the refusals from the files in `drafts`. The commit message gives the
 number written for each model and the run's wall time.
 

@@ -291,8 +291,18 @@ public sealed class AdventureGenerator(
     /// <summary>Overrides the effort every call asks for; null uses the catalog's story effort for the model, else Medium.</summary>
     public ThinkingEffort? Effort { get; init; }
 
-    /// <summary>How long one model call may run on a provider that is not on this machine.</summary>
-    public TimeSpan CallLimit { get; init; } = TimeSpan.FromSeconds(120);
+    /// <summary>Slowest output rate, in tokens per second, a call is expected to sustain.</summary>
+    public const int SlowestTokensPerSecond = 80;
+
+    /// <summary>The least a call on a provider that is not on this machine may run.</summary>
+    public static readonly TimeSpan MinimumCallLimit = TimeSpan.FromSeconds(120);
+
+    /// <summary>How long a call asking for <paramref name="budget"/> output tokens may run on a provider that is not on this machine.</summary>
+    public static TimeSpan CallLimitFor(int budget) =>
+        TimeSpan.FromSeconds(Math.Max(MinimumCallLimit.TotalSeconds, (double)budget / SlowestTokensPerSecond));
+
+    /// <summary>Overrides how long one call may run on a provider that is not on this machine; null uses <see cref="CallLimitFor"/>.</summary>
+    public TimeSpan? CallLimit { get; init; }
 
     /// <summary>How long a model call on a provider that is not on this machine may go with no text or thinking arriving.</summary>
     public TimeSpan SilenceLimit { get; init; } = TimeSpan.FromSeconds(30);
@@ -1683,7 +1693,7 @@ public sealed class AdventureGenerator(
             // Cold, although what comes back is a story (#98).
             sampling: LlmSampling.Adventure,
             // A model on this machine may be on a CPU, so it is never stopped for being slow.
-            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, SilenceLimit) { First = FirstReplyLimit, Time = Time },
+            limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit ?? CallLimitFor(budget), SilenceLimit) { First = FirstReplyLimit, Time = Time },
             received: progress is null ? null : progress.Received,
             responseSchema: call.Schema).ConfigureAwait(false);
 

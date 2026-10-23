@@ -24,6 +24,8 @@ On a page of rows, Down and Up focus the first and last row, then step to the ro
 
 A selected row that has keyboard focus draws a 2 pixel Knock frame just inside its edge, so you can tell where focus is on the open arc and the selected item on the Checklist. A row you clicked, an unselected row and a disabled row draw no frame.
 
+A story call on a cloud provider is now stopped by the size of the reply it asks for, not after a flat two minutes. The spine gets 200 seconds and each later step 400 seconds, so a high-effort Sonnet chapter that thinks for two minutes before writing its beats is no longer stopped with "Nothing came back (TimedOut)". A call with no output for 30 seconds, or no first output in 90, is still stopped.
+
 Digit keys print as the digit and numpad digits as "Num 0" to "Num 9", so the headset reset-zoom key reads Ctrl+Alt+0 in Settings and the logs instead of Ctrl+Alt+D0. Stored settings are unchanged.
 
 Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar; the number of the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, and Alt+Left goes back, the same as Escape.

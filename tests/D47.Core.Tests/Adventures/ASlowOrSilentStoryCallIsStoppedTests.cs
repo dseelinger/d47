@@ -7,7 +7,7 @@ using Xunit;
 namespace D47.Core.Tests.Adventures;
 
 /// <summary>
-/// A story's model call on a cloud provider is stopped after <see cref="AdventureGenerator.CallLimit"/>, or after
+/// A story's model call on a cloud provider is stopped after <see cref="AdventureGenerator.CallLimitFor"/> its output budget, or after
 /// <see cref="AdventureGenerator.SilenceLimit"/> with no text or thinking, and counts as a failed draft. A call on this
 /// machine is not stopped.
 /// </summary>
@@ -67,16 +67,66 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
     }
 
     [Fact]
-    public async Task ACloudCallStillThinkingAtTwoMinutesIsStopped()
+    public async Task ACloudSpineCallStillThinkingAtThreeMinutesTwentyIsStopped()
     {
         var time = new ManualTime();
-        var provider = new ClockedLlmProvider(time, local: false, ThinksThenSays(TimeSpan.FromSeconds(10), 20, AdventureGeneratorTests.Spine));
+        var provider = new ClockedLlmProvider(time, local: false, ThinksThenSays(TimeSpan.FromSeconds(10), 21, AdventureGeneratorTests.Spine));
         var log = new RecordingLogger();
 
         var outcome = await Generate(provider, log, time);
 
         Assert.True(outcome.Redraftable);
-        Assert.Contains("TimedOut: a cloud call may run for 120 s; stopped after 120.0 s", SingleWarning(log));
+        Assert.Contains("TimedOut: a cloud call may run for 200 s; stopped after 200.0 s", SingleWarning(log));
+    }
+
+    [Fact]
+    public async Task ACloudSpineCallStillThinkingAtTwoMinutesTenIsNotStopped()
+    {
+        var time = new ManualTime();
+        var provider = new ClockedLlmProvider(
+            time,
+            local: false,
+            ThinksThenSays(TimeSpan.FromSeconds(10), 13, AdventureGeneratorTests.Spine),
+            Says(AdventureGeneratorTests.GoodBeats));
+
+        var outcome = await Generate(provider, new RecordingLogger(), time);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task ACloudBeatsCallStillThinkingAtTwoMinutesTenIsNotStopped()
+    {
+        var time = new ManualTime();
+        var provider = new ClockedLlmProvider(
+            time,
+            local: false,
+            Says(AdventureGeneratorTests.Spine),
+            ThinksThenSays(TimeSpan.FromSeconds(10), 13, AdventureGeneratorTests.GoodBeats));
+
+        var outcome = await Generate(provider, new RecordingLogger(), time);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+    }
+
+    [Fact]
+    public async Task ACloudBeatsCallStillThinkingAtSixHundredAndSixtySecondsIsStoppedAtFourHundred()
+    {
+        var time = new ManualTime();
+        var provider = new ClockedLlmProvider(
+            time,
+            local: false,
+            Says(AdventureGeneratorTests.Spine),
+            ThinksThenSays(TimeSpan.FromSeconds(10), 41, AdventureGeneratorTests.GoodBeats),
+            Says(AdventureGeneratorTests.Spine),
+            Says(AdventureGeneratorTests.GoodBeats));
+        var log = new RecordingLogger();
+
+        await Generate(provider, log, time);
+
+        Assert.Contains(
+            log.Entries,
+            entry => entry.Level == LogLevel.Warning && entry.Message.Contains("TimedOut: a cloud call may run for 400 s; stopped after 400.0 s", StringComparison.Ordinal));
     }
 
     [Fact]
