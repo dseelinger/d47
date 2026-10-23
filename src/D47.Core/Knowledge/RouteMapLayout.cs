@@ -23,6 +23,37 @@ public enum RouteLeg
 /// <summary>One stop of a route to draw; <see cref="Position"/> is null where the source has none.</summary>
 public sealed record RouteMapStop(string System, StarPosition? Position, RouteStopMarks Marks)
 {
+    /// <summary>The stop reached; off the route, the Commander only inside the route's extent; otherwise null.</summary>
+    public static StarPosition? CommanderMark(IReadOnlyList<RouteMapStop> stops, int reached, StarPosition? commander)
+    {
+        var positioned = stops.Where(stop => stop.Position is not null).Select(stop => stop.Position!.Value).ToList();
+
+        if (positioned.Count < 2 || reached < -1 || reached >= stops.Count)
+        {
+            return null;
+        }
+
+        if (reached >= 0)
+        {
+            return stops[reached].Position;
+        }
+
+        if (commander is not { } from)
+        {
+            return null;
+        }
+
+        var minX = positioned.Min(at => at.X);
+        var maxX = positioned.Max(at => at.X);
+        var minZ = positioned.Min(at => at.Z);
+        var maxZ = positioned.Max(at => at.Z);
+
+        return Math.Abs(from.X - (minX + maxX) / 2) <= Math.Max(maxX - minX, 1) / 2 &&
+            Math.Abs(from.Z - (minZ + maxZ) / 2) <= Math.Max(maxZ - minZ, 1) / 2
+            ? from
+            : null;
+    }
+
     public static IReadOnlyList<RouteMapStop> From(NavRoute route) =>
         [.. route.Hops.Select(hop => new RouteMapStop(
             hop.StarSystem,

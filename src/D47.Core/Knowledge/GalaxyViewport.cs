@@ -41,6 +41,23 @@ public sealed record GalaxyViewport(double CentreX, double CentreZ, double Light
         return Clamped((minX + maxX) / 2, (minZ + maxZ) / 2, across);
     }
 
+    /// <summary>Centred on the points' extent with <paramref name="inset"/> px clear each side of a <paramref name="side"/> px view; null for fewer than two points or no room.</summary>
+    public static GalaxyViewport? Fitted(IReadOnlyList<StarPosition> points, double side, double inset)
+    {
+        if (points.Count < 2 || side <= 2 * inset)
+        {
+            return null;
+        }
+
+        var minX = points.Min(point => point.X);
+        var maxX = points.Max(point => point.X);
+        var minZ = points.Min(point => point.Z);
+        var maxZ = points.Max(point => point.Z);
+        var span = Math.Max(Math.Max(maxX - minX, maxZ - minZ), 1);
+
+        return new((minX + maxX) / 2, (minZ + maxZ) / 2, span * side / (side - 2 * inset));
+    }
+
     public GalaxyViewport ZoomIn() => this with { LightYearsAcross = Steps[Math.Max(StepIndex() - 1, 0)] };
 
     public GalaxyViewport ZoomOut() => this with { LightYearsAcross = Steps[Math.Min(StepIndex() + 1, Steps.Length - 1)] };
