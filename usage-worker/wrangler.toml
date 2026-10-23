@@ -1,0 +1,15 @@
+# The usage-count endpoint. Deploying is `wrangler deploy` from this folder; README.md has the
+# provisioning commands.
+
+name = "d47-usage"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "d47-usage"
+database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
