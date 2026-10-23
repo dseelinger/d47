@@ -39,6 +39,7 @@ nav_order: 127
 <h2><span class="num">2</span> The two hotkeys worth knowing.</h2>
 <p class="say">Press Ctrl+comma to open Settings, or Ctrl+L to jump to the ask box.</p>
 <p class="expect">Settings opens, or the ask box takes the cursor; on the Transcript tab Ctrl+L scrolls the reading instead.</p>
+<p class="body">Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar, and the same number on the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, wrapping at the ends. Alt+Left goes back. None of these can be rebound.</p>
 <svg viewBox="0 0 880 250" role="img" aria-label="Hotkeys">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <text x="44" y="52" font-size="17" font-weight="700" fill="var(--text)">Hotkeys</text>
@@ -504,8 +505,8 @@ cannot glance at a second monitor. Every crumb but the last can be pressed — *
 > "navigation"
 > "select the navigation tab"
 
-Back is three routes that agree: the breadcrumb, the **grip button** on either controller, and
-the phrase. Say the name of the tab you are already on and you go back to its top, exactly as
+Back is four routes that agree: the breadcrumb, the **grip button** on either controller, the
+phrase, and on the keyboard Escape or Alt+Left. Say the name of the tab you are already on and you go back to its top, exactly as
 pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
 "select" in front of it, and to "tab" after it — and to nothing looser, because a phrase that
 merely mentions a tab is not a request for it.

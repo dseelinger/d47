@@ -1777,6 +1777,11 @@ public partial class PanelView : UserControl, IPanelTabHost
             return;
         }
 
+        if (TabKey(e))
+        {
+            return;
+        }
+
         if (!_searchable)
         {
             return;
@@ -1800,6 +1805,68 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Ctrl+1 to Ctrl+7 show the Nth registered tab (the one already showing goes to its top), Ctrl+Tab and
+    /// Ctrl+Shift+Tab step along the bar, and Alt+Left goes back. Matched here so a focused control never sees them.
+    /// </summary>
+    private bool TabKey(KeyEventArgs e)
+    {
+        if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
+        {
+            e.Handled = true;
+            GoBack();
+            return true;
+        }
+
+        var step = e.Key == Key.Tab
+            ? e.KeyModifiers switch
+            {
+                KeyModifiers.Control => 1,
+                KeyModifiers.Control | KeyModifiers.Shift => -1,
+                _ => 0,
+            }
+            : 0;
+
+        var number = e.KeyModifiers == KeyModifiers.Control && e.Key is >= Key.D1 and <= Key.D7 ? e.Key - Key.D0 : 0;
+
+        if (step == 0 && number == 0)
+        {
+            return false;
+        }
+
+        e.Handled = true;
+
+        if (Nav.Modal)
+        {
+            return true;
+        }
+
+        if (step != 0)
+        {
+            Prompts.Abandon();
+            Nav.Step(step);
+            return true;
+        }
+
+        var tabs = Enum.GetValues<PanelTab>().Where(Nav.Has).ToList();
+
+        if (number <= tabs.Count)
+        {
+            Prompts.Abandon();
+
+            if (tabs[number - 1] == Tab)
+            {
+                Nav.ToRoot();
+            }
+            else
+            {
+                Nav.Select(tabs[number - 1]);
+            }
+        }
+
+        return true;
     }
 
     /// <summary>The mouse's Back button goes back, the same as the breadcrumb (#342). Forward does nothing —

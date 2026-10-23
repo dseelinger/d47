@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Ctrl+1 to Ctrl+7 show the first to seventh tab on the bar; the number of the tab you are on goes to the top of it. Ctrl+Tab and Ctrl+Shift+Tab step to the next and previous tab, and Alt+Left goes back, the same as Escape.
+
 On the Navigation tab's Galaxy map, the map takes keyboard focus when the page opens and when you click it. The arrow keys pan a quarter of the view, + and − zoom a step, and Home frames HERE. Ctrl with + or − still zooms the window.
 
 On the Transcript tab, Ctrl+Shift+C copies the whole page, the same as the Copy button. Ctrl+C still copies only a selection.
