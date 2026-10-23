@@ -320,7 +320,7 @@ public static class SettingsLayout
                     false,
                     [
                         G(
-                            "Mining callouts",
+                            "Mining and material callouts",
                             "What D47 reports while you prospect and mine.",
                             [
                                 E("callouts.materials"),
