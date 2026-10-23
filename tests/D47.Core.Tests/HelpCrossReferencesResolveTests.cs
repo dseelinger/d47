@@ -1,4 +1,5 @@
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using Xunit;
 
@@ -31,7 +32,7 @@ public class HelpCrossReferencesResolveTests
             {
                 foreach (var target in HelpLinks.TargetsIn(row.Help))
                 {
-                    if (!ids.Contains(target))
+                    if (HelpLinks.PlaceIdOf(target) is null && !ids.Contains(target))
                     {
                         broken.Add($"{capability.Id}.{row.Key} -> ({target})");
                     }
@@ -44,6 +45,43 @@ public class HelpCrossReferencesResolveTests
             "these settings link to a section that is not a registered capability, so the link "
             + "would do nothing when clicked — " + string.Join("; ", broken));
     }
+
+    private static HashSet<string> PlaceIds() =>
+        [.. SettingsLayout.Areas.SelectMany(area => area.Places).Select(place => place.Id)];
+
+    [Fact]
+    public void EveryPlaceLinkInSettingsHelpNamesAPlace()
+    {
+        var places = PlaceIds();
+        var broken = new List<string>();
+
+        foreach (var row in Registered().SelectMany(capability => capability.Settings))
+        {
+            broken.AddRange(HelpLinks.TargetsIn(row.Help)
+                .Select(HelpLinks.PlaceIdOf)
+                .Where(id => id is not null && !places.Contains(id))
+                .Select(id => $"{row.Key} -> place:{id}"));
+        }
+
+        foreach (var place in SettingsLayout.Areas.SelectMany(area => area.Places))
+        {
+            foreach (var group in place.Groups)
+            {
+                broken.AddRange(HelpLinks.TargetsIn(group.Help)
+                    .Where(target => HelpLinks.PlaceIdOf(target) is { } id && !places.Contains(id))
+                    .Select(target => $"{place.Id}/{group.Title} -> {target}"));
+            }
+        }
+
+        Assert.True(broken.Count == 0, "these help links name no settings place — " + string.Join("; ", broken));
+    }
+
+    [Theory]
+    [InlineData("place:voice", "voice")]
+    [InlineData("privacy", null)]
+    [InlineData("place:", null)]
+    public void APlaceTargetNamesItsPlaceAndACapabilityTargetNamesNone(string target, string? place) =>
+        Assert.Equal(place, HelpLinks.PlaceIdOf(target));
 
     /// <summary>And the links exist at all.</summary>
     [Fact]

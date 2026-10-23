@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The help under the Voice group on Your core › Its voice, the help under the Provider group on Providers › Speech synthesis, and the help on the Voice row now link to each other. Pressing "Providers › Speech synthesis" or "Your core › Its voice" opens that page. The Voice group's help also says that Speaking rate is shown only where the speech provider can change the pace.
+
 D47 reads your sticks, throttle and pedals through Windows HID, and stores each controller interface under its USB device name. Before, Windows gave the same stick a different id in each copy of D47, so a switch bound in one copy did not work in another. A binding also keeps working when you move the controller to another USB port.
 
 Bindings you made before this update carry over on the first start: switches, push-to-talk and cancel move to the new identity when D47 can tell which controller each one was. Where it cannot, flip one of the switches on the HOTAS switches page, as before.

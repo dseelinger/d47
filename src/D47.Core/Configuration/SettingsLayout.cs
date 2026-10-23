@@ -188,7 +188,7 @@ public static class SettingsLayout
                     [
                         G(
                             "Voice",
-                            "Who voices the core aboard, and how fast it speaks.",
+                            "Who voices the core aboard. The voices come from the provider under [Providers › Speech synthesis](place:speech-synthesis), and Speaking rate is shown only where that provider can change the pace.",
                             [E("speech.voice"), E("speech.rate")]),
                         G(
                             "COVAS Voice",
@@ -550,7 +550,7 @@ public static class SettingsLayout
                     [
                         G(
                             "Provider",
-                            "Where D47 synthesises speech, and what the provider needs.",
+                            "Where D47 synthesises speech, and what the provider needs. The voice your core speaks in is chosen under [Your core › Its voice](place:voice).",
                             [
                                 E("speech.provider"),
                                 F(IsSpeechProviderKeyFamily),

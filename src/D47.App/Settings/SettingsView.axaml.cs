@@ -141,6 +141,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         _marker = new QueryMarker(this, id =>
         {
+            if (D47.Core.Interface.HelpLinks.PlaceIdOf(id) is { } placeId)
+            {
+                return TryRevealPlace(placeId);
+            }
+
             var index = SectionHolding(id);
 
             if (index < 0)
@@ -650,7 +655,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         var spoken = new TextBlock
         {
-            Text = row.Help,
+            Text = D47.Core.Interface.HelpLinks.Plain(row.Help),
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
@@ -1019,17 +1024,20 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     }
 
     /// <summary>Opens a settings place by its id and marks its title. An id that names no place changes nothing.</summary>
-    public void RevealPlace(string placeId)
+    public void RevealPlace(string placeId) => TryRevealPlace(placeId);
+
+    private bool TryRevealPlace(string placeId)
     {
         var index = _sections.FindIndex(section => string.Equals(section.PlaceId, placeId, StringComparison.Ordinal));
 
         if (_tabPlaceId is not null || index < 0 || !_sift.Places[index].Exists)
         {
-            return;
+            return false;
         }
 
         ShowPlace(index);
         Land(_pageHead);
+        return true;
     }
 
     /// <summary>The tab place this view is the strip of, or null on the settings page.</summary>
@@ -1549,7 +1557,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // Hidden inline copy, shown only when a search matches text no other visible control carries (#333).
         var help = new TextBlock
         {
-            Text = row.Help,
+            Text = D47.Core.Interface.HelpLinks.Plain(row.Help),
             FontSize = TypeScale.Secondary,
             Margin = new Thickness(0, 4, 0, 0),
             TextWrapping = TextWrapping.Wrap,
@@ -1576,7 +1584,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         // changed and nowhere else.
         var spoken = new TextBlock
         {
-            Text = row.Help,
+            Text = D47.Core.Interface.HelpLinks.Plain(row.Help),
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,
@@ -1804,7 +1812,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     {
         var line = new TextBlock
         {
-            Text = help,
+            Text = D47.Core.Interface.HelpLinks.Plain(help),
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             MaxWidth = 420,

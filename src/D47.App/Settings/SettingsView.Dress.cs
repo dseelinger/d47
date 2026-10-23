@@ -62,7 +62,7 @@ public partial class SettingsView
 
         var note = new TextBlock
         {
-            Text = help,
+            Text = D47.Core.Interface.HelpLinks.Plain(help),
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,

@@ -589,8 +589,8 @@ public static class SpeechCapability
                 Label = "Voice",
                 Help =
                     "Which voice the core aboard speaks in. Kept per core, so switching core "
-                    + "switches voice. The voices come from the provider set under Providers › Speech "
-                    + "synthesis, and clearing the row has d47 choose for this core again.",
+                    + "switches voice. The voices come from the provider set under [Providers › Speech "
+                    + "synthesis](place:speech-synthesis), and clearing the row has d47 choose for this core again.",
                 Kind = SettingKind.Choice,
 
                 // Two different answers, because clearing this row does two different things.

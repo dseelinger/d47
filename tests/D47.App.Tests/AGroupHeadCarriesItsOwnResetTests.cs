@@ -59,7 +59,7 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
 
             Assert.Contains(texts, text => text.FontSize == TypeScale.Secondary
                 && Words(text) == group.Title.ToUpperInvariant());
-            Assert.Contains(texts, text => Words(text) == group.Help);
+            Assert.Contains(texts, text => Words(text) == D47.Core.Interface.HelpLinks.Plain(group.Help));
             Assert.Equal(TypeScale.MinimumTarget, reset.Width);
 
             var rule = head.Children.OfType<Border>().Single();

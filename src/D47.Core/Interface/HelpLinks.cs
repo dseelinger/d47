@@ -13,6 +13,15 @@ public readonly record struct HelpSegment(string Text, string? Target);
 /// </summary>
 public static class HelpLinks
 {
+    /// <summary>Prefix of a target that names a settings place by id rather than a capability.</summary>
+    public const string PlacePrefix = "place:";
+
+    /// <summary>The place id a target names, or null when it is a capability id.</summary>
+    public static string? PlaceIdOf(string target) =>
+        target.StartsWith(PlacePrefix, StringComparison.Ordinal) && target.Length > PlacePrefix.Length
+            ? target[PlacePrefix.Length..]
+            : null;
+
     /// <summary>The help split into stretches, with the linked ones carrying their target.</summary>
     public static IReadOnlyList<HelpSegment> Parse(string? help)
     {
@@ -105,7 +114,7 @@ public static class HelpLinks
         return built.ToString();
     }
 
-    /// <summary>Every capability id this help points at, in the order it points at them.</summary>
+    /// <summary>Every target this help points at, a capability id or a <c>place:</c> id, in the order it points at them.</summary>
     public static IReadOnlyList<string> TargetsIn(string? help) =>
         [.. Parse(help).Where(segment => segment.Target is not null).Select(segment => segment.Target!)];
 }
