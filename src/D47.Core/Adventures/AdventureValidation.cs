@@ -46,6 +46,14 @@ public static class Careers
         ["Xenobiologist"] = "Exobiologist",
     };
 
+    /// <summary>The highest rank a rank objective may name: Elite V, or Elite for CQC.</summary>
+    public static int TopRank(string? career) =>
+        string.Equals(career, "CQC", StringComparison.OrdinalIgnoreCase) ? RankStanding.Elite : RankStanding.EliteTop;
+
+    /// <summary>A rank in words: "Elite III" from 8 up, otherwise "rank 6".</summary>
+    public static string RankWord(int rank) =>
+        rank >= RankStanding.Elite ? RankStanding.EliteName(rank) : $"rank {rank.ToString(CultureInfo.InvariantCulture)}";
+
     /// <summary>How a Commander says the career.</summary>
     public static string Word(string? career) => career switch
     {
@@ -218,9 +226,11 @@ public static class AdventureValidation
                                 + string.Join(", ", Careers.Keys.Select(Careers.Word)) + ".");
                         }
 
-                        if (step.Trigger.Rank is not (>= 1 and <= RankStanding.Elite))
+                        var topRank = Careers.TopRank(Careers.Match(step.Trigger.Career));
+
+                        if (step.Trigger.Rank is not { } stepRank || stepRank < 1 || stepRank > topRank)
                         {
-                            problems.Add($"{stepWhere} names rank {step.Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; ranks run 1 to {RankStanding.Elite}.");
+                            problems.Add($"{stepWhere} names rank {step.Trigger.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; ranks run 1 to {topRank}.");
                         }
 
                         break;

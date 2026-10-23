@@ -319,7 +319,7 @@ public sealed class AdventureGeneratorTests
     }
 
     [Fact]
-    public async Task APromotionWhereTheCommanderIsAlreadyEliteIsRefusedAsSuch()
+    public async Task APromotionWhereTheCommanderIsAlreadyEliteVIsRefusedAsSuch()
     {
         const string elite = """
             {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
@@ -334,10 +334,10 @@ public sealed class AdventureGeneratorTests
             RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)),
             RoundScriptedLlmProvider.Saying(Repairs.Replacing(elite, 2)));
 
-        var outcome = await Generator(provider, new Galaxy(), combat: 8).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+        var outcome = await Generator(provider, new Galaxy(), combat: 13).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
 
         Assert.False(outcome.Succeeded);
-        Assert.Contains("where the Commander is already Elite; make it another career or another kind of objective", outcome.Refusal);
+        Assert.Contains("where the Commander is already Elite V; make it another career or another kind of objective", outcome.Refusal);
     }
 
     [Fact]

@@ -69,7 +69,8 @@ public sealed record RankStanding(string Career, int Rank)
         _ => null,
     };
 
-    private static string EliteName(int rank) => rank == Elite ? "Elite" : $"Elite {Grade(rank - Elite)}";
+    /// <summary>"Elite" for 8, "Elite I" to "Elite V" for 9 to 13.</summary>
+    public static string EliteName(int rank) => rank == Elite ? "Elite" : $"Elite {Grade(rank - Elite)}";
 
     private static string Grade(int grade) => grade switch
     {

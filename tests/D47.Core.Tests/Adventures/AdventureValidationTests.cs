@@ -77,10 +77,17 @@ public class AdventureValidationTests
     {
         var adventure = LanternRoute() with
         {
-            Beats = [Beat("Promotion", null, new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Combat", Rank = 9 }, "Well.")],
+            Beats = [Beat("Promotion", null, new AdventureTrigger { Kind = TriggerKind.Rank, Career = "Combat", Rank = 14 }, "Well.")],
         };
 
-        Assert.Contains(AdventureValidation.Problems(adventure), problem => problem.Contains("ranks run 1 to 8"));
+        Assert.Contains(AdventureValidation.Problems(adventure), problem => problem.Contains("ranks run 1 to 13"));
+
+        var cqc = LanternRoute() with
+        {
+            Beats = [Beat("Promotion", null, new AdventureTrigger { Kind = TriggerKind.Rank, Career = "CQC", Rank = 9 }, "Well.")],
+        };
+
+        Assert.Contains(AdventureValidation.Problems(cqc), problem => problem.Contains("ranks run 1 to 8"));
     }
 
     [Fact]

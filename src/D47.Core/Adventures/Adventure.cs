@@ -351,7 +351,9 @@ public sealed record AdventureTrigger
         TriggerKind.Dock => $"dock at {Station ?? Market(MarketId)}{In()}",
         TriggerKind.Land => $"land on {Body ?? Address(SystemAddress, BodyId)}{In()}",
         TriggerKind.Scan => $"scan {Body ?? Address(SystemAddress, BodyId)}{In()}",
-        TriggerKind.Rank => $"reach {Careers.Word(Career)} rank {Rank}",
+        TriggerKind.Rank => Rank is { } rank && rank >= Journal.RankStanding.Elite
+            ? $"reach {Journal.RankStanding.EliteName(rank)} in {Careers.Word(Career)}"
+            : $"reach {Careers.Word(Career)} rank {Rank}",
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         TriggerKind.Reach => $"fit out a ship that can reach the beacon in {System?.Trim() ?? "the Guardian beacon's system"}",
         TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",

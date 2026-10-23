@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story or adventure rank objective can now ask for Elite I to Elite V in Combat, Trade, Exploration, Mercenary and Exobiology, and reads "reach Elite III in Trade". CQC objectives still stop at Elite.
+
 Privacy and egress settings now have a Usage counts switch, on by default, and the egress list names it. It counts how often each tool is used and sends each finished day once, at startup and hourly, with no identifier. Turning it off empties the counts and deletes data\usage-counts.json. A test drive counts but never sends.
 
 The privacy, data retention and donation privacy pages no longer say d47 has no analytics. They now say d47 sends one thing without being asked: once a day, how many times each tool was used, with no identifier and nothing from your journal. It is on by default, and Usage counts in Privacy settings turns it off.

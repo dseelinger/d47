@@ -2548,7 +2548,7 @@ public sealed class AdventureGenerator(
         text.AppendLine("- \"dock\": the Commander docks at a named station in a named system.");
         text.AppendLine("- \"land\": the Commander lands on a named body (a planet or moon, by its full name such as \"Tavell's Reach 3 c\") in a named system. The body must be landable.");
         text.AppendLine("- \"scan\": the Commander scans a named body in a named system. A body is scanned on the way in, before any landing, and needs no equipment — so a scan objective comes before a land objective on the same body, never after it, and no body is scanned twice.");
-        text.AppendLine($"- \"rank\": the Commander is promoted to a rank (1 to 8) in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now.");
+        text.AppendLine($"- \"rank\": the Commander is promoted to a rank in a career — one of {string.Join(", ", Careers.Keys.Select(Careers.Word))} — higher than they hold now. Ranks run 1 to 13, where 8 is Elite and 9 to 13 are Elite I to Elite V; CQC runs 1 to 8.");
         if (ships.Count > 0)
         {
             var hulls = string.Join(", ", ships);
@@ -3677,15 +3677,17 @@ public sealed class AdventureGenerator(
                 {
                     var held = facts.Ranks.For(career)?.Rank ?? 0;
 
-                    if (held >= RankStanding.Elite)
+                    var top = Careers.TopRank(career);
+
+                    if (held >= top)
                     {
-                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already Elite; make it another career or another kind of objective.");
+                        Refuse(index, $"{where} asks for a promotion in {Careers.Word(career)}, where the Commander is already {RankStanding.EliteName(top)}; make it another career or another kind of objective.");
                     }
-                    else if (beat.Rank is not { } rank || rank <= held || rank > RankStanding.Elite)
+                    else if (beat.Rank is not { } rank || rank <= held || rank > top)
                     {
                         Refuse(index, 
                             $"{where} asks for {Careers.Word(career)} rank {beat.Rank?.ToString(CultureInfo.InvariantCulture) ?? "nothing"}; the Commander holds {held}, "
-                            + $"so the objective must name {held + 1}{(held + 1 < RankStanding.Elite ? $" or {held + 2}" : string.Empty)}.");
+                            + $"so the objective must name {held + 1}{(held + 1 < top ? $" or {held + 2}" : string.Empty)}.");
                     }
                     else
                     {
