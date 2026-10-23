@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
@@ -9,26 +10,29 @@ namespace D47.Core.Knowledge;
 /// <summary>
 /// Sends the shown Commander's live colonisation events to the planner while both
 /// <see cref="KnowledgeSettings.ColonisationPlanner"/> and <see cref="KnowledgeSettings.ColonisationProgress"/>
-/// are on, and only while the shown Commander is the one the key belongs to. <see cref="Tick"/> is for the
-/// tick thread and never waits; <see cref="KeyChanged"/> may be called from any thread. The writer and the
-/// queue are built the first time the switches are found on.
+/// are on, and only while the shown Commander is the one the key belongs to. The key is the shown
+/// Commander's own secret, or the installation secret until its Commander is shown, when it moves to them.
+/// <see cref="Tick"/> is for the tick thread and never waits; <see cref="KeyChanged"/> may be called from
+/// any thread. The queue is built the first time the switches are found on.
 /// </summary>
 public sealed class ColonisationProgress
 {
     public static readonly TimeSpan AskAgainAfter = TimeSpan.FromMinutes(1);
 
-    private readonly Func<IColonisationPlanWriter> _writerFactory;
+    private readonly Func<string, IColonisationPlanWriter> _writerFactory;
     private readonly ColonisationPlans _plans;
     private readonly Func<D47Settings> _settings;
-    private readonly Func<bool> _hasKey;
+    private readonly Func<string, bool> _hasKey;
+    private readonly Func<string, string, bool> _move;
     private readonly ILogger<PlanWriteQueue> _queueLogger;
 
     private readonly ConcurrentQueue<(int Generation, PlanCommander Answer)> _answers = new();
 
-    private IColonisationPlanWriter? _writer;
     private PlanWriteQueue? _queue;
     private volatile bool _keyChanged;
     private bool _on;
+    private string? _fid;
+    private string? _secretName;
     private int _generation;
     private bool _asking;
     private DateTimeOffset _askAt = DateTimeOffset.MinValue;
@@ -38,16 +42,18 @@ public sealed class ColonisationProgress
     private volatile string? _note;
 
     public ColonisationProgress(
-        Func<IColonisationPlanWriter> writer,
+        Func<string, IColonisationPlanWriter> writer,
         ColonisationPlans plans,
         Func<D47Settings> settings,
-        Func<bool> hasKey,
+        Func<string, bool> hasKey,
+        Func<string, string, bool> move,
         ILogger<PlanWriteQueue> queueLogger)
     {
         _writerFactory = writer;
         _plans = plans;
         _settings = settings;
         _hasKey = hasKey;
+        _move = move;
         _queueLogger = queueLogger;
     }
 
@@ -63,11 +69,16 @@ public sealed class ColonisationProgress
     /// <summary>Forgets whose key it is, so the next tick asks the planner again.</summary>
     public void KeyChanged() => _keyChanged = true;
 
-    /// <summary>One tick. <paramref name="arrived"/> is the shown Commander's events from this poll.</summary>
+    /// <summary>
+    /// One tick. <paramref name="fid"/> is the shown Commander's FID; a different one from the last tick
+    /// forgets the held answer and writes. <paramref name="arrived"/> is the shown Commander's events from
+    /// this poll.
+    /// </summary>
     public void Tick(
         bool priming,
         bool offDuty,
         string? shown,
+        string? fid,
         IReadOnlyList<JournalEvent> arrived,
         Func<long, string?> systemOf,
         DateTimeOffset now)
@@ -79,20 +90,32 @@ public sealed class ColonisationProgress
             return;
         }
 
-        if (!_on || _keyChanged)
+        var changed = !_on || _keyChanged || !string.Equals(fid, _fid, StringComparison.Ordinal);
+        _on = true;
+        _keyChanged = false;
+        _fid = fid;
+
+        var name = fid is null ? null : SecretNameFor(fid);
+
+        if (changed || !string.Equals(name, _secretName, StringComparison.Ordinal))
         {
-            _on = true;
-            _keyChanged = false;
+            _secretName = name;
             Forget();
         }
 
-        if (!_hasKey())
+        if (fid is null)
+        {
+            Publish(null);
+            return;
+        }
+
+        if (_secretName is null)
         {
             Publish("No Raven Colonial key is set");
             return;
         }
 
-        Answered(now);
+        Answered(now, shown, fid);
 
         if (_keyCommander is null && !_keyRefused && !_asking && now >= _askAt)
         {
@@ -125,14 +148,24 @@ public sealed class ColonisationProgress
         _queue = null;
     }
 
-    private IColonisationPlanWriter Writer() => _writer ??= _writerFactory();
+    private string? SecretNameFor(string fid)
+    {
+        var own = CommanderSecret.Name(ColonisationCapability.KeySecretName, fid);
+
+        if (_hasKey(own))
+        {
+            return own;
+        }
+
+        return _hasKey(ColonisationCapability.KeySecretName) ? ColonisationCapability.KeySecretName : null;
+    }
 
     private PlanWriteQueue Queue() =>
-        _queue ??= new PlanWriteQueue(Writer(), _plans, _queueLogger) { Dispatch = Dispatch };
+        _queue ??= new PlanWriteQueue(_writerFactory(_secretName!), _plans, _queueLogger) { Dispatch = Dispatch };
 
     private void Ask()
     {
-        var writer = Writer();
+        var writer = _writerFactory(_secretName!);
         var generation = _generation;
         _asking = true;
 
@@ -153,7 +186,7 @@ public sealed class ColonisationProgress
         });
     }
 
-    private void Answered(DateTimeOffset now)
+    private void Answered(DateTimeOffset now, string? shown, string fid)
     {
         while (_answers.TryDequeue(out var answered))
         {
@@ -169,6 +202,7 @@ public sealed class ColonisationProgress
                 case { Outcome: PlanWriteOutcome.Sent, Name: { Length: > 0 } name }:
                     _keyCommander = name;
                     _askFailedAt = null;
+                    MoveInstallationKey(name, shown, fid);
                     break;
 
                 case { Outcome: PlanWriteOutcome.KeyRefused }:
@@ -180,6 +214,23 @@ public sealed class ColonisationProgress
                     _askAt = now + AskAgainAfter;
                     break;
             }
+        }
+    }
+
+    private void MoveInstallationKey(string answeredName, string? shown, string fid)
+    {
+        if (!string.Equals(_secretName, ColonisationCapability.KeySecretName, StringComparison.Ordinal)
+            || !string.Equals(answeredName, shown, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var own = CommanderSecret.Name(ColonisationCapability.KeySecretName, fid);
+
+        if (_move(ColonisationCapability.KeySecretName, own))
+        {
+            _secretName = own;
+            _queue = null;
         }
     }
 

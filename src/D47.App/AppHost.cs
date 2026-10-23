@@ -429,7 +429,7 @@ public sealed class AppHost : IDisposable
     private D47.Knowledge.EddnUploader? _eddnUploader;
 
     private D47.Knowledge.RavenColonialPlanService? _colonisationPlanService;
-    private D47.Knowledge.RavenColonialPlanWriter? _colonisationPlanWriter;
+    private readonly Dictionary<string, D47.Knowledge.RavenColonialPlanWriter> _colonisationPlanWriters = new(StringComparer.Ordinal);
 
     /// <summary>The time of the last BGS tick d47 has read.</summary>
     public BgsTickWatch? BgsTick { get; private set; }
@@ -4193,13 +4193,22 @@ public sealed class AppHost : IDisposable
 
         tick.Add("colonisation-plans", context => colonisationPlans.Poll(context.Now));
 
-        // The writer is built only once both switches are found on.
+        // One writer per secret name for the session: a send in flight keeps the key it was built over.
         var colonisationProgress = host.ColonisationProgress = new ColonisationProgress(
-            () => host._colonisationPlanWriter = new D47.Knowledge.RavenColonialPlanWriter(
-                () => foundations.Secrets.TryGet(ColonisationCapability.KeySecretName, out var key) ? key : null),
+            secretName =>
+            {
+                if (!host._colonisationPlanWriters.TryGetValue(secretName, out var writer))
+                {
+                    host._colonisationPlanWriters[secretName] = writer = new D47.Knowledge.RavenColonialPlanWriter(
+                        () => foundations.Secrets.TryGet(secretName, out var key) ? key : null);
+                }
+
+                return writer;
+            },
             colonisationPlans,
             () => settings.Current,
-            () => foundations.Secrets.Has(ColonisationCapability.KeySecretName),
+            foundations.Secrets.Has,
+            foundations.Secrets.Move,
             foundations.LoggerFactory.CreateLogger<PlanWriteQueue>());
 
         settings.Changed += change =>
@@ -4214,6 +4223,7 @@ public sealed class AppHost : IDisposable
             context.IsFirst,
             gameState.IsOffDuty,
             gameState.Active?.Identity.Name,
+            gameState.Active?.Identity.FrontierId,
             feed.Arrived,
             marketId => gameState.Active?.Colonisation.All.FirstOrDefault(site => site.MarketId == marketId)?.StarSystem,
             context.Now));
@@ -6565,7 +6575,11 @@ public sealed class AppHost : IDisposable
         _serverStatusSource?.Dispose();
         _eddnUploader?.Dispose();
         _colonisationPlanService?.Dispose();
-        _colonisationPlanWriter?.Dispose();
+
+        foreach (var writer in _colonisationPlanWriters.Values)
+        {
+            writer.Dispose();
+        }
 
         // And then let go of the game (#206).
         _gameInput.Dispose();

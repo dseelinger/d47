@@ -1,3 +1,4 @@
+using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using Xunit;
@@ -28,7 +29,8 @@ public class SendingColonisationProgressIsDisclosedAndTheCommandersTests
             "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
             entry.Destination);
         Assert.Equal(
-            "Your Raven Colonial key and the Commander name it belongs to. For each construction site you deliver "
+            "The shown Commander's Raven Colonial key and the Commander name it belongs to. For each construction "
+            + "site you deliver "
             + "to that already has a project on the planner: the tonnes you deliver, what the depot says is still "
             + "needed, and that the site is complete when it completes. Only what happens while d47 is running; "
             + "nothing from older journals.",
@@ -64,10 +66,21 @@ public class SendingColonisationProgressIsDisclosedAndTheCommandersTests
     public void TheModelIsRefusedTheKey()
     {
         var surface = TestSurface.For(new MemoryInstall());
+        surface.Settings.UseCommander("F1", "Tester");
 
         var result = surface.Settings.Apply(ColonisationCapability.KeyRow, "not-a-real-key", SettingsCaller.Model);
 
         Assert.Equal(SettingApplyStatus.Refused, result.Status);
+    }
+
+    [Fact]
+    public void TheKeyIsKeptPerCommander()
+    {
+        var row = ColonisationCapability.Create(() => null).Settings
+            .Single(setting => setting.Key == ColonisationCapability.KeyRow);
+
+        Assert.Equal(SettingScope.Commander, row.Scope);
+        Assert.Equal("ravencolonial.apiKey", row.SecretName);
     }
 
     [Fact]

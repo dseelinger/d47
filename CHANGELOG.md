@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.
+
 The last step of setup has a link, THE D47 DISCORD, that opens the community page in your browser.
 
 Once every 14 days, at a quiet moment, the core says one line pointing at the D47 Discord, and "D47 Discord" in the transcript is a link. The first mention comes 14 days after the first launch. It is said at least 10 minutes into a session, after 90 seconds docked, landed or in supercruise, and at most once per launch, whichever core is aboard. The row "Mention the Discord every two weeks" under Callouts turns it off.

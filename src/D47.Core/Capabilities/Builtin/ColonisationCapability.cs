@@ -254,8 +254,10 @@ public static class ColonisationCapability
                 Label = "Raven Colonial key",
                 Help =
                     "Get your key from https://ravencolonial.com/user after signing in to Raven Colonial. It is "
-                    + "stored encrypted for this Windows account and never shown back.",
+                    + "stored encrypted for this Windows account and never shown back. Each Commander on this "
+                    + "machine has their own key.",
                 Kind = SettingKind.Secret,
+                Scope = SettingScope.Commander,
                 SecretName = KeySecretName,
                 DocsAnchor = "raven-colonial-key",
             },

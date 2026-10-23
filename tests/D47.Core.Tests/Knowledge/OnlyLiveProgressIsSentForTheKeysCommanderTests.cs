@@ -71,11 +71,15 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
     {
         public Rig(bool reads = true, bool writes = true, bool hasKey = true)
         {
+            if (hasKey)
+            {
+                Keys.Add(CommanderSecret.Name(ColonisationCapability.KeySecretName, Fid));
+            }
+
             Settings = new D47Settings
             {
                 Knowledge = new KnowledgeSettings { ColonisationPlanner = reads, ColonisationProgress = writes },
             };
-            HasKey = hasKey;
 
             Plans = new ColonisationPlans(new Service(), () => true, () => null, NullLogger<ColonisationPlans>.Instance)
             {
@@ -85,14 +89,26 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
             Plans.Poll(Start);
 
             Progress = new ColonisationProgress(
-                () =>
+                name =>
                 {
                     Built++;
-                    return Writer;
+                    Used.Add(name);
+                    return Writers.TryGetValue(name, out var other) ? other : Writer;
                 },
                 Plans,
                 () => Settings,
-                () => HasKey,
+                Keys.Contains,
+                (from, to) =>
+                {
+                    if (!Keys.Remove(from))
+                    {
+                        return false;
+                    }
+
+                    Keys.Add(to);
+                    Moves.Add((from, to));
+                    return true;
+                },
                 NullLogger<PlanWriteQueue>.Instance)
             {
                 Dispatch = work => _ = work(),
@@ -107,7 +123,15 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
 
         public D47Settings Settings { get; set; }
 
-        public bool HasKey { get; set; }
+        public const string Fid = "F1";
+
+        public HashSet<string> Keys { get; } = [];
+
+        public Dictionary<string, Writer> Writers { get; } = [];
+
+        public List<string> Used { get; } = [];
+
+        public List<(string From, string To)> Moves { get; } = [];
 
         public int Built { get; private set; }
 
@@ -116,8 +140,9 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
             bool priming = false,
             bool offDuty = false,
             string shown = "Tester",
-            DateTimeOffset? at = null) =>
-            Progress.Tick(priming, offDuty, shown, arrived, Known, at ?? Start);
+            DateTimeOffset? at = null,
+            string? fid = Fid) =>
+            Progress.Tick(priming, offDuty, shown, fid, arrived, Known, at ?? Start);
 
         /// <summary>The startup tick, which also asks whose key it is.</summary>
         public void Prime() => Tick([], priming: true);
@@ -325,5 +350,102 @@ public class OnlyLiveProgressIsSentForTheKeysCommanderTests
 
         Assert.Equal(2, rig.Writer.Asked);
         Assert.Equal(["contribute build-1 Tester steel=120"], rig.Writer.Calls);
+    }
+
+    [Fact]
+    public void TwoCommandersEachSendUnderTheirOwnKey()
+    {
+        var rig = new Rig();
+        var other = new Writer { Commander = new PlanCommander(PlanWriteOutcome.Sent, "Alt") };
+        var otherName = CommanderSecret.Name(ColonisationCapability.KeySecretName, "F2");
+        rig.Keys.Add(otherName);
+        rig.Writers[otherName] = other;
+        rig.Prime();
+
+        rig.Tick([Contribution()]);
+        rig.Tick([], shown: "Alt", fid: "F2");
+        rig.Tick([Contribution()], shown: "Alt", fid: "F2");
+        rig.Tick([], shown: "Tester");
+        rig.Tick([Contribution()], shown: "Tester");
+
+        Assert.Equal(["contribute build-1 Tester steel=120", "contribute build-1 Tester steel=120"], rig.Writer.Calls);
+        Assert.Equal(["contribute build-1 Alt steel=120"], other.Calls);
+    }
+
+    [Fact]
+    public void ACommanderWithNoKeySendsNothingAndTheNoteSaysSo()
+    {
+        var rig = new Rig();
+        rig.Prime();
+
+        rig.Tick([Contribution()], shown: "Alt", fid: "F2");
+
+        Assert.Empty(rig.Writer.Calls);
+        Assert.Equal("No Raven Colonial key is set", rig.Progress.Note);
+    }
+
+    [Fact]
+    public void ANewCommanderDropsHeldWritesAndAsksAgain()
+    {
+        var rig = new Rig();
+        rig.Prime();
+        rig.Writer.Hold = new TaskCompletionSource();
+        rig.Tick([Contribution()]);
+        rig.Tick([Contribution()]);
+
+        rig.Keys.Add(CommanderSecret.Name(ColonisationCapability.KeySecretName, "F2"));
+        rig.Tick([], shown: "Alt", fid: "F2");
+        rig.Writer.Hold.SetResult();
+        rig.Tick([], shown: "Alt", fid: "F2");
+        rig.Tick([], shown: "Alt", fid: "F2");
+
+        Assert.Equal(["contribute build-1 Tester steel=120"], rig.Writer.Calls);
+        Assert.Equal(2, rig.Writer.Asked);
+    }
+
+    [Fact]
+    public void AKeyThatBelongsToAnotherCommanderSendsNothingForTheShownOne()
+    {
+        var rig = new Rig();
+        rig.Writer.Commander = new PlanCommander(PlanWriteOutcome.Sent, "Alt");
+        rig.Prime();
+
+        rig.Tick([Contribution()], shown: "Tester");
+
+        Assert.Empty(rig.Writer.Calls);
+        Assert.Equal("This key belongs to CMDR Alt, so nothing is sent for CMDR Tester", rig.Progress.Note);
+    }
+
+    [Fact]
+    public void TheInstallationKeyMovesOnceToTheCommanderItBelongsTo()
+    {
+        var rig = new Rig(hasKey: false);
+        rig.Keys.Add(ColonisationCapability.KeySecretName);
+        rig.Prime();
+        rig.Tick([Contribution()]);
+        rig.Tick([Contribution()]);
+
+        var own = CommanderSecret.Name(ColonisationCapability.KeySecretName, Rig.Fid);
+        Assert.Equal([(ColonisationCapability.KeySecretName, own)], rig.Moves);
+        Assert.Equal([own], rig.Keys);
+        Assert.Equal(2, rig.Writer.Calls.Count);
+        Assert.Equal(ColonisationCapability.KeySecretName, rig.Used[0]);
+        Assert.Equal(own, rig.Used[^1]);
+    }
+
+    [Fact]
+    public void TheInstallationKeyIsNotMovedWhileAnotherCommanderIsShown()
+    {
+        var rig = new Rig(hasKey: false);
+        rig.Keys.Add(ColonisationCapability.KeySecretName);
+        rig.Prime();
+
+        rig.Tick([Contribution()], shown: "Alt", fid: "F2");
+        rig.Tick([Contribution()], shown: "Alt", fid: "F2");
+
+        Assert.Empty(rig.Moves);
+        Assert.Empty(rig.Writer.Calls);
+        Assert.Equal([ColonisationCapability.KeySecretName], rig.Keys);
+        Assert.Equal("This key belongs to CMDR Tester, so nothing is sent for CMDR Alt", rig.Progress.Note);
     }
 }

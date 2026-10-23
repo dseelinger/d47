@@ -227,7 +227,8 @@ public class CommanderScopeTests
 
     /// <summary>
     /// A switch announces each Commander row whose effective value moved, under that row's own key, so
-    /// the prompt re-reads About Me through the same fan-out an edit would use.
+    /// the prompt re-reads About Me through the same fan-out an edit would use. A Commander-scoped secret
+    /// row has no value to compare, so it is announced on every switch.
     /// </summary>
     [Fact]
     public void SwitchingCommanderAnnouncesTheRowsThatMovedUnderTheirOwnKeys()
@@ -247,11 +248,11 @@ public class CommanderScopeTests
         surface.Settings.Changed += change => announced.Add(change.Key);
 
         surface.Settings.UseCommander("F1", "Alice");
-        Assert.Equal([AboutMe], announced);
+        Assert.Equal([ColonisationCapability.KeyRow, AboutMe], announced.Order(StringComparer.Ordinal));
 
         announced.Clear();
         surface.Settings.UseCommander("F2", "Bob");
-        Assert.Equal([AboutMe, CharacterSheet], announced.Order(StringComparer.Ordinal));
+        Assert.Equal([ColonisationCapability.KeyRow, AboutMe, CharacterSheet], announced.Order(StringComparer.Ordinal));
 
         announced.Clear();
         surface.Settings.UseCommander("F2", "Bob");

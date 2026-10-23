@@ -314,7 +314,7 @@ public static class EgressDisclosure
                 ColonisationProgress,
                 NameOf(ColonisationProgress),
                 "ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net (Raven Colonial)",
-                "Your Raven Colonial key and the Commander name it belongs to. For each construction site you "
+                "The shown Commander's Raven Colonial key and the Commander name it belongs to. For each construction site you "
                 + "deliver to that already has a project on the planner: the tonnes you deliver, what the depot "
                 + "says is still needed, and that the site is complete when it completes. Only what happens while "
                 + "d47 is running; nothing from older journals.",

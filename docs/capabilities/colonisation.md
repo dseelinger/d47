@@ -482,9 +482,13 @@ the planner missed.
 Sending needs your Raven Colonial key. Get your key from https://ravencolonial.com/user after signing
 in to Raven Colonial. It is stored encrypted for this Windows account and never shown back.
 
-When the key is entered or the switch turns on, d47 asks Raven Colonial which Commander the key
-belongs to. It sends only while the Commander shown in d47 has that name, so an alt's deliveries never
-reach another Commander's projects. The line under the switch says which of these holds:
+Each Commander on this machine has their own key. Set it while that Commander is shown. A key stored
+before this release moves to its Commander the first time that Commander is shown.
+
+When the key is entered, the switch turns on or the shown Commander changes, d47 asks Raven Colonial
+which Commander the key belongs to. It sends only while the Commander shown in d47 has that name, so a
+key entered under the wrong Commander sends nothing and an alt's deliveries never reach another
+Commander's projects. The line under the switch says which of these holds:
 
 - "Sending as CMDR *name*"
 - "This key belongs to CMDR *name*, so nothing is sent for CMDR *shown*"
@@ -494,7 +498,7 @@ reach another Commander's projects. The line under the switch says which of thes
 - "No Raven Colonial key is set"
 
 Nothing about it is spoken. The Privacy and egress section lists "Colonisation progress" with the key,
-the Commander name and the figures above while it is on, and "nothing sent" while it is off.
+the shown Commander's key, the Commander name and the figures above while it is on, and "nothing sent" while it is off.
 
 ### What this does not do
 
