@@ -878,19 +878,7 @@ internal sealed partial class SettingControls
     /// What each of a bind row's <see cref="SettingRow.BoundKeys"/> is bound to, in the Commander's
     /// words, aligned by index — null where that slot holds nothing.
     /// </summary>
-    private IReadOnlyList<string?> BoundAs(SettingRow row) => row.BoundKeys.Select(key =>
-    {
-        var stored = host.Settings.Read(key);
-
-        if (string.IsNullOrWhiteSpace(stored))
-        {
-            return null;
-        }
-
-        return KindOf(key) == SettingKind.HotasButton
-            ? D47.Core.Hotas.HotasButton.Parse(stored)?.Describe() ?? stored
-            : Gestures.Describe(stored);
-    }).ToList();
+    private IReadOnlyList<string?> BoundAs(SettingRow row) => Gestures.BoundAs(host.Settings, row);
 
     private SettingKind KindOf(string key) => host.Settings.Find(key)?.Kind ?? SettingKind.Hotkey;
 

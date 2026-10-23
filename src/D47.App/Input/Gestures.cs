@@ -48,6 +48,22 @@ public static class Gestures
         [Key.NumPad9] = "Num 9",
     };
 
+    /// <summary>What each of <paramref name="row"/>'s bound keys holds now, as Settings prints it, aligned by index; null where a slot holds nothing.</summary>
+    public static IReadOnlyList<string?> BoundAs(D47.Core.Configuration.SettingsService settings, D47.Core.Capabilities.SettingRow row) =>
+        [.. row.BoundKeys.Select(key =>
+        {
+            var stored = settings.Read(key);
+
+            if (string.IsNullOrWhiteSpace(stored))
+            {
+                return null;
+            }
+
+            return (settings.Find(key)?.Kind ?? D47.Core.Capabilities.SettingKind.Hotkey) == D47.Core.Capabilities.SettingKind.HotasButton
+                ? D47.Core.Hotas.HotasButton.Parse(stored)?.Describe() ?? stored
+                : Describe(stored);
+        })];
+
     public static string Describe(string? gesture)
     {
         if (string.IsNullOrWhiteSpace(gesture))

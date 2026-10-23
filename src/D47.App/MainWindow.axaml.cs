@@ -761,6 +761,11 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 ToggleFind();
             }
+            else if (IsKeysKey(e, FocusManager?.GetFocusedElement()))
+            {
+                e.Handled = true;
+                ToggleKeys();
+            }
         }
 
         // Escape leaves the settings page for the one it covered up.
@@ -841,6 +846,32 @@ public partial class MainWindow : Window
     }
 
     private void OpenSettings() => Panel.Tab = PanelTab.Settings;
+
+    /// <summary>Whether <paramref name="e"/> typed a question mark while no text box has the cursor.</summary>
+    internal static bool IsKeysKey(KeyEventArgs e, object? focused) =>
+        e.KeySymbol == "?" && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Meta)) == 0 && focused is not TextBox;
+
+    /// <summary>Opens the keys list, or closes it when it is open.</summary>
+    private void ToggleKeys()
+    {
+        if (ModalHost.For(this).Top is KeysDialog open)
+        {
+            open.Close();
+            return;
+        }
+
+        if (_host is not { } host || ModalHost.For(this).Top is not null)
+        {
+            return;
+        }
+
+        var groups = KeyList.Build(host.Settings, row => Gestures.BoundAs(host.Settings, row));
+        var dialog = new KeysDialog(
+            groups,
+            () => Panel.OpenFound(new PanelFindResult(PanelFindKind.SettingsPlace, "Window", string.Empty, KeyList.WindowPlace, 0)));
+
+        _ = dialog.Over(this);
+    }
 
     private FindDialog? _find;
 

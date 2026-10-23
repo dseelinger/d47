@@ -116,7 +116,13 @@ public static class Modal
         name.Name = "ModalTitle";
         name.TextWrapping = TextWrapping.Wrap;
 
-        var words = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Bottom, Children = { line, name } };
+        var words = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Bottom, Children = { name } };
+
+        if (context.Length > 0)
+        {
+            words.Children.Insert(0, line);
+        }
+
 
         if (subtitle is { Length: > 0 })
         {

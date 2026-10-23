@@ -16,6 +16,8 @@ The last step of setup has a link, THE D47 DISCORD, that opens the community pag
 
 F1 opens help for the page you are on, the same page the HELP button opens. F1 again closes help and shows the page you were on. F1 cannot be rebound.
 
+? opens a list of every key the window answers to, grouped, with what each does and the key bound to it now. It opens when no text box has the cursor, so typing ? in the ask box or the page search box still types a question mark. Keys you can rebind are shown in orange with the Settings place that changes them, and a key with nothing bound reads Unbound. ? or Esc closes the list, and CHANGE KEYS closes it and opens Settings at Window.
+
 Once every 14 days, at a quiet moment, the core says one line pointing at the D47 Discord, and "D47 Discord" in the transcript is a link. The first mention comes 14 days after the first launch. It is said at least 10 minutes into a session, after 90 seconds docked, landed or in supercruise, and at most once per launch, whichever core is aboard. The row "Mention the Discord every two weeks" under Callouts turns it off.
 
 On a page of rows, Down and Up focus the first and last row, then step to the row below or above. In a grid of tiles they step down a column, and Left and Right move along a line. Enter or Space opens the focused row, which draws in Tile2. Down from the page search box focuses the first row the search left. On the Checklist, Stories, Adventures and Messages pages, and on the Materials tiles and rows and the Statistics rows, rows and cards can now take focus. Going back with Escape, the mouse Back button or Alt+Left puts focus back on the row you opened, or on the row now in its place if the list changed; a row opened by a click is not refocused.
