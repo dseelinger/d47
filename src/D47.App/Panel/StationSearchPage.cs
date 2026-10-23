@@ -41,7 +41,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 500, Step = 10, Width = 132 };
+    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 500, Step = 10, Format = "#,0" };
     private readonly ShowUpTo _limit = new();
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
@@ -391,7 +391,8 @@ public sealed class StationSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Columns2("*,*", Labelled("Distance in LY", _distance), _limit.Field("Stations"))));
+            Labelled("Distance in LY", _distance),
+            _limit.Field("Stations")));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
