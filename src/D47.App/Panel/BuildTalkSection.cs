@@ -196,13 +196,14 @@ public sealed class BuildTalkSection : UserControl
     {
         var body = new StackPanel { Spacing = 5 };
 
-        body.Children.Add(Who("D47", ThemeManager.AKey, round.Answered is { } answered ? Clock(answered) : "working"));
-
         if (round.Advice is not { } advice)
         {
+            body.Children.Add(Who("D47", ThemeManager.AKey, new AdventureThinking("Working") { Margin = default }));
             body.Children.Add(Prose("Checking the proposal against the hull and the blueprints.", ThemeManager.GreyKey));
             return Message(body, ThemeManager.AKey, commander: false);
         }
+
+        body.Children.Add(Who("D47", ThemeManager.AKey, round.Answered is { } answered ? Clock(answered) : string.Empty));
 
         if (!advice.Succeeded)
         {
@@ -487,17 +488,18 @@ public sealed class BuildTalkSection : UserControl
         return message;
     }
 
-    private static Control Who(string name, string key, string meta)
+    private static Control Who(string name, string key, string meta) =>
+        Who(name, key, Mono(meta, ThemeManager.GreyKey, TypeScale.Meta));
+
+    private static Control Who(string name, string key, Control meta)
     {
         var who = Chrome(name, key, TypeScale.Small);
         who.FontWeight = FontWeight.Bold;
 
-        var when = Mono(meta, ThemeManager.GreyKey, TypeScale.Meta);
-
         return new WrapPanel
         {
             ItemSpacing = 10,
-            Children = { who, when },
+            Children = { who, meta },
         };
     }
 

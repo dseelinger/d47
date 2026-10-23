@@ -755,10 +755,10 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     private readonly AssetsFurnishing _assets;
 
-    /// <summary>Redraws the Adventures pulse, from the host's tick.</summary>
+    /// <summary>Beats the working pulses on the Stories and Assets tabs, from the host's tick.</summary>
     public bool TickAdventures()
     {
-        if (Tab != PanelTab.Stories)
+        if (Tab is not (PanelTab.Stories or PanelTab.Assets))
         {
             return false;
         }

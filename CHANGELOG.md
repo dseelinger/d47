@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+While D47 is working on a remark in TALK THROUGH THIS BUILD, the reply header shows a "Working" label with three dots lit in turn, as the Stories tab does, in place of the grey "working" text. The dots stop when the answer or the failure notice is drawn.
+
 While the game is not running, the Ships tab and the spoken fleet answer now list the ship you last flew, with the flying badge. Its page reads "You were flying it when you last logged out." The spoken answer says "Last flown" instead of "Currently flying". A ship since swapped into storage is not shown this way, and the first login replaces it with the live ship.
 
 Each bind row in Settings now draws a key slot and a controller button slot, 180 pixels wide each, then BIND and CLEAR, on one line that no longer wraps. An empty slot reads UNBOUND. A row with no button slot, or with no controller attached, keeps the button slot's space so BIND and CLEAR line up with the other rows. While BIND is listening, the slots that are listening read PRESS A KEY… and OR A BUTTON… in cyan. Each group of bind rows has a KEY / CONTROLLER BUTTON header over its first row.

@@ -28,7 +28,7 @@ public class AProposalIsReviewedOnTheShipPageTests
 
     private static readonly SlotPlan Engines = new("MainEngines", "Clean Drive Tuning", 3, Module: "Thrusters");
 
-    private sealed record Bench(ShipsMode Mode, ShipPlanService Ships, BuildTalk Talk, string BuildId);
+    private sealed record Bench(ShipsMode Mode, ShipPlanService Ships, BuildTalk Talk, string BuildId, ChecklistService Checklists, CommanderGameState Live);
 
     private static Bench Set(Func<ShipBuild, Task<BuildAdvice>> advise)
     {
@@ -76,7 +76,7 @@ public class AProposalIsReviewedOnTheShipPageTests
             (asked, _, _, _) => advise(asked),
             () => new DateTimeOffset(2026, 10, 5, 19, 43, 0, TimeSpan.Zero));
 
-        return new Bench(new ShipsMode(ships, checklists, () => live, talk: talk), ships, talk, build.Id);
+        return new Bench(new ShipsMode(ships, checklists, () => live, talk: talk), ships, talk, build.Id, checklists, live);
     }
 
     private static Task<BuildAdvice> ThreeChanges(ShipBuild build) => Task.FromResult(new BuildAdvice(
@@ -223,6 +223,55 @@ public class AProposalIsReviewedOnTheShipPageTests
         Assert.True(Pressable(section, "Clear").IsVisible);
 
         Capture(window, "build-talk-failed.png");
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task AWorkingTurnShowsAPulseThatMovesUntilTheAnswerArrives()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+
+        var answer = new TaskCompletionSource<BuildAdvice>();
+        var bench = Set(_ => answer.Task);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        panel.EnableLoadout(bench.Ships, bench.Checklists, () => bench.Live, talk: bench.Talk);
+
+        var window = new Window { Content = panel, Width = 1400, Height = 1700 };
+        window.Show();
+        panel.Tab = PanelTab.Assets;
+        Dispatcher.UIThread.RunJobs();
+
+        panel.GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(block => (block.Text ?? string.Empty).Contains("Blue Meridian", StringComparison.OrdinalIgnoreCase)))
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var asking = bench.Talk.AskAsync(bench.BuildId, "Make it jump further.", InputSource.Typed, CancellationToken.None);
+        Dispatcher.UIThread.RunJobs();
+
+        var section = panel.GetVisualDescendants().OfType<BuildTalkSection>().Single();
+        var pulse = Assert.Single(section.GetVisualDescendants().OfType<AdventureThinking>());
+
+        Assert.Contains(Texts(pulse), text => text == "Working");
+        Assert.DoesNotContain("working", Texts(section));
+        Assert.Contains("Checking the proposal against the hull and the blueprints.", Texts(section));
+
+        Assert.False(panel.TickAdventures());
+        Assert.False(panel.TickAdventures());
+        Assert.True(panel.TickAdventures());
+
+        answer.SetResult(ThreeChanges(bench.Ships.Store.Find(bench.BuildId)!).Result);
+        await asking;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Empty(section.GetVisualDescendants().OfType<AdventureThinking>());
+        var answered = new DateTimeOffset(2026, 10, 5, 19, 43, 0, TimeSpan.Zero).ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Contains(answered, Texts(section));
+        Assert.False(panel.TickAdventures());
 
         window.Close();
     }
