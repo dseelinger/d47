@@ -651,7 +651,7 @@ Kokoro download.
   none is stored.
 
 The **Local voice** and **Chatterbox voice** download rows under **Providers › Speech synthesis** appear while a downloaded
-story's cast needs them, even when no slot uses that provider. A pick tried anyway is refused, and the ship
+story's cast needs them and the model is not downloaded, even when no slot uses that provider. A pick tried anyway is refused, and the ship
 posts one message to the Story log listing the same things.
 
 If a voice a running story needs stops being ready, for example because the recording was deleted, the

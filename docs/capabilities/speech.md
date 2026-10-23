@@ -225,7 +225,7 @@ players. Edge is free, but free is not the same as private. Kokoro runs the voic
 machine, so those words do not leave it.
 
 The model is **downloaded once**, about 350 MB, from `huggingface.co` — there is a **Local voice**
-row below the speaking rate that says whether it is here and fetches it if not. After that this
+row below the speaking rate that says whether it is here and fetches it if not. The row shows while **Voice provider** is Kokoro, or while another voice slot or a downloaded story uses Kokoro and the model is not yet downloaded. After that this
 provider needs no network at all.
 
 **The download shows itself.** A bar fills along the bottom of the button while it runs, the button
@@ -303,7 +303,7 @@ never the graphics card, and speaks in one of the [Chatterbox voices](#chatterbo
 Kokoro stays the default local voice.
 
 - **The download is 691 MB**, fetched once from `huggingface.co/ResembleAI/chatterbox-turbo-ONNX`.
-  A **Chatterbox voice** row below the speaking rate, shown while any slot uses Chatterbox, says
+  A **Chatterbox voice** row below the speaking rate, shown while **Voice provider** is Chatterbox, or while another voice slot or a downloaded story uses it and the model is not yet downloaded, says
   whether it is here and has a **Download it** button. Every file is checked against a pinned size
   and SHA-256 before it is kept.
 - **It performs some bracketed directions** rather than reading them out: the ones its tokenizer

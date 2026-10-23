@@ -106,6 +106,18 @@ public static class SpeechCapability
     public const string SpentBySlotKey = "speech.spentBySlot";
 
     /// <summary>The sentence the three voice rows show when their picker has nothing in it.</summary>
+    /// <summary>The Aboard provider's row always shows; another slot's or a story's shows only until the model is downloaded.</summary>
+    private static bool LocalProviderRowApplies(D47Settings s, string providerId, Func<bool>? installed, SpeechSurface surface)
+    {
+        if (string.Equals(s.Speech.Provider, providerId, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var otherUses = VoiceGroups.Selected(s.Speech).Values
+            .Any(id => string.Equals(id, providerId, StringComparison.OrdinalIgnoreCase))
+            || surface.StoryCastUses?.Invoke(providerId) == true;
+        return otherUses && installed?.Invoke() != true;
+    }
+
     private static Func<D47Settings, string?> WhyNoVoices(SpeechSurface surface, VoiceGroup group) => _ =>
         surface.WhyNoVoices?.Invoke(group);
 
@@ -666,10 +678,7 @@ public static class SpeechCapability
                             ? fetch(progress, cancellationToken)
                             : Task.FromResult<string?>(null),
 
-                // On screen while any slot speaks through Kokoro, the same rule as a provider's key row, or a story's cast does.
-                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
-                    .Any(id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase))
-                    || surface.StoryCastUses?.Invoke(TtsProviderCatalog.KokoroId) == true,
+                AppliesWhen = s => LocalProviderRowApplies(s, TtsProviderCatalog.KokoroId, surface.LocalVoiceInstalled, surface),
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.LocalVoiceState?.Invoke() ?? "Not available.",
@@ -693,9 +702,7 @@ public static class SpeechCapability
                         surface.DownloadChatterbox.Invoke() is { } fetch
                             ? fetch(progress, cancellationToken)
                             : Task.FromResult<string?>(null),
-                AppliesWhen = s => VoiceGroups.Selected(s.Speech).Values
-                    .Any(id => string.Equals(id, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase))
-                    || surface.StoryCastUses?.Invoke(TtsProviderCatalog.ChatterboxId) == true,
+                AppliesWhen = s => LocalProviderRowApplies(s, TtsProviderCatalog.ChatterboxId, surface.ChatterboxInstalled, surface),
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.ChatterboxState?.Invoke() ?? "Not available.",

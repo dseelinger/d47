@@ -111,7 +111,7 @@ public class TheLocalVoiceRowOffersItsButtonTests
         Assert.True(Row(surface).AppliesWhen!(settings));
     }
 
-    /// <summary>A carrier-only slot on Kokoro is enough — the row is not the ship's alone.</summary>
+    /// <summary>A carrier-only slot on Kokoro applies the row while Kokoro is not downloaded.</summary>
     [Fact]
     public void ACarrierOnlyOnKokoroAppliesTheRow()
     {
@@ -125,5 +125,22 @@ public class TheLocalVoiceRowOffersItsButtonTests
         };
 
         Assert.True(Row(surface).AppliesWhen!(settings));
+    }
+
+    [Fact]
+    public void ACarrierOnlyOnKokoroDoesNotApplyTheRowOnceItIsInstalled()
+    {
+        var (surface, _, _) = Deferred();
+        surface = surface with { LocalVoiceInstalled = () => true };
+        var settings = new D47Settings
+        {
+            Speech = new SpeechSettings
+            {
+                Provider = TtsProviderCatalog.ElevenLabsId,
+                GroupProviders = new Dictionary<string, string> { ["carrier"] = TtsProviderCatalog.KokoroId },
+            },
+        };
+
+        Assert.False(Row(surface).AppliesWhen!(settings));
     }
 }
