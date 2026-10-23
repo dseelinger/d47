@@ -339,7 +339,7 @@ public sealed record StationQuery
             LargePadOnly = largePadOnly,
 
             // Bounded on both ends.
-            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
+            MaxDistance = Math.Max(maxDistance is > 0 ? maxDistance.Value : 50, 1),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -417,7 +417,7 @@ public sealed record StationQuery
                     (search.IncludeCarriers || kind != StationKind.FleetCarrier)
                     && (search.SurfaceStations || kind is not (StationKind.SurfacePort or StationKind.Settlement))),
             ],
-            MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
+            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -551,7 +551,7 @@ public sealed record StationQuery
             TechnologyBroker = broker,
             Criteria = criteria,
             Sort = sort,
-            MaxDistance = Math.Clamp(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1, 500),
+            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 

@@ -18,6 +18,8 @@ A galaxy search with exactly one result now says "1 station", "1 body", "1 signa
 
 A galaxy search whose match count reaches Spansh's limit of ten thousand now says "10,000 or more" instead of "10000", since the true number is higher. Station, body, "sell" and system answers all do this.
 
+The distance on the Stations, Outfitting and Signals search pages, and `max_distance` in the station and outfitting searches, now goes up to 99,999 light years. The limit was 500 for stations and outfitting and 1,000 on the Signals page. A radius larger than that is now sent as asked.
+
 Each Commander keeps their own Raven Colonial key. Set it while that Commander is shown; a key stored before this release moves to the Commander it belongs to the first time that Commander is shown. A key entered under the wrong Commander sends nothing.
 
 The Carrier Captain's portraits are new. Both captains wear a burgundy and black command tunic on a carrier bridge, in place of a naval cap and braid.

@@ -51,7 +51,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     private readonly WrapPanel _tiles = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 500, Step = 10, Format = "#,0" };
+    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
     private readonly Segment _pad = new() { ItemsSource = Pads, SelectedIndex = 0, Height = TypeScale.MinimumTarget };
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly CheckBox _surface = LabeledCheckBox.Caps("Surface stations");
@@ -206,7 +206,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
         if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
         {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 500);
+            _distance.Value = (decimal)Math.Clamp(distance, 1, 99999);
         }
     }
 

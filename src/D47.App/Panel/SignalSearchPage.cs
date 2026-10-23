@@ -45,7 +45,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
     private readonly TextBox _name = Field("part of a signal's name");
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 1000, Step = 10, Format = "#,0" };
+    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
 
     private string? _picked;
     private bool _filling;
@@ -179,7 +179,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
         if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
         {
-            _distance.Value = (decimal)Math.Clamp(distance, 1, 1000);
+            _distance.Value = (decimal)Math.Clamp(distance, 1, 99999);
         }
 
         if (Get("signal")?.Trim() is { Length: > 0 } signal)

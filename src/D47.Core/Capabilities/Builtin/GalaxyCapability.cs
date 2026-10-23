@@ -193,7 +193,7 @@ public static class GalaxyCapability
                     {
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50, at most 500.",
+                        Description = "How far to look, in light years. Default 50.",
                     },
                     new ToolParameter
                     {
@@ -306,7 +306,7 @@ public static class GalaxyCapability
                     {
                         Name = "max_distance",
                         Type = ToolParameterType.Number,
-                        Description = "How far to look, in light years. Default 50, at most 500.",
+                        Description = "How far to look, in light years. Default 50.",
                     },
                     new ToolParameter
                     {
