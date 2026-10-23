@@ -237,29 +237,14 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         {
             Height = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Cursor = new Cursor(StandardCursorType.Hand),
             Child = new Grid
             {
                 ColumnDefinitions = new ColumnDefinitions("180,12,*,12,Auto"),
                 Children = { where, name, figure },
             },
         };
-        var fill = Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
-        row.PointerEntered += (_, _) =>
-        {
-            fill.Dispose();
-            fill = Themed(row, Border.BackgroundProperty, ThemeManager.Tile2Key);
-        };
-        row.PointerExited += (_, _) =>
-        {
-            fill.Dispose();
-            fill = Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
-        };
-        row.PointerPressed += (_, e) =>
-        {
-            e.Handled = true;
-            Open(section);
-        };
+        MaterialsPage.Hover(row, ThemeManager.SlabKey);
+        ListRow.Opens(row, () => Open(section));
 
         return row;
     }

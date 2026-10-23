@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -766,19 +767,38 @@ public sealed class MaterialsPage : UserControl
         return bar;
     }
 
-    /// <summary>Fills a row or tile with Tile, and Tile2 while the pointer is over it.</summary>
-    internal static void Hover(Border target)
+    /// <summary>Fills a row or tile with <paramref name="restKey"/>, and Tile2 while the pointer is over it or it has keyboard focus.</summary>
+    internal static void Hover(Border target, string restKey = ThemeManager.TileKey)
     {
-        var fill = Themed(target, Border.BackgroundProperty, ThemeManager.TileKey);
-        target.PointerEntered += (_, _) =>
+        var fill = Themed(target, Border.BackgroundProperty, restKey);
+        var pointerOver = false;
+        var keyboardFocus = false;
+
+        void Refresh()
         {
             fill.Dispose();
-            fill = Themed(target, Border.BackgroundProperty, ThemeManager.Tile2Key);
+            fill = Themed(target, Border.BackgroundProperty, pointerOver || keyboardFocus ? ThemeManager.Tile2Key : restKey);
+        }
+
+        target.PointerEntered += (_, _) =>
+        {
+            pointerOver = true;
+            Refresh();
         };
         target.PointerExited += (_, _) =>
         {
-            fill.Dispose();
-            fill = Themed(target, Border.BackgroundProperty, ThemeManager.TileKey);
+            pointerOver = false;
+            Refresh();
+        };
+        target.GotFocus += (_, e) =>
+        {
+            keyboardFocus = e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional;
+            Refresh();
+        };
+        target.LostFocus += (_, _) =>
+        {
+            keyboardFocus = false;
+            Refresh();
         };
     }
 
@@ -789,16 +809,8 @@ public sealed class MaterialsPage : UserControl
         _ => "Ship",
     };
 
-    /// <summary>Runs the action when the target is pressed, with a hand cursor over it.</summary>
-    internal static void Pressable(Control target, Action press)
-    {
-        target.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
-        target.PointerPressed += (_, e) =>
-        {
-            e.Handled = true;
-            press();
-        };
-    }
+    /// <summary>Runs the action when the target is pressed, or Enter or Space is pressed on it with focus.</summary>
+    internal static void Pressable(Control target, Action press) => ListRow.Opens(target, press);
 
     internal static string Count(int n) => n.ToString(CultureInfo.InvariantCulture);
 
