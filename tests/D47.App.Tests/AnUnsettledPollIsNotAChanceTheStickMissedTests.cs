@@ -87,7 +87,7 @@ public class AnUnsettledPollIsNotAChanceTheStickMissedTests
     }
 
     private static void Poll(IHotasReader reader, BoundButton pushToTalk, BoundButton cancel, List<string> lines) =>
-        Listener.PollTheStick(reader, pushToTalk, cancel, new Capture(lines));
+        Listener.PollTheStick(reader, pushToTalk, cancel, new ActionButtons(), new Capture(lines));
 
     private sealed class Capture(List<string> lines) : ILogger
     {

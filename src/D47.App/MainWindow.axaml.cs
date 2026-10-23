@@ -17,6 +17,7 @@ using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Diagnostics.Donation;
+using D47.Core.Hotas;
 using D47.Core.Vr;
 using D47.Core.Listening;
 using D47.Core.Audio;
@@ -585,6 +586,9 @@ public partial class MainWindow : Window
         BindShutUp();
         BindOverlayKeys();
         BindHeadsetZoomAndResizeKeys();
+
+        // The stick's half of the same nine actions, read on the tick and run here.
+        _host.ActionButtons.Pressed += key => Avalonia.Threading.Dispatcher.UIThread.Post(() => OnActionButton(key));
 
         // The media keys, through Windows' media sessions rather than a hotkey that would take them from
         // every other player.
@@ -1291,17 +1295,19 @@ public partial class MainWindow : Window
         }
 
         BindHotkey(_showOverlay, _host.Settings.Current.Hotkeys.ShowOverlay, "overlay",
-            InterfaceCapability.ShowOverlayHotkeyKey, ToggleOverlay);
+            InterfaceCapability.ShowOverlayHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ToggleOverlay));
         BindHotkey(_moveOverlay, _host.Settings.Current.Hotkeys.MoveOverlay, "move-the-overlay",
-            InterfaceCapability.MoveOverlayHotkeyKey,
-            () => Avalonia.Threading.Dispatcher.UIThread.Post(() => _host.Overlay?.Place()));
-
-        void ToggleOverlay() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            _host.Settings.Apply(
-                InterfaceCapability.OverlayKey,
-                (!_host.Settings.Current.Ui.Overlay.Enabled).ToString(),
-                SettingsCaller.Hotkey));
+            InterfaceCapability.MoveOverlayHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(MoveOverlay));
     }
+
+    /// <summary>Flips the Show the overlay row; UI thread.</summary>
+    private void ToggleOverlay() => _host?.Settings.Apply(
+        InterfaceCapability.OverlayKey,
+        (!_host.Settings.Current.Ui.Overlay.Enabled).ToString(),
+        SettingsCaller.Hotkey);
+
+    /// <summary>Lets the overlay take a drag; UI thread.</summary>
+    private void MoveOverlay() => _host?.Overlay?.Place();
 
     /// <summary>
     /// Registers one system-wide gesture, and reports it if the OS refuses to hand it over, linking to
@@ -1333,27 +1339,66 @@ public partial class MainWindow : Window
         BindHotkey(_resetHeadsetZoom, _host.Settings.Current.Hotkeys.ResetHeadsetZoom, "reset-headset-zoom",
             VrCapability.ResetZoomHotkeyKey, StepZoom("reset"));
         BindHotkey(_resizeHeadsetPanel, _host.Settings.Current.Hotkeys.ResizeHeadsetPanel, "resize-headset-panel",
-            VrCapability.ResizeHotkeyKey, ToggleHeadsetResize);
+            VrCapability.ResizeHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ToggleHeadsetResize));
 
         Action StepZoom(string direction) => () => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => VrCapability.StepZoom(_host.Settings, direction, SettingsCaller.Hotkey));
+            () => StepHeadsetZoom(direction));
+    }
 
-        void ToggleHeadsetResize() => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+    /// <summary>Steps the headset panel's zoom in, out or back to 100%; UI thread.</summary>
+    private void StepHeadsetZoom(string direction)
+    {
+        if (_host is not null)
         {
-            if (_host.Vr is not { } vr)
-            {
-                return;
-            }
+            VrCapability.StepZoom(_host.Settings, direction, SettingsCaller.Hotkey);
+        }
+    }
 
-            var outcome = vr.Resize(!vr.ResizeMode);
+    /// <summary>Enters or leaves headset resize mode; UI thread.</summary>
+    private void ToggleHeadsetResize()
+    {
+        if (_host?.Vr is not { } vr)
+        {
+            return;
+        }
 
-            // On and off are silent — the handles appearing or leaving is the answer. The other two are
-            // spoken because the Commander is in the headset and cannot see this transcript.
-            if (outcome is VrResizeOutcome.NoControllers or VrResizeOutcome.NoHeadset)
-            {
-                _host.Announcer.SayAside(VrResize.Describe(outcome));
-            }
-        });
+        var outcome = vr.Resize(!vr.ResizeMode);
+
+        // On and off are silent — the handles appearing or leaving is the answer. The other two are
+        // spoken because the Commander is in the headset and cannot see this transcript.
+        if (outcome is VrResizeOutcome.NoControllers or VrResizeOutcome.NoHeadset)
+        {
+            _host.Announcer.SayAside(VrResize.Describe(outcome));
+        }
+    }
+
+    /// <summary>What a stick button bound to each hotkey action does, by its slot's settings key; UI thread.</summary>
+    internal static readonly IReadOnlyDictionary<string, Action<MainWindow>> ButtonActions =
+        new Dictionary<string, Action<MainWindow>>(StringComparer.Ordinal)
+        {
+            [InterfaceCapability.OpenSettingsButtonKey] = window => window.OpenSettings(),
+            [InterfaceCapability.FocusAskButtonKey] = window => window.Panel.FocusAsk(),
+            [InterfaceCapability.FindButtonKey] = window => window.ToggleFind(),
+            [InterfaceCapability.ShowOverlayButtonKey] = window => window.ToggleOverlay(),
+            [InterfaceCapability.MoveOverlayButtonKey] = window => window.MoveOverlay(),
+            [VrCapability.ZoomInButtonKey] = window => window.StepHeadsetZoom("in"),
+            [VrCapability.ZoomOutButtonKey] = window => window.StepHeadsetZoom("out"),
+            [VrCapability.ResetZoomButtonKey] = window => window.StepHeadsetZoom("reset"),
+            [VrCapability.ResizeButtonKey] = window => window.ToggleHeadsetResize(),
+        };
+
+    /// <summary>
+    /// Runs the action a pressed stick button is bound to; the window's own three only while it is active, and
+    /// none while a bind is listening to the stick.
+    /// </summary>
+    private void OnActionButton(string key)
+    {
+        if (!BindCapture.IsListeningToTheStick
+            && ActionButtons.Acts(key, IsActive)
+            && ButtonActions.TryGetValue(key, out var act))
+        {
+            act(this);
+        }
     }
 
     /// <summary>The SPEND row's figure and the dialog it opens, for whichever surface shows the row.</summary>

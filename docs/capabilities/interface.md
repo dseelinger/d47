@@ -298,14 +298,19 @@ looks exactly like the app failing to start.
 Opens the settings window. `Ctrl+,` out of the box.
 
 Press the combination to bind it: the row listens for one and stores what it heard, so there is
-no list of key names to learn and no way to type one that does not exist. Clear it to leave the
-action unbound.
+no list of key names to learn and no way to type one that does not exist. Press a stick or
+throttle button instead and the row binds that, beside the key rather than in its place: a key, a
+button, or one of each. Giving it the same kind twice replaces that one. Clear removes both and
+leaves the action unbound.
 
-This one works while Directive 47 has focus.
+This one works while Directive 47 has focus, from the key and the button alike. With Elite in
+front, the button does nothing.
 
 #### Focus the ask box {#focus-ask}
 
-Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box.
+Puts the cursor in the ask box from anywhere in the main window. `Ctrl+L` out of the box. A stick
+button can be bound beside the key, as for Open settings; it works only while Directive 47 has
+focus.
 
 **One chord, two acts.** On the Transcript tab `Ctrl+L` scrolls the reading you are on above the
 top of the view instead — In Ship, Log File, Journal or Raw journal, whichever is showing. **It
@@ -321,7 +326,7 @@ the arrows move the caret instead.
 
 #### Find {#find}
 
-Opens a box that searches every page, settings place, setting and help page at once. `Ctrl+Shift+F` out of the box.
+Opens a box that searches every page, settings place, setting and help page at once. `Ctrl+Shift+F` out of the box. A stick button can be bound beside the key, as for Open settings; it works only while Directive 47 has focus.
 
 Type, and up to eight results appear, best first, each with its path and whether it is a page, a place, a setting or a help page. Up and Down move the selection, Enter or a click opens it, and Esc or pressing the key again closes the box and leaves the panel where it was. `Ctrl+F` still searches only the page you are on.
 
@@ -424,9 +429,13 @@ read one of your files.
 want it is a moment the game is filling the screen. It flips the row above, so what you did with
 the key and what Settings says are one thing and survive a restart together.
 
+A stick or throttle button can be bound beside the key, as for Open settings, and it works
+anywhere too.
+
 #### Move the overlay {#move-overlay}
 
-`Ctrl+Alt+M` out of the box, and it works **anywhere** too.
+`Ctrl+Alt+M` out of the box, and it works **anywhere** too. So does a stick button bound beside
+the key.
 
 Press it and the strip briefly takes clicks so you can drag it, with a border round it to show it
 has hold of them. Let go and it hands them straight back — press again without dragging and it does

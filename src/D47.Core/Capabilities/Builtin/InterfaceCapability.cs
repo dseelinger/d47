@@ -125,20 +125,23 @@ public static class InterfaceCapability
                     Write = (s, v) => s with { Ui = s.Ui with { Tabs = v == TabsLeft ? TabsLeft : TabsTop } },
                 },
             },
-            HotkeyRow(
+            .. HotkeyRows(
                 OpenSettingsHotkeyKey,
+                OpenSettingsButtonKey,
                 "Open settings",
                 "open-settings",
                 s => s.Hotkeys.OpenSettings,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { OpenSettings = v } }),
-            HotkeyRow(
+            .. HotkeyRows(
                 FocusAskHotkeyKey,
+                FocusAskButtonKey,
                 "Focus the ask box",
                 "focus-ask",
                 s => s.Hotkeys.FocusAsk,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { FocusAsk = v } }),
-            HotkeyRow(
+            .. HotkeyRows(
                 FindHotkeyKey,
+                FindButtonKey,
                 "Find",
                 "find",
                 s => s.Hotkeys.Find,
@@ -282,15 +285,17 @@ public static class InterfaceCapability
                     Read = _ => (display ?? DefaultDisplay)(),
                 },
             },
-            HotkeyRow(
+            .. HotkeyRows(
                 ShowOverlayHotkeyKey,
+                ShowOverlayButtonKey,
                 "Show or hide the overlay",
                 "show-overlay",
                 s => s.Hotkeys.ShowOverlay,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ShowOverlay = v } },
                 systemWide: true),
-            HotkeyRow(
+            .. HotkeyRows(
                 MoveOverlayHotkeyKey,
+                MoveOverlayButtonKey,
                 "Move the overlay",
                 "move-overlay",
                 s => s.Hotkeys.MoveOverlay,
@@ -307,30 +312,66 @@ public static class InterfaceCapability
             ? percent
             : ZoomLadder.Default;
 
-    /// <summary>Every hotkey row is protected. Internal so another capability's hotkeys can share it (#189).</summary>
-    internal static SettingRow HotkeyRow(
+    /// <summary>
+    /// A hotkey row and the stick button its control also binds; both protected. Internal so another
+    /// capability's hotkeys can share it (#189).
+    /// </summary>
+    internal static SettingRow[] HotkeyRows(
         string key,
+        string buttonKey,
         string label,
         string anchor,
         Func<Configuration.D47Settings, string?> read,
         Func<Configuration.D47Settings, string?, Configuration.D47Settings> write,
-        bool systemWide = false) => new()
+        bool systemWide = false)
     {
-        Key = key,
-        Advanced = true,
-        Label = label,
-        Help = "Press the key combination to bind it. Clear it to leave the action unbound."
-               + (systemWide
-                   ? " Registered system-wide, so it works while Elite has the foreground - which is "
-                     + "the only time it is wanted."
-                   : string.Empty),
-        Kind = SettingKind.Hotkey,
-        DefaultDisplay = "(unbound)",
-        DocsAnchor = anchor,
-        Protected = true,
+        var slot = Hotas.ButtonSlots.All.Single(slot => slot.Key == buttonKey);
 
-        // The factory already knew this; the row did not.
-        SystemWide = systemWide,
-        Binding = new SettingBinding { Read = read, Write = write },
-    };
+        return
+        [
+            new SettingRow
+            {
+                Key = key,
+                Advanced = true,
+                Label = label,
+                Help = "Press a key combination or a stick button to bind it. Bind a key, a stick button, or "
+                       + "one of each; giving it the same kind twice replaces that one. Clear removes both and "
+                       + "leaves the action unbound."
+                       + (systemWide
+                           ? " Registered system-wide, so the key and the button both work while Elite has the "
+                             + "foreground, which is when they are needed."
+                           : " The key and the button both work only while the D47 window has focus."),
+                Kind = SettingKind.Hotkey,
+                DefaultDisplay = "(unbound)",
+                DocsAnchor = anchor,
+                Protected = true,
+
+                // The factory already knew this; the row did not.
+                SystemWide = systemWide,
+                AlsoBinds = buttonKey,
+                Binding = new SettingBinding { Read = read, Write = write },
+            },
+            new SettingRow
+            {
+                Key = buttonKey,
+                Advanced = true,
+                Label = label + " button",
+                Help =
+                    "The same thing on your stick or throttle: press the button you want and D47 works out "
+                    + "which one it was. It sits beside the key rather than replacing it. Needs a button "
+                    + "that springs back, not a switch that stays where you put it.",
+                Kind = SettingKind.HotasButton,
+                DocsAnchor = anchor,
+
+                // Held by the key row's control rather than drawn on its own.
+                DrawnElsewhere = true,
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = slot.Read,
+                    Write = (s, v) => slot.Write(s, string.IsNullOrWhiteSpace(v) ? null : v),
+                },
+            },
+        ];
+    }
 }

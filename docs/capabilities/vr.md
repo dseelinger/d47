@@ -332,6 +332,10 @@ leaving are silent: the handles appearing, or leaving, is the answer. Asking to 
 motion controllers off, or with no headset session, is spoken instead — from inside a headset there
 is no transcript to read it from.
 
+Each of these four headset keys takes a stick or throttle button as well: press **BIND** on the row
+and press the button, and it is bound beside the key rather than in its place. Giving it the same
+kind twice replaces that one, and **CLEAR** removes both. The button works anywhere, as the key does.
+
 ### Zooming it
 
 > "zoom the panel in" / "make the panel text bigger"
@@ -346,14 +350,17 @@ move; the content is laid out again at the new size.
 
 `Ctrl+Alt+=` out of the box, and it works **anywhere**, including while Elite has the foreground —
 the same as the overlay's own keys. Steps **Scale** up one rung on whichever panel is on screen.
+A stick button bound beside the key does the same.
 
 #### Zoom the headset panel out {#hotkey-zoom-out}
 
-`Ctrl+Alt+-` out of the box, and it works **anywhere**. Steps **Scale** down one rung.
+`Ctrl+Alt+-` out of the box, and it works **anywhere**. Steps **Scale** down one rung. A stick
+button bound beside the key does the same.
 
 #### Reset the headset panel's zoom {#hotkey-zoom-reset}
 
-`Ctrl+Alt+0` out of the box, and it works **anywhere**. Puts **Scale** back to 100%.
+`Ctrl+Alt+0` out of the box, and it works **anywhere**. Puts **Scale** back to 100%. A stick
+button bound beside the key does the same.
 
 ### Settings
 

@@ -621,6 +621,7 @@ public sealed class Listener : IDisposable
         IHotasReader? reader,
         BoundButton pushToTalkButton,
         BoundButton cancelButton,
+        ActionButtons actionButtons,
         ILogger logger)
     {
         // A single enumeration at startup reported three of six devices on the bench, which is Phase 21's
@@ -634,6 +635,7 @@ public sealed class Listener : IDisposable
 
         pushToTalkButton.Poll(buttons);
         cancelButton.Poll(buttons);
+        actionButtons.Poll(buttons);
 
         // And then, and only then, whether the stick it is bound to turned up (#45).
         WarnIfTheStickIsMissing(pushToTalkButton, logger);

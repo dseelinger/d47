@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Each of the nine hotkeys on the Window, Overlay and Headset settings pages can now take a stick or throttle button as well as a key, as Push-to-talk and Cancel already could. Press BIND and press the button; giving it the same kind twice replaces that one, and CLEAR removes both. Open settings, Focus the ask box and Find answer the button only while the D47 window has focus, as their keys do. The overlay and headset buttons work while Elite has the foreground.
+
 A key or stick button that another action already holds is now refused. Binding it in Settings or the setup wizard says, for example, "Ctrl+L is already bound to Focus the ask box. Press another, or Esc." and keeps listening; asking by voice or text says to clear it there first. The other action keeps its binding.
 
 Esc now ends a bind that listens only for a stick button, such as the push-to-talk button step in the setup wizard, and leaves the existing binding as it was. It also ends the capture after D47 has declined a button press.

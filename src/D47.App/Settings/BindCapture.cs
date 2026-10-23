@@ -12,6 +12,11 @@ namespace D47.App.Settings;
 /// </summary>
 public static class BindCapture
 {
+    private static int _stickCaptures;
+
+    /// <summary>Whether a capture is listening to the stick, so a press there binds rather than acts; UI thread.</summary>
+    public static bool IsListeningToTheStick => _stickCaptures > 0;
+
     /// <summary>
     /// <see cref="RunAsync"/> again after each press <paramref name="refuse"/> gives a reason for, saying the
     /// reason on <paramref name="message"/>; returns the first press nothing refused, or null on Esc.
@@ -116,6 +121,11 @@ public static class BindCapture
             ? Walk(switches, buttonKey, message, captured, notice)
             : null;
 
+        if (walking is not null)
+        {
+            _stickCaptures++;
+        }
+
         try
         {
             return await captured.Task;
@@ -125,7 +135,11 @@ public static class BindCapture
             top.RemoveHandler(InputElement.KeyDownEvent, OnKey);
             top.RemoveHandler(InputElement.KeyUpEvent, OnKeyUp);
 
-            walking?.Stop();
+            if (walking is not null)
+            {
+                walking.Stop();
+                _stickCaptures--;
+            }
         }
     }
 

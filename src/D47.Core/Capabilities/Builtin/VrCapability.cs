@@ -366,29 +366,33 @@ public static class VrCapability
             },
 
             // Reach zoom and resize from the keyboard, since #107 left them reachable by voice only (#189).
-            InterfaceCapability.HotkeyRow(
+            .. InterfaceCapability.HotkeyRows(
                 ZoomInHotkeyKey,
+                ZoomInButtonKey,
                 "Zoom the headset panel in",
                 "hotkey-zoom-in",
                 s => s.Hotkeys.ZoomHeadsetIn,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetIn = v } },
                 systemWide: true),
-            InterfaceCapability.HotkeyRow(
+            .. InterfaceCapability.HotkeyRows(
                 ZoomOutHotkeyKey,
+                ZoomOutButtonKey,
                 "Zoom the headset panel out",
                 "hotkey-zoom-out",
                 s => s.Hotkeys.ZoomHeadsetOut,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ZoomHeadsetOut = v } },
                 systemWide: true),
-            InterfaceCapability.HotkeyRow(
+            .. InterfaceCapability.HotkeyRows(
                 ResetZoomHotkeyKey,
+                ResetZoomButtonKey,
                 "Reset the headset panel's zoom",
                 "hotkey-zoom-reset",
                 s => s.Hotkeys.ResetHeadsetZoom,
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ResetHeadsetZoom = v } },
                 systemWide: true),
-            InterfaceCapability.HotkeyRow(
+            .. InterfaceCapability.HotkeyRows(
                 ResizeHotkeyKey,
+                ResizeButtonKey,
                 "Toggle the headset panel's resize mode",
                 "hotkey-resize",
                 s => s.Hotkeys.ResizeHeadsetPanel,

@@ -468,6 +468,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Hearing: the microphone, the transcribers, push-to-talk and the wake word.</summary>
     public Listener Listener { get; }
 
+    /// <summary>The stick buttons bound to the nine hotkey actions; <c>MainWindow</c> dispatches their presses.</summary>
+    public ActionButtons ActionButtons { get; } = new();
+
     /// <summary>The Commander's Elite bindings.</summary>
     public EliteBinds Binds => _binds.Current;
 
@@ -3520,6 +3523,8 @@ public sealed class AppHost : IDisposable
             host.Listener.ApplyListeningSettings();
         }
 
+        host.ActionButtons.Bind(settings.Current);
+
         // The mixer as the file left it, before anything is audible.
         audio.Mix = loaded.Audio;
 
@@ -3880,7 +3885,7 @@ public sealed class AppHost : IDisposable
             pushToTalk.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host._logger);
+            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.
@@ -6229,6 +6234,9 @@ public sealed class AppHost : IDisposable
             default:
                 break;
         }
+
+        // On every change, since a batch write can move a button under another key; unchanged slots are left alone.
+        ActionButtons.Bind(change.Settings);
 
         // After the apply, as it was when this was an if/else chain.
         if (fanout.ChooseVoiceForCoreAboard)
