@@ -67,6 +67,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<IGalaxyService?> _galaxy;
     private readonly GalaxyMapLookups _lookups;
+    private readonly RoutePlanBook? _plans;
 
     private readonly GalaxyMapView _map = new();
     private readonly Segment _framing = new() { ItemsSource = ["Galaxy", "Here", "Route"] };
@@ -116,6 +117,9 @@ public sealed class GalaxyMapPage : UserControl
     private IReadOnlyList<StarPosition> _routePoints = [];
     private StarPosition? _position;
     private object? _seen;
+    private RoutePlanKind? _planKind;
+    private RoutePlanKind? _planDrawn;
+    private StoredRoutePlan? _planSeen;
 
     public GalaxyMapPage(
         Func<TravelLog?> travel,
@@ -128,7 +132,9 @@ public sealed class GalaxyMapPage : UserControl
         BookmarkStore? bookmarks = null,
         Func<string, Task<bool>>? copy = null,
         Func<IGalaxyService?>? galaxy = null,
-        GalaxyMapLookups? lookups = null)
+        GalaxyMapLookups? lookups = null,
+        RoutePlanBook? plans = null,
+        RoutePlanKind? plan = null)
     {
         _travel = travel;
         _commander = commander;
@@ -141,6 +147,8 @@ public sealed class GalaxyMapPage : UserControl
         _copy = copy;
         _galaxy = galaxy ?? (() => null);
         _lookups = lookups ?? new GalaxyMapLookups();
+        _plans = plans;
+        _planKind = plan;
 
         _engineers = Marked("Engineers", live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
         _bookmarkMarks = Marked("Bookmarks", live => MarkDrawing(GalaxyMapMarkKind.Bookmark, live));
@@ -185,7 +193,7 @@ public sealed class GalaxyMapPage : UserControl
 
         Refresh();
 
-        _framing.SelectedIndex = _position is null ? Galaxy : Here;
+        _framing.SelectedIndex = _planDrawn is not null ? RouteFraming : _position is null ? Galaxy : Here;
         Frame(_framing.SelectedIndex);
     }
 
@@ -248,6 +256,24 @@ public sealed class GalaxyMapPage : UserControl
 
     internal GalaxyMapLookups Lookups => _lookups;
 
+    /// <summary>The kind of plan drawn, or null while the plotted route is.</summary>
+    internal RoutePlanKind? PlanDrawn => _planDrawn;
+
+    /// <summary>Draws the shown Commander's last plan of <paramref name="kind"/> in place of the plotted route, or the plotted route for null.</summary>
+    public void ShowPlan(RoutePlanKind? kind)
+    {
+        _planKind = kind;
+        Refresh();
+
+        if (_routePoints.Count >= 2 && (kind is null || _planDrawn is not null))
+        {
+            _framing.SelectedIndex = RouteFraming;
+            Frame(RouteFraming);
+        }
+    }
+
+    private StoredRoutePlan? ChosenPlan() => _planKind is { } kind ? _plans?.Last(kind) : null;
+
     /// <summary>The words about items the map could not place.</summary>
     internal string UnplacedLine => _unplaced.IsVisible
         ? string.Concat((_unplaced.Inlines ?? []).OfType<Run>().Select(run => run.Text))
@@ -276,7 +302,10 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>Redraws when the Commander, their travels, their position or the route has moved; true when it did.</summary>
     public bool Tick()
     {
-        if (Equals(Key(_travel(), _commander(), _offDuty?.Invoke(OffDutyNote.Position)), _seen))
+        var offDuty = _offDuty?.Invoke(OffDutyNote.Position);
+
+        if (Equals(Key(_travel(), _commander(), offDuty), _seen)
+            && (offDuty is not null || ReferenceEquals(ChosenPlan(), _planSeen)))
         {
             return false;
         }
@@ -312,7 +341,13 @@ public sealed class GalaxyMapPage : UserControl
         var travels = TravelPicture.Of(steps, Since());
         var here = offDuty is null ? _here() : null;
         var route = offDuty is null ? _route() : NavRoute.None;
-        var stops = route.IsPlotted ? RouteMapStop.From(route) : [];
+        var chosen = offDuty is null ? ChosenPlan() : null;
+        var planStops = chosen is null ? null : RouteMapStop.From(chosen);
+        var planned = planStops is not null && planStops.Count(stop => stop.Position is not null) >= 2;
+        var stops = planned ? planStops! : route.IsPlotted ? RouteMapStop.From(route) : [];
+
+        _planSeen = chosen;
+        _planDrawn = planned ? _planKind : null;
 
         _current = here;
         _position = offDuty is null ? commander?.Location.StarPos : null;
@@ -344,7 +379,7 @@ public sealed class GalaxyMapPage : UserControl
             _regions.IsChecked == true,
             _travels.IsChecked == true ? travels : null,
             _routeShown.IsChecked == true && hasRoute ? stops : null,
-            RouteProgress.For(route, here).Index,
+            planned ? RouteMapStop.ReachedIndex(chosen!) : RouteProgress.For(route, here).Index,
             _position,
             here,
             Named(steps, Since()),

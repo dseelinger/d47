@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.Core.Help;
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 using System.Globalization;
 
 namespace D47.App.Panel;
@@ -791,6 +792,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         bool unsold = true,
         bool galaxyMap = true) =>
         _navigation.EnableRouting(surface, plan, progress, market, bestCargo, trade, bookmarks, body, unsold, galaxyMap);
+
+    /// <summary>Opens the Galaxy map root on the last plan of <paramref name="kind"/>.</summary>
+    public void ShowOnGalaxyMap(RoutePlanKind kind) => _navigation.ShowOnGalaxyMap(kind);
 
     /// <summary>
     /// Redraws the route being flown, from the host's tick, and says whether anything on it moved — the

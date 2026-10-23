@@ -181,6 +181,8 @@ public sealed class GalaxyMapView : Control
     internal Point? ScreenOf(string name) =>
         _targets.Where(target => string.Equals(target.Star.Name, name, StringComparison.OrdinalIgnoreCase)).Select(target => (Point?)target.At).FirstOrDefault();
 
+    internal GalaxyMapScene Scene => _scene;
+
     /// <summary>The unvisited systems drawn now, by name.</summary>
     internal IEnumerable<string> UnvisitedDrawn => _unvisitedAt.Select(star => star.Star.Name);
 

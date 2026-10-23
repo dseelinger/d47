@@ -80,6 +80,16 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
             route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, RouteStopMarks.None)),
             route.End);
 
+    /// <summary>The plan's stops to draw; null for a trade plan or a plan with no route recorded.</summary>
+    public static IReadOnlyList<RouteMapStop>? From(StoredRoutePlan plan) => plan switch
+    {
+        { Jump: { } jump } => From(jump),
+        { Riches: { } riches } => From(riches),
+        { Exobiology: { } exobiology } => From(exobiology),
+        { Carrier: { } carrier } => From(carrier),
+        _ => null,
+    };
+
     /// <summary>The index in the map's stop list of the stop <c>plan.Reached</c> names, or -1.</summary>
     public static int ReachedIndex(StoredRoutePlan plan)
     {

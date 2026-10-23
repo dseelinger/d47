@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -14,6 +15,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private RoutePlanResultPage? _routeResult;
     private RouteBestCargoPage? _bestCargo;
     private GalaxyMapPage? _galaxyMap;
+    private RoutePlanKind? _planOnMap;
     
     private Func<D47.Core.Journal.NavRoute>? _routeState;
     private Func<string?>? _routeHere;
@@ -167,7 +169,9 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Bookmarks,
                         surface.Clipboard is { } clipboard ? text => clipboard.SetTextAsync(text) : null,
                         () => surface.LookupsEnabled?.Invoke() == true ? surface.Galaxy?.Invoke() : null,
-                        surface.MapLookups);
+                        surface.MapLookups,
+                        surface.Plans,
+                        _planOnMap);
                 }
 
                 var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts);
@@ -210,6 +214,14 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                 _routeResult?.Refresh();
             };
         }
+    }
+
+    /// <summary>Opens the Galaxy map root on the last plan of <paramref name="kind"/>.</summary>
+    public void ShowOnGalaxyMap(RoutePlanKind kind)
+    {
+        _planOnMap = kind;
+        host.Nav.Show(RoutingPages.GalaxyMapRoot);
+        _galaxyMap?.ShowPlan(kind);
     }
 
     /// <summary>
