@@ -16,6 +16,8 @@ When the galaxy search fails while a story chapter is being checked, D47 waits a
 
 A story's premise, want, stake, turn and ending no longer have a length limit. Before, a premise one character over 700 failed a draft that had passed every other check, and the next draft failed the same way.
 
+The Callouts setting formerly labelled "Trading Mode needs a hold of (tonnes)" is now labelled "Trading Mode requires a cargo capacity of at least (tonnes)". Only the label changed; the value, its default of 25 and the saved setting are the same.
+
 Button labels are centred. Before, a label sat at the left of any button wider than its text, such as CLOSE at the foot of the spend dialog and other dialogs.
 
 A box that opens over the window with a text field, such as Find (Ctrl+K) and the name box when you save a search, now opens with the cursor in the field, so you can type at once. Before, you had to click the field first.

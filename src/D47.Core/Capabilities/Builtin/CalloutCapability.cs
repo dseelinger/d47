@@ -1287,7 +1287,7 @@ public static class CalloutCapability
         {
             Key = TradingModeMinHoldKey,
             Advanced = true,
-            Label = "Trading Mode needs a hold of (tonnes)",
+            Label = "Trading Mode requires a cargo capacity of at least (tonnes)",
             Help = "1 to 50: cargo capacity less the limpets aboard. Below this, Trading Mode says nothing.",
             Kind = SettingKind.Number,
             DefaultDisplay = "25",
