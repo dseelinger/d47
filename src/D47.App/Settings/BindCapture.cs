@@ -36,21 +36,26 @@ public static class BindCapture
 
         void OnKey(object? sender, KeyEventArgs e)
         {
-            var modifier = e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
-                or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin;
+            var decision = Decide(keys, e.Key, e.KeyModifiers);
 
-            if (modifier)
+            if (IsModifier(e.Key))
             {
                 // Told apart by which edge it arrives on: pressed, it is still someone assembling a chord;
                 // released with nothing else pressed, it was the binding.
-                held = bare ? e.Key : null;
+                held = keys && bare ? e.Key : null;
                 return;
             }
 
             held = null;
+
+            if (decision == KeyDecision.Ignore)
+            {
+                return;
+            }
+
             e.Handled = true;
 
-            captured.TrySetResult(e.Key == Key.Escape
+            captured.TrySetResult(decision == KeyDecision.Escape
                 ? null
                 : (keyKey!, new KeyGesture(e.Key, e.KeyModifiers).ToString()));
         }
@@ -66,15 +71,13 @@ public static class BindCapture
             captured.TrySetResult((keyKey!, new KeyGesture(e.Key, KeyModifiers.None).ToString()));
         }
 
-        if (keys)
-        {
-            // Tunnelling: the gesture belongs to the binding, not to whatever control the click left focused.
-            top.AddHandler(InputElement.KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
+        // Tunnelling: the gesture belongs to the binding, not to whatever control the click left focused.
+        // Attached even when only the stick is armed, so Esc always ends the capture.
+        top.AddHandler(InputElement.KeyDownEvent, OnKey, RoutingStrategies.Tunnel, handledEventsToo: true);
 
-            if (bare)
-            {
-                top.AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
-            }
+        if (keys && bare)
+        {
+            top.AddHandler(InputElement.KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel, handledEventsToo: true);
         }
 
         var walking = buttonKey is not null && switches is not null
@@ -87,15 +90,29 @@ public static class BindCapture
         }
         finally
         {
-            if (keys)
-            {
-                top.RemoveHandler(InputElement.KeyDownEvent, OnKey);
-                top.RemoveHandler(InputElement.KeyUpEvent, OnKeyUp);
-            }
+            top.RemoveHandler(InputElement.KeyDownEvent, OnKey);
+            top.RemoveHandler(InputElement.KeyUpEvent, OnKeyUp);
 
             walking?.Stop();
         }
     }
+
+    internal enum KeyDecision { Escape, Gesture, Ignore }
+
+    /// <summary>What a key-down does to a capture: Esc always ends it; any other non-modifier key is a gesture only when the keyboard is armed.</summary>
+    internal static KeyDecision Decide(bool keyboardArmed, Key key, KeyModifiers modifiers)
+    {
+        if (key == Key.Escape)
+        {
+            return KeyDecision.Escape;
+        }
+
+        return keyboardArmed && !IsModifier(key) ? KeyDecision.Gesture : KeyDecision.Ignore;
+    }
+
+    private static bool IsModifier(Key key) =>
+        key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift
+            or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin;
 
     /// <summary>The controller half of a capture: a 10 Hz walk on a timer this capture owns.</summary>
     private static DispatcherTimer Walk(

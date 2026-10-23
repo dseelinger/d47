@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Esc now ends a bind that listens only for a stick button, such as the push-to-talk button step in the setup wizard, and leaves the existing binding as it was. It also ends the capture after D47 has declined a button press.
+
 The Chatterbox voice and Local voice rows under Providers › Speech synthesis now show only when that provider is the Voice provider, or when another voice slot or a downloaded story uses it and its model is not yet downloaded. Once the model is installed they go away.
 
 d47 now writes one log file a day, the readable `.log`, instead of that and a `.jsonl` copy. The `.jsonl` files left in `data\logs` by earlier versions are deleted the first time this version starts. Log lines now carry milliseconds, as in `[14:36:09.412 INF]`, and incident excerpts read both the old and the new form.
