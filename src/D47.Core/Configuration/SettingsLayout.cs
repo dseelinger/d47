@@ -193,7 +193,7 @@ public static class SettingsLayout
                         G(
                             "COVAS Voice",
                             "How the stock COVAS core sounds.",
-                            [E("speech.covasVoice.reverb"), E("speech.covasVoice.test")]),
+                            [E("speech.covasVoice.reverb")]),
                         G(
                             "Guardian Voice Effects",
                             "Optional treatments for the core's voice, all off by default and global to every core.",

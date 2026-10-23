@@ -533,6 +533,16 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             {
                 foreach (var row in settings.RowsForEntry(entry))
                 {
+                    if (row is { Kind: SettingKind.Toggle, Beside: { } besideKey } && settings.Find(besideKey) is { } pressRow)
+                    {
+                        var line = BuildToggleLine(row, pressRow) with { Section = index, GroupIndex = groupIndex };
+
+                        _rows.Add(line);
+                        rows.Add(row);
+                        content.Children.Add(line.Container);
+                        continue;
+                    }
+
                     if (row is { Kind: SettingKind.Toggle, PageTop: false } && group.ToggleColumns > 0)
                     {
                         if (tiles is null)
@@ -703,6 +713,68 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             Control = box,
             Label = label,
             Spoken = spoken,
+        };
+    }
+
+    /// <summary>Marks a toggle's line with a press row beside it, for a test to find it.</summary>
+    public const string ToggleLineName = "ToggleLine";
+
+    /// <summary>
+    /// A toggle's tile, the press row's text on a slab and its TEST tile, on one 44px line with the reset
+    /// column left empty. The group reset covers the toggle.
+    /// </summary>
+    private RowView BuildToggleLine(SettingRow row, SettingRow pressRow)
+    {
+        var tile = BuildToggleTile(row);
+
+        var (slab, text) = Report();
+        slab.VerticalAlignment = VerticalAlignment.Stretch;
+        slab.MinHeight = TypeScale.MinimumTarget;
+        text.VerticalAlignment = VerticalAlignment.Center;
+        text.FontSize = TypeScale.Secondary;
+
+        var pressMessage = new StatusLine { Margin = new Thickness(0, 4, 0, 0) };
+        var test = _controls.BuildTestTile(pressRow, pressMessage);
+
+        var grid = new Grid
+        {
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(LabelColumnWidth, GridUnitType.Pixel),
+                new ColumnDefinition(RowColumnGap, GridUnitType.Pixel),
+                new ColumnDefinition(1, GridUnitType.Star),
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(ResetGutterWidth, GridUnitType.Pixel),
+            ],
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+
+        test.Margin = new Thickness(RowColumnGap, 0, 0, 0);
+
+        Grid.SetColumn(tile.Container, 0);
+        Grid.SetColumn(slab, 2);
+        Grid.SetColumn(test, 3);
+        grid.Children.Add(tile.Container);
+        grid.Children.Add(slab);
+        grid.Children.Add(test);
+
+        var container = new StackPanel { Name = ToggleLineName };
+        container.Children.Add(RowFrame(grid, protectedRow: false));
+        container.Children.Add(pressMessage);
+
+        void Read() => text.Text = pressRow.Binding?.Read?.Invoke(_settings!.Current);
+
+        Read();
+
+        return tile with
+        {
+            Container = container,
+            Refresh = () =>
+            {
+                tile.Refresh();
+                Read();
+            },
+            Body = grid,
         };
     }
 

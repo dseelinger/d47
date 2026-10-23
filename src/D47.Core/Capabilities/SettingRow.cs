@@ -230,6 +230,9 @@ public sealed record SettingRow
     /// </summary>
     public bool DrawnElsewhere { get; init; }
 
+    /// <summary>A press row drawn on this toggle's line; that row is <see cref="DrawnElsewhere"/>.</summary>
+    public string? Beside { get; init; }
+
     /// <summary>
     /// Every settings key this row's control writes: its own, and <see cref="AlsoBinds"/> when there is
     /// one.

@@ -1221,6 +1221,7 @@ public static class SpeechCapability
                 DefaultDisplay = "on",
                 Group = "COVAS Voice",
                 DocsAnchor = "covas-voice-reverb",
+                Beside = CovasTestKey,
                 Binding = new SettingBinding
                 {
                     Read = s => s.Speech.CovasReverb ? "true" : "false",
@@ -1236,6 +1237,7 @@ public static class SpeechCapability
                 Kind = SettingKind.Info,
                 Group = "COVAS Voice",
                 DocsAnchor = "covas-voice-test",
+                DrawnElsewhere = true,
                 PressLabel = "Test",
                 PressAsync = surface.CovasTest is null
                     ? null

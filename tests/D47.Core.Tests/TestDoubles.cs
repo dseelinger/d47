@@ -354,6 +354,7 @@ public sealed class TestSurface
         Action? onSilence = null) => new()
     {
         Silence = onSilence ?? (() => { }),
+        CovasTest = _ => Task.FromResult<string?>(null),
     };
 
  /// <summary>The fleet surface, every member supplied and none of them doing anything.</summary>
