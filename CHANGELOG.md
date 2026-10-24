@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The Ships goal now counts every hull you own. It counted only hulls the journal names without a localised name, so a large fleet read as a handful. Asking about an owned ship you have never boarded, by hull type, now finds it too.
+
 A stock story can now be a Goals story. Each of its chapters after the beacon scan works the Goal you are furthest behind on, as a share of the whole goal, so your Goals rise together. Near a promotion, the chapter asks for the rank. Further from it, the chapter's activities are ones that earn that rank. Powerplay chapters ask for a pledge or the next Powerplay rank, Engineers chapters for the next engineer on your route, and Ships chapters for the cheapest hull you can afford and do not own.
 
 A Goals story's clues now follow your Goals progress: each waits for its day and for your overall Goals progress to reach a threshold. The thresholds are spaced evenly between your progress when you picked the story and 100%. The finale waits until every Goal is done, Powerplay included. While you are not pledged to a Power, the next Goals chapter asks you to pledge. The story's entry on the Goals page says what the next clue or the finale is waiting for, such as "Clue 5 waits for Goals progress of 60%; you are at 37%". The Story Bench cannot jump a Goals story.

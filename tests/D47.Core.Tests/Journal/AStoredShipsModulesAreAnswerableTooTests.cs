@@ -91,6 +91,31 @@ public class AStoredShipsModulesAreAnswerableTooTests
         Assert.DoesNotContain("modules fitted", result.Content, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task AShipOwnedUnderItsLocalisedHullNameIsFoundByHullType()
+    {
+        var gameState = new GameStateStore();
+
+        Apply(gameState, """{"timestamp":"2026-09-05T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-09-05T10:01:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour",
+             "CargoCapacity":8,"Modules":[]}
+            """);
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-09-05T10:02:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"Abraham Lincoln",
+             "ShipsHere":[],"ShipsRemote":[{"ShipID":41,"ShipType":"panthermkii","ShipType_Localised":"Panther Clipper Mk II","StarSystem":"Sol"}]}
+            """);
+
+        var result = await Ask(gameState, "Panther Clipper");
+
+        Assert.False(result.IsError);
+        Assert.Contains("no loadout has been read for it yet", result.Content, StringComparison.Ordinal);
+    }
+
     /// <summary>The second defect #108 names: a restart before a fresh <c>Loadout</c> answers about
     /// the Commander's own ship from what is remembered rather than refusing (#337, one level down).</summary>
     [Fact]

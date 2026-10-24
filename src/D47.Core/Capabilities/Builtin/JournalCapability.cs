@@ -1151,7 +1151,7 @@ public static class JournalCapability
         var match = named.Length > 0 && Catalogue.Match(named, spoken) is { } byName
             ? owned.FirstOrDefault(ship => string.Equals(ship.Name, byName, StringComparison.OrdinalIgnoreCase))
             : EliteSpecifications.Ship(spoken)?.Symbol is { } symbol
-                ? owned.FirstOrDefault(ship => string.Equals(ship.Type, symbol, StringComparison.OrdinalIgnoreCase))
+                ? owned.FirstOrDefault(ship => string.Equals(EliteSpecifications.HullSymbol(ship.Type) ?? ship.Type, symbol, StringComparison.OrdinalIgnoreCase))
                 : null;
 
         if (match is not null)

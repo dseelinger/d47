@@ -103,6 +103,34 @@ public class GoalEvaluatorTests
     }
 
     [Fact]
+    public void HullsTheJournalNamesInEitherFormEachCountOnce()
+    {
+        var state = State(
+            Event(
+                "StoredShips",
+                "\"ShipsHere\":["
+                + "{\"ShipID\":1,\"ShipType\":\"type6\",\"ShipType_Localised\":\"Type-6 Transporter\",\"StarSystem\":\"Sol\"},"
+                + "{\"ShipID\":2,\"ShipType\":\"empire_explorer\",\"ShipType_Localised\":\"Asp Explorer\",\"StarSystem\":\"Sol\"},"
+                + "{\"ShipID\":3,\"ShipType\":\"eagle\",\"StarSystem\":\"Sol\"},"
+                + "{\"ShipID\":4,\"ShipType\":\"type6\",\"ShipType_Localised\":\"Type-6 Transporter\",\"StarSystem\":\"Sol\"}],"
+                + "\"ShipsRemote\":[]"));
+
+        Assert.Equal(3, Evaluate(GoalCatalogue.Ships, state, null).Have);
+    }
+
+    [Fact]
+    public void TheHullBeingFlownIsNotCountedTwiceWhenTheFleetHoldsAnother()
+    {
+        var state = State(
+            Event(
+                "StoredShips",
+                "\"ShipsHere\":[{\"ShipID\":1,\"ShipType\":\"type6\",\"ShipType_Localised\":\"Type-6 Transporter\",\"StarSystem\":\"Sol\"}],\"ShipsRemote\":[]"),
+            Event("Loadout", "\"Ship\":\"type6\",\"ShipID\":2"));
+
+        Assert.Equal(1, Evaluate(GoalCatalogue.Ships, state, null).Have);
+    }
+
+    [Fact]
     public void AgeIsMeasuredFromTheStartAndReadsInTheUnitThatFits()
     {
         var standing = Evaluate(

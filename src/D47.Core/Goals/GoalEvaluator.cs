@@ -193,18 +193,20 @@ public static class GoalEvaluator
             : new GoalStanding { Arc = arc, Need = total, Source = GoalSource.Unknown, Started = mark?.Started };
     }
 
+    private static string HullOf(string type) => EliteSpecifications.HullSymbol(type) ?? type;
+
     /// <summary>The collection.</summary>
     private static GoalStanding Ships(GoalArc arc, CommanderGameState? state, GoalMark? mark)
     {
         if (state?.Fleet is { IsKnown: true } fleet)
         {
             var hulls = new HashSet<string>(
-                fleet.Ships.Select(ship => ship.Type).Where(type => type.Length > 0),
+                fleet.Ships.Select(ship => ship.Type).Where(type => type.Length > 0).Select(HullOf),
                 StringComparer.OrdinalIgnoreCase);
 
             if (state.Ship.Type is { Length: > 0 } flying)
             {
-                hulls.Add(flying);
+                hulls.Add(HullOf(flying));
             }
 
             hulls.IntersectWith(EliteSpecifications.Ships.Select(ship => ship.Symbol));
