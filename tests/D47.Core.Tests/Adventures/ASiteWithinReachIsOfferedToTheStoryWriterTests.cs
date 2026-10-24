@@ -72,6 +72,36 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
     }
 
     [Fact]
+    public async Task OnlyALandableGuardianBodyIsOffered()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+        var galaxy = new AdventureGeneratorTests.Galaxy { GuardianBodies = [GuardianBody with { Name = "Dyson's Hollow 4", IsLandable = false }, GuardianBody] };
+
+        await Generator(provider, bodies: [], index: null, galaxy: galaxy).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.Contains(galaxy.BodyQueries, query => query.Signal == "Guardian" && query.Landable == true);
+
+        foreach (var request in provider.Requests.Take(2))
+        {
+            var instruction = request.Prompt.History[0].Text;
+
+            Assert.Contains("- Guardian site: Dyson's Hollow 3 b,", instruction);
+            Assert.DoesNotContain("Dyson's Hollow 4", instruction);
+        }
+    }
+
+    [Fact]
+    public async Task WithOnlyNonLandableGuardianBodiesNoSiteIsOffered()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+
+        await Generator(provider, bodies: [GuardianBody with { IsLandable = false }], index: null).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
+        Assert.DoesNotContain("\"site\"", provider.Requests[1].ResponseSchema!.SchemaJson);
+    }
+
+    [Fact]
     public async Task WithNoSiteTheSectionAndTheKindAreLeftOutAndTheNotesSayWhy()
     {
         var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
@@ -186,10 +216,11 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         IReadOnlyList<BodySummary> bodies,
         Index? index,
         bool indexOn = true,
-        VisitedStarsBook? visited = null)
+        VisitedStarsBook? visited = null,
+        AdventureGeneratorTests.Galaxy? galaxy = null)
     {
         var state = AdventureGeneratorTests.State(1, []);
-        var galaxy = new AdventureGeneratorTests.Galaxy { GuardianBodies = bodies };
+        galaxy ??= new AdventureGeneratorTests.Galaxy { GuardianBodies = bodies };
 
         return new AdventureGenerator(
             () => provider,

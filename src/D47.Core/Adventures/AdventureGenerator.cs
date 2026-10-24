@@ -1428,12 +1428,12 @@ public sealed class AdventureGenerator(
 
         try
         {
-            var found = await search.FindBodiesAsync(BodyQuery.LandableNear(here, radius, 20) with { Signal = "Guardian", Landable = null }, cancellationToken).ConfigureAwait(false);
+            var found = await search.FindBodiesAsync(BodyQuery.LandableNear(here, radius, 20) with { Signal = "Guardian" }, cancellationToken).ConfigureAwait(false);
 
             guardian =
             [
                 .. found.Bodies
-                    .Where(body => body is { SystemAddress: not null, BodyId: not null } && !PermitSystemTable.Locked(body.SystemName) && !Visited(body.SystemAddress.Value))
+                    .Where(body => body is { SystemAddress: not null, BodyId: not null, IsLandable: true } && !PermitSystemTable.Locked(body.SystemName) && !Visited(body.SystemAddress.Value))
                     .OrderBy(body => body.Distance ?? double.MaxValue)
                     .Take(SitesPerKind),
             ];
