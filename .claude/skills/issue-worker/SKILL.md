@@ -1,7 +1,7 @@
 ---
 name: issue-worker
 description: >-
-  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Does not push — the maintainer pushes once the review has run. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Pushes main once the commit and any review are done, taking every other unpushed commit on main with it, and says in a large bold banner when the change, the commit or the push did not happen. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
@@ -234,15 +234,39 @@ Co-Authored-By: ...
 ```
 
 `(#92)` in the subject is a reference and closes nothing. `Fixes #92` is the line GitHub acts on
-when the maintainer pushes to `main`, which is the default branch. Without it the issue stays open
+when the commit is pushed to `main`, which is the default branch. Without it the issue stays open
 after the fix has shipped and has to be closed by hand later.
 
 Put the trailer on the commit that finishes the issue, and on that one only. Where a fix takes
 several commits — a first attempt that did not hold, then the one that did — the earlier commits
 carry the subject reference alone.
 
-Do not push, and do not open a PR. The commit stays local so the review has something to read and
-its findings can be amended into it. The maintainer pushes, and the push is what closes the issue.
+Do not open a PR. Stage only the files this issue changed: other sessions' uncommitted edits in the
+tree are theirs, and stay out of the commit.
+
+## Push
+
+Push `main` once the commit is made and any review in **Reviews** has been amended into it — not
+before, so the review still reads a local commit. The push is what closes the issue. This is the
+maintainer's standing instruction, so AGENTS.md's stop before a push does not apply to it.
+
+The push sends every commit on local `main` that `origin/main` lacks, including commits other
+sessions made and did not push. Send them all; do not stop to ask. List them first so the report
+can name them:
+
+```bash
+git fetch origin
+git log --format='%h %s' origin/main..main
+git push origin main
+```
+
+In the main checkout, push only when the current branch is `main`. An issue worked in a worktree
+pushes from the main checkout after its merge, as step 4 of **Merging into main** says; never push
+an `issue/<N>` branch.
+
+Never force a push, and never pull or rebase to get past a refusal. A rejected push means
+`origin/main` has commits local `main` lacks; stop, and report it with the failure banner in
+**When it does not land**, naming the commits `git log --format='%h %s' main..origin/main` lists.
 
 ## What triage chose
 
@@ -337,8 +361,9 @@ started inside the worktree has no `EnterWorktree` to exit, and holds the folder
 directory, so the removal may leave the folder behind. That is expected: `/pre-release` clears it.
 
 When the issue does not land — it is bigger than it looked, the build or tests cannot be made
-green, or any step of **Merging into main** stops — stop and ask, as for any issue. Leave the worktree and branch in place and say where they are. The rest of its lane
-waits on it.
+green, or any step of **Merging into main** stops — stop and ask, as for any issue, with the failure
+banner in **When it does not land**. Unless the push was what failed, leave the worktree and branch
+in place and say where they are; the rest of its lane waits on it.
 
 ### Merging into main
 
@@ -365,13 +390,13 @@ It returns at once when no lane is merging. Otherwise it waits, and this session
 it exits; do nothing in the meantime. When several lanes wait, whichever `mkdir` succeeds first
 merges next and the others keep waiting.
 
-- `ACQUIRED`: run the three steps below.
+- `ACQUIRED`: run the four steps below.
 - `STALE`: a lane has held the lock for over 45 minutes, which means its session ended without
   releasing it. Stop and report the owner line. Do not remove the lock: the maintainer checks that
   session and removes it.
 
-Release the lock on **every** way out of the three steps — a merge, an aborted rebase, a failed
-check, a refused merge — before the report, and only when `owner` names this issue:
+Release the lock on **every** way out of the four steps — a push, an aborted rebase, a failed
+check, a refused merge, a rejected push — before the report, and only when `owner` names this issue:
 
 ```bash
 grep -q "issue <N>," "<main checkout>/.git/d47-merge.lock/owner" && rm -r "<main checkout>/.git/d47-merge.lock"
@@ -379,7 +404,7 @@ grep -q "issue <N>," "<main checkout>/.git/d47-merge.lock/owner" && rm -r "<main
 
 The lock's disappearing is what lets the waiting lanes continue; nothing else signals them.
 
-#### The three steps
+#### The four steps
 
 Run each step below as its own command. Never chain them with `&&` or `;`: a failed check must
 never be followed by a merge in the same command.
@@ -411,25 +436,40 @@ never be followed by a merge in the same command.
    changed `main` outside the lanes, such as a commit made directly in the main checkout. Stop. Do
    not rebase again.
 
-When any step stops, release the lock, leave the worktree and branch in place and do not call
-`ExitWorktree`. The report says the lane is paused at this issue, which step stopped it, and:
+4. Push `main` from the main checkout, still holding the lock, as **Push** says:
+
+   ```bash
+   git -C <main checkout> fetch origin
+   git -C <main checkout> log --format='%h %s' origin/main..main
+   git -C <main checkout> push origin main
+   ```
+
+   A rejected push stops here, as **Push** says. The merge stays in `main`; the next lane's push
+   sends it.
+
+When step 1, 2 or 3 stops, release the lock, leave the worktree and branch in place and do not call
+`ExitWorktree`; the lane is paused at this issue. When step 4 stops, the issue is in `main` and the
+lane is not paused: release the lock and remove the worktree as for a merge. Either way the report
+opens with the failure banner in **When it does not land**, says which step stopped it, and gives:
 
 - for a conflict, each conflicting file and the commits on `main` that changed it since the branch
   point (`git log --format='%h %s' issue/<N>..main -- <file>`);
 - for a failed check, the failing build error or test names and their output;
 - for a refused merge, the commits that landed on `main` since the rebase
-  (`git log --format='%h %s' issue/<N>..main`).
+  (`git log --format='%h %s' issue/<N>..main`);
+- for a rejected push, the commits on `origin/main` that local `main` lacks
+  (`git -C <main checkout> log --format='%h %s' main..origin/main`).
 
 A paused lane starts nothing new: the issue before the next one has no `Fixes #N` commit, so the
 check at the top of **Lanes** stops it. The other lanes keep running. The maintainer resumes the
 paused issue once the other lanes have finished, by starting `/issue-worker <N>` again. That session
-finds the worktree and branch already there, enters the worktree, takes the lock, and runs the three
+finds the worktree and branch already there, enters the worktree, takes the lock, and runs the four
 steps above. On resume, a conflict in a file other than `CHANGELOG.md` is resolved against everything
 merged in the meantime rather than aborted, and a failed check is fixed in the worktree and amended
 into the issue's commit; a refused merge still stops.
 
-Never create a merge commit, never force anything, and never push. The rebase changes the commit's
-hash, which matters to nothing: it is still local.
+Never create a merge commit, never force anything, and push only `main`, in step 4. The rebase
+changes the commit's hash, which matters to nothing: it is still local until then.
 
 ## Saying how to test it
 
@@ -511,10 +551,13 @@ The turn where the work lands ends in this order:
 1. Commit.
 2. `/code-review` or `/prose`, when the Reviews section calls for one, with its findings amended into
    the commit.
-3. `/test-drive`, when the change needs manual testing.
-4. The spoken done sentence, through `/claude-voice`'s command, unless the voice was turned off. It
+3. Push, as **Push** says.
+4. `/test-drive`, when the change needs manual testing.
+5. The spoken done sentence, through `/claude-voice`'s command, unless the voice was turned off. It
    is the last tool call of the turn.
-5. The written report, then how to test it — the exact steps, against the test drive now running.
+6. The written report, then how to test it — the exact steps, against the test drive now running.
+   The report names the pushed range and every commit in it that is not this issue's, by hash and
+   subject.
 
 The voice rules were loaded at the start of the session, many tool calls earlier, and writing the
 report ends the turn. A sentence left until after the report is not spoken.
@@ -522,12 +565,44 @@ report ends the turn. A sentence left until after the report is not spoken.
 An issue worked in a worktree adds two steps after the review: merge it into `main` and remove the
 worktree, as **Lanes** says. `/test-drive` then runs from the main checkout, so the build under test
 holds everything merged so far from every lane; say so in the line above the steps. When the
-merge into `main` succeeded, the report's first line is `Lane <letter> issue complete`, with this
+merge into `main` and the push succeeded, the report's first line is `Lane <letter> issue complete`, with this
 issue's lane letter — `Lane A issue complete`, `Lane B issue complete`, `Lane C issue complete`.
 The report ends with the next issue in this lane, if there is one: the Issue key given the lane
-letter starts it. When the merge stopped, there is no completion line, no test drive and no next
-issue: the report says which step stopped it, as **Merging into main** lists, and that the lane is
-paused.
+letter starts it. When step 1, 2 or 3 of **Merging into main** stopped, there is no completion
+line, no test drive and no next issue: the report opens with the failure banner and says which step
+stopped it, as **Merging into main** lists, and that the lane is paused. When only the push failed,
+the report opens with the `NOT PUSHED` banner in place of the completion line and otherwise
+finishes as for a merge.
 
 This applies equally when the work lands on a turn started by a background agent's completion
 notice rather than by the maintainer.
+
+## When it does not land
+
+Any turn that ends with a named issue's change unfinished, uncommitted or unpushed opens its report
+with a failure banner: a level-one heading in bold, as its first line, before anything else.
+
+```
+# ❌ **ISSUE #<N> NOT FINISHED**
+# ❌ **ISSUE #<N> NOT COMMITTED**
+# ❌ **ISSUE #<N> NOT PUSHED**
+```
+
+Use the first stage that did not happen:
+
+- **NOT FINISHED** — the change is not complete: a prerequisite is not done, it is bigger than it
+  looked, the build or tests cannot be made green, the chapter comparison fell short, a design is
+  missing, a lane merge stopped at the rebase or the checks, or the session stopped to ask before
+  the change was complete.
+- **NOT COMMITTED** — the change is complete but no commit holds it, or a lane's commit could not be
+  merged into `main`.
+- **NOT PUSHED** — the commit is on local `main` but `origin/main` does not have it.
+
+The line under the banner says, in one sentence, what stopped it and where the work is now:
+uncommitted in the main checkout, committed locally as `<hash>`, or in `.claude/worktrees/<N>` on
+`issue/<N>`. Then the rest of the report as the section that stopped it asks.
+
+The spoken sentence says the issue did not land and at which stage, and the wrap-up recap's first
+sentence says the same, so the failure reads from the sidebar and by ear as well as on the page.
+
+No other report uses a level-one heading, and a turn that pushed the issue never shows the banner.
