@@ -1574,11 +1574,14 @@ public sealed class StoryDirector(
             ? BeaconReach.Of(here(), Game()?.Ship ?? ShipLoadout.Unknown, Game()?.Carrier.Owned == true)
             : null;
         var game = Game();
-        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
-        var slots = story.BeaconScanAt is { } scanned && chapter.Written >= scanned
+        var afterBeacon = story.BeaconScanAt is { } scanned && chapter.Written >= scanned;
+        var slots = afterBeacon
             ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, cancellationToken).ConfigureAwait(false)
             : null;
+        var rank = chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).FirstOrDefault(trigger => trigger.Kind == TriggerKind.Rank);
+        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
+            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, rank));
 
         return new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -1659,13 +1662,12 @@ public sealed class StoryDirector(
         }
 
         var ship = game.Ship;
-        var reach = ChapterFit.IsLongHaul(story.Pacing, game) ? AdventureReach.Anywhere : AdventureReach.Session;
         PadSize? pad = Enum.TryParse<PadSize>(EliteSpecifications.Ship(ship.Type)?.Pad, ignoreCase: true, out var size) ? size : null;
 
         try
         {
             var found = await search
-                .FindStationsAsync(StationQuery.Near(system, AdventureGenerator.Radius(reach, ship.MaxJumpRange, game.Carrier.Owned), 20), cancellationToken)
+                .FindStationsAsync(StationQuery.Near(system, AdventureGenerator.Radius(AdventureReach.Session, ship.MaxJumpRange, game.Carrier.Owned), 20), cancellationToken)
                 .ConfigureAwait(false);
 
             return found.Stations.Any(station =>
@@ -2591,7 +2593,6 @@ public sealed class StoryDirector(
             : null;
 
         var game = Game();
-        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game);
         var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
         var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
@@ -2632,6 +2633,9 @@ public sealed class StoryDirector(
         {
             goal = null;
         }
+
+        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
+            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective));
 
         var ask = new AdventureAsk(
             longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,

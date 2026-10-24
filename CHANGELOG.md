@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A long-haul story no longer sends every chapter across the galaxy. After the beacon scan and before the finale, a chapter may go anywhere only when it holds a discovery, map, footfall or organic activity, or its Goals step is an Exploration or Exobiologist rank. Any other chapter keeps to a session's flying, and so does a chapter you change the objective of.
+
 A cast member whose description gives a manner of speaking, such as "clipped file notes", no longer opens every line with that manner as a label ("File note: …"). The story writer and the live replies are told the manner is how the character talks, not a set phrase. Lines already saved in an adventure keep their prefix until that adventure is written again.
 
 A story chapter no longer asks you to collect a cargo or on-foot item as a material. Steps that wait on collecting a material name only engineering materials; chapters already saved with another name still load.

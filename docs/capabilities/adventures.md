@@ -732,7 +732,10 @@ are on. A chapter has as many steps as its story needs.
 
 **The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
-may go anywhere, as far as Colonia or Sagittarius A*. Below that, the writer is not told it exists.
+may go anywhere, as far as Colonia or Sagittarius A*, but only after the beacon scan and before the finale,
+and only when the chapter draws a discovery, map, footfall or organic activity or its Goals step is an
+Exploration or Exobiologist rank. Any other chapter keeps to a session's flying. Below the credits, the
+writer is not told it exists.
 
 **A credit reserve.** A chapter never spends the Commander to nothing. A story objective that buys something,
 which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the
