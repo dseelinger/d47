@@ -1,5 +1,32 @@
 @echo off
-rem Stream Deck launcher. Opens a session in the repo, then press "To desktop" to hand it over.
+rem Stream Deck launcher. Takes an issue number as an argument, or asks for it, then opens a review
+rem of that issue's commits and everything committed after them. With no number it reviews the last
+rem commit. The issue worker pushes when it lands, so origin/main holds the work and cannot be the
+rem base. Press "Desktop" to hand it over.
 cd /d C:\dev\d47
-rem The issue worker commits and does not push, so origin/main is the base to review against.
-claude -n "Review" "/code-review high origin/main"
+
+set NUM=%~1
+if "%NUM%"=="" set /p NUM=Issue number, or Enter for the last commit:
+if "%NUM%"=="" (
+    claude -n "Review" "/code-review high HEAD~1"
+    exit /b
+)
+echo %NUM%| findstr /r "^[0-9][0-9]*$" >nul
+if errorlevel 1 (
+    echo Not an issue number.
+    pause
+    exit /b 1
+)
+
+rem The oldest of the last 300 commits whose message carries "(#N)": the issue's first commit.
+set FIRST=
+for /f "usebackq" %%h in (`git log -n 300 --reverse --fixed-strings --grep "(#%NUM%)" --format^=%%h`) do (
+    if not defined FIRST set FIRST=%%h
+)
+if "%FIRST%"=="" (
+    echo No recent commit names #%NUM%.
+    pause
+    exit /b 1
+)
+
+claude -n "Review #%NUM%" "/code-review high %FIRST%~1"

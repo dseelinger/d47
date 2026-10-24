@@ -211,8 +211,10 @@ number triage does not name starts on `sonnet`/`medium` and says so. The session
 itself afterwards — the desktop app refuses `set_session_model` and `set_session_effort` for the
 session making the call — so the launcher is the only place this can be set.
 **Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
-work starts on a keypress and continues by clicking. **Review** reviews against `origin/main`: the
-issue worker commits and does not push, so the working diff is empty by the time anyone reviews.
+work starts on a keypress and continues by clicking. **Review** asks for an issue number and
+reviews from the parent of the oldest recent commit naming `(#N)`, so it covers that issue's
+commits and anything committed after them; Enter alone reviews the last commit. The issue worker
+pushes when it lands, so `origin/main` holds the work and the diff against it is empty.
 **Pre-release** sits in the release row but is violet, because it opens a session rather than
 running a script to the end: it runs the suite, fixes what fails and pushes `main`, and Patch or
 Minor comes after it.
