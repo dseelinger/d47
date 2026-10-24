@@ -104,6 +104,16 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     }
 
     [Fact]
+    public void AnUnpledgedCommanderIsAskedToPledgeBeforeAnyArcFurtherBehind()
+    {
+        var unpledged = State(events: """{ "timestamp":"2026-09-30T12:00:00Z", "event":"PowerplayLeave", "Power":"Aisling Duval" }""");
+        var standing = GoalEvaluator.Evaluate(GoalCatalogue.Find(GoalCatalogue.Powerplay)!, unpledged, null);
+
+        Assert.Equal(GoalCatalogue.Powerplay, GoalClimb.Next(Standings(0, standing), unpledged, null)?.Key);
+        Assert.Equal("rank.combat", GoalClimb.Next(Standings(0, standing), State(), null)?.Key);
+    }
+
+    [Fact]
     public void APledgedCommanderIsAskedForTheNextPowerplayRank()
     {
         var pledged = State(events: """{ "timestamp":"2026-09-30T12:00:00Z", "event":"Powerplay", "Power":"Aisling Duval", "Rank":20, "Merits":100000 }""");

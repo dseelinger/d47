@@ -864,7 +864,8 @@ A stock story whose card sets `"goals": true` is a Goals story. Each of its chap
 finale works one of your Goals arcs: the unfinished one with the lowest share of its whole, so the arcs rise together.
 Powerplay runs to rank 100 and a career to Elite V, so at Powerplay rank 20 and Combat rank 6 the Powerplay arc is
 further behind and is worked first. An arc whose progress d47 cannot read counts as not started, and a tie goes to the
-arc first on the Goals page. `GoalClimb.Next` makes the choice and gives the chapter one step for the arc:
+arc first on the Goals page. While d47 knows you are not pledged to a Power, the pledge comes before every other arc.
+`GoalClimb.Next` makes the choice and gives the chapter one step for the arc:
 
 - A career or navy within a quarter of its next rank: an objective for that rank.
 - A career or navy further from it: the drawn activities are only ones that earn that rank. Combat: bounties, bonds,
@@ -880,6 +881,17 @@ An arc is passed over for the next one when it has no step to give now: a pledge
 are pledged, a hull your credits do not cover, no engineer on the route, or a career none of whose activities can be
 drawn, given your ranks, your ship and the activities the story has refused. An objective step takes the place of one drawn activity, and a chapter without that
 objective is refused like a chapter missing a drawn activity. A rewritten chapter carries no Goals step.
+
+A Goals story's clues follow your Goals progress as well as their days. Overall progress is the mean share done of
+every built-in Goals arc, with an arc d47 cannot read counted as 0. Powerplay counts while you are unpledged, and so
+does an arc you removed from the Goals page. Each clue before the finale waits for
+its day and also for overall progress to reach an even step on the way from where it stood when you picked the story
+to 100%. With fourteen clues and 40% at the pick, the first clue waits for 44% and the fifth for 60%. Its finale waits
+for its day and for every built-in Goal to be done; once the finale has begun, it is not withdrawn. A drop in progress,
+such as the ship collection reading 0 before the fleet has been listed this session, holds the next clue and takes
+back none already given. The story's entry on the Goals page says what it is waiting for: "Clue 5 waits for Goals
+progress of 60%; you are at 37%", or "The finale waits for every Goal: 9 of 11 done". The Story Bench cannot jump a
+Goals story.
 
 ### What you like doing {#career-ratings}
 

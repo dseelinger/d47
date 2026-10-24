@@ -10,6 +10,8 @@
 
 A stock story can now be a Goals story. Each of its chapters after the beacon scan works the Goal you are furthest behind on, as a share of the whole goal, so your Goals rise together. Near a promotion, the chapter asks for the rank. Further from it, the chapter's activities are ones that earn that rank. Powerplay chapters ask for a pledge or the next Powerplay rank, Engineers chapters for the next engineer on your route, and Ships chapters for the cheapest hull you can afford and do not own.
 
+A Goals story's clues now follow your Goals progress: each waits for its day and for your overall Goals progress to reach a threshold. The thresholds are spaced evenly between your progress when you picked the story and 100%. The finale waits until every Goal is done, Powerplay included. While you are not pledged to a Power, the next Goals chapter asks you to pledge. The story's entry on the Goals page says what the next clue or the finale is waiting for, such as "Clue 5 waits for Goals progress of 60%; you are at 37%". The Story Bench cannot jump a Goals story.
+
 A story or adventure rank objective can now name the Imperial Navy or the Federal Navy, up to King or Admiral, and reads "reach Baron in the Imperial Navy". The story writer is told your navy ranks by name.
 
 A story or adventure rank objective can now ask for Elite I to Elite V in Combat, Trade, Exploration, Mercenary and Exobiology, and reads "reach Elite III in Trade". CQC objectives still stop at Elite.

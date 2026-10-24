@@ -3214,12 +3214,13 @@ public sealed class AppHost : IDisposable
         {
             var frontierId = gameState.Active?.Identity.FrontierId;
 
-            return D47.Core.Goals.StoryGoal.Of(storyStore.For(frontierId), key => adventureBook.Standing(frontierId, key));
+            return D47.Core.Goals.StoryGoal.Of(storyStore.For(frontierId), key => adventureBook.Standing(frontierId, key), storyDirector.Goals);
         };
 
         storyDirector.Gender = () => settings.Current.CommanderGender;
         storyDirector.Backstory = () => settings.Current.Llm.AboutMe;
         storyDirector.Game = () => gameState.Active;
+        storyDirector.Goals = () => D47.Core.Goals.GoalClimb.Standings(gameState.Active, goalBook.Mine);
         storyDirector.Ratings = () => settings.Current.CareerRatings;
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });

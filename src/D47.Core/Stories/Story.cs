@@ -101,6 +101,9 @@ public sealed record Story
     /// <summary>The id of the ending option the Commander chose, once they have.</summary>
     public string? EndingChoice { get; init; }
 
+    /// <summary>The Commander's overall Goals progress, 0 to 1, when a Goals story was picked; null for any other story.</summary>
+    public double? GoalsAtPick { get; init; }
+
     /// <summary>The number of the first finale chapter, once the finale has begun.</summary>
     public int? FinaleFrom { get; init; }
 

@@ -11,6 +11,9 @@ public readonly record struct StoryJumpTarget(int? Clue)
 /// <summary>Moves a story forward so a chosen clue, or the finale, is due now.</summary>
 public static class StoryJump
 {
+    /// <summary>Why a Goals story cannot be moved: its clues and finale wait for Goals progress, which a jump cannot bring.</summary>
+    public const string GoalsRefusal = "A Goals story cannot be jumped: its clues and finale wait for your Goals progress.";
+
     /// <summary>Why the story cannot be moved to the target, or null.</summary>
     public static string? Refusal(Story story, StoryJumpTarget target)
     {
@@ -26,6 +29,11 @@ public static class StoryJump
         if (story.FinaleFrom is not null)
         {
             return "The story is already in its finale.";
+        }
+
+        if (story.GoalsAtPick is not null)
+        {
+            return GoalsRefusal;
         }
 
         if (target.Clue is not { } clue)

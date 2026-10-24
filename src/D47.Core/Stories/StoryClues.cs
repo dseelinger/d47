@@ -45,9 +45,11 @@ public static class StoryClues
 
     /// <summary>
     /// The clue the running story owes the Commander now, or null. A clue before the finale waits for its day, a new
-    /// session and a chapter finished since the last; a finale clue is due as its chapter begins.
+    /// session and a chapter finished since the last, and in a Goals story for <paramref name="goals"/>, the overall
+    /// Goals progress, to reach its <see cref="GoalsThreshold"/>; a finale clue is due as its chapter begins.
+    /// <paramref name="goals"/> is read last, only for a Goals story, and none counts as 0.
     /// </summary>
-    public static StoryClueDue? Due(Story story, DateTimeOffset now)
+    public static StoryClueDue? Due(Story story, DateTimeOffset now, Func<double>? goals = null)
     {
         ArgumentNullException.ThrowIfNull(story);
 
@@ -69,7 +71,8 @@ public static class StoryClues
             || story.SinceBeacon(now) is not { } since
             || since < TimeSpan.FromDays(pacing.ClueDays[story.CluesGiven])
             || (story.ClueSession is { } session && story.Sessions - session < SessionsApart)
-            || (story.ClueChapter is { } chapter && story.Chapters.Count <= chapter))
+            || (story.ClueChapter is { } chapter && story.Chapters.Count <= chapter)
+            || (story.GoalsAtPick is not null && GoalsHeld(story, story.CluesGiven, goals?.Invoke() ?? 0)))
         {
             return null;
         }
@@ -77,15 +80,35 @@ public static class StoryClues
         return new StoryClueDue(story.Id, story.CluesGiven);
     }
 
-    /// <summary>Whether the next chapter written opens the finale: every clue before the finale given, and the finale's day reached.</summary>
-    public static bool FinaleDue(Story story, DateTimeOffset now)
+    /// <summary>
+    /// The overall Goals progress a Goals story's clue before the finale waits for, by its 0-based index: even steps
+    /// from <see cref="Story.GoalsAtPick"/> to 1, the last step left to the finale. 0 for any other story.
+    /// </summary>
+    public static double GoalsThreshold(Story story, int index)
+    {
+        ArgumentNullException.ThrowIfNull(story);
+
+        return story.GoalsAtPick is { } start
+            ? start + ((1 - start) * (index + 1) / (story.Pacing.ClueDays.Count + 1))
+            : 0;
+    }
+
+    /// <summary>Whether <paramref name="goals"/>, the overall Goals progress, is short of the clue's <see cref="GoalsThreshold"/>; reaching it counts.</summary>
+    public static bool GoalsHeld(Story story, int index, double goals) => goals < GoalsThreshold(story, index) - 1e-9;
+
+    /// <summary>
+    /// Whether the next chapter written opens the finale: every clue before the finale given, the finale's day reached,
+    /// and in a Goals story <paramref name="goalsDone"/>, every Goal done.
+    /// </summary>
+    public static bool FinaleDue(Story story, DateTimeOffset now, bool goalsDone = false)
     {
         ArgumentNullException.ThrowIfNull(story);
 
         return story.FinaleFrom is null
             && story.CluesGiven >= story.Pacing.ClueDays.Count
             && story.SinceBeacon(now) is { } since
-            && since >= TimeSpan.FromDays(story.Pacing.FinaleDay);
+            && since >= TimeSpan.FromDays(story.Pacing.FinaleDay)
+            && (story.GoalsAtPick is null || goalsDone);
     }
 
     /// <summary>Whether the story's last finale chapter is under way and its clue given, so the story finishes when the chapter does.</summary>

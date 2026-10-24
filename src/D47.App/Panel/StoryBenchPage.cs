@@ -514,12 +514,12 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
     // ---- jump --------------------------------------------------------------------------------
 
-    /// <summary>The jump choices for a story: each clue not yet given, by number and day, then the finale; empty once the story is in its finale.</summary>
+    /// <summary>The jump choices for a story: each clue not yet given, by number and day, then the finale; empty once the story is in its finale, and for a Goals story.</summary>
     internal static IReadOnlyList<(string Label, StoryJumpTarget Target)> JumpChoices(Story story)
     {
         var choices = new List<(string, StoryJumpTarget)>();
 
-        if (!story.IsCurrent || story.FinaleFrom is not null)
+        if (!story.IsCurrent || story.FinaleFrom is not null || story.GoalsAtPick is not null)
         {
             return choices;
         }
@@ -556,7 +556,8 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
 
         if (JumpChoices(story) is not { Count: > 0 } choices)
         {
-            holder.Children.Add(new Border { Margin = new Thickness(0, 6, 0, 0), Child = AdventuresPage.Muted("The story is already in its finale.") });
+            var why = StoryJump.Refusal(story, StoryJumpTarget.Finale) ?? "The story is already in its finale.";
+            holder.Children.Add(new Border { Margin = new Thickness(0, 6, 0, 0), Child = AdventuresPage.Muted(why) });
             return holder;
         }
 

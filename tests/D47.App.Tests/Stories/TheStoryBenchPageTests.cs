@@ -362,4 +362,35 @@ public sealed class TheStoryBenchPageTests
         Assert.Equal(StoryBenchPage.FinaleLabel, labels[^1]);
         Assert.Equal(days.Count - 2 + 1, labels.Count);
     }
+
+    [Fact]
+    public void AGoalsStoryOffersNoJump()
+    {
+        var story = new Story
+        {
+            Id = "s",
+            Title = "S",
+            PublicLayer = "-",
+            Length = StoryPacing.OneMonth.Key,
+            GoalsAtPick = 0.3,
+        };
+
+        Assert.Empty(StoryBenchPage.JumpChoices(story));
+        Assert.NotEmpty(StoryBenchPage.JumpChoices(story with { GoalsAtPick = null }));
+    }
+
+    [AvaloniaFact]
+    public void AGoalsStorysJumpSectionSaysWhyItCannotJump()
+    {
+        var rig = Build(benchOn: true);
+        rig.Stories.Update("F1", StoryFixture.Story.Id, story => story with { GoalsAtPick = 0.3 });
+
+        rig.Panel.Nav.SelectRoot(StoryBenchPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(rig.Panel);
+        Assert.Contains(StoryJump.GoalsRefusal, drawn);
+        Assert.DoesNotContain("The story is already in its finale.", drawn);
+        Assert.Null(Find(rig.Panel, "Jump"));
+    }
 }
