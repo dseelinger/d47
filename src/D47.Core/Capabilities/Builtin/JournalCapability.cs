@@ -531,6 +531,18 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
+                    Name = "get_ranks",
+                    Description =
+                        "Report the Commander's rank and rank progress in every career (Combat, Trade, Exploration, "
+                        + "Mercenary, Exobiologist, CQC) and in the Imperial and Federal navies: the current rank, the "
+                        + "percent of the way to the next rank, and the name of the next rank. Use it for any "
+                        + "question about rank, promotion or how far the Commander is from a rank.",
+                    Parameters = [],
+                    Commands = Asking(Ranks),
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeRanks(gameState))),
+                },
+                new ToolDefinition
+                {
                     Name = "get_unsold_exploration",
                     Description =
                         "The bodies the Commander has mapped with the surface scanner and not yet sold to "
@@ -767,6 +779,19 @@ public static class JournalCapability
 
     private static readonly IReadOnlyDictionary<string, string> BankAccount =
         new Dictionary<string, string>(StringComparer.Ordinal) { ["section"] = "Bank_Account" };
+
+    private static readonly string[] Ranks =
+    [
+        "what's my rank", "what is my rank", "my rank", "what are my ranks", "my ranks",
+        "what rank am i", "how are my ranks",
+    ];
+
+    /// <summary>Each rank ladder as the Commander names it, keyed by the journal's own key.</summary>
+    private static readonly (string Key, string Label)[] RankLadders =
+    [
+        ("Combat", "Combat"), ("Trade", "Trade"), ("Explore", "Exploration"), ("Soldier", "Mercenary"),
+        ("Exobiologist", "Exobiologist"), ("CQC", "CQC"), ("Empire", "Imperial Navy"), ("Federation", "Federal Navy"),
+    ];
 
     private static readonly string[] Standing =
     [
@@ -2585,6 +2610,34 @@ public static class JournalCapability
         };
 
         return meant is null ? null : Superpowers.First(superpower => superpower.Name == meant);
+    }
+
+    private static string DescribeRanks(GameStateStore gameState)
+    {
+        if (!TryActive(gameState, out var active, out var reason))
+        {
+            return reason;
+        }
+
+        if (!active.Ranks.IsKnown)
+        {
+            return "The game has not reported your ranks this session. They are written when you enter the game.";
+        }
+
+        var report = new StringBuilder().AppendLine($"Ranks{AsOf(active.Ranks.TakenAt!.Value)}:");
+
+        foreach (var (key, label) in RankLadders)
+        {
+            if (active.Ranks.For(key) is not { } standing)
+            {
+                continue;
+            }
+
+            report.Append($"  {label}: {standing.Describe()}.");
+            report.AppendLine(standing.NextName() is { } next ? $" Next rank: {next}." : " Top of the ladder.");
+        }
+
+        return report.ToString().TrimEnd();
     }
 
     /// <summary>Each superpower's band and number, and its navy rank where it has one.</summary>

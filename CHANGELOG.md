@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The ship's AI can now read your rank and rank progress in every career and in the Imperial and Federal navies, with the name of the next rank, and no longer asks you to read the percentage out. "What's my rank" and "what are my ranks" are answered without the model. It does not depend on keeping a rank goal.
+
 The Ships goal now counts every hull you own. It counted only hulls the journal names without a localised name, so a large fleet read as a handful. Asking about an owned ship you have never boarded, by hull type, now finds it too.
 
 A stock story can now be a Goals story. Each of its chapters after the beacon scan works the Goal you are furthest behind on, as a share of the whole goal, so your Goals rise together. Near a promotion, the chapter asks for the rank. Further from it, the chapter's activities are ones that earn that rank. Powerplay chapters ask for a pledge or the next Powerplay rank, Engineers chapters for the next engineer on your route, and Ships chapters for the cheapest hull you can afford and do not own.

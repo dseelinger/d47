@@ -692,6 +692,12 @@ a reading is held for (`JournalCapability.StandingPhrases`). The bands are
 `ReputationBands` in `Knowledge/UnlockTest.cs`, the same thresholds engineer unlocks are tested
 against.
 
+`get_ranks` takes no arguments and reports every career and navy rank with its progress and the next rank, whether or not any rank goal is kept:
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 `StoredModules`, like `StoredShips`, is a complete snapshot rather than a delta, so the store is
 replaced wholesale on each one. Merging would keep modules that have since been sold or fitted,
 and the failure that causes is a Commander flying somewhere to collect something that is not
