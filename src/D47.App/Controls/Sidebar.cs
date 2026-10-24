@@ -8,10 +8,11 @@ using D47.App.Theming;
 namespace D47.App.Controls;
 
 /// <summary>One row of a <see cref="Sidebar"/>: a key the caller is handed back, its label and an optional count.</summary>
-public sealed record SidebarItem(string Key, string Label, string? Count = null);
+/// <param name="CountKey">The theme brush the count takes while the row is not selected; null follows the label.</param>
+public sealed record SidebarItem(string Key, string Label, string? Count = null, string? CountKey = null);
 
-/// <summary>A run of <see cref="SidebarItem"/> rows, under a heading when one is given.</summary>
-public sealed record SidebarGroup(string? Heading, IReadOnlyList<SidebarItem> Items);
+/// <summary>A run of <see cref="SidebarItem"/> rows, under a heading when one is given and a note when it has no rows.</summary>
+public sealed record SidebarGroup(string? Heading, IReadOnlyList<SidebarItem> Items, string? Note = null);
 
 /// <summary>
 /// The kit's <c>.d47-sidebar</c>: a 230-wide column of 44px rows, grouped under slab headings, with a
@@ -35,12 +36,17 @@ public sealed class Sidebar : Border
     private readonly StackPanel _column = new() { Spacing = 2 };
     private string? _selected;
 
-    public Sidebar(IReadOnlyList<SidebarGroup> groups, string? selected = null, Action<string>? select = null, string? note = null)
+    public Sidebar(
+        IReadOnlyList<SidebarGroup> groups,
+        string? selected = null,
+        Action<string>? select = null,
+        string? note = null,
+        double width = ColumnWidth)
     {
         _select = select;
         _selected = selected;
 
-        Width = ColumnWidth;
+        Width = width;
         Margin = new Thickness(0, 0, ContentGap, 0);
         Padding = new Thickness(0, 0, 16, 0);
         BorderThickness = new Thickness(0, 0, 1, 0);
@@ -68,6 +74,19 @@ public sealed class Sidebar : Border
                 _column.Children.Add(Heading(heading, g == 0 ? 0 : GroupGap));
             }
 
+            if (group.Note is { } groupNote)
+            {
+                var said = new TextBlock
+                {
+                    Text = groupNote,
+                    FontSize = TypeScale.Small,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(15, 8, 12, 4),
+                };
+                Themed(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+                _column.Children.Add(said);
+            }
+
             foreach (var item in group.Items)
             {
                 var row = new Row(item, group.Heading is null ? 12 : 15, this);
@@ -86,6 +105,9 @@ public sealed class Sidebar : Border
         _column.Children.Add(Heading(heading, GroupGap));
         _column.Children.AddRange(controls);
     }
+
+    /// <summary>A control after the last group, drawn without a heading.</summary>
+    public void Append(Control control) => _column.Children.Add(control);
 
     /// <summary>The key of the selected row, or null when none is.</summary>
     public string? Selected
@@ -157,6 +179,7 @@ public sealed class Sidebar : Border
         private readonly TextBlock _count;
         private IDisposable? _fill;
         private IDisposable? _ink;
+        private IDisposable? _countInk;
         private bool _selected;
 
         public Row(SidebarItem item, double indent, Sidebar owner)
@@ -184,7 +207,11 @@ public sealed class Sidebar : Border
                 VerticalAlignment = VerticalAlignment.Center,
                 IsVisible = item.Count is not null,
             };
-            _count.Bind(TextBlock.ForegroundProperty, _label.GetObservable(TextBlock.ForegroundProperty));
+
+            if (item.CountKey is null)
+            {
+                _count.Bind(TextBlock.ForegroundProperty, _label.GetObservable(TextBlock.ForegroundProperty));
+            }
 
             var words = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
             Grid.SetColumn(_count, 1);
@@ -216,7 +243,14 @@ public sealed class Sidebar : Border
             _selected = selected;
             _fill?.Dispose();
             _ink?.Dispose();
+            _countInk?.Dispose();
             _fill = null;
+            _countInk = null;
+
+            if (Item.CountKey is { } countKey)
+            {
+                _countInk = Themed(_count, TextBlock.ForegroundProperty, selected ? ThemeManager.BrownKey : countKey);
+            }
 
             if (selected)
             {

@@ -711,11 +711,14 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.GameStatus>? status = null,
 
         // Asset Mgmt › Construction, between Carrier and Materials (#828).
-        ConstructionSurface? construction = null)
+        ConstructionSurface? construction = null,
+
+        // Asset Mgmt › Characters, after Crew.
+        CharactersHost? characters = null)
     {
         _shipPlans = ships;
         _assets.EnableLoadout(
-            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, crewSeats, talk, status, construction);
+            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, crewSeats, talk, status, construction, characters);
     }
 
     private D47.Core.Ships.ShipPlanService? _shipPlans;

@@ -43,7 +43,7 @@ internal static class TriggerConfirms
         [TriggerKind.SquadronFound] = "the Commander founded a squadron — not its aims or members",
         [TriggerKind.Conflict] = "the Commander took part in a war, civil war or election — not which side won or the Commander's part in the result",
         [TriggerKind.Faction] = "missions for a faction raised its influence — not the missions' content or the faction's standing",
-        [TriggerKind.Reach] = "the ship has the jump range and a fuel scoop for the trip — not that the trip was made",
+        [TriggerKind.Reach] = "the ship has the jump range, a fuel scoop and a laser or railgun for the trip — not that the trip was made",
         [TriggerKind.Boost] = "the frame shift drive was supercharged in a jet cone — not where the Commander was headed",
         [TriggerKind.Discover] = "bodies no one had discovered were scanned — not that the discovery was credited or sold",
         [TriggerKind.Footfall] = "the Commander walked on a body no one had walked on — not what was found there",

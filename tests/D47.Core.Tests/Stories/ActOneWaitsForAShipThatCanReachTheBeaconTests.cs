@@ -8,8 +8,8 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 namespace D47.Core.Tests.Stories;
 
 /// <summary>
-/// An act-one chapter ends at the beacon only when the ship the Commander is in can reach it: a fleet carrier, or
-/// twenty jumps or fewer with a fuel scoop, never asking for more than 28 light years. Otherwise the chapter works toward a ship that can.
+/// An act-one chapter ends at the beacon only when the ship the Commander is in can reach it: a laser or railgun fitted, and a fleet carrier
+/// or twenty jumps or fewer with a fuel scoop, never asking for more than 28 light years. Otherwise the chapter works toward a ship that can.
 /// </summary>
 public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 {
@@ -60,8 +60,65 @@ public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
         Assert.True(BeaconReach.Of(BeyondTheBeacon(584), Flying(47.7, scoop: true).Ship, carrier: false).InReach);
 
     [Fact]
-    public void ACarrierOwnerIsAlwaysInReach() =>
+    public void ACarrierOwnerWithALaserIsInReachWhateverTheRangeAndScoop() =>
         Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false).Ship, carrier: true).InReach);
+
+    [Fact]
+    public void ACarrierOwnerWithNoLaserOrRailgunIsOutOfReachAndTheReasonIsOnlyTheWeapon()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false, hardpoint: null).Ship, carrier: true);
+
+        Assert.False(reach.InReach);
+        Assert.Equal("no laser or railgun is fitted", reach.Why);
+        Assert.True(reach.Unarmed);
+        Assert.True(reach.Carrier);
+    }
+
+    [Fact]
+    public void ARangeAndAScoopWithNoLaserOrRailgunIsOutOfReach()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, hardpoint: null).Ship, carrier: false);
+
+        Assert.False(reach.InReach);
+        Assert.Equal("no laser or railgun is fitted", reach.Why);
+        Assert.True(reach.Unarmed);
+        Assert.False(reach.Carrier);
+    }
+
+    [Fact]
+    public void AMissingWeaponIsNamedBesideTheRangeAndTheScoop()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false, hardpoint: null).Ship, carrier: false);
+
+        Assert.Contains("jump range of 7.6 light years", reach.Why);
+        Assert.EndsWith("no fuel scoop is fitted and no laser or railgun is fitted", reach.Why);
+    }
+
+    [Theory]
+    [InlineData("hpt_beamlaser_turret_large")]
+    [InlineData("hpt_pulselaserburst_gimbal_medium")]
+    [InlineData("hpt_railgun_fixed_medium")]
+    public void ALaserOrRailgunInAnyMountIsInReach(string item) =>
+        Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, hardpoint: item).Ship, carrier: false).InReach);
+
+    [Theory]
+    [InlineData("hpt_multicannon_fixed_medium")]
+    [InlineData("hpt_mininglaser_fixed_small")]
+    [InlineData("hpt_plasmaaccelerator_fixed_large")]
+    [InlineData("hpt_guardian_gausscannon_fixed_medium")]
+    public void AnyOtherWeaponIsOutOfReach(string item) =>
+        Assert.False(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, hardpoint: item).Ship, carrier: false).InReach);
+
+    [Fact]
+    public void ALoadoutThatListsNoModulesIsInReach()
+    {
+        var ship = new ShipLoadout().Apply(Tests.Adventures.AdventureFixtures.Event(
+            """{ "timestamp":"2026-10-14T10:00:00Z", "event":"Loadout", "Ship":"sidewinder", "ShipID":1, "MaxJumpRange":35, "Modules":[] }"""));
+
+        Assert.True(ship.IsKnown);
+        Assert.True(BeaconReach.Of(BeyondTheBeacon(686), ship, carrier: false).InReach);
+        Assert.True(BeaconReach.Of(BeyondTheBeacon(686), ship, carrier: true).InReach);
+    }
 
     [Trait("Category", "Integration")]
     [Fact]

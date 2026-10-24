@@ -315,13 +315,15 @@ internal sealed class StoryFixtures : IDisposable
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
     public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);
 
-    /// <summary>A Commander in a Sidewinder with this jump range, with or without a fuel scoop, and with or without a fleet carrier.</summary>
-    public static CommanderGameState Flying(double jumpRange, bool scoop, bool carrier = false)
+    /// <summary>A Commander in a Sidewinder with this jump range, with or without a fuel scoop, a weapon (a pulse laser unless <paramref name="hardpoint"/> names another) and a fleet carrier.</summary>
+    public static CommanderGameState Flying(double jumpRange, bool scoop, bool carrier = false, string? hardpoint = "hpt_pulselaser_fixed_small")
     {
         var state = new CommanderGameState(new CommanderIdentity("F1", "Test"));
-        var modules = scoop
-            ? """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true},{"Slot":"Slot01_Size2","Item":"int_fuelscoop_size2_class5","On":true}]"""
-            : """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true}]""";
+        var modules =
+            """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true}"""
+            + (scoop ? """,{"Slot":"Slot01_Size2","Item":"int_fuelscoop_size2_class5","On":true}""" : string.Empty)
+            + (hardpoint is null ? string.Empty : $$""",{"Slot":"SmallHardpoint1","Item":"{{hardpoint}}","On":true}""")
+            + "]";
 
         state.Apply(AdventureFixtures.Event(
             $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"sidewinder", "ShipID":1, "MaxJumpRange":{{jumpRange.ToString(System.Globalization.CultureInfo.InvariantCulture)}}, "Modules":{{modules}} }"""));

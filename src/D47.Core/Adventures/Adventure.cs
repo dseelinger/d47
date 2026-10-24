@@ -130,7 +130,7 @@ public enum TriggerKind
     /// <summary><c>+</c> influence marks in the <c>FactionEffects</c> of <c>MissionCompleted</c> for one <see cref="AdventureTrigger.Faction"/>, optionally in one <see cref="AdventureTrigger.SystemAddress"/>.</summary>
     Faction,
 
-    /// <summary>A <c>Loadout</c> whose ship has the jump range and a fuel scoop for the trip to a Guardian beacon, arriving in the beacon's system, or a <c>CarrierBuy</c>. Not counted.</summary>
+    /// <summary>A <c>Loadout</c> whose ship has the jump range, a fuel scoop and a laser or railgun for the trip to a Guardian beacon, arriving in the beacon's system, or a <c>CarrierBuy</c>. Not counted.</summary>
     Reach,
 
     /// <summary><c>JetConeBoost</c> events. <see cref="AdventureTrigger.Filter"/> limits it to <c>neutron</c> (a <c>BoostValue</c> of 4 or more) or <c>whitedwarf</c>.</summary>
@@ -282,6 +282,12 @@ public sealed record AdventureTrigger
     /// <summary>For <see cref="TriggerKind.Reach"/>: the jump range, in light years, the ship needs for the trip.</summary>
     public double? JumpRange { get; init; }
 
+    /// <summary>For <see cref="TriggerKind.Reach"/>: true when the ship lacked a laser or railgun when the chapter was written, so arriving does not meet it; null on an objective written before the weapon was asked for.</summary>
+    public bool? Unarmed { get; init; }
+
+    /// <summary>For <see cref="TriggerKind.Reach"/>: true when a fleet carrier stood in for the jump range, which the objective then does not name.</summary>
+    public bool? Carrier { get; init; }
+
     /// <summary>The engineer an <see cref="TriggerKind.Engineer"/> beat waits on.</summary>
     public string? Engineer { get; init; }
 
@@ -327,7 +333,7 @@ public sealed record AdventureTrigger
         TriggerKind.Land or TriggerKind.Scan => SystemAddress is not null && BodyId is not null,
         TriggerKind.Rank => Career is not null && Rank is not null,
         TriggerKind.Board => ShipType is not null,
-        TriggerKind.Reach => JumpRange > 0,
+        TriggerKind.Reach => JumpRange > 0 || Carrier == true,
         TriggerKind.Unlock => Knowledge.TechBrokerCatalogue.ForName(Filter) is not null,
         TriggerKind.Pledge => Filter is null || Knowledge.GalaxyFilters.Powers.Contains(Filter),
         TriggerKind.PowerRank => Rank is > 0,
@@ -463,10 +469,15 @@ public sealed record AdventureTrigger
     {
         TriggerKind.Scan =>
             $"Next: {Describe()} — the ship's own scanner from supercruise does it, or a close pass; no surface scanner is needed, and simply going there counts if you have scanned it before.",
-        TriggerKind.Beacon => $"Next: {Describe()} with the ship's data-link scanner.",
+        TriggerKind.Beacon =>
+            $"Next: scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.",
         TriggerKind.Site when Filter == TouristSite => $"Next: {Describe()} with the ship's data-link scanner.",
+        TriggerKind.Reach when Carrier == true =>
+            $"Next: fit a laser or railgun to the ship you take to the beacon in {System?.Trim() ?? "the Guardian beacon's system"}. Its pylons are charged by weapon fire before it can be scanned.",
         TriggerKind.Reach =>
-            $"Next: {Describe()}: a jump range of at least {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years and a fuel scoop. Arriving there in any ship also counts.",
+            $"Next: {Describe()}: a jump range of at least {JumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years"
+            + (Unarmed is null ? " and a fuel scoop." : ", a fuel scoop and a laser or railgun.")
+            + (Unarmed == true ? string.Empty : " Arriving there in any ship also counts."),
         _ when IsCounted => $"Next: {Describe()}, counted from now. {Progress(0)}.",
         _ => $"Next: {Describe()}.",
     };

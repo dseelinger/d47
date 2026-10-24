@@ -46,6 +46,8 @@ public sealed record MiniPanelServices
 
     public CrewSeatsHost? CrewSeats { get; init; }
 
+    public CharactersHost? Characters { get; init; }
+
     public D47.Core.Ships.BuildTalk? BuildTalk { get; init; }
 
     public RoutingSurface? Routing { get; init; }
@@ -171,6 +173,7 @@ public sealed record MiniPanelServices
                     : () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: Galaxy,
                 crewSeats: CrewSeats,
+                characters: Characters,
                 talk: BuildTalk,
                 status: Routing?.Status,
                 construction: Construction);

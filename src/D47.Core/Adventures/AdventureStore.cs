@@ -558,6 +558,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Engineer = record.Engineer?.Trim(),
         Stage = record.Stage?.Trim(),
         JumpRange = record.JumpRange,
+        Unarmed = record.Unarmed,
+        Carrier = record.Carrier,
         Event = record.Event?.Trim(),
         Where = new EventFilter((record.Where ?? []).Where(pair => pair.Field is not null && pair.Value is not null).Select(pair => new EventField(pair.Field!.Trim(), pair.Value!.Trim()))),
         Task = record.Task?.Trim(),
@@ -587,6 +589,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Engineer = trigger.Engineer,
         Stage = trigger.Stage,
         JumpRange = trigger.JumpRange,
+        Unarmed = trigger.Unarmed,
+        Carrier = trigger.Carrier,
         Event = trigger.Event,
         Where = trigger.Where.Count > 0 ? [.. trigger.Where.Select(pair => new WhereRecord { Field = pair.Field, Value = pair.Value })] : null,
         Task = trigger.Task,
@@ -865,6 +869,10 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public bool? New { get; set; }
 
         public double? JumpRange { get; set; }
+
+        public bool? Unarmed { get; set; }
+
+        public bool? Carrier { get; set; }
 
         public string? Engineer { get; set; }
 

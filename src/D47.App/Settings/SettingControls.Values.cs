@@ -930,50 +930,11 @@ internal sealed partial class SettingControls
         // The work is "until the list is on screen", not "until the Commander has chosen": what can take a
         // moment is asking the machine for its capture devices or a provider for its voices.
         var listed = new TaskCompletionSource();
-        var clips = row.ChoiceClips?.Invoke(host.Settings.Current);
 
         prompts.Pick(
             $"settings-pick:{row.Key}",
             row.Label,
-            new PickerRequest
-            {
-                Prompt = row.Label,
-
-                // A voice row states what a press costs instead; every other row's help is readable here,
-                // where a ray cannot reach the label's hover text.
-                Help = row.Audition is null ? row.Help : clips?.Help,
-                Clips = clips,
-                Choices = row.ChoicesFor(host.Settings.Current),
-
-                // Read at open like the choices themselves: a label can depend on the provider serving the
-                // list right now, and on the rest of the list beside it (#152).
-                Describe = row.DescriberFor(host.Settings.Current),
-                Current = host.Settings.Read(row.Key),
-                DefaultDisplay = row.IsClearable ? row.BareDefaultFor(host.Settings.Current) : null,
-                AllowsFreeText = row.AllowsFreeText,
-                WhyEmpty = row.WhyNoChoicesFor(host.Settings.Current),
-
-                // Read at open like the choices themselves, and for the same reason: which properties the
-                // list has depends on the provider serving it right now (#146).
-                Facet = row.Facet?.Invoke(host.Settings.Current),
-                Facets = row.Facets?.Invoke(host.Settings.Current),
-                ChoiceNoun = row.ChoiceNoun ?? "choices",
-                Sorts = row.Audition is null ? null : [PickerSort.Name],
-
-                // Read at open rather than captured once, because both the price and the reason it might be
-                // unavailable follow the selected provider.
-                Audition = row.Audition is { } audition
-                    ? new PickerAudition
-                    {
-                        Play = audition.Play,
-                        Preview = audition.Preview,
-                        HasPreview = audition.HasPreview,
-                        Cost = audition.Cost(host.Settings.Current),
-                        LineCost = audition.LineCost?.Invoke(host.Settings.Current),
-                        Unavailable = audition.Unavailable?.Invoke(host.Settings.Current),
-                    }
-                    : null,
-            },
+            PickerRequestFor(row, host.Settings.Current, host.Settings.Read(row.Key)),
             result =>
             {
                 host.Apply(row.Key, result.Value, message);
@@ -982,6 +943,52 @@ internal sealed partial class SettingControls
             onListed: () => listed.TrySetResult());
 
         await Busy.While(button, busy, () => listed.Task);
+    }
+
+    /// <summary>The picker page's request for a choice row, with <paramref name="value"/> as the current choice.</summary>
+    internal static PickerRequest PickerRequestFor(SettingRow row, D47Settings current, string? value)
+    {
+        var clips = row.ChoiceClips?.Invoke(current);
+
+        return new PickerRequest
+        {
+            Prompt = row.Label,
+
+            // A voice row states what a press costs instead; every other row's help is readable here,
+            // where a ray cannot reach the label's hover text.
+            Help = row.Audition is null ? row.Help : clips?.Help,
+            Clips = clips,
+            Choices = row.ChoicesFor(current),
+
+            // Read at open like the choices themselves: a label can depend on the provider serving the
+            // list right now, and on the rest of the list beside it (#152).
+            Describe = row.DescriberFor(current),
+            Current = value,
+            DefaultDisplay = row.IsClearable ? row.BareDefaultFor(current) : null,
+            AllowsFreeText = row.AllowsFreeText,
+            WhyEmpty = row.WhyNoChoicesFor(current),
+
+            // Read at open like the choices themselves, and for the same reason: which properties the
+            // list has depends on the provider serving it right now (#146).
+            Facet = row.Facet?.Invoke(current),
+            Facets = row.Facets?.Invoke(current),
+            ChoiceNoun = row.ChoiceNoun ?? "choices",
+            Sorts = row.Audition is null ? null : [PickerSort.Name],
+
+            // Read at open rather than captured once, because both the price and the reason it might be
+            // unavailable follow the selected provider.
+            Audition = row.Audition is { } audition
+                ? new PickerAudition
+                {
+                    Play = audition.Play,
+                    Preview = audition.Preview,
+                    HasPreview = audition.HasPreview,
+                    Cost = audition.Cost(current),
+                    LineCost = audition.LineCost?.Invoke(current),
+                    Unavailable = audition.Unavailable?.Invoke(current),
+                }
+                : null,
+        };
     }
 
     /// <summary>Binds by listening for a gesture, rather than by offering a list of key names.</summary>

@@ -353,14 +353,13 @@ public static class AdventureFold
                 journalEvent.Kind is "ShipyardNew" or "ShipyardSwap"
                 && string.Equals(raw.String("ShipType"), trigger.ShipType, StringComparison.OrdinalIgnoreCase),
 
-            // Arriving in the beacon's system proves the ship can make the trip, whatever its range.
+            // Arriving in the beacon's system proves the ship can make the trip, whatever its range, unless the ship had no laser or railgun.
             TriggerKind.Reach =>
-                journalEvent.Kind is "CarrierBuy"
-                || (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
-                    && string.Equals(raw.String("StarSystem"), trigger.System?.Trim(), StringComparison.OrdinalIgnoreCase))
-                || (journalEvent.Kind is "Loadout"
-                    && trigger.JumpRange is { } needed
-                    && Stories.BeaconReach.CanMakeTrip(new Journal.ShipLoadout().Apply(journalEvent), needed)),
+                (trigger.Unarmed != true
+                    && (journalEvent.Kind is "CarrierBuy"
+                        || (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+                            && string.Equals(raw.String("StarSystem"), trigger.System?.Trim(), StringComparison.OrdinalIgnoreCase))))
+                || (journalEvent.Kind is "Loadout" && LoadoutMakesTheTrip(trigger, new Journal.ShipLoadout().Apply(journalEvent))),
 
             TriggerKind.Beacon =>
                 systemAddress == trigger.SystemAddress
@@ -576,6 +575,11 @@ public static class AdventureFold
 
     private static MissionBinding? Bound(AdventureTrigger trigger, AdventureStanding? standing) =>
         trigger.Handle is { } handle && standing?.Handles.TryGetValue(handle.Trim(), out var binding) == true ? binding : null;
+
+    private static bool LoadoutMakesTheTrip(AdventureTrigger trigger, Journal.ShipLoadout ship) =>
+        trigger.Carrier == true
+            ? Stories.BeaconReach.HasWeapon(ship)
+            : trigger.JumpRange is { } needed && Stories.BeaconReach.CanMakeTrip(ship, needed, weaponNeeded: trigger.Unarmed is not null);
 
     private static bool Named(string? wanted, string? actual) =>
         !string.IsNullOrWhiteSpace(wanted) && string.Equals(wanted.Trim(), actual?.Trim(), StringComparison.OrdinalIgnoreCase);

@@ -202,6 +202,9 @@ public sealed record ShipLoadout
     /// <summary>The Fuel Scoop symbol family.</summary>
     public const string FuelScoop = "int_fuelscoop";
 
+    /// <summary>The symbol families of the weapons that charge a Guardian beacon's pylons: pulse and burst lasers, beam lasers and railguns.</summary>
+    public static readonly IReadOnlyList<string> BeaconWeapons = ["hpt_pulselaser", "hpt_beamlaser", "hpt_railgun"];
+
     /// <summary>The fitted frame shift drive, or null where the loadout does not list one.</summary>
     public ShipModule? FrameShiftDrive =>
         Modules.FirstOrDefault(module => string.Equals(module.Slot, "FrameShiftDrive", StringComparison.OrdinalIgnoreCase));
@@ -217,6 +220,12 @@ public sealed record ShipLoadout
     public bool? Fitted(string family) =>
         IsKnown && Modules.Count > 0
             ? Modules.Any(module => module.Item.StartsWith(family, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+    /// <summary>Whether a module from any of the symbol families is fitted, or null when this loadout cannot answer.</summary>
+    public bool? FittedAny(IReadOnlyList<string> families) =>
+        IsKnown && Modules.Count > 0
+            ? Modules.Any(module => families.Any(family => module.Item.StartsWith(family, StringComparison.OrdinalIgnoreCase)))
             : null;
 
     /// <summary>Hull plus modules.</summary>

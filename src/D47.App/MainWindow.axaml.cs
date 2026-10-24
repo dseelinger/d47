@@ -270,6 +270,7 @@ public partial class MainWindow : Window
                 carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: () => host.Settings.Current.Knowledge.GalaxySearch ? host.Galaxy : null,
                 crewSeats: host.CrewSeatsHost,
+                characters: host.CharactersHost,
                 talk: host.BuildTalk,
                 status: () => host.LiveStatus,
                 construction: Construction);

@@ -5,7 +5,7 @@ using D47.Core.Persona;
 namespace D47.Core.Stories;
 
 /// <summary>The Guardian beacon nearest the Commander, how far it is, and whether the ship they are in can make the trip.</summary>
-public sealed record BeaconReach(long Address, string System, double LightYears, bool InReach, string? Why)
+public sealed record BeaconReach(long Address, string System, double LightYears, bool InReach, string? Why, bool Unarmed = false, bool Carrier = false)
 {
     /// <summary>The most jumps a trip to the beacon may take for it to be in reach.</summary>
     public const int MostJumps = 20;
@@ -14,8 +14,8 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     public const double MostRangeNeeded = 28;
 
     /// <summary>
-    /// In reach with a fleet carrier, or within <see cref="MostJumps"/> jumps at the ship's jump range with a fuel
-    /// scoop fitted. What the journal has not said counts in the Commander's favour.
+    /// In reach with a laser or railgun fitted and either a fleet carrier or a fuel scoop and a jump range for
+    /// <see cref="MostJumps"/> jumps or fewer. What the journal has not said counts in the Commander's favour.
     /// </summary>
     public static BeaconReach Of(StarPosition? here, ShipLoadout ship, bool carrier)
     {
@@ -24,24 +24,42 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
         var (address, system) = GuardianCores.NearestBeacon(here);
         var lightYears = GuardianCores.BeaconPositions[address].DistanceTo(here ?? StarPosition.Origin);
 
-        if (carrier || !ship.IsKnown)
+        if (!ship.IsKnown)
         {
             return new BeaconReach(address, system, lightYears, true, null);
         }
 
-        var needed = RangeNeeded(lightYears);
-        var tooFar = ship.MaxJumpRange is { } range && !RangeEnough(range, needed);
-        var noScoop = ship.Fitted(ShipLoadout.FuelScoop) is false;
+        var noWeapon = ship.FittedAny(ShipLoadout.BeaconWeapons) is false;
+        var parts = new List<string>();
 
-        var why = (tooFar, noScoop) switch
+        if (!carrier)
         {
-            (true, true) => $"{Range(ship, needed)} and no fuel scoop is fitted",
-            (true, false) => Range(ship, needed),
-            (false, true) => "no fuel scoop is fitted",
-            _ => null,
+            var needed = RangeNeeded(lightYears);
+
+            if (ship.MaxJumpRange is { } range && !RangeEnough(range, needed))
+            {
+                parts.Add(Range(ship, needed));
+            }
+
+            if (ship.Fitted(ShipLoadout.FuelScoop) is false)
+            {
+                parts.Add("no fuel scoop is fitted");
+            }
+        }
+
+        if (noWeapon)
+        {
+            parts.Add(NoWeapon);
+        }
+
+        var why = parts.Count switch
+        {
+            0 => null,
+            1 => parts[0],
+            _ => $"{string.Join(", ", parts.SkipLast(1))} and {parts[^1]}",
         };
 
-        return new BeaconReach(address, system, lightYears, why is null, why);
+        return new BeaconReach(address, system, lightYears, why is null, why, noWeapon, carrier);
     }
 
     /// <summary>
@@ -52,13 +70,27 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
 
     public static bool RangeEnough(double range, double needed) => range > 0 && range >= needed;
 
-    /// <summary>Whether the ship has a known jump range of at least <paramref name="needed"/> and a fuel scoop fitted; what the journal has not said counts against it.</summary>
-    public static bool CanMakeTrip(ShipLoadout ship, double needed)
+    /// <summary>
+    /// Whether the ship has a known jump range of at least <paramref name="needed"/>, a fuel scoop and, when <paramref name="weaponNeeded"/>,
+    /// a laser or railgun fitted; what the journal has not said counts against it.
+    /// </summary>
+    public static bool CanMakeTrip(ShipLoadout ship, double needed, bool weaponNeeded = true)
     {
         ArgumentNullException.ThrowIfNull(ship);
 
-        return ship.MaxJumpRange is { } range && RangeEnough(range, needed) && ship.Fitted(ShipLoadout.FuelScoop) is true;
+        return ship.MaxJumpRange is { } range && RangeEnough(range, needed) && ship.Fitted(ShipLoadout.FuelScoop) is true
+            && (!weaponNeeded || HasWeapon(ship));
     }
+
+    /// <summary>Whether a laser or railgun is fitted; what the journal has not said counts against it.</summary>
+    public static bool HasWeapon(ShipLoadout ship)
+    {
+        ArgumentNullException.ThrowIfNull(ship);
+
+        return ship.FittedAny(ShipLoadout.BeaconWeapons) is true;
+    }
+
+    private const string NoWeapon = "no laser or railgun is fitted";
 
     private static string Range(ShipLoadout ship, double needed) =>
         $"the ship's jump range of {ship.MaxJumpRange.GetValueOrDefault().ToString("0.0", CultureInfo.InvariantCulture)} light years "

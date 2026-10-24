@@ -3639,6 +3639,7 @@ public sealed class AppHost : IDisposable
         host.Activities = activities;
         host.Adventures = (adventureBook, adventureGenerator);
         host.Stories = storyDirector;
+        host.StoryStore = storyStore;
         host.StoryDownloads = storyDownloads;
         host.CodexPictures = new CodexPictureStore(
             files,
@@ -5842,6 +5843,35 @@ public sealed class AppHost : IDisposable
         () => [.. Speech.VoiceIds().Select(id => (id, Speech.VoiceLabelFor(id)))],
         () => D47.Core.Audio.VoiceGroups.ProviderFor(Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
         () => [Personas.Current.Name, .. new[] { Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]);
+
+    private D47.App.Panel.CharactersHost? _charactersHost;
+
+    /// <summary>What Asset Mgmt › Characters reads, shared by the window and the headset.</summary>
+    public D47.App.Panel.CharactersHost CharactersHost => _charactersHost ??= new D47.App.Panel.CharactersHost(
+        () => Characters,
+        Settings,
+        RunningCast,
+        (from, to, cancellationToken) => Settings.Current.Knowledge.GalaxySearch && Galaxy is { } galaxy
+            ? galaxy.DistanceAsync(from, to, cancellationToken)
+            : Task.FromResult<double?>(null));
+
+    /// <summary>The story store, for the cast the running story has introduced.</summary>
+    public D47.Core.Stories.StoryStore? StoryStore { get; set; }
+
+    private D47.App.Panel.RunningCast? RunningCast(string? frontierId)
+    {
+        if (Stories is not { } director || StoryStore?.Current(frontierId) is not { State: D47.Core.Stories.StoryState.Running } story)
+        {
+            return null;
+        }
+
+        var cast = director.PrimaryCast(story.Id);
+
+        return new D47.App.Panel.RunningCast(
+            story.Id,
+            story.Title,
+            [.. story.Introduced.Select(id => cast.FirstOrDefault(member => member.Shown.Id == id)).OfType<D47.Core.Stories.StoryCastMember>()]);
+    }
 
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
     internal const string CastSampleSentence = "This is the voice you will hear me speak in.";

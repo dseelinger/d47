@@ -525,6 +525,8 @@ public static class BuiltinCapabilities
             () => settings.Current.Knowledge.ServerStatus,
             now ?? (() => DateTimeOffset.MinValue)),
 
+        CharactersCapability.Create(),
+
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
         AboutCapability.Create(

@@ -21,6 +21,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     private ComparePage? _comparePage;
     private StoredModulesPage? _storedModulesPage;
     private CrewPage? _crewPage;
+    private CharactersPage? _charactersPage;
+    private Func<NavCrumb, Control>? _charactersBuild;
     private (object? Materials, object? Suit, object? Colonisation) _planStock;
     private (object?, object?, object?, string?, bool) _inventorySeen;
     private Func<D47.Core.Journal.CommanderGameState?>? _loadoutState;
@@ -44,7 +46,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         CrewSeatsHost? crewSeats = null,
         D47.Core.Ships.BuildTalk? talk = null,
         Func<D47.Core.Journal.GameStatus>? status = null,
-        ConstructionSurface? construction = null)
+        ConstructionSurface? construction = null,
+        CharactersHost? characters = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status,
             D47.App.Input.DesktopClipboard.ReadTextAsync,
@@ -104,6 +107,22 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                 Help = D47.Core.Capabilities.Builtin.CrewCapability.Id,
             },
         };
+
+        if (characters is not null)
+        {
+            _charactersBuild = _ => _charactersPage = new CharactersPage(
+                characters,
+                state,
+                host.Prompts,
+                host.Portraits,
+                host.Model?.CarrierPictureSource,
+                host.Headset);
+
+            roots.Add(new NavCrumb(CharactersPage.RootKey, "Characters")
+            {
+                Help = D47.Core.Capabilities.Builtin.CharactersCapability.Id,
+            });
+        }
 
         if (onFoot is not null)
         {
@@ -335,6 +354,11 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             changed |= crewPage.Tick();
         }
 
+        if (_charactersPage is { } charactersPage && nav.RootKeyOf(PanelTab.Assets) == CharactersPage.RootKey)
+        {
+            changed |= charactersPage.Tick();
+        }
+
         // The Materials page measures plans against the inventory, which moves without either store saying so.
         if (_gap is { } gap && nav.RootKeyOf(PanelTab.Assets) == LoadoutPages.GapRoot)
         {
@@ -366,6 +390,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     /// <summary>Draws an Asset Mgmt level: the Construction page, the engineer pages, or whatever the loadout roots draw.</summary>
     private Control BuildAssets(NavCrumb crumb) =>
         crumb.Key == ConstructionPage.RootKey && _constructionBuild is { } construction ? construction(crumb)
+        : crumb.Key == CharactersPage.RootKey && _charactersBuild is { } characters ? characters(crumb)
         : EngineersPages.Owns(crumb) && _engineerBuild is { } engineers ? engineers(crumb)
         : _loadoutBuild is { } loadout ? loadout(crumb)
         : new TextBlock { Text = "Nothing here." };

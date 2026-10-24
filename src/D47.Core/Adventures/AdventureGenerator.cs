@@ -88,7 +88,7 @@ public sealed record AdventureDestination(long SystemAddress, string System, int
 }
 
 /// <summary>The Guardian beacon an act-one chapter works toward but cannot reach, and why.</summary>
-public sealed record AdventureBeaconAway(string System, double LightYears, string Why);
+public sealed record AdventureBeaconAway(string System, double LightYears, string Why, bool Unarmed = false, bool Carrier = false);
 
 /// <summary>An activity a chapter must contain one beat of; a mission beat matches when its family starts with <see cref="MissionFamily"/>.</summary>
 public sealed record AdventureActivity(string Name, TriggerKind Kind, string? MissionFamily = null)
@@ -2151,7 +2151,7 @@ public sealed class AdventureGenerator(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
                 + "This chapter has no beacon objective and keeps every hop within the reach. It works toward a ship that can make "
-                + "the trip: credits, a better ship, a fuel scoop or a longer jump range. Its last objective may be \"reach\", which any ship that can make the trip meets.");
+                + "the trip: credits, a better ship, a laser or railgun, a fuel scoop or a longer jump range. Its last objective may be \"reach\", which any ship that can make the trip meets.");
         }
 
         if (story.Beacon is { } beacon)
@@ -2159,7 +2159,7 @@ public sealed class AdventureGenerator(
             text.AppendLine();
             text.AppendLine(
                 $"This chapter ends act one at a Guardian beacon: its last objective is \"beacon\", the Commander "
-                + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner. That scan is when the "
+                + $"scanning the Guardian beacon in {beacon.System} with the ship's data-link scanner after charging its three pylons with laser or railgun fire. That scan is when the "
                 + "Guardian cores come aboard. The reason to go is the public layer's beacon line. That objective may be farther "
                 + "than the reach; every other hop keeps to it.");
         }
@@ -2663,13 +2663,13 @@ public sealed class AdventureGenerator(
         if (reachAway is not null)
         {
             text.AppendLine(
-                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with the jump range and a fuel scoop, bought or refitted. "
+                $"- \"reach\": the Commander's ship can make the trip to the Guardian beacon in {reachAway.System}: any ship with the jump range, a fuel scoop and a laser or railgun, bought or refitted. "
                 + "Use it to end this chapter on the ship instead of naming a hull with \"board\". Leave the place to d47.");
         }
 
         if (beacon is not null)
         {
-            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}. The last objective and no other; write its kind, title and line, and leave the place to d47.");
+            text.AppendLine($"- \"beacon\": the Commander scans the Guardian beacon in {beacon.System}, after charging its pylons with laser or railgun fire. The last objective and no other; write its kind, title and line, and leave the place to d47.");
         }
 
         text.AppendLine();
@@ -3477,7 +3477,14 @@ public sealed class AdventureGenerator(
             {
                 if (ask.Story?.BeaconAway is { } away)
                 {
-                    trigger = new AdventureTrigger { Kind = TriggerKind.Reach, System = away.System, JumpRange = BeaconReach.RangeNeeded(away.LightYears) };
+                    trigger = new AdventureTrigger
+                    {
+                        Kind = TriggerKind.Reach,
+                        System = away.System,
+                        JumpRange = away.Carrier ? null : BeaconReach.RangeNeeded(away.LightYears),
+                        Unarmed = away.Unarmed,
+                        Carrier = away.Carrier ? true : null,
+                    };
                 }
                 else
                 {

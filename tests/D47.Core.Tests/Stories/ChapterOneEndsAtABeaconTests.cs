@@ -54,7 +54,9 @@ public sealed class ChapterOneEndsAtABeaconTests
         Assert.Equal(TriggerKind.Beacon, chapter.Beats[^1].Trigger.Kind);
         Assert.Equal(BeaconAddress, chapter.Beats[^1].Trigger.SystemAddress);
         Assert.Equal(Beacon, chapter.Beats[^1].Trigger.System);
-        Assert.Equal($"Next: scan the Guardian beacon in {Beacon} with the ship's data-link scanner.", chapter.Beats[^1].Trigger.HandOff());
+        Assert.Equal(
+            $"Next: scan the Guardian beacon in {Beacon}. Charge its three pylons with laser or railgun fire, all within a few minutes, then data-link scan the core it opens. It releases an Ancient Key, which needs a cargo scoop or collector limpet and 1 t of free cargo.",
+            chapter.Beats[^1].Trigger.HandOff());
 
         var prompt = fixtures.Provider.Requests[0].Prompt.History[0].Text;
 
