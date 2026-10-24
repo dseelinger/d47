@@ -46,9 +46,9 @@ WHITELIST = [
 ]
 
 # A committed Knowledge table column that already names a whitelisted field's values:
-# "Event.Field" -> (file, column, lower-case the value).
+# "Event.Field" -> (file, column, lower-case the value, only rows whose column equals a value).
 KNOWLEDGE_COLUMNS = {
-    "MaterialCollected.Name": ("Materials.tsv", "symbol", False),
+    "MaterialCollected.Name": ("Materials.tsv", "symbol", False, ("ledger", "material")),
 }
 
 # Gates a drawn step needs: ActivityGate names, comma separated.

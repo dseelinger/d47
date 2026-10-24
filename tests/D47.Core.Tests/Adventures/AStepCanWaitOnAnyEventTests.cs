@@ -200,4 +200,33 @@ public sealed class AStepCanWaitOnAnyEventTests
         Assert.False(AdventureTrigger.IsAuthorable(TriggerKind.Event));
         Assert.Contains("event", AdventureValidation.Kinds);
     }
+
+    [Fact]
+    public void ANewStepCannotWaitOnACargoNamedAsAMaterial()
+    {
+        var gold = new AdventureTrigger { Kind = TriggerKind.Event, Event = "MaterialCollected", Where = new EventFilter([new EventField("Name", "gold")]), Task = "collect a material" };
+        var iron = gold with { Where = new EventFilter([new EventField("Name", "iron")]) };
+
+        Assert.Single(AdventureValidation.EventProblems("Beat one", gold));
+        Assert.Empty(AdventureValidation.EventProblems("Beat one", iron));
+    }
+
+    [Fact]
+    public void AStoredStepKeepsAMaterialNameTheTableNoLongerHolds()
+    {
+        var files = new MemoryFileSystem();
+        var step = new AdventureTrigger { Kind = TriggerKind.Event, Event = "MaterialCollected", Where = new EventFilter([new EventField("Name", "iron")]), Count = 1, Task = "collect a material" };
+        var route = LanternRoute(Accepted);
+        var adventure = route with { Beats = [route.Beats[0], Beat("The Count", "catalyst", step, "Done."), .. route.Beats.Skip(2)] };
+
+        Assert.Null(new AdventureStore(AdventuresFile, files, NullLogger<AdventureStore>.Instance).Save("F1", adventure));
+        files.WriteText(AdventuresFile, files.ReadText(AdventuresFile)!.Replace("\"iron\"", "\"gold\"", StringComparison.Ordinal));
+
+        var reread = new AdventureStore(AdventuresFile, files, NullLogger<AdventureStore>.Instance);
+        reread.Poll();
+
+        Assert.Empty(reread.Problems);
+        var stored = reread.Find("F1", adventure.Key)!;
+        Assert.Equal(new EventField("Name", "gold"), Assert.Single(stored.Beats[1].Trigger.Where));
+    }
 }

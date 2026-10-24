@@ -454,7 +454,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Offered = record.Offered is { Beat: >= 0, At: not null } offered ? new AdventureOffer(offered.Beat!.Value, offered.At.Value) : null,
         };
 
-        var refusals = AdventureValidation.Problems(adventure);
+        var refusals = AdventureValidation.Problems(adventure, loading: true);
 
         if (refusals.Count > 0)
         {

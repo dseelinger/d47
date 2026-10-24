@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter no longer asks you to collect a cargo or on-foot item as a material. Steps that wait on collecting a material name only engineering materials; chapters already saved with another name still load.
+
 A story no longer sends you to a Guardian site on a body that cannot be landed on. Only landable bodies with a Guardian signal are offered as site objectives.
 
 Hovering a segment of a goal's track on the checklist page shows that segment's name: the rank on a rank goal, the rank on the Powerplay track, "Clue N" on a story. The collapsed track has a taller hover area than its 6px drawing.

@@ -123,8 +123,8 @@ public static class AdventureValidation
         return text.Trim().All(char.IsLetter) && Enum.TryParse(text.Trim(), ignoreCase: true, out kind) && Enum.IsDefined(kind);
     }
 
-    /// <summary>What stops this being stored or begun, each naming where and why.</summary>
-    public static IReadOnlyList<string> Problems(Adventure adventure)
+    /// <summary>What stops this being stored or begun, each naming where and why. A story being loaded keeps event values the step event table no longer holds.</summary>
+    public static IReadOnlyList<string> Problems(Adventure adventure, bool loading = false)
     {
         ArgumentNullException.ThrowIfNull(adventure);
 
@@ -171,7 +171,7 @@ public static class AdventureValidation
 
         problems.AddRange(ScansOutOfOrder(adventure.Beats));
         problems.AddRange(MissionHandleProblems(adventure.Beats));
-        problems.AddRange(ChoiceProblems(adventure.Beats, adventure.OpeningLines));
+        problems.AddRange(ChoiceProblems(adventure.Beats, adventure.OpeningLines, loading));
 
         for (var index = 0; index < adventure.Beats.Count; index++)
         {
@@ -233,7 +233,7 @@ public static class AdventureValidation
 
                 if (step.Trigger.IsCounted)
                 {
-                    problems.AddRange(CountedProblems(stepWhere, step.Trigger));
+                    problems.AddRange(CountedProblems(stepWhere, step.Trigger, loading));
                     continue;
                 }
 
@@ -372,7 +372,7 @@ public static class AdventureValidation
         trigger.IsCounted ? trigger with { Count = 1 } : trigger;
 
     /// <summary>What is wrong with a counted trigger: a count under one, or a mission family that is not one or is set aside.</summary>
-    public static IEnumerable<string> CountedProblems(string where, AdventureTrigger trigger)
+    public static IEnumerable<string> CountedProblems(string where, AdventureTrigger trigger, bool loading = false)
     {
         ArgumentNullException.ThrowIfNull(trigger);
 
@@ -424,7 +424,7 @@ public static class AdventureValidation
 
         if (trigger.Kind == TriggerKind.Event)
         {
-            foreach (var problem in EventProblems(where, trigger))
+            foreach (var problem in EventProblems(where, trigger, loading))
             {
                 yield return problem;
             }
@@ -432,7 +432,7 @@ public static class AdventureValidation
     }
 
     /// <summary>What is wrong with an event trigger: an event or field the step event table does not allow, a value the field does not allow, or a task that is empty or too long.</summary>
-    public static IEnumerable<string> EventProblems(string where, AdventureTrigger trigger)
+    public static IEnumerable<string> EventProblems(string where, AdventureTrigger trigger, bool loading = false)
     {
         ArgumentNullException.ThrowIfNull(trigger);
 
@@ -453,7 +453,7 @@ public static class AdventureValidation
                 {
                     yield return $"{where} tests the field \"{pair.Field}\", which {name} does not have; its fields are {string.Join(", ", fields)}.";
                 }
-                else if (!catalogue.AllowsValue(name, pair.Field, pair.Value))
+                else if (!loading && !catalogue.AllowsValue(name, pair.Field, pair.Value))
                 {
                     yield return $"{where} tests {name} {pair.Field} against \"{pair.Value}\", which that field does not allow.";
                 }
@@ -551,7 +551,7 @@ public static class AdventureValidation
     /// too many options, a missing or long label, an option step that travels or is a choice, options on a step that is not a choice, or
     /// an ending that is unnamed, unsaid, named twice or named as the failure.
     /// </summary>
-    public static IEnumerable<string> ChoiceProblems(IReadOnlyList<AdventureBeat> beats, IReadOnlyList<AdventureLine> opening)
+    public static IEnumerable<string> ChoiceProblems(IReadOnlyList<AdventureBeat> beats, IReadOnlyList<AdventureLine> opening, bool loading = false)
     {
         var endings = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -611,7 +611,7 @@ public static class AdventureValidation
                         }
                         else if (optionStep.Trigger.IsCounted)
                         {
-                            foreach (var problem in CountedProblems(optionWhere, optionStep.Trigger))
+                            foreach (var problem in CountedProblems(optionWhere, optionStep.Trigger, loading))
                             {
                                 yield return problem;
                             }

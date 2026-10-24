@@ -155,4 +155,21 @@ public sealed class AStepNamesAnEventOnlyIfTheTableHoldsItTests
 
         Assert.Empty(stray);
     }
+
+    [Fact]
+    public void MaterialCollectedNamesOnlyEngineeringMaterials()
+    {
+        var shipped = StepEventCatalogue.Default;
+        var materials = MaterialCatalogue.All.Where(entry => entry.Ledger == MaterialLedger.Material).Select(entry => entry.Symbol).ToHashSet(StringComparer.Ordinal);
+        var stray = shipped.ValuesOf("MaterialCollected", "Name").Where(value => !materials.Contains(value)).ToList();
+
+        Assert.Empty(stray);
+        Assert.True(shipped.AllowsValue("MaterialCollected", "Name", "iron"));
+        Assert.True(shipped.IsDrawableValue("MaterialCollected", "Name", "adaptiveencryptors"));
+
+        foreach (var cargoOrItem in new[] { "ancientkey", "gold", "aerogel" })
+        {
+            Assert.False(shipped.AllowsValue("MaterialCollected", "Name", cargoOrItem));
+        }
+    }
 }

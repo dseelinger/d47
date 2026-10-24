@@ -73,7 +73,7 @@ def declared_fields(schema: dict) -> list[tuple[str, str, dict]]:
     return sorted(fields)
 
 
-def knowledge_values(file: str, column: str, lower: bool) -> set[str]:
+def knowledge_values(file: str, column: str, lower: bool, only: tuple[str, str] | None = None) -> set[str]:
     values: set[str] = set()
     header: list[str] | None = None
     for line in (KNOWLEDGE / file).read_text(encoding="utf-8").splitlines():
@@ -87,6 +87,10 @@ def knowledge_values(file: str, column: str, lower: bool) -> set[str]:
             continue
         cells = line.split("\t")
         if column in header and header.index(column) < len(cells) and cells[header.index(column)]:
+            if only is not None:
+                at = header.index(only[0]) if only[0] in header else -1
+                if at < 0 or at >= len(cells) or cells[at] != only[1]:
+                    continue
             value = cells[header.index(column)]
             values.add(value.lower() if lower else value)
     return values
