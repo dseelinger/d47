@@ -34,6 +34,9 @@ public sealed partial class SpeakerPictures(IFileSystem files, string chosenFold
     /// <summary>A hired pilot's picture name, from their crew id.</summary>
     public static string Crew(long crewId) => "crew." + crewId.ToString(CultureInfo.InvariantCulture);
 
+    /// <summary>A custom character's picture name, from its id.</summary>
+    public static string Character(string characterId) => "character." + characterId;
+
     /// <summary>
     /// The picture name of the carrier captain or the tower speaking in a voice of <paramref name="gender"/>, carrying
     /// the Commander's Frontier id when known; null for any other role, or a voice whose listing gives no gender.

@@ -35,6 +35,7 @@ public sealed class AppPaths
         PronunciationsFile = Path.Combine(Data, PronunciationOverrides.FileName);
         NameAccentsFile = Path.Combine(Data, "name-accents.json");
         CrewSeatsFile = Path.Combine(Data, "crew-seats.json");
+        CharactersFile = Path.Combine(Data, "characters.json");
         VrActions = Path.Combine(Data, "vr-actions");
         DonorTokenFile = Path.Combine(Data, "donor-token.txt");
         EddnUploadersFile = Path.Combine(Data, "eddn-uploaders.json");
@@ -96,6 +97,9 @@ public sealed class AppPaths
 
     /// <summary>The crew seats of every ship.</summary>
     public string CrewSeatsFile { get; }
+
+    /// <summary>Each Commander's own characters, and their notes on the captain, the tower and story cast.</summary>
+    public string CharactersFile { get; }
 
     /// <summary>
     /// The OpenVR action manifest and its binding files, written here rather than shipped as content
