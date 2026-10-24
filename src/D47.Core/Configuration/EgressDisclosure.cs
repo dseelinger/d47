@@ -238,6 +238,7 @@ public static class EgressDisclosure
     /// </param>
     /// <param name="imagesAvailable">Whether the model in use reads pictures.</param>
     /// <param name="codexPublishTokenPresent">Whether a codex publish token is stored or in the environment.</param>
+    /// <param name="remoteCharacterSystems">The systems the Commander's remote characters are in.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
@@ -245,7 +246,8 @@ public static class EgressDisclosure
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
-        bool codexPublishTokenPresent = false) => id switch
+        bool codexPublishTokenPresent = false,
+        IReadOnlyList<string>? remoteCharacterSystems = null) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
@@ -291,6 +293,9 @@ public static class EgressDisclosure
                 + "to spansh.co.uk as you type. "
                 + "Asking for a home system suggestion sends the names of systems you have claimed for colonisation, "
                 + "your pledged Power, your squadron's minor faction and your position for a search within 200 light years. "
+                + (remoteCharacterSystems is { Count: > 0 } remote
+                    ? $"Addressing a character who is not aboard sends your system and theirs, to measure the distance: the systems your remote characters are in ({string.Join(", ", remote)}). "
+                    : string.Empty)
                 + "No key and no identifier goes with any of it.",
                 Active: true,
                 Summary: "Sends the system name and search filters you ask about, and your location "
@@ -1090,8 +1095,9 @@ public static class EgressDisclosure
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
-        bool codexPublishTokenPresent = false) =>
-        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent))];
+        bool codexPublishTokenPresent = false,
+        IReadOnlyList<string>? remoteCharacterSystems = null) =>
+        [.. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems))];
 
     /// <summary>The same disclosure as prose, for the tool result and the spoken path.</summary>
     public static string Describe(
@@ -1100,9 +1106,10 @@ public static class EgressDisclosure
         bool searchAvailable = true,
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
-        bool codexPublishTokenPresent = false)
+        bool codexPublishTokenPresent = false,
+        IReadOnlyList<string>? remoteCharacterSystems = null)
     {
-        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent);
+        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

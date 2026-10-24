@@ -2884,7 +2884,12 @@ public sealed class AppHost : IDisposable
                 imagesAvailable: () => late.Host?.ReadsPictures ?? true,
                 pictureNote: () => late.Host?.PictureNote,
                 files: files,
-                runningStory: () => late.Host?.Stories?.RunningVoices(gameState.Active?.Identity.FrontierId) ?? []));
+                runningStory: () => late.Host?.Stories?.RunningVoices(gameState.Active?.Identity.FrontierId) ?? [],
+                remoteCharacterSystems: () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId)
+                    .Where(c => !c.Aboard && c.System is { Length: > 0 })
+                    .Select(c => c.System!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList() ?? []));
 
         buildingRegistry.Dispose();
 
@@ -3113,6 +3118,15 @@ public sealed class AppHost : IDisposable
                 : Task.FromResult<double?>(null),
             ModelFree,
             () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Tower)));
+
+        // The Commander's own characters, reached by name. Aboard they are on the intercom; elsewhere, on the radio.
+        turns.Lines.Add(new CharacterLine(
+            () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? [],
+            () => gameState.Active?.Location.StarSystem,
+            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
+                ? galaxy.DistanceAsync(from, to, cancellationToken)
+                : Task.FromResult<double?>(null),
+            ModelFree));
 
         string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
             late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);

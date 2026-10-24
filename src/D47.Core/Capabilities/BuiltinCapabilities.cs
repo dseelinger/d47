@@ -310,7 +310,10 @@ public static class BuiltinCapabilities
         Storage.IFileSystem? files = null,
 
         // The running story's pinned voices, for the voice-provider disclosure.
-        Func<IReadOnlyList<Configuration.RunningStoryVoice>>? runningStory = null) =>
+        Func<IReadOnlyList<Configuration.RunningStoryVoice>>? runningStory = null,
+
+        // The systems the Commander's remote characters are in, for the galaxy search disclosure.
+        Func<IReadOnlyList<string>>? remoteCharacterSystems = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -466,7 +469,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

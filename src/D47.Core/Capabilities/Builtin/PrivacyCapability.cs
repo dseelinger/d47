@@ -71,11 +71,13 @@ public static class PrivacyCapability
         // Whether the model in use reads pictures.
         Func<bool>? imagesAvailable = null,
         IFileSystem? files = null,
-        Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null)
+        Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null,
+        Func<IReadOnlyList<string>>? remoteCharacterSystems = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
         var storyVoices = runningStory ?? (() => []);
+        var remoteSystems = remoteCharacterSystems ?? (() => []);
 
         // Presence of the key, never its value — the disclosure has to distinguish "configured and sending"
         // from "selected but inert", and that is the only bit it needs.
@@ -119,11 +121,11 @@ public static class PrivacyCapability
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(
-                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent()))),
+                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent(), remoteSystems()))),
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent),
+                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent, remoteSystems),
         };
     }
 
@@ -137,7 +139,8 @@ public static class PrivacyCapability
         LongPress? forgetDonations,
         Func<bool> imagesAvailable,
         Func<IReadOnlyList<RunningStoryVoice>> runningStory,
-        Func<bool> codexPublishTokenPresent)
+        Func<bool> codexPublishTokenPresent,
+        Func<IReadOnlyList<string>> remoteCharacterSystems)
     {
         var rows = new List<SettingRow>
         {
@@ -296,12 +299,12 @@ public static class PrivacyCapability
                 Read = s =>
                 {
                     var entry = EgressDisclosure.Entry(
-                        id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent());
+                        id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems());
                     return $"{entry.Line}\n{entry.Summary}";
                 },
             },
             DetailBinding = s => EgressDisclosure.Entry(
-                id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent()).What,
+                id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems()).What,
         }));
 
         return rows;

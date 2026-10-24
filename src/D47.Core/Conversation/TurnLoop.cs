@@ -25,7 +25,7 @@ public enum TurnRoute
     /// <summary>Nothing could answer it.</summary>
     NoCapability,
 
-    /// <summary>Addressed to the carrier's captain while the carrier is beyond comms range.</summary>
+    /// <summary>Addressed to a carrier character or a custom character beyond comms range.</summary>
     CarrierOutOfRange,
 
     /// <summary>Addressed to an invented speaker whose exchange is over.</summary>
