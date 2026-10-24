@@ -10,7 +10,7 @@ using static D47.Core.Tests.Persona.TheNarratorAnswersInNarrationTests;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>Within a narration's window, a command d47 knows without the model, and the ship AI's name, still reach the ship.</summary>
+/// <summary>With the Narrator selected on comms, a command on the primary key and the ship AI's name reach the ship.</summary>
 public class ACommandAfterANarrationReachesTheShipTests
 {
     private static (TurnLoop Loop, NarratorLine Line, World World, RecordingGameInput Input) Flying(FakeLlmProvider provider)
@@ -31,24 +31,22 @@ public class ACommandAfterANarrationReachesTheShipTests
         }));
 
         var (loop, line, world) = Build(registry, new KeywordRouter(registry), provider);
-        world.Now += TimeSpan.FromSeconds(20);
 
         return (loop, line, world, input);
     }
 
     [Fact]
-    public async Task GearDownTwentySecondsLaterLowersTheGear()
+    public async Task GearDownLowersTheGear()
     {
         var provider = FakeLlmProvider.Answering("The gear came down.");
-        var (loop, line, _, input) = Flying(provider);
+        var (loop, _, _, input) = Flying(provider);
 
-        var events = await RunAsync(loop, "gear down");
+        var events = await OnComms.AskAsync(loop, "gear down");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(TurnRoute.ActionCommand, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
         Assert.NotEmpty(input.Steps);
         Assert.Null(provider.LastRequest);
-        Assert.True(line.IsOpen);
     }
 
     [Fact]
@@ -57,7 +55,7 @@ public class ACommandAfterANarrationReachesTheShipTests
         var provider = FakeLlmProvider.Answering("The gear came down.");
         var (loop, _, _, _) = Flying(provider);
 
-        var events = await RunAsync(loop, "landing gear down");
+        var events = await OnComms.AskAsync(loop, "landing gear down");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         var result = Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
@@ -66,16 +64,15 @@ public class ACommandAfterANarrationReachesTheShipTests
     }
 
     [Fact]
-    public async Task TheShipAiByNameGoesToTheShipAiAndClosesTheLine()
+    public async Task TheShipAiByNameGoesToTheShipAi()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Noted.");
-        var (loop, line, _) = Build(TestSurface.For(install), provider);
+        var (loop, _, _) = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, $"{ShipAi}, what was that about");
+        var events = await OnComms.AskAsync(loop, $"{ShipAi}, what was that about");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
-        Assert.False(line.IsOpen);
     }
 }

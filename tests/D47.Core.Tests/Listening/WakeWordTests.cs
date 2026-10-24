@@ -46,20 +46,6 @@ public class WakeWordTests
         Assert.Equal("D47, gear up", decision.Text);
     }
 
-    [Fact]
-    public void AWindowOpenedFromOutsideAdmitsOneUnnamedUtterance()
-    {
-        var gate = Gate("D47");
-
-        gate.Open(Now);
-
-        var decision = gate.Admit("how much tritium?", Now.AddSeconds(3));
-
-        Assert.Equal(WakeOutcome.Addressed, decision.Outcome);
-        Assert.Equal("how much tritium?", decision.Text);
-        Assert.Equal(WakeOutcome.Ignored, gate.Admit("and the cargo?", Now.AddSeconds(4)).Outcome);
-    }
-
     /// <summary>The reason this matches a flattened form rather than the string.</summary>
     [Theory]
     [InlineData("D47, gear up")]

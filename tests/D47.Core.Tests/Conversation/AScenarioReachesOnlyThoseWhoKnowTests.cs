@@ -17,16 +17,10 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
 
     private sealed class AddressedLine(VoiceRole role) : ILine
     {
-        public bool IsOpen => false;
-
-        public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken) =>
+        public Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken) =>
             Task.FromResult<LineDecision>(new LineDecision.Taken(
                 new Speaker(role, role.ToString(), $"You are the {role}.", [], OffersTools: false, Signal: 1),
                 input));
-
-        public void Close()
-        {
-        }
     }
 
     private static TurnLoop Build(TestSurface surface, ILlmProvider provider, ScenarioAudience audience, VoiceRole? addressed)
@@ -43,6 +37,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
             Persona = "You are the ship's AI.",
             Scenario = Secret,
             ScenarioAudience = audience,
+            CommsSelected = () => OnComms.Captain,
         };
 
         if (addressed is { } role)
@@ -55,9 +50,7 @@ public class AScenarioReachesOnlyThoseWhoKnowTests
 
     private static async Task<string> SystemBlockAsync(TurnLoop loop, FakeLlmProvider provider)
     {
-        await foreach (var _ in loop.RunAsync(Question, cancellationToken: TestContext.Current.CancellationToken))
-        {
-        }
+        _ = loop.Lines.Count > 0 ? await OnComms.SayAsync(loop, Question) : await OnComms.AskAsync(loop, Question);
 
         return provider.LastRequest!.Prompt.RenderCachedSystemBlock();
     }

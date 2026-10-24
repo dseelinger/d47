@@ -297,20 +297,18 @@ offered it, and a miss refuses the whole draft by name.
 **No stop needs a permit.** Your journal does not say which permits you hold, so a generated story
 never sends you to a permit-locked system such as Shinrarta Dezhra or Sol, unless you are already in it.
 
-**A stock story's cast can be answered.** For ninety seconds after a cast member of the running stock
-story speaks, whether in an opening, an objective, a clue, a finale line or a reaction, whatever you say
-goes to that member. They answer in the first person, in their own voice. Each reply restarts the ninety
-seconds, and one line takes at most four replies; the window opens again the next time that member
-speaks. Two things still go to the ship: a command d47 runs or offers without the model, such as "gear
-down", and anything that starts with your core's name, which also ends the exchange. The member reads
+**A stock story's cast can be answered.** Every cast member the running stock story has introduced is
+on the Story [comms channel](comms.md#choose-who-your-comms-key-reaches). While one is selected, what you
+say on the comms push-to-talk goes to that member, with no time limit and no limit on replies. They
+answer in the first person, in their own voice, knowing their last line and what has been said since.
+Push-to-talk still goes to the ship. The member reads
 the hidden story as every speaker does, so they may hint at the secret but never state it, and never
 mislead you about fuel, cargo, credits, routes, rank or danger. A reply that contradicts your ship, such
-as one counting on a fuel scoop you have not fitted, is not said, and ends the exchange. The member is
+as one counting on a fuel scoop you have not fitted, is not said. The member is
 offered no tools, so nothing they say can act on the ship. Each reply is one model call, counted in your
 spend like conversation, and is posted to the Story log from the member, with their picture and the clip
-it was spoken in, below what you said. Nothing opens while the story is paused or switched off, or while
-the game runs without Odyssey, and the line that finishes the story opens nothing, because the story has
-ended. You cannot call a cast member up: only their own lines open the window. Ask the core whether one
+it was spoken in, below what you said. No one is on the Story channel while the story is paused or
+switched off, or while the game runs without Odyssey. Ask the core whether one
 of them was real and it says they are someone in the story. The notes you keep on a cast member on the
 **Characters** page are added after the story's own description of them, so their replies follow both.
 

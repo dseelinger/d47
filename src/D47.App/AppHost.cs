@@ -203,7 +203,10 @@ public sealed class AppHost : IDisposable
             Writer,
             Records,
             text => Debrief?.NoteHeardFromOutside(text),
-            () => CanSearch);
+            () => CanSearch)
+        {
+            Hailed = name => Volatile.Write(ref _hailedBy, name),
+        };
 
         Listener = new Listener(
             settings,
@@ -231,9 +234,6 @@ public sealed class AppHost : IDisposable
             pushToTalkButton,
             wake,
             heardAt);
-
-        // A wake phrase alone addresses the ship's AI, so it closes every line as the name at the front of a turn does.
-        Listener.Woken += turns.CloseLines;
 
         OwnVoice = ownVoice;
         CustomVoices = customVoices;
@@ -2019,10 +2019,6 @@ public sealed class AppHost : IDisposable
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn returns,
         // because the turn returns while the reply is still being spoken.
         audio.ActivityChanged += voice.Settle;
-        audio.Silenced += voice.ReplyCut;
-
-        // Another speaker's reply opens the wake window, so the Commander can answer them without a name.
-        voice.AddressedReplyEnded += () => wake.Open(DateTimeOffset.Now);
 
         // Off unless D47_RECORD_AUDIO=1 (#164).
         var recording = Recording.AudioRecorder.Create(
@@ -3091,20 +3087,14 @@ public sealed class AppHost : IDisposable
                                     late.Host?.SearchReachesTheWeb ?? true))))))),
         };
 
-        // The ship's AI, by its name, "D47" or a wake phrase; any of them at the front of an utterance closes every
-        // line below.
+        // The ship's AI, by its name, "D47" or a wake phrase, any of them removed from the front of an utterance.
         var wake = services.Wake;
         turns.ShipAiNames = () => [.. ShipAiNames(personas), .. wake.Phrases];
 
-        // What the ship runs without the model, exactly; near misses stay with an open line.
-        bool ModelFree(string input) => router.MatchSetting(input) is not null
-                                        || router.MatchToolCommand(input) is not null
-                                        || router.Match(input, InputSource.Spoken) is not null
-                                        || wording.LearnedPhraseFor(input) is not null
-                                        || router.MatchSettingBySound(input) is { Certain: true };
+        // Who a comms turn is spoken to. The lines below answer only there.
+        turns.CommsSelected = () => stores.CommsChannels.Selected;
 
-        // The carrier's captain, reached by name. The distance is asked of the galaxy service only while galaxy
-        // search is on.
+        // The carrier's captain. The distance is asked of the galaxy service only while galaxy search is on.
         turns.Lines.Add(new CaptainLine(
             () => gameState.Active,
             () => gameState.Active?.Location.StarSystem,
@@ -3112,12 +3102,11 @@ public sealed class AppHost : IDisposable
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null),
-            ModelFree,
             () => stores.Fight.Snapshot,
             () => settings.Current.Speech.CarrierCaptainName,
             () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Captain)));
 
-        // The carrier's tower control, reached by name.
+        // The carrier's tower control.
         turns.Lines.Add(new TowerLine(
             () => gameState.Active,
             () => gameState.Active?.Location.StarSystem,
@@ -3125,45 +3114,30 @@ public sealed class AppHost : IDisposable
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null),
-            ModelFree,
             () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Tower)));
 
-        // The Commander's own characters, reached by name. Aboard they are on the intercom; elsewhere, on the radio.
+        // The Commander's own characters. Aboard they are on the intercom; elsewhere, on the radio.
         turns.Lines.Add(new CharacterLine(
             () => late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? [],
             () => gameState.Active?.Location.StarSystem,
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
-                : Task.FromResult<double?>(null),
-            ModelFree,
-            PilotNames));
+                : Task.FromResult<double?>(null)));
 
         string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
             late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);
 
-        IReadOnlyList<string> CharacterNames() =>
-            [.. (late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? []).Select(character => character.Name)];
-
-        IReadOnlyList<string> PilotNames() =>
-            [.. gameState.Active?.Crew?.Members.Select(member => member.Name) ?? []];
-
-        // A hired pilot, reached by name (#188).
+        // A hired pilot (#188).
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
-            () => gameState.Active?.Ship.Name,
-            CharacterNames,
-            ModelFree));
+            () => gameState.Active?.Ship.Name));
 
-        // An invented speaker from the last overheard exchange, reached by name while it is still going, or
-        // without a name after a hail.
+        // A stranger heard in this system: an invented speaker or a real comms NPC.
         turns.Lines.Add(new ChatterLine(
-            () => SystemWallClock.Instance.UtcNow,
             () => gameState.Active?.Location.StarSystem,
-            () => AmbientLines.Situate(status.Current),
             () => turns.BackgroundModel,
             voiceId => late.Host?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
-            ModelFree,
             loggerFactory.CreateLogger<ChatterLine>(),
             () => late.Host?.Announcer.NpcsHere,
             (npc, cancellationToken) => FlavourTurn.AskAsync(
@@ -3176,14 +3150,11 @@ public sealed class AppHost : IDisposable
                 spend,
                 PriceTable.Default,
                 loggerFactory.CreateLogger<ChatterLine>(),
-                cancellationToken),
-            () => stores.CommsChannels.Selected));
+                cancellationToken)));
 
-        // The held target's NPC pilot, reached only through the TARGET comms channel.
+        // The held target's NPC pilot.
         turns.Lines.Add(new TargetLine(
-            () => stores.CommsChannels.Selected,
             () => gameState.Active?.Target,
-            ModelFree,
             () => turns.BackgroundModel,
             () => ShipFacts.Of(gameState.Active),
             loggerFactory.CreateLogger<TargetLine>(),
@@ -3199,15 +3170,8 @@ public sealed class AppHost : IDisposable
                 loggerFactory.CreateLogger<TargetLine>(),
                 cancellationToken)));
 
-        // The Narrator, answered by whatever the Commander says shortly after a narration, except what the
-        // ship would run or offer without the model.
+        // The Narrator, while the STORY channel offers it.
         turns.Lines.Add(new NarratorLine(
-            () => SystemWallClock.Instance.UtcNow,
-            input => router.MatchSetting(input) is not null
-                     || router.MatchToolCommand(input) is not null
-                     || router.Match(input, InputSource.Spoken) is not null
-                     || router.Book.Candidates(input, InputSource.Spoken).Count > 0
-                     || wording.LearnedPhraseFor(input) is not null,
             () => late.Host?.Writer.HiddenStory(VoiceRole.Narrator),
             () => string.IsNullOrWhiteSpace(settings.Current.Llm.CharacterSheet)
                 ? CommanderStory.SheetOrName(null, gameState.Active?.Identity.Name)
@@ -3313,15 +3277,8 @@ public sealed class AppHost : IDisposable
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
 
-        // A story's cast member, answered by whatever the Commander says shortly after their line, except what the
-        // ship would run or offer without the model.
+        // A running story's cast member the Commander has been introduced to.
         turns.Lines.Add(new CastLine(
-            () => SystemWallClock.Instance.UtcNow,
-            input => router.MatchSetting(input) is not null
-                     || router.MatchToolCommand(input) is not null
-                     || router.Match(input, InputSource.Spoken) is not null
-                     || router.Book.Candidates(input, InputSource.Spoken).Count > 0
-                     || wording.LearnedPhraseFor(input) is not null,
             castId => storyDirector.Answering(gameState.Active?.Identity.FrontierId, castId),
             () => storyDirector.HiddenBrief(gameState.Active?.Identity.FrontierId),
             () => ShipFacts.Of(gameState.Active),
@@ -6148,7 +6105,13 @@ public sealed class AppHost : IDisposable
         return cast.ForSender(addressed.Name, isPlayer: false, addressed.Role, own: own);
     }
 
-    /// <summary>Pushes the active Commander's carrier, target, roster, story, crew and characters to the comms channels, and the selection to the panel.</summary>
+    /// <summary>The NPC whose hail was spoken since the last feed, selected once the roster that holds them is pushed.</summary>
+    private string? _hailedBy;
+
+    /// <summary>
+    /// Pushes the active Commander's carrier, target, roster, story, crew and characters to the comms channels, selects a
+    /// hailer, and pushes the selection to the panel.
+    /// </summary>
     private void FeedCommsChannels()
     {
         if (CommsChannels is not { } channels)
@@ -6160,6 +6123,12 @@ public sealed class AppHost : IDisposable
         var fid = active?.Identity.FrontierId;
 
         channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid)));
+
+        if (Interlocked.Exchange(ref _hailedBy, null) is { } hailer)
+        {
+            channels.Hailed(hailer);
+        }
+
         Panel.Comms = D47.App.Panel.CommsIndicatorState.Of(channels, active?.Target);
     }
 

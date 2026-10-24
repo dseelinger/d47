@@ -78,6 +78,7 @@ public static class ScenarioRunner
 
             // Off for every scenario, and that is a statement rather than a default.
             WebSearchEnabled = () => false,
+            CommsSelected = scenario.Comms,
         };
 
         foreach (var line in scenario.Lines?.Invoke(world) ?? [])
@@ -97,7 +98,7 @@ public static class ScenarioRunner
         // that produced it even when one round asks for the same tool twice.
         var askedNext = 0;
 
-        await foreach (var turnEvent in loop.RunAsync(scenario.Utterance, cancellationToken: cancellationToken)
+        await foreach (var turnEvent in loop.RunAsync(scenario.Utterance, InputSource.Typed, scenario.Target, cancellationToken)
                            .ConfigureAwait(false))
         {
             events.Add(turnEvent);

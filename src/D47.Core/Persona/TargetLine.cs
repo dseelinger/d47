@@ -10,16 +10,12 @@ namespace D47.Core.Persona;
 /// The NPC pilot of the held target, who answers whatever the Commander says while the TARGET comms channel is
 /// selected. A Commander target is never offered by the channel and never answers. Thread-safe.
 /// </summary>
-/// <param name="selected">The comms selection.</param>
 /// <param name="target">The held target, or null.</param>
-/// <param name="modelFree">Whether an utterance has a route that needs no model.</param>
 /// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
 public sealed class TargetLine(
-    Func<CommsSelection?> selected,
     Func<TargetedShip?> target,
-    Func<string, bool> modelFree,
     Func<string?>? model = null,
     Func<ShipFacts>? facts = null,
     ILogger? logger = null,
@@ -31,15 +27,11 @@ public sealed class TargetLine(
 
     private readonly Dictionary<string, string?> _personalities = new(StringComparer.OrdinalIgnoreCase);
 
-    public bool IsOpen => false;
-
-    public void Close()
+    public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
-    }
+        ArgumentNullException.ThrowIfNull(selected);
 
-    public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
-    {
-        if (selected() is not { Channel: CommsChannel.Target, SubChannel: not null }
+        if (selected is not { Channel: CommsChannel.Target, SubChannel: not null }
             || target() is not { IsCommander: false, PilotName: { Length: > 0 } name } ship)
         {
             return new LineDecision.NotMine();
@@ -47,9 +39,9 @@ public sealed class TargetLine(
 
         var question = input.Trim();
 
-        if (question.Length == 0 || modelFree(input))
+        if (question.Length == 0)
         {
-            return new LineDecision.NotMine();
+            question = "The Commander is trying to get your attention.";
         }
 
         var personality = await PersonalityAsync(name, cancellationToken).ConfigureAwait(false);

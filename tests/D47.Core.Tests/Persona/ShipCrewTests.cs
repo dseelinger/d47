@@ -119,65 +119,9 @@ public class ShipCrewTests
     }
 }
 
-/// <summary>Working out who the Commander was talking to.</summary>
+/// <summary>A hired pilot's brief.</summary>
 public class CrewAddressingTests
 {
-    private static ShipCrew Crew(params string[] names) => new()
-    {
-        Members = [.. names.Select((name, index) => new CrewMember(name, index + 1))],
-    };
-
-    [Fact]
-    public void AnOpeningNameHandsTheTurnToThatPerson()
-    {
-        var addressed = CrewAddressing.Match("Vance, what's the fighter looking like?", Crew("Vance", "Ilse"));
-
-        Assert.NotNull(addressed);
-        Assert.Equal("Vance", addressed.Member.Name);
-        Assert.Equal("what's the fighter looking like?", addressed.Question);
-    }
-
-    [Fact]
-    public void ANameInTheMiddleIsAQuestionForTheShipsAiAboutThem()
-    {
-        // A real distinction, and the reason this is not a contains check.
-        Assert.Null(CrewAddressing.Match("what does Vance think of the fighter", Crew("Vance")));
-    }
-
-    [Fact]
-    public void ABareNameIsStillATurn()
-    {
-        // It is how you get somebody's attention.
-        var addressed = CrewAddressing.Match("Vance", Crew("Vance"));
-
-        Assert.NotNull(addressed);
-        Assert.Equal(string.Empty, addressed.Question);
-    }
-
-    [Fact]
-    public void AShortNameDoesNotClaimEveryWordStartingWithIt()
-    {
-        // Without a word boundary, a crew member called "Al" takes every turn beginning "always".
-        Assert.Null(CrewAddressing.Match("always plot the shortest route", Crew("Al")));
-        Assert.NotNull(CrewAddressing.Match("Al, status", Crew("Al")));
-    }
-
-    [Fact]
-    public void TheLongerNameWinsWhenBothWouldMatch()
-    {
-        var addressed = CrewAddressing.Match("Vance Ilo, report", Crew("Vance", "Vance Ilo"));
-
-        Assert.Equal("Vance Ilo", addressed?.Member.Name);
-    }
-
-    [Fact]
-    public void WithNoCrewNothingIsEverAddressedToThem()
-    {
-        Assert.Null(CrewAddressing.Match("Vance, status", ShipCrew.Empty));
-        Assert.Null(CrewAddressing.Match(null, Crew("Vance")));
-        Assert.Null(CrewAddressing.Match("   ", Crew("Vance")));
-    }
-
     [Fact]
     public void ACrewMemberIsBriefedAsAPersonRatherThanAsACore()
     {

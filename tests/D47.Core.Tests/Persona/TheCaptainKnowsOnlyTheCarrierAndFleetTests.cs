@@ -46,9 +46,14 @@ public class TheCaptainKnowsOnlyTheCarrierAndFleetTests
 
     private static async Task<LlmRequest> AskAsync(TurnLoop loop, FakeLlmProvider provider, string input)
     {
-        await foreach (var _ in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-        }
+        await OnComms.AskAsync(loop, input);
+
+        return provider.LastRequest!;
+    }
+
+    private static async Task<LlmRequest> SayAsync(TurnLoop loop, FakeLlmProvider provider, string input)
+    {
+        await OnComms.SayAsync(loop, input);
 
         return provider.LastRequest!;
     }
@@ -76,6 +81,7 @@ public class TheCaptainKnowsOnlyTheCarrierAndFleetTests
             Persona = "You are the ship's AI aboard this vessel.",
             ShipAiNames = () => ["Warden"],
             LiveGameState = () => ShipAiState,
+            CommsSelected = () => OnComms.Captain,
         };
 
         loop.Lines.Add(new CaptainLine(() => state, () => "Sol", () => DateTimeOffset.UnixEpoch));
@@ -91,7 +97,7 @@ public class TheCaptainKnowsOnlyTheCarrierAndFleetTests
         var ship = await AskAsync(loop, provider, "Warden, what do you make of the stars tonight");
         Assert.NotEmpty(ship.Prompt.Tools);
 
-        var captain = await AskAsync(loop, provider, "Captain, how's our fuel?");
+        var captain = await SayAsync(loop, provider, "how's our fuel?");
         Assert.Empty(captain.Prompt.Tools);
     }
 
@@ -100,7 +106,7 @@ public class TheCaptainKnowsOnlyTheCarrierAndFleetTests
     {
         var (loop, provider) = Build(Commander(Flying, Stored));
 
-        var captain = await AskAsync(loop, provider, "Captain, how's our fuel?");
+        var captain = await SayAsync(loop, provider, "how's our fuel?");
         var live = captain.Prompt.LiveGameState;
 
         Assert.NotNull(live);

@@ -2,64 +2,9 @@ using D47.Core.Journal;
 
 namespace D47.Core.Persona;
 
-/// <summary>A turn the Commander addressed to a crew member rather than to the ship's AI.</summary>
-/// <param name="Member">Who they spoke to.</param>
-/// <param name="Question">What they said, with the name taken off the front.</param>
-public sealed record CrewAddressed(CrewMember Member, string Question);
-
-/// <summary>
-/// Working out whether the Commander was talking to the ship's AI or to somebody in the fighter bay
-/// (Phase 11, "Ship Crew").
-/// </summary>
+/// <summary>How a hired pilot is briefed when they answer on comms.</summary>
 public static class CrewAddressing
 {
-    /// <summary>The crew member this input opens by naming, or null.</summary>
-    public static CrewAddressed? Match(string? input, ShipCrew crew)
-    {
-        if (string.IsNullOrWhiteSpace(input) || !crew.Any)
-        {
-            return null;
-        }
-
-        var trimmed = input.TrimStart();
-
-        // Longest name first, so a crew of "Vance" and "Vance Ilo" cannot have the shorter one claim the
-        // longer one's turns.
-        foreach (var member in crew.Members.OrderByDescending(m => m.Name.Length))
-        {
-            if (Opens(trimmed, member.Name) is { } question)
-            {
-                return new CrewAddressed(member, question);
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// What is left after the name, or null if the input does not open with it at a word boundary. Leading
-    /// whitespace and punctuation are ignored.
-    /// </summary>
-    public static string? Opens(string input, string name)
-    {
-        input = input.TrimStart(',', ':', '-', ' ', '.', '?', '!', '"', '\'');
-
-        if (name.Length == 0 || !input.StartsWith(name, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var rest = input[name.Length..];
-
-        // The name has to end at a word boundary.
-        if (rest.Length > 0 && (char.IsLetterOrDigit(rest[0]) || rest[0] == '\''))
-        {
-            return null;
-        }
-
-        return rest.TrimStart(',', ':', '-', ' ', '.', '?', '!').Trim();
-    }
-
     /// <summary>The prompt block for a crew member.</summary>
     /// <param name="shipName">What the ship is called, so they can refer to it.</param>
     public static string Brief(CrewMember member, string? shipName) =>

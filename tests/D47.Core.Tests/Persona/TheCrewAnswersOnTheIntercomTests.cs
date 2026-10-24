@@ -8,7 +8,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>"Vance, ..." is answered by the hired pilot on the intercom, who keeps the line until dismissed.</summary>
+/// <summary>A hired pilot answers on the intercom every comms turn while the CREW channel selects them.</summary>
 public class TheCrewAnswersOnTheIntercomTests
 {
     private const string ShipAi = "Warden";
@@ -22,12 +22,9 @@ public class TheCrewAnswersOnTheIntercomTests
         Members = [new CrewMember("Vance", CrewId: 1, CombatRank: "Dangerous", Active: true)],
     };
 
-    private static (TurnLoop Loop, CrewLine Line) Build(
-        TestSurface surface,
-        ILlmProvider provider,
-        ShipCrew? roster = null)
+    private static TurnLoop Build(TestSurface surface, ILlmProvider provider, CommsSelection? selected = null)
     {
-        var line = new CrewLine(() => roster ?? Roster, () => "Warden's Reach");
+        var line = new CrewLine(() => Roster, () => "Warden's Reach");
 
         var loop = new TurnLoop(
             surface.Registry,
@@ -40,36 +37,25 @@ public class TheCrewAnswersOnTheIntercomTests
         {
             Persona = ShipAiBrief,
             ShipAiNames = () => [ShipAi],
+            CommsSelected = () => selected ?? OnComms.Crew(1, "Vance"),
         };
 
         loop.Lines.Add(line);
 
-        return (loop, line);
-    }
-
-    private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
-    {
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
-
-        return events;
+        return loop;
     }
 
     private static string Text(ConversationMessage message) =>
         string.Join(' ', message.Content.OfType<ConversationContent.Text>().Select(part => part.Value));
 
     [Fact]
-    public async Task ThePilotByNameIsAnsweredWithNoTools()
+    public async Task ThePilotIsAnsweredWithNoTools()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Holding steady, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, "Vance, how is the fighter");
+        var events = await OnComms.SayAsync(loop, "how is the fighter");
 
         var addressed = Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(VoiceRole.Crew, addressed.Role);
@@ -79,62 +65,33 @@ public class TheCrewAnswersOnTheIntercomTests
         Assert.Contains(VanceBrief, prompt.Persona, StringComparison.Ordinal);
         Assert.Equal("how is the fighter", Text(Assert.Single(prompt.History)));
         Assert.Empty(prompt.Tools);
-        Assert.True(line.IsOpen);
     }
 
     [Fact]
-    public async Task TheNextTurnWithNoNameReachesThePilotToo()
+    public async Task EveryCommsTurnReachesThePilotWhileSelected()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Vance, how is the fighter");
-        var next = await RunAsync(loop, "and are you low on ammo");
+        await OnComms.SayAsync(loop, "how is the fighter");
+        var next = await OnComms.SayAsync(loop, "That's all");
 
         Assert.Equal(VoiceRole.Crew, Assert.Single(next.OfType<TurnEvent.Addressed>()).Role);
         Assert.Contains(VanceBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task NamingTheCaptainClosesThePilotsLineAndOpensHers()
+    public async Task APrimaryTurnNamingThePilotReachesTheShipAi()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var surface = TestSurface.For(install);
-        var (loop, crewLine) = Build(surface, provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        loop.Lines.Add(new CaptainLine(
-            () => new CommanderGameState(new CommanderIdentity("F1", "Tester"))
-            {
-                Carrier = new CarrierState { CallSign = "BNH-T2F", Name = "Sacred Fire", StarSystem = "Sol" },
-            },
-            () => "Sol",
-            () => DateTimeOffset.UnixEpoch));
+        var events = await OnComms.AskAsync(loop, "Vance, how is the fighter");
 
-        await RunAsync(loop, "Vance, how is the fighter");
-        var next = await RunAsync(loop, "Captain, fuel");
-
-        var addressed = Assert.Single(next.OfType<TurnEvent.Addressed>());
-        Assert.Equal(VoiceRole.CarrierCaptain, addressed.Role);
-        Assert.False(crewLine.IsOpen);
-    }
-
-    [Fact]
-    public async Task ThatsAllReturnsTheTurnToTheShipAi()
-    {
-        var install = new MemoryInstall();
-        var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
-
-        await RunAsync(loop, "Vance, how is the fighter");
-        await RunAsync(loop, "That's all");
-
-        Assert.False(line.IsOpen);
-
-        var after = await RunAsync(loop, $"{ShipAi}, summarise that exchange for me");
-
-        Assert.Empty(after.OfType<TurnEvent.Addressed>());
+        Assert.Empty(events.OfType<TurnEvent.Addressed>());
+        Assert.Equal(ShipAiBrief, provider.LastRequest!.Prompt.Persona);
     }
 
     [Fact]
@@ -144,19 +101,19 @@ public class TheCrewAnswersOnTheIntercomTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("Holding steady, Commander."),
             RoundScriptedLlmProvider.Saying("Noted."));
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Vance, how is the fighter");
+        await OnComms.SayAsync(loop, "how is the fighter");
 
         Assert.Empty(loop.History);
 
-        await RunAsync(loop, $"{ShipAi}, summarise that exchange for me");
+        await OnComms.AskAsync(loop, $"{ShipAi}, summarise that exchange for me");
 
         var prompt = provider.Requests[1].Prompt;
         var carried = Text(prompt.History[0]);
 
         Assert.Equal(ShipAiBrief, prompt.Persona);
-        Assert.Contains("The Commander said \"Vance, how is the fighter\"", carried, StringComparison.Ordinal);
+        Assert.Contains("The Commander said \"how is the fighter\"", carried, StringComparison.Ordinal);
         Assert.Contains("Vance answered \"Holding steady, Commander.\"", carried, StringComparison.Ordinal);
 
         Assert.DoesNotContain(
@@ -166,16 +123,16 @@ public class TheCrewAnswersOnTheIntercomTests
     }
 
     [Fact]
-    public async Task ANameOffTheRosterReachesTheShipAi()
+    public async Task APilotOffTheRosterIsNoOne()
     {
         var install = new MemoryInstall();
-        var provider = FakeLlmProvider.Answering("I don't have a crew member by that name aboard.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
+        var provider = FakeLlmProvider.Answering("Aye, Commander.");
+        var loop = Build(TestSurface.For(install), provider, OnComms.Crew(2, "Jameson"));
 
-        var events = await RunAsync(loop, "Jameson, how is the fighter");
+        var events = await OnComms.SayAsync(loop, "how is the fighter");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
-        Assert.False(line.IsOpen);
-        Assert.Equal(ShipAiBrief, provider.LastRequest!.Prompt.Persona);
+        Assert.Equal("No one on Crew.", Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Text);
+        Assert.Equal(0, provider.CallCount);
     }
 }

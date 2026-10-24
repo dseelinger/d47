@@ -78,9 +78,8 @@ public class SceneSpeakersAreToldTheScenarioAtEveryAudienceTests
     }
 
     [Fact]
-    public void ASceneLineIsNotAnsweredAndMayTalkAboutShooting()
+    public void ASceneLineMayTalkAboutShooting()
     {
-        Assert.False(NpcChatter.MayNotice(NpcChatterKind.Scene, 0));
         Assert.Equal(NpcChatterKind.Scene, NpcChatter.KindOf(SceneCallout.Key));
 
         var lines = NpcChatter.Parse("Vasquez: They're shooting at you, Reyes, get down!\nReyes: Moving to the hangar.", NpcChatterKind.Scene);

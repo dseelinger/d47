@@ -8,7 +8,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>What the Commander says within ninety seconds of a narration is answered by the Narrator, in narration.</summary>
+/// <summary>What the Commander says on comms while the STORY channel selects the Narrator is answered in narration.</summary>
 public class TheNarratorAnswersInNarrationTests
 {
     internal const string ShipAi = "Warden";
@@ -21,8 +21,6 @@ public class TheNarratorAnswersInNarrationTests
 
     internal sealed class World
     {
-        public DateTimeOffset Now { get; set; } = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
-
         public List<string> Posted { get; } = [];
     }
 
@@ -34,14 +32,7 @@ public class TheNarratorAnswersInNarrationTests
     {
         var world = new World();
 
-        var line = new NarratorLine(
-            () => world.Now,
-            input => router.MatchSetting(input) is not null
-                     || router.MatchToolCommand(input) is not null
-                     || router.Match(input, InputSource.Spoken) is not null
-                     || router.Book.Candidates(input, InputSource.Spoken).Count > 0,
-            () => Hidden,
-            () => "Commander Vale.")
+        var line = new NarratorLine(() => Hidden, () => "Commander Vale.")
         {
             Said = world.Posted.Add,
         };
@@ -58,24 +49,13 @@ public class TheNarratorAnswersInNarrationTests
             Persona = ShipAiBrief,
             ShipAiNames = () => [ShipAi],
             HiddenStory = () => "The ship AI's own reading.",
+            CommsSelected = () => OnComms.Narrator,
         };
 
         loop.Lines.Add(line);
         line.Heard(Narration);
 
         return (loop, line, world);
-    }
-
-    internal static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
-    {
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync(input, InputSource.Spoken, TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
-
-        return events;
     }
 
     [Fact]
@@ -86,7 +66,7 @@ public class TheNarratorAnswersInNarrationTests
         var provider = FakeLlmProvider.Answering(reply);
         var (loop, _, world) = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, "what happened next?");
+        var events = await OnComms.SayAsync(loop, "what happened next?");
 
         var addressed = Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(VoiceRole.Narrator, addressed.Role);
@@ -106,50 +86,42 @@ public class TheNarratorAnswersInNarrationTests
     }
 
     [Fact]
-    public async Task AReplyThatSaysYouIsNotSaidAndClosesTheLine()
+    public async Task AReplyThatSaysYouIsNotSaidAndTheNextIsStillTheNarrators()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("You turned toward the beacon.");
-        var (loop, line, world) = Build(TestSurface.For(install), provider);
+        var (loop, _, world) = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, "what happened next?");
+        var events = await OnComms.SayAsync(loop, "what happened next?");
 
         Assert.Equal(string.Empty, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Text);
         Assert.Empty(world.Posted);
-        Assert.False(line.IsOpen);
+        Assert.Single((await OnComms.SayAsync(loop, "and then?")).OfType<TurnEvent.Addressed>());
     }
 
     [Fact]
-    public async Task FourRepliesAndTheNextGoesToTheShip()
+    public async Task AFifthReplyIsNarratedToo()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("The silence held a moment longer.");
-        var (loop, line, _) = Build(TestSurface.For(install), provider);
+        var (loop, _, _) = Build(TestSurface.For(install), provider);
 
-        for (var reply = 1; reply <= NarratorLine.MostReplies; reply++)
+        for (var reply = 1; reply <= 5; reply++)
         {
-            Assert.Single((await RunAsync(loop, "and then?")).OfType<TurnEvent.Addressed>());
+            Assert.Single((await OnComms.SayAsync(loop, "and then?")).OfType<TurnEvent.Addressed>());
         }
 
-        Assert.Contains("last reply", provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
-        Assert.False(line.IsOpen);
-        Assert.Empty((await RunAsync(loop, "and then?")).OfType<TurnEvent.Addressed>());
-        Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
+        Assert.DoesNotContain("last reply", provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task NinetyOneSecondsAfterTheNarrationTheShipAnswers()
+    public async Task ThePrimaryKeyReachesTheShipRightAfterANarration()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Standing by.");
-        var (loop, line, world) = Build(TestSurface.For(install), provider);
+        var (loop, _, _) = Build(TestSurface.For(install), provider);
 
-        world.Now += NarratorLine.Window;
-        Assert.True(line.IsOpen);
-
-        world.Now += TimeSpan.FromSeconds(1);
-
-        Assert.Empty((await RunAsync(loop, "what happened next?")).OfType<TurnEvent.Addressed>());
+        Assert.Empty((await OnComms.AskAsync(loop, "what happened next?")).OfType<TurnEvent.Addressed>());
         Assert.Contains(ShipAiBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }
 

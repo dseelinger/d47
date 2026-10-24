@@ -1,11 +1,11 @@
-using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Persona;
+using D47.Core.Tests.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>An answerable stranger is given a personality once, which every later reply is briefed with.</summary>
+/// <summary>A stranger on comms is given a personality once, which every later reply is briefed with.</summary>
 public class AStrangerKeepsOnePersonalityForTheStayTests
 {
     private static readonly DateTimeOffset Now = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
@@ -16,16 +16,14 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
     {
         var roster = new NpcsHeardHere();
         var line = new ChatterLine(
-            () => Now,
             () => "Diaguandri",
-            () => AmbientSituation.Docked,
             roster: () => roster,
             writePersonality: write);
 
         var hail = new NpcChatterLine("Vance", "Nice ship, Commander.", VoiceId: "bf_emma");
-        line.Heard(hail, true, 3, hail: true);
+        line.Heard(hail, 3);
         roster.Heard(
-            new Announcement(NpcChatter.LineKey, hail.Text) { Speaker = "Vance", Invented = new NpcChatterHeard(hail, 3, false) },
+            new Announcement(NpcChatter.LineKey, hail.Text) { Speaker = "Vance", Invented = new NpcChatterHeard(hail, 3, Hail: false) },
             "bf_emma",
             Now);
 
@@ -34,7 +32,7 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
 
     private static async Task<string> BriefAsync(ChatterLine line, string input)
     {
-        var decision = await line.RouteAsync(input, TestContext.Current.CancellationToken);
+        var decision = await line.RouteAsync(OnComms.System("Vance"), input, TestContext.Current.CancellationToken);
 
         return Assert.IsType<LineDecision.Taken>(decision).Speaker.Brief;
     }
@@ -49,8 +47,8 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
             return Task.FromResult<string?>(Written);
         });
 
-        var first = await BriefAsync(line, "Vance, how's the cargo");
-        var second = await BriefAsync(line, "Vance, and the traffic");
+        var first = await BriefAsync(line, "how's the cargo");
+        var second = await BriefAsync(line, "and the traffic");
 
         Assert.Equal(1, calls);
         Assert.Contains("Your personality: " + Written, first, StringComparison.Ordinal);
@@ -59,7 +57,7 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
     }
 
     [Fact]
-    public async Task AFailureFallsBackToThePlainBriefAndIsNotRetriedInTheExchange()
+    public async Task AFailureFallsBackToThePlainBriefAndIsNotRetriedForTheStay()
     {
         var calls = 0;
         var (line, _) = Build((_, _) =>
@@ -68,8 +66,8 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
             throw new InvalidOperationException("offline");
         });
 
-        var first = await BriefAsync(line, "Vance, how's the cargo");
-        var second = await BriefAsync(line, "Vance, and the traffic");
+        var first = await BriefAsync(line, "how's the cargo");
+        var second = await BriefAsync(line, "and the traffic");
 
         Assert.Equal(1, calls);
         Assert.DoesNotContain("Your personality", first, StringComparison.Ordinal);
@@ -81,7 +79,7 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
     {
         var (line, roster) = Build((_, _) => Task.FromResult<string?>("As an AI language model, I am calm."));
 
-        var brief = await BriefAsync(line, "Vance, how's the cargo");
+        var brief = await BriefAsync(line, "how's the cargo");
 
         Assert.DoesNotContain("Your personality", brief, StringComparison.Ordinal);
         Assert.Null(roster.Find("Vance")!.Personality);
@@ -97,18 +95,18 @@ public class AStrangerKeepsOnePersonalityForTheStayTests
             return Task.FromResult<string?>(Written);
         });
 
-        await BriefAsync(line, "Vance, how's the cargo");
+        await BriefAsync(line, "how's the cargo");
 
         var again = new NpcChatterLine("Vance", "Cargo's late again.");
         roster.Heard(
-            new Announcement(NpcChatter.LineKey, again.Text) { Speaker = "Vance", Invented = new NpcChatterHeard(again, 3, false) },
+            new Announcement(NpcChatter.LineKey, again.Text) { Speaker = "Vance", Invented = new NpcChatterHeard(again, 3, Hail: false) },
             "bf_emma",
             Now.AddSeconds(5));
 
         Assert.Equal(Written, roster.Find("Vance")!.Personality);
 
         roster.Heard(
-            new Announcement(NpcChatter.LineKey, NpcsHeardHere.SignOff("Vance")) { Speaker = "Vance", Invented = new NpcChatterHeard(again, 3, false) },
+            new Announcement(NpcChatter.LineKey, NpcsHeardHere.SignOff("Vance")) { Speaker = "Vance", Invented = new NpcChatterHeard(again, 3, Hail: false) },
             "bf_emma",
             Now.AddSeconds(9));
 

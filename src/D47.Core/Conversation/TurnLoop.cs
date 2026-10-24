@@ -26,11 +26,11 @@ public enum TurnRoute
     /// <summary>Nothing could answer it.</summary>
     NoCapability,
 
-    /// <summary>Addressed to a carrier character or a custom character beyond comms range.</summary>
+    /// <summary>Spoken on comms to a carrier character or a custom character beyond comms range.</summary>
     CarrierOutOfRange,
 
-    /// <summary>Addressed to an invented speaker whose exchange is over.</summary>
-    ChatterClosed,
+    /// <summary>Spoken on comms with no one on the selected channel to answer.</summary>
+    NoOneOnComms,
 }
 
 public enum TurnOutcome
@@ -467,59 +467,24 @@ public sealed class TurnLoop(
     /// <summary>The event selected on the Journal page, or null when none is.</summary>
     public Func<Journal.JournalEntry?>? SelectedJournalEvent { get; set; }
 
-    /// <summary>
-    /// Speakers other than the ship's AI, asked before any other route: the open lines first, the one heard most
-    /// recently ahead, then the rest in order.
-    /// </summary>
+    /// <summary>The speakers on the comms channels, asked in order with the selection on a comms turn and never on any other.</summary>
     public List<Persona.ILine> Lines { get; } = [];
 
-    /// <summary>The names that address the ship's AI; one at the front of an utterance closes every line and is removed.</summary>
+    /// <summary>The comms selection a comms turn is spoken to, or null for none.</summary>
+    public Func<CommsSelection?>? CommsSelected { get; set; }
+
+    /// <summary>The names that address the ship's AI; one at the front of an utterance is removed.</summary>
     public Func<IReadOnlyList<string>>? ShipAiNames { get; set; }
 
-    /// <summary>Closes every line, as naming the ship's AI does.</summary>
-    public void CloseLines()
-    {
-        foreach (var line in Lines)
-        {
-            line.Close();
-        }
-    }
-
-    private readonly Lock _heardGate = new();
-
-    /// <summary>When each line was last heard, as a count of lines heard; a later line is offered first.</summary>
-    private readonly Dictionary<Persona.ILine, long> _heardAt = [];
-
-    private long _heardCount;
-
-    /// <summary>Tells the first line of type <typeparamref name="T"/> it was heard, which offers it ahead of any line heard before it.</summary>
+    /// <summary>Tells the first line of type <typeparamref name="T"/> what was heard on it.</summary>
     public void LineHeard<T>(Action<T> heard)
         where T : class, Persona.ILine
     {
         ArgumentNullException.ThrowIfNull(heard);
 
-        if (Lines.OfType<T>().FirstOrDefault() is not { } line)
+        if (Lines.OfType<T>().FirstOrDefault() is { } line)
         {
-            return;
-        }
-
-        heard(line);
-        Stamp(line);
-    }
-
-    private void Stamp(Persona.ILine line)
-    {
-        lock (_heardGate)
-        {
-            _heardAt[line] = ++_heardCount;
-        }
-    }
-
-    private long HeardAt(Persona.ILine line)
-    {
-        lock (_heardGate)
-        {
-            return _heardAt.GetValueOrDefault(line);
+            heard(line);
         }
     }
 
@@ -563,7 +528,18 @@ public sealed class TurnLoop(
             }
         }
 
-        // 0.25. A reply in a teaching exchange, read before addressed lines, learned phrases or any route.
+        // 0.2. Spoken through the comms push-to-talk: the selected party answers, and nothing below is read.
+        if (target == PttTarget.Comms)
+        {
+            await foreach (var turnEvent in CommsTurnAsync(input, cancellationToken).ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            yield break;
+        }
+
+        // 0.25. A reply in a teaching exchange, read before learned phrases or any route.
         if (_teaching is { } teaching)
         {
             await foreach (var turnEvent in TeachingAsync(teaching, input, source, cancellationToken).ConfigureAwait(false))
@@ -574,7 +550,7 @@ public sealed class TurnLoop(
             yield break;
         }
 
-        // 0.3. The utterance after a bare "captain's log", read before addressed lines, learned phrases or any route.
+        // 0.3. The utterance after a bare "captain's log", read before learned phrases or any route.
         if (_logOpenedAt is { } logOpenedAt)
         {
             _logOpenedAt = null;
@@ -607,47 +583,10 @@ public sealed class TurnLoop(
         }
 
         // 0.4. Addressed to the ship's AI by name.
-        var bareName = false;
-
         if (ShipAiNames?.Invoke() is { Count: > 0 } shipAiNames
-            && D47.Core.Persona.ShipAiAddressing.Opens(input, shipAiNames) is { } rest)
+            && D47.Core.Persona.ShipAiAddressing.Opens(input, shipAiNames) is { Length: > 0 } rest)
         {
-            CloseLines();
-
-            if (rest.Length == 0)
-            {
-                bareName = true;
-            }
-            else
-            {
-                input = rest;
-            }
-        }
-
-        // 0.5. Addressed to someone other than the ship's AI.
-        var addressed = bareName
-            ? new Persona.LineDecision.NotMine()
-            : await AddressedAsync(input, cancellationToken).ConfigureAwait(false);
-
-        switch (addressed)
-        {
-            case Persona.LineDecision.Taken taken:
-                await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
-                {
-                    yield return turnEvent;
-                }
-
-                yield break;
-
-            case Persona.LineDecision.Refused refused:
-                yield return new TurnEvent.Routed(refused.Route, Effort: null);
-
-                Said(refused.Line, input);
-
-                yield return new TurnEvent.TextDelta(refused.Line);
-                yield return new TurnEvent.Completed(new TurnResult(
-                    TurnOutcome.Answered, refused.Route, refused.Line, Effort: null, Cost: null));
-                yield break;
+            input = rest;
         }
 
         if (LearnedPhraseFor?.Invoke(input) is { } taught && InBook(taught))
@@ -962,37 +901,63 @@ public sealed class TurnLoop(
         }
     }
 
-    /// <summary>The decision of the first line that claims the input; taking a turn closes every other line.</summary>
-    private async Task<Persona.LineDecision> AddressedAsync(string input, CancellationToken cancellationToken)
+    /// <summary>A comms turn: the first line that speaks for the selected party answers, or the ship's AI says no one is there.</summary>
+    private async IAsyncEnumerable<TurnEvent> CommsTurnAsync(
+        string input,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var open = Lines.Where(line => line.IsOpen).OrderByDescending(HeardAt).ToList();
+        var decision = await CommsDecisionAsync(input, cancellationToken).ConfigureAwait(false);
 
-        List<Persona.ILine> order = [.. open, .. Lines.Where(line => !open.Contains(line))];
-
-        foreach (var line in order)
+        if (decision is Persona.LineDecision.Taken taken)
         {
-            var decision = await line.RouteAsync(input, cancellationToken).ConfigureAwait(false);
-
-            if (decision is Persona.LineDecision.NotMine)
+            await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
             {
-                continue;
+                yield return turnEvent;
             }
 
-            if (decision is Persona.LineDecision.Taken)
-            {
-                Stamp(line);
-
-                foreach (var other in Lines.Where(other => other != line))
-                {
-                    other.Close();
-                }
-            }
-
-            return decision;
+            yield break;
         }
 
-        return new Persona.LineDecision.NotMine();
+        var refused = (Persona.LineDecision.Refused)decision;
+
+        yield return new TurnEvent.Routed(refused.Route, Effort: null);
+
+        Said(refused.Line, input);
+
+        yield return new TurnEvent.TextDelta(refused.Line);
+        yield return new TurnEvent.Completed(new TurnResult(
+            TurnOutcome.Answered, refused.Route, refused.Line, Effort: null, Cost: null));
     }
+
+    /// <summary>Taken or Refused, never NotMine: a party no line speaks for is no one.</summary>
+    private async Task<Persona.LineDecision> CommsDecisionAsync(string input, CancellationToken cancellationToken)
+    {
+        if (CommsSelected?.Invoke() is not { } selected)
+        {
+            return new Persona.LineDecision.Refused(NoChannel, TurnRoute.NoOneOnComms);
+        }
+
+        if (!selected.IsNoOne)
+        {
+            foreach (var line in Lines)
+            {
+                var decision = await line.RouteAsync(selected, input, cancellationToken).ConfigureAwait(false);
+
+                if (decision is not D47.Core.Persona.LineDecision.NotMine)
+                {
+                    return decision;
+                }
+            }
+        }
+
+        return new Persona.LineDecision.Refused(NoOneOn(selected.Channel), TurnRoute.NoOneOnComms);
+    }
+
+    /// <summary>What the ship's AI says to a comms turn while no comms channel is available.</summary>
+    public const string NoChannel = "No comms channel is open.";
+
+    /// <summary>What the ship's AI says to a comms turn with no one on <paramref name="channel"/> to answer it.</summary>
+    public static string NoOneOn(CommsChannel channel) => $"No one on {channel}.";
 
     /// <summary>
     /// A turn answered by an addressed speaker, from their own brief and transcript. Skips the model-free

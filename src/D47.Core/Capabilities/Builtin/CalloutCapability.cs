@@ -906,8 +906,8 @@ public static class CalloutCapability
                 "In Ship chatter",
                 "Your core and your crew - the voices inside your ship. The occasional "
                 + "in-character line to you, said because nothing has happened rather than because "
-                + "something did; only the AI speaks unasked, and your crew answer when you "
-                + "address them. Written by the model in the core's own voice, so it needs a "
+                + "something did; only the AI speaks unasked, and your crew answer on the comms "
+                + "key. Written by the model in the core's own voice, so it needs a "
                 + "language model configured; with none there is no chatter.",
                 "ambient",
                 "in ship chatter",
@@ -924,9 +924,9 @@ public static class CalloutCapability
                 "NPC chatter",
                 "Anybody outside your ship. Made-up radio traffic from people who do not exist - "
                 + "passers-by talking to each other, the dock telling somebody off, the occasional "
-                + "word to you. Theatre, written by the model. When one of them speaks to you, say "
-                + "their name within 90 seconds of the last line and they answer, up to four replies "
-                + "before they sign off; after that D47 says they are off the channel. Each reply is "
+                + "word to you. Theatre, written by the model. Everyone you hear is on the System comms "
+                + "channel until you jump or they sign off, and a hail selects the one who hailed you; "
+                + "speak on the comms key and whoever is selected answers. Each reply is "
                 + "billed like any turn, on the background model. The game's own NPC messages are a "
                 + "different switch, under Speech.",
                 "npc-chatter",

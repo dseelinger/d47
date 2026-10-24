@@ -28,6 +28,9 @@ public sealed class Announcer : IDisposable
     /// <summary>The NPCs heard in the current system.</summary>
     public NpcsHeardHere NpcsHere { get; } = new();
 
+    /// <summary>Called with the hailer's name once a hail has been spoken, from the speaking thread.</summary>
+    public Action<string>? Hailed { get; set; }
+
     internal Announcer(
         VoicePipeline voice,
         AudioArbiter audio,
@@ -222,8 +225,12 @@ public sealed class Announcer : IDisposable
                         // Only a line actually spoken can be answered.
                         if (announcement.Invented is { } chatter)
                         {
-                            Turns.LineHeard<D47.Core.Persona.ChatterLine>(
-                                line => line.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex, chatter.Hail));
+                            Turns.LineHeard<D47.Core.Persona.ChatterLine>(line => line.Heard(chatter.Line, chatter.ExchangeIndex));
+
+                            if (chatter.Hail && chatter.Line.Role is null)
+                            {
+                                Hailed?.Invoke(chatter.Line.Name);
+                            }
                         }
 
                         if (announcement.Voice == VoiceRole.Narrator)

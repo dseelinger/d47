@@ -7,16 +7,14 @@ using D47.Core.Journal;
 
 namespace D47.Core.Persona;
 
-/// <summary>The captain of the Commander's fleet carrier, on the line while addressed.</summary>
+/// <summary>The captain of the Commander's fleet carrier, on the CARRIER channel.</summary>
 /// <param name="commander">The active Commander, whose carrier and ships the captain knows.</param>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
-/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class CaptainLine(
     Func<CommanderGameState?> commander,
     Func<string?> commanderSystem,
     Func<DateTimeOffset> now,
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
-    Func<string, bool>? modelFree = null,
     Func<FightSnapshot>? fight = null,
     Func<string?>? captainName = null,
     Func<string?>? notes = null) : ILine
@@ -24,59 +22,32 @@ public sealed class CaptainLine(
     /// <summary>How far the captain can be heard.</summary>
     public const double RangeLightYears = CarrierComms.RangeLightYears;
 
-    /// <summary>Said to the captain while the line is open, each ends it.</summary>
-    public static readonly IReadOnlyList<string> Dismissals =
-        ["that's all", "that'll be all", "thank you captain", "dismissed", "carry on"];
-
     private readonly List<ConversationMessage> _transcript = [];
 
-    public bool IsOpen { get; private set; }
-
-    public void Close() => IsOpen = false;
-
-    public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(selected);
+
         var state = commander()?.Carrier ?? CarrierState.None;
 
-        if (!state.Owned || state.StarSystem is not { Length: > 0 } carrierSystem)
-        {
-            IsOpen = false;
-            return new LineDecision.NotMine();
-        }
-
-        string question;
-
-        if (CrewAddressing.Opens(input, NpcChatter.CaptainName) is { } rest)
-        {
-            question = rest;
-        }
-        else if (IsOpen)
-        {
-            if (modelFree?.Invoke(input) == true)
-            {
-                return new LineDecision.NotMine();
-            }
-
-            question = input.Trim();
-        }
-        else
+        if (selected is not { Channel: CommsChannel.Carrier, SubChannel.Key: CommsChannels.CaptainKey }
+            || !state.Owned
+            || state.StarSystem is not { Length: > 0 } carrierSystem)
         {
             return new LineDecision.NotMine();
         }
+
+        var question = input.Trim();
 
         var lightYears = await CarrierComms.DistanceAsync(commanderSystem(), carrierSystem, distance, cancellationToken)
             .ConfigureAwait(false);
 
         if (lightYears is > RangeLightYears and var away)
         {
-            IsOpen = false;
-
             return new LineDecision.Refused(
                 CarrierComms.OutOfRange(away, "The captain"),
                 TurnRoute.CarrierOutOfRange);
         }
-
-        IsOpen = !IsDismissal(input);
 
         return new LineDecision.Taken(
             new Speaker(
@@ -88,24 +59,6 @@ public sealed class CaptainLine(
                 Signal: LinkSignal.Strength(lightYears),
                 LiveState: () => Knows(commander(), now(), fight?.Invoke())),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
-    }
-
-    /// <summary>Whether the utterance, less punctuation and <paramref name="name"/>, is one of <paramref name="dismissals"/>.</summary>
-    public static bool IsDismissal(string input, string name = NpcChatter.CaptainName, IReadOnlyList<string>? dismissals = null)
-    {
-        dismissals ??= Dismissals;
-
-        string[] words = new string([.. input.Replace('’', '\'').Where(c => char.IsLetter(c) || c is ' ' or '\'')])
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        bool IsNamed(string word) => string.Equals(word, name, StringComparison.OrdinalIgnoreCase);
-
-        return Is(words)
-               || (words.Length > 1 && IsNamed(words[^1]) && Is(words[..^1]))
-               || (words.Length > 1 && IsNamed(words[0]) && Is(words[1..]));
-
-        bool Is(string[] said) => dismissals.Any(dismissal =>
-            string.Equals(string.Join(' ', said), dismissal, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>The captain's live game state: the carrier report, the roster, then any fight in the carrier's system.</summary>

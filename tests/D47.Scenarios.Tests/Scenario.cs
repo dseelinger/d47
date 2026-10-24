@@ -60,9 +60,16 @@ public sealed record Scenario
     /// <summary>What was already said before this turn, handed to the loop as its transcript.</summary>
     public IReadOnlyList<D47.Core.Conversation.ConversationMessage> History { get; init; } = [];
 
-    /// <summary>Addressed speakers the loop asks before its own routes, built over this run's world.</summary>
+    /// <summary>The speakers on the comms channels, built over this run's world.</summary>
     [JsonIgnore]
     public Func<ScenarioWorld, IReadOnlyList<D47.Core.Persona.ILine>>? Lines { get; init; }
+
+    /// <summary>Which push-to-talk the utterance is spoken through.</summary>
+    public D47.Core.Listening.PttTarget Target { get; init; } = D47.Core.Listening.PttTarget.Core;
+
+    /// <summary>The comms selection a comms utterance is spoken to, or null for none.</summary>
+    [JsonIgnore]
+    public Func<D47.Core.Conversation.CommsSelection?>? Comms { get; init; }
 
     public IReadOnlyList<ScenarioAssertion> Assertions { get; init; } = [];
 

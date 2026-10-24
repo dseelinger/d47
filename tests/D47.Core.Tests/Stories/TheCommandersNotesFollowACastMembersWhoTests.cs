@@ -44,10 +44,10 @@ public sealed class TheCommandersNotesFollowACastMembersWhoTests
 
     private static async Task<string> BriefOf(AdventureSpeaker member)
     {
-        var line = new CastLine(() => Now, _ => false, _ => member, () => null);
+        var line = new CastLine(_ => member, () => null);
 
         line.Heard(member.Id, "Hold the course.");
 
-        return Assert.IsType<LineDecision.Taken>(await line.RouteAsync("Who are you?", CancellationToken.None)).Speaker.Brief;
+        return Assert.IsType<LineDecision.Taken>(await line.RouteAsync(D47.Core.Tests.Conversation.OnComms.Cast(member.Id, member.Name), "Who are you?", CancellationToken.None)).Speaker.Brief;
     }
 }

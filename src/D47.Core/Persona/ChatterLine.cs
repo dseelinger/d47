@@ -6,189 +6,161 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Persona;
 
 /// <summary>
-/// The invented people of the last overheard exchange, who answer when the Commander names them while
-/// the exchange is still going. A hail opens the line to its hailer, so an unnamed reply reaches them too.
-/// Thread-safe: <see cref="Heard"/> runs on the callout drain and
-/// <see cref="RouteAsync"/> on the turn loop.
+/// The strangers on the SYSTEM channel, by roster name: the invented people of overheard exchanges, and real comms
+/// NPCs. Thread-safe: <see cref="Heard"/> runs on the callout drain and <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
-/// <param name="clock">The time now.</param>
 /// <param name="system">The Commander's current star system.</param>
-/// <param name="situation">What the Commander is doing, as <see cref="AmbientLines.Situate"/> reads it.</param>
 /// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
 /// <param name="accentOf">The accent a voice id speaks with, or null for none.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
-/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 /// <param name="roster">The NPCs heard here, which keep the personality written for each, or null for none.</param>
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
-/// <param name="selected">The comms selection; a real comms NPC on the roster answers only while it is selected, or null for none.</param>
 public sealed class ChatterLine(
-    Func<DateTimeOffset> clock,
     Func<string?> system,
-    Func<AmbientSituation> situation,
     Func<string?>? model = null,
     Func<string?, string?>? accentOf = null,
     Func<ShipFacts>? facts = null,
-    Func<string, bool>? modelFree = null,
     ILogger? logger = null,
     Func<NpcsHeardHere?>? roster = null,
-    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
-    Func<CommsSelection?>? selected = null) : ILine
+    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null) : ILine
 {
-    /// <summary>How long after the exchange's last line the Commander can still answer it.</summary>
-    public static readonly TimeSpan Window = TimeSpan.FromSeconds(90);
-
-    /// <summary>The most replies one exchange gives.</summary>
-    public const int MostReplies = 4;
-
     private const string Commander = "Commander";
 
     private readonly Lock _lock = new();
 
-    private Exchange? _exchange;
+    /// <summary>The exchange held last, which the next line of the same index joins.</summary>
+    private Exchange? _last;
 
-    /// <summary>The person the line is open to, or null.</summary>
-    private string? _open;
+    /// <summary>The exchange each invented speaker was last heard in.</summary>
+    private readonly Dictionary<string, Exchange> _heardIn = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Real comms NPCs whose personality could not be written, so the plain brief is used for the stay.</summary>
+    /// <summary>When each invented speaker was last heard, as a count of lines heard.</summary>
+    private readonly Dictionary<string, long> _heardAt = new(StringComparer.OrdinalIgnoreCase);
+
+    private long _lines;
+
+    /// <summary>NPCs whose personality could not be written, so the plain brief is used for the stay.</summary>
     private readonly HashSet<string> _noPersonality = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Words said ahead of a name: "Oh, Fenn" and "Hey Fenn" both name Fenn.</summary>
-    private static readonly string[] Interjections =
-        ["thank you", "thanks", "cheers", "hello", "hey", "hi", "oh", "ah", "okay", "ok", "well", "yeah", "yes"];
-
-    public bool IsOpen
-    {
-        get
-        {
-            lock (_lock)
-            {
-                return _open is not null && _exchange is { } exchange && Carries(exchange);
-            }
-        }
-    }
-
-    /// <summary>The invented speakers of the held exchange while the Commander can still answer it; otherwise empty.</summary>
+    /// <summary>The invented speakers heard in the current system, most recently heard first.</summary>
     public IReadOnlyList<string> Speakers
     {
         get
         {
             lock (_lock)
             {
-                return _exchange is { } exchange && Carries(exchange) ? [.. exchange.People.Keys] : [];
+                var here = system();
+
+                return [.. _heardIn
+                    .Where(pair => In(pair.Value, here))
+                    .OrderByDescending(pair => _heardAt.GetValueOrDefault(pair.Key))
+                    .Select(pair => pair.Key)];
             }
         }
     }
 
-    public void Close()
-    {
-        lock (_lock)
-        {
-            _open = null;
-        }
-    }
-
     /// <summary>
-    /// Records a line as spoken. A new <paramref name="exchangeIndex"/> replaces the exchange held. Only
-    /// invented speakers can be addressed; the tower and the captain are context.
+    /// Records a line as spoken in the Commander's current system. A new <paramref name="exchangeIndex"/> starts a new
+    /// exchange. Only invented speakers can be answered; the tower and the captain are context.
     /// </summary>
-    /// <param name="answerable">Whether the Commander may answer this exchange at all.</param>
-    /// <param name="hail">Whether the exchange is said to the Commander, which opens the line to its speaker.</param>
-    public void Heard(
-        NpcChatterLine line,
-        bool answerable,
-        int exchangeIndex,
-        string? system,
-        AmbientSituation situation,
-        bool hail = false)
+    public void Heard(NpcChatterLine line, int exchangeIndex)
     {
         ArgumentNullException.ThrowIfNull(line);
 
         lock (_lock)
         {
-            if (_exchange is not { } exchange || exchange.Index != exchangeIndex)
+            var here = system();
+
+            foreach (var gone in _heardIn.Where(pair => !In(pair.Value, here)).Select(pair => pair.Key).ToList())
             {
-                _exchange = exchange = new Exchange(exchangeIndex, answerable, system, situation);
-                _open = null;
+                _heardIn.Remove(gone);
+                _heardAt.Remove(gone);
+            }
+
+            if (_last is not { } exchange || exchange.Index != exchangeIndex || !In(exchange, here))
+            {
+                _last = exchange = new Exchange(exchangeIndex, here);
             }
 
             exchange.Said.Add($"{line.Name}: {line.Text}");
-            exchange.LastLineAt = clock();
 
-            if (line.Role is null && !exchange.People.ContainsKey(line.Name))
+            if (line.Role is null)
             {
                 exchange.People[line.Name] = line.VoiceId;
-            }
-
-            if (hail && answerable && line.Role is null && exchange.Replies == 0)
-            {
-                _open = line.Name;
+                _heardIn[line.Name] = exchange;
+                _heardAt[line.Name] = ++_lines;
             }
         }
     }
 
-    /// <summary>Records a line as spoken in the Commander's current system and situation.</summary>
-    public void Heard(NpcChatterLine line, bool answerable, int exchangeIndex, bool hail = false) =>
-        Heard(line, answerable, exchangeIndex, system(), situation(), hail);
-
-    public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
-        if (SelectedCommsNpc() is { } commsNpc)
+        ArgumentNullException.ThrowIfNull(selected);
+
+        if (selected is not { Channel: CommsChannel.System, SubChannel.Key: var key })
         {
-            return await RouteCommsNpcAsync(commsNpc, input, cancellationToken).ConfigureAwait(false);
+            return new LineDecision.NotMine();
         }
 
-        await EnsurePersonalityAsync(input, cancellationToken).ConfigureAwait(false);
+        var npc = roster?.Invoke()?.Find(key);
+
+        if (npc is { Kind: NpcKind.Comms })
+        {
+            return await RouteCommsNpcAsync(npc, input, cancellationToken).ConfigureAwait(false);
+        }
+
+        Exchange? exchange;
 
         lock (_lock)
         {
-            return Route(input);
+            exchange = _heardIn.TryGetValue(key, out var heardIn) && In(heardIn, system()) ? heardIn : null;
         }
-    }
 
-    private NpcHeard? SelectedCommsNpc() =>
-        selected?.Invoke() is { Channel: CommsChannel.System, SubChannel: { } party }
-        && roster?.Invoke()?.Find(party.Key) is { Kind: NpcKind.Comms } npc
-            ? npc
-            : null;
+        // An invented speaker answers only from an exchange they spoke in; a carrier post heard in chatter is never one.
+        if (exchange is null)
+        {
+            return new LineDecision.NotMine();
+        }
+
+        var name = npc?.Name ?? key;
+
+        if (npc is not null)
+        {
+            await PersonalityAsync(npc, cancellationToken).ConfigureAwait(false);
+        }
+
+        var question = input.Trim();
+        string brief;
+
+        lock (_lock)
+        {
+            if (question.Length > 0)
+            {
+                exchange?.Said.Add($"{Commander}: {question}");
+            }
+
+            brief = Brief(name, exchange, npc?.VoiceId);
+        }
+
+        return new LineDecision.Taken(
+            new Speaker(
+                VoiceRole.Comms,
+                name,
+                brief,
+                [],
+                OffersTools: false,
+                Signal: 1,
+                Model: model?.Invoke(),
+                Screen: reply => Screened(reply, name, exchange)),
+            question.Length == 0 ? "The Commander is trying to get your attention." : question);
+    }
 
     /// <summary>A real comms NPC answers from its family and personality; what it said is never held or sent.</summary>
     private async Task<LineDecision> RouteCommsNpcAsync(NpcHeard npc, string input, CancellationToken cancellationToken)
     {
         var question = input.Trim();
 
-        if (question.Length == 0 || modelFree?.Invoke(input) == true)
-        {
-            return new LineDecision.NotMine();
-        }
-
-        var personality = npc.Personality;
-
-        if (personality is null && writePersonality is not null && roster?.Invoke() is { } here)
-        {
-            bool tried;
-
-            lock (_lock)
-            {
-                tried = _noPersonality.Contains(npc.Name);
-            }
-
-            if (!tried)
-            {
-                personality = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
-
-                if (personality is null)
-                {
-                    lock (_lock)
-                    {
-                        _noPersonality.Add(npc.Name);
-                    }
-                }
-                else
-                {
-                    here.SetPersonality(npc.Name, personality);
-                }
-            }
-        }
+        var personality = await PersonalityAsync(npc, cancellationToken).ConfigureAwait(false);
 
         var accent = SpeakerAccent.Sentence(accentOf?.Invoke(npc.VoiceId));
 
@@ -202,6 +174,7 @@ public sealed class ChatterLine(
                      no quotation marks. Never name or imitate a real person or another player.
                      You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
                      them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
+                     {SigningOff(npc.Name)}
                      """;
 
         return new LineDecision.Taken(
@@ -213,144 +186,49 @@ public sealed class ChatterLine(
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
-                Screen: reply => ScreenedCommsNpc(reply, npc.Name)),
-            question);
+                Screen: reply => Screened(reply, npc.Name, exchange: null)),
+            question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
-    private string ScreenedCommsNpc(string reply, string name)
+    /// <summary>The NPC's personality, written once for the stay unless it is already held or could not be written.</summary>
+    private async Task<string?> PersonalityAsync(NpcHeard npc, CancellationToken cancellationToken)
     {
-        var said = reply.Trim();
+        if (npc.Personality is { } held)
+        {
+            return held;
+        }
 
-        var sayable = FlavourBriefs.MayBeSpoken(said)
-                      && !NpcChatter.Escalates(said)
-                      && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, NpcChatter.KeyPrefix + "reply") is not null;
-
-        return sayable ? said : NpcsHeardHere.SignOff(name);
-    }
-
-    /// <summary>Writes the personality of the NPC the input would reach, once, unless the NPC already has one.</summary>
-    private async Task EnsurePersonalityAsync(string input, CancellationToken cancellationToken)
-    {
         if (writePersonality is null || roster?.Invoke() is not { } here)
-        {
-            return;
-        }
-
-        Exchange exchange;
-        string name;
-
-        lock (_lock)
-        {
-            if (_exchange is not { Answerable: true, PersonalityFailed: false } held || Addressee(input, held) is not { } who)
-            {
-                return;
-            }
-
-            (exchange, name) = (held, who);
-        }
-
-        if (here.Find(name) is not { Personality: null } npc)
-        {
-            return;
-        }
-
-        var kept = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
-
-        if (kept is null)
-        {
-            lock (_lock)
-            {
-                exchange.PersonalityFailed = true;
-            }
-
-            return;
-        }
-
-        here.SetPersonality(name, kept);
-    }
-
-    /// <summary>The held speaker the input would reach, without changing any state; null when none.</summary>
-    private string? Addressee(string input, Exchange exchange)
-    {
-        if (exchange.People.Count == 0 || !Carries(exchange))
         {
             return null;
         }
 
-        if (Named(input, exchange) is { } named)
+        lock (_lock)
         {
-            return named.Name;
-        }
-
-        return _open is { } open && modelFree?.Invoke(input) != true ? open : null;
-    }
-
-    private LineDecision Route(string input)
-    {
-        if (_exchange is not { Answerable: true } exchange || exchange.People.Count == 0)
-        {
-            _open = null;
-            return new LineDecision.NotMine();
-        }
-
-        var carries = Carries(exchange);
-        string name;
-        string question;
-
-        if (Named(input, exchange) is { } named)
-        {
-            if (!carries)
+            if (_noPersonality.Contains(npc.Name))
             {
-                _open = null;
-                return new LineDecision.Refused($"{named.Name} is off the channel.", TurnRoute.ChatterClosed);
+                return null;
+            }
+        }
+
+        var written = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
+
+        if (written is null)
+        {
+            lock (_lock)
+            {
+                _noPersonality.Add(npc.Name);
             }
 
-            (name, question) = named;
-        }
-        else if (_open is { } open && carries)
-        {
-            if (modelFree?.Invoke(input) == true)
-            {
-                return new LineDecision.NotMine();
-            }
-
-            name = open;
-            question = input.Trim();
-        }
-        else
-        {
-            _open = null;
-            return new LineDecision.NotMine();
+            return null;
         }
 
-        exchange.Replies++;
-
-        _open = exchange.Replies >= MostReplies
-                || CaptainLine.IsDismissal(input, name)
-                || CaptainLine.IsDismissal(input, LastWord(name))
-            ? null
-            : name;
-
-        if (question.Length > 0)
-        {
-            exchange.Said.Add($"{Commander}: {question}");
-        }
-
-        return new LineDecision.Taken(
-            new Speaker(
-                VoiceRole.Comms,
-                name,
-                Brief(name, exchange),
-                [],
-                OffersTools: false,
-                Signal: 1,
-                Model: model?.Invoke(),
-                Screen: reply => Screened(reply, name, exchange)),
-            question.Length == 0 ? "The Commander is trying to get your attention." : question);
+        here.SetPersonality(npc.Name, written);
+        return written;
     }
 
-    /// <summary>The reply, or a fixed sign-off that shuts the exchange when the reply may not be said.</summary>
-    private string Screened(string reply, string name, Exchange exchange)
+    /// <summary>The reply, or a fixed sign-off when it may not be said. A reply that signs off takes the speaker off the roster.</summary>
+    private string Screened(string reply, string name, Exchange? exchange)
     {
         var said = reply.Trim();
 
@@ -358,132 +236,68 @@ public sealed class ChatterLine(
                       && !NpcChatter.Escalates(said)
                       && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, NpcChatter.KeyPrefix + "reply") is not null;
 
+        if (!sayable)
+        {
+            said = NpcsHeardHere.SignOff(name);
+        }
+
+        var left = NpcsHeardHere.SignsOff(said, name);
+
         lock (_lock)
         {
-            if (!sayable)
-            {
-                said = NpcsHeardHere.SignOff(name);
-                exchange.Shut = true;
-            }
+            exchange?.Said.Add($"{name}: {said}");
 
-            exchange.Said.Add($"{name}: {said}");
-            exchange.LastLineAt = clock();
-
-            if (exchange.Shut && _exchange == exchange)
+            if (left)
             {
-                _open = null;
+                _heardIn.Remove(name);
+                _heardAt.Remove(name);
             }
+        }
+
+        if (left)
+        {
+            roster?.Invoke()?.Left(name);
         }
 
         return said;
     }
 
-    /// <summary>Whether the Commander can still be answered in this exchange.</summary>
-    private bool Carries(Exchange exchange) =>
-        exchange.Answerable
-        && !exchange.Shut
-        && exchange.Replies < MostReplies
-        && clock() - exchange.LastLineAt <= Window
-        && string.Equals(system(), exchange.System, StringComparison.OrdinalIgnoreCase)
-        && situation() == exchange.Situation;
+    /// <summary>How a stranger ends the conversation, in the words <see cref="NpcsHeardHere.SignsOff"/> reads.</summary>
+    private static string SigningOff(string name) =>
+        $"When you are done talking, end your reply with exactly: {NpcsHeardHere.SignOff(name)}";
 
-    /// <summary>
-    /// The held speaker the input opens with — whole name or its last word, after any interjections — and what
-    /// follows. With an interjection ahead of the name, the whole input is the question.
-    /// </summary>
-    private static (string Name, string Question)? Named(string input, Exchange exchange)
+    private static bool In(Exchange exchange, string? system) =>
+        string.Equals(exchange.System, system, StringComparison.OrdinalIgnoreCase);
+
+    private string Brief(string name, Exchange? exchange, string? rosterVoice)
     {
-        if (OpensWithName(input, exchange) is { } named)
-        {
-            return named;
-        }
-
-        var rest = input;
-
-        while (Interjections.Select(word => CrewAddressing.Opens(rest, word)).FirstOrDefault(after => after is not null) is { } after)
-        {
-            rest = after;
-
-            if (OpensWithName(rest, exchange) is { } late)
-            {
-                return (late.Name, input.Trim());
-            }
-        }
-
-        return null;
-    }
-
-    private static (string Name, string Question)? OpensWithName(string input, Exchange exchange)
-    {
-        foreach (var name in exchange.People.Keys.OrderByDescending(name => name.Length))
-        {
-            if (CrewAddressing.Opens(input, name) is { } rest)
-            {
-                return (name, rest);
-            }
-        }
-
-        foreach (var name in exchange.People.Keys.OrderByDescending(name => name.Length))
-        {
-            if (LastWord(name) is var last && last != name && CrewAddressing.Opens(input, last) is { } rest)
-            {
-                return (name, rest);
-            }
-        }
-
-        return null;
-    }
-
-    private static string LastWord(string name) =>
-        name.Split(' ', StringSplitOptions.RemoveEmptyEntries) is { Length: > 0 } words ? words[^1] : name;
-
-    private string Personality(string name) =>
-        roster?.Invoke()?.Find(name)?.Personality is { } personality ? $"\nYour personality: {personality}" : string.Empty;
-
-    private string Brief(string name, Exchange exchange)
-    {
-        var accent = SpeakerAccent.Sentence(accentOf?.Invoke(exchange.People[name]));
-        var last = exchange.Replies >= MostReplies
-            ? " This is your last reply: sign off in it."
-            : string.Empty;
+        var voiceId = exchange is not null && exchange.People.TryGetValue(name, out var heardIn) ? heardIn : rosterVoice;
+        var accent = SpeakerAccent.Sentence(accentOf?.Invoke(voiceId));
+        var personality = roster?.Invoke()?.Find(name)?.Personality is { } trait ? $"\nYour personality: {trait}" : string.Empty;
+        var said = exchange is null ? string.Empty : $"\nWhat has been said so far:\n\n{ExchangeLines.Recent(exchange.Said)}\n";
 
         return $"""
-                 You are {name}, one of the people the Commander just overheard on the comms channel.
-                 You are a human being, not an artificial intelligence, and you never claim to be one.{Personality(name)}
-                 The Commander has answered you. What has been said so far:
-
-                 {string.Join('\n', exchange.Said)}
-
+                 You are {name}, one of the people the Commander overheard on the comms channel in this system.
+                 You are a human being, not an artificial intelligence, and you never claim to be one.{personality}
+                 The Commander is talking to you.{said}
                  Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
                  no quotation marks. Never name or imitate a real person or another player.
                  You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
-                 them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}{last}
+                 them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
+                 {SigningOff(name)}
                  """;
     }
 
-    private sealed class Exchange(int index, bool answerable, string? system, AmbientSituation situation)
+    private sealed class Exchange(int index, string? system)
     {
         public int Index { get; } = index;
 
-        public bool Answerable { get; } = answerable;
-
-        /// <summary>Whether writing a personality for this exchange failed, so the plain brief is used for the rest of it.</summary>
-        public bool PersonalityFailed { get; set; }
-
         public string? System { get; } = system;
-
-        public AmbientSituation Situation { get; } = situation;
 
         /// <summary>Invented speakers by name, with the voice each was heard in.</summary>
         public Dictionary<string, string?> People { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Every line so far, overheard and replied, as "Name: text".</summary>
         public List<string> Said { get; } = [];
-
-        public DateTimeOffset LastLineAt { get; set; }
-
-        public int Replies { get; set; }
-
-        public bool Shut { get; set; }
     }
 }

@@ -1506,7 +1506,7 @@ Commander doing the interdicting.
 
 **Who it is: your core and your crew** — the voices inside your ship, as against the
 [NPC chatter](#npc-chatter) below, which is everybody outside it. Only the AI speaks unasked; your
-crew answer when you address them.
+crew answer on comms.
 
 The occasional in-character line **to you**, said because *nothing* has happened. Everything else
 on this page speaks because something did. Spoken to you rather than narrated, on purpose: the
@@ -1560,17 +1560,14 @@ small business, the dock telling an invented pilot off when you are docked somew
 one exchange in four — one line said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
-**You can answer the ones that speak to you.** After a hail, whatever you say within 90 seconds of
-the last line in that exchange goes to the hailer, with or without their name, and they reply in the
-voice you heard them in. The occasional passer-by who notices you is answered by name: start with
-the speaker's name — *"Vance, thanks"*, *"Hey Vance, thanks"*, or the whole *"Courier Vance"* — within
-the same 90 seconds. Either way your next line goes to them too, until you name your core, say the
-wake phrase or say goodbye. A command the ship runs without the model, such as *"landing gear"*,
-still goes to the ship. Each exchange gives **four replies at most**; the fourth is their sign-off.
-A reply that would contradict your ship or claim something the game would log — a scan, a fine, a
-docking decision — is replaced with *"Got to go. Vance out."*, which ends the exchange. After 90
-seconds, a jump, a change of situation such as docking or undocking, or the next exchange, naming
-them gets *"Vance is off the channel."* from D47, and nothing is sent to the model.
+**You can answer them on comms.** Everyone you hear is on the System
+[comms channel](comms.md#choose-who-your-comms-key-reaches) until you jump or they sign off, and a
+hail moves the selection to the hailer. What you say on the comms push-to-talk goes to whoever the
+System channel selects, and they reply in the voice you heard them in, knowing what was said in
+their exchange. There is no time limit and no limit on replies. Push-to-talk still goes to your
+core, even when you start with their name. A reply that would contradict your ship or claim
+something the game would log — a scan, a fine, a docking decision — is replaced with
+*"Got to go. Vance out."* A stranger who signs off, either way, leaves the System channel.
 
 Each reply is a turn of its own on the background model, billed like any other turn. A tower
 controller's traffic and passers-by talking only to each other are never answered.
@@ -1787,15 +1784,9 @@ rows are absent; with personality off, it is silent.
 It is captioned *Narrator* and spoken in its own voice from the provider that speaks for your ship,
 chosen under Speech → [Narrator voice](speech.md#narrator-voice). It is never the ship's voice.
 
-**A narration can be answered.** For ninety seconds after the Narrator's last line, whatever you say
-goes to the Narrator, which answers with more narration in the third person and the past tense, taking
-what you said as what your Commander said or did. Each reply restarts the ninety seconds, and a
-narration takes at most four replies. Two things still go to the ship: a command d47 runs or offers
-without the model, such as "gear down", and anything that starts with your core's name, which also
-ends the exchange. The Narrator is offered no tools, so nothing it says can act on the ship. A reply
-that addresses you as "you" is not said, and ends the exchange. Each reply is posted to the Story log from
-the Narrator, and goes to the same model as the narration. Outside those ninety seconds, saying
-"Narrator" starts no conversation with it.
+**A narration is not answered.** The Narrator is not on the Story
+[comms channel](comms.md#choose-who-your-comms-key-reaches), and push-to-talk goes to your core, so
+nothing you say reaches it. Saying "Narrator" starts no conversation with it.
 
 > "stop calling out the narrator" / "start calling out the narrator"
 

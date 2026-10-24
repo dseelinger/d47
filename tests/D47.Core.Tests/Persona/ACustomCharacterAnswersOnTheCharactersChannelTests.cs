@@ -3,13 +3,14 @@ using D47.Core.Characters;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Persona;
+using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>A custom character answers when named: clear aboard, faded by distance when not, refused beyond range.</summary>
-public class ACustomCharacterAnswersByNameTests
+/// <summary>A custom character answers on the CHARACTERS channel: clear aboard, faded by distance when not, refused beyond range.</summary>
+public class ACustomCharacterAnswersOnTheCharactersChannelTests
 {
     private static readonly CustomCharacter Aboard = new("aaaa0001", "Mara", null, "gruff", true, null);
 
@@ -31,15 +32,17 @@ public class ACustomCharacterAnswersByNameTests
         return (line, asked);
     }
 
-    private static async Task<LineDecision.Taken> TakenAsync(CharacterLine line, string input) =>
-        Assert.IsType<LineDecision.Taken>(await line.RouteAsync(input, CancellationToken.None));
+    private static CommsSelection To(CustomCharacter character) => OnComms.Character(character.Id, character.Name);
+
+    private static async Task<LineDecision.Taken> TakenAsync(CharacterLine line, CustomCharacter character, string input) =>
+        Assert.IsType<LineDecision.Taken>(await line.RouteAsync(To(character), input, CancellationToken.None));
 
     [Fact]
     public async Task AnAboardCharacterIsOnTheIntercomWithAClearSignal()
     {
         var (line, asked) = Build(Aboard, 900);
 
-        var taken = await TakenAsync(line, "Mara, how are we doing?");
+        var taken = await TakenAsync(line, Aboard, "how are we doing?");
 
         Assert.Equal(VoiceRole.Crew, taken.Speaker.Role);
         Assert.False(RadioVoice.IsOverTheAir(taken.Speaker.Role));
@@ -55,7 +58,7 @@ public class ACustomCharacterAnswersByNameTests
     {
         var (line, asked) = Build(Remote(), 375);
 
-        var taken = await TakenAsync(line, "Juno, are you there?");
+        var taken = await TakenAsync(line, Remote(), "are you there?");
 
         Assert.Equal(VoiceRole.Comms, taken.Speaker.Role);
         Assert.True(RadioVoice.IsOverTheAir(taken.Speaker.Role));
@@ -69,11 +72,10 @@ public class ACustomCharacterAnswersByNameTests
     {
         var (line, _) = Build(Remote(), 1200);
 
-        var decision = await line.RouteAsync("Juno, are you there?", CancellationToken.None);
+        var decision = await line.RouteAsync(To(Remote()), "are you there?", CancellationToken.None);
 
         var refused = Assert.IsType<LineDecision.Refused>(decision);
         Assert.Equal("Juno is 1,200 light years away, beyond comms range.", refused.Line);
-        Assert.False(line.IsOpen);
     }
 
     [Fact]
@@ -81,7 +83,7 @@ public class ACustomCharacterAnswersByNameTests
     {
         var (line, _) = Build(Remote(), null);
 
-        var taken = await TakenAsync(line, "Juno, are you there?");
+        var taken = await TakenAsync(line, Remote(), "are you there?");
 
         Assert.Equal(1, taken.Speaker.Signal);
     }
@@ -91,31 +93,29 @@ public class ACustomCharacterAnswersByNameTests
     {
         var (line, asked) = Build(Remote("sol"), 900);
 
-        var taken = await TakenAsync(line, "Juno, are you there?");
+        var taken = await TakenAsync(line, Remote("sol"), "are you there?");
 
         Assert.Equal(1, taken.Speaker.Signal);
         Assert.Empty(asked);
     }
 
     [Fact]
-    public async Task TheLineStaysOpenUntilDismissedAndAnUnnamedTurnIsNotTaken()
+    public async Task OnlyTheSelectedCharacterAnswersAndADismissalLeavesThemSelected()
     {
         var (line, _) = Build(Aboard, null);
 
-        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("how are we doing?", CancellationToken.None));
+        Assert.IsType<LineDecision.NotMine>(
+            await line.RouteAsync(OnComms.Character("someone-else", "Mara"), "how are we doing?", CancellationToken.None));
+        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync(OnComms.Captain, "how are we doing?", CancellationToken.None));
 
-        await TakenAsync(line, "Mara, hello");
-        Assert.True(line.IsOpen);
+        await TakenAsync(line, Aboard, "that's all Mara");
 
-        var follow = await TakenAsync(line, "and the fuel?");
+        var follow = await TakenAsync(line, Aboard, "and the fuel?");
         Assert.Equal("and the fuel?", follow.Question);
-
-        await TakenAsync(line, "that's all Mara");
-        Assert.False(line.IsOpen);
     }
 
     [Fact]
-    public async Task ACharacterAddressedIsHeardInTheirStoredVoiceAndShownWithTheirPicture()
+    public async Task ACharacterOnCommsIsHeardInTheirStoredVoiceAndShownWithTheirPicture()
     {
         var voiced = Aboard with { Voice = new CharacterVoice("kokoro", "am_adam") };
         var surface = TestSurface.For(new MemoryInstall());
@@ -127,35 +127,20 @@ public class ACustomCharacterAnswersByNameTests
             new SpendTracker(),
             PriceTable.Default,
             NullLogger<TurnLoop>.Instance,
-            D47.Core.Tests.Conversation.FakeLlmProvider.Answering("Holding steady."))
+            FakeLlmProvider.Answering("Holding steady."))
         {
             Persona = "You are the ship's AI.",
+            CommsSelected = () => To(voiced),
         };
 
         loop.Lines.Add(new CharacterLine(() => [voiced], () => "Sol"));
 
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync("Mara, how are we doing?", cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
+        var events = await OnComms.SayAsync(loop, "how are we doing?");
 
         var addressed = Assert.Single(events.OfType<TurnEvent.Addressed>());
 
         Assert.Equal(new CharacterVoice("kokoro", "am_adam"), addressed.Voice);
         Assert.Equal("character.aaaa0001", addressed.Picture);
-    }
-
-    [Fact]
-    public async Task NamingSomebodyElseAboardClosesTheLine()
-    {
-        var line = new CharacterLine(() => [Aboard], () => "Sol", others: () => ["Vance"]);
-
-        await TakenAsync(line, "Mara, hello");
-
-        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("Vance, launch the fighter", CancellationToken.None));
-        Assert.False(line.IsOpen);
     }
 
     [Fact]

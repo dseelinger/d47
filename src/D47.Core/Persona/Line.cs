@@ -38,23 +38,27 @@ public abstract record LineDecision
     {
     }
 
-    /// <summary>Not addressed to this line.</summary>
+    /// <summary>Not a party this line speaks for.</summary>
     public sealed record NotMine : LineDecision;
 
     /// <summary>This speaker answers <paramref name="Question"/>.</summary>
     public sealed record Taken(Speaker Speaker, string Question) : LineDecision;
 
-    /// <summary>Addressed to this line and answered by the ship's AI with a fixed line, no model call.</summary>
+    /// <summary>Answered by the ship's AI with a fixed line, no model call.</summary>
     public sealed record Refused(string Line, TurnRoute Route) : LineDecision;
 }
 
-/// <summary>An addressed speaker <see cref="TurnLoop"/> asks before any of its own routes.</summary>
+/// <summary>The lines of an exchange a speaker's brief carries: the latest <see cref="Most"/>, oldest first.</summary>
+public static class ExchangeLines
+{
+    public const int Most = 20;
+
+    public static string Recent(IEnumerable<string> said) => string.Join('\n', said.TakeLast(Most));
+}
+
+/// <summary>Someone on a comms channel, who answers a turn spoken through the comms push-to-talk while selected.</summary>
 public interface ILine
 {
-    /// <summary>Whether this line takes every turn until it closes, with no name needed.</summary>
-    bool IsOpen { get; }
-
-    Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken);
-
-    void Close();
+    /// <summary>The answer for <paramref name="selected"/>; <see cref="LineDecision.NotMine"/> for a party this line does not speak for.</summary>
+    Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken);
 }

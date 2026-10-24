@@ -23,7 +23,7 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
             Invented = new NpcChatterHeard(
                 new NpcChatterLine("Courier Vance", "Nice lines on that hull, Commander."),
                 exchange,
-                NpcChatter.MayNotice(kind, exchange)),
+                kind is NpcChatterKind.Hail),
         };
 
     [Fact]
@@ -31,16 +31,14 @@ public class InventedChatterJoinsTheTranscriptUnderItsInventedNameTests
     {
         var hail = Line(NpcChatterKind.Hail, 3);
 
-        Assert.True(hail.Invented!.Answerable);
         Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(hail, "COVAS"));
     }
 
     [Fact]
-    public void AControllerExchangeIsNamedByItsInventedNameAndCannotBeAnswered()
+    public void AControllerExchangeIsNamedByItsInventedName()
     {
         var controller = Line(NpcChatterKind.Controller, 3);
 
-        Assert.False(controller.Invented!.Answerable);
         Assert.Equal("Courier Vance (invented)", Announcer.ConversationSpeaker(controller, "COVAS"));
     }
 

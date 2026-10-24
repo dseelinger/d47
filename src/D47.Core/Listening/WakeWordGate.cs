@@ -30,7 +30,7 @@ public sealed class WakeWordGate
     /// <summary>How far into an utterance the name may appear and still count as being addressed.</summary>
     public int Lead { get; set; } = 12;
 
-    /// <summary>How long d47 keeps listening after its name alone, or after another speaker's reply.</summary>
+    /// <summary>How long d47 keeps listening after its name alone.</summary>
     public TimeSpan Window { get; set; } = TimeSpan.FromSeconds(12);
 
     /// <summary>The names it answers to.</summary>
@@ -62,15 +62,6 @@ public sealed class WakeWordGate
         lock (_gate)
         {
             return _awake is { } since && now - since < Window;
-        }
-    }
-
-    /// <summary>Opens the window at <paramref name="now"/>, as the name alone does.</summary>
-    public void Open(DateTimeOffset now)
-    {
-        lock (_gate)
-        {
-            _awake = now;
         }
     }
 

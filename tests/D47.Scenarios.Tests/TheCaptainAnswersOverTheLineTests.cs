@@ -1,13 +1,14 @@
 using D47.Core.Audio;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Listening;
 using D47.Core.Persona;
 using D47.Core.Tests.Conversation;
 using Xunit;
 
 namespace D47.Scenarios.Tests;
 
-/// <summary>A turn opened with "Captain" is answered by the carrier's captain, not the ship's AI.</summary>
+/// <summary>A comms turn with the captain selected is answered by the carrier's captain, not the ship's AI.</summary>
 [Trait("Category", "Integration")]
 public class TheCaptainAnswersOverTheLineTests
 {
@@ -23,14 +24,16 @@ public class TheCaptainAnswersOverTheLineTests
     ];
 
     [Fact]
-    public async Task CaptainByNameIsAnsweredWithTheCaptainsBrief()
+    public async Task ACommsTurnIsAnsweredWithTheCaptainsBrief()
     {
         var scenario = new Scenario
         {
             Id = "carrier-captain/fuel-at-100-ly",
-            Note = "#185: the captain addressed by name, carrier owned and 100 Ly away",
-            Utterance = "Captain, how much fuel have we got",
+            Note = "#185, #1605: the captain on the comms key, carrier owned and 100 Ly away",
+            Utterance = "how much fuel have we got",
             Journal = Journal,
+            Target = PttTarget.Comms,
+            Comms = () => OnComms.Captain,
             Lines = world =>
             [
                 new CaptainLine(
@@ -79,8 +82,10 @@ public class TheCaptainAnswersOverTheLineTests
         {
             Id = $"carrier-captain/fuel-at-{lightYears}-ly",
             Note = "#187: the captain's words thin with the carrier's distance",
-            Utterance = "Captain, how much fuel have we got",
+            Utterance = "how much fuel have we got",
             Journal = Journal,
+            Target = PttTarget.Comms,
+            Comms = () => OnComms.Captain,
             Lines = world =>
             [
                 new CaptainLine(

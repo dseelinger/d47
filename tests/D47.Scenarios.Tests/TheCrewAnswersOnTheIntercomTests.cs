@@ -1,12 +1,13 @@
 using D47.Core.Audio;
 using D47.Core.Conversation;
+using D47.Core.Listening;
 using D47.Core.Persona;
 using D47.Core.Tests.Conversation;
 using Xunit;
 
 namespace D47.Scenarios.Tests;
 
-/// <summary>A turn opened with a hired pilot's name is answered by them, not the ship's AI.</summary>
+/// <summary>A comms turn with a hired pilot selected on CREW is answered by them, not the ship's AI.</summary>
 [Trait("Category", "Integration")]
 public class TheCrewAnswersOnTheIntercomTests
 {
@@ -21,14 +22,16 @@ public class TheCrewAnswersOnTheIntercomTests
     ];
 
     [Fact]
-    public async Task ThePilotByNameIsAnsweredWithNoTools()
+    public async Task ThePilotOnCommsIsAnsweredWithNoTools()
     {
         var scenario = new Scenario
         {
             Id = "crew/vance-hired",
-            Note = "#188: a hired pilot addressed by name",
-            Utterance = "Vance Ilo, how is the fighter",
+            Note = "#188, #1605: a hired pilot on the comms key",
+            Utterance = "how is the fighter",
             Journal = Journal,
+            Target = PttTarget.Comms,
+            Comms = () => OnComms.Crew(1, "Vance Ilo"),
             Lines = world =>
             [
                 new CrewLine(

@@ -11,10 +11,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-/// <summary>
-/// An utterance opening with the ship AI's name or "D47" closes every line, and what follows is routed with the name
-/// taken off (#1179).
-/// </summary>
+/// <summary>An utterance opening with the ship AI's name or "D47" is routed with the name taken off (#1179).</summary>
 public class TheShipAisNameReachesTheShipTests
 {
     private const string ShipAiBrief = "You are the ship's AI aboard this vessel.";
@@ -121,53 +118,32 @@ public class TheShipAisNameReachesTheShipTests
     [InlineData("D47, request docking")]
     [InlineData("D-47, request docking")]
     [InlineData("d47 request docking")]
-    public async Task ACommandAfterTheNameRunsWithTheCaptainsLineOpen(string utterance)
+    public async Task ACommandAfterTheNameRuns(string utterance)
     {
-        var (loop, captain, provider, input) = Build();
+        var (loop, _, provider, input) = Build();
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
-        Assert.True(captain.IsOpen);
-
-        var events = await RunAsync(loop, utterance);
+        var events = await OnComms.AskAsync(loop, utterance);
         var result = Result(events);
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
-        Assert.False(captain.IsOpen);
         Assert.Equal(TurnRoute.ActionCommand, result.Route);
         Assert.DoesNotContain("Did you mean", result.Text, StringComparison.Ordinal);
         Assert.Contains(input.Steps, step => step.Kind == InputStepKind.KeyDown);
-        Assert.Equal(1, provider.CallCount);
+        Assert.Equal(0, provider.CallCount);
 
-        Assert.NotEqual("Learned.", Result(await RunAsync(loop, "yes")).Text);
+        Assert.NotEqual("Learned.", Result(await OnComms.AskAsync(loop, "yes")).Text);
     }
 
     [Fact]
-    public async Task TheCaptainNamedAfterTheShipAiAnswers()
+    public async Task TheCaptainNamedAfterTheShipAiReachesTheShipAi()
     {
         var (loop, _, provider, _) = Build();
+        loop.CommsSelected = () => OnComms.Captain;
 
-        var events = await RunAsync(loop, "Cora, captain, how's our fuel?");
+        var events = await OnComms.AskAsync(loop, "Cora, captain, how's our fuel?");
 
-        Assert.Equal(VoiceRole.CarrierCaptain, Assert.Single(events.OfType<TurnEvent.Addressed>()).Role);
-        Assert.Contains(CaptainBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
-        Assert.Equal("how's our fuel?", Text(Assert.Single(provider.LastRequest.Prompt.History)));
-    }
-
-    [Fact]
-    public async Task TheNameAloneClosesTheLineForTheNextUtterance()
-    {
-        var (loop, captain, provider, _) = Build();
-
-        await RunAsync(loop, "Captain, how much fuel have we got");
-
-        var named = await RunAsync(loop, "Cora");
-
-        Assert.Empty(named.OfType<TurnEvent.Addressed>());
-        Assert.False(captain.IsOpen);
-
-        var next = await RunAsync(loop, "and how much cargo");
-
-        Assert.Empty(next.OfType<TurnEvent.Addressed>());
+        Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(ShipAiBrief, provider.LastRequest!.Prompt.Persona);
+        Assert.Equal("captain, how's our fuel?", Text(Assert.Single(provider.LastRequest.Prompt.History)));
     }
 }

@@ -2,11 +2,12 @@ using D47.Core.Callouts;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
+using D47.Core.Tests.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>The held target and a real comms NPC answer only through the comms channel, from a personality and never from their own words.</summary>
+/// <summary>The held target and a real comms NPC answer only on their own channel, from a personality and never from their own words.</summary>
 public class ATargetAndARealCommsNpcAnswerTests
 {
     private static readonly DateTimeOffset Now = new(3312, 5, 1, 12, 0, 0, TimeSpan.Zero);
@@ -32,9 +33,9 @@ public class ATargetAndARealCommsNpcAnswerTests
     public async Task TheTargetAnswersWithItsPersonalityShipAndLegalStatus()
     {
         var channels = Channels(Pilot);
-        var line = new TargetLine(() => channels.Selected, () => Pilot, _ => false, writePersonality: Write);
+        var line = new TargetLine(() => Pilot, writePersonality: Write);
 
-        var speaker = Taken(await line.RouteAsync("who are you", TestContext.Current.CancellationToken));
+        var speaker = Taken(await line.RouteAsync(channels.Selected!, "who are you", TestContext.Current.CancellationToken));
 
         Assert.Equal("Jessa Corvane", speaker.Name);
         Assert.Contains("Your personality: " + Written, speaker.Brief, StringComparison.Ordinal);
@@ -49,9 +50,7 @@ public class ATargetAndARealCommsNpcAnswerTests
         var channels = Channels(commander);
         var asked = false;
         var line = new TargetLine(
-            () => channels.Selected,
             () => commander,
-            _ => false,
             writePersonality: (_, _) =>
             {
                 asked = true;
@@ -59,7 +58,8 @@ public class ATargetAndARealCommsNpcAnswerTests
             });
 
         Assert.Null(channels.Selected);
-        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("who are you", TestContext.Current.CancellationToken));
+        Assert.IsType<LineDecision.NotMine>(
+            await line.RouteAsync(OnComms.Target("Python"), "who are you", TestContext.Current.CancellationToken));
         Assert.False(asked);
     }
 
@@ -70,9 +70,9 @@ public class ATargetAndARealCommsNpcAnswerTests
         roster.Heard(new Announcement(IncomingMessages.CannedKeyPrefix + "Pirate", TheirWords) { Speaker = "Vik", CommsChannel = "npc" }, null, Now);
         var channels = Channels(Pilot, roster);
         Assert.True(channels.Select(CommsChannel.System));
-        var line = new TargetLine(() => channels.Selected, () => Pilot, _ => false);
+        var line = new TargetLine(() => Pilot);
 
-        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("who are you", TestContext.Current.CancellationToken));
+        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync(channels.Selected!, "who are you", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -83,15 +83,9 @@ public class ATargetAndARealCommsNpcAnswerTests
         var channels = Channels(null, roster);
         Assert.True(channels.Select(CommsChannel.System, "Vik"));
 
-        var line = new ChatterLine(
-            () => Now,
-            () => "Diaguandri",
-            () => AmbientSituation.Docked,
-            roster: () => roster,
-            writePersonality: Write,
-            selected: () => channels.Selected);
+        var line = new ChatterLine(() => "Diaguandri", roster: () => roster, writePersonality: Write);
 
-        var speaker = Taken(await line.RouteAsync("what do you want", TestContext.Current.CancellationToken));
+        var speaker = Taken(await line.RouteAsync(channels.Selected!, "what do you want", TestContext.Current.CancellationToken));
 
         Assert.Equal("Vik", speaker.Name);
         Assert.Contains("pirate", speaker.Brief, StringComparison.OrdinalIgnoreCase);
@@ -101,12 +95,13 @@ public class ATargetAndARealCommsNpcAnswerTests
     }
 
     [Fact]
-    public async Task ARealCommsNpcIsNotReachedByNameOrWithoutTheChannel()
+    public async Task ARealCommsNpcIsNotReachedFromAnotherChannel()
     {
         var roster = new NpcsHeardHere();
         roster.Heard(new Announcement(IncomingMessages.CannedKeyPrefix + "Pirate", TheirWords) { Speaker = "Vik", CommsChannel = "npc" }, null, Now);
-        var line = new ChatterLine(() => Now, () => "Diaguandri", () => AmbientSituation.Docked, roster: () => roster);
+        var line = new ChatterLine(() => "Diaguandri", roster: () => roster);
 
-        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("Vik, what do you want", TestContext.Current.CancellationToken));
+        Assert.IsType<LineDecision.NotMine>(
+            await line.RouteAsync(OnComms.Target("Vik"), "Vik, what do you want", TestContext.Current.CancellationToken));
     }
 }

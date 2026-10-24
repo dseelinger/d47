@@ -60,8 +60,8 @@ public static class CrewCapability
         }
 
         report.AppendLine();
-        report.AppendLine("Address one of them by name to talk to them directly, for example \"" +
-                          crew.Members[0].Name + ", status\".");
+        report.AppendLine("Select one on the Crew comms channel and use the comms key to talk to them directly, for example \"comms " +
+                          crew.Members[0].Name + "\".");
 
         return report.ToString().TrimEnd();
     }

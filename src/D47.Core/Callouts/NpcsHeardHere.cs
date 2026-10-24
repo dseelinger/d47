@@ -33,6 +33,19 @@ public sealed partial class NpcsHeardHere
     /// <summary>The last line an invented NPC says before leaving.</summary>
     public static string SignOff(string name) => $"Got to go. {name} out.";
 
+    /// <summary>Whether <paramref name="said"/> ends with <paramref name="name"/>'s sign-off.</summary>
+    public static bool SignsOff(string said, string name) =>
+        said.TrimEnd().EndsWith(SignOff(name), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Takes an NPC off the roster, as their sign-off does.</summary>
+    public void Left(string name)
+    {
+        lock (_lock)
+        {
+            _heard.Remove(name);
+        }
+    }
+
     /// <summary>The NPCs heard here, most recently heard first.</summary>
     public IReadOnlyList<NpcHeard> Present
     {

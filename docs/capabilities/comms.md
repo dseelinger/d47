@@ -240,6 +240,18 @@ Each channel opens from the game:
 | Crew | a hired pilot is active | that pilot |
 | Characters | you have made a character | each of them |
 
+What you say on the [comms push-to-talk](listening.md#comms-push-to-talk) goes to whoever the
+selection names, and never to your core. It is not routed: a command such as "landing gear" is said
+to them, not carried out. There is no time limit and no limit on replies. With no one on the
+channel your core answers, without asking the model:
+
+```text
+No one on Story.
+```
+
+With no channel open it says "No comms channel is open." A hail moves the selection to the hailer.
+Push-to-talk and the Ask box always reach your core, even when you start with someone's name.
+
 After each change D47 says the selection in the fewest words:
 
 ```text

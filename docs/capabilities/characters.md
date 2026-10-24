@@ -14,9 +14,9 @@ nav_order: 164
 <p class="expect">The name joins YOURS in the sidebar. Its page opens with the picture, voice, notes and where they are.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Say their name.</h2>
-<p class="say">Say the character's name and a question, such as "Harlan, are you there".</p>
-<p class="expect">The character answers in their own voice, shaped by your notes, and keeps the line for your next question.</p>
+<h2><span class="num">2</span> Select them, then use the comms key.</h2>
+<p class="say">Say "comms Harlan", then hold the comms push-to-talk and say "are you there".</p>
+<p class="expect">The character answers in their own voice, shaped by your notes, and answers every comms question while they stay selected.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Say where they are.</h2>
@@ -89,5 +89,6 @@ Away from the ship, the distance is looked up with Galaxy search. With Galaxy se
 distance is unknown, and the character is clear on the radio. A character is stored in `data\characters.json`
 for each Commander; their picture is `character.<id>` in the pictures folder.
 
-The page has no tool and no setting of its own. Say a character's name to reach them; see
-[Crew](crew.html) for the same way of addressing a hired pilot.
+The page has no tool and no setting of its own. Your characters are on the Characters
+[comms channel](comms.html#choose-who-your-comms-key-reaches): select one, then speak on the comms
+push-to-talk to reach them. [Crew](crew.html) reaches a hired pilot the same way.

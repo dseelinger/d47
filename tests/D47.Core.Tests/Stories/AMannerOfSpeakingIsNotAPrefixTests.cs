@@ -13,11 +13,10 @@ public sealed class AMannerOfSpeakingIsNotAPrefixTests
     [Fact]
     public async Task TheReplyToTheCommandersAnswerCarriesTheRule()
     {
-        var now = new DateTimeOffset(2026, 10, 24, 12, 0, 0, TimeSpan.Zero);
-        var line = new CastLine(() => now, _ => false, _ => new AdventureSpeaker("rowan", "Rowan", Who), () => null);
+        var line = new CastLine(_ => new AdventureSpeaker("rowan", "Rowan", Who), () => null);
 
         line.Heard("rowan", "For the file.");
-        var decision = await line.RouteAsync("Who are you?", CancellationToken.None);
+        var decision = await line.RouteAsync(D47.Core.Tests.Conversation.OnComms.Cast("rowan", "Rowan"), "Who are you?", CancellationToken.None);
 
         var taken = Assert.IsType<LineDecision.Taken>(decision);
         Assert.Contains(Who, taken.Speaker.Brief);

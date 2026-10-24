@@ -8,8 +8,8 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>"Tower, ..." is answered by the carrier's tower, who keeps the line until it is ended.</summary>
-public class TheTowerAnswersAndKeepsTheLineTests
+/// <summary>The carrier's tower answers every comms turn while the CARRIER channel selects it.</summary>
+public class TheTowerAnswersOnTheCarrierChannelTests
 {
     private const string TowerBrief = "tower control for the Commander's fleet carrier";
 
@@ -47,6 +47,7 @@ public class TheTowerAnswersAndKeepsTheLineTests
         {
             Persona = "You are the ship's AI aboard this vessel.",
             ShipAiNames = () => ["Warden"],
+            CommsSelected = () => OnComms.Tower,
         };
 
         loop.Lines.Add(line);
@@ -54,57 +55,38 @@ public class TheTowerAnswersAndKeepsTheLineTests
         return (loop, line);
     }
 
-    private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
-    {
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
-
-        return events;
-    }
-
-    [Theory]
-    [InlineData("Tower, request landing clearance")]
-    [InlineData("Tower Control, request landing clearance")]
-    public async Task TowerByNameIsAnsweredInItsOwnVoiceWithItsOwnBrief(string said)
-    {
-        var provider = FakeLlmProvider.Answering("Pad four, Commander.");
-        var (loop, line) = Build(TestSurface.For(new MemoryInstall()), provider);
-
-        var events = await RunAsync(loop, said);
-
-        Assert.Equal(VoiceRole.TowerControl, Assert.Single(events.OfType<TurnEvent.Addressed>()).Role);
-        Assert.Contains(TowerBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
-        Assert.True(line.IsOpen);
-    }
-
     [Fact]
-    public async Task TheNextTurnWithNoNameIsTheTowersToo()
+    public async Task ACommsTurnIsAnsweredInTheTowersOwnVoiceWithItsOwnBrief()
     {
         var provider = FakeLlmProvider.Answering("Pad four, Commander.");
         var (loop, _) = Build(TestSurface.For(new MemoryInstall()), provider);
 
-        await RunAsync(loop, "Tower, request landing clearance");
-        var next = await RunAsync(loop, "and how much fuel have you got");
+        var events = await OnComms.SayAsync(loop, "request landing clearance");
+
+        Assert.Equal(VoiceRole.TowerControl, Assert.Single(events.OfType<TurnEvent.Addressed>()).Role);
+        Assert.Contains(TowerBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EveryCommsTurnIsTheTowersWhileSelected()
+    {
+        var provider = FakeLlmProvider.Answering("Pad four, Commander.");
+        var (loop, _) = Build(TestSurface.For(new MemoryInstall()), provider);
+
+        await OnComms.SayAsync(loop, "request landing clearance");
+        var next = await OnComms.SayAsync(loop, "and how much fuel have you got");
 
         Assert.Equal(VoiceRole.TowerControl, Assert.Single(next.OfType<TurnEvent.Addressed>()).Role);
         Assert.Equal(3, provider.LastRequest!.Prompt.History.Count);
     }
 
     [Fact]
-    public async Task ThatsAllTowerEndsTheLine()
+    public async Task TheCaptainsKeyIsNotTheTowers()
     {
-        var provider = FakeLlmProvider.Answering("Pad four, Commander.");
-        var (loop, line) = Build(TestSurface.For(new MemoryInstall()), provider);
+        var (_, line) = Build(TestSurface.For(new MemoryInstall()), FakeLlmProvider.Answering("Aye."));
 
-        await RunAsync(loop, "Tower, request landing clearance");
-        await RunAsync(loop, "That's all, Tower");
-
-        Assert.False(line.IsOpen);
-        Assert.Empty((await RunAsync(loop, "Warden, summarise that")).OfType<TurnEvent.Addressed>());
+        Assert.IsType<LineDecision.NotMine>(
+            await line.RouteAsync(OnComms.Captain, "status", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -114,7 +96,7 @@ public class TheTowerAnswersAndKeepsTheLineTests
         {
             var (_, line) = Build(TestSurface.For(new MemoryInstall()), FakeLlmProvider.Answering("Aye."), lightYears);
             var taken = Assert.IsType<LineDecision.Taken>(
-                await line.RouteAsync("Tower, status", TestContext.Current.CancellationToken));
+                await line.RouteAsync(OnComms.Tower, "status", TestContext.Current.CancellationToken));
 
             return taken.Speaker;
         }
@@ -132,7 +114,7 @@ public class TheTowerAnswersAndKeepsTheLineTests
     {
         var (_, line) = Build(TestSurface.For(new MemoryInstall()), FakeLlmProvider.Answering("Aye."));
         var taken = Assert.IsType<LineDecision.Taken>(
-            await line.RouteAsync("Tower, status", TestContext.Current.CancellationToken));
+            await line.RouteAsync(OnComms.Tower, "status", TestContext.Current.CancellationToken));
 
         Assert.Contains("BNH-T2F", taken.Speaker.LiveState!(), StringComparison.Ordinal);
     }
@@ -141,9 +123,9 @@ public class TheTowerAnswersAndKeepsTheLineTests
     public async Task BeyondRangeTheTowerCannotBeHeardAndNoModelIsAsked()
     {
         var provider = FakeLlmProvider.Answering("Pad four, Commander.");
-        var (loop, line) = Build(TestSurface.For(new MemoryInstall()), provider, 600);
+        var (loop, _) = Build(TestSurface.For(new MemoryInstall()), provider, 600);
 
-        var events = await RunAsync(loop, "Tower, request landing clearance");
+        var events = await OnComms.SayAsync(loop, "request landing clearance");
 
         var result = Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
 
@@ -152,17 +134,18 @@ public class TheTowerAnswersAndKeepsTheLineTests
         Assert.Contains("Tower control", result.Text, StringComparison.Ordinal);
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(0, provider.CallCount);
-        Assert.False(line.IsOpen);
     }
 
     [Fact]
-    public async Task WithNoCarrierOwnedTheShipAiAnswers()
+    public async Task WithNoCarrierOwnedNoOneIsOnTheChannel()
     {
         var provider = FakeLlmProvider.Answering("Aye.");
-        var (loop, line) = Build(TestSurface.For(new MemoryInstall()), provider, carrier: CarrierState.None);
+        var (loop, _) = Build(TestSurface.For(new MemoryInstall()), provider, carrier: CarrierState.None);
 
-        Assert.Empty((await RunAsync(loop, "Tower, status")).OfType<TurnEvent.Addressed>());
-        Assert.False(line.IsOpen);
+        var events = await OnComms.SayAsync(loop, "status");
+
+        Assert.Empty(events.OfType<TurnEvent.Addressed>());
+        Assert.Equal(TurnRoute.NoOneOnComms, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
     [Fact]
@@ -171,7 +154,7 @@ public class TheTowerAnswersAndKeepsTheLineTests
         var provider = FakeLlmProvider.Answering("Pad four, Commander.");
         var (loop, _) = Build(TestSurface.For(new MemoryInstall()), provider, notes: Notes);
 
-        await RunAsync(loop, "Tower, request landing clearance");
+        await OnComms.SayAsync(loop, "request landing clearance");
 
         Assert.Contains(Notes, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
     }

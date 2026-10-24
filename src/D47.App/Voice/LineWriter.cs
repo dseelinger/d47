@@ -300,7 +300,6 @@ internal sealed class LineWriter
         var facts = ShipFacts.Of(GameState.Active);
         var heard = new List<Announcement>();
         var exchange = marker.Variant ?? 0;
-        var answerable = NpcChatter.MayNotice(kind, exchange);
 
         foreach (var line in NpcChatter.Parse(script, kind, carrier, roster))
         {
@@ -353,7 +352,7 @@ internal sealed class LineWriter
                 SpeakerIsPlayer = false,
                 CommsChannel = "npc",
                 Overheard = kind is not NpcChatterKind.Hail,
-                Invented = new NpcChatterHeard(line with { Text = said }, exchange, answerable, kind is NpcChatterKind.Hail),
+                Invented = new NpcChatterHeard(line with { Text = said }, exchange, kind is NpcChatterKind.Hail),
             });
         }
 

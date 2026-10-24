@@ -32,7 +32,7 @@ public class ANpcHeardHereIsOnTheRosterTests
         {
             Speaker = name,
             CommsChannel = "npc",
-            Invented = new NpcChatterHeard(new NpcChatterLine(name, text, null, null), 1, false),
+            Invented = new NpcChatterHeard(new NpcChatterLine(name, text, null, null), 1, Hail: false),
         };
 
     [Fact]

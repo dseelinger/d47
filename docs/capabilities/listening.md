@@ -435,7 +435,8 @@ It opens the same microphone, with the same capture before the key and the same 
 - when hands-free listening has already opened the microphone, pressing it makes what is being said
   a comms capture.
 
-For now a comms capture runs the same turn push-to-talk does.
+A comms capture goes to whoever the [comms selection](comms.md#choose-who-your-comms-key-reaches)
+names, and push-to-talk goes only to the core.
 
 **The model cannot change this row**, for the same reason as push-to-talk.
 
@@ -513,13 +514,7 @@ request — the way you would address a person. **12 seconds** out of the box, a
 closes the window again: it is one reply, not an open microphone. Nothing is said back and nothing
 reaches the transcript; being called by name is not conversation.
 
-The same window opens when the captain, a crew member, a character, a voice on comms, a story's cast or
-the Narrator finishes answering you, so you can reply to them without a name: ask the captain about
-fuel, then say "how much tritium?" and the captain answers that too. Start the reply with a wake
-phrase and it goes to the core instead. No window opens after the core answers.
-
-Set it to zero if you would rather the name and the request always arrived in the same breath. That
-turns the reply window off too.
+Set it to zero if you would rather the name and the request always arrived in the same breath.
 
 #### Cancel D47's own voice out of the microphone {#echo-cancellation}
 

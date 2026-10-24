@@ -8,65 +8,28 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Persona;
 
 /// <summary>
-/// A running story's cast member, who answers whatever the Commander says shortly after that member's line, in the
-/// first person. A command with a model-free route is left to the ship.
+/// A running story's cast member, on the STORY channel by cast id, who answers in the first person.
 /// Thread-safe: <see cref="Heard"/> runs on the callout drain and <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
-/// <param name="modelFree">Whether an utterance has a route that needs no model.</param>
 /// <param name="member">
 /// The running story's cast member with this id, as the Commander meets them; null when there is none, or the story
 /// is paused, switched off or without Odyssey.
 /// </param>
 /// <param name="hiddenStory">The running story's hidden layer as every speaker reads it, or null.</param>
 public sealed class CastLine(
-    Func<DateTimeOffset> clock,
-    Func<string, bool> modelFree,
     Func<string, AdventureSpeaker?> member,
     Func<string?> hiddenStory,
     Func<ShipFacts>? facts = null,
     ILogger? logger = null) : ILine
 {
-    /// <summary>How long after the member's last line the Commander can still answer it.</summary>
-    public static readonly TimeSpan Window = TimeSpan.FromSeconds(90);
-
-    /// <summary>The most replies one line of the member's gives.</summary>
-    public const int MostReplies = 4;
-
     private const string KeyPrefix = "cast.reply";
 
     private readonly Lock _lock = new();
 
-    /// <summary>The member's line and the replies so far, as "Name: text" and "Commander: text".</summary>
-    private readonly List<string> _said = [];
+    /// <summary>Each member's last line and the replies since, as "Name: text" and "Commander: text".</summary>
+    private readonly Dictionary<string, List<string>> _said = new(StringComparer.Ordinal);
 
-    private string? _castId;
-
-    private string _name = string.Empty;
-
-    private DateTimeOffset? _lastLineAt;
-
-    private int _replies;
-
-    public bool IsOpen
-    {
-        get
-        {
-            lock (_lock)
-            {
-                return Carries() is not null;
-            }
-        }
-    }
-
-    public void Close()
-    {
-        lock (_lock)
-        {
-            _lastLineAt = null;
-        }
-    }
-
-    /// <summary>Records a line the cast member <paramref name="castId"/> spoke, which opens the line to them afresh.</summary>
+    /// <summary>Records a line the cast member <paramref name="castId"/> spoke, which starts their exchange afresh.</summary>
     public void Heard(string castId, string line)
     {
         if (string.IsNullOrWhiteSpace(castId) || string.IsNullOrWhiteSpace(line))
@@ -78,81 +41,76 @@ public sealed class CastLine(
         {
             if (member(castId) is not { } speaking)
             {
-                _lastLineAt = null;
+                _said.Remove(castId);
                 return;
             }
 
-            _castId = castId;
-            _name = speaking.Name;
-            _said.Clear();
-            _said.Add($"{speaking.Name}: {line.Trim()}");
-            _replies = 0;
-            _lastLineAt = clock();
+            _said[castId] = [$"{speaking.Name}: {line.Trim()}"];
         }
     }
 
-    public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    public Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(selected);
+
         lock (_lock)
         {
-            return Task.FromResult(Route(input));
+            return Task.FromResult(Route(selected, input));
         }
     }
 
-    private LineDecision Route(string input)
+    private LineDecision Route(CommsSelection selected, string input)
     {
-        if (Carries() is not { } speaking)
-        {
-            return new LineDecision.NotMine();
-        }
-
-        if (modelFree(input))
+        if (selected is not { Channel: CommsChannel.Story, SubChannel.Key: var castId } || member(castId) is not { } speaking)
         {
             return new LineDecision.NotMine();
         }
 
         var said = input.Trim();
 
-        if (said.Length == 0)
+        if (!_said.TryGetValue(castId, out var exchange))
         {
-            return new LineDecision.NotMine();
+            _said[castId] = exchange = [];
         }
 
-        _replies++;
-        _said.Add($"Commander: {said}");
+        if (said.Length > 0)
+        {
+            exchange.Add($"Commander: {said}");
+        }
 
         return new LineDecision.Taken(
             new Speaker(
                 VoiceRole.Crew,
                 speaking.Name,
-                Brief(speaking),
+                Brief(speaking, exchange),
                 [],
                 OffersTools: false,
                 Signal: 1,
-                Screen: Screened,
+                Screen: reply => Screened(reply, castId, speaking.Name),
                 HiddenStory: hiddenStory,
                 Cast: speaking.Id),
-            said);
+            said.Length == 0 ? "The Commander is trying to get your attention." : said);
     }
 
-    /// <summary>The reply, or nothing when it may not be said, which also closes the line.</summary>
-    private string Screened(string reply)
+    /// <summary>The reply, or nothing when it may not be said.</summary>
+    private string Screened(string reply, string castId, string name)
     {
         var said = reply.Trim();
 
         var sayable = FlavourBriefs.MayBeSpoken(said)
                       && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
 
+        if (!sayable)
+        {
+            return string.Empty;
+        }
+
         lock (_lock)
         {
-            if (!sayable)
+            if (_said.TryGetValue(castId, out var exchange))
             {
-                _lastLineAt = null;
-                return string.Empty;
+                exchange.Add($"{name}: {said}");
             }
-
-            _said.Add($"{_name}: {said}");
-            _lastLineAt = clock();
         }
 
         return said;
@@ -161,27 +119,17 @@ public sealed class CastLine(
     /// <summary>The Story log body of one reply: what the Commander said, then the answer.</summary>
     public static string Logged(string asked, string answer) => $"You: {asked.Trim()}\n\n{answer.Trim()}";
 
-    /// <summary>The member the line is open to, or null when it is shut.</summary>
-    private AdventureSpeaker? Carries() =>
-        _castId is { } castId
-        && _lastLineAt is { } last
-        && _replies < MostReplies
-        && clock() - last <= Window
-            ? member(castId)
-            : null;
-
-    private string Brief(AdventureSpeaker speaking)
+    private static string Brief(AdventureSpeaker speaking, List<string> exchange)
     {
-        var last = _replies >= MostReplies ? " This is your last reply: bring the exchange to a close." : string.Empty;
         var notes = speaking.Notes is { Length: > 0 } written ? $" The Commander's notes on {speaking.Name}: {written}" : string.Empty;
 
         return $"""
                  You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}{notes} {StorySpeaker.MannerRule}
-                 The Commander has answered you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
+                 The Commander is talking to you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
                  in one to three short sentences, as said aloud. You are not the core and never speak for it. You
                  have no tools and change nothing aboard. The exchange so far:
 
-                 {string.Join('\n', _said)}{last}
+                 {ExchangeLines.Recent(exchange)}
                  """;
     }
 }

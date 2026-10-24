@@ -8,8 +8,8 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
-/// <summary>"Captain, ..." is answered by the carrier's captain, who keeps the line until it is ended.</summary>
-public class TheCaptainAnswersAndKeepsTheLineTests
+/// <summary>The carrier's captain answers every comms turn while the CARRIER channel selects them, and no primary turn.</summary>
+public class TheCaptainAnswersOnTheCarrierChannelTests
 {
     private const string ShipAi = "Warden";
 
@@ -26,7 +26,7 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         StarSystem = "Wolf 359",
     };
 
-    private static (TurnLoop Loop, CaptainLine Line) Build(
+    private static TurnLoop Build(
         TestSurface surface,
         ILlmProvider provider,
         Func<string, string, CancellationToken, Task<double?>>? distance = null,
@@ -49,36 +49,25 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         {
             Persona = ShipAiBrief,
             ShipAiNames = () => [ShipAi],
+            CommsSelected = () => OnComms.Captain,
         };
 
         loop.Lines.Add(line);
 
-        return (loop, line);
-    }
-
-    private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
-    {
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
-
-        return events;
+        return loop;
     }
 
     private static string Text(ConversationMessage message) =>
         string.Join(' ', message.Content.OfType<ConversationContent.Text>().Select(part => part.Value));
 
     [Fact]
-    public async Task CaptainByNameIsAnsweredWithTheCaptainsBrief()
+    public async Task ACommsTurnIsAnsweredWithTheCaptainsBrief()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Seven hundred ninety-two tonnes, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
 
         var addressed = Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(VoiceRole.CarrierCaptain, addressed.Role);
@@ -87,18 +76,17 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         var prompt = provider.LastRequest!.Prompt;
         Assert.Contains(CaptainBrief, prompt.Persona, StringComparison.Ordinal);
         Assert.Equal("how much fuel have we got", Text(Assert.Single(prompt.History)));
-        Assert.True(line.IsOpen);
     }
 
     [Fact]
-    public async Task TheNextTurnWithNoNameIsTheCaptainsToo()
+    public async Task EveryCommsTurnIsTheCaptainsWhileSelected()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
-        var next = await RunAsync(loop, "and how much cargo");
+        await OnComms.SayAsync(loop, "how much fuel have we got");
+        var next = await OnComms.SayAsync(loop, "and how much cargo");
 
         Assert.Equal(VoiceRole.CarrierCaptain, Assert.Single(next.OfType<TurnEvent.Addressed>()).Role);
         Assert.Contains(CaptainBrief, provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
@@ -106,37 +94,29 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     }
 
     [Fact]
-    public async Task ThatsAllCaptainEndsTheLine()
+    public async Task ADismissalDoesNotCloseTheChannel()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
-        await RunAsync(loop, "That's all, Captain");
+        await OnComms.SayAsync(loop, "That's all, Captain");
+        var after = await OnComms.SayAsync(loop, "one more thing");
 
-        Assert.False(line.IsOpen);
-
-        var after = await RunAsync(loop, ToShipAi);
-
-        Assert.Empty(after.OfType<TurnEvent.Addressed>());
+        Assert.Equal(VoiceRole.CarrierCaptain, Assert.Single(after.OfType<TurnEvent.Addressed>()).Role);
     }
 
     [Fact]
-    public async Task TheShipAisNameEndsTheLine()
+    public async Task APrimaryTurnNamingTheCaptainReachesTheCore()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
-        var named = await RunAsync(loop, ToShipAi);
+        var events = await OnComms.AskAsync(loop, "Captain, how much fuel have we got");
 
-        Assert.Empty(named.OfType<TurnEvent.Addressed>());
-        Assert.False(line.IsOpen);
+        Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(ShipAiBrief, provider.LastRequest!.Prompt.Persona);
-
-        Assert.Empty((await RunAsync(loop, "and how much cargo")).OfType<TurnEvent.Addressed>());
     }
 
     [Fact]
@@ -144,9 +124,9 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(600));
+        var loop = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(600));
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
 
         var result = Assert.Single(events.OfType<TurnEvent.Completed>()).Result;
 
@@ -154,7 +134,6 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         Assert.Contains("600", result.Text, StringComparison.Ordinal);
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(0, provider.CallCount);
-        Assert.False(line.IsOpen);
     }
 
     [Fact]
@@ -162,12 +141,12 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, _) = Build(
+        var loop = Build(
             TestSurface.For(install),
             provider,
             (_, _, _) => throw new HttpRequestException("the galaxy service went away"));
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
 
         Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
@@ -178,25 +157,26 @@ public class TheCaptainAnswersAndKeepsTheLineTests
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, _) = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(null));
+        var loop = Build(TestSurface.For(install), provider, (_, _, _) => Task.FromResult<double?>(null));
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
 
         Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.Equal(TurnRoute.Model, Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Route);
     }
 
     [Fact]
-    public async Task WithNoCarrierOwnedTheShipAiAnswers()
+    public async Task WithNoCarrierOwnedNoOneIsOnTheChannel()
     {
         var install = new MemoryInstall();
         var provider = FakeLlmProvider.Answering("Aye, Commander.");
-        var (loop, line) = Build(TestSurface.For(install), provider, carrier: CarrierState.None);
+        var loop = Build(TestSurface.For(install), provider, carrier: CarrierState.None);
 
-        var events = await RunAsync(loop, "Captain, status");
+        var events = await OnComms.SayAsync(loop, "status");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
-        Assert.False(line.IsOpen);
+        Assert.Equal("No one on Carrier.", Assert.Single(events.OfType<TurnEvent.Completed>()).Result.Text);
+        Assert.Equal(0, provider.CallCount);
     }
 
     [Fact]
@@ -206,9 +186,9 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Calling("call-1", "accept_proposal", "{}"),
             RoundScriptedLlmProvider.Saying("I can't do that from here, Commander."));
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        var events = await RunAsync(loop, "Captain, accept the checklist proposal");
+        var events = await OnComms.SayAsync(loop, "accept the checklist proposal");
 
         Assert.Single(events.OfType<TurnEvent.Addressed>());
         Assert.False(Assert.Single(events.OfType<TurnEvent.ToolFinished>()).Succeeded);
@@ -227,19 +207,19 @@ public class TheCaptainAnswersAndKeepsTheLineTests
         var provider = new RoundScriptedLlmProvider(
             RoundScriptedLlmProvider.Saying("Seven hundred ninety-two tonnes, Commander."),
             RoundScriptedLlmProvider.Saying("Noted."));
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
+        await OnComms.SayAsync(loop, "how much fuel have we got");
 
         Assert.Empty(loop.History);
 
-        await RunAsync(loop, ToShipAi);
+        await OnComms.AskAsync(loop, ToShipAi);
 
         var prompt = provider.Requests[1].Prompt;
         var carried = Text(prompt.History[0]);
 
         Assert.Equal(ShipAiBrief, prompt.Persona);
-        Assert.Contains("The Commander said \"Captain, how much fuel have we got\"", carried, StringComparison.Ordinal);
+        Assert.Contains("The Commander said \"how much fuel have we got\"", carried, StringComparison.Ordinal);
         Assert.Contains("Captain answered \"Seven hundred ninety-two tonnes, Commander.\"", carried, StringComparison.Ordinal);
 
         Assert.DoesNotContain(
@@ -256,14 +236,14 @@ public class TheCaptainAnswersAndKeepsTheLineTests
             RoundScriptedLlmProvider.Saying("Seven hundred ninety-two tonnes, Commander."),
             RoundScriptedLlmProvider.Saying("Five hundred forty tonnes aboard."),
             RoundScriptedLlmProvider.Saying("Noted."));
-        var (loop, _) = Build(TestSurface.For(install), provider);
+        var loop = Build(TestSurface.For(install), provider);
 
-        await RunAsync(loop, "Captain, how much fuel have we got");
+        await OnComms.SayAsync(loop, "how much fuel have we got");
 
         loop.Said("Hostile contact, Commander.");
 
-        await RunAsync(loop, "and how much cargo");
-        await RunAsync(loop, ToShipAi);
+        await OnComms.SayAsync(loop, "and how much cargo");
+        await OnComms.AskAsync(loop, ToShipAi);
 
         Assert.DoesNotContain(
             provider.Requests[1].Prompt.History,
@@ -271,14 +251,4 @@ public class TheCaptainAnswersAndKeepsTheLineTests
 
         Assert.Contains("Hostile contact, Commander.", Text(provider.Requests[2].Prompt.History[0]), StringComparison.Ordinal);
     }
-
-    [Theory]
-    [InlineData("That's all, Captain", true)]
-    [InlineData("that’ll be all", true)]
-    [InlineData("Thank you, Captain.", true)]
-    [InlineData("Captain, dismissed", true)]
-    [InlineData("carry on", true)]
-    [InlineData("that's all the fuel we have?", false)]
-    public void TheDismissalsAreReadWhateverThePunctuation(string said, bool dismissal) =>
-        Assert.Equal(dismissal, CaptainLine.IsDismissal(said));
 }

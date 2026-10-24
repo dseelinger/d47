@@ -1,78 +1,30 @@
+using System.Globalization;
 using D47.Core.Audio;
-using D47.Core.Callouts;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 
 namespace D47.Core.Persona;
 
-/// <summary>A hired pilot, on the intercom while addressed.</summary>
+/// <summary>A hired pilot, on the CREW channel by crew id.</summary>
 /// <param name="crew">The roster, or null while there is no active Commander.</param>
 /// <param name="shipName">What the pilot calls the hull they are posted to, for their own brief.</param>
-/// <param name="others">Names that belong to someone else aboard; one at the front of an utterance closes the line.</param>
-/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class CrewLine(
     Func<ShipCrew?> crew,
-    Func<string?> shipName,
-    Func<IReadOnlyList<string>>? others = null,
-    Func<string, bool>? modelFree = null) : ILine
+    Func<string?> shipName) : ILine
 {
     private readonly Dictionary<long, List<ConversationMessage>> _transcripts = [];
 
-    private CrewMember? _open;
-
-    public bool IsOpen => _open is not null;
-
-    public void Close() => _open = null;
-
-    public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    public Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
-        var roster = crew();
+        ArgumentNullException.ThrowIfNull(selected);
 
-        if (roster is not { Any: true })
+        if (selected is not { Channel: CommsChannel.Crew, SubChannel.Key: var key }
+            || crew()?.Members.FirstOrDefault(m => m.Active && m.CrewId.ToString(CultureInfo.InvariantCulture) == key) is not { } member)
         {
-            _open = null;
             return Task.FromResult<LineDecision>(new LineDecision.NotMine());
         }
 
-        // The captain's own line claims this, not the fighter bay's.
-        if (CrewAddressing.Opens(input, NpcChatter.CaptainName) is not null)
-        {
-            _open = null;
-            return Task.FromResult<LineDecision>(new LineDecision.NotMine());
-        }
-
-        string question;
-        CrewMember member;
-
-        if (CrewAddressing.Match(input, roster) is null
-            && others?.Invoke().Any(name => CrewAddressing.Opens(input, name) is not null) == true)
-        {
-            _open = null;
-            return Task.FromResult<LineDecision>(new LineDecision.NotMine());
-        }
-
-        if (CrewAddressing.Match(input, roster) is { } addressed)
-        {
-            member = addressed.Member;
-            question = addressed.Question;
-        }
-        else if (_open is { } current && roster.Members.Any(m => m.CrewId == current.CrewId))
-        {
-            if (modelFree?.Invoke(input) == true)
-            {
-                return Task.FromResult<LineDecision>(new LineDecision.NotMine());
-            }
-
-            member = current;
-            question = input.Trim();
-        }
-        else
-        {
-            _open = null;
-            return Task.FromResult<LineDecision>(new LineDecision.NotMine());
-        }
-
-        _open = CaptainLine.IsDismissal(input, member.Name) ? null : member;
+        var question = input.Trim();
 
         if (!_transcripts.TryGetValue(member.CrewId, out var transcript))
         {

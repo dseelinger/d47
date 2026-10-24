@@ -35,6 +35,7 @@ public class AFaintCaptainIsHeardInPiecesTests
         {
             Persona = "You are the ship's AI aboard this vessel.",
             ShipAiNames = () => ["Warden"],
+            CommsSelected = () => OnComms.Captain,
         };
 
         loop.Lines.Add(new CaptainLine(
@@ -44,18 +45,6 @@ public class AFaintCaptainIsHeardInPiecesTests
             (_, _, _) => Task.FromResult<double?>(lightYears)));
 
         return loop;
-    }
-
-    private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
-    {
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync(input, cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
-
-        return events;
     }
 
     private static string Heard(IEnumerable<TurnEvent> events) =>
@@ -70,7 +59,7 @@ public class AFaintCaptainIsHeardInPiecesTests
         var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering(Answer), lightYears: 200);
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
 
         Assert.Equal(1, Assert.Single(events.OfType<TurnEvent.Addressed>()).Signal);
         Assert.Equal(Answer, Heard(events));
@@ -82,7 +71,7 @@ public class AFaintCaptainIsHeardInPiecesTests
         var install = new MemoryInstall();
         var loop = Build(TestSurface.For(install), FakeLlmProvider.Answering(Answer), lightYears: 426);
 
-        var events = await RunAsync(loop, "Captain, how much fuel have we got");
+        var events = await OnComms.SayAsync(loop, "how much fuel have we got");
         var heard = Heard(events);
 
         Assert.Equal(LinkSignal.Strength(426), Assert.Single(events.OfType<TurnEvent.Addressed>()).Signal);
@@ -100,10 +89,10 @@ public class AFaintCaptainIsHeardInPiecesTests
             RoundScriptedLlmProvider.Saying("Five hundred forty tonnes, Commander."));
         var loop = Build(TestSurface.For(install), provider, lightYears: 426);
 
-        var heard = Heard(await RunAsync(loop, "Captain, how much fuel have we got"));
+        var heard = Heard(await OnComms.SayAsync(loop, "how much fuel have we got"));
 
-        await RunAsync(loop, "Warden, summarise that exchange for me");
-        await RunAsync(loop, "Captain, and how much cargo");
+        await OnComms.AskAsync(loop, "Warden, summarise that exchange for me");
+        await OnComms.SayAsync(loop, "and how much cargo");
 
         var overheard = Text(provider.Requests[1].Prompt.History[0]);
 

@@ -1,4 +1,3 @@
-using D47.Core.Callouts;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -7,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Conversation;
 
-/// <summary>"Narrator, ..." reaches no addressed speaker: the Narrator tells the story and takes no questions.</summary>
+/// <summary>"Narrator, ..." on the primary key reaches no addressed speaker, with the Narrator selected on comms or not.</summary>
 public class TheNarratorCannotBeAddressedTests
 {
     [Fact]
@@ -29,18 +28,15 @@ public class TheNarratorCannotBeAddressedTests
         {
             Persona = "You are the ship's AI.",
             ShipAiNames = () => ["Warden"],
+            CommsSelected = () => OnComms.Narrator,
         };
 
         loop.Lines.Add(new CaptainLine(() => null, () => "Diaguandri", () => now));
         loop.Lines.Add(new CrewLine(() => null, () => "Vagrant"));
-        loop.Lines.Add(new ChatterLine(() => now, () => "Diaguandri", () => AmbientSituation.Docked));
+        loop.Lines.Add(new ChatterLine(() => "Diaguandri"));
+        loop.Lines.Add(new NarratorLine(() => null));
 
-        List<TurnEvent> events = [];
-
-        await foreach (var turnEvent in loop.RunAsync("Narrator, what happens next", cancellationToken: TestContext.Current.CancellationToken))
-        {
-            events.Add(turnEvent);
-        }
+        var events = await OnComms.AskAsync(loop, "Narrator, what happens next");
 
         Assert.Empty(events.OfType<TurnEvent.Addressed>());
     }

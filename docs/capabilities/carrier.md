@@ -44,15 +44,15 @@ nav_order: 104
 </svg>
 </section>
 <section>
-<h2><span class="num">3</span> Say "Captain" to talk to the carrier's captain.</h2>
-<p class="say">Say "Captain, how much fuel have we got".</p>
-<p class="expect">The captain answers, and answers the next question too until you say "that's all".</p>
-<svg viewBox="0 0 880 212" role="img" aria-label="A question opened with Captain, answered by the carrier's captain until the line is ended">
+<h2><span class="num">3</span> Select the captain, then use the comms key.</h2>
+<p class="say">Say "comms captain", then hold the comms push-to-talk and say "how much fuel have we got".</p>
+<p class="expect">The captain answers, and answers every comms question while the captain stays selected.</p>
+<svg viewBox="0 0 880 212" role="img" aria-label="The captain selected on the carrier channel answers what is said on the comms key">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="53" font-size="17" fill="var(--text)">Captain, how much fuel have we got</text>
- <text x="836" y="53" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
- <text x="20" y="112" font-size="16" fill="var(--text)">The captain answers, and answers the next question too, until you say "that's all".</text>
- <text x="20" y="144" font-size="15" fill="var(--text-muted)">"that'll be all", "thank you captain", "dismissed", "carry on" or the core's name also end it.</text>
+ <text x="44" y="53" font-size="17" fill="var(--text)">how much fuel have we got</text>
+ <text x="836" y="53" text-anchor="end" font-size="15" fill="var(--text-muted)">Comms key</text>
+ <text x="20" y="112" font-size="16" fill="var(--text)">CARRIER · CAPTAIN answers every comms question while selected.</text>
+ <text x="20" y="144" font-size="15" fill="var(--text-muted)">Push-to-talk still reaches the core, even when you start with "Captain".</text>
  <text x="20" y="182" font-size="15" fill="var(--text-muted)">More than 500 light years away, the core says the carrier is out of range.</text>
 </svg>
 </section>
@@ -163,23 +163,22 @@ Services:
 
 ### Talk to the captain
 
-> "Captain, how much fuel have we got"
+> "comms captain", then on the comms key: "how much fuel have we got"
 
-A question that opens with "Captain" goes to the carrier's captain instead of the core, and is
+With the Carrier [comms channel](comms.md#choose-who-your-comms-key-reaches) selecting the captain,
+what you say on the comms push-to-talk goes to the carrier's captain instead of the core, and is
 spoken in the captain's voice. The captain uses no tools. They know the carrier report above and,
 of your ships, how many there are and each one's name and hull. Asked about fuel, they give the
-carrier's tritium; anything else they leave to the core. They answer follow-up questions with
-no name needed until the line is ended by one of these:
+carrier's tritium; anything else they leave to the core. Every comms question reaches them while
+they stay selected:
 
 ```csharp
-public static readonly IReadOnlyList<string> Dismissals =
-    ["that's all", "that'll be all", "thank you captain", "dismissed", "carry on"];
+if (selected is not { Channel: CommsChannel.Carrier, SubChannel.Key: CommsChannels.CaptainKey }
 ```
 
-Starting a question with the core's name also ends it, and so does answering the Narrator or a
-story's cast member who spoke after the captain. The core is told each exchange as one it
-overheard, so it can refer to it, but the captain's answers are not added to the core's own
-conversation.
+"Tower" on the same channel reaches tower control the same way. Push-to-talk always goes to the
+core. The core is told each exchange as one it overheard, so it can refer to it, but the captain's
+answers are not added to the core's own conversation.
 
 With galaxy search on, a carrier more than 500 light years from you is out of range: the core
 says so and gives the distance, and no model is asked. With galaxy search off, or when the distance

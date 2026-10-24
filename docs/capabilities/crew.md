@@ -33,16 +33,16 @@ nav_order: 103
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Address them by name. They stay on the line until you're done.</h2>
-<p class="say">Say a crew member's name and a question, such as "Vasquez, how is the fighter holding up".</p>
-<p class="expect">The crew member answers, and answers your next question too until you say "that's all" or name somebody else.</p>
-<svg viewBox="0 0 880 212" role="img" aria-label="A question addressed to a named crew member, answered in that crew member's own voice, and the follow-up needs no name">
+<h2><span class="num">2</span> Select them on the Crew channel, then use the comms key.</h2>
+<p class="say">Say "comms Vasquez", then hold the comms push-to-talk and say "how is the fighter holding up".</p>
+<p class="expect">The crew member answers, and answers every comms question while they stay selected.</p>
+<svg viewBox="0 0 880 212" role="img" aria-label="A question on the comms key with a crew member selected, answered in that crew member's own voice">
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
- <text x="44" y="53" font-size="17" fill="var(--text)">Vasquez, how is the fighter holding up?</text>
+ <text x="44" y="53" font-size="17" fill="var(--text)">how is the fighter holding up?</text>
  <text x="44" y="116" font-size="15" font-weight="700" fill="var(--accent)">[VASQUEZ]</text>
  <text x="180" y="116" font-size="16" fill="var(--text)">Still flying, Commander. Wing took a knock.</text>
- <text x="20" y="150" font-size="16" fill="var(--text-muted)">Start with the name and the turn goes to them instead of the core.</text>
- <text x="20" y="184" font-size="15" fill="var(--text-muted)">The next question reaches them too, no name needed, until you say "that's all" or name somebody else.</text>
+ <text x="20" y="150" font-size="16" fill="var(--text-muted)">With CREW · VASQUEZ selected, the comms key reaches them instead of the core.</text>
+ <text x="20" y="184" font-size="15" fill="var(--text-muted)">Push-to-talk still reaches the core, even when you start with their name.</text>
 </svg>
 </section>
 <section>
@@ -98,13 +98,13 @@ nav_order: 103
 <p class="body">They speak in their own voice, kept for the session like any other. Each keeps their own conversation, the way the carrier's captain does, and the core is told each exchange as one it overheard rather than one it had — it can refer to what was said, but the pilot's answers are never added to its own conversation.</p>
 </section>
 <section>
-<h2><span class="num">3</span> The line stays open until you end it.</h2>
-<svg viewBox="0 0 880 212" role="img" aria-label="A pilot keeps the line for every follow-up until dismissed, the core is named, or somebody else is">
+<h2><span class="num">3</span> They stay on comms while selected.</h2>
+<svg viewBox="0 0 880 212" role="img" aria-label="A selected pilot answers every comms question, and push-to-talk always reaches the core">
  <rect x="20" y="36" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">An intercom does not fade</text>
  <text x="440" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">a pilot's line carries as clearly on the last word as the first</text>
- <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Ends on "that's all" and its kin, on your core's name, or on naming another pilot.</text>
- <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">The core's own name always wins, even mid-conversation with a pilot.</text>
+ <text x="440" y="160" text-anchor="middle" font-size="16" fill="var(--text)">Every comms question reaches the selected pilot, with no time limit.</text>
+ <text x="440" y="188" text-anchor="middle" font-size="15" fill="var(--text-muted)">Push-to-talk always reaches the core.</text>
 </svg>
 </section>
 <section>
@@ -155,35 +155,28 @@ The pilots you have hired, and how to talk to them.
   Vance Ilo (Expert) — on duty in the fighter bay, assigned aboard Long Way Home
   Ilse Bruhn (Competent) — off duty
 
-Address one of them by name to talk to them directly, for example "Vance Ilo, status".
+Select one on the Crew comms channel and use the comms key to talk to them directly, for example "comms Vance Ilo".
 ```
 
 ### Talking to one of them
 
-Open with their name and the turn goes to them instead of your core.
+Select them on the Crew [comms channel](comms.md#choose-who-your-comms-key-reaches), then speak
+on the comms push-to-talk, and the turn goes to them instead of your core.
 
-> "Vance, what's the fighter looking like?"
+> "comms Vance", then on the comms key: "what's the fighter looking like?"
 
-The name has to be at the **front**. "What does Vance think of the fighter" is a question for
-your core *about* Vance, and that is a real difference rather than a parsing quirk.
-
-A bare name works too — it is how you get somebody's attention.
-
-Matching is done without the model, against the names in your journal. That means it costs
-nothing, it cannot pick the wrong person, and it does not need a model to know who you are
-talking to — only to have them answer.
+Push-to-talk goes to your core, so "Vance, what's the fighter looking like?" on it is a question
+for your core *about* Vance.
 
 They speak in their own voice, kept for the session like any other. They are people you hired at
 a station, not another Guardian core: they are not a million years old, they have no tools, no
 database and no way to look anything up, and asked something they cannot see from where they sit
 they will say so.
 
-Once you address a pilot, the line stays open — an intercom does not fade the way the carrier's
-captain does over distance. The next thing you say reaches the same pilot with no name needed,
-until you end it with "that's all" and its kin, name your core, or name a different pilot. If the
-Narrator or a story's cast member speaks while the line is open, what you say next goes to them
-instead, and the pilot's line ends. The core is told each exchange as one it overheard, so it can refer to what was said, but a pilot's
-answers are never added to the core's own conversation.
+An intercom does not fade the way the carrier's captain does over distance. Every comms question
+reaches the same pilot while they stay selected. The core is told each exchange as one it overheard,
+so it can refer to what was said, but a pilot's answers are never added to the core's own
+conversation.
 
 ### What Directive 47 actually knows about your crew
 
@@ -245,11 +238,9 @@ assigned aboard. Takes no arguments.
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
-Addressing is resolved before the turn runs, in `CrewAddressing.Match`, against the closed set of
-names the journal supplied — the same shape the keyword router uses. `CrewLine` holds the line
-open the way `CaptainLine` does: once a pilot answers, the same pilot takes every turn until a
-dismissal, the core's name, or another pilot's name closes it, with no tool offered on any of
-those turns.
+`CrewLine` answers a comms turn while the Crew channel selects a pilot by `CrewId`, the way
+`CaptainLine` answers for the captain on the Carrier channel, with no tool offered on any of those
+turns.
 
 Each pilot keeps their own transcript, one per `CrewId`, rather than sharing the core's. The
 core is told each exchange as overheard rather than reading it from a shared history, so a

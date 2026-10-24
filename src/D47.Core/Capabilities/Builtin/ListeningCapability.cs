@@ -602,8 +602,7 @@ public static class ListeningCapability
                 Unit = "s",
                 Help =
                     "Say the name alone, D47 answers, and the next thing you say is the request — the "
-                    + "way you would address a person. It also opens when the captain, the crew or anyone "
-                    + "else but the core finishes answering you, so you can reply without a name. "
+                    + "way you would address a person. "
                     + "Zero means the name and the request have to arrive in the same breath.",
                 Kind = SettingKind.Number,
                 Minimum = 0,
