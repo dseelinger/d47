@@ -71,7 +71,7 @@ public sealed class AnUtteranceWithNoModelSaysSoTests : IDisposable
             new WakeWordGate(),
             new StrongBox<DateTimeOffset?>(null));
 
-        _listener.Heard += _heard.Add;
+        _listener.Heard += (text, _) => _heard.Add(text);
     }
 
     [Fact]

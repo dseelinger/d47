@@ -63,6 +63,9 @@ public partial class MainWindow : Window
     /// <summary>Whether the input waiting in the ask box got there by being spoken.</summary>
     private bool _spoken;
 
+    /// <summary>Which push-to-talk the next spoken ask came through.</summary>
+    private PttTarget _spokenTarget;
+
     public MainWindow() : this(host: null)
     {
     }
@@ -108,6 +111,7 @@ public partial class MainWindow : Window
         if (host is not null)
         {
             PushToTalkGesture = () => host.Settings.Current.Listening.PushToTalkKey;
+            CommsPushToTalkGesture = () => host.Settings.Current.Listening.CommsPushToTalkKey;
         }
 
         // The version lives in the chrome that is on screen anyway, and it is set here rather than on load
@@ -614,12 +618,13 @@ public partial class MainWindow : Window
         }
 
         // Spoken input runs the same turn as typed input, deliberately.
-        _host.Listener.Heard += text => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        _host.Listener.Heard += (text, target) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             // Spoken and typed run the same turn - the Commander expects "where am I" to mean the same thing
             // either way - but the router is told which it was, because a couple of phrases only mean what
             // they say when they arrived through a microphone.
             _spoken = true;
+            _spokenTarget = target;
             _model.AskText = text;
             _ = AskAsync();
         });
@@ -844,7 +849,11 @@ public partial class MainWindow : Window
     /// <summary>The bound push-to-talk gesture.</summary>
     internal Func<string?> PushToTalkGesture { get; set; } = () => null;
 
-    private bool IsPushToTalk(KeyEventArgs e) => Matches(PushToTalkGesture(), e);
+    /// <summary>The bound comms push-to-talk gesture.</summary>
+    internal Func<string?> CommsPushToTalkGesture { get; set; } = () => null;
+
+    private bool IsPushToTalk(KeyEventArgs e) =>
+        Matches(PushToTalkGesture(), e) || Matches(CommsPushToTalkGesture(), e);
 
     /// <summary>
     /// Gestures are stored in the form <see cref="KeyGesture"/> writes, so an unparseable one is a
@@ -1121,7 +1130,9 @@ public partial class MainWindow : Window
         // Taken once, whether or not this turn goes ahead, so a discarded input cannot leave the next typed
         // one looking spoken.
         var source = _spoken ? InputSource.Spoken : InputSource.Typed;
+        var target = _spoken ? _spokenTarget : PttTarget.Core;
         _spoken = false;
+        _spokenTarget = PttTarget.Core;
 
         if (string.IsNullOrEmpty(input))
         {
@@ -1206,7 +1217,7 @@ public partial class MainWindow : Window
             // Through the voice pipeline rather than straight off the turn loop, so the panel and the speaker
             // are fed from one traversal of one stream.
             var result = await _host.Voice.RunAsync(
-                _host.Turns.RunAsync(input, source, cancelling.Token),
+                _host.Turns.RunAsync(input, source, target, cancelling.Token),
                 turnEvent =>
                 {
                     presenter.On(turnEvent);

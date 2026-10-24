@@ -3896,8 +3896,8 @@ public sealed class AppHost : IDisposable
         pushToTalkButton.Pressed += sources.ButtonPressed;
         pushToTalkButton.Released += sources.ButtonReleased;
 
-        sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now);
-        sources.Released += () => gate.KeyUp();
+        sources.Pressed += () => gate.KeyDown(DateTimeOffset.Now, PttTarget.Core);
+        sources.Released += () => gate.KeyUp(PttTarget.Core);
 
         // Cancel, on press and once (#221).
         host.Listener.CancelButton.Pressed += () => host.CancelNow();
@@ -3967,9 +3967,10 @@ public sealed class AppHost : IDisposable
         tick.Add("push-to-talk", context =>
         {
             pushToTalk.Poll();
+            host.Listener.CommsKey.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
+            Listener.PollTheStick(sampledControllers, pushToTalkButton, host.Listener.CommsButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.

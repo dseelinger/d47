@@ -106,10 +106,24 @@ public sealed class Listener : IDisposable
         _pushToTalkButton = pushToTalkButton;
         Wake = wake;
         _heardAt = heardAt;
+
+        CommsKey = new PushToTalkKey(loggers.CreateLogger<PushToTalkKey>());
+
+        // The comms key and button as one source, opening the same gate as the primary.
+        CommsKey.Pressed += CommsSources.KeyPressed;
+        CommsKey.Released += CommsSources.KeyReleased;
+        CommsButton.Pressed += CommsSources.ButtonPressed;
+        CommsButton.Released += CommsSources.ButtonReleased;
+
+        CommsSources.Pressed += () => _gate.KeyDown(DateTimeOffset.Now, PttTarget.Comms);
+        CommsSources.Released += () => _gate.KeyUp(PttTarget.Comms);
     }
 
-    /// <summary>Raised when an utterance has been turned into words, so a surface can run it.</summary>
-    public event Action<string>? Heard;
+    /// <summary>
+    /// Raised when an utterance has been turned into words, so a surface can run it, with the
+    /// push-to-talk it came through.
+    /// </summary>
+    public event Action<string, PttTarget>? Heard;
 
     /// <summary>Something the Commander said that no turn is going to write down.</summary>
     public event Action<string>? HeardText;
@@ -122,6 +136,18 @@ public sealed class Listener : IDisposable
 
     /// <summary>Cancel's stick button (#221).</summary>
     public BoundButton CancelButton { get; } = new();
+
+    /// <summary>The comms push-to-talk key, sampled from the tick.</summary>
+    public PushToTalkKey CommsKey { get; }
+
+    /// <summary>The comms push-to-talk stick button.</summary>
+    public BoundButton CommsButton { get; } = new();
+
+    /// <summary>The comms key and button merged.</summary>
+    internal PushToTalkSources CommsSources { get; } = new();
+
+    /// <summary>Transcribes in place of the selected provider when set; for tests.</summary>
+    internal ISpeechTranscriber? TranscriberOverride { get; init; }
 
     private EliteBinds Binds => _binds.Current;
 
@@ -230,7 +256,7 @@ public sealed class Listener : IDisposable
         var provider = _hearing;
 
         // A hosted provider is never loading, so the local model's state does not gate it.
-        var hosted = provider.Hosted ? HostedTranscriber(provider) : null;
+        var hosted = TranscriberOverride ?? (provider.Hosted ? HostedTranscriber(provider) : null);
 
         if (hosted is null && !_transcriber.IsReady && !_transcriber.IsLoading)
         {
@@ -369,7 +395,7 @@ public sealed class Listener : IDisposable
                     HeardAside(transcription.Text, "heard");
                 }
 
-                Heard?.Invoke(decision.Text);
+                Heard?.Invoke(decision.Text, utterance.Target);
             }
             catch (Exception ex)
             {
@@ -525,6 +551,8 @@ public sealed class Listener : IDisposable
         // listening equivalent of a stranded key.
         _pushToTalk.ForceUp();
         _pushToTalkButton.ForceUp();
+        CommsKey.ForceUp();
+        CommsButton.ForceUp();
 
         _hearing = SttProviderCatalog.Selected(listening.Provider);
 
@@ -562,12 +590,15 @@ public sealed class Listener : IDisposable
         // And the stick (Phase 53).
         var boundButton = _pushToTalkButton.Bind(HotasButton.Parse(listening.PushToTalkButton));
 
+        var boundCommsKey = CommsKey.Bind(listening.CommsPushToTalkKey);
+        var boundCommsButton = CommsButton.Bind(HotasButton.Parse(listening.CommsPushToTalkButton));
+
         // Cancel's stick button, rebound on the same apply (#221).
         CancelButton.Bind(HotasButton.Parse(_settings.Current.Speech.CancelButton));
 
         // Whether that stick is actually here is asked from the tick, not from here (#45).
 
-        var bound = boundKey || boundButton;
+        var bound = boundKey || boundButton || boundCommsKey || boundCommsButton;
 
         if (!ListeningWiring.NeedsMicrophone(listening.Mode, bound))
         {
@@ -588,24 +619,33 @@ public sealed class Listener : IDisposable
             return;
         }
 
-        if (boundKey && Binds.Using(listening.PushToTalkKey!) is { Count: > 0 } collisions)
+        WarnIfEliteBindsIt("Push-to-talk", boundKey ? listening.PushToTalkKey : null, _pushToTalkButton);
+        WarnIfEliteBindsIt("Comms push-to-talk", boundCommsKey ? listening.CommsPushToTalkKey : null, CommsButton);
+    }
+
+    /// <summary>Logs a push-to-talk key or button that Elite also binds.</summary>
+    private void WarnIfEliteBindsIt(string control, string? key, BoundButton stick)
+    {
+        if (key is not null && Binds.Using(key) is { Count: > 0 } collisions)
         {
             // Logged at startup as well as answered on request: the symptom of a double-bound key is that
             // nothing happens, which reads as d47 being broken.
             _logger.LogWarning(
-                "Push-to-talk {Key} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
-                listening.PushToTalkKey,
+                "{Control} {Key} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
+                control,
+                key,
                 Binds.PresetName,
                 string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
         }
 
-        if (_pushToTalkButton.Bound is { } button
+        if (stick.Bound is { } button
             && Binds.UsingJoystickButton(button.Button) is { Count: > 0 } sharing)
         {
             // Hedged, and the hedge is the accurate part.
             _logger.LogWarning(
-                "Push-to-talk {Button} may collide: Elite ({Preset}) binds a button of that number to "
+                "{Control} {Button} may collide: Elite ({Preset}) binds a button of that number to "
                 + "{Actions}. D47 cannot tell whether that is the same controller.",
+                control,
                 button.Describe(),
                 Binds.PresetName,
                 string.Join(", ", sharing.Select(binding => binding.Action).Distinct()));
@@ -620,6 +660,7 @@ public sealed class Listener : IDisposable
     internal static void PollTheStick(
         IHotasReader? reader,
         BoundButton pushToTalkButton,
+        BoundButton commsButton,
         BoundButton cancelButton,
         ActionButtons actionButtons,
         ILogger logger)
@@ -634,23 +675,26 @@ public sealed class Listener : IDisposable
         var buttons = reader.Poll();
 
         pushToTalkButton.Poll(buttons);
+        commsButton.Poll(buttons);
         cancelButton.Poll(buttons);
         actionButtons.Poll(buttons);
 
         // And then, and only then, whether the stick it is bound to turned up (#45).
-        WarnIfTheStickIsMissing(pushToTalkButton, logger);
+        WarnIfTheStickIsMissing("Push-to-talk", pushToTalkButton, logger);
+        WarnIfTheStickIsMissing("Comms push-to-talk", commsButton, logger);
     }
 
-    /// <summary>The stick bound to push-to-talk is not here (Phase 53). Asked on settled polls only.</summary>
-    private static void WarnIfTheStickIsMissing(BoundButton pushToTalkButton, ILogger logger)
+    /// <summary>The stick bound to a push-to-talk is not here (Phase 53). Asked on settled polls only.</summary>
+    private static void WarnIfTheStickIsMissing(string control, BoundButton stick, ILogger logger)
     {
-        if (pushToTalkButton.MissingDeviceNotice() is not { } button)
+        if (stick.MissingDeviceNotice() is not { } button)
         {
             return;
         }
 
         logger.LogWarning(
-            "Push-to-talk is bound to {Button} on a controller that is not here",
+            "{Control} is bound to {Button} on a controller that is not here",
+            control,
             button.Describe());
     }
 
@@ -697,6 +741,8 @@ public sealed class Listener : IDisposable
     {
         _pushToTalk.ForceUp();
         _pushToTalkButton.ForceUp();
+        CommsKey.ForceUp();
+        CommsButton.ForceUp();
         CancelButton.ForceUp();
         _microphone.Dispose();
         _transcriber.Dispose();

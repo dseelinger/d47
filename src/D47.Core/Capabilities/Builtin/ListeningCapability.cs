@@ -17,6 +17,11 @@ public static class ListeningCapability
     /// <summary>The stick button beside it (Phase 53).</summary>
     public const string PushToTalkButtonKey = "listening.pushToTalkButton";
 
+    /// <summary>Push-to-talk for whoever the comms selection names.</summary>
+    public const string CommsPushToTalkKeyKey = "listening.commsPushToTalkKey";
+
+    public const string CommsPushToTalkButtonKey = "listening.commsPushToTalkButton";
+
     /// <summary>Cancel's key (#221).</summary>
     public const string CancelHotkeyKey = "listening.cancelHotkey";
 
@@ -299,6 +304,61 @@ public static class ListeningCapability
                         Listening = s.Listening with
                         {
                             PushToTalkButton = string.IsNullOrWhiteSpace(v) ? null : v,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = CommsPushToTalkKeyKey,
+                Label = "Comms push-to-talk",
+                Help =
+                    "While it is held, what you say is for whoever your comms channel selection names rather "
+                    + "than for D47. It works the way the push-to-talk key does: held in hold, hands-free "
+                    + "and wake-word modes, pressed once to start and again to stop in toggle mode. While one "
+                    + "of the two keys holds the microphone open, the other does nothing. Bind a key, a stick "
+                    + "button, or one of each; giving it the same kind twice replaces that one. Unbound out of "
+                    + "the box.",
+                Kind = SettingKind.Hotkey,
+                DefaultDisplay = "(unbound)",
+                DocsAnchor = "comms-push-to-talk",
+                AlsoBinds = CommsPushToTalkButtonKey,
+
+                // Protected like the primary key: who the Commander's voice reaches is the Commander's choice.
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.CommsPushToTalkKey,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            CommsPushToTalkKey = string.IsNullOrWhiteSpace(v) ? null : v,
+                        },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = CommsPushToTalkButtonKey,
+                Advanced = true,
+                Label = "Comms push-to-talk button",
+                Help =
+                    "The same thing on your stick or throttle: press the button you want and D47 works out "
+                    + "which one it was. It sits beside the key rather than replacing it. Needs a button "
+                    + "that springs back, not a switch that stays where you put it.",
+                Kind = SettingKind.HotasButton,
+                DocsAnchor = "comms-push-to-talk",
+                DrawnElsewhere = true,
+                Protected = true,
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Listening.CommsPushToTalkButton,
+                    Write = (s, v) => s with
+                    {
+                        Listening = s.Listening with
+                        {
+                            CommsPushToTalkButton = string.IsNullOrWhiteSpace(v) ? null : v,
                         },
                     },
                 },

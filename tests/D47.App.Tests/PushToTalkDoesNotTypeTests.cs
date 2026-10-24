@@ -55,6 +55,24 @@ public class PushToTalkDoesNotTypeTests
             $"push-to-talk typed into the Ask box: '{ask.Text}'");
     }
 
+    [AvaloniaFact]
+    public void TheCommsKeyDoesNotReachTheAskBoxEither()
+    {
+        var window = new MainWindow(host: null) { CommsPushToTalkGesture = () => BoundKey };
+
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var ask = Assert.IsType<TextBox>(window.Panel.FindControl<TextBox>("AskBox"));
+
+        ask.Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        Type(ask, Key.Oem4, "[");
+
+        Assert.True(string.IsNullOrEmpty(ask.Text), $"comms push-to-talk typed into the Ask box: '{ask.Text}'");
+    }
+
     /// <summary>
     /// The control case, and what proves this test can see the fault it guards: with nothing bound, the
     /// very same keystroke types normally.

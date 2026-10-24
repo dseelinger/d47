@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
+using D47.Core.Listening;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
@@ -365,6 +366,9 @@ public sealed class TurnLoop(
     /// <summary>How the turn running now, or the last one, reached d47.</summary>
     public InputSource Source { get; private set; }
 
+    /// <summary>Which push-to-talk the turn running now, or the last one, was spoken through.</summary>
+    public PttTarget Target { get; private set; }
+
     /// <summary>The pinned model, or null for the provider's own default.</summary>
     public string? Model { get; set; } = model;
 
@@ -522,13 +526,21 @@ public sealed class TurnLoop(
     /// <summary>Who answered the last model turn, or null for the ship's AI.</summary>
     private string? _lastSpeaker;
 
-    public async IAsyncEnumerable<TurnEvent> RunAsync(
+    public IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
         InputSource source = InputSource.Typed,
+        CancellationToken cancellationToken = default) =>
+        RunAsync(input, source, PttTarget.Core, cancellationToken);
+
+    public async IAsyncEnumerable<TurnEvent> RunAsync(
+        string input,
+        InputSource source,
+        PttTarget target,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         availability.BeginTurn();
         Source = source;
+        Target = target;
 
         // 0.
         if (source == InputSource.Spoken && Heard is { } heard)

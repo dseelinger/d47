@@ -512,6 +512,12 @@ public sealed record ListeningSettings
     /// <summary>A stick button to talk with, as <c>NonRoamableId#index</c> (Phase 53).</summary>
     public string? PushToTalkButton { get; init; }
 
+    /// <summary>Hold to talk on comms.</summary>
+    public string? CommsPushToTalkKey { get; init; }
+
+    /// <summary>A stick button to talk on comms with, as <c>NonRoamableId#index</c>.</summary>
+    public string? CommsPushToTalkButton { get; init; }
+
     /// <summary>"hold", "toggle", "continuous" or "wake" — the gate policy (Phase 6 and 13).</summary>
     public string Mode { get; init; } = "hold";
 

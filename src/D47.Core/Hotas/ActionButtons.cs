@@ -3,11 +3,15 @@ using D47.Core.Configuration;
 
 namespace D47.Core.Hotas;
 
-/// <summary>The stick buttons other than push-to-talk and cancel, polled together.</summary>
+/// <summary>The stick buttons other than the two push-to-talks and cancel, polled together.</summary>
 public sealed class ActionButtons
 {
     private static readonly HashSet<string> Elsewhere =
-        [ListeningCapability.PushToTalkButtonKey, ListeningCapability.CancelButtonKey];
+    [
+        ListeningCapability.PushToTalkButtonKey,
+        ListeningCapability.CommsPushToTalkButtonKey,
+        ListeningCapability.CancelButtonKey,
+    ];
 
     private readonly Lock _binding = new();
 

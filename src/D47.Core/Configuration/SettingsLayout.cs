@@ -442,6 +442,7 @@ public static class SettingsLayout
                                 E("listening.inputDevice"),
                                 E("listening.pushToTalkKey"),
                                 E("listening.cancelHotkey"),
+                                E("listening.commsPushToTalkKey"),
                                 E("listening.mode"),
                                 E("listening.sensitivity"),
                                 E("listening.silence"),

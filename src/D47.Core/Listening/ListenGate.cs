@@ -37,11 +37,24 @@ public enum MicrophoneState
     Open,
 }
 
+/// <summary>Who a capture is for: the ship's core, or whoever the comms selection names.</summary>
+public enum PttTarget
+{
+    /// <summary>The primary push-to-talk, and every capture no key opened.</summary>
+    Core,
+
+    /// <summary>The comms push-to-talk.</summary>
+    Comms,
+}
+
 /// <summary>One captured stretch of speech, ready to transcribe.</summary>
 /// <param name="Samples">Mono float PCM.</param>
 /// <param name="SampleRate">Hz.</param>
 public sealed record Utterance(float[] Samples, int SampleRate)
 {
+    /// <summary>The key that opened or took over the capture.</summary>
+    public PttTarget Target { get; init; } = PttTarget.Core;
+
     public TimeSpan Duration => TimeSpan.FromSeconds((double)Samples.Length / SampleRate);
 
     /// <summary>The loudest sample in it.</summary>
@@ -214,6 +227,9 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
     /// <summary>Whether the open gate was opened by the detector rather than by the key.</summary>
     private bool _openedByVoice;
 
+    /// <summary>Who the open capture is for.</summary>
+    private PttTarget _target;
+
     /// <summary>The pre-roll ring.</summary>
     private float[] _ring = [];
     private int _ringWritten;
@@ -275,34 +291,43 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
         }
     }
 
-    /// <summary>The key went down.</summary>
-    public void KeyDown(DateTimeOffset now)
+    /// <summary>
+    /// A key went down. While a key holds the gate open, the other key does nothing; either key takes
+    /// over a capture the detector opened.
+    /// </summary>
+    public void KeyDown(DateTimeOffset now, PttTarget target = PttTarget.Core)
     {
+        if (IsListening && _openedByVoice)
+        {
+            // The detector got there first and the Commander has now pressed a key.
+            lock (_gate)
+            {
+                _openedByVoice = false;
+                _openedAt = now;
+                _target = target;
+            }
+
+            return;
+        }
+
+        if (IsListening && _target != target)
+        {
+            return;
+        }
+
         if (Mode == ListenMode.Toggle && IsListening)
         {
             Close(UtteranceEnd.Released);
             return;
         }
 
-        if (IsListening && _openedByVoice)
-        {
-            // The detector got there first and the Commander has now pressed the key.
-            lock (_gate)
-            {
-                _openedByVoice = false;
-                _openedAt = now;
-            }
-
-            return;
-        }
-
-        Open(byVoice: false, now);
+        Open(byVoice: false, now, target);
     }
 
-    /// <summary>The key came up.</summary>
-    public void KeyUp()
+    /// <summary>A key came up; only the key that holds the capture closes it.</summary>
+    public void KeyUp(PttTarget target = PttTarget.Core)
     {
-        if (Mode != ListenMode.Toggle && IsListening && !_openedByVoice)
+        if (Mode != ListenMode.Toggle && IsListening && !_openedByVoice && _target == target)
         {
             Close(UtteranceEnd.Released);
         }
@@ -377,6 +402,7 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
 
             IsListening = false;
             _openedByVoice = false;
+            _target = PttTarget.Core;
             _open.Clear();
             _openedAt = null;
         }
@@ -395,7 +421,7 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
 
     private DateTimeOffset? _openedAt;
 
-    private void Open(bool byVoice, DateTimeOffset? now = null)
+    private void Open(bool byVoice, DateTimeOffset? now = null, PttTarget target = PttTarget.Core)
     {
         var was = State;
 
@@ -419,6 +445,7 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
 
             IsListening = true;
             _openedByVoice = byVoice;
+            _target = target;
             _openedAt = now;
         }
 
@@ -448,6 +475,9 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
             _openedByVoice = false;
             _openedAt = null;
 
+            var target = _target;
+            _target = PttTarget.Core;
+
             var samples = _open.ToArray();
             _open.Clear();
 
@@ -461,7 +491,7 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
             }
             else if (samples.Length > 0)
             {
-                utterance = new Utterance(samples, SampleRate);
+                utterance = new Utterance(samples, SampleRate) { Target = target };
             }
         }
 

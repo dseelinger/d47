@@ -421,6 +421,24 @@ push-to-talk again, and interrupting is this.
 anything the model calls. A model able to unbind the one control that outranks it has removed the
 one control that outranks it, and that matters more now the same press ends the turn.
 
+#### Comms push-to-talk {#comms-push-to-talk}
+
+**Unbound out of the box.** A second push-to-talk, for speaking to whoever your comms channel
+selection names rather than to Directive 47. Bind a key, a stick button, or one of each, the same
+way as push-to-talk.
+
+It opens the same microphone, with the same capture before the key and the same 60-second ceiling:
+
+- in hold, hands-free and wake-word modes it is held, like push-to-talk;
+- in toggle mode one press starts and the next press stops;
+- while one of the two keys holds the microphone open, the other does nothing;
+- when hands-free listening has already opened the microphone, pressing it makes what is being said
+  a comms capture.
+
+For now a comms capture runs the same turn push-to-talk does.
+
+**The model cannot change this row**, for the same reason as push-to-talk.
+
 #### How D47 decides you are talking to it {#mode}
 
 Four settings, and the key works in all four — a policy that decides for itself is not a reason to
