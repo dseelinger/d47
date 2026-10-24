@@ -28,10 +28,14 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
     private static Lock WriteGate(object store) =>
         (Lock)store.GetType().GetField("_writeGate", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(store)!;
 
+    /// <summary>Runs <paramref name="work"/> on a dedicated thread, so the waits measure the store rather than how soon the pool has a thread free.</summary>
+    private static Task Dedicated(Action work) =>
+        Task.Factory.StartNew(work, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
     /// <summary>Polls <paramref name="seen"/> on another thread until true; false if a call blocks or it never turns true.</summary>
     private static bool Eventually(Func<bool> seen)
     {
-        var poll = Task.Run(() =>
+        var poll = Dedicated(() =>
         {
             while (!seen())
             {
@@ -58,7 +62,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
 
         try
         {
-            keeping = Task.Run(() => book.Record(Jump(), "Sol to Colonia", At), TestContext.Current.CancellationToken);
+            keeping = Dedicated(() => book.Record(Jump(), "Sol to Colonia", At));
 
             Assert.True(Eventually(() => book.Last(RoutePlanKind.Jump) is not null));
             Assert.False(File.Exists(path));
@@ -85,10 +89,10 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
 
         try
         {
-            first = Task.Run(() => book.Record(Jump(), "Sol to Colonia", At), TestContext.Current.CancellationToken);
+            first = Dedicated(() => book.Record(Jump(), "Sol to Colonia", At));
             Assert.True(Eventually(() => book.Last(RoutePlanKind.Jump) is not null));
 
-            second = Task.Run(() => book.Record(Trade(), "A loop", At), TestContext.Current.CancellationToken);
+            second = Dedicated(() => book.Record(Trade(), "A loop", At));
             Assert.True(Eventually(() => book.Last(RoutePlanKind.Trade) is not null));
         }
         finally
@@ -121,7 +125,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
 
         try
         {
-            reading = Task.Run(() => ledger.Read("F1"), TestContext.Current.CancellationToken);
+            reading = Dedicated(() => ledger.Read("F1"));
 
             Assert.True(Eventually(() => ledger.ReadThrough("F1") is not null));
             Assert.False(File.Exists(path));
