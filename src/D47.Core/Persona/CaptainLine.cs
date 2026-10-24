@@ -18,10 +18,11 @@ public sealed class CaptainLine(
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
     Func<string, bool>? modelFree = null,
     Func<FightSnapshot>? fight = null,
-    Func<string?>? captainName = null) : ILine
+    Func<string?>? captainName = null,
+    Func<string?>? notes = null) : ILine
 {
     /// <summary>How far the captain can be heard.</summary>
-    public const double RangeLightYears = LinkSignal.LostLightYears;
+    public const double RangeLightYears = CarrierComms.RangeLightYears;
 
     /// <summary>Said to the captain while the line is open, each ends it.</summary>
     public static readonly IReadOnlyList<string> Dismissals =
@@ -63,14 +64,15 @@ public sealed class CaptainLine(
             return new LineDecision.NotMine();
         }
 
-        var lightYears = await DistanceAsync(carrierSystem, cancellationToken).ConfigureAwait(false);
+        var lightYears = await CarrierComms.DistanceAsync(commanderSystem(), carrierSystem, distance, cancellationToken)
+            .ConfigureAwait(false);
 
         if (lightYears is > RangeLightYears and var away)
         {
             IsOpen = false;
 
             return new LineDecision.Refused(
-                $"The carrier is {away:N0} light years away, beyond comms range. The captain can't hear you from here.",
+                CarrierComms.OutOfRange(away, "The captain"),
                 TurnRoute.CarrierOutOfRange);
         }
 
@@ -80,7 +82,7 @@ public sealed class CaptainLine(
             new Speaker(
                 VoiceRole.CarrierCaptain,
                 NpcChatter.CaptainName,
-                Brief(state, captainName?.Invoke()),
+                Brief(state, captainName?.Invoke(), notes?.Invoke()),
                 _transcript,
                 OffersTools: false,
                 Signal: LinkSignal.Strength(lightYears),
@@ -88,9 +90,11 @@ public sealed class CaptainLine(
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
-    /// <summary>Whether the utterance, less punctuation and <paramref name="name"/>, is one of <see cref="Dismissals"/>.</summary>
-    public static bool IsDismissal(string input, string name = NpcChatter.CaptainName)
+    /// <summary>Whether the utterance, less punctuation and <paramref name="name"/>, is one of <paramref name="dismissals"/>.</summary>
+    public static bool IsDismissal(string input, string name = NpcChatter.CaptainName, IReadOnlyList<string>? dismissals = null)
     {
+        dismissals ??= Dismissals;
+
         string[] words = new string([.. input.Replace('’', '\'').Where(c => char.IsLetter(c) || c is ' ' or '\'')])
             .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -100,40 +104,8 @@ public sealed class CaptainLine(
                || (words.Length > 1 && IsNamed(words[^1]) && Is(words[..^1]))
                || (words.Length > 1 && IsNamed(words[0]) && Is(words[1..]));
 
-        static bool Is(string[] said) => Dismissals.Any(dismissal =>
+        bool Is(string[] said) => dismissals.Any(dismissal =>
             string.Equals(string.Join(' ', said), dismissal, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>Zero in the same system; null when there is nothing to ask or the answer fails.</summary>
-    private async Task<double?> DistanceAsync(string carrierSystem, CancellationToken cancellationToken)
-    {
-        if (commanderSystem() is not { Length: > 0 } here)
-        {
-            return null;
-        }
-
-        if (string.Equals(here, carrierSystem, StringComparison.OrdinalIgnoreCase))
-        {
-            return 0;
-        }
-
-        if (distance is null)
-        {
-            return null;
-        }
-
-        try
-        {
-            return await distance(here, carrierSystem, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
     }
 
     /// <summary>The captain's live game state: the carrier report, the roster, then any fight in the carrier's system.</summary>
@@ -186,7 +158,7 @@ public sealed class CaptainLine(
     }
 
     /// <summary>The prompt block for the captain.</summary>
-    public static string Brief(CarrierState state, string? captainName = null) =>
+    public static string Brief(CarrierState state, string? captainName = null, string? notes = null) =>
         $"""
          You are the captain of the Commander's fleet carrier{(state.Name is { Length: > 0 } name ? $", {name}" : string.Empty)}.
          You are a human being and an employee: you run the carrier day to day and report to the
@@ -203,7 +175,7 @@ public sealed class CaptainLine(
          ships you know only how many there are, and each one's name and hull. Anything else — a ship's
          fuel, cargo or fittings, systems, stations or the galaxy — is not yours to know: say so and
          leave it to the core. Invent no figures or events, and no crew names beyond your own; where the report does not
-         say, tell the Commander you do not have it.{OwnName(state, captainName)}
+         say, tell the Commander you do not have it.{OwnName(state, captainName)}{CarrierComms.NotesBlock(notes)}
          """;
 
     /// <summary>What Elite calls the captain and how the Commander's name for them relates to it; empty without a captain on file.</summary>

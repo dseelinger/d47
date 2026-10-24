@@ -3100,7 +3100,22 @@ public sealed class AppHost : IDisposable
                 : Task.FromResult<double?>(null),
             ModelFree,
             () => stores.Fight.Snapshot,
-            () => settings.Current.Speech.CarrierCaptainName));
+            () => settings.Current.Speech.CarrierCaptainName,
+            () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Captain)));
+
+        // The carrier's tower control, reached by name.
+        turns.Lines.Add(new TowerLine(
+            () => gameState.Active,
+            () => gameState.Active?.Location.StarSystem,
+            () => SystemWallClock.Instance.UtcNow,
+            (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
+                ? galaxy.DistanceAsync(from, to, cancellationToken)
+                : Task.FromResult<double?>(null),
+            ModelFree,
+            () => CarrierNotes(D47.Core.Characters.CarrierCharacter.Tower)));
+
+        string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
+            late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);
 
         D47.Core.Seats.ShipSeats? SeatsFlown() =>
             gameState.Active is { } active && active.FlownShip.ShipId is { } shipId
@@ -3486,6 +3501,7 @@ public sealed class AppHost : IDisposable
 
         // Read now, so the first callout a seat speaks does not read the file on the tick.
         _ = host.CrewSeats;
+        _ = host.Characters;
 
         AvatarClipStore.Enable(
             paths.AvatarClips,
@@ -5768,6 +5784,23 @@ public sealed class AppHost : IDisposable
         {
             StoryVoices = new Dictionary<string, StoryVoiceChoice>(current.StoryVoices, StringComparer.Ordinal) { [key] = choice },
         });
+    }
+
+    private D47.Core.Characters.CharacterStore? _characters;
+
+    /// <summary>Every Commander's characters and carrier notes, read on first use.</summary>
+    public D47.Core.Characters.CharacterStore Characters
+    {
+        get
+        {
+            if (_characters is null)
+            {
+                _characters = new D47.Core.Characters.CharacterStore(Paths.CharactersFile, Files, _loggerFactory.CreateLogger<D47.Core.Characters.CharacterStore>());
+                _characters.Poll();
+            }
+
+            return _characters;
+        }
     }
 
     private D47.Core.Seats.CrewSeatStore? _crewSeats;
