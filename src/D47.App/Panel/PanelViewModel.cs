@@ -140,6 +140,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string? _speakingPicture;
     private D47.Core.Listening.MicrophoneState _microphone = D47.Core.Listening.MicrophoneState.Off;
     private string? _switchesText;
+    private CommsIndicatorState _comms = CommsIndicatorState.NoChannel;
     private string? _startupText;
     private string _microphoneDetail = string.Empty;
     private bool _modelLoading;
@@ -354,6 +355,13 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 Raise(nameof(SwitchesVisible));
             }
         }
+    }
+
+    /// <summary>The comms channel and who is on it, shown on every surface.</summary>
+    public CommsIndicatorState Comms
+    {
+        get => _comms;
+        set => Set(ref _comms, value ?? CommsIndicatorState.NoChannel);
     }
 
     public bool SwitchesVisible => !string.IsNullOrEmpty(_switchesText);

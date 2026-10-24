@@ -2183,6 +2183,9 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
+        CommsFull.IsVisible = full;
+        CommsMini.IsVisible = !full;
+        Frame.Margin = new Thickness(28, full ? 20 : 26, 28, 24);
         PageHeader.IsVisible = full;
         TitleRule.IsVisible = full;
 

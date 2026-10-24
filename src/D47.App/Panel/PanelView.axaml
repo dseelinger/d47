@@ -98,6 +98,7 @@
           IsVisible="False"
           Background="{DynamicResource D47.Line2}" />
 
+  <Panel>
   <DockPanel x:Name="Frame" Margin="28,20,28,24">
 
     <!--
@@ -465,6 +466,12 @@
             Every child is docked left, so source order is draw order: the field with its count and
             clear glyph inside it, the steppers, a divider, then the page's own actions.
           -->
+          <!-- Read-only; at the right end of every tab's title line so it is in the same place on each. -->
+          <controls:CommsIndicator x:Name="CommsFull"
+                                   DockPanel.Dock="Right"
+                                   Margin="16,0,0,0"
+                                   VerticalAlignment="Center"
+                                   State="{Binding Comms}" />
           <DockPanel x:Name="SearchRow"
                      DockPanel.Dock="Right"
                      LastChildFill="False"
@@ -910,6 +917,16 @@
     </Border>
 
   </DockPanel>
+
+  <!-- Mini's indicator: 3px in from the top-left of the text area, outside the frame's margins. -->
+  <controls:CommsIndicator x:Name="CommsMini"
+                           Compact="True"
+                           IsVisible="False"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Top"
+                           Margin="3,3,0,0"
+                           State="{Binding Comms}" />
+  </Panel>
   </DockPanel>
 
   <!--

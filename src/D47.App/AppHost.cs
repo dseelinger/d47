@@ -6114,7 +6114,7 @@ public sealed class AppHost : IDisposable
         return cast.ForSender(addressed.Name, isPlayer: false, addressed.Role, own: own);
     }
 
-    /// <summary>Pushes the active Commander's carrier, target, roster, story, crew and characters to the comms channels.</summary>
+    /// <summary>Pushes the active Commander's carrier, target, roster, story, crew and characters to the comms channels, and the selection to the panel.</summary>
     private void FeedCommsChannels()
     {
         if (CommsChannels is not { } channels)
@@ -6126,6 +6126,7 @@ public sealed class AppHost : IDisposable
         var fid = active?.Identity.FrontierId;
 
         channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid)));
+        Panel.Comms = D47.App.Panel.CommsIndicatorState.Of(channels, active?.Target);
     }
 
     private string? _voiceScopeSystem;
