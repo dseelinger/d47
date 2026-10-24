@@ -3190,6 +3190,8 @@ public sealed class AppHost : IDisposable
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,
+            Engineers = () => late.Unlocks?.Report(),
+            Mine = () => goalBook.Mine,
             Tools = () =>
                 [.. (late.Registry?.All ?? [])
                     .SelectMany(capability => capability.Descriptor.Tools)

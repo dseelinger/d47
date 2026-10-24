@@ -3,6 +3,8 @@ using System.Globalization;
 using D47.Core.Activities;
 using D47.Core.Adventures;
 using D47.Core.Audio;
+using D47.Core.Engineers;
+using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Persona;
@@ -77,6 +79,12 @@ public sealed class StoryDirector(
 
     /// <summary>The activities Commanders have changed away from often enough to bar them, or null before it exists.</summary>
     public ActivityBars? Bars { get; set; }
+
+    /// <summary>The engineer route a Goals story's engineers arc reads, or null; with none, that arc gives no step.</summary>
+    public Func<EngineerReport?>? Engineers { get; set; }
+
+    /// <summary>The last walk over the Commander's journals, for the Goals arcs the game has not reported this session.</summary>
+    public Func<GoalMine?>? Mine { get; set; }
 
     /// <summary>Commanders with a chapter being written.</summary>
     private readonly HashSet<string> _writing = new(StringComparer.Ordinal);
@@ -2585,6 +2593,13 @@ public sealed class StoryDirector(
         var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
+        var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id)?.Goals == true
+            ? GoalClimb.Next(
+                game,
+                Mine?.Invoke(),
+                Engineers?.Invoke(),
+                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused))
+            : null;
         var slots = story.BeaconScanAt is null
             ? null
             : ChapterDraw.Draw(
@@ -2602,9 +2617,17 @@ public sealed class StoryDirector(
                 stationsInReach,
                 NeverCompleted(),
                 Tools is null ? null : StepEventCatalogue.Default,
-                Tools?.Invoke()) is { Count: > 0 } drawn
+                Tools?.Invoke(),
+                goal?.Objective is null ? ChapterDraw.Slots : ChapterDraw.Slots - 1,
+                goal?.Draw is null ? null : goal.Earns) is { Count: > 0 } drawn
                 ? drawn
                 : null;
+
+        // A limited draw that fell back to the whole table works no arc.
+        if (goal?.Draw is not null && slots?.Any(slot => ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic) is { } row && goal.Earns(row)) != true)
+        {
+            goal = null;
+        }
 
         var ask = new AdventureAsk(
             longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -2623,7 +2646,8 @@ public sealed class StoryDirector(
                 longHaul,
                 slots,
                 finaleChapter > 1 ? story.FinaleDestination : null,
-                home),
+                home,
+                goal),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2697,7 +2721,8 @@ public sealed class StoryDirector(
         bool longHaul,
         IReadOnlyList<DrawnActivity>? slots,
         AdventureDestination? destination,
-        string? home = null)
+        string? home = null,
+        GoalClimbStep? goal = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -2728,7 +2753,8 @@ public sealed class StoryDirector(
             Aboard()?.Name,
             Aboard()?.Stock == true,
             home,
-            story.BeaconsRemembered > 0);
+            story.BeaconsRemembered > 0,
+            goal);
     }
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>

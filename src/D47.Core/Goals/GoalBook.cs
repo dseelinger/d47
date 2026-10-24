@@ -387,9 +387,7 @@ public sealed class GoalBook(
                 []);
         }
 
-        var report = solver.Report();
-
-        if (report.Route.FirstOrDefault() is not { } candidate)
+        if (NextEngineer(solver.Report()) is not { } candidate)
         {
             return new GoalStep(
                 $"{standing.Arc.Name}: {standing.Note ?? "I cannot say"}. There is nobody I can name as "
@@ -406,26 +404,7 @@ public sealed class GoalBook(
     /// <summary>The collection.</summary>
     private GoalStep Ships(GoalStanding standing)
     {
-        var live = state();
-
-        var owned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var ship in live?.Fleet.Ships ?? [])
-        {
-            owned.Add(ship.Type);
-        }
-
-        if (live?.Ship.Type is { Length: > 0 } flying)
-        {
-            owned.Add(flying);
-        }
-
-        var next = EliteSpecifications.Ships
-            .Where(ship => !owned.Contains(ship.Symbol) && !GoalEvaluator.IsUnobtainable(ship) && ship.Cost is > 0)
-            .OrderBy(ship => ship.Cost)
-            .FirstOrDefault();
-
-        if (next is null)
+        if (NextHull(state()) is not { } next)
         {
             return new GoalStep(
                 $"{standing.Arc.Name}: {standing.Note ?? "I cannot say"}. I cannot name a hull you are "
@@ -439,6 +418,35 @@ public sealed class GoalBook(
             $"{standing.Arc.Name}: {standing.Note ?? "I cannot say"}. The cheapest hull you do not have "
             + $"is the {next.Name}, at {cost} credits.",
             [$"Buy a {next.Name} — {cost} cr, the cheapest hull you do not own"]);
+    }
+
+    /// <summary>The engineer the unlock route names next, or null when it names nobody.</summary>
+    public static UnlockCandidate? NextEngineer(EngineerReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        return report.Route.FirstOrDefault();
+    }
+
+    /// <summary>The cheapest obtainable hull with a price that the Commander does not own, or null.</summary>
+    public static ShipSpecification? NextHull(CommanderGameState? live)
+    {
+        var owned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var ship in live?.Fleet.Ships ?? [])
+        {
+            owned.Add(ship.Type);
+        }
+
+        if (live?.Ship.Type is { Length: > 0 } flying)
+        {
+            owned.Add(flying);
+        }
+
+        return EliteSpecifications.Ships
+            .Where(ship => !owned.Contains(ship.Symbol) && !GoalEvaluator.IsUnobtainable(ship) && ship.Cost is > 0)
+            .OrderBy(ship => ship.Cost)
+            .FirstOrDefault();
     }
 
     private static string Ran(GoalStanding standing, DateTimeOffset now) =>

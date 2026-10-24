@@ -858,6 +858,29 @@ held a drawn activity, only that activity is drawn again, without the refused on
 the seed includes the index of the replaced objective. The chapter's activities are read back from its objectives, so
 nothing extra is stored.
 
+### A Goals story {#goals-stories}
+
+A stock story whose card sets `"goals": true` is a Goals story. Each of its chapters after the beacon scan and before the
+finale works one of your Goals arcs: the unfinished one with the lowest share of its whole, so the arcs rise together.
+Powerplay runs to rank 100 and a career to Elite V, so at Powerplay rank 20 and Combat rank 6 the Powerplay arc is
+further behind and is worked first. An arc whose progress d47 cannot read counts as not started, and a tie goes to the
+arc first on the Goals page. `GoalClimb.Next` makes the choice and gives the chapter one step for the arc:
+
+- A career or navy within a quarter of its next rank: an objective for that rank.
+- A career or navy further from it: the drawn activities are only ones that earn that rank. Combat: bounties, bonds,
+  conflicts, and massacre and assassination missions. Trade: selling cargo and trade missions. Exploration:
+  cartographic data sales, discoveries, mapping and first footfalls. Exobiology: organic samples and organic data
+  sales. Mercenary: on-foot massacre, onslaught, assassination and defence missions. A navy: missions, and the writer is
+  told they are for that superpower's factions.
+- Powerplay: a pledge objective while you are unpledged, otherwise an objective for the next Powerplay rank.
+- Engineers: an objective to reach the next stage with the first engineer on the unlock route.
+- Ships: an objective to board the cheapest hull you do not own.
+
+An arc is passed over for the next one when it has no step to give now: a pledge while d47 has not read whether you
+are pledged, a hull your credits do not cover, no engineer on the route, or a career none of whose activities can be
+drawn, given your ranks, your ship and the activities the story has refused. An objective step takes the place of one drawn activity, and a chapter without that
+objective is refused like a chapter missing a drawn activity. A rewritten chapter carries no Goals step.
+
 ### What you like doing {#career-ratings}
 
 The Stories settings hold eight ratings, one per career, each from 1 to 100 and 50 until you set it. They are kept per

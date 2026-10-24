@@ -245,7 +245,7 @@ internal sealed class StoryFixtures : IDisposable
                     throw new HttpRequestException("The provider went away.");
                 }
 
-                var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null } };
+                var sent = WritesDrawnChapters || ask.Story is null ? ask : ask with { Story = ask.Story with { Slots = null, Goal = null } };
 
                 return Written(generator.GenerateAsync(sent, now, cancellationToken));
             },

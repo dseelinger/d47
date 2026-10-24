@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using D47.Core.Conversation;
+using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using D47.Core.Stories;
@@ -131,7 +132,8 @@ public sealed record AdventureStory(
     string? Core = null,
     bool CoreIsStock = false,
     string? Home = null,
-    bool Remembered = false);
+    bool Remembered = false,
+    GoalClimbStep? Goal = null);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
@@ -2374,6 +2376,16 @@ public sealed class AdventureGenerator(
             }
         }
 
+        if (story.Goal is { } goal)
+        {
+            text.AppendLine();
+            text.AppendLine(goal.Objective is { } objective
+                ? $"This chapter's Goals objective works the Commander's goal \"{goal.Name}\", and the chapter must contain it: {GoalLine(objective)}. Its want and its turn give the Commander a reason for it."
+                : Careers.IsNavy(goal.Draw)
+                    ? $"The drawn activities work the Commander's goal \"{goal.Name}\": the missions are for factions of the {(goal.Draw == Careers.Empire ? "Empire" : "Federation")}, which is what earns {Careers.Word(goal.Draw)} rank, so the story gives the Commander a reason to work for them."
+                    : $"The drawn activities work the Commander's goal \"{goal.Name}\".");
+        }
+
         if (story.Refused is { Count: > 0 } refused)
         {
             text.AppendLine();
@@ -2382,6 +2394,17 @@ public sealed class AdventureGenerator(
                 + string.Join("; ", refused.Select(RefusedActivities.Phrase)) + ".");
         }
     }
+
+    /// <summary>A Goals objective as the writer is told it, and as a refusal names it.</summary>
+    private static string GoalLine(AdventureTrigger objective) => objective.Kind switch
+    {
+        TriggerKind.Rank => $"a \"rank\" objective for {Careers.Word(objective.Career)} rank {objective.Rank?.ToString(CultureInfo.InvariantCulture)}, {Careers.RankName(objective.Career, objective.Rank ?? 0)}",
+        TriggerKind.PowerRank => $"a \"powerrank\" objective for rank {objective.Rank?.ToString(CultureInfo.InvariantCulture)}",
+        TriggerKind.Pledge => "a \"pledge\" objective, to any Power the story gives the Commander a reason to serve",
+        TriggerKind.Engineer => $"an \"engineer\" objective for {objective.Engineer} at the stage {objective.Stage}",
+        TriggerKind.Board => $"a \"board\" objective for a {EliteSpecifications.HullName(objective.ShipType) ?? objective.ShipType}",
+        _ => $"a \"{objective.Kind.ToString().ToLowerInvariant()}\" objective",
+    };
 
     /// <summary>A drawn activity as the writer is told it: what the Commander does, the objective that holds it and its count.</summary>
     private static string SlotLine(DrawnActivity slot)
@@ -3820,6 +3843,12 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal($"This chapter is built on drawn activities and has no objective for this one: {SlotLine(slot)}.", []));
         }
 
+        if (ask.Story?.Goal?.Objective is { } goal
+            && !beats.Any(beat => MeetsGoal(goal, beat.Kind, Careers.Match(beat.Career), beat.Rank, beat.Engineer, beat.Stage, EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship))))
+        {
+            refusals.Add(new Refusal($"This is a Goals chapter and has no objective for its Goals step: {GoalLine(goal)}.", []));
+        }
+
         foreach (var (beat, index) in beats.Select((beat, index) => (beat, index)))
         {
             if (TeamBeats.Why(beat.Kind, facts.Carrier.Owned, facts.InSquadron, facts.Credits, facts.Pledge) is { } why)
@@ -3900,6 +3929,15 @@ public sealed class AdventureGenerator(
 
         return result;
     }
+
+    /// <summary>Whether an objective with these fields is the Goals objective: the same kind, ladder, rank, engineer, stage and hull.</summary>
+    private static bool MeetsGoal(AdventureTrigger goal, TriggerKind kind, string? career, int? rank, string? engineer, string? stage, string? ship) =>
+        kind == goal.Kind
+        && (goal.Career is null || string.Equals(career, goal.Career, StringComparison.OrdinalIgnoreCase))
+        && (goal.Rank is null || rank == goal.Rank)
+        && (goal.Engineer is null || (EngineerDirectory.ByName(engineer) is { } named && string.Equals(named.Name, goal.Engineer, StringComparison.OrdinalIgnoreCase)))
+        && (goal.Stage is null || string.Equals(stage?.Trim(), goal.Stage, StringComparison.OrdinalIgnoreCase))
+        && (goal.ShipType is null || string.Equals(ship, goal.ShipType, StringComparison.OrdinalIgnoreCase));
 
     private static string? BeatPhrase(ReadBeat beat) =>
         RefusedActivities.Key(beat.Kind, beat.MissionFamily, beat.Event, RefusedActivities.ToolOf(beat.Where)) is { } key ? RefusedActivities.Phrase(key) : null;

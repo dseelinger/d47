@@ -165,7 +165,8 @@ add.
   Cat genres), `tone`, `level` (#739), `blurb`, `inYourWords` (the Commander's
   backstory in the first person, starting at the level), `length` (the key of a `StoryPacing`), `beacon` (why they go, or went, to scan it; for a story shorter
   than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
-  never `covas` or `heretic`). Until #739 and #716 land, show `level` and `core` on the page and
+  never `covas` or `heretic`), and optionally `goals` (`true` for a Goals story, whose chapters after the
+  beacon scan each work the Commander's Goals arc furthest behind; leave it out otherwise). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the card.
 - **The tone** is a feel word or two, then the kind of story, for example "dark, haunted mystery" or
   "desperate survival thriller". A word for how the story is told may follow, but never opens it. It

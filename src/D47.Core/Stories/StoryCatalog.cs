@@ -87,6 +87,9 @@ public sealed record StoryCard
     /// <summary>Why this Commander goes to a Guardian beacon.</summary>
     public string? Beacon { get; init; }
 
+    /// <summary>Whether this is a Goals story: each chapter between the beacon scan and the finale works the Goals arc furthest behind.</summary>
+    public bool Goals { get; init; }
+
     /// <summary>The picture names of the primary cast, in cast order, both version names for a member with versions.</summary>
     public IReadOnlyList<string> CastPictures { get; init; } = [];
 
