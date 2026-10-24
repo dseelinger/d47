@@ -524,7 +524,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
                     entry.Character!.Name,
                     "Name",
                     "Name",
-                    text => SaveCharacter(entry.Character with { Name = text }),
+                    text => SaveCharacter(entry.Character, held => held with { Name = text }),
                     CharacterField.Name);
                 break;
         }
@@ -609,7 +609,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
             return shell;
         }
 
-        var box = new TextBox { Name = name, Text = value, PlaceholderText = placeholder, Height = TypeScale.MinimumTarget };
+        var box = new TextBox { Name = name, Text = value, PlaceholderText = placeholder };
         Watch(box, text => commit(text.Trim()), keepsReturn: false);
         shell.Children.Add(box);
 
@@ -711,11 +711,15 @@ public sealed class CharactersPage : UserControl, IPageSummary
         Draw();
     }
 
-    private void SaveCharacter(CustomCharacter character)
+    /// <summary>
+    /// Saves <paramref name="change"/> applied to the character as the store holds it now, not as <paramref name="seen"/>
+    /// was drawn: a control from an earlier draw can still fire after another field saved.
+    /// </summary>
+    private void SaveCharacter(CustomCharacter seen, Func<CustomCharacter, CustomCharacter> change)
     {
         _errors.Clear();
 
-        if (Store.Set(Fid, character) is { } refusal)
+        if (Store.Set(Fid, change(Store.Find(Fid, seen.Id) ?? seen)) is { } refusal)
         {
             _errors[refusal.Field] = refusal.Reason;
         }
@@ -805,7 +809,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         {
             var held = entry.Character!;
             current = held.Voice is { } voice && SameProvider(voice.Provider) ? voice.VoiceId : null;
-            chosen = value => SaveCharacter(held with { Voice = string.IsNullOrEmpty(value) ? null : new CharacterVoice(ProviderId, value) });
+            chosen = value => SaveCharacter(held, stored => stored with { Voice = string.IsNullOrEmpty(value) ? null : new CharacterVoice(ProviderId, value) });
         }
 
         var label = current is { Length: > 0 } id
@@ -1011,7 +1015,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
                 _draft!.Notes = text;
                 break;
             default:
-                SaveCharacter(entry.Character! with { Notes = text });
+                SaveCharacter(entry.Character!, held => held with { Notes = text });
                 return;
         }
 
@@ -1055,7 +1059,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
                 return;
             }
 
-            SaveCharacter(entry.Character! with { Aboard = now });
+            SaveCharacter(entry.Character!, held => held with { Aboard = now });
         };
 
         var who = HintName(entry);
@@ -1087,7 +1091,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
                 return;
             }
 
-            SaveCharacter(entry.Character! with { System = text, Aboard = aboard && !asked });
+            SaveCharacter(entry.Character!, held => held with { System = text, Aboard = held.Aboard && !asked });
         };
 
         var field = TextField(SystemBoxName, system, "System", "System", commit, CharacterField.System);

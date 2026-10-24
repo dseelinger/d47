@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -6,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Characters;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -267,6 +269,60 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
 
         Assert.Contains("Name the system they are in, or check Aboard.", Text(surface.Page));
         Assert.True(Named<CheckBox>(surface.Page, CharactersPage.AboardName).IsChecked);
+
+        Close(surface);
+    }
+
+    [AvaloniaFact]
+    public void ARefusedFieldKeepsItsFullHeightAboveTheReason()
+    {
+        var surface = Open();
+
+        Assert.Null(surface.Store.Set("F1", new CustomCharacter("0a1b2c3d", "Babalooey", null, null, true, null)));
+        surface.Page.Select("custom:0a1b2c3d");
+
+        Named<CheckBox>(surface.Page, CharactersPage.AboardName).IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        var system = Named<TextBox>(surface.Page, CharactersPage.SystemBoxName);
+
+        Assert.Equal("Name the system they are in, or check Aboard.", FieldMessage.GetText(system));
+        var border = Named<Border>(system, "PART_BorderElement");
+        var reason = Named<DockPanel>(system, "PART_Message");
+        var boxBottom = border.TranslatePoint(new Point(0, border.Bounds.Height), system)!.Value.Y;
+        var reasonTop = reason.TranslatePoint(default, system)!.Value.Y;
+
+        Assert.True(border.Bounds.Height >= TypeScale.MinimumTarget, $"the System box is {border.Bounds.Height}px tall.");
+        Assert.True(reasonTop >= boxBottom, $"the reason starts at {reasonTop}px, inside the box, which ends at {boxBottom}px.");
+
+        Capture(surface, "characters-system-refused.png");
+        Close(surface);
+    }
+
+    [AvaloniaFact]
+    public void AControlFromAnEarlierDrawSavesOverWhatIsStoredNow()
+    {
+        var surface = Open();
+
+        Assert.Null(surface.Store.Set("F1", new CustomCharacter("0a1b2c3d", "Babalooey", null, null, true, null)));
+        surface.Page.Select("custom:0a1b2c3d");
+
+        Named<CheckBox>(surface.Page, CharactersPage.AboardName).IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        var stale = Named<CheckBox>(surface.Page, CharactersPage.AboardName);
+
+        Type(surface.Page, CharactersPage.SystemBoxName, "Synuefe JI-W b49-11");
+
+        stale.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        var saved = surface.Store.Find("F1", "0a1b2c3d")!;
+
+        Assert.False(saved.Aboard);
+        Assert.Equal("Synuefe JI-W b49-11", saved.System);
+        Assert.DoesNotContain("Name the system they are in, or check Aboard.", Text(surface.Page));
+        Assert.Null(FieldMessage.GetText(Named<TextBox>(surface.Page, CharactersPage.SystemBoxName)));
 
         Close(surface);
     }
