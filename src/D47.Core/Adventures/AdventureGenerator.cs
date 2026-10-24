@@ -2232,7 +2232,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine(
                 "The narrator says who each cast member is just before their first line, from the role given beside their name, "
-                + "so never write that introduction.");
+                + "so never write that introduction. " + StorySpeaker.MannerRule);
 
             foreach (var member in cast)
             {

@@ -2,6 +2,7 @@ using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
+using D47.Core.Stories;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Persona;
@@ -174,7 +175,7 @@ public sealed class CastLine(
         var last = _replies >= MostReplies ? " This is your last reply: bring the exchange to a close." : string.Empty;
 
         return $"""
-                 You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}
+                 You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who} {StorySpeaker.MannerRule}
                  The Commander has answered you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
                  in one to three short sentences, as said aloud. You are not the core and never speak for it. You
                  have no tools and change nothing aboard. The exchange so far:

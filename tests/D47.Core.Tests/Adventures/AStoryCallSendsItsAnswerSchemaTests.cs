@@ -1,6 +1,7 @@
 using System.Text.Json;
 using D47.Core.Adventures;
 using D47.Core.Conversation;
+using D47.Core.Stories;
 using Xunit;
 
 namespace D47.Core.Tests.Adventures;
@@ -64,6 +65,14 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         Assert.Contains("board", Kinds(beats.Schema));
         Assert.Equal(["Cobra MkIII", null], ship.GetProperty("enum").EnumerateArray().Select(name => name.GetString()));
         Assert.Contains("one of Cobra MkIII;", beats.Text);
+    }
+
+    [Fact]
+    public async Task TheCastListSaysAMannerOfSpeakingIsNotAPrefix()
+    {
+        var beats = await BeatsCall("cast");
+
+        Assert.Contains(StorySpeaker.MannerRule, beats.Text);
     }
 
     [Fact]

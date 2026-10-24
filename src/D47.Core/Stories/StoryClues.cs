@@ -269,7 +269,7 @@ public static class StoryClues
     /// <summary>What the model is asked to write when a cast member of the story speaks a clue.</summary>
     public static FlavourBrief Speaking(string clue, string name, string? who) => new()
     {
-        Speaker = $"You are {name}, a character in the stock story the Commander is playing. {who}".TrimEnd(),
+        Speaker = $"You are {name}, a character in the stock story the Commander is playing. {who} {StorySpeaker.MannerRule}".TrimEnd(),
         Instruction =
             $"Say one line to the Commander as {name}, in {name}'s own words, carrying a clue to the hidden story as a "
             + "detail they could miss. Hint at what it points to; never state it. One to three sentences. Do not give "

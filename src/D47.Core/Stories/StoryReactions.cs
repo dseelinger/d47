@@ -33,7 +33,7 @@ public static partial class StoryReactions
             "Choose the one of them most likely to hear of it and care, and write what they say to the Commander about "
             + "it, as that character, in the first person and in their own words. One or two sentences. React to what "
             + "the Commander did and to nothing else: state no new fact about the story, carry no clue, and do not give "
-            + "advice. Reply with the character's id, a colon, and the line, and nothing else.");
+            + "advice. " + StorySpeaker.MannerRule + " Reply with the character's id, a colon, and the line, and nothing else.");
 
         return new FlavourBrief
         {

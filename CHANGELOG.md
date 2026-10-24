@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A cast member whose description gives a manner of speaking, such as "clipped file notes", no longer opens every line with that manner as a label ("File note: …"). The story writer and the live replies are told the manner is how the character talks, not a set phrase. Lines already saved in an adventure keep their prefix until that adventure is written again.
+
 A story chapter no longer asks you to collect a cargo or on-foot item as a material. Steps that wait on collecting a material name only engineering materials; chapters already saved with another name still load.
 
 A story no longer sends you to a Guardian site on a body that cannot be landed on. Only landable bodies with a Guardian signal are offered as site objectives.

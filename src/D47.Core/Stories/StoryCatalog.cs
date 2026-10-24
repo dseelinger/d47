@@ -250,6 +250,11 @@ public sealed record StorySpeaker
     /// <summary>One line for the writer: who they are and how they speak.</summary>
     public required string Who { get; init; }
 
+    /// <summary>The sentence every prompt that passes <see cref="Who"/> to a writer carries.</summary>
+    public const string MannerRule =
+        "A manner of speaking in that description is how they talk, not a label or a set phrase: never open every line "
+        + "with the same word or phrase, and show the manner in the wording.";
+
     /// <summary>The longest <see cref="Role"/> a story may be published with.</summary>
     public const int MostRoleLength = 160;
 
