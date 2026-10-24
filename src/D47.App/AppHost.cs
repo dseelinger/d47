@@ -3176,6 +3176,27 @@ public sealed class AppHost : IDisposable
                 spend,
                 PriceTable.Default,
                 loggerFactory.CreateLogger<ChatterLine>(),
+                cancellationToken),
+            () => stores.CommsChannels.Selected));
+
+        // The held target's NPC pilot, reached only through the TARGET comms channel.
+        turns.Lines.Add(new TargetLine(
+            () => stores.CommsChannels.Selected,
+            () => gameState.Active?.Target,
+            ModelFree,
+            () => turns.BackgroundModel,
+            () => ShipFacts.Of(gameState.Active),
+            loggerFactory.CreateLogger<TargetLine>(),
+            (npc, cancellationToken) => FlavourTurn.AskAsync(
+                turns.Provider,
+                turns.BackgroundModel,
+                persona: null,
+                aboutMe: null,
+                StrangerPersonality.Instruction(npc),
+                gameState: null,
+                spend,
+                PriceTable.Default,
+                loggerFactory.CreateLogger<TargetLine>(),
                 cancellationToken)));
 
         // The Narrator, answered by whatever the Commander says shortly after a narration, except what the

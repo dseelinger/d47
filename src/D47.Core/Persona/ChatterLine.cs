@@ -20,6 +20,7 @@ namespace D47.Core.Persona;
 /// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 /// <param name="roster">The NPCs heard here, which keep the personality written for each, or null for none.</param>
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
+/// <param name="selected">The comms selection; a real comms NPC on the roster answers only while it is selected, or null for none.</param>
 public sealed class ChatterLine(
     Func<DateTimeOffset> clock,
     Func<string?> system,
@@ -30,7 +31,8 @@ public sealed class ChatterLine(
     Func<string, bool>? modelFree = null,
     ILogger? logger = null,
     Func<NpcsHeardHere?>? roster = null,
-    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null) : ILine
+    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
+    Func<CommsSelection?>? selected = null) : ILine
 {
     /// <summary>How long after the exchange's last line the Commander can still answer it.</summary>
     public static readonly TimeSpan Window = TimeSpan.FromSeconds(90);
@@ -46,6 +48,9 @@ public sealed class ChatterLine(
 
     /// <summary>The person the line is open to, or null.</summary>
     private string? _open;
+
+    /// <summary>Real comms NPCs whose personality could not be written, so the plain brief is used for the stay.</summary>
+    private readonly HashSet<string> _noPersonality = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Words said ahead of a name: "Oh, Fenn" and "Hey Fenn" both name Fenn.</summary>
     private static readonly string[] Interjections =
@@ -127,12 +132,100 @@ public sealed class ChatterLine(
 
     public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
     {
+        if (SelectedCommsNpc() is { } commsNpc)
+        {
+            return await RouteCommsNpcAsync(commsNpc, input, cancellationToken).ConfigureAwait(false);
+        }
+
         await EnsurePersonalityAsync(input, cancellationToken).ConfigureAwait(false);
 
         lock (_lock)
         {
             return Route(input);
         }
+    }
+
+    private NpcHeard? SelectedCommsNpc() =>
+        selected?.Invoke() is { Channel: CommsChannel.System, SubChannel: { } party }
+        && roster?.Invoke()?.Find(party.Key) is { Kind: NpcKind.Comms } npc
+            ? npc
+            : null;
+
+    /// <summary>A real comms NPC answers from its family and personality; what it said is never held or sent.</summary>
+    private async Task<LineDecision> RouteCommsNpcAsync(NpcHeard npc, string input, CancellationToken cancellationToken)
+    {
+        var question = input.Trim();
+
+        if (question.Length == 0 || modelFree?.Invoke(input) == true)
+        {
+            return new LineDecision.NotMine();
+        }
+
+        var personality = npc.Personality;
+
+        if (personality is null && writePersonality is not null && roster?.Invoke() is { } here)
+        {
+            bool tried;
+
+            lock (_lock)
+            {
+                tried = _noPersonality.Contains(npc.Name);
+            }
+
+            if (!tried)
+            {
+                personality = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
+
+                if (personality is null)
+                {
+                    lock (_lock)
+                    {
+                        _noPersonality.Add(npc.Name);
+                    }
+                }
+                else
+                {
+                    here.SetPersonality(npc.Name, personality);
+                }
+            }
+        }
+
+        var accent = SpeakerAccent.Sentence(accentOf?.Invoke(npc.VoiceId));
+
+        var trait = personality is null ? string.Empty : "\nYour personality: " + personality;
+
+        var brief = $"""
+                     {CannedSpeakers.For(npc.Family ?? string.Empty)}
+                     You are {npc.Name}, a real contact on the comms channel. The Commander is talking to you.
+                     You are a human being, not an artificial intelligence, and you never claim to be one.{trait}
+                     Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
+                     no quotation marks. Never name or imitate a real person or another player.
+                     You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
+                     them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
+                     """;
+
+        return new LineDecision.Taken(
+            new Speaker(
+                VoiceRole.Comms,
+                npc.Name,
+                brief,
+                [],
+                OffersTools: false,
+                Signal: 1,
+                Model: model?.Invoke(),
+                Screen: reply => ScreenedCommsNpc(reply, npc.Name)),
+            question);
+    }
+
+    private string ScreenedCommsNpc(string reply, string name)
+    {
+        var said = reply.Trim();
+
+        var sayable = FlavourBriefs.MayBeSpoken(said)
+                      && !NpcChatter.Escalates(said)
+                      && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, NpcChatter.KeyPrefix + "reply") is not null;
+
+        return sayable ? said : NpcsHeardHere.SignOff(name);
     }
 
     /// <summary>Writes the personality of the NPC the input would reach, once, unless the NPC already has one.</summary>
@@ -161,19 +254,7 @@ public sealed class ChatterLine(
             return;
         }
 
-        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        budget.CancelAfter(StrangerPersonality.Budget);
-
-        string? kept = null;
-
-        try
-        {
-            kept = StrangerPersonality.Kept(await writePersonality(npc, budget.Token).ConfigureAwait(false));
-        }
-        catch (Exception error) when (error is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
-        {
-            logger?.LogDebug(error, "Personality for {Name} not written; the plain brief is used.", name);
-        }
+        var kept = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
 
         if (kept is null)
         {

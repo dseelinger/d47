@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace D47.Core.Callouts;
 
 /// <summary>The brief for a stranger's personality, and what of the model's answer may be kept.</summary>
@@ -32,5 +34,32 @@ public static class StrangerPersonality
         var text = answer?.Trim();
 
         return text is { Length: > 0 and <= MostLength } && FlavourBriefs.MayBeSpoken(text) ? text : null;
+    }
+
+    /// <summary>
+    /// Asks <paramref name="write"/> for a personality within <see cref="Budget"/>; the kept answer, or null when it
+    /// fails, runs out of time or is not keepable. Cancelling <paramref name="cancellationToken"/> still throws.
+    /// </summary>
+    public static async Task<string?> WriteAsync(
+        NpcHeard npc,
+        Func<NpcHeard, CancellationToken, Task<string?>> write,
+        ILogger? logger,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(npc);
+        ArgumentNullException.ThrowIfNull(write);
+
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(Budget);
+
+        try
+        {
+            return Kept(await write(npc, budget.Token).ConfigureAwait(false));
+        }
+        catch (Exception error) when (error is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            logger?.LogDebug(error, "Personality for {Name} not written; the plain brief is used.", npc.Name);
+            return null;
+        }
     }
 }

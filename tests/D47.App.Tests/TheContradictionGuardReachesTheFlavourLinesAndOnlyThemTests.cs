@@ -7,7 +7,7 @@ namespace D47.App.Tests;
 /// The guard between composition and speech runs on the five flavour paths and on nothing else. Four
 /// are in <c>AppHost.cs</c>; the announcement rewrite is in Core's <c>Rewording.cs</c>. An invented
 /// speaker's reply, the Narrator's reply and a story cast member's reply are screened by Core's
-/// <c>ChatterLine.cs</c>, <c>NarratorLine.cs</c> and <c>CastLine.cs</c>, each with a ship reader from the app.
+/// <c>ChatterLine.cs</c>, <c>NarratorLine.cs</c>, <c>CastLine.cs</c> and <c>TargetLine.cs</c>, each with a ship reader from the app.
 /// </summary>
 [Trait("Category", "Gate")]
 public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
@@ -58,7 +58,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
             .Order()
             .ToList();
 
-        Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs"], reaching);
+        Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs", "TargetLine.cs"], reaching);
 
         string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "ComposeStoryLineAsync"];
         var stray = AppSource.Files
@@ -83,8 +83,8 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
         var read = CodeLinesContaining("ShipFacts.Of(");
 
         // Four for the five paths — the two persona paths are branches of one switch and share a
-        // snapshot — and the readers ChatterLine, NarratorLine and CastLine screen each reply against.
-        Assert.Equal(FlavourCallSites + 2, read.Count);
+        // snapshot — and the readers ChatterLine, NarratorLine, CastLine and TargetLine screen each reply against.
+        Assert.Equal(FlavourCallSites + 3, read.Count);
         Assert.All(read, line => Assert.Contains(
             line,
             new[]

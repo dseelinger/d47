@@ -1,0 +1,130 @@
+using D47.Core.Audio;
+using D47.Core.Callouts;
+using D47.Core.Conversation;
+using D47.Core.Journal;
+using Microsoft.Extensions.Logging;
+
+namespace D47.Core.Persona;
+
+/// <summary>
+/// The NPC pilot of the held target, who answers whatever the Commander says while the TARGET comms channel is
+/// selected. A Commander target is never offered by the channel and never answers. Thread-safe.
+/// </summary>
+/// <param name="selected">The comms selection.</param>
+/// <param name="target">The held target, or null.</param>
+/// <param name="modelFree">Whether an utterance has a route that needs no model.</param>
+/// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
+/// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
+/// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
+public sealed class TargetLine(
+    Func<CommsSelection?> selected,
+    Func<TargetedShip?> target,
+    Func<string, bool> modelFree,
+    Func<string?>? model = null,
+    Func<ShipFacts>? facts = null,
+    ILogger? logger = null,
+    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null) : ILine
+{
+    private const string KeyPrefix = "target.reply";
+
+    private readonly Lock _lock = new();
+
+    private readonly Dictionary<string, string?> _personalities = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool IsOpen => false;
+
+    public void Close()
+    {
+    }
+
+    public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    {
+        if (selected() is not { Channel: CommsChannel.Target, SubChannel: not null }
+            || target() is not { IsCommander: false, PilotName: { Length: > 0 } name } ship)
+        {
+            return new LineDecision.NotMine();
+        }
+
+        var question = input.Trim();
+
+        if (question.Length == 0 || modelFree(input))
+        {
+            return new LineDecision.NotMine();
+        }
+
+        var personality = await PersonalityAsync(name, cancellationToken).ConfigureAwait(false);
+
+        return new LineDecision.Taken(
+            new Speaker(
+                VoiceRole.Comms,
+                name,
+                Brief(name, ship, personality),
+                [],
+                OffersTools: false,
+                Signal: 1,
+                Model: model?.Invoke(),
+                Screen: reply => Screened(reply, name)),
+            question);
+    }
+
+    private async Task<string?> PersonalityAsync(string name, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            if (_personalities.TryGetValue(name, out var held))
+            {
+                return held;
+            }
+        }
+
+        string? written = null;
+
+        if (writePersonality is not null)
+        {
+            var npc = new NpcHeard(name, NpcKind.Comms, null, null, DateTimeOffset.MinValue);
+            written = await StrangerPersonality.WriteAsync(npc, writePersonality, logger, cancellationToken).ConfigureAwait(false);
+        }
+
+        lock (_lock)
+        {
+            _personalities[name] = written;
+        }
+
+        return written;
+    }
+
+    private static string Brief(string name, TargetedShip ship, string? personality)
+    {
+        var facts = new List<string>();
+
+        if (ship.Ship is { Length: > 0 } hull)
+        {
+            facts.Add($"You fly a {hull}.");
+        }
+
+        if (ship.LegalStatus is { Length: > 0 } status)
+        {
+            facts.Add($"Your legal status is {status}.");
+        }
+
+        return $"""
+                You are {name}, the pilot of the ship the Commander has just targeted and hailed. {string.Join(' ', facts)}
+                You are a human being, not an artificial intelligence, and you never claim to be one.{(personality is null ? string.Empty : $"\nYour personality: {personality}")}
+                Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
+                no quotation marks. Never name or imitate a real person or another player.
+                You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
+                them docking, give them or take their cargo, or send them a wing or friend invite.
+                """;
+    }
+
+    private string Screened(string reply, string name)
+    {
+        var said = reply.Trim();
+
+        var sayable = FlavourBriefs.MayBeSpoken(said)
+                      && !NpcChatter.Escalates(said)
+                      && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
+
+        return sayable ? said : NpcsHeardHere.SignOff(name);
+    }
+}

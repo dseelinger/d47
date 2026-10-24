@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The pilot of your targeted ship and the real NPCs heard on comms can now answer. With the Target channel selected, whatever you say goes to the targeted pilot, who answers from a personality D47 writes for them, their ship and their legal status. With the System channel on a real comms NPC, they answer in the voice of their kind, such as a pirate or station control, from the same kind of personality. Neither is sent what the NPC said, and a Commander you target never answers. Neither answers by name or by the open window; only the selected channel reaches them.
+
 A stranger who answers you on comms now keeps one personality for as long as they are in the system. D47 writes two sentences about them on the background model before their first reply, and every later reply follows it. If the model fails or answers badly, the reply is written as before. The personality is dropped when the stranger signs off or you jump.
 
 The panel now shows the selected comms channel on every surface and every tab: the main window, the desktop overlay and both headset panels. It reads, for example, "COMMS CARRIER · TOWER", "COMMS SYSTEM · NO ONE" when the chosen person has left, or "COMMS NO CHANNEL" when none is open. A target you have not scanned shows its ship with "UNSCANNED". It sits at the right end of the title line, and in the mini panel at the top left of the text area. It cannot be pressed.
