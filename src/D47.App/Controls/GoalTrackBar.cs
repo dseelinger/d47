@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -13,13 +13,15 @@ namespace D47.App.Controls;
 
 /// <summary>
 /// A goal's one segmented track: chapter labels above it, 2px between segments, and the current segment's name and
-/// percent under it. Display-only; nothing on it depends on hover.
+/// percent under it. Display-only; hovering a segment also shows its name.
 /// </summary>
 public static class GoalTrackBar
 {
     public const double RowHeight = 6;
 
     public const double OpenHeight = 10;
+
+    private const double HitHeight = 16;
 
     private const double LabelStartLimit = 0.6;
 
@@ -73,7 +75,7 @@ public static class GoalTrackBar
 
         var columns = Columns(track);
         var labels = new Grid { ColumnDefinitions = columns, ClipToBounds = true };
-        var segments = new Grid { ColumnDefinitions = Columns(track), Height = height };
+        var segments = SegmentRow(track, height);
         var current = track.CurrentChapter;
         var drawn = new List<(TextBlock Label, int First, int Last, bool Always)>();
 
@@ -100,7 +102,7 @@ public static class GoalTrackBar
 
         for (var index = 0; index < track.Segments.Count; index++)
         {
-            var segment = Segment(track, index);
+            var segment = Hoverable(track, index, height);
             Grid.SetColumn(segment, index * 2);
             segments.Children.Add(segment);
         }
@@ -161,7 +163,7 @@ public static class GoalTrackBar
             }
         };
 
-        var segments = new Grid { ColumnDefinitions = Columns(track), Height = height };
+        var segments = SegmentRow(track, height);
         var labels = new Grid { ColumnDefinitions = Columns(track), ClipToBounds = true, Margin = new Thickness(0, 3, 0, 0) };
         var current = track.CurrentChapter;
         var drawn = new List<(TextBlock Label, int First, int Last, bool Always)>();
@@ -185,7 +187,7 @@ public static class GoalTrackBar
 
         for (var index = 0; index < track.Segments.Count; index++)
         {
-            var segment = Segment(track, index);
+            var segment = Hoverable(track, index, height);
             Grid.SetColumn(segment, index * 2);
             segments.Children.Add(segment);
         }
@@ -257,6 +259,25 @@ public static class GoalTrackBar
         }
 
         return columns;
+    }
+
+    private static Grid SegmentRow(GoalTrack track, double height)
+    {
+        var extra = Math.Max(0, HitHeight - height);
+
+        return new Grid { ColumnDefinitions = Columns(track), Height = height + extra, Margin = new Thickness(0, -extra / 2) };
+    }
+
+    private static Control Hoverable(GoalTrack track, int index, double height)
+    {
+        var segment = Segment(track, index);
+        segment.Height = height;
+        segment.VerticalAlignment = VerticalAlignment.Center;
+
+        var hit = new Grid { Background = Brushes.Transparent, Children = { segment } };
+        ToolTip.SetTip(hit, track.Segments[index].Name);
+
+        return hit;
     }
 
     private static Control Segment(GoalTrack track, int index)
