@@ -115,7 +115,7 @@ public class ACustomCharacterAnswersByNameTests
     }
 
     [Fact]
-    public async Task ACharacterAddressedIsHeardInTheVoiceStoredForThem()
+    public async Task ACharacterAddressedIsHeardInTheirStoredVoiceAndShownWithTheirPicture()
     {
         var voiced = Aboard with { Voice = new CharacterVoice("kokoro", "am_adam") };
         var surface = TestSurface.For(new MemoryInstall());
@@ -141,7 +141,10 @@ public class ACustomCharacterAnswersByNameTests
             events.Add(turnEvent);
         }
 
-        Assert.Equal(new CharacterVoice("kokoro", "am_adam"), Assert.Single(events.OfType<TurnEvent.Addressed>()).Voice);
+        var addressed = Assert.Single(events.OfType<TurnEvent.Addressed>());
+
+        Assert.Equal(new CharacterVoice("kokoro", "am_adam"), addressed.Voice);
+        Assert.Equal("character.aaaa0001", addressed.Picture);
     }
 
     [Fact]

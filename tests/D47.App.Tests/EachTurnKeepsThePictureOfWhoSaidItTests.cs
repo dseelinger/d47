@@ -64,6 +64,23 @@ public sealed class EachTurnKeepsThePictureOfWhoSaidItTests
         Assert.Equal("crew.4521", model.Segments(TranscriptPage.Conversation)[^1].Picture);
     }
 
+    [Theory]
+    [InlineData(VoiceRole.Crew)]
+    [InlineData(VoiceRole.Comms)]
+    public void ACharactersReplyCarriesTheirPictureUnderTheirOwnName(VoiceRole role)
+    {
+        var model = Model();
+
+        var presenter = new TurnPresenter(model, model.ShipPicture, _ => null);
+        presenter.On(new TurnEvent.Addressed(role, "Babalooey", 1, Picture: SpeakerPictures.Character("42febf0f")));
+        presenter.On(new TurnEvent.TextDelta("Right here, Commander."));
+
+        var said = model.Segments(TranscriptPage.Conversation)[^1];
+
+        Assert.Equal("character.42febf0f", said.Picture);
+        Assert.Equal("Babalooey", said.Speaker);
+    }
+
     [Fact]
     public void InventedCommsCarryNoPicture()
     {

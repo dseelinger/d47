@@ -91,7 +91,8 @@ public sealed class CharacterLine(
                 transcript,
                 OffersTools: false,
                 Signal: character.Aboard ? 1 : LinkSignal.Strength(lightYears),
-                Voice: character.Voice),
+                Voice: character.Voice,
+                Picture: character.Picture),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 

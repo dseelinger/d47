@@ -6152,7 +6152,7 @@ public sealed class AppHost : IDisposable
     /// <summary>The picture name the Conversation page shows an addressed turn's reply with, or null.</summary>
     public string? AddressedPicture(TurnEvent.Addressed addressed) => CastVoice(addressed) is { Cast: { } cast }
         ? SpeakerPictures.For(cast)
-        : addressed.Role switch
+        : addressed.Picture ?? addressed.Role switch
     {
         VoiceRole.CarrierCaptain or VoiceRole.TowerControl =>
             D47.Core.Interface.SpeakerPictures.ByVoice(addressed.Role, RoleGender(addressed.Role), Flying),

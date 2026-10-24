@@ -24,8 +24,11 @@ public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = nu
         switch (turnEvent)
         {
             case TurnEvent.Addressed addressed:
-                _speaker = addressed.Role == VoiceRole.Comms ? NpcChatter.Invented(addressed.Name) : addressed.Name;
-                _picture = addressed.Role == VoiceRole.Comms ? null : addressedPicture?.Invoke(addressed);
+                // A speaker with a picture of their own is somebody the Commander made, even over the radio.
+                var invented = addressed.Role == VoiceRole.Comms && addressed.Picture is null;
+
+                _speaker = invented ? NpcChatter.Invented(addressed.Name) : addressed.Name;
+                _picture = invented ? null : addressed.Picture ?? addressedPicture?.Invoke(addressed);
                 break;
 
             case TurnEvent.Routed routed:

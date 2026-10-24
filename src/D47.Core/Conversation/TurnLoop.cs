@@ -64,7 +64,8 @@ public abstract record TurnEvent
     /// <summary>The turn is answered by someone other than the ship's AI. Emitted before any text.</summary>
     /// <param name="Cast">The id of the running story's cast member answering, or null.</param>
     /// <param name="Voice">The speaker's own voice, or null for their role's.</param>
-    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal, string? Cast = null, Characters.CharacterVoice? Voice = null) : TurnEvent;
+    /// <param name="Picture">The picture name the reply is shown with, or null to choose one by role.</param>
+    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal, string? Cast = null, Characters.CharacterVoice? Voice = null, string? Picture = null) : TurnEvent;
 
     /// <summary>Emitted as soon as routing is decided, before any work.</summary>
     public sealed record Routed(TurnRoute Route, ThinkingEffort? Effort) : TurnEvent;
@@ -994,7 +995,7 @@ public sealed class TurnLoop(
 
         logger.LogInformation("Turn addressed to {Name}", speaker.Name);
 
-        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal, speaker.Cast, speaker.Voice);
+        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal, speaker.Cast, speaker.Voice, speaker.Picture);
 
         var activeProvider = Provider;
 

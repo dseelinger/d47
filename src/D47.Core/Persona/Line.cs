@@ -15,6 +15,7 @@ namespace D47.Core.Persona;
 /// <param name="Cast">The id of the running story's cast member speaking, or null.</param>
 /// <param name="LiveState">What this speaker knows of the game right now, in place of the ship AI's live game state.</param>
 /// <param name="Voice">The speaker's own voice, or null for their role's.</param>
+/// <param name="Picture">The picture name the speaker's replies are shown with, or null to choose one by role.</param>
 public sealed record Speaker(
     VoiceRole Role,
     string Name,
@@ -27,7 +28,8 @@ public sealed record Speaker(
     Func<string?>? HiddenStory = null,
     string? Cast = null,
     Func<string?>? LiveState = null,
-    Characters.CharacterVoice? Voice = null);
+    Characters.CharacterVoice? Voice = null,
+    string? Picture = null);
 
 /// <summary>What a line makes of one utterance.</summary>
 public abstract record LineDecision
