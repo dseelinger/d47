@@ -206,7 +206,7 @@ public sealed class ChatterLine(
         {
             if (!sayable)
             {
-                said = $"Got to go. {name} out.";
+                said = NpcsHeardHere.SignOff(name);
                 exchange.Shut = true;
             }
 

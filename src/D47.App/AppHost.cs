@@ -6138,6 +6138,7 @@ public sealed class AppHost : IDisposable
         if (_voiceScopeSystem is not null)
         {
             Speech.Casting.EnteredSystem();
+            Announcer.NpcsHere.EnteredSystem();
         }
 
         _voiceScopeSystem = system;

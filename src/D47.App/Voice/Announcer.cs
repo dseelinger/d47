@@ -25,6 +25,9 @@ public sealed class Announcer : IDisposable
     private readonly SpeakingTurn _speaking = new();
     private readonly SpokenReferent _referent = new();
 
+    /// <summary>The NPCs heard in the current system.</summary>
+    public NpcsHeardHere NpcsHere { get; } = new();
+
     internal Announcer(
         VoicePipeline voice,
         AudioArbiter audio,
@@ -123,6 +126,7 @@ public sealed class Announcer : IDisposable
         }
 
         var voice = SpeakerAccent.VoiceOf(_castFor(announcement), announcement);
+        NpcsHere.Heard(announcement, voice.VoiceId, DateTimeOffset.Now);
 
         // Written before it is spoken, and whether or not the speaking works: a message that could not be
         // synthesised is still a message that arrived. **Into the log, on the Commander's instruction**
