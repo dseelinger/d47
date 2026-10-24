@@ -23,10 +23,15 @@ public static class ProperNouns
 
     /// <summary>The names worth biasing towards, most relevant first.</summary>
     /// <param name="shipAi">The names that address the ship's AI, ahead of every other name.</param>
+    /// <param name="speakers">The invented speakers the Commander can answer now, straight after <paramref name="shipAi"/>.</param>
     public static IReadOnlyList<string> From(
-        CommanderGameState? state, NavRoute? route = null, IReadOnlyList<string>? shipAi = null)
+        CommanderGameState? state,
+        NavRoute? route = null,
+        IReadOnlyList<string>? shipAi = null,
+        IReadOnlyList<string>? speakers = null)
     {
         var addressing = (shipAi ?? [])
+            .Concat(speakers ?? [])
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name.Trim());
 

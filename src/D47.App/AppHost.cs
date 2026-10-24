@@ -212,7 +212,11 @@ public sealed class AppHost : IDisposable
             voice,
             said: text => Said?.Invoke(text),
             prompted: PanelRouting.Prompted,
-            properNouns: () => ProperNouns.From(GameState.Active, _route?.Invoke(), NamesToHear(personas)),
+            properNouns: () => ProperNouns.From(
+                GameState.Active,
+                _route?.Invoke(),
+                NamesToHear(personas),
+                turns.Lines.OfType<ChatterLine>().FirstOrDefault()?.Speakers),
             recorder: () => AudioRecorder,
             shipName: () => personas.Current.Name,
             withheld: turns.IsLogEntry,
@@ -3124,7 +3128,8 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Crew,
             ModelFree));
 
-        // An invented speaker from the last overheard exchange, reached by name while it is still going.
+        // An invented speaker from the last overheard exchange, reached by name while it is still going, or
+        // without a name after a hail.
         turns.Lines.Add(new ChatterLine(
             () => SystemWallClock.Instance.UtcNow,
             () => gameState.Active?.Location.StarSystem,
@@ -3132,6 +3137,7 @@ public sealed class AppHost : IDisposable
             () => turns.BackgroundModel,
             voiceId => late.Host?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
+            ModelFree,
             loggerFactory.CreateLogger<ChatterLine>()));
 
         // The Narrator, answered by whatever the Commander says shortly after a narration, except what the

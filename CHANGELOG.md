@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A hail can be answered without naming the hailer. For 90 seconds after a hail, what you say goes to the hailer, until you name your core, say the wake phrase or say goodbye; a command the ship runs without the model still goes to the ship. A passer-by is still answered only by name, and the name can now follow a word such as "oh", "hey" or "thanks": "Hey Fenn, thanks" reaches Fenn. The transcriber is given the names of the people you can answer, so an invented name is less often misheard.
+
 Material callouts no longer repeat during collection-limpet work. "First" is said only when you held none of the material before the pickup, each milestone (25, 50, 75 percent and full) is said only when a pickup crosses it from what you already held, and the running count above 75 percent is gone.
 
 The ship's AI can now read your rank and rank progress in every career and in the Imperial and Federal navies, with the name of the next rank, and no longer asks you to read the percentage out. "What's my rank" and "what are my ranks" are answered without the model. It does not depend on keeping a rank goal.

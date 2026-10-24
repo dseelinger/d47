@@ -1560,11 +1560,13 @@ small business, the dock telling an invented pilot off when you are docked somew
 one exchange in four — one line said to *you* over the open channel. Traffic between other people
 sounds further off than a hail and has its own row, Overheard chatter, in the audio mixer.
 
-**You can answer the ones that speak to you, by name.** A hail, and the occasional passer-by who
-notices you, can be answered: start with the speaker's name — *"Vance, thanks"*, or the whole
-*"Courier Vance"* — within 90 seconds of the last line anyone said in that exchange, and they reply
-in the voice you heard them in. Once you have named them, your next line goes to them too, until you
-name your core or say goodbye. Each exchange gives **four replies at most**; the fourth is their sign-off.
+**You can answer the ones that speak to you.** After a hail, whatever you say within 90 seconds of
+the last line in that exchange goes to the hailer, with or without their name, and they reply in the
+voice you heard them in. The occasional passer-by who notices you is answered by name: start with
+the speaker's name — *"Vance, thanks"*, *"Hey Vance, thanks"*, or the whole *"Courier Vance"* — within
+the same 90 seconds. Either way your next line goes to them too, until you name your core, say the
+wake phrase or say goodbye. A command the ship runs without the model, such as *"landing gear"*,
+still goes to the ship. Each exchange gives **four replies at most**; the fourth is their sign-off.
 A reply that would contradict your ship or claim something the game would log — a scan, a fine, a
 docking decision — is replaced with *"Got to go. Vance out."*, which ends the exchange. After 90
 seconds, a jump, a change of situation such as docking or undocking, or the next exchange, naming

@@ -7,7 +7,8 @@ namespace D47.Core.Persona;
 
 /// <summary>
 /// The invented people of the last overheard exchange, who answer when the Commander names them while
-/// the exchange is still going. Thread-safe: <see cref="Heard"/> runs on the callout drain and
+/// the exchange is still going. A hail opens the line to its hailer, so an unnamed reply reaches them too.
+/// Thread-safe: <see cref="Heard"/> runs on the callout drain and
 /// <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
 /// <param name="clock">The time now.</param>
@@ -16,6 +17,7 @@ namespace D47.Core.Persona;
 /// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
 /// <param name="accentOf">The accent a voice id speaks with, or null for none.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
+/// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class ChatterLine(
     Func<DateTimeOffset> clock,
     Func<string?> system,
@@ -23,6 +25,7 @@ public sealed class ChatterLine(
     Func<string?>? model = null,
     Func<string?, string?>? accentOf = null,
     Func<ShipFacts>? facts = null,
+    Func<string, bool>? modelFree = null,
     ILogger? logger = null) : ILine
 {
     /// <summary>How long after the exchange's last line the Commander can still answer it.</summary>
@@ -40,6 +43,10 @@ public sealed class ChatterLine(
     /// <summary>The person the line is open to, or null.</summary>
     private string? _open;
 
+    /// <summary>Words said ahead of a name: "Oh, Fenn" and "Hey Fenn" both name Fenn.</summary>
+    private static readonly string[] Interjections =
+        ["thank you", "thanks", "cheers", "hello", "hey", "hi", "oh", "ah", "okay", "ok", "well", "yeah", "yes"];
+
     public bool IsOpen
     {
         get
@@ -47,6 +54,18 @@ public sealed class ChatterLine(
             lock (_lock)
             {
                 return _open is not null && _exchange is { } exchange && Carries(exchange);
+            }
+        }
+    }
+
+    /// <summary>The invented speakers of the held exchange while the Commander can still answer it; otherwise empty.</summary>
+    public IReadOnlyList<string> Speakers
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _exchange is { } exchange && Carries(exchange) ? [.. exchange.People.Keys] : [];
             }
         }
     }
@@ -64,12 +83,14 @@ public sealed class ChatterLine(
     /// invented speakers can be addressed; the tower and the captain are context.
     /// </summary>
     /// <param name="answerable">Whether the Commander may answer this exchange at all.</param>
+    /// <param name="hail">Whether the exchange is said to the Commander, which opens the line to its speaker.</param>
     public void Heard(
         NpcChatterLine line,
         bool answerable,
         int exchangeIndex,
         string? system,
-        AmbientSituation situation)
+        AmbientSituation situation,
+        bool hail = false)
     {
         ArgumentNullException.ThrowIfNull(line);
 
@@ -88,12 +109,17 @@ public sealed class ChatterLine(
             {
                 exchange.People[line.Name] = line.VoiceId;
             }
+
+            if (hail && answerable && line.Role is null && exchange.Replies == 0)
+            {
+                _open = line.Name;
+            }
         }
     }
 
     /// <summary>Records a line as spoken in the Commander's current system and situation.</summary>
-    public void Heard(NpcChatterLine line, bool answerable, int exchangeIndex) =>
-        Heard(line, answerable, exchangeIndex, system(), situation());
+    public void Heard(NpcChatterLine line, bool answerable, int exchangeIndex, bool hail = false) =>
+        Heard(line, answerable, exchangeIndex, system(), situation(), hail);
 
     public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
     {
@@ -127,6 +153,11 @@ public sealed class ChatterLine(
         }
         else if (_open is { } open && carries)
         {
+            if (modelFree?.Invoke(input) == true)
+            {
+                return new LineDecision.NotMine();
+            }
+
             name = open;
             question = input.Trim();
         }
@@ -200,8 +231,33 @@ public sealed class ChatterLine(
         && string.Equals(system(), exchange.System, StringComparison.OrdinalIgnoreCase)
         && situation() == exchange.Situation;
 
-    /// <summary>The held speaker the input opens with — whole name or its last word — and what follows.</summary>
+    /// <summary>
+    /// The held speaker the input opens with — whole name or its last word, after any interjections — and what
+    /// follows. With an interjection ahead of the name, the whole input is the question.
+    /// </summary>
     private static (string Name, string Question)? Named(string input, Exchange exchange)
+    {
+        if (OpensWithName(input, exchange) is { } named)
+        {
+            return named;
+        }
+
+        var rest = input;
+
+        while (Interjections.Select(word => CrewAddressing.Opens(rest, word)).FirstOrDefault(after => after is not null) is { } after)
+        {
+            rest = after;
+
+            if (OpensWithName(rest, exchange) is { } late)
+            {
+                return (late.Name, input.Trim());
+            }
+        }
+
+        return null;
+    }
+
+    private static (string Name, string Question)? OpensWithName(string input, Exchange exchange)
     {
         foreach (var name in exchange.People.Keys.OrderByDescending(name => name.Length))
         {

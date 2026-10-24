@@ -35,7 +35,8 @@ public enum NpcChatterKind
 public sealed record NpcChatterLine(string Name, string Text, VoiceRole? Role = null, string? VoiceId = null);
 
 /// <summary>A chatter line as it will be spoken, with its exchange and whether the Commander may answer it.</summary>
-public sealed record NpcChatterHeard(NpcChatterLine Line, int ExchangeIndex, bool Answerable);
+/// <param name="Hail">Whether the exchange is a <see cref="NpcChatterKind.Hail"/>, said to the Commander.</param>
+public sealed record NpcChatterHeard(NpcChatterLine Line, int ExchangeIndex, bool Answerable, bool Hail = false);
 
 /// <summary>One voice an exchange may use, cast before the exchange is written (#415).</summary>
 /// <param name="Tag">What the model tags this slot's lines with.</param>

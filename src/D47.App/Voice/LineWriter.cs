@@ -353,7 +353,7 @@ internal sealed class LineWriter
                 SpeakerIsPlayer = false,
                 CommsChannel = "npc",
                 Overheard = kind is not NpcChatterKind.Hail,
-                Invented = new NpcChatterHeard(line with { Text = said }, exchange, answerable),
+                Invented = new NpcChatterHeard(line with { Text = said }, exchange, answerable, kind is NpcChatterKind.Hail),
             });
         }
 

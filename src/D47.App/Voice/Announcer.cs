@@ -219,7 +219,7 @@ public sealed class Announcer : IDisposable
                         if (announcement.Invented is { } chatter)
                         {
                             Turns.LineHeard<D47.Core.Persona.ChatterLine>(
-                                line => line.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex));
+                                line => line.Heard(chatter.Line, chatter.Answerable, chatter.ExchangeIndex, chatter.Hail));
                         }
 
                         if (announcement.Voice == VoiceRole.Narrator)
