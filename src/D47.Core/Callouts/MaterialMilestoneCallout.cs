@@ -3,8 +3,8 @@ using D47.Core.Journal;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// Progress towards filling a material (Phase 8, "Call out material-gathering milestones"): the first
-/// unit, then 25/50/75%, a running count above 75%, and full.
+/// Progress towards filling a material: the first unit held, then 25/50/75% and full, each measured from
+/// what the Commander held before the pickup.
 /// </summary>
 public sealed class MaterialMilestoneCallout : ICallout
 {
@@ -17,9 +17,6 @@ public sealed class MaterialMilestoneCallout : ICallout
 
     /// <summary>The highest milestone already announced per material, so each fires once.</summary>
     private readonly Dictionary<string, int> _announced = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>Materials seen at all, which is what makes "the first unit" meaningful.</summary>
-    private readonly HashSet<string> _seen = new(StringComparer.OrdinalIgnoreCase);
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -43,7 +40,7 @@ public sealed class MaterialMilestoneCallout : ICallout
             var count = holding?.Count ?? journalEvent.Int("Count") ?? 0;
             var spoken = holding?.Speak() ?? journalEvent.Named("Name") ?? name;
 
-            var firstEver = _seen.Add(name);
+            var before = count - (journalEvent.Int("Count") ?? 0);
 
             // Priming folds without announcing.
             if (context.IsPriming)
@@ -52,7 +49,7 @@ public sealed class MaterialMilestoneCallout : ICallout
                 continue;
             }
 
-            if (firstEver)
+            if (before <= 0)
             {
                 yield return new Announcement("materials.first." + name, $"First {spoken}.");
             }
@@ -64,24 +61,18 @@ public sealed class MaterialMilestoneCallout : ICallout
             }
 
             var percent = (int)Math.Floor(count * 100.0 / capacity);
-            var already = _announced.GetValueOrDefault(name, 0);
+
+            if (!_announced.ContainsKey(name))
+            {
+                _announced[name] = Standing(before, capacity, (int)Math.Floor(before * 100.0 / capacity));
+            }
+
+            var already = _announced[name];
 
             if (count >= capacity && already < 100)
             {
                 _announced[name] = 100;
                 yield return new Announcement("materials.full." + name, $"{spoken} is full. {count} of {capacity}.");
-                continue;
-            }
-
-            // Above 75% every collection is worth a running count — that is the range where the Commander is
-            // deciding whether to keep going or move on.
-            if (percent >= 75 && already >= 75)
-            {
-                yield return new Announcement(
-                    "materials.running." + name, $"{spoken}, {count} of {capacity}.")
-                {
-                    Cooldown = TimeSpan.FromSeconds(10),
-                };
                 continue;
             }
 

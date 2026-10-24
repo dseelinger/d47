@@ -960,9 +960,48 @@ public class CalloutTests
 
         Assert.Empty(callout.Examine(Context(state, events: [collect], priming: true)));
 
-        // This is what "primed from the session backlog" buys: the second unit collected after startup is not
-        // announced as the first.
-        Assert.Empty(callout.Examine(Context(state, events: [collect], atSecond: 1)));
+        var next = """{"timestamp":"3311-01-01T00:00:02Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
+
+        Assert.Empty(callout.Examine(Context(StateFrom(collect, next), events: [next], atSecond: 2)));
+    }
+
+    [Fact]
+    public void AHeldMaterialNotCollectedEarlierInTheRunIsNotAFirstUnit()
+    {
+        var callout = new MaterialMilestoneCallout { Capacity = _ => 100 };
+        var held = """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":60}],"Manufactured":[],"Encoded":[]}""";
+        var collect = """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":3}""";
+
+        Assert.Empty(callout.Examine(Context(StateFrom(held, collect), events: [collect])));
+    }
+
+    [Fact]
+    public void AMilestoneIsAnnouncedOnlyWhenAPickupCrossesItFromTheHolding()
+    {
+        var callout = new MaterialMilestoneCallout { Capacity = _ => 100 };
+        var held = """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":70}],"Manufactured":[],"Encoded":[]}""";
+        var first = """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":3}""";
+        var second = """{"timestamp":"3311-01-01T00:00:02Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":3}""";
+        var third = """{"timestamp":"3311-01-01T00:00:03Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":10}""";
+
+        Assert.Empty(callout.Examine(Context(StateFrom(held, first), events: [first], atSecond: 1)));
+
+        var said = Assert.Single(callout.Examine(Context(StateFrom(held, first, second), events: [second], atSecond: 2)));
+        Assert.Equal("materials.milestone.iron", said.Key);
+        Assert.Contains("75 percent", said.Text);
+
+        Assert.Empty(callout.Examine(Context(StateFrom(held, first, second, third), events: [third], atSecond: 3)));
+    }
+
+    [Fact]
+    public void AMaterialSpentToZeroAndCollectedAgainIsAFirstUnitAgain()
+    {
+        var callout = new MaterialMilestoneCallout();
+        var held = """{"timestamp":"3311-01-01T00:00:00Z","event":"Materials","Raw":[{"Name":"iron","Count":0}],"Manufactured":[],"Encoded":[]}""";
+        var collect = """{"timestamp":"3311-01-01T00:00:01Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":2}""";
+
+        var said = Assert.Single(callout.Examine(Context(StateFrom(held, collect), events: [collect])));
+        Assert.Equal("materials.first.iron", said.Key);
     }
 
     [Fact]
@@ -989,7 +1028,7 @@ public class CalloutTests
 
         foreach (var (count, second) in (ReadOnlySpan<(int, int)>)[(1, 1), (30, 2), (60, 3), (80, 4), (100, 5)])
         {
-            var line = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{count}}}],"Manufactured":[],"Encoded":[]}""";
+            var line = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{count - 1}}}],"Manufactured":[],"Encoded":[]}""";
             var collect = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
 
             store.Apply(Event(line));
@@ -1023,7 +1062,7 @@ public class CalloutTests
 
         void Collect(int held, int second)
         {
-            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held}}}],"Manufactured":[],"Encoded":[]}""";
+            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held - 1}}}],"Manufactured":[],"Encoded":[]}""";
             var collect = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
 
             store.Apply(Event(snapshot));
@@ -1077,7 +1116,7 @@ public class CalloutTests
 
         void Collect(int held, int second)
         {
-            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held}}}],"Manufactured":[],"Encoded":[]}""";
+            var snapshot = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"Materials","Raw":[{"Name":"iron","Count":{{held - 1}}}],"Manufactured":[],"Encoded":[]}""";
             var collect = $$"""{"timestamp":"3311-01-01T00:00:0{{second}}Z","event":"MaterialCollected","Category":"Raw","Name":"iron","Count":1}""";
 
             store.Apply(Event(snapshot));

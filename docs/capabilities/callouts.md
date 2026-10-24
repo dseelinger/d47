@@ -436,8 +436,10 @@ also means it keeps working when a new engineer is added.
 
 #### Material milestones {#materials}
 
-Your first unit of a material, then a quarter, half and three-quarters full, a running count
-after that, and full.
+Your first unit of a material, then a quarter, half and three-quarters full, and full. Each
+milestone is measured from what you already hold: it is said only when a pickup carries you across
+it, so a material you already hold in quantity is not announced as a first, and a pickup between
+three-quarters and full says nothing.
 
 Start Directive 47 after Elite and it catches up on the session so far first, so materials you
 already had do not all announce themselves as firsts.

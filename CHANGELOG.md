@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Material callouts no longer repeat during collection-limpet work. "First" is said only when you held none of the material before the pickup, each milestone (25, 50, 75 percent and full) is said only when a pickup crosses it from what you already held, and the running count above 75 percent is gone.
+
 The ship's AI can now read your rank and rank progress in every career and in the Imperial and Federal navies, with the name of the next rank, and no longer asks you to read the percentage out. "What's my rank" and "what are my ranks" are answered without the model. It does not depend on keeping a rank goal.
 
 The Ships goal now counts every hull you own. It counted only hulls the journal names without a localised name, so a large fleet read as a handful. Asking about an owned ship you have never boarded, by hull type, now finds it too.
