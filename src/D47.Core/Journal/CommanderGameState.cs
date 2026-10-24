@@ -137,6 +137,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The hired NPC pilots on the books (Phase 11, "Ship Crew").</summary>
     public ShipCrew Crew { get; private set; } = ShipCrew.Empty;
 
+    /// <summary>The ship currently targeted, or null when none is.</summary>
+    public TargetedShip? Target { get; private set; }
+
     /// <summary>On-foot inventory.</summary>
     public SuitInventory Suit { get; internal set; } = SuitInventory.Empty;
 
@@ -177,7 +180,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         Parts.FirstOrDefault(each => each.Name == part)?.Phrase;
 
     /// <summary>A part of the state an event can replace, in the order <see cref="Fold"/> applies them.</summary>
-    private sealed record Part(string Name, string Phrase, Func<CommanderGameState, object> Read);
+    private sealed record Part(string Name, string Phrase, Func<CommanderGameState, object?> Read);
 
     private static readonly Part[] Parts =
     [
@@ -219,10 +222,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Session), "this session's totals", state => state.Session),
         new(nameof(Colonisation), "construction sites", state => state.Colonisation),
         new(nameof(Crew), "your crew", state => state.Crew),
+        new(nameof(Target), "your target", state => state.Target),
     ];
 
     /// <summary>How a receipt names this part's change, or null when it did not change.</summary>
-    private static FoldChange? Changed(Part part, object was, object now) => (was, now) switch
+    private static FoldChange? Changed(Part part, object? was, object? now) => (was, now) switch
     {
         _ when Equals(was, now) => null,
 
@@ -331,6 +335,13 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather than the one
         // they were in a moment ago.
         Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeName ?? Ship.Type);
+
+        Target = journalEvent.Kind switch
+        {
+            "ShipTargeted" => TargetedShip.From(journalEvent),
+            "FSDJump" or "CarrierJump" or "Docked" or "LoadGame" => null,
+            _ => Target,
+        };
     }
 
     private bool _loadoutSilenceLogged;
