@@ -229,6 +229,17 @@ skip any channel that has no one on it, and wrap around. Sub-channel up and down
 who is on the selected channel and wrap within it. "Comms" followed by a channel or a name
 selects it directly. A name can be the whole name or the last word of it.
 
+Each channel opens from the game:
+
+| Channel | Open while | Who is on it |
+|---|---|---|
+| Carrier | you own a fleet carrier | Captain, Tower |
+| Target | you have a ship flown by an NPC targeted | its pilot |
+| System | an NPC has been heard on comms in this system | each of them, last heard first |
+| Story | a story runs | the cast it has introduced |
+| Crew | a hired pilot is active | that pilot |
+| Characters | you have made a character | each of them |
+
 After each change D47 says the selection in the fewest words:
 
 ```text

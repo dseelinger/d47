@@ -4288,6 +4288,9 @@ public sealed class AppHost : IDisposable
         // NPC voices are scoped to the system, so something has to notice the system changing.
         tick.Add("voice-scope", _ => host.FollowSystemForVoices());
 
+        // After the journal, the adventures and voice-scope, which clears the roster on a new system.
+        tick.Add("comms-channels", _ => host.FeedCommsChannels());
+
         // After the callouts, so a honk that reports why it did not fire is spoken in the same order it was
         // decided relative to everything else this tick.
         tick.Add("autonomous-drain", _ => host.CarryOutPendingActions(autonomous, gameInput));
@@ -6109,6 +6112,20 @@ public sealed class AppHost : IDisposable
             : null;
 
         return cast.ForSender(addressed.Name, isPlayer: false, addressed.Role, own: own);
+    }
+
+    /// <summary>Pushes the active Commander's carrier, target, roster, story, crew and characters to the comms channels.</summary>
+    private void FeedCommsChannels()
+    {
+        if (CommsChannels is not { } channels)
+        {
+            return;
+        }
+
+        var active = GameState.Active;
+        var fid = active?.Identity.FrontierId;
+
+        channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid)));
     }
 
     private string? _voiceScopeSystem;
