@@ -63,11 +63,12 @@ public static class StoryVoices
     /// <summary>
     /// The voice of a line by <paramref name="speaker"/>. The ship is the core aboard, or the narrator while that core is
     /// stock; a cast member speaks in the voice <paramref name="choices"/> holds for the version a Commander of
-    /// <paramref name="gender"/> meets, or else its pinned voice. A speaker the story does not cast is the ship's.
+    /// <paramref name="gender"/> meets, or else its pinned voice. A speaker the story does not cast is the ship's. A
+    /// member in <paramref name="aboard"/> is heard in the cockpit: their link is not applied, their effects still are.
     /// </summary>
     public static StoryLineVoice Of(
         string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null,
-        ShipSpeech? ship = null)
+        ShipSpeech? ship = null, IReadOnlyCollection<string>? aboard = null)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
@@ -82,12 +83,13 @@ public static class StoryVoices
         }
 
         var shown = member.Shown(secret.Id, gender);
+        var voice = Voice(member, shown, choices, ship);
 
         return new StoryLineVoice(
             VoiceRole.Crew,
             shown.Name,
             shown,
-            Voice(member, shown, choices, ship))
+            aboard?.Contains(member.Id) == true ? InCockpit(voice) : voice)
         {
             Who = member.Who,
         };
@@ -125,6 +127,9 @@ public static class StoryVoices
                 : new PinnedVoice(ship.Provider, ship.VoiceFor(shown.Picture)))
             with { Link = member.Link, Effects = member.Effects };
     }
+
+    private static PinnedVoice InCockpit(PinnedVoice voice) =>
+        voice with { Link = null, Fallback = voice.Fallback is { } fallback ? InCockpit(fallback) : null };
 
     /// <summary>Whether a line by <paramref name="speaker"/> is the ship's: named so, or naming nobody the story casts.</summary>
     public static bool IsShip(string? speaker, StorySecret secret)

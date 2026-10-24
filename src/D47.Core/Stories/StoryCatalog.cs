@@ -51,6 +51,9 @@ public sealed record StoryCard
     /// <summary>The key of one of <see cref="StoryPacing.All"/>: how long the story runs.</summary>
     public string? Length { get; init; }
 
+    /// <summary>The SHA-256 of the story's <c>.sealed</c> file in lower-case hex; null on a card published without it.</summary>
+    public string? SealedSha256 { get; init; }
+
     /// <summary>How the story is paced: by its <see cref="Length"/>, or as a year for a missing or unknown key.</summary>
     public StoryPacing Pacing => StoryPacing.Find(Length) ?? StoryPacing.OneYear;
 
@@ -282,6 +285,9 @@ public sealed record StorySpeaker
     /// <summary>Guardian effects the member's voice passes through, in order.</summary>
     public IReadOnlyList<StorySpeakerEffect>? Effects { get; init; }
 
+    /// <summary>When the member is aboard the Commander's ship, heard in the cockpit rather than through <see cref="Link"/>; null for never.</summary>
+    public StorySpeakerAboard? Aboard { get; init; }
+
     /// <summary>
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
     /// <see cref="StorySpeakerVersions.ForMan"/> version.
@@ -333,6 +339,12 @@ public sealed record StorySpeakerVersion
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; init; }
 }
+
+/// <summary>
+/// A cast member's time aboard: from the <see cref="Boards"/> beat up to, not including, the <see cref="Leaves"/> beat,
+/// each a key of the story length's <see cref="StoryPacing.BeatKeys"/>. Null boards at the story's start; null leaves at its end.
+/// </summary>
+public sealed record StorySpeakerAboard(string? Boards, string? Leaves);
 
 /// <summary>One Guardian effect on a cast member's voice: a <see cref="Audio.GuardianEffect.Id"/> and a level, 1 to 20.</summary>
 public sealed record StorySpeakerEffect(string Id, int Level);
@@ -412,6 +424,9 @@ public sealed record StoryBeats
     public string? Finale { get; init; }
 
     public string? FinalImage { get; init; }
+
+    /// <summary>Every beat key, in story order.</summary>
+    public static IReadOnlyList<string> Keys { get; } = [.. new StoryBeats().All.Select(beat => beat.Key)];
 
     /// <summary>Every beat in order, keyed as in the sealed file.</summary>
     public IReadOnlyList<(string Key, string? Line)> All =>
@@ -1048,6 +1063,31 @@ public sealed class StoryCatalog
         if (secret.Finale.Count != pacing.FinaleChapters)
         {
             yield return $"finale has {secret.Finale.Count.ToString(CultureInfo.InvariantCulture)} lines, not {pacing.FinaleChapters.ToString(CultureInfo.InvariantCulture)} for {pacing.Name}.";
+        }
+
+        foreach (var (speaker, at) in secret.Cast.Select((speaker, at) => (speaker, at)))
+        {
+            if (speaker.Aboard is not { } aboard)
+            {
+                continue;
+            }
+
+            var name = $"cast[{at.ToString(CultureInfo.InvariantCulture)}].aboard";
+            var known = true;
+
+            foreach (var (field, beat) in new[] { ("boards", aboard.Boards), ("leaves", aboard.Leaves) })
+            {
+                if (beat is not null && !keys.Contains(beat, StringComparer.Ordinal))
+                {
+                    known = false;
+                    yield return $"{name}.{field} is {beat}, which is not a beat of a {pacing.Name} story.";
+                }
+            }
+
+            if (known && aboard is { Boards: { } boards, Leaves: { } leaves } && StoryAboard.Order(boards) >= StoryAboard.Order(leaves))
+            {
+                yield return $"{name} leaves at or before the beat it boards at.";
+            }
         }
     }
 

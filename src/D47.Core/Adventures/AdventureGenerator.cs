@@ -133,13 +133,17 @@ public sealed record AdventureStory(
     bool CoreIsStock = false,
     string? Home = null,
     bool Remembered = false,
-    GoalClimbStep? Goal = null);
+    GoalClimbStep? Goal = null,
+    IReadOnlyList<string>? Aboard = null);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
 {
     /// <summary>Who the member is to the Commander, public; null when the story has none.</summary>
     public string? Role { get; init; }
+
+    /// <summary>The Commander's notes on the member, which add to <see cref="Who"/>; null for none.</summary>
+    public string? Notes { get; init; }
 }
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
@@ -665,6 +669,7 @@ public sealed class AdventureGenerator(
                 Previous = previous is null ? null : previous with { Previous = null },
                 Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
                 StoryId = ask.Story?.Id ?? previous?.StoryId,
+                Aboard = ask.Story is { } story ? Aboard(story, read.Aboard) : null,
             };
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
@@ -1174,6 +1179,14 @@ public sealed class AdventureGenerator(
             Refusals = [.. resolved.Refusals.Where(refusal => !refusal.Text.StartsWith(SelfNamed, StringComparison.Ordinal))],
         };
     }
+
+    /// <summary>The cast ids aboard for a story chapter: those the story puts aboard, then those the chapter adds, in the cast's own spelling.</summary>
+    private static IReadOnlyList<string> Aboard(AdventureStory story, IReadOnlyList<string> added) =>
+    [
+        .. (story.Aboard ?? [])
+            .Concat(added.Select(id => (story.Cast ?? []).FirstOrDefault(member => string.Equals(member.Id, id.Trim(), StringComparison.OrdinalIgnoreCase))?.Id).OfType<string>())
+            .Distinct(StringComparer.Ordinal),
+    ];
 
     /// <summary>The ids a story chapter's lines may name: the ship, the narrator and the cast.</summary>
     private static IEnumerable<string> Speakers(AdventureStory story) =>
@@ -2207,8 +2220,8 @@ public sealed class AdventureGenerator(
             "Every line, the opening included, has a speaker, and is written as that speaker says it: \"ship\", the core aboard"
             + (story.Core is { Length: > 0 } core ? $" ({core})" : string.Empty)
             + "; \"narrator\", who tells the story in the third person from outside the cockpit, never says \"I\", \"me\" or \"we\", "
-            + "never speaks to the Commander, and never offers, asks or waits for anything; or one of the story's cast, over comms, in a recording "
-            + "or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
+            + "never speaks to the Commander, and never offers, asks or waits for anything; or one of the story's cast: in the cockpit while they are aboard the ship, "
+            + "otherwise over comms, in a recording or a message. Give a line to the cast only where the Commander would hear that person. Most lines are the ship's. "
             + "A cast member's line is that person's own words, in the first person, as they would say them: it never names them and "
             + "never describes them, except that they may give their own name as a person does when introducing themselves "
             + "(\"This is …\", \"My name is …\"). Narration, including any line that describes a cast member, what they did or what they left behind, "
@@ -2240,6 +2253,16 @@ public sealed class AdventureGenerator(
                     ? $"- \"{member.Id}\": {member.Name}, {role} — {member.Who}"
                     : $"- \"{member.Id}\": {member.Name} — {member.Who}");
             }
+
+            var aboard = cast.Where(member => story.Aboard?.Contains(member.Id, StringComparer.Ordinal) == true).ToList();
+
+            text.AppendLine(
+                (aboard.Count > 0
+                    ? $"Aboard the Commander's ship for this chapter: {string.Join(", ", aboard.Select(member => member.Name))}. They are in the cockpit "
+                      + "with the Commander: write their lines as spoken there, in person, never over comms. Every other cast member is elsewhere. "
+                    : "No cast member is aboard the ship for this chapter; each is elsewhere. ")
+                + "\"aboard\" lists the id of each other cast member who rides along in the cockpit for this chapter alone, whose lines are then "
+                + "written as spoken there. Most chapters list none.");
         }
     }
 
@@ -2738,7 +2761,7 @@ public sealed class AdventureGenerator(
             + "give an objective as many as the story needs, and an empty \"then\" when it takes one.");
         text.AppendLine();
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null)
+            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 })
             + (changing
                 ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
                   + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
@@ -2746,7 +2769,14 @@ public sealed class AdventureGenerator(
                 : ". \"reply\" is what you say to the Commander, in your own "
                   + "voice, as you hand them the story — one or two sentences, no summary of the plot."));
 
-        return new StoryCall(text.ToString(), StoryAnswer.BeatsSchema(ask.Story is { } cast ? [.. Speakers(cast)] : null, kinds, destination, ships.Count > 0 ? ships : null));
+        return new StoryCall(
+            text.ToString(),
+            StoryAnswer.BeatsSchema(
+                ask.Story is { } cast ? [.. Speakers(cast)] : null,
+                kinds,
+                destination,
+                ships.Count > 0 ? ships : null,
+                ask.Story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null));
     }
 
     /// <summary>The draft's objectives numbered in the chapter, why some cannot stand, and which of them the answer replaces.</summary>
@@ -3098,7 +3128,11 @@ public sealed class AdventureGenerator(
     /// <summary>One option of a choice as the model wrote it.</summary>
     private sealed record ReadOption(string? Label, IReadOnlyList<ReadBeat> Steps, string? Ending, string? EndingLine);
 
-    private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination);
+    private sealed record ReadAnswer(IReadOnlyList<AdventureLine> Opening, string? Reply, IReadOnlyList<ReadBeat> Beats, ReadPlace? Destination)
+    {
+        /// <summary>The ids the chapter's "aboard" lists, as written.</summary>
+        public IReadOnlyList<string> Aboard { get; init; } = [];
+    }
 
     /// <summary>A place as the model named it.</summary>
     private sealed record ReadPlace(string? System, string? Body);
@@ -3116,7 +3150,12 @@ public sealed class AdventureGenerator(
                 beats.AddRange(array.EnumerateArray().SelectMany(ReadObjective));
             }
 
-            return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, ReadDestination(root));
+            return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, ReadDestination(root))
+            {
+                Aboard = root.TryGetProperty("aboard", out var aboard) && aboard.ValueKind == JsonValueKind.Array
+                    ? [.. aboard.EnumerateArray().Where(id => id.ValueKind == JsonValueKind.String).Select(id => id.GetString()!)]
+                    : [],
+            };
         }
         catch (JsonException)
         {

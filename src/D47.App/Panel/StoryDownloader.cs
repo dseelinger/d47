@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -11,8 +12,9 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// Fetches stock stories from the <c>stories-1</c> release into <c>data\stories\</c>: the list once per session with
-/// the cast pictures it names, a story's hidden layer and cast pictures when it is picked, and a running story's
-/// missing files at startup. Every fetch runs on the pool.
+/// the cast pictures it names and every story on disk whose card's <c>sealedSha256</c> differs from its file, a story's
+/// hidden layer and cast pictures when it is picked, and a running story's missing files at startup. Every fetch runs
+/// on the pool.
 /// </summary>
 public sealed partial class StoryDownloader
 {
@@ -94,6 +96,7 @@ public sealed partial class StoryDownloader
         }
 
         List<string> listed;
+        List<(string Id, string Hash)> hashes;
 
         try
         {
@@ -106,6 +109,7 @@ public sealed partial class StoryDownloader
                 }
 
                 listed = CastPictureNames(document.RootElement);
+                hashes = SealedHashes(document.RootElement);
             }
 
             File.Move(partial, Path.Combine(_folder, StoryCatalog.IndexFile), overwrite: true);
@@ -133,7 +137,41 @@ public sealed partial class StoryDownloader
             _logger.LogInformation("The list's cast pictures could not be stored ({Error}).", ex.GetType().Name);
         }
 
+        foreach (var (id, hash) in hashes.Where(pair => SafeName(pair.Id)))
+        {
+            if (IsOnDisk(id) && !Holds(id, hash))
+            {
+                _logger.LogInformation("Story {StoryId} was published again; fetching it.", id);
+                await FetchStory(id).ConfigureAwait(false);
+            }
+        }
+
         Raise();
+    }
+
+    /// <summary>Each card's id and <c>sealedSha256</c>; a card without both strings contributes none.</summary>
+    private static List<(string Id, string Hash)> SealedHashes(JsonElement list) =>
+    [
+        .. list.EnumerateArray()
+            .Where(card => card.ValueKind == JsonValueKind.Object
+                && card.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
+                && card.TryGetProperty("sealedSha256", out var hash) && hash.ValueKind == JsonValueKind.String)
+            .Select(card => (card.GetProperty("id").GetString()!, card.GetProperty("sealedSha256").GetString()!)),
+    ];
+
+    /// <summary>Whether the hidden layer of <paramref name="id"/> on disk has the SHA-256 <paramref name="hash"/>; true when it cannot be read.</summary>
+    private bool Holds(string id, string hash)
+    {
+        try
+        {
+            var held = SHA256.HashData(File.ReadAllBytes(Path.Combine(_folder, id + StoryCatalog.SealedExtension)));
+            return string.Equals(Convert.ToHexStringLower(held), hash, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogInformation("Story {StoryId}: the file on disk could not be read to compare ({Error}).", id, ex.GetType().Name);
+            return true;
+        }
     }
 
     /// <summary>Every name in each card's <c>castPictures</c>; a card or entry of another shape contributes none.</summary>

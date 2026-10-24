@@ -78,7 +78,7 @@ jobs:
           REPLACE: ${{ inputs.replace }}
         shell: python3 {0}
         run: |
-          import json, os, pathlib, subprocess, sys
+          import hashlib, json, os, pathlib, subprocess, sys
 
           repo = os.environ["GITHUB_REPOSITORY"]
           story = os.environ["STORY"]
@@ -98,6 +98,7 @@ jobs:
           card = json.loads(card_file.read_text(encoding="utf-8"))
           if card.get("id") != story:
               sys.exit(f"card.json has the id {card.get('id')}, not {story}.")
+          card["sealedSha256"] = hashlib.sha256((staged / f"{story}.sealed").read_bytes()).hexdigest()
 
           names = {asset["name"] for asset in json.loads(gh("release", "view", release, "--json", "assets"))["assets"]}
           if "index.json" in names:

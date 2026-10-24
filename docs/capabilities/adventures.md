@@ -311,7 +311,8 @@ spend like conversation, and is posted to the Story log from the member, with th
 it was spoken in, below what you said. Nothing opens while the story is paused or switched off, or while
 the game runs without Odyssey, and the line that finishes the story opens nothing, because the story has
 ended. You cannot call a cast member up: only their own lines open the window. Ask the core whether one
-of them was real and it says they are someone in the story.
+of them was real and it says they are someone in the story. The notes you keep on a cast member on the
+**Characters** page are added after the story's own description of them, so their replies follow both.
 
 ### Where you are in it, and what it says
 
@@ -520,6 +521,12 @@ connection and pick it again." and nothing starts. At startup, a story that is r
 has no hidden file on disk is fetched, and one that has fetches any cast picture the release has and
 `data\stories` does not.
 
+A story can be published again with changes. Its card in `index.json` then carries `sealedSha256`, the
+SHA-256 of its hidden file, and each time the list lands, a story on disk whose hidden file has another
+hash is fetched again. The new file replaces the old one only once it and its cast pictures are in place,
+so a failed fetch leaves the old one; pictures already on disk are not fetched again. A card without
+`sealedSha256` is never fetched again. A running story reads the new file from its next line.
+
 **Download stock stories**, on by default, is in the Stories settings. Off, nothing is fetched and
 the Stories page lists only stories already on disk.
 
@@ -603,6 +610,13 @@ description of what they said. A cast member may give their own name only when i
   own sound, a comms link at the story's strength and any Guardian effects the story lists, and nothing
   else: no radio for its role and none of the **Guardian Voice Effects** you set for the ship. The model
   writes a cast member's clue as that member, from their name and who they are.
+
+**A cast member can be aboard your ship.** A story may give a member a span of its beats, from the one
+they board at to the one they leave at. A chapter is written with the members whose span takes in any
+beat the chapter writer is given for it, and the writer may add others for that chapter alone. While a
+member is aboard, the chapter writer writes their lines as spoken in the cockpit, and their lines are
+spoken without the comms link; their Guardian effects still apply. Whoever the current chapter was
+written with is aboard for every line until the next chapter, clues and replies included.
 
 Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line

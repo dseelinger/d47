@@ -277,8 +277,23 @@ public sealed class StoryDirector(
     /// <summary>Who speaks a line by <paramref name="speaker"/> in the current story, decided now; null when no story is current.</summary>
     public StoryLineVoice? LineVoice(string? frontierId, string? speaker) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship())
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret))
             : null;
+
+    /// <summary>
+    /// The current story's cast ids aboard the ship now: those its current chapter was written with, or, for a story with
+    /// no such chapter, those whose span takes in its stage. Empty when no story is current.
+    /// </summary>
+    public IReadOnlyList<string> CastAboard(string? frontierId) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? CastAboard(frontierId, story, secret) : [];
+
+    private IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret) =>
+        story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: { } written }
+            ? written
+            : StoryAboard.Of(secret, story.Pacing, StoryClues.Stage(story), story.BeaconScanAt is not null, story.FinaleChapter);
+
+    /// <summary>The Commander's notes on a story's cast member, by Frontier ID, story id and cast id; null for none.</summary>
+    public Func<string?, string, string, string?> CastNotes { get; set; } = (_, _, _) => null;
 
     /// <summary>
     /// The current story's cast member <paramref name="castId"/> as this Commander meets them, for the Commander to answer;
@@ -291,7 +306,11 @@ public sealed class StoryDirector(
         && Hidden(story.Id) is { } secret
         && secret.Cast.FirstOrDefault(member => string.Equals(member.Id, castId, StringComparison.Ordinal)) is { } member
         && StoryIntroductions.Met(story, secret, member.Id)
-            ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role }
+            ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who)
+            {
+                Role = member.Role,
+                Notes = CastNotes(frontierId, secret.Id, member.Id),
+            }
             : null;
 
     /// <summary>The narrator's introduction owed before cast member <paramref name="castId"/> speaks in the current story, or null.</summary>
@@ -2193,7 +2212,7 @@ public sealed class StoryDirector(
                && stories.Current(frontierId) is { } story
                && Hidden(story.Id) is { } secret
                && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
-            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship())
+            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret))
             : null;
     }
 
@@ -2762,7 +2781,8 @@ public sealed class StoryDirector(
             Aboard()?.Stock == true,
             home,
             story.BeaconsRemembered > 0,
-            goal);
+            goal,
+            StoryAboard.Of(secret, story.Pacing, stage, beaconInReach, finaleChapter));
     }
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>

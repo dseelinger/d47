@@ -13,8 +13,10 @@ The script downloads `index.json` from the release (an empty list if the release
 already in it unless --replace is given, checks the card and hidden entry with `faults` from seal-stories.py and
 requires a picture for every primary cast member (any other member with no picture file is published without one),
 lists the primary members' picture names in the card's `castPictures`, and builds in the work directory:
-`<id>.sealed`, a 1024 px JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and `card.json`.
---dry-run stops there and lists each file with its size. The release is created with make_latest false when
+`<id>.sealed`, a 1024 px JPEG `<name>.jpg` and the kept `<name>.original.png` for each picture, and `card.json`,
+whose `sealedSha256` is the SHA-256 of `<id>.sealed` in lower-case hex. An install that already holds the story
+fetches it again when its file's hash differs, so --replace reaches every install; use it only for a change a
+story in progress can take. --dry-run stops there, lists each file with its size and prints `card.json`. The release is created with make_latest false when
 missing: UpdateChecker reads the latest release to find updates. A release that holds stories but no `index.json`
 is refused rather than given a new index.
 
@@ -34,6 +36,7 @@ run by the token in the run name, fails unless that run succeeds, and then reads
 """
 import argparse
 import base64
+import hashlib
 import importlib.util
 import json
 import mimetypes
@@ -270,6 +273,7 @@ def main() -> None:
     card.pop("number", None)
 
     (work / f"{story}.sealed").write_text(seal(entry), encoding="ascii", newline="\n")
+    card["sealedSha256"] = hashlib.sha256((work / f"{story}.sealed").read_bytes()).hexdigest()
     files = [work / f"{story}.sealed"]
     for name, source in sources.items():
         files += convert(source, work, name)
@@ -278,6 +282,7 @@ def main() -> None:
     for file in files + [work / "card.json"]:
         print(f"{file.name}  {file.stat().st_size:,} bytes")
     if args.dry_run:
+        print((work / "card.json").read_text(encoding="utf-8"), end="")
         print(f"Dry run: nothing uploaded. Files are in {work}")
         return
 

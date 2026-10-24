@@ -28,6 +28,10 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals", where 
            A speaker may carry "link", a number from 0 to 1: the signal strength of the comms link it is heard
            through. It may carry "effects", a list of {"id", "level"}: Guardian effect ids (GuardianVoice.Table),
            each at a level from 1 to 20, applied in order before the link. An id may be listed once.
+           A speaker may carry "aboard": {"boards", "leaves"}, when it rides in the Commander's ship and is heard
+           in the cockpit rather than through its link. Each is a beat of the length's sheet, or null for the
+           story's start or end; boards comes before leaves. The member is aboard for every chapter whose stage
+           hands the writer a beat from boards up to, not including, leaves.
            A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
            Voice "own" is pinned whether or not it says so. A version never carries "pinned"; it covers both.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
@@ -99,6 +103,23 @@ def sound_fault(who: str, speaker: dict) -> list:
         seen.add(eid)
         if isinstance(level, bool) or not isinstance(level, int) or not 1 <= level <= 20:
             found.append(f"{who} has the effect {eid} at a level outside 1 to 20")
+    return found
+
+
+def aboard_fault(who: str, speaker: dict, sheet: tuple, length) -> list:
+    if "aboard" not in speaker:
+        return []
+    aboard = speaker["aboard"]
+    if not isinstance(aboard, dict) or set(aboard) - {"boards", "leaves"}:
+        return [f"{who} has an aboard that is not {{\"boards\", \"leaves\"}}"]
+    found = []
+    for field in ("boards", "leaves"):
+        beat = aboard.get(field)
+        if beat is not None and beat not in sheet:
+            found.append(f"{who} has aboard {field} {beat!r}, not a beat of a {length} story")
+    boards, leaves = aboard.get("boards"), aboard.get("leaves")
+    if not found and boards is not None and leaves is not None and BEATS.index(boards) >= BEATS.index(leaves):
+        found.append(f"{who} leaves at or before the beat it boards at")
     return found
 
 
@@ -209,6 +230,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
         found += sound_fault(f"cast {at + 1} ({sid})", speaker)
+        found += aboard_fault(f"cast {at + 1} ({sid})", speaker, sheet, length)
         found += role_fault(sid, speaker)
         if "primary" in speaker and not isinstance(speaker["primary"], bool):
             found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")

@@ -211,6 +211,15 @@ add.
   look for"). It holds no `{name:...}` token and neither version's name. One role covers both versions
   of a member. It states nothing from the hidden layer: no secret, twist or turn of the plot. It is the
   role the card already uses for the member. `tools/seal-stories.py` refuses a member without one.
+- **A cast member who rides in the Commander's ship** carries `aboard`: `{"boards": <beat>, "leaves": <beat>}`,
+  each a beat key of the length's sheet or null for the story's start or end, `boards` before `leaves`. While
+  aboard, the member is heard in the cockpit (`link` is not applied; `effects` still are) and the chapter writer
+  writes their lines as spoken there. d47 follows stages, not single beats: a member is aboard for every chapter
+  whose stage hands the writer any beat from `boards` up to, not including, `leaves`. All of act one is one stage,
+  and so are the finale chapters, so choose a beat that starts a stage — `breakIntoTwo`, `midpoint`,
+  `allIsLost`, `breakIntoThree` on a full sheet, or `finale` on a short one — or the member is aboard for that
+  whole stage. Leave `aboard` out for a member who is never in the ship; a chapter may still bring one aboard
+  for that chapter alone.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

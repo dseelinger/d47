@@ -856,6 +856,9 @@ public sealed record Adventure
     /// <summary>The stock story this adventure is a chapter of, or null.</summary>
     public string? StoryId { get; init; }
 
+    /// <summary>The story's cast ids aboard the ship for this chapter; null when the chapter does not record them.</summary>
+    public IReadOnlyList<string>? Aboard { get; init; }
+
     /// <summary>
     /// What was actually said about this story, oldest first (asked for 2026-08-22) — the beats as the
     /// Commander heard them and the asides between them.

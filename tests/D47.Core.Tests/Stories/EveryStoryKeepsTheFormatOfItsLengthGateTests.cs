@@ -83,6 +83,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "effect-level-zero" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 0)] }] }),
         "effect-level-twenty-one" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 21)] }] }),
         "effect-listed-twice" => ("twice", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 5), new("glitch", 9)] }] }),
+        "week-boarding-at-set-up" => ("cast[0].aboard.boards is setUp, which is not a beat of a 1 week story", WeekCard, Week with { Cast = [Speaker with { Aboard = new("setUp", null) }] }),
+        "leaving-at-no-beat" => ("cast[0].aboard.leaves is climax", Card, Secret with { Cast = [Speaker with { Aboard = new(null, "climax") }] }),
+        "leaving-before-boarding" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = new("midpoint", "catalyst") }] }),
+        "leaving-where-it-boards" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = new("midpoint", "midpoint") }] }),
         "line-without-speaker" => ("no speaker", Card, Secret with { Clues = [Secret.Clues[0] with { Speaker = "" }, .. Secret.Clues.Skip(1)] }),
         "line-by-a-stranger" => ("not the ship, the narrator or in the cast", Card, Secret with { Finale = [Secret.Finale[0] with { Speaker = "stranger" }, .. Secret.Finale.Skip(1)] }),
         "opening-by-a-stranger" => ("opening[0] is spoken by stranger", Card, Secret with { Opening = [Opening[0] with { Speaker = "stranger" }] }),
@@ -114,6 +118,14 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [Fact]
     public void ASpeakerWithALinkAndEffectsKeepsTheFormat() =>
         Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Link = 0.05, Effects = [new("glitch", 20)] }] }]).Faults());
+
+    [Fact]
+    public void ASpeakerAboardBetweenTwoOfItsLengthsBeatsKeepsTheFormat()
+    {
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = new("midpoint", "allIsLost") }] }]).Faults());
+        Assert.Empty(new StoryCatalog([WeekCard], () => [Week with { Cast = [Speaker with { Aboard = new("breakIntoTwo", null) }] }]).Faults());
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = new(null, null) }] }]).Faults());
+    }
 
     [Fact]
     public void APinnedSpeakerKeepsTheFormat() =>
@@ -189,6 +201,10 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("effect-level-zero")]
     [InlineData("effect-level-twenty-one")]
     [InlineData("effect-listed-twice")]
+    [InlineData("week-boarding-at-set-up")]
+    [InlineData("leaving-at-no-beat")]
+    [InlineData("leaving-before-boarding")]
+    [InlineData("leaving-where-it-boards")]
     [InlineData("line-without-speaker")]
     [InlineData("line-by-a-stranger")]
     [InlineData("opening-by-a-stranger")]

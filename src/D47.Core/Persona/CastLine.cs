@@ -173,9 +173,10 @@ public sealed class CastLine(
     private string Brief(AdventureSpeaker speaking)
     {
         var last = _replies >= MostReplies ? " This is your last reply: bring the exchange to a close." : string.Empty;
+        var notes = speaking.Notes is { Length: > 0 } written ? $" The Commander's notes on {speaking.Name}: {written}" : string.Empty;
 
         return $"""
-                 You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who} {StorySpeaker.MannerRule}
+                 You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}{notes} {StorySpeaker.MannerRule}
                  The Commander has answered you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
                  in one to three short sentences, as said aloud. You are not the core and never speak for it. You
                  have no tools and change nothing aboard. The exchange so far:

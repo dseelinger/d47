@@ -441,6 +441,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
+            Aboard = record.Aboard is { } aboard ? [.. aboard.OfType<string>().Where(id => id.Trim().Length > 0).Select(id => id.Trim())] : null,
             Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null && Math.Max(step.Step ?? 0, 0) < beats[step.Beat!.Value].MostSteps)
                 .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value, string.Equals(step.By?.Trim(), CommanderStep, StringComparison.Ordinal) ? AdventureFold.CommanderSource : null, Math.Max(step.Step ?? 0, 0)))],
             Choices = [.. (record.Choices ?? []).Where(choice => choice is { Beat: >= 0, Option: >= 0, At: not null } && choice.Beat < beats.Count && choice.Option < (beats[choice.Beat!.Value].Steps.FirstOrDefault()?.Options.Count ?? 0))
@@ -642,6 +643,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
+        Aboard = adventure.Aboard is { } aboard ? [.. aboard] : null,
         Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, Step = step.Step > 0 ? step.Step : null, At = step.At, By = step.By == AdventureFold.CommanderSource ? CommanderStep : null })] : null,
         Choices = adventure.Choices.Count > 0 ? [.. adventure.Choices.Select(choice => new ChoiceRecord { Beat = choice.Beat, Option = choice.Option, At = choice.At })] : null,
         Events = adventure.Events.Count > 0
@@ -705,6 +707,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Follows { get; set; }
 
         public string? StoryId { get; set; }
+
+        public List<string?>? Aboard { get; set; }
 
         public List<StepRecord>? Stepped { get; set; }
 

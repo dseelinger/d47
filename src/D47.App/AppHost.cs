@@ -3266,6 +3266,7 @@ public sealed class AppHost : IDisposable
         storyClue.VoiceOf = due => storyDirector.ClueVoice(gameState.Active?.Identity.FrontierId, due);
         storyReaction.Window = () => storyDirector.ReactionWindow(gameState.Active?.Identity.FrontierId);
         storyDirector.Aboard = () => personas.Current;
+        storyDirector.CastNotes = (fid, storyId, castId) => late.Host?.Characters.CastNotes(fid, storyId, castId);
 
         storyDirector.MissionAsides.Excerpt = () => storyDirector.MissionExcerpt(gameState.Active?.Identity.FrontierId);
 

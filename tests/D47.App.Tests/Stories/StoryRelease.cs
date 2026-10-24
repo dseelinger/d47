@@ -37,7 +37,10 @@ internal sealed class StoryRelease : HttpMessageHandler
 
     public void ServeIndex(params StoryCard[] cards) => Serve(StoryCatalog.IndexFile, JsonSerializer.SerializeToUtf8Bytes(cards, Json));
 
-    public void ServeSealed(StorySecret secret)
+    public void ServeSealed(StorySecret secret) => Serve(secret.Id + StoryCatalog.SealedExtension, Sealed(secret));
+
+    /// <summary>The bytes of <paramref name="secret"/>'s <c>.sealed</c> file.</summary>
+    public static byte[] Sealed(StorySecret secret)
     {
         using var packed = new MemoryStream();
 
@@ -46,7 +49,7 @@ internal sealed class StoryRelease : HttpMessageHandler
             deflate.Write(JsonSerializer.SerializeToUtf8Bytes(new[] { secret }, Json));
         }
 
-        Serve(secret.Id + StoryCatalog.SealedExtension, Encoding.ASCII.GetBytes(Convert.ToBase64String(packed.ToArray())));
+        return Encoding.ASCII.GetBytes(Convert.ToBase64String(packed.ToArray()));
     }
 
     public StoryDownloader Downloader(bool allowed = true) =>

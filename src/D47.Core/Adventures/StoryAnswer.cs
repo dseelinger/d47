@@ -121,11 +121,12 @@ internal static class StoryAnswer
             })]).ToJsonString());
 
     /// <summary>The answer's JSON shape as the instruction states it.</summary>
-    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null) =>
+    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
         + ", \"opening\": " + OpeningShape(speakers)
         + ", \"reply\": string, \"beats\": [" + BeatShape(speakers, kinds, ships, objective: false) + "]"
-        + (destination ? ", " + DestinationShape : string.Empty) + "}";
+        + (destination ? ", " + DestinationShape : string.Empty)
+        + (aboard ? ", \"aboard\": [string]" : string.Empty) + "}";
 
     /// <summary>A repair answer's JSON shape: the replacements, and the opening and destination only when they are asked for again.</summary>
     internal static string ReplacementsShape(bool speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null) =>
@@ -149,7 +150,9 @@ internal static class StoryAnswer
         + string.Concat(FieldsFor(kinds).Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + "}";
 
-    internal static LlmResponseSchema BeatsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null)
+    /// <summary>The schema of a chapter's answer; a <paramref name="cast"/> with any id adds the "aboard" list of them.</summary>
+    internal static LlmResponseSchema BeatsSchema(
+        IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, IReadOnlyList<string>? cast = null)
     {
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
         {
@@ -161,6 +164,15 @@ internal static class StoryAnswer
         if (destination)
         {
             answer.Add(("destination", Destination()));
+        }
+
+        if (cast is { Count: > 0 })
+        {
+            answer.Add(("aboard", new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. cast.Select(id => (JsonNode)JsonValue.Create(id)!)]) },
+            }));
         }
 
         return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
