@@ -10,8 +10,7 @@ using D47.Core.Journal;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Fleet › Crew: the hired pilots, their combat rank, fighter-bay duty and posted ship (#564), and the seats on
-/// the ship flown (#847).
+/// Fleet › Crew: the hired pilots, their combat rank, fighter-bay duty and posted ship (#564).
 /// </summary>
 public sealed class CrewPage : UserControl
 {
@@ -61,16 +60,14 @@ public sealed class CrewPage : UserControl
     private readonly SortHeader<CrewMember> _head = new("CrewHead", ColumnHeadings);
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
-    private readonly CrewSeatsSection? _seats;
     private readonly SpeakerPictures? _pictures;
     private object? _seen;
 
     /// <summary>Each hired pilot's row carries a picture chooser when <paramref name="pictures"/> is given.</summary>
-    public CrewPage(Func<CommanderGameState?> state, CrewSeatsHost? seats = null, SpeakerPictures? pictures = null)
+    public CrewPage(Func<CommanderGameState?> state, SpeakerPictures? pictures = null)
     {
         _state = state;
         _pictures = pictures;
-        _seats = seats is null ? null : new CrewSeatsSection(seats, state, () => Draw());
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _head.Changed += Draw;
 
@@ -114,7 +111,7 @@ public sealed class CrewPage : UserControl
     /// <summary>The posted-to cell's text.</summary>
     public static string Posting(CrewMember member) => member.PostedTo is { Length: > 0 } ship ? ship : NotPosted;
 
-    private object? Stamp() => (_state()?.Crew, _seats?.Stamp());
+    private object? Stamp() => _state()?.Crew;
 
     private void Draw()
     {
@@ -123,28 +120,14 @@ public sealed class CrewPage : UserControl
         _body.Children.Clear();
         _body.Children.Add(TitleText.Block(
             TitleText.Build("Crew", TypeScale.Title, TitleRank.Screen),
-            TitleText.Context(_seats is null ? "Hired pilots" : "Hired pilots and seats aboard")));
+            TitleText.Context("Hired pilots")));
 
         DrawPilots();
-
-        if (_seats is not null)
-        {
-            _body.Children.Add(_seats.Build());
-        }
     }
 
     private void DrawPilots()
     {
         var crew = _state()?.Crew;
-
-        if (_seats is not null)
-        {
-            _body.Children.Add(new Border
-            {
-                Margin = new Thickness(0, 28, 0, 0),
-                Child = TitleText.GroupRow(TitleText.Build("Hired pilots, from the game", TypeScale.Secondary, TitleRank.Group)),
-            });
-        }
 
         if (crew is not { Any: true })
         {
@@ -161,7 +144,7 @@ public sealed class CrewPage : UserControl
             rows.Children.Add(Row(member, _pictures));
         }
 
-        _body.Children.Add(new StackPanel { Margin = new Thickness(0, _seats is null ? 28 : 12, 0, 0), Children = { ColumnHeads(), rows } });
+        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { ColumnHeads(), rows } });
     }
 
     private Control ColumnHeads()

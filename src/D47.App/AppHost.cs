@@ -2233,8 +2233,7 @@ public sealed class AppHost : IDisposable
             voice,
             audio,
             ownVoice,
-            customVoices,
-            crewSeats: () => late.Host!.CrewSeats);
+            customVoices);
 
         var auditions = new VoiceAuditions(speech, audio, settings, personas);
 
@@ -3126,35 +3125,23 @@ public sealed class AppHost : IDisposable
             (from, to, cancellationToken) => settings.Current.Knowledge.GalaxySearch
                 ? galaxy.DistanceAsync(from, to, cancellationToken)
                 : Task.FromResult<double?>(null),
-            ModelFree));
+            ModelFree,
+            PilotNames));
 
         string? CarrierNotes(D47.Core.Characters.CarrierCharacter who) =>
             late.Host?.Characters.NotesFor(gameState.Active?.Identity.FrontierId, who);
 
-        D47.Core.Seats.ShipSeats? SeatsFlown() =>
-            gameState.Active is { } active && active.FlownShip.ShipId is { } shipId
-                ? late.Host?.CrewSeats.For(active.Identity.FrontierId, shipId)
-                : null;
+        IReadOnlyList<string> CharacterNames() =>
+            [.. (late.Host?.Characters.CharactersOf(gameState.Active?.Identity.FrontierId) ?? []).Select(character => character.Name)];
 
-        IReadOnlyList<D47.Core.Seats.CrewSeat> SeatsAboard() => SeatsFlown()?.Seats ?? [];
-
-        // A filled seat speaks its domain's callouts, and reads its domain's model-free answers.
-        callouts.SeatsFlown = SeatsFlown;
-        turns.SeatsFlown = SeatsFlown;
+        IReadOnlyList<string> PilotNames() =>
+            [.. gameState.Active?.Crew?.Members.Select(member => member.Name) ?? []];
 
         // A hired pilot, reached by name (#188).
         turns.Lines.Add(new CrewLine(
             () => gameState.Active?.Crew,
             () => gameState.Active?.Ship.Name,
-            SeatsAboard,
-            ModelFree));
-
-        // A crew seat on the ship flown, reached by name (#846).
-        turns.Lines.Add(new SeatLine(
-            SeatsAboard,
-            () => gameState.Active?.FlownShip.Name,
-            () => gameState.Active?.FlownShip.TypeSaid,
-            () => gameState.Active?.Crew,
+            CharacterNames,
             ModelFree));
 
         // An invented speaker from the last overheard exchange, reached by name while it is still going, or
@@ -3513,8 +3500,7 @@ public sealed class AppHost : IDisposable
         // The entry reference is set on the UI thread and read here whole, so the turn thread sees either the old or the new one.
         turns.SelectedJournalEvent = () => host.Panel.JournalSelected;
 
-        // Read now, so the first callout a seat speaks does not read the file on the tick.
-        _ = host.CrewSeats;
+        // Read now, so the first turn does not read the file or run the seat migration.
         _ = host.Characters;
 
         AvatarClipStore.Enable(
@@ -5803,46 +5789,30 @@ public sealed class AppHost : IDisposable
 
     private D47.Core.Characters.CharacterStore? _characters;
 
-    /// <summary>Every Commander's characters and carrier notes, read on first use.</summary>
+    /// <summary>Every Commander's characters and carrier notes, read on first use, with any crew seats made characters first.</summary>
     public D47.Core.Characters.CharacterStore Characters
     {
         get
         {
             if (_characters is null)
             {
-                _characters = new D47.Core.Characters.CharacterStore(Paths.CharactersFile, Files, _loggerFactory.CreateLogger<D47.Core.Characters.CharacterStore>());
-                _characters.Poll();
+                var characters = new D47.Core.Characters.CharacterStore(Paths.CharactersFile, Files, _loggerFactory.CreateLogger<D47.Core.Characters.CharacterStore>());
+                characters.Poll();
+
+                D47.Core.Characters.SeatMigration.Run(
+                    Files,
+                    Paths.CrewSeatsFile,
+                    characters,
+                    D47.Core.Audio.VoiceGroups.ProviderFor(Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
+                    D47.Core.Characters.SeatMigration.RoleVoices(Settings.Current.Speech),
+                    _loggerFactory.CreateLogger(typeof(D47.Core.Characters.SeatMigration)));
+
+                _characters = characters;
             }
 
             return _characters;
         }
     }
-
-    private D47.Core.Seats.CrewSeatStore? _crewSeats;
-
-    /// <summary>Every ship's crew seats, read on first use.</summary>
-    public D47.Core.Seats.CrewSeatStore CrewSeats
-    {
-        get
-        {
-            if (_crewSeats is null)
-            {
-                _crewSeats = new D47.Core.Seats.CrewSeatStore(Paths.CrewSeatsFile, Files, _loggerFactory.CreateLogger<D47.Core.Seats.CrewSeatStore>());
-                _crewSeats.Poll();
-            }
-
-            return _crewSeats;
-        }
-    }
-
-    private D47.App.Panel.CrewSeatsHost? _crewSeatsHost;
-
-    /// <summary>What Fleet › Crew reads, shared by the window and the headset.</summary>
-    public D47.App.Panel.CrewSeatsHost CrewSeatsHost => _crewSeatsHost ??= new D47.App.Panel.CrewSeatsHost(
-        () => CrewSeats,
-        () => [.. Speech.VoiceIds().Select(id => (id, Speech.VoiceLabelFor(id)))],
-        () => D47.Core.Audio.VoiceGroups.ProviderFor(Settings.Current.Speech, D47.Core.Audio.VoiceGroup.Aboard),
-        () => [Personas.Current.Name, .. new[] { Settings.Current.Speech.CarrierCaptainName }.OfType<string>()]);
 
     private D47.App.Panel.CharactersHost? _charactersHost;
 
@@ -6095,18 +6065,36 @@ public sealed class AppHost : IDisposable
         }
 
         // An invented speaker keeps the voice their exchange was heard in.
+        var provider = VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroups.Of(addressed.Role));
+
         Voice.Voice = addressed.Role switch
         {
-            VoiceRole.Comms => Writer.NpcCast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+            VoiceRole.Comms => AddressedVoiceOf(addressed, Writer.NpcCast, provider),
             VoiceRole.Narrator => CastFor(new Announcement(NarratorCallout.KeyPrefix, string.Empty) { Voice = VoiceRole.Narrator })
                 .For(VoiceRole.Narrator),
-            _ => Speech.Cast.ForSender(addressed.Name, isPlayer: false, addressed.Role),
+            _ => AddressedVoiceOf(addressed, Speech.Cast, provider),
         };
         Voice.Picture = AddressedPicture(addressed);
         Voice.SpeakingAs = addressed.Role;
         Voice.CaptionSpeaker = addressed.Name;
 
         return restore;
+    }
+
+    /// <summary>
+    /// The voice an addressed speaker is heard in from <paramref name="cast"/>: their own when <paramref name="provider"/>,
+    /// which speaks their role, issued it and the cast lists it; otherwise their role's.
+    /// </summary>
+    internal static VoiceSelection AddressedVoiceOf(TurnEvent.Addressed addressed, VoiceCast cast, string provider)
+    {
+        ArgumentNullException.ThrowIfNull(addressed);
+        ArgumentNullException.ThrowIfNull(cast);
+
+        var own = addressed.Voice is { } voice && string.Equals(voice.Provider, provider, StringComparison.OrdinalIgnoreCase)
+            ? voice.VoiceId
+            : null;
+
+        return cast.ForSender(addressed.Name, isPlayer: false, addressed.Role, own: own);
     }
 
     private string? _voiceScopeSystem;

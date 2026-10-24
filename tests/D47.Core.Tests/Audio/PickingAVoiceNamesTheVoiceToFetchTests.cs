@@ -18,20 +18,17 @@ public class PickingAVoiceNamesTheVoiceToFetchTests
     }
 
     [Fact]
-    public void TheTowerAndASeatNameTheirOwnVoices()
+    public void TheTowerNamesItsOwnVoice()
     {
-        var seat = SpeechCapability.SeatVoiceRoles[0];
         var settings = D47Settings.Defaults with
         {
             Speech = D47Settings.Defaults.Speech with
             {
                 TowerVoice = "bram",
-                SeatVoices = new Dictionary<string, string> { [D47.Core.Seats.SeatVoices.KeyOf(seat)] = "wren" },
             },
         };
 
         Assert.Equal((VoiceGroups.Of(VoiceRole.TowerControl), "bram"), SpeechCapability.PickedVoice(SpeechCapability.TowerVoiceKey, settings));
-        Assert.Equal((VoiceGroup.Aboard, "wren"), SpeechCapability.PickedVoice(SpeechCapability.SeatVoiceKey(seat), settings));
     }
 
     [Fact]

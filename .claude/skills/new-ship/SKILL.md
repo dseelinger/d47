@@ -38,7 +38,6 @@ If the hull is not in `shipyard.csv`, stop and say so. The generator loops over 
 
    ```bash
    dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~Knowledge&Category!=Integration&Category!=Gate"
-   dotnet test tests/D47.Core.Tests --filter "FullyQualifiedName~Seats&Category!=Integration&Category!=Gate"
    dotnet test tests/D47.Core.Tests --filter "Category=Gate"
    ```
 
@@ -46,9 +45,6 @@ Generated data is generated: edit the generator, never the table.
 
 ## 3. Lists, as the tests name them
 
-- **Crew purpose.** When the hull has two or more seats, ask the maintainer for its crew purpose and add
-  it to `CrewDefaults.Purposes`. `CrewSeatTests.EveryHullWithASeatIsInThePurposeTable` fails until it is
-  there. The purpose is a judgment; do not choose it.
 - **ARX early access.** While the hull is ARX-only, add it to `ARX_EARLY_ACCESS` in
   `tools/curated_ships.py` (#1364), then re-run stage 2.
 - **Outfitting names.** Add the hull to `OutfittingCatalogue.Ships` only once the outside station

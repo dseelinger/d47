@@ -63,7 +63,8 @@ public abstract record TurnEvent
 
     /// <summary>The turn is answered by someone other than the ship's AI. Emitted before any text.</summary>
     /// <param name="Cast">The id of the running story's cast member answering, or null.</param>
-    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal, string? Cast = null) : TurnEvent;
+    /// <param name="Voice">The speaker's own voice, or null for their role's.</param>
+    public sealed record Addressed(D47.Core.Audio.VoiceRole Role, string Name, double Signal, string? Cast = null, Characters.CharacterVoice? Voice = null) : TurnEvent;
 
     /// <summary>Emitted as soon as routing is decided, before any work.</summary>
     public sealed record Routed(TurnRoute Route, ThinkingEffort? Effort) : TurnEvent;
@@ -154,9 +155,6 @@ public sealed class TurnLoop(
     /// decay it (#154).
     /// </summary>
     public Action? StandingSaid { get; set; }
-
-    /// <summary>The seats on the ship flown, or null when it has none.</summary>
-    public Func<Seats.ShipSeats?>? SeatsFlown { get; set; }
 
     /// <summary>How many times in one turn the model may ask for tools and be answered.</summary>
     public int MaxToolRounds { get; set; } = 8;
@@ -996,7 +994,7 @@ public sealed class TurnLoop(
 
         logger.LogInformation("Turn addressed to {Name}", speaker.Name);
 
-        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal, speaker.Cast);
+        yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, speaker.Signal, speaker.Cast, speaker.Voice);
 
         var activeProvider = Provider;
 
@@ -1465,12 +1463,6 @@ public sealed class TurnLoop(
             Cost: null));
     }
 
-    /// <summary>The seat on the ship flown that reads a model-free answer from this tool, or null for the core.</summary>
-    private Seats.CrewSeat? SeatAnswering(string tool, ToolResult result) =>
-        !result.IsError && Seats.CrewDomains.Answers.TryGetValue(tool, out var role)
-            ? SeatsFlown?.Invoke()?.Seats.FirstOrDefault(seat => seat.Role == role)
-            : null;
-
     /// <summary>Steps 0-3, which never reach the model.</summary>
     private async IAsyncEnumerable<TurnEvent> ModelFreeAsync(
         string input,
@@ -1685,12 +1677,7 @@ public sealed class TurnLoop(
                 toolCommand.Phrase);
 
             // With what was asked for, as above (#415).
-            if (SeatAnswering(toolCommand.ToolName, actioned) is { } commandSeat)
-            {
-                yield return new TurnEvent.Addressed(Audio.VoiceRole.Crew, commandSeat.Name, 1);
-                Record(actioned.Spoken, input, commandSeat.Name);
-            }
-            else if (!actioned.IsError && actioned.SpokenBy is { } speaker)
+            if (!actioned.IsError && actioned.SpokenBy is { } speaker)
             {
                 yield return new TurnEvent.Addressed(speaker.Role, speaker.Name, 1);
                 Record(actioned.Spoken, input, speaker.Name);
@@ -1725,15 +1712,7 @@ public sealed class TurnLoop(
                 "Keyword router answered with {Capability}/{Tool}", match.CapabilityId, match.ToolName);
 
             // With what was asked for, as above (#415).
-            if (SeatAnswering(match.ToolName, result) is { } matchSeat)
-            {
-                yield return new TurnEvent.Addressed(Audio.VoiceRole.Crew, matchSeat.Name, 1);
-                Record(result.Spoken, input, matchSeat.Name);
-            }
-            else
-            {
-                Said(result.Spoken, input);
-            }
+            Said(result.Spoken, input);
 
             yield return new TurnEvent.TextDelta(result.Spoken);
             yield return new TurnEvent.Completed(new TurnResult(

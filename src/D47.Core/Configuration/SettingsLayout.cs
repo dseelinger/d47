@@ -367,22 +367,6 @@ public static class SettingsLayout
                             ]),
                     ]),
                 new SettingsPlace(
-                    "crew-seats",
-                    "Crew seats",
-                    "Who speaks from each crew seat.",
-                    "speech",
-                    [],
-                    false,
-                    [
-                        G(
-                            "Seat voices",
-                            "Who speaks from each seat, on every ship. A seat's unprompted remarks stop when Speak without being asked is off. That switch is under Your core › Callouts.",
-                            [
-                                .. Capabilities.Builtin.SpeechCapability.SeatVoiceRoles
-                                    .Select(role => E(Capabilities.Builtin.SpeechCapability.SeatVoiceKey(role))),
-                            ]),
-                    ]),
-                new SettingsPlace(
                     "chatter",
                     "Chatter and messages",
                     "Invented radio traffic, and in-game chat read aloud.",

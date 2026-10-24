@@ -43,7 +43,6 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         Func<Control?>? settingsStrip = null,
         Func<Control?>? carrierSettingsStrip = null,
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
-        CrewSeatsHost? crewSeats = null,
         D47.Core.Ships.BuildTalk? talk = null,
         Func<D47.Core.Journal.GameStatus>? status = null,
         ConstructionSurface? construction = null,
@@ -146,7 +145,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state),
             () => _storedModulesPage = new StoredModulesPage(state),
-            () => _crewPage = new CrewPage(state, crewSeats, host.Portraits?.Pictures),
+            () => _crewPage = new CrewPage(state, host.Portraits?.Pictures),
             planCarrierRoute,
             host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture
                 ? new CarrierPictures(pictures, picture, () => host.Model?.CommanderPictureSource?.Invoke() is not null)

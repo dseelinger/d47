@@ -2,19 +2,18 @@ using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Conversation;
 using D47.Core.Journal;
-using D47.Core.Seats;
 
 namespace D47.Core.Persona;
 
 /// <summary>A hired pilot, on the intercom while addressed.</summary>
 /// <param name="crew">The roster, or null while there is no active Commander.</param>
 /// <param name="shipName">What the pilot calls the hull they are posted to, for their own brief.</param>
-/// <param name="seats">The crew seats on the ship flown; a seat's name at the front of an utterance closes the line.</param>
+/// <param name="others">Names that belong to someone else aboard; one at the front of an utterance closes the line.</param>
 /// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
 public sealed class CrewLine(
     Func<ShipCrew?> crew,
     Func<string?> shipName,
-    Func<IReadOnlyList<CrewSeat>>? seats = null,
+    Func<IReadOnlyList<string>>? others = null,
     Func<string, bool>? modelFree = null) : ILine
 {
     private readonly Dictionary<long, List<ConversationMessage>> _transcripts = [];
@@ -45,8 +44,8 @@ public sealed class CrewLine(
         string question;
         CrewMember member;
 
-        if (CrewAddressing.Match(input, roster) is null && seats?.Invoke() is { Count: > 0 } aboard
-            && CrewAddressing.MatchSeat(input, aboard) is not null)
+        if (CrewAddressing.Match(input, roster) is null
+            && others?.Invoke().Any(name => CrewAddressing.Opens(input, name) is not null) == true)
         {
             _open = null;
             return Task.FromResult<LineDecision>(new LineDecision.NotMine());

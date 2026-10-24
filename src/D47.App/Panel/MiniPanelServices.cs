@@ -44,8 +44,6 @@ public sealed record MiniPanelServices
 
     public D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? AdventureDesk { get; init; }
 
-    public CrewSeatsHost? CrewSeats { get; init; }
-
     public CharactersHost? Characters { get; init; }
 
     public D47.Core.Ships.BuildTalk? BuildTalk { get; init; }
@@ -172,7 +170,6 @@ public sealed record MiniPanelServices
                     ? null
                     : () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: Galaxy,
-                crewSeats: CrewSeats,
                 characters: Characters,
                 talk: BuildTalk,
                 status: Routing?.Status,

@@ -75,9 +75,6 @@ public sealed class VoiceCast
     /// </summary>
     public Func<string, NameReading?>? ReadingOfName { get; set; }
 
-    /// <summary>The voice a crew seat speaks in, from its seat id, or null to fall through to the pool.</summary>
-    public Func<string, string?>? SeatVoice { get; set; }
-
     /// <summary>Called with a name that has no answer yet, so the question can be queued.</summary>
     public Action<string>? NameUnknown { get; set; }
 
@@ -160,16 +157,17 @@ public sealed class VoiceCast
     /// <param name="allegiance">
     /// The docked station's <c>StationAllegiance</c>, or null — most stations have none (#68).
     /// </param>
+    /// <param name="own">The sender's own voice, spoken in when this cast lists it.</param>
     public VoiceSelection ForSender(
         string sender,
         bool isPlayer,
         VoiceRole role = VoiceRole.Comms,
         string? allegiance = null,
-        string? seatId = null)
+        string? own = null)
     {
-        if (seatId is not null && SeatVoice?.Invoke(seatId) is { } seated)
+        if (own is not null && (Voices.Count == 0 || Voices.ContainsKey(own)))
         {
-            return Of(seated, role);
+            return Of(own, role);
         }
 
         // A role the Commander has cast has one voice, and a sender does not override it (<a

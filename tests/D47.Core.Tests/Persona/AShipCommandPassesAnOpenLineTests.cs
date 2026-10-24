@@ -1,6 +1,6 @@
+using D47.Core.Characters;
 using D47.Core.Journal;
 using D47.Core.Persona;
-using D47.Core.Seats;
 using Xunit;
 
 namespace D47.Core.Tests.Persona;
@@ -20,7 +20,7 @@ public class AShipCommandPassesAnOpenLineTests
         Members = [new CrewMember("Vance", CrewId: 1, CombatRank: "Dangerous", Active: true)],
     };
 
-    private static readonly CrewSeat Teo = new("0000000a", CrewRole.ScienceOfficer, null, "Teo Marsh");
+    private static readonly CustomCharacter Teo = new("0000000a", "Teo Marsh", null, "Science officer.", Aboard: true, System: null);
 
     private static bool IsCommand(string input) => input == Command;
 
@@ -50,9 +50,9 @@ public class AShipCommandPassesAnOpenLineTests
             "how's our fuel?");
 
     [Fact]
-    public Task ACrewSeatPassesACommandAndKeepsTheLine() =>
+    public Task ACharacterAboardPassesACommandAndKeepsTheLine() =>
         AssertPassesAndKeepsAsync(
-            new SeatLine(() => [Teo], () => "Warden's Reach", () => "Python", () => null, IsCommand),
+            new CharacterLine(() => [Teo], () => "Sol", modelFree: IsCommand),
             "Teo Marsh, status?",
             "how's our fuel?");
 
@@ -75,9 +75,9 @@ public class AShipCommandPassesAnOpenLineTests
     }
 
     [Fact]
-    public async Task ACommandThatNamesASeatStillGoesToTheSeat()
+    public async Task ACommandThatNamesACharacterStillGoesToTheCharacter()
     {
-        var line = new SeatLine(() => [Teo], () => "Warden's Reach", () => "Python", () => null, IsCommand);
+        var line = new CharacterLine(() => [Teo], () => "Sol", modelFree: IsCommand);
 
         Assert.IsType<LineDecision.Taken>(await line.RouteAsync("Teo Marsh, request docking", CancellationToken.None));
     }

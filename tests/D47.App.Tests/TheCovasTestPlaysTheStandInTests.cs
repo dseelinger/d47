@@ -38,8 +38,7 @@ public class TheCovasTestPlaysTheStandInTests : IDisposable
             voice,
             _arbiter,
             new OwnVoice(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
-            new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
-            () => throw new InvalidOperationException("No crew seat is looked up here."));
+            new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()));
 
         _auditions = new VoiceAuditions(_speech, _arbiter, settings, personas);
     }

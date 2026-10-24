@@ -5,7 +5,6 @@ using D47.Core.Capabilities.Builtin;
 using D47.Core.Catalog;
 using D47.Core.Configuration;
 using D47.Core.Persona;
-using D47.Core.Seats;
 using D47.Core.Storage;
 using D47.Tts;
 using Microsoft.Extensions.Logging;
@@ -28,7 +27,6 @@ public sealed class SpeechClients : IDisposable
     private readonly AudioArbiter _audio;
     private readonly OwnVoice _ownVoice;
     private readonly CustomVoices _customVoices;
-    private readonly Func<CrewSeatStore> _crewSeats;
     private readonly IFileSystem _files;
 
     internal SpeechClients(
@@ -41,8 +39,7 @@ public sealed class SpeechClients : IDisposable
         VoicePipeline voice,
         AudioArbiter audio,
         OwnVoice ownVoice,
-        CustomVoices customVoices,
-        Func<CrewSeatStore> crewSeats)
+        CustomVoices customVoices)
     {
         _files = files;
         _settings = settings;
@@ -55,7 +52,6 @@ public sealed class SpeechClients : IDisposable
         _audio = audio;
         _ownVoice = ownVoice;
         _customVoices = customVoices;
-        _crewSeats = crewSeats;
         NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger);
 
         D47.Core.Speech.LocalVoiceStandIn.Installed = id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
@@ -733,11 +729,6 @@ public sealed class SpeechClients : IDisposable
                 cast.Assign(
                     VoiceRole.Narrator,
                     string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase) ? speech.NarratorVoice : null);
-
-                // A crew seat's own voice, else its role's, both from the ship's provider.
-                cast.SeatVoice = string.Equals(providerId, aboard, StringComparison.OrdinalIgnoreCase)
-                    ? seatId => SeatVoiceOf(seatId, providerId, cast)
-                    : null;
             }
 
             _voice.Voice = Casting.Of(aboard).For(VoiceRole.ShipAi);
@@ -873,19 +864,6 @@ public sealed class SpeechClients : IDisposable
         return CastClient(providerId) is { } client
             ? await client.ListVoicesAsync(cancellationToken).ConfigureAwait(false)
             : VoiceCatalogue.Silent;
-    }
-
-    private string? SeatVoiceOf(string seatId, string providerId, VoiceCast cast)
-    {
-        var seat = _crewSeats().Ships.SelectMany(ship => ship.Seats).FirstOrDefault(known => known.Id == seatId);
-
-        return seat is null
-            ? null
-            : D47.Core.Seats.SeatVoices.Resolve(
-                seat,
-                providerId,
-                _settings.Current.Speech.SeatVoices,
-                id => cast.Voices.Count == 0 || cast.Voices.ContainsKey(id));
     }
 
     /// <summary>Removes the cast's own clients, every one or those a slot now has a client for, and returns them to dispose. The caller holds <c>_speechGate</c>.</summary>

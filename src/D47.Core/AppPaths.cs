@@ -95,7 +95,7 @@ public sealed class AppPaths
     /// <summary>The accents the language model judged sender names to suggest.</summary>
     public string NameAccentsFile { get; }
 
-    /// <summary>The crew seats of every ship.</summary>
+    /// <summary>The crew seat file, read only by <see cref="Characters.SeatMigration"/>.</summary>
     public string CrewSeatsFile { get; }
 
     /// <summary>Each Commander's own characters, and their notes on the captain, the tower and story cast.</summary>

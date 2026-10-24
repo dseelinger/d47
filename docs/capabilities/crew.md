@@ -135,6 +135,7 @@ nav_order: 103
 <a class="card" href="persona.html"><span class="ct">Core →</span><span class="cd">The voice a crew turn steps aside from, and comes back to.</span></a>
 <a class="card" href="ships.html"><span class="ct">Ships →</span><span class="cd">The hulls a posting is remembered against.</span></a>
 <a class="card" href="journal.html"><span class="ct">Journal →</span><span class="cd">The four events this whole page is built from.</span></a>
+<a class="card" href="characters.html"><span class="ct">Characters →</span><span class="cd">People you name yourself, aboard or elsewhere.</span></a>
 </div>
 </div>
 </div></div>
@@ -219,49 +220,12 @@ under the pilot's game crew id, not their name, so two pilots with the same name
 shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their file, and a rehire
 with the same crew id gets it back.
 
-### Crew seats aboard your ship
+### People of your own
 
-Fleet › Crew has a second section, **Seats aboard** followed by the name of the ship you are flying. It is
-separate from the hired pilots above it: hired pilots come from the game and d47 can only read them, while
-a seat is somebody you name yourself, kept per ship in `data\crew-seats.json`. The page offers one row for
-each seat the hull has, which is its crew figure less your own seat: three on an Anaconda, none on a
-Sidewinder. A hull d47 has no crew figure for says "d47 does not know how many seats a Corsair has." A hull
-with no seat says "The Sidewinder has no seat besides yours." and draws no rows.
-
-Each row has a role, a name, a voice, **SAVE** and **CLEAR**. The role is one of six, or Custom with a
-title of your own:
-
-| Role | Speaks for |
-|---|---|
-| First officer | checklist, missions, promotions, rebuy, community goal sales, trading mode |
-| Helm | fuel, limpets |
-| Comms | messages |
-| Science officer | discovery, biology, mapping, emissions, footfall, sampling, materials, prospecting, core asteroids |
-| Security officer | danger, announced attacks, kills, rival territory |
-| Navigation | routes, long jumps, arrivals |
-
-A Custom seat is addressed by name and takes none of these. A seat whose row is empty leaves its lines
-with the ship's core.
-
-**OFFER THE DEFAULTS** fills every empty seat with a role and a name chosen for what the hull is for: a
-combat hull gets security, helm and navigation, a trader first officer, navigation and comms. Seats you
-have already filled are not touched. Nothing is stored until you press it.
-
-The voice is picked from the voices of the provider that speaks for your ship. Left on *Same as the role*,
-the seat speaks in its role's voice from Speech settings. Choosing one stores it for the provider in use;
-change the provider and the seat's voice is ignored until you choose again. Picking a voice on a seat that
-is already saved stores it at once.
-
-A save is refused, with the reason on the row and nothing written, when:
-
-- another seat on the ship has the same name;
-- a hired pilot, the core or the carrier captain has the same name;
-- another seat on the ship holds the same standard role;
-- the name is empty or longer than 32 characters, or a Custom title is empty or longer than 24.
-
-Seats belong to the ship flown. Swap ships and the section shows that ship's seats; seats on a ship you
-are not flying cannot be edited. There is no voice command or tool for filling seats: the page is the
-only way.
+This page covers the pilots you hire in the game. People you name yourself, aboard or elsewhere, are
+characters: see [Characters](characters.md). Crew seats from earlier versions became characters the
+first time this version loaded, one per name, aboard, with the seat's role in their notes, and their
+callouts went back to the core. The old seat file is kept as `data\crew-seats.migrated.json`.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

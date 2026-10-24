@@ -36,7 +36,7 @@ public sealed class EachHiredPilotKeepsTheirOwnPictureTests
             store.Apply(parsed!);
         }
 
-        var page = new CrewPage(() => store.Active, null, pictures);
+        var page = new CrewPage(() => store.Active, pictures);
         var window = new Window { Content = page, Width = 1280, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();

@@ -9,11 +9,13 @@ namespace D47.Core.Persona;
 /// <param name="commanderSystem">The system the Commander is in.</param>
 /// <param name="distance">Light years between two systems, or null when the host cannot ask.</param>
 /// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
+/// <param name="others">Names that belong to someone else aboard; one at the front of an utterance closes the line.</param>
 public sealed class CharacterLine(
     Func<IReadOnlyList<CustomCharacter>> characters,
     Func<string?> commanderSystem,
     Func<string, string, CancellationToken, Task<double?>>? distance = null,
-    Func<string, bool>? modelFree = null) : ILine
+    Func<string, bool>? modelFree = null,
+    Func<IReadOnlyList<string>>? others = null) : ILine
 {
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = [];
 
@@ -39,6 +41,10 @@ public sealed class CharacterLine(
         {
             character = named;
             question = rest;
+        }
+        else if (others?.Invoke().Any(name => CrewAddressing.Opens(input, name) is not null) == true)
+        {
+            return NotMine();
         }
         else if (all.FirstOrDefault(c => c.Id == _open) is { } current)
         {
@@ -84,7 +90,8 @@ public sealed class CharacterLine(
                 Brief(character),
                 transcript,
                 OffersTools: false,
-                Signal: character.Aboard ? 1 : LinkSignal.Strength(lightYears)),
+                Signal: character.Aboard ? 1 : LinkSignal.Strength(lightYears),
+                Voice: character.Voice),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 

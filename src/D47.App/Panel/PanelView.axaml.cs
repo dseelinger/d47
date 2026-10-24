@@ -701,9 +701,6 @@ public partial class PanelView : UserControl, IPanelTabHost
         // The galaxy service while "Look things up in the galaxy" is on, else null; material detail searches it.
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
 
-        // The seats on the ship flown, on Fleet › Crew (#847).
-        CrewSeatsHost? crewSeats = null,
-
         // The conversation about each build's plan, on a ship's page (#570).
         D47.Core.Ships.BuildTalk? talk = null,
 
@@ -718,7 +715,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     {
         _shipPlans = ships;
         _assets.EnableLoadout(
-            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, crewSeats, talk, status, construction, characters);
+            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, talk, status, construction, characters);
     }
 
     private D47.Core.Ships.ShipPlanService? _shipPlans;

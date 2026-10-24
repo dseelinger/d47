@@ -39,8 +39,7 @@ public class TheShipSpeaksInTheFirstListedVoiceUntilOneIsStoredTests : IDisposab
             _voice,
             arbiter,
             new OwnVoice(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
-            new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
-            () => throw new InvalidOperationException("No crew seat is looked up here."));
+            new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()));
     }
 
     public void Dispose() => _speech.Dispose();

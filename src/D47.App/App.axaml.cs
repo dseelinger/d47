@@ -126,7 +126,6 @@ public partial class App(AppHost? host) : Application
                 codexPictures: host.CodexPictureSet,
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
-                crewSeats: host.CrewSeatsHost,
                 characters: host.CharactersHost,
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),

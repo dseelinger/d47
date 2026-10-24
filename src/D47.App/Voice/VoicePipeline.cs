@@ -536,7 +536,7 @@ public sealed class VoicePipeline(
                 slot: VoiceGroups.Of(announcement.Voice, announcement.CommsChannel),
 
                 // And who to name on the caption when this is not d47 talking (#201).
-                captionSpeaker: announcement.Seat is not null ? announcement.Speaker : VoiceRoles.Called(announcement.Voice),
+                captionSpeaker: VoiceRoles.Called(announcement.Voice),
 
                 // The speaker's picture, shown in the avatar while the line plays.
                 picture: announcement.Picture)

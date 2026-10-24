@@ -1,7 +1,9 @@
 using D47.Core.Audio;
 using D47.Core.Characters;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Persona;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Persona;
@@ -109,6 +111,47 @@ public class ACustomCharacterAnswersByNameTests
         Assert.Equal("and the fuel?", follow.Question);
 
         await TakenAsync(line, "that's all Mara");
+        Assert.False(line.IsOpen);
+    }
+
+    [Fact]
+    public async Task ACharacterAddressedIsHeardInTheVoiceStoredForThem()
+    {
+        var voiced = Aboard with { Voice = new CharacterVoice("kokoro", "am_adam") };
+        var surface = TestSurface.For(new MemoryInstall());
+
+        var loop = new TurnLoop(
+            surface.Registry,
+            surface.Router,
+            new LlmAvailabilityState(providerConfigured: true),
+            new SpendTracker(),
+            PriceTable.Default,
+            NullLogger<TurnLoop>.Instance,
+            D47.Core.Tests.Conversation.FakeLlmProvider.Answering("Holding steady."))
+        {
+            Persona = "You are the ship's AI.",
+        };
+
+        loop.Lines.Add(new CharacterLine(() => [voiced], () => "Sol"));
+
+        List<TurnEvent> events = [];
+
+        await foreach (var turnEvent in loop.RunAsync("Mara, how are we doing?", cancellationToken: TestContext.Current.CancellationToken))
+        {
+            events.Add(turnEvent);
+        }
+
+        Assert.Equal(new CharacterVoice("kokoro", "am_adam"), Assert.Single(events.OfType<TurnEvent.Addressed>()).Voice);
+    }
+
+    [Fact]
+    public async Task NamingSomebodyElseAboardClosesTheLine()
+    {
+        var line = new CharacterLine(() => [Aboard], () => "Sol", others: () => ["Vance"]);
+
+        await TakenAsync(line, "Mara, hello");
+
+        Assert.IsType<LineDecision.NotMine>(await line.RouteAsync("Vance, launch the fighter", CancellationToken.None));
         Assert.False(line.IsOpen);
     }
 

@@ -495,7 +495,7 @@ request — the way you would address a person. **12 seconds** out of the box, a
 closes the window again: it is one reply, not an open microphone. Nothing is said back and nothing
 reaches the transcript; being called by name is not conversation.
 
-The same window opens when the captain, a crew member, a seat, a voice on comms, a story's cast or
+The same window opens when the captain, a crew member, a character, a voice on comms, a story's cast or
 the Narrator finishes answering you, so you can reply to them without a name: ask the captain about
 fuel, then say "how much tritium?" and the captain answers that too. Start the reply with a wake
 phrase and it goes to the core instead. No window opens after the core answers.

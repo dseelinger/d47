@@ -49,7 +49,7 @@ nav_order: 164
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="crew.html"><span class="ct">Crew →</span><span class="cd">The pilots you hired and the seats aboard.</span></a>
+<a class="card" href="crew.html"><span class="ct">Crew →</span><span class="cd">The pilots you hired in the game.</span></a>
 <a class="card" href="carrier.html"><span class="ct">Carrier →</span><span class="cd">The captain and tower, and the carrier they speak for.</span></a>
 </div>
 </div>

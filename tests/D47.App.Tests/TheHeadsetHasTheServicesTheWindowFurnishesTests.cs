@@ -12,7 +12,6 @@ using D47.Core.Checklists;
 using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
-using D47.Core.Seats;
 using D47.Core.Ships;
 using D47.Core.Storage;
 using D47.Vr;
@@ -22,7 +21,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The headset panel is furnished with the phrases, story desk, crew seats and build talk the window has (#1092).</summary>
+/// <summary>The headset panel is furnished with the phrases, story desk and build talk the window has (#1092).</summary>
 [Trait("Category", "Integration")]
 public class TheHeadsetHasTheServicesTheWindowFurnishesTests
 {
@@ -115,7 +114,7 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
         Assert.Null(surface.Book.Standing("F1", "one"));
     }
 
-    private static VrPanelSurface Fleet(bool crew, bool talk)
+    private static VrPanelSurface Fleet(bool talk)
     {
         var start = Begin();
         Func<CommanderGameState?> state = () => start.Flying;
@@ -125,15 +124,6 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
             new ShipBuildStore(Path.Combine(start.Paths.Data, "ships.json"), new MemoryFileSystem(), NullLogger<ShipBuildStore>.Instance),
             checklists,
             state);
-
-        var seats = new CrewSeatStore(
-            Path.Combine(start.Paths.Data, "crew-seats.json"), new MemoryFileSystem(), NullLogger<CrewSeatStore>.Instance);
-
-        var host = new CrewSeatsHost(
-            () => seats,
-            () => [("am_michael", "Michael"), ("af_heart", "Heart")],
-            () => "kokoro",
-            () => ["Ava"]);
 
         var buildTalk = new BuildTalk(
             ships,
@@ -149,7 +139,6 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
             gameState: state,
             modulePower: () => ModulePower.None,
             hullArt: () => false,
-            crewSeats: crew ? host : null,
             buildTalk: talk ? buildTalk : null);
 
         Dispatcher.UIThread.RunJobs();
@@ -164,35 +153,9 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
             button => Assert.True(button.Bounds.Height >= 44, $"{button.Name} is {button.Bounds.Height}px tall."));
 
     [AvaloniaFact]
-    public void FleetOnTheHeadsetShowsCrewSeatsAtPressableHeight()
-    {
-        var panel = Fleet(crew: true, talk: false);
-
-        panel.Nav.GoTo(new NavCrumb(LoadoutPages.FleetRoot, "Fleet"), new NavCrumb(CrewPage.RootKey, "Crew"));
-        Redraw(panel);
-
-        var page = panel.Board.View.GetVisualDescendants().OfType<CrewPage>().Single();
-
-        Assert.Contains(page.GetVisualDescendants().OfType<Button>(), button => button.Name == CrewSeatsSection.OfferName);
-        AssertPressable(page);
-    }
-
-    [AvaloniaFact]
-    public void FleetOnTheHeadsetHasNoSeatsWithoutTheHost()
-    {
-        var panel = Fleet(crew: false, talk: false);
-
-        panel.Nav.GoTo(new NavCrumb(LoadoutPages.FleetRoot, "Fleet"), new NavCrumb(CrewPage.RootKey, "Crew"));
-        Redraw(panel);
-
-        Assert.DoesNotContain(
-            panel.Board.View.GetVisualDescendants().OfType<Button>(), button => button.Name == CrewSeatsSection.OfferName);
-    }
-
-    [AvaloniaFact]
     public void ABuildOnTheHeadsetShowsItsTalkSectionAtPressableHeight()
     {
-        var panel = Fleet(crew: false, talk: true);
+        var panel = Fleet(talk: true);
 
         OpenShip(panel);
 
@@ -202,7 +165,7 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
     [AvaloniaFact]
     public void ABuildOnTheHeadsetHasNoTalkSectionWithoutTheTalk()
     {
-        var panel = Fleet(crew: false, talk: false);
+        var panel = Fleet(talk: false);
 
         OpenShip(panel);
 

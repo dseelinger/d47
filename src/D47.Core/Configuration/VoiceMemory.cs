@@ -22,10 +22,6 @@ public sealed record VoiceChoices
 
     public string? Narrator { get; init; }
 
-    /// <summary>The voice for each standard crew role, keyed by <c>SeatVoices.KeyOf</c>.</summary>
-    public IReadOnlyDictionary<string, string> Seats { get; init; } =
-        new Dictionary<string, string>(StringComparer.Ordinal);
-
     /// <summary>The voice paired to each core, keyed by persona id.</summary>
     public IReadOnlyDictionary<string, string> Cores { get; init; } =
         new Dictionary<string, string>(StringComparer.Ordinal);
@@ -43,7 +39,7 @@ public sealed record VoiceChoices
     /// <summary>Nothing was ever chosen here.</summary>
     public bool IsEmpty =>
         Ship is null && CarrierCaptain is null && Tower is null && Narrator is null
-        && Seats.Count == 0 && Cores.Count == 0 && PairedCores.Count == 0 && !Paired;
+        && Cores.Count == 0 && PairedCores.Count == 0 && !Paired;
 }
 
 /// <summary>
@@ -168,7 +164,6 @@ public static class VoiceMemory
         {
             Ship = taking.Ship,
             Narrator = taking.Narrator,
-            Seats = taking.Seats,
             Cores = taking.Cores,
             PairedCores = taking.PairedCores,
             Paired = taking.Paired,
@@ -193,7 +188,6 @@ public static class VoiceMemory
                 {
                     Voice = restoring.Ship,
                     NarratorVoice = restoring.Narrator,
-                    SeatVoices = new Dictionary<string, string>(restoring.Seats, StringComparer.Ordinal),
                 },
                 Persona = settings.Persona with
                 {
@@ -213,7 +207,6 @@ public static class VoiceMemory
         CarrierCaptain = settings.Speech.CarrierCaptainVoice,
         Tower = settings.Speech.TowerVoice,
         Narrator = settings.Speech.NarratorVoice,
-        Seats = new Dictionary<string, string>(settings.Speech.SeatVoices, StringComparer.Ordinal),
         Cores = new Dictionary<string, string>(settings.Persona.Voices, StringComparer.Ordinal),
         PairedCores = new Dictionary<string, string>(settings.Persona.PairedVoices, StringComparer.Ordinal),
         Paired = settings.Persona.VoicesPaired,
@@ -238,7 +231,6 @@ public static class VoiceMemory
                 CarrierCaptain = null,
                 Tower = null,
                 Narrator = null,
-                Seats = new Dictionary<string, string>(StringComparer.Ordinal),
                 Cores = new Dictionary<string, string>(StringComparer.Ordinal),
                 PairedCores = new Dictionary<string, string>(StringComparer.Ordinal),
                 Paired = false,
@@ -260,7 +252,6 @@ public static class VoiceMemory
                 CarrierCaptainVoice = null,
                 TowerVoice = null,
                 NarratorVoice = null,
-                SeatVoices = new Dictionary<string, string>(StringComparer.Ordinal),
                 ProviderVoices = providerVoices,
             },
         };
