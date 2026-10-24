@@ -18,9 +18,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem The oldest of the last 300 commits whose message carries "(#N)": the issue's first commit.
+rem The oldest of the last 300 commits whose subject has "#N" followed by ")" or ",": the issue's
+rem first commit. A combined commit names "(#N, #M)". Bodies are not searched, since prose there
+rem names other issues.
 set FIRST=
-for /f "usebackq" %%h in (`git log -n 300 --reverse --fixed-strings --grep "(#%NUM%)" --format^=%%h`) do (
+for /f "usebackq tokens=1" %%h in (`git log -n 300 --reverse --format^="%%h %%s" ^| findstr /r "#%NUM%[),]"`) do (
     if not defined FIRST set FIRST=%%h
 )
 if "%FIRST%"=="" (

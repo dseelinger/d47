@@ -212,7 +212,8 @@ itself afterwards — the desktop app refuses `set_session_model` and `set_sessi
 session making the call — so the launcher is the only place this can be set.
 **Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
 work starts on a keypress and continues by clicking. **Review** asks for an issue number and
-reviews from the parent of the oldest recent commit naming `(#N)`, so it covers that issue's
+reviews from the parent of the oldest recent commit whose subject has `#N` followed by `)` or `,`
+(so `(#N, #M)` counts and bodies are not searched), covering that issue's
 commits and anything committed after them; Enter alone reviews the last commit. The issue worker
 pushes when it lands, so `origin/main` holds the work and the diff against it is empty.
 **Pre-release** sits in the release row but is violet, because it opens a session rather than
