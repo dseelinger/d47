@@ -34,7 +34,7 @@ public sealed class TheKeysListNamesEveryHotkeyTests
         var titles = Build(Surface()).Select(g => g.Title).ToArray();
 
         Assert.Equal(
-            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Overlay", "Headset overlay", "Galaxy map", "Hull viewer"],
+            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Comms channel keys", "Overlay", "Headset overlay", "Galaxy map", "Hull viewer"],
             titles);
     }
 
@@ -43,7 +43,7 @@ public sealed class TheKeysListNamesEveryHotkeyTests
     {
         var wheres = Build(Surface()).Where(g => g.Changeable).Select(g => g.Where!).ToArray();
 
-        Assert.Equal(["Settings › Window", "Settings › Voice Input", "Settings › Overlay", "Settings › Headset"], wheres);
+        Assert.Equal(["Settings › Window", "Settings › Voice Input", "Settings › What D47 may do", "Settings › Overlay", "Settings › Headset"], wheres);
     }
 
     [Fact]
@@ -55,6 +55,7 @@ public sealed class TheKeysListNamesEveryHotkeyTests
         Assert.Equal("Work while Elite has the foreground", notes["Microphone"]);
         Assert.Equal("Work while Elite has the foreground", notes["Overlay"]);
         Assert.Equal("Work while Elite has the foreground", notes["Headset overlay"]);
+        Assert.Equal("Work while Elite has the foreground", notes["Comms channel keys"]);
     }
 
     [Fact]

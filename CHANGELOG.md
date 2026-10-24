@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+You can now choose which comms channel your voice goes to, and who on it: Carrier, Target, System, Story, Crew or Characters. Say "channel up", "channel down", "next sub-channel" or "previous sub-channel", or "comms" followed by a channel or a name, such as "comms carrier" or "comms Tower". Comms channel up and down, and sub-channel up and down, each take a key and a stick button under Acting on the game › What D47 may do › Comms channel keys. All four start unbound and work while Elite has the foreground. After each change D47 says the selection, such as "Carrier, Tower." or "Story, no one." The AI cannot change the selection. Nothing is routed by the selection yet, and the channels are not yet filled from the game.
+
 Your fleet carrier's tower control now answers when you say "Tower" or "Tower Control", in its own voice and with its own conversation, apart from the captain's. Like the captain it knows the carrier's report, gets fainter with distance, and can't be heard beyond 500 light years. The captain's and the tower's briefs also carry the notes you keep on them.
 
 The characters you made now answer when you say their name, each with their own conversation and their notes as their personality. One who is aboard is heard on the intercom, clear. One who is somewhere else is heard over the radio, fainter the further away they are, and can't be heard beyond 500 light years: "<name> is <N> light years away, beyond comms range." With Galaxy search off the distance is unknown and the radio is clear. Galaxy search's entry in Privacy and egress lists the systems your remote characters are in while there are any.

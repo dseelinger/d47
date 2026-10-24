@@ -1320,6 +1320,26 @@ public sealed record HotkeySettings
 
     /// <summary>The stick button for <see cref="ResizeHeadsetPanel"/>, or null.</summary>
     public string? ResizeHeadsetPanelButton { get; init; }
+
+    public string? CommsChannelUp { get; init; }
+
+    public string? CommsChannelDown { get; init; }
+
+    public string? CommsSubChannelUp { get; init; }
+
+    public string? CommsSubChannelDown { get; init; }
+
+    /// <summary>The stick button for <see cref="CommsChannelUp"/>, or null.</summary>
+    public string? CommsChannelUpButton { get; init; }
+
+    /// <summary>The stick button for <see cref="CommsChannelDown"/>, or null.</summary>
+    public string? CommsChannelDownButton { get; init; }
+
+    /// <summary>The stick button for <see cref="CommsSubChannelUp"/>, or null.</summary>
+    public string? CommsSubChannelUpButton { get; init; }
+
+    /// <summary>The stick button for <see cref="CommsSubChannelDown"/>, or null.</summary>
+    public string? CommsSubChannelDownButton { get; init; }
 }
 
 public sealed record UpdateSettings

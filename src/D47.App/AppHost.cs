@@ -722,6 +722,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The signals the Commander's journals have shown.</summary>
     public D47.Core.Journal.SignalSightings? SignalSightings { get; private set; }
 
+    /// <summary>Who the comms key reaches.</summary>
+    public D47.Core.Conversation.CommsChannels? CommsChannels { get; private set; }
+
     /// <summary>Each Commander's arrivals, with their positions.</summary>
     public D47.Core.Journal.TravelLog? TravelLog { get; private set; }
 
@@ -1125,6 +1128,8 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.Core.Journal.SignalSightings>());
 
         var friends = new D47.Core.Journal.FriendRoster();
+
+        var commsChannels = new D47.Core.Conversation.CommsChannels();
 
         var commanderLog = new D47.Core.Journal.CommanderLog(
             files,
@@ -1586,6 +1591,7 @@ public sealed class AppHost : IDisposable
             SignalSightings = signalSightings,
             CommanderLog = commanderLog,
             Friends = friends,
+            CommsChannels = commsChannels,
             TravelLog = travelLog,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
@@ -2866,6 +2872,7 @@ public sealed class AppHost : IDisposable
                 cargo: cargoBoard,
                 mail: mail,
                 friends: stores.Friends,
+                commsChannels: stores.CommsChannels,
                 searches: galaxySearchBoard,
                 starSystems: starSystems,
                 visitedStars: visitedStars,
@@ -2967,7 +2974,10 @@ public sealed class AppHost : IDisposable
 
                 // And "switch to commander Kestrel Vane" (#895), one pair per Commander but the one flying.
                 .Concat(CommandersCapability.Phrases(
-                    () => history.Commanders, () => gameState.Active?.Identity.FrontierId));
+                    () => history.Commanders, () => gameState.Active?.Identity.FrontierId))
+
+                // And "comms Tower", one or two per party on an open comms channel (#1601).
+                .Concat(CommsCapability.ChannelPhrases(stores.CommsChannels));
 
         var router = new KeywordRouter(
             capabilities, () => MacroCapability.Phrases(macros).Concat(OtherDynamicCommands()));
@@ -3787,6 +3797,7 @@ public sealed class AppHost : IDisposable
         host.SavedSearches = stores.SavedSearches;
         host.SearchHistory = stores.SearchHistory;
         host.SignalSightings = stores.SignalSightings;
+        host.CommsChannels = stores.CommsChannels;
         host.TravelLog = stores.TravelLog;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, otherDynamicCommands());
@@ -4515,6 +4526,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Journal.CommanderLog CommanderLog { get; init; }
 
         public required D47.Core.Journal.FriendRoster Friends { get; init; }
+
+        public required D47.Core.Conversation.CommsChannels CommsChannels { get; init; }
 
         public required D47.Core.Journal.TravelLog TravelLog { get; init; }
 

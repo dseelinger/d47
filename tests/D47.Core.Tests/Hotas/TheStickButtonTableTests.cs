@@ -69,7 +69,7 @@ public sealed class TheStickButtonTableTests
     {
         Assert.Equal(ButtonSlots.All.Count, ButtonSlots.All.Select(slot => slot.Key).Distinct().Count());
         Assert.Equal(ButtonSlots.All.Count, ButtonSlots.All.Select(slot => slot.Named).Distinct().Count());
-        Assert.Equal(11, ButtonSlots.All.Count);
+        Assert.Equal(15, ButtonSlots.All.Count);
     }
 
     [Fact]

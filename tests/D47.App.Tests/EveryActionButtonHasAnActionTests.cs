@@ -7,7 +7,7 @@ namespace D47.App.Tests;
 public sealed class EveryActionButtonHasAnActionTests
 {
     [Fact]
-    public void TheWindowDispatchesExactlyTheNineActionSlots()
+    public void TheWindowDispatchesExactlyTheActionSlots()
     {
         Assert.Equal(
             ActionButtons.Slots.Select(slot => slot.Key).Order(StringComparer.Ordinal),

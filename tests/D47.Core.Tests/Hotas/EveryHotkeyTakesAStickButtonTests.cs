@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Hotas;
 
-/// <summary>Each of the nine hotkey rows binds a stick button beside its key, and a press acts as the key does (#1550).</summary>
+/// <summary>Each hotkey row binds a stick button beside its key, and a press acts as the key does (#1550).</summary>
 public sealed class EveryHotkeyTakesAStickButtonTests
 {
     private static readonly string[] HotkeyKeys =
@@ -14,6 +14,8 @@ public sealed class EveryHotkeyTakesAStickButtonTests
         InterfaceCapability.OpenSettingsHotkeyKey, InterfaceCapability.FocusAskHotkeyKey, InterfaceCapability.FindHotkeyKey,
         InterfaceCapability.ShowOverlayHotkeyKey, InterfaceCapability.MoveOverlayHotkeyKey,
         VrCapability.ZoomInHotkeyKey, VrCapability.ZoomOutHotkeyKey, VrCapability.ResetZoomHotkeyKey, VrCapability.ResizeHotkeyKey,
+        CommsCapability.ChannelUpHotkeyKey, CommsCapability.ChannelDownHotkeyKey,
+        CommsCapability.SubChannelUpHotkeyKey, CommsCapability.SubChannelDownHotkeyKey,
     ];
 
     private static SettingsService Settings() => TestSurface.For(new MemoryInstall(), everyOptionalSurface: true).Settings;

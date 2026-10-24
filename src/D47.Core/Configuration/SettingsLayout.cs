@@ -128,6 +128,12 @@ public static class SettingsLayout
             or Capabilities.Builtin.VrCapability.ResetZoomHotkeyKey
             or Capabilities.Builtin.VrCapability.ResizeHotkeyKey;
 
+    public static bool IsCommsHotkeyFamily(string key) =>
+        key is Capabilities.Builtin.CommsCapability.ChannelUpHotkeyKey
+            or Capabilities.Builtin.CommsCapability.ChannelDownHotkeyKey
+            or Capabilities.Builtin.CommsCapability.SubChannelUpHotkeyKey
+            or Capabilities.Builtin.CommsCapability.SubChannelDownHotkeyKey;
+
     public static bool IsEgressFamily(string key) =>
         key.StartsWith("egress.", StringComparison.Ordinal);
 
@@ -698,6 +704,10 @@ public static class SettingsLayout
                                 E("actions.separateAndSupercruise"),
                                 E("actions.requestDocking"),
                             ]),
+                        G(
+                            "Comms channel keys",
+                            "The keys and stick buttons that choose who your comms key reaches.",
+                            [F(IsCommsHotkeyFamily)]),
                     ]),
                 new SettingsPlace(
                     "macros-and-switches",

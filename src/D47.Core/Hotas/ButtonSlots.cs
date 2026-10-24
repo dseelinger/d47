@@ -45,5 +45,17 @@ public static class ButtonSlots
         new(VrCapability.ResizeButtonKey, "resize headset panel",
             s => s.Hotkeys.ResizeHeadsetPanelButton,
             (s, v) => s with { Hotkeys = s.Hotkeys with { ResizeHeadsetPanelButton = v } }),
+        new(CommsCapability.ChannelUpButtonKey, "comms channel up",
+            s => s.Hotkeys.CommsChannelUpButton,
+            (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelUpButton = v } }),
+        new(CommsCapability.ChannelDownButtonKey, "comms channel down",
+            s => s.Hotkeys.CommsChannelDownButton,
+            (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelDownButton = v } }),
+        new(CommsCapability.SubChannelUpButtonKey, "comms sub-channel up",
+            s => s.Hotkeys.CommsSubChannelUpButton,
+            (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelUpButton = v } }),
+        new(CommsCapability.SubChannelDownButtonKey, "comms sub-channel down",
+            s => s.Hotkeys.CommsSubChannelDownButton,
+            (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelDownButton = v } }),
     ];
 }

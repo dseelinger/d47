@@ -114,6 +114,26 @@ nav_order: 139
 </svg>
 <p class="body">Line breaks are flattened to spaces before anything is typed. A newline in the middle of a message would send the first half early and type the second half into the cockpit, where every character is one of your keybinds.</p>
 </section>
+<section>
+<h2><span class="num">4</span> You choose who hears you, and the AI cannot.</h2>
+<svg viewBox="0 0 880 220" role="img" aria-label="The channel selector steps through carrier, target, system, story, crew and characters, and only the Commander moves it">
+ <rect x="20" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
+ <text x="85" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">CARRIER</text>
+ <rect x="166" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="231" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">TARGET</text>
+ <rect x="312" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="377" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">SYSTEM</text>
+ <rect x="458" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="523" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">STORY</text>
+ <rect x="604" y="30" width="110" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="659" y="68" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text-muted)">CREW</text>
+ <rect x="730" y="30" width="130" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="795" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">CHARACTERS</text>
+ <text x="440" y="136" text-anchor="middle" font-size="17" fill="var(--text)">“Channel up” skips any channel with nobody on it. “Next sub-channel” picks who on it.</text>
+ <text x="440" y="168" text-anchor="middle" font-size="16" fill="var(--text-muted)">After each move D47 says where you are: “Carrier, Tower.”</text>
+ <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text-muted)">The AI cannot move it, so text from the game cannot redirect your voice.</text>
+</svg>
+</section>
 </div></div>
 </details>
 
@@ -197,6 +217,39 @@ D47 names up to three friends Elite has reported online since it started, newest
 counts the rest. Elite does not write a line for most friends who leave, so this is who has been
 reported, not who is online now. With Elite closed it says so.
 
+### Choose who your comms key reaches
+
+> "channel up"
+> "next sub-channel"
+> "comms carrier"
+> "comms Tower"
+
+The comms channels are Carrier, Target, System, Story, Crew and Characters. Channel up and down
+skip any channel that has no one on it, and wrap around. Sub-channel up and down step through
+who is on the selected channel and wrap within it. "Comms" followed by a channel or a name
+selects it directly. A name can be the whole name or the last word of it.
+
+After each change D47 says the selection in the fewest words:
+
+```text
+Carrier, Tower.
+```
+
+If no one is on the channel, D47 says "no one":
+
+```text
+Story, no one.
+```
+
+Only you can change the selection, by key, stick button or your own words. The AI cannot,
+so text from the game cannot change who your voice reaches.
+
+### Channel keys
+
+**Comms channel up**, **Comms channel down**, **Comms sub-channel up** and **Comms sub-channel
+down** each take a key and a stick button. All four are unbound until you bind them, and they
+work while Elite has the foreground.
+
 ### It needs the keyboard too
 
 Sending a message means opening the chat box, which means pressing a key. So this needs **Let
@@ -234,6 +287,15 @@ Say which friends the journal has reported online since Elite started, newest re
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `select_comms_channel`
+
+Choose which comms channel, and who on it, the Commander's comms key reaches, and say the selection.
+Protected: the keyword router, the keys and the stick buttons reach it, and the model is refused.
+
+```json
+{"type":"object","properties":{"channel":{"type":"string","description":"A channel by name, or next, previous or current to move from the one selected.","enum":["carrier","target","system","story","crew","characters","next","previous","current"]},"sub_channel":{"type":"string","description":"Who on the channel, by name, or next or previous."}},"required":["channel"],"additionalProperties":false}
 ```
 
 </details>

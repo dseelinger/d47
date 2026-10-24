@@ -13,7 +13,7 @@ public sealed class ActionButtons
 
     private Slot[] _bound = [];
 
-    /// <summary>The nine slots this poller reads.</summary>
+    /// <summary>The slots this poller reads.</summary>
     public static IReadOnlyList<ButtonSlot> Slots { get; } =
         [.. ButtonSlots.All.Where(slot => !Elsewhere.Contains(slot.Key))];
 

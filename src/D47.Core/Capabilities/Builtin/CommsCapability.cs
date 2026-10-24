@@ -1,5 +1,6 @@
 ﻿using D47.Core.Audio;
 using D47.Core.Configuration;
+using D47.Core.Conversation;
 using D47.Core.Input;
 using D47.Core.Journal;
 
@@ -13,6 +14,32 @@ public static class CommsCapability
     public const string Id = "comms";
 
     public const string ChatKey = "actions.chat";
+
+    public const string SelectTool = "select_comms_channel";
+
+    public const string ChannelUpHotkeyKey = "hotkeys.commsChannelUp";
+
+    public const string ChannelDownHotkeyKey = "hotkeys.commsChannelDown";
+
+    public const string SubChannelUpHotkeyKey = "hotkeys.commsSubChannelUp";
+
+    public const string SubChannelDownHotkeyKey = "hotkeys.commsSubChannelDown";
+
+    public const string ChannelUpButtonKey = "hotkeys.commsChannelUpButton";
+
+    public const string ChannelDownButtonKey = "hotkeys.commsChannelDownButton";
+
+    public const string SubChannelUpButtonKey = "hotkeys.commsSubChannelUpButton";
+
+    public const string SubChannelDownButtonKey = "hotkeys.commsSubChannelDownButton";
+
+    /// <summary>The <c>channel</c> and <c>sub_channel</c> values that move rather than name.</summary>
+    public const string Next = "next";
+
+    public const string Previous = "previous";
+
+    /// <summary>The <c>channel</c> value that keeps the selected channel.</summary>
+    public const string Current = "current";
 
     /// <summary>Elite's own channel prefixes, typed at the start of the message.</summary>
     private static readonly Dictionary<string, string> Prefixes = new(StringComparer.OrdinalIgnoreCase)
@@ -32,7 +59,8 @@ public static class CommsCapability
         MailLedger? mail = null,
         Func<string?>? commander = null,
         FriendRoster? friends = null,
-        Func<bool>? gameRunning = null) => new()
+        Func<bool>? gameRunning = null,
+        CommsChannels? channels = null) => new()
     {
         Id = Id,
         Group = "Acting on the game",
@@ -40,7 +68,42 @@ public static class CommsCapability
         Summary = "Send a message in Elite's chat, to local, system, wing or squadron, and say what mail has arrived.",
         Examples = ["tell my wing I am on the way", "say o7 in local", "any mail"],
         Display = new CapabilityDisplay { PanelTitle = "Comms", Order = 61 },
-        Settings = [ChatRow()],
+        Settings =
+        [
+            ChatRow(),
+            .. InterfaceCapability.HotkeyRows(
+                ChannelUpHotkeyKey,
+                ChannelUpButtonKey,
+                "Comms channel up",
+                "channel-keys",
+                s => s.Hotkeys.CommsChannelUp,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelUp = v } },
+                systemWide: true),
+            .. InterfaceCapability.HotkeyRows(
+                ChannelDownHotkeyKey,
+                ChannelDownButtonKey,
+                "Comms channel down",
+                "channel-keys",
+                s => s.Hotkeys.CommsChannelDown,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { CommsChannelDown = v } },
+                systemWide: true),
+            .. InterfaceCapability.HotkeyRows(
+                SubChannelUpHotkeyKey,
+                SubChannelUpButtonKey,
+                "Comms sub-channel up",
+                "channel-keys",
+                s => s.Hotkeys.CommsSubChannelUp,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelUp = v } },
+                systemWide: true),
+            .. InterfaceCapability.HotkeyRows(
+                SubChannelDownHotkeyKey,
+                SubChannelDownButtonKey,
+                "Comms sub-channel down",
+                "channel-keys",
+                s => s.Hotkeys.CommsSubChannelDown,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { CommsSubChannelDown = v } },
+                systemWide: true),
+        ],
         Tools =
         [
             new ToolDefinition
@@ -101,8 +164,188 @@ public static class CommsCapability
                 ],
                 Handler = (_, _) => Task.FromResult(FriendsOnline(friends, gameRunning)),
             },
+            new ToolDefinition
+            {
+                Name = SelectTool,
+                Description =
+                    "Choose which comms channel, and who on it, the Commander's comms key reaches, and say "
+                    + "the selection.",
+                Parameters =
+                [
+                    new ToolParameter
+                    {
+                        Name = "channel",
+                        Type = ToolParameterType.String,
+                        Description = "A channel by name, or next, previous or current to move from the one selected.",
+                        Required = true,
+                        AllowedValues = [.. ChannelNames.Values, Next, Previous, Current],
+                    },
+                    new ToolParameter
+                    {
+                        Name = "sub_channel",
+                        Type = ToolParameterType.String,
+                        Description = "Who on the channel, by name, or next or previous.",
+                    },
+                ],
+
+                // Who the Commander's voice reaches is the Commander's choice alone.
+                Protected = true,
+                RefusalExample = "channel up",
+                Commands =
+                [
+                    new ToolCommandPhrase("channel up", Move(Next, null)),
+                    new ToolCommandPhrase("next channel", Move(Next, null)),
+                    new ToolCommandPhrase("channel down", Move(Previous, null)),
+                    new ToolCommandPhrase("previous channel", Move(Previous, null)),
+                    new ToolCommandPhrase("next sub-channel", Move(Current, Next)),
+                    new ToolCommandPhrase("sub-channel up", Move(Current, Next)),
+                    new ToolCommandPhrase("previous sub-channel", Move(Current, Previous)),
+                    new ToolCommandPhrase("sub-channel down", Move(Current, Previous)),
+                    .. ChannelNames.Values.Select(name => new ToolCommandPhrase($"comms {name}", Move(name, null))),
+                ],
+                Handler = (arguments, _) => Task.FromResult(Choose(
+                    channels,
+                    arguments.TryGetString("channel", out var channel) ? channel : Current,
+                    arguments.TryGetString("sub_channel", out var subChannel) ? subChannel : null)),
+            },
         ],
     };
+
+    /// <summary>Each channel's name, as it is said and as the tool takes it.</summary>
+    public static IReadOnlyDictionary<CommsChannel, string> ChannelNames { get; } = new Dictionary<CommsChannel, string>
+    {
+        [CommsChannel.Carrier] = "carrier",
+        [CommsChannel.Target] = "target",
+        [CommsChannel.System] = "system",
+        [CommsChannel.Story] = "story",
+        [CommsChannel.Crew] = "crew",
+        [CommsChannel.Characters] = "characters",
+    };
+
+    /// <summary>"comms Tower", "comms Kestrel Vane" and "comms Vane", for everyone on an available channel.</summary>
+    public static IEnumerable<DynamicCommand> ChannelPhrases(CommsChannels? channels)
+    {
+        if (channels is null)
+        {
+            yield break;
+        }
+
+        var phrases = (
+            from channel in channels.Available
+            from party in channels.SubChannels(channel)
+            let arguments = Move(ChannelNames[channel], party.Name)
+            let words = party.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            from said in words.Length > 1 ? [party.Name, words[^1]] : new[] { party.Name }
+            select (Said: said, Arguments: arguments)).ToList();
+
+        // A name two parties share, or a channel's own name, reaches no one rather than the wrong one.
+        foreach (var phrase in phrases)
+        {
+            if (phrases.Count(other => Same(other.Said, phrase.Said)) == 1
+                && !ChannelNames.Values.Any(name => Same(name, phrase.Said)))
+            {
+                yield return new DynamicCommand($"comms {phrase.Said}", Id, SelectTool, phrase.Arguments);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Moves or sets the selection and says it in the fewest words. <paramref name="channel"/> is a channel name,
+    /// <see cref="Next"/>, <see cref="Previous"/> or <see cref="Current"/>; <paramref name="subChannel"/> is a name,
+    /// <see cref="Next"/> or <see cref="Previous"/>.
+    /// </summary>
+    public static ToolResult Choose(CommsChannels? channels, string channel, string? subChannel)
+    {
+        if (channels is null)
+        {
+            return ToolResult.Ok("Comms channels are not running in this configuration.");
+        }
+
+        var who = string.IsNullOrWhiteSpace(subChannel) ? null : subChannel.Trim();
+        var step = who is not null && (Same(who, Next) || Same(who, Previous));
+
+        if (Same(channel, Next) || Same(channel, Previous))
+        {
+            if (who is not null)
+            {
+                return ToolResult.Error("Move the channel or name who on it, not both.");
+            }
+
+            if (Same(channel, Next))
+            {
+                channels.NextChannel();
+            }
+            else
+            {
+                channels.PreviousChannel();
+            }
+        }
+        else if (Same(channel, Current))
+        {
+            if (who is not null && !step)
+            {
+                if (channels.Selected is not { } now)
+                {
+                    return ToolResult.Ok("No comms channel is open.");
+                }
+
+                if (!channels.Select(now.Channel, who))
+                {
+                    return ToolResult.Error($"No one called {who} on {now.Channel}.");
+                }
+            }
+        }
+        else
+        {
+            if (ChannelNames.FirstOrDefault(pair => Same(pair.Value, channel)) is not { Value: not null } pair)
+            {
+                return ToolResult.Error($"There is no comms channel called {channel}.");
+            }
+
+            var named = pair.Key;
+
+            if (!channels.Available.Contains(named))
+            {
+                return ToolResult.Error($"{named} is not open.");
+            }
+
+            if (who is null || step)
+            {
+                if (channels.Selected?.Channel != named)
+                {
+                    channels.Select(named);
+                }
+            }
+            else if (!channels.Select(named, who))
+            {
+                return ToolResult.Error($"No one called {who} on {named}.");
+            }
+        }
+
+        if (step && Same(who!, Next))
+        {
+            channels.NextSubChannel();
+        }
+        else if (step)
+        {
+            channels.PreviousSubChannel();
+        }
+
+        return channels.Selected is { } selected
+            ? ToolResult.Ok(Say(selected))
+            : ToolResult.Ok("No comms channel is open.");
+    }
+
+    /// <summary>The selection in the fewest words: "Carrier, Tower." or "Story, no one."</summary>
+    public static string Say(CommsSelection selection) =>
+        $"{selection.Channel}, {selection.SubChannel?.Name ?? "no one"}.";
+
+    private static Dictionary<string, string> Move(string channel, string? subChannel) =>
+        subChannel is null
+            ? new(StringComparer.Ordinal) { ["channel"] = channel }
+            : new(StringComparer.Ordinal) { ["channel"] = channel, ["sub_channel"] = subChannel };
+
+    private static bool Same(string left, string right) => string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
 
     private static readonly IReadOnlyDictionary<string, string> NoArguments = new Dictionary<string, string>();
 

@@ -262,6 +262,9 @@ public static class BuiltinCapabilities
         // The friends reported online this game launch.
         Journal.FriendRoster? friends = null,
 
+        // The comms channel selection.
+        Conversation.CommsChannels? commsChannels = null,
+
         // Where every galaxy search answer is posted.
         Knowledge.GalaxySearchBoard? searches = null,
 
@@ -437,7 +440,8 @@ public static class BuiltinCapabilities
             mail,
             () => gameState.Active?.Identity.FrontierId,
             friends,
-            () => gameState.IsGameRunning),
+            () => gameState.IsGameRunning,
+            commsChannels),
         MacroCapability.Create(macros, actions),
         SwitchCapability.Create(switches ?? SwitchSurface.Inert, () => settings.Current.Actions.Keyboard),
         ClockCapability.Create(now, zone),

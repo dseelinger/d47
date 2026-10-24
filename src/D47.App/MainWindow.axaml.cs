@@ -46,6 +46,13 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _resetHeadsetZoom;
     private readonly GlobalHotkey _resizeHeadsetPanel;
 
+    /// <summary>The four gestures that move the comms channel selection.</summary>
+    private readonly GlobalHotkey _commsChannelUp;
+
+    private readonly GlobalHotkey _commsChannelDown;
+    private readonly GlobalHotkey _commsSubChannelUp;
+    private readonly GlobalHotkey _commsSubChannelDown;
+
     private readonly PanelViewModel _model;
 
     private Media.MediaSession? _mediaSession;
@@ -84,6 +91,10 @@ public partial class MainWindow : Window
         _zoomHeadsetOut = new GlobalHotkey(hotkeyLogger);
         _resetHeadsetZoom = new GlobalHotkey(hotkeyLogger);
         _resizeHeadsetPanel = new GlobalHotkey(hotkeyLogger);
+        _commsChannelUp = new GlobalHotkey(hotkeyLogger);
+        _commsChannelDown = new GlobalHotkey(hotkeyLogger);
+        _commsSubChannelUp = new GlobalHotkey(hotkeyLogger);
+        _commsSubChannelDown = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -586,8 +597,9 @@ public partial class MainWindow : Window
         BindShutUp();
         BindOverlayKeys();
         BindHeadsetZoomAndResizeKeys();
+        BindCommsChannelKeys();
 
-        // The stick's half of the same nine actions, read on the tick and run here.
+        // The stick's half of the same actions, read on the tick and run here.
         _host.ActionButtons.Pressed += key => Avalonia.Threading.Dispatcher.UIThread.Post(() => OnActionButton(key));
 
         // The media keys, through Windows' media sessions rather than a hotkey that would take them from
@@ -655,6 +667,11 @@ public partial class MainWindow : Window
                 || change.Key == VrCapability.ResizeHotkeyKey)
             {
                 BindHeadsetZoomAndResizeKeys();
+            }
+
+            if (SettingsLayout.IsCommsHotkeyFamily(change.Key))
+            {
+                BindCommsChannelKeys();
             }
 
             if (change.Key == ShipsCapability.HullArtKey || change.Key.StartsWith("speech.", StringComparison.Ordinal))
@@ -1347,6 +1364,38 @@ public partial class MainWindow : Window
             () => StepHeadsetZoom(direction));
     }
 
+    /// <summary>The four gestures that move the comms channel selection.</summary>
+    private void BindCommsChannelKeys()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        var hotkeys = _host.Settings.Current.Hotkeys;
+
+        BindHotkey(_commsChannelUp, hotkeys.CommsChannelUp, "comms-channel-up",
+            CommsCapability.ChannelUpHotkeyKey, Move(CommsCapability.Next, null));
+        BindHotkey(_commsChannelDown, hotkeys.CommsChannelDown, "comms-channel-down",
+            CommsCapability.ChannelDownHotkeyKey, Move(CommsCapability.Previous, null));
+        BindHotkey(_commsSubChannelUp, hotkeys.CommsSubChannelUp, "comms-sub-channel-up",
+            CommsCapability.SubChannelUpHotkeyKey, Move(CommsCapability.Current, CommsCapability.Next));
+        BindHotkey(_commsSubChannelDown, hotkeys.CommsSubChannelDown, "comms-sub-channel-down",
+            CommsCapability.SubChannelDownHotkeyKey, Move(CommsCapability.Current, CommsCapability.Previous));
+
+        Action Move(string channel, string? subChannel) => () => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => MoveComms(channel, subChannel));
+    }
+
+    /// <summary>Moves the comms channel selection and says it; UI thread.</summary>
+    private void MoveComms(string channel, string? subChannel)
+    {
+        if (_host is not null)
+        {
+            _host.Announcer.SayAside(CommsCapability.Choose(_host.CommsChannels, channel, subChannel).Spoken);
+        }
+    }
+
     /// <summary>Steps the headset panel's zoom in, out or back to 100%; UI thread.</summary>
     private void StepHeadsetZoom(string direction)
     {
@@ -1387,6 +1436,10 @@ public partial class MainWindow : Window
             [VrCapability.ZoomOutButtonKey] = window => window.StepHeadsetZoom("out"),
             [VrCapability.ResetZoomButtonKey] = window => window.StepHeadsetZoom("reset"),
             [VrCapability.ResizeButtonKey] = window => window.ToggleHeadsetResize(),
+            [CommsCapability.ChannelUpButtonKey] = window => window.MoveComms(CommsCapability.Next, null),
+            [CommsCapability.ChannelDownButtonKey] = window => window.MoveComms(CommsCapability.Previous, null),
+            [CommsCapability.SubChannelUpButtonKey] = window => window.MoveComms(CommsCapability.Current, CommsCapability.Next),
+            [CommsCapability.SubChannelDownButtonKey] = window => window.MoveComms(CommsCapability.Current, CommsCapability.Previous),
         };
 
     /// <summary>
