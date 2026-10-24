@@ -9,12 +9,21 @@ public enum NpcKind
     Comms,
 }
 
-/// <summary>One NPC heard in the current system. The family is the canned one for a comms NPC, or null.</summary>
-public sealed record NpcHeard(string Name, NpcKind Kind, string? Family, string? VoiceId, DateTimeOffset LastHeardAt);
+/// <summary>
+/// One NPC heard in the current system. The family is the canned one for a comms NPC, or null. The
+/// personality is written once for the stay, or null before it is.
+/// </summary>
+public sealed record NpcHeard(
+    string Name,
+    NpcKind Kind,
+    string? Family,
+    string? VoiceId,
+    DateTimeOffset LastHeardAt,
+    string? Personality = null);
 
 /// <summary>
 /// The NPCs heard in the current system, newest first. An NPC leaves on a jump or a sign-off and on
-/// nothing else. Holds names and families, never message text.
+/// nothing else. Holds names, families and personalities, never message text.
 /// </summary>
 public sealed partial class NpcsHeardHere
 {
@@ -32,6 +41,27 @@ public sealed partial class NpcsHeardHere
             lock (_lock)
             {
                 return [.. _heard.Values.OrderByDescending(npc => npc.LastHeardAt)];
+            }
+        }
+    }
+
+    /// <summary>The NPC heard here under this name, or null.</summary>
+    public NpcHeard? Find(string name)
+    {
+        lock (_lock)
+        {
+            return _heard.GetValueOrDefault(name);
+        }
+    }
+
+    /// <summary>Keeps a personality on the NPC until they leave; ignored when the NPC is not here.</summary>
+    public void SetPersonality(string name, string personality)
+    {
+        lock (_lock)
+        {
+            if (_heard.TryGetValue(name, out var npc))
+            {
+                _heard[name] = npc with { Personality = personality };
             }
         }
     }
@@ -80,7 +110,7 @@ public sealed partial class NpcsHeardHere
 
         lock (_lock)
         {
-            _heard[name] = new NpcHeard(name, kind, family, voiceId, at);
+            _heard[name] = new NpcHeard(name, kind, family, voiceId, at, _heard.GetValueOrDefault(name)?.Personality);
         }
     }
 

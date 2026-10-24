@@ -3164,7 +3164,19 @@ public sealed class AppHost : IDisposable
             voiceId => late.Host?.Writer.NpcCast.AccentOf(voiceId),
             () => ShipFacts.Of(gameState.Active),
             ModelFree,
-            loggerFactory.CreateLogger<ChatterLine>()));
+            loggerFactory.CreateLogger<ChatterLine>(),
+            () => late.Host?.Announcer.NpcsHere,
+            (npc, cancellationToken) => FlavourTurn.AskAsync(
+                turns.Provider,
+                turns.BackgroundModel,
+                persona: null,
+                aboutMe: null,
+                StrangerPersonality.Instruction(npc),
+                gameState: null,
+                spend,
+                PriceTable.Default,
+                loggerFactory.CreateLogger<ChatterLine>(),
+                cancellationToken)));
 
         // The Narrator, answered by whatever the Commander says shortly after a narration, except what the
         // ship would run or offer without the model.

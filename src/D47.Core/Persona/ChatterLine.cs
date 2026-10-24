@@ -18,6 +18,8 @@ namespace D47.Core.Persona;
 /// <param name="accentOf">The accent a voice id speaks with, or null for none.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
 /// <param name="modelFree">Whether an unnamed utterance has a route that needs no model; the ship takes it and the line stays open.</param>
+/// <param name="roster">The NPCs heard here, which keep the personality written for each, or null for none.</param>
+/// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
 public sealed class ChatterLine(
     Func<DateTimeOffset> clock,
     Func<string?> system,
@@ -26,7 +28,9 @@ public sealed class ChatterLine(
     Func<string?, string?>? accentOf = null,
     Func<ShipFacts>? facts = null,
     Func<string, bool>? modelFree = null,
-    ILogger? logger = null) : ILine
+    ILogger? logger = null,
+    Func<NpcsHeardHere?>? roster = null,
+    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null) : ILine
 {
     /// <summary>How long after the exchange's last line the Commander can still answer it.</summary>
     public static readonly TimeSpan Window = TimeSpan.FromSeconds(90);
@@ -121,12 +125,83 @@ public sealed class ChatterLine(
     public void Heard(NpcChatterLine line, bool answerable, int exchangeIndex, bool hail = false) =>
         Heard(line, answerable, exchangeIndex, system(), situation(), hail);
 
-    public Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
+    public async Task<LineDecision> RouteAsync(string input, CancellationToken cancellationToken)
     {
+        await EnsurePersonalityAsync(input, cancellationToken).ConfigureAwait(false);
+
         lock (_lock)
         {
-            return Task.FromResult(Route(input));
+            return Route(input);
         }
+    }
+
+    /// <summary>Writes the personality of the NPC the input would reach, once, unless the NPC already has one.</summary>
+    private async Task EnsurePersonalityAsync(string input, CancellationToken cancellationToken)
+    {
+        if (writePersonality is null || roster?.Invoke() is not { } here)
+        {
+            return;
+        }
+
+        Exchange exchange;
+        string name;
+
+        lock (_lock)
+        {
+            if (_exchange is not { Answerable: true, PersonalityFailed: false } held || Addressee(input, held) is not { } who)
+            {
+                return;
+            }
+
+            (exchange, name) = (held, who);
+        }
+
+        if (here.Find(name) is not { Personality: null } npc)
+        {
+            return;
+        }
+
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(StrangerPersonality.Budget);
+
+        string? kept = null;
+
+        try
+        {
+            kept = StrangerPersonality.Kept(await writePersonality(npc, budget.Token).ConfigureAwait(false));
+        }
+        catch (Exception error) when (error is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            logger?.LogDebug(error, "Personality for {Name} not written; the plain brief is used.", name);
+        }
+
+        if (kept is null)
+        {
+            lock (_lock)
+            {
+                exchange.PersonalityFailed = true;
+            }
+
+            return;
+        }
+
+        here.SetPersonality(name, kept);
+    }
+
+    /// <summary>The held speaker the input would reach, without changing any state; null when none.</summary>
+    private string? Addressee(string input, Exchange exchange)
+    {
+        if (exchange.People.Count == 0 || !Carries(exchange))
+        {
+            return null;
+        }
+
+        if (Named(input, exchange) is { } named)
+        {
+            return named.Name;
+        }
+
+        return _open is { } open && modelFree?.Invoke(input) != true ? open : null;
     }
 
     private LineDecision Route(string input)
@@ -281,6 +356,9 @@ public sealed class ChatterLine(
     private static string LastWord(string name) =>
         name.Split(' ', StringSplitOptions.RemoveEmptyEntries) is { Length: > 0 } words ? words[^1] : name;
 
+    private string Personality(string name) =>
+        roster?.Invoke()?.Find(name)?.Personality is { } personality ? $"\nYour personality: {personality}" : string.Empty;
+
     private string Brief(string name, Exchange exchange)
     {
         var accent = SpeakerAccent.Sentence(accentOf?.Invoke(exchange.People[name]));
@@ -290,7 +368,7 @@ public sealed class ChatterLine(
 
         return $"""
                  You are {name}, one of the people the Commander just overheard on the comms channel.
-                 You are a human being, not an artificial intelligence, and you never claim to be one.
+                 You are a human being, not an artificial intelligence, and you never claim to be one.{Personality(name)}
                  The Commander has answered you. What has been said so far:
 
                  {string.Join('\n', exchange.Said)}
@@ -307,6 +385,9 @@ public sealed class ChatterLine(
         public int Index { get; } = index;
 
         public bool Answerable { get; } = answerable;
+
+        /// <summary>Whether writing a personality for this exchange failed, so the plain brief is used for the rest of it.</summary>
+        public bool PersonalityFailed { get; set; }
 
         public string? System { get; } = system;
 
