@@ -402,6 +402,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                     ? [.. lines.Select(line => new AdventureLine { Text = line.Text?.Trim() ?? string.Empty, Speaker = line.Speaker, Introduces = line.Introduces })]
                     : [new AdventureLine { Text = beat.Line?.Trim() ?? string.Empty, Speaker = beat.Speaker }],
                 Steps = steps,
+                Boards = Ids(beat.Boards),
+                Leaves = Ids(beat.Leaves),
             });
         }
 
@@ -441,7 +443,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
-            Aboard = record.Aboard is { } aboard ? [.. aboard.OfType<string>().Where(id => id.Trim().Length > 0).Select(id => id.Trim())] : null,
+            Aboard = record.Aboard is { } aboard ? Ids(aboard) : null,
+            OpeningBoards = Ids(record.OpeningBoards),
+            OpeningLeaves = Ids(record.OpeningLeaves),
             Stepped = [.. (record.Stepped ?? []).Where(step => step.Beat is { } beat && beat >= 0 && beat < beats.Count && step.At is not null && Math.Max(step.Step ?? 0, 0) < beats[step.Beat!.Value].MostSteps)
                 .Select(step => new AdventureStep(step.Beat!.Value, step.At!.Value, string.Equals(step.By?.Trim(), CommanderStep, StringComparison.Ordinal) ? AdventureFold.CommanderSource : null, Math.Max(step.Step ?? 0, 0)))],
             Choices = [.. (record.Choices ?? []).Where(choice => choice is { Beat: >= 0, Option: >= 0, At: not null } && choice.Beat < beats.Count && choice.Option < (beats[choice.Beat!.Value].Steps.FirstOrDefault()?.Options.Count ?? 0))
@@ -632,6 +636,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
                 Line = beat.Lines.Count == 1 ? beat.Line : null,
                 Speaker = beat.Lines.Count == 1 ? beat.Speaker : null,
                 Lines = beat.Lines.Count == 1 ? null : [.. beat.Lines.Select(line => new LineRecord { Text = line.Text, Speaker = line.Speaker, Introduces = line.Introduces })],
+                Boards = beat.Boards.Count > 0 ? [.. beat.Boards] : null,
+                Leaves = beat.Leaves.Count > 0 ? [.. beat.Leaves] : null,
             }),
         ],
         AcceptedAt = adventure.AcceptedAt,
@@ -644,6 +650,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
         Aboard = adventure.Aboard is { } aboard ? [.. aboard] : null,
+        OpeningBoards = adventure.OpeningBoards.Count > 0 ? [.. adventure.OpeningBoards] : null,
+        OpeningLeaves = adventure.OpeningLeaves.Count > 0 ? [.. adventure.OpeningLeaves] : null,
         Stepped = adventure.Stepped.Count > 0 ? [.. adventure.Stepped.Select(step => new StepRecord { Beat = step.Beat, Step = step.Step > 0 ? step.Step : null, At = step.At, By = step.By == AdventureFold.CommanderSource ? CommanderStep : null })] : null,
         Choices = adventure.Choices.Count > 0 ? [.. adventure.Choices.Select(choice => new ChoiceRecord { Beat = choice.Beat, Option = choice.Option, At = choice.At })] : null,
         Events = adventure.Events.Count > 0
@@ -653,6 +661,9 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
     };
 
     /// <summary>Whether a beat is written as a list of steps: it has more than one, or one with options.</summary>
+    /// <summary>The ids as written, trimmed, without blanks.</summary>
+    private static IReadOnlyList<string> Ids(List<string?>? ids) => [.. (ids ?? []).OfType<string>().Where(id => id.Trim().Length > 0).Select(id => id.Trim())];
+
     private static bool Listed(AdventureBeat beat) => beat.Steps.Count > 1 || beat.Steps.Any(step => step.Options.Count > 0);
 
     private sealed class Document
@@ -709,6 +720,10 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? StoryId { get; set; }
 
         public List<string?>? Aboard { get; set; }
+
+        public List<string?>? OpeningBoards { get; set; }
+
+        public List<string?>? OpeningLeaves { get; set; }
 
         public List<StepRecord>? Stepped { get; set; }
 
@@ -812,6 +827,10 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
 
         /// <summary>Written instead of <see cref="Line"/> and <see cref="Speaker"/> when a beat has more than one line.</summary>
         public List<LineRecord>? Lines { get; set; }
+
+        public List<string?>? Boards { get; set; }
+
+        public List<string?>? Leaves { get; set; }
     }
 
     private sealed class StepDefRecord

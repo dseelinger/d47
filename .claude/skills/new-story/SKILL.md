@@ -214,12 +214,10 @@ add.
 - **A cast member who rides in the Commander's ship** carries `aboard`: `{"boards": <beat>, "leaves": <beat>}`,
   each a beat key of the length's sheet or null for the story's start or end, `boards` before `leaves`. While
   aboard, the member is heard in the cockpit (`link` is not applied; `effects` still are) and the chapter writer
-  writes their lines as spoken there. d47 follows stages, not single beats: a member is aboard for every chapter
-  whose stage hands the writer any beat from `boards` up to, not including, `leaves`. All of act one is one stage,
-  and so are the finale chapters, so choose a beat that starts a stage — `breakIntoTwo`, `midpoint`,
-  `allIsLost`, `breakIntoThree` on a full sheet, or `finale` on a short one — or the member is aboard for that
-  whole stage. Leave `aboard` out for a member who is never in the ship; a chapter may still bring one aboard
-  for that chapter alone.
+  writes their lines as spoken there. The member boards and leaves at an objective: the chapter whose stage hands
+  the writer that beat places the boarding or leaving on the objective where the beat happens, and a chapter past
+  the beat with nothing placed opens with it done. Any beat of the sheet works; it need not start a stage. Leave
+  `aboard` out for a member who is never in the ship; a chapter may still bring one aboard for that chapter alone.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

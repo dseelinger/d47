@@ -274,23 +274,47 @@ public sealed class StoryDirector(
         return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId, Choices(), Ship()));
     }
 
-    /// <summary>Who speaks a line by <paramref name="speaker"/> in the current story, decided now; null when no story is current.</summary>
-    public StoryLineVoice? LineVoice(string? frontierId, string? speaker) =>
+    /// <summary>
+    /// Who speaks a line by <paramref name="speaker"/> in the current story, decided now, at <paramref name="beat"/> of the
+    /// current chapter as <see cref="CastAboard(string?, int?)"/> reads it; null when no story is current.
+    /// </summary>
+    public StoryLineVoice? LineVoice(string? frontierId, string? speaker, int? beat = null) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret))
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret, beat))
             : null;
 
     /// <summary>
-    /// The current story's cast ids aboard the ship now: those its current chapter was written with, or, for a story with
-    /// no such chapter, those whose span takes in its stage. Empty when no story is current.
+    /// The current story's cast ids aboard the ship at <paramref name="beat"/> of its current chapter, -1 for the opening and by
+    /// default the last beat that fired; for a story with no recorded chapter, those aboard by span. Empty when no story is current.
     /// </summary>
-    public IReadOnlyList<string> CastAboard(string? frontierId) =>
-        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? CastAboard(frontierId, story, secret) : [];
+    public IReadOnlyList<string> CastAboard(string? frontierId, int? beat = null) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? CastAboard(frontierId, story, secret, beat) : [];
 
-    private IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret) =>
-        story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: { } written }
-            ? written
-            : StoryAboard.Of(secret, story.Pacing, StoryClues.Stage(story), story.BeaconScanAt is not null, story.FinaleChapter);
+    private IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
+        story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
+            ? StoryAboard.At(chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
+            : StoryAboard.BySpan(secret, story);
+
+    /// <summary>
+    /// The story with its boardings and leavings as a chapter handed <paramref name="handed"/> opens: the current chapter's at
+    /// its opening and its fired beats folded in, then each one the stage has passed applied.
+    /// </summary>
+    private Story Opening(string? frontierId, Story story, StorySecret secret, IReadOnlyList<string> handed)
+    {
+        if (story.CurrentChapter is { } key)
+        {
+            if (book.Store.Find(frontierId, key) is { } onFile)
+            {
+                story = StoryAboard.Folded(story, onFile, book.Standing(frontierId, key)?.Fired.Count ?? 0);
+            }
+            else if (Archive.Find(frontierId, story, key) is { } archived)
+            {
+                story = StoryAboard.Folded(story, archived.Adventure, archived.Fired.Count);
+            }
+        }
+
+        return StoryAboard.Missed(story, secret, handed);
+    }
 
     /// <summary>The Commander's notes on a story's cast member, by Frontier ID, story id and cast id; null for none.</summary>
     public Func<string?, string, string, string?> CastNotes { get; set; } = (_, _, _) => null;
@@ -2656,12 +2680,14 @@ public sealed class StoryDirector(
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
             && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective));
 
+        var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter));
+
         var ask = new AdventureAsk(
             longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
-                story,
+                opening,
                 secret,
                 number,
                 now,
@@ -2710,6 +2736,8 @@ public sealed class StoryDirector(
         stories.Save(frontierId, still with
         {
             Chapters = [.. replacing ? still.Chapters.SkipLast(1) : still.Chapters, key],
+            Boarded = opening.Boarded,
+            Left = opening.Left,
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
@@ -2782,7 +2810,8 @@ public sealed class StoryDirector(
             home,
             story.BeaconsRemembered > 0,
             goal,
-            StoryAboard.Of(secret, story.Pacing, stage, beaconInReach, finaleChapter));
+            StoryAboard.BySpan(secret, story),
+            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter)));
     }
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>

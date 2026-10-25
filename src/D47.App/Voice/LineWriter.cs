@@ -432,7 +432,7 @@ internal sealed class LineWriter
 
         if (D47.Core.Adventures.AdventureCallout.Spoken(announcement.Key) is not var (key, beat, line)
             || Adventures.Store.Find(commander, key) is not { StoryId: not null } chapter
-            || Stories.LineVoice(commander, chapter.SpeakerOf(beat, line)) is not { } voice
+            || Stories.LineVoice(commander, chapter.SpeakerOf(beat, line), beat) is not { } voice
             || voice.Role == VoiceRole.ShipAi)
         {
             return null;

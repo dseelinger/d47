@@ -92,6 +92,12 @@ public sealed record Story
     /// <summary>The cast ids whose introduction the narrator has said or posted in this story.</summary>
     public IReadOnlyList<string> Introduced { get; init; } = [];
 
+    /// <summary>The cast ids whose span boarding has happened, folded in from the chapters before the current one.</summary>
+    public IReadOnlyList<string> Boarded { get; init; } = [];
+
+    /// <summary>The cast ids whose span leaving has happened, folded in from the chapters before the current one.</summary>
+    public IReadOnlyList<string> Left { get; init; } = [];
+
     /// <summary>The value of <see cref="Sessions"/> when a cast member last reacted to what the Commander did.</summary>
     public int? ReactionSession { get; init; }
 

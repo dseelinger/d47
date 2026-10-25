@@ -134,7 +134,8 @@ public sealed record AdventureStory(
     string? Home = null,
     bool Remembered = false,
     GoalClimbStep? Goal = null,
-    IReadOnlyList<string>? Aboard = null);
+    IReadOnlyList<string>? Aboard = null,
+    IReadOnlyList<Stories.StorySwitch>? Due = null);
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
@@ -670,7 +671,14 @@ public sealed class AdventureGenerator(
                 Follows = ask.Chapter?.Previous.Key ?? previous?.Follows,
                 StoryId = ask.Story?.Id ?? previous?.StoryId,
                 Aboard = ask.Story is { } story ? Aboard(story, read.Aboard) : null,
+                OpeningBoards = read.OpeningBoards,
+                OpeningLeaves = read.OpeningLeaves,
             };
+
+        if (ask.Story is { } placing)
+        {
+            adventure = Stories.StoryAboard.Placed(adventure, placing.Due ?? []);
+        }
 
         if (AdventureValidation.Problems(adventure) is { Count: > 0 } problems)
         {
@@ -2212,8 +2220,36 @@ public sealed class AdventureGenerator(
             + $"{HomeLeg.Home.ToString("0", CultureInfo.InvariantCulture)} light years of {target}. Each hop must be within the reach.");
     }
 
+    /// <summary>
+    /// The boardings and leavings this answer may place: the story's due ones, less those a rewrite keeps at the opening or
+    /// on an objective before the ones it writes.
+    /// </summary>
+    private static IReadOnlyList<Stories.StorySwitch> Due(AdventureAsk ask)
+    {
+        if (ask.Story?.Due is not { Count: > 0 } due)
+        {
+            return [];
+        }
+
+        if (ask.Rewrite is not { } rewrite)
+        {
+            return due;
+        }
+
+        var kept = rewrite.Chapter.Beats.Take(rewrite.From).ToList();
+        var boarded = rewrite.Chapter.OpeningBoards.Concat(kept.SelectMany(beat => beat.Boards)).ToHashSet(StringComparer.Ordinal);
+        var left = rewrite.Chapter.OpeningLeaves.Concat(kept.SelectMany(beat => beat.Leaves)).ToHashSet(StringComparer.Ordinal);
+
+        return [.. due.Where(entry => !(entry.Boards ? boarded : left).Contains(entry.Id))];
+    }
+
+    /// <summary>The boardings and leavings an objective of a draft carries, as the repair turn shows them; empty for none.</summary>
+    private static string Switched(IReadOnlyList<string> boards, IReadOnlyList<string> leaves) =>
+        (boards.Count > 0 ? $" — boards: {string.Join(", ", boards)}" : string.Empty)
+        + (leaves.Count > 0 ? $" — leaves: {string.Join(", ", leaves)}" : string.Empty);
+
     /// <summary>Who may speak a story chapter's lines, and how the ship's lines are read while a stock core is aboard.</summary>
-    private static void AppendSpeakers(StringBuilder text, AdventureStory story)
+    private static void AppendSpeakers(StringBuilder text, AdventureStory story, IReadOnlyList<Stories.StorySwitch> due, bool opening)
     {
         text.AppendLine();
         text.AppendLine(
@@ -2258,12 +2294,41 @@ public sealed class AdventureGenerator(
 
             text.AppendLine(
                 (aboard.Count > 0
-                    ? $"Aboard the Commander's ship for this chapter: {string.Join(", ", aboard.Select(member => member.Name))}. They are in the cockpit "
+                    ? $"Aboard the Commander's ship as this chapter opens: {string.Join(", ", aboard.Select(member => member.Name))}. They are in the cockpit "
                       + "with the Commander: write their lines as spoken there, in person, never over comms. Every other cast member is elsewhere. "
-                    : "No cast member is aboard the ship for this chapter; each is elsewhere. ")
+                    : "No cast member is aboard the ship as this chapter opens; each is elsewhere. ")
                 + "\"aboard\" lists the id of each other cast member who rides along in the cockpit for this chapter alone, whose lines are then "
                 + "written as spoken there. Most chapters list none.");
+
+            AppendSwitches(text, cast, due, opening);
         }
+    }
+
+    /// <summary>Each boarding and leaving the chapter may place, by name and beat, and how the lines around it are spoken.</summary>
+    private static void AppendSwitches(StringBuilder text, IReadOnlyList<AdventureSpeaker> cast, IReadOnlyList<Stories.StorySwitch> due, bool opening)
+    {
+        if (due.Count == 0)
+        {
+            return;
+        }
+
+        text.AppendLine(
+            "The story moves these cast members on or off the Commander's ship at a beat of this stage. Place each on the objective"
+            + (opening ? ", or the opening," : string.Empty)
+            + " where that beat happens in this chapter, by listing the member's id in that objective's "
+            + (opening ? "\"boards\" or \"leaves\" (\"openingBoards\" or \"openingLeaves\" for the opening)" : "\"boards\" or \"leaves\"")
+            + ". If this chapter does not reach the beat, list it nowhere: a later chapter places it.");
+
+        foreach (var entry in due)
+        {
+            var name = cast.FirstOrDefault(member => member.Id == entry.Id)?.Name ?? entry.Id;
+
+            text.AppendLine($"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.");
+        }
+
+        text.AppendLine(
+            "A member's lines from the objective they board at on are spoken in the cockpit, and before it over comms. A member's lines "
+            + "before the objective they leave at are spoken in the cockpit, and from it on over comms. Leave every other objective's lists empty.");
     }
 
     /// <summary>The most missions a story chapter is told of.</summary>
@@ -2710,10 +2775,14 @@ public sealed class AdventureGenerator(
             + "person said or left is the objective's line. Every other kind has a null reason.");
         text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
+        var due = Due(ask);
+        var switches = due.Count > 0
+            ? new StorySwitches([.. due.Where(entry => entry.Boards).Select(entry => entry.Id)], [.. due.Where(entry => !entry.Boards).Select(entry => entry.Id)], rewrite is null)
+            : null;
 
         if (ask.Story is { } told)
         {
-            AppendSpeakers(text, told);
+            AppendSpeakers(text, told, due, rewrite is null);
         }
 
         if (repair is not null)
@@ -2745,12 +2814,12 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine(
                 "Answer with one JSON object and nothing else: "
-                + StoryAnswer.ReplacementsShape(speakers, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null)
+                + StoryAnswer.ReplacementsShape(speakers, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null, switches)
                 + ". \"objective\" is the number of the objective a replacement takes the place of, as numbered above.");
 
             return new StoryCall(
                 text.ToString(),
-                StoryAnswer.ReplacementsSchema(ask.Story is { } speaking ? [.. Speakers(speaking)] : null, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null));
+                StoryAnswer.ReplacementsSchema(ask.Story is { } speaking ? [.. Speakers(speaking)] : null, kinds, repair.Opening, repair.Destination, ships.Count > 0 ? ships : null, switches));
         }
 
         var destination = ask.Story is { FinaleChapter: 1, Destination: null };
@@ -2761,7 +2830,7 @@ public sealed class AdventureGenerator(
             + "give an objective as many as the story needs, and an empty \"then\" when it takes one.");
         text.AppendLine();
         text.AppendLine(
-            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 })
+            "Answer with one JSON object and nothing else: " + StoryAnswer.BeatsShape(speakers, kinds, destination, ships.Count > 0 ? ships : null, ask.Story?.Cast is { Count: > 0 }, switches)
             + (changing
                 ? ". \"reply\" is what you say to the Commander, in your own voice, in two or three sentences: why the objective they were on was "
                   + "probably chosen, against what this chapter is for; whether their idea serves that; and, if it does not, what you would do instead "
@@ -2776,7 +2845,8 @@ public sealed class AdventureGenerator(
                 kinds,
                 destination,
                 ships.Count > 0 ? ships : null,
-                ask.Story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null));
+                ask.Story?.Cast is { Count: > 0 } members ? [.. members.Select(member => member.Id)] : null,
+                switches));
     }
 
     /// <summary>The draft's objectives numbered in the chapter, why some cannot stand, and which of them the answer replaces.</summary>
@@ -2789,7 +2859,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine(beat.Continues
                 ? $"{repair.Offset + index + 1}. (a further step of the objective above) — {beat.Describe()}{Why(beat.Reason)}"
-                : $"{repair.Offset + index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)} — {Quoted(beat.Lines)}");
+                : $"{repair.Offset + index + 1}. {beat.Title} ({beat.Function}) — {beat.Describe()}{Why(beat.Reason)}{Switched(beat.Boards, beat.Leaves)} — {Quoted(beat.Lines)}");
         }
 
         text.AppendLine();
@@ -3085,6 +3155,12 @@ public sealed class AdventureGenerator(
         /// <summary>For a tool run step: the phrase the Commander says, which the task has to hold.</summary>
         public string? Say { get; init; }
 
+        /// <summary>The cast ids the model wrote as boarding at this objective.</summary>
+        public IReadOnlyList<string> Boards { get; init; } = [];
+
+        /// <summary>The cast ids the model wrote as leaving at this objective.</summary>
+        public IReadOnlyList<string> Leaves { get; init; } = [];
+
         /// <summary>The title, marked when this is a further step.</summary>
         public string Named => Continues ? $"{Title}, a further step" : Title;
 
@@ -3132,6 +3208,12 @@ public sealed class AdventureGenerator(
     {
         /// <summary>The ids the chapter's "aboard" lists, as written.</summary>
         public IReadOnlyList<string> Aboard { get; init; } = [];
+
+        /// <summary>The ids "openingBoards" lists, as written.</summary>
+        public IReadOnlyList<string> OpeningBoards { get; init; } = [];
+
+        /// <summary>The ids "openingLeaves" lists, as written.</summary>
+        public IReadOnlyList<string> OpeningLeaves { get; init; } = [];
     }
 
     /// <summary>A place as the model named it.</summary>
@@ -3152,9 +3234,9 @@ public sealed class AdventureGenerator(
 
             return new ReadAnswer(ReadOpening(root), Text(root, "reply"), beats, ReadDestination(root))
             {
-                Aboard = root.TryGetProperty("aboard", out var aboard) && aboard.ValueKind == JsonValueKind.Array
-                    ? [.. aboard.EnumerateArray().Where(id => id.ValueKind == JsonValueKind.String).Select(id => id.GetString()!)]
-                    : [],
+                Aboard = Ids(root, "aboard"),
+                OpeningBoards = Ids(root, "openingBoards"),
+                OpeningLeaves = Ids(root, "openingLeaves"),
             };
         }
         catch (JsonException)
@@ -3195,6 +3277,12 @@ public sealed class AdventureGenerator(
         }
     }
 
+    /// <summary>The strings of the list <paramref name="property"/>, as written; empty when there is none.</summary>
+    private static IReadOnlyList<string> Ids(JsonElement element, string property) =>
+        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(property, out var list) && list.ValueKind == JsonValueKind.Array
+            ? [.. list.EnumerateArray().Where(id => id.ValueKind == JsonValueKind.String).Select(id => id.GetString()!)]
+            : [];
+
     private static ReadPlace? ReadDestination(JsonElement root) =>
         Nested(root, "destination") is { } named ? new ReadPlace(Text(named, "system"), Text(named, "body")) : null;
 
@@ -3217,7 +3305,7 @@ public sealed class AdventureGenerator(
         {
             if (ReadBeatFrom(step) is { } next)
             {
-                yield return next with { Title = first.Title, Function = null, Lines = [], Continues = true };
+                yield return next with { Title = first.Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] };
             }
         }
     }
@@ -3259,6 +3347,8 @@ public sealed class AdventureGenerator(
             Handle = Text(element, "handle"),
             Task = Text(element, "task"),
             Options = kind == TriggerKind.Choice ? ReadOptions(element) : [],
+            Boards = Ids(element, "boards"),
+            Leaves = Ids(element, "leaves"),
         };
     }
 
@@ -3408,7 +3498,7 @@ public sealed class AdventureGenerator(
                 if (replaceable.Contains(index) && replaced.Add(index))
                 {
                     beats[index] = beats[index].Continues
-                        ? beat with { Title = beats[index].Title, Function = null, Lines = [], Continues = true }
+                        ? beat with { Title = beats[index].Title, Function = null, Lines = [], Continues = true, Boards = [], Leaves = [] }
                         : beat with { Continues = false };
                 }
             }
@@ -3841,6 +3931,8 @@ public sealed class AdventureGenerator(
                     Function = beat.Function,
                     Steps = [new BeatStep { Trigger = trigger, Reason = IsTravel(trigger.Kind) ? beat.Reason : null, Options = options }],
                     Lines = beat.Lines,
+                    Boards = beat.Boards,
+                    Leaves = beat.Leaves,
                 });
             }
         }

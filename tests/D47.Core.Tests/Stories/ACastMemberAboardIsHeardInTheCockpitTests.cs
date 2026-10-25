@@ -29,23 +29,16 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
 
     private static readonly StorySecret Riding = Secret with { Cast = [.. Secret.Cast, Rider] };
 
-    [Theory]
-    [InlineData(StoryStage.ActOne, false)]
-    [InlineData(StoryStage.FunAndGames, false)]
-    [InlineData(StoryStage.Midpoint, true)]
-    [InlineData(StoryStage.BadGuysCloseIn, true)]
-    [InlineData(StoryStage.AllIsLost, false)]
-    [InlineData(StoryStage.Finale, false)]
-    public void AMemberIsAboardBetweenTheirBeatsAndNotOutsideThem(StoryStage stage, bool aboard) =>
-        Assert.Equal(aboard, StoryAboard.Of(Riding, StoryPacing.OneYear, stage, beaconInReach: true, finaleChapter: 1).Contains("rider"));
+    private static readonly Story Picked = new() { Id = Id, Title = Card.Title, PublicLayer = "public" };
 
     [Fact]
     public void ASpanWithoutBeatsRunsTheWholeStoryAndAMemberWithoutOneIsNeverAboard()
     {
         var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = new(null, null) }] };
 
-        Assert.All(Enum.GetValues<StoryStage>(), stage =>
-            Assert.Equal(["rider"], StoryAboard.Of(always, StoryPacing.OneYear, stage, beaconInReach: false, finaleChapter: 4)));
+        Assert.Equal(["rider"], StoryAboard.BySpan(always, Picked));
+        Assert.Equal(["rider"], StoryAboard.BySpan(always, Picked with { Boarded = ["rider"], Left = ["rider"] }));
+        Assert.Empty(StoryAboard.Due(always, Picked, StoryBeats.Keys));
     }
 
     [Fact]
@@ -53,10 +46,12 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
     {
         var week = Secret with { Cast = [Rider with { Aboard = new("breakIntoTwo", "allIsLost") }] };
 
-        Assert.Empty(StoryAboard.Of(week, StoryPacing.OneWeek, StoryStage.ActOne, beaconInReach: false, finaleChapter: null));
-        Assert.Equal(["rider"], StoryAboard.Of(week, StoryPacing.OneWeek, StoryStage.ActOne, beaconInReach: true, finaleChapter: null));
-        Assert.Equal(["rider"], StoryAboard.Of(week, StoryPacing.OneWeek, StoryStage.Midpoint, beaconInReach: true, finaleChapter: null));
-        Assert.Empty(StoryAboard.Of(week, StoryPacing.OneWeek, StoryStage.AllIsLost, beaconInReach: true, finaleChapter: null));
+        Assert.Empty(StoryAboard.Due(week, Picked, StoryClues.BeatKeys(StoryPacing.OneWeek, StoryStage.ActOne, beaconInReach: false, finaleChapter: null)));
+        Assert.Equal(
+            [new StorySwitch("rider", true, "breakIntoTwo")],
+            StoryAboard.Due(week, Picked, StoryClues.BeatKeys(StoryPacing.OneWeek, StoryStage.ActOne, beaconInReach: true, finaleChapter: null)));
+        Assert.Equal(["rider"], StoryAboard.BySpan(week, StoryAboard.Missed(Picked, week, StoryClues.BeatKeys(StoryPacing.OneWeek, StoryStage.Midpoint, true, null))));
+        Assert.Empty(StoryAboard.BySpan(week, StoryAboard.Missed(Picked, week, StoryClues.BeatKeys(StoryPacing.OneWeek, StoryStage.Finale, true, 1))));
     }
 
     [Fact]
@@ -111,7 +106,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
         var key = fixtures.Stories.Current("F1")!.CurrentChapter!;
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", key)!.Aboard);
         Assert.Contains(fixtures.Provider.Requests, request => request.Prompt.History[0].Text.Contains(
-            "Aboard the Commander's ship for this chapter: Vale.", StringComparison.Ordinal));
+            "Aboard the Commander's ship as this chapter opens: Vale.", StringComparison.Ordinal));
     }
 
     [Fact]

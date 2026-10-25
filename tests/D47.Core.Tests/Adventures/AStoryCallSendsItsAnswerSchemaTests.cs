@@ -15,7 +15,7 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
 
     private static readonly AdventureStory Chapter = new("s", "Title", "Public", "Hidden", Chapter: 1, DaysRunning: 3, DaysSinceBeacon: null);
 
-    public static TheoryData<string> Variants => ["short", "cast", "beacon", "away", "finale"];
+    public static TheoryData<string> Variants => ["short", "cast", "beacon", "away", "finale", "switches"];
 
     [Theory]
     [MemberData(nameof(Variants))]
@@ -121,6 +121,25 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         Assert.DoesNotContain("\"speaker\"", (await BeatsCall("short")).Schema.SchemaJson, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task TheSwitchFieldsAreOfferedOnlyWhenDueWithOnlyTheDueIds()
+    {
+        var due = await BeatsCall("switches");
+        var root = Root(due.Schema).GetProperty("properties");
+        var beat = BeatProperties(Root(due.Schema));
+
+        Assert.Equal(["tess"], beat.GetProperty("boards").GetProperty("items").GetProperty("enum").EnumerateArray().Select(id => id.GetString()));
+        Assert.Equal(["tess"], root.GetProperty("openingBoards").GetProperty("items").GetProperty("enum").EnumerateArray().Select(id => id.GetString()));
+        Assert.False(beat.TryGetProperty("leaves", out _));
+        Assert.False(root.TryGetProperty("openingLeaves", out _));
+        Assert.Contains("\"boards\": [\"tess\"]", due.Text[due.Text.LastIndexOf("Answer with one JSON object", StringComparison.Ordinal)..], StringComparison.Ordinal);
+        Assert.Contains("Tess (\"tess\") comes aboard at the catalyst beat.", due.Text, StringComparison.Ordinal);
+
+        var none = (await BeatsCall("cast")).Schema.SchemaJson;
+        Assert.DoesNotContain("boards", none, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("leaves", none, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [MemberData(nameof(Variants))]
     public async Task TheDestinationIsRequiredOnlyForFinaleChapterOne(string variant)
@@ -212,6 +231,11 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         var ask = variant switch
         {
             "cast" => new AdventureAsk(Story: Chapter with { Cast = [new AdventureSpeaker("tess", "Tess", "A pilot")] }),
+            "switches" => new AdventureAsk(Story: Chapter with
+            {
+                Cast = [new AdventureSpeaker("tess", "Tess", "A pilot"), new AdventureSpeaker("vale", "Vale", "A courier")],
+                Due = [new StorySwitch("tess", true, "catalyst")],
+            }),
             "beacon" => new AdventureAsk(Story: Chapter with { Beacon = new AdventureBeacon(1, "Beacon System") }),
             "away" => new AdventureAsk(Story: Chapter with { BeaconAway = new AdventureBeaconAway("Far System", 900, "too far") }),
             "finale" => new AdventureAsk(Story: Chapter with { FinaleChapter = 1 }),

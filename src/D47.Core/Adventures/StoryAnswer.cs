@@ -6,6 +6,12 @@ namespace D47.Core.Adventures;
 /// <summary>A story call's instruction text and the JSON schema its answer must match.</summary>
 internal sealed record StoryCall(string Text, LlmResponseSchema Schema);
 
+/// <summary>
+/// The cast ids a story answer may board and leave at an objective, and whether the opening may carry them too; a direction
+/// with no ids has no field.
+/// </summary>
+internal sealed record StorySwitches(IReadOnlyList<string> Boarding, IReadOnlyList<string> Leaving, bool Opening);
+
 /// <summary>The fields and kinds a story answer has, written once for both the instruction's JSON line and the schema.</summary>
 internal static class StoryAnswer
 {
@@ -121,28 +127,38 @@ internal static class StoryAnswer
             })]).ToJsonString());
 
     /// <summary>The answer's JSON shape as the instruction states it.</summary>
-    internal static string BeatsShape(bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false) =>
+    internal static string BeatsShape(
+        bool speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, bool aboard = false, StorySwitches? switches = null) =>
         "{" + string.Join(", ", SpineFields.Select(field => $"\"{field}\": string"))
         + ", \"opening\": " + OpeningShape(speakers)
-        + ", \"reply\": string, \"beats\": [" + BeatShape(speakers, kinds, ships, objective: false) + "]"
+        + ", \"reply\": string, \"beats\": [" + BeatShape(speakers, kinds, ships, objective: false, switches) + "]"
         + (destination ? ", " + DestinationShape : string.Empty)
-        + (aboard ? ", \"aboard\": [string]" : string.Empty) + "}";
+        + (aboard ? ", \"aboard\": [string]" : string.Empty)
+        + (switches is { Opening: true } ? SwitchesShape(switches, "openingBoards", "openingLeaves") : string.Empty) + "}";
 
     /// <summary>A repair answer's JSON shape: the replacements, and the opening and destination only when they are asked for again.</summary>
-    internal static string ReplacementsShape(bool speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null) =>
-        "{\"replacements\": [" + BeatShape(speakers, kinds, ships, objective: true) + "]"
+    internal static string ReplacementsShape(
+        bool speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null, StorySwitches? switches = null) =>
+        "{\"replacements\": [" + BeatShape(speakers, kinds, ships, objective: true, switches) + "]"
         + (opening ? ", \"opening\": " + OpeningShape(speakers) : string.Empty)
         + (destination ? ", " + DestinationShape : string.Empty) + "}";
+
+    private static string SwitchesShape(StorySwitches? switches, string boards, string leaves) =>
+        (switches?.Boarding is { Count: > 0 } boarding ? $", \"{boards}\": [{Ids(boarding)}]" : string.Empty)
+        + (switches?.Leaving is { Count: > 0 } leaving ? $", \"{leaves}\": [{Ids(leaving)}]" : string.Empty);
+
+    private static string Ids(IReadOnlyList<string> ids) => string.Join("|", ids.Select(id => $"\"{id}\""));
 
     private const string DestinationShape = "\"destination\": {\"system\": string, \"body\": string}";
 
     private static string OpeningShape(bool speakers) => speakers ? "[{\"text\": string, \"speaker\": string}]" : "string";
 
-    private static string BeatShape(bool speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships, bool objective) =>
+    private static string BeatShape(bool speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships, bool objective, StorySwitches? switches) =>
         "{" + (objective ? "\"objective\": number, " : string.Empty) + "\"title\": string, \"function\": string, \"kind\": "
         + string.Join("|", kinds.Select(kind => $"\"{kind}\""))
         + string.Concat(FieldsFor(kinds).Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + ", " + (speakers ? "\"lines\": [{\"text\": string, \"speaker\": string}]" : "\"line\": string")
+        + SwitchesShape(switches, "boards", "leaves")
         + (objective ? string.Empty : ", \"then\": [" + StepShape(kinds, ships) + "]") + "}";
 
     private static string StepShape(IReadOnlyList<string> kinds, IReadOnlyList<string>? ships) =>
@@ -150,15 +166,23 @@ internal static class StoryAnswer
         + string.Concat(FieldsFor(kinds).Select(field => $", \"{field.Name}\": {(field.Name == "ship" && ships is not null ? string.Join("|", ships.Select(ship => $"\"{ship}\"")) + "|null" : Prose(field.Shape))}"))
         + "}";
 
-    /// <summary>The schema of a chapter's answer; a <paramref name="cast"/> with any id adds the "aboard" list of them.</summary>
+    /// <summary>
+    /// The schema of a chapter's answer; a <paramref name="cast"/> with any id adds the "aboard" list of them, and
+    /// <paramref name="switches"/> the boardings and leavings due.
+    /// </summary>
     internal static LlmResponseSchema BeatsSchema(
-        IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool destination, IReadOnlyList<string>? ships = null, IReadOnlyList<string>? cast = null)
+        IReadOnlyList<string>? speakers,
+        IReadOnlyList<string> kinds,
+        bool destination,
+        IReadOnlyList<string>? ships = null,
+        IReadOnlyList<string>? cast = null,
+        StorySwitches? switches = null)
     {
         var answer = new List<(string, JsonNode)>(SpineFields.Select(field => (field, (JsonNode)Text())))
         {
             ("opening", speakers is not null ? Lines(speakers) : Text()),
             ("reply", Text()),
-            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object([.. Beat(speakers, kinds, ships), ("then", new JsonObject { ["type"] = "array", ["items"] = Object(Step(kinds, ships)) })]) }),
+            ("beats", new JsonObject { ["type"] = "array", ["items"] = Object([.. Beat(speakers, kinds, ships, switches), ("then", new JsonObject { ["type"] = "array", ["items"] = Object(Step(kinds, ships)) })]) }),
         };
 
         if (destination)
@@ -168,21 +192,23 @@ internal static class StoryAnswer
 
         if (cast is { Count: > 0 })
         {
-            answer.Add(("aboard", new JsonObject
-            {
-                ["type"] = "array",
-                ["items"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. cast.Select(id => (JsonNode)JsonValue.Create(id)!)]) },
-            }));
+            answer.Add(("aboard", IdList(cast)));
+        }
+
+        if (switches is { Opening: true })
+        {
+            answer.AddRange(Switches(switches, "openingBoards", "openingLeaves"));
         }
 
         return new LlmResponseSchema(BeatsName, Object(answer).ToJsonString());
     }
 
     /// <summary>The schema of a repair answer: each replacement is a beat with the number of the objective it replaces.</summary>
-    internal static LlmResponseSchema ReplacementsSchema(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null)
+    internal static LlmResponseSchema ReplacementsSchema(
+        IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, bool opening, bool destination, IReadOnlyList<string>? ships = null, StorySwitches? switches = null)
     {
         var replacement = new List<(string, JsonNode)> { ("objective", new JsonObject { ["type"] = "integer" }) };
-        replacement.AddRange(Beat(speakers, kinds, ships));
+        replacement.AddRange(Beat(speakers, kinds, ships, switches));
 
         var answer = new List<(string, JsonNode)> { ("replacements", new JsonObject { ["type"] = "array", ["items"] = Object(replacement) }) };
 
@@ -199,7 +225,7 @@ internal static class StoryAnswer
         return new LlmResponseSchema(ReplacementsName, Object(answer).ToJsonString());
     }
 
-    private static List<(string, JsonNode)> Beat(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships)
+    private static List<(string, JsonNode)> Beat(IReadOnlyList<string>? speakers, IReadOnlyList<string> kinds, IReadOnlyList<string>? ships, StorySwitches? switches)
     {
         var beat = new List<(string, JsonNode)>
         {
@@ -208,9 +234,31 @@ internal static class StoryAnswer
         };
         beat.AddRange(Step(kinds, ships));
         beat.Add(speakers is not null ? ("lines", Lines(speakers)) : ("line", Text()));
+        beat.AddRange(Switches(switches, "boards", "leaves"));
 
         return beat;
     }
+
+    /// <summary>A list field for each direction of <paramref name="switches"/> that has ids, holding only those ids.</summary>
+    private static IEnumerable<(string, JsonNode)> Switches(StorySwitches? switches, string boards, string leaves)
+    {
+        if (switches?.Boarding is { Count: > 0 } boarding)
+        {
+            yield return (boards, IdList(boarding));
+        }
+
+        if (switches?.Leaving is { Count: > 0 } leaving)
+        {
+            yield return (leaves, IdList(leaving));
+        }
+    }
+
+    private static JsonObject IdList(IReadOnlyList<string> ids) =>
+        new()
+        {
+            ["type"] = "array",
+            ["items"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. ids.Select(id => (JsonNode)JsonValue.Create(id)!)]) },
+        };
 
     /// <summary>A step's fields: its kind and the fields that kind uses.</summary>
     private static List<(string, JsonNode)> Step(IReadOnlyList<string> kinds, IReadOnlyList<string>? ships)

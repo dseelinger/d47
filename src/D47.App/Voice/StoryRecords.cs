@@ -135,7 +135,7 @@ internal sealed class StoryRecords(
         var commander = gameState.Active?.Identity.FrontierId;
         var story = adventures.Store.Find(commander, key);
         var reached = beat >= 0 ? story?.Beats.ElementAtOrDefault(beat) : null;
-        var voice = story?.StoryId is null ? null : stories.LineVoice(commander, story.SpeakerOf(beat, line));
+        var voice = story?.StoryId is null ? null : stories.LineVoice(commander, story.SpeakerOf(beat, line), beat);
 
         D47.Core.Adventures.AdventureMessages.Post(
             messages, voice?.From ?? personas.Current.Id, story, key, beat, announcement.Text, DateTimeOffset.Now, spoken, pictureOf(voice?.Cast), voice?.Cast?.Picture);

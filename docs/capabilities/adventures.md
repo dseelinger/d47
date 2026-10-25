@@ -610,11 +610,16 @@ description of what they said. A cast member may give their own name only when i
   writes a cast member's clue as that member, from their name and who they are.
 
 **A cast member can be aboard your ship.** A story may give a member a span of its beats, from the one
-they board at to the one they leave at. A chapter is written with the members whose span takes in any
-beat the chapter writer is given for it, and the writer may add others for that chapter alone. While a
-member is aboard, the chapter writer writes their lines as spoken in the cockpit, and their lines are
-spoken without the comms link; their Guardian effects still apply. Whoever the current chapter was
-written with is aboard for every line until the next chapter, clues and replies included.
+they board at to the one they leave at. Boarding and leaving happen at an objective: when the chapter
+writer is given the beat, it places the boarding or leaving on the objective, or the opening, where that
+beat happens, and a chapter that does not reach the beat leaves it for a later one. A chapter written
+after the beat has passed with nothing placed opens with the boarding or leaving already done. A chapter
+opens with the members whose boarding has happened and whose leaving has not, and the writer may add
+others for that chapter alone. While a member is aboard, the chapter writer writes their lines as spoken
+in the cockpit, and their lines are spoken without the comms link; their Guardian effects still apply. A
+chapter's line is voiced for who is aboard at its own objective. Clues, reactions and replies are voiced
+for who is aboard at the last objective you completed. A boarding or leaving counts for the next chapter
+once its objective has fired.
 
 Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line

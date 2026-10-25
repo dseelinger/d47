@@ -652,12 +652,20 @@ public sealed record AdventureBeat
         init => Lines = [(Lines.Count > 0 ? Lines[0] : new AdventureLine { Text = string.Empty }) with { Speaker = value }, .. Lines.Skip(1)];
     }
 
+    /// <summary>The story cast ids who come aboard the ship at this beat, from its own lines on.</summary>
+    public IReadOnlyList<string> Boards { get; init; } = [];
+
+    /// <summary>The story cast ids who leave the ship at this beat, from its own lines on.</summary>
+    public IReadOnlyList<string> Leaves { get; init; } = [];
+
     public bool Equals(AdventureBeat? other) =>
         other is not null
         && Title == other.Title
         && Function == other.Function
         && Steps.SequenceEqual(other.Steps)
-        && Lines.SequenceEqual(other.Lines);
+        && Lines.SequenceEqual(other.Lines)
+        && Boards.SequenceEqual(other.Boards)
+        && Leaves.SequenceEqual(other.Leaves);
 
     public override int GetHashCode() => HashCode.Combine(Title, Function, Steps.Count, Steps.Count > 0 ? Steps[0] : null, Lines.Count > 0 ? Lines[0] : null);
 
@@ -856,8 +864,14 @@ public sealed record Adventure
     /// <summary>The stock story this adventure is a chapter of, or null.</summary>
     public string? StoryId { get; init; }
 
-    /// <summary>The story's cast ids aboard the ship for this chapter; null when the chapter does not record them.</summary>
+    /// <summary>The story's cast ids aboard the ship as this chapter opens; null when the chapter does not record them.</summary>
     public IReadOnlyList<string>? Aboard { get; init; }
+
+    /// <summary>The story cast ids who come aboard at the opening, from its lines on.</summary>
+    public IReadOnlyList<string> OpeningBoards { get; init; } = [];
+
+    /// <summary>The story cast ids who leave the ship at the opening, from its lines on.</summary>
+    public IReadOnlyList<string> OpeningLeaves { get; init; } = [];
 
     /// <summary>
     /// What was actually said about this story, oldest first (asked for 2026-08-22) — the beats as the
