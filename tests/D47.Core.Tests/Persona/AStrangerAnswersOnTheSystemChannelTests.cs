@@ -90,6 +90,7 @@ public class AStrangerAnswersOnTheSystemChannelTests
         Assert.Equal(VoiceRole.Comms, addressed.Role);
         Assert.Equal("Vance", addressed.Name);
         Assert.Equal("Like a dream, friend.", Result(events).Text);
+        Assert.Null(addressed.HeardAs);
 
         var request = provider.LastRequest!;
         Assert.Equal(Background, request.Model);
@@ -102,6 +103,27 @@ public class AStrangerAnswersOnTheSystemChannelTests
 
         Assert.Equal("Vance", Assert.Single(next.OfType<TurnEvent.Addressed>()).Name);
         Assert.Contains("Vance: Like a dream, friend.", provider.LastRequest!.Prompt.Persona, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ARealCommsNpcsTurnCarriesTheMessageTheyWereHeardIn()
+    {
+        var provider = FakeLlmProvider.Answering("State your business.");
+        var (loop, _, world) = Build(provider, selected: "Sacred Fire BNH-T2F");
+        world.Roster.Heard(
+            IncomingMessages.VoicedAs("Sacred Fire BNH-T2F", VoiceRole.TowerControl, "npc", isPlayer: false, allegiance: null) with
+            {
+                Text = "Docking is open.",
+            },
+            "c_emma",
+            At);
+
+        var events = await OnComms.SayAsync(loop, "requesting docking");
+
+        var heardAs = Assert.IsType<Announcement>(Assert.Single(events.OfType<TurnEvent.Addressed>()).HeardAs);
+        Assert.Equal(VoiceRole.TowerControl, heardAs.Voice);
+        Assert.Equal("Sacred Fire BNH-T2F", heardAs.Speaker);
+        Assert.Equal("npc", heardAs.CommsChannel);
     }
 
     [Fact]

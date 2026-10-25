@@ -3150,7 +3150,8 @@ public sealed class AppHost : IDisposable
                 spend,
                 PriceTable.Default,
                 loggerFactory.CreateLogger<ChatterLine>(),
-                cancellationToken)));
+                cancellationToken),
+            heardAs => late.Host?.AccentHeardAs(heardAs)));
 
         // The held target's NPC pilot.
         turns.Lines.Add(new TargetLine(
@@ -3168,7 +3169,9 @@ public sealed class AppHost : IDisposable
                 spend,
                 PriceTable.Default,
                 loggerFactory.CreateLogger<TargetLine>(),
-                cancellationToken)));
+                cancellationToken),
+            () => late.Host?.Announcer.NpcsHere,
+            heardAs => late.Host?.AccentHeardAs(heardAs)));
 
         // The Narrator, while the STORY channel offers it.
         turns.Lines.Add(new NarratorLine(
@@ -5966,10 +5969,23 @@ public sealed class AppHost : IDisposable
     public Core.Journal.GameStatus LiveStatus => Writer.LiveStatus();
 
     /// <summary>The cast belonging to whoever speaks for an announcement's slot.</summary>
-    private VoiceCast CastFor(Announcement announcement) =>
-        Speech.Casting.Of(VoiceGroups.ProviderFor(
-            Settings.Current.Speech,
-            VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
+    private VoiceCast CastFor(Announcement announcement) => CastFor(announcement, Settings.Current.Speech, Speech.Casting.Of);
+
+    /// <summary>The cast <paramref name="casting"/> gives the provider that speaks for an announcement's slot.</summary>
+    internal static VoiceCast CastFor(Announcement announcement, SpeechSettings speech, Func<string, VoiceCast> casting) =>
+        casting(VoiceGroups.ProviderFor(speech, VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)));
+
+    /// <summary>The accent of the voice an incoming message resolves to, assigning its sender that voice on first use.</summary>
+    private string? AccentHeardAs(Announcement heardAs) => AccentHeardAs(heardAs, CastFor);
+
+    /// <inheritdoc cref="AccentHeardAs(Announcement)"/>
+    internal static string? AccentHeardAs(Announcement heardAs, Func<Announcement, VoiceCast> castFor)
+    {
+        ArgumentNullException.ThrowIfNull(castFor);
+
+        var cast = castFor(heardAs);
+        return cast.AccentOf(HeardVoiceOf(heardAs, _ => cast).Voice.VoiceId);
+    }
 
     /// <summary>Whether a web lookup could actually be run right now.</summary>
     private bool CanSearch =>
@@ -6073,6 +6089,16 @@ public sealed class AppHost : IDisposable
             return restore;
         }
 
+        // A comms NPC answers in the voice, and from the voice group, their incoming message is heard in.
+        if (addressed.HeardAs is { } heardAs)
+        {
+            (Voice.Voice, Voice.SpeakingAs) = HeardVoiceOf(heardAs, CastFor);
+            Voice.Picture = AddressedPicture(addressed);
+            Voice.CaptionSpeaker = addressed.Name;
+
+            return restore;
+        }
+
         // An invented speaker keeps the voice their exchange was heard in.
         var provider = VoiceGroups.ProviderFor(Settings.Current.Speech, VoiceGroups.Of(addressed.Role));
 
@@ -6088,6 +6114,18 @@ public sealed class AppHost : IDisposable
         Voice.CaptionSpeaker = addressed.Name;
 
         return restore;
+    }
+
+    /// <summary>
+    /// The voice a reply is spoken in and the role whose voice group synthesises it: those <see cref="D47.App.Voice.Announcer"/>
+    /// gives the incoming message <paramref name="heardAs"/>.
+    /// </summary>
+    internal static (VoiceSelection Voice, VoiceRole SpeakingAs) HeardVoiceOf(Announcement heardAs, Func<Announcement, VoiceCast> castFor)
+    {
+        ArgumentNullException.ThrowIfNull(heardAs);
+        ArgumentNullException.ThrowIfNull(castFor);
+
+        return (SpeakerAccent.VoiceOf(castFor(heardAs), heardAs), heardAs.Voice);
     }
 
     /// <summary>

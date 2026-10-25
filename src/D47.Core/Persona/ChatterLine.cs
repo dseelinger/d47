@@ -11,10 +11,11 @@ namespace D47.Core.Persona;
 /// </summary>
 /// <param name="system">The Commander's current star system.</param>
 /// <param name="model">The model replies are written on, or null for the turn loop's own.</param>
-/// <param name="accentOf">The accent a voice id speaks with, or null for none.</param>
+/// <param name="accentOf">The accent an invented speaker's voice id speaks with, or null for none.</param>
 /// <param name="facts">What the ship can prove about itself, which a reply may not contradict.</param>
 /// <param name="roster">The NPCs heard here, which keep the personality written for each, or null for none.</param>
 /// <param name="writePersonality">Writes one NPC's personality on the background model, or null for none.</param>
+/// <param name="accentHeardAs">The accent of the voice an incoming message resolves to, or null for none.</param>
 public sealed class ChatterLine(
     Func<string?> system,
     Func<string?>? model = null,
@@ -22,7 +23,8 @@ public sealed class ChatterLine(
     Func<ShipFacts>? facts = null,
     ILogger? logger = null,
     Func<NpcsHeardHere?>? roster = null,
-    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null) : ILine
+    Func<NpcHeard, CancellationToken, Task<string?>>? writePersonality = null,
+    Func<Announcement, string?>? accentHeardAs = null) : ILine
 {
     private const string Commander = "Commander";
 
@@ -155,14 +157,19 @@ public sealed class ChatterLine(
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
-    /// <summary>A real comms NPC answers from its family and personality; what it said is never held or sent.</summary>
+    /// <summary>
+    /// A real comms NPC answers from its family and personality, in the voice its message was heard in; what it said is
+    /// never held or sent.
+    /// </summary>
     private async Task<LineDecision> RouteCommsNpcAsync(NpcHeard npc, string input, CancellationToken cancellationToken)
     {
         var question = input.Trim();
 
         var personality = await PersonalityAsync(npc, cancellationToken).ConfigureAwait(false);
 
-        var accent = SpeakerAccent.Sentence(accentOf?.Invoke(npc.VoiceId));
+        var heardAs = npc.HeardAs;
+
+        var accent = SpeakerAccent.Sentence(heardAs is null ? null : accentHeardAs?.Invoke(heardAs));
 
         var trait = personality is null ? string.Empty : "\nYour personality: " + personality;
 
@@ -186,7 +193,8 @@ public sealed class ChatterLine(
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
-                Screen: reply => Screened(reply, npc.Name, exchange: null)),
+                Screen: reply => Screened(reply, npc.Name, exchange: null),
+                HeardAs: heardAs),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 

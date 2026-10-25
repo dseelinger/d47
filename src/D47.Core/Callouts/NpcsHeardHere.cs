@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using D47.Core.Audio;
 
 namespace D47.Core.Callouts;
 
@@ -11,7 +12,8 @@ public enum NpcKind
 
 /// <summary>
 /// One NPC heard in the current system. The family is the canned one for a comms NPC, or null. The
-/// personality is written once for the stay, or null before it is.
+/// personality is written once for the stay, or null before it is. The role, channel and allegiance are
+/// what the NPC's message was voiced with.
 /// </summary>
 public sealed record NpcHeard(
     string Name,
@@ -19,7 +21,16 @@ public sealed record NpcHeard(
     string? Family,
     string? VoiceId,
     DateTimeOffset LastHeardAt,
-    string? Personality = null);
+    string? Personality = null,
+    VoiceRole Role = VoiceRole.Comms,
+    string? Channel = null,
+    string? Allegiance = null)
+{
+    /// <summary>The message a comms NPC was heard in, with only its voice fields, or null for an invented NPC.</summary>
+    public Announcement? HeardAs => Kind == NpcKind.Comms && Channel is { } channel
+        ? IncomingMessages.VoicedAs(Name, Role, channel, isPlayer: false, Allegiance)
+        : null;
+}
 
 /// <summary>
 /// The NPCs heard in the current system, newest first. An NPC leaves on a jump or a sign-off and on
@@ -123,7 +134,16 @@ public sealed partial class NpcsHeardHere
 
         lock (_lock)
         {
-            _heard[name] = new NpcHeard(name, kind, family, voiceId, at, _heard.GetValueOrDefault(name)?.Personality);
+            _heard[name] = new NpcHeard(
+                name,
+                kind,
+                family,
+                voiceId,
+                at,
+                _heard.GetValueOrDefault(name)?.Personality,
+                announcement.Voice,
+                announcement.CommsChannel,
+                announcement.SpeakerAllegiance);
         }
     }
 

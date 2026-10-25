@@ -16,6 +16,10 @@ namespace D47.Core.Persona;
 /// <param name="LiveState">What this speaker knows of the game right now, in place of the ship AI's live game state.</param>
 /// <param name="Voice">The speaker's own voice, or null for their role's.</param>
 /// <param name="Picture">The picture name the speaker's replies are shown with, or null to choose one by role.</param>
+/// <param name="HeardAs">
+/// The incoming message a comms speaker's replies are voiced as, built by <see cref="Callouts.IncomingMessages.VoicedAs"/>,
+/// or null for any other speaker.
+/// </param>
 public sealed record Speaker(
     VoiceRole Role,
     string Name,
@@ -29,7 +33,8 @@ public sealed record Speaker(
     string? Cast = null,
     Func<string?>? LiveState = null,
     Characters.CharacterVoice? Voice = null,
-    string? Picture = null);
+    string? Picture = null,
+    Callouts.Announcement? HeardAs = null);
 
 /// <summary>What a line makes of one utterance.</summary>
 public abstract record LineDecision

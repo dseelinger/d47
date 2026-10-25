@@ -191,12 +191,10 @@ public sealed partial class IncomingMessages : ICallout
             && authority.StartsWith("$ShipName_Police", StringComparison.OrdinalIgnoreCase)
             && frontiers)
         {
-            return new Announcement(AuthorityCannedKey, text)
+            return VoicedAs(sender, VoiceRole.Comms, channel, isPlayer: false, allegiance: null) with
             {
-                Voice = VoiceRole.Comms,
-                Speaker = sender,
-                SpeakerIsPlayer = false,
-                CommsChannel = channel,
+                Key = AuthorityCannedKey,
+                Text = text,
                 Transcript = $"{sender}: {text}\n",
                 Cooldown = TimeSpan.Zero,
             };
@@ -207,24 +205,24 @@ public sealed partial class IncomingMessages : ICallout
             ? CannedKeyPrefix + FamilyOf(journalEvent.String("Message")!)
             : $"message.{channel}";
 
-        return new Announcement(key, Spoken(sender, text, isPlayer))
-        {
+        return VoicedAs(
+            sender,
+
             // A carrier's traffic is its tower talking, and the Commander has cast a voice for it.
-            Voice = IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,
-            Speaker = sender,
-            SpeakerIsPlayer = isPlayer,
+            IsMyCarrier(sender) ? VoiceRole.TowerControl : VoiceRole.Comms,
+            channel,
+            isPlayer,
 
             // Only the station the Commander is actually docked at names an allegiance — a stranger on
             // the open channel is not the local controller (#68).
-            SpeakerAllegiance = !isPlayer
+            !isPlayer
                 && DockedStationName() is { Length: > 0 } docked
                 && string.Equals(docked, sender, StringComparison.OrdinalIgnoreCase)
                 ? DockedStationAllegiance()
-                : null,
-
-            // Which slot pays for this line, and it is not derivable from the boolean above: a squadron mate
-            // and a stranger in local are both players (Phase 57).
-            CommsChannel = channel,
+                : null) with
+        {
+            Key = key,
+            Text = Spoken(sender, text, isPlayer),
 
             // Written down with the sender on it, whoever they are.
             Transcript = sender is { Length: > 0 } named
@@ -235,6 +233,24 @@ public sealed partial class IncomingMessages : ICallout
             Cooldown = TimeSpan.Zero,
         };
     }
+
+    /// <summary>
+    /// A message from <paramref name="sender"/> with only the fields that decide its voice set. Every incoming message
+    /// with a sender is built from this, and so is the reply of someone the Commander talks to on comms.
+    /// </summary>
+    /// <param name="channel">
+    /// Which slot pays for the line, which <paramref name="isPlayer"/> does not decide: a squadron mate and a stranger
+    /// in local are both players (Phase 57).
+    /// </param>
+    public static Announcement VoicedAs(string sender, VoiceRole voice, string channel, bool isPlayer, string? allegiance) =>
+        new($"message.{channel}", string.Empty)
+        {
+            Voice = voice,
+            Speaker = sender,
+            SpeakerIsPlayer = isPlayer,
+            SpeakerAllegiance = allegiance,
+            CommsChannel = channel,
+        };
 
     /// <summary>What is actually said out loud.</summary>
     private static string Spoken(string sender, string text, bool isPlayer) =>
