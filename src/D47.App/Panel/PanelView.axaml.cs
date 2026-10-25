@@ -184,6 +184,13 @@ public partial class PanelView : UserControl, IPanelTabHost
         Bubbles.AddHandler(PointerMovedEvent, OnBubblesPointerMoved, handledEventsToo: true);
 
         TitleLine.SizeChanged += (_, _) => SizeSearchRow();
+        CommsFull.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == Controls.CommsIndicator.StateProperty)
+            {
+                SizeSearchRow();
+            }
+        };
 
         // Tunnelling, so this runs before the TextBox's own key handling inserts a newline or moves the
         // caret on Up/Down.
@@ -4093,6 +4100,15 @@ public partial class PanelView : UserControl, IPanelTabHost
             }
         }
 
+        var comms = 0.0;
+
+        if (CommsFull.IsVisible)
+        {
+            CommsFull.MaxWidth = Controls.CommsIndicator.FullMaxWidth;
+            CommsFull.Measure(Size.Infinity);
+            comms = CommsFull.DesiredSize.Width;
+        }
+
         // Down the left, the chrome shares the title line too.
         if (ReferenceEquals(ChromeRow.Parent, TitleLine))
         {
@@ -4107,8 +4123,14 @@ public partial class PanelView : UserControl, IPanelTabHost
             ? TranscriptSearchWidth
             : (PagePane.Child as IFilterablePage)?.FilterWidth ?? Math.Clamp(line * 0.32, 240, 420);
 
-        var room = line - PageTitle.DesiredSize.Width - Gap - SearchRow.Margin.Left - actions;
+        var room = line - PageTitle.DesiredSize.Width - Gap - SearchRow.Margin.Left - actions - comms;
         var width = Math.Max(90, Math.Min(field, room));
+
+        // Past the field's floor, the read-only indicator gives the rest, so no action overlaps the field.
+        if (comms > 0 && room < width)
+        {
+            CommsFull.MaxWidth = Math.Max(0, comms - CommsFull.Margin.Left - (width - room));
+        }
 
         if (SearchInput.Width == width)
         {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+In a narrow main window the search field's buttons no longer overlap the field. The field narrows first, and once it is at its narrowest the comms indicator narrows instead.
+
 Each push-to-talk now has one destination. Push-to-talk and the Ask box reach your core only, even when you start with "Captain", a pilot's or a stranger's name. The comms push-to-talk reaches whoever the comms selection names: the captain or the tower, the targeted pilot, a stranger heard in the system, a story's cast member, a hired pilot or one of your characters. On comms nothing is routed: "landing gear" is said to them, not carried out. With no one on the selected channel your core says so without asking the model, as in "No one on Story.", and with no channel open it says "No comms channel is open." There is no 90-second window and no four-reply limit any more, and "that's all" no longer ends a conversation. A hail moves the selection to the stranger who hailed you, and a stranger who signs off leaves the System channel. A passer-by who never noticed you answers when you select them. In wake-word mode, an answer from someone else no longer opens the wake window, so a reply to them needs the comms key.
 
 The setup wizard's Talk button step now offers an optional comms key, on a key, a stick button or both. The Comms help page explains the two keys, the channels, strangers and characters, range, and that real Commanders are never on a channel, and its walkthrough covers binding the comms key. The setup guide has a section on it.

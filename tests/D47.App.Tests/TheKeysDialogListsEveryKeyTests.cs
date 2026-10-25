@@ -52,7 +52,7 @@ public sealed class TheKeysDialogListsEveryKeyTests
             .ToArray();
 
         Assert.Equal(
-            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Overlay", "Headset overlay", "Galaxy map", "Hull viewer"],
+            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Comms channel keys", "Overlay", "Headset overlay", "Galaxy map", "Hull viewer"],
             names);
     }
 

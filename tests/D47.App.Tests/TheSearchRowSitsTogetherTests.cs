@@ -116,9 +116,12 @@ public class TheSearchRowSitsTogetherTests
         Assert.True(next.Right <= copy.Left, "the steppers are not left of the page actions");
     }
 
-    /// <summary>The Transcript's field is 340 wide at any width with room for it, and the row pushed to the title line's right-hand end (#430).</summary>
+    /// <summary>
+    /// The Transcript's field is 340 wide at any width with room for it, and the row ends 16px short of the comms
+    /// indicator, which ends the title line (#430, #1602).
+    /// </summary>
     [AvaloniaTheory]
-    [InlineData(1024)]
+    [InlineData(1200)]
     [InlineData(1400)]
     [InlineData(2400)]
     public void TheTranscriptsFieldIsAFixedWidth(double width)
@@ -128,10 +131,35 @@ public class TheSearchRowSitsTogetherTests
         var field = panel.GetControl<TextBox>("SearchInput");
         var row = panel.GetControl<DockPanel>("SearchRow");
         var bar = panel.GetControl<DockPanel>("TitleLine");
+        var comms = panel.GetControl<Control>("CommsFull");
         var right = row.TranslatePoint(new Point(row.Bounds.Width, 0), bar)!.Value.X;
+        var commsLeft = comms.TranslatePoint(default, bar)!.Value.X;
 
         // Within the pixel that layout rounding moves an edge by.
         Assert.InRange(field.Bounds.Width - PanelView.TranscriptSearchWidth, -1, 1);
-        Assert.InRange(bar.Bounds.Width - right, -1, 1);
+        Assert.InRange(commsLeft - 16 - right, -1, 1);
+        Assert.InRange(bar.Bounds.Width - (commsLeft + comms.Bounds.Width), -1, 1);
+    }
+
+    /// <summary>A narrow pane narrows the field to its floor and then the comms indicator, so no action overlaps the field (#1602).</summary>
+    [AvaloniaFact]
+    public void TheCommsIndicatorGivesAfterTheField()
+    {
+        var panel = Searching(480);
+
+        var field = Where(panel, "SearchInput");
+
+        foreach (var name in new[] { "SearchPrevious", "SearchNext", "CopyButton" })
+        {
+            Assert.False(Where(panel, name).Intersects(field), $"{name} overlaps the field");
+        }
+
+        var bar = panel.GetControl<DockPanel>("TitleLine");
+        var row = panel.GetControl<DockPanel>("SearchRow");
+        var comms = panel.GetControl<Control>("CommsFull");
+
+        Assert.True(
+            row.TranslatePoint(new Point(row.Bounds.Width, 0), bar)!.Value.X <= comms.TranslatePoint(default, bar)!.Value.X,
+            "the search row runs under the indicator");
     }
 }

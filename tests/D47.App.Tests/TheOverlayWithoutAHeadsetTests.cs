@@ -569,7 +569,7 @@ public class TheOverlayWithoutAHeadsetTests
         Assert.Equal(280, rule.Bounds.X);
         Assert.Equal(1, rule.Bounds.Width);
 
-        Assert.Equal(281, view.GetControl<DockPanel>("Frame").Bounds.X - 28);
+        Assert.Equal(281, view.GetControl<DockPanel>("Frame").TranslatePoint(default, view)!.Value.X - 28);
 
         overlay.Close();
     }
