@@ -21,7 +21,9 @@ public sealed record SetupChoices(
     string Listening,
     string? TalkKey,
     string? TalkButton,
-    string TalkMode)
+    string TalkMode,
+    string? CommsKey = null,
+    string? CommsButton = null)
 {
     /// <summary>The saved settings, with a provider id no catalog knows read as that catalog's fallback.</summary>
     public static SetupChoices From(D47Settings settings) => new(
@@ -30,7 +32,9 @@ public sealed record SetupChoices(
         SttProviderCatalog.Selected(settings.Listening.Provider).Id,
         settings.Listening.PushToTalkKey,
         settings.Listening.PushToTalkButton,
-        settings.Listening.Mode);
+        settings.Listening.Mode,
+        settings.Listening.CommsPushToTalkKey,
+        settings.Listening.CommsPushToTalkButton);
 
     public string For(SetupSlot slot) => slot switch
     {
@@ -200,7 +204,8 @@ public static class FirstRun
 
     private static bool IsListeningKey(string key) =>
         key is ListeningCapability.ProviderKey or ListeningCapability.PushToTalkKeyKey
-            or ListeningCapability.PushToTalkButtonKey or ListeningCapability.ModeKey;
+            or ListeningCapability.PushToTalkButtonKey or ListeningCapability.ModeKey
+            or ListeningCapability.CommsPushToTalkKeyKey or ListeningCapability.CommsPushToTalkButtonKey;
 
     private static (string Key, string? Value)[] Changes(SetupChoices choices) =>
     [
@@ -210,6 +215,8 @@ public static class FirstRun
         (ListeningCapability.PushToTalkKeyKey, choices.TalkKey),
         (ListeningCapability.PushToTalkButtonKey, choices.TalkButton),
         (ListeningCapability.ModeKey, choices.TalkMode),
+        (ListeningCapability.CommsPushToTalkKeyKey, choices.CommsKey),
+        (ListeningCapability.CommsPushToTalkButtonKey, choices.CommsButton),
     ];
 
     /// <summary>Saves the effective choices, providers first, and returns any setting that refused. Without a microphone the listening settings are left as they are.</summary>

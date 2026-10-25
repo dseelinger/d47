@@ -410,7 +410,7 @@ public sealed class SetupWizard : ModalDialog
             ("Voice", "How D47 sounds when it speaks."),
             ("Listening", "How D47 turns your voice into text."),
             ("Keys", "API keys from your providers, if needed."),
-            ("Talk button", "The button you hold to talk."),
+            ("Talk button", "The button you hold to talk, and an optional comms button."),
         ];
 
         for (var i = 0; i < outline.Length; i++)
@@ -725,6 +725,44 @@ public sealed class SetupWizard : ModalDialog
         stack.Children.Add(keyboard);
         stack.Children.Add(message);
 
+        // The comms key.
+        var comms = new StackPanel { Spacing = 10 };
+        comms.Children.Add(Head("Comms key", "Optional"));
+        comms.Children.Add(Help(
+            "Talk to whoever the comms channel names, such as a carrier captain, a target or a character, "
+            + "instead of to D47."));
+
+        var commsButton = HotasButton.Parse(Choices.CommsButton);
+        var waitingForCommsStick = _capturing == ListeningCapability.CommsPushToTalkButtonKey;
+
+        comms.Children.Add(BindLine(
+            "SetupCommsStick",
+            waitingForCommsStick
+                ? "Press a button on your stick…"
+                : _switches is null ? "No controllers" : commsButton?.Describe() ?? "None",
+            waitingForCommsStick,
+            canBind: _switches is not null,
+            bound: commsButton is not null,
+            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkButtonKey, message),
+            clear: () => Choose(Choices with { CommsButton = null })));
+
+        var waitingForCommsKey = _capturing == ListeningCapability.CommsPushToTalkKeyKey;
+
+        comms.Children.Add(BindLine(
+            "SetupCommsKey",
+            waitingForCommsKey
+                ? "Press a key…"
+                : Choices.CommsKey is { Length: > 0 } commsKey ? Gestures.Describe(commsKey) : "None",
+            waitingForCommsKey,
+            canBind: true,
+            bound: Choices.CommsKey is { Length: > 0 },
+            bind: () => _ = CaptureAsync(ListeningCapability.CommsPushToTalkKeyKey, message),
+            clear: () => Choose(Choices with { CommsKey = null })));
+
+        comms.Children.Add(Link("COMMS GUIDE ›", "Opens the comms page in your browser", Guide("capabilities/comms", "choose-who-your-comms-key-reaches")));
+
+        stack.Children.Add(comms);
+
         // The mode.
         var mode = new StackPanel { Spacing = 10 };
         mode.Children.Add(Head("How it listens", null));
@@ -807,7 +845,7 @@ public sealed class SetupWizard : ModalDialog
         _capturing = key;
         Render();
 
-        var stick = key == ListeningCapability.PushToTalkButtonKey;
+        var stick = key is ListeningCapability.PushToTalkButtonKey or ListeningCapability.CommsPushToTalkButtonKey;
 
         var caught = await BindCapture.RunUntilFreeAsync(
             top,
@@ -834,13 +872,15 @@ public sealed class SetupWizard : ModalDialog
         {
             Render();
         }
-        else if (stick)
-        {
-            Choose(Choices with { TalkButton = pressed.Value });
-        }
         else
         {
-            Choose(Choices with { TalkKey = pressed.Value });
+            Choose(key switch
+            {
+                ListeningCapability.PushToTalkButtonKey => Choices with { TalkButton = pressed.Value },
+                ListeningCapability.CommsPushToTalkButtonKey => Choices with { CommsButton = pressed.Value },
+                ListeningCapability.CommsPushToTalkKeyKey => Choices with { CommsKey = pressed.Value },
+                _ => Choices with { TalkKey = pressed.Value },
+            });
         }
     }
 
@@ -997,11 +1037,25 @@ public sealed class SetupWizard : ModalDialog
             parts.Add("None");
         }
 
+        var comms = new List<string>();
+
+        if (HotasButton.Parse(Choices.CommsButton) is { } commsButton)
+        {
+            comms.Add(commsButton.Describe());
+        }
+
+        if (Choices.CommsKey is { Length: > 0 } commsKey)
+        {
+            comms.Add(Gestures.Describe(commsKey));
+        }
+
         var index = TalkModes.ToList().FindIndex(
             entry => string.Equals(entry.Mode, Choices.TalkMode, StringComparison.OrdinalIgnoreCase));
         var mode = index >= 0 ? TalkModes[index].Label : Choices.TalkMode;
 
-        return $"{string.Join(" or ", parts)} · {mode}";
+        var summary = $"{string.Join(" or ", parts)} · {mode}";
+
+        return comms.Count == 0 ? summary : $"{summary} · Comms {string.Join(" or ", comms)}";
     }
 
     private Button SummaryTile(string label, string value, string? note, Step step, bool enabled = true)

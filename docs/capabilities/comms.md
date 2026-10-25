@@ -19,11 +19,43 @@ nav_order: 139
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to sending a message other people can read.</p>
+<p class="intro">Bind the comms key, choose who it reaches, then talk to them. Sending a message other people can read comes after.</p>
 <section>
-<h2><span class="num">1</span> Turn on key injection, then say what to send.</h2>
+<h2><span class="num">1</span> Bind the comms key.</h2>
+<p class="say">In Settings, find Comms push-to-talk, press BIND, then press the key or stick button you want.</p>
+<p class="expect">The row shows your key or button. It is unbound until you do this, and the setup wizard offers it on its Talk button step.</p>
+<svg viewBox="0 0 880 136" role="img" aria-label="The comms push-to-talk row with a key bound">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">Comms push-to-talk</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">your key or stick button</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">Push-to-talk reaches your core. The comms key reaches whoever the channel names.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">2</span> Choose who it reaches.</h2>
+<p class="say">Say "comms Tower".</p>
+<p class="expect">D47 says the selection in the fewest words, such as "Carrier, Tower."</p>
+<svg viewBox="0 0 880 136" role="img" aria-label="The selection read back after choosing a channel and a name">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface-alt)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">Carrier, Tower.</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">With no one on the channel, D47 says so and your core answers.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">3</span> Hold the comms key and talk.</h2>
+<p class="say">Hold the comms key and say "are you there".</p>
+<p class="expect">The selected person answers in their own voice, with no time limit.</p>
+<svg viewBox="0 0 880 136" role="img" aria-label="A comms question answered by the selected person">
+ <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+ <text x="44" y="57" font-size="17" fill="var(--text)">are you there</text>
+ <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Tower</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">Your words go to them, not to your core, so a command is said and not carried out.</text>
+</svg>
+</section>
+<section>
+<h2><span class="num">4</span> Turn on key injection, then say what to send.</h2>
 <p class="say">Turn on key injection, then say what to send, such as "tell the wing I am on my way".</p>
-<p class="expect">D47 names the channel and the message before it types anything.</p>
+<p class="expect">D47 names the channel and the message before it types anything. The message then appears in Elite's chat for other people to read; nothing else D47 does is visible to them.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a question typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">tell the wing I am on my way</text>
@@ -33,7 +65,7 @@ nav_order: 139
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> Check the channel before it goes.</h2>
+<h2><span class="num">5</span> Check the channel before it goes.</h2>
 <p class="say">Check the channel and the message it read back.</p>
 <p class="expect">The channel is local, wing, squadron or a direct message, and the words are the ones you said.</p>
 <svg viewBox="0 0 880 190" role="img" aria-label="The confirmation showing the channel and the exact text before it is sent">
@@ -43,16 +75,6 @@ nav_order: 139
  <text x="44" y="100" font-size="15" font-weight="700" fill="var(--text-muted)">MESSAGE</text>
  <text x="200" y="100" font-size="17" fill="var(--text)">on my way</text>
  <text x="44" y="148" font-size="16" fill="var(--text-muted)">Local, wing, squadron or a direct message. It says which before it types.</text>
-</svg>
-</section>
-<section>
-<h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Read the message once more before you let it go.</p>
-<p class="expect">The message appears in Elite's chat for other people to read; nothing else D47 does is visible to them.</p>
-<svg viewBox="0 0 880 152" role="img" aria-label="This is the one thing other people see.">
- <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
- <text x="440" y="62" text-anchor="middle" font-size="19" font-weight="800" fill="var(--danger)">This is the one thing other people see.</text>
- <text x="440" y="100" text-anchor="middle" font-size="16" fill="var(--text)">Everything else D47 does is private to your machine. A message is not. It is worth reading twice.</text>
 </svg>
 </section>
 </div></div>
@@ -266,6 +288,33 @@ Story, no one.
 
 Only you can change the selection, by key, stick button or your own words. The AI cannot,
 so text from the game cannot change who your voice reaches.
+
+### The two keys
+
+Push-to-talk always reaches your core. The comms push-to-talk always reaches the selection. Neither
+changes the other's meaning: the Ask box and push-to-talk work the same however the channel is set.
+You can bind the comms key in Settings, or on the Talk button step of the setup wizard.
+
+### Strangers and characters
+
+**Characters** are the people you or a story defined: the carrier's captain and tower, a story's
+cast, a hired pilot, and any you add on the [Characters](characters.md) page. They keep the name,
+voice and notes you gave them.
+
+**Strangers** are NPCs D47 makes up, such as a pilot on your target or a voice heard on comms in this
+system. D47 writes each one a short personality. Strangers appear on the Target and System
+channels.
+
+### Range
+
+A character who is aboard is clear on the intercom. One elsewhere gets fainter with distance, as
+[Characters](characters.md) describes, and the carrier's crew is out of range beyond 500 light years.
+A stranger on comms in your system is always in range.
+
+### Real Commanders are never on a channel
+
+Other players are never on a channel and D47 never writes lines for them. The comms key reaches
+characters and strangers only. To reach a real Commander, send a message, as below.
 
 ### Channel keys
 

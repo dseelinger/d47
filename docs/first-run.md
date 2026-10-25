@@ -61,8 +61,16 @@ is not stored. **SKIP SETUP** and Esc close it with every setting unchanged. Not
    Settings: no AI for conversation, Edge Neural for voice, This computer for listening.
 6. **Talk button.** The button you hold to talk. The default is the Scroll Lock key, held to talk.
    A button on a stick or throttle is easier to reach in flight. Setup says when Elite already
-   binds the same button or key to something else.
+   binds the same button or key to something else. The same step offers an optional **Comms key**:
+   a second button that sends what you say to whoever your comms channel names, such as a carrier
+   captain or a character, instead of to D47. See [Comms](capabilities/comms.html#choose-who-your-comms-key-reaches).
 7. **Ready.** Shows each choice. Select one to change it. **START** saves. A link under the summary opens the D47 Discord in your browser.
+
+### The comms key
+
+The Talk button step also offers a comms key, on a key, a stick button or both. It is unbound
+unless you bind it. Hold it to speak to whoever the comms channel names instead of to D47, as
+[Comms](capabilities/comms.html#choose-who-your-comms-key-reaches) describes.
 
 Everything setup chooses can be changed later in Settings.
 
