@@ -1061,6 +1061,9 @@ public sealed record SpeechSettings
     /// </summary>
     public bool SpeakIncomingMessages { get; init; }
 
+    /// <summary>Whether the Narrator takes replies on the STORY channel and may address the Commander in them.</summary>
+    public bool NarratorFourthWall { get; init; }
+
     /// <summary>The chance, 0-100, that an accented NPC line is written to suit its accent. Clamped where it is read.</summary>
     public int AccentPercent { get; init; } = 50;
 

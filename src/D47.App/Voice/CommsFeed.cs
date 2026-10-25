@@ -12,13 +12,13 @@ public static class CommsFeed
 {
     /// <summary>
     /// The inputs for the active Commander. Reads only what is already in memory, so it may run on the tick.
-    /// <see cref="CommsInputs.NarratorAnswers"/> stays false until #1606 adds its setting.
     /// </summary>
     public static CommsInputs Inputs(
         CommanderGameState? active,
         IReadOnlyList<NpcHeard> heard,
         RunningCast? story,
-        IReadOnlyList<CustomCharacter> characters)
+        IReadOnlyList<CustomCharacter> characters,
+        bool narratorAnswers = false)
     {
         ArgumentNullException.ThrowIfNull(heard);
         ArgumentNullException.ThrowIfNull(characters);
@@ -29,6 +29,7 @@ public static class CommsFeed
             Target = active?.Target,
             Heard = heard,
             StoryRunning = story is not null,
+            NarratorAnswers = narratorAnswers,
             StoryCast = story is null
                 ? []
                 : [.. story.Members.Select(member => new AdventureSpeaker(member.Shown.Id, member.Shown.Name, string.Empty) { Role = member.Role })],

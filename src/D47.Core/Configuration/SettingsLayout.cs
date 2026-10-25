@@ -363,6 +363,7 @@ public static class SettingsLayout
                                 E("callouts.narratorSeconds", under: true),
                                 E("callouts.narratorMaxSeconds", under: true),
                                 E("speech.narratorVoice"),
+                                E("speech.narratorFourthWall"),
                             ]),
                         G(
                             "Stories",

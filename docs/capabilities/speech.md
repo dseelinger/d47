@@ -969,6 +969,13 @@ provider that speaks for your ship, because the Narrator is heard in the cockpit
 the radio. Left empty, or set to the ship's own voice, the Narrator takes the first voice on that
 list that is not the ship's, so a narration is never mistaken for your core talking to you.
 
+#### Break the fourth wall {#narrator-fourth-wall}
+
+Off by default. When on, the [Narrator](callouts.md#narrator) joins the STORY channel while a story is
+running, and you can talk to it there. Its reply may speak to you as "you". With the row off the Narrator
+is not on the channel, and a reply that addressed you would be dropped. The Narrator's own narration and
+the story's lines stay in the third person either way.
+
 #### How often an accent flavours the words {#accent-percent}
 
 When the language model writes an NPC's line, and the voice that will speak it has an accent, the

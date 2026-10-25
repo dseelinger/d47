@@ -3178,7 +3178,8 @@ public sealed class AppHost : IDisposable
                 : null,
             () => turns.BackgroundModel,
             () => ShipFacts.Of(gameState.Active),
-            loggerFactory.CreateLogger<NarratorLine>())
+            loggerFactory.CreateLogger<NarratorLine>(),
+            () => settings.Current.Speech.NarratorFourthWall)
         {
             Said = reply => late.Host?.Messages?.Post(
                 D47.Core.Messages.MessageStore.Narrator, "Narration", reply, DateTimeOffset.Now),
@@ -6122,7 +6123,8 @@ public sealed class AppHost : IDisposable
         var active = GameState.Active;
         var fid = active?.Identity.FrontierId;
 
-        channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid)));
+        channels.Update(D47.App.Voice.CommsFeed.Inputs(active, Announcer.NpcsHere.Present, RunningCast(fid), Characters.CharactersOf(fid),
+            Settings.Current.Speech.NarratorFourthWall));
 
         if (Interlocked.Exchange(ref _hailedBy, null) is { } hailer)
         {

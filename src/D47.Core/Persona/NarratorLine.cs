@@ -11,13 +11,15 @@ namespace D47.Core.Persona;
 /// Thread-safe: <see cref="Heard"/> runs on the callout drain and <see cref="RouteAsync"/> on the turn loop.
 /// </summary>
 /// <param name="hiddenStory">The running story's hidden layer as the Narrator reads it, or null.</param>
+/// <param name="fourthWall">Whether replies may address the Commander; narration never does.</param>
 /// <param name="commander">How the Narrator names the Commander when there is no character sheet, or null.</param>
 public sealed partial class NarratorLine(
     Func<string?> hiddenStory,
     Func<string?>? commander = null,
     Func<string?>? model = null,
     Func<ShipFacts>? facts = null,
-    ILogger? logger = null) : ILine
+    ILogger? logger = null,
+    Func<bool>? fourthWall = null) : ILine
 {
     public const string Name = "Narrator";
 
@@ -90,7 +92,7 @@ public sealed partial class NarratorLine(
         var said = reply.Trim();
 
         var sayable = FlavourBriefs.MayBeSpoken(said)
-                      && !AddressesTheCommander(said)
+                      && (fourthWall?.Invoke() == true || !AddressesTheCommander(said))
                       && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
 
         if (!sayable)
@@ -114,6 +116,18 @@ public sealed partial class NarratorLine(
     private string Brief()
     {
         var name = commander?.Invoke() is { Length: > 0 } named ? $" The Commander: {named}" : string.Empty;
+
+        if (fourthWall?.Invoke() == true)
+        {
+            return $"""
+                     You are the narrator of this Commander's story, writing as a novel's narrator does. You are not the core. Never mention being an AI.{name}
+                     The Commander has spoken to you directly. Answer in one to three sentences, in the voice of the story's narrator.
+                     You may address the Commander as "you". Say only what the game state and the story's texts say, and invent no events.
+                     The passage so far:
+
+                     {ExchangeLines.Recent(_said)}
+                     """;
+        }
 
         return $"""
                  {FlavourBriefs.Narration.Speaker}{name}

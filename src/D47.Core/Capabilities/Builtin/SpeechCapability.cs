@@ -33,6 +33,7 @@ public static class SpeechCapability
     public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
     public const string TowerVoiceKey = "speech.towerVoice";
     public const string NarratorVoiceKey = "speech.narratorVoice";
+    public const string NarratorFourthWallKey = "speech.narratorFourthWall";
     public const string CarrierCaptainNameKey = "speech.carrierCaptainName";
     public const string TowerNameKey = "speech.towerName";
     public const string SpeakIncomingKey = "speech.speakIncomingMessages";
@@ -1000,6 +1001,26 @@ public static class SpeechCapability
                     Write = (s, v) => s with
                     {
                         Speech = s.Speech with { NarratorVoice = string.IsNullOrWhiteSpace(v) ? null : v.Trim() },
+                    },
+                },
+            },
+            new SettingRow
+            {
+                Key = NarratorFourthWallKey,
+                Advanced = true,
+                Label = "Break the fourth wall",
+                Help = "Lets you talk to the Narrator on the STORY channel, and lets it answer you directly. "
+                       + "Its own narration and the story's lines stay in the third person. Off by default.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "off",
+                Group = "Other voices",
+                DocsAnchor = "narrator-fourth-wall",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.NarratorFourthWall ? "true" : "false",
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { NarratorFourthWall = v is not "false" and not null },
                     },
                 },
             },
