@@ -140,6 +140,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The ship currently targeted, or null when none is.</summary>
     public TargetedShip? Target { get; private set; }
 
+    /// <summary>When the Commander entered the Operation they are in, or null when they are in the main game.</summary>
+    public DateTimeOffset? InOperationSince { get; private set; }
+
     /// <summary>On-foot inventory.</summary>
     public SuitInventory Suit { get; internal set; } = SuitInventory.Empty;
 
@@ -223,6 +226,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Colonisation), "construction sites", state => state.Colonisation),
         new(nameof(Crew), "your crew", state => state.Crew),
         new(nameof(Target), "your target", state => state.Target),
+        new(nameof(InOperationSince), "whether you are in an Operation", state => state.InOperationSince),
     ];
 
     /// <summary>How a receipt names this part's change, or null when it did not change.</summary>
@@ -335,6 +339,13 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather than the one
         // they were in a moment ago.
         Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeName ?? Ship.Type);
+
+        InOperationSince = journalEvent.Kind switch
+        {
+            "GameModeChange" => journalEvent.String("GameMode") == "Operation" ? journalEvent.Timestamp : null,
+            "LoadGame" or "Shutdown" => null,
+            _ => InOperationSince,
+        };
 
         Target = journalEvent.Kind switch
         {
