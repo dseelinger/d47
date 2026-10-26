@@ -1,7 +1,7 @@
 ---
 name: issue-worker
 description: >-
-  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Pushes main once the commit and any review are done, taking every other unpushed commit on main with it, and says in a large bold banner when the change, the commit or the push did not happen. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Pushes main once the commit and any review are done, taking every other unpushed commit on main with it, and says in a large bold banner when the change, the commit or the push did not happen. Also takes a story issue, which changes published stock stories in the stories-1 release and nothing in the tree. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
@@ -12,6 +12,9 @@ that needed settling. Your job is the change itself.
 `/issue-worker 62` has named the issue. The number is the work, not a label for the session, so
 start on #62 in that same turn — do not acknowledge it and wait for a second instruction saying the
 same thing.
+
+An issue that names published stories by id and changes their card or hidden entry is a story issue:
+work it as **Story issues** says, not as the rest of this skill does.
 
 Only a bare `/issue-worker`, carrying no issue, waits: acknowledge in one line, stop, and start when
 the maintainer names one.
@@ -470,6 +473,48 @@ into the issue's commit; a refused merge still stops.
 
 Never create a merge commit, never force anything, and push only `main`, in step 4. The rebase
 changes the commit's hash, which matters to nothing: it is still local until then.
+
+## Story issues
+
+A story issue names published stories by id, or by surprise id such as `N-1Y-A`, and changes their
+card or hidden entry. It changes nothing in the tree. The release upload and the issue close below
+are standing instructions, as the push is for code issues.
+
+- **Where.** In the scratchpad, whatever the lanes say. No worktree, build, test run, changelog
+  entry, commit or test drive. Hidden text is never written into the tree
+  (`NoSealedTextAppearsInTheTreeTests`).
+- **Rules.** Read The rules, The format and The length in `/new-story`. Every line the change adds
+  or rewrites keeps the twelve rules.
+- **Each story.** `python tools/unpack-story.py <id> <scratchpad>/<id>`, edit `card.json` and
+  `hidden.json` there, then `python tools/publish-story.py <scratchpad>/<id> --replace --dry-run`.
+  Fix every fault it prints.
+- **Review.**
+  - A named story whose change adds or rewrites a sentence in the hidden layer goes on a draft page
+    first, as `/new-story`'s draft page does, showing each changed field before and after. It is
+    published only on the maintainer's word.
+  - A change to fields only (`aboard`, `recorded`, `link`, `effects`, `primary`, `pinned`, and card
+    flags such as `goals` and `beaconTrip`) is published without stopping.
+- **Surprise stories.** Map the id to its story as `/new-story`'s Writing one does. In chat, voice,
+  the report and any artifact, the story appears only as ids, faults by field, and issue numbers.
+  Nothing is shown for review, and the story is published without stopping.
+- **Publish.**
+  - Take `.git/d47-merge.lock` as **Merging into main** does, and release it on every way out.
+  - At unpack, record the SHA-256 of the story's `.sealed` file. Holding the lock, download the
+    release's `.sealed` again and hash it. If it has changed, another session republished the story
+    in the meantime: unpack it again, reapply this change, run the dry run again, and only then
+    continue.
+  - Note the ids in `index.json`, run `python tools/publish-story.py <scratchpad>/<id> --replace`,
+    then download `index.json` again.
+  - Confirm that every noted id is still there and that the card's `sealedSha256` is the hash of the
+    built `.sealed` file.
+  - If an id is missing, stop and report it. Do not republish another story to repair it.
+  - Never use `--via-actions`.
+- **Finish.**
+  - Delete the story folders and the draft pages' files.
+  - Close the issue with `gh issue close <N> --comment "<ids republished>"`.
+  - Say how to test it as **Saying how to test it** says: a field change needs no manual test.
+- **When it does not land.** Open the report with the banner `# ❌ **ISSUE #<N> NOT PUBLISHED**`. The
+  line under it names the ids published and the ids not published. The issue stays open.
 
 ## Saying how to test it
 

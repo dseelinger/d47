@@ -15,6 +15,8 @@ built from whatever the argument fixes. `/new-story` with a surprise id such as 
 "surprise" or "premises", is surprise work (below). A bare `/new-story` looks for draft pages first (below): if
 there are any, ask whether to continue one or start another; if there are none, pitch one.
 
+A change to an already published story is a story issue for `/issue-worker`, not work for this skill.
+
 ## Turn the voice on first
 
 The first step of the working turn is `/claude-voice New story`. `/claude-voice off` stops it and the
@@ -291,8 +293,9 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
    printed by id and field and nothing is uploaded. The second command is a GitHub write: run it
    only after he says to publish. In a cloud session, whose GitHub access refuses release uploads
    (HTTP 415), add `--via-actions --branch <the session's designated branch>`. A local session
-   uploads directly, and only when no other session is publishing: the direct upload is not
-   serialised and can drop another story's `index.json` entry. With `--via-actions` the files and the card
+   uploads directly while holding `.git/d47-merge.lock`, taken and released as `/issue-worker`'s
+   **Merging into main** does: the direct upload is not serialised and can drop another story's
+   `index.json` entry. With `--via-actions` the files and the card
    are pushed to `story-upload/<story-id>/` on that branch, and `.github/workflows/publish-story.yml`
    runs one publish at a time from a queue: it uploads the files, adds the card to `index.json` by
    id with its number, and removes the files from the branch. The script waits for its own run and
@@ -384,7 +387,8 @@ and go into the final packet.
   fails. Nobody else reads it.
 - `/new-story <id>` is his permission to generate the cast pictures and to publish to
   `stories-1`. Ask nothing: generate the pictures, look at each one and show none of them, then
-  run the dry run and publish (`--via-actions` in a cloud session).
+  run the dry run and publish (`--via-actions` in a cloud session; a local publish holds
+  `.git/d47-merge.lock`).
 - Never open, republish or `SendUserFile` the packet page or any other artifact or file for a
   surprise story. After publishing, delete the scratch files.
 - The report gives the id, published or not, any fault by id and field, and any gap by issue number.
