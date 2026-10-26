@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Pressing the picture on a Codex entry page shows it full size over the window, as a speaker picture does. Close or Esc puts it away. The family placeholder opens nothing.
+
 Invented pilots in overheard exchanges with a controller or among passersby fly a hull of their own, chosen by price so cheap ships are common and expensive ones rare, rather than taking the hull you fly. At an outpost, no large ship is chosen.
 
 A chapter of a long-haul story can send you to a notable place to see it. After the beacon scan and before the finale, a chapter not heading home may be drawn as a sightseeing chapter, with one objective in the system of a place from the exploration catalogue. Outside the bubble, only places within the Sol band are offered. With notable places off, or the catalogue unreachable, no chapter is a sightseeing chapter.

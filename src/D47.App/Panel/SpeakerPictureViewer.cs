@@ -10,7 +10,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>A speaker's picture at full size over the whole window, put away by Close or Escape.</summary>
+/// <summary>A speaker's or Codex entry's picture at full size over the whole window, put away by Close or Escape.</summary>
 internal sealed class SpeakerPictureViewer : Grid
 {
     private readonly OverlayLayer _layer;
@@ -70,6 +70,14 @@ internal sealed class SpeakerPictureViewer : Grid
             return;
         }
 
+        Press(image, () => Open(image, pictures, picture));
+    }
+
+    /// <summary>Makes <paramref name="image"/> open the already decoded <paramref name="picture"/> full size when pressed.</summary>
+    internal static void Enlarges(Image image, Bitmap picture) => Press(image, () => Open(image, picture));
+
+    private static void Press(Image image, Action open)
+    {
         image.Cursor = new Cursor(StandardCursorType.Hand);
 
         image.PointerPressed += (_, e) =>
@@ -80,8 +88,16 @@ internal sealed class SpeakerPictureViewer : Grid
             }
 
             e.Handled = true;
-            Open(image, pictures, picture);
+            open();
         };
+    }
+
+    internal static void Open(Visual from, Bitmap picture)
+    {
+        if (OverlayLayer.GetOverlayLayer(from) is { } layer)
+        {
+            layer.Children.Add(new SpeakerPictureViewer(picture, layer));
+        }
     }
 
     internal static void Open(Visual from, SpeakerPictures pictures, string? picture)

@@ -180,7 +180,9 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
             if (Decode(bytes) is { } picture)
             {
-                square.Child = Pic("CodexPicture", picture);
+                var shown = Pic("CodexPicture", picture);
+                SpeakerPictureViewer.Enlarges(shown, picture);
+                square.Child = shown;
                 column.Children.Add(CreditsKit.Label(CodexModel.PictureLine(choice)));
 
                 return column;
