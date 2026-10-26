@@ -260,6 +260,7 @@ public sealed class StoryDirector(
         return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null, ship), StoryVoices.Voice(member, shown, choices, ship))
         {
             Role = member.Role,
+            Recorded = member.Recorded,
             SpeaksName = choices.GetValueOrDefault(shown.Picture) is { } choice
                 ? choice.VoiceName
                 : shown.Pinned ? null : ship?.Pairings?.GetValueOrDefault(shown.Picture)?.VoiceName,
@@ -341,7 +342,7 @@ public sealed class StoryDirector(
         stories.Current(frontierId) is { State: StoryState.Running, IsOff: false } story
         && !WithoutOdyssey(frontierId)
         && Hidden(story.Id) is { } secret
-        && secret.Cast.FirstOrDefault(member => string.Equals(member.Id, castId, StringComparison.Ordinal)) is { } member
+        && secret.Cast.FirstOrDefault(member => string.Equals(member.Id, castId, StringComparison.Ordinal)) is { Recorded: false } member
         && StoryIntroductions.Met(story, secret, member.Id)
             ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who)
             {
@@ -2309,7 +2310,7 @@ public sealed class StoryDirector(
         var gender = Gender();
 
         return [.. secret.Cast
-            .Where(member => member.Primary && (member.Versions is null || CommanderGender.IsSet(gender)) && StoryIntroductions.Met(story, secret, member.Id))
+            .Where(member => member.Primary && !member.Recorded && (member.Versions is null || CommanderGender.IsSet(gender)) && StoryIntroductions.Met(story, secret, member.Id))
             .Select(member => new StoryReactor(member.Id, member.Shown(secret.Id, gender).Name, member.Who))];
     }
 

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's cast member can be marked as heard only in recordings or messages. They are no longer on the STORY channel, do not answer a hail and do not react to what you do; Characters still lists them so their voice and picture can be changed.
+
 A station's state from a galaxy search is now presented as spansh's report: the answer says "reported under repairs" and the station search page shows the same words, since spansh can list a station as damaged after it has returned to normal.
 
 A story's signal-source objective can name the system where the drops must happen. It then counts a drop only while your ship is in that system, the story writer is told so, and a line may place a drop in a system only when the objective names it.

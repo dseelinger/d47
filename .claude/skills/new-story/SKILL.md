@@ -190,6 +190,8 @@ add.
   A pin may use `edge`, `kokoro` or `chatterbox` only; `elevenlabs`, `openai` and `cartesia` are billed and are refused.
   An `edge` pin is free and needs no key, but sends the member's lines to Microsoft and needs the network, and an
   older install (before #1072) does not load a story with an `edge` pin. Use one only when the story asks for it, and say so in the pitch.
+  `recorded: true` marks a member heard only in recordings or messages: they never answer a hail or react live,
+  and never carry `aboard`.
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or
   `inYourWords`, never one with voice `own` (#737). Every story has at least one primary member,
   and every cast member gets a picture, `<story-id>.<cast-id>.png`, a square

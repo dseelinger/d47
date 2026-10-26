@@ -32,7 +32,7 @@ public static class CommsFeed
             NarratorAnswers = narratorAnswers,
             StoryCast = story is null
                 ? []
-                : [.. story.Members.Select(member => new AdventureSpeaker(member.Shown.Id, member.Shown.Name, string.Empty) { Role = member.Role })],
+                : [.. story.Members.Where(member => !member.Recorded).Select(member => new AdventureSpeaker(member.Shown.Id, member.Shown.Name, string.Empty) { Role = member.Role })],
             Crew = active?.Crew ?? ShipCrew.Empty,
             Characters = characters,
         };

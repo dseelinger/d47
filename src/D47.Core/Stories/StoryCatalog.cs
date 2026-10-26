@@ -279,6 +279,9 @@ public sealed record StorySpeaker
     /// <summary>A recurring character the Commander knows from the card. A primary member always has a picture.</summary>
     public bool Primary { get; init; }
 
+    /// <summary>Whether the member is heard only in recordings or messages and never speaks live; not with <see cref="Aboard"/>.</summary>
+    public bool Recorded { get; init; }
+
     /// <summary>Signal strength, 0 to 1, of the comms link the member is heard through; null for none.</summary>
     public double? Link { get; init; }
 
@@ -1098,6 +1101,11 @@ public sealed class StoryCatalog
             }
 
             var member = $"cast[{at.ToString(CultureInfo.InvariantCulture)}].aboard";
+
+            if (speaker.Recorded)
+            {
+                yield return $"{member} is set on a recorded member, who never speaks live.";
+            }
 
             if (aboard.Count == 0 || aboard.Any(span => span is null))
             {

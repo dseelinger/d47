@@ -30,6 +30,9 @@ public sealed record StoryCastMember(string StoryId, string Title, StorySpeakerS
     /// <summary>Who the member is to the Commander, from <see cref="StorySpeaker.Role"/>; null when the story has none.</summary>
     public string? Role { get; init; }
 
+    /// <summary>Whether the member is heard only in recordings or messages, from <see cref="StorySpeaker.Recorded"/>.</summary>
+    public bool Recorded { get; init; }
+
     /// <summary>The <see cref="D47Settings.StoryVoices"/> key.</summary>
     public string Key => Shown.Picture;
 }

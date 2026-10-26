@@ -308,7 +308,8 @@ as one counting on a fuel scoop you have not fitted, is not said. The member is
 offered no tools, so nothing they say can act on the ship. Each reply is one model call, counted in your
 spend like conversation, and is posted to the Story log from the member, with their picture and the clip
 it was spoken in, below what you said. No one is on the Story channel while the story is paused or
-switched off, or while the game runs without Odyssey. Ask the core whether one
+switched off, or while the game runs without Odyssey, and a member the story marks as heard only in
+recordings or messages is never on it. Ask the core whether one
 of them was real and it says they are someone in the story. The notes you keep on a cast member on the
 **Characters** page are added after the story's own description of them, so their replies follow both.
 

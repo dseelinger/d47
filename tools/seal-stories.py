@@ -34,6 +34,8 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals", where 
            hands the writer a beat from boards up to, not including, leaves. A speaker that rides more than once
            carries a list of two or more such spans in story order: each boards after the beat the one before it
            leaves at, only the first boards at null and only the last leaves at null. One span is an object.
+           A speaker may carry "recorded": true: it is heard only in recordings or messages and never speaks
+           live. A recorded speaker never carries "aboard".
            A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
            Voice "own" is pinned whether or not it says so. A version never carries "pinned"; it covers both.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
@@ -253,6 +255,10 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         found += role_fault(sid, speaker)
         if "primary" in speaker and not isinstance(speaker["primary"], bool):
             found.append(f"cast {at + 1} ({sid}) has a primary that is not true or false")
+        if "recorded" in speaker and not isinstance(speaker["recorded"], bool):
+            found.append(f"cast {at + 1} ({sid}) has a recorded that is not true or false")
+        if speaker.get("recorded") is True and "aboard" in speaker:
+            found.append(f"cast {at + 1} ({sid}) is recorded and also aboard")
         if "pinned" in speaker and not isinstance(speaker["pinned"], bool):
             found.append(f"cast {at + 1} ({sid}) has a pinned that is not true or false")
         if isinstance(speaker.get("versions"), dict) and any(isinstance(version, dict) and "pinned" in version for version in speaker["versions"].values()):
