@@ -49,6 +49,21 @@ gh issue list --state open --limit 300 --json number,body --jq '.[] | {n: .numbe
 A needed issue is done when it is not in the open list, or when `git log main --format=%B` has the
 line `Fixes #N`. An eligible issue with a needed issue that is not done is **waiting**.
 
+## The size each issue names
+
+/architect and /new-issue end most bodies with a line such as
+`Size: /issue-worker, Opus, medium effort.` Read every eligible issue's line in one more call:
+
+```bash
+gh issue list --state open --limit 300 --json number,body --jq '.[] | select(.body | test("(?m)^Size:")) | "\(.number): \(.body | capture("(?m)^(?<s>Size:.*)$").s)"'
+```
+
+Where the line names both a model and an effort, that issue's row uses them, whatever **Model and
+effort** below would choose. Lower-case them to the exact tokens (`Opus 5.5` is `opus`,
+`medium effort` is `medium`). The advisor is `opus` only where the line names an Opus advisor, and
+nothing otherwise. Where the line is missing, or names only one of model and effort, size the issue
+from the table.
+
 ## Read only what you need
 
 The titles in this repository state the defect and usually its cause — "the row is decided from a
@@ -122,7 +137,8 @@ belong elsewhere.
 
 ## Model and effort
 
-Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`,
+An issue's own `Size:` line wins (see **The size each issue names**); this table sizes the issues
+that have none. Emit the exact tokens, so the line can be pasted: `opus` / `sonnet` / `haiku`,
 `low` / `medium` / `high` / `xhigh` / `max`, and `opus` or nothing for the advisor.
 
 | Model | Effort | Advisor | When |
