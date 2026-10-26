@@ -356,6 +356,12 @@ public sealed record StorySpeakerVersion
 /// </summary>
 public sealed record StorySpeakerAboard(string? Boards, string? Leaves);
 
+/// <summary>
+/// A span of a story in the black: from the <see cref="From"/> beat up to, not including, the <see cref="To"/> beat, each a key of
+/// the story length's <see cref="StoryPacing.BeatKeys"/>. Null from is the story's start; null to is its end.
+/// </summary>
+public sealed record StoryBlackSpan(string? From, string? To);
+
 /// <summary>Reads a cast member's <c>"aboard"</c> as one span object or a list of them, and writes one span as an object.</summary>
 internal sealed class StorySpeakerAboardConverter : JsonConverter<IReadOnlyList<StorySpeakerAboard>>
 {
@@ -511,6 +517,9 @@ public sealed partial record StorySecret
 
     /// <summary>The speakers besides <see cref="StorySpeaker.Ship"/> and <see cref="StorySpeaker.Narrator"/>.</summary>
     public IReadOnlyList<StorySpeaker> Cast { get; init; } = [];
+
+    /// <summary>The spans of the beat sheet that take place in the black, where chapters are held to neither the Sol band nor the home leg; null or empty for none.</summary>
+    public IReadOnlyList<StoryBlackSpan>? Black { get; init; }
 
     /// <summary>Every hidden text, named by the field it is in, for the checks that it is never shown.</summary>
     public IEnumerable<(string Field, string Text)> Texts()
@@ -1101,6 +1110,11 @@ public sealed class StoryCatalog
             yield return $"finale has {secret.Finale.Count.ToString(CultureInfo.InvariantCulture)} lines, not {pacing.FinaleChapters.ToString(CultureInfo.InvariantCulture)} for {pacing.Name}.";
         }
 
+        foreach (var fault in BlackFaults(secret, keys, pacing))
+        {
+            yield return fault;
+        }
+
         foreach (var (speaker, at) in secret.Cast.Select((speaker, at) => (speaker, at)))
         {
             if (speaker.Aboard is not { } aboard)
@@ -1159,6 +1173,56 @@ public sealed class StoryCatalog
 
                 previous = keys.Contains(span.Leaves ?? string.Empty, StringComparer.Ordinal) ? span.Leaves : null;
             }
+        }
+    }
+
+    /// <summary>Where the spans in the black name a beat outside the length's sheet, end at or before they start, or overlap.</summary>
+    private static IEnumerable<string> BlackFaults(StorySecret secret, IReadOnlyList<string> keys, StoryPacing pacing)
+    {
+        var spans = secret.Black ?? [];
+        var known = new List<(int From, int To, string Name)>();
+
+        foreach (var (span, index) in spans.Select((span, index) => (span, index)))
+        {
+            var name = $"black[{index.ToString(CultureInfo.InvariantCulture)}]";
+
+            if (span is null)
+            {
+                yield return $"{name} is not a span.";
+                continue;
+            }
+
+            var inSheet = true;
+
+            foreach (var (field, beat) in new[] { ("from", span.From), ("to", span.To) })
+            {
+                if (beat is not null && !keys.Contains(beat, StringComparer.Ordinal))
+                {
+                    inSheet = false;
+                    yield return $"{name}.{field} is {beat}, which is not a beat of a {pacing.Name} story.";
+                }
+            }
+
+            if (!inSheet)
+            {
+                continue;
+            }
+
+            var from = span.From is null ? 0 : StoryAboard.Order(span.From);
+            var to = span.To is null ? StoryBeats.Keys.Count : StoryAboard.Order(span.To);
+
+            if (from >= to)
+            {
+                yield return $"{name} ends at or before the beat it starts at.";
+                continue;
+            }
+
+            foreach (var other in known.Where(other => from < other.To && other.From < to))
+            {
+                yield return $"{name} overlaps {other.Name}.";
+            }
+
+            known.Add((from, to, name));
         }
     }
 

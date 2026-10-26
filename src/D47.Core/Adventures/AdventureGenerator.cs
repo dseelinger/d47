@@ -139,6 +139,9 @@ public sealed record AdventureStory(
 {
     /// <summary>The cast ids aboard with no seat in the Commander's current hull, heard over comms.</summary>
     public IReadOnlyList<string> OnComms { get; init; } = [];
+
+    /// <summary>Whether a beat the chapter's stage hands out lies in a span the story marks as in the black, where neither the Sol band nor the home leg applies.</summary>
+    public bool InTheBlack { get; init; }
 }
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
@@ -2193,9 +2196,18 @@ public sealed class AdventureGenerator(
         AppendMissions(text, facts);
     }
 
-    /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be.</summary>
+    /// <summary>For a chapter starting outside the bubble, how far from Sol its last stop must be; for a chapter in the black, that it may stay far out.</summary>
     private static void AppendBand(StringBuilder text, AdventureAsk ask, Facts facts)
     {
+        if (ChapterBand.Applies(ask) && ask.Story is { InTheBlack: true })
+        {
+            text.AppendLine();
+            text.AppendLine(
+                "This chapter of the story takes place in the black. Its stops may be far from the bubble, "
+                + "and it need not work its way back toward populated space; each hop must still be within the reach.");
+            return;
+        }
+
         if (ChapterBand.Of(facts.Position, ask) is not { } band || facts.Position is not { } position)
         {
             return;

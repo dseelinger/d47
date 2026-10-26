@@ -228,6 +228,14 @@ add.
   the writer that beat places the boarding or leaving on the objective where the beat happens, and a chapter past
   the beat with nothing placed opens with it done. Any beat of the sheet works; it need not start a stage. Leave
   `aboard` out for a member who is never in the ship; a chapter may still bring one aboard for that chapter alone.
+- **A story that spends time in the black** carries `black` in the hidden entry: a list of spans
+  `{"from": <beat>, "to": <beat>}`, each a beat key of the length's sheet or null for the story's start or end,
+  `from` included and `to` not, as with `aboard`. `[{"from": null, "to": null}]` is the whole story. Spans do not
+  overlap. A chapter whose stage hands the writer a beat inside a span is held to neither the Sol band nor the home
+  leg, so it may stay far from the bubble. Leave `black` out of a story that never goes far out. A chapter still
+  travels far only at the long-haul reach (#1585), so a story with a span needs a premise and a level that can reach a
+  long-haul ship: a story of 3 months or longer for a Commander with the credits or the hull `ChapterFit.IsLongHaul`
+  names. Rule 10 still applies in a span: no beat or clue sends the Commander to a permit system.
 - **An effect on a cast voice** (a weak comms link, static) cannot be expressed until #726 is
   decided. Describe it in `who` and record it on the page as a gap against #726.
 

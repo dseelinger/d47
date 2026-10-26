@@ -1658,7 +1658,8 @@ public sealed class StoryDirector(
                 longHaul,
                 slots,
                 finaleChapter is null ? null : story.FinaleDestination,
-                hull: game?.Ship.Type),
+                hull: game?.Ship.Type,
+                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter))),
             Rewrite: rewrite);
     }
 
@@ -2654,7 +2655,8 @@ public sealed class StoryDirector(
         var game = Game();
         var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
-        var home = HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
+        var inTheBlack = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter));
+        var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id)?.Goals == true
@@ -2675,7 +2677,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.Of(game?.Location.StarPos) is not null || home is not null) ? 1 : 0),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null) ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
@@ -2717,7 +2719,8 @@ public sealed class StoryDirector(
                 finaleChapter > 1 ? story.FinaleDestination : null,
                 home,
                 goal,
-                game?.Ship.Type),
+                game?.Ship.Type,
+                inTheBlack),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2808,7 +2811,8 @@ public sealed class StoryDirector(
         AdventureDestination? destination,
         string? home = null,
         GoalClimbStep? goal = null,
-        string? hull = null)
+        string? hull = null,
+        bool inTheBlack = false)
     {
         var card = catalog().Find(story.Id);
 
@@ -2845,6 +2849,7 @@ public sealed class StoryDirector(
             StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull))
         {
             OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
+            InTheBlack = inTheBlack,
         };
     }
 

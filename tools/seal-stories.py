@@ -41,6 +41,9 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals" and "be
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
            a primary speaker must have a picture when the story is published, is named in the card's blurb
            or inYourWords unless it has versions, and never speaks in the voice "own".
+  black    optional: a list of spans {"from", "to"} of the story that take place in the black, where chapters are held
+           to neither the Sol band nor the home leg. Each is a beat of the length's sheet, or null for the story's start
+           or end; from is included and to is not, so from comes before to. Spans do not overlap.
 Every opening line, the scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
@@ -144,6 +147,34 @@ def aboard_fault(who: str, speaker: dict, sheet: tuple, length) -> list:
     return found
 
 
+def black_fault(entry: dict, sheet: tuple, length) -> list:
+    black = entry.get("black")
+    if black is None:
+        return []
+    if not isinstance(black, list) or any(not isinstance(span, dict) or set(span) - {"from", "to"} for span in black):
+        return ["black is not a list of {\"from\", \"to\"} spans"]
+    found = []
+    known = []
+    for at, span in enumerate(black):
+        name = f"black span {at + 1}"
+        in_sheet = True
+        for field in ("from", "to"):
+            beat = span.get(field)
+            if beat is not None and beat not in sheet:
+                in_sheet = False
+                found.append(f"{name} has {field} {beat!r}, not a beat of a {length} story")
+        if not in_sheet:
+            continue
+        start = 0 if span.get("from") is None else BEATS.index(span["from"])
+        end = len(BEATS) if span.get("to") is None else BEATS.index(span["to"])
+        if start >= end:
+            found.append(f"{name} ends at or before the beat it starts at")
+            continue
+        found += [f"{name} overlaps {other}" for other_start, other_end, other in known if start < other_end and other_start < end]
+        known.append((start, end, name))
+    return found
+
+
 def role_fault(sid, speaker: dict) -> list:
     role = speaker.get("role")
     if not text(role):
@@ -217,6 +248,8 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     beats = entry.get("beats") or {}
     found += [f"no beat {beat}" for beat in sheet if not text(beats.get(beat))]
     found += [f"beat {beat} is not a beat of a {length} story" for beat in BEATS if beat not in sheet and text(beats.get(beat))]
+
+    found += black_fault(entry, sheet, length)
 
     scan = entry.get("scan")
     if length in NARRATED and not isinstance(scan, dict):

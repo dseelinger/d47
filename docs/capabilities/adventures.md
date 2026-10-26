@@ -790,9 +790,16 @@ must fall in: a chapter starting 588 light years out has a last stop between 288
 of the chapter's last place objective, and a chapter with none counts as ending where it started. A draft outside the
 band is refused and goes back through the repair rounds, as does one whose last stop Galaxy search cannot measure. The
 rule does not apply to a chapter that ends at the beacon, a finale chapter, a rewrite or a short story, or to a chapter
-that starts within 500 light years. The chapter also keeps one of its two place objectives for this stop.
+that starts within 500 light years, or to a chapter in the black (below). The chapter also keeps one of its two place
+objectives for this stop.
 
 **Heading home from the black.** A chapter counts as changed when you apply a **Change objective** replacement in it; **Never ask this** does not count. When the last two chapters were both changed and you are more than 1,000 light years from both Sol and Colonia, the story heads home: to the nearer of the two, or to Sol when you are within 1,000 light years of Colonia. Each chapter heading home uses the long-haul reach (1,500 light years, or 5,000 with a fleet carrier), may have more than two place objectives, and is told where you are going and why it travels. Its last stop must be at least one reach nearer the target than the chapter starts, or within 1,000 light years of the target; a draft that misses is refused and goes back through the repair rounds. The target is cleared by the first chapter written within 1,000 light years of it. Finale chapters and the chapter that ends at the beacon are not sent home. A chapter heading home is not held to the Sol band above. The changed chapters and the target are kept with the story across a restart.
+
+**In the black.** A story's hidden entry may mark spans of its beat sheet as in the black. A chapter whose stage hands
+the writer a beat inside a span is held to neither rule above: it has no Sol band, keeps no place objective for one,
+is not sent home, and clears a home target already set. The writer is told the chapter takes place in the black and
+its stops may be far from the bubble. A chapter in the black still travels far only at the long-haul reach. Outside
+every span both rules apply.
 
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
 `Statistics` show you have done least, and it is the first of the chapter's drawn activities:

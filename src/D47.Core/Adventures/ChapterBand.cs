@@ -18,14 +18,18 @@ public static class ChapterBand
     public readonly record struct Range(double Min, double Max);
 
     /// <summary>The band for a story chapter starting at <paramref name="start"/>, or null where the rule does not apply.</summary>
-    public static Range? Of(StarPosition? start, AdventureAsk ask)
+    public static Range? Of(StarPosition? start, AdventureAsk ask) => Applies(ask) && ask.Story is { InTheBlack: false } ? Of(start) : null;
+
+    /// <summary>Whether <paramref name="ask"/> is a story chapter the rule covers unless it is in the black: not a beacon, finale, home-leg, rewrite or short-story ask.</summary>
+    public static bool Applies(AdventureAsk ask)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Story: { Beacon: null, FinaleChapter: null, Home: null }, Rewrite: null, Length: not AdventureLength.Short }
-            ? Of(start)
-            : null;
+        return ask is { Story: { Beacon: null, FinaleChapter: null, Home: null }, Rewrite: null, Length: not AdventureLength.Short };
     }
+
+    /// <summary>Whether a chapter starting at <paramref name="start"/> keeps a place objective for the band's stop: outside the bubble and not in the black.</summary>
+    public static bool ReservesAPlace(StarPosition? start, bool inTheBlack) => !inTheBlack && Of(start) is not null;
 
     /// <summary>The band for a chapter starting at <paramref name="start"/>, or null within the bubble.</summary>
     public static Range? Of(StarPosition? start) =>

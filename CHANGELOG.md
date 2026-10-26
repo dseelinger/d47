@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story can mark stretches of its plot as taking place in the black. Its chapters there are no longer pulled back toward the bubble or sent home after two changed chapters, so a story about a long journey out can stay out. A story with such a stretch needs this version of d47; an older version still pulls it back.
+
 A story whose plot happens at the beacon scan can say so on its card. It then flies to a beacon even when an earlier story recorded a scan.
 
 A story's cast member can be marked as heard only in recordings or messages. They are no longer on the STORY channel, do not answer a hail and do not react to what you do; Characters still lists them so their voice and picture can be changed.
