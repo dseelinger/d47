@@ -404,6 +404,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     PaneWidthMemory? IPanelTabHost.PaneWidths => _paneWidths;
 
+    ColumnWidthMemory? IPanelTabHost.ColumnWidths => _columnWidths;
+
     CarrierHullMemory? IPanelTabHost.CarrierHulls => _carrierHulls;
 
     void IPanelTabHost.ShowSearch() => ShowSearch();
@@ -1283,7 +1285,12 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// 55).
     private PaneWidthMemory? _paneWidths;
 
+    private ColumnWidthMemory? _columnWidths;
+
     private CarrierHullMemory? _carrierHulls;
+
+    /// <summary>Lets the mouse drag the boundaries between table columns (#1612).</summary>
+    public void EnableResizableColumns(ColumnWidthMemory memory) => _columnWidths = memory;
 
     /// <summary>Lets the Carrier page remember which model the Commander picked.</summary>
     public void EnableCarrierHulls(CarrierHullMemory memory) => _carrierHulls = memory;

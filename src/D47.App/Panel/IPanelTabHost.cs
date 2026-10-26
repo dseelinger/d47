@@ -31,6 +31,9 @@ internal interface IPanelTabHost
     /// <summary>Where dragged pane widths are remembered, or null where the surface has no mouse.</summary>
     PaneWidthMemory? PaneWidths { get; }
 
+    /// <summary>Where dragged column widths are remembered, or null where the surface has no mouse.</summary>
+    ColumnWidthMemory? ColumnWidths { get; }
+
     /// <summary>Which fleet carrier model each carrier is drawn as, or null where the surface keeps none.</summary>
     CarrierHullMemory? CarrierHulls { get; }
 

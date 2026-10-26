@@ -129,6 +129,51 @@ public sealed record ViewState
     public IReadOnlyDictionary<int, IReadOnlyList<double>> PaneShares { get; init; } =
         new Dictionary<int, IReadOnlyList<double>>();
 
+    /// <summary>Column widths the Commander dragged, in DIPs, by table id and then column key.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, double>> ColumnWidths { get; init; } =
+        new Dictionary<string, IReadOnlyDictionary<string, double>>(StringComparer.Ordinal);
+
+    /// <summary>Records a dragged column width.</summary>
+    public ViewState With(string table, string column, double width)
+    {
+        var columns = ColumnWidths.TryGetValue(table, out var existing)
+            ? new Dictionary<string, double>(existing, StringComparer.Ordinal)
+            : new Dictionary<string, double>(StringComparer.Ordinal);
+        columns[column] = width;
+
+        return this with { ColumnWidths = Replacing(table, columns) };
+    }
+
+    /// <summary>Forgets a dragged column width.</summary>
+    public ViewState Without(string table, string column)
+    {
+        if (!ColumnWidths.TryGetValue(table, out var existing) || !existing.ContainsKey(column))
+        {
+            return this;
+        }
+
+        var columns = new Dictionary<string, double>(existing, StringComparer.Ordinal);
+        columns.Remove(column);
+
+        return this with { ColumnWidths = Replacing(table, columns) };
+    }
+
+    private Dictionary<string, IReadOnlyDictionary<string, double>> Replacing(string table, Dictionary<string, double> columns)
+    {
+        var next = new Dictionary<string, IReadOnlyDictionary<string, double>>(ColumnWidths, StringComparer.Ordinal);
+
+        if (columns.Count == 0)
+        {
+            next.Remove(table);
+        }
+        else
+        {
+            next[table] = columns;
+        }
+
+        return next;
+    }
+
     /// <summary>The width in pixels the Commander dragged the Search form to, or null for the default.</summary>
     public double? SearchFormWidth { get; init; }
 
