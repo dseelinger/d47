@@ -265,7 +265,7 @@ public static class ShipCommands
             Binding = new SettingBinding
             {
                 Read = s => s.Actions.TakeUsOut ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { TakeUsOut = v is "true" } },
+                Write = (s, v) => s with { Actions = s.Actions with { TakeUsOut = v is not "false" } },
             },
         },
 
@@ -289,7 +289,7 @@ public static class ShipCommands
             Binding = new SettingBinding
             {
                 Read = s => s.Actions.SeparateAndEngage ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndEngage = v is "true" } },
+                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndEngage = v is not "false" } },
             },
         },
 
@@ -313,7 +313,7 @@ public static class ShipCommands
             Binding = new SettingBinding
             {
                 Read = s => s.Actions.SeparateAndSupercruise ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndSupercruise = v is "true" } },
+                Write = (s, v) => s with { Actions = s.Actions with { SeparateAndSupercruise = v is not "false" } },
             },
         },
 
@@ -338,7 +338,7 @@ public static class ShipCommands
             Binding = new SettingBinding
             {
                 Read = s => s.Actions.RequestDocking ? "true" : "false",
-                Write = (s, v) => s with { Actions = s.Actions with { RequestDocking = v is "true" } },
+                Write = (s, v) => s with { Actions = s.Actions with { RequestDocking = v is not "false" } },
             },
         },
     ];

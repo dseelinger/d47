@@ -1133,7 +1133,7 @@ public static class SpeechCapability
                     Read = s => s.Speech.SpeakSystemChat ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { SpeakSystemChat = v is not "false" and not null },
+                        Speech = s.Speech with { SpeakSystemChat = v is not "false" },
                     },
                 },
             },
@@ -1153,7 +1153,7 @@ public static class SpeechCapability
                     Read = s => s.Speech.SpeakLocalChat ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { SpeakLocalChat = v is not "false" and not null },
+                        Speech = s.Speech with { SpeakLocalChat = v is not "false" },
                     },
                 },
             },
@@ -1173,7 +1173,7 @@ public static class SpeechCapability
                     Read = s => s.Speech.SpeakWingChat ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { SpeakWingChat = v is not "false" and not null },
+                        Speech = s.Speech with { SpeakWingChat = v is not "false" },
                     },
                 },
             },
@@ -1193,7 +1193,7 @@ public static class SpeechCapability
                     Read = s => s.Speech.SpeakSquadronChat ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { SpeakSquadronChat = v is not "false" and not null },
+                        Speech = s.Speech with { SpeakSquadronChat = v is not "false" },
                     },
                 },
             },
@@ -1213,7 +1213,7 @@ public static class SpeechCapability
                     Read = s => s.Speech.SpeakDirectMessages ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Speech = s.Speech with { SpeakDirectMessages = v is not "false" and not null },
+                        Speech = s.Speech with { SpeakDirectMessages = v is not "false" },
                     },
                 },
             },
@@ -1253,7 +1253,7 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = s => s.Speech.CovasReverb ? "true" : "false",
-                    Write = (s, v) => s with { Speech = s.Speech with { CovasReverb = v is not "false" and not null } },
+                    Write = (s, v) => s with { Speech = s.Speech with { CovasReverb = v is not "false" } },
                 },
             },
             new SettingRow

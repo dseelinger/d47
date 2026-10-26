@@ -298,7 +298,7 @@ public static class AdventureCapability
                     Read = s => s.Ui.StoryDownloads ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Ui = s.Ui with { StoryDownloads = bool.TryParse(v, out var on) && on },
+                        Ui = s.Ui with { StoryDownloads = v is not "false" },
                     },
                 },
             },
@@ -319,7 +319,7 @@ public static class AdventureCapability
                     Read = s => s.Ui.StoryRatings ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Ui = s.Ui with { StoryRatings = bool.TryParse(v, out var on) && on },
+                        Ui = s.Ui with { StoryRatings = v is not "false" },
                     },
                 },
             },
@@ -339,7 +339,7 @@ public static class AdventureCapability
                     Read = s => s.Callouts.CastReactions ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Callouts = s.Callouts with { CastReactions = bool.TryParse(v, out var on) && on },
+                        Callouts = s.Callouts with { CastReactions = v is not "false" },
                     },
                 },
             },

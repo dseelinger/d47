@@ -1419,7 +1419,7 @@ public static class CalloutCapability
         Binding = new SettingBinding
         {
             Read = s => read(s) ? "true" : "false",
-            Write = (s, v) => write(s, v is not "false"),
+            Write = (s, v) => write(s, v is null ? defaultOn : v is not "false"),
         },
     };
 

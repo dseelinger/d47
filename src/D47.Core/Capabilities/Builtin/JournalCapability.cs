@@ -164,7 +164,7 @@ public static class JournalCapability
                         Read = s => s.Ui.CodexPictures ? "true" : "false",
                         Write = (s, v) => s with
                         {
-                            Ui = s.Ui with { CodexPictures = bool.TryParse(v, out var on) && on },
+                            Ui = s.Ui with { CodexPictures = v is not "false" },
                         },
                     },
                 },

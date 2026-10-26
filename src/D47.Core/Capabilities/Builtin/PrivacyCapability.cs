@@ -187,7 +187,7 @@ public static class PrivacyCapability
                 Read = s => s.Usage.Counts ? "true" : "false",
                 Write = (s, v) => s with
                 {
-                    Usage = s.Usage with { Counts = bool.TryParse(v, out var on) && on },
+                    Usage = s.Usage with { Counts = v is not "false" },
                 },
             },
         });

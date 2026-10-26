@@ -771,7 +771,7 @@ public static class ListeningCapability
                     Read = s => s.Listening.UseGpu ? "true" : "false",
                     Write = (s, v) => s with
                     {
-                        Listening = s.Listening with { UseGpu = v is not "false" },
+                        Listening = s.Listening with { UseGpu = v is "true" },
                     },
                 },
             },

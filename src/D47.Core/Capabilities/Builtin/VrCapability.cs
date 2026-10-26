@@ -277,7 +277,7 @@ public static class VrCapability
                 Binding = new SettingBinding
                 {
                     Read = s => s.Vr.Enabled ? "true" : "false",
-                    Write = (s, v) => s with { Vr = s.Vr with { Enabled = v == "true" } },
+                    Write = (s, v) => s with { Vr = s.Vr with { Enabled = v is not "false" } },
                 },
                 Commands =
                 [
@@ -356,7 +356,7 @@ public static class VrCapability
                 Binding = new SettingBinding
                 {
                     Read = s => s.Vr.Controllers ? "true" : "false",
-                    Write = (s, v) => s with { Vr = s.Vr with { Controllers = v == "true" } },
+                    Write = (s, v) => s with { Vr = s.Vr with { Controllers = v is not "false" } },
                 },
                 Commands =
                 [
@@ -420,7 +420,7 @@ public static class VrCapability
                 + "between the two places D47 works out for you.",
                 SettingKind.Toggle,
                 s => s.Vr.Captions.Enabled ? "true" : "false",
-                (s, v) => s with { Vr = s.Vr with { Captions = s.Vr.Captions with { Enabled = v == "true" } } },
+                (s, v) => s with { Vr = s.Vr with { Captions = s.Vr.Captions with { Enabled = v is not "false" } } },
                 "captions"),
             CaptionRow(
                 CaptionLockKey,

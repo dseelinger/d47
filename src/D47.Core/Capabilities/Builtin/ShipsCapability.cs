@@ -233,7 +233,7 @@ public static class ShipsCapability
                 Read = s => s.Ui.HullArt ? "true" : "false",
                 Write = (s, v) => s with
                 {
-                    Ui = s.Ui with { HullArt = bool.TryParse(v, out var on) && on },
+                    Ui = s.Ui with { HullArt = v is not "false" },
                 },
             },
         },

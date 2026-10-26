@@ -185,7 +185,7 @@ public static class PersonaCapability
                 Read = s => s.Ui.AvatarClips ? "true" : "false",
                 Write = (s, v) => s with
                 {
-                    Ui = s.Ui with { AvatarClips = bool.TryParse(v, out var on) && on },
+                    Ui = s.Ui with { AvatarClips = v is not "false" },
                 },
             },
         },
