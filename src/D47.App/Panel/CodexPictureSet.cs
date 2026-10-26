@@ -9,6 +9,11 @@ public sealed class CodexPictureSet(
 {
     public CodexPictureStore Store => store;
 
+    /// <summary>The Commander saved a picture of their own for the entry from a new capture; a re-crop does not raise it.</summary>
+    public event Action<CodexPictureKey>? PictureSaved;
+
+    internal void RaisePictureSaved(CodexPictureKey key) => PictureSaved?.Invoke(key);
+
     public CodexPicturePublisher? Publisher => publisher;
 
     public bool StockOn => stockOn();

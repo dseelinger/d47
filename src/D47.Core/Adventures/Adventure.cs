@@ -177,6 +177,12 @@ public enum TriggerKind
 
     /// <summary>Any event <see cref="Knowledge.StepEventCatalogue"/> allows, named by <see cref="AdventureTrigger.Event"/> and limited by <see cref="AdventureTrigger.Where"/>. Not authorable.</summary>
     Event,
+
+    /// <summary>The Commander saves their own picture for a codex entry that is on record. Counted; one picture is one.</summary>
+    CodexPicture,
+
+    /// <summary>The Commander saves their own picture for an entry first logged, in that region, after the step appeared. Counted; one picture is one.</summary>
+    NewCodexPicture,
 }
 
 /// <summary>One field of an event and the value it has to hold.</summary>
@@ -387,6 +393,8 @@ public sealed record AdventureTrigger
         TriggerKind.Signal => $"survey {Counted("body", "bodies")} with {Plain()} signals",
         TriggerKind.Wreck => $"touch down at {Counted(Wrecks(one: true), Wrecks(one: false))}",
         TriggerKind.Codex => $"log {Counted(CodexWord(one: true), CodexWord(one: false))}",
+        TriggerKind.CodexPicture => $"save your own picture for {Counted("known codex entry", "known codex entries")}",
+        TriggerKind.NewCodexPicture => $"log {Counted("new codex entry", "new codex entries")} and save your own picture for it",
         TriggerKind.DataSale => $"sell {Credits()} of {DataWord()} data",
         TriggerKind.Salvage => $"pick up {Counted(Cargo(one: true), Cargo(one: false))}",
         TriggerKind.Uss => $"drop into {Counted(Sources(one: true), Sources(one: false))}{In()}",
@@ -444,6 +452,8 @@ public sealed record AdventureTrigger
             TriggerKind.Signal => $"Bodies with {Plain()} signals: {of}",
             TriggerKind.Wreck => $"{Capital(Wrecks(one: false))}: {of}",
             TriggerKind.Codex => $"{Capital(CodexWord(one: false))}: {of}",
+            TriggerKind.CodexPicture => $"Known codex entries pictured: {of}",
+            TriggerKind.NewCodexPicture => $"New codex entries pictured: {of}",
             TriggerKind.DataSale => $"{Capital(DataWord())} data sold: {of} cr",
             TriggerKind.Salvage => $"{Capital(Cargo(one: false))}: {of}",
             TriggerKind.Uss => $"{Capital(Sources(one: false))}: {of}",

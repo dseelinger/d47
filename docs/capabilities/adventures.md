@@ -225,6 +225,8 @@ Thirty-nine triggers, and every one is a comparison on a structured field rather
 | Survey signals | `SAASignalsFound` with a `Signals` entry of one type, such as `Thargoid` or `Platinum` | the body's name |
 | Land at a wreck | `Touchdown` at a `$Settlement_Unflattened_Wrecked…` destination, of one type; unfiltered, only `Unknown`, a crashed Thargoid ship | the destination's display name |
 | Log codex entries | `CodexEntry`, optionally of one `Category` or `SubCategory` (Biology, StellarBodies, Civilisations or Guardian), and with `new` true only an entry whose `IsNewEntry` is true, the first time it is logged in a region | the entry's name |
+| Picture a new codex entry | the Commander saves their own picture (from a new capture, on the entry's page in the main window) for an entry whose `CodexEntry` with `IsNewEntry` true was logged in that region after the objective appeared, and the entry is on record | a picture for another entry, one saved before the entry was logged, one set from the Discoveries page for a Missing entry, or a **Re-crop** |
+| Picture a known codex entry | the Commander saves their own picture, after the objective appeared, for an entry on record in that region | a picture for a Missing entry, a **Re-crop**, or a picture the entry already had when the objective appeared |
 | Sell data | credits from `SellExplorationData`, `MultiSellExplorationData` and `SellOrganicData`, optionally one of the two kinds | anything else |
 | Salvage cargo | `CollectCargo`, optionally of one `Type` | the cargo's display name |
 | Drop into a signal source | `USSDrop`, optionally of one `USSType` | the source's display name |
@@ -849,7 +851,7 @@ replaced in a rewrite, so the same inputs give the same activities.
 | Combat | bounty, bond, conflict | Massacre, Assassinate, OnFoot_Massacre, OnFoot_Onslaught, OnFoot_Assassination, OnFoot_Defence |
 | Trading | sell | Courier, Delivery, Collect, OnFoot_Delivery, OnFoot_Collect |
 | Mining | mine | Mining |
-| Exploration | map, signal, codex, wreck, uss, srv, datasale (cartographic) | none |
+| Exploration | map, signal, codex, newcodexpicture, codexpicture, wreck, uss, srv, datasale (cartographic) | none |
 | Exobiology | organic, datasale (organic) | none |
 | Passengers | none | PassengerBulk, PassengerVIP, Sightseeing, LongDistanceExpedition |
 | Search and rescue | rescue, salvage | Rescue, Salvage, OnFoot_Salvage, OnFoot_Reboot, OnFoot_RebootRestore |

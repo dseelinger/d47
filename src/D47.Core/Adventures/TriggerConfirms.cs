@@ -26,6 +26,8 @@ internal static class TriggerConfirms
         [TriggerKind.Signal] = "bodies that show a signal were surveyed — not what makes the signal",
         [TriggerKind.Wreck] = "the ship touched down at crashed ships — not who crashed or what was aboard",
         [TriggerKind.Codex] = "codex entries were logged — not what the entries say",
+        [TriggerKind.CodexPicture] = "a picture the Commander chose was saved for a codex entry — not what the picture shows",
+        [TriggerKind.NewCodexPicture] = "a new codex entry was logged and the Commander saved a picture for it — not what the entry says or the picture shows",
         [TriggerKind.DataSale] = "credits' worth of exploration or organic data was sold — not who bought it or what it described",
         [TriggerKind.Salvage] = "cargo canisters were picked up in space — not what they held beyond the cargo type named, or whose they were",
         [TriggerKind.Uss] = "the ship dropped into signal sources — not who sent the signal or what was found there",

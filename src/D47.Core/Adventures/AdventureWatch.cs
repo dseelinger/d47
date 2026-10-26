@@ -40,6 +40,7 @@ public static class AdventureWatch
             "Loadout" => ObserveShip(seen, journalEvent.Raw),
             "CarrierLocation" => ObserveCarrier(seen, journalEvent.Raw),
             "Scan" => ObserveScan(seen, journalEvent.Raw),
+            "CodexEntry" => ObserveCodex(seen, journalEvent),
             _ => new AdventureObservation(seen, [], false),
         };
     }
@@ -166,6 +167,28 @@ public static class AdventureWatch
         var bodyClass = DiscoverKey(raw.String("PlanetClass") ?? raw.String("StarType")) ?? string.Empty;
 
         return new AdventureObservation(new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = bodyClass }, [], false, Discovered: bodyClass);
+    }
+
+    /// <summary>When an entry was last logged as new in a region, or null.</summary>
+    public static DateTimeOffset? LoggedNewSince(IReadOnlyDictionary<string, string> seen, string? entry, string? region) =>
+        seen.TryGetValue($"codexnew:{entry}:{region}", out var at) && DateTimeOffset.TryParse(at, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var when) ? when : null;
+
+    /// <summary>A <c>CodexEntry</c> with <c>IsNewEntry</c> is remembered by entry and region, with the time it was logged.</summary>
+    private static AdventureObservation ObserveCodex(IReadOnlyDictionary<string, string> seen, JournalEvent journalEvent)
+    {
+        var raw = journalEvent.Raw;
+
+        if (!(raw.TryGetProperty("IsNewEntry", out var isNew) && isNew.ValueKind == System.Text.Json.JsonValueKind.True)
+            || raw.Long("EntryID") is not { } entry
+            || CodexLedger.RegionIdOf(raw.String("Region")) is not { } region)
+        {
+            return new AdventureObservation(seen, [], false);
+        }
+
+        var key = $"codexnew:{entry.ToString(CultureInfo.InvariantCulture)}:{region.ToString(CultureInfo.InvariantCulture)}";
+
+        return new AdventureObservation(
+            new Dictionary<string, string>(seen, StringComparer.Ordinal) { [key] = journalEvent.Timestamp.ToString("o", CultureInfo.InvariantCulture) }, [], false);
     }
 
     private static IEnumerable<string> Names(System.Text.Json.JsonElement element, string property) =>

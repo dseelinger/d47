@@ -2805,6 +2805,8 @@ public sealed class AdventureGenerator(
             "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.",
             "- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.",
             "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. \"new\" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.",
+            "- \"newcodexpicture\": the Commander logs a codex entry that is new to them in its region, then saves their own picture for it from the D47 Codex page. Met once per picture.",
+            "- \"codexpicture\": the Commander saves their own picture for a codex entry they have already logged, from the D47 Codex page. Met once per picture.",
             "- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.",
             "- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.",
             "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any. \"system\" is the system where the drops must happen, or null for anywhere. A line may place a drop in a system only when the objective names it.",
@@ -2849,7 +2851,7 @@ public sealed class AdventureGenerator(
         {
             text.AppendLine("The counted kinds, in no order of preference:");
 
-            foreach (var line in Shuffled(counted, name))
+            foreach (var line in Shuffled(counted.Where(line => !StoryAnswer.PictureKinds.Contains(KindOf(line))).ToList(), name))
             {
                 text.AppendLine(line);
             }

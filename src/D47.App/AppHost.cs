@@ -3843,6 +3843,12 @@ public sealed class AppHost : IDisposable
 
         capabilities.ToolInvoked += invocation => RecordForStories(D47.Core.Adventures.D47Event.Ran(invocation, DateTimeOffset.Now));
         checklists.LineAdded += scope => RecordForStories(D47.Core.Adventures.D47Event.LineAdded(scope, DateTimeOffset.Now));
+        host.CodexPictureSet.PictureSaved += key =>
+        {
+            var onRecord = gameState.Active?.CodexLedger.Logged.Contains((key.EntryId, key.RegionId)) == true;
+
+            RecordForStories(D47.Core.Adventures.D47Event.PictureSaved(key.EntryId, key.RegionId, onRecord, DateTimeOffset.Now));
+        };
 
         host.AudioRecorder = recording;
         host.InputTrace = inputTrace;

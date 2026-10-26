@@ -166,6 +166,8 @@ public static class ChapterActivities
             new(TriggerKind.Map, null, Career.Exploration, ActivityGate.SurfaceScanner, 2, 5),
             new(TriggerKind.Signal, null, Career.Exploration, ActivityGate.None, 2, 4),
             new(TriggerKind.Codex, null, Career.Exploration, ActivityGate.None, 3, 6),
+            new(TriggerKind.NewCodexPicture, null, Career.Exploration, ActivityGate.None, 1, 1),
+            new(TriggerKind.CodexPicture, null, Career.Exploration, ActivityGate.None, 1, 1),
             new(TriggerKind.Wreck, null, Career.Exploration, ActivityGate.None, 1, 2),
             new(TriggerKind.Uss, null, Career.Exploration, ActivityGate.None, 2, 4),
             new(TriggerKind.Srv, null, Career.Exploration, ActivityGate.BuggyBay, 1, 3),

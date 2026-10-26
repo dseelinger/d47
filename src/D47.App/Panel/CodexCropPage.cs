@@ -105,6 +105,11 @@ public sealed class CodexCropPage : UserControl, IPageSummary
             return;
         }
 
+        if (!_kept)
+        {
+            _pictures.RaisePictureSaved(key);
+        }
+
         Leave();
     }
 

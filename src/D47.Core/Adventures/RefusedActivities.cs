@@ -116,6 +116,8 @@ public static class RefusedActivities
         TriggerKind.Signal => "survey bodies with signals",
         TriggerKind.Wreck => "touch down at crashed ships",
         TriggerKind.Codex => "log codex entries",
+        TriggerKind.CodexPicture => "save your own picture for a codex entry",
+        TriggerKind.NewCodexPicture => "log a new codex entry and save your own picture for it",
         TriggerKind.DataSale => "sell exploration data",
         TriggerKind.Salvage => "pick up cargo canisters",
         TriggerKind.Uss => "drop into signal sources",

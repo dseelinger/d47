@@ -456,6 +456,15 @@ public static class AdventureFold
                 && (SameType(trigger.Filter, raw.String("Category")) || SameType(trigger.Filter, raw.String("SubCategory")))
                 && (trigger.New != true || (raw.TryGetProperty("IsNewEntry", out var isNew) && isNew.ValueKind == JsonValueKind.True)),
 
+            TriggerKind.CodexPicture =>
+                IsPictureOnRecord(journalEvent),
+
+            TriggerKind.NewCodexPicture =>
+                IsPictureOnRecord(journalEvent)
+                && standing is not null
+                && AdventureWatch.LoggedNewSince(standing.Seen, raw.String("Entry"), raw.String("Region")) is { } logged
+                && logged > StepAppeared(standing),
+
             TriggerKind.DataSale =>
                 journalEvent.Kind switch
                 {
@@ -530,6 +539,17 @@ public static class AdventureFold
 
             _ => false,
         };
+    }
+
+    private static bool IsPictureOnRecord(JournalEvent journalEvent) =>
+        journalEvent.Kind == D47Event.CodexPicture && journalEvent.Raw.String("OnRecord") == "true";
+
+    /// <summary>When the step the standing waits on became current: the last step fired, the acceptance, or a later replacement.</summary>
+    private static DateTimeOffset StepAppeared(AdventureStanding standing)
+    {
+        var since = standing.StepFires.Count > 0 ? standing.StepFires[^1].At : standing.Adventure.AcceptedAt ?? DateTimeOffset.MinValue;
+
+        return standing.Adventure is { RewrittenFrom: not null, RewrittenAt: { } rewritten } && rewritten > since ? rewritten : since;
     }
 
     /// <summary>A string field holds when the folded symbols are equal, a boolean when it is present and equal; a missing field never holds.</summary>
@@ -986,7 +1006,8 @@ public static class AdventureFold
             .SelectMany(beat => beat.Steps)
             .SelectMany(step => step.Options.SelectMany(option => option.Steps).Prepend(step))
             .SelectMany(step => step.FailsOn.Select(AdventureValidation.FailTrigger).Prepend(step.Trigger))
-            .Any(trigger => trigger.Kind == TriggerKind.Event && Matches(trigger, made));
+            .Any(trigger => trigger.Kind == TriggerKind.Event && Matches(trigger, made)
+                || trigger.Kind is TriggerKind.CodexPicture or TriggerKind.NewCodexPicture && made.Kind == D47Event.CodexPicture);
     }
 
     /// <summary>The standing with its current step fired at <paramref name="at"/> by <paramref name="by"/>, the bench when null.</summary>

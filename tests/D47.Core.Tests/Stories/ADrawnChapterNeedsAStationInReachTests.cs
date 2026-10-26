@@ -92,7 +92,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
     public void AComfortChapterWithNeitherMineNorOrganicHasNoComfortSlot()
     {
         var statistics = Statistics("\"Combat\":{ \"Bounties_Claimed\":0 }");
-        var ungated = new[] { TriggerKind.Signal, TriggerKind.Codex, TriggerKind.Wreck, TriggerKind.Uss, TriggerKind.Salvage, TriggerKind.Boost, TriggerKind.Discover, TriggerKind.Organic };
+        var ungated = new[] { TriggerKind.Signal, TriggerKind.Codex, TriggerKind.NewCodexPicture, TriggerKind.CodexPicture, TriggerKind.Wreck, TriggerKind.Uss, TriggerKind.Salvage, TriggerKind.Boost, TriggerKind.Discover, TriggerKind.Organic };
 
         foreach (var seed in Enumerable.Range(0, Seeds))
         {

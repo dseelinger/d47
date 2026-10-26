@@ -385,6 +385,30 @@ public class TheCodexPicturePagesCropACaptureTests
         again.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData(false, 1)]
+    [InlineData(true, 0)]
+    public async Task OnlyASaveFromANewCaptureAnnouncesTheEntrysPicture(bool kept, int announced)
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+        surface.OwnPictureWithSource(Key, new CropSquare(200, 50, 500));
+        surface.Nav.Drill(CodexPage.CropCrumb(Key, kept));
+        List<CodexPictureKey> saved = [];
+        surface.Pictures.PictureSaved += saved.Add;
+
+        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
+
+        await crop.SaveAsync();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(announced, saved.Count);
+        Assert.All(saved, key => Assert.Equal(Key, key));
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void RecropOpensOnTheKeptSourceWithTheSavedSquareAndCancelWritesNothing()
     {

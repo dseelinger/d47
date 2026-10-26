@@ -39,6 +39,9 @@ internal static class StoryAnswer
 
     internal const string EventKind = "event";
 
+    /// <summary>The kinds offered only to a chapter that drew them.</summary>
+    internal static readonly IReadOnlySet<string> PictureKinds = new HashSet<string>(StringComparer.Ordinal) { "codexpicture", "newcodexpicture" };
+
     private enum Shape
     {
         Text,
@@ -98,6 +101,8 @@ internal static class StoryAnswer
             {
                 kinds.Add(EventKind);
             }
+
+            kinds.AddRange(PictureKinds.Where(names.Contains));
         }
 
         return kinds;

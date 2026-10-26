@@ -14,6 +14,9 @@ public sealed record D47Event(string Name, IReadOnlyList<EventField> Fields, Dat
     /// <summary>A line landed on a checklist.</summary>
     public const string ChecklistLineAdded = "ChecklistLineAdded";
 
+    /// <summary>The Commander saved their own picture for a codex entry. Fields: <c>Entry</c>, <c>Region</c> and <c>OnRecord</c> (<c>true</c> or <c>false</c>).</summary>
+    public const string CodexPicture = "CodexPicture";
+
     /// <summary>The <see cref="ToolRun"/> a tool call makes, or null when the model called it or the handler did not run and return no error.</summary>
     public static D47Event? Ran(ToolInvocation invocation, DateTimeOffset at)
     {
@@ -31,6 +34,17 @@ public sealed record D47Event(string Name, IReadOnlyList<EventField> Fields, Dat
 
         return new D47Event(ChecklistLineAdded, [new EventField("Group", ChecklistScope.Word(scope.Group))], at);
     }
+
+    /// <summary>The <see cref="CodexPicture"/> for a picture saved for <paramref name="entryId"/> in <paramref name="regionId"/>.</summary>
+    public static D47Event PictureSaved(long entryId, int regionId, bool onRecord, DateTimeOffset at) =>
+        new(
+            CodexPicture,
+            [
+                new EventField("Entry", entryId.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                new EventField("Region", regionId.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                new EventField("OnRecord", onRecord ? "true" : "false"),
+            ],
+            at);
 
     /// <summary>The event as the fold reads a journal event: its name as the kind, its fields as string properties.</summary>
     public JournalEvent AsJournalEvent()

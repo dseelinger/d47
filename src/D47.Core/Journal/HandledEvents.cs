@@ -43,6 +43,7 @@ public static class HandledEvents
         "CarrierStats",
         "CarrierTradeOrder",
         "CodexEntry",
+        "CodexPicture",
         "CollectCargo",
         "CollectItems",
         "ColonisationBeaconDeployed",
