@@ -53,7 +53,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ChecklistPage.SuggestionsKey => (page ??= Page(root)).BuildSuggestions(),
             ChecklistPage.ActivitiesKey => activities is null
                 ? new TextBlock { Text = "No activity dates yet." }
-                : new ActivitiesPage(activities, () => checklists.Document.CommanderFid),
+                : new ActivitiesPage(activities, () => checklists.Document.CommanderFid, columnWidths: host.ColumnWidths),
             _ => page = Page(crumb),
         };
 
@@ -143,7 +143,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset);
+        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, host.SettingsJump, headset, host.ColumnWidths);
 
         DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
     }
@@ -155,7 +155,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset);
+        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths);
 
         DeclareLedger(new NavCrumb(CombatStatsPage.PageKey, "Combat stats"));
     }
@@ -172,10 +172,10 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         {
             if (!CreditsPage.IsTransactions(crumb.Key))
             {
-                return _credits = new CreditsPage(state, history, now, choice, host.Nav, headset);
+                return _credits = new CreditsPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths);
             }
 
-            return _creditTransactions = new CreditTransactionsPage(state, history, now, choice, CreditsPage.KindOf(crumb.Key), headset);
+            return _creditTransactions = new CreditTransactionsPage(state, history, now, choice, CreditsPage.KindOf(crumb.Key), headset, host.ColumnWidths);
         };
 
         DeclareLedger(new NavCrumb(CreditsPage.PageKey, "Credits"));
@@ -196,10 +196,10 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsDiscoveries(crumb.Key)
-            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures)
+            ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths)
             : CodexPage.IsRegion(crumb.Key)
-            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav)
-            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset);
+            ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths)
+            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths);
 
         DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
     }
@@ -218,7 +218,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     public void EnableCommanders(CommanderRoster roster)
     {
-        _commandersBuild = _ => _commanders = new CommandersPage(roster);
+        _commandersBuild = _ => _commanders = new CommandersPage(roster, host.ColumnWidths);
 
         host.Furnish(
             PanelTab.Commander,

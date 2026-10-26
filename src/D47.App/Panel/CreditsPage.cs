@@ -14,6 +14,8 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 {
     public const string PageKey = "credits";
 
+    public const string TableId = "Credits.Kinds";
+
     public const string AllKey = "credits-all";
 
     private const string KindPrefix = "credits-kind-";
@@ -22,8 +24,14 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
     public const string HeadsetSummaryText = "Where your credits came from and went.";
 
-    private static readonly string[] PanelColumns = ["*", "200", "200", "110", "20"];
-    private static readonly string[] HeadsetColumns = ["*", "155", "155", "110", "16"];
+    private static readonly TableColumn[] KindColumns =
+    [
+        new("Kind", ColumnFit.Fill),
+        new("In"),
+        new("Out"),
+        new("Entries"),
+        new("Open", ColumnFit.Fixed) { Fixed = 20 },
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -31,6 +39,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
     private readonly CreditsChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<CreditKindRow> _head = new("CreditsHead", CreditsModel.KindHeads());
     private readonly Segment _period = CreditsKit.PeriodSegment();
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
@@ -48,7 +57,8 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         CreditsChoice choice,
         PanelNavigator nav,
-        bool headset = false)
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _history = history;
@@ -56,6 +66,7 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _nav = nav;
         _headset = headset;
+        _columnWidths = columnWidths;
 
         _head.Changed += Draw;
         _period.SelectedIndex = choice.Period;
@@ -273,14 +284,15 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
     private StackPanel Table(IReadOnlyList<CreditKindRow> kinds, IReadOnlyList<CreditKindRow> moved)
     {
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
+        var layout = new TableLayout(TableId, KindColumns, _columnWidths, _headset ? 12 : 16);
 
         if (kinds.Count > 0)
         {
-            table.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+            table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
 
             foreach (var row in _head.Sort(kinds))
             {
-                table.Children.Add(RowView(row));
+                table.Children.Add(RowView(row, layout));
             }
         }
 
@@ -292,22 +304,16 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
             foreach (var row in moved)
             {
-                table.Children.Add(RowView(row));
+                table.Children.Add(RowView(row, layout));
             }
         }
 
         return table;
     }
 
-    private Grid NewGrid() => new()
+    private Button RowView(CreditKindRow row, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
-
-    private Button RowView(CreditKindRow row)
-    {
-        var grid = NewGrid();
+        var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         var bank = row.Kind == CreditKind.CarrierBank;

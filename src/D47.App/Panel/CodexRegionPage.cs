@@ -15,8 +15,15 @@ namespace D47.App.Panel;
 /// <summary>Commander › Ledgers › Codex › a region: one pressable row per entry in the period, grouped by subcategory (#1290).</summary>
 public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 {
-    private static readonly string[] PanelColumns = ["*", "360", "160", "200"];
-    private static readonly string[] HeadsetColumns = ["*", "250", "136", "150"];
+    public const string TableId = "Codex.Entries";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Entry", ColumnFit.Fill),
+        new("System", ColumnFit.Fill),
+        new("Time"),
+        new("Status"),
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -24,6 +31,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly int? _regionId;
     private readonly bool _headset;
+    private TableLayout _layout;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
     private readonly CodexTable _table;
     private readonly SortHeader<CodexEntryRow> _head = new("CodexEntryHead", CodexModel.EntryHeads());
@@ -48,7 +57,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         int? regionId,
         bool headset = false,
         PanelNavigator? nav = null,
-        CodexTable? table = null)
+        CodexTable? table = null,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _history = history;
@@ -56,6 +66,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _regionId = regionId;
         _headset = headset;
+        _columnWidths = columnWidths;
+        _layout = NewLayout();
         _nav = nav;
         _table = table ?? CodexCatalogue.Table;
 
@@ -211,7 +223,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        _top.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => HorizontalAlignment.Left));
+        _layout = NewLayout();
+        _top.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left));
 
         var items = new List<object>();
 
@@ -279,11 +292,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         _list.ItemsSource = items;
     }
 
-    private Grid NewGrid() => new()
-    {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
+    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
     private static DockPanel GroupView(CodexGroup group)
     {
@@ -299,7 +308,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
     private Button RowView(CodexEntryRow row)
     {
-        var grid = NewGrid();
+        var grid = _layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         CreditsKit.Place(grid, 0, CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));

@@ -29,8 +29,17 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
 
-    private static readonly string[] PanelColumns = ["*", "120", "120", "120", "150", "16"];
-    private static readonly string[] HeadsetColumns = ["*", "80", "80", "80", "110", "16"];
+    public const string TableId = "Codex.Regions";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Region", ColumnFit.Fill),
+        new("New"),
+        new("Logged"),
+        new("Entries"),
+        new("Discoveries"),
+        new("Open", ColumnFit.Fixed) { Fixed = 16 },
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -38,6 +47,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
+    private TableLayout _layout;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<CodexRegionRow> _head = new("CodexHead", CodexModel.RegionHeads());
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _row;
@@ -54,7 +65,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         CodexChoice choice,
         PanelNavigator nav,
-        bool headset = false)
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _history = history;
@@ -62,6 +74,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _nav = nav;
         _headset = headset;
+        _columnWidths = columnWidths;
+        _layout = NewLayout();
 
         _row = CodexKit.PeriodRow(_period);
         _head.Changed += Draw;
@@ -228,6 +242,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         var view = Build();
 
         _body.Children.Clear();
+        _layout = NewLayout();
 
         if (view.Running)
         {
@@ -294,29 +309,24 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private StackPanel Table(IReadOnlyList<CodexRegionRow> rows, bool header = true)
     {
         var table = new StackPanel { Spacing = Gaps.Tile };
-
         if (header)
         {
-            table.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+            table.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
         }
 
         foreach (var row in _head.Sort(rows))
         {
-            table.Children.Add(RowView(row));
+            table.Children.Add(RowView(row, _layout));
         }
 
         return table;
     }
 
-    private Grid NewGrid() => new()
-    {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
+    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
-    private Button RowView(CodexRegionRow row)
+    private Button RowView(CodexRegionRow row, TableLayout layout)
     {
-        var grid = NewGrid();
+        var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         CreditsKit.Place(grid, 0, NameOf(row));

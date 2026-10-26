@@ -122,18 +122,19 @@ internal static class CreditsKit
         return label;
     }
 
-    /// <summary>Fills <paramref name="grid"/> with one header cell per column of <paramref name="head"/>.</summary>
-    public static Grid HeaderRow<TRow>(SortHeader<TRow> head, Grid grid, Func<int, HorizontalAlignment> alignment)
+    /// <summary>The header row of <paramref name="table"/>: one cell per column of <paramref name="head"/>, an empty cell for any column past them.</summary>
+    public static Grid HeaderRow<TRow>(SortHeader<TRow> head, TableLayout table, Func<int, HorizontalAlignment> alignment)
     {
+        var cells = new List<Control>();
+
+        for (var i = 0; i < table.Columns.Count; i++)
+        {
+            cells.Add(i < head.Columns.Count ? head.Cell(i, alignment(i)) : new Border());
+        }
+
+        var grid = table.Header(cells);
         grid.MinHeight = TypeScale.MinimumTarget;
         grid.Margin = new Thickness(14, 0);
-
-        for (var i = 0; i < head.Columns.Count; i++)
-        {
-            var cell = head.Cell(i, alignment(i));
-            Grid.SetColumn(cell, i);
-            grid.Children.Add(cell);
-        }
 
         return grid;
     }

@@ -66,14 +66,24 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         SortColumn<BgsWorkRow>.Figure("Influence", row => row.InfluenceChange, SortDirection.Descending) with { Second = "Tick → visit" },
     ];
 
-    private static readonly string[] PanelColumns = ["*", "110", "170", "170", "170", "190"];
-    private static readonly string[] HeadsetColumns = ["*", "84", "140", "140", "140", "150"];
+    public const string TableId = "BgsWork";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("System", ColumnFit.Fill),
+        new("Missions"),
+        new("Combat"),
+        new("Trade"),
+        new("Data"),
+        new("Influence"),
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<DateTimeOffset?> _tick;
     private readonly Func<DateTimeOffset> _now;
     private readonly Action<string>? _openSettings;
     private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<BgsWorkRow> _head = new("BgsWorkHead", Heads);
     private readonly StackPanel _body = new();
 
@@ -89,13 +99,15 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset?> tick,
         Func<DateTimeOffset> now,
         Action<string>? openSettings = null,
-        bool headset = false)
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _tick = tick;
         _now = now;
         _openSettings = openSettings;
         _headset = headset;
+        _columnWidths = columnWidths;
 
         Margin = new Thickness(14);
         Content = LoadoutPages.Scrolling(_body);
@@ -370,36 +382,21 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         var columns = withInfluence ? Heads.Count : Heads.Count - 1;
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
 
-        var header = NewGrid(columns);
-        header.MinHeight = TypeScale.MinimumTarget;
-        header.Margin = new Thickness(14, 0);
+        var layout = new TableLayout(TableId, [.. ColumnList.Take(columns)], _columnWidths, _headset ? 12 : 16);
 
-        for (var i = 0; i < columns; i++)
-        {
-            var cell = _head.Cell(i, i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
-            Grid.SetColumn(cell, i);
-            header.Children.Add(cell);
-        }
-
-        table.Children.Add(header);
+        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
 
         foreach (var row in _head.Sort(rows))
         {
-            table.Children.Add(RowView(row, withInfluence, current));
+            table.Children.Add(RowView(row, withInfluence, current, layout));
         }
 
         return table;
     }
 
-    private Grid NewGrid(int columns) => new()
+    private static Border RowView(BgsWorkRow row, bool withInfluence, string? current, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', (_headset ? HeadsetColumns : PanelColumns).Take(columns))),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
-
-    private Border RowView(BgsWorkRow row, bool withInfluence, string? current)
-    {
-        var grid = NewGrid(withInfluence ? Heads.Count : Heads.Count - 1);
+        var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);

@@ -17,14 +17,25 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 {
     private const int ThumbnailPixels = 88;
 
-    private static readonly string[] PanelColumns = ["44", "*", "210", "150", "120", "110"];
-    private static readonly string[] HeadsetColumns = ["44", "*", "180", "130", "110", "100"];
+    public const string TableId = "Codex.Discoveries";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Mark", ColumnFit.Fixed) { Fixed = 44 },
+        new("Entry", ColumnFit.Fill),
+        new("Category", ColumnFit.Fill),
+        new("SubCategory", ColumnFit.Fill),
+        new("ReportedIn"),
+        new("Status"),
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly int? _regionId;
     private readonly CodexTable _table;
     private readonly bool _headset;
+    private TableLayout _layout;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
     private readonly CodexPictureSet? _pictures;
     private readonly Dictionary<long, (Bitmap Bitmap, string Name)> _thumbs = [];
@@ -50,7 +61,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         CodexTable? table = null,
         bool headset = false,
         PanelNavigator? nav = null,
-        CodexPictureSet? pictures = null)
+        CodexPictureSet? pictures = null,
+        ColumnWidthMemory? columnWidths = null)
     {
         _nav = nav;
         _pictures = pictures;
@@ -60,6 +72,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _regionId = regionId;
         _table = table ?? CodexCatalogue.Table;
         _headset = headset;
+        _columnWidths = columnWidths;
+        _layout = NewLayout();
 
         _head.Changed += Draw;
         _filters.Changed += (_, _) => Draw();
@@ -196,7 +210,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
             return;
         }
 
-        _top.Children.Add(CreditsKit.HeaderRow(_head, NewGrid(), i => HorizontalAlignment.Left));
+        _layout = NewLayout();
+        _top.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left));
 
         Rows(_head.Sort(view.Rows));
     }
@@ -241,15 +256,11 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _list.ItemsSource = items;
     }
 
-    private Grid NewGrid() => new()
-    {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
+    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
     private Button RowView(CodexMissingRow row)
     {
-        var grid = NewGrid();
+        var grid = _layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         var status = CreditsKit.Line(

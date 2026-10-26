@@ -20,17 +20,33 @@ public sealed class ActivitiesPage : UserControl
     /// <summary>Below this width a row is two columns.</summary>
     public const double NarrowBelow = 760;
 
-    private const double DateColumn = 150;
-
-    private const double AgeColumn = 200;
+    public const string TableId = "Activities";
 
     private const double SuggestColumn = 76;
+
+    private static readonly TableColumn[] WideColumns =
+    [
+        new("Activity", ColumnFit.Fill),
+        new("LastDone"),
+        new("Age"),
+        new("Suggest", ColumnFit.Fixed) { Fixed = SuggestColumn },
+    ];
+
+    private static readonly TableColumn[] NarrowColumns =
+    [
+        new("Activity", ColumnFit.Fill),
+        new("Suggest", ColumnFit.Fixed) { Fixed = SuggestColumn },
+    ];
 
     private readonly ActivityLedger _ledger;
 
     private readonly Func<string?> _commander;
 
     private readonly Func<DateTimeOffset> _now;
+
+    private readonly ColumnWidthMemory? _columnWidths;
+
+    private TableLayout _layout;
 
     private readonly StackPanel _page = new() { Spacing = 2, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Stretch };
 
@@ -55,8 +71,10 @@ public sealed class ActivitiesPage : UserControl
 
     private bool _writing;
 
-    public ActivitiesPage(ActivityLedger ledger, Func<string?> commander, Func<DateTimeOffset>? now = null)
+    public ActivitiesPage(ActivityLedger ledger, Func<string?> commander, Func<DateTimeOffset>? now = null, ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
+        _layout = NewLayout();
         _ledger = ledger;
         _commander = commander;
         _now = now ?? (() => DateTimeOffset.Now);
@@ -115,6 +133,7 @@ public sealed class ActivitiesPage : UserControl
     private void Fill()
     {
         _page.Children.Clear();
+        _layout = NewLayout();
 
         var commander = _commander();
         var corpus = _ledger.CorpusFrom(commander);
@@ -160,10 +179,10 @@ public sealed class ActivitiesPage : UserControl
     private Control Head()
     {
         var head = ListRow.Head(string.Empty);
-        var grid = new Grid { ColumnDefinitions = Columns(), ColumnSpacing = _narrow ? 0 : 16 };
+        var grid = _layout.Header([]);
         var sorting = _narrow ? _narrowHead : _wideHead;
 
-        head.Padding = new Thickness(0);
+        head.Padding = new Thickness(13, 0, 1, 0);
         head.Child = grid;
         AddCell(grid, sorting.Cell(0, HorizontalAlignment.Left), 0);
 
@@ -178,15 +197,9 @@ public sealed class ActivitiesPage : UserControl
         return head;
     }
 
-    private ColumnDefinitions Columns() => _narrow
-        ? [new ColumnDefinition(1, GridUnitType.Star), new ColumnDefinition(SuggestColumn, GridUnitType.Pixel)]
-        :
-        [
-            new ColumnDefinition(1, GridUnitType.Star),
-            new ColumnDefinition(DateColumn, GridUnitType.Pixel),
-            new ColumnDefinition(AgeColumn, GridUnitType.Pixel),
-            new ColumnDefinition(SuggestColumn, GridUnitType.Pixel),
-        ];
+    private TableLayout NewLayout() => _narrow
+        ? new TableLayout(TableId, NarrowColumns, _columnWidths)
+        : new TableLayout(TableId, WideColumns, _columnWidths, 16);
 
     private Border Row(
         ActivityEntry entry,
@@ -224,7 +237,7 @@ public sealed class ActivitiesPage : UserControl
             BorderBrush = Brushes.Transparent,
         });
 
-        var grid = new Grid { ColumnDefinitions = Columns(), ColumnSpacing = _narrow ? 0 : 16 };
+        var grid = _layout.Row([]);
         row.Child = grid;
 
         if (_narrow)

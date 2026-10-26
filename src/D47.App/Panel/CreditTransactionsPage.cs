@@ -14,8 +14,15 @@ namespace D47.App.Panel;
 /// <summary>Commander › Ledgers › Credits › a kind, or all transactions: one row per entry in the period (#1289).</summary>
 public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFilterablePage
 {
-    private static readonly string[] PanelColumns = ["150", "*", "210", "230"];
-    private static readonly string[] HeadsetColumns = ["128", "*", "180", "190"];
+    public const string TableId = "Credits.Transactions";
+
+    private static readonly TableColumn[] TxColumns =
+    [
+        new("Time"),
+        new("Kind", ColumnFit.Fill),
+        new("Amount"),
+        new("Balance"),
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
@@ -23,6 +30,8 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
     private readonly CreditsChoice _choice;
     private readonly CreditKind? _kind;
     private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
+    private TableLayout _layout;
     private readonly SortHeader<CreditTxRow> _head = new("CreditsTxHead", CreditsModel.TxHeads());
     private readonly Segment _period = CreditsKit.PeriodSegment();
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
@@ -42,7 +51,8 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         Func<DateTimeOffset> now,
         CreditsChoice choice,
         CreditKind? kind,
-        bool headset = false)
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _history = history;
@@ -50,6 +60,8 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         _choice = choice;
         _kind = kind;
         _headset = headset;
+        _columnWidths = columnWidths;
+        _layout = NewLayout();
 
         _head.Changed += Draw;
         _period.SelectedIndex = choice.Period;
@@ -198,7 +210,9 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
             _top.Children.Add(CreditsKit.Note(CreditsModel.NoBalanceLine, 6));
         }
 
-        var header = CreditsKit.HeaderRow(_head, NewGrid(), i => i is 0 or 1 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
+        _layout = NewLayout();
+
+        var header = CreditsKit.HeaderRow(_head, _layout, i => i is 0 or 1 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
         header.Margin = new Thickness(14, 10, 14, 0);
         _top.Children.Add(header);
 
@@ -241,11 +255,7 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         return note;
     }
 
-    private Grid NewGrid() => new()
-    {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
+    private TableLayout NewLayout() => new(TableId, TxColumns, _columnWidths, _headset ? 12 : 16);
 
     /// <summary>"2026-10-17 19:32", or "10-17 19:32" on the big panel; a folded row gives its first and last dates.</summary>
     public string TimeText(CreditTxRow row)
@@ -259,7 +269,7 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
     private Border RowView(CreditTxRow row)
     {
-        var grid = NewGrid();
+        var grid = _layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         var bank = row.Kind == CreditKind.CarrierBank;

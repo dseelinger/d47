@@ -14,6 +14,8 @@ Inside an Operation, d47 now says only warnings and relayed in-game comms unprom
 
 The slot table on a ship's Fleet page sizes its columns to what they hold: CURRENT is no wider than "empty" on an empty ship, and PLAN keeps its roll and effects. On the desktop window, drag the right edge of SLOT, CURRENT or PLAN to set a width, which holds on every ship; double-click the edge to clear it.
 
+The tables on the Commander tab size their columns to what they hold: the credit kinds and transactions, the Codex regions, entries and discoveries, combat stats, BGS work, the Commanders list and Activities. On the desktop window, drag the right edge of a column heading to set a width, which holds after you reopen the page; double-click the edge to clear it. The headset panel fits to content with no drag handles.
+
 A stick button bound to an action or to cancel now acts on every press, however short. A dial bound to comms channel up or down steps once per click, where before it missed most of them, and a dial can now be bound on the bind page.
 
 A stick button bound to comms channel or sub-channel up or down still moves the channel on every press, but D47 now says the channel's name once, 400 ms after the last step, instead of once per step.

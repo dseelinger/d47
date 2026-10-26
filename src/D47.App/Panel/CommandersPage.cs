@@ -19,7 +19,16 @@ public sealed class CommandersPage : UserControl
 
     public const string NoneYet = "No commander has been found in the journals yet.";
 
-    private const string Columns = "1.4*,*,*,170,140";
+    public const string TableId = "Commanders";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Name", ColumnFit.Fill),
+        new("Ship"),
+        new("LastLocation"),
+        new("LastDetected"),
+        new("Switch", ColumnFit.Fixed) { Fixed = 140 },
+    ];
 
     /// <summary>The table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<CommanderSighting>> Heads =
@@ -35,12 +44,16 @@ public sealed class CommandersPage : UserControl
 
     private readonly SortHeader<CommanderSighting> _head = new("CommandersHead", Heads, ByLastDetected);
     private readonly CommanderRoster _roster;
+    private readonly ColumnWidthMemory? _columnWidths;
+    private TableLayout _layout;
     private readonly StackPanel _body = new();
     private (object? Sightings, string? Shown, int Files, bool OffDuty) _seen;
 
-    public CommandersPage(CommanderRoster roster)
+    public CommandersPage(CommanderRoster roster, ColumnWidthMemory? columnWidths = null)
     {
         _roster = roster;
+        _columnWidths = columnWidths;
+        _layout = new TableLayout(TableId, ColumnList, columnWidths, 16);
         _head.Changed += Draw;
 
         Content = new DockPanel
@@ -102,6 +115,8 @@ public sealed class CommandersPage : UserControl
             return;
         }
 
+        _layout = new TableLayout(TableId, ColumnList, _columnWidths, 16);
+
         var rows = new StackPanel { Spacing = 2 };
         rows.Children.Add(Header());
 
@@ -119,19 +134,8 @@ public sealed class CommandersPage : UserControl
 
     private Grid Header()
     {
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(Columns),
-            ColumnSpacing = 16,
-            Margin = new Thickness(14, 0, 4, 6),
-        };
-
-        for (var column = 0; column < Heads.Count; column++)
-        {
-            var cell = _head.Cell(column, HorizontalAlignment.Left);
-            Grid.SetColumn(cell, column);
-            grid.Children.Add(cell);
-        }
+        var grid = _layout.Header([.. Enumerable.Range(0, Heads.Count).Select(column => _head.Cell(column, HorizontalAlignment.Left)), new Border()]);
+        grid.Margin = new Thickness(14, 0, 4, 6);
 
         return grid;
     }
@@ -142,13 +146,10 @@ public sealed class CommandersPage : UserControl
         name.FontWeight = FontWeight.SemiBold;
 
         var ship = Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
-        Grid.SetColumn(ship, 1);
 
         var location = Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.AKey);
-        Grid.SetColumn(location, 2);
 
         var detected = Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
-        Grid.SetColumn(detected, 3);
 
         Control action;
 
@@ -174,23 +175,23 @@ public sealed class CommandersPage : UserControl
             action = button;
         }
 
-        Grid.SetColumn(action, 4);
-
         var row = new Border
         {
             MinHeight = 52,
             Padding = new Thickness(14, 4, 4, 4),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions(Columns),
-                ColumnSpacing = 16,
-                VerticalAlignment = VerticalAlignment.Center,
-                Children = { name, ship, location, detected, action },
-            },
+            Child = Cells(name, ship, location, detected, action),
         };
         Themed(row, Border.BackgroundProperty, current ? ThemeManager.CyanGroundKey : ThemeManager.SlabKey);
 
         return row;
+    }
+
+    private Grid Cells(params Control[] cells)
+    {
+        var grid = _layout.Row(cells);
+        grid.VerticalAlignment = VerticalAlignment.Center;
+
+        return grid;
     }
 
     private static TextBlock Text(string text, string family, double size, string key)

@@ -97,13 +97,20 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         ["Victim or paying", "Of their ships", "Paid by them"],
     ];
 
-    private static readonly string[] PanelColumns = ["*", "160", "220"];
-    private static readonly string[] HeadsetColumns = ["*", "110", "180"];
+    public const string TableId = "CombatStats";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Name", ColumnFit.Fill),
+        new("Kills"),
+        new("Credits"),
+    ];
 
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<CombatRow>[] _heads;
     private readonly Segment _period = SortBar.Choice("CombatPeriod", Periods);
     private readonly Segment _grouping = SortBar.Choice("CombatGrouping", Groupings);
@@ -121,12 +128,14 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         Func<CommanderGameState?> state,
         Func<HistoryState> history,
         Func<DateTimeOffset> now,
-        bool headset = false)
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _history = history;
         _now = now;
         _headset = headset;
+        _columnWidths = columnWidths;
 
         _heads =
         [
@@ -450,36 +459,21 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
         var head = Head;
 
-        var header = NewGrid();
-        header.MinHeight = TypeScale.MinimumTarget;
-        header.Margin = new Thickness(14, 0);
+        var layout = new TableLayout(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
-        for (var i = 0; i < head.Columns.Count; i++)
-        {
-            var cell = head.Cell(i, i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
-            Grid.SetColumn(cell, i);
-            header.Children.Add(cell);
-        }
-
-        table.Children.Add(header);
+        table.Children.Add(CreditsKit.HeaderRow(head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
 
         foreach (var row in head.Sort(rows))
         {
-            table.Children.Add(RowView(row, current));
+            table.Children.Add(RowView(row, current, layout));
         }
 
         return table;
     }
 
-    private Grid NewGrid() => new()
+    private static Border RowView(CombatRow row, long? current, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(string.Join(',', _headset ? HeadsetColumns : PanelColumns)),
-        ColumnSpacing = _headset ? 12 : 16,
-    };
-
-    private Border RowView(CombatRow row, long? current)
-    {
-        var grid = NewGrid();
+        var grid = layout.Row([]);
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         Place(grid, 0, NameOf(row, current));
