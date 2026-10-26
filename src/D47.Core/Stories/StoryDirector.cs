@@ -1642,7 +1642,8 @@ public sealed class StoryDirector(
                 reach?.InReach != false,
                 longHaul,
                 slots,
-                finaleChapter is null ? null : story.FinaleDestination),
+                finaleChapter is null ? null : story.FinaleDestination,
+                hull: game?.Ship.Type),
             Rewrite: rewrite);
     }
 

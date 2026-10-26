@@ -1,7 +1,9 @@
-﻿using D47.Core.Stories;
+﻿using D47.Core.Adventures;
+using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
+using static D47.Core.Tests.Adventures.AdventureFixtures;
 using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
@@ -198,6 +200,59 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Assert.Equal([new StorySwitch("rider", true, "setUp", false, 2)], fixtures.Asks.Single().Story!.Due);
         Assert.Equal(["rider"], story.AwaitingSeat);
         Assert.Empty(story.Boarded);
+    }
+
+    [Fact]
+    public async Task AChapterRewrittenInASidewinderAsksForTheSeatsAHeldBoardingNeeds()
+    {
+        const string BountyAndADock = """
+            {"opening": "x", "reply": "ok", "beats": [
+              {"title": "Another Way", "function": "midpoint", "kind": "bounty", "count": 2, "line": "Two more."},
+              {"title": "Home Again", "function": "finale", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "Home."}
+            ]}
+            """;
+
+        using var fixtures = new StoryFixtures(new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(BountyAndADock)), Rider);
+        fixtures.Director.Game = () => Loaded(0);
+        fixtures.Stories.Save("F1", Picked with
+        {
+            PickedAt = Now.AddDays(-30),
+            BeaconScanAt = Now.AddDays(-20),
+            Chapters = ["chapter-one", "the-hard-way"],
+            CluesGiven = 2,
+            AwaitingSeat = ["rider"],
+        });
+
+        var chapter = new Adventure
+        {
+            Key = "the-hard-way",
+            Name = "The Hard Way",
+            Source = AdventureSource.Generated,
+            Written = Now,
+            Spine = new AdventureSpine { Premise = "A debt.", Want = "To pay it.", Stake = "Whether it can be.", Turn = "It is owed to you.", Ending = "It is forgiven." },
+            Opening = "Go.",
+            StoryId = Id,
+            Beats =
+            [
+                Beat("First Blood", "catalyst", new AdventureTrigger { Kind = TriggerKind.Bounty, Count = 1 }, "One."),
+                Beat("The Wing", "midpoint", new AdventureTrigger { Kind = TriggerKind.Bond, Count = 3 }, "Three bonds."),
+                Beat("Home", "finale", new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = Home, System = "Tavell's Reach" }, "End."),
+            ],
+        };
+
+        Assert.Null(fixtures.Book.Write("F1", chapter));
+        Assert.Null(fixtures.Book.Begin("F1", "the-hard-way", Now));
+        fixtures.Book.Observe(
+            AdventureFixtures.Event($$"""{ "timestamp":"{{Stamp(Now.AddMinutes(1))}}", "event":"Bounty", "TotalReward":100 }"""),
+            "F1");
+        fixtures.Director.Clock = () => Now.AddHours(1);
+
+        Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
+
+        var ask = Assert.Single(fixtures.Asks);
+
+        Assert.NotNull(ask.Rewrite);
+        Assert.Equal([new StorySwitch("rider", true, "setUp", true, 2)], ask.Story!.Due);
     }
 
     [Fact]
