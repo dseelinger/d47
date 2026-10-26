@@ -306,20 +306,23 @@ public sealed class StoryDirector(
     }
 
     /// <summary>
-    /// The story with its boardings and leavings as a chapter handed <paramref name="handed"/> opens: the current chapter's at
-    /// its opening and its fired beats folded in, then each one the stage has passed applied.
+    /// The story with its boardings and leavings as a chapter handed <paramref name="handed"/> opens: any saved before
+    /// <see cref="Story.Switched"/> carried over, the current chapter's at its opening and its fired beats folded in, then each one
+    /// the stage has passed applied.
     /// </summary>
     private Story Opening(string? frontierId, Story story, StorySecret secret, IReadOnlyList<string> handed, string? hull)
     {
+        story = StoryAboard.CarriedOver(story, secret);
+
         if (story.CurrentChapter is { } key)
         {
             if (book.Store.Find(frontierId, key) is { } onFile)
             {
-                story = StoryAboard.Folded(story, onFile, book.Standing(frontierId, key)?.Fired.Count ?? 0);
+                story = StoryAboard.Folded(story, secret, onFile, book.Standing(frontierId, key)?.Fired.Count ?? 0);
             }
             else if (Archive.Find(frontierId, story, key) is { } archived)
             {
-                story = StoryAboard.Folded(story, archived.Adventure, archived.Fired.Count);
+                story = StoryAboard.Folded(story, secret, archived.Adventure, archived.Fired.Count);
             }
         }
 
@@ -2748,8 +2751,9 @@ public sealed class StoryDirector(
         stories.Save(frontierId, still with
         {
             Chapters = [.. replacing ? still.Chapters.SkipLast(1) : still.Chapters, key],
-            Boarded = opening.Boarded,
-            Left = opening.Left,
+            Switched = opening.Switched,
+            Boarded = null,
+            Left = null,
             AwaitingSeat = [.. opening.AwaitingSeat, .. Unseated(ask.Story?.Due, draft, opening.AwaitingSeat)],
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,

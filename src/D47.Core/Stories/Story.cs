@@ -92,11 +92,17 @@ public sealed record Story
     /// <summary>The cast ids whose introduction the narrator has said or posted in this story.</summary>
     public IReadOnlyList<string> Introduced { get; init; } = [];
 
-    /// <summary>The cast ids whose span boarding has happened, folded in from the chapters before the current one.</summary>
-    public IReadOnlyList<string> Boarded { get; init; } = [];
+    /// <summary>
+    /// Each boarding and leaving of the cast's spans that has happened: folded in from the chapters before the current one, or
+    /// applied at a chapter's opening as passed.
+    /// </summary>
+    public IReadOnlyList<StorySwitch> Switched { get; init; } = [];
 
-    /// <summary>The cast ids whose span leaving has happened, folded in from the chapters before the current one.</summary>
-    public IReadOnlyList<string> Left { get; init; } = [];
+    /// <summary>In a story saved before <see cref="Switched"/>, the cast ids whose first-span boarding has happened; read, never written.</summary>
+    public IReadOnlyList<string>? Boarded { get; init; }
+
+    /// <summary>In a story saved before <see cref="Switched"/>, the cast ids whose first-span leaving has happened; read, never written.</summary>
+    public IReadOnlyList<string>? Left { get; init; }
 
     /// <summary>The cast ids whose boarding beat has passed while the ship had no seat for them, handed to the next chapter drawn with a free seat.</summary>
     public IReadOnlyList<string> AwaitingSeat { get; init; } = [];

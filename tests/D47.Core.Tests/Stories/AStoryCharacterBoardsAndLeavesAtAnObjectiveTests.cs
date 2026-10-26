@@ -26,7 +26,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Provider = StorySpeaker.Kokoro,
         Voice = "bm_lewis",
         Link = 0.3,
-        Aboard = new("setUp", "midpoint"),
+        Aboard = [new("setUp", "midpoint")],
     };
 
     private static readonly StorySecret Riding = Secret with { Cast = [.. Secret.Cast, Rider] };
@@ -93,8 +93,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     [Fact]
     public void ALeavingIsDueForAMemberAboardBySpanOrBoardingInTheSameChapter()
     {
-        var short1 = Riding with { Cast = [Rider with { Aboard = new("breakIntoTwo", "midpoint") }] };
-        var always = Riding with { Cast = [Rider with { Aboard = new(null, "midpoint") }] };
+        var short1 = Riding with { Cast = [Rider with { Aboard = [new("breakIntoTwo", "midpoint")] }] };
+        var always = Riding with { Cast = [Rider with { Aboard = [new(null, "midpoint")] }] };
 
         Assert.Equal(
             [new StorySwitch("rider", true, "breakIntoTwo"), new StorySwitch("rider", false, "midpoint")],
@@ -112,7 +112,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
 
         Assert.Equal(["rider"], StoryAboard.BySpan(Riding, pastBoarding));
         Assert.Empty(StoryAboard.BySpan(Riding, pastLeaving));
-        Assert.Equal(["rider"], pastLeaving.Left);
+        Assert.Equal([new StorySwitch("rider", true, "setUp"), new StorySwitch("rider", false, "midpoint")], pastLeaving.Switched);
         Assert.Same(Picked, StoryAboard.Missed(Picked, Riding, []));
         Assert.Empty(StoryAboard.BySpan(Riding, StoryAboard.Missed(Picked, Riding, ActOne)));
     }
@@ -120,16 +120,16 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     [Fact]
     public void ABeatEveryFinaleChapterIsHandedIsNeverAppliedAsMissed()
     {
-        var finale = Riding with { Cast = [Rider with { Aboard = new("breakIntoThree", null) }] };
+        var finale = Riding with { Cast = [Rider with { Aboard = [new("breakIntoThree", null)] }] };
 
-        Assert.Empty(StoryAboard.Missed(Picked, finale, ["finalImage"]).Boarded);
+        Assert.Empty(StoryAboard.Missed(Picked, finale, ["finalImage"]).Switched);
     }
 
     [Fact]
     public void ABoardingOnAFiredObjectiveCarriesToTheNextChaptersOpening()
     {
         var chapter = WithBeat(Chapter([]), 1, beat => beat with { Boards = ["rider"] });
-        var folded = StoryAboard.Folded(Picked, chapter, fired: 2);
+        var folded = StoryAboard.Folded(Picked, Riding, chapter, fired: 2);
 
         Assert.Equal(["rider"], StoryAboard.BySpan(Riding, StoryAboard.Missed(folded, Riding, ["breakIntoTwo", "bStory"])));
         Assert.Empty(StoryAboard.Due(Riding, folded, ActOne));
@@ -139,9 +139,9 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     public void ABoardingOnAnObjectiveThatNeverFiredIsStillDueOrAppliedAtTheOpening()
     {
         var chapter = WithBeat(Chapter([]), 1, beat => beat with { Boards = ["rider"] });
-        var folded = StoryAboard.Folded(Picked, chapter, fired: 1);
+        var folded = StoryAboard.Folded(Picked, Riding, chapter, fired: 1);
 
-        Assert.Empty(folded.Boarded);
+        Assert.Empty(folded.Switched);
         Assert.Equal([new StorySwitch("rider", true, "setUp")], StoryAboard.Due(Riding, folded, ActOne));
         Assert.Equal(["rider"], StoryAboard.BySpan(Riding, StoryAboard.Missed(folded, Riding, ["breakIntoTwo", "bStory"])));
     }
@@ -240,7 +240,9 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
 
         var story = fixtures.Stories.Current("F1")!;
         Assert.Equal(2, story.Chapters.Count);
-        Assert.Equal(["rider"], story.Boarded);
+        Assert.Equal([new StorySwitch("rider", true, "setUp", Chapter: first)], story.Switched);
+        Assert.Null(story.Boarded);
+        Assert.DoesNotContain("\"boarded\"", fixtures.Files.ReadText(fixtures.StoryPath)!, StringComparison.Ordinal);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
         Assert.Contains("Aboard the Commander's ship as this chapter opens: Vale.", fixtures.Provider.Requests[4].Prompt.History[0].Text, StringComparison.Ordinal);
     }
@@ -248,7 +250,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     [Fact]
     public async Task ABoardingNoChapterPlacedIsAppliedAtTheOpeningOfTheFirstChapterPastIt()
     {
-        var unspanned = Riding with { Cast = [.. Secret.Cast, Rider with { Aboard = new("setUp", null) }] };
+        var unspanned = Riding with { Cast = [.. Secret.Cast, Rider with { Aboard = [new("setUp", null)] }] };
         using var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
                 RoundScriptedLlmProvider.Saying(Spine),
@@ -270,7 +272,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
 
         var story = fixtures.Stories.Current("F1")!;
         Assert.Equal(2, story.Chapters.Count);
-        Assert.Equal(["rider"], story.Boarded);
+        Assert.Equal([new StorySwitch("rider", true, "setUp")], story.Switched);
         Assert.Equal(["rider"], fixtures.Book.Store.Find("F1", story.CurrentChapter!)!.Aboard);
         Assert.False(Beat(fixtures.Provider.Requests[4].ResponseSchema!).TryGetProperty("boards", out _));
         Assert.DoesNotContain("openingBoards", fixtures.Provider.Requests[4].ResponseSchema!.SchemaJson, StringComparison.Ordinal);
@@ -322,8 +324,22 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
 
         var story = StoryStore.Open(stories, files, NullLogger<StoryStore>.Instance).Current("F1")!;
         Assert.Equal(["plain"], story.Chapters);
-        Assert.Empty(story.Boarded);
-        Assert.Empty(story.Left);
+        Assert.Empty(story.Switched);
+        Assert.Null(story.Boarded);
+        Assert.Null(story.Left);
+    }
+
+    [Fact]
+    public void ASavedStoryKeepsItsSwitchesThroughTheStore()
+    {
+        var files = new MemoryFileSystem();
+        var path = Path.Combine(MemoryInstall.FakeRoot, "d47-switches", Guid.NewGuid().ToString("N"), "story.json");
+        IReadOnlyList<StorySwitch> switched = [new("rider", true, "setUp", Chapter: "plain"), new("rider", false, "midpoint")];
+
+        StoryStore.Open(path, files, NullLogger<StoryStore>.Instance).Save("F1", Picked with { Switched = switched });
+
+        Assert.Equal(switched, StoryStore.Open(path, files, NullLogger<StoryStore>.Instance).Current("F1")!.Switched);
+        Assert.DoesNotContain("passed", files.ReadText(path)!, StringComparison.Ordinal);
     }
 
     private static JsonElement Beat(D47.Core.Conversation.LlmResponseSchema schema) =>

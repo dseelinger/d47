@@ -83,10 +83,16 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "effect-level-zero" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 0)] }] }),
         "effect-level-twenty-one" => ("cast[0]", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 21)] }] }),
         "effect-listed-twice" => ("twice", Card, Secret with { Cast = [Speaker with { Effects = [new("glitch", 5), new("glitch", 9)] }] }),
-        "week-boarding-at-set-up" => ("cast[0].aboard.boards is setUp, which is not a beat of a 1 week story", WeekCard, Week with { Cast = [Speaker with { Aboard = new("setUp", null) }] }),
-        "leaving-at-no-beat" => ("cast[0].aboard.leaves is climax", Card, Secret with { Cast = [Speaker with { Aboard = new(null, "climax") }] }),
-        "leaving-before-boarding" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = new("midpoint", "catalyst") }] }),
-        "leaving-where-it-boards" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = new("midpoint", "midpoint") }] }),
+        "week-boarding-at-set-up" => ("cast[0].aboard.boards is setUp, which is not a beat of a 1 week story", WeekCard, Week with { Cast = [Speaker with { Aboard = [new("setUp", null)] }] }),
+        "leaving-at-no-beat" => ("cast[0].aboard.leaves is climax", Card, Secret with { Cast = [Speaker with { Aboard = [new(null, "climax")] }] }),
+        "leaving-before-boarding" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = [new("midpoint", "catalyst")] }] }),
+        "leaving-where-it-boards" => ("cast[0].aboard leaves at or before", Card, Secret with { Cast = [Speaker with { Aboard = [new("midpoint", "midpoint")] }] }),
+        "no-spans" => ("cast[0].aboard is not one span or a list of spans", Card, Secret with { Cast = [Speaker with { Aboard = [] }] }),
+        "second-span-boarding-at-the-start" => ("cast[0].aboard[1].boards is null", Card, Secret with { Cast = [Speaker with { Aboard = [new("setUp", "catalyst"), new(null, null)] }] }),
+        "first-span-leaving-at-the-end" => ("cast[0].aboard[0].leaves is null", Card, Secret with { Cast = [Speaker with { Aboard = [new("setUp", null), new("midpoint", null)] }] }),
+        "span-boarding-where-the-last-leaves" => ("cast[0].aboard[1] boards at or before the beat the span before it leaves at", Card, Secret with { Cast = [Speaker with { Aboard = [new("setUp", "midpoint"), new("midpoint", null)] }] }),
+        "span-boarding-before-the-last-leaves" => ("cast[0].aboard[1] boards at or before the beat the span before it leaves at", Card, Secret with { Cast = [Speaker with { Aboard = [new("setUp", "midpoint"), new("catalyst", null)] }] }),
+        "second-span-leaving-at-no-beat" => ("cast[0].aboard[1].leaves is climax", Card, Secret with { Cast = [Speaker with { Aboard = [new("setUp", "catalyst"), new("midpoint", "climax")] }] }),
         "line-without-speaker" => ("no speaker", Card, Secret with { Clues = [Secret.Clues[0] with { Speaker = "" }, .. Secret.Clues.Skip(1)] }),
         "line-by-a-stranger" => ("not the ship, the narrator or in the cast", Card, Secret with { Finale = [Secret.Finale[0] with { Speaker = "stranger" }, .. Secret.Finale.Skip(1)] }),
         "opening-by-a-stranger" => ("opening[0] is spoken by stranger", Card, Secret with { Opening = [Opening[0] with { Speaker = "stranger" }] }),
@@ -122,9 +128,16 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [Fact]
     public void ASpeakerAboardBetweenTwoOfItsLengthsBeatsKeepsTheFormat()
     {
-        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = new("midpoint", "allIsLost") }] }]).Faults());
-        Assert.Empty(new StoryCatalog([WeekCard], () => [Week with { Cast = [Speaker with { Aboard = new("breakIntoTwo", null) }] }]).Faults());
-        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = new(null, null) }] }]).Faults());
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = [new("midpoint", "allIsLost")] }] }]).Faults());
+        Assert.Empty(new StoryCatalog([WeekCard], () => [Week with { Cast = [Speaker with { Aboard = [new("breakIntoTwo", null)] }] }]).Faults());
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = [new(null, null)] }] }]).Faults());
+    }
+
+    [Fact]
+    public void ASpeakerAboardInSpansInStoryOrderKeepsTheFormat()
+    {
+        Assert.Empty(new StoryCatalog([Card], () => [Secret with { Cast = [Speaker with { Aboard = [new(null, "catalyst"), new("midpoint", "allIsLost"), new("finale", null)] }] }]).Faults());
+        Assert.Empty(new StoryCatalog([WeekCard], () => [Week with { Cast = [Speaker with { Aboard = [new("catalyst", "breakIntoTwo"), new("midpoint", "allIsLost")] }] }]).Faults());
     }
 
     [Fact]
@@ -205,6 +218,12 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("leaving-at-no-beat")]
     [InlineData("leaving-before-boarding")]
     [InlineData("leaving-where-it-boards")]
+    [InlineData("no-spans")]
+    [InlineData("second-span-boarding-at-the-start")]
+    [InlineData("first-span-leaving-at-the-end")]
+    [InlineData("span-boarding-where-the-last-leaves")]
+    [InlineData("span-boarding-before-the-last-leaves")]
+    [InlineData("second-span-leaving-at-no-beat")]
     [InlineData("line-without-speaker")]
     [InlineData("line-by-a-stranger")]
     [InlineData("opening-by-a-stranger")]

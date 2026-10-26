@@ -22,7 +22,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Who = "A passenger.",
         Provider = StorySpeaker.Kokoro,
         Voice = "bm_lewis",
-        Aboard = new(boards, leaves),
+        Aboard = [new(boards, leaves)],
     };
 
     private static StorySecret Cast(params StorySpeaker[] members) => Secret with { Cast = [.. Secret.Cast, .. members] };
@@ -49,7 +49,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     {
         var story = StoryAboard.Missed(Picked, Rider, Later, Sidewinder);
 
-        Assert.Empty(story.Boarded);
+        Assert.Empty(story.Switched);
         Assert.Equal(["rider"], story.AwaitingSeat);
         Assert.Empty(StoryAboard.BySpan(Rider, story));
     }
@@ -62,7 +62,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Assert.Equal([new StorySwitch("rider", true, "setUp", true)], StoryAboard.Due(Rider, held, Later, Cobra));
 
         var missed = StoryAboard.Missed(held, Rider, Later, Cobra);
-        Assert.Empty(missed.Boarded);
+        Assert.Empty(missed.Switched);
         Assert.Equal(["rider"], missed.AwaitingSeat);
     }
 
@@ -82,7 +82,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Assert.Equal([new StorySwitch("pilot", true, "catalyst", false, 3)], StoryAboard.Due(two, aboard, ActOne, Cobra));
 
         var story = StoryAboard.Missed(aboard, two, ["debate", "breakIntoTwo"], Cobra);
-        Assert.Equal(["rider"], story.Boarded);
+        Assert.Equal([new StorySwitch("rider", true, "setUp")], story.Switched);
         Assert.Equal(["pilot"], story.AwaitingSeat);
     }
 
@@ -118,7 +118,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Assert.Single(StoryAboard.Due(Rider, Picked, ActOne));
         Assert.Single(StoryAboard.Due(Rider, Picked, ActOne, null));
         Assert.Single(StoryAboard.Due(Rider, Picked, ActOne, "NoSuchHull"));
-        Assert.Equal(["rider"], StoryAboard.Missed(Picked, Rider, Later, "NoSuchHull").Boarded);
+        Assert.Equal([new StorySwitch("rider", true, "setUp")], StoryAboard.Missed(Picked, Rider, Later, "NoSuchHull").Switched);
         Assert.Empty(StoryAboard.Missed(Picked, Rider, Later, "NoSuchHull").AwaitingSeat);
     }
 
@@ -141,9 +141,9 @@ public sealed class ABoardingWaitsForAFreeSeatTests
             Beats = [new D47.Core.Adventures.AdventureBeat { Title = "B0", Line = "Go." }],
         };
 
-        var folded = StoryAboard.Folded(Picked with { AwaitingSeat = ["rider"] }, chapter, fired: 0);
+        var folded = StoryAboard.Folded(Picked with { AwaitingSeat = ["rider"] }, Rider, chapter, fired: 0);
 
-        Assert.Equal(["rider"], folded.Boarded);
+        Assert.Equal([new StorySwitch("rider", true, "setUp", Chapter: "c")], folded.Switched);
         Assert.Empty(folded.AwaitingSeat);
     }
 
@@ -178,7 +178,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
 
         var story = fixtures.Stories.Current("F1")!;
         Assert.Equal(2, story.Chapters.Count);
-        Assert.Empty(story.Boarded);
+        Assert.Empty(story.Switched);
         Assert.Equal(["rider"], story.AwaitingSeat);
         Assert.All(fixtures.Asks, ask => Assert.All(ask.Story!.Due!, entry => Assert.Equal(2, entry.Seats)));
     }
@@ -199,7 +199,7 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         var story = fixtures.Stories.Current("F1")!;
         Assert.Equal([new StorySwitch("rider", true, "setUp", false, 2)], fixtures.Asks.Single().Story!.Due);
         Assert.Equal(["rider"], story.AwaitingSeat);
-        Assert.Empty(story.Boarded);
+        Assert.Empty(story.Switched);
     }
 
     [Fact]

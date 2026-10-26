@@ -23,7 +23,7 @@ public sealed class ACastMemberWithNoSeatIsHeardOverCommsTests
         Provider = StorySpeaker.Kokoro,
         Voice = "bm_lewis",
         Link = 0.3,
-        Aboard = new(null, null),
+        Aboard = [new(null, null)],
     };
 
     private static readonly StorySecret Two = Secret with { Cast = [.. Secret.Cast, Member("first", "Vale"), Member("second", "Orrin")] };
@@ -83,8 +83,7 @@ public sealed class ACastMemberWithNoSeatIsHeardOverCommsTests
         Assert.Equal(0.3, fixtures.Director.LineVoice("F1", "second")!.Pinned!.Link);
 
         var after = fixtures.Stories.Current("F1")!;
-        Assert.Equal(before.Boarded, after.Boarded);
-        Assert.Equal(before.Left, after.Left);
+        Assert.Equal(before.Switched, after.Switched);
         Assert.Equal(before.AwaitingSeat, after.AwaitingSeat);
         Assert.Equal(["first", "second"], StoryAboard.BySpan(Two, after));
         Assert.Equal(["first", "second"], fixtures.Director.CastAboard("F1"));

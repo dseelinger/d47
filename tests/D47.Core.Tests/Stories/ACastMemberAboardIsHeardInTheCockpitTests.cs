@@ -24,7 +24,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
         Provider = StorySpeaker.Kokoro,
         Voice = "bm_lewis",
         Link = 0.3,
-        Aboard = new("midpoint", "allIsLost"),
+        Aboard = [new("midpoint", "allIsLost")],
     };
 
     private static readonly StorySecret Riding = Secret with { Cast = [.. Secret.Cast, Rider] };
@@ -34,7 +34,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
     [Fact]
     public void ASpanWithoutBeatsRunsTheWholeStoryAndAMemberWithoutOneIsNeverAboard()
     {
-        var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = new(null, null) }] };
+        var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = [new(null, null)] }] };
 
         Assert.Equal(["rider"], StoryAboard.BySpan(always, Picked));
         Assert.Equal(["rider"], StoryAboard.BySpan(always, Picked with { Boarded = ["rider"], Left = ["rider"] }));
@@ -44,7 +44,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
     [Fact]
     public void AShortStoryBoardsAtTheStageThatHandsOutItsBeat()
     {
-        var week = Secret with { Cast = [Rider with { Aboard = new("breakIntoTwo", "allIsLost") }] };
+        var week = Secret with { Cast = [Rider with { Aboard = [new("breakIntoTwo", "allIsLost")] }] };
 
         Assert.Empty(StoryAboard.Due(week, Picked, StoryClues.BeatKeys(StoryPacing.OneWeek, StoryStage.ActOne, beaconInReach: false, finaleChapter: null)));
         Assert.Equal(
@@ -93,12 +93,12 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
 
     [Fact]
     public void ASealedEntryWithASpanReadsItBack() =>
-        Assert.Equal(new StorySpeakerAboard("midpoint", "allIsLost"), Assert.Single(StoryCatalog.Unseal(Sealed.Of(Riding))).Cast[^1].Aboard);
+        Assert.Equal([new StorySpeakerAboard("midpoint", "allIsLost")], Assert.Single(StoryCatalog.Unseal(Sealed.Of(Riding))).Cast[^1].Aboard);
 
     [Fact]
     public async Task TheChapterWriterIsToldWhoIsAboardAndTheChapterRecordsThem()
     {
-        var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = new(null, null) }] };
+        var always = Secret with { Cast = [.. Secret.Cast, Rider with { Aboard = [new(null, null)] }] };
         using var fixtures = new StoryFixtures(Scripted(BeatsToTheBeacon), always);
 
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));

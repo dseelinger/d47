@@ -285,8 +285,12 @@ public sealed record StorySpeaker
     /// <summary>Guardian effects the member's voice passes through, in order.</summary>
     public IReadOnlyList<StorySpeakerEffect>? Effects { get; init; }
 
-    /// <summary>When the member is aboard the Commander's ship, heard in the cockpit rather than through <see cref="Link"/>; null for never.</summary>
-    public StorySpeakerAboard? Aboard { get; init; }
+    /// <summary>
+    /// When the member is aboard the Commander's ship, heard in the cockpit rather than through <see cref="Link"/>: its spans in
+    /// story order, read from one span object or a list of them; null for never.
+    /// </summary>
+    [JsonConverter(typeof(StorySpeakerAboardConverter))]
+    public IReadOnlyList<StorySpeakerAboard>? Aboard { get; init; }
 
     /// <summary>
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
@@ -345,6 +349,27 @@ public sealed record StorySpeakerVersion
 /// each a key of the story length's <see cref="StoryPacing.BeatKeys"/>. Null boards at the story's start; null leaves at its end.
 /// </summary>
 public sealed record StorySpeakerAboard(string? Boards, string? Leaves);
+
+/// <summary>Reads a cast member's <c>"aboard"</c> as one span object or a list of them, and writes one span as an object.</summary>
+internal sealed class StorySpeakerAboardConverter : JsonConverter<IReadOnlyList<StorySpeakerAboard>>
+{
+    public override IReadOnlyList<StorySpeakerAboard>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType == JsonTokenType.StartArray
+            ? JsonSerializer.Deserialize<List<StorySpeakerAboard>>(ref reader, options)
+            : JsonSerializer.Deserialize<StorySpeakerAboard>(ref reader, options) is { } span ? [span] : null;
+
+    public override void Write(Utf8JsonWriter writer, IReadOnlyList<StorySpeakerAboard> value, JsonSerializerOptions options)
+    {
+        if (value.Count == 1)
+        {
+            JsonSerializer.Serialize(writer, value[0], options);
+        }
+        else
+        {
+            JsonSerializer.Serialize<IEnumerable<StorySpeakerAboard>>(writer, value, options);
+        }
+    }
+}
 
 /// <summary>One Guardian effect on a cast member's voice: a <see cref="Audio.GuardianEffect.Id"/> and a level, 1 to 20.</summary>
 public sealed record StorySpeakerEffect(string Id, int Level);
@@ -1072,21 +1097,51 @@ public sealed class StoryCatalog
                 continue;
             }
 
-            var name = $"cast[{at.ToString(CultureInfo.InvariantCulture)}].aboard";
-            var known = true;
+            var member = $"cast[{at.ToString(CultureInfo.InvariantCulture)}].aboard";
 
-            foreach (var (field, beat) in new[] { ("boards", aboard.Boards), ("leaves", aboard.Leaves) })
+            if (aboard.Count == 0 || aboard.Any(span => span is null))
             {
-                if (beat is not null && !keys.Contains(beat, StringComparer.Ordinal))
-                {
-                    known = false;
-                    yield return $"{name}.{field} is {beat}, which is not a beat of a {pacing.Name} story.";
-                }
+                yield return $"{member} is not one span or a list of spans.";
+                continue;
             }
 
-            if (known && aboard is { Boards: { } boards, Leaves: { } leaves } && StoryAboard.Order(boards) >= StoryAboard.Order(leaves))
+            string? previous = null;
+
+            foreach (var (span, index) in aboard.Select((span, index) => (span, index)))
             {
-                yield return $"{name} leaves at or before the beat it boards at.";
+                var name = aboard.Count == 1 ? member : $"{member}[{index.ToString(CultureInfo.InvariantCulture)}]";
+                var known = true;
+
+                foreach (var (field, beat) in new[] { ("boards", span.Boards), ("leaves", span.Leaves) })
+                {
+                    if (beat is not null && !keys.Contains(beat, StringComparer.Ordinal))
+                    {
+                        known = false;
+                        yield return $"{name}.{field} is {beat}, which is not a beat of a {pacing.Name} story.";
+                    }
+                }
+
+                if (index > 0 && span.Boards is null)
+                {
+                    yield return $"{name}.boards is null; only the first span boards at the start.";
+                }
+
+                if (index < aboard.Count - 1 && span.Leaves is null)
+                {
+                    yield return $"{name}.leaves is null; only the last span leaves at the end.";
+                }
+
+                if (known && span is { Boards: { } boards, Leaves: { } leaves } && StoryAboard.Order(boards) >= StoryAboard.Order(leaves))
+                {
+                    yield return $"{name} leaves at or before the beat it boards at.";
+                }
+
+                if (known && previous is not null && span.Boards is { } again && StoryAboard.Order(again) <= StoryAboard.Order(previous))
+                {
+                    yield return $"{name} boards at or before the beat the span before it leaves at.";
+                }
+
+                previous = keys.Contains(span.Leaves ?? string.Empty, StringComparer.Ordinal) ? span.Leaves : null;
             }
         }
     }

@@ -212,7 +212,11 @@ add.
   of a member. It states nothing from the hidden layer: no secret, twist or turn of the plot. It is the
   role the card already uses for the member. `tools/seal-stories.py` refuses a member without one.
 - **A cast member who rides in the Commander's ship** carries `aboard`: `{"boards": <beat>, "leaves": <beat>}`,
-  each a beat key of the length's sheet or null for the story's start or end, `boards` before `leaves`. While
+  each a beat key of the length's sheet or null for the story's start or end, `boards` before `leaves`. A member
+  who rides in more than one stretch carries a list of two or more such spans in story order instead: each span
+  boards after the beat the one before it leaves at, only the first may board at null and only the last may leave
+  at null. One span is written as the object, never a list of one. A story with a list needs the d47 version that
+  reads one; an older install drops the story. While
   aboard, the member is heard in the cockpit (`link` is not applied; `effects` still are) and the chapter writer
   writes their lines as spoken there. The member boards and leaves at an objective: the chapter whose stage hands
   the writer that beat places the boarding or leaving on the objective where the beat happens, and a chapter past

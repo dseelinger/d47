@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using D47.Core.Adventures;
 using D47.Core.Knowledge;
 
@@ -6,14 +7,24 @@ namespace D47.Core.Stories;
 /// <summary>
 /// A boarding or leaving in a cast member's span that a chapter may place: the member, the direction and the beat;
 /// <paramref name="Passed"/> for a boarding held for a seat whose beat has passed; <paramref name="Seats"/> for a boarding the
-/// current ship has no seat for, the crew a hull needs to seat it.
+/// current ship has no seat for, the crew a hull needs to seat it; <paramref name="Chapter"/> for one that has happened, the key of
+/// the chapter it was folded in from, or null for one applied as passed.
 /// </summary>
-public sealed record StorySwitch(string Id, bool Boards, string Beat, bool Passed = false, int? Seats = null);
+public sealed record StorySwitch(
+    string Id,
+    bool Boards,
+    string Beat,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Passed = false,
+    int? Seats = null,
+    string? Chapter = null);
 
 /// <summary>Which of a story's cast are aboard the Commander's ship, and so heard in the cockpit rather than over comms.</summary>
 public static class StoryAboard
 {
-    /// <summary>The cast ids aboard by span: each member with a span whose boarding has happened, or who boards at the start, and whose leaving has not.</summary>
+    /// <summary>
+    /// The cast ids aboard by span: each member whose latest switch that has happened, in span order, is a boarding, or who
+    /// boards at the start and has no switch that has happened.
+    /// </summary>
     public static IReadOnlyList<string> BySpan(StorySecret secret, Story story)
     {
         ArgumentNullException.ThrowIfNull(secret);
@@ -49,10 +60,10 @@ public static class StoryAboard
     }
 
     /// <summary>
-    /// The boardings and leavings a chapter handed <paramref name="handed"/> may place: each boarding not yet happened whose beat is
-    /// handed out or that is held for a seat, those held first, with <see cref="StorySwitch.Seats"/> set on each that <paramref name="hull"/> has
-    /// no free seat for; and each leaving
-    /// not yet happened whose beat is handed out, only for a member aboard by span or boarding in the same chapter.
+    /// The boardings and leavings a chapter handed <paramref name="handed"/> may place, each a member's next switch: a boarding
+    /// whose beat is handed out or that is held for a seat, those held first, with <see cref="StorySwitch.Seats"/> set on each that
+    /// <paramref name="hull"/> has no free seat for; and a leaving whose beat is handed out, of the open span of a member aboard by
+    /// span or of the span a boarding here opens.
     /// </summary>
     public static IReadOnlyList<StorySwitch> Due(StorySecret secret, Story story, IReadOnlyList<string> handed, string? hull = null)
     {
@@ -64,33 +75,37 @@ public static class StoryAboard
 
         var free = FreeSeats(secret, story, hull);
         var aboard = BySpan(secret, story).Count;
+        var next = secret.Cast.Select(member => (Member: member, At: Latest(member, story) + 1)).ToList();
 
-        var boarding = secret.Cast
-            .Where(member => member.Aboard is { Boards: { } boards }
-                && !story.Boarded.Contains(member.Id, StringComparer.Ordinal)
-                && (handed.Contains(boards, StringComparer.Ordinal) || (Held(member) && !story.Left.Contains(member.Id, StringComparer.Ordinal))))
-            .OrderBy(member => Held(member) ? 0 : 1)
-            .ThenBy(member => Held(member) ? story.AwaitingSeat.ToList().IndexOf(member.Id) : Order(member.Aboard!.Boards!))
-            .Select((member, index) => new StorySwitch(
-                member.Id,
+        var boarding = next
+            .Where(entry => Switches(entry.Member).ElementAtOrDefault(entry.At) is { Boards: true } due
+                && (handed.Contains(due.Beat, StringComparer.Ordinal) || Held(entry.Member)))
+            .Select(entry => (entry.Member, entry.At, Switches(entry.Member)[entry.At].Beat))
+            .OrderBy(entry => Held(entry.Member) ? 0 : 1)
+            .ThenBy(entry => Held(entry.Member) ? story.AwaitingSeat.ToList().IndexOf(entry.Member.Id) : Order(entry.Beat))
+            .Select((entry, index) => (entry.At, Switch: new StorySwitch(
+                entry.Member.Id,
                 true,
-                member.Aboard!.Boards!,
-                Held(member) && !handed.Contains(member.Aboard.Boards!, StringComparer.Ordinal),
-                index < free ? null : 2 + aboard + index))
+                entry.Beat,
+                Held(entry.Member) && !handed.Contains(entry.Beat, StringComparer.Ordinal),
+                index < free ? null : 2 + aboard + index)))
             .ToList();
 
-        var leaving = secret.Cast
-            .Where(member => member.Aboard is { Leaves: { } leaves } && !story.Left.Contains(member.Id, StringComparer.Ordinal) && handed.Contains(leaves, StringComparer.Ordinal)
-                && (IsAboard(member, story) || boarding.Any(due => due.Id == member.Id)))
-            .Select(member => new StorySwitch(member.Id, false, member.Aboard!.Leaves!));
+        var leaving = next
+            .Select(entry => boarding.FirstOrDefault(due => due.Switch.Id == entry.Member.Id) is { Switch: not null } boards
+                ? Switches(entry.Member).ElementAtOrDefault(boards.At + 1)
+                : Switches(entry.Member).ElementAtOrDefault(entry.At))
+            .OfType<StorySwitch>()
+            .Where(due => !due.Boards && handed.Contains(due.Beat, StringComparer.Ordinal));
 
-        return [.. boarding, .. leaving];
+        return [.. boarding.Select(entry => entry.Switch), .. leaving];
     }
 
     /// <summary>
-    /// The story with each boarding and leaving a chapter handed <paramref name="handed"/> has passed applied: one not yet
-    /// happened whose beat comes before every beat handed out. Leavings first, then boardings in beat order: a member is boarded
-    /// while <paramref name="hull"/> has a free seat and otherwise held in <see cref="Story.AwaitingSeat"/>. Nothing is applied for a
+    /// The story with each switch a chapter handed <paramref name="handed"/> has passed applied: a member's next switches, in span
+    /// order, whose beats come before every beat handed out. Those up to a member's last passed leaving are recorded first, less a
+    /// boarding held for a seat, which is skipped; then each last passed boarding, in beat order, is recorded while
+    /// <paramref name="hull"/> has a free seat and otherwise held in <see cref="Story.AwaitingSeat"/>. Nothing is applied for a
     /// chapter handed no beats, or for a beat every finale chapter is handed.
     /// </summary>
     public static Story Missed(Story story, StorySecret secret, IReadOnlyList<string> handed, string? hull = null)
@@ -111,40 +126,102 @@ public static class StoryAboard
             .Intersect(StoryClues.BeatKeys(story.Pacing, StoryStage.Finale, true, story.Pacing.FinaleChapters), StringComparer.Ordinal)
             .ToList();
 
-        bool Passed(string? beat) => beat is not null && Order(beat) is var at && at >= 0 && at < first && !everyFinale.Contains(beat, StringComparer.Ordinal);
+        bool Passed(string beat) => Order(beat) is var at && at >= 0 && at < first && !everyFinale.Contains(beat, StringComparer.Ordinal);
 
-        var left = secret.Cast.Where(member => Passed(member.Aboard?.Leaves)).Select(member => member.Id);
-        var result = With(story, [], left);
+        var result = CarriedOver(story, secret);
+        var recorded = new List<StorySwitch>();
+        var boardings = new List<StorySwitch>();
 
-        foreach (var member in secret.Cast.Where(member => Passed(member.Aboard?.Boards)).OrderBy(member => Order(member.Aboard!.Boards!)))
+        foreach (var member in secret.Cast)
         {
-            if (result.AwaitingSeat.Contains(member.Id, StringComparer.Ordinal))
+            var passed = Switches(member).Skip(Latest(member, result) + 1).TakeWhile(due => Passed(due.Beat)).ToList();
+
+            if (passed.Count == 0)
             {
                 continue;
             }
 
-            if (result.Left.Contains(member.Id, StringComparer.Ordinal) || FreeSeats(secret, result, hull) > 0)
+            var held = result.AwaitingSeat.Contains(member.Id, StringComparer.Ordinal);
+            var settled = passed[^1].Boards ? passed.Count - 1 : passed.Count;
+
+            recorded.AddRange(passed.Take(settled).Where((due, at) => !(at == 0 && due.Boards && held)));
+
+            if (passed[^1].Boards)
             {
-                result = With(result, [member.Id], []);
+                boardings.Add(passed[^1]);
             }
-            else if (!result.Boarded.Contains(member.Id, StringComparer.Ordinal))
+        }
+
+        result = With(result, recorded);
+
+        foreach (var boarding in boardings.OrderBy(due => Order(due.Beat)))
+        {
+            if (result.AwaitingSeat.Contains(boarding.Id, StringComparer.Ordinal))
             {
-                result = result with { AwaitingSeat = [.. result.AwaitingSeat, member.Id] };
+                continue;
+            }
+
+            result = FreeSeats(secret, result, hull) > 0
+                ? With(result, [boarding])
+                : result with { AwaitingSeat = [.. result.AwaitingSeat, boarding.Id] };
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The story with a chapter's boardings and leavings folded in: those at its opening and at each of its first
+    /// <paramref name="fired"/> beats, in order, each recorded as the member's next switch when that is in the same direction.
+    /// A switch this chapter already folded in is not recorded again.
+    /// </summary>
+    public static Story Folded(Story story, StorySecret secret, Adventure chapter, int fired)
+    {
+        ArgumentNullException.ThrowIfNull(story);
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(chapter);
+
+        var result = CarriedOver(story, secret);
+        var places = chapter.Beats.Take(Math.Max(fired, 0)).Select(beat => (beat.Boards, beat.Leaves)).Prepend((chapter.OpeningBoards, chapter.OpeningLeaves));
+
+        foreach (var (boards, leaves) in places)
+        {
+            foreach (var (id, boarding) in boards.Select(id => (id, true)).Concat(leaves.Select(id => (id, false))))
+            {
+                if (secret.Cast.FirstOrDefault(member => member.Id == id) is not { } member
+                    || result.Switched.Any(done => done.Id == id && done.Boards == boarding && done.Chapter == chapter.Key)
+                    || Switches(member).ElementAtOrDefault(Latest(member, result) + 1) is not { } next
+                    || next.Boards != boarding)
+                {
+                    continue;
+                }
+
+                result = With(result, [next with { Chapter = chapter.Key }]);
             }
         }
 
         return result;
     }
 
-    /// <summary>The story with a chapter's boardings and leavings folded in: those at its opening and at each of its first <paramref name="fired"/> beats.</summary>
-    public static Story Folded(Story story, Adventure chapter, int fired)
+    /// <summary>
+    /// The story with <see cref="Story.Boarded"/> and <see cref="Story.Left"/>, from a story saved before
+    /// <see cref="Story.Switched"/>, carried over into it: each id in the first as that member's first-span boarding, each in the
+    /// second as their first-span leaving. The story itself when it has neither.
+    /// </summary>
+    public static Story CarriedOver(Story story, StorySecret secret)
     {
         ArgumentNullException.ThrowIfNull(story);
-        ArgumentNullException.ThrowIfNull(chapter);
+        ArgumentNullException.ThrowIfNull(secret);
 
-        var beats = chapter.Beats.Take(Math.Max(fired, 0)).ToList();
+        if (story.Boarded is null && story.Left is null)
+        {
+            return story;
+        }
 
-        return With(story, [.. chapter.OpeningBoards, .. beats.SelectMany(beat => beat.Boards)], [.. chapter.OpeningLeaves, .. beats.SelectMany(beat => beat.Leaves)]);
+        var carried = secret.Cast
+            .SelectMany(member => Legacy(member, story))
+            .Where(due => !story.Switched.Any(done => Same(done, due)));
+
+        return story with { Switched = [.. story.Switched, .. carried], Boarded = null, Left = null };
     }
 
     /// <summary>
@@ -267,14 +344,68 @@ public static class StoryAboard
             : int.MaxValue;
 
     private static bool IsAboard(StorySpeaker member, Story story) =>
-        member.Aboard is { } aboard
-        && (aboard.Boards is null || story.Boarded.Contains(member.Id, StringComparer.Ordinal))
-        && !(aboard.Leaves is not null && story.Left.Contains(member.Id, StringComparer.Ordinal));
+        member.Aboard is { Count: > 0 } spans
+        && (Latest(member, story) is var latest && latest >= 0 ? Switches(member)[latest].Boards : spans[0].Boards is null);
 
-    private static Story With(Story story, IEnumerable<string> boarded, IEnumerable<string> left) => story with
+    /// <summary>A member's switches in span order: each span's boarding, unless it boards at the start, then its leaving, unless it leaves at the end.</summary>
+    private static IReadOnlyList<StorySwitch> Switches(StorySpeaker member) =>
+        [.. (member.Aboard ?? []).SelectMany(span => new[]
+        {
+            span.Boards is { } boards ? new StorySwitch(member.Id, true, boards) : null,
+            span.Leaves is { } leaves ? new StorySwitch(member.Id, false, leaves) : null,
+        }).OfType<StorySwitch>()];
+
+    /// <summary>The index in <see cref="Switches"/> of the member's latest switch that has happened, or -1 for none.</summary>
+    private static int Latest(StorySpeaker member, Story story)
     {
-        Boarded = [.. story.Boarded.Union(boarded, StringComparer.Ordinal)],
-        Left = [.. story.Left.Union(left, StringComparer.Ordinal)],
-        AwaitingSeat = [.. story.AwaitingSeat.Except(boarded, StringComparer.Ordinal)],
-    };
+        var happened = story.Switched.Concat(Legacy(member, story)).Where(done => done.Id == member.Id).ToList();
+        var switches = Switches(member);
+
+        for (var at = switches.Count - 1; at >= 0; at--)
+        {
+            if (happened.Any(done => Same(done, switches[at])))
+            {
+                return at;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>The member's first-span switches that <see cref="Story.Boarded"/> and <see cref="Story.Left"/> record.</summary>
+    private static IEnumerable<StorySwitch> Legacy(StorySpeaker member, Story story)
+    {
+        if (member.Aboard is not [var span, ..])
+        {
+            yield break;
+        }
+
+        if (span.Boards is { } boards && story.Boarded?.Contains(member.Id, StringComparer.Ordinal) == true)
+        {
+            yield return new StorySwitch(member.Id, true, boards);
+        }
+
+        if (span.Leaves is { } leaves && story.Left?.Contains(member.Id, StringComparer.Ordinal) == true)
+        {
+            yield return new StorySwitch(member.Id, false, leaves);
+        }
+    }
+
+    private static bool Same(StorySwitch one, StorySwitch other) =>
+        one.Id == other.Id && one.Boards == other.Boards && one.Beat == other.Beat;
+
+    /// <summary>The story with each of <paramref name="happened"/> not yet recorded added to <see cref="Story.Switched"/>, and each member it names off <see cref="Story.AwaitingSeat"/>.</summary>
+    private static Story With(Story story, IReadOnlyList<StorySwitch> happened)
+    {
+        var added = happened
+            .Select(due => new StorySwitch(due.Id, due.Boards, due.Beat, Chapter: due.Chapter))
+            .Where(due => !story.Switched.Any(done => Same(done, due)))
+            .ToList();
+
+        return added.Count == 0 ? story : story with
+        {
+            Switched = [.. story.Switched, .. added],
+            AwaitingSeat = [.. story.AwaitingSeat.Except(added.Select(due => due.Id), StringComparer.Ordinal)],
+        };
+    }
 }

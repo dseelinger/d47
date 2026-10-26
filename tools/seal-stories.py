@@ -31,7 +31,9 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals", where 
            A speaker may carry "aboard": {"boards", "leaves"}, when it rides in the Commander's ship and is heard
            in the cockpit rather than through its link. Each is a beat of the length's sheet, or null for the
            story's start or end; boards comes before leaves. The member is aboard for every chapter whose stage
-           hands the writer a beat from boards up to, not including, leaves.
+           hands the writer a beat from boards up to, not including, leaves. A speaker that rides more than once
+           carries a list of two or more such spans in story order: each boards after the beat the one before it
+           leaves at, only the first boards at null and only the last leaves at null. One span is an object.
            A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
            Voice "own" is pinned whether or not it says so. A version never carries "pinned"; it covers both.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
@@ -110,16 +112,33 @@ def aboard_fault(who: str, speaker: dict, sheet: tuple, length) -> list:
     if "aboard" not in speaker:
         return []
     aboard = speaker["aboard"]
-    if not isinstance(aboard, dict) or set(aboard) - {"boards", "leaves"}:
-        return [f"{who} has an aboard that is not {{\"boards\", \"leaves\"}}"]
+    if isinstance(aboard, list) and not aboard:
+        return [f"{who} has an empty aboard list"]
+    if isinstance(aboard, list) and len(aboard) == 1:
+        return [f"{who} has an aboard list of one span, which is written as an object"]
+    spans = aboard if isinstance(aboard, list) else [aboard]
+    if any(not isinstance(span, dict) or set(span) - {"boards", "leaves"} for span in spans):
+        return [f"{who} has an aboard that is not {{\"boards\", \"leaves\"}} or a list of them"]
     found = []
-    for field in ("boards", "leaves"):
-        beat = aboard.get(field)
-        if beat is not None and beat not in sheet:
-            found.append(f"{who} has aboard {field} {beat!r}, not a beat of a {length} story")
-    boards, leaves = aboard.get("boards"), aboard.get("leaves")
-    if not found and boards is not None and leaves is not None and BEATS.index(boards) >= BEATS.index(leaves):
-        found.append(f"{who} leaves at or before the beat it boards at")
+    previous = None
+    for at, span in enumerate(spans):
+        name = who if len(spans) == 1 else f"{who} span {at + 1}"
+        known = True
+        for field in ("boards", "leaves"):
+            beat = span.get(field)
+            if beat is not None and beat not in sheet:
+                known = False
+                found.append(f"{name} has aboard {field} {beat!r}, not a beat of a {length} story")
+        boards, leaves = span.get("boards"), span.get("leaves")
+        if at > 0 and boards is None:
+            found.append(f"{name} boards at null; only the first span boards at the start")
+        if at < len(spans) - 1 and leaves is None:
+            found.append(f"{name} leaves at null; only the last span leaves at the end")
+        if known and boards is not None and leaves is not None and BEATS.index(boards) >= BEATS.index(leaves):
+            found.append(f"{name} leaves at or before the beat it boards at")
+        if known and previous is not None and boards is not None and BEATS.index(boards) <= BEATS.index(previous):
+            found.append(f"{name} boards at or before the beat the span before it leaves at")
+        previous = leaves if leaves in sheet else None
     return found
 
 
