@@ -113,10 +113,11 @@ public static class ChapterFit
 
     /// <summary>
     /// Whether a chapter built on these drawn activities and this objective serves a long haul: a discovery, map, footfall or
-    /// organic slot, or an objective that is a rank on the Explore or Exobiologist ladder.
+    /// organic slot, or an objective that is a rank on the Explore or Exobiologist ladder, or a sightseeing chapter.
     /// </summary>
-    public static bool ServesLongHaul(IReadOnlyList<DrawnActivity>? slots, AdventureTrigger? objective) =>
-        slots?.Any(slot => slot.Kind is TriggerKind.Discover or TriggerKind.Map or TriggerKind.Footfall or TriggerKind.Organic) == true
+    public static bool ServesLongHaul(IReadOnlyList<DrawnActivity>? slots, AdventureTrigger? objective, bool sightseeing = false) =>
+        sightseeing
+        || slots?.Any(slot => slot.Kind is TriggerKind.Discover or TriggerKind.Map or TriggerKind.Footfall or TriggerKind.Organic) == true
         || objective is { Kind: TriggerKind.Rank, Career: "Explore" or "Exobiologist" };
 
     private static bool IsLongHaulHull(string? type) =>

@@ -44,12 +44,44 @@ public static class ChapterDraw
     /// <summary>The share of its weight a row keeps when the last chapters already asked for it.</summary>
     public const double RecentFactor = 0.25;
 
+    /// <summary>The share of chapters that are sightseeing chapters at an even Exploration weight.</summary>
+    public const double SightShare = 0.2;
+
+    /// <summary>The most the share of sightseeing chapters is scaled up to.</summary>
+    public const double MostSightShare = 0.4;
+
     /// <summary>An FNV-1a hash of the story id and chapter number, and of the replaced objective's index in a rewrite.</summary>
     public static uint Seed(string storyId, int chapter, int? replaced = null)
     {
         ArgumentNullException.ThrowIfNull(storyId);
 
-        var text = replaced is { } index ? $"{storyId}|{chapter}|{index}" : $"{storyId}|{chapter}";
+        return Hash(replaced is { } index ? $"{storyId}|{chapter}|{index}" : $"{storyId}|{chapter}");
+    }
+
+    /// <summary>The seed of a chapter's sightseeing draw, apart from <see cref="Seed"/>.</summary>
+    public static uint SightSeed(string storyId, int chapter)
+    {
+        ArgumentNullException.ThrowIfNull(storyId);
+
+        return Hash($"{storyId}|{chapter}|sight");
+    }
+
+    /// <summary>The chance a chapter is a sightseeing chapter: scaled by the Exploration weight, capped, and reduced after a sightseeing chapter.</summary>
+    public static double SightChance(CareerWeights weights, bool previousWasSight)
+    {
+        ArgumentNullException.ThrowIfNull(weights);
+
+        var chance = Math.Min(MostSightShare, SightShare * weights.Weight(Career.Exploration) / CareerWeights.Default);
+
+        return previousWasSight ? chance * RecentFactor : chance;
+    }
+
+    /// <summary>Whether the chapter with this <paramref name="seed"/> is a sightseeing chapter.</summary>
+    public static bool Sightsee(CareerWeights weights, bool previousWasSight, uint seed) =>
+        new Random32(seed).NextDouble() < SightChance(weights, previousWasSight);
+
+    private static uint Hash(string text)
+    {
         var hash = 2166136261u;
 
         foreach (var value in Encoding.UTF8.GetBytes(text))
