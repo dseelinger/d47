@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using D47.Core.Activities;
 using D47.Core.Adventures;
@@ -533,7 +533,7 @@ public sealed class StoryDirector(
         setBackstory(card.InYourWords);
 
         var narrated = card.Pacing.NarratedScan;
-        var remembered = narrated ? 0 : BeaconsOnRecord(frontierId, card.Id);
+        var remembered = narrated ? 0 : BeaconsOnRecord(frontierId, card);
         var story = new Story
         {
             Id = card.Id,
@@ -587,10 +587,11 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// The beacon scans a story picked now would open with, 1 or 2: the most scanned in any other story of this Commander
-    /// that recorded a real or remembered scan, in any state. 0 when none did, and the story flies to its own beacon.
+    /// that recorded a real or remembered scan, in any state. 0 when none did, or the card sets <c>beaconTrip</c>, and the
+    /// story flies to its own beacon.
     /// </summary>
-    public int BeaconsOnRecord(string? frontierId, string pickingId) =>
-        stories.BeaconForgotten(frontierId) ? 0 : ScansOnRecord(frontierId, pickingId);
+    public int BeaconsOnRecord(string? frontierId, StoryCard card) =>
+        card.BeaconTrip || stories.BeaconForgotten(frontierId) ? 0 : ScansOnRecord(frontierId, card.Id);
 
     /// <summary>Whether any story of this Commander recorded a real or remembered scan, whether or not they asked to fly to a beacon again.</summary>
     public bool HasScanOnRecord(string? frontierId) => ScansOnRecord(frontierId, null) > 0;
@@ -612,7 +613,7 @@ public sealed class StoryDirector(
     {
         ArgumentNullException.ThrowIfNull(card);
 
-        return !card.Pacing.NarratedScan && BeaconsOnRecord(frontierId, card.Id) > 0;
+        return !card.Pacing.NarratedScan && BeaconsOnRecord(frontierId, card) > 0;
     }
 
     /// <summary>Abandons the current story, moving its chapters to the archive, and picks another.</summary>

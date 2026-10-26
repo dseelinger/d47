@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text;
@@ -92,6 +92,9 @@ public sealed record StoryCard
 
     /// <summary>Whether this is a Goals story: each chapter between the beacon scan and the finale works the Goals arc furthest behind.</summary>
     public bool Goals { get; init; }
+
+    /// <summary>Whether the story's plot happens at the beacon scan: it flies to a beacon even when a scan is on record.</summary>
+    public bool BeaconTrip { get; init; }
 
     /// <summary>The picture names of the primary cast, in cast order, both version names for a member with versions.</summary>
     public IReadOnlyList<string> CastPictures { get; init; } = [];
@@ -884,6 +887,11 @@ public sealed class StoryCatalog
         if (StoryPacing.Find(card.Length) is null)
         {
             yield return $"{card.Id}: the length is missing or is not one of {string.Join(", ", StoryPacing.All.Select(length => length.Key))}.";
+        }
+
+        if (card.BeaconTrip && card.Pacing.NarratedScan)
+        {
+            yield return $"{card.Id}: beaconTrip is set on a story shorter than 1 month.";
         }
     }
 

@@ -5,7 +5,7 @@ Not part of the build. `faults` checks one hidden entry and its card; the hidden
 `<id>.sealed` (raw-deflated JSON, then base64) by `publish-story.py`.
 
 Each entry: {"id", "secret", "end", "beats", "opening", "scan", "clues", "finale", "options", "cast"}, paced by
-the "length" on its card, one of the keys of LENGTHS. The card's "goals", where present, is true or false.
+the "length" on its card, one of the keys of LENGTHS. The card's "goals" and "beaconTrip", where present, are true or false.
   opening  optional, a story of any length: one or more lines said word for word, in order, at the pick, before
            the scan line and chapter one. Left out when the story has none; never an empty list.
            An opening line may carry {commander} ("Commander" and the Commander's name), {their} (his, her or
@@ -208,6 +208,11 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     clue_count, finale_count, sheet = LENGTHS.get(length, LENGTHS["1-year"])
     if "goals" in (card or {}) and not isinstance(card["goals"], bool):
         found.append(f"the card's goals is {card['goals']!r}, not true or false")
+    if "beaconTrip" in (card or {}):
+        if not isinstance(card["beaconTrip"], bool):
+            found.append(f"the card's beaconTrip is {card['beaconTrip']!r}, not true or false")
+        elif card["beaconTrip"] and length in NARRATED:
+            found.append(f"the card's beaconTrip is set on a {length} story, shorter than 1 month")
 
     beats = entry.get("beats") or {}
     found += [f"no beat {beat}" for beat in sheet if not text(beats.get(beat))]
