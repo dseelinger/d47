@@ -38,6 +38,7 @@ public sealed class ButtonCapture
     public static readonly TimeSpan Patience = TimeSpan.FromSeconds(30);
 
     private readonly HashSet<HotasButton> _atRest = [];
+    private readonly Dictionary<string, IReadOnlyList<int>> _presses = new(StringComparer.Ordinal);
 
     private bool _baselined;
     private HotasButton? _holding;
@@ -56,6 +57,8 @@ public sealed class ButtonCapture
             }
         }
 
+        var rose = Rose(readings);
+
         // Everything already held when the walk opens is a switch sitting where it was left.
         if (!_baselined)
         {
@@ -73,10 +76,7 @@ public sealed class ButtonCapture
         {
             if (!down.Contains(holding))
             {
-                return new ButtonCaptureResult(
-                    ButtonCaptureStage.Captured,
-                    holding,
-                    $"Button {holding.Button + 1}. Press Save to bind push-to-talk to it.");
+                return Captured(holding);
             }
 
             return elapsed - _heldSince > HoldCeiling
@@ -89,7 +89,7 @@ public sealed class ButtonCapture
                 : new ButtonCaptureResult(ButtonCaptureStage.Held, null, "Holding… let go when you are ready.");
         }
 
-        var fresh = down.Where(button => !_atRest.Contains(button)).ToArray();
+        var fresh = down.Where(button => !_atRest.Contains(button)).Union(rose).ToArray();
 
         if (fresh.Length > 1)
         {
@@ -98,6 +98,11 @@ public sealed class ButtonCapture
                 null,
                 "Two buttons went down at once, so I cannot tell which one you meant. Try again and "
                 + "press one.");
+        }
+
+        if (fresh.Length == 1 && !down.Contains(fresh[0]))
+        {
+            return Captured(fresh[0]);
         }
 
         if (fresh.Length == 1)
@@ -114,6 +119,36 @@ public sealed class ButtonCapture
 
         return Waiting(elapsed);
     }
+
+    /// <summary>
+    /// The buttons whose press count rose since the previous poll. A device not seen before, or a count that
+    /// fell, sets a new baseline.
+    /// </summary>
+    private List<HotasButton> Rose(IReadOnlyList<HotasReading> readings)
+    {
+        var rose = new List<HotasButton>();
+
+        foreach (var reading in readings)
+        {
+            if (_presses.TryGetValue(reading.Id, out var last))
+            {
+                for (var button = 0; button < Math.Min(last.Count, reading.Presses.Count); button++)
+                {
+                    if (reading.Presses[button] > last[button])
+                    {
+                        rose.Add(new HotasButton(reading.Id, button));
+                    }
+                }
+            }
+
+            _presses[reading.Id] = reading.Presses;
+        }
+
+        return rose;
+    }
+
+    private static ButtonCaptureResult Captured(HotasButton button) =>
+        new(ButtonCaptureStage.Captured, button, $"Button {button.Button + 1}. Press Save to bind push-to-talk to it.");
 
     private static ButtonCaptureResult Waiting(TimeSpan elapsed) =>
         elapsed > Patience

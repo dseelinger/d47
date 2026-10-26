@@ -20,6 +20,12 @@ public sealed record HotasReading
     /// <summary>Buttons that were down in any sample since the last read; empty when the reader does not track it.</summary>
     public IReadOnlyList<bool> DownSinceLastRead { get; init; } = [];
 
+    /// <summary>
+    /// A running count of presses by button index, each up-to-down change the reader saw; empty when the reader
+    /// does not count. Never reset on a read, so each consumer keeps the last count it saw.
+    /// </summary>
+    public IReadOnlyList<int> Presses { get; init; } = [];
+
     /// <summary>Hat positions, as the platform's own enumeration values.</summary>
     public IReadOnlyList<int> Hats { get; init; } = [];
 
@@ -27,6 +33,9 @@ public sealed record HotasReading
 
     /// <summary>Whether a button index exists on this device and is currently held.</summary>
     public bool IsHeld(int button) => button >= 0 && button < Buttons.Count && Buttons[button];
+
+    /// <summary>The running press count of a button index, or null when the reader does not count it.</summary>
+    public int? PressCount(int button) => button >= 0 && button < Presses.Count ? Presses[button] : null;
 
     /// <summary>Whether a button index was down in any sample since the last read, or is held now.</summary>
     public bool WasDownSinceLastRead(int button) =>
@@ -88,6 +97,15 @@ public sealed class FakeHotasReader : IHotasReader
         }
 
         _readings = [new HotasReading { Id = id, Buttons = buttons }];
+
+        return this;
+    }
+
+    /// <summary>Sets one device holding the buttons named, with a running press count for each of its buttons.</summary>
+    public FakeHotasReader Counting(string id, int[] presses, params int[] held)
+    {
+        Holding(id, presses.Length, held);
+        _readings = [_readings[0] with { Presses = [.. presses] }];
 
         return this;
     }

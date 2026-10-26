@@ -132,7 +132,7 @@ public sealed class Listener : IDisposable
     public WakeWordGate Wake { get; }
 
     /// <summary>Cancel's stick button (#221).</summary>
-    public BoundButton CancelButton { get; } = new();
+    public BoundButton CancelButton { get; } = new() { CountsPresses = true };
 
     /// <summary>The comms push-to-talk key, sampled from the tick.</summary>
     public PushToTalkKey CommsKey { get; }

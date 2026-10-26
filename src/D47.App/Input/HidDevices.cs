@@ -12,7 +12,11 @@ internal sealed record HidDevice(nint Handle, string Path, ushort VendorId, usho
 }
 
 /// <summary>One parsed input state; the arrays are never written after it is handed out.</summary>
-internal sealed record HidState(bool[] Buttons, int[] Hats);
+internal sealed record HidState(bool[] Buttons, int[] Hats)
+{
+    /// <summary>A running count of up-to-down changes by button index, set by <see cref="HidControllers"/>.</summary>
+    public int[] Presses { get; init; } = [];
+}
 
 /// <summary>The HID collections Windows lists, and reading one.</summary>
 internal interface IHidDevices

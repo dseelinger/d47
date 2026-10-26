@@ -8,8 +8,12 @@ public sealed class BoundButton
     private bool _sawDevice;
     private int _pollsSinceBind;
     private bool _noticedAbsence;
+    private int? _presses;
 
-    /// <summary>Raised on the tick that first sees the button down.</summary>
+    /// <summary>
+    /// Raised on the tick that first sees the button down; when <see cref="CountsPresses"/> is set and the reader
+    /// counts, once for each press counted since the previous poll instead.
+    /// </summary>
     public event Action? Pressed;
 
     /// <summary>Raised on the tick that first sees it back up.</summary>
@@ -19,6 +23,9 @@ public sealed class BoundButton
     public HotasButton? Bound => _bound;
 
     public bool IsDown => _wasDown;
+
+    /// <summary>Whether <see cref="Pressed"/> follows the reader's press counts, so a press between two polls is not lost.</summary>
+    public bool CountsPresses { get; init; }
 
     /// <summary>How many polls the bound device gets to turn up in before its absence is called.</summary>
     public const int PollsBeforeAbsenceIsCalled = 15;
@@ -55,6 +62,7 @@ public sealed class BoundButton
         // A new binding is a new question, so the counting and the notice both start again.
         _pollsSinceBind = 0;
         _noticedAbsence = false;
+        _presses = null;
 
         return _bound is not null;
     }
@@ -83,6 +91,24 @@ public sealed class BoundButton
         }
 
         var down = device?.IsHeld(bound.Button) ?? false;
+        var counted = CountsPresses ? device?.PressCount(bound.Button) : null;
+
+        if (counted is { } count)
+        {
+            // A lower count is a reopened collection, and nothing before it is raised.
+            var pressed = _presses is { } last && count >= last ? count - last : 0;
+
+            _presses = count;
+
+            for (var press = 0; press < pressed; press++)
+            {
+                Pressed?.Invoke();
+            }
+        }
+        else if (device is not null)
+        {
+            _presses = null;
+        }
 
         if (down == _wasDown)
         {
@@ -93,7 +119,10 @@ public sealed class BoundButton
 
         if (down)
         {
-            Pressed?.Invoke();
+            if (counted is null)
+            {
+                Pressed?.Invoke();
+            }
         }
         else
         {

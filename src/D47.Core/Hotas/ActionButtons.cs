@@ -29,7 +29,7 @@ public sealed class ActionButtons
         InterfaceCapability.FindButtonKey,
     };
 
-    /// <summary>Raised on the poll that first sees a bound button down, with the slot's settings key.</summary>
+    /// <summary>Raised once for each press of a bound button, with the slot's settings key.</summary>
     public event Action<string>? Pressed;
 
     /// <summary>Whether a press of the slot <paramref name="key"/> acts, given whether the D47 window is active.</summary>
@@ -56,7 +56,7 @@ public sealed class ActionButtons
                     continue;
                 }
 
-                var button = new BoundButton();
+                var button = new BoundButton { CountsPresses = true };
 
                 button.Bind(HotasButton.Parse(stored));
                 button.Pressed += () => Pressed?.Invoke(key);

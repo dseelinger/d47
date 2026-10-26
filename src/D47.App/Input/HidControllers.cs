@@ -313,10 +313,11 @@ public sealed class HidControllers : IHotasReader, IDisposable
 
         public bool GaveUp { get; set; }
 
+        /// <summary>Set by the reader thread alone; counts each button that went down since the state before.</summary>
         public HidState? State
         {
             get => _state;
-            set => _state = value;
+            set => _state = value is null ? null : Counted(_state, value);
         }
 
         public bool Ended
@@ -341,11 +342,37 @@ public sealed class HidControllers : IHotasReader, IDisposable
                 VendorId = Device.VendorId,
                 ProductId = Device.ProductId,
                 Buttons = state.Buttons,
+                Presses = [.. state.Presses],
                 Hats = state.Hats,
                 AxisCount = Device.Layout.AxisCount,
             };
         }
 
         public void Stop() => Reader?.Dispose();
+
+        private static HidState Counted(HidState? previous, HidState next)
+        {
+            var counts = previous?.Presses ?? new int[next.Buttons.Length];
+
+            if (previous is not null)
+            {
+                var compared = Math.Min(counts.Length, Math.Min(previous.Buttons.Length, next.Buttons.Length));
+
+                for (var index = 0; index < compared; index++)
+                {
+                    if (next.Buttons[index] && !previous.Buttons[index])
+                    {
+                        if (ReferenceEquals(counts, previous.Presses))
+                        {
+                            counts = [.. previous.Presses];
+                        }
+
+                        counts[index]++;
+                    }
+                }
+            }
+
+            return next with { Presses = counts };
+        }
     }
 }
