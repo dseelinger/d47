@@ -141,11 +141,11 @@ nav_order: 128
 </section>
 <section>
 <h2><span class="num">4</span> The captions follow the broadcast standard, not a preference.</h2>
-<svg viewBox="0 0 880 246" role="img" aria-label="Caption limits: 42 characters a line, two lines per utterance, 20 characters a second, timed from when the speech ends">
+<svg viewBox="0 0 880 246" role="img" aria-label="Caption limits: 42 characters a line, three lines per utterance, 20 characters a second, timed from when the speech ends">
  <rect x="20" y="34" width="840" height="124" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="60" y="68" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">42 characters</text>
  <text x="270" y="68" text-anchor="start" font-size="15" fill="var(--text-muted)">the most on one line</text>
- <text x="60" y="96" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">2 lines</text>
+ <text x="60" y="96" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">3 lines</text>
  <text x="270" y="96" text-anchor="start" font-size="15" fill="var(--text-muted)">the most for one thing said</text>
  <text x="60" y="124" text-anchor="start" font-size="16" font-weight="700" fill="var(--text)">20 a second</text>
  <text x="270" y="124" text-anchor="start" font-size="15" fill="var(--text-muted)">reading speed, which sets how long one stays</text>
@@ -498,8 +498,8 @@ They follow the broadcast closed-caption standard rather than anyone's preferenc
 
 ```text
 42 characters   the most on one line
- 2 lines        the most for one thing said
- 2 lines        the most on screen at once
+ 3 lines        the most for one thing said
+ 3 lines        the most on screen at once
 20 per second   reading speed, which decides how long one stays up
 5/6 s .. 7 s    the shortest and longest a caption lingers
 ```
@@ -507,10 +507,10 @@ They follow the broadcast closed-caption standard rather than anyone's preferenc
 A caption stays up timed from when the **speech ends**, not when it starts. Nobody reads along
 with a voice they can hear; they catch the last line after it has gone.
 
-**A long sentence arrives as several captions, not as its last two lines.** Anything that wraps
-past two lines is shown two at a time, each staying up for as long as your reading speed says it
-takes to read, until the sentence has been shown in full — which is what a caption track does with
-a long line. If Directive 47 starts saying something new while an earlier sentence is still being
+**A long sentence arrives as several captions, not as its last three lines.** Anything that wraps
+past three lines is shown three at a time, each staying up for the longer of your reading speed and
+the time the voice takes to say it, until the sentence has been shown in full. The speaking time
+comes from how fast the voice has recently spoken. If Directive 47 starts saying something new while an earlier sentence is still being
 shown, the new one takes over: a caption still working through something the voice finished with
 is no longer captioning.
 

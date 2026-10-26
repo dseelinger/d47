@@ -20,6 +20,19 @@ public sealed class CaptionLayer
     private string _showing = string.Empty;
     private long? _saying;
 
+    /// <summary>Measured speaking speed, characters a second.</summary>
+    public const double InitialSpeakingSpeed = 13;
+    public const double SlowestSpeakingSpeed = 8;
+    public const double FastestSpeakingSpeed = 20;
+    private const double SpeedWeight = 0.3;
+    private static readonly TimeSpan ShortestSampled = TimeSpan.FromSeconds(1.5);
+
+    private DateTimeOffset? _sayStartedAt;
+    private int _sayCharacters;
+
+    /// <summary>Running average of how fast sentences that ran to their end were spoken.</summary>
+    public double SpeakingSpeed { get; private set; } = InitialSpeakingSpeed;
+
     public CaptionSettings Settings { get; set; } = new();
 
     /// <summary>The window, oldest first.</summary>
@@ -55,8 +68,11 @@ public sealed class CaptionLayer
             return;
         }
 
-        // The standard caps one event at two lines, and a sentence long enough to need more is shown as
-        // consecutive events — which is what a caption track does with one too.
+        Sample(now);
+        _sayStartedAt = now;
+        _sayCharacters = string.Join(' ', wrapped).Length;
+
+        // A sentence long enough to need more lines than one event holds is shown as consecutive events — which is what a caption track does with one too.
         _pending.Clear();
 
         foreach (var line in wrapped)
@@ -80,9 +96,13 @@ public sealed class CaptionLayer
     /// </summary>
     private void Advance(DateTimeOffset now)
     {
+        var eventCharacters = 0;
+
         for (var taken = 0; taken < Caption.WindowLines && _pending.Count > 0; taken++)
         {
-            _lines.Add(_pending.Dequeue());
+            var line = _pending.Dequeue();
+            eventCharacters += line.Length + (taken > 0 ? 1 : 0);
+            _lines.Add(line);
 
             while (_lines.Count > Caption.WindowLines)
             {
@@ -94,7 +114,12 @@ public sealed class CaptionLayer
 
         if (_pending.Count > 0)
         {
-            _advanceAt = now + dwell;
+            // Held until the voice has reached the end of this event.
+            var speaking = TimeSpan.FromSeconds(Math.Max(
+                eventCharacters / SpeakingSpeed,
+                Caption.MinimumDwell.TotalSeconds));
+
+            _advanceAt = now + (speaking > dwell ? speaking : dwell);
             _clearAt = null;
             return;
         }
@@ -112,6 +137,8 @@ public sealed class CaptionLayer
     /// <summary>The voice has stopped.</summary>
     public void Quiet(DateTimeOffset now)
     {
+        Sample(now);
+
         if (_lines.Count == 0 || _clearAt is not null)
         {
             return;
@@ -144,7 +171,33 @@ public sealed class CaptionLayer
         _clearAt = null;
         _showing = string.Empty;
         _saying = null;
+        _sayStartedAt = null;
         Changed?.Invoke();
+    }
+
+    /// <summary>Takes a speed sample from the sentence that just ended on its own.</summary>
+    private void Sample(DateTimeOffset now)
+    {
+        if (_sayStartedAt is not { } started)
+        {
+            return;
+        }
+
+        _sayStartedAt = null;
+
+        var elapsed = now - started;
+
+        if (elapsed < ShortestSampled)
+        {
+            return;
+        }
+
+        var sample = _sayCharacters / elapsed.TotalSeconds;
+
+        SpeakingSpeed = Math.Clamp(
+            (SpeakingSpeed * (1 - SpeedWeight)) + (sample * SpeedWeight),
+            SlowestSpeakingSpeed,
+            FastestSpeakingSpeed);
     }
 
     /// <summary>

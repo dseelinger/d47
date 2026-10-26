@@ -105,7 +105,7 @@ public class CaptionTests
     }
 
     [Fact]
-    public void TheWindowHoldsTwoLinesAndRollsTheOldestOff()
+    public void TheWindowHoldsThreeLinesAndRollsTheOldestOff()
     {
         var layer = new CaptionLayer();
 
@@ -114,10 +114,10 @@ public class CaptionTests
         layer.Say("Three.", Now);
         layer.Say("Four.", Now);
 
-        // Two, matching the per-event maximum rather than exceeding it.
-        Assert.Equal(2, Caption.WindowLines);
+        // Three, matching the per-event maximum rather than exceeding it.
+        Assert.Equal(3, Caption.WindowLines);
         Assert.Equal(Caption.WindowLines, layer.Lines.Count);
-        Assert.Equal(["Three.", "Four."], layer.Lines);
+        Assert.Equal(["Two.", "Three.", "Four."], layer.Lines);
     }
 
     [Fact]

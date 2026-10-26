@@ -79,8 +79,7 @@ public class CaptionSurfaceTests
             Render(model, (frame, _) => frame.SaveCapture($"vr-captions-{name}.png"));
         }
 
-        // Two lines, which is the window: the long sentence wraps to two and the short one ahead of it has
-        // rolled off.
+        // Three lines, which is the window: the short sentence and the two the long one wraps to.
         Assert.Equal(Caption.WindowLines, layer.Lines.Count);
     }
 

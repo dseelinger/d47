@@ -3,7 +3,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Vr;
 
-/// <summary>A sentence that wraps past two lines reaches the Commander whole.</summary>
+/// <summary>A sentence that wraps past the window reaches the Commander whole.</summary>
 public class ALongSentenceIsCaptionedInFullTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 30, 12, 0, 0, TimeSpan.Zero);
@@ -49,6 +49,20 @@ public class ALongSentenceIsCaptionedInFullTests
         layer.Changed -= Record;
 
         return seen;
+    }
+
+    /// <summary>Speaks short sentences quickly enough that the measured speaking speed reaches its ceiling.</summary>
+    private static void Prime(CaptionLayer layer, int sentences)
+    {
+        var at = Now - TimeSpan.FromMinutes(5);
+
+        for (var i = 0; i < sentences; i++)
+        {
+            layer.Say(new string('x', 60), at, utterance: 1000 + i);
+            at += TimeSpan.FromSeconds(2.5);
+            layer.Quiet(at);
+            at += TimeSpan.FromSeconds(10);
+        }
     }
 
     /// <summary>The test the issue asked for first.</summary>
@@ -114,12 +128,14 @@ public class ALongSentenceIsCaptionedInFullTests
         var quick = new CaptionLayer { Settings = new CaptionSettings { CharactersPerSecond = 20 } };
         var slow = new CaptionLayer { Settings = new CaptionSettings { CharactersPerSecond = 8 } };
 
+        Prime(quick, 12);
+        Prime(slow, 12);
         quick.Say(Long, Now);
         slow.Say(Long, Now);
 
-        // Five seconds in, the fast reader has been moved on and the slow one has not: the first event is 78
-        // characters, which is 3.9 seconds at twenty a second and 9.8 at eight.
-        for (var elapsed = TimeSpan.Zero; elapsed <= TimeSpan.FromSeconds(5); elapsed += TimeSpan.FromSeconds(0.1))
+        // With the voice measured at the fastest speed, the first event of three lines is held for about six
+        // seconds by the quick reader and seven (the longest dwell) by the slow one.
+        for (var elapsed = TimeSpan.Zero; elapsed <= TimeSpan.FromSeconds(6.5); elapsed += TimeSpan.FromSeconds(0.1))
         {
             quick.Tick(Now + elapsed);
             slow.Tick(Now + elapsed);
@@ -182,6 +198,83 @@ public class ALongSentenceIsCaptionedInFullTests
         layer.Say("Two.", Now, utterance: 2);
         layer.Say("Three.", Now, utterance: 3);
 
-        Assert.Equal(["Two.", "Three."], layer.Lines);
+        Assert.Equal(["One.", "Two.", "Three."], layer.Lines);
+    }
+
+    /// <summary>An event with lines behind it is held until the voice has reached its end.</summary>
+    [Fact]
+    public void AnEventWithLinesBehindItWaitsForTheVoice()
+    {
+        var layer = new CaptionLayer();
+
+        for (var i = 0; i < 2; i++)
+        {
+            var at = Now - TimeSpan.FromMinutes(5) + TimeSpan.FromMinutes(i);
+
+            layer.Say(new string('x', 55), at, utterance: 100 + i);
+            layer.Quiet(at + TimeSpan.FromSeconds(5));
+        }
+
+        var speed = layer.SpeakingSpeed;
+        Assert.InRange(speed, 11, 13);
+
+        var sentence = Long + " " + Long[..60];
+        var wrapped = Caption.Wrap(sentence);
+        Assert.True(wrapped.Count > Caption.WindowLines);
+
+        var first = wrapped.Take(Caption.WindowLines).ToList();
+        var holds = string.Join(' ', first).Length / speed;
+
+        layer.Say(sentence, Now, utterance: 1);
+        layer.Tick(Now + TimeSpan.FromSeconds(holds - 0.2));
+        Assert.Equal(first, layer.Lines);
+
+        layer.Tick(Now + TimeSpan.FromSeconds(holds + 0.2));
+        Assert.NotEqual(first, layer.Lines);
+    }
+
+    [Fact]
+    public void ASentenceEndedBySilenceLeavesTheSpeakingSpeedAlone()
+    {
+        var layer = new CaptionLayer();
+        var before = layer.SpeakingSpeed;
+
+        layer.Say(new string('x', 200), Now, utterance: 1);
+        layer.Silence();
+        layer.Quiet(Now + TimeSpan.FromSeconds(30));
+
+        Assert.Equal(before, layer.SpeakingSpeed);
+    }
+
+    [Fact]
+    public void ASentenceUnderOneAndAHalfSecondsLeavesTheSpeakingSpeedAlone()
+    {
+        var layer = new CaptionLayer();
+        var before = layer.SpeakingSpeed;
+
+        layer.Say(new string('x', 200), Now, utterance: 1);
+        layer.Quiet(Now + TimeSpan.FromSeconds(1.4));
+
+        Assert.Equal(before, layer.SpeakingSpeed);
+    }
+
+    [Fact]
+    public void TheSpeakingSpeedStaysBetweenEightAndTwentyHoweverExtremeTheSamples()
+    {
+        var fast = new CaptionLayer();
+        var slow = new CaptionLayer();
+
+        for (var i = 0; i < 30; i++)
+        {
+            var at = Now + TimeSpan.FromMinutes(i);
+
+            fast.Say(new string('x', 400), at, utterance: i);
+            fast.Quiet(at + TimeSpan.FromSeconds(1.5));
+            slow.Say("x", at, utterance: i);
+            slow.Quiet(at + TimeSpan.FromSeconds(500));
+        }
+
+        Assert.Equal(CaptionLayer.FastestSpeakingSpeed, fast.SpeakingSpeed);
+        Assert.Equal(CaptionLayer.SlowestSpeakingSpeed, slow.SpeakingSpeed);
     }
 }
