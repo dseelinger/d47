@@ -1031,30 +1031,6 @@ public static class EgressDisclosure
             ", ",
             providers.Select(provider => provider.Destination).Distinct(StringComparer.OrdinalIgnoreCase));
 
-    /// <summary>What choosing one provider for one slot causes to leave (Phase 57).</summary>
-    public static EgressEntry TextToSpeechForSlot(Audio.VoiceGroupInfo slot, Audio.TtsProviderInfo provider)
-    {
-        provider = Speech.LocalVoiceStandIn.Live(provider);
-
-        var what = $"{slot.Name} — {slot.Covers} — is spoken by {provider.Name}. {provider.Egress}";
-
-        if (slot.OtherPeoplesWords && provider.Billed)
-        {
-            what += " This slot carries text written by other players, so choosing a paid "
-                    + "provider for it means being billed per character for words somebody else "
-                    + "typed, in whatever volume they choose to type them.";
-        }
-
-        var summary = provider.Speaks
-            ? $"{slot.Name} is spoken by {provider.Name}."
-            : $"{slot.Name} is silent — nothing is sent for it.";
-
-        return provider.Speaks
-            ? new EgressEntry(
-                TextToSpeech, NameOf(TextToSpeech), provider.Destination, what, Active: true, Summary: summary)
-            : EgressEntry.Silent(TextToSpeech, NameOf(TextToSpeech), what, summary);
-    }
-
     /// <summary>What one hearing provider receives, whether or not it is the one selected.</summary>
     public static EgressEntry SpeechRecognitionFor(Listening.SttProviderInfo provider) =>
         provider.Hosted

@@ -259,11 +259,6 @@ public sealed record SettingRow
     /// </summary>
     public string? EgressId { get; init; }
 
-    /// <summary>
-    /// What this row's own value causes to leave, where that is not what the current selection causes.
-    /// </summary>
-    public Func<D47Settings, EgressEntry>? EgressFor { get; init; }
-
     /// <summary>Anchor within the owning capability's documentation page.</summary>
     public string? DocsAnchor { get; init; }
 

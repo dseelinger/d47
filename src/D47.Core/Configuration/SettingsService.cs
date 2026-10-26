@@ -306,19 +306,6 @@ public sealed class SettingsService
         return Apply(key, string.Equals(blank, @default, StringComparison.Ordinal) ? null : @default, caller);
     }
 
-    /// <summary>Every row on one capability's card, put back to its default (#61).</summary>
-    public int ResetCard(string capabilityId, SettingsCaller caller)
-    {
-        var rows = Sections
-            .Where(section => string.Equals(section.Capability.Id, capabilityId, StringComparison.Ordinal))
-            .SelectMany(section => section.Rows)
-            .Where(row => IsChanged(row.Key))
-            .Select(row => row.Key)
-            .ToList();
-
-        return rows.Count(key => Reset(key, caller).Status == SettingApplyStatus.Applied);
-    }
-
     /// <summary>
     /// The bound rows a <see cref="SettingsLayout"/> place or tab place draws, in the layout's order — a
     /// single-key entry resolves to the one row with that key, a family entry to every bound row its
@@ -326,17 +313,6 @@ public sealed class SettingsService
     /// </summary>
     public IReadOnlyList<SettingRow> RowsForPlace(string placeId) =>
         [.. EntriesForPlace(placeId).SelectMany(RowsForEntry)];
-
-    /// <summary>Every row on one <see cref="SettingsLayout"/> place or tab place, put back to its default.</summary>
-    public int ResetPlace(string placeId, SettingsCaller caller)
-    {
-        var keys = RowsForPlace(placeId)
-            .Select(row => row.Key)
-            .Where(IsChanged)
-            .ToList();
-
-        return keys.Count(key => Reset(key, caller).Status == SettingApplyStatus.Applied);
-    }
 
     /// <summary>Every changed row in one group of a <see cref="SettingsLayout"/> place, put back to its default.</summary>
     public int ResetGroup(string placeId, int groupIndex, SettingsCaller caller)

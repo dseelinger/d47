@@ -40,9 +40,6 @@ public sealed partial class CapabilityRegistry
     private readonly Dictionary<string, RegisteredCapability> _byId;
     private readonly Dictionary<string, (RegisteredCapability Capability, ToolDefinition Tool)> _byToolName;
 
-    /// <summary>How many times each capability has actually been used this session.</summary>
-    private readonly Dictionary<string, int> _uses = new(StringComparer.Ordinal);
-
     private CapabilityRegistry(IReadOnlyList<RegisteredCapability> capabilities)
     {
         All = capabilities;
@@ -114,15 +111,6 @@ public sealed partial class CapabilityRegistry
     /// <summary>Raised once per tool call, after the outcome is known.</summary>
     public event Action<ToolInvocation>? ToolInvoked;
 
-    /// <summary>How often a capability has been invoked this session.</summary>
-    public int UseCountOf(string capabilityId)
-    {
-        lock (_uses)
-        {
-            return _uses.GetValueOrDefault(capabilityId, 0);
-        }
-    }
-
     /// <summary>Runs a tool.</summary>
     /// <param name="caller">Who asked.</param>
     public async Task<ToolResult> InvokeAsync(
@@ -146,13 +134,6 @@ public sealed partial class CapabilityRegistry
                 $"'{toolName}' is not something I can do on my own — the Commander performs it from the "
                 + "panel or by saying so directly."
                 + (tool.RefusalExample is { Length: > 0 } example ? $" Say \"{example}\" and it is done." : string.Empty));
-        }
-
-        // Counted on the attempt rather than on success.
-        lock (_uses)
-        {
-            var id = found.Capability.Descriptor.Id;
-            _uses[id] = _uses.GetValueOrDefault(id, 0) + 1;
         }
 
         if (Invalid(toolName, tool, arguments) is { } refusal)

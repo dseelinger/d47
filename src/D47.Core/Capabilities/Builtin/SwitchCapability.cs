@@ -67,20 +67,6 @@ public static class SwitchCapability
         ],
     };
 
-    /// <summary>The live half, for prompt position 7 — the disagreements and nothing else.</summary>
-    public static string? Live(SwitchSurface surface)
-    {
-        var against = surface.States()
-            .Where(state => state.Disagrees is not null)
-            .Select(state => $"{state.Name} ({state.Disagrees})")
-            .ToArray();
-
-        return against.Length == 0
-            ? null
-            : "Switches currently sitting against the state of the game or the panel: "
-              + string.Join("; ", against) + ".";
-    }
-
     /// <summary>What both surfaces show, in one sentence: the switches that disagree, or nothing at all.</summary>
     public static string? Annunciator(IReadOnlyList<SwitchState> states)
     {

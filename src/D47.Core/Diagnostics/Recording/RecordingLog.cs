@@ -79,18 +79,6 @@ public sealed class RecordingLog
         }
     }
 
-    /// <summary>What the whole record costs on disk right now, kept clips included.</summary>
-    public long Bytes
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _rows.Sum(row => row.Bytes) + KeptBytes();
-            }
-        }
-    }
-
     /// <summary>Writes one utterance down and evicts whatever that pushed past the cap.</summary>
     public RecordingRow Add(RecordingCapture capture)
     {

@@ -444,7 +444,4 @@ public static class CommunityGoalCapability
 
     private static bool Matches(string title, string? wanted) =>
         wanted is null || title.Contains(wanted, StringComparison.OrdinalIgnoreCase);
-
-    private static bool Same(string one, string other) =>
-        string.Equals(one.Trim(), other.Trim(), StringComparison.OrdinalIgnoreCase);
 }

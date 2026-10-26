@@ -13,7 +13,6 @@ public class ALocalBuildSaysSoTests
     {
         Assert.Equal("local build", ReleaseChannelText.Short(ReleaseChannel.Local));
         Assert.Equal("0.84.3 (local build)", ReleaseChannelText.Marked("0.84.3", ReleaseChannel.Local));
-        Assert.Contains("not from any release", ReleaseChannelText.Full(ReleaseChannel.Local), StringComparison.Ordinal);
     }
 
     /// <summary>

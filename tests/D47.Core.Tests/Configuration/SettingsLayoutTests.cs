@@ -260,46 +260,6 @@ public class SettingsLayoutTests
         Assert.Equal(["ships.remembered", "ships.art", "ships.hullgpu"], keys);
     }
 
-    [Fact]
-    public void ResetPlaceResetsAChangedAttemptsRowAndLeavesTheProviderRowAloneTests()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        surface.Settings.Apply(SpeechCapability.RetryAttemptsKey, "5", SettingsCaller.Panel);
-        surface.Settings.Apply(
-            ConversationCapability.ProviderKey, D47.Core.Conversation.LlmProviderCatalog.OpenAiId, SettingsCaller.Panel);
-
-        var moved = surface.Settings.ResetPlace("turn-fails", SettingsCaller.Panel);
-
-        Assert.Equal(1, moved);
-        Assert.False(surface.Settings.IsChanged(SpeechCapability.RetryAttemptsKey));
-        Assert.True(surface.Settings.IsChanged(ConversationCapability.ProviderKey));
-    }
-
-    [Fact]
-    public void ResetPlaceWithNothingChangedResetsNothingTests()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        Assert.Equal(0, surface.Settings.ResetPlace("turn-fails", SettingsCaller.Panel));
-    }
-
-    [Fact]
-    public void ResetPlaceWorksOnATabPlaceTooTests()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        surface.Settings.Apply("knowledge.notablePlaces", "true", SettingsCaller.Panel);
-
-        var moved = surface.Settings.ResetPlace("adventures", SettingsCaller.Panel);
-
-        Assert.Equal(1, moved);
-        Assert.False(surface.Settings.IsChanged("knowledge.notablePlaces"));
-    }
-
     private static TestSurface Surface() => TestSurface.For(new MemoryInstall(), everyOptionalSurface: true);
 
     private static IEnumerable<string> AllPlaceIds() =>

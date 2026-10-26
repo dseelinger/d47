@@ -184,24 +184,6 @@ public static class OnFootCapability
         Description = "True when this is about a hand weapon rather than the suit.",
     };
 
-    /// <summary>
-    /// What the model is told about the on-foot plans on every turn, below the cache breakpoint.
-    /// </summary>
-    public static string? Live(OnFootPlanService? plans)
-    {
-        if (plans is null)
-        {
-            return null;
-        }
-
-        var planned = plans.Kit().Count(entry => entry.Planned > 0);
-
-        return planned == 0
-            ? null
-            : $"On foot: {planned.ToString(CultureInfo.InvariantCulture)} suit or weapon plan"
-              + (planned == 1 ? "." : "s.");
-    }
-
     private static string Kit(OnFootPlanService? plans)
     {
         if (plans is null)

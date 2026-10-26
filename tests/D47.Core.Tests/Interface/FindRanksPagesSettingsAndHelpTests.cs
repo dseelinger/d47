@@ -37,7 +37,7 @@ public class FindRanksPagesSettingsAndHelpTests
                 InstalledModels = () => ["tiny.en"],
                 KeyLabel = key => key,
             }),
-            CalloutCapability.Create(settings, () => string.Empty),
+            CalloutCapability.Create(() => string.Empty),
             ShipsCapability.Create(surface: ShipsCapability.ShipsSurface.Inert),
         ]));
 

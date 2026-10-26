@@ -50,8 +50,6 @@ public sealed class LearnedPhrasesStore(string path, IFileSystem files, ILogger<
 
     private Dictionary<string, Dictionary<string, LearnedPhrase>> _byCommander = new(StringComparer.Ordinal);
 
-    public string Path => path;
-
     /// <summary>Raised when a phrase is learned or forgotten, whoever changed it.</summary>
     public event Action? Changed;
 

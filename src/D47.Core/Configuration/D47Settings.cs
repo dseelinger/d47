@@ -1270,18 +1270,6 @@ public sealed record HotkeySettings
 
     public string? Find { get; init; } = "Ctrl+Shift+F";
 
-    /// <summary>
-    /// Snaps every world-locked headset surface back in front of the Commander (Phase 9, "Re-anchor the
-    /// panels").
-    /// </summary>
-    public string? Reanchor { get; init; } = "Ctrl+Alt+R";
-
-    /// <summary>
-    /// Binds the core aboard to the ship the Commander is in, and unbinds it when it is already that
-    /// core (Phase 35, "The binding is the Commander's, and unreachable from the model").
-    /// </summary>
-    public string? BindShipCore { get; init; } = "Ctrl+Alt+B";
-
     /// <summary>Shows and hides the flat mini panel (Phase 48).</summary>
     public string? ShowOverlay { get; init; } = "Ctrl+Alt+O";
 
@@ -1383,9 +1371,6 @@ public sealed record DonationSettings
     /// Commander's instruction).
     /// </summary>
     public const string Address = "https://d47-donations.dseelinger.workers.dev";
-
-    /// <summary>The address a Commander once pasted in, before the build carried its own.</summary>
-    public string? Endpoint { get; init; }
 }
 
 /// <summary>Whether d47 counts how often each tool is used and sends the counts once a day.</summary>

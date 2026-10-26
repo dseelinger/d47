@@ -9,9 +9,6 @@ public sealed class ClipboardOffer
     /// <summary>What would go on the clipboard — a system name, almost always.</summary>
     public string? Text { get; private set; }
 
-    /// <summary>What it is, in the words the offer sentence used: "the system", "the trader's system".</summary>
-    public string? Subject { get; private set; }
-
     public bool IsStanding => Text is { Length: > 0 };
 
     /// <summary>Records what is being offered and returns the sentence to say.</summary>
@@ -20,12 +17,10 @@ public sealed class ClipboardOffer
         if (text is not { Length: > 0 } wanted)
         {
             Text = null;
-            Subject = null;
             return null;
         }
 
         Text = wanted;
-        Subject = subject;
 
         return $"Say \"copy that\" and I will put {wanted} on your clipboard.";
     }

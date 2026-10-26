@@ -30,7 +30,4 @@ public readonly record struct SecretCheck(SecretVerdict Verdict, string Detail)
     public static SecretCheck Rejected(string detail) => new(SecretVerdict.Rejected, detail);
 
     public static SecretCheck Unreachable(string detail) => new(SecretVerdict.Unreachable, detail);
-
-    /// <summary>Whether this verdict should stop a guided run from moving on.</summary>
-    public bool Blocks => Verdict == SecretVerdict.Rejected;
 }

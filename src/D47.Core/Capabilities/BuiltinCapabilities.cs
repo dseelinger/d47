@@ -420,7 +420,7 @@ public static class BuiltinCapabilities
             learnedPhrases,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             phraseBook ?? (() => PhraseBook.From(registry(), []))),
-        CalloutCapability.Create(settings, () => CalloutCapability.Describe(callouts, settings.Current)),
+        CalloutCapability.Create(() => CalloutCapability.Describe(callouts, settings.Current)),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
         FocusCapability.Create(raiseGame),

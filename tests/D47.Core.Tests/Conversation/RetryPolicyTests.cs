@@ -53,19 +53,4 @@ public class RetryPolicyTests
             Policy(BackoffShape.Sequential).WaitBefore(2),
             Policy(BackoffShape.Logarithmic).WaitBefore(2));
     }
-
-    [Fact]
-    public void OneAttemptMeansNoRetriesAndNoWaiting()
-    {
-        var policy = Policy(BackoffShape.Sequential, attempts: 1);
-
-        Assert.Equal(TimeSpan.Zero, policy.TotalWait());
-    }
-
-    [Fact]
-    public void TotalWaitIsWhatTheCommanderWouldSitThrough()
-    {
-        // 0 + 2 + 4 + 6 for four attempts.
-        Assert.Equal(TimeSpan.FromSeconds(12), Policy(BackoffShape.Sequential).TotalWait());
-    }
 }

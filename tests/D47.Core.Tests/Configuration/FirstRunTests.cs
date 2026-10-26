@@ -53,14 +53,4 @@ public class FirstRunTests
 
         Assert.True(FirstRun.IsNeeded(NeedsKey, moved.Has));
     }
-
-    /// <summary>Being offline says nothing about a key, so it must not hold a guided run.</summary>
-    [Fact]
-    public void OnlyARejectionBlocks()
-    {
-        Assert.True(SecretCheck.Rejected("no").Blocks);
-        Assert.False(SecretCheck.Unreachable("offline").Blocks);
-        Assert.False(SecretCheck.Works("fine").Blocks);
-        Assert.False(SecretCheck.Untested.Blocks);
-    }
 }

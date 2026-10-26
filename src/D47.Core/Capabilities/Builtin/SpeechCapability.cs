@@ -1451,11 +1451,6 @@ public static class SpeechCapability
                 Group = "Where each voice comes from",
                 DocsAnchor = "voice-slots",
                 EgressId = EgressDisclosure.TextToSpeech,
-
-                // This slot's own consequence, not whichever provider happens to be selected for the ship.
-                EgressFor = s => EgressDisclosure.TextToSpeechForSlot(
-                    slot,
-                    TtsProviderCatalog.Selected(VoiceGroups.ProviderFor(s.Speech, slot.Group))),
                 Binding = new SettingBinding
                 {
                     Read = s => s.Speech.GroupProviders?.GetValueOrDefault(slot.Id),
@@ -1478,9 +1473,6 @@ public static class SpeechCapability
                 SecretName = provider.KeySecretName,
                 DocsAnchor = "api-key",
                 EgressId = EgressDisclosure.TextToSpeech,
-
-                // This provider's own disclosure, not whichever one happens to be selected.
-                EgressFor = _ => EgressDisclosure.TextToSpeechFor(provider),
 
                 // Verified against the provider's own voice list, which is the real call this key is for —
                 // and the one d47 makes anyway the moment the key lands.

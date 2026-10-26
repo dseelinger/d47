@@ -45,22 +45,6 @@ public sealed record RetryPolicy
 
         return Wait * multiplier;
     }
-
-    /// <summary>
-    /// The whole schedule, for logging and for saying how long d47 will keep trying before it gives up
-    /// out loud.
-    /// </summary>
-    public TimeSpan TotalWait()
-    {
-        var total = TimeSpan.Zero;
-
-        for (var attempt = 2; attempt <= Attempts; attempt++)
-        {
-            total += WaitBefore(attempt);
-        }
-
-        return total;
-    }
 }
 
 /// <summary>What the turn path needs from a clock.</summary>

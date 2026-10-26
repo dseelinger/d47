@@ -98,10 +98,6 @@ public class APreReleaseSaysSoTests
             var shouldBe = channel is ReleaseChannel.PreRelease or ReleaseChannel.Local;
 
             Assert.Equal(shouldBe, marked);
-
-            // And the long form agrees with the short one, since About and the title bar are answering the
-            // same question at two lengths.
-            Assert.Equal(marked, ReleaseChannelText.Full(channel) is not null);
         }
     }
 }

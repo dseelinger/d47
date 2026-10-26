@@ -41,14 +41,4 @@ public static class SettingsFold
 
         return !changed;
     }
-
-    /// <summary>How many rows the fold is currently hiding, for the toggle's own hint.</summary>
-    public static int Folded(
-        IEnumerable<SettingRow> rows,
-        D47Settings settings,
-        Func<SettingRow, bool> changed,
-        bool showEverything) =>
-        rows.Count(row => row.Applies(settings)
-                          && !row.DrawnElsewhere
-                          && IsFolded(row, settings, changed(row), showEverything));
 }

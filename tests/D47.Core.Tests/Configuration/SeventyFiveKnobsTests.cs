@@ -186,29 +186,6 @@ public class SeventyFiveKnobsTests
             surface.Settings.Current.Llm.EffortCeiling);
     }
 
-    /// <summary>The toggle says how much it is folding.</summary>
-    [Fact]
-    public void TheFoldCanSayHowMuchItIsHiding()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        var folded = SettingsFold.Folded(
-            Rows(surface),
-            surface.Settings.Current,
-            row => surface.Settings.IsChanged(row.Key),
-            showEverything: false);
-
-        Assert.True(folded > 0, "Nothing is folded, so the fold is doing nothing.");
-        Assert.Equal(
-            0,
-            SettingsFold.Folded(
-                Rows(surface),
-                surface.Settings.Current,
-                row => surface.Settings.IsChanged(row.Key),
-                showEverything: true));
-    }
-
     /// <summary>
     /// The toggle itself is on the calm page, or a Commander who folded the settings away has no way to
     /// unfold them.

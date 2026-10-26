@@ -169,7 +169,6 @@ public class SecretRowTests
         var anthropic = LlmProviderCatalog.Find(LlmProviderCatalog.AnthropicId);
 
         Assert.NotNull(anthropic);
-        Assert.True(anthropic.HasEndpoint, "it does have an address");
         Assert.False(anthropic.AcceptsCustomEndpoint, "but retyping it is not a setting");
     }
 

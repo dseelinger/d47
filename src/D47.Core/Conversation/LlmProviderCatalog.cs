@@ -29,8 +29,6 @@ public sealed record LlmProviderInfo
     /// <summary>Exactly what leaves the machine when this provider answers a turn.</summary>
     public required string Egress { get; init; }
 
-    public bool HasEndpoint => DefaultEndpoint is not null;
-
     /// <summary>Whether pointing this provider somewhere else is a thing anyone would do.</summary>
     public bool AcceptsCustomEndpoint { get; init; }
 

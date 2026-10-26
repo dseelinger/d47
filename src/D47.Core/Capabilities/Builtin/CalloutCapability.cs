@@ -128,7 +128,7 @@ public static class CalloutCapability
     public const string NarratorSecondsKey = "callouts.narratorSeconds";
     public const string NarratorMaxSecondsKey = "callouts.narratorMaxSeconds";
 
-    public static CapabilityDescriptor Create(SettingsService settings, Func<string> describe) => new()
+    public static CapabilityDescriptor Create(Func<string> describe) => new()
     {
         Id = Id,
         Group = "Voice",

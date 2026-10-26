@@ -33,8 +33,6 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
 
     private Dictionary<string, Dictionary<string, Bookmark>> _byCommander = new(StringComparer.Ordinal);
 
-    public string Path => path;
-
     /// <summary>Raised when a bookmark is added, renamed or deleted, whoever changed it.</summary>
     public event Action? Changed;
 

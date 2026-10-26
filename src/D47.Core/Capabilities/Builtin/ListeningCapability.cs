@@ -34,7 +34,6 @@ public static class ListeningCapability
     public const string ProviderKey = "listening.provider";
 
     public const string GpuKey = "listening.useGpu";
-    public const string EgressKey = "listening.egress";
     public const string EchoKey = "listening.echoCancellation";
     public const string NoiseKey = "listening.noiseSuppression";
     public const string SensitivityKey = "listening.sensitivity";
@@ -675,7 +674,6 @@ public static class ListeningCapability
                    SecretName = provider.KeySecretName,
                    DocsAnchor = "provider-key",
                    EgressId = EgressDisclosure.SpeechRecognition,
-                   EgressFor = _ => EgressDisclosure.SpeechRecognitionFor(provider),
                    AppliesWhen = s => SttProviderCatalog.Selected(s.Listening.Provider).Id == provider.Id,
                },
             new SettingRow

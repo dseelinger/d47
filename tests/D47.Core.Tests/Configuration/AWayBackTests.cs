@@ -79,43 +79,6 @@ public class AWayBackTests
     }
 
     /// <summary>
-    /// The realistic gesture: a Commander who has been fiddling with a card does not know which row did
-    /// it.
-    /// </summary>
-    [Fact]
-    public void ACardResetsEverythingOnItAndNoKeys()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        var key = ConversationCapability.KeyRowFor(
-            D47.Core.Conversation.LlmProviderCatalog.Selected(D47.Core.Conversation.LlmProviderCatalog.AnthropicId));
-
-        surface.Settings.Apply(key, "sk-ant-not-a-real-key", SettingsCaller.Panel);
-        surface.Settings.Apply(ConversationCapability.ModelKey, "claude-opus-5", SettingsCaller.Panel);
-        surface.Settings.Apply(ConversationCapability.WebSearchKey, "true", SettingsCaller.Panel);
-
-        var moved = surface.Settings.ResetCard(ConversationCapability.Id, SettingsCaller.Panel);
-
-        Assert.Equal(2, moved);
-        Assert.Null(surface.Settings.Current.Llm.Model);
-        Assert.False(surface.Settings.Current.Llm.WebSearch);
-
-        // "A Commander asking for a working Speech tab is not asking to be logged out of ElevenLabs." The
-        // same holds one card over.
-        Assert.True(surface.Settings.HasSecret(surface.Settings.Find(key)!.SecretName));
-    }
-
-    [Fact]
-    public void ACardWithNothingChangedResetsNothing()
-    {
-        var install = new MemoryInstall();
-        var surface = TestSurface.For(install);
-
-        Assert.Equal(0, surface.Settings.ResetCard(ConversationCapability.Id, SettingsCaller.Panel));
-    }
-
-    /// <summary>
     /// Reset writes safety-critical settings, so it inherits the invariant unchanged: reachable from
     /// the panel and the keyword router, never from the tool surface.
     /// </summary>
