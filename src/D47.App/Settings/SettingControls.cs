@@ -945,7 +945,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 editing.Now,
                 editing.ExportPath,
                 editing.Destinations(),
-                editing.Settings));
+                editing.Settings,
+                ((Panel.IPanelTabHost)panel).ColumnWidths));
 
             // The editor writes the file; this is what puts the new summary on the row without waiting for
             // something else to notice.

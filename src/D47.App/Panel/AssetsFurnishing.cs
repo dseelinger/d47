@@ -143,9 +143,9 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         // _engineers is read when the first draw opens Materials, not here (#477); Copy and Portraits likewise.
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
-            () => _comparePage = new ComparePage(state),
-            () => _storedModulesPage = new StoredModulesPage(state),
-            () => _crewPage = new CrewPage(state, host.Portraits?.Pictures),
+            () => _comparePage = new ComparePage(state, host.ColumnWidths),
+            () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths),
+            () => _crewPage = new CrewPage(state, host.Portraits?.Pictures, host.ColumnWidths),
             planCarrierRoute,
             host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture
                 ? new CarrierPictures(pictures, picture, () => host.Model?.CommanderPictureSource?.Invoke() is not null)
@@ -179,7 +179,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     {
         var headset = host.Headset;
 
-        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse);
+        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths);
 
         host.Furnish(
             PanelTab.Assets,

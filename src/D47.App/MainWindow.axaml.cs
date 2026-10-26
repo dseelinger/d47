@@ -159,7 +159,8 @@ public partial class MainWindow : Window
                 BuildSettingsPage,
                 RevealSetting,
                 () => new PhrasesPage(
-                    host.Capabilities, host.Wording.Phrases, () => host.GameState.Active, () => host.Router.Book));
+                    host.Capabilities, host.Wording.Phrases, () => host.GameState.Active, () => host.Router.Book,
+                    ((IPanelTabHost)Panel).ColumnWidths));
 
             // Every system name the panel draws goes through this one seam (#157).
             if (host.Clipboard is { } clipboard)

@@ -16,6 +16,8 @@ The slot table on a ship's Fleet page sizes its columns to what they hold: CURRE
 
 The tables on the Commander tab size their columns to what they hold: the credit kinds and transactions, the Codex regions, entries and discoveries, combat stats, BGS work, the Commanders list and Activities. On the desktop window, drag the right edge of a column heading to set a width, which holds after you reopen the page; double-click the edge to clear it. The headset panel fits to content with no drag handles.
 
+The Crew, Stored modules, Materials needed by plans, Construction needs, Compare ships, Phrases and HOTAS switch position tables size their columns to what they hold. Stored modules and Materials draw one table per system or plan, and every group's columns line up. On the desktop window, drag a column edge to set a width, which holds when the page is reopened; double-click the edge to clear it.
+
 A stick button bound to an action or to cancel now acts on every press, however short. A dial bound to comms channel up or down steps once per click, where before it missed most of them, and a dial can now be bound on the bind page.
 
 A stick button bound to comms channel or sub-channel up or down still moves the channel on every press, but D47 now says the channel's name once, 400 ms after the last step, instead of once per step.

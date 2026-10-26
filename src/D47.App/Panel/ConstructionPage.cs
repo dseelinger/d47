@@ -96,7 +96,17 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
     private const double ListWidth = 380;
 
-    private const string NeedsColumns = "1.7*,*,*,*,*,112";
+    public const string NeedsTable = "Construction.Needs";
+
+    private static readonly TableColumn[] NeedsColumns =
+    [
+        new("Commodity", ColumnFit.Fill),
+        new("Remaining"),
+        new("InHold"),
+        new("OnCarrier"),
+        new("ToBuy"),
+        new("Order"),
+    ];
 
     private const string LotColumns = "1.7*,*,*,*";
 
@@ -107,6 +117,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private readonly Func<string, Task<bool>>? _copy;
     private readonly bool _headset;
     private readonly Action<string>? _browse;
+    private readonly ColumnWidthMemory? _columnWidths;
 
     private readonly Button _search = new() { Content = SearchLabel };
     private readonly Button _cancel = new() { Content = "Cancel", IsVisible = false };
@@ -118,8 +129,9 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private object? _seen;
     private string? _plannedKey;
 
-    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false, Action<string>? browse = null)
+    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false, Action<string>? browse = null, ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
         _surface = surface;
         _browse = browse;
         _copy = copy;
@@ -886,14 +898,11 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             return section;
         }
 
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(NeedsColumns), ColumnSpacing = 12, Margin = new Thickness(14, 0, 14, 4) };
-
-        for (var column = 0; column < NeedHeadings.Count; column++)
-        {
-            var head = _head.Cell(column, column is >= 1 and <= 4 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
-        }
+        var table = new TableLayout(NeedsTable, NeedsColumns, _columnWidths, 12);
+        var heads = table.Header(
+            _head,
+            [.. Enumerable.Range(0, NeedHeadings.Count).Select(column => column is >= 1 and <= 4 ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
+        heads.Margin = new Thickness(14, 0, 14, 4);
 
         section.Children.Add(heads);
 
@@ -901,7 +910,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         foreach (var need in _head.Sort(needs))
         {
-            rows.Children.Add(NeedRow(need, carrier.Owned));
+            rows.Children.Add(NeedRow(need, carrier.Owned, table));
         }
 
         section.Children.Add(rows);
@@ -924,7 +933,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             : "The carrier's hold has not been checked yet, so To buy leaves the carrier out. "
                 + "It counts once the carrier reports its cargo.";
 
-    private static Border NeedRow(ConstructionNeeds need, bool carrierOwned)
+    private static Border NeedRow(ConstructionNeeds need, bool carrierOwned, TableLayout table)
     {
         var name = new TextBlock
         {
@@ -935,48 +944,43 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
         Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var remaining = Figure(Number(need.Remaining), ThemeManager.WhiteKey, 1);
-        var hold = Held(need.InHold, 2);
+        var remaining = Figure(Number(need.Remaining), ThemeManager.WhiteKey);
+        var hold = Held(need.InHold);
 
-        TextBlock onCarrier = need.OnCarrier is { } tonnes ? Held(tonnes, 3)
-            : carrierOwned ? Cell(Chrome(Unknown, TypeScale.MetaSmall, ThemeManager.GreyKey), 3)
-            : Figure("—", ThemeManager.Grey2Key, 3);
+        TextBlock onCarrier = need.OnCarrier is { } tonnes ? Held(tonnes)
+            : carrierOwned ? Cell(Chrome(Unknown, TypeScale.MetaSmall, ThemeManager.GreyKey))
+            : Figure("—", ThemeManager.Grey2Key);
 
         var toBuy = need.ToBuy > 0
-            ? Figure(Number(need.ToBuy), ThemeManager.AKey, 4)
-            : Cell(Chrome(Covered, TypeScale.MetaSmall, ThemeManager.BlueKey), 4);
+            ? Figure(Number(need.ToBuy), ThemeManager.AKey)
+            : Cell(Chrome(Covered, TypeScale.MetaSmall, ThemeManager.BlueKey));
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(NeedsColumns),
-            ColumnSpacing = 12,
-            Children = { name, remaining, hold, onCarrier, toBuy },
-        };
+        Control order = new Border();
 
         if (need.OrderOpen)
         {
-            var order = Chrome(OrderOpen, TypeScale.MetaSmall, ThemeManager.CyanKey);
-            order.VerticalAlignment = VerticalAlignment.Center;
-            Grid.SetColumn(order, 5);
-            grid.Children.Add(order);
+            var open = Chrome(OrderOpen, TypeScale.MetaSmall, ThemeManager.CyanKey);
+            open.VerticalAlignment = VerticalAlignment.Center;
+            order = open;
         }
+
+        var grid = table.Row([name, remaining, hold, onCarrier, toBuy, order]);
 
         var row = new Border { MinHeight = 36, Padding = new Thickness(14, 6), Child = grid };
         Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;
 
-        static TextBlock Held(int tonnes, int column) =>
-            tonnes > 0 ? Figure(Number(tonnes), ThemeManager.YellowKey, column) : Figure("—", ThemeManager.Grey2Key, column);
+        static TextBlock Held(int tonnes) =>
+            tonnes > 0 ? Figure(Number(tonnes), ThemeManager.YellowKey) : Figure("—", ThemeManager.Grey2Key);
 
-        static TextBlock Figure(string text, string key, int column) => Cell(Mono(text, TypeScale.Small, key), column);
+        static TextBlock Figure(string text, string key) => Cell(Mono(text, TypeScale.Small, key));
 
-        static TextBlock Cell(TextBlock block, int column)
+        static TextBlock Cell(TextBlock block)
         {
             block.HorizontalAlignment = HorizontalAlignment.Right;
             block.VerticalAlignment = VerticalAlignment.Center;
             block.TextWrapping = TextWrapping.NoWrap;
-            Grid.SetColumn(block, column);
             return block;
         }
     }

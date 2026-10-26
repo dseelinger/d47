@@ -143,7 +143,7 @@ public static class LoadoutPages
 
         if (crumb.Key == GapRoot && gap is not null)
         {
-            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy);
+            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy, columnWidths);
         }
 
         if (crumb.Key.StartsWith(MaterialsPage.DetailPrefix, StringComparison.Ordinal)

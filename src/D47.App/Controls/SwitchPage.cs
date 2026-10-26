@@ -67,8 +67,16 @@ public sealed class SwitchPage : DialogPage
 
     private const double ColumnGap = 8;
 
-    /// <summary>The columns of the column heads and of every position row: bar, button, action, state, page.</summary>
-    private const string Columns = "3,140,*,150,*";
+    public const string PositionsTable = "Switch.Positions";
+
+    private static readonly TableColumn[] PositionColumns =
+    [
+        new("Mark", ColumnFit.Fixed) { Fixed = 3 },
+        new("Position"),
+        new("Action", ColumnFit.Fill) { Min = 120 },
+        new("Means"),
+        new("Page", ColumnFit.Fill) { Min = 120 },
+    ];
 
     /// <summary>Only the actions Elite reports the state of, by the name a list shows.</summary>
     private static readonly IReadOnlyList<(string Id, string Name)> Assignable =
@@ -104,6 +112,8 @@ public sealed class SwitchPage : DialogPage
 
     private readonly LostDeviceFinder _finder = new();
     private readonly SettingsService? _settings;
+    private readonly Panel.ColumnWidthMemory? _columnWidths;
+    private TableLayout _positions;
 
     public SwitchPage(
         SwitchStore store,
@@ -112,8 +122,11 @@ public sealed class SwitchPage : DialogPage
         Func<DateTimeOffset> now,
         string exportPath,
         IReadOnlyList<PanelDestination> destinations,
-        SettingsService? settings = null)
+        SettingsService? settings = null,
+        Panel.ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
+        _positions = NewPositions();
         _settings = settings;
         _store = store;
         _reader = reader;
@@ -433,9 +446,12 @@ public sealed class SwitchPage : DialogPage
             .Select(position => $"{mapping.Name.Trim()}: {KeyChord.Problem(position.Chord!)}")),
     ];
 
+    private TableLayout NewPositions() => new(PositionsTable, PositionColumns, _columnWidths, ColumnGap);
+
     private void Rebuild()
     {
         _list.Children.Clear();
+        _positions = NewPositions();
 
         if (_switches.Count == 0)
         {
@@ -576,11 +592,10 @@ public sealed class SwitchPage : DialogPage
     }
 
     /// <summary>The column heads over a switch's position rows.</summary>
-    private static Control BuildHeads()
+    private Control BuildHeads()
     {
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
-
         string[] words = ["", "Position", "Action", "Means", "Or opens a D47 page"];
+        var cells = new List<Control> { new Border() };
 
         for (var column = 1; column < words.Length; column++)
         {
@@ -595,11 +610,10 @@ public sealed class SwitchPage : DialogPage
             };
 
             Themed(head, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
+            cells.Add(head);
         }
 
-        return heads;
+        return _positions.Header(cells);
     }
 
     /// <summary>One position: the button, what it means, ON or OFF, or the page it opens.</summary>
@@ -863,13 +877,7 @@ public sealed class SwitchPage : DialogPage
 
         Draw();
 
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap };
-
-        foreach (var (cell, column) in new (Control, int)[] { (bar, 0), (buttonCell, 1), (action, 2), (stateCell, 3), (pageButton, 4) })
-        {
-            Grid.SetColumn(cell, column);
-            row.Children.Add(cell);
-        }
+        var row = _positions.Row([bar, buttonCell, action, stateCell, pageButton]);
 
         bool? wasHeld = null;
 

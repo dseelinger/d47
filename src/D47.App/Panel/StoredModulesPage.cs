@@ -27,8 +27,15 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     public const string InTransit = "In transit";
 
-    /// <summary>The table's columns: module, class, transfer cost, transfer time.</summary>
-    private const string Columns = "*,70,150,110";
+    public const string TableId = "StoredModules";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Module", ColumnFit.Fill),
+        new("Class"),
+        new("TransferCost"),
+        new("TransferTime"),
+    ];
 
     /// <summary>The modules held in one system. <see cref="Here"/> is the system the snapshot was taken in.</summary>
     public sealed record Group(
@@ -78,12 +85,16 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly SortHeader<Held> _head = new("StoredHead", ColumnHeadings, ByName);
+    private readonly ColumnWidthMemory? _columnWidths;
+    private TableLayout _table;
     private object? _seen;
     private string _query = string.Empty;
 
-    public StoredModulesPage(Func<CommanderGameState?> state)
+    public StoredModulesPage(Func<CommanderGameState?> state, ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
+        _columnWidths = columnWidths;
+        _table = new TableLayout(TableId, ColumnList, columnWidths);
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _head.Changed += Draw;
 
@@ -246,6 +257,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         var groups = Groups(state, _query);
         var count = groups.Sum(group => group.Modules.Count);
 
+        _table = new TableLayout(TableId, ColumnList, _columnWidths);
         _body.Children.Clear();
         _body.Children.Add(TitleText.Block(
             TitleText.Build("Stored modules", TypeScale.Title, TitleRank.Screen),
@@ -301,7 +313,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         foreach (var row in _head.Sort([.. group.Modules.Select(module => new Held(module, group.Here))]))
         {
-            rows.Children.Add(Row(row.Module, row.Here));
+            rows.Children.Add(Row(row.Module, row.Here, _table));
         }
 
         return new StackPanel
@@ -313,19 +325,15 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     private Control ColumnHeads()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
-
-        for (var column = 0; column < ColumnHeadings.Count; column++)
-        {
-            var head = _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(head, column);
-            grid.Children.Add(head);
-        }
+        var grid = _table.Header(
+            _head,
+            [HorizontalAlignment.Left, HorizontalAlignment.Left, HorizontalAlignment.Right, HorizontalAlignment.Right]);
+        grid.MinHeight = TypeScale.MinimumTarget;
 
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(StoredModule module, bool here)
+    private static Border Row(StoredModule module, bool here, TableLayout table)
     {
         var name = new TextBlock
         {
@@ -338,24 +346,17 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         var rating = MaterialsPage.Mono(module.Class ?? "—", module.Class is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         rating.HorizontalAlignment = HorizontalAlignment.Left;
-        Grid.SetColumn(rating, 1);
 
         var costText = Cost(module, here);
         var cost = MaterialsPage.Mono(costText, costText == "—" ? ThemeManager.GreyKey : ThemeManager.AKey);
-        Grid.SetColumn(cost, 2);
 
         var time = MaterialsPage.Mono(Time(module), ThemeManager.WhiteKey);
-        Grid.SetColumn(time, 3);
 
         var row = new Border
         {
             Height = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions(Columns),
-                Children = { name, rating, cost, time },
-            },
+            Child = table.Row([name, rating, cost, time]),
         };
         LoadoutPages.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 

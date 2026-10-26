@@ -71,7 +71,18 @@ public sealed class MaterialsPage : UserControl
     /// <summary>Names the click-outside layer, for a test to press without aiming at the dialog itself.</summary>
     internal const string DetailBackdropName = "MaterialsDetailBackdrop";
 
-    private const string Columns = "*,150,110,90,200";
+    public const string NeededTable = "Materials.Needed";
+
+    private const double GaugeColumn = 200;
+
+    private static readonly TableColumn[] NeededColumns =
+    [
+        new("Material", ColumnFit.Fill),
+        new("Ledger"),
+        new("HeldNeed"),
+        new("Short"),
+        new("Gauge", ColumnFit.Fixed) { Fixed = GaugeColumn },
+    ];
 
     /// <summary>The order a Guardian or Thargoid ledger lists its journal categories in.</summary>
     private static readonly string[] Categories = ["Raw", "Manufactured", "Encoded"];
@@ -90,6 +101,8 @@ public sealed class MaterialsPage : UserControl
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly ColumnWidthMemory? _columnWidths;
+    private TableLayout _needed;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
@@ -102,8 +115,11 @@ public sealed class MaterialsPage : UserControl
         JournalClock clock,
         EngineerSource? engineers = null,
         PanelNavigator? nav = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
+        _needed = new TableLayout(NeededTable, NeededColumns, columnWidths);
         _gap = gap;
         _engineers = engineers;
         _nav = nav;
@@ -133,6 +149,7 @@ public sealed class MaterialsPage : UserControl
     public void Refresh()
     {
         CloseDetail();
+        _needed = new TableLayout(NeededTable, NeededColumns, _columnWidths);
 
         var report = _gap.Report();
         var ledgers = _gap.Tracker(report).Ship;
@@ -833,7 +850,7 @@ public sealed class MaterialsPage : UserControl
 
         foreach (var line in _head.Sort(build.Lines))
         {
-            rows.Children.Add(Row(line, open));
+            rows.Children.Add(Row(line, open, _needed));
         }
 
         return new StackPanel
@@ -845,19 +862,18 @@ public sealed class MaterialsPage : UserControl
 
     private Control ColumnHeads()
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
-
-        for (var column = 0; column < ColumnHeadings.Count; column++)
-        {
-            var head = _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(head, column);
-            grid.Children.Add(head);
-        }
+        var grid = _needed.Header(
+        [
+            .. Enumerable.Range(0, ColumnHeadings.Count)
+                .Select(column => _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left)),
+            new Border(),
+        ]);
+        grid.MinHeight = TypeScale.MinimumTarget;
 
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(GapBuildLine line, Action<MaterialEntry> open)
+    private static Border Row(GapBuildLine line, Action<MaterialEntry> open, TableLayout table)
     {
         var name = new TextBlock
         {
@@ -869,30 +885,22 @@ public sealed class MaterialsPage : UserControl
         LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var ledger = Chrome(LedgerOf(line.Material), ThemeManager.GreyKey);
-        Grid.SetColumn(ledger, 1);
 
         var amounts = Mono($"{Count(line.Held)} / {Count(line.Needed)}", ThemeManager.WhiteKey);
-        Grid.SetColumn(amounts, 2);
 
         var shortfall = line.Short > 0
             ? Mono(Count(line.Short), ThemeManager.AKey)
             : Mono(Met, ThemeManager.BlueKey);
-        Grid.SetColumn(shortfall, 3);
 
         var gauge = Gauge.Track(line.Needed > 0 ? (double)line.Held / line.Needed : 1, ThemeManager.AKey);
         gauge.VerticalAlignment = VerticalAlignment.Center;
         gauge.Margin = new Thickness(16, 0, 0, 0);
-        Grid.SetColumn(gauge, 4);
 
         var row = new Border
         {
             Height = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Child = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions(Columns),
-                Children = { name, ledger, amounts, shortfall, gauge },
-            },
+            Child = table.Row([name, ledger, amounts, shortfall, gauge]),
         };
         Hover(row);
 

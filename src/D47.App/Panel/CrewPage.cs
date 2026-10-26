@@ -28,8 +28,15 @@ public sealed class CrewPage : UserControl
 
     public const string NotPosted = "NOT POSTED";
 
-    /// <summary>The table's columns: pilot, combat rank, fighter bay, posted to.</summary>
-    private const string Columns = "*,160,170,*";
+    public const string TableId = "Crew";
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Pilot", ColumnFit.Fill),
+        new("CombatRank"),
+        new("FighterBay"),
+        new("PostedTo", ColumnFit.Fill),
+    ];
 
     private static readonly string[] CombatLadder =
         ["Harmless", "Mostly Harmless", "Novice", "Competent", "Expert", "Master", "Dangerous", "Deadly", "Elite"];
@@ -61,13 +68,15 @@ public sealed class CrewPage : UserControl
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly SpeakerPictures? _pictures;
+    private readonly ColumnWidthMemory? _columnWidths;
     private object? _seen;
 
     /// <summary>Each hired pilot's row carries a picture chooser when <paramref name="pictures"/> is given.</summary>
-    public CrewPage(Func<CommanderGameState?> state, SpeakerPictures? pictures = null)
+    public CrewPage(Func<CommanderGameState?> state, SpeakerPictures? pictures = null, ColumnWidthMemory? columnWidths = null)
     {
         _state = state;
         _pictures = pictures;
+        _columnWidths = columnWidths;
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _head.Changed += Draw;
 
@@ -137,31 +146,26 @@ public sealed class CrewPage : UserControl
             return;
         }
 
+        var table = new TableLayout(TableId, ColumnList, _columnWidths);
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
         foreach (var member in _head.Sort(crew.Members))
         {
-            rows.Children.Add(Row(member, _pictures));
+            rows.Children.Add(Row(member, _pictures, table));
         }
 
-        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { ColumnHeads(), rows } });
+        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { ColumnHeads(table), rows } });
     }
 
-    private Control ColumnHeads()
+    private Control ColumnHeads(TableLayout table)
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), MinHeight = TypeScale.MinimumTarget };
-
-        for (var column = 0; column < ColumnHeadings.Count; column++)
-        {
-            var head = _head.Cell(column, HorizontalAlignment.Left);
-            Grid.SetColumn(head, column);
-            grid.Children.Add(head);
-        }
+        var grid = table.Header(_head);
+        grid.MinHeight = TypeScale.MinimumTarget;
 
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(CrewMember member, SpeakerPictures? pictures)
+    private static Border Row(CrewMember member, SpeakerPictures? pictures, TableLayout table)
     {
         var name = new TextBlock
         {
@@ -172,17 +176,13 @@ public sealed class CrewPage : UserControl
         };
         LoadoutPages.Themed(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var rank = Cell(member.CombatRank is { Length: > 0 } combat ? combat : "—", 1,
+        var rank = Cell(member.CombatRank is { Length: > 0 } combat ? combat : "—",
             member.CombatRank is { Length: > 0 } ? ThemeManager.AKey : ThemeManager.GreyKey);
-        var duty = Cell(Duty(member), 2, member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey);
-        var posted = Cell(Posting(member), 3, member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        var duty = Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey);
+        var posted = Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
-        var line = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(Columns),
-            Height = TypeScale.MinimumTarget,
-            Children = { name, rank, duty, posted },
-        };
+        var line = table.Row([name, rank, duty, posted]);
+        line.Height = TypeScale.MinimumTarget;
 
         var content = new StackPanel { Children = { line } };
 
@@ -197,11 +197,10 @@ public sealed class CrewPage : UserControl
         return row;
     }
 
-    private static TextBlock Cell(string text, int column, string key)
+    private static TextBlock Cell(string text, string key)
     {
         var block = MaterialsPage.Chrome(text, key);
         block.HorizontalAlignment = HorizontalAlignment.Left;
-        Grid.SetColumn(block, column);
         return block;
     }
 }
