@@ -16,10 +16,10 @@ public sealed class CodexCropPage : UserControl, IPageSummary
     private readonly PanelNavigator _nav;
     private readonly CodexPictureWork _work;
     private readonly bool _kept;
-    private readonly Button _save = new() { Name = "CodexCropSave", Content = "Save" };
-    private readonly TextBlock _readout;
-    private readonly TextBlock _floor;
-    private readonly TextBlock _status = RoutingKit.Ink(string.Empty, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
+    private Button _save = new();
+    private TextBlock _readout = new();
+    private TextBlock _floor = new();
+    private TextBlock _status = new();
     private byte[]? _source;
 
     /// <summary>Cuts from the kept source with its saved square when <paramref name="kept"/>, else from the capture in <paramref name="work"/>.</summary>
@@ -30,11 +30,8 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         _nav = nav;
         _work = work;
         _kept = kept;
-        _readout = CreditsKit.Mono(string.Empty, TypeScale.Small, ThemeManager.GreyKey, right: false);
-        _floor = CreditsKit.Mono(CodexModel.SmallestSquareText.ToUpperInvariant(), TypeScale.Small, ThemeManager.GreyKey, right: false);
 
         Margin = new Thickness(14);
-        _save.Click += async (_, _) => await SaveAsync();
     }
 
     internal CropSurface? Surface { get; private set; }
@@ -114,7 +111,11 @@ public sealed class CodexCropPage : UserControl, IPageSummary
     private void Load()
     {
         _source = _kept ? _pictures.Store.LocalSource(_key) : _work.Capture is { } path ? _pictures.CaptureBytes(path) : null;
-        _status.Text = string.Empty;
+        _save = new Button { Name = "CodexCropSave", Content = "Save" };
+        _save.Click += async (_, _) => await SaveAsync();
+        _readout = CreditsKit.Mono(string.Empty, TypeScale.Small, ThemeManager.GreyKey, right: false);
+        _floor = CreditsKit.Mono(CodexModel.SmallestSquareText.ToUpperInvariant(), TypeScale.Small, ThemeManager.GreyKey, right: false);
+        _status = RoutingKit.Ink(string.Empty, TypeScale.Small, ThemeManager.GreyKey, wrap: true);
 
         var body = new StackPanel { Spacing = 10 };
         var cancel = new Button { Name = "CodexCropCancel", Content = "Cancel" };

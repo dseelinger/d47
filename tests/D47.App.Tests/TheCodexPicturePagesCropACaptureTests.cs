@@ -405,6 +405,34 @@ public class TheCodexPicturePagesCropACaptureTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ACropPageOpenedAgainDrawsTheCropSurfaceAndAnEnabledSave(bool kept)
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+        surface.OwnPictureWithSource(Key, new CropSquare(200, 50, 500));
+
+        var (window, crop) = Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept));
+
+        for (var visit = 0; visit < 3; visit++)
+        {
+            window.Content = null;
+            Dispatcher.UIThread.RunJobs();
+            Assert.Null(crop.Surface);
+
+            window.Content = crop;
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.NotNull(crop.Surface);
+            Assert.True(Named(crop, "CodexCropSave")!.IsEnabled);
+        }
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void TheFrameStaysInsideTheCaptureAndNeverShrinksBelow384Pixels()
     {

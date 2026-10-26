@@ -10,6 +10,8 @@
 
 With EDDN sharing on, D47 now sends nothing while you are inside an Operation. The instance's station, its star system position and the signals seen there stay off EDDN, and sharing resumes when you leave. A scan run begun in the main game is still sent when the Operation starts.
 
+Opening a codex entry's crop page a second time no longer crashes D47. This covers reopening after Save, Cancel or Back, and Re-crop.
+
 In a narrow main window the search field's buttons no longer overlap the field. The field narrows first, and once it is at its narrowest the comms indicator narrows instead.
 
 Each push-to-talk now has one destination. Push-to-talk and the Ask box reach your core only, even when you start with "Captain", a pilot's or a stranger's name. The comms push-to-talk reaches whoever the comms selection names: the captain or the tower, the targeted pilot, a stranger heard in the system, a story's cast member, a hired pilot or one of your characters. On comms nothing is routed: "landing gear" is said to them, not carried out. With no one on the selected channel your core says so without asking the model, as in "No one on Story.", and with no channel open it says "No comms channel is open." There is no 90-second window and no four-reply limit any more, and "that's all" no longer ends a conversation. A hail moves the selection to the stranger who hailed you, and a stranger who signs off leaves the System channel. A passer-by who never noticed you answers when you select them. In wake-word mode, an answer from someone else no longer opens the wake window, so a reply to them needs the comms key.
