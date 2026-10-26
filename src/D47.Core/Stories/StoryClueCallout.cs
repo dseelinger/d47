@@ -37,6 +37,7 @@ public sealed class StoryClueCallout(NearbyFight fight) : ICallout
             || AmbientLines.Situate(context.Status) == AmbientSituation.None
             || context.Status.Has(StatusFlags.Supercruise)
             || fight.On(context.Now, context.Status)
+            || context.InOperation
             || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Quiet)
             || Due(context.Now) is not { } due)
         {

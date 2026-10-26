@@ -68,6 +68,7 @@ public sealed class StoryReactionCallout(NearbyFight fight) : ICallout
             || !Enabled()
             || AmbientLines.Situate(context.Status) != AmbientSituation.Docked
             || fight.On(context.Now, context.Status)
+            || context.InOperation
             || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Quiet)
             || Newest(window.Commander, window.Due) is null
             || !Offer(Key(window.Due)))

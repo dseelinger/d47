@@ -86,6 +86,7 @@ public sealed class NarratorCallout(NearbyFight fight) : ICallout
         }
 
         if (fight.On(context.Now, context.Status)
+            || context.InOperation
             || CalloutEngine.ChatterOwesQuiet(context.LastChatter, context.Now, Interval))
         {
             yield break;

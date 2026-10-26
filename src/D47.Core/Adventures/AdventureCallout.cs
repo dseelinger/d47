@@ -309,7 +309,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
             // And the acknowledgement, now, with no settle and no model behind it — see <see
             // cref="AdventureAcks"/> for why it is split off from the beat at all.
-            if (!moment.IsOpening && !moment.IsFailure)
+            if (!moment.IsOpening && !moment.IsFailure && !context.InOperation)
             {
                 yield return new Announcement($"{AckPrefix}{moment.Adventure.Key}.{moment.Beat}{(moment.Step is { } step ? "." + step.ToString(System.Globalization.CultureInfo.InvariantCulture) : string.Empty)}", AdventureAcks.Pick(_acks++))
                 {
@@ -318,12 +318,12 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
             }
         }
 
-        foreach (var warning in openingsOnly ? Enumerable.Empty<Announcement>() : CrimeWarnings(context, commander))
+        foreach (var warning in openingsOnly || context.InOperation ? Enumerable.Empty<Announcement>() : CrimeWarnings(context, commander))
         {
             yield return warning;
         }
 
-        if (!openingsOnly && (_offerChecked is not { } checkedAt || context.Now - checkedAt >= OfferCheck))
+        if (!openingsOnly && !context.InOperation && (_offerChecked is not { } checkedAt || context.Now - checkedAt >= OfferCheck))
         {
             _offerChecked = context.Now;
             OfferAgain(context, commander);
@@ -338,7 +338,7 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
                        && (context.Status.Has(StatusFlags.InDanger) || context.Status.Has(StatusFlags.BeingInterdicted));
 
         var due = _waiting
-            .Where(moment => (moment.IsOpening || moment.IsFailure || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
+            .Where(moment => !context.InOperation && (moment.IsOpening || moment.IsFailure || context.Now - moment.At >= Settle) && !Held(moment.FrontierId))
             .ToList();
 
         foreach (var moment in due)

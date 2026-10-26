@@ -27,6 +27,9 @@ public readonly record struct CalloutContext(
     ChatterSaid? LastChatter = null,
     bool AnotherFlying = false)
 {
+    /// <summary>Whether the shown Commander is in an Operation.</summary>
+    public bool InOperation => State?.InOperationSince is not null;
+
     /// <summary>The journal tick's context for the shown Commander, silent as priming is while another flies.</summary>
     public static CalloutContext For(
         DateTimeOffset now,
@@ -200,7 +203,7 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
                 // (#257).
                 foreach (var announcement in callout.Examine(context with { LastChatter = _lastChatter }))
                 {
-                    if (Offer(announcement, context))
+                    if (Offer(callout.Id, announcement, context))
                     {
                         _lastSpokeBy[callout.Id] = context.Now;
                     }
@@ -219,10 +222,18 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
     /// Queues one announcement, and says whether it queued it — which is what makes <see
     /// cref="_lastSpokeBy"/> a record of what was said rather than of what was examined.
     /// </summary>
-    private bool Offer(Announcement announcement, CalloutContext context)
+    private bool Offer(string calloutId, Announcement announcement, CalloutContext context)
     {
         // Never during priming, whatever a callout returns, except a line that is said while another Commander flies.
         if ((context.IsPriming && !(context.AnotherFlying && announcement.WhileAnotherFlies)) || !Enabled)
+        {
+            return false;
+        }
+
+        // Inside an Operation only warnings and relayed comms are said; the rest is dropped.
+        if (context.InOperation
+            && announcement.Urgency != CalloutUrgency.Urgent
+            && calloutId != IncomingMessages.CalloutId)
         {
             return false;
         }

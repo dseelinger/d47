@@ -95,7 +95,7 @@ public sealed class NpcChatterCallout(NearbyFight fight) : ICallout
         }
 
         // No small talk in the middle of a fight; the exchange waits until it is over.
-        if (fight.On(context.Now, context.Status))
+        if (fight.On(context.Now, context.Status) || context.InOperation)
         {
             yield break;
         }

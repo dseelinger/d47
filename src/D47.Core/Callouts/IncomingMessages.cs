@@ -10,7 +10,9 @@ namespace D47.Core.Callouts;
 /// </summary>
 public sealed partial class IncomingMessages : ICallout
 {
-    public string Id => "messages";
+    public const string CalloutId = "messages";
+
+    public string Id => CalloutId;
 
     /// <summary>Whether to speak them at all.</summary>
     public Func<bool> Enabled { get; set; } = () => false;
