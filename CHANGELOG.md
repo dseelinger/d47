@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A chapter of a long-haul story can send you to a notable place to see it. After the beacon scan and before the finale, a chapter not heading home may be drawn as a sightseeing chapter, with one objective in the system of a place from the exploration catalogue. Outside the bubble, only places within the Sol band are offered. With notable places off, or the catalogue unreachable, no chapter is a sightseeing chapter.
+
 A story's chapter can send you to a generation ship. The writer is offered up to three within reach from the Signal index, and the objective is met when you drop out of supercruise at that ship.
 
 A Goals story can name the Goals it works. Its chapters, clues, finale and Goals page entry then follow only those Goals, and it asks for a Powerplay pledge only when Powerplay is one of them.

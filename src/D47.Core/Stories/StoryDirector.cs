@@ -71,6 +71,9 @@ public sealed class StoryDirector(
     /// <summary>The galaxy search, or null while it is off; with none, a chapter's draw is not gated on stations.</summary>
     public Func<IGalaxyService?>? Galaxy { get; set; }
 
+    /// <summary>The catalogue of notable places, or null while it is off; with none, no chapter is a sightseeing chapter.</summary>
+    public Func<INotablePlacesService?>? Places { get; set; }
+
     /// <summary>The activity ledger, or null before it exists; with none, a comfort chapter does not look for unrun mission families.</summary>
     public Func<ActivityLedger?>? Ledger { get; set; }
 
@@ -1187,10 +1190,11 @@ public sealed class StoryDirector(
     private string? Replace(string? frontierId, string key, AdventureStanding standing, Adventure draft)
     {
         var from = standing.Current;
+        var setSight = standing.Adventure.Sight is not null && !(SightBeat(standing.Adventure) is { } sightBeat && sightBeat < from);
 
         return standing.CurrentBeat is { Steps.Count: > 1 } && draft.Beats.ElementAtOrDefault(from)?.Steps.FirstOrDefault() is { } step
-            ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, step, Clock())
-            : book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock());
+            ? book.ReplaceStep(frontierId, key, from, standing.CurrentStep, step, Clock(), draft.Sight, setSight)
+            : book.ReplaceBeats(frontierId, key, from, [.. draft.Beats.Skip(from)], Clock(), draft.Sight, setSight);
     }
 
     private bool StillWaitingOn(string? frontierId, string key, int from) =>
@@ -1662,12 +1666,27 @@ public sealed class StoryDirector(
         var game = Game();
         var previous = ChapterAt(frontierId, story, story.Chapters.Count - 2);
         var afterBeacon = story.BeaconScanAt is { } scanned && chapter.Written >= scanned;
+        IReadOnlyList<NotablePlace> sights = [];
+
+        if (afterBeacon && finaleChapter is null && SightBeat(chapter) is { } sightBeat && sightBeat >= rewrite.From && ChapterFit.IsLongHaul(story.Pacing, game))
+        {
+            var seen = before.Chapters.Select(key => ChapterOf(frontierId, story, key)?.Sight).OfType<string>().ToList();
+
+            if (sightBeat == rewrite.From)
+            {
+                seen.Add(chapter.Sight!);
+            }
+
+            sights = await SightsAsync(game?.Location.StarPos, null, seen, cancellationToken).ConfigureAwait(false);
+        }
+
+        var sightseeing = sights.Count > 0;
         var slots = afterBeacon
-            ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, cancellationToken).ConfigureAwait(false)
+            ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, sightseeing, cancellationToken).ConfigureAwait(false)
             : null;
         var rank = chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).FirstOrDefault(trigger => trigger.Kind == TriggerKind.Rank);
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, rank));
+            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, rank, sightseeing));
 
         return new AdventureAsk(
             longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -1687,8 +1706,48 @@ public sealed class StoryDirector(
                 slots,
                 finaleChapter is null ? null : story.FinaleDestination,
                 hull: game?.Ship.Type,
-                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter))),
+                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter)),
+                sights: sightseeing ? sights : null),
             Rewrite: rewrite);
+    }
+
+    /// <summary>The index of the chapter's first arrive, land or scan objective in its sight's system; null for a chapter with no sight.</summary>
+    private static int? SightBeat(Adventure chapter)
+    {
+        if (chapter.Sight is not { } sight)
+        {
+            return null;
+        }
+
+        for (var index = 0; index < chapter.Beats.Count; index++)
+        {
+            if (chapter.Beats[index].Steps.Any(step => step.Trigger is { Kind: TriggerKind.Arrive or TriggerKind.Land or TriggerKind.Scan } trigger
+                && string.Equals(trigger.System, sight, StringComparison.OrdinalIgnoreCase)))
+            {
+                return index;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The sights within a long haul of <paramref name="position"/>; empty with no catalogue, no position or an unreachable catalogue.</summary>
+    private async Task<IReadOnlyList<NotablePlace>> SightsAsync(StarPosition? position, ChapterBand.Range? band, IReadOnlyCollection<string> seen, CancellationToken cancellationToken)
+    {
+        if (Places?.Invoke() is not { } places || position is not { } at)
+        {
+            return [];
+        }
+
+        try
+        {
+            return NotableSights.Pick(await places.NearAsync(at, AdventureGenerator.LongHaulLightYears, int.MaxValue, cancellationToken).ConfigureAwait(false), seen, band);
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            logger.LogWarning(ex, "The catalogue of notable places could not be reached, so the chapter is not a sightseeing chapter");
+            return [];
+        }
     }
 
     /// <summary>
@@ -1697,7 +1756,7 @@ public sealed class StoryDirector(
     /// </summary>
     private async Task<IReadOnlyList<DrawnActivity>?> RewriteSlotsAsync(
         Story story, Adventure chapter, AdventureRewrite rewrite, CommanderGameState? game, AdventureChapter? previous, int number, int? finaleChapter,
-        CancellationToken cancellationToken)
+        bool sightseeing, CancellationToken cancellationToken)
     {
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         var held = chapter.Beats
@@ -1722,7 +1781,7 @@ public sealed class StoryDirector(
                 refused,
                 comfort: false,
                 statistics,
-                FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore),
+                FixedPlaces(story, finaleChapter) + others.Count(slot => slot.PlaceBefore) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, rewrite.From),
                 stationsInReach: await StationsInReachAsync(story, game, cancellationToken).ConfigureAwait(false));
 
@@ -2688,6 +2747,20 @@ public sealed class StoryDirector(
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
+        IReadOnlyList<NotablePlace> sights = [];
+
+        if (story.BeaconScanAt is not null
+            && finaleChapter is null
+            && home is null
+            && ChapterFit.IsLongHaul(story.Pacing, game)
+            && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number)))
+        {
+            var earlier = (replacing ? story.Chapters.SkipLast(1) : story.Chapters).Select(chapterKey => ChapterOf(frontierId, story, chapterKey)?.Sight).OfType<string>().ToList();
+
+            sights = await SightsAsync(game?.Location.StarPos, inTheBlack ? null : ChapterBand.Of(game?.Location.StarPos), earlier, cancellationToken).ConfigureAwait(false);
+        }
+
+        var sightseeing = sights.Count > 0;
         var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard
             ? GoalClimb.Next(
                 GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
@@ -2706,7 +2779,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null) ? 1 : 0),
+                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || home is not null) ? 1 : 0) + (sightseeing ? 1 : 0),
                 ChapterDraw.Seed(story.Id, number, replacing ? -1 : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
@@ -2725,7 +2798,7 @@ public sealed class StoryDirector(
         }
 
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective));
+            && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective, sightseeing));
 
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
 
@@ -2749,7 +2822,8 @@ public sealed class StoryDirector(
                 home,
                 goal,
                 game?.Ship.Type,
-                inTheBlack),
+                inTheBlack,
+                sightseeing ? sights : null),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2841,7 +2915,8 @@ public sealed class StoryDirector(
         string? home = null,
         GoalClimbStep? goal = null,
         string? hull = null,
-        bool inTheBlack = false)
+        bool inTheBlack = false,
+        IReadOnlyList<NotablePlace>? sights = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -2875,7 +2950,8 @@ public sealed class StoryDirector(
             story.BeaconsRemembered > 0,
             goal,
             StoryAboard.BySpan(secret, story),
-            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull))
+            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull),
+            sights)
         {
             OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
             OnCarrier = StoryAboard.OnCarrierBySpan(secret, story),

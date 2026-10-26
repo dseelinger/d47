@@ -3221,6 +3221,7 @@ public sealed class AppHost : IDisposable
         {
             Archive = storyArchive,
             Galaxy = () => settings.Current.Knowledge.GalaxySearch ? galaxy : null,
+            Places = () => settings.Current.Knowledge.NotablePlaces ? notablePlaces : null,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,
             Engineers = () => late.Unlocks?.Report(),

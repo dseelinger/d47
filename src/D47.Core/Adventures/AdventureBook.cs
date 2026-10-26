@@ -568,14 +568,15 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     /// <summary>
     /// Replaces the beats from <paramref name="from"/> on in an adventure that is waiting on that beat. Events before
-    /// <paramref name="at"/> do not count toward the new beats. Returns a refusal or null.
+    /// <paramref name="at"/> do not count toward the new beats. With <paramref name="setSight"/>, the chapter's sight becomes <paramref name="sight"/>. Returns a refusal or null.
     /// </summary>
-    public string? ReplaceBeats(string? frontierId, string key, int from, IReadOnlyList<AdventureBeat> beats, DateTimeOffset at)
+    public string? ReplaceBeats(string? frontierId, string key, int from, IReadOnlyList<AdventureBeat> beats, DateTimeOffset at, string? sight = null, bool setSight = false)
     {
         ArgumentNullException.ThrowIfNull(beats);
 
         return Rewrite(frontierId, key, from, null, adventure => adventure with
         {
+            Sight = setSight ? sight : adventure.Sight,
             Beats = [.. adventure.Beats.Take(from), .. beats],
             RewrittenAt = at,
             RewrittenFrom = from,
@@ -587,14 +588,15 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
     /// <summary>
     /// Replaces step <paramref name="step"/> of beat <paramref name="beat"/> in an adventure that is waiting on that step, and
-    /// nothing else. Events before <paramref name="at"/> do not count toward it. Returns a refusal or null.
+    /// nothing else. Events before <paramref name="at"/> do not count toward it. With <paramref name="setSight"/>, the chapter's sight becomes <paramref name="sight"/>. Returns a refusal or null.
     /// </summary>
-    public string? ReplaceStep(string? frontierId, string key, int beat, int step, BeatStep replacement, DateTimeOffset at)
+    public string? ReplaceStep(string? frontierId, string key, int beat, int step, BeatStep replacement, DateTimeOffset at, string? sight = null, bool setSight = false)
     {
         ArgumentNullException.ThrowIfNull(replacement);
 
         return Rewrite(frontierId, key, beat, step, adventure => adventure with
         {
+            Sight = setSight ? sight : adventure.Sight,
             Beats = [.. adventure.Beats.Select((known, index) => index == beat
                 ? known with { Steps = [.. known.Steps.Select((existing, position) => position == step ? replacement : existing)] }
                 : known)],

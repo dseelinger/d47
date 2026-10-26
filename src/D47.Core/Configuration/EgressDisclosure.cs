@@ -340,19 +340,19 @@ public static class EgressDisclosure
                 NameOf(NotablePlaces),
                 "edastro.com",
                 "One request for the whole Galactic Exploration Catalog — about two megabytes, every point "
-                + "of interest it lists — made when you ask for a short story to be written. Nothing about you "
+                + "of interest it lists — made when a short story or a story chapter is written. Nothing about you "
                 + "goes with it: no position, no key, no identifier and nothing from your journal. The "
                 + "choosing by distance happens on this machine. The catalogue's descriptions are read as "
                 + "information and never written into D47's own tables; its content is CC BY-NC-SA 3.0, "
                 + "acknowledged in NOTICE.",
                 Active: true,
-                Summary: "One ~2 MB request for the whole exploration catalogue, made when you ask for "
-                    + "a short story. Nothing about you goes with it.")
+                Summary: "One ~2 MB request for the whole exploration catalogue, made when a short story "
+                    + "or a story chapter is written. Nothing about you goes with it.")
             : EgressEntry.Silent(
                 NotablePlaces,
                 NameOf(NotablePlaces),
-                "Notable places are off, so no catalogue is fetched and a generated short story chooses its "
-                + "stops from the galaxy search alone.",
+                "Notable places are off, so no catalogue is fetched, a generated short story chooses its "
+                + "stops from the galaxy search alone, and no story chapter is a sightseeing chapter.",
                 summary: "Notable places are off, so no catalogue is fetched; a short story's stops come "
                     + "from galaxy search alone."),
         CommunityBiology => settings.Knowledge.CommunityBiology

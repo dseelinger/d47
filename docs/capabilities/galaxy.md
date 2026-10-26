@@ -171,6 +171,10 @@ place it suggests is still checked against spansh's id for the system before a s
 offered — two sources, and a disagreement refuses the place. Its content is CC BY-NC-SA 3.0,
 acknowledged in `NOTICE`; d47 is non-commercial.
 
+A long-haul story's chapter may also be a sightseeing chapter, which sends you to one of these places. The same
+request serves it, and the choosing by distance is again done on this machine. With this off, or when the catalogue
+cannot be reached, no chapter is a sightseeing chapter and the chapter is still written.
+
 With this off, a generated short story still works, choosing its stops from the galaxy search and
 the model's own knowledge. With galaxy search off, no short story can be generated at all, because
 the places in a story have to be real and this is the thing that checks.

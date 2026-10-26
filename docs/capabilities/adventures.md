@@ -768,8 +768,13 @@ are on. A chapter has as many steps as its story needs.
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
 may go anywhere, as far as Colonia or Sagittarius A*, but only after the beacon scan and before the finale,
 and only when the chapter draws a discovery, map, footfall or organic activity or its Goals step is an
-Exploration or Exobiologist rank. Any other chapter keeps to a session's flying. Below the credits, the
-writer is not told it exists.
+Exploration or Exobiologist rank. A chapter may also be a sightseeing chapter: with notable places on, a long-haul story's chapter after the beacon scan
+and before the finale, other than one heading home, is drawn as one with a chance that grows with your Exploration
+record and falls after a sightseeing chapter. It is offered up to eight notable places from the catalogue, none in a
+system an earlier chapter of the story sent you to, and must have an arrive, land or scan objective at one. That
+chapter goes anywhere. Outside the bubble the offered places are only those in the Sol band above. Changing the
+objective of a sightseeing chapter whose sight is still ahead gives another sight. Any other chapter keeps to a
+session's flying. Below the credits, the writer is not told it exists.
 
 **A credit reserve.** A chapter never spends the Commander to nothing. A story objective that buys something,
 which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the
