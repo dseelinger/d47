@@ -24,9 +24,18 @@ public sealed class SystemSearchPage : GalaxySearchPage
     /// <summary>The table's columns: system, light years, allegiance, economy, population, power, reported.</summary>
     public const string HeadName = "SystemHead";
 
-    private const string Columns = "1.5*,64,*,*,104,*,76";
+    public const string TableId = "Search.Systems";
 
-    private const string HeadsetColumns = "1.5*,64,*,*,104,*";
+    private static readonly TableColumn[] Columns =
+    [
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Distance"),
+        new("Allegiance"),
+        new("Economy"),
+        new("Population"),
+        new("Power"),
+        new("Reported"),
+    ];
 
     private const string Dash = "—";
 
@@ -276,7 +285,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = headset ? HeadsetColumns : Columns;
+        var columns = NewTable(TableId, headset ? Columns[..^1] : Columns);
 
         List<SearchColumn> heads =
         [
@@ -358,7 +367,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private string Reference() =>
         _near.Text is { } near && near.Trim().Length > 0 ? near.Trim() : _here() ?? "your system";
 
-    private Control Row(SystemSummary system, string columns, bool headset, bool here)
+    private Control Row(SystemSummary system, TableLayout columns, bool headset, bool here)
     {
         var name = Chrome(system.Name, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey);
         name.Text = system.Name;
@@ -369,28 +378,25 @@ public sealed class SystemSearchPage : GalaxySearchPage
                 : controlling
             : Dash;
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(columns),
-            ColumnSpacing = 12,
-            Children =
-            {
+        List<Control> cells =
+        [
                 Cell(Pair(name, Sub(faction)), 0),
                 Cell(Right(Mono(system.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 1),
                 Cell(Pair(Value(system.Allegiance), Sub(system.Government)), 2),
                 Cell(Pair(Value(system.PrimaryEconomy), Sub(system.Security)), 3),
                 Cell(Right(Mono(system.Population is { } people ? people.ToString("N0", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
                 Cell(Pair(Value(system.ControllingPower), Sub(system.PowerState)), 5),
-            },
-        };
+        ];
 
         if (!headset)
         {
-            grid.Children.Add(Cell(Right(Mono(
+            cells.Add(Cell(Right(Mono(
                 system.ReportedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
                 TypeScale.Small,
                 ThemeManager.GreyKey)), 6));
         }
+
+        var grid = columns.Row(cells);
 
         if (system.SystemAddress is null || _open is null)
         {

@@ -91,7 +91,18 @@ public sealed partial class StarSystemPage
 {
     public const string NoStationMatches = "No station here matches those filters.";
 
-    private const string StationColumns = "1.5*,132,1.2*,96,92,34,72";
+    public const string StationsTable = "StarSystem.Stations";
+
+    private static readonly TableColumn[] StationColumns =
+    [
+        new("Station", ColumnFit.Fill) { Min = 120 },
+        new("Type"),
+        new("Faction", ColumnFit.Fill) { Min = 100 },
+        new("Government"),
+        new("Economy"),
+        new("Pad"),
+        new("Arrival"),
+    ];
 
     /// <summary>The stations table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<StationProfile>> StationHeads =
@@ -367,22 +378,18 @@ public sealed partial class StarSystemPage
         Avalonia.Automation.AutomationProperties.SetName(showing, $"Showing {shown.Count} of {profile.Stations.Count}");
         table.Children.Add(showing);
 
-        var header = StationGrid();
+        var layout = new TableLayout(StationsTable, StationColumns, _surface.ColumnWidths, 12);
+        var header = layout.Header(
+            _stationHead,
+            [.. StationHeads.Select((_, i) => i == StationHeads.Count - 1 ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
         header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
-
-        for (var i = 0; i < StationHeads.Count; i++)
-        {
-            var cell = _stationHead.Cell(i, i == StationHeads.Count - 1 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(cell, i);
-            header.Children.Add(cell);
-        }
 
         table.Children.Add(header);
 
         foreach (var station in shown)
         {
-            table.Children.Add(StationRow(station));
+            table.Children.Add(StationRow(station, layout));
         }
 
         if (shown.Count == 0)
@@ -395,36 +402,29 @@ public sealed partial class StarSystemPage
         return table;
     }
 
-    private static Grid StationGrid() => new()
+    private static Border StationRow(StationProfile station, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(StationColumns),
-        ColumnSpacing = 12,
-    };
-
-    private static Border StationRow(StationProfile station)
-    {
-        var grid = StationGrid();
-        grid.VerticalAlignment = VerticalAlignment.Center;
+        List<Control> cells = [];
 
         var name = Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey);
         var untyped = station.Kind == StationKind.Other && station.Type is null;
 
-        Cell(grid, 0, name);
-        Cell(grid, 1, Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, untyped ? ThemeManager.GreyKey : ThemeManager.AKey));
-        Cell(grid, 2, Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey));
-        Cell(grid, 3, Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey));
-        Cell(grid, 4, Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey));
-        Cell(grid, 5, Mono(PadText(station.LargestPad), ThemeManager.WhiteKey));
+        cells.Add(Centred(name));
+        cells.Add(Centred(Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, untyped ? ThemeManager.GreyKey : ThemeManager.AKey)));
+        cells.Add(Centred(Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)));
+        cells.Add(Centred(Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
+        cells.Add(Centred(Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
+        cells.Add(Centred(Mono(PadText(station.LargestPad), ThemeManager.WhiteKey)));
 
         var arrival = Mono(ArrivalText(station.DistanceToArrival), ThemeManager.AKey);
         arrival.HorizontalAlignment = HorizontalAlignment.Right;
-        Cell(grid, 6, arrival);
+        cells.Add(Centred(arrival));
 
         var row = new Border
         {
             MinHeight = 40,
             Padding = new Thickness(12, 0),
-            Child = grid,
+            Child = layout.Row(cells),
         };
         RoutingKit.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
         Avalonia.Automation.AutomationProperties.SetName(row, station.Name);

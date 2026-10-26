@@ -22,6 +22,8 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public const string HeadName = "BodyHead";
 
+    public const string TableId = "Search.Bodies";
+
     private const string Dash = "—";
 
     private readonly Func<string?> _here;
@@ -315,7 +317,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         var material = Material(posting.Arguments);
-        var columns = $"1.5*,*,64,92,72{(material is null ? string.Empty : ",92")}{(headset ? string.Empty : ",76")}";
         var shareColumn = material is null ? -1 : 5;
         var gravityColumn = headset ? -1 : shareColumn < 0 ? 5 : 6;
 
@@ -338,6 +339,26 @@ public sealed class BodySearchPage : GalaxySearchPage
             heads.Add(new("Gravity", null, "gravity", true));
         }
 
+        List<TableColumn> shown =
+        [
+            new("Body", ColumnFit.Fill) { Min = 120 },
+            new("System", ColumnFit.Fill) { Min = 100 },
+            new("Distance"),
+            new("FromStar"),
+            new("Landable"),
+        ];
+
+        if (shareColumn >= 0)
+        {
+            shown.Add(new("Share"));
+        }
+
+        if (gravityColumn >= 0)
+        {
+            shown.Add(new("Gravity"));
+        }
+
+        var columns = NewTable(TableId, shown);
         var rule = SearchHead(posting, HeadName, columns, heads);
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 2, 0, 0) };
@@ -408,30 +429,25 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked"];
 
-    private Control Row(BodySummary body, string? material, string columns, int shareColumn, int gravityColumn)
+    private Control Row(BodySummary body, string? material, TableLayout columns, int shareColumn, int gravityColumn)
     {
         var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
 
         var system = Value(body.SystemName);
         Themed(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(columns),
-            ColumnSpacing = 12,
-            Children =
-            {
+        List<Control> cells =
+        [
                 Cell(Pair(name, Sub(body.Subtype)), 0),
                 Cell(system, 1),
                 Cell(Right(Mono(body.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Right(Mono(body.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 3),
                 Cell(Value(body.IsLandable ? "Yes" : "No"), 4),
-            },
-        };
+        ];
 
         if (shareColumn >= 0)
         {
-            grid.Children.Add(Cell(Right(Mono(
+            cells.Add(Cell(Right(Mono(
                 body.Share(material!) is { } share ? $"{share.ToString("F2", CultureInfo.InvariantCulture)}%" : Dash,
                 TypeScale.Small,
                 ThemeManager.AKey)), shareColumn));
@@ -439,13 +455,13 @@ public sealed class BodySearchPage : GalaxySearchPage
 
         if (gravityColumn >= 0)
         {
-            grid.Children.Add(Cell(Right(Mono(
+            cells.Add(Cell(Right(Mono(
                 body.Gravity is { } g ? $"{g.ToString("0.00", CultureInfo.InvariantCulture)} g" : Dash,
                 TypeScale.Small,
                 ThemeManager.GreyKey)), gravityColumn));
         }
 
-        var row = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { RowClass } };
+        var row = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = columns.Row(cells), Classes = { RowClass } };
         return ListRow.Dress(row);
     }
 

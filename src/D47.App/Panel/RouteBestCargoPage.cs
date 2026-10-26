@@ -53,8 +53,20 @@ public sealed class RouteBestCargoPage : UserControl
     public const string MarketUnseenText =
         "Nobody has reported this market's prices, and you have not opened it while D47 was watching. Open the commodity market once and D47 will have them.";
 
-    /// <summary>The results table's columns: rank, commodity, sell at, profit, tonnes, total, bar.</summary>
-    private const string Columns = "22,1.3*,1.1*,100,96,130,150";
+    public const string TableId = "Route.BestCargo";
+
+    private const double BarColumn = 150;
+
+    private static readonly TableColumn[] Columns =
+    [
+        new("Rank", ColumnFit.Fixed) { Fixed = 22 },
+        new("Commodity", ColumnFit.Fill) { Min = 100 },
+        new("SellAt", ColumnFit.Fill) { Min = 100 },
+        new("Profit"),
+        new("Tonnes"),
+        new("Total"),
+        new("Bar", ColumnFit.Fixed) { Fixed = BarColumn },
+    ];
 
     /// <summary>The table's columns; the picks arrive ordered by total.</summary>
     public static readonly IReadOnlyList<SortColumn<CargoPick>> Headings =
@@ -80,6 +92,7 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly Func<NavRoute> _route;
     private readonly Func<string, string?>? _offDuty;
     private readonly Func<bool> _lookupsEnabled;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly SettingsService? _settings;
     private readonly Action? _openSettings;
     private readonly Action? _changeFilters;
@@ -103,8 +116,10 @@ public sealed class RouteBestCargoPage : UserControl
         Action? changeFilters = null,
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
         TimeSpan? suggestionPause = null,
-        Func<string, string?>? offDuty = null)
+        Func<string, string?>? offDuty = null,
+        ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
         _offDuty = offDuty;
         _head.Changed += Draw;
         _registry = registry;
@@ -569,14 +584,15 @@ public sealed class RouteBestCargoPage : UserControl
 
     private StackPanel Table(IReadOnlyList<CargoPick> picks)
     {
-        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(Columns), ColumnSpacing = ColumnGap, Margin = new Thickness(14, 8, 14, 8) };
+        var layout = new TableLayout(TableId, Columns, _columnWidths, ColumnGap);
 
-        for (var column = 0; column < Headings.Count; column++)
-        {
-            var head = _head.Cell(column, column is 3 or 4 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(head, column);
-            heads.Children.Add(head);
-        }
+        var heads = layout.Header(
+        [
+            .. Enumerable.Range(0, Headings.Count)
+                .Select(column => _head.Cell(column, column is 3 or 4 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left)),
+            new Border(),
+        ]);
+        heads.Margin = new Thickness(14, 8, 14, 8);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads, Margin = new Thickness(0, 0, 0, 6) };
         Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
@@ -586,13 +602,13 @@ public sealed class RouteBestCargoPage : UserControl
 
         for (var index = 0; index < picks.Count; index++)
         {
-            rows.Children.Add(Row(index + 1, picks[index], best));
+            rows.Children.Add(Row(index + 1, picks[index], best, layout));
         }
 
         return new StackPanel { Children = { rule, rows } };
     }
 
-    private static Border Row(int rank, CargoPick pick, long best)
+    private static Border Row(int rank, CargoPick pick, long best, TableLayout layout)
     {
         var number = Cell(Mono(rank.ToString(CultureInfo.InvariantCulture), TypeScale.Meta, ThemeManager.GreyKey), 0);
 
@@ -632,21 +648,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         var bar = Gauge.Track((double)pick.Total / best, ThemeManager.AKey);
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(Columns),
-            ColumnSpacing = ColumnGap,
-            Children =
-            {
-                number,
-                Cell(commodity, 1),
-                Cell(station, 2),
-                Cell(profit, 3),
-                Cell(tonnes, 4),
-                Cell(total, 5),
-                Cell(bar, 6),
-            },
-        };
+        var grid = layout.Row([number, Cell(commodity, 1), Cell(station, 2), Cell(profit, 3), Cell(tonnes, 4), Cell(total, 5), Cell(bar, 6)]);
 
         var row = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 6), Child = grid };
         Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);

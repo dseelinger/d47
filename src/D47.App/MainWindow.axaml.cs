@@ -378,6 +378,7 @@ public partial class MainWindow : Window
                     () => host.Settings.Current.Knowledge.GalaxySearch,
                     OpenSettings)
                 {
+                    ColumnWidths = ((IPanelTabHost)Panel).ColumnWidths,
                     Remember = (name, address) =>
                     {
                         if (host.SearchHistory is { } history)

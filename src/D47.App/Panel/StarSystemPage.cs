@@ -31,6 +31,9 @@ public sealed record StarSystemSurface(
 
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
+
+    /// <summary>Where dragged table column widths are kept; null draws the tables without drag handles.</summary>
+    public ColumnWidthMemory? ColumnWidths { get; init; }
 }
 
 /// <summary>
@@ -782,7 +785,17 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         return tile;
     }
 
-    private const string FactionColumns = "*,130,120,200,150,150";
+    public const string FactionsTable = "StarSystem.Factions";
+
+    private static readonly TableColumn[] FactionColumns =
+    [
+        new("Faction", ColumnFit.Fill) { Min = 120 },
+        new("Government"),
+        new("Allegiance"),
+        new("Influence"),
+        new("Active"),
+        new("Pending"),
+    ];
 
     /// <summary>The factions table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<FactionStanding>> FactionHeads =
@@ -821,16 +834,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     {
         var rows = new StackPanel { Spacing = Gaps.Tile };
 
-        var header = FactionGrid();
+        var layout = new TableLayout(FactionsTable, FactionColumns, _surface.ColumnWidths, 16);
+        var header = layout.Header(_factionHead);
         header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(14, 0);
-
-        for (var i = 0; i < FactionHeads.Count; i++)
-        {
-            var cell = _factionHead.Cell(i, HorizontalAlignment.Left);
-            Grid.SetColumn(cell, i);
-            header.Children.Add(cell);
-        }
 
         rows.Children.Add(header);
 
@@ -838,22 +845,16 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         {
             rows.Children.Add(FactionRow(
                 faction,
-                string.Equals(faction.Name, profile.ControllingFaction, StringComparison.OrdinalIgnoreCase)));
+                string.Equals(faction.Name, profile.ControllingFaction, StringComparison.OrdinalIgnoreCase),
+                layout));
         }
 
         return rows;
     }
 
-    private static Grid FactionGrid() => new()
+    private static Border FactionRow(FactionStanding faction, bool controls, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(FactionColumns),
-        ColumnSpacing = 16,
-    };
-
-    private static Border FactionRow(FactionStanding faction, bool controls)
-    {
-        var grid = FactionGrid();
-        grid.VerticalAlignment = VerticalAlignment.Center;
+        List<Control> cells = [];
 
         var name = new WrapPanel { ItemSpacing = 10, VerticalAlignment = VerticalAlignment.Center };
         var named = new TextBlock
@@ -875,19 +876,19 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
             name.Children.Add(tag);
         }
 
-        Cell(grid, 0, name);
-        Cell(grid, 1, Word(faction.Government ?? Dash));
-        Cell(grid, 2, Word(faction.Allegiance ?? Dash));
-        Cell(grid, 3, Influence(faction.Influence));
-        Cell(grid, 4, States(faction.ActiveStates, ThemeManager.AKey));
-        Cell(grid, 5, States(faction.PendingStates, ThemeManager.GreyKey));
+        cells.Add(Centred(name));
+        cells.Add(Centred(Word(faction.Government ?? Dash)));
+        cells.Add(Centred(Word(faction.Allegiance ?? Dash)));
+        cells.Add(Centred(Influence(faction.Influence)));
+        cells.Add(Centred(States(faction.ActiveStates, ThemeManager.AKey)));
+        cells.Add(Centred(States(faction.PendingStates, ThemeManager.GreyKey)));
 
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(11, 0, 14, 0),
             BorderThickness = new Thickness(3, 0, 0, 0),
-            Child = grid,
+            Child = layout.Row(cells),
         };
         RoutingKit.Themed(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
@@ -908,6 +909,13 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         cell.VerticalAlignment = VerticalAlignment.Center;
         Grid.SetColumn(cell, column);
         grid.Children.Add(cell);
+    }
+
+    private static Control Centred(Control cell)
+    {
+        cell.VerticalAlignment = VerticalAlignment.Center;
+
+        return cell;
     }
 
     private static TextBlock Word(string text)

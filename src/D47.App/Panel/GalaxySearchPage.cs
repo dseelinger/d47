@@ -218,6 +218,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Where the form width is remembered; null where the host gives the form a fixed width.</summary>
     public PaneWidthMemory? PaneWidths { get; init; }
 
+    public ColumnWidthMemory? ColumnWidths { get; init; }
+
+    /// <summary>A table layout for an answer; the headset draws it with no drag handles.</summary>
+    protected TableLayout NewTable(string id, IReadOnlyList<TableColumn> columns) =>
+        new(id, columns, _headset ? null : ColumnWidths, 12);
+
     /// <summary>What is drawn where the answer goes.</summary>
     public GalaxySearchView View { get; private set; }
 
@@ -448,7 +454,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// The header row of an answer table. A column the service sorts on is pressed to re-run the search
     /// sorted by it; the sort is carried as <c>order_by</c> and <c>order</c> in the search's arguments.
     /// </summary>
-    protected Control SearchHead(GalaxySearchPosting posting, string name, string gridColumns, IReadOnlyList<SearchColumn> columns)
+    protected Control SearchHead(GalaxySearchPosting posting, string name, TableLayout layout, IReadOnlyList<SearchColumn> columns)
     {
         var fields = SearchSorts.For(Kind);
 
@@ -475,14 +481,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         head.Changed += () => SortBy(posting, columns, head.Order);
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(gridColumns), ColumnSpacing = 12, Margin = new Thickness(12, 0, 12, 6) };
-
-        for (var index = 0; index < columns.Count; index++)
-        {
-            var cell = head.Cell(index, columns[index].Right ? HorizontalAlignment.Right : HorizontalAlignment.Left);
-            Grid.SetColumn(cell, index);
-            grid.Children.Add(cell);
-        }
+        var grid = layout.Header(head, [.. columns.Select(column => column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
+        grid.Margin = new Thickness(12, 0, 12, 6);
 
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
         Themed(rule, Border.BorderBrushProperty, ThemeManager.LineKey);

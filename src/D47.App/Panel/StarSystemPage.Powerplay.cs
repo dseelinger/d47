@@ -30,7 +30,16 @@ public sealed partial class StarSystemPage
 
     public const string NoNeighbours = "No Powerplay system is listed here.";
 
-    private const string NeighbourColumns = "*,110,120,*,170";
+    public const string PowerplayTable = "StarSystem.Powerplay";
+
+    private static readonly TableColumn[] NeighbourColumns =
+    [
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Distance"),
+        new("State"),
+        new("Power", ColumnFit.Fill) { Min = 100 },
+        new("Progress"),
+    ];
 
     private enum Nearby
     {
@@ -285,22 +294,16 @@ public sealed partial class StarSystemPage
         var shown = _neighbourHead.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        var header = NeighbourGrid();
+        var layout = new TableLayout(PowerplayTable, NeighbourColumns, _surface.ColumnWidths, 12);
+        var header = layout.Header(_neighbourHead);
         header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
-
-        for (var i = 0; i < NeighbourHeads.Count; i++)
-        {
-            var cell = _neighbourHead.Cell(i, HorizontalAlignment.Left);
-            Grid.SetColumn(cell, i);
-            header.Children.Add(cell);
-        }
 
         table.Children.Add(header);
 
         foreach (var system in shown)
         {
-            table.Children.Add(NeighbourRow(system));
+            table.Children.Add(NeighbourRow(system, layout));
         }
 
         if (shown.Count == 0)
@@ -319,28 +322,21 @@ public sealed partial class StarSystemPage
         return table;
     }
 
-    private static Grid NeighbourGrid() => new()
+    private Border NeighbourRow(PowerplayNeighbour system, TableLayout layout)
     {
-        ColumnDefinitions = new ColumnDefinitions(NeighbourColumns),
-        ColumnSpacing = 12,
-    };
+        List<Control> cells = [];
 
-    private Border NeighbourRow(PowerplayNeighbour system)
-    {
-        var grid = NeighbourGrid();
-        grid.VerticalAlignment = VerticalAlignment.Center;
-
-        Cell(grid, 0, Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey));
-        Cell(grid, 1, Mono(DistanceText(system.Distance), ThemeManager.AKey));
-        Cell(grid, 2, Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey));
-        Cell(grid, 3, Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey));
-        Cell(grid, 4, Influence(system.ControlProgress));
+        cells.Add(Centred(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey)));
+        cells.Add(Centred(Mono(DistanceText(system.Distance), ThemeManager.AKey)));
+        cells.Add(Centred(Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
+        cells.Add(Centred(Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)));
+        cells.Add(Centred(Influence(system.ControlProgress)));
 
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
-            Child = grid,
+            Child = layout.Row(cells),
         };
         MaterialsPage.Hover(row);
         MaterialsPage.Pressable(row, () => Look(system.Name));

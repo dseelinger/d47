@@ -21,9 +21,8 @@ public sealed class RouteMarketPage : UserControl
     /// <summary>How long a search may run.</summary>
     private static readonly TimeSpan Budget = TimeSpan.FromSeconds(70);
 
-    // The Station column is a name cell, a gap and a copy button, and the header above it has to line up
-    // with every row (#157).
-    private const double StationColumnWidth = 260;
+    public const string TableId = "Route.Market";
+
     private const double CopyGap = 6;
 
     private readonly CapabilityRegistry _registry;
@@ -66,14 +65,17 @@ public sealed class RouteMarketPage : UserControl
     private bool _sorting;
 
     private readonly StackPanel _results = new() { Spacing = 6 };
+    private readonly ColumnWidthMemory? _columnWidths;
 
     public RouteMarketPage(
         CapabilityRegistry registry,
         CommodityBoard board,
         Func<bool> lookupsEnabled,
         Action? openSettings = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
         _registry = registry;
         _board = board;
         _lookupsEnabled = lookupsEnabled;
@@ -250,23 +252,16 @@ public sealed class RouteMarketPage : UserControl
             wrap: true);
 
         var rows = new StackPanel { Spacing = 2 };
+        var layout = new TableLayout(TableId, ColumnsOf(posting), _columnWidths, 10);
 
-        rows.Children.Add(HeaderRow(posting));
+        rows.Children.Add(HeaderRow(posting, layout));
 
         foreach (var offer in posting.Answer.Offers)
         {
-            rows.Children.Add(OfferRow(offer, posting));
+            rows.Children.Add(OfferRow(offer, posting, layout));
         }
 
-        // Fixed pixel columns again, and the same overflow the Community Goal table had (#333): one scroll
-        // viewport around the header and the offer rows together, so the block clips at the card's inner edge
-        // and every column stays under its own header as it scrolls.
-        var table = new ScrollViewer
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Content = rows,
-        };
+        var table = rows;
 
         var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading, table } };
 
@@ -280,31 +275,53 @@ public sealed class RouteMarketPage : UserControl
         _results.Children.Add(stack);
     }
 
+    private static List<TableColumn> ColumnsOf(CommodityPosting posting)
+    {
+        List<TableColumn> columns = [new("Station", ColumnFit.Fill) { Min = 160 }];
+
+        if (posting.Answer.OriginKnown)
+        {
+            columns.Add(new("Distance"));
+        }
+
+        columns.Add(new("Price"));
+        columns.Add(new("Stock"));
+
+        if (posting.Query.Tonnes is not null)
+        {
+            columns.Add(new("Load"));
+        }
+
+        columns.Add(new("Priced"));
+
+        return columns;
+    }
+
     /// <summary>The distance and price columns sort the whole answer, so a press asks again; the rest are plain labels.</summary>
-    private Control HeaderRow(CommodityPosting posting)
+    private Control HeaderRow(CommodityPosting posting, TableLayout layout)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
         var best = buying ? SortDirection.Ascending : SortDirection.Descending;
 
-        List<(string Label, double Width, SortColumn<object> Column)> heads =
+        List<(string Label, SortColumn<object> Column)> heads =
         [
-            ("Station", StationColumnWidth, SortColumn<object>.Plain("Station")),
+            ("Station", SortColumn<object>.Plain("Station")),
         ];
 
         if (posting.Answer.OriginKnown)
         {
-            heads.Add(("Distance", 80, SortColumn<object>.Remote("Distance", SortDirection.Ascending)));
+            heads.Add(("Distance", SortColumn<object>.Remote("Distance", SortDirection.Ascending)));
         }
 
-        heads.Add((buying ? "Price" : "Pays", 90, SortColumn<object>.Remote(buying ? "Price" : "Pays", best)));
-        heads.Add((buying ? "Stock" : "Demand", 90, SortColumn<object>.Plain(buying ? "Stock" : "Demand")));
+        heads.Add((buying ? "Price" : "Pays", SortColumn<object>.Remote(buying ? "Price" : "Pays", best)));
+        heads.Add((buying ? "Stock" : "Demand", SortColumn<object>.Plain(buying ? "Stock" : "Demand")));
 
         if (posting.Query.Tonnes is not null)
         {
-            heads.Add(("The load", 110, SortColumn<object>.Plain("The load")));
+            heads.Add(("The load", SortColumn<object>.Plain("The load")));
         }
 
-        heads.Add(("Priced", 130, SortColumn<object>.Plain("Priced")));
+        heads.Add(("Priced", SortColumn<object>.Plain("Priced")));
 
         var columns = heads.Select(head => head.Column).ToList();
         var header = new SortHeader<object>(HeadName, columns);
@@ -322,16 +339,8 @@ public sealed class RouteMarketPage : UserControl
         header.Changed += () => SortBy(posting, header.Order, distance, price);
 
         // Inset by a list row's padding, so each header sits over its column.
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(12, 0) };
-
-        for (var index = 0; index < heads.Count; index++)
-        {
-            var cell = header.Cell(index, HorizontalAlignment.Left);
-
-            // A pressable cell bleeds six either side of its column.
-            cell.Width = heads[index].Width + (columns[index].Sortable ? 12 : 0);
-            row.Children.Add(cell);
-        }
+        var row = layout.Header(header);
+        row.Margin = new Thickness(12, 0);
 
         return row;
     }
@@ -420,37 +429,34 @@ public sealed class RouteMarketPage : UserControl
         }
     }
 
-    private Control OfferRow(CommodityOffer offer, CommodityPosting posting)
+    private Control OfferRow(CommodityOffer offer, CommodityPosting posting, TableLayout layout)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
         var quote = offer.Market.Quote(posting.Query.Commodity);
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
-
-        row.Children.Add(StationCell(offer.Market.Station, offer.Market.System));
+        List<Control> cells = [StationCell(offer.Market.Station, offer.Market.System)];
 
         if (posting.Answer.OriginKnown)
         {
-            row.Children.Add(Cell($"{offer.Distance:0.#} ly", 80));
+            cells.Add(Cell($"{offer.Distance:0.#} ly"));
         }
 
-        row.Children.Add(Cell($"{offer.UnitPrice:N0}", 90));
-        row.Children.Add(Cell($"{(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0):N0}", 90));
+        cells.Add(Cell($"{offer.UnitPrice:N0}"));
+        cells.Add(Cell($"{(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0):N0}"));
 
         if (posting.Query.Tonnes is not null)
         {
-            row.Children.Add(Cell($"{offer.Total:N0}", 110));
+            cells.Add(Cell($"{offer.Total:N0}"));
         }
 
         // The Commander's own reading is named as theirs, because it is the one figure here with no caveat on
         // it.
-        row.Children.Add(Cell(
+        cells.Add(Cell(
             offer.Market.UpdatedAt is { } when
                 ? $"{(offer.IsTheirs ? "you saw it " : string.Empty)}{Ago(DateTimeOffset.UtcNow - when)}"
                 : "undated",
-            130,
             offer.IsTheirs ? ThemeManager.CyanKey : ThemeManager.GreyKey));
 
-        return ListRow.Dress(new Border { Child = row });
+        return ListRow.Dress(new Border { Child = layout.Row(cells) });
     }
 
     private static string Ago(TimeSpan old) => old switch
@@ -465,7 +471,7 @@ public sealed class RouteMarketPage : UserControl
     private Control StationCell(string station, string system)
     {
         // The name takes what the copy glyph leaves, so a long one trims rather than running under it.
-        var cells = new DockPanel { Width = StationColumnWidth };
+        var cells = new DockPanel();
 
         if (_copy is { } copy)
         {
@@ -477,20 +483,19 @@ public sealed class RouteMarketPage : UserControl
             cells.Children.Add(glyph);
         }
 
-        var name = Cell($"{station} ({system})", double.NaN, ThemeManager.WhiteKey);
+        var name = Cell($"{station} ({system})", ThemeManager.WhiteKey);
         cells.Children.Add(name);
 
         return cells;
     }
 
-    private static Control Cell(string text, double width, bool muted = false) =>
-        Cell(text, width, muted ? ThemeManager.GreyKey : ThemeManager.AKey);
+    private static Control Cell(string text, bool muted = false) =>
+        Cell(text, muted ? ThemeManager.GreyKey : ThemeManager.AKey);
 
-    private static Control Cell(string text, double width, string key)
+    private static Control Cell(string text, string key)
     {
         var block = RoutingKit.Ink(text, TypeScale.Secondary, key);
 
-        block.Width = width;
         block.TextTrimming = TextTrimming.CharacterEllipsis;
         block.VerticalAlignment = VerticalAlignment.Center;
 

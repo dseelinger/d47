@@ -29,9 +29,16 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public const string HeadName = "SignalHead";
 
-    private const string Columns = "1.3*,1.2*,72,128,104";
+    public const string TableId = "Search.Signals";
 
-    private const string HeadsetColumns = "1.2*,1.3*,64,128,96";
+    private static readonly TableColumn[] Columns =
+    [
+        new("Signal", ColumnFit.Fill) { Min = 100 },
+        new("System", ColumnFit.Fill) { Min = 100 },
+        new("Distance"),
+        new("Seen"),
+        new("Source"),
+    ];
 
     private const string YourScan = "YOUR SCAN";
 
@@ -221,7 +228,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = headset ? HeadsetColumns : Columns;
+        var columns = NewTable(TableId, Columns);
 
         List<SearchColumn> heads =
         [
@@ -267,7 +274,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
     protected override void Follow() =>
         ShowHere(_near, _here());
 
-    private Control Row(SignalFinding finding, string columns, DateTimeOffset now)
+    private Control Row(SignalFinding finding, TableLayout columns, DateTimeOffset now)
     {
         var here = string.Equals(finding.System, _here(), StringComparison.OrdinalIgnoreCase);
         var system = Value(finding.System);
@@ -283,19 +290,14 @@ public sealed class SignalSearchPage : GalaxySearchPage
             systemCell.Children.Add(glyph);
         }
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(columns),
-            ColumnSpacing = 12,
-            Children =
-            {
+        var grid = columns.Row(
+            [
                 Cell(Value(finding.Signal), 0),
                 Cell(systemCell, 1),
                 Cell(Right(Mono(finding.Distance.ToString("F2", CultureInfo.InvariantCulture), TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Value(MissionsPage.Ago(now - finding.LastSeen)), 3),
                 Cell(Chrome(finding.OwnScan ? YourScan : FromIndex, TypeScale.Small, finding.OwnScan ? ThemeManager.CyanKey : ThemeManager.GreyKey), 4),
-            },
-        };
+            ]);
 
         var row = new Button
         {

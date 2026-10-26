@@ -85,6 +85,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
+                ColumnWidths = host.ColumnWidths,
             };
             ApplyPending();
 
@@ -102,6 +103,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
+                ColumnWidths = host.ColumnWidths,
             };
             ApplyPending();
 
@@ -120,6 +122,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
+                ColumnWidths = host.ColumnWidths,
             };
             ApplyPending();
 
@@ -136,6 +139,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
+                ColumnWidths = host.ColumnWidths,
             };
             ApplyPending();
 
@@ -154,6 +158,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Headset)
             {
                 PaneWidths = host.PaneWidths,
+                ColumnWidths = host.ColumnWidths,
             };
             ApplyPending();
 

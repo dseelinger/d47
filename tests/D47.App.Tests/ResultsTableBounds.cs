@@ -36,9 +36,10 @@ internal static class ResultsTableBounds
     /// <summary>How far the block of rows actually reaches on screen.</summary>
     private static Rect PaintedExtent(Visual header, Border card)
     {
-        var row = header.GetVisualAncestors()
+        Visual row = header.GetVisualAncestors()
             .OfType<StackPanel>()
-            .First(panel => panel.Orientation == Avalonia.Layout.Orientation.Horizontal);
+            .FirstOrDefault(panel => panel.Orientation == Avalonia.Layout.Orientation.Horizontal) as Visual
+            ?? header.GetVisualAncestors().OfType<D47.App.Theming.TableGrid>().First();
 
         var block = row.GetVisualParent() ?? row;
         var painted = Rect(block, card);

@@ -32,9 +32,17 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     public const string HeadName = "OutfittingHead";
 
-    private const string Columns = "1.5*,*,64,84,92,76";
+    public const string TableId = "Search.Outfitting";
 
-    private const string HeadsetColumns = "1.5*,*,64,84,92";
+    private static readonly TableColumn[] Columns =
+    [
+        new("Station", ColumnFit.Fill) { Min = 120 },
+        new("System", ColumnFit.Fill) { Min = 100 },
+        new("Distance"),
+        new("Pad"),
+        new("FromStar"),
+        new("Updated"),
+    ];
 
     private const string Dash = "—";
 
@@ -249,7 +257,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = headset ? HeadsetColumns : Columns;
+        var columns = NewTable(TableId, headset ? Columns[..^1] : Columns);
 
         List<SearchColumn> heads =
         [
@@ -352,7 +360,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         }
     }
 
-    private Control Row(StationSummary station, string columns, bool headset)
+    private Control Row(StationSummary station, TableLayout columns, bool headset)
     {
         var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
         name.Text = station.Name;
@@ -371,27 +379,24 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
             systemCell.Children.Add(glyph);
         }
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(columns),
-            ColumnSpacing = 12,
-            Children =
-            {
+        List<Control> cells =
+        [
                 Cell(Pair(name, Sub(station.Type)), 0),
                 Cell(systemCell, 1),
                 Cell(Right(Mono(station.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Value(LargestPad(station)), 3),
                 Cell(Right(Mono(station.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
-            },
-        };
+        ];
 
         if (!headset)
         {
-            grid.Children.Add(Cell(Right(Mono(
+            cells.Add(Cell(Right(Mono(
                 station.UpdatedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
                 TypeScale.Small,
                 ThemeManager.GreyKey)), 5));
         }
+
+        var grid = columns.Row(cells);
 
         var row = new Button
         {

@@ -174,7 +174,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         _planOnMap);
                 }
 
-                var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts);
+                var page = RoutingPages.Build(crumb, surface, host.Nav, host.Prompts, host.ColumnWidths);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;

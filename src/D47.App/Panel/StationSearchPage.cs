@@ -31,9 +31,18 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const string HeadName = "StationHead";
 
-    private const string Columns = "1.5*,*,64,84,92,1.5*,76";
+    public const string TableId = "Search.Stations";
 
-    private const string HeadsetColumns = "1.5*,*,64,84,92,1.5*";
+    private static readonly TableColumn[] Columns =
+    [
+        new("Station", ColumnFit.Fill) { Min = 120 },
+        new("System", ColumnFit.Fill) { Min = 100 },
+        new("Distance"),
+        new("Pad"),
+        new("FromStar"),
+        new("AskedFor", ColumnFit.Fill) { Min = 100 },
+        new("Updated"),
+    ];
 
     private readonly Func<string?> _here;
     private readonly Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> _chooseServices;
@@ -355,7 +364,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = headset ? HeadsetColumns : Columns;
+        var columns = NewTable(TableId, headset ? Columns[..^1] : Columns);
 
         List<SearchColumn> heads =
         [
@@ -466,7 +475,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         }
     }
 
-    private Control Row(StationSummary station, IReadOnlyList<string> asked, string columns, bool headset)
+    private Control Row(StationSummary station, IReadOnlyList<string> asked, TableLayout columns, bool headset)
     {
         var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
         name.Text = station.Name;
@@ -478,28 +487,25 @@ public sealed class StationSearchPage : GalaxySearchPage
             ? station.State is { } state ? $"{controlling} · {state}" : controlling
             : Dash;
 
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions(columns),
-            ColumnSpacing = 12,
-            Children =
-            {
+        List<Control> cells =
+        [
                 Cell(Pair(name, Sub(station.Type)), 0),
                 Cell(Pair(systemName, Sub(system)), 1),
                 Cell(Right(Mono(station.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Value(LargestPad(station)), 3),
                 Cell(Right(Mono(station.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
                 Cell(Wrapped(asked.Count == 0 ? Dash : string.Join(", ", asked)), 5),
-            },
-        };
+        ];
 
         if (!headset)
         {
-            grid.Children.Add(Cell(Right(Mono(
+            cells.Add(Cell(Right(Mono(
                 station.UpdatedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
                 TypeScale.Small,
                 ThemeManager.GreyKey)), 6));
         }
+
+        var grid = columns.Row(cells);
 
         var row = new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { RowClass } };
         return ListRow.Dress(row);

@@ -173,7 +173,8 @@ public static class RoutingPages
         NavCrumb crumb,
         RoutingSurface surface,
         PanelNavigator nav,
-        PanelPrompts prompts)
+        PanelPrompts prompts,
+        ColumnWidthMemory? columnWidths = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
@@ -189,8 +190,8 @@ public static class RoutingPages
                 Copy(surface),
                 surface.OffDuty,
                 () => surface.Commander?.Invoke()?.Location.StarPos),
-            MarketRoot => Market(surface),
-            BestCargoRoot => BestCargo(surface, nav),
+            MarketRoot => Market(surface, columnWidths),
+            BestCargoRoot => BestCargo(surface, nav, columnWidths),
             TradeRoot => Trade(surface, nav),
             BookmarksRoot => Bookmarks(surface, prompts),
             _ => Missing("There is no such page on this tab."),
@@ -213,17 +214,18 @@ public static class RoutingPages
                 surface.SuggestionPause)
             : Missing("Plotting is not available on this surface.");
 
-    private static Control Market(RoutingSurface surface) =>
+    private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths) =>
         surface is { Registry: { } registry, Commodities: { } board }
             ? new RouteMarketPage(
                 registry,
                 board,
                 surface.LookupsEnabled ?? (() => false),
                 surface.OpenSettings,
-                Copy(surface))
+                Copy(surface),
+                columnWidths)
             : Missing("Market lookups are not available on this surface.");
 
-    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav) =>
+    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths) =>
         surface is { Registry: { } registry, Cargo: { } board }
             ? new RouteBestCargoPage(
                 registry,
@@ -238,7 +240,8 @@ public static class RoutingPages
                     : null,
                 surface.PrefixNames,
                 surface.SuggestionPause,
-                surface.OffDuty)
+                surface.OffDuty,
+                columnWidths)
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
