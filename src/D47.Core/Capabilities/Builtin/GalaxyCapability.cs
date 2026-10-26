@@ -548,7 +548,7 @@ public static class GalaxyCapability
                     {
                         Name = "max_price_age_hours",
                         Type = ToolParameterType.Integer,
-                        Description = "How stale a quoted price may be, in hours. Default 720, one month.",
+                        Description = "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month.",
                     },
                     new ToolParameter
                     {
@@ -2229,11 +2229,11 @@ public static class GalaxyCapability
 
         arguments.TryGetBoolean("include_carriers", out var includeCarriers);
 
-        var askedAge = arguments.TryGetInt32("max_price_age_hours", out var hours) && hours > 0
+        var askedAge = arguments.TryGetInt32("max_price_age_hours", out var hours) && hours >= 0
             ? hours
             : (int?)null;
 
-        var maxPriceAge = Math.Clamp(askedAge ?? DefaultPriceAgeHours, 1, MaxPriceAgeHours);
+        var maxPriceAge = Math.Clamp(askedAge ?? DefaultPriceAgeHours, 0, MaxPriceAgeHours);
 
         // The four knobs INARA's search has and this one lacked (#296).
         double? maxStationDistance = arguments.TryGetDouble("max_station_distance", out var lightSeconds)
@@ -2549,7 +2549,7 @@ public static class GalaxyCapability
         // attached.
         if (maxPriceAge != DefaultPriceAgeHours && !refused)
         {
-            turned.Add($"prices up to {Span(maxPriceAge)} old");
+            turned.Add(maxPriceAge == 0 ? "prices of any age" : $"prices up to {Span(maxPriceAge)} old");
         }
 
         if (query.IncludeCarriers)
@@ -2591,8 +2591,8 @@ public static class GalaxyCapability
         {
             said +=
                 $" You asked for prices up to {Span(askedPriceAge!.Value)} old; max_price_age_hours "
-                + $"stops at {MaxPriceAgeHours:N0} hours — {Span(MaxPriceAgeHours)} — so that is what "
-                + "I searched.";
+                + $"stops at {MaxPriceAgeHours:N0} hours — {Span(MaxPriceAgeHours)} — and 0 means any age, so "
+                + $"{MaxPriceAgeHours:N0} hours is what I searched.";
         }
 
         return said + LimitRefused(askedLimit);

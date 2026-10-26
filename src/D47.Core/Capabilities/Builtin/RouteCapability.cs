@@ -227,7 +227,7 @@ public static class RouteCapability
                         Name = "max_price_age_hours",
                         Type = ToolParameterType.Integer,
                         Description =
-                            "How stale a reported price may be, in hours. Defaults to 720, one month.",
+                            "How stale a reported price may be, in hours; 0 for any age. Defaults to 720, one month.",
                     },
                     new ToolParameter
                     {

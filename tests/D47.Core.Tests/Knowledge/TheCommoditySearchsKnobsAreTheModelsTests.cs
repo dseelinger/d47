@@ -163,6 +163,20 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
         Assert.Contains("prices up to 60 days old", said, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ZeroHoursMeansPricesOfAnyAgeAndIsSaidBack()
+    {
+        var install = new MemoryInstall();
+
+        var (said, search) = await AskAsync(
+            install,
+            new CommodityAnswer([], 30, 0, true),
+            ("max_price_age_hours", "0"));
+
+        Assert.Equal(0, search.MaxPriceAge);
+        Assert.Contains("prices of any age", said, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Carriers are askable rather than hard-coded out.</summary>
     [Fact]
     public async Task CarriersAreAskableAndAreSaidBack()

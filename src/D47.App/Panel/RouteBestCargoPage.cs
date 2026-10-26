@@ -203,7 +203,7 @@ public sealed class RouteBestCargoPage : UserControl
     [
         trade.LargePadOnly ? "large pad only" : "any pad",
         trade.Planetary ? "surface ports included" : "no surface ports",
-        $"prices under {Age(trade.MaxPriceAgeHours)}",
+        trade.MaxPriceAgeHours == 0 ? "prices of any age" : $"prices under {Age(trade.MaxPriceAgeHours)}",
         $"stations within {Number((long)trade.MaxStationDistance)} ls",
     ];
 

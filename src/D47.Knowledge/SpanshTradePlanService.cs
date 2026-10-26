@@ -108,7 +108,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
         var complete = Reaches(reply);
 
-        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+        var oldest = Oldest(search.MaxPriceAge);
         var usable = new List<MarketSnapshot>(fetched.Count);
         var stale = 0;
 
@@ -134,6 +134,10 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             Complete = complete,
         };
     }
+
+    /// <summary>The earliest report time a price may carry; a bound of 0 hours admits every price.</summary>
+    private DateTimeOffset Oldest(int maxPriceAgeHours) =>
+        maxPriceAgeHours <= 0 ? DateTimeOffset.MinValue : _now() - TimeSpan.FromHours(maxPriceAgeHours);
 
     /// <summary>Whether the reply is evidence about the radius that was asked for (#350).</summary>
     private static bool Reaches(ArdentCommodityService.Reply reply) =>
@@ -244,7 +248,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         origin ??= fetched.FirstOrDefault(market =>
             string.Equals(market.System, search.System, StringComparison.OrdinalIgnoreCase));
 
-        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+        var oldest = Oldest(search.MaxPriceAge);
         var usable = new List<MarketSnapshot>(fetched.Count);
         var stale = 0;
 
@@ -342,7 +346,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             return null;
         }
 
-        var oldest = _now() - TimeSpan.FromHours(search.MaxPriceAge);
+        var oldest = Oldest(search.MaxPriceAge);
 
         var destination = new List<MarketSnapshot>(fetched.Count);
 
@@ -379,7 +383,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 query.System, radius, cancellationToken, surfaceStations: query.Planetary)
             .ConfigureAwait(false)).Markets;
 
-        var oldest = _now() - TimeSpan.FromHours(query.MaxPriceAge);
+        var oldest = Oldest(query.MaxPriceAge);
         var merged = new List<MarketSnapshot>(fetched.Count);
         var mine = new List<MarketSnapshot>();
 

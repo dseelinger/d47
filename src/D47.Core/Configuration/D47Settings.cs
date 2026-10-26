@@ -324,7 +324,7 @@ public sealed record TradeSettings
     /// <summary>Light seconds from the entry point that a station may sit at.</summary>
     public double MaxStationDistance { get; init; } = 1_000;
 
-    /// <summary>How stale a reported price may be, in hours.</summary>
+    /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
     public int MaxPriceAgeHours { get; init; } = 720;
 
     /// <summary>End back where the route started.</summary>

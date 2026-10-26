@@ -389,6 +389,51 @@ public class ArdentCommodityRequestTests
     }
 
     [Fact]
+    public async Task NoAgeBoundAsksForADateRangeThatImposesNone()
+    {
+        var index = new Index(Exporters);
+        using var commodities = Commodities(index);
+        using var service = Service(commodities);
+
+        await service.FindCommodityAsync(Search(Palladium(), 0), TestContext.Current.CancellationToken);
+
+        Assert.Contains($"maxDaysAgo={ArdentCommodityService.AnyDaysAgo}", Query(index));
+        Assert.True(ArdentCommodityService.AnyDaysAgo >= 3_650);
+    }
+
+    [Theory]
+    [InlineData(8, 1)]
+    [InlineData(16, 2)]
+    [InlineData(0, 3)]
+    public async Task RowsOlderThanTheBoundAreDroppedAfterTheReplyArrives(int hours, int kept)
+    {
+        var index = new Index(
+            """
+            [{"commodityName":"palladium","marketId":1,"stationName":"Two Hours","stationType":"Orbis",
+              "distanceToArrival":10,"maxLandingPadSize":3,"systemName":"A","systemX":30,"systemY":17,"systemZ":114,
+              "buyPrice":100,"demand":1,"sellPrice":90,"stock":50000,"updatedAt":"2026-09-06T19:22:16.000Z"},
+             {"commodityName":"palladium","marketId":2,"stationName":"Ten Hours","stationType":"Orbis",
+              "distanceToArrival":10,"maxLandingPadSize":3,"systemName":"B","systemX":31,"systemY":17,"systemZ":114,
+              "buyPrice":101,"demand":1,"sellPrice":91,"stock":50000,"updatedAt":"2026-09-06T11:22:16.000Z"},
+             {"commodityName":"palladium","marketId":3,"stationName":"Three Days","stationType":"Orbis",
+              "distanceToArrival":10,"maxLandingPadSize":3,"systemName":"C","systemX":32,"systemY":17,"systemZ":114,
+              "buyPrice":102,"demand":1,"sellPrice":92,"stock":50000,"updatedAt":"2026-09-03T21:22:16.000Z"}]
+            """);
+        using var commodities = Commodities(index);
+        using var service = Service(commodities);
+
+        var answer = await service.FindCommodityAsync(
+            Search(Palladium(), hours), TestContext.Current.CancellationToken);
+
+        Assert.Equal(kept, answer.Offers.Count);
+
+        if (hours == 8)
+        {
+            Assert.Equal("Two Hours", answer.Offers.Single().Market.Station);
+        }
+    }
+
+    [Fact]
     public async Task AWideSearchThatFindsNothingClaimsNeitherHorizonNorRadius()
     {
         var index = new Index("[]");

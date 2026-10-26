@@ -18,11 +18,12 @@ public sealed class ArdentCommodityService : IDisposable
     /// </summary>
     public const int RowCeiling = 1_000;
 
-    /// <summary>
-    /// How stale a quote may be to come back at all, in whole days, from the bound the Commander
-    /// actually set.
-    /// </summary>
-    public static int DaysAgo(int hours) => Math.Max(1, (int)Math.Ceiling(hours / 24.0));
+    /// <summary>The <c>maxDaysAgo</c> that imposes no limit; leaving the parameter off applies about 90 days.</summary>
+    public const int AnyDaysAgo = 3_650;
+
+    /// <summary>The <c>maxDaysAgo</c> for a bound in hours, rounded up to whole days; 0 hours is no bound.</summary>
+    public static int DaysAgo(int hours) =>
+        hours <= 0 ? AnyDaysAgo : Math.Max(1, (int)Math.Ceiling(hours / 24.0));
 
     private const string Nearby = "v2/system/name/{0}/commodity/name/{1}/nearby/{2}";
 

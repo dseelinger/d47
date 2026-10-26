@@ -410,7 +410,7 @@ public sealed record TradeQuery
 
     public bool LargePadOnly { get; init; }
 
-    /// <summary>How stale a reported price may be, in hours.</summary>
+    /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
     public int MaxPriceAge { get; init; } = 720;
 
     /// <summary>Whether the sweep includes surface stations — planetary ports, outposts, settlements (#310).</summary>
@@ -484,7 +484,7 @@ public sealed record TradeQuery
             LadenRange = ladenRange.Value,
             MaxSystemDistance = Math.Clamp(maxSystemDistance ?? 1_000, 1, 1_000_000),
             LargePadOnly = largePadOnly,
-            MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 1, 8_760),
+            MaxPriceAge = Math.Clamp(maxPriceAge ?? 720, 0, 8_760),
             Loop = loop ?? false,
             Planetary = planetary ?? false,
             AvoidPermitSystems = avoidPermitSystems ?? true,
@@ -546,7 +546,7 @@ public sealed record BestCargoSearch
     /// <summary>Tonnes to fill, which is the cargo capacity less the limpets aboard.</summary>
     public int Hold { get; init; }
 
-    /// <summary>How stale a reported price may be, in hours.</summary>
+    /// <summary>How stale a reported price may be, in hours; 0 is no bound.</summary>
     public int MaxPriceAge { get; init; } = 720;
 
     public bool LargePadOnly { get; init; }

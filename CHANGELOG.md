@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A price age of 0 hours now means prices of any age, in the commodity search, trade routes, the best-cargo search and the Trade setting. The market index is asked for a date range that imposes no limit, where before it applied about 90 days. A bound of a few hours no longer returns a day of prices.
+
 VR captions are paced to the voice. A sentence that wraps past the caption window goes up in events held for the longer of your reading time and the time the voice takes to say them, using how fast the voice has recently spoken, so the captions no longer run ahead of it. The caption window is now three lines.
 
 A story chapter can ask you to save your own picture for a codex entry. One objective asks for a picture of an entry you log as new after the objective appears; the other asks for a picture of an entry already on record. A picture for a Missing entry, or a Re-crop, meets neither.
