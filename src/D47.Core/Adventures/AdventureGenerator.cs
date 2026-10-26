@@ -2222,14 +2222,16 @@ public sealed class AdventureGenerator(
 
     /// <summary>
     /// The boardings and leavings this answer may place: the story's due ones, less those a rewrite keeps at the opening or
-    /// on an objective before the ones it writes.
+    /// on an objective before the ones it writes, and the boardings no hull can seat.
     /// </summary>
-    private static IReadOnlyList<Stories.StorySwitch> Due(AdventureAsk ask)
+    private static IReadOnlyList<Stories.StorySwitch> Due(AdventureAsk ask, Facts facts)
     {
-        if (ask.Story?.Due is not { Count: > 0 } due)
+        if (ask.Story?.Due is not { Count: > 0 } all)
         {
             return [];
         }
+
+        var due = all.Where(entry => entry.Seats is not { } seats || SeatHulls(seats, facts).Count > 0).ToList();
 
         if (ask.Rewrite is not { } rewrite)
         {
@@ -2243,13 +2245,22 @@ public sealed class AdventureGenerator(
         return [.. due.Where(entry => !(entry.Boards ? boarded : left).Contains(entry.Id))];
     }
 
+    /// <summary>The hulls with at least this many seats that the Commander owns or can afford to board, cheapest first, five at most.</summary>
+    private static IReadOnlyList<string> SeatHulls(int seats, Facts facts) =>
+        [.. EliteSpecifications.Ships
+            .Where(ship => ship.Crew >= seats && ChapterFit.BoardWhy(ship.Symbol, facts.Owns(ship.Symbol), facts.Credits) is null)
+            .OrderBy(ship => facts.Owns(ship.Symbol) ? 0 : ship.Cost ?? long.MaxValue)
+            .ThenBy(ship => ship.Name, StringComparer.Ordinal)
+            .Take(5)
+            .Select(ship => ship.Name)];
+
     /// <summary>The boardings and leavings an objective of a draft carries, as the repair turn shows them; empty for none.</summary>
     private static string Switched(IReadOnlyList<string> boards, IReadOnlyList<string> leaves) =>
         (boards.Count > 0 ? $" — boards: {string.Join(", ", boards)}" : string.Empty)
         + (leaves.Count > 0 ? $" — leaves: {string.Join(", ", leaves)}" : string.Empty);
 
     /// <summary>Who may speak a story chapter's lines, and how the ship's lines are read while a stock core is aboard.</summary>
-    private static void AppendSpeakers(StringBuilder text, AdventureStory story, IReadOnlyList<Stories.StorySwitch> due, bool opening)
+    private static void AppendSpeakers(StringBuilder text, AdventureStory story, IReadOnlyList<Stories.StorySwitch> due, bool opening, Facts facts)
     {
         text.AppendLine();
         text.AppendLine(
@@ -2300,12 +2311,12 @@ public sealed class AdventureGenerator(
                 + "\"aboard\" lists the id of each other cast member who rides along in the cockpit for this chapter alone, whose lines are then "
                 + "written as spoken there. Most chapters list none.");
 
-            AppendSwitches(text, cast, due, opening);
+            AppendSwitches(text, cast, due, opening, facts);
         }
     }
 
     /// <summary>Each boarding and leaving the chapter may place, by name and beat, and how the lines around it are spoken.</summary>
-    private static void AppendSwitches(StringBuilder text, IReadOnlyList<AdventureSpeaker> cast, IReadOnlyList<Stories.StorySwitch> due, bool opening)
+    private static void AppendSwitches(StringBuilder text, IReadOnlyList<AdventureSpeaker> cast, IReadOnlyList<Stories.StorySwitch> due, bool opening, Facts facts)
     {
         if (due.Count == 0)
         {
@@ -2324,9 +2335,13 @@ public sealed class AdventureGenerator(
         {
             var name = cast.FirstOrDefault(member => member.Id == entry.Id)?.Name ?? entry.Id;
 
-            text.AppendLine(entry.Passed
+            var line = entry.Passed
                 ? $"- {name} (\"{entry.Id}\") comes aboard (held: the {entry.Beat} beat has passed)."
-                : $"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.");
+                : $"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.";
+
+            text.AppendLine(entry.Seats is { } seats
+                ? line + $" The Commander's ship has no seat for {name}: place the boarding only on or after an objective that boards a ship with {seats} seats or more, such as {string.Join(", ", SeatHulls(seats, facts))}."
+                : line);
         }
 
         text.AppendLine(
@@ -2778,14 +2793,14 @@ public sealed class AdventureGenerator(
             + "person said or left is the objective's line. Every other kind has a null reason.");
         text.AppendLine("Give each objective a short title — a chapter name, never a number.");
         var speakers = ask.Story is not null;
-        var due = Due(ask);
+        var due = Due(ask, facts);
         var switches = due.Count > 0
             ? new StorySwitches([.. due.Where(entry => entry.Boards).Select(entry => entry.Id)], [.. due.Where(entry => !entry.Boards).Select(entry => entry.Id)], rewrite is null)
             : null;
 
         if (ask.Story is { } told)
         {
-            AppendSpeakers(text, told, due, rewrite is null);
+            AppendSpeakers(text, told, due, rewrite is null, facts);
         }
 
         if (repair is not null)

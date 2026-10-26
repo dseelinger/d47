@@ -620,8 +620,10 @@ in the cockpit, and their lines are spoken without the comms link; their Guardia
 chapter's line is voiced for who is aboard at its own objective. Clues, reactions and replies are voiced
 for who is aboard at the last objective you completed. A boarding or leaving counts for the next chapter
 once its objective has fired. A boarding waits for a free seat: the ship's crew size, less you, less the members already aboard.
-While your ship has none, the boarding is held, and the first chapter written while it has a seat is told the boarding is due
-and places it as a scene.
+While your ship has none, a boarding that comes due is still offered to a chapter that moves you into a ship with enough seats: the
+writer is told how many seats the boarding needs and which ships have them, and places it on or after the objective that boards such a ship.
+A boarding no ship you own or can afford could seat is not offered. One the chapter does not place is held, and the first chapter written
+while your ship has a seat is told the boarding is due and places it as a scene.
 
 Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line

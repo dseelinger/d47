@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using D47.Core.Adventures;
 using D47.Core.Conversation;
 using D47.Core.Stories;
@@ -140,6 +140,30 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
         Assert.DoesNotContain("leaves", none, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ABoardingWithNoSeatNamesTheSeatsAndTheCheapestHullsThatHaveThem()
+    {
+        var text = (await BeatsCall("seats", Credits(10_000_000_000))).Text;
+
+        Assert.Contains(
+            "Tess (\"tess\") comes aboard at the catalyst beat. The Commander's ship has no seat for Tess: place the boarding only on or after an objective "
+            + "that boards a ship with 2 seats or more, such as Adder, Cobra MkIII, Cobra MkIV, Cobra MkV, Keelback.",
+            text,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ABoardingWithNoSeatThatNoHullCouldSeatIsNotInThePrompt()
+    {
+        var call = await BeatsCall("seats", Credits(0));
+
+        Assert.DoesNotContain("comes aboard", call.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("boards", call.Schema.SchemaJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string[] Credits(long credits) =>
+        [$$"""{ "timestamp":"2026-08-22T11:00:30Z", "event":"LoadGame", "Credits":{{credits}} }"""];
+
     [Theory]
     [MemberData(nameof(Variants))]
     public async Task TheDestinationIsRequiredOnlyForFinaleChapterOne(string variant)
@@ -222,10 +246,10 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
     private static IReadOnlyList<string> Kinds(LlmResponseSchema schema) =>
         BeatProperties(Root(schema)).GetProperty("kind").GetProperty("enum").EnumerateArray().Select(kind => kind.GetString()!).ToList();
 
-    private static async Task<(string Text, LlmResponseSchema Schema)> BeatsCall(string variant) =>
-        (await Calls(variant)).Single(call => call.Schema.Name == "story_beats");
+    private static async Task<(string Text, LlmResponseSchema Schema)> BeatsCall(string variant, string[]? journal = null) =>
+        (await Calls(variant, journal)).Single(call => call.Schema.Name == "story_beats");
 
-    private static async Task<List<(string Text, LlmResponseSchema Schema)>> Calls(string variant)
+    private static async Task<List<(string Text, LlmResponseSchema Schema)>> Calls(string variant, string[]? journal = null)
     {
         var provider = new Capturing();
         var ask = variant switch
@@ -236,6 +260,11 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
                 Cast = [new AdventureSpeaker("tess", "Tess", "A pilot"), new AdventureSpeaker("vale", "Vale", "A courier")],
                 Due = [new StorySwitch("tess", true, "catalyst")],
             }),
+            "seats" => new AdventureAsk(Story: Chapter with
+            {
+                Cast = [new AdventureSpeaker("tess", "Tess", "A pilot")],
+                Due = [new StorySwitch("tess", true, "catalyst", false, 2)],
+            }),
             "beacon" => new AdventureAsk(Story: Chapter with { Beacon = new AdventureBeacon(1, "Beacon System") }),
             "away" => new AdventureAsk(Story: Chapter with { BeaconAway = new AdventureBeaconAway("Far System", 900, "too far") }),
             "finale" => new AdventureAsk(Story: Chapter with { FinaleChapter = 1 }),
@@ -243,8 +272,11 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
             _ => new AdventureAsk(Length: AdventureLength.Short),
         };
 
-        await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), TimeProvider.System)
-            .GenerateAsync(ask, Now, CancellationToken.None);
+        var generator = journal is null
+            ? AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), TimeProvider.System)
+            : AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy(), new RecordingLogger(), 1, journal);
+
+        await generator.GenerateAsync(ask, Now, CancellationToken.None);
 
         return provider.Calls;
     }

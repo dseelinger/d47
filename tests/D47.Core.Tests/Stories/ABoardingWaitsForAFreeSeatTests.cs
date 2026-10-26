@@ -1,4 +1,4 @@
-using D47.Core.Stories;
+﻿using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
 using Xunit;
@@ -34,9 +34,12 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     private static readonly StorySecret Rider = Cast(Member("rider", "setUp"));
 
     [Fact]
-    public void ABoardingWhoseBeatIsHandedWhileFlyingASidewinderIsNotDue()
+    public void ABoardingWhoseBeatIsHandedWhileFlyingASidewinderIsHandedWithTheSeatsItNeeds()
     {
-        Assert.Empty(StoryAboard.Due(Rider, Picked, ActOne, Sidewinder));
+        Assert.Equal([new StorySwitch("rider", true, "setUp", false, 2)], StoryAboard.Due(Rider, Picked, ActOne, Sidewinder));
+        Assert.Equal(
+            [new StorySwitch("rider", true, "setUp", false, 3)],
+            StoryAboard.Due(Cast(Member("pilot", "openingImage"), Member("rider", "setUp")), Picked with { Boarded = ["pilot"] }, ActOne, Sidewinder));
     }
 
     [Fact]
@@ -69,12 +72,12 @@ public sealed class ABoardingWaitsForAFreeSeatTests
     }
 
     [Fact]
-    public void ASecondBoardingInACobraWithOneAboardIsNotDueAndIsHeldPastItsBeat()
+    public void ASecondBoardingInACobraWithOneAboardNeedsThreeSeatsAndIsHeldPastItsBeat()
     {
         var two = Cast(Member("rider", "setUp"), Member("pilot", "catalyst"));
         var aboard = Picked with { Boarded = ["rider"] };
 
-        Assert.Empty(StoryAboard.Due(two, aboard, ActOne, Cobra));
+        Assert.Equal([new StorySwitch("pilot", true, "catalyst", false, 3)], StoryAboard.Due(two, aboard, ActOne, Cobra));
 
         var story = StoryAboard.Missed(aboard, two, ["debate", "breakIntoTwo"], Cobra);
         Assert.Equal(["rider"], story.Boarded);
@@ -90,7 +93,10 @@ public sealed class ABoardingWaitsForAFreeSeatTests
 
         var three = Cast(Member("rider", "setUp"), Member("pilot", "catalyst"), Member("medic", "debate"));
 
-        Assert.Equal(["pilot"], StoryAboard.Due(three, Picked with { Boarded = ["rider"] }, ActOne, Krait).Select(entry => entry.Id));
+        var due = StoryAboard.Due(three, Picked with { Boarded = ["rider"] }, ActOne, Krait);
+
+        Assert.Equal(["pilot", "medic"], due.Select(entry => entry.Id));
+        Assert.Equal([null, 4], due.Select(entry => entry.Seats));
     }
 
     [Fact]
@@ -99,7 +105,8 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         var two = Cast(Member("rider", "setUp"), Member("pilot", "catalyst"));
         var held = Picked with { AwaitingSeat = ["pilot"] };
 
-        Assert.Equal(["pilot"], StoryAboard.Due(two, held, ActOne, Cobra).Select(entry => entry.Id));
+        Assert.Equal(["pilot", "rider"], StoryAboard.Due(two, held, ActOne, Cobra).Select(entry => entry.Id));
+        Assert.Equal([null, 3], StoryAboard.Due(two, held, ActOne, Cobra).Select(entry => entry.Seats));
         Assert.Equal(["pilot", "rider"], StoryAboard.Due(two, held, ActOne, Krait).Select(entry => entry.Id));
     }
 
@@ -171,7 +178,26 @@ public sealed class ABoardingWaitsForAFreeSeatTests
         Assert.Equal(2, story.Chapters.Count);
         Assert.Empty(story.Boarded);
         Assert.Equal(["rider"], story.AwaitingSeat);
-        Assert.All(fixtures.Asks, ask => Assert.Empty(ask.Story!.Due!));
+        Assert.All(fixtures.Asks, ask => Assert.All(ask.Story!.Due!, entry => Assert.Equal(2, entry.Seats)));
+    }
+
+    [Fact]
+    public async Task ABoardingHandedWithSeatsThatTheChapterDoesNotPlaceIsAwaitingASeat()
+    {
+        using var fixtures = new StoryFixtures(
+            new RoundScriptedLlmProvider(
+                RoundScriptedLlmProvider.Saying(Spine),
+                RoundScriptedLlmProvider.Saying(BeatsToTheBeacon),
+                RoundScriptedLlmProvider.Saying(NothingObjected)),
+            Cast(Member("rider", "setUp")));
+        fixtures.Director.Game = () => Loaded(0);
+
+        Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
+
+        var story = fixtures.Stories.Current("F1")!;
+        Assert.Equal([new StorySwitch("rider", true, "setUp", false, 2)], fixtures.Asks.Single().Story!.Due);
+        Assert.Equal(["rider"], story.AwaitingSeat);
+        Assert.Empty(story.Boarded);
     }
 
     [Fact]

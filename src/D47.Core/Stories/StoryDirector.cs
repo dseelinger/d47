@@ -2739,7 +2739,7 @@ public sealed class StoryDirector(
             Chapters = [.. replacing ? still.Chapters.SkipLast(1) : still.Chapters, key],
             Boarded = opening.Boarded,
             Left = opening.Left,
-            AwaitingSeat = opening.AwaitingSeat,
+            AwaitingSeat = [.. opening.AwaitingSeat, .. Unseated(ask.Story?.Due, draft, opening.AwaitingSeat)],
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
@@ -2753,6 +2753,17 @@ public sealed class StoryDirector(
 
         ArchiveChapters(frontierId);
         return new(null);
+    }
+
+    /// <summary>The members of the boardings handed with no seat that the chapter does not place and the list does not already hold.</summary>
+    private static IEnumerable<string> Unseated(IReadOnlyList<StorySwitch>? due, Adventure chapter, IReadOnlyList<string> waiting)
+    {
+        var placed = chapter.OpeningBoards.Concat(chapter.Beats.SelectMany(beat => beat.Boards)).ToHashSet(StringComparer.Ordinal);
+
+        return (due ?? [])
+            .Where(entry => entry.Seats is not null && !placed.Contains(entry.Id) && !waiting.Contains(entry.Id, StringComparer.Ordinal))
+            .Select(entry => entry.Id)
+            .Distinct(StringComparer.Ordinal);
     }
 
     /// <summary>Moves a failed chapter the replacement has taken the place of to the archive under this run, and off the adventure file.</summary>
