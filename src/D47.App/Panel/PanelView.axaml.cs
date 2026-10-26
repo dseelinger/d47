@@ -3687,11 +3687,13 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// One segment's markup spans. On the conversation, delivery direction such as <c>[calm]</c> is taken out
     /// of the drawn text and carried on the span for the turn's head; the text sent to speech is not this text.
     /// </summary>
-    private static IEnumerable<DrawnSegment> Spans(TranscriptSegment segment, TranscriptPage page, string shipName)
+    private static List<DrawnSegment> Spans(TranscriptSegment segment, TranscriptPage page, string shipName)
     {
         var direction = page == TranscriptPage.Conversation && !segment.Marker
             ? D47.Core.Audio.AudioTags.In(segment.Text)
             : [];
+
+        var drawn = new List<DrawnSegment>();
 
         foreach (var span in TranscriptMarkup.Parse(segment.Text))
         {
@@ -3702,11 +3704,19 @@ public partial class PanelView : UserControl, IPanelTabHost
                 continue;
             }
 
-            yield return new DrawnSegment(
+            drawn.Add(new DrawnSegment(
                 text, segment.Marker, segment.Voice, span.Style,
                 segment.Speaker ?? shipName, segment.SourceKey, segment.Time, segment.Kind, segment.ProposalId,
-                direction, segment.Provenance, segment.Picture, segment.SettingKey);
+                direction, segment.Provenance, segment.Picture, segment.SettingKey));
         }
+
+        if (segment.Translation is { Length: > 0 } english && drawn.Count > 0)
+        {
+            drawn[^1] = drawn[^1] with { Text = drawn[^1].Text.TrimEnd() };
+            drawn.Add(drawn[^1] with { Text = "\n\n" + english.Trim(), Style = MarkupStyle.None, Direction = null, Provenance = null });
+        }
+
+        return drawn;
     }
 
     /// <summary>

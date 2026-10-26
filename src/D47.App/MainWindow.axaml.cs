@@ -645,8 +645,8 @@ public partial class MainWindow : Window
             () => _model.Append($"\n{text}\n"));
 
         // Every spoken line joins the conversation, attributed to whoever said it.
-        _host.Announcer.CalloutSaid += (text, speaker, sourceKey, picture) => Avalonia.Threading.Dispatcher.UIThread.Post(
-            () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey, picture: picture));
+        _host.Announcer.CalloutSaid += (text, speaker, sourceKey, picture, translation) => Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => _model.Append($"\n{text}\n", speaker: speaker, sourceKey: sourceKey, picture: picture, translation: translation));
 
         // And what happened to the conversation rather than in it - the core changing under it.
         _host.Noted += text => Avalonia.Threading.Dispatcher.UIThread.Post(() => _model.Mark(text));

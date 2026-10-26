@@ -41,6 +41,10 @@ public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = nu
                 model.Append(text.Text, speaker: _speaker, picture: _picture);
                 break;
 
+            case TurnEvent.Translation translation:
+                model.AppendTranslation(translation.Text);
+                break;
+
             case TurnEvent.Retrying retry:
                 model.TurnStatus =
                     $"retrying ({retry.Attempt}/{retry.Of}) in {retry.Wait.TotalSeconds:0.#}s — {retry.Because}";

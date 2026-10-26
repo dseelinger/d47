@@ -77,7 +77,7 @@ public sealed class Announcer : IDisposable
     /// said it, and the callout key, once the wording and the contradiction check have settled what was
     /// actually said.
     /// </summary>
-    public event Action<string, string, string, string?>? CalloutSaid;
+    public event Action<string, string, string, string?, string?>? CalloutSaid;
 
     private VoicePipeline Voice { get; }
 
@@ -115,10 +115,6 @@ public sealed class Announcer : IDisposable
     /// <summary>Whether the voice says a pronoun for a system the line names: not for a narration, and not for a line in another language.</summary>
     internal static bool TakesPronouns(Announcement announcement) =>
         announcement.Voice != VoiceRole.Narrator && SpokenLanguage.IsEnglish(announcement.Language);
-
-    /// <summary>What the transcript shows for a line: what was heard, then its English when it is in another language.</summary>
-    internal static string WithTranslation(Announcement announcement) =>
-        announcement.Translation is { Length: > 0 } english ? $"{announcement.Heard}\n{english}" : announcement.Heard;
 
     /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
     internal async Task<SpokenClip?> SayAsync(Announcement announcement)
@@ -162,7 +158,7 @@ public sealed class Announcer : IDisposable
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(WithTranslation(written), ConversationSpeaker(written, Personas.Current.Name), written.Key, picture);
+        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.Current.Name), written.Key, picture, written.Translation);
         return clip;
     }
 

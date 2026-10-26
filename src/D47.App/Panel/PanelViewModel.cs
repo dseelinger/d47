@@ -69,6 +69,7 @@ public enum TranscriptRunKind
 /// <param name="Provenance">The line drawn inside the turn this run finished, or null.</param>
 /// <param name="Picture">The speaker's picture name, or null for a run drawn without one.</param>
 /// <param name="SettingKey">The settings row a failed turn's "Settings" link opens, or null.</param>
+/// <param name="Translation">The English for a line in another language, drawn under it, or null.</param>
 public sealed record TranscriptSegment(
     string Text,
     bool Marker,
@@ -80,7 +81,8 @@ public sealed record TranscriptSegment(
     string? ProposalId = null,
     TurnProvenance? Provenance = null,
     string? Picture = null,
-    string? SettingKey = null);
+    string? SettingKey = null,
+    string? Translation = null);
 
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
@@ -117,6 +119,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
         /// <summary>The settings row a failed turn's "Settings" link opens.</summary>
         public string? SettingKey { get; init; }
+
+        /// <summary>The English for the run's text when it is in another language.</summary>
+        public StringBuilder Translation { get; } = new();
     }
 
     /// <summary>Guards <see cref="_runs"/> and the strings derived from it.</summary>
@@ -561,7 +566,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         string? speaker = null,
         string? sourceKey = null,
         DateTimeOffset? time = null,
-        string? picture = null)
+        string? picture = null,
+        string? translation = null)
     {
         var named = speaker ?? (voice == TranscriptVoice.Commander ? "CMDR" : ShipName);
         var pictured = marker ? null
@@ -583,17 +589,41 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 || _runs[^1].Speaker != named
                 || _runs[^1].SourceKey != sourceKey
                 || _runs[^1].Picture != pictured
-                || _runs[^1].Kind != TranscriptRunKind.Text)
+                || _runs[^1].Kind != TranscriptRunKind.Text
+                || _runs[^1].Translation.Length > 0
+                || translation is { Length: > 0 })
             {
                 _runs.Add(new Run(marker, voice, named, sourceKey, at, new StringBuilder()) { Picture = pictured });
             }
 
             _runs[^1].Text.Append(text);
+            _runs[^1].Translation.Append(translation);
 
             transcript = string.Concat(_runs.Select(Flatten));
         }
 
         // Outside the lock.
+        TranscriptText = transcript;
+
+        TranscriptAppended?.Invoke();
+    }
+
+    /// <summary>Puts the English for the last run's text under it.</summary>
+    public void AppendTranslation(string translation)
+    {
+        string transcript;
+
+        lock (_appendLock)
+        {
+            if (_runs.Count == 0)
+            {
+                return;
+            }
+
+            _runs[^1].Translation.Append(translation);
+            transcript = string.Concat(_runs.Select(Flatten));
+        }
+
         TranscriptText = transcript;
 
         TranscriptAppended?.Invoke();
@@ -757,7 +787,8 @@ public sealed class PanelViewModel : INotifyPropertyChanged
                 .. _runs.Select(run =>
                     new TranscriptSegment(
                         Text(run), run.Marker, run.Voice, run.Speaker, run.SourceKey, run.Time,
-                        run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey))
+                        run.Kind, run.ProposalId, run.Provenance, run.Picture, run.SettingKey,
+                        run.Translation.Length > 0 ? run.Translation.ToString() : null))
             ],
         };
     }
@@ -766,7 +797,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private static string Flatten(Run run) =>
         run.Voice == TranscriptVoice.Commander
             ? $"\n\n> {run.Text}\n"
-            : run.Text.ToString();
+            : run.Translation.Length > 0
+                ? $"{run.Text.ToString().TrimEnd()}\n\n{run.Translation}\n"
+                : run.Text.ToString();
 
     /// <summary>The last <paramref name="lines"/> lines, for a surface with less room than a window.</summary>
     public string Tail(int lines)
