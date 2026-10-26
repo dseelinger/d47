@@ -10,6 +10,8 @@
 
 A stick button bound to an action or to cancel now acts on every press, however short. A dial bound to comms channel up or down steps once per click, where before it missed most of them, and a dial can now be bound on the bind page.
 
+A stick button bound to comms channel or sub-channel up or down still moves the channel on every press, but D47 now says the channel's name once, 400 ms after the last step, instead of once per step.
+
 Asking D47 to reset one of its on/off settings to its default now restores that default. Before, 25 of them, among them Download stock stories, Story ratings, the chat channel speech settings, COVAS reverb, Show D47 in the headset, the VR captions and the ship-command permissions, went to the opposite value.
 
 With EDDN sharing on, D47 now sends nothing while you are inside an Operation. The instance's station, its star system position and the signals seen there stay off EDDN, and sharing resumes when you leave. A scan run begun in the main game is still sent when the Operation starts.

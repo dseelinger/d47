@@ -48,6 +48,8 @@ public partial class MainWindow : Window
 
     /// <summary>The four gestures that move the comms channel selection.</summary>
     private readonly GlobalHotkey _commsChannelUp;
+    private CommsStepSpeaker? _commsStepSpeaker;
+    private Avalonia.Threading.DispatcherTimer? _commsStepTimer;
 
     private readonly GlobalHotkey _commsChannelDown;
     private readonly GlobalHotkey _commsSubChannelUp;
@@ -1407,6 +1409,36 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Moves the comms selection for a stick step and says it once the steps stop; UI thread.</summary>
+    private void StepComms(string channel, string? subChannel)
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        _commsStepSpeaker ??= new CommsStepSpeaker(_host.CommsChannels, _host.Announcer.SayAside);
+        _commsStepTimer ??= new Avalonia.Threading.DispatcherTimer(
+            TimeSpan.FromMilliseconds(100),
+            Avalonia.Threading.DispatcherPriority.Normal,
+            (_, _) =>
+            {
+                _commsStepSpeaker.Poll(DateTimeOffset.UtcNow);
+
+                if (!_commsStepSpeaker.Waiting)
+                {
+                    _commsStepTimer!.Stop();
+                }
+            });
+
+        _commsStepSpeaker.Step(channel, subChannel, DateTimeOffset.UtcNow);
+
+        if (_commsStepSpeaker.Waiting)
+        {
+            _commsStepTimer.Start();
+        }
+    }
+
     /// <summary>Steps the headset panel's zoom in, out or back to 100%; UI thread.</summary>
     private void StepHeadsetZoom(string direction)
     {
@@ -1447,10 +1479,10 @@ public partial class MainWindow : Window
             [VrCapability.ZoomOutButtonKey] = window => window.StepHeadsetZoom("out"),
             [VrCapability.ResetZoomButtonKey] = window => window.StepHeadsetZoom("reset"),
             [VrCapability.ResizeButtonKey] = window => window.ToggleHeadsetResize(),
-            [CommsCapability.ChannelUpButtonKey] = window => window.MoveComms(CommsCapability.Next, null),
-            [CommsCapability.ChannelDownButtonKey] = window => window.MoveComms(CommsCapability.Previous, null),
-            [CommsCapability.SubChannelUpButtonKey] = window => window.MoveComms(CommsCapability.Current, CommsCapability.Next),
-            [CommsCapability.SubChannelDownButtonKey] = window => window.MoveComms(CommsCapability.Current, CommsCapability.Previous),
+            [CommsCapability.ChannelUpButtonKey] = window => window.StepComms(CommsCapability.Next, null),
+            [CommsCapability.ChannelDownButtonKey] = window => window.StepComms(CommsCapability.Previous, null),
+            [CommsCapability.SubChannelUpButtonKey] = window => window.StepComms(CommsCapability.Current, CommsCapability.Next),
+            [CommsCapability.SubChannelDownButtonKey] = window => window.StepComms(CommsCapability.Current, CommsCapability.Previous),
         };
 
     /// <summary>
