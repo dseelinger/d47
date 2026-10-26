@@ -116,6 +116,10 @@ public sealed class Announcer : IDisposable
     internal static bool TakesPronouns(Announcement announcement) =>
         announcement.Voice != VoiceRole.Narrator && SpokenLanguage.IsEnglish(announcement.Language);
 
+    /// <summary>What the transcript shows for a line: what was heard, then its English when it is in another language.</summary>
+    internal static string WithTranslation(Announcement announcement) =>
+        announcement.Translation is { Length: > 0 } english ? $"{announcement.Heard}\n{english}" : announcement.Heard;
+
     /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
     internal async Task<SpokenClip?> SayAsync(Announcement announcement)
     {
@@ -158,7 +162,7 @@ public sealed class Announcer : IDisposable
             .ConfigureAwait(false);
 
         // The Transcript keeps the names the voice replaced with a pronoun.
-        CalloutSaid?.Invoke(written.Heard, ConversationSpeaker(written, Personas.Current.Name), written.Key, picture);
+        CalloutSaid?.Invoke(WithTranslation(written), ConversationSpeaker(written, Personas.Current.Name), written.Key, picture);
         return clip;
     }
 

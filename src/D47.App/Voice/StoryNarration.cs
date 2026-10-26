@@ -149,11 +149,14 @@ public sealed class StoryNarration
         }
 
         var text = StorySecret.ForCommander(line.Text, _gameState.Active?.Identity.Name, _stories.Gender());
+        var english = line.Translation is { Length: > 0 } translation
+            ? StorySecret.ForCommander(translation, _gameState.Active?.Identity.Name, _stories.Gender())
+            : null;
 
         var posted = _messages.Post(
             voice.From,
             title,
-            text,
+            english is null || SpokenLanguage.IsEnglish(voice.Language) ? text : $"{text}\n\n{english}",
             DateTimeOffset.Now,
             StoryLines.Key(storyId),
             picture: _pictures.For(voice.Cast),
@@ -164,7 +167,14 @@ public sealed class StoryNarration
             await _pairing.EnsureVoiceForCurrentPersonaAsync().ConfigureAwait(false);
         }
 
-        _records.Keep(posted, await _announcer.SayAsync(_writer.Voiced(new Announcement($"{key}.{storyId}", text), voice)).ConfigureAwait(false));
+        var announcement = new Announcement($"{key}.{storyId}", text);
+
+        if (!SpokenLanguage.IsEnglish(voice.Language) && english is not null)
+        {
+            announcement = announcement with { Language = voice.Language, Translation = english };
+        }
+
+        _records.Keep(posted, await _announcer.SayAsync(_writer.Voiced(announcement, voice)).ConfigureAwait(false));
     }
 
     /// <summary>

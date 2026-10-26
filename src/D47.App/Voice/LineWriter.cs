@@ -378,6 +378,13 @@ internal sealed class LineWriter
             : D47.Core.Stories.StoryClues.Speaking(clue, voice.Narrated);
         var directed = voice.Pinned is { } pinned ? CastClient(pinned.ProviderId)?.ReadsAudioTags == true : (bool?)null;
 
+        if (voice.Cast is not null && !SpokenLanguage.IsEnglish(voice.Language))
+        {
+            return await ComposeBilingualStoryLineAsync(brief, voice.Language!, voice.Role, marker.CommsChannel, marker.Key, directed, voice.Cast.Id).ConfigureAwait(false) is var (spoken, english)
+                ? Voiced(marker with { Text = spoken, Translation = english, Language = voice.Language }, voice)
+                : null;
+        }
+
         return await ComposeStoryLineAsync(brief, voice.Role, marker.CommsChannel, marker.Key, directed, voice.Cast?.Id).ConfigureAwait(false) is { } said
             ? Voiced(marker with { Text = said }, voice)
             : null;
@@ -409,7 +416,18 @@ internal sealed class LineWriter
             return null;
         }
 
-        return Voiced(marker with { Key = D47.Core.Stories.StoryReactionCallout.Key(due, castId), Text = line }, chosen);
+        var reaction = marker with { Key = D47.Core.Stories.StoryReactionCallout.Key(due, castId), Text = line };
+
+        if (SpokenLanguage.IsEnglish(chosen.Language))
+        {
+            return Voiced(reaction, chosen);
+        }
+
+        var (spoken, english) = BilingualReply.Split(line);
+
+        return spoken.Length > 0 && english is not null
+            ? Voiced(reaction with { Text = spoken, Translation = english, Language = chosen.Language }, chosen)
+            : null;
     }
 
     /// <summary>A story line as its speaker says it: the role, and for a cast member the name and the pinned voice.</summary>
@@ -457,7 +475,7 @@ internal sealed class LineWriter
             return [];
         }
 
-        return [Voiced(line with { Key = D47.Core.Stories.StoryIntroductions.Key(secret.Id, castId), Text = introduction }, narrator)];
+        return [Voiced(line with { Key = D47.Core.Stories.StoryIntroductions.Key(secret.Id, castId), Text = introduction, Language = null, Translation = null }, narrator)];
     }
 
     /// <summary>
@@ -483,7 +501,21 @@ internal sealed class LineWriter
     /// A story line the model writes from the brief in the given voice, or null when no line came back. The ship's lines
     /// are written by the core aboard; every other speaker's by the brief's own speaker.
     /// </summary>
-    internal async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null, string? cast = null)
+    internal async Task<string?> ComposeStoryLineAsync(FlavourBrief brief, VoiceRole voice, string? channel, string key, bool? canBeDirected = null, string? cast = null) =>
+        (await WriteStoryLineAsync(brief, null, voice, channel, key, canBeDirected, cast).ConfigureAwait(false))?.Spoken;
+
+    /// <summary>
+    /// A story line a cast member speaks in <paramref name="language"/>, with its English: the model is asked for both, and
+    /// the claims screen reads the English. Null when no line came back or the English is missing.
+    /// </summary>
+    internal async Task<(string Spoken, string Translation)?> ComposeBilingualStoryLineAsync(
+        FlavourBrief brief, string language, VoiceRole voice, string? channel, string key, bool? canBeDirected, string cast) =>
+        await WriteStoryLineAsync(brief, language, voice, channel, key, canBeDirected, cast).ConfigureAwait(false) is { Translation: { } english } written
+            ? (written.Spoken, english)
+            : null;
+
+    private async Task<(string Spoken, string? Translation)?> WriteStoryLineAsync(
+        FlavourBrief brief, string? language, VoiceRole voice, string? channel, string key, bool? canBeDirected, string? cast)
     {
         if (Turns.Provider is null || !Settings.Current.Llm.PersonalityEnabled)
         {
@@ -515,12 +547,34 @@ internal sealed class LineWriter
 
         var facts = ShipFacts.Of(GameState.Active);
 
+        var instruction = language is null ? brief.Instruction : $"{brief.Instruction} {BilingualReply.Shape(SpokenLanguage.NameOf(language))}";
+        string? spoken = null;
+
+        async Task<string?> AskScreenedAsync(string ask)
+        {
+            var reply = await AskAsync(ask).ConfigureAwait(false);
+
+            if (language is null || reply is null)
+            {
+                spoken = reply;
+                return reply;
+            }
+
+            var (said, translation) = BilingualReply.Split(reply);
+
+            spoken = translation is null || said.Length == 0 ? null : said;
+
+            return spoken is null ? null : translation;
+        }
+
         return await ContradictedClaims.SayableAsync(
-            await AskAsync(brief.Instruction).ConfigureAwait(false),
+            await AskScreenedAsync(instruction).ConfigureAwait(false),
             facts,
-            contradiction => AskAsync($"{brief.Instruction} {contradiction.Correction}"),
+            contradiction => AskScreenedAsync($"{instruction} {contradiction.Correction}"),
             _logger,
-            key).ConfigureAwait(false);
+            key).ConfigureAwait(false) is { } screened && spoken is not null
+            ? (spoken, language is null ? null : screened)
+            : null;
     }
 
     /// <summary>The Narrator's recap, written in one model call that carries no hidden layer; null when no line came back.</summary>

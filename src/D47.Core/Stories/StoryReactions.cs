@@ -1,12 +1,18 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using D47.Core.Adventures;
+using D47.Core.Audio;
 using D47.Core.Callouts;
+using D47.Core.Persona;
 
 namespace D47.Core.Stories;
 
 /// <summary>A primary cast member who may react: the cast id, the name the Commander knows them by, and who they are.</summary>
-public sealed record StoryReactor(string Id, string Name, string Who);
+public sealed record StoryReactor(string Id, string Name, string Who)
+{
+    /// <summary>The language the member speaks; null for English.</summary>
+    public string? Language { get; init; }
+}
 
 /// <summary>What the model is asked when a cast member reacts to what the Commander did, and how its reply is read.</summary>
 public static partial class StoryReactions
@@ -26,7 +32,9 @@ public static partial class StoryReactions
 
         foreach (var member in cast)
         {
-            text.AppendLine($"- {member.Id}: {member.Name}. {member.Who}".TrimEnd());
+            var tongue = SpokenLanguage.IsEnglish(member.Language) ? string.Empty : $" Speaks {SpokenLanguage.NameOf(member.Language)}.";
+
+            text.AppendLine($"- {member.Id}: {member.Name}. {member.Who}{tongue}".TrimEnd());
         }
 
         text.Append(
@@ -34,6 +42,13 @@ public static partial class StoryReactions
             + "it, as that character, in the first person and in their own words. One or two sentences. React to what "
             + "the Commander did and to nothing else: state no new fact about the story, carry no clue, and do not give "
             + "advice. " + StorySpeaker.MannerRule + " Reply with the character's id, a colon, and the line, and nothing else.");
+
+        if (cast.Any(member => !SpokenLanguage.IsEnglish(member.Language)))
+        {
+            text.Append(
+                " For a character who speaks another language, write the line in that language, then a line holding only "
+                + $"{BilingualReply.Marker}, then the same line in English.");
+        }
 
         return new FlavourBrief
         {

@@ -5,6 +5,10 @@ public static class BilingualReply
 {
     public const string Marker = "///";
 
+    /// <summary>The instruction that asks for a line in <paramref name="tongue"/> followed by its English.</summary>
+    public static string Shape(string tongue) =>
+        $"Write the line in {tongue}, then a line holding only {Marker}, then the same line in English. Nothing else goes before, between or after them.";
+
     /// <summary>The part to speak and its English; the whole reply and a null translation when no line holds only the marker.</summary>
     public static (string Spoken, string? Translation) Split(string reply)
     {

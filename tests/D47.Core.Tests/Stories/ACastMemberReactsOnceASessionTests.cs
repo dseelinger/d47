@@ -40,6 +40,18 @@ public sealed class ACastMemberReactsOnceASessionTests
         new(now, false, null, status, NavRoute.None, events, null);
 
     [Fact]
+    public void AJapaneseMemberIsNamedAsSuchAndTheReplyShapeIsAskedForOnlyThen()
+    {
+        var notable = new Notable(NotableKind.Interdicted, Now, "Pulled out of supercruise.");
+        var english = StoryReactions.Asking(notable, Cast).Instruction;
+        var mixed = StoryReactions.Asking(notable, [.. Cast, new StoryReactor("yui", "Yui", "A courier.") { Language = "ja" }]).Instruction;
+
+        Assert.DoesNotContain("///", english);
+        Assert.Contains("- yui: Yui. A courier. Speaks Japanese.", mixed);
+        Assert.Contains("///", mixed);
+    }
+
+    [Fact]
     public void ANotableEventIsReactedToAtTheNextDockAndNotBefore()
     {
         var callout = new StoryReactionCallout(new NearbyFight()) { Window = () => Window() };

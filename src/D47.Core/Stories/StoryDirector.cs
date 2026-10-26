@@ -2342,7 +2342,7 @@ public sealed class StoryDirector(
 
         return [.. secret.Cast
             .Where(member => member.Primary && !member.Recorded && (member.Versions is null || CommanderGender.IsSet(gender)) && StoryIntroductions.Met(story, secret, member.Id))
-            .Select(member => new StoryReactor(member.Id, member.Shown(secret.Id, gender).Name, member.Who))];
+            .Select(member => new StoryReactor(member.Id, member.Shown(secret.Id, gender).Name, member.Who) { Language = member.Language })];
     }
 
     /// <summary>Records that a reaction was spoken, so the story gives no other this session.</summary>

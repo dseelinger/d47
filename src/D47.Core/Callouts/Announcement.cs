@@ -85,6 +85,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>The language <see cref="Text"/> is in, as a <see cref="SpokenLanguage"/> tag; null for English.</summary>
     public string? Language { get; init; }
 
+    /// <summary>The English of <see cref="Text"/> when it is in another <see cref="Language"/>; shown beside it, never spoken.</summary>
+    public string? Translation { get; init; }
+
     /// <summary>The id of the running story's cast member who says this, or null.</summary>
     public string? Cast { get; init; }
 

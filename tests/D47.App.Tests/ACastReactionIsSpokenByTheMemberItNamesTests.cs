@@ -29,6 +29,7 @@ public sealed class ACastReactionIsSpokenByTheMemberItNamesTests
         [
             new StorySpeaker { Id = "ren", Name = "Ren", Who = "A tired dock hand, short words.", Provider = StorySpeaker.Kokoro, Voice = "bm_george", Primary = true },
             new StorySpeaker { Id = "ama", Name = "Ama", Who = "A station clerk.", Provider = StorySpeaker.Kokoro, Voice = "af_heart" },
+            new StorySpeaker { Id = "yui", Name = "Yui", Who = "A courier pilot.", Provider = StorySpeaker.Kokoro, Voice = "af_heart", Primary = true, Language = "ja" },
         ],
     };
 
@@ -165,6 +166,44 @@ public sealed class ACastReactionIsSpokenByTheMemberItNamesTests
         Assert.DoesNotContain("Dedy Sofyan", instruction);
         Assert.Null(prompt.LiveGameState);
         Assert.Contains(Secret.Secret, prompt.HiddenStory);
+    }
+
+    [Fact]
+    public async Task AJapaneseMemberIsAskedForTheJapaneseAndItsEnglishAndSpeaksTheJapanese()
+    {
+        var built = Build("yui: 無事でよかった。\n///\nGood to see you made it.");
+
+        var said = Assert.Single(await built.Writer.WriteAsync(Marker(built)));
+
+        Assert.Equal("無事でよかった。", said.Text);
+        Assert.Equal("Good to see you made it.", said.Translation);
+        Assert.Equal("ja", said.Language);
+        Assert.Equal("Yui", said.Speaker);
+
+        var instruction = Assert.Single(Assert.Single(built.Model.Requests).Prompt.History).Text;
+
+        Assert.Contains("- yui: Yui. A courier pilot. Speaks Japanese.", instruction);
+        Assert.Contains("///", instruction);
+    }
+
+    [Fact]
+    public async Task AJapaneseReplyWithNoEnglishIsNotSpoken()
+    {
+        var built = Build("yui: 無事でよかった。");
+
+        Assert.Empty(await built.Writer.WriteAsync(Marker(built)));
+        Assert.False(built.Director.ReactionWindow(null)!.Reacted);
+    }
+
+    [Fact]
+    public async Task AnEnglishMemberAmongJapaneseOnesCarriesNoTranslation()
+    {
+        var built = Build("ren: Fought it, did you.");
+
+        var said = Assert.Single(await built.Writer.WriteAsync(Marker(built)));
+
+        Assert.Null(said.Translation);
+        Assert.Null(said.Language);
     }
 
     [Theory]

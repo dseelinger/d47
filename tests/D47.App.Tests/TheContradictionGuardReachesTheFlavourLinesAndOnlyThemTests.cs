@@ -60,7 +60,7 @@ public class TheContradictionGuardReachesTheFlavourLinesAndOnlyThemTests
 
         Assert.Equal(["CastLine.cs", "ChatterLine.cs", "ContradictedClaims.cs", "NarratorLine.cs", "Rewording.cs", "TargetLine.cs"], reaching);
 
-        string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "ComposeStoryLineAsync"];
+        string[] permitted = ["OnPersonaChanged", "ComposeNpcChatterAsync", "WriteStoryLineAsync"];
         var stray = AppSource.Files
             .SelectMany(file => file.Tree.GetRoot().DescendantNodes().OfType<IdentifierNameSyntax>()
                 .Where(identifier => identifier.Identifier.ValueText == "ContradictedClaims")
