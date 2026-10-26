@@ -18,29 +18,58 @@ public sealed record StorySwitch(
     int? Seats = null,
     string? Chapter = null);
 
-/// <summary>Which of a story's cast are aboard the Commander's ship, and so heard in the cockpit rather than over comms.</summary>
+/// <summary>
+/// Which of a story's cast are aboard the Commander's ship, and so heard in the cockpit rather than over comms, and which are
+/// aboard their fleet carrier.
+/// </summary>
 public static class StoryAboard
 {
     /// <summary>
-    /// The cast ids aboard by span: each member whose latest switch that has happened, in span order, is a boarding, or who
-    /// boards at the start and has no switch that has happened.
+    /// The cast ids aboard the ship by span: each ship-place member whose latest switch that has happened, in span order, is a
+    /// boarding, or who boards at the start and has no switch that has happened.
     /// </summary>
     public static IReadOnlyList<string> BySpan(StorySecret secret, Story story)
     {
         ArgumentNullException.ThrowIfNull(secret);
         ArgumentNullException.ThrowIfNull(story);
 
-        return [.. secret.Cast.Where(member => IsAboard(member, story)).Select(member => member.Id)];
+        return [.. secret.Cast.Where(member => !member.OnCarrier && IsAboard(member, story)).Select(member => member.Id)];
+    }
+
+    /// <summary>The cast ids aboard the carrier by span, as <see cref="BySpan"/> reads it for carrier-place members.</summary>
+    public static IReadOnlyList<string> OnCarrierBySpan(StorySecret secret, Story story)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(story);
+
+        return [.. secret.Cast.Where(member => member.OnCarrier && IsAboard(member, story)).Select(member => member.Id)];
     }
 
     /// <summary>
-    /// The cast ids aboard at <paramref name="beat"/> of a chapter, -1 for the opening: its <see cref="Adventure.Aboard"/>, plus
-    /// each boarding and minus each leaving at the opening and at every beat up to and including <paramref name="beat"/>.
+    /// The cast ids aboard the carrier at <paramref name="beat"/> of <paramref name="chapter"/>, -1 for the opening: those aboard
+    /// by span once the chapter's switches at its opening and at every beat up to and including <paramref name="beat"/> are
+    /// folded into <paramref name="story"/>, as saved when the chapter opened.
     /// </summary>
-    public static IReadOnlyList<string> At(Adventure chapter, int beat)
+    public static IReadOnlyList<string> OnCarrierAt(StorySecret secret, Story story, Adventure chapter, int beat)
     {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(story);
         ArgumentNullException.ThrowIfNull(chapter);
 
+        return OnCarrierBySpan(secret, Folded(story, secret, chapter, beat + 1));
+    }
+
+    /// <summary>
+    /// The cast ids aboard the ship at <paramref name="beat"/> of a chapter, -1 for the opening: its <see cref="Adventure.Aboard"/>,
+    /// plus each boarding and minus each leaving of a member who is not carrier-place, at the opening and at every beat up to and
+    /// including <paramref name="beat"/>.
+    /// </summary>
+    public static IReadOnlyList<string> At(StorySecret secret, Adventure chapter, int beat)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(chapter);
+
+        var carrier = secret.Cast.Where(member => member.OnCarrier).Select(member => member.Id).ToHashSet(StringComparer.Ordinal);
         var aboard = new List<string>(chapter.Aboard ?? []);
 
         Apply(chapter.OpeningBoards, chapter.OpeningLeaves);
@@ -54,16 +83,16 @@ public static class StoryAboard
 
         void Apply(IReadOnlyList<string> boards, IReadOnlyList<string> leaves)
         {
-            aboard.AddRange(boards.Where(id => !aboard.Contains(id, StringComparer.Ordinal)));
-            aboard.RemoveAll(id => leaves.Contains(id, StringComparer.Ordinal));
+            aboard.AddRange(boards.Where(id => !carrier.Contains(id) && !aboard.Contains(id, StringComparer.Ordinal)));
+            aboard.RemoveAll(id => !carrier.Contains(id) && leaves.Contains(id, StringComparer.Ordinal));
         }
     }
 
     /// <summary>
     /// The boardings and leavings a chapter handed <paramref name="handed"/> may place, each a member's next switch: a boarding
-    /// whose beat is handed out or that is held for a seat, those held first, with <see cref="StorySwitch.Seats"/> set on each that
-    /// <paramref name="hull"/> has no free seat for; and a leaving whose beat is handed out, of the open span of a member aboard by
-    /// span or of the span a boarding here opens.
+    /// whose beat is handed out or that is held for a seat, those held first, with <see cref="StorySwitch.Seats"/> set on each
+    /// ship-place boarding that <paramref name="hull"/> has no free seat for; and a leaving whose beat is handed out, of the open
+    /// span of a member aboard by span, on the ship or the carrier, or of the span a boarding here opens.
     /// </summary>
     public static IReadOnlyList<StorySwitch> Due(StorySecret secret, Story story, IReadOnlyList<string> handed, string? hull = null)
     {
@@ -77,18 +106,21 @@ public static class StoryAboard
         var aboard = BySpan(secret, story).Count;
         var next = secret.Cast.Select(member => (Member: member, At: Latest(member, story) + 1)).ToList();
 
-        var boarding = next
+        var ordered = next
             .Where(entry => Switches(entry.Member).ElementAtOrDefault(entry.At) is { Boards: true } due
                 && (handed.Contains(due.Beat, StringComparer.Ordinal) || Held(entry.Member)))
             .Select(entry => (entry.Member, entry.At, Switches(entry.Member)[entry.At].Beat))
             .OrderBy(entry => Held(entry.Member) ? 0 : 1)
             .ThenBy(entry => Held(entry.Member) ? story.AwaitingSeat.ToList().IndexOf(entry.Member.Id) : Order(entry.Beat))
-            .Select((entry, index) => (entry.At, Switch: new StorySwitch(
+            .ToList();
+        var seating = ordered.Where(entry => !entry.Member.OnCarrier).Select(entry => entry.Member.Id).ToList();
+        var boarding = ordered
+            .Select(entry => (entry.At, Switch: new StorySwitch(
                 entry.Member.Id,
                 true,
                 entry.Beat,
                 Held(entry.Member) && !handed.Contains(entry.Beat, StringComparer.Ordinal),
-                index < free ? null : 2 + aboard + index)))
+                entry.Member.OnCarrier || seating.IndexOf(entry.Member.Id) is var index && index < free ? null : 2 + aboard + index)))
             .ToList();
 
         var leaving = next
@@ -105,7 +137,8 @@ public static class StoryAboard
     /// The story with each switch a chapter handed <paramref name="handed"/> has passed applied: a member's next switches, in span
     /// order, whose beats come before every beat handed out. Those up to a member's last passed leaving are recorded first, less a
     /// boarding held for a seat, which is skipped; then each last passed boarding, in beat order, is recorded while
-    /// <paramref name="hull"/> has a free seat and otherwise held in <see cref="Story.AwaitingSeat"/>. Nothing is applied for a
+    /// <paramref name="hull"/> has a free seat and otherwise held in <see cref="Story.AwaitingSeat"/>; a carrier-place boarding is
+    /// always recorded. Nothing is applied for a
     /// chapter handed no beats, or for a beat every finale chapter is handed.
     /// </summary>
     public static Story Missed(Story story, StorySecret secret, IReadOnlyList<string> handed, string? hull = null)
@@ -161,7 +194,7 @@ public static class StoryAboard
                 continue;
             }
 
-            result = FreeSeats(secret, result, hull) > 0
+            result = OnCarrier(secret, boarding.Id) || FreeSeats(secret, result, hull) > 0
                 ? With(result, [boarding])
                 : result with { AwaitingSeat = [.. result.AwaitingSeat, boarding.Id] };
         }
@@ -226,7 +259,8 @@ public static class StoryAboard
 
     /// <summary>
     /// The chapter with only the boardings and leavings in <paramref name="due"/> kept, in the cast's spelling, each at its first
-    /// place; a leaving is kept only for a member aboard as the chapter opens or boarding at an earlier beat. A boarding with
+    /// place; a leaving is kept only for a member aboard as the chapter opens or boarding at an earlier beat, where a due leaving
+    /// with no due boarding is of a member aboard as it opens, on the ship or the carrier. A boarding with
     /// <see cref="StorySwitch.Seats"/> is kept only on or after the first objective that boards a hull with that many seats.
     /// </summary>
     public static Adventure Placed(Adventure chapter, IReadOnlyList<StorySwitch> due)
@@ -235,6 +269,7 @@ public static class StoryAboard
         ArgumentNullException.ThrowIfNull(due);
 
         var aboard = new HashSet<string>(chapter.Aboard ?? [], StringComparer.Ordinal);
+        aboard.UnionWith(due.Where(entry => !entry.Boards && !due.Any(other => other.Boards && other.Id == entry.Id)).Select(entry => entry.Id));
         var boarded = new HashSet<string>(StringComparer.Ordinal);
         var left = new HashSet<string>(StringComparer.Ordinal);
 
@@ -337,6 +372,9 @@ public static class StoryAboard
 
         return int.MaxValue;
     }
+
+    private static bool OnCarrier(StorySecret secret, string id) =>
+        secret.Cast.FirstOrDefault(member => member.Id == id)?.OnCarrier == true;
 
     private static int FreeSeats(StorySecret secret, Story story, string? hull) =>
         EliteSpecifications.Ship(hull)?.Crew is { } crew

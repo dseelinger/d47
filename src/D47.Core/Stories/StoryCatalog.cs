@@ -298,6 +298,10 @@ public sealed record StorySpeaker
     [JsonConverter(typeof(StorySpeakerAboardConverter))]
     public IReadOnlyList<StorySpeakerAboard>? Aboard { get; init; }
 
+    /// <summary>Whether the member's spans are on the Commander's fleet carrier rather than their ship, by the first span's place.</summary>
+    [JsonIgnore]
+    public bool OnCarrier => Aboard is [{ Place: StorySpeakerAboard.Carrier }, ..];
+
     /// <summary>
     /// The member as a Commander of <paramref name="gender"/> meets them. An unset gender meets the
     /// <see cref="StorySpeakerVersions.ForMan"/> version.
@@ -353,8 +357,19 @@ public sealed record StorySpeakerVersion
 /// <summary>
 /// A cast member's time aboard: from the <see cref="Boards"/> beat up to, not including, the <see cref="Leaves"/> beat,
 /// each a key of the story length's <see cref="StoryPacing.BeatKeys"/>. Null boards at the story's start; null leaves at its end.
+/// <paramref name="Place"/> is <see cref="Ship"/> or <see cref="Carrier"/>; null is the ship.
 /// </summary>
-public sealed record StorySpeakerAboard(string? Boards, string? Leaves);
+public sealed record StorySpeakerAboard(
+    string? Boards,
+    string? Leaves,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Place = null)
+{
+    /// <summary>Aboard the Commander's ship.</summary>
+    public const string Ship = "ship";
+
+    /// <summary>Aboard the Commander's own fleet carrier.</summary>
+    public const string Carrier = "carrier";
+}
 
 /// <summary>
 /// A span of a story in the black: from the <see cref="From"/> beat up to, not including, the <see cref="To"/> beat, each a key of
@@ -1141,6 +1156,15 @@ public sealed class StoryCatalog
             {
                 var name = aboard.Count == 1 ? member : $"{member}[{index.ToString(CultureInfo.InvariantCulture)}]";
                 var known = true;
+
+                if (span.Place is not (null or StorySpeakerAboard.Ship or StorySpeakerAboard.Carrier))
+                {
+                    yield return $"{name}.place is {span.Place}, not {StorySpeakerAboard.Ship} or {StorySpeakerAboard.Carrier}.";
+                }
+                else if (index > 0 && (span.Place ?? StorySpeakerAboard.Ship) != (aboard[0].Place ?? StorySpeakerAboard.Ship))
+                {
+                    yield return $"{name}.place differs from the first span's; a member's spans share one place.";
+                }
 
                 foreach (var (field, beat) in new[] { ("boards", span.Boards), ("leaves", span.Leaves) })
                 {

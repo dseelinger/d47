@@ -67,11 +67,12 @@ public static class StoryVoices
     /// The voice of a line by <paramref name="speaker"/>. The ship is the core aboard, or the narrator while that core is
     /// stock; a cast member speaks in the voice <paramref name="choices"/> holds for the version a Commander of
     /// <paramref name="gender"/> meets, or else its pinned voice. A speaker the story does not cast is the ship's. A
-    /// member in <paramref name="aboard"/> is heard in the cockpit: their link is not applied, their effects still are.
+    /// member's link is the one <see cref="CastLink.Of"/> gives for <paramref name="aboard"/>, those in the cockpit,
+    /// <paramref name="onCarrier"/> and <paramref name="carrier"/>; their effects are always applied.
     /// </summary>
     public static StoryLineVoice Of(
         string? speaker, StorySecret secret, string? gender, Persona.Persona? core, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null,
-        ShipSpeech? ship = null, IReadOnlyCollection<string>? aboard = null)
+        ShipSpeech? ship = null, IReadOnlyCollection<string>? aboard = null, IReadOnlyCollection<string>? onCarrier = null, CarrierFix? carrier = null)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
@@ -92,7 +93,7 @@ public static class StoryVoices
             VoiceRole.Crew,
             shown.Name,
             shown,
-            aboard?.Contains(member.Id) == true ? InCockpit(voice) : voice)
+            Linked(voice, CastLink.Of(member, aboard?.Contains(member.Id) == true, onCarrier?.Contains(member.Id) == true, carrier)))
         {
             Who = member.Who,
         };
@@ -131,8 +132,8 @@ public static class StoryVoices
             with { Link = member.Link, Effects = member.Effects };
     }
 
-    private static PinnedVoice InCockpit(PinnedVoice voice) =>
-        voice with { Link = null, Fallback = voice.Fallback is { } fallback ? InCockpit(fallback) : null };
+    private static PinnedVoice Linked(PinnedVoice voice, double? link) =>
+        voice with { Link = link, Fallback = voice.Fallback is { } fallback ? Linked(fallback, link) : null };
 
     /// <summary>Whether a line by <paramref name="speaker"/> is the ship's: named so, or naming nobody the story casts.</summary>
     public static bool IsShip(string? speaker, StorySecret secret)

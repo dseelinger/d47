@@ -228,6 +228,10 @@ add.
   the writer that beat places the boarding or leaving on the objective where the beat happens, and a chapter past
   the beat with nothing placed opens with it done. Any beat of the sheet works; it need not start a stage. Leave
   `aboard` out for a member who is never in the ship; a chapter may still bring one aboard for that chapter alone.
+  A span may carry `"place": "carrier"` for a member who lives on the Commander's own fleet carrier rather than in
+  their ship; `"ship"` is the default and is left out. A member's spans share one place. A carrier member needs
+  no seat, is heard in person while the Commander is docked at the carrier and over comms that fade with distance
+  otherwise, and keeps their `link` for a Commander with no carrier.
 - **A story that spends time in the black** carries `black` in the hidden entry: a list of spans
   `{"from": <beat>, "to": <beat>}`, each a beat key of the length's sheet or null for the story's start or end,
   `from` included and `to` not, as with `aboard`. `[{"from": null, "to": null}]` is the whole story. Spans do not

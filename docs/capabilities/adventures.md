@@ -627,6 +627,15 @@ writer is told how many seats the boarding needs and which ships have them, and 
 A boarding no ship you own or can afford could seat is not offered. One the chapter does not place is held, and the first chapter written
 while your ship has a seat is told the boarding is due and places it as a scene.
 
+**A cast member can live on your fleet carrier.** A story may mark a member's span as on the carrier rather than
+your ship. That member boards and leaves the carrier at their beats as a ship rider does, needs no seat, and is
+never counted as aboard your ship. While you are docked at your own carrier they are heard in person. Away from
+it, they are heard over comms that fade with distance: clear within 250 light years, then more broken up
+farther out, though never lost entirely. Beyond 500 light years they cannot hear you, and a reply to them is refused as the captain's
+is; their story lines are still spoken. With no carrier of your own, a squadron carrier, or a carrier in a system
+you have no position for, they are heard through the story's own comms sound. A chapter that lists them aboard
+your ship puts them in the cockpit.
+
 Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line
 as written and the ship then says where you go next. A line may open with a sound such as

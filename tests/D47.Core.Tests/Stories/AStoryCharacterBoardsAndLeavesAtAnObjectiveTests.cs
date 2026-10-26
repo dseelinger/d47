@@ -51,8 +51,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     {
         var chapter = WithBeat(Chapter([]), 2, beat => beat with { Boards = ["rider"] });
 
-        Assert.All(new[] { -1, 0, 1 }, at => Assert.Empty(StoryAboard.At(chapter, at)));
-        Assert.All(new[] { 2, 3 }, at => Assert.Equal(["rider"], StoryAboard.At(chapter, at)));
+        Assert.All(new[] { -1, 0, 1 }, at => Assert.Empty(StoryAboard.At(Riding, chapter, at)));
+        Assert.All(new[] { 2, 3 }, at => Assert.Equal(["rider"], StoryAboard.At(Riding, chapter, at)));
     }
 
     [Fact]
@@ -60,8 +60,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     {
         var chapter = WithBeat(Chapter(["rider"]), 2, beat => beat with { Leaves = ["rider"] });
 
-        Assert.All(new[] { -1, 0, 1 }, at => Assert.Equal(["rider"], StoryAboard.At(chapter, at)));
-        Assert.All(new[] { 2, 3 }, at => Assert.Empty(StoryAboard.At(chapter, at)));
+        Assert.All(new[] { -1, 0, 1 }, at => Assert.Equal(["rider"], StoryAboard.At(Riding, chapter, at)));
+        Assert.All(new[] { 2, 3 }, at => Assert.Empty(StoryAboard.At(Riding, chapter, at)));
     }
 
     [Fact]
@@ -70,8 +70,8 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         var boarding = Chapter([]) with { OpeningBoards = ["rider"] };
         var leaving = Chapter(["rider"]) with { OpeningLeaves = ["rider"] };
 
-        Assert.All(new[] { -1, 0, 3 }, at => Assert.Equal(["rider"], StoryAboard.At(boarding, at)));
-        Assert.All(new[] { -1, 0, 3 }, at => Assert.Empty(StoryAboard.At(leaving, at)));
+        Assert.All(new[] { -1, 0, 3 }, at => Assert.Equal(["rider"], StoryAboard.At(Riding, boarding, at)));
+        Assert.All(new[] { -1, 0, 3 }, at => Assert.Empty(StoryAboard.At(Riding, leaving, at)));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
     {
         var chapter = Chapter(["rider", "dock-hand"]);
 
-        Assert.All(Enumerable.Range(-1, 6), at => Assert.Equal(["rider", "dock-hand"], StoryAboard.At(chapter, at)));
+        Assert.All(Enumerable.Range(-1, 6), at => Assert.Equal(["rider", "dock-hand"], StoryAboard.At(Riding, chapter, at)));
     }
 
     [Fact]

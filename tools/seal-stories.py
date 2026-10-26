@@ -34,6 +34,8 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals" and "be
            hands the writer a beat from boards up to, not including, leaves. A speaker that rides more than once
            carries a list of two or more such spans in story order: each boards after the beat the one before it
            leaves at, only the first boards at null and only the last leaves at null. One span is an object.
+           A span may carry "place": "ship" (the default) or "carrier", for a member who lives aboard the
+           Commander's own fleet carrier rather than their ship; a member's spans share one place.
            A speaker may carry "recorded": true: it is heard only in recordings or messages and never speaks
            live. A recorded speaker never carries "aboard".
            A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
@@ -122,13 +124,18 @@ def aboard_fault(who: str, speaker: dict, sheet: tuple, length) -> list:
     if isinstance(aboard, list) and len(aboard) == 1:
         return [f"{who} has an aboard list of one span, which is written as an object"]
     spans = aboard if isinstance(aboard, list) else [aboard]
-    if any(not isinstance(span, dict) or set(span) - {"boards", "leaves"} for span in spans):
-        return [f"{who} has an aboard that is not {{\"boards\", \"leaves\"}} or a list of them"]
+    if any(not isinstance(span, dict) or set(span) - {"boards", "leaves", "place"} for span in spans):
+        return [f"{who} has an aboard that is not {{\"boards\", \"leaves\", \"place\"}} or a list of them"]
     found = []
     previous = None
     for at, span in enumerate(spans):
         name = who if len(spans) == 1 else f"{who} span {at + 1}"
         known = True
+        place = span.get("place", "ship")
+        if place not in ("ship", "carrier"):
+            found.append(f"{name} has aboard place {place!r}, not 'ship' or 'carrier'")
+        elif at > 0 and place != spans[0].get("place", "ship"):
+            found.append(f"{name} has aboard place {place!r}, not the first span's; a member's spans share one place")
         for field in ("boards", "leaves"):
             beat = span.get(field)
             if beat is not None and beat not in sheet:

@@ -199,6 +199,9 @@ public sealed class StoryDirector(
     /// <summary>The provider the ship speaks through and the voices paired with the cast on it; null leaves every member in the story's voice.</summary>
     public Func<ShipSpeech?> Ship { get; set; } = () => null;
 
+    /// <summary>Where the Commander is relative to their own fleet carrier; null with no carrier of their own.</summary>
+    public Func<CarrierFix?> Carrier { get; set; } = () => null;
+
     /// <summary>The voices the Commander chose for story characters, keyed as <see cref="Configuration.D47Settings.StoryVoices"/>.</summary>
     public Func<IReadOnlyDictionary<string, Configuration.StoryVoiceChoice>> Choices { get; set; } =
         () => new Dictionary<string, Configuration.StoryVoiceChoice>();
@@ -282,7 +285,20 @@ public sealed class StoryDirector(
     /// </summary>
     public StoryLineVoice? LineVoice(string? frontierId, string? speaker, int? beat = null) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret, beat))
+            ? StoryVoices.Of(
+                speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret, beat), CastOnCarrier(frontierId, story, secret, beat), Carrier())
+            : null;
+
+    /// <summary>
+    /// The light years to the Commander's carrier when the current story's member <paramref name="castId"/> is heard over its
+    /// link, as <see cref="CastLink.Away"/> decides at the last beat that fired; null otherwise.
+    /// </summary>
+    public double? CastCarrierAway(string? frontierId, string castId) =>
+        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
+            ? CastLink.Away(
+                InCockpit(frontierId, story, secret).Contains(castId, StringComparer.Ordinal),
+                CastOnCarrier(frontierId, story, secret).Contains(castId, StringComparer.Ordinal),
+                Carrier())
             : null;
 
     /// <summary>
@@ -294,8 +310,14 @@ public sealed class StoryDirector(
 
     private IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
         story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
-            ? StoryAboard.At(chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
+            ? StoryAboard.At(secret, chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
             : StoryAboard.BySpan(secret, story);
+
+    /// <summary>The cast aboard the Commander's carrier at <paramref name="beat"/>, read as <see cref="CastAboard(string?, int?)"/> reads the ship.</summary>
+    private IReadOnlyList<string> CastOnCarrier(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
+        story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
+            ? StoryAboard.OnCarrierAt(secret, story, chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
+            : StoryAboard.OnCarrierBySpan(secret, story);
 
     /// <summary>The cast aboard at <paramref name="beat"/> who have a seat in the hull the Commander flies now.</summary>
     private IReadOnlyList<string> InCockpit(string? frontierId, Story story, StorySecret secret, int? beat = null)
@@ -2253,7 +2275,8 @@ public sealed class StoryDirector(
                && stories.Current(frontierId) is { } story
                && Hidden(story.Id) is { } secret
                && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
-            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret))
+            ? StoryVoices.Of(
+                line.Speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret), CastOnCarrier(frontierId, story, secret), Carrier())
             : null;
     }
 

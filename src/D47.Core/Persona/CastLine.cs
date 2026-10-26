@@ -16,11 +16,15 @@ namespace D47.Core.Persona;
 /// is paused, switched off or without Odyssey.
 /// </param>
 /// <param name="hiddenStory">The running story's hidden layer as every speaker reads it, or null.</param>
+/// <param name="carrierAway">
+/// The light years to the Commander's carrier when the member with this cast id is heard over its link, or null.
+/// </param>
 public sealed class CastLine(
     Func<string, AdventureSpeaker?> member,
     Func<string?> hiddenStory,
     Func<ShipFacts>? facts = null,
-    ILogger? logger = null) : ILine
+    ILogger? logger = null,
+    Func<string, double?>? carrierAway = null) : ILine
 {
     private const string KeyPrefix = "cast.reply";
 
@@ -66,6 +70,13 @@ public sealed class CastLine(
             return new LineDecision.NotMine();
         }
 
+        var away = carrierAway?.Invoke(castId);
+
+        if (away is > CarrierComms.RangeLightYears and var far)
+        {
+            return new LineDecision.Refused(CarrierComms.OutOfRange(far, speaking.Name), TurnRoute.CarrierOutOfRange);
+        }
+
         var said = input.Trim();
 
         if (!_said.TryGetValue(castId, out var exchange))
@@ -85,7 +96,7 @@ public sealed class CastLine(
                 Brief(speaking, exchange),
                 [],
                 OffersTools: false,
-                Signal: 1,
+                Signal: away is { } carried ? CastLink.Strength(carried) : 1,
                 Screen: reply => Screened(reply, castId, speaking.Name),
                 HiddenStory: hiddenStory,
                 Cast: speaking.Id),

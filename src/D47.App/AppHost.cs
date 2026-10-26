@@ -3258,6 +3258,10 @@ public sealed class AppHost : IDisposable
         storyDirector.SetGender = gender => settings.Replace(
             "the Commander's gender changed", current => current with { CommanderGender = gender });
         storyDirector.Choices = () => settings.Current.StoryVoices;
+        storyDirector.Carrier = () => gameState.Active is { Identity.FrontierId: { } fid } active
+            ? D47.Core.Stories.CarrierFix.Of(
+                active.Carrier, active.Location.StarSystem, active.Location.StarPos, system => stores.TravelLog.PositionOf(fid, system))
+            : null;
         storyDirector.Ship = () =>
         {
             var current = settings.Current;
@@ -3286,7 +3290,8 @@ public sealed class AppHost : IDisposable
             castId => storyDirector.Answering(gameState.Active?.Identity.FrontierId, castId),
             () => storyDirector.HiddenBrief(gameState.Active?.Identity.FrontierId),
             () => ShipFacts.Of(gameState.Active),
-            loggerFactory.CreateLogger<CastLine>()));
+            loggerFactory.CreateLogger<CastLine>(),
+            castId => storyDirector.CastCarrierAway(gameState.Active?.Identity.FrontierId, castId)));
 
         ShippedCallouts.Connect(callouts, new ShippedCallouts.Services
         {

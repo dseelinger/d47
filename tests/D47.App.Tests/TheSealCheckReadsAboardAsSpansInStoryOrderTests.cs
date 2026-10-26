@@ -47,6 +47,8 @@ public sealed class TheSealCheckReadsAboardAsSpansInStoryOrderTests
     [InlineData("""{"boards": "midpoint", "leaves": "allIsLost"}""")]
     [InlineData("""[{"boards": null, "leaves": "catalyst"}, {"boards": "midpoint", "leaves": null}]""")]
     [InlineData("""[{"boards": "setUp", "leaves": "catalyst"}, {"boards": "midpoint", "leaves": "allIsLost"}, {"boards": "finale", "leaves": null}]""")]
+    [InlineData("""{"boards": "midpoint", "leaves": "allIsLost", "place": "carrier"}""")]
+    [InlineData("""[{"boards": null, "leaves": "catalyst", "place": "ship"}, {"boards": "midpoint", "leaves": null}]""")]
     public void AnObjectOrAListInStoryOrderHasNoFault(string aboard) =>
         Assert.Empty(Faults(aboard));
 
@@ -58,6 +60,8 @@ public sealed class TheSealCheckReadsAboardAsSpansInStoryOrderTests
     [InlineData("""[{"boards": "setUp", "leaves": "midpoint"}, {"boards": "midpoint", "leaves": null}]""", "span 2 boards at or before the beat the span before it leaves at")]
     [InlineData("""[{"boards": "setUp", "leaves": "midpoint"}, {"boards": "catalyst", "leaves": null}]""", "span 2 boards at or before the beat the span before it leaves at")]
     [InlineData("""[{"boards": "setUp", "leaves": "catalyst"}, {"boards": "midpoint", "leaves": "climax"}]""", "span 2 has aboard leaves 'climax'")]
+    [InlineData("""{"boards": "midpoint", "leaves": null, "place": "station"}""", "has aboard place 'station', not 'ship' or 'carrier'")]
+    [InlineData("""[{"boards": null, "leaves": "catalyst", "place": "carrier"}, {"boards": "midpoint", "leaves": null}]""", "span 2 has aboard place 'ship', not the first span's")]
     public void AListOutOfOrderIsRefused(string aboard, string fault) =>
         Assert.Contains(Faults(aboard), found => found.Contains(fault, StringComparison.Ordinal));
 }
