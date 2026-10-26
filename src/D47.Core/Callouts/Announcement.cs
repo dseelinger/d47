@@ -82,6 +82,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// </summary>
     public Stories.PinnedVoice? Pinned { get; init; }
 
+    /// <summary>The language <see cref="Text"/> is in, as a <see cref="SpokenLanguage"/> tag; null for English.</summary>
+    public string? Language { get; init; }
+
     /// <summary>The id of the running story's cast member who says this, or null.</summary>
     public string? Cast { get; init; }
 

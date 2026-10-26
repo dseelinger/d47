@@ -112,6 +112,10 @@ public sealed class Announcer : IDisposable
                 && text.Contains(name, StringComparison.OrdinalIgnoreCase))
             .Select(name => name!)];
 
+    /// <summary>Whether the voice says a pronoun for a system the line names: not for a narration, and not for a line in another language.</summary>
+    internal static bool TakesPronouns(Announcement announcement) =>
+        announcement.Voice != VoiceRole.Narrator && SpokenLanguage.IsEnglish(announcement.Language);
+
     /// <summary>Says one announcement and returns what was queued to play, for a message to keep.</summary>
     internal async Task<SpokenClip?> SayAsync(Announcement announcement)
     {
@@ -120,7 +124,7 @@ public sealed class Announcer : IDisposable
         // The voice takes the pronoun; everything written below keeps the name, so a Commander scrolling back
         // can always see which system "it" was.
         // Not a narration, which is prose and keeps its names.
-        if (announcement.Voice != VoiceRole.Narrator)
+        if (TakesPronouns(announcement))
         {
             announcement = announcement with
             {

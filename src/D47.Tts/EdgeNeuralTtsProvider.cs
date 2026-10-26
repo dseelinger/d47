@@ -100,7 +100,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
 
         try
         {
-            using var socket = await OpenAsync(text, voiceId, voice.Rate, cancellationToken).ConfigureAwait(false);
+            using var socket = await OpenAsync(text, voiceId, voice.Rate, voice.Language, cancellationToken).ConfigureAwait(false);
 
             var mp3 = await ReceiveAudioAsync(socket, cancellationToken).ConfigureAwait(false);
 
@@ -146,7 +146,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
 
         try
         {
-            socket = await OpenAsync(text, voiceId, voice.Rate, cancellationToken).ConfigureAwait(false);
+            socket = await OpenAsync(text, voiceId, voice.Rate, voice.Language, cancellationToken).ConfigureAwait(false);
 
             var frames = ReceiveFramesAsync(socket, cancellationToken).GetAsyncEnumerator(cancellationToken);
             var arriving = new ArrivingClip(text);
@@ -237,6 +237,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
         string text,
         string voiceId,
         double rate,
+        string? language,
         CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
@@ -259,7 +260,7 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
             await SendAsync(socket, EdgeProtocol.Configuration(now), cancellationToken).ConfigureAwait(false);
             await SendAsync(
                 socket,
-                EdgeProtocol.SsmlRequest(text, voiceId, rate, Guid.NewGuid().ToString("N"), now),
+                EdgeProtocol.SsmlRequest(text, voiceId, rate, Guid.NewGuid().ToString("N"), now, language),
                 cancellationToken).ConfigureAwait(false);
 
             return socket;

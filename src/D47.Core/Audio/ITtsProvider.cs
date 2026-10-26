@@ -31,6 +31,9 @@ public sealed record VoiceSelection(string? VoiceId, double Rate = 1.0)
     /// <summary>Who the line is spoken as, where the caller knows.</summary>
     public VoiceRole? Role { get; init; }
 
+    /// <summary>The language the line is in, as a <see cref="SpokenLanguage"/> tag; null for English.</summary>
+    public string? Language { get; init; }
+
     /// <summary>No voice chosen; a provider speaks in its first listed voice, and refuses only when it lists none.</summary>
     public static readonly VoiceSelection Default = new(VoiceId: null);
 }

@@ -30,7 +30,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
 
     private readonly SemaphoreSlim _inFlight = new(MaxConcurrent, MaxConcurrent);
 
-    /// <summary>The language every line is synthesised as.</summary>
+    /// <summary>The language a line with none is synthesised as.</summary>
     public const string Language = "en";
 
     /// <summary>What leaves the machine.</summary>
@@ -497,9 +497,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
         request.Content = JsonContent.Create(
             new SynthesisRequest
             {
-                Text = Billable(text),
+                // Numerals are spelled out in English, so a line in another language keeps them.
+                Text = SpokenLanguage.IsEnglish(voice.Language) ? Billable(text) : text,
                 ModelId = model,
-                LanguageCode = Language,
+                LanguageCode = voice.Language ?? Language,
 
                 // Omitted entirely for a model that does not read it, rather than sent and ignored. v3
                 // accepts 0.5 through 2.0 and acts on none of it, so a speed on the wire would be a

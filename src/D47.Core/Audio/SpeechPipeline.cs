@@ -297,11 +297,17 @@ public sealed class SpeechPipeline : IAsyncDisposable
         }
 
         var directed = AudioTags.For(plain, _tts.Performs);
-        var spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(directed));
+        var spoken = directed;
 
-        if (_address is not null)
+        // The rewrites write English words.
+        if (SpokenLanguage.IsEnglish(_voice.Language))
         {
-            spoken = _address.Rewrite(spoken);
+            spoken = SpokenUnits.Rewrite(SpokenDesignations.Rewrite(spoken));
+
+            if (_address is not null)
+            {
+                spoken = _address.Rewrite(spoken);
+            }
         }
 
         // The address was all there was to say — nothing left to send the provider (#196).

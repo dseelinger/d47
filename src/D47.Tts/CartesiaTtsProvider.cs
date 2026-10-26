@@ -25,7 +25,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
     /// <summary>The catalog's model.</summary>
     public static string DefaultModel => ModelCatalogSource.Shared.Current.SpeechDefaultFor(ProviderId)!;
 
-    /// <summary>The language every line is synthesised as.</summary>
+    /// <summary>The language a line with none is synthesised as.</summary>
     public const string Language = "en";
 
     /// <summary>
@@ -189,7 +189,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
         try
         {
-            using var request = SpeechRequestFor(key, text, voiceId);
+            using var request = SpeechRequestFor(key, text, voiceId, voice.Language);
 
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -261,7 +261,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
         try
         {
-            using var request = SpeechRequestFor(key, text, voiceId);
+            using var request = SpeechRequestFor(key, text, voiceId, voice.Language);
 
             response = await _http
                 .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
@@ -313,7 +313,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
         }
     }
 
-    private static HttpRequestMessage SpeechRequestFor(string key, string text, string voiceId)
+    private static HttpRequestMessage SpeechRequestFor(string key, string text, string voiceId, string? language)
     {
         var request = Request(HttpMethod.Post, "/tts/bytes", key);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
@@ -340,7 +340,7 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
 
                 // Pinned, which is the property that makes this provider eligible for a slot carrying
                 // another player's words.
-                Language = Language,
+                Language = language ?? Language,
             },
             options: Json);
 

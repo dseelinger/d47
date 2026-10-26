@@ -444,6 +444,11 @@ public sealed class VoicePipeline(
         _logger.LogDebug(
             "Speaking callout {Key} as {Role}", announcement.Key, announcement.Voice);
 
+        if (announcement.Language is { } language)
+        {
+            voice = (voice ?? Voice) with { Language = language };
+        }
+
         // A story's cast member, in the voice the story pinned and with the treatment the story gave them.
         if (announcement.Pinned is { IsCrewVoice: true, Fallback: null } crew)
         {
@@ -475,7 +480,7 @@ public sealed class VoicePipeline(
                     client,
                     announcement.Text,
                     announcement.Channel,
-                    new VoiceSelection(pinned.VoiceId),
+                    new VoiceSelection(pinned.VoiceId) { Language = announcement.Language },
                     announcement.Group,
                     D47.Core.Stories.CastVoice.Treatment(pinned),
                     D47.Core.Stories.CastVoice.Running(pinned),

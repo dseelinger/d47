@@ -74,6 +74,25 @@ public sealed record TtsProviderInfo
     /// <summary>Why d47 quotes no rate for a provider that charges, or null where it quotes one.</summary>
     public string? NoRateBecause { get; init; }
 
+    /// <summary>The primary language subtags this provider speaks; not read where <see cref="LanguageFollowsVoice"/>.</summary>
+    public IReadOnlyList<string> Languages { get; init; } = [SpokenLanguage.English];
+
+    /// <summary>Whether each voice speaks the language of the locale its id starts with, and no other.</summary>
+    public bool LanguageFollowsVoice { get; init; }
+
+    /// <summary>Whether a line in <paramref name="language"/>, null for English, can be spoken in <paramref name="voiceId"/>.</summary>
+    public bool SpeaksIn(string? language, string? voiceId)
+    {
+        var wanted = SpokenLanguage.Primary(language ?? SpokenLanguage.English);
+
+        return LanguageFollowsVoice
+            ? string.Equals(
+                SpokenLanguage.Primary(SpokenLanguage.LocaleOfVoiceId(voiceId) ?? SpokenLanguage.English),
+                wanted,
+                StringComparison.OrdinalIgnoreCase)
+            : Languages.Contains(wanted, StringComparer.OrdinalIgnoreCase);
+    }
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>Whether this provider can say anything right now.</summary>
@@ -122,6 +141,7 @@ public static class TtsProviderCatalog
         Label = "Edge Neural",
         Summary = "Microsoft's online voices. No account needed.",
         Destination = "speech.platform.bing.com",
+        LanguageFollowsVoice = true,
         Egress = "The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to "
                  + "be turned into audio. That includes re-voiced in-game messages when you have "
                  + "turned those on, which are written by other players. No game state, no journal "
@@ -136,6 +156,7 @@ public static class TtsProviderCatalog
         Summary = "The widest choice of voices. One key also covers ElevenLabs listening.",
         KeySecretName = ElevenLabsKeySecretName,
         Destination = "api.elevenlabs.io, storage.googleapis.com",
+        Languages = [SpokenLanguage.English, SpokenLanguage.Japanese],
 
         // "JBFqnCBsd6RMkjVDRZzb" is a real one, and it is what the Voice row showed.
         VoiceIdsAreOpaque = true,
@@ -170,6 +191,9 @@ public static class TtsProviderCatalog
         // The same secret the language-model provider uses.
         KeySecretName = "openai.apiKey",
         Destination = "api.openai.com",
+
+        // Spoken in the language of the text, since no language is sent.
+        Languages = [SpokenLanguage.English, SpokenLanguage.Japanese],
         Egress = "The text of every line D47 speaks through this slot is sent to OpenAI to be turned "
                  + "into audio, along with your API key — the same key the language model uses if you "
                  + "have set one. No journal content, game state or other keys are sent.",
@@ -203,6 +227,7 @@ public static class TtsProviderCatalog
         Summary = "Cartesia's hosted voices, with a key of its own.",
         KeySecretName = "cartesia.apiKey",
         Destination = "api.cartesia.ai",
+        Languages = [SpokenLanguage.English, SpokenLanguage.Japanese],
         Egress = "The text of every line D47 speaks through this slot is sent to Cartesia to be "
                  + "turned into audio, along with your API key. That includes re-voiced in-game "
                  + "messages when you have turned those on, which are written by other players. "

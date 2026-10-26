@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using D47.Core.Audio;
 
 namespace D47.Tts;
 
@@ -49,10 +50,13 @@ internal static class EdgeProtocol
         {"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}
         """;
 
-    public static string SsmlRequest(string text, string voice, double rate, string requestId, DateTimeOffset now)
+    /// <summary>An English line is tagged <c>en-US</c>; any other with the locale of <paramref name="voice"/>.</summary>
+    public static string SsmlRequest(string text, string voice, double rate, string requestId, DateTimeOffset now, string? language = null)
     {
+        var tag = SpokenLanguage.IsEnglish(language) ? "en-US" : SpokenLanguage.LocaleOfVoiceId(voice) ?? language!;
+
         var ssml =
-            "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>" +
+            $"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='{Escape(tag)}'>" +
             $"<voice name='{Escape(voice)}'>" +
             $"<prosody pitch='+0Hz' rate='{RateAttribute(rate)}' volume='+0%'>" +
             Escape(text) +
