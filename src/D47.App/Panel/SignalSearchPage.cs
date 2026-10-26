@@ -54,6 +54,8 @@ public sealed class SignalSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
 
+    private readonly MaxReportAge _age = new();
+
     private string? _picked;
     private bool _filling;
 
@@ -163,6 +165,11 @@ public sealed class SignalSearchPage : GalaxySearchPage
             arguments["max_distance"] = distance.ToString("0", CultureInfo.InvariantCulture);
         }
 
+        if (_age.Asked is { } age)
+        {
+            arguments["max_report_age_hours"] = age;
+        }
+
         return arguments;
     }
 
@@ -173,6 +180,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         _near.Text = string.Empty;
         _filling = false;
         _distance.Value = DefaultDistance;
+        _age.Reset();
         Pick(null);
     }
 
@@ -183,6 +191,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         string? Get(string key) => arguments.TryGetValue(key, out var value) ? value : null;
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
+        _age.Set(Get("max_report_age_hours"));
 
         if (double.TryParse(Get("max_distance"), NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
         {
@@ -264,7 +273,8 @@ public sealed class SignalSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Up to, in LY", _distance)));
+            Labelled("Up to, in LY", _distance),
+            _age.Field("Max report age")));
 
         return form;
     }

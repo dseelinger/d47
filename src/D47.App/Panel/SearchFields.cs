@@ -171,6 +171,94 @@ internal sealed class ShowUpTo
     }
 }
 
+/// <summary>The MAX REPORT AGE dropdown: how old a report may be, stored as hours with 0 for any age.</summary>
+internal sealed class MaxReportAge
+{
+    internal const int Any = 0;
+
+    internal const int Max = 8_760;
+
+    internal static readonly IReadOnlyList<(int Hours, string Label)> Choices =
+    [
+        (Any, "Any"),
+        (1, "1 hour"),
+        (8, "8 hours"),
+        (16, "16 hours"),
+        (24, "1 day"),
+        (48, "2 days"),
+        (72, "3 days"),
+        (168, "7 days"),
+        (336, "14 days"),
+        (720, "30 days"),
+        (4_320, "180 days"),
+    ];
+
+    private readonly InlinePicker _picker = new() { Label = "max report age", Mono = true };
+    private readonly int _default;
+    private int _value;
+
+    public MaxReportAge(int hours = Any)
+    {
+        _default = hours;
+        _value = hours;
+        _picker.Picked += (_, id) =>
+        {
+            Value = int.Parse(id, CultureInfo.InvariantCulture);
+            Changed?.Invoke(this, EventArgs.Empty);
+        };
+        Draw();
+    }
+
+    /// <summary>Raised when the Commander picks an age.</summary>
+    public event EventHandler? Changed;
+
+    /// <summary>The picker, for a page that lays out its own label.</summary>
+    public InlinePicker Picker => _picker;
+
+    /// <summary>The age in hours, 0 for any; one outside <see cref="Choices"/> is shown as it is.</summary>
+    public int Value
+    {
+        get => _value;
+        set
+        {
+            _value = value;
+            Draw();
+        }
+    }
+
+    /// <summary>Puts the picker back to the age the page starts with.</summary>
+    public void Reset() => Value = _default;
+
+    /// <summary>The labelled field.</summary>
+    public Control Field(string label) => SystemSearchPage.Labelled(label, _picker);
+
+    /// <summary>Sets the age from a tool argument; a missing or unreadable one is the starting age.</summary>
+    public void Set(string? hours) =>
+        Value = int.TryParse(hours, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) ? parsed : _default;
+
+    /// <summary>The argument to send, or null when the age is Any.</summary>
+    public string? Asked => _value == Any ? null : _value.ToString(CultureInfo.InvariantCulture);
+
+    internal static string Label(int hours) =>
+        Choices.FirstOrDefault(choice => choice.Hours == hours) is { Label: { } label }
+            ? label
+            : $"{hours.ToString("N0", CultureInfo.InvariantCulture)} hours";
+
+    private void Draw()
+    {
+        var options = Choices.Select(choice => new InlinePickerOption(choice.Hours.ToString(CultureInfo.InvariantCulture), choice.Label, ThemeManager.WhiteKey)).ToList();
+        var id = _value.ToString(CultureInfo.InvariantCulture);
+        var shown = Label(_value);
+
+        if (Choices.All(choice => choice.Hours != _value))
+        {
+            options.Add(new InlinePickerOption(id, shown, ThemeManager.WhiteKey));
+        }
+
+        _picker.Show([.. options], id, shown, ThemeManager.WhiteKey, null);
+    }
+}
+
 /// <summary>The MINIMUM POPULATION field: three tiles and a box, sent as a population range.</summary>
 internal sealed class MinimumPopulation : StackPanel
 {

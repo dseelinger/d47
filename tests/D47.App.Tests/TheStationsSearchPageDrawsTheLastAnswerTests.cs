@@ -361,6 +361,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
         amounts[0].Value = 80;
         page.Limit = 8;
+        page.MaxReportAgeHours = 72;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_stations");
 

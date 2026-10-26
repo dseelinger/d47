@@ -286,6 +286,12 @@ public class TheMarketPageTests
                                         Type = D47.Core.Capabilities.ToolParameterType.Boolean,
                                         Description = "Also planetary ports, outposts and settlements.",
                                     },
+                                    new D47.Core.Capabilities.ToolParameter
+                                    {
+                                        Name = "max_price_age_hours",
+                                        Type = D47.Core.Capabilities.ToolParameterType.Integer,
+                                        Description = "How stale a price may be.",
+                                    },
                                 ],
                                 Handler = (arguments, _) =>
                                 {
@@ -319,5 +325,7 @@ public class TheMarketPageTests
         Assert.NotNull(sent);
         Assert.True(sent!.TryGetString("surface_stations", out var value));
         Assert.Equal("true", value);
+        Assert.True(sent.TryGetInt32("max_price_age_hours", out var age));
+        Assert.Equal(720, age);
     }
 }

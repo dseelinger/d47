@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The search pages have a Max report age dropdown. System, Station, Outfitting and Signal searches choose Any, 1 hour up to 180 days, and Any sends no bound. The Market page picks a price age the same way, starting at 30 days, and the Trade page's hours box is now the same dropdown, with a saved 720 showing as 30 days. Replaying a search from history restores the choice, and the Outfitting table's Updated column shows the stock date the search filters on.
+
 Signal search can leave out old sightings. `find_signal` takes a maximum report age in hours and drops signals last seen before it, from the daily index and from your own scans, and the answer says how far back it looked. With no age given, nothing changes.
 
 Galaxy searches can leave out old reports. System, station and outfitting searches take a maximum report age in hours, and the module and ship branches of the nearest-station search use their price age the same way. The bound is applied by the service, on the station's outfitting or shipyard report date for a module or ship and on the last update otherwise, and the answer says how far back it looked. With no age given, nothing changes.

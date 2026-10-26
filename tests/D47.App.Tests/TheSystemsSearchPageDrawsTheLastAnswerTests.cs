@@ -320,6 +320,7 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
 
         page.GetLogicalDescendants().OfType<CheckBox>().Single(box => box.Content as string == "Only colonised systems").IsChecked = true;
         page.Limit = 8;
+        page.MaxReportAgeHours = 72;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_systems");
 

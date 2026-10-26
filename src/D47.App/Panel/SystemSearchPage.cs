@@ -49,6 +49,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private readonly TextBox _distanceFrom = Field("distance from", mono: true);
     private readonly TextBox _distanceTo = Field("distance to", mono: true);
     private readonly ShowUpTo _limit = new();
+    private readonly MaxReportAge _age = new();
     private readonly RangeReadout _distanceReadout;
 
     private readonly MinimumPopulation _population = new(Field("minimum population", mono: true));
@@ -152,6 +153,13 @@ public sealed class SystemSearchPage : GalaxySearchPage
             null);
     }
 
+    /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
+    public int MaxReportAgeHours
+    {
+        get => _age.Value;
+        set => _age.Value = value;
+    }
+
     /// <summary>The count SHOW UP TO shows.</summary>
     public int Limit
     {
@@ -191,6 +199,11 @@ public sealed class SystemSearchPage : GalaxySearchPage
             arguments["colonised"] = "true";
         }
 
+        if (_age.Asked is { } age)
+        {
+            arguments["max_report_age_hours"] = age;
+        }
+
         if (_limit.Value is { } limit && limit != DefaultLimit)
         {
             arguments["limit"] = limit.ToString("0", CultureInfo.InvariantCulture);
@@ -208,6 +221,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         _population.Set(null);
         _limit.Value = DefaultLimit;
+        _age.Reset();
         _powerState.SelectedIndex = 0;
         _colonised.IsChecked = false;
 
@@ -228,6 +242,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         _population.Set(Get("population"));
         Fill(_controllingFaction, _controllingFactionNames, Get("controlling_faction") ?? string.Empty);
         Fill(_faction, _factionNames, Get("faction") ?? string.Empty);
+        _age.Set(Get("max_report_age_hours"));
         _colonised.IsChecked = bool.TryParse(Get("colonised"), out var colonised) && colonised;
         _powerState.SelectedIndex = Index(_powerState.ItemsSource, Get("power_state"));
 
@@ -323,7 +338,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in light years", Span(_distanceFrom, _distanceTo, _distanceReadout)),
-            _limit.Field("Systems")));
+            _limit.Field("Systems"),
+            _age.Field("Max report age")));
 
         form.Children.Add(Group(
             "The system",

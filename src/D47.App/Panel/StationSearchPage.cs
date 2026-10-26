@@ -52,6 +52,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
     private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
     private readonly ShowUpTo _limit = new();
+    private readonly MaxReportAge _age = new();
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypes.ToDictionary(type => type.Name, type => Tile(type.Name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
@@ -157,6 +158,13 @@ public sealed class StationSearchPage : GalaxySearchPage
             null);
     }
 
+    /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
+    public int MaxReportAgeHours
+    {
+        get => _age.Value;
+        set => _age.Value = value;
+    }
+
     /// <summary>The count SHOW UP TO shows.</summary>
     public int Limit
     {
@@ -218,6 +226,11 @@ public sealed class StationSearchPage : GalaxySearchPage
             arguments["colonised"] = "true";
         }
 
+        if (_age.Asked is { } age)
+        {
+            arguments["max_report_age_hours"] = age;
+        }
+
         if (_limit.Value is { } limit && limit != DefaultLimit)
         {
             arguments["limit"] = limit.ToString("0", CultureInfo.InvariantCulture);
@@ -245,6 +258,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         _distance.Value = DefaultDistance;
         _limit.Value = DefaultLimit;
+        _age.Reset();
         _population.Set(null);
         _colonised.IsChecked = false;
         ChooseServices([]);
@@ -262,6 +276,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         string? Get(string key) => arguments.TryGetValue(key, out var value) ? value : null;
 
         Fill(_near, _nearNames, Get("near") ?? string.Empty);
+        _age.Set(Get("max_report_age_hours"));
         _fromStar.Text = Get("max_station_distance") ?? string.Empty;
         Fill(_controllingFaction, _controllingFactionNames, Get("controlling_faction") ?? string.Empty);
         _module.Text = Get("module") ?? string.Empty;
@@ -401,7 +416,8 @@ public sealed class StationSearchPage : GalaxySearchPage
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
             Labelled("Distance in LY", _distance),
-            _limit.Field("Stations")));
+            _limit.Field("Stations"),
+            _age.Field("Max report age")));
 
         var types = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 

@@ -89,12 +89,11 @@ public sealed class RouteTradePage : UserControl
         var hops = Field("Hops", "5");
         var maxJumps = Field("Most jumps per leg", "2");
         var maxDistance = Field("Max distance from star (ls)", "1,000");
-        var maxAge = Field("Max price age (hours)", "720");
+        var maxAge = new MaxReportAge(trade.MaxPriceAgeHours);
 
         hops.Box.Text = trade.Hops.ToString(CultureInfo.InvariantCulture);
         maxJumps.Box.Text = trade.MaxJumps.ToString(CultureInfo.InvariantCulture);
         maxDistance.Box.Text = trade.MaxStationDistance.ToString("N0", CultureInfo.InvariantCulture);
-        maxAge.Box.Text = trade.MaxPriceAgeHours.ToString("N0", CultureInfo.InvariantCulture);
 
         var loop = RoutingKit.Switch("End where it started");
         var largePad = RoutingKit.Switch("Large pads only");
@@ -117,7 +116,7 @@ public sealed class RouteTradePage : UserControl
                     Hops = ParseInt(hops.Text, s.Trade.Hops, 1, 10),
                     MaxJumps = ParseInt(maxJumps.Text, s.Trade.MaxJumps, 1, 10),
                     MaxStationDistance = ParseDouble(maxDistance.Text, s.Trade.MaxStationDistance, 1, 1_000_000),
-                    MaxPriceAgeHours = ParseInt(maxAge.Text, s.Trade.MaxPriceAgeHours, 1, 8_760),
+                    MaxPriceAgeHours = maxAge.Value,
                     Loop = loop.IsChecked == true,
                     LargePadOnly = largePad.IsChecked == true,
                     Planetary = planetary.IsChecked == true,
@@ -128,7 +127,7 @@ public sealed class RouteTradePage : UserControl
         hops.Box.TextChanged += (_, _) => Save();
         maxJumps.Box.TextChanged += (_, _) => Save();
         maxDistance.Box.TextChanged += (_, _) => Save();
-        maxAge.Box.TextChanged += (_, _) => Save();
+        maxAge.Changed += (_, _) => Save();
         loop.IsCheckedChanged += (_, _) => Save();
         largePad.IsCheckedChanged += (_, _) => Save();
         planetary.IsCheckedChanged += (_, _) => Save();
@@ -141,7 +140,7 @@ public sealed class RouteTradePage : UserControl
             {
                 Row(capital, hops),
                 Row(maxJumps, maxDistance),
-                Row(maxAge, null),
+                RoutingKit.Fields(maxAge.Field("Max price age")),
                 RoutingKit.Fields(loop, largePad, planetary, avoidPermit),
                 RoutingKit.Prose(
                     "Your balance is never read from the journal and never saved — say what you "

@@ -59,6 +59,7 @@ public sealed class RouteMarketPage : UserControl
     /// this page.
     /// </summary>
     private readonly CheckBox _surfaceStations;
+    private readonly MaxReportAge _age = new(720);
 
     private readonly StatusLine _status;
 
@@ -135,6 +136,7 @@ public sealed class RouteMarketPage : UserControl
         Detach(_selling);
         Detach(_largePad);
         Detach(_surfaceStations);
+        Detach(_age.Picker);
         Detach(_status);
 
         var find = new Button { Content = "Find it" };
@@ -192,6 +194,7 @@ public sealed class RouteMarketPage : UserControl
                     Labelled("Commodity", _commodity, D47.App.Controls.FieldNeed.Required),
                     Labelled("Tonnes", _tonnes)),
                 D47.App.Controls.FormField.Legend(required: true),
+                RoutingKit.Fields(Labelled("Max price age", _age.Picker)),
                 RoutingKit.Fields(_selling, _largePad, _surfaceStations),
                 RoutingKit.Prose(
                     "Say the tonnage and stations that cannot fill the whole load drop out, and a "
@@ -230,6 +233,8 @@ public sealed class RouteMarketPage : UserControl
         {
             values["surface_stations"] = "true";
         }
+
+        values["max_price_age_hours"] = _age.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         return new ToolArguments(values);
     }

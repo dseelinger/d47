@@ -64,6 +64,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly CheckBox _surface = LabeledCheckBox.Caps("Surface stations");
     private readonly CheckBox _carriers = LabeledCheckBox.Caps("Fleet carriers");
+    private readonly MaxReportAge _age = new();
 
     private IReadOnlyList<OutfittingItem> _items = [];
 
@@ -166,6 +167,11 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         Put("min_pad", _pad.SelectedIndex > 0 ? Pads[_pad.SelectedIndex] : null);
         Put("max_station_distance", _fromStar.Text);
 
+        if (_age.Asked is { } age)
+        {
+            arguments["max_report_age_hours"] = age;
+        }
+
         if (_surface.IsChecked != true)
         {
             arguments["surface_stations"] = "false";
@@ -189,6 +195,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         _pad.SelectedIndex = 0;
         _surface.IsChecked = true;
         _carriers.IsChecked = false;
+        _age.Reset();
         DrawItems();
     }
 
@@ -202,6 +209,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         _fromStar.Text = Get("max_station_distance") ?? string.Empty;
         Pad(Get("min_pad") ?? "Any");
         _surface.IsChecked = !bool.TryParse(Get("surface_stations"), out var surface) || surface;
+        _age.Set(Get("max_report_age_hours"));
         _carriers.IsChecked = bool.TryParse(Get("include_carriers"), out var carriers) && carriers;
 
         foreach (var part in Get("items")?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries) ?? [])
@@ -299,7 +307,8 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Distance in LY", _distance)));
+            Labelled("Distance in LY", _distance),
+            _age.Field("Max report age")));
 
         Control[] ticks = Headset ? [Columns2("*,*", _surface, _carriers)] : [_surface, _carriers];
 
@@ -391,7 +400,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         if (!headset)
         {
             cells.Add(Cell(Right(Mono(
-                station.UpdatedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
+                station.StockLastSeen is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
                 TypeScale.Small,
                 ThemeManager.GreyKey)), 5));
         }
