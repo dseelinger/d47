@@ -86,6 +86,7 @@ public sealed class EddnComposer(
     private string _gameBuild = "";
     private bool? _horizons;
     private bool? _odyssey;
+    private bool _inOperation;
     private string? _journalBodyName;
     private long? _journalBodyId;
     private readonly List<JournalEvent> _run = [];
@@ -187,7 +188,8 @@ public sealed class EddnComposer(
     }
 
     private bool Eligible =>
-        _gameVersion.StartsWith("4.", StringComparison.Ordinal)
+        !_inOperation
+        && _gameVersion.StartsWith("4.", StringComparison.Ordinal)
         && !_gameVersion.Contains("beta", StringComparison.OrdinalIgnoreCase);
 
     private void Fold(JournalEvent journalEvent)
@@ -202,6 +204,11 @@ public sealed class EddnComposer(
                 FoldVersion(journalEvent);
                 _horizons = Flag(journalEvent.Raw, "Horizons");
                 _odyssey = Flag(journalEvent.Raw, "Odyssey");
+                _inOperation = false;
+                break;
+
+            case "GameModeChange":
+                _inOperation = journalEvent.String("GameMode") == "Operation";
                 break;
 
             case "ApproachBody":
