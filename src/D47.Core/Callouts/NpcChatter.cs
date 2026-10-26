@@ -3,6 +3,7 @@ using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Persona;
 using D47.Core.Ships;
 
@@ -440,7 +441,7 @@ public static partial class NpcChatter
         var cast = roster ?? NpcChatterRoster.None;
 
         return Situation(docked, stationType)
-            + Scene(kind, about, docked, exchangeIndex, fight)
+            + Scene(kind, about, docked, exchangeIndex, fight, stationType)
             + (cast.Slots.Count > 0 ? Roster(cast, exchangeIndex) : UnslottedManners(kind, exchangeIndex))
             + (cast.Slots.Count > 0 ? Slotted : Unslotted)
             + Contract
@@ -735,7 +736,8 @@ public static partial class NpcChatter
                 + "slot. ";
 
     private static string Scene(
-        NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex, FightSnapshot? fight) =>
+        NpcChatterKind kind, NpcChatterCarrier carrier, bool docked, int exchangeIndex, FightSnapshot? fight,
+        string? stationType) =>
         kind switch
         {
             NpcChatterKind.Combat => CombatScene(fight ?? FightSnapshot.None),
@@ -746,13 +748,13 @@ public static partial class NpcChatter
             NpcChatterKind.Controller when carrier.Present =>
                 "An invented pilot and the tower controller aboard the Commander's own fleet carrier "
                 + $"{Called(carrier)}exchange 2 to 4 short lines of routine traffic — "
-                + $"{ControllerScene(exchangeIndex)} Procedure with a human edge. The Commander is not "
+                + $"{ControllerScene(exchangeIndex)} {ControllerPilotFlies(exchangeIndex, stationType)}Procedure with a human edge. The Commander is not "
                 + "part of it. ",
 
             NpcChatterKind.Controller =>
                 "An invented pilot and the controller of the station or carrier where the Commander "
                 + "is docked exchange 2 to 4 short lines of routine traffic — "
-                + $"{ControllerScene(exchangeIndex)} Procedure with a human edge. The Commander is not "
+                + $"{ControllerScene(exchangeIndex)} {ControllerPilotFlies(exchangeIndex, stationType)}Procedure with a human edge. The Commander is not "
                 + "part of it. ",
 
             NpcChatterKind.Hail when !docked =>
@@ -766,7 +768,7 @@ public static partial class NpcChatter
                 + "channel — a compliment on the ship, a grumble about the queue, a rumour heard in "
                 + "the bar. Statements only: they are not starting a conversation. ",
 
-            _ => PassersbyScene(exchangeIndex, docked),
+            _ => PassersbyScene(exchangeIndex, docked, stationType),
         };
 
     private static string CombatScene(FightSnapshot fight)
@@ -793,7 +795,7 @@ public static partial class NpcChatter
     /// <paramref name="exchangeIndex"/>, and the completions that shape is known to reach for are
     /// named off limits.
     /// </summary>
-    private static string PassersbyScene(int exchangeIndex, bool docked)
+    private static string PassersbyScene(int exchangeIndex, bool docked, string? stationType)
     {
         var cast = Pick(exchangeIndex, CastOffset, docked ? DockedCasts : OpenSpaceCasts);
         var topic = Pick(exchangeIndex, TopicOffset, Topics);
@@ -809,6 +811,7 @@ public static partial class NpcChatter
 
         return $"Two invented people near the Commander — {cast} — exchange 2 to 4 short lines, "
             + $"opening on {opening}, about {topic}. "
+            + PassersbyFly(exchangeIndex, stationType)
             + noStation
             + noticed
             + PassersbyBans;
@@ -905,6 +908,7 @@ public static partial class NpcChatter
     private const int TopicOffset = 7;
     private const int OpeningOffset = 13;
     private const int NoticeOffset = 19;
+    private const int HullOffset = 37;
 
     /// <summary>
     /// The stock deflections the measured logs showed — asked for once here rather than caught after
@@ -926,6 +930,50 @@ public static partial class NpcChatter
         var fraction = unchecked((uint)(exchangeIndex + offset) * 2654435761u) / 4294967296.0;
 
         return options[(int)(fraction * options.Length)];
+    }
+
+    private static string HullPhrase(int exchangeIndex, int speaker, string? stationType) =>
+        IndefiniteArticle.With(InventedPilotHull(exchangeIndex, speaker, stationType).Name);
+
+    private static string ControllerPilotFlies(int exchangeIndex, string? stationType) =>
+        $"The pilot the controller is talking to flies {HullPhrase(exchangeIndex, 0, stationType)}. ";
+
+    private static string PassersbyFly(int exchangeIndex, string? stationType) =>
+        $"The first of them flies {HullPhrase(exchangeIndex, 0, stationType)}; "
+        + $"the second flies {HullPhrase(exchangeIndex, 1, stationType)}. ";
+
+    private static readonly Lazy<(ShipSpecification Ship, double Weight)[]> PricedHulls = new(() =>
+        [.. EliteSpecifications.Ships
+            .Where(ship => ship.Cost is > 0)
+            .OrderBy(ship => ship.Symbol, StringComparer.Ordinal)
+            .Select(ship => (ship, 1.0 / Math.Cbrt(ship.Cost!.Value)))]);
+
+    /// <summary>
+    /// The hull of an invented pilot: a priced hull weighted by 1 / Cost^(1/3), the same for the same
+    /// exchange and speaker. Large-pad hulls are left out at an outpost.
+    /// </summary>
+    public static ShipSpecification InventedPilotHull(int exchangeIndex, int speaker, string? stationType)
+    {
+        var outpost = string.Equals(stationType, "Outpost", StringComparison.OrdinalIgnoreCase);
+
+        var allowed = PricedHulls.Value
+            .Where(hull => !outpost || !string.Equals(hull.Ship.Pad, "large", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        var key = unchecked((uint)(exchangeIndex * 2 + speaker + HullOffset) * 2654435761u) / 4294967296.0;
+        var target = key * allowed.Sum(hull => hull.Weight);
+
+        var running = 0.0;
+        foreach (var (ship, weight) in allowed)
+        {
+            running += weight;
+            if (target < running)
+            {
+                return ship;
+            }
+        }
+
+        return allowed[^1].Ship;
     }
 
     /// <summary>The name an invented speaker is shown under, so they read apart from a real Commander.</summary>
