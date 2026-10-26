@@ -506,8 +506,6 @@ public sealed partial record StorySecret
 {
     public const int MostOptions = 4;
 
-    public const int MostCast = 4;
-
     public required string Id { get; init; }
 
     public required string Secret { get; init; }
@@ -949,11 +947,6 @@ public sealed class StoryCatalog
             {
                 yield return $"{name}.add names {persona}, which is not a persona.";
             }
-        }
-
-        if (secret.Cast.Count > StorySecret.MostCast)
-        {
-            yield return $"cast has {secret.Cast.Count.ToString(CultureInfo.InvariantCulture)} speakers, more than {StorySecret.MostCast.ToString(CultureInfo.InvariantCulture)}.";
         }
 
         var speakers = new HashSet<string>([StorySpeaker.Ship, StorySpeaker.Narrator], StringComparer.Ordinal);

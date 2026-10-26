@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story whose hidden entry has more than four cast members no longer fails to load. An install from before this version drops such a story, with a log line and nothing on screen, so a story with a larger cast needs this version.
+
 The chapter writer is told which cast members are on your fleet carrier, and words their boardings and leavings as the carrier's, so their lines read correctly in person and over its comms.
 
 A story's cast member can live on your fleet carrier. While you are docked at your own carrier they are heard in person; away from it, over comms that break up with distance but are never lost entirely. Beyond 500 light years a reply to them is refused, as the captain's is, though their story lines are still spoken. An older version of d47 treats a carrier member as riding in your ship.

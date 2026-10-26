@@ -16,7 +16,7 @@ the "length" on its card, one of the keys of LENGTHS. The card's "goals" and "be
   clues    exactly one line for each of the length's clue days.
   finale   exactly one line for each of the length's finale chapters.
   options  1 to 4 endings, each {"id", "label", "after", "add"}; "add" is a list of persona ids.
-  cast     0 to 4 speakers, each {"id", "name", "who", "role", "provider", "voice"}; provider is a free speaking id in
+  cast     any number of speakers, each {"id", "name", "who", "role", "provider", "voice"}; provider is a free speaking id in
            PROVIDERS (edge, kokoro or chatterbox), and voice "own" is chatterbox only. A billed provider
            (elevenlabs, openai, cartesia) is refused.
            "role" is who the speaker is to the Commander: a lower-case noun phrase of at most 160 characters,
@@ -281,8 +281,6 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             found.append(f"option {at + 1} has no {', '.join(missing)}")
 
     cast = entry.get("cast") or []
-    if len(cast) > 4:
-        found.append(f"{len(cast)} cast, more than 4")
     speakers = set(SPEAKERS)
     versioned = {}
     for at, speaker in enumerate(cast):
