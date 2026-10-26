@@ -12,6 +12,8 @@ A turn you speak through the comms push-to-talk now shows a grey `comms` tag in 
 
 Inside an Operation, d47 now says only warnings and relayed in-game comms unprompted. Story lines and adventure beats reached there wait and are said after the Operation ends.
 
+Your missions stay on the mission board through an Operation. Entering one no longer replaces the board with the Operation’s own mission, so d47 no longer reports a mission as past expiry for the whole run or loses a mission’s destination, reward and expiry.
+
 Entering or leaving an Operation is no longer treated as starting a new session. The session summary, the session-length reminder, per-session kill and carrier counts, "next session" reminders and a story's session count carry on across it, and d47 no longer says "Welcome back, Commander." when you leave one.
 
 The commodity sales total, the Codex "this session" figures, the Commanders-met "this session" check, a story's session count and the logbook's last-session range also ignore Operation entries and exits, whether d47 follows them live or rebuilds from your journals at launch.

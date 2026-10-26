@@ -212,7 +212,7 @@ public sealed record MissionBoard
             Commodity = mission.Commodity ?? JournalJson.Symbol(journalEvent.String("CargoType")),
         }),
         "MissionCompleted" or "MissionFailed" or "MissionAbandoned" => End(journalEvent),
-        "Missions" => Snapshot(journalEvent),
+        "Missions" => journalEvent.InOperation ? this : Snapshot(journalEvent),
         _ => this,
     };
 
