@@ -139,6 +139,20 @@ public static class LogRanges
         };
     }
 
+    private static readonly string[] SessionKinds = ["LoadGame", "GameModeChange", "Fileheader", "Shutdown"];
+
+    private static IEnumerable<JournalEvent> Parsed(StreamReader reader, ILogger logger, string[]? kinds)
+    {
+        while (reader.ReadLine() is { } line)
+        {
+            if ((kinds is null || kinds.Any(kind => line.Contains("\"" + kind + "\"", StringComparison.Ordinal)))
+                && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
+            {
+                yield return parsed;
+            }
+        }
+    }
+
     /// <summary>Walks the newest journals backwards for the most recent <c>LoadGame</c>.</summary>
     private static LogRange Session(
         IFileSystem fileSystem,
@@ -158,17 +172,13 @@ public static class LogRanges
                 using var stream = fileSystem.OpenRead(files[index]) ?? throw new FileNotFoundException("The journal file is missing.", files[index]);
                 using var reader = new StreamReader(stream);
 
-                while (reader.ReadLine() is { } line)
+                foreach (var parsed in OperationMarker.Mark(Parsed(reader, logger, SessionKinds)))
                 {
-                    if (!line.Contains("\"LoadGame\"", StringComparison.Ordinal) ||
-                        !JournalEvent.TryParse(line, logger, out var parsed) ||
-                        parsed is not { Kind: "LoadGame" } ||
-                        (frontierId is not null && !string.Equals(parsed.String("FID"), frontierId, StringComparison.Ordinal)))
+                    if (parsed.StartsSession
+                        && (frontierId is null || string.Equals(parsed.String("FID"), frontierId, StringComparison.Ordinal)))
                     {
-                        continue;
+                        started = parsed.Timestamp;
                     }
-
-                    started = parsed.Timestamp;
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -231,14 +241,11 @@ public static class LogRanges
                 using var stream = fileSystem.OpenRead(file) ?? throw new FileNotFoundException("The journal file is missing.", file);
                 using var reader = new StreamReader(stream);
 
-                while (reader.ReadLine() is { } line)
-                {
-                    if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null || parsed.Timestamp >= before)
-                    {
-                        continue;
-                    }
+                var lines = Parsed(reader, logger, null).Where(parsed => parsed.Timestamp < before);
 
-                    if (parsed.Kind == "LoadGame")
+                foreach (var parsed in OperationMarker.Mark(lines))
+                {
+                    if (parsed.StartsSession)
                     {
                         from = parsed.Timestamp;
                     }

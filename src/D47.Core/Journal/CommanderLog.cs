@@ -44,7 +44,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 {
     private static readonly string[] Events =
     [
-        "Commander", "LoadGame", "Location", "FSDJump", "CarrierJump", "ShipTargeted", "Interdicted",
+        "Commander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump", "CarrierJump", "ShipTargeted", "Interdicted",
         "EscapeInterdiction", "Interdiction", "CrimeVictim", "Died", "PVPKill", "WingJoin", "WingAdd", "ReceiveText",
     ];
 
@@ -212,7 +212,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
             }
         }
 
-        Apply(events);
+        Apply([.. OperationMarker.Mark(events)]);
     }
 
     private static IEnumerable<string> ReadLines(Stream stream)
@@ -250,8 +250,12 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 
                 if (journalEvent.Kind == "LoadGame")
                 {
-                    _session = journalEvent.Timestamp;
                     _system = string.Empty;
+                }
+
+                if (journalEvent.StartsSession)
+                {
+                    _session = journalEvent.Timestamp;
                 }
 
                 break;

@@ -401,6 +401,17 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
+    private static IEnumerable<JournalEvent> Drain(JournalReader reader)
+    {
+        while (reader.Poll() is { Count: > 0 } batch)
+        {
+            foreach (var journalEvent in batch)
+            {
+                yield return journalEvent;
+            }
+        }
+    }
+
     /// <summary>
     /// Folds journal files, oldest first, into a fresh fold state, reading the file named by <paramref name="until"/>
     /// only to its position. Touches nothing else on the book.
@@ -419,21 +430,18 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
 
             var reader = new JournalReader(file, store.Files, logger, limit);
 
-            while (reader.Poll() is { Count: > 0 } batch)
+            foreach (var journalEvent in OperationMarker.Mark(Drain(reader)))
             {
-                foreach (var journalEvent in batch)
+                events++;
+
+                if (journalEvent.Kind is "Commander" or "LoadGame"
+                    && journalEvent.Raw.String("FID") is { Length: > 0 } fid)
                 {
-                    events++;
-
-                    if (journalEvent.Kind is "Commander" or "LoadGame"
-                        && journalEvent.Raw.String("FID") is { Length: > 0 } fid)
-                    {
-                        commander = fid;
-                    }
-
-                    Fold(state, commander, journalEvent, announce: false);
-                    state.HighWater[commander] = journalEvent.Timestamp;
+                    commander = fid;
                 }
+
+                Fold(state, commander, journalEvent, announce: false);
+                state.HighWater[commander] = journalEvent.Timestamp;
             }
         }
 

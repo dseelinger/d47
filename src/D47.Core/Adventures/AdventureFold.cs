@@ -717,7 +717,7 @@ public static class AdventureFold
             standing = standing with { Notables = notables };
         }
 
-        if (journalEvent.Kind is "LoadGame")
+        if (journalEvent.StartsSession)
         {
             return standing with { Loads = [.. standing.Loads, journalEvent.Timestamp] };
         }

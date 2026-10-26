@@ -148,10 +148,7 @@ public sealed class CommodityLedger
         {
             var reader = new JournalReader(files[i], fileSystem, logger);
 
-            while (reader.Poll() is { Count: > 0 } batch)
-            {
-                Apply(batch);
-            }
+            Apply([.. OperationMarker.Mark(Drain(reader))]);
 
             read++;
         }
@@ -159,6 +156,17 @@ public sealed class CommodityLedger
         logger.LogInformation("Commodity ledger folded {Count} journal files back to {Since:u}", read, since);
 
         return read;
+    }
+
+    private static IEnumerable<JournalEvent> Drain(JournalReader reader)
+    {
+        while (reader.Poll() is { Count: > 0 } batch)
+        {
+            foreach (var journalEvent in batch)
+            {
+                yield return journalEvent;
+            }
+        }
     }
 
     /// <summary>The last Commander/LoadGame FID a file carries, without folding it (#314).</summary>
@@ -302,7 +310,7 @@ public sealed class CommodityLedger
                 {
                     _current = fid;
 
-                    if (journalEvent.Kind == "LoadGame")
+                    if (journalEvent.StartsSession)
                     {
                         // A fresh session wipes the session slate and nothing else: the day and the week are
                         // windows over the same sales.

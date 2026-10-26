@@ -28,9 +28,9 @@ public static class CodexLedgerBackfill
 
             var legacy = false;
 
-            foreach (var line in Lines(fileSystem, file, logger))
+            foreach (var parsed in OperationMarker.Mark(Parsed(fileSystem, file, logger)))
             {
-                if (!Read(line) || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
+                if (!CodexLedger.Reads.Contains(parsed.Kind))
                 {
                     continue;
                 }
@@ -72,6 +72,17 @@ public static class CodexLedgerBackfill
         return ledgers;
     }
 
+    private static IEnumerable<JournalEvent> Parsed(IFileSystem fileSystem, string file, ILogger logger)
+    {
+        foreach (var line in Lines(fileSystem, file, logger))
+        {
+            if (Read(line) && JournalEvent.TryParse(line, logger, out var parsed) && parsed is not null)
+            {
+                yield return parsed;
+            }
+        }
+    }
+
     private static bool Read(string line)
     {
         var start = line.IndexOf(EventKey, StringComparison.Ordinal);
@@ -84,7 +95,11 @@ public static class CodexLedgerBackfill
         start += EventKey.Length;
         var end = line.IndexOf('"', start);
 
-        return end > start && CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(line.AsSpan(start, end - start));
+        var kind = line.AsSpan(start, end - start);
+
+        return end > start
+            && (CodexLedger.Reads.GetAlternateLookup<ReadOnlySpan<char>>().Contains(kind)
+                || kind.SequenceEqual("GameModeChange") || kind.SequenceEqual("Shutdown"));
     }
 
     private static IEnumerable<string> Lines(IFileSystem fileSystem, string file, ILogger logger)

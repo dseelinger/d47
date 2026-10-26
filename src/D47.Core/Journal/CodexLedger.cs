@@ -57,7 +57,7 @@ public sealed record CodexLedger
     /// <summary>The newest exploration data sale, or null when none is on record.</summary>
     public DateTimeOffset? TripStart { get; init; }
 
-    /// <summary>The time of the newest <c>LoadGame</c>.</summary>
+    /// <summary>The time of the newest <c>LoadGame</c> that starts a session.</summary>
     public DateTimeOffset? SessionStart { get; init; }
 
     /// <summary>The first event this record folded; entries before it are not counted.</summary>
@@ -138,7 +138,7 @@ public sealed record CodexLedger
 
         return journalEvent.Kind switch
         {
-            "LoadGame" => result with { SessionStart = journalEvent.Timestamp },
+            "LoadGame" when journalEvent.StartsSession => result with { SessionStart = journalEvent.Timestamp },
             "SellExplorationData" or "MultiSellExplorationData" => result with { TripStart = journalEvent.Timestamp },
             "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Entry(journalEvent, id)) },
             _ => result,
