@@ -1,3 +1,4 @@
+using D47.Core.Listening;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -81,6 +82,45 @@ public class TheBubbleHeadNamesWhoSpokeTests
         var head = Head(Turns(Laid(model))[0]);
 
         Assert.Equal("CMDR", Said(head[0]));
+    }
+
+    [AvaloniaFact]
+    public void ACommsCommanderTurnIsTaggedComms()
+    {
+        var model = new PanelViewModel();
+        model.Append("hail the station", voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(PttTarget.Comms));
+
+        var head = Head(Turns(Laid(model))[0]);
+
+        Assert.Equal(3, head.Count);
+        Assert.Equal("CMDR", Said(head[0]));
+        Assert.Equal("comms", Said(head[1]));
+    }
+
+    [AvaloniaFact]
+    public void ACoreCommanderTurnHasNoTag()
+    {
+        var model = new PanelViewModel();
+        model.Append("where am I", voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(PttTarget.Core));
+
+        Assert.Equal(2, Head(Turns(Laid(model))[0]).Count);
+    }
+
+    [AvaloniaFact]
+    public void ACoreUtteranceThenACommsUtteranceStayTwoBubbles()
+    {
+        var model = new PanelViewModel();
+        model.Append("where am I", voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(PttTarget.Core));
+        model.Append("hail the station", voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(PttTarget.Comms));
+
+        Assert.Equal(2, Turns(Laid(model)).Count);
+    }
+
+    [Fact]
+    public void OnlyTheCommsTargetHasATag()
+    {
+        Assert.Null(PanelViewModel.TagFor(PttTarget.Core));
+        Assert.Equal("comms", PanelViewModel.TagFor(PttTarget.Comms));
     }
 
     /// <summary>

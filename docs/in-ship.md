@@ -116,6 +116,8 @@ colour, `CMDR` in a dimmer grey, a persona or a role like `Tower` in between. Wh
 notes something *about* the conversation rather than saying something in it — the core changing
 under you — that sits across the middle in the accent with no badge.
 
+A turn you speak through the comms push-to-talk carries a grey `comms` tag after `CMDR`; turns spoken through the core key, and typed turns, have none.
+
 The headset's big panel does the same, and so does the mini panel.
 
 ### The controls

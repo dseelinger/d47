@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A turn you speak through the comms push-to-talk now shows a grey `comms` tag in its header, after `CMDR`, in the window, the desktop overlay and the headset panels. Turns spoken through the core key and typed turns have no tag.
+
 A stick button bound to an action or to cancel now acts on every press, however short. A dial bound to comms channel up or down steps once per click, where before it missed most of them, and a dial can now be bound on the bind page.
 
 A stick button bound to comms channel or sub-channel up or down still moves the channel on every press, but D47 now says the channel's name once, 400 ms after the last step, instead of once per step.

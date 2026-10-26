@@ -1190,7 +1190,7 @@ public partial class MainWindow : Window
             var stopped = await _host.Capabilities.InvokeAsync(interrupting.ToolName, ToolArguments.Empty);
 
             // Two writes rather than one interpolation, because they are two voices.
-            _model.Append(input, voice: TranscriptVoice.Commander);
+            _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
             _model.Append(stopped.Content);
             return;
         }
@@ -1203,7 +1203,7 @@ public partial class MainWindow : Window
         _turnInFlight = true;
         _model.CanAsk = false;
         _model.AskText = string.Empty;
-        _model.Append(input, voice: TranscriptVoice.Commander);
+        _model.Append(input, voice: TranscriptVoice.Commander, sourceKey: PanelViewModel.TagFor(target));
 
         var presenter = new TurnPresenter(_model, _host.ShipPicture, _host.AddressedPicture);
 

@@ -63,7 +63,7 @@ public enum TranscriptRunKind
 
 /// <summary>A stretch of transcript drawn one way.</summary>
 /// <param name="Speaker">Who said it, or null on the flat Log and Raw Journal blocks, which carry no chip.</param>
-/// <param name="SourceKey">The callout key this run came from, or null for one that did not.</param>
+/// <param name="SourceKey">The tag drawn in the header: a callout key, a proposal's state or <c>comms</c>, or null.</param>
 /// <param name="Kind">Whether this is a proposal card rather than plain text (#277).</param>
 /// <param name="ProposalId">Which proposal a <see cref="TranscriptRunKind.Proposal"/> run is about.</param>
 /// <param name="Provenance">The line drawn inside the turn this run finished, or null.</param>
@@ -85,6 +85,12 @@ public sealed record TranscriptSegment(
 /// <summary>What the panel shows, independent of where it is being shown.</summary>
 public sealed class PanelViewModel : INotifyPropertyChanged
 {
+    /// <summary>The header tag on a Commander turn spoken through the comms push-to-talk.</summary>
+    public const string CommsTag = "comms";
+
+    /// <summary>The header tag for a turn spoken through <paramref name="target"/>, or null for the core.</summary>
+    public static string? TagFor(D47.Core.Listening.PttTarget target) => target == D47.Core.Listening.PttTarget.Comms ? CommsTag : null;
+
     /// <summary>The transcript in order, split into runs that are drawn the same way.</summary>
     private readonly List<Run> _runs = [];
 
