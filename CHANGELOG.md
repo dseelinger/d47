@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's signal-source objective can name the system where the drops must happen. It then counts a drop only while your ship is in that system, the story writer is told so, and a line may place a drop in a system only when the objective names it.
+
 A story's cast member boards your ship only while it has a free seat. A boarding that comes due while you fly a Sidewinder, or a ship whose seats are taken, is held, and the first chapter written while you fly a ship with a seat places it as a scene, so the member is met aboard rather than appearing in the cockpit.
 
 The check that a story's lines claim only what their objectives confirm now reads a site objective by its kind: a Guardian site objective confirms the ship came to that site, and a tourist beacon objective confirms the beacon was scanned. A Guardian site chapter is no longer refused for a line the objective does confirm.

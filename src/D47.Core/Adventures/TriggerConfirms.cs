@@ -80,8 +80,10 @@ internal static class TriggerConfirms
     internal static string Of(TriggerKind kind, bool story = false) => story && kind == TriggerKind.Beacon ? StockBeacon : Entries[kind];
 
     /// <summary>The entry for an objective of a kind with a filter; a site objective is described by its filter alone.</summary>
-    internal static string Of(TriggerKind kind, string? filter, bool story = false) =>
-        kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
+    internal static string Of(TriggerKind kind, string? filter, bool story = false, string? system = null) =>
+        kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(system)
+            ? $"the ship dropped into signal sources in {system.Trim()} — not who sent the signal or what was found there"
+            : kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
             ? "the ship came to the Guardian site on that body — not what is there or what it holds"
             : kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.TouristSite, StringComparison.OrdinalIgnoreCase)
                 ? "the tourist beacon in that system was scanned — not what is there or what it holds"

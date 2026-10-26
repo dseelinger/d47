@@ -820,7 +820,7 @@ public sealed class AdventureGenerator(
             var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
 
             text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
-            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story)}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Kind == TriggerKind.Uss ? beat.System : null)}");
 
             if (!beat.Continues)
             {
@@ -2691,7 +2691,7 @@ public sealed class AdventureGenerator(
             "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. \"new\" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.",
             "- \"datasale\": the Commander sells \"count\" credits' worth of exploration data. \"organic\" is true for organic data only, false for cartographic data only, null for both.",
             "- \"salvage\": the Commander picks up \"count\" cargo canisters in space. \"filter\" is the cargo type such as OccupiedCryoPod or metaalloys; null for any.",
-            "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any.",
+            "- \"uss\": the Commander drops into \"count\" signal sources. \"filter\" is DistressSignal, Salvage, Convoy, WeaponsFire or another type; null for any. \"system\" is the system where the drops must happen, or null for anywhere. A line may place a drop in a system only when the objective names it.",
             "- \"rescue\": the Commander hands in \"count\" rescue items. \"filter\" is the item's name, or null for any.",
             "- \"engineer\": the Commander reaches a stage with one engineer, once. \"engineer\" is the engineer's name and \"stage\" is Invited or Unlocked; use it only where the game state shows the Commander has not reached that stage yet. The engineer may be a ship engineer or an on-foot engineer such as Domino Green. An on-foot engineer's stage is seen only in the list written at login, so that objective fires at the next login after the stage is reached, not at the moment.",
             "- \"srv\": the Commander launches the SRV \"count\" times.",
@@ -3178,6 +3178,7 @@ public sealed class AdventureGenerator(
             Filter = Filter,
             Organic = Organic,
             New = New,
+            System = Kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(System) ? System.Trim() : null,
             Engineer = Engineer,
             Stage = Stage,
             Rank = Kind == TriggerKind.PowerRank ? Rank : null,
@@ -3781,6 +3782,26 @@ public sealed class AdventureGenerator(
             {
                 var counted = beat.Written();
                 var problems = AdventureValidation.CountedProblems(where, counted).ToList();
+
+                if (problems.Count == 0 && counted.Kind == TriggerKind.Uss && counted.System is { } ussSystem)
+                {
+                    try
+                    {
+                        if (await resolver.SystemAsync(ussSystem, cancellationToken).ConfigureAwait(false) is { } ussFound)
+                        {
+                            counted = counted with { System = ussFound.Name, SystemAddress = ussFound.Address };
+                            previousSystem = ussFound.Name;
+                        }
+                        else
+                        {
+                            problems.Add($"{where} names a system, \"{ussSystem}\", that the galaxy search does not know; name a real system, or leave \"system\" null for a drop anywhere.");
+                        }
+                    }
+                    catch (GalaxyUnavailableException ex)
+                    {
+                        problems.Add($"{where} could not be placed: {ex.Message}");
+                    }
+                }
 
                 if (beat is { Kind: TriggerKind.Event, Say: { } say } && counted.Task?.Contains(say, StringComparison.OrdinalIgnoreCase) != true)
                 {

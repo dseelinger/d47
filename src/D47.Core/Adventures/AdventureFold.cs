@@ -466,7 +466,8 @@ public static class AdventureFold
 
             TriggerKind.Uss =>
                 journalEvent.Kind is "USSDrop"
-                && SameType(trigger.Filter, raw.String("USSType")),
+                && SameType(trigger.Filter, raw.String("USSType"))
+                && (trigger.SystemAddress is null || systemAddress == trigger.SystemAddress),
 
             TriggerKind.Rescue =>
                 journalEvent.Kind is "SearchAndRescue"

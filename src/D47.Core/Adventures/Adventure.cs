@@ -382,7 +382,7 @@ public sealed record AdventureTrigger
         TriggerKind.Codex => $"log {Counted(CodexWord(one: true), CodexWord(one: false))}",
         TriggerKind.DataSale => $"sell {Credits()} of {DataWord()} data",
         TriggerKind.Salvage => $"pick up {Counted(Cargo(one: true), Cargo(one: false))}",
-        TriggerKind.Uss => $"drop into {Counted(Sources(one: true), Sources(one: false))}",
+        TriggerKind.Uss => $"drop into {Counted(Sources(one: true), Sources(one: false))}{In()}",
         TriggerKind.Rescue => $"hand in {Counted(Survivors(one: true), Survivors(one: false))}",
         TriggerKind.Engineer => $"reach {Stage?.Trim()} with {Engineer?.Trim()}",
         TriggerKind.Srv => $"launch the SRV {Times()}",
