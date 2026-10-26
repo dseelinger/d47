@@ -222,7 +222,11 @@ public sealed record StoryCard
 }
 
 /// <summary>One spoken line of a hidden story: what is said, and the id of the speaker who says it.</summary>
-public sealed record StoryLine(string Text, string Speaker);
+public sealed record StoryLine(string Text, string Speaker)
+{
+    /// <summary>The English of a line spoken in the speaker's <see cref="StorySpeaker.Language"/>; null for English.</summary>
+    public string? Translation { get; init; }
+}
 
 /// <summary>One way a story may end. <see cref="Add"/> names the persona ids that come aboard after it.</summary>
 public sealed record StoryOption
@@ -270,6 +274,12 @@ public sealed record StorySpeaker
 
     /// <summary>Who the member is to the Commander, public and in lower case; null for a story published without one.</summary>
     public string? Role { get; init; }
+
+    /// <summary>The language codes a member may speak.</summary>
+    public static readonly IReadOnlyList<string> Languages = ["ja"];
+
+    /// <summary>The language the member speaks and nothing else, one of <see cref="Languages"/>; null for English.</summary>
+    public string? Language { get; init; }
 
     /// <summary>The id of a speaking provider in <see cref="TtsProviderCatalog"/>.</summary>
     public required string Provider { get; init; }
@@ -991,6 +1001,7 @@ public sealed class StoryCatalog
         }
 
         var speakers = new HashSet<string>([StorySpeaker.Ship, StorySpeaker.Narrator], StringComparer.Ordinal);
+        var spoken = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var (speaker, at) in secret.Cast.Select((speaker, at) => (speaker, at)))
         {
@@ -1006,6 +1017,16 @@ public sealed class StoryCatalog
             }
 
             speakers.Add(speaker.Id ?? string.Empty);
+
+            if (speaker.Language is not null)
+            {
+                spoken.Add(speaker.Id ?? string.Empty);
+            }
+
+            foreach (var fault in LanguageFaults(name, speaker))
+            {
+                yield return fault;
+            }
 
             foreach (var fault in SoundFaults(name, speaker))
             {
@@ -1083,6 +1104,14 @@ public sealed class StoryCatalog
 
         foreach (var (field, line) in secret.Lines())
         {
+            if (field.StartsWith("opening", StringComparison.Ordinal) || field is "scan")
+            {
+                foreach (var fault in TranslationFaults(field, line, spoken))
+                {
+                    yield return fault;
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(line.Speaker))
             {
                 yield return $"{field} has no speaker.";
@@ -1091,6 +1120,61 @@ public sealed class StoryCatalog
             {
                 yield return $"{field} is spoken by {line.Speaker}, who is not the ship, the narrator or in the cast.";
             }
+        }
+    }
+
+    private static IEnumerable<string> LanguageFaults(string name, StorySpeaker speaker)
+    {
+        if (speaker.Language is not { } language)
+        {
+            yield break;
+        }
+
+        if (!StorySpeaker.Languages.Contains(language, StringComparer.Ordinal))
+        {
+            yield return $"{name} has the language {language}, not one of {string.Join(", ", StorySpeaker.Languages)}.";
+            yield break;
+        }
+
+        if (!speaker.Pinned)
+        {
+            yield return $"{name} has a language and is not pinned.";
+        }
+
+        var prefix = language + "-";
+        var voices = speaker.Versions is { } versions
+            ? versions.All().Select(pair => (Label: $"{name}.{pair.Key}", Voice: (string?)pair.Version.Voice, Provider: pair.Version.Provider ?? speaker.Provider))
+            : [(Label: name, Voice: (string?)speaker.Voice, Provider: speaker.Provider)];
+
+        foreach (var (label, voice, provider) in voices)
+        {
+            if (provider != TtsProviderCatalog.EdgeId)
+            {
+                yield return $"{label} has a language and the provider {provider}, not edge.";
+            }
+
+            if (voice is null || !voice.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return $"{label} has a language and a voice that is not an Edge {prefix} voice.";
+            }
+        }
+    }
+
+    private static IEnumerable<string> TranslationFaults(string field, StoryLine line, HashSet<string> spoken)
+    {
+        if (!spoken.Contains(line.Speaker ?? string.Empty))
+        {
+            yield break;
+        }
+
+        if (string.IsNullOrWhiteSpace(line.Translation))
+        {
+            yield return $"{field} is in a language and has no translation.";
+        }
+
+        if (line.Text.Contains("{their}", StringComparison.Ordinal) || line.Text.Contains("{they}", StringComparison.Ordinal))
+        {
+            yield return $"{field} is in a language and has a {{their}} or {{they}} token, which resolves to English.";
         }
     }
 

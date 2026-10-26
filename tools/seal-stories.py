@@ -41,13 +41,17 @@ The card's "goalArcs", where present, is a card with "goals" true naming one or 
            live. A recorded speaker never carries "aboard".
            A speaker may carry "pinned": true: it speaks in its provider and voice, not the ship's provider.
            Voice "own" is pinned whether or not it says so. A version never carries "pinned"; it covers both.
+           A speaker may carry "language": "ja" (LANGUAGES): it speaks only that language. It must be pinned, its
+           provider edge, and its voice, and each version's voice, an Edge voice whose locale starts "ja-" (for
+           example ja-JP-NanamiNeural). An opening or scan line it says carries "translation", the English, and its
+           text holds no {their} or {they}.
            A speaker may carry "primary": true, a recurring character the Commander knows from the card;
            a primary speaker must have a picture when the story is published, is named in the card's blurb
            or inYourWords unless it has versions, and never speaks in the voice "own".
   black    optional: a list of spans {"from", "to"} of the story that take place in the black, where chapters are held
            to neither the Sol band nor the home leg. Each is a beat of the length's sheet, or null for the story's start
            or end; from is included and to is not, so from comes before to. Spans do not overlap.
-Every opening line, the scan line and every clue and finale line is {"speaker", "text"}, the speaker "ship", "narrator" or a cast id.
+Every opening line, the scan line and every clue and finale line is {"speaker", "text"} ("translation" too, as above), the speaker "ship", "narrator" or a cast id.
 The gate (EveryStoryKeepsTheFormatOfItsLengthGateTests) checks the same rules, and the persona and voice ids.
 """
 import pathlib
@@ -79,6 +83,7 @@ GOAL_ARCS = (
 )
 # Speaking ids in TtsProviderCatalog whose Billed is false.
 PROVIDERS = ("edge", "kokoro", "chatterbox")
+LANGUAGES = ("ja",)
 BILLED = ("elevenlabs", "openai", "cartesia")
 SPEAKERS = ("ship", "narrator")
 VERSIONS = ("forMan", "forWoman")
@@ -264,6 +269,42 @@ def voice_fault(name: str, provider, voice) -> list:
     return []
 
 
+def language_fault(who: str, speaker: dict) -> list:
+    if "language" not in speaker:
+        return []
+    language = speaker["language"]
+    if language not in LANGUAGES:
+        return [f"{who} has the language {language!r}, not one of {', '.join(LANGUAGES)}"]
+    found = []
+    if speaker.get("pinned") is not True:
+        found.append(f"{who} has a language and is not pinned")
+    versions = speaker.get("versions") if isinstance(speaker.get("versions"), dict) else None
+    voices = [(who, speaker.get("provider"), speaker.get("voice"))]
+    if versions is not None:
+        voices = [
+            (f"{who} version {key}", version.get("provider", speaker.get("provider")), version.get("voice"))
+            for key, version in versions.items() if isinstance(version, dict)
+        ]
+    for label, provider, voice in voices:
+        if provider != "edge":
+            found.append(f"{label} has a language and the provider {provider}, not edge")
+        if not (isinstance(voice, str) and voice.lower().startswith(language + "-")):
+            found.append(f"{label} has a language and a voice that is not an Edge {language}- voice")
+    return found
+
+
+def translation_fault(name: str, lines: list, spoken: set) -> list:
+    found = []
+    for at, line in enumerate(lines):
+        if line.get("speaker") not in spoken:
+            continue
+        if not text(line.get("translation")):
+            found.append(f"{name} {at + 1} is in a language and has no translation")
+        if re.search(r"\{(?:their|they)\}", line.get("text") or ""):
+            found.append(f"{name} {at + 1} is in a language and has a {{their}} or {{they}} token, which resolves to English")
+    return found
+
+
 def faults(entry: dict, personas: set, card: dict | None = None) -> list:
     found = [f"no {field}" for field in FIELDS if not text(entry.get(field))]
 
@@ -321,6 +362,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
         if sid in speakers or sid in personas:
             found.append(f"cast {at + 1} has the id {sid}, taken by the ship, the narrator, a persona or another speaker")
         speakers.add(sid)
+        found += language_fault(f"cast {at + 1} ({sid})", speaker)
         found += sound_fault(f"cast {at + 1} ({sid})", speaker)
         found += aboard_fault(f"cast {at + 1} ({sid})", speaker, sheet, length)
         found += role_fault(sid, speaker)
@@ -390,6 +432,9 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             found.append(f"opening line {at + 1} has the token {', '.join(unknown)}, not {{commander}}, {{their}}, {{they}} or {{name:<cast-id>}}")
 
     scanned = [scan] if isinstance(scan, dict) else []
+    spoken = {speaker.get("id") for speaker in cast if "language" in speaker}
+    for name, lines in (("opening line", opening), ("scan line", scanned)):
+        found += translation_fault(name, lines, spoken)
     for name, lines in (("opening line", opening), ("scan line", scanned), ("clue", clues), ("finale line", finale)):
         for at, line in enumerate(lines):
             if not text(line.get("text")):

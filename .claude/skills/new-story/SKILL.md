@@ -192,6 +192,9 @@ add.
   A pin may use `edge`, `kokoro` or `chatterbox` only; `elevenlabs`, `openai` and `cartesia` are billed and are refused.
   An `edge` pin is free and needs no key, but sends the member's lines to Microsoft and needs the network, and an
   older install (before #1072) does not load a story with an `edge` pin. Use one only when the story asks for it, and say so in the pitch.
+  `language: "ja"` makes a member speak only Japanese (#1751): it must be `pinned` on `edge`, its `voice` (and each 
+  version's) an Edge `ja-` voice such as `ja-JP-NanamiNeural`, and each `opening` or `scan` line it says carries 
+  `translation`, the English, with no `{their}` or `{they}` in its `text`.
   `recorded: true` marks a member heard only in recordings or messages: they never answer a hail or react live,
   and never carry `aboard`.
   `primary: true` (#717) marks a recurring character named in the card's `blurb` or

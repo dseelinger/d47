@@ -43,6 +43,23 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         new("{commander} heard {their} own voice, which {they} knew.", StorySpeaker.Narrator),
     ];
 
+    private static readonly System.Text.Json.JsonSerializerOptions Reading = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    private static readonly StorySpeaker Japanese = Speaker with
+    {
+        Language = "ja",
+        Pinned = true,
+        Provider = "edge",
+        Voice = "ja-JP-NanamiNeural",
+    };
+
+    private static StorySecret Spoken(StorySpeaker member, params StoryLine[] opening) =>
+        Secret with { Cast = [member], Opening = opening };
+
     private static (string Named, StoryCard Card, StorySecret? Secret) Broken(string rule) => rule switch
     {
         "genre" => ("genre", Card with { Genre = "Western" }, Secret),
@@ -99,6 +116,23 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
         "empty-opening" => ("opening is empty", Card, Secret with { Opening = [] }),
         "opening-without-text" => ("opening[1] has no text", Card, Secret with { Opening = [Opening[0], Opening[1] with { Text = " " }] }),
         "opening-with-another-token" => ("opening[0] has a token", Card, Secret with { Opening = [Opening[0] with { Text = "Mayday on {date}." }] }),
+        "unknown-language" => ("the language fr", Card, Spoken(Japanese with { Language = "fr" })),
+        "language-unpinned" => ("has a language and is not pinned", Card, Spoken(Japanese with { Pinned = false })),
+        "language-on-kokoro" => ("not edge", Card, Spoken(Japanese with { Provider = StorySpeaker.Kokoro, Voice = "af_heart" })),
+        "language-with-an-english-voice" => ("not an Edge ja- voice", Card, Spoken(Japanese with { Voice = "en-US-AriaNeural" })),
+        "language-with-an-own-voice" => ("not an Edge ja- voice", Card, Spoken(Japanese with { Voice = StorySpeaker.Own })),
+        "language-version-with-an-english-voice" => ("cast[0].for-woman has a language and a voice that is not an Edge ja- voice", Card, Spoken(Japanese with
+        {
+            Voice = null,
+            Name = null,
+            Versions = new StorySpeakerVersions
+            {
+                ForMan = new StorySpeakerVersion { Name = "Ken", Voice = "ja-JP-KeitaNeural" },
+                ForWoman = new StorySpeakerVersion { Name = "Mio", Voice = "en-US-AriaNeural" },
+            },
+        })),
+        "language-line-without-a-translation" => ("opening[0] is in a language and has no translation", Card, Spoken(Japanese, new StoryLine("Tasukete.", Japanese.Id))),
+        "language-line-with-a-pronoun-token" => ("opening[0] is in a language and has a {their} or {they} token", Card, Spoken(Japanese, new StoryLine("{they}", Japanese.Id) { Translation = "Help." })),
         _ => throw new ArgumentOutOfRangeException(nameof(rule), rule, null),
     };
 
@@ -230,12 +264,34 @@ public sealed class EveryStoryKeepsTheFormatOfItsLengthGateTests
     [InlineData("empty-opening")]
     [InlineData("opening-without-text")]
     [InlineData("opening-with-another-token")]
+    [InlineData("unknown-language")]
+    [InlineData("language-unpinned")]
+    [InlineData("language-on-kokoro")]
+    [InlineData("language-with-an-english-voice")]
+    [InlineData("language-with-an-own-voice")]
+    [InlineData("language-version-with-an-english-voice")]
+    [InlineData("language-line-without-a-translation")]
+    [InlineData("language-line-with-a-pronoun-token")]
     public void ABrokenRuleIsAFault(string rule)
     {
         var (named, card, secret) = Broken(rule);
         var faults = new StoryCatalog([card], () => secret is null ? [] : [secret]).Faults();
 
         Assert.Contains(faults, fault => fault.Contains(named, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AJapaneseSpeakerWithTranslatedLinesKeepsTheFormat() =>
+        Assert.Empty(new StoryCatalog([Card], () => [Spoken(Japanese, new StoryLine("Tasukete.", Japanese.Id) { Translation = "Help." })]).Faults());
+
+    [Fact]
+    public void ALanguageAndTranslationAreReadFromTheSealedJson()
+    {
+        var json = """{"id":"x","name":"Mio","who":"w","provider":"edge","voice":"ja-JP-NanamiNeural","pinned":true,"language":"ja"}""";
+        var line = """{"text":"Tasukete.","speaker":"x","translation":"Help."}""";
+
+        Assert.Equal("ja", System.Text.Json.JsonSerializer.Deserialize<StorySpeaker>(json, Reading)!.Language);
+        Assert.Equal("Help.", System.Text.Json.JsonSerializer.Deserialize<StoryLine>(line, Reading)!.Translation);
     }
 
     [Fact]
