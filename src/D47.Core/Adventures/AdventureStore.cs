@@ -443,6 +443,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
             Previous = record.Previous is { } previous ? FromRecord(previous, problems) : null,
             Follows = string.IsNullOrWhiteSpace(record.Follows) ? null : record.Follows.Trim(),
             StoryId = string.IsNullOrWhiteSpace(record.StoryId) ? null : record.StoryId.Trim(),
+            Sight = string.IsNullOrWhiteSpace(record.Sight) ? null : record.Sight.Trim(),
             Aboard = record.Aboard is { } aboard ? Ids(aboard) : null,
             OpeningBoards = Ids(record.OpeningBoards),
             OpeningLeaves = Ids(record.OpeningLeaves),
@@ -649,6 +650,7 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         Previous = adventure.Previous is { } previous ? ToRecord(previous) : null,
         Follows = adventure.Follows,
         StoryId = adventure.StoryId,
+        Sight = adventure.Sight,
         Aboard = adventure.Aboard is { } aboard ? [.. aboard] : null,
         OpeningBoards = adventure.OpeningBoards.Count > 0 ? [.. adventure.OpeningBoards] : null,
         OpeningLeaves = adventure.OpeningLeaves.Count > 0 ? [.. adventure.OpeningLeaves] : null,
@@ -718,6 +720,8 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         public string? Follows { get; set; }
 
         public string? StoryId { get; set; }
+
+        public string? Sight { get; set; }
 
         public List<string?>? Aboard { get; set; }
 

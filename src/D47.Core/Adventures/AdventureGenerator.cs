@@ -135,7 +135,8 @@ public sealed record AdventureStory(
     bool Remembered = false,
     GoalClimbStep? Goal = null,
     IReadOnlyList<string>? Aboard = null,
-    IReadOnlyList<Stories.StorySwitch>? Due = null)
+    IReadOnlyList<Stories.StorySwitch>? Due = null,
+    IReadOnlyList<NotablePlace>? Sights = null)
 {
     /// <summary>The cast ids aboard with no seat in the Commander's current hull, heard over comms.</summary>
     public IReadOnlyList<string> OnComms { get; init; } = [];
@@ -440,7 +441,7 @@ public sealed class AdventureGenerator(
         Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
-        var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var notable = ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
         if (ask.Rewrite is { } rewrite)
@@ -529,7 +530,7 @@ public sealed class AdventureGenerator(
         Enter(ask, WriteStage.Places);
         var facts = await DestinationDistanceAsync(Facts.Of(state(), ask), ask, cancellationToken).ConfigureAwait(false);
         var notes = new List<string>();
-        var notable = await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
+        var notable = ask.Story?.Sights is { Count: > 0 } sights ? sights : await NotableAsync(facts, cancellationToken, notes).ConfigureAwait(false);
         var candidates = await CandidatesAsync(facts, cancellationToken, notes).ConfigureAwait(false);
 
         Enter(ask, WriteStage.Objectives);
@@ -690,6 +691,11 @@ public sealed class AdventureGenerator(
                 OpeningBoards = read.OpeningBoards,
                 OpeningLeaves = read.OpeningLeaves,
             };
+
+        if (ask.Story?.Sights is { Count: > 0 } drawnSights)
+        {
+            adventure = adventure with { Sight = SightSeen(drawnSights, adventure.Beats) ?? adventure.Sight };
+        }
 
         if (ask.Story is { } placing)
         {
@@ -2551,6 +2557,13 @@ public sealed class AdventureGenerator(
                 "The Commander can make a long haul: this chapter may go anywhere in the galaxy, as far as Colonia or Sagittarius A*.");
         }
 
+        if (story.Sights is { Count: > 0 })
+        {
+            text.AppendLine(
+                "This is a sightseeing chapter, drawn by d47: the Commander goes to see one of the notable places listed below. "
+                + "One arrive, land or scan objective is in that place's system, named as the list names it, and the spine is built around going to see it.");
+        }
+
         if (story.Slots is { Count: > 0 } slots)
         {
             text.AppendLine();
@@ -2740,6 +2753,12 @@ public sealed class AdventureGenerator(
         if (ask.Failed is { } failedAttempt)
         {
             AppendFailed(text, failedAttempt);
+        }
+
+        if (ask.Story?.Sights is { Count: > 0 })
+        {
+            text.AppendLine();
+            text.AppendLine("The chapter must contain an arrive, land or scan objective in the system of one of the notable places above, named as the list names it.");
         }
 
         text.AppendLine();
@@ -4102,6 +4121,15 @@ public sealed class AdventureGenerator(
             refusals.Add(new Refusal($"This chapter is built on drawn activities and has no objective for this one: {SlotLine(slot)}.", []));
         }
 
+        if (ask.Story?.Sights is { Count: > 0 } sights
+            && !placed.Any(p => p.Trigger.Kind is TriggerKind.Arrive or TriggerKind.Land or TriggerKind.Scan && sights.Any(sight => AtSight(sight, p.Trigger))))
+        {
+            refusals.Add(new Refusal(
+                "This is a sightseeing chapter and has no arrive, land or scan objective in the system of one of its sights: "
+                + string.Join("; ", sights.Select(sight => $"{sight.Name} ({sight.System})")) + ".",
+                []));
+        }
+
         if (ask.Story?.Goal?.Objective is { } goal
             && !beats.Any(beat => MeetsGoal(goal, beat.Kind, Careers.Match(beat.Career), beat.Rank, beat.Engineer, beat.Stage, EliteSpecifications.HullSymbol(beat.Ship) ?? facts.HullNamed(beat.Ship))))
         {
@@ -4188,6 +4216,20 @@ public sealed class AdventureGenerator(
 
         return result;
     }
+
+    /// <summary>Whether the trigger is in the sight's system: by <c>SystemAddress</c> when the sight has one, otherwise by name.</summary>
+    private static bool AtSight(NotablePlace sight, AdventureTrigger trigger) =>
+        sight.SystemAddress is { } address
+            ? trigger.SystemAddress == address
+            : string.Equals(sight.System, trigger.System, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The system of the first arrive, land or scan objective at one of the sights, or null.</summary>
+    private static string? SightSeen(IReadOnlyList<NotablePlace>? sights, IEnumerable<AdventureBeat> beats) =>
+        sights is not { Count: > 0 }
+            ? null
+            : beats.SelectMany(beat => beat.Steps)
+                .Select(step => step.Trigger)
+                .FirstOrDefault(trigger => trigger.Kind is TriggerKind.Arrive or TriggerKind.Land or TriggerKind.Scan && sights.Any(sight => AtSight(sight, trigger)))?.System;
 
     /// <summary>Whether an objective with these fields is the Goals objective: the same kind, ladder, rank, engineer, stage and hull.</summary>
     private static bool MeetsGoal(AdventureTrigger goal, TriggerKind kind, string? career, int? rank, string? engineer, string? stage, string? ship) =>

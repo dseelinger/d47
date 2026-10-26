@@ -871,6 +871,9 @@ public sealed record Adventure
     /// <summary>The stock story this adventure is a chapter of, or null.</summary>
     public string? StoryId { get; init; }
 
+    /// <summary>The system of the sight objective on an accepted sightseeing chapter; null otherwise.</summary>
+    public string? Sight { get; init; }
+
     /// <summary>The story's cast ids aboard the ship as this chapter opens; null when the chapter does not record them.</summary>
     public IReadOnlyList<string>? Aboard { get; init; }
 
