@@ -1,0 +1,18 @@
+{
+  "id": "after-you",
+  "title": "After You",
+  "genre": "Rites of Passage",
+  "level": "endgame",
+  "length": "2-weeks",
+  "core": "kex",
+  "tone": "Skittish, tender road romance",
+  "blurb": "For thirty years you have flown only routes with a station at each end, and you have never seen a star nobody has named. Now you have hired the best guide in the black for two weeks past the bubble's edge, with your fleet carrier along in case your nerve goes. The guide is funny, patient and very good company, has walked on more untouched worlds than anyone alive, and keeps one rule: the client takes every first step. The voice that came aboard at the beacon does not trust the guide and says so every night, Effie Carrow, who has run your carrier's deck for fifteen years, wants you home, and the guide has started plotting each day's route around something on the map without saying what. Turn back, and you lose the guide to the black for good. What is the guide looking for out there?",
+  "inYourWords": "I have a fleet carrier, a hangar of ships I keep in perfect order and more credits than I will ever spend, and I made every credit of it on routes with a station at each end. Thirty years of it. Pilots I came up with have seen the core. I have never seen a star that nobody has named, and the truth is that the dark between the stars frightens me and always has. So I have hired the best guide there is, for two weeks out past the edge, with the carrier coming along in case my nerve goes. Effie Carrow, who has run my deck for fifteen years, says it is the worst idea I have ever had. The guide laughed, and said the client goes first.",
+  "beacon": "Every client the guide takes starts with a test run to a Guardian beacon, nine hundred light years out: sit through the dark out there, scan the beacon, and you can manage two weeks. I sat through it and I scanned it. Something else came aboard with the data.",
+  "castPictures": [
+    "after-you.guide.for-man",
+    "after-you.guide.for-woman",
+    "after-you.effie"
+  ],
+  "sealedSha256": "eff10c84167c9096ce36f314636ab83c5a9596ba5d995b7060d39d6f33a8a744"
+}
