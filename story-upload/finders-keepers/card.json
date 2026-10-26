@@ -1,0 +1,16 @@
+{
+  "id": "finders-keepers",
+  "title": "Finders Keepers",
+  "genre": "Golden Fleece",
+  "tone": "Prickly odd-couple road trip, warm",
+  "level": "midrange",
+  "length": "1-week",
+  "core": "quartermaster",
+  "blurb": "Marit Haldane has explored the dark past the bubble's edge for fifty-two years, and every explorer at Anchorage stands her a drink. Her name is on no world at all, so they call her Zero. Her flight licence lapses in seven days, and she has booked you, a sightseeing pilot who has never been past the edge, to fly her out for the week and find one world she can sell under her own name. She will not touch the controls, she corrects every scan you make, and on the first night the mind that came aboard at the Guardian beacon starts reading her old logs. Fail, and the last week the best explorer at Anchorage spends among the stars ends with her name still on nothing. Why has she never sold a single world?",
+  "inYourWords": "I fly the sightseeing loop at Anchorage, in Synuefe ER-D c15-9: forty minutes round the system with a cabin full of tourists, six times a day. My ship is paid for, I have had a little engineering done on it, and I keep enough saved for a bad month. I bought it at nineteen with the one lucky week of my life. I was broke at an edge station with my Sidewinder on a scrap list when the yard sold me an old cartography unit for the price of a meal, and it still held a dead explorer's unsold survey. The payout bought me a real ship. I keep the unit on my console. I always meant to go out past the edge and find something of my own, and in twenty years I never have. Then Marit Haldane booked me for a week.",
+  "beacon": "Marit starts every trip with a data-link scan of a Guardian beacon, for luck, and she will not go past the edge without one. On the way out you flew her to a beacon and ran the scan yourself, because she would not.",
+  "castPictures": [
+    "finders-keepers.marit"
+  ],
+  "sealedSha256": "5eb69c9f1e59eacd8a2c832ffdeb3a6a32e78210b507a11aa775cf63d18227a6"
+}
