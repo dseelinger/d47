@@ -23,9 +23,15 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
     private readonly bool _ownsClient;
 
-    public SpanshGalaxyService(ILogger<SpanshGalaxyService> logger, HttpClient? http = null)
+    private readonly Func<DateTimeOffset> _now;
+
+    public SpanshGalaxyService(
+        ILogger<SpanshGalaxyService> logger,
+        HttpClient? http = null,
+        Func<DateTimeOffset>? now = null)
     {
         _logger = logger;
+        _now = now ?? (() => DateTimeOffset.UtcNow);
         _ownsClient = http is null;
 
         _http = http ?? new HttpClient
@@ -49,7 +55,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
     public async Task<GalaxySearchResult> SearchAsync(GalaxyQuery query, CancellationToken cancellationToken)
     {
-        using var content = new StringContent(SpanshRequest.Search(query), Encoding.UTF8, "application/json");
+        using var content = new StringContent(SpanshRequest.Search(query, _now()), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
             _logger,
             token => _http.PostAsync("api/systems/search", content, token),
@@ -64,7 +70,7 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         StationQuery query,
         CancellationToken cancellationToken)
     {
-        using var content = new StringContent(SpanshRequest.Stations(query), Encoding.UTF8, "application/json");
+        using var content = new StringContent(SpanshRequest.Stations(query, _now()), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
             _logger,
             token => _http.PostAsync("api/stations/search", content, token),

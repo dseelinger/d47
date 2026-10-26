@@ -161,6 +161,7 @@ public static class GalaxyCapability
                     },
                     .. GalaxyFilters.For(GalaxySearchKind.Systems).Select(Parameter),
                     .. SortParameters(GalaxySearchKind.Systems),
+                    ReportAgeParameter,
                     new ToolParameter
                     {
                         Name = "limit",
@@ -266,6 +267,7 @@ public static class GalaxyCapability
                     },
                     .. GalaxyFilters.For(GalaxySearchKind.Stations).Select(Parameter),
                     .. SortParameters(GalaxySearchKind.Stations),
+                    ReportAgeParameter,
                     new ToolParameter
                     {
                         Name = "limit",
@@ -321,6 +323,7 @@ public static class GalaxyCapability
                         Type = ToolParameterType.Number,
                         Description = "Furthest from the star, in light seconds.",
                     },
+                    ReportAgeParameter,
                     new ToolParameter
                     {
                         Name = "surface_stations",
@@ -548,7 +551,9 @@ public static class GalaxyCapability
                     {
                         Name = "max_price_age_hours",
                         Type = ToolParameterType.Integer,
-                        Description = "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month.",
+                        Description =
+                            "How stale a quoted price may be, in hours; 0 for any age. Default 720, one month for "
+                            + "a commodity. For a module or ship, how old the station's report may be; no bound unless given.",
                     },
                     new ToolParameter
                     {
@@ -1302,18 +1307,25 @@ public static class GalaxyCapability
             limit = DefaultLimit;
         }
 
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
+
         if (!GalaxyQuery.TryParse(
                 near, requested, limit, out var query, out var failure, Text(arguments, "order_by"), Text(arguments, "order")))
         {
             return ToolResult.Error(failure);
         }
 
+        query = query with { MaxReportAgeHours = reportAge };
+
         try
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
 
             var notes = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known);
-            var said = notes + Describe(result, query);
+            var said = notes + Describe(result, query) + ReportAgeSaid(reportAge);
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Systems,
@@ -1432,10 +1444,17 @@ public static class GalaxyCapability
             Filters = requested,
         };
 
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
+
         if (!StationQuery.TryParse(search, out var query, out var failure))
         {
             return ToolResult.Error(failure);
         }
+
+        query = query with { MaxReportAgeHours = reportAge };
 
         try
         {
@@ -1444,7 +1463,8 @@ public static class GalaxyCapability
             var said = FactionNotes(corrected, result.Stations.Count == 0 ? unknown : [], known)
                        + DescribeStations(result, query)
                        + LeftOutSaid(result)
-                       + LimitRefused(askedLimit);
+                       + LimitRefused(askedLimit)
+                       + ReportAgeSaid(reportAge);
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Stations,
@@ -1508,16 +1528,24 @@ public static class GalaxyCapability
             IncludeCarriers = arguments.TryGetBoolean("include_carriers", out var carriers) && carriers,
         };
 
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
+
         if (!StationQuery.TryParse(search, out var query, out var failure))
         {
             return ToolResult.Error(failure);
         }
 
+        query = query with { MaxReportAgeHours = reportAge };
+
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            var said = Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit);
+            var said = Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit)
+                       + ReportAgeSaid(reportAge);
 
             var posting = new GalaxySearchPosting(
                 GalaxySearchKind.Outfitting,
@@ -2163,6 +2191,11 @@ public static class GalaxyCapability
 
         var limit = Limit(arguments, out var askedLimit);
 
+        if (ReportAge(arguments, "max_price_age_hours", out var reportAge) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
+
         if (!StationQuery.TryParse(
                 near, module, moduleClass, moduleRating, ship, largePad, maxDistance, limit,
                 out var query,
@@ -2171,11 +2204,14 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
+        query = query with { MaxReportAgeHours = reportAge };
+
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            return ToolResult.Ok(Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit));
+            return ToolResult.Ok(
+                Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -2597,6 +2633,36 @@ public static class GalaxyCapability
 
         return said + LimitRefused(askedLimit);
     }
+
+    private static readonly ToolParameter ReportAgeParameter = new()
+    {
+        Name = "max_report_age_hours",
+        Type = ToolParameterType.Integer,
+        Description = "Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age.",
+    };
+
+    /// <summary>Reads a report age: null hours for none, or an error sentence when out of range.</summary>
+    private static string? ReportAge(ToolArguments arguments, string name, out int? hours)
+    {
+        hours = null;
+
+        if (!arguments.TryGetInt32(name, out var asked) || asked == 0)
+        {
+            return null;
+        }
+
+        if (asked is < 1 or > MaxPriceAgeHours)
+        {
+            return $"{name} runs from 1 to {MaxPriceAgeHours:N0} hours, and 0 or absent means any age; you gave {asked:N0}.";
+        }
+
+        hours = asked;
+        return null;
+    }
+
+    /// <summary>The sentence naming the report age bound, or nothing where none applied.</summary>
+    private static string ReportAgeSaid(int? hours) =>
+        hours is { } bound ? $" Only reports from the last {Span(bound)} were considered." : string.Empty;
 
     /// <summary>A stretch of hours in the words a Commander would use for it.</summary>
     private static string Span(int hours) => hours switch

@@ -221,6 +221,9 @@ public sealed record StationQuery
 
     public int Size { get; init; } = 5;
 
+    /// <summary>Oldest report to match, in hours; null sends no bound.</summary>
+    public int? MaxReportAgeHours { get; init; }
+
     /// <summary>Sent as the service's station name filter; null sends none.</summary>
     public string? StationName { get; init; }
 

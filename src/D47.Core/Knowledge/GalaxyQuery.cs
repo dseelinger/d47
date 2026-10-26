@@ -459,6 +459,9 @@ public sealed record GalaxyQuery
     /// <summary>What the results are sorted by; null is nearest first.</summary>
     public SearchSort? Sort { get; init; }
 
+    /// <summary>Oldest report to match, in hours; null sends no bound.</summary>
+    public int? MaxReportAgeHours { get; init; }
+
     /// <summary>Builds a query, or explains what was wrong with it in words the model can act on.</summary>
     public static bool TryParse(
         string? referenceSystem,

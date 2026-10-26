@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Galaxy searches can leave out old reports. System, station and outfitting searches take a maximum report age in hours, and the module and ship branches of the nearest-station search use their price age the same way. The bound is applied by the service, on the station's outfitting or shipyard report date for a module or ship and on the last update otherwise, and the answer says how far back it looked. With no age given, nothing changes.
+
 A price age of 0 hours now means prices of any age, in the commodity search, trade routes, the best-cargo search and the Trade setting. The market index is asked for a date range that imposes no limit, where before it applied about 90 days. A bound of a few hours no longer returns a day of prices.
 
 VR captions are paced to the voice. A sentence that wraps past the caption window goes up in events held for the longer of your reading time and the time the voice takes to say them, using how fast the voice has recently spoken, so the captions no longer run ahead of it. The caption window is now three lines.

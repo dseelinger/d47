@@ -9,7 +9,7 @@ namespace D47.Knowledge;
 /// <summary>Turns a validated <see cref="GalaxyQuery"/> into the search body the service expects.</summary>
 internal static class SpanshRequest
 {
-    public static string Search(GalaxyQuery query)
+    public static string Search(GalaxyQuery query, DateTimeOffset? now = null)
     {
         var buffer = new ArrayBufferWriter<byte>();
 
@@ -20,6 +20,7 @@ internal static class SpanshRequest
             writer.WriteStartObject("filters");
 
             WriteCriteria(writer, GalaxySearchKind.Systems, query.Criteria);
+            WriteReportAge(writer, "updated_at", query.MaxReportAgeHours, now);
 
             writer.WriteEndObject();
 
@@ -117,7 +118,7 @@ internal static class SpanshRequest
     }
 
     /// <summary>The station search body.</summary>
-    public static string Stations(StationQuery query)
+    public static string Stations(StationQuery query, DateTimeOffset? now = null)
     {
         var buffer = new ArrayBufferWriter<byte>();
 
@@ -221,6 +222,23 @@ internal static class SpanshRequest
             }
 
             WriteCriteria(writer, GalaxySearchKind.Stations, query.Criteria);
+
+            if (query.Modules.Count > 0 || query.Ship is not null)
+            {
+                if (query.Modules.Count > 0)
+                {
+                    WriteReportAge(writer, "outfitting_updated_at", query.MaxReportAgeHours, now);
+                }
+
+                if (query.Ship is not null)
+                {
+                    WriteReportAge(writer, "shipyard_updated_at", query.MaxReportAgeHours, now);
+                }
+            }
+            else
+            {
+                WriteReportAge(writer, "updated_at", query.MaxReportAgeHours, now);
+            }
 
             writer.WriteEndObject();
 
@@ -648,6 +666,27 @@ internal static class SpanshRequest
         writer.WriteString("comparison", "<=>");
         writer.WriteEndObject();
     }
+
+    /// <summary>Writes nothing without an age; otherwise a date range from the cutoff to a far-future date.</summary>
+    private static void WriteReportAge(Utf8JsonWriter writer, string name, int? hours, DateTimeOffset? now)
+    {
+        if (hours is not { } age)
+        {
+            return;
+        }
+
+        var cutoff = (now ?? DateTimeOffset.UtcNow).UtcDateTime.AddHours(-age);
+
+        writer.WriteStartObject(name);
+        writer.WriteStartArray("value");
+        writer.WriteStringValue(cutoff.ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture));
+        writer.WriteStringValue(FarFuture);
+        writer.WriteEndArray();
+        writer.WriteString("comparison", "<=>");
+        writer.WriteEndObject();
+    }
+
+    private const string FarFuture = "2999-12-31T00:00:00";
 
     /// <summary>The commodity filter, always with a bound on it (#156).</summary>
     private static void WriteMarketFilter(Utf8JsonWriter writer, string commodity, bool selling, int minimum)
