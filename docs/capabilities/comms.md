@@ -309,7 +309,8 @@ channels.
 
 A character who is aboard is clear on the intercom. One elsewhere gets fainter with distance, as
 [Characters](characters.md) describes, and the carrier's crew is out of range beyond 500 light years.
-A stranger on comms in your system is always in range.
+A stranger on comms in your system is always in range. A story character riding with you in a ship
+with no free seat for them is heard over comms until you fly a ship with room.
 
 ### Real Commanders are never on a channel
 

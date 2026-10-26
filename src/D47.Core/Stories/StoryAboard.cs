@@ -201,6 +201,39 @@ public static class StoryAboard
             due.FirstOrDefault(entry => entry.Boards == boards && string.Equals(entry.Id, written.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// Of <paramref name="aboard"/>, those <paramref name="hull"/> seats besides the Commander, in <paramref name="aboard"/>'s order.
+    /// Seats go first to those in <paramref name="opening"/>, then to the rest, each group in cast order. Everyone is seated in a
+    /// hull with no known crew.
+    /// </summary>
+    public static IReadOnlyList<string> Seated(StorySecret secret, IReadOnlyList<string> aboard, IReadOnlyCollection<string> opening, string? hull)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        ArgumentNullException.ThrowIfNull(aboard);
+        ArgumentNullException.ThrowIfNull(opening);
+
+        if (EliteSpecifications.Ship(hull)?.Crew is not { } crew)
+        {
+            return aboard;
+        }
+
+        var seated = aboard
+            .OrderBy(id => opening.Contains(id, StringComparer.Ordinal) ? 0 : 1)
+            .ThenBy(id => CastOrder(secret, id))
+            .Take(Math.Max(crew - 1, 0))
+            .ToHashSet(StringComparer.Ordinal);
+
+        return [.. aboard.Where(seated.Contains)];
+    }
+
+    /// <summary>Of <paramref name="aboard"/>, those <see cref="Seated"/> leaves without a seat in <paramref name="hull"/>, heard over comms.</summary>
+    public static IReadOnlyList<string> Seatless(StorySecret secret, IReadOnlyList<string> aboard, IReadOnlyCollection<string> opening, string? hull)
+    {
+        var seated = Seated(secret, aboard, opening, hull);
+
+        return [.. aboard.Where(id => !seated.Contains(id, StringComparer.Ordinal))];
+    }
+
     /// <summary>A beat key's place in story order, or -1 for a key that is not a beat.</summary>
     public static int Order(string beat)
     {
@@ -213,6 +246,19 @@ public static class StoryAboard
         }
 
         return -1;
+    }
+
+    private static int CastOrder(StorySecret secret, string id)
+    {
+        for (var at = 0; at < secret.Cast.Count; at++)
+        {
+            if (string.Equals(secret.Cast[at].Id, id, StringComparison.Ordinal))
+            {
+                return at;
+            }
+        }
+
+        return int.MaxValue;
     }
 
     private static int FreeSeats(StorySecret secret, Story story, string? hull) =>

@@ -12,6 +12,8 @@ A story's signal-source objective can name the system where the drops must happe
 
 A story's cast member boards your ship only while it has a free seat. A boarding that comes due while you fly a Sidewinder, or a ship whose seats are taken, is held, and the first chapter written while you fly a ship with a seat places it as a scene, so the member is met aboard rather than appearing in the cockpit. A chapter that moves you into a ship with enough seats can place the boarding in that same chapter, on or after the objective that boards the ship. A chapter rewritten after you refuse or close an objective holds boardings for a free seat the same way, so a Sidewinder is no longer given two riders.
 
+A story's cast member aboard a ship with no free seat for them is heard over comms, with their comms sound, rather than in the cockpit. Seats go first to those aboard as the chapter opened. The member stays aboard and is back in the cockpit as soon as you fly a ship with room, and the story writer is told who is on comms.
+
 The check that a story's lines claim only what their objectives confirm now reads a site objective by its kind: a Guardian site objective confirms the ship came to that site, and a tourist beacon objective confirms the beacon was scanned. A Guardian site chapter is no longer refused for a line the objective does confirm.
 
 A turn you speak through the comms push-to-talk now shows a grey `comms` tag in its header, after `CMDR`, in the window, the desktop overlay and the headset panels. Turns spoken through the core key and typed turns have no tag.

@@ -135,7 +135,11 @@ public sealed record AdventureStory(
     bool Remembered = false,
     GoalClimbStep? Goal = null,
     IReadOnlyList<string>? Aboard = null,
-    IReadOnlyList<Stories.StorySwitch>? Due = null);
+    IReadOnlyList<Stories.StorySwitch>? Due = null)
+{
+    /// <summary>The cast ids aboard with no seat in the Commander's current hull, heard over comms.</summary>
+    public IReadOnlyList<string> OnComms { get; init; } = [];
+}
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
 public sealed record AdventureSpeaker(string Id, string Name, string Who)
@@ -2302,11 +2306,20 @@ public sealed class AdventureGenerator(
             }
 
             var aboard = cast.Where(member => story.Aboard?.Contains(member.Id, StringComparer.Ordinal) == true).ToList();
+            var seated = aboard.Where(member => !story.OnComms.Contains(member.Id, StringComparer.Ordinal)).ToList();
+            var onComms = aboard.Except(seated).ToList();
 
             text.AppendLine(
                 (aboard.Count > 0
-                    ? $"Aboard the Commander's ship as this chapter opens: {string.Join(", ", aboard.Select(member => member.Name))}. They are in the cockpit "
-                      + "with the Commander: write their lines as spoken there, in person, never over comms. Every other cast member is elsewhere. "
+                    ? $"Aboard the Commander's ship as this chapter opens: {string.Join(", ", aboard.Select(member => member.Name))}. "
+                      + (seated.Count > 0
+                          ? $"{string.Join(", ", seated.Select(member => member.Name))} {(seated.Count == 1 ? "is" : "are")} in the cockpit with the Commander: "
+                            + "write their lines as spoken there, in person, never over comms. "
+                          : string.Empty)
+                      + (onComms.Count > 0
+                          ? $"The Commander's ship has no seat for {string.Join(", ", onComms.Select(member => member.Name))}: write their lines as heard over comms. "
+                          : string.Empty)
+                      + "Every other cast member is elsewhere. "
                     : "No cast member is aboard the ship as this chapter opens; each is elsewhere. ")
                 + "\"aboard\" lists the id of each other cast member who rides along in the cockpit for this chapter alone, whose lines are then "
                 + "written as spoken there. Most chapters list none.");

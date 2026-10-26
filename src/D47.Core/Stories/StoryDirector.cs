@@ -276,11 +276,12 @@ public sealed class StoryDirector(
 
     /// <summary>
     /// Who speaks a line by <paramref name="speaker"/> in the current story, decided now, at <paramref name="beat"/> of the
-    /// current chapter as <see cref="CastAboard(string?, int?)"/> reads it; null when no story is current.
+    /// current chapter as <see cref="CastAboard(string?, int?)"/> reads it, those aboard with no seat in the current hull heard
+    /// over comms; null when no story is current.
     /// </summary>
     public StoryLineVoice? LineVoice(string? frontierId, string? speaker, int? beat = null) =>
         stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret
-            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret, beat))
+            ? StoryVoices.Of(speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret, beat))
             : null;
 
     /// <summary>
@@ -294,6 +295,15 @@ public sealed class StoryDirector(
         story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
             ? StoryAboard.At(chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
             : StoryAboard.BySpan(secret, story);
+
+    /// <summary>The cast aboard at <paramref name="beat"/> who have a seat in the hull the Commander flies now.</summary>
+    private IReadOnlyList<string> InCockpit(string? frontierId, Story story, StorySecret secret, int? beat = null)
+    {
+        var aboard = CastAboard(frontierId, story, secret, beat);
+        var opening = story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: { } chapterAboard } ? chapterAboard : aboard;
+
+        return StoryAboard.Seated(secret, aboard, opening, Game()?.Ship.Type);
+    }
 
     /// <summary>
     /// The story with its boardings and leavings as a chapter handed <paramref name="handed"/> opens: the current chapter's at
@@ -2237,7 +2247,7 @@ public sealed class StoryDirector(
                && stories.Current(frontierId) is { } story
                && Hidden(story.Id) is { } secret
                && StoryClues.Line(secret, story.Pacing, due.Index) is { } line
-            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship(), CastAboard(frontierId, story, secret))
+            ? StoryVoices.Of(line.Speaker, secret, Gender(), Aboard(), Choices(), Ship(), InCockpit(frontierId, story, secret))
             : null;
     }
 
@@ -2826,7 +2836,10 @@ public sealed class StoryDirector(
             story.BeaconsRemembered > 0,
             goal,
             StoryAboard.BySpan(secret, story),
-            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull));
+            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull))
+        {
+            OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
+        };
     }
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
