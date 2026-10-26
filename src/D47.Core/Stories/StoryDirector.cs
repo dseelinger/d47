@@ -299,7 +299,7 @@ public sealed class StoryDirector(
     /// The story with its boardings and leavings as a chapter handed <paramref name="handed"/> opens: the current chapter's at
     /// its opening and its fired beats folded in, then each one the stage has passed applied.
     /// </summary>
-    private Story Opening(string? frontierId, Story story, StorySecret secret, IReadOnlyList<string> handed)
+    private Story Opening(string? frontierId, Story story, StorySecret secret, IReadOnlyList<string> handed, string? hull)
     {
         if (story.CurrentChapter is { } key)
         {
@@ -313,7 +313,7 @@ public sealed class StoryDirector(
             }
         }
 
-        return StoryAboard.Missed(story, secret, handed);
+        return StoryAboard.Missed(story, secret, handed, hull);
     }
 
     /// <summary>The Commander's notes on a story's cast member, by Frontier ID, story id and cast id; null for none.</summary>
@@ -2680,7 +2680,7 @@ public sealed class StoryDirector(
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
             && (story.BeaconScanAt is null || finaleChapter is not null || home is not null || ChapterFit.ServesLongHaul(slots, goal?.Objective));
 
-        var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter));
+        var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter), game?.Ship.Type);
 
         var ask = new AdventureAsk(
             longHaul || home is not null ? AdventureReach.Anywhere : AdventureReach.Session,
@@ -2700,7 +2700,8 @@ public sealed class StoryDirector(
                 slots,
                 finaleChapter > 1 ? story.FinaleDestination : null,
                 home,
-                goal),
+                goal,
+                game?.Ship.Type),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -2738,6 +2739,7 @@ public sealed class StoryDirector(
             Chapters = [.. replacing ? still.Chapters.SkipLast(1) : still.Chapters, key],
             Boarded = opening.Boarded,
             Left = opening.Left,
+            AwaitingSeat = opening.AwaitingSeat,
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
@@ -2777,7 +2779,8 @@ public sealed class StoryDirector(
         IReadOnlyList<DrawnActivity>? slots,
         AdventureDestination? destination,
         string? home = null,
-        GoalClimbStep? goal = null)
+        GoalClimbStep? goal = null,
+        string? hull = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -2811,7 +2814,7 @@ public sealed class StoryDirector(
             story.BeaconsRemembered > 0,
             goal,
             StoryAboard.BySpan(secret, story),
-            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter)));
+            StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull));
     }
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>

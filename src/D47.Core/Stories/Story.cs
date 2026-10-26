@@ -98,6 +98,9 @@ public sealed record Story
     /// <summary>The cast ids whose span leaving has happened, folded in from the chapters before the current one.</summary>
     public IReadOnlyList<string> Left { get; init; } = [];
 
+    /// <summary>The cast ids whose boarding beat has passed while the ship had no seat for them, handed to the next chapter drawn with a free seat.</summary>
+    public IReadOnlyList<string> AwaitingSeat { get; init; } = [];
+
     /// <summary>The value of <see cref="Sessions"/> when a cast member last reacted to what the Commander did.</summary>
     public int? ReactionSession { get; init; }
 

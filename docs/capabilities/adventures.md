@@ -619,7 +619,9 @@ others for that chapter alone. While a member is aboard, the chapter writer writ
 in the cockpit, and their lines are spoken without the comms link; their Guardian effects still apply. A
 chapter's line is voiced for who is aboard at its own objective. Clues, reactions and replies are voiced
 for who is aboard at the last objective you completed. A boarding or leaving counts for the next chapter
-once its objective has fired.
+once its objective has fired. A boarding waits for a free seat: the ship's crew size, less you, less the members already aboard.
+While your ship has none, the boarding is held, and the first chapter written while it has a seat is told the boarding is due
+and places it as a scene.
 
 Each line is posted to the Story log from its speaker's name, with the speaker's picture and the clip it was
 spoken in. When a chapter's objective belongs to the narrator or a cast member, that speaker says the objective's line

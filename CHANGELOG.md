@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's cast member boards your ship only while it has a free seat. A boarding that comes due while you fly a Sidewinder, or a ship whose seats are taken, is held, and the first chapter written while you fly a ship with a seat places it as a scene, so the member is met aboard rather than appearing in the cockpit.
+
 A turn you speak through the comms push-to-talk now shows a grey `comms` tag in its header, after `CMDR`, in the window, the desktop overlay and the headset panels. Turns spoken through the core key and typed turns have no tag.
 
 Inside an Operation, d47 now says only warnings and relayed in-game comms unprompted. Story lines and adventure beats reached there wait and are said after the Operation ends.

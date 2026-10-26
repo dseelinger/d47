@@ -2317,13 +2317,16 @@ public sealed class AdventureGenerator(
             + (opening ? ", or the opening," : string.Empty)
             + " where that beat happens in this chapter, by listing the member's id in that objective's "
             + (opening ? "\"boards\" or \"leaves\" (\"openingBoards\" or \"openingLeaves\" for the opening)" : "\"boards\" or \"leaves\"")
-            + ". If this chapter does not reach the beat, list it nowhere: a later chapter places it.");
+            + ". If this chapter does not reach the beat, list it nowhere: a later chapter places it. A boarding marked held is due in this chapter "
+            + "although its beat has passed: place it on the opening or an objective where the member joins the ship.");
 
         foreach (var entry in due)
         {
             var name = cast.FirstOrDefault(member => member.Id == entry.Id)?.Name ?? entry.Id;
 
-            text.AppendLine($"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.");
+            text.AppendLine(entry.Passed
+                ? $"- {name} (\"{entry.Id}\") comes aboard (held: the {entry.Beat} beat has passed)."
+                : $"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.");
         }
 
         text.AppendLine(
