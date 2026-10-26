@@ -62,6 +62,21 @@ public static class GoalClimb
         return standings.Count > 0 && standings.All(standing => standing.IsDone);
     }
 
+    /// <summary>The standings whose arc keys are in <paramref name="arcs"/>, in their own order; all of them when it is null.</summary>
+    public static IReadOnlyList<GoalStanding> Listed(IReadOnlyList<GoalStanding> standings, IReadOnlyList<string>? arcs)
+    {
+        ArgumentNullException.ThrowIfNull(standings);
+
+        if (arcs is null)
+        {
+            return standings;
+        }
+
+        var keys = new HashSet<string>(arcs.Select(key => key.Trim()), StringComparer.OrdinalIgnoreCase);
+
+        return [.. standings.Where(standing => keys.Contains(standing.Arc.Key))];
+    }
+
     /// <summary>The same choice over <paramref name="standings"/>, which are in catalogue order.</summary>
     public static GoalClimbStep? Next(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null)
     {

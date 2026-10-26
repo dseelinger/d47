@@ -400,6 +400,10 @@ public sealed class StoryDirector(
     /// <summary>Every built-in Goals arc as it stands now, which a Goals story's clues and finale wait on; an empty list holds them.</summary>
     public Func<IReadOnlyList<GoalStanding>> Goals { get; set; } = () => [];
 
+    /// <summary>The <see cref="Goals"/> the story with this id works: the arcs its card lists, or every arc.</summary>
+    public IReadOnlyList<GoalStanding> GoalsOf(string? storyId) =>
+        GoalClimb.Listed(Goals(), storyId is null ? null : catalog().Find(storyId)?.GoalArcs);
+
     /// <summary>How much the Commander likes each career, for the draw of a chapter's activities.</summary>
     public Func<Configuration.CareerRatingSettings?> Ratings { get; set; } = () => null;
 
@@ -567,7 +571,7 @@ public sealed class StoryDirector(
             BeaconNarrated = narrated,
             BeaconsRemembered = remembered,
             BackstoryBefore = before,
-            GoalsAtPick = card.Goals ? GoalClimb.Overall(Goals()) : null,
+            GoalsAtPick = card.Goals ? GoalClimb.Overall(GoalClimb.Listed(Goals(), card.GoalArcs)) : null,
         };
 
         stories.Save(frontierId, story);
@@ -2249,7 +2253,7 @@ public sealed class StoryDirector(
     /// <summary>The clue the running story owes now, or null.</summary>
     public StoryClueDue? ClueDue(string? frontierId, DateTimeOffset now) =>
         stories.Current(frontierId) is { IsOff: false, IsWithoutOdyssey: false } story && catalog().Secret(story.Id) is not null
-            ? StoryClues.Due(story, now, () => GoalClimb.Overall(Goals()))
+            ? StoryClues.Due(story, now, () => GoalClimb.Overall(GoalsOf(story.Id)))
             : null;
 
     /// <summary>The text of a clue that is still the next one owed, or null.</summary>
@@ -2682,10 +2686,10 @@ public sealed class StoryDirector(
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
-        var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id)?.Goals == true
+        var goal = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard
             ? GoalClimb.Next(
+                GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
                 game,
-                Mine?.Invoke(),
                 Engineers?.Invoke(),
                 row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused))
             : null;
@@ -2878,7 +2882,7 @@ public sealed class StoryDirector(
     }
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
-        StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(Goals()));
+        StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(GoalsOf(story.Id)));
 
     /// <summary>The story's chapters written since the beacon scan; none before it.</summary>
     private int SinceBeacon(string? frontierId, Story story) => story.BeaconScanAt is { } scanned

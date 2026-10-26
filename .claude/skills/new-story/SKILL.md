@@ -170,7 +170,7 @@ add.
   backstory in the first person, starting at the level), `length` (the key of a `StoryPacing`), `beacon` (why they go, or went, to scan it; for a story shorter
   than 1 month, the scan the story opens after) and `core` (#716: the Guardian core the story is written for,
   never `covas` or `heretic`), and optionally `goals` (`true` for a Goals story, whose chapters after the
-  beacon scan each work the Commander's Goals arc furthest behind; leave it out otherwise), and optionally `beaconTrip` (`true` for a story of 1 month or longer whose plot happens at the beacon scan, so it flies to a beacon even when a scan is on record; leave it out otherwise). Until #739 and #716 land, show `level` and `core` on the page and
+  beacon scan each work the Commander's Goals arc furthest behind; leave it out otherwise), optionally `goalArcs` (beside `goals: true`, a list of the arc keys the story works, from `rank.combat`, `rank.trade`, `rank.explore`, `rank.soldier`, `rank.exobiologist`, `rank.empire`, `rank.federation`, `powerplay`, `engineers` and `ships`; leave it out for every arc), and optionally `beaconTrip` (`true` for a story of 1 month or longer whose plot happens at the beacon scan, so it flies to a beacon even when a scan is on record; leave it out otherwise). Until #739 and #716 land, show `level` and `core` on the page and
   leave them out of the card.
 - **The tone** is a feel word or two, then the kind of story, for example "dark, haunted mystery" or
   "desperate survival thriller". A word for how the story is told may follow, but never opens it. It

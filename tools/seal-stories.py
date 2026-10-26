@@ -6,6 +6,7 @@ Not part of the build. `faults` checks one hidden entry and its card; the hidden
 
 Each entry: {"id", "secret", "end", "beats", "opening", "scan", "clues", "finale", "options", "cast"}, paced by
 the "length" on its card, one of the keys of LENGTHS. The card's "goals" and "beaconTrip", where present, are true or false.
+The card's "goalArcs", where present, is a card with "goals" true naming one or more GOAL_ARCS keys, each once.
   opening  optional, a story of any length: one or more lines said word for word, in order, at the pick, before
            the scan line and chapter one. Left out when the story has none; never an empty list.
            An opening line may carry {commander} ("Commander" and the Commander's name), {their} (his, her or
@@ -72,6 +73,10 @@ LENGTHS = {
 }
 # The lengths whose beacon scan is narrated at the pick, as StoryPacing.NarratedScan.
 NARRATED = ("3-days", "1-week", "2-weeks")
+GOAL_ARCS = (
+    "rank.combat", "rank.trade", "rank.explore", "rank.soldier", "rank.exobiologist", "rank.empire", "rank.federation",
+    "powerplay", "engineers", "ships",
+)
 # Speaking ids in TtsProviderCatalog whose Billed is false.
 PROVIDERS = ("edge", "kokoro", "chatterbox")
 BILLED = ("elevenlabs", "openai", "cartesia")
@@ -151,6 +156,28 @@ def aboard_fault(who: str, speaker: dict, sheet: tuple, length) -> list:
         if known and previous is not None and boards is not None and BEATS.index(boards) <= BEATS.index(previous):
             found.append(f"{name} boards at or before the beat the span before it leaves at")
         previous = leaves if leaves in sheet else None
+    return found
+
+
+def goal_arcs_fault(card: dict) -> list:
+    if "goalArcs" not in card:
+        return []
+    arcs = card["goalArcs"]
+    if not isinstance(arcs, list) or not all(isinstance(key, str) for key in arcs):
+        return [f"the card's goalArcs is {arcs!r}, not a list of arc keys"]
+    found = []
+    if card.get("goals") is not True:
+        found.append("the card's goalArcs is set on a card that is not a Goals story")
+    if not arcs:
+        found.append("the card's goalArcs is empty")
+    seen = set()
+    for key in arcs:
+        canonical = key.strip().lower()
+        if canonical not in GOAL_ARCS:
+            found.append(f"the card's goalArcs names {key}, which is not a Goals arc")
+        elif canonical in seen:
+            found.append(f"the card's goalArcs names {canonical} more than once")
+        seen.add(canonical)
     return found
 
 
@@ -251,6 +278,7 @@ def faults(entry: dict, personas: set, card: dict | None = None) -> list:
             found.append(f"the card's beaconTrip is {card['beaconTrip']!r}, not true or false")
         elif card["beaconTrip"] and length in NARRATED:
             found.append(f"the card's beaconTrip is set on a {length} story, shorter than 1 month")
+    found += goal_arcs_fault(card or {})
 
     beats = entry.get("beats") or {}
     found += [f"no beat {beat}" for beat in sheet if not text(beats.get(beat))]

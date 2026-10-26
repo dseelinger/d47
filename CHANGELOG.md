@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A Goals story can name the Goals it works. Its chapters, clues, finale and Goals page entry then follow only those Goals, and it asks for a Powerplay pledge only when Powerplay is one of them.
+
 A story whose hidden entry has more than four cast members no longer fails to load. An install from before this version drops such a story, with a log line and nothing on screen, so a story with a larger cast needs this version.
 
 The chapter writer is told which cast members are on your fleet carrier, and words their boardings and leavings as the carrier's, so their lines read correctly in person and over its comms.

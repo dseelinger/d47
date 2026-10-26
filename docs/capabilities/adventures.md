@@ -936,6 +936,11 @@ back none already given. The story's entry on the Goals page says what it is wai
 progress of 60%; you are at 37%", or "The finale waits for every Goal: 9 of 11 done". The Story Bench cannot jump a
 Goals story.
 
+A Goals story's card may also list `goalArcs`, the keys of the arcs it works, such as
+`["rank.combat", "rank.trade", "rank.explore", "rank.soldier", "rank.exobiologist"]` for Elite V in the five careers.
+Its chapters' steps, its overall progress, its finale and its Goals page entry then read only those arcs, and the
+pledge step is offered only when `powerplay` is listed. A card without the list works every arc.
+
 ### What you like doing {#career-ratings}
 
 The Stories settings hold eight ratings, one per career, each from 1 to 100 and 50 until you set it. They are kept per

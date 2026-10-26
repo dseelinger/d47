@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using D47.Core.Audio;
+using D47.Core.Goals;
 using D47.Core.Persona;
 using D47.Core.Speech;
 using D47.Core.Storage;
@@ -92,6 +93,9 @@ public sealed record StoryCard
 
     /// <summary>Whether this is a Goals story: each chapter between the beacon scan and the finale works the Goals arc furthest behind.</summary>
     public bool Goals { get; init; }
+
+    /// <summary>The <see cref="GoalCatalogue"/> arc keys a Goals story works, or null for every arc.</summary>
+    public IReadOnlyList<string>? GoalArcs { get; init; }
 
     /// <summary>Whether the story's plot happens at the beacon scan: it flies to a beacon even when a scan is on record.</summary>
     public bool BeaconTrip { get; init; }
@@ -914,6 +918,43 @@ public sealed class StoryCatalog
         if (card.BeaconTrip && card.Pacing.NarratedScan)
         {
             yield return $"{card.Id}: beaconTrip is set on a story shorter than 1 month.";
+        }
+
+        foreach (var fault in GoalArcFaults(card))
+        {
+            yield return $"{card.Id}: {fault}";
+        }
+    }
+
+    private static IEnumerable<string> GoalArcFaults(StoryCard card)
+    {
+        if (card.GoalArcs is not { } arcs)
+        {
+            yield break;
+        }
+
+        if (!card.Goals)
+        {
+            yield return "goalArcs is set on a card that is not a Goals story.";
+        }
+
+        if (arcs.Count == 0)
+        {
+            yield return "goalArcs is empty.";
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var key in arcs)
+        {
+            if (GoalCatalogue.Find(key) is not { } arc)
+            {
+                yield return $"goalArcs names {key}, which is not a Goals arc.";
+            }
+            else if (!seen.Add(arc.Key))
+            {
+                yield return $"goalArcs names {arc.Key} more than once.";
+            }
         }
     }
 

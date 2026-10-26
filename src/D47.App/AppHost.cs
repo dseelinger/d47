@@ -3247,7 +3247,7 @@ public sealed class AppHost : IDisposable
         {
             var frontierId = gameState.Active?.Identity.FrontierId;
 
-            return D47.Core.Goals.StoryGoal.Of(storyStore.For(frontierId), key => adventureBook.Standing(frontierId, key), storyDirector.Goals);
+            return D47.Core.Goals.StoryGoal.Of(storyStore.For(frontierId), key => adventureBook.Standing(frontierId, key), () => storyDirector.GoalsOf(storyStore.Current(frontierId)?.Id));
         };
 
         storyDirector.Gender = () => settings.Current.CommanderGender;
