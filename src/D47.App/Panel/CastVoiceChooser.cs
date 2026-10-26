@@ -52,7 +52,8 @@ public static class CastVoiceChooser
             return;
         }
 
-        var providers = TtsProviderCatalog.All.Where(provider => provider.Speaks).ToList();
+        var providers = TtsProviderCatalog.All.Where(provider => provider.Speaks && provider.CanSpeak(member.Language)).ToList();
+        var language = SpokenLanguage.IsEnglish(member.Language) ? null : SpokenLanguage.NameOf(member.Language);
 
         prompts.Pick(
             $"story.voice.{key}.provider",
@@ -60,8 +61,11 @@ public static class CastVoiceChooser
             new PickerRequest
             {
                 Prompt = $"Who speaks for {member.Shown.Name}",
-                Help = "Any provider, and next any voice it lists. The story's text is not rewritten to match the voice.",
+                Help = language is null
+                    ? "Any provider, and next any voice it lists. The story's text is not rewritten to match the voice."
+                    : $"Providers that speak {language}, and next the voices that do. The story's text is not rewritten to match the voice.",
                 Choices = [.. providers.Select(provider => provider.Id)],
+                WhyEmpty = language is null ? null : $"No voice provider on this PC speaks {language}.",
                 Describe = id => TtsProviderCatalog.Selected(id) is var provider && provider.Id == member.Pinned.ProviderId
                     ? $"{provider.Name} (the story's provider)"
                     : TtsProviderCatalog.Selected(id).Name,
@@ -98,6 +102,11 @@ public static class CastVoiceChooser
             listed = VoiceCatalogue.Unreachable(ex.Message);
         }
 
+        if (!SpokenLanguage.IsEnglish(member.Language) && provider.LanguageFollowsVoice)
+        {
+            listed = listed with { Voices = [.. listed.Voices.Where(voice => provider.SpeaksIn(member.Language, voice.Id))] };
+        }
+
         var pinnedHere = string.Equals(providerId, member.Pinned.ProviderId, StringComparison.OrdinalIgnoreCase);
         var ids = listed.Voices.Select(voice => voice.Id).ToList();
 
@@ -122,7 +131,8 @@ public static class CastVoiceChooser
                 },
                 Current = string.Equals(member.Speaks.ProviderId, providerId, StringComparison.OrdinalIgnoreCase) ? member.Speaks.VoiceId : null,
                 DefaultDisplay = DefaultDisplay(member),
-                WhyEmpty = listed.WhyEmpty(provider.Name),
+                WhyEmpty = listed.WhyEmpty(provider.Name)
+                    ?? (SpokenLanguage.IsEnglish(member.Language) ? null : $"{provider.Name} lists no {SpokenLanguage.NameOf(member.Language)} voices."),
                 Facet = SpeechCapability.GenderFacet(listed),
                 Sorts = [PickerSort.Name],
                 Audition = AuditionOf(surface, member, provider, providerId, listed),

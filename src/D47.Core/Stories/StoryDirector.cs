@@ -263,6 +263,7 @@ public sealed class StoryDirector(
         return new StoryCastMember(secret.Id, title, shown, StoryVoices.Voice(member, shown, null, ship), StoryVoices.Voice(member, shown, choices, ship))
         {
             Role = member.Role,
+            Language = member.Language,
             Recorded = member.Recorded,
             SpeaksName = choices.GetValueOrDefault(shown.Picture) is { } choice
                 ? choice.VoiceName

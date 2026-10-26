@@ -13,6 +13,10 @@ public static partial class SpokenLanguage
     public static bool IsEnglish(string? language) =>
         language is null || string.Equals(Primary(language), English, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>The English name of <paramref name="language"/> as the Commander reads it; the tag itself for one D47 has no name for.</summary>
+    public static string NameOf(string? language) =>
+        IsEnglish(language) ? "English" : string.Equals(Primary(language!), Japanese, StringComparison.OrdinalIgnoreCase) ? "Japanese" : language!;
+
     /// <summary>"ja" from "ja-JP".</summary>
     public static string Primary(string language)
     {

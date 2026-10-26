@@ -93,6 +93,9 @@ public sealed record TtsProviderInfo
             : Languages.Contains(wanted, StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>Whether any voice of this provider can speak <paramref name="language"/>, null for English.</summary>
+    public bool CanSpeak(string? language) => LanguageFollowsVoice || SpeaksIn(language, null);
+
     public bool NeedsKey => KeySecretName is not null;
 
     /// <summary>Whether this provider can say anything right now.</summary>

@@ -27,6 +27,9 @@ public sealed record StoryCastMember(string StoryId, string Title, StorySpeakerS
     /// <summary>What the provider calls the voice the member speaks in, where the Commander's choice or the pairing recorded it.</summary>
     public string? SpeaksName { get; init; }
 
+    /// <summary>The language the member speaks, from <see cref="StorySpeaker.Language"/>; null for English.</summary>
+    public string? Language { get; init; }
+
     /// <summary>Who the member is to the Commander, from <see cref="StorySpeaker.Role"/>; null when the story has none.</summary>
     public string? Role { get; init; }
 
@@ -112,6 +115,7 @@ public static class StoryVoices
         var pinned = Own(member, shown, ship);
 
         return choices?.GetValueOrDefault(shown.Picture) is { } choice
+               && TtsProviderCatalog.Selected(choice.Provider).SpeaksIn(member.Language, choice.Voice)
             ? new PinnedVoice(choice.Provider, choice.Voice) { Link = member.Link, Effects = member.Effects, Key = shown.Picture, Fallback = pinned }
             : pinned;
     }
