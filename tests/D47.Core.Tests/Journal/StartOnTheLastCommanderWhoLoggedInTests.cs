@@ -12,6 +12,8 @@ public class StartOnTheLastCommanderWhoLoggedInTests
 
     private const string Header = """{ "timestamp":"2026-01-02T00:00:00Z", "event":"Fileheader", "part":1, "gameversion":"4.2" }""";
 
+    private const string MainGame = """{ "timestamp":"2026-01-02T00:01:00Z", "event":"GameModeChange", "GameMode":"MainGame" }""";
+
     private readonly MemoryFileSystem _files = new();
 
     private readonly GameStateStore _store = new();
@@ -64,6 +66,7 @@ public class StartOnTheLastCommanderWhoLoggedInTests
         spine.Poll(priming: true);
 
         Append("2026-01-02T000000", LoadGame("F1", "Alice"));
+        Append("2026-01-02T000000", MainGame);
         spine.Poll();
 
         Assert.Equal("Alice", _store.Active!.Identity.Name);
@@ -79,6 +82,7 @@ public class StartOnTheLastCommanderWhoLoggedInTests
         spine.Poll(priming: true);
 
         Append("2026-01-02T000000", LoadGame("F2", "Bob"));
+        Append("2026-01-02T000000", MainGame);
         spine.Poll();
 
         Assert.Equal("Bob", _store.Active!.Identity.Name);

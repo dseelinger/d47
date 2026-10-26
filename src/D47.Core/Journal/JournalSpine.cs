@@ -5,7 +5,7 @@ namespace D47.Core.Journal;
 
 /// <summary>
 /// The tick-loop-facing piece: tails the newest journal file, switches to a newer one when it appears,
-/// and feeds every event through <see cref="GameStateStore"/>.
+/// marks the lines an Operation writes, and feeds every event through <see cref="GameStateStore"/>.
 /// </summary>
 /// <param name="position">
 /// The live <c>Status.json</c>, for stamping a position onto events that carry none — organic sampling
@@ -27,6 +27,8 @@ public sealed class JournalSpine(
         new(directory, files, loggerFactory.CreateLogger<CargoManifestReader>());
 
     private JournalReader? _reader;
+
+    private OperationMarker _operations = new();
 
     private DateTime? _listedAt;
 
@@ -59,15 +61,29 @@ public sealed class JournalSpine(
             return [];
         }
 
+        JournalEvent? carried = null;
+
         if (_reader is null || _reader.Path != latest)
         {
             // A new file becoming latest means a new session — Elite restarted, or a different Commander
             // logged in.
             _logger.LogInformation("Now tailing {Path}", latest);
             _reader = new JournalReader(latest, files, _logger);
+            carried = _operations.Release();
+            _operations = new OperationMarker();
         }
 
-        var events = _reader.Poll();
+        List<JournalEvent> events = [.. _operations.Next(_reader.Poll())];
+
+        if (carried is not null)
+        {
+            events.Insert(0, carried);
+        }
+
+        if (priming && _operations.Release() is { } held)
+        {
+            events.Add(held);
+        }
 
         Receipts = [.. events.Select(journalEvent => gameState.Apply(journalEvent, FixFor(journalEvent), priming))];
 

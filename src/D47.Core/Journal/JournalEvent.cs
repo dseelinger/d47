@@ -7,6 +7,12 @@ namespace D47.Core.Journal;
 /// <summary>One parsed journal line.</summary>
 public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonElement Raw)
 {
+    /// <summary>Whether Elite wrote this line for an Operation, as <see cref="OperationMarker"/> marks it.</summary>
+    public bool InOperation { get; init; }
+
+    /// <summary>A <c>LoadGame</c> that starts a play session rather than entering or leaving an Operation.</summary>
+    public bool StartsSession => Kind == "LoadGame" && !InOperation;
+
     /// <summary>Parses one line.</summary>
     public static bool TryParse(string line, ILogger logger, out JournalEvent? result)
     {

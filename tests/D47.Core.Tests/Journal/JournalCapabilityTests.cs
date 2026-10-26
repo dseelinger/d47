@@ -270,6 +270,7 @@ public class JournalCapabilityTests
             Path.Combine(install.Root, "Journal.2026-09-08T100000.01.log"),
             [
                 """{"timestamp":"2026-09-08T10:00:00Z","event":"LoadGame","FID":"F7654321","Commander":"Other"}""",
+                """{"timestamp":"2026-09-08T10:00:00Z","event":"GameModeChange","GameMode":"MainGame"}""",
             ]);
 
         var result = await CarrierReportAsync(install);
