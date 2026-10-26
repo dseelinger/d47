@@ -16,6 +16,8 @@ A story character who speaks Japanese answers on comms in Japanese, and the voic
 
 A story character who speaks Japanese also gives clues, reacts, opens the story and reads the beacon scan in Japanese. The voice speaks the Japanese and the transcript shows the English beneath it as a second paragraph, and copying the message copies both. A clue or reaction with no English, or one the claims check refuses, is not said.
 
+In the headset, a line spoken in Japanese is captioned with its English translation, shown for the whole line rather than a sentence at a time.
+
 A story whose hidden entry has more than four cast members no longer fails to load. An install from before this version drops such a story, with a log line and nothing on screen, so a story with a larger cast needs this version.
 
 The chapter writer is told which cast members are on your fleet carrier, and words their boardings and leavings as the carrier's, so their lines read correctly in person and over its comms.

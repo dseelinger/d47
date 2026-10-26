@@ -80,6 +80,12 @@ public sealed class SpeechPipeline : IAsyncDisposable
     /// </summary>
     private readonly string? _captionSpeaker;
 
+    /// <summary>
+    /// The caption for the whole utterance, carried by the first request in place of each sentence's own
+    /// text; null to caption each sentence.
+    /// </summary>
+    private readonly string? _utteranceCaption;
+
     /// <summary>Whether the speaker ID has already gone out for this utterance.</summary>
     private int _attributed;
 
@@ -142,7 +148,8 @@ public sealed class SpeechPipeline : IAsyncDisposable
         bool keep = false,
         Func<IPcmFilter>? running = null,
         string? voiceRow = null,
-        string? picture = null)
+        string? picture = null,
+        string? utteranceCaption = null)
     {
         _arbiter = arbiter;
         _tts = tts;
@@ -161,6 +168,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
         _kept = keep ? [] : null;
         _voiceRow = voiceRow;
         _picture = picture;
+        _utteranceCaption = utteranceCaption is { Length: > 0 } ? utteranceCaption : null;
 
         // Shut up has to reach synthesis, not just the queue.
         _arbiter.Silenced += Abandon;
@@ -533,6 +541,7 @@ public sealed class SpeechPipeline : IAsyncDisposable
     private async Task DrainAsync()
     {
         var said = new System.Text.StringBuilder();
+        var firstRequest = true;
 
         try
         {
@@ -547,13 +556,21 @@ public sealed class SpeechPipeline : IAsyncDisposable
                     continue;
                 }
 
+                var caption = !_captioned
+                    ? null
+                    : _utteranceCaption is null
+                        ? Attributed(spoken.Text)
+                        : firstRequest ? Attributed(_utteranceCaption) : null;
+
+                firstRequest = false;
+
                 _arbiter.Enqueue(new AudioRequest
                 {
                     Channel = _channel,
                     Clip = spoken.Clip,
                     Arriving = spoken.Arriving,
                     Group = _group,
-                    Caption = _captioned ? Attributed(spoken.Text) : null,
+                    Caption = caption,
                     Picture = _picture,
                 });
 

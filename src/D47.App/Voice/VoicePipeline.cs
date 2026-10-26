@@ -134,6 +134,7 @@ public sealed class VoicePipeline(
         SpeechPipeline? speech = null;
         TurnResult? result = null;
         var signal = 1.0;
+        string? translation = null;
 
         KeptTurn = null;
 
@@ -152,13 +153,17 @@ public sealed class VoicePipeline(
                         signal = addressed.Signal;
                         break;
 
+                    case TurnEvent.Translation english:
+                        translation = english.Text;
+                        break;
+
                     case TurnEvent.TextDelta text:
                         // Created on the first delta rather than up front, so a turn that never speaks never
                         // opens a pipeline — and, more to the point, the bed stops the moment there are words
                         // rather than when the turn ends.
                         if (speech is null && !_held && Pinned is { } pinned)
                         {
-                            speech = CastTurnSpeech(pinned, group);
+                            speech = CastTurnSpeech(pinned, group, translation);
                             _spoke = speech is not null;
                         }
                         else if (speech is null && !_held && Speaker(VoiceGroups.Of(SpeakingAs)) is { } provider)
@@ -182,7 +187,8 @@ public sealed class VoicePipeline(
                                 guardianTreated: IsGuardianTreated(role, colour),
                                 running: Running(role, colour, signal),
                                 voiceRow: SpeechCapability.VoiceRowFor(role),
-                                picture: Picture);
+                                picture: Picture,
+                                utteranceCaption: translation);
                             speech.SynthesisFailed += OnSynthesisFailed;
                             speech.VoiceRejected += OnVoiceRejected;
                         }
@@ -261,7 +267,8 @@ public sealed class VoicePipeline(
         VoiceRole role = VoiceRole.ShipAi,
         bool overheard = false,
         Func<IPcmFilter>? runningColour = null,
-        string? picture = null)
+        string? picture = null,
+        string? utteranceCaption = null)
     {
         if (_held || Speaker(slot) is not { } provider)
         {
@@ -271,7 +278,7 @@ public sealed class VoicePipeline(
         var applied = colour ?? Colour(role, overheard: overheard);
         var running = runningColour ?? (colour is null ? Running(role, applied, overheard: overheard) : null);
 
-        return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false, picture)
+        return await SpeakAsync(provider, text, channel, voice, group, applied, running, speaker, captioned, captionSpeaker, role, pinned: false, picture, utteranceCaption)
             .ConfigureAwait(false);
     }
 
@@ -279,7 +286,7 @@ public sealed class VoicePipeline(
     /// A turn's speech in a story cast member's voice, with the member's own treatment and kept for the Story log, as
     /// <see cref="AnnounceAsync(Announcement, VoiceSelection?)"/> speaks the member's lines; null when nothing can speak it.
     /// </summary>
-    private SpeechPipeline? CastTurnSpeech(D47.Core.Stories.PinnedVoice pinned, string group)
+    private SpeechPipeline? CastTurnSpeech(D47.Core.Stories.PinnedVoice pinned, string group, string? translation)
     {
         var crew = pinned is { IsCrewVoice: true, Fallback: null };
 
@@ -306,7 +313,8 @@ public sealed class VoicePipeline(
             keep: true,
             running: D47.Core.Stories.CastVoice.Running(pinned),
             voiceRow: SpeechCapability.VoiceRowFor(SpeakingAs),
-            picture: Picture);
+            picture: Picture,
+            utteranceCaption: translation);
 
         // A member in the crew voice speaks through the slot, so its failures count against the slot; a pinned voice's do not.
         if (crew)
@@ -370,7 +378,8 @@ public sealed class VoicePipeline(
         string? captionSpeaker,
         VoiceRole role,
         bool pinned,
-        string? picture = null)
+        string? picture = null,
+        string? utteranceCaption = null)
     {
         // The voice is a parameter rather than always the ship AI's, because Phase 11 has several things to
         // say that are not the ship AI speaking — a re-voiced in-game message, a carrier's tower, a crew
@@ -392,7 +401,8 @@ public sealed class VoicePipeline(
             keep: true,
             running: running,
             voiceRow: SpeechCapability.VoiceRowFor(role),
-            picture: picture);
+            picture: picture,
+            utteranceCaption: utteranceCaption);
 
         if (!pinned)
         {
@@ -467,7 +477,8 @@ public sealed class VoicePipeline(
                     announcement.Speaker,
                     announcement.Voice,
                     runningColour: D47.Core.Stories.CastVoice.Running(crew),
-                    picture: announcement.Picture)
+                    picture: announcement.Picture,
+                    utteranceCaption: announcement.Translation)
                 .ConfigureAwait(false);
         }
 
@@ -492,7 +503,8 @@ public sealed class VoicePipeline(
                     announcement.Speaker,
                     announcement.Voice,
                     pinned: true,
-                    announcement.Picture)
+                    announcement.Picture,
+                    announcement.Translation)
                 .ConfigureAwait(false);
         }
 
@@ -524,7 +536,8 @@ public sealed class VoicePipeline(
                 captionSpeaker: VoiceRoles.Called(announcement.Voice),
 
                 // The speaker's picture, shown in the avatar while the line plays.
-                picture: announcement.Picture)
+                picture: announcement.Picture,
+                utteranceCaption: announcement.Translation)
             .ConfigureAwait(false);
     }
 
