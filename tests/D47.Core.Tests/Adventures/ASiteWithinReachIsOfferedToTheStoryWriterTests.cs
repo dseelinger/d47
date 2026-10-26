@@ -152,6 +152,56 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
     }
 
     [Fact]
+    public async Task TheFidelityCheckReadsAGuardianSiteObjectiveAsTheGuardianSiteAlone()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(GuardianBeats), Saying("""{"objections": []}"""));
+
+        var outcome = await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var confirms = ConfirmsLines(provider.Requests[2].Prompt.History[0].Text).First();
+
+        Assert.Contains("Guardian site on that body", confirms);
+        Assert.DoesNotContain("tourist", confirms, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task TheFidelityCheckReadsATouristSiteObjectiveAsTheBeaconScanAlone()
+    {
+        const string beats = """
+            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+              {"title": "The Watch", "function": "setup", "kind": "site", "reason": "A beacon there has been logging visitors.", "system": "Ossen's Lantern", "body": null, "filter": "tourist", "line": "It logs every visitor."},
+              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+            ]}
+            """;
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats), Saying("""{"objections": []}"""));
+
+        var outcome = await Generator(provider, bodies: [GuardianBody], index: Source(Tsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+
+        var confirms = ConfirmsLines(provider.Requests[2].Prompt.History[0].Text).First();
+
+        Assert.Contains("tourist beacon in that system was scanned", confirms);
+        Assert.DoesNotContain("Guardian", confirms);
+    }
+
+    [Fact]
+    public void TheWritersSectionNamesBothFiltersOfASiteOnce()
+    {
+        var section = TriggerConfirms.Section(["site"]);
+
+        Assert.Single(section.Split('\n'), line => line.StartsWith("- \"site\":", StringComparison.Ordinal));
+        Assert.Contains("\"guardian\" filter", section);
+        Assert.Contains("\"tourist\" filter", section);
+    }
+
+    private static IEnumerable<string> ConfirmsLines(string prompt) =>
+        prompt.Split('\n').Where(line => line.TrimStart().StartsWith("Confirms:", StringComparison.Ordinal));
+
+    [Fact]
     public async Task ADraftNamingAnUnlistedSiteIsRefusedAndTheRepairNamesTheListedOnes()
     {
         var provider = new RoundScriptedLlmProvider(

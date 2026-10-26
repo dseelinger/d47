@@ -820,7 +820,7 @@ public sealed class AdventureGenerator(
             var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
 
             text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
-            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, story)}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story)}");
 
             if (!beat.Continues)
             {

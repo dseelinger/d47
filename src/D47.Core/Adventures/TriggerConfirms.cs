@@ -51,7 +51,7 @@ internal static class TriggerConfirms
         [TriggerKind.Claim] = "a system was claimed for colonisation — not what will be built",
         [TriggerKind.Unlock] = "a tech broker row was unlocked — not who supplied the parts",
         [TriggerKind.Pledge] = "the Commander pledged to a Power — not what the Power asked or promised",
-        [TriggerKind.Site] = "the ship came to a Guardian site, or a tourist beacon was scanned in that system — not what is there or what it holds",
+        [TriggerKind.Site] = "with the \"guardian\" filter, the ship came to the Guardian site on that body; with the \"tourist\" filter, a tourist beacon in that system was scanned — not what is there or what it holds",
         [TriggerKind.PowerRank] = "a Power rank was reached — not what it was earned for",
         [TriggerKind.MissionTaken] = "a mission of this family was accepted, at the station if one is named — not what it will involve",
         [TriggerKind.MissionDestination] = "the ship came to the mission's destination — not that the mission was done or what waited there",
@@ -78,6 +78,14 @@ internal static class TriggerConfirms
 
     /// <summary>The entry for a kind; in a stock story the beacon's entry says the story's cores came aboard.</summary>
     internal static string Of(TriggerKind kind, bool story = false) => story && kind == TriggerKind.Beacon ? StockBeacon : Entries[kind];
+
+    /// <summary>The entry for an objective of a kind with a filter; a site objective is described by its filter alone.</summary>
+    internal static string Of(TriggerKind kind, string? filter, bool story = false) =>
+        kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
+            ? "the ship came to the Guardian site on that body — not what is there or what it holds"
+            : kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.TouristSite, StringComparison.OrdinalIgnoreCase)
+                ? "the tourist beacon in that system was scanned — not what is there or what it holds"
+                : Of(kind, story);
 
     /// <summary>The entry for a kind in the words an answer uses, or null when the word is no kind.</summary>
     internal static string? Of(string word, bool story = false) =>
