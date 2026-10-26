@@ -383,6 +383,7 @@ public static class GalaxyCapability
                         Type = ToolParameterType.Integer,
                         Description = "How many to return, 1 to 100. Default 25.",
                     },
+                    ReportAgeParameter,
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindSignalAsync(
@@ -1863,11 +1864,18 @@ public static class GalaxyCapability
         var limit = Limit(arguments, out var askedLimit);
         var (matcher, byKind) = SignalSearch.Matcher(signal);
 
-        var result = await Task.Run(
-            () => SignalSearch.Find(origin, reference, matcher, maxDistance, limit, own, index),
-            cancellationToken).ConfigureAwait(false);
+        if (ReportAge(arguments, "max_report_age_hours", out var reportAge) is { } badAge)
+        {
+            return ToolResult.Error(badAge);
+        }
 
         var at = now?.Invoke() ?? DateTimeOffset.UtcNow;
+        DateTimeOffset? notBefore = reportAge is { } hours ? at - TimeSpan.FromHours(hours) : null;
+
+        var result = await Task.Run(
+            () => SignalSearch.Find(origin, reference, matcher, maxDistance, limit, own, index, notBefore),
+            cancellationToken).ConfigureAwait(false);
+
         var distance = maxDistance.ToString("0.##", CultureInfo.InvariantCulture);
         var from = string.IsNullOrWhiteSpace(reference) ? "here" : reference;
 
@@ -1908,7 +1916,7 @@ public static class GalaxyCapability
                    + (result.Total > 1 ? $" {result.Total - 1} more within {distance} light years." : string.Empty);
         }
 
-        said += source + LimitRefused(askedLimit);
+        said += source + ReportAgeSaid(reportAge) + LimitRefused(askedLimit);
 
         var posting = new GalaxySearchPosting(
             GalaxySearchKind.Signals,

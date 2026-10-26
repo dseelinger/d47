@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Signal search can leave out old sightings. `find_signal` takes a maximum report age in hours and drops signals last seen before it, from the daily index and from your own scans, and the answer says how far back it looked. With no age given, nothing changes.
+
 Galaxy searches can leave out old reports. System, station and outfitting searches take a maximum report age in hours, and the module and ship branches of the nearest-station search use their price age the same way. The bound is applied by the service, on the station's outfitting or shipyard report date for a module or ship and on the last update otherwise, and the answer says how far back it looked. With no age given, nothing changes.
 
 A price age of 0 hours now means prices of any age, in the commodity search, trade routes, the best-cargo search and the Trade setting. The market index is asked for a date range that imposes no limit, where before it applied about 90 days. A bound of a few hours no longer returns a day of prices.

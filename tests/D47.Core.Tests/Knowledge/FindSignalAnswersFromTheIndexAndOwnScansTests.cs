@@ -334,4 +334,34 @@ public class FindSignalAnswersFromTheIndexAndOwnScansTests
 
         Assert.Equal("Gamma", found.System);
     }
+
+    [Fact]
+    public async Task AReportAgeLeavesOutOlderSightingsAndSaysSo()
+    {
+        var world = Build();
+
+        var result = await Ask(world, ("signal", "Hazardous RES"), ("max_report_age_hours", "72"));
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Equal(["Delta", "Alpha"], Posted(world).Signals.Select(f => f.System));
+        Assert.Contains("Only reports from the last 3 days were considered.", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AReportAgeOfZeroChangesNothing()
+    {
+        var world = Build();
+
+        await Ask(world, ("signal", "Hazardous RES"), ("max_report_age_hours", "0"));
+
+        Assert.Equal(["Delta", "Alpha", "Beta", "Gamma"], Posted(world).Signals.Select(f => f.System));
+    }
+
+    [Fact]
+    public async Task AReportAgeOutOfRangeIsRefused()
+    {
+        var result = await Ask(Build(), ("signal", "Hazardous RES"), ("max_report_age_hours", "9000"));
+
+        Assert.True(result.IsError);
+    }
 }

@@ -612,7 +612,7 @@ be saved by name.
 Find the nearest signal of a kind, such as a Hazardous RES, a nav beacon or a memorial.
 
 ```json
-{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 100."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"signal":{"type":"string","description":"A kind, one of Any RES, Nav beacon, Compromised nav beacon, Resource extraction site, Low RES, High RES, Hazardous RES, Colonisation beacon, Tourist beacon, Installation, Megaship, Titan, Listening post, Unregistered comms beacon, Notable stellar phenomena; or any part of a signal\u0027s name such as \u0022unauthorised\u0022, \u0022memorial\u0022 or \u0022Natalie Fraser\u0022."}},"required":["signal"],"additionalProperties":false}
+{"type":"object","properties":{"limit":{"type":"integer","description":"How many to return, 1 to 100. Default 25."},"max_distance":{"type":"number","description":"How far to look, in light years. Default 100."},"max_report_age_hours":{"type":"integer","description":"Leave out reports older than this many hours, 1 to 8,760. Absent or 0 means any age."},"near":{"type":"string","description":"Search out from this system. Defaults to theirs."},"signal":{"type":"string","description":"A kind, one of Any RES, Nav beacon, Compromised nav beacon, Resource extraction site, Low RES, High RES, Hazardous RES, Colonisation beacon, Tourist beacon, Installation, Megaship, Titan, Listening post, Unregistered comms beacon, Notable stellar phenomena; or any part of a signal\u0027s name such as \u0022unauthorised\u0022, \u0022memorial\u0022 or \u0022Natalie Fraser\u0022."}},"required":["signal"],"additionalProperties":false}
 ```
 
 `signal` is a kind's display name or "Any RES", tried first, or any part of a signal's name, such as
@@ -624,7 +624,9 @@ megaship appears once, where it was last seen.
 `near` is placed from, in order: where the Commander is, when it is left out; a signal of the index
 or of the Commander's own scans in that system; Spansh, while Galaxy search is on. Otherwise the
 search is refused, saying the system's position is unknown. `max_distance` is in light years and
-defaults to 100.
+defaults to 100. `max_report_age_hours` (1 to 8,760) drops sightings last seen earlier than that many
+hours ago, from the index and from the Commander's own scans, before ranking; absent or 0 applies no bound,
+and the answer says how far back it looked.
 
 Each row of the answer gives the signal's name, its system, the distance to two decimals, the date
 last seen, and whether it came from the index or the Commander's own scan. The spoken answer names

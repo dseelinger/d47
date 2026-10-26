@@ -44,7 +44,7 @@ public static class SignalSearch
     /// <summary>
     /// The signals within <paramref name="maxDistance"/> light years of <paramref name="origin"/> that
     /// <paramref name="matches"/> accepts. A signal in both sources appears once, with the later date; a megaship
-    /// appears once, where it was last seen.
+    /// appears once, where it was last seen. A sighting last seen before <paramref name="notBefore"/> is left out.
     /// </summary>
     public static SignalSearchResult Find(
         StarPosition origin,
@@ -53,13 +53,14 @@ public static class SignalSearch
         double maxDistance,
         int limit,
         IEnumerable<SignalSighting> own,
-        SignalIndex? index)
+        SignalIndex? index,
+        DateTimeOffset? notBefore = null)
     {
         var found = new Dictionary<(long System, string Type, string Name), (SignalSighting Sighting, bool Own)>();
 
         foreach (var sighting in index?.Within(origin, maxDistance) ?? [])
         {
-            if (matches(sighting))
+            if (matches(sighting) && IsRecent(sighting, notBefore))
             {
                 Keep(found, sighting, own: false);
             }
@@ -67,7 +68,7 @@ public static class SignalSearch
 
         foreach (var sighting in own)
         {
-            if (origin.DistanceTo(sighting.Position) <= maxDistance && matches(sighting))
+            if (origin.DistanceTo(sighting.Position) <= maxDistance && matches(sighting) && IsRecent(sighting, notBefore))
             {
                 Keep(found, sighting, own: true);
             }
@@ -88,6 +89,9 @@ public static class SignalSearch
 
         return new SignalSearchResult(reference, ordered.Count, [.. ordered.Take(limit)]);
     }
+
+    private static bool IsRecent(SignalSighting sighting, DateTimeOffset? notBefore) =>
+        notBefore is not { } cutoff || sighting.LastSeen >= cutoff;
 
     private static void Keep(
         Dictionary<(long System, string Type, string Name), (SignalSighting Sighting, bool Own)> found,
