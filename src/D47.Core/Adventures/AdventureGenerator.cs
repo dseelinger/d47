@@ -140,6 +140,9 @@ public sealed record AdventureStory(
     /// <summary>The cast ids aboard with no seat in the Commander's current hull, heard over comms.</summary>
     public IReadOnlyList<string> OnComms { get; init; } = [];
 
+    /// <summary>The cast ids on the Commander's fleet carrier as the chapter opens.</summary>
+    public IReadOnlyList<string> OnCarrier { get; init; } = [];
+
     /// <summary>Whether a beat the chapter's stage hands out lies in a span the story marks as in the black, where neither the Sol band nor the home leg applies.</summary>
     public bool InTheBlack { get; init; }
 }
@@ -152,6 +155,9 @@ public sealed record AdventureSpeaker(string Id, string Name, string Who)
 
     /// <summary>The Commander's notes on the member, which add to <see cref="Who"/>; null for none.</summary>
     public string? Notes { get; init; }
+
+    /// <summary>Whether the member's span is on the Commander's fleet carrier.</summary>
+    public bool OnCarrier { get; init; }
 }
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>
@@ -2320,6 +2326,7 @@ public sealed class AdventureGenerator(
             var aboard = cast.Where(member => story.Aboard?.Contains(member.Id, StringComparer.Ordinal) == true).ToList();
             var seated = aboard.Where(member => !story.OnComms.Contains(member.Id, StringComparer.Ordinal)).ToList();
             var onComms = aboard.Except(seated).ToList();
+            var onCarrier = cast.Where(member => story.OnCarrier.Contains(member.Id, StringComparer.Ordinal)).ToList();
 
             text.AppendLine(
                 (aboard.Count > 0
@@ -2331,8 +2338,15 @@ public sealed class AdventureGenerator(
                       + (onComms.Count > 0
                           ? $"The Commander's ship has no seat for {string.Join(", ", onComms.Select(member => member.Name))}: write their lines as heard over comms. "
                           : string.Empty)
-                      + "Every other cast member is elsewhere. "
-                    : "No cast member is aboard the ship as this chapter opens; each is elsewhere. ")
+                      + (onCarrier.Count > 0 ? string.Empty : "Every other cast member is elsewhere. ")
+                    : "No cast member is aboard the ship as this chapter opens; "
+                      + (onCarrier.Count > 0 ? "each other cast member is elsewhere. " : "each is elsewhere. "))
+                + (onCarrier.Count > 0
+                    ? $"On the Commander's fleet carrier as this chapter opens: {string.Join(", ", onCarrier.Select(member => member.Name))}. "
+                      + "Write each of their lines to read correctly both in person, as when the Commander is docked at the carrier, and over the carrier's comms. "
+                      + "They are never in the cockpit unless \"aboard\" lists them. "
+                      + (aboard.Count > 0 ? "Every other cast member is elsewhere. " : string.Empty)
+                    : string.Empty)
                 + "\"aboard\" lists the id of each other cast member who rides along in the cockpit for this chapter alone, whose lines are then "
                 + "written as spoken there. Most chapters list none.");
 
@@ -2360,9 +2374,12 @@ public sealed class AdventureGenerator(
         {
             var name = cast.FirstOrDefault(member => member.Id == entry.Id)?.Name ?? entry.Id;
 
+            var carrier = cast.FirstOrDefault(member => member.Id == entry.Id)?.OnCarrier == true;
+            var boards = carrier ? "comes aboard the carrier" : "comes aboard";
+
             var line = entry.Passed
-                ? $"- {name} (\"{entry.Id}\") comes aboard (held: the {entry.Beat} beat has passed)."
-                : $"- {name} (\"{entry.Id}\") {(entry.Boards ? "comes aboard" : "leaves the ship")} at the {entry.Beat} beat.";
+                ? $"- {name} (\"{entry.Id}\") {boards} (held: the {entry.Beat} beat has passed)."
+                : $"- {name} (\"{entry.Id}\") {(entry.Boards ? boards : carrier ? "leaves the carrier" : "leaves the ship")} at the {entry.Beat} beat.";
 
             text.AppendLine(entry.Seats is { } seats
                 ? line + $" The Commander's ship has no seat for {name}: place the boarding only on or after an objective that boards a ship with {seats} seats or more, such as {string.Join(", ", SeatHulls(seats, facts))}."

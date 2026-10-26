@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The chapter writer is told which cast members are on your fleet carrier, and words their boardings and leavings as the carrier's, so their lines read correctly in person and over its comms.
+
 A story's cast member can live on your fleet carrier. While you are docked at your own carrier they are heard in person; away from it, over comms that break up with distance but are never lost entirely. Beyond 500 light years a reply to them is refused, as the captain's is, though their story lines are still spoken. An older version of d47 treats a carrier member as riding in your ship.
 
 A story can mark stretches of its plot as taking place in the black. Its chapters there are no longer pulled back toward the bubble or sent home after two changed chapters, so a story about a long journey out can stay out. A story with such a stretch needs this version of d47; an older version still pulls it back.

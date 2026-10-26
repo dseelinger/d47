@@ -2862,7 +2862,7 @@ public sealed class StoryDirector(
             slots,
             destination,
             story.Refused,
-            [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role })],
+            [.. secret.Cast.Select(member => new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who) { Role = member.Role, OnCarrier = member.OnCarrier })],
             Aboard()?.Name,
             Aboard()?.Stock == true,
             home,
@@ -2872,6 +2872,7 @@ public sealed class StoryDirector(
             StoryAboard.Due(secret, story, StoryClues.BeatKeys(story.Pacing, stage, beaconInReach, finaleChapter), hull))
         {
             OnComms = StoryAboard.Seatless(secret, StoryAboard.BySpan(secret, story), StoryAboard.BySpan(secret, story), hull),
+            OnCarrier = StoryAboard.OnCarrierBySpan(secret, story),
             InTheBlack = inTheBlack,
         };
     }
