@@ -158,6 +158,9 @@ public sealed record AdventureSpeaker(string Id, string Name, string Who)
 
     /// <summary>Whether the member's span is on the Commander's fleet carrier.</summary>
     public bool OnCarrier { get; init; }
+
+    /// <summary>The language the member answers in; null for English.</summary>
+    public string? Language { get; init; }
 }
 
 /// <summary>The finished adventure a new chapter follows, and the chapters before it, oldest first.</summary>

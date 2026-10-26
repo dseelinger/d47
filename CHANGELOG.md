@@ -12,6 +12,8 @@ A Goals story can name the Goals it works. Its chapters, clues, finale and Goals
 
 Changing the voice of a story character who speaks Japanese offers only providers and voices that speak Japanese. A stored choice that does not speak the character's language is ignored, and the story's voice speaks.
 
+A story character who speaks Japanese answers on comms in Japanese, and the voice speaks only that. The English translation goes to the ship's AI and the Story log, and the character's own memory of the exchange keeps both. A reply with no translation, or one the claims check refuses, is not said.
+
 A story whose hidden entry has more than four cast members no longer fails to load. An install from before this version drops such a story, with a log line and nothing on screen, so a story with a larger cast needs this version.
 
 The chapter writer is told which cast members are on your fleet carrier, and words their boardings and leavings as the carrier's, so their lines read correctly in person and over its comms.

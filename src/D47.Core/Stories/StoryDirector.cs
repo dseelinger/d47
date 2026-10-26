@@ -370,6 +370,7 @@ public sealed class StoryDirector(
             ? new AdventureSpeaker(member.Id, member.Shown(secret.Id, Gender()).Name, member.Who)
             {
                 Role = member.Role,
+                Language = member.Language,
                 Notes = CastNotes(frontierId, secret.Id, member.Id),
             }
             : null;

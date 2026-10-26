@@ -74,6 +74,9 @@ public abstract record TurnEvent
 
     public sealed record TextDelta(string Text) : TurnEvent;
 
+    /// <summary>The English of the reply the next <see cref="TextDelta"/> speaks in another language. Emitted before that delta.</summary>
+    public sealed record Translation(string Text) : TurnEvent;
+
     public sealed record ThinkingDelta(string Text) : TurnEvent;
 
     /// <summary>About to try again after a transient failure.</summary>
@@ -998,7 +1001,35 @@ public sealed class TurnLoop(
         await foreach (var turnEvent in RunModelTurnAsync(taken.Question, activeProvider, speaker, cancellationToken)
                            .ConfigureAwait(false))
         {
-            if (speaker.Screen is { } screen)
+            if (speaker.ScreenReply is { } screenReply)
+            {
+                if (turnEvent is TurnEvent.TextDelta)
+                {
+                    continue;
+                }
+
+                if (turnEvent is TurnEvent.Completed { Result.Outcome: TurnOutcome.Answered or TurnOutcome.Truncated } unscreenedReply)
+                {
+                    var screened = screenReply(unscreenedReply.Result.Text);
+
+                    if (screened.Spoken.Length > 0)
+                    {
+                        if (screened.Translation is { Length: > 0 } translation)
+                        {
+                            yield return new TurnEvent.Translation(translation);
+                        }
+
+                        yield return new TurnEvent.TextDelta(screened.Spoken);
+                    }
+
+                    var english = screened.Translation is { Length: > 0 } ? screened.Translation : screened.Spoken;
+
+                    result = unscreenedReply.Result with { Text = english };
+                    yield return new TurnEvent.Completed(result);
+                    continue;
+                }
+            }
+            else if (speaker.Screen is { } screen)
             {
                 if (turnEvent is TurnEvent.TextDelta)
                 {
@@ -1057,7 +1088,7 @@ public sealed class TurnLoop(
         // The ship AI overhears what came through.
         if (result is { Outcome: TurnOutcome.Answered })
         {
-            Record(thinner is null ? result.Text : heard.ToString().Trim(), input, speaker.Name);
+            Record(thinner is null || speaker.ScreenReply is not null ? result.Text : heard.ToString().Trim(), input, speaker.Name);
         }
     }
 

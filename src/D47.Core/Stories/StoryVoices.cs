@@ -14,6 +14,9 @@ public sealed record StoryLineVoice(VoiceRole Role, string From, StorySpeakerSho
     /// <summary>The cast member's line for the writer: who they are and how they speak.</summary>
     public string? Who { get; init; }
 
+    /// <summary>The language the member speaks; null for English.</summary>
+    public string? Language { get; init; }
+
     /// <summary>Whether the narrator speaks it, for the ship's lines while a stock core is aboard as well.</summary>
     public bool Narrated => Role == VoiceRole.Narrator;
 }
@@ -99,6 +102,7 @@ public static class StoryVoices
             Linked(voice, CastLink.Of(member, aboard?.Contains(member.Id) == true, onCarrier?.Contains(member.Id) == true, carrier)))
         {
             Who = member.Who,
+            Language = member.Language,
         };
     }
 

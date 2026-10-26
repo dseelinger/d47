@@ -77,6 +77,9 @@ public sealed class VoicePipeline(
     /// <summary>The story cast member's voice the next turn is spoken in, or null for <see cref="Voice"/>.</summary>
     public D47.Core.Stories.PinnedVoice? Pinned { get; set; }
 
+    /// <summary>The language the next turn is spoken in; null for English.</summary>
+    public string? SpeakingLanguage { get; set; }
+
     /// <summary>The picture name of the speaker answering the next turn, or null for the ship's AI.</summary>
     public string? Picture { get; set; }
 
@@ -291,7 +294,7 @@ public sealed class VoicePipeline(
         var speech = new SpeechPipeline(
             arbiter,
             provider,
-            Introduce(crew ? Voice : new VoiceSelection(pinned.VoiceId)),
+            Introduce(crew ? Voice : new VoiceSelection(pinned.VoiceId) { Language = SpeakingLanguage }),
             group,
             loggers.CreateLogger<SpeechPipeline>(),
             colour: colour,

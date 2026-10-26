@@ -97,10 +97,38 @@ public sealed class CastLine(
                 [],
                 OffersTools: false,
                 Signal: away is { } carried ? CastLink.Strength(carried) : 1,
-                Screen: reply => Screened(reply, castId, speaking.Name),
+                Screen: SpeaksEnglish(speaking) ? reply => Screened(reply, castId, speaking.Name) : null,
+                ScreenReply: SpeaksEnglish(speaking) ? null : reply => ScreenedBilingual(reply, castId, speaking.Name),
                 HiddenStory: hiddenStory,
                 Cast: speaking.Id),
             said.Length == 0 ? "The Commander is trying to get your attention." : said);
+    }
+
+    private static bool SpeaksEnglish(AdventureSpeaker speaking) => SpokenLanguage.IsEnglish(speaking.Language);
+
+    private bool Sayable(string said) =>
+        FlavourBriefs.MayBeSpoken(said)
+        && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
+
+    /// <summary>The part of a bilingual reply to speak and its English; nothing when the English is missing or may not be said.</summary>
+    private ScreenedReply ScreenedBilingual(string reply, string castId, string name)
+    {
+        var (spoken, translation) = BilingualReply.Split(reply);
+
+        if (spoken.Length == 0 || translation is null || !Sayable(translation))
+        {
+            return new ScreenedReply(string.Empty);
+        }
+
+        lock (_lock)
+        {
+            if (_said.TryGetValue(castId, out var exchange))
+            {
+                exchange.Add($"{name}: {spoken} ({translation})");
+            }
+        }
+
+        return new ScreenedReply(spoken, translation);
     }
 
     /// <summary>The reply, or nothing when it may not be said.</summary>
@@ -108,10 +136,7 @@ public sealed class CastLine(
     {
         var said = reply.Trim();
 
-        var sayable = FlavourBriefs.MayBeSpoken(said)
-                      && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
-
-        if (!sayable)
+        if (!Sayable(said))
         {
             return string.Empty;
         }
@@ -132,13 +157,17 @@ public sealed class CastLine(
 
     private static string Brief(AdventureSpeaker speaking, List<string> exchange)
     {
+        var tongue = SpokenLanguage.NameOf(speaking.Language);
+        var language = SpeaksEnglish(speaking)
+            ? string.Empty
+            : $" You understand the Commander's English but answer only in {tongue}. Write your reply in {tongue}, then a line holding only {BilingualReply.Marker}, then the same reply in English. Nothing else goes before, between or after them.";
         var notes = speaking.Notes is { Length: > 0 } written ? $" The Commander's notes on {speaking.Name}: {written}" : string.Empty;
 
         return $"""
                  You are {speaking.Name}, a person in the story the Commander is playing. {speaking.Who}{notes} {StorySpeaker.MannerRule}
                  The Commander is talking to you. Reply as {speaking.Name}, in the first person, speaking to the Commander,
                  in one to three short sentences, as said aloud. You are not the core and never speak for it. You
-                 have no tools and change nothing aboard. The exchange so far:
+                 have no tools and change nothing aboard.{language} The exchange so far:
 
                  {ExchangeLines.Recent(exchange)}
                  """;

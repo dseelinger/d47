@@ -11,6 +11,10 @@ namespace D47.Core.Persona;
 /// <param name="Screen">
 /// Given the whole reply, returns what may be said instead; the reply is held back until it has run.
 /// </param>
+/// <param name="ScreenReply">
+/// Given the whole reply, returns what may be said and its English; used in place of <paramref name="Screen"/> for a
+/// speaker who answers in another language.
+/// </param>
 /// <param name="HiddenStory">This speaker's reading of the running story's hidden layer, in place of the ship AI's.</param>
 /// <param name="Cast">The id of the running story's cast member speaking, or null.</param>
 /// <param name="LiveState">What this speaker knows of the game right now, in place of the ship AI's live game state.</param>
@@ -34,7 +38,11 @@ public sealed record Speaker(
     Func<string?>? LiveState = null,
     Characters.CharacterVoice? Voice = null,
     string? Picture = null,
-    Callouts.Announcement? HeardAs = null);
+    Callouts.Announcement? HeardAs = null,
+    Func<string, ScreenedReply>? ScreenReply = null);
+
+/// <summary>What may be said of a reply, and its English when it is said in another language; Spoken is empty when nothing may be said.</summary>
+public sealed record ScreenedReply(string Spoken, string? Translation = null);
 
 /// <summary>What a line makes of one utterance.</summary>
 public abstract record LineDecision

@@ -6064,6 +6064,7 @@ public sealed class AppHost : IDisposable
         {
             host.Voice.Voice = voice;
             host.Voice.Pinned = null;
+            host.Voice.SpeakingLanguage = null;
             host.Voice.Picture = null;
             host.Voice.CaptionSpeaker = captionSpeaker;
             host.Voice.SpeakingAs = VoiceRole.ShipAi;
@@ -6087,6 +6088,7 @@ public sealed class AppHost : IDisposable
 
             Voice.Voice = SpeakerAccent.VoiceOf(CastFor(line), line);
             Voice.Pinned = pinned;
+            Voice.SpeakingLanguage = cast.Language;
             Voice.Picture = SpeakerPictures.For(cast.Cast);
             Voice.SpeakingAs = VoiceRole.Crew;
             Voice.CaptionSpeaker = addressed.Name;
