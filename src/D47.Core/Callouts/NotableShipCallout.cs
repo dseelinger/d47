@@ -38,7 +38,7 @@ public sealed class NotableShipCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _spoken.Clear();
                     break;
 

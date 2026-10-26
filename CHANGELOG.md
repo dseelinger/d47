@@ -12,6 +12,8 @@ A turn you speak through the comms push-to-talk now shows a grey `comms` tag in 
 
 Inside an Operation, d47 now says only warnings and relayed in-game comms unprompted. Story lines and adventure beats reached there wait and are said after the Operation ends.
 
+Entering or leaving an Operation is no longer treated as starting a new session. The session summary, the session-length reminder, per-session kill and carrier counts, "next session" reminders and a story's session count carry on across it, and d47 no longer says "Welcome back, Commander." when you leave one.
+
 The slot table on a ship's Fleet page sizes its columns to what they hold: CURRENT is no wider than "empty" on an empty ship, and PLAN keeps its roll and effects. On the desktop window, drag the right edge of SLOT, CURRENT or PLAN to set a width, which holds on every ship; double-click the edge to clear it.
 
 The tables on the Commander tab size their columns to what they hold: the credit kinds and transactions, the Codex regions, entries and discoveries, combat stats, BGS work, the Commanders list and Activities. On the desktop window, drag the right edge of a column heading to set a width, which holds after you reopen the page; double-click the edge to clear it. The headset panel fits to content with no drag handles.

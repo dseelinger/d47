@@ -62,7 +62,7 @@ public sealed class ShipModeCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _since.Clear();
                     _spoken.Clear();
                     _lastMining = null;

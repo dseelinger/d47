@@ -78,7 +78,7 @@ public sealed record SessionSummary
     public SessionSummary Apply(JournalEvent journalEvent)
     {
         // A fresh session wipes the slate.
-        if (journalEvent.Kind == "LoadGame")
+        if (journalEvent.StartsSession)
         {
             return new SessionSummary
             {

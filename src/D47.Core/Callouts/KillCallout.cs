@@ -44,7 +44,7 @@ public sealed class KillCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _kills = 0;
                     _bestReward = 0;
                     _lastKillAt = null;

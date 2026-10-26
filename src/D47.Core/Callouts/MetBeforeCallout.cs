@@ -19,7 +19,7 @@ public sealed class MetBeforeCallout(CommanderLog log) : ICallout
 
         foreach (var journalEvent in context.Events)
         {
-            if (journalEvent.Kind == "LoadGame")
+            if (journalEvent.StartsSession)
             {
                 _told.Clear();
                 continue;

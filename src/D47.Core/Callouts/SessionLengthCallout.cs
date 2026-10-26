@@ -22,7 +22,7 @@ public sealed class SessionLengthCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _start = journalEvent.Timestamp;
                     _spoken = false;
                     break;

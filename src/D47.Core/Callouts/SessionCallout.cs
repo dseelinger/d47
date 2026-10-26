@@ -39,7 +39,7 @@ public sealed class SessionCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _who = journalEvent.String("FID") ?? _who;
                     if (Due(_arrived, context) is { } arrival)
                     {

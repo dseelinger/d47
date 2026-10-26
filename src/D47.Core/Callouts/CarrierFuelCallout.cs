@@ -30,7 +30,7 @@ public sealed class CarrierFuelCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _spokenFor = null;
                     Warnings.NewSession();
                     break;

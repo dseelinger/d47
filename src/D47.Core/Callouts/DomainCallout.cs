@@ -103,7 +103,7 @@ public sealed class DomainCallout : ICallout
 
         foreach (var journalEvent in context.Events)
         {
-            if (journalEvent.Kind == "LoadGame")
+            if (journalEvent.StartsSession)
             {
                 _lastAt = null;
                 _lastRate = null;

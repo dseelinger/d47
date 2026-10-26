@@ -27,7 +27,7 @@ public sealed class CarrierUpkeepCallout : ICallout
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     _spokenFor = null;
                     Warnings.NewSession();
                     break;

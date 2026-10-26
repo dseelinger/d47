@@ -54,7 +54,7 @@ public sealed class JournalReminderCallout(JournalReminderStore store) : ICallou
 
         if (context.IsPriming)
         {
-            foreach (var journalEvent in context.Events.Where(journalEvent => journalEvent.Kind == "LoadGame"))
+            foreach (var journalEvent in context.Events.Where(journalEvent => journalEvent.StartsSession))
             {
                 _primedSession = journalEvent.Timestamp;
             }
@@ -85,7 +85,7 @@ public sealed class JournalReminderCallout(JournalReminderStore store) : ICallou
         {
             switch (journalEvent.Kind)
             {
-                case "LoadGame":
+                case "LoadGame" when journalEvent.StartsSession:
                     // Before this session's own reminders fire, so those wait for the next one.
                     store.RemoveFired(commander);
                     Fire(JournalTrigger.NextSession, reminder => reminder.Set < journalEvent.Timestamp, _ => NextSessionLeadIn);

@@ -1902,7 +1902,7 @@ public sealed class StoryDirector(
             }
         }
 
-        if (journalEvent.Kind == "LoadGame"
+        if (journalEvent.StartsSession
             && stories.Current(frontierId) is { } playing
             && journalEvent.Timestamp >= playing.PickedAt)
         {
