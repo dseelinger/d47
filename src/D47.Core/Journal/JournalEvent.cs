@@ -10,6 +10,9 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
     /// <summary>Whether Elite wrote this line for an Operation, as <see cref="OperationMarker"/> marks it.</summary>
     public bool InOperation { get; init; }
 
+    /// <summary>A <c>Location</c> in an Operation's instance, which names a place no record outlives the run to keep.</summary>
+    public bool IsOperationLocation => Kind == "Location" && InOperation;
+
     /// <summary>A <c>LoadGame</c> that starts a play session rather than entering or leaving an Operation.</summary>
     public bool StartsSession => Kind == "LoadGame" && !InOperation;
 

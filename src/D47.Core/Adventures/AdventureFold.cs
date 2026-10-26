@@ -315,7 +315,7 @@ public static class AdventureFold
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(journalEvent);
 
-        if (!trigger.IsResolved)
+        if (!trigger.IsResolved || journalEvent.IsOperationLocation)
         {
             return false;
         }
@@ -659,6 +659,7 @@ public static class AdventureFold
 
         // Before the acceptance check, so a Commander already in a beat's system when it was accepted is counted.
         if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+            && !journalEvent.IsOperationLocation
             && journalEvent.Raw.Long("SystemAddress") is { } arrived
             && arrived != standing.SystemAddress)
         {
@@ -667,6 +668,7 @@ public static class AdventureFold
 
         var market = journalEvent.Kind switch
         {
+            "Location" when journalEvent.IsOperationLocation => standing.MarketId,
             "Docked" => journalEvent.Raw.Long("MarketID"),
             "Location" => journalEvent.Raw.Bool("Docked") ? journalEvent.Raw.Long("MarketID") : null,
             "Undocked" or "FSDJump" => null,
@@ -678,7 +680,7 @@ public static class AdventureFold
             standing = standing with { MarketId = market };
         }
 
-        if (world is not null && standing.Parts.Any(part => !part.Ended) && journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump")
+        if (world is not null && standing.Parts.Any(part => !part.Ended) && journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump" && !journalEvent.IsOperationLocation)
         {
             standing = standing with { Parts = [.. standing.Parts.Select(part => Ended(part, world))] };
         }

@@ -130,7 +130,7 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
             }
         }
 
-        Apply(events);
+        Apply([.. OperationMarker.Mark(events)]);
     }
 
     private static IEnumerable<string> ReadLines(Stream stream)
@@ -145,6 +145,10 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
 
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"FSSSignalDiscovered\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"GameModeChange\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Fileheader\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Shutdown\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal);
@@ -154,7 +158,8 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
         switch (journalEvent.Kind)
         {
             case "Location" or "FSDJump" or "CarrierJump":
-                if (journalEvent.Long("SystemAddress") is { } address
+                if (!journalEvent.InOperation
+                    && journalEvent.Long("SystemAddress") is { } address
                     && journalEvent.String("StarSystem") is { } system
                     && StarPosition.Read(journalEvent.Raw) is { } position)
                 {
@@ -163,7 +168,7 @@ public sealed class SignalSightings(IFileSystem fileSystem, ILogger logger)
 
                 break;
 
-            case "FSSSignalDiscovered":
+            case "FSSSignalDiscovered" when !journalEvent.InOperation:
                 Sight(journalEvent);
                 break;
         }

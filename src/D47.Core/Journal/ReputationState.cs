@@ -55,7 +55,7 @@ public sealed record ReputationState
         return journalEvent.Kind switch
         {
             "Reputation" => WithSuperpowers(journalEvent),
-            "Location" => WithFactions(journalEvent),
+            "Location" => journalEvent.InOperation ? this : WithFactions(journalEvent),
             "FSDJump" => WithFactions(journalEvent),
             "CarrierJump" => WithFactions(journalEvent),
             _ => this,

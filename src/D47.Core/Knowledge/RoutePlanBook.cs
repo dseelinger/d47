@@ -249,7 +249,7 @@ public sealed class RoutePlanBook(
 
             foreach (var journalEvent in events)
             {
-                if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location" or "CarrierLocation"))
+                if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location" or "CarrierLocation") || journalEvent.IsOperationLocation)
                 {
                     continue;
                 }

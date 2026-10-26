@@ -261,7 +261,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
                 break;
 
             case "Location" or "FSDJump" or "CarrierJump":
-                if (journalEvent.String("StarSystem") is { } system)
+                if (!journalEvent.InOperation && journalEvent.String("StarSystem") is { } system)
                 {
                     _system = system;
                 }

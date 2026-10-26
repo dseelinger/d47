@@ -110,7 +110,7 @@ public sealed class JournalReminderCallout(JournalReminderStore store) : ICallou
 
                     break;
 
-                case "FSDJump" or "CarrierJump" or "Location":
+                case "FSDJump" or "CarrierJump" or "Location" when !journalEvent.IsOperationLocation:
                     var system = journalEvent.String("StarSystem");
 
                     Fire(

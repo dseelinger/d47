@@ -116,7 +116,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 
         lock (_gate)
         {
-            foreach (var journalEvent in events)
+            foreach (var journalEvent in OperationMarker.Mark(events))
             {
                 Fold(journalEvent, ref fid);
             }
@@ -181,6 +181,9 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"GameModeChange\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Fileheader\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"Shutdown\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"FSDJump\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"CarrierJump\"", StringComparison.Ordinal);
@@ -207,7 +210,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
                 how = TravelArrival.CarrierJump;
                 break;
 
-            case "Location":
+            case "Location" when !journalEvent.InOperation:
                 how = TravelArrival.Location;
                 break;
 

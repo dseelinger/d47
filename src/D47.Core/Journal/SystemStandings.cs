@@ -126,6 +126,7 @@ public sealed record SystemStandings
         ArgumentNullException.ThrowIfNull(journalEvent);
 
         if (journalEvent.Kind is not ("FSDJump" or "Location" or "CarrierJump")
+            || journalEvent.IsOperationLocation
             || journalEvent.String("StarSystem") is not { Length: > 0 } system
             || !journalEvent.Raw.TryGetProperty("Factions", out _))
         {

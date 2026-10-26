@@ -1189,6 +1189,7 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
 
         if (journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump"
+            && !journalEvent.IsOperationLocation
             && journalEvent.Raw.Long("SystemAddress") is { } arrived)
         {
             state.Here[commander] = arrived;
