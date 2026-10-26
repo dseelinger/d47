@@ -346,8 +346,8 @@ public class EachSearchKindOffersOnlyTheFiltersItHonoursTests
             TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError, result.Content);
-        Assert.Contains("Galileo in Sol; under repairs", result.Content, StringComparison.Ordinal);
-        Assert.Contains("Boston Base in Barnard's Star; damaged", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Galileo in Sol; reported under repairs", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Boston Base in Barnard's Star; reported damaged", result.Content, StringComparison.Ordinal);
         Assert.DoesNotContain("DamagedHuman", result.Content, StringComparison.Ordinal);
     }
 

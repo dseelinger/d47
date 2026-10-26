@@ -40,6 +40,16 @@ public sealed record StationSummary
 
     public int? LargePads { get; init; }
 
+    /// <summary>The station's state in words, marked as reported; null for a state that is not shown.</summary>
+    public string? ReportedState => State switch
+    {
+        "Construction" => "reported under construction",
+        "Damaged" or "DamagedHuman" => "reported damaged",
+        "UnderAttack" => "reported under attack",
+        "UnderRepairs" => "reported under repairs",
+        _ => null,
+    };
+
     /// <summary>Whether a ship needing this pad or larger can dock. True where no pad count is known.</summary>
     public bool Admits(PadSize size)
     {

@@ -3438,7 +3438,7 @@ public static class GalaxyCapability
                 report.Append($"; controlled by {station.ControllingFaction}");
             }
 
-            if (askedState && StationStateInWords(station.State) is { } state)
+            if (askedState && station.ReportedState is { } state)
             {
                 report.Append($"; {state}");
             }
@@ -3446,15 +3446,6 @@ public static class GalaxyCapability
 
         return report.ToString().TrimEnd();
     }
-
-    private static string? StationStateInWords(string? state) => state switch
-    {
-        "Construction" => "under construction",
-        "Damaged" or "DamagedHuman" => "damaged",
-        "UnderAttack" => "under attack",
-        "UnderRepairs" => "under repairs",
-        _ => null,
-    };
 
     private static string Describe(StationQuery query)
     {

@@ -150,7 +150,7 @@ public static class GalaxyFilters
             ["Construction", "Damaged", "DamagedHuman", "UnderAttack", "UnderRepairs"])
         {
             Fields = new Dictionary<GalaxySearchKind, string> { [GalaxySearchKind.Stations] = "state" },
-            Description = "The station's own state.",
+            Description = "The station's own state. Crowd-reported, so it may be out of date.",
             Several = true,
         },
 

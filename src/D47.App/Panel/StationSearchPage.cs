@@ -484,7 +484,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         Themed(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var system = station.ControllingFaction is { } controlling
-            ? station.State is { } state ? $"{controlling} · {state}" : controlling
+            ? station.ReportedState is { } state ? $"{controlling} · {state}" : controlling
             : Dash;
 
         List<Control> cells =
