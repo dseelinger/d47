@@ -229,6 +229,9 @@ public sealed record AdventureTrigger
     /// <summary><see cref="Filter"/> of a <see cref="TriggerKind.Site"/> at a tourist beacon.</summary>
     public const string TouristSite = "tourist";
 
+    /// <summary><see cref="Filter"/> of a <see cref="TriggerKind.Site"/> at a generation ship.</summary>
+    public const string GenerationSite = "generation";
+
     public required TriggerKind Kind { get; init; }
 
     public long? SystemAddress { get; init; }
@@ -270,7 +273,7 @@ public sealed record AdventureTrigger
     /// <summary>The cargo, item, genus, category, signal, wreck or source type, the tech broker row an unlock beat waits for, the Power a pledge beat waits for, the suit mod, the name of what is rescued, or the war type (<c>war</c>, <c>civilwar</c> or <c>election</c>), that a counted beat is limited to.</summary>
     public string? Filter { get; init; }
 
-    /// <summary>For a tourist <see cref="TriggerKind.Site"/>: the beacon's name, as the signal index shows it.</summary>
+    /// <summary>For a tourist or generation <see cref="TriggerKind.Site"/>: the beacon's or ship's name, as the signal index shows it.</summary>
     public string? SiteName { get; init; }
 
     /// <summary>For <see cref="TriggerKind.DataSale"/>: true for organic data only, false for cartographic data only, null for both.</summary>
@@ -344,6 +347,7 @@ public sealed record AdventureTrigger
         {
             GuardianSite => SystemAddress is not null && BodyId is not null,
             TouristSite => SystemAddress is not null,
+            GenerationSite => SystemAddress is not null && !string.IsNullOrWhiteSpace(SiteName),
             _ => false,
         },
         TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim or TriggerKind.Choice => true,
@@ -365,9 +369,12 @@ public sealed record AdventureTrigger
         TriggerKind.Board => $"board {Article(Knowledge.EliteSpecifications.HullName(ShipType) ?? ShipType ?? "an unknown ship")}",
         TriggerKind.Reach => $"fit out a ship that can reach the beacon in {System?.Trim() ?? "the Guardian beacon's system"}",
         TriggerKind.Beacon => $"scan the Guardian beacon in {System ?? BeaconName(SystemAddress) ?? Address(SystemAddress)}",
-        TriggerKind.Site => Filter == GuardianSite
-            ? $"fly to the Guardian site on {Body ?? Address(SystemAddress, BodyId)}{In()}"
-            : $"scan the tourist beacon {SiteName?.Trim()}{In()}",
+        TriggerKind.Site => Filter switch
+        {
+            GuardianSite => $"fly to the Guardian site on {Body ?? Address(SystemAddress, BodyId)}{In()}",
+            GenerationSite => $"drop out at {SiteName?.Trim()}{In()}",
+            _ => $"scan the tourist beacon {SiteName?.Trim()}{In()}",
+        },
         TriggerKind.Bounty => $"collect {Counted("bounty", "bounties")}",
         TriggerKind.Bond => $"earn {Counted("kill bond", "kill bonds")}{For()}",
         TriggerKind.Mission => $"complete {Counted(Missions(one: true), Missions(one: false))}{For()}",

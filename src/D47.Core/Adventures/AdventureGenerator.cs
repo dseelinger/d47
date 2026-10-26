@@ -1358,7 +1358,7 @@ public sealed class AdventureGenerator(
         /// <summary>Up to five Anarchy systems within reach, nearest first.</summary>
         public IReadOnlyList<SystemSummary> Anarchy { get; init; } = [];
 
-        /// <summary>The unvisited Guardian sites and tourist beacons within reach.</summary>
+        /// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach.</summary>
         public Sites Sites { get; init; } = Sites.None;
 
         public bool IsEmpty => Stations.Count == 0 && Bodies.Count == 0;
@@ -1436,22 +1436,25 @@ public sealed class AdventureGenerator(
         }
     }
 
-    /// <summary>A tourist beacon from the signal index, listed by its system.</summary>
+    /// <summary>A tourist beacon or generation ship from the signal index, listed by its system.</summary>
     private sealed record TouristSite(long SystemAddress, string System, string Name, double LightYears);
 
-    /// <summary>The unvisited Guardian sites and tourist beacons within reach, nearest first.</summary>
-    private sealed record Sites(IReadOnlyList<BodySummary> Guardian, IReadOnlyList<TouristSite> Tourist)
+    /// <summary>The unvisited Guardian sites, tourist beacons and generation ships within reach, nearest first.</summary>
+    private sealed record Sites(IReadOnlyList<BodySummary> Guardian, IReadOnlyList<TouristSite> Tourist, IReadOnlyList<TouristSite> Generation)
     {
-        public static readonly Sites None = new([], []);
+        public static readonly Sites None = new([], [], []);
 
-        public bool IsEmpty => Guardian.Count == 0 && Tourist.Count == 0;
+        public bool IsEmpty => Guardian.Count == 0 && Tourist.Count == 0 && Generation.Count == 0;
 
         /// <summary>The listed sites as a refusal names them.</summary>
         public string Listed() => string.Join(
             "; ",
             Guardian.Select(body => $"Guardian site {body.Name} (\"filter\": \"guardian\", \"system\": \"{body.SystemName}\", \"body\": \"{body.Name}\")")
-                .Concat(Tourist.Select(site => $"tourist beacon {site.Name} (\"filter\": \"tourist\", \"system\": \"{site.System}\")")));
+                .Concat(Tourist.Select(site => $"tourist beacon {site.Name} (\"filter\": \"tourist\", \"system\": \"{site.System}\")"))
+                .Concat(Generation.Select(site => $"generation ship {site.Name} (\"filter\": \"generation\", \"system\": \"{site.System}\")")));
     }
+
+    private const string GenerationShipPrefix = "Generation Ship ";
 
     private const int SitesPerKind = 3;
 
@@ -1481,14 +1484,15 @@ public sealed class AdventureGenerator(
         }
 
         IReadOnlyList<TouristSite> tourist = [];
+        IReadOnlyList<TouristSite> generation = [];
 
         if (signalIndex?.Invoke() is not { } source)
         {
-            notes.Add("The signal index is off, so no tourist beacon was offered.");
+            notes.Add("The signal index is off, so no tourist beacon or generation ship was offered.");
         }
         else if (await source.GetAsync(cancellationToken).ConfigureAwait(false) is not { } index)
         {
-            notes.Add("The signal index is missing, so no tourist beacon was offered.");
+            notes.Add("The signal index is missing, so no tourist beacon or generation ship was offered.");
         }
         else if (facts.Position is { } position)
         {
@@ -1502,9 +1506,22 @@ public sealed class AdventureGenerator(
                         .Take(SitesPerKind),
                 ],
                 cancellationToken).ConfigureAwait(false);
+
+            generation = await Task.Run(
+                () => (IReadOnlyList<TouristSite>)[
+                    .. index.Within(position, radius)
+                        .Where(sighting => sighting.Kind == SignalKind.Megaship && sighting.SignalName.StartsWith(GenerationShipPrefix, StringComparison.OrdinalIgnoreCase))
+                        .GroupBy(sighting => sighting.SignalName, StringComparer.OrdinalIgnoreCase)
+                        .Select(ship => ship.MaxBy(sighting => sighting.LastSeen)!)
+                        .Where(sighting => !PermitSystemTable.Locked(sighting.SystemName) && !Visited(sighting.SystemAddress))
+                        .Select(sighting => new TouristSite(sighting.SystemAddress, sighting.SystemName, sighting.SignalName, position.DistanceTo(sighting.Position)))
+                        .OrderBy(site => site.LightYears)
+                        .Take(SitesPerKind),
+                ],
+                cancellationToken).ConfigureAwait(false);
         }
 
-        return new Sites(guardian, tourist);
+        return new Sites(guardian, tourist, generation);
     }
 
     /// <summary>The sites within reach, or nothing when there are none.</summary>
@@ -1516,7 +1533,7 @@ public sealed class AdventureGenerator(
         }
 
         text.AppendLine();
-        text.AppendLine("Sites within reach, nearest first, none visited yet (Guardian sites from the galaxy search, tourist beacons from the signal index):");
+        text.AppendLine("Sites within reach, nearest first, none visited yet (Guardian sites from the galaxy search, tourist beacons and generation ships from the signal index):");
 
         foreach (var body in sites.Guardian)
         {
@@ -1531,6 +1548,13 @@ public sealed class AdventureGenerator(
             AppendLightYears(text, site.LightYears);
             text.AppendLine();
         }
+
+        foreach (var site in sites.Generation)
+        {
+            text.Append("- Generation ship: ").Append(site.Name).Append(", in ").Append(site.System);
+            AppendLightYears(text, site.LightYears);
+            text.AppendLine();
+        }
     }
 
     /// <summary>The trigger for the listed site a site beat names, or the refusal that names the listed sites.</summary>
@@ -1538,7 +1562,7 @@ public sealed class AdventureGenerator(
     {
         if (sites.IsEmpty)
         {
-            return (null, $"{where} is a \"site\" objective, but no Guardian site or tourist beacon is listed within reach; make it another kind of objective.");
+            return (null, $"{where} is a \"site\" objective, but no Guardian site, tourist beacon or generation ship is listed within reach; make it another kind of objective.");
         }
 
         var filter = beat.Filter?.Trim();
@@ -1568,6 +1592,19 @@ public sealed class AdventureGenerator(
                 SystemAddress = beacon.SystemAddress,
                 System = beacon.System,
                 SiteName = beacon.Name,
+            }, null);
+        }
+
+        if (string.Equals(filter, AdventureTrigger.GenerationSite, StringComparison.OrdinalIgnoreCase)
+            && sites.Generation.FirstOrDefault(site => same(site.System, beat.System)) is { } ship)
+        {
+            return (new AdventureTrigger
+            {
+                Kind = TriggerKind.Site,
+                Filter = AdventureTrigger.GenerationSite,
+                SystemAddress = ship.SystemAddress,
+                System = ship.System,
+                SiteName = ship.Name,
             }, null);
         }
 
@@ -2806,8 +2843,8 @@ public sealed class AdventureGenerator(
         if (!candidates.Sites.IsEmpty)
         {
             text.AppendLine(
-                "- \"site\": the Commander flies to a Guardian site, or scans a tourist beacon, from the sites within reach listed above and no other. "
-                + "\"filter\" is guardian or tourist, \"system\" is the listed system, and \"body\" is the listed body for a Guardian site and null for a tourist beacon. "
+                "- \"site\": the Commander flies to a Guardian site, scans a tourist beacon or drops out at a generation ship, from the sites within reach listed above and no other. "
+                + "\"filter\" is guardian, tourist or generation, \"system\" is the listed system, and \"body\" is the listed body for a Guardian site and null for a tourist beacon or generation ship. "
                 + "Like arrive, dock, land and scan, it is a place and has a \"reason\".");
         }
 

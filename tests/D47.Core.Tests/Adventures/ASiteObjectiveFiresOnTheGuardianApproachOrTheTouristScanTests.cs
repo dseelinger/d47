@@ -22,6 +22,60 @@ public sealed class ASiteObjectiveFiresOnTheGuardianApproachOrTheTouristScanTest
         Kind = TriggerKind.Site, Filter = AdventureTrigger.TouristSite, SystemAddress = System, System = "Synuefe XR-H d11-102", SiteName = "Lantern's Rest",
     };
 
+    private static readonly AdventureTrigger Generation = new()
+    {
+        Kind = TriggerKind.Site, Filter = AdventureTrigger.GenerationSite, SystemAddress = System, System = "Alaunus", SiteName = "Generation Ship Lycaon",
+    };
+
+    private static JournalEvent Drop(string type) =>
+        Event($$"""{ "timestamp":"2026-10-20T12:00:00Z", "event":"SupercruiseDestinationDrop", "Type":"{{type}}", "Threat":0 }""");
+
+    [Fact]
+    public void ADropAtTheGenerationShipMeetsItInAnySystem()
+    {
+        Assert.True(AdventureFold.Matches(Generation, Drop("Generation Ship Lycaon")));
+        Assert.True(AdventureFold.Matches(Generation, Drop("generation ship lycaon"), Elsewhere));
+    }
+
+    [Fact]
+    public void ADropAtAnotherMegashipOrAShipUplinkScanOrABeaconScanDoesNotMeetIt()
+    {
+        Assert.False(AdventureFold.Matches(Generation, Drop("Generation Ship Argo")));
+        Assert.False(AdventureFold.Matches(Generation, Drop("Cobra Wanderer")));
+        Assert.False(AdventureFold.Matches(Generation, Scanned("$Datascan_ShipUplink;"), System));
+        Assert.False(AdventureFold.Matches(Generation, Scanned("$Datascan_TouristBeacon;"), System));
+    }
+
+    [Fact]
+    public void AGenerationSiteNeedsItsSystemAndShipAndIsDescribedInWords()
+    {
+        Assert.True(Generation.IsResolved);
+        Assert.False((Generation with { SiteName = null }).IsResolved);
+        Assert.False((Generation with { SystemAddress = null }).IsResolved);
+        Assert.Equal("drop out at Generation Ship Lycaon in Alaunus", Generation.Describe());
+    }
+
+    [Fact]
+    public void AGenerationSiteSurvivesTheStore()
+    {
+        var path = Path.Combine(MemoryInstall.FakeRoot, "d47-site", "generation.json");
+        var files = new MemoryFileSystem();
+        var adventure = new Adventure
+        {
+            Key = "generation-chapter",
+            Name = "Generation Chapter",
+            Source = AdventureSource.Generated,
+            Beats = [new AdventureBeat { Title = "The Ship", Function = "setup", Trigger = Generation, Lines = [new AdventureLine { Text = "Go there." }] }],
+        };
+
+        Assert.Null(new AdventureStore(path, files, NullLogger<AdventureStore>.Instance).Save("F1", adventure));
+
+        var store = new AdventureStore(path, files, NullLogger<AdventureStore>.Instance);
+        store.Poll();
+
+        Assert.Equal(Generation, store.Find("F1", "generation-chapter")!.Beats[0].Trigger);
+    }
+
     private static JournalEvent Event(string line)
     {
         Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed), line);

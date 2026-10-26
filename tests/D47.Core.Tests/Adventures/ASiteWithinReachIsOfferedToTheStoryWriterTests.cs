@@ -110,7 +110,7 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
 
         Assert.All(provider.Requests, request => Assert.DoesNotContain("Sites within reach", request.Prompt.History[0].Text));
         Assert.DoesNotContain("\"site\"", provider.Requests[1].ResponseSchema!.SchemaJson);
-        Assert.Contains("The signal index is off, so no tourist beacon was offered.", outcome.Notes);
+        Assert.Contains("The signal index is off, so no tourist beacon or generation ship was offered.", outcome.Notes);
     }
 
     [Fact]
@@ -149,6 +149,50 @@ public sealed class ASiteWithinReachIsOfferedToTheStoryWriterTests
         Assert.Equal(AdventureTrigger.TouristSite, trigger.Filter);
         Assert.Equal(AdventureFixtures.Lantern, trigger.SystemAddress);
         Assert.Equal("Lantern Watch", trigger.SiteName);
+    }
+
+    private static readonly string GenerationTsv = string.Join(
+        "\n",
+        SignalIndex.Header,
+        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tGeneration Ship Lycaon\t2026-10-01",
+        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tGeneration Ship Lycaon\t2026-10-10",
+        $"{AdventureFixtures.Lantern}\tOssen's Lantern\t10\t-40\t125\tMegaship\tMegaship Cobra Wanderer\t2026-10-10") + "\n";
+
+    [Fact]
+    public async Task AGenerationShipIsListedOnceAndOtherMegashipsAreNot()
+    {
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(AdventureGeneratorTests.GoodBeats));
+
+        await Generator(provider, bodies: [], index: Source(GenerationTsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        foreach (var request in provider.Requests.Take(2))
+        {
+            var instruction = request.Prompt.History[0].Text;
+
+            Assert.Single(instruction.Split('\n'), line => line.StartsWith("- Generation ship: Generation Ship Lycaon, in Ossen's Lantern", StringComparison.Ordinal));
+            Assert.DoesNotContain("Cobra Wanderer", instruction);
+        }
+    }
+
+    [Fact]
+    public async Task ADraftNamingAListedGenerationShipStandsOnItsSystemAndName()
+    {
+        const string beats = """
+            {"opening": "Somebody is paying.", "reply": "Here it is.", "beats": [
+              {"title": "The Ship", "function": "setup", "kind": "site", "reason": "A generation ship drifts there.", "system": "Ossen's Lantern", "body": null, "filter": "generation", "line": "It has been travelling for centuries."},
+              {"title": "The Anchorage", "function": "turn", "kind": "dock", "reason": "Someone there knows about the burst.", "system": "Dyson's Hollow", "station": "Maren Anchorage", "line": "To one name."},
+              {"title": "The Column Will Not Balance", "function": "resolution", "kind": "rank", "career": "Trader", "rank": 8, "line": "It balances."}
+            ]}
+            """;
+        var provider = new RoundScriptedLlmProvider(Saying(AdventureGeneratorTests.Spine), Saying(beats));
+
+        var outcome = await Generator(provider, bodies: [], index: Source(GenerationTsv)).GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        var trigger = outcome.Draft!.Beats[0].Trigger;
+        Assert.Equal(AdventureTrigger.GenerationSite, trigger.Filter);
+        Assert.Equal(AdventureFixtures.Lantern, trigger.SystemAddress);
+        Assert.Equal("Generation Ship Lycaon", trigger.SiteName);
     }
 
     [Fact]

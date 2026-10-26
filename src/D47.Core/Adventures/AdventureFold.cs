@@ -375,6 +375,10 @@ public static class AdventureFold
                 AdventureTrigger.TouristSite =>
                     GuardianCores.IsTouristBeaconScan(journalEvent)
                     && systemAddress == trigger.SystemAddress,
+                AdventureTrigger.GenerationSite =>
+                    journalEvent.Kind is "SupercruiseDestinationDrop"
+                    && trigger.SiteName is { } ship
+                    && string.Equals(raw.String("Type")?.Trim(), ship.Trim(), StringComparison.OrdinalIgnoreCase),
                 _ => false,
             },
 

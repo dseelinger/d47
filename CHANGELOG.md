@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's chapter can send you to a generation ship. The writer is offered up to three within reach from the Signal index, and the objective is met when you drop out of supercruise at that ship.
+
 A Goals story can name the Goals it works. Its chapters, clues, finale and Goals page entry then follow only those Goals, and it asks for a Powerplay pledge only when Powerplay is one of them.
 
 Changing the voice of a story character who speaks Japanese offers only providers and voices that speak Japanese. A stored choice that does not speak the character's language is ignored, and the story's voice speaks.
