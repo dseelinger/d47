@@ -53,6 +53,7 @@ public static class CarrierBackfill
                 // The text test, before any JSON is touched: a handful of event names out of the hundreds a
                 // journal holds, so the cost is a read of the folder rather than a replay of it.
                 if (!line.Contains("\"event\":\"Carrier", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
@@ -66,6 +67,16 @@ public static class CarrierBackfill
 
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = folded.Remove(created);
+                    }
+
                     continue;
                 }
 

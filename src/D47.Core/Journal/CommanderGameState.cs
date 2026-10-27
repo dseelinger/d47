@@ -282,6 +282,11 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Loadouts = ShipLoadouts.NoShips;
             Kit = OwnedKit.Empty;
             Missions = MissionBoard.Empty;
+            Fleet = FleetRegistry.Empty;
+            Carrier = CarrierState.None;
+            Colonisation = ColonisationSites.Empty;
+            TechBroker = TechBrokerUnlocks.Empty;
+            CycleMerits = PowerplayCycleMerits.None;
             return;
         }
 

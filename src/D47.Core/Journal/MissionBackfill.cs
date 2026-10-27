@@ -12,7 +12,7 @@ namespace D47.Core.Journal;
 /// </summary>
 public static class MissionBackfill
 {
-    private static readonly string[] Relevant = ["\"event\":\"Mission", "\"event\":\"CargoDepot\"", "\"event\":\"Commander\"", "\"event\":\"LoadGame\""];
+    private static readonly string[] Relevant = ["\"event\":\"Mission", "\"event\":\"CargoDepot\"", "\"event\":\"Commander\"", "\"event\":\"LoadGame\"", "\"event\":\"NewCommander\""];
 
     public static IReadOnlyDictionary<string, MissionBoard> FromHistory(
         IFileSystem files,
@@ -130,6 +130,16 @@ public static class MissionBackfill
         {
             foreach (var journalEvent in kept[i])
             {
+                if (journalEvent.Kind == "NewCommander")
+                {
+                    if (journalEvent.String("FID") == commander)
+                    {
+                        board = MissionBoard.Empty;
+                    }
+
+                    continue;
+                }
+
                 board = board.Apply(journalEvent);
             }
         }
@@ -181,7 +191,7 @@ public static class MissionBackfill
             }
 
             if (journalEvent.Kind is not ("MissionAccepted" or "MissionRedirected" or "CargoDepot"
-                or "MissionCompleted" or "MissionFailed" or "MissionAbandoned" or "Missions"))
+                or "MissionCompleted" or "MissionFailed" or "MissionAbandoned" or "Missions" or "NewCommander"))
             {
                 continue;
             }

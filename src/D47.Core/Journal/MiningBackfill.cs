@@ -34,6 +34,7 @@ public static class MiningBackfill
                     && !line.Contains("\"event\":\"MiningRefined\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Docked\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
                 {
@@ -42,6 +43,17 @@ public static class MiningBackfill
 
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = open.Remove(created);
+                        _ = finished.Remove(created);
+                    }
+
                     continue;
                 }
 

@@ -6,7 +6,7 @@ namespace D47.Core.Journal;
 /// <summary>Every Commander's tech broker unlocks, recovered from every journal on disk.</summary>
 public static class TechBrokerBackfill
 {
-    private static readonly string[] Kinds = ["Commander", "LoadGame", "TechnologyBroker", "Loadout", "StoredModules"];
+    private static readonly string[] Kinds = ["Commander", "LoadGame", "NewCommander", "TechnologyBroker", "Loadout", "StoredModules"];
 
     /// <summary>Each Commander's unlocks, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, TechBrokerUnlocks> FromHistory(
@@ -31,6 +31,16 @@ public static class TechBrokerBackfill
                 if (!Kinds.Any(kind => line.Contains($"\"event\":\"{kind}\"", StringComparison.Ordinal))
                     || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = unlocks.Remove(created);
+                    }
+
                     continue;
                 }
 

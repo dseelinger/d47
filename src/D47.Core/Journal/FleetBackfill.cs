@@ -106,6 +106,16 @@ public static class FleetBackfill
             {
                 foreach (var journalEvent in batch)
                 {
+                    if (journalEvent.Kind == "NewCommander")
+                    {
+                        if (journalEvent.String("FID") is { Length: > 0 } created)
+                        {
+                            _ = fleets.Remove(created);
+                        }
+
+                        continue;
+                    }
+
                     if (journalEvent.Kind is "Commander" or "LoadGame"
                         && journalEvent.String("FID") is { Length: > 0 } fid)
                     {

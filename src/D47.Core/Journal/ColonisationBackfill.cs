@@ -54,6 +54,7 @@ public static class ColonisationBackfill
                 if (!line.Contains("\"event\":\"ColonisationConstructionDepot\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"ColonisationSystemClaim\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"ColonisationBeaconDeployed\"", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Location\"", StringComparison.Ordinal)
@@ -67,6 +68,17 @@ public static class ColonisationBackfill
 
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = sites.Remove(created);
+                        _ = locations.Remove(created);
+                    }
+
                     continue;
                 }
 

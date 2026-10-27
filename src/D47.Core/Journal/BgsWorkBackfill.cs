@@ -9,7 +9,7 @@ public static class BgsWorkBackfill
 {
     private static readonly string[] Kinds =
     [
-        "Commander", "LoadGame", "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
+        "Commander", "LoadGame", "NewCommander", "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
         "RedeemVoucher", "MarketSell", "SellOrganicData", "SellExplorationData", "MultiSellExplorationData",
     ];
 
@@ -49,6 +49,16 @@ public static class BgsWorkBackfill
                 if (!Kinds.Any(kind => line.Contains($"\"event\":\"{kind}\"", StringComparison.Ordinal))
                     || !JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = work.Remove(created);
+                    }
+
                     continue;
                 }
 

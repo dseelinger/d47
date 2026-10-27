@@ -28,6 +28,7 @@ public static class PowerplayCycleBackfill
             {
                 // Powerplay, PowerplayJoin, PowerplayDefect, PowerplayLeave, PowerplayMerits and the rest.
                 if (!line.Contains("\"event\":\"Powerplay", StringComparison.Ordinal)
+                    && !line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
                     && !line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal))
                 {
@@ -36,6 +37,17 @@ public static class PowerplayCycleBackfill
 
                 if (!JournalEvent.TryParse(line, logger, out var parsed) || parsed is null)
                 {
+                    continue;
+                }
+
+                if (parsed.Kind == "NewCommander")
+                {
+                    if (parsed.String("FID") is { Length: > 0 } created)
+                    {
+                        _ = pledges.Remove(created);
+                        _ = merits.Remove(created);
+                    }
+
                     continue;
                 }
 
