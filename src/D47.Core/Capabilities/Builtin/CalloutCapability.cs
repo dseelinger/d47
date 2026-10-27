@@ -54,6 +54,7 @@ public static class CalloutCapability
     public const string NotablePremiumFsdInjectionKey = "callouts.notablePremiumFsdInjection";
     public const string NotableLandableAtmosphereKey = "callouts.notableLandableAtmosphere";
     public const string GeologyKey = "callouts.geology";
+    public const string CodexDiscoveredKey = "callouts.codexDiscovered";
     public const string RegionFirstKey = "callouts.regionFirst";
     public const string BiologyKey = "callouts.biologyValue";
     public const string SurveyedBiologyKey = "callouts.surveyedBiology";
@@ -536,6 +537,15 @@ public static class CalloutCapability
                 "missing geology",
                 s => s.Callouts.Geology,
                 (s, v) => s with { Callouts = s.Callouts with { Geology = v } }),
+
+            Toggle(
+                CodexDiscoveredKey,
+                "New codex entries",
+                "Every new codex entry, said as \"Discovered\" and its name when you log it.",
+                "codex-discovered",
+                "codex discoveries",
+                s => s.Callouts.CodexDiscovered,
+                (s, v) => s with { Callouts = s.Callouts with { CodexDiscovered = v } }),
 
             Toggle(
                 RegionFirstKey,

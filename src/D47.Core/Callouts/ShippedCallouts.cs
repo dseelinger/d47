@@ -181,6 +181,7 @@ public static class ShippedCallouts
             .Add(new EarlierFindsCallout(loggers.CreateLogger<EarlierFindsCallout>()))
             .Add(biology)
             .Add(new GeologyCallout())
+            .Add(new CodexDiscoveredCallout())
             .Add(new RegionFirstCallout())
             .Add(tradingMode)
             .Add(new ProspectorCallout { Target = () => sources.MiningTargets.For(gameState.Active?.Identity.FrontierId) })
@@ -458,6 +459,7 @@ public static class ShippedCallouts
         engine.SetEnabled("body-value", callouts.BodyValue, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("geology", callouts.Geology, now);
+        engine.SetEnabled("codex-discovered", callouts.CodexDiscovered, now);
         engine.SetEnabled("region-first", callouts.RegionFirst, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
         engine.SetEnabled("earlier-finds", callouts.EarlierFinds, now);

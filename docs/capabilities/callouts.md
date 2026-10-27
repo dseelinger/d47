@@ -1037,6 +1037,20 @@ B 3 could have water ice fumaroles or water ice geysers, not in your codex for t
 It names up to three, in table order, and counts the rest. It says nothing until your codex history
 has loaded, and speaks once per body.
 
+#### New codex entries {#codex-discovered}
+
+When you log a new codex entry of any kind, a star, a planet, an organic, a geological feature or an
+anomaly:
+
+```text
+Discovered T Tauri Star and Q09-Type Anomaly.
+```
+
+Entries logged in the same moment make one line. It says nothing for an entry you had already logged,
+for an entry with no name, or while the journal is being read on start. It is separate from
+[possible region firsts](#region-first), so either can be turned off alone; when both apply, this
+line comes first. Nothing leaves your machine.
+
 #### Possible region firsts {#region-first}
 
 When you log a new organic codex entry that the Canonn table shipped in this build does not list for

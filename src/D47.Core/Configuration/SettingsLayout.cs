@@ -295,6 +295,7 @@ public static class SettingsLayout
                                 E("callouts.footfallApproach"),
                                 E("callouts.mapping"),
                                 E("callouts.geology"),
+                                E("callouts.codexDiscovered"),
                                 E("callouts.regionFirst"),
                                 E("callouts.bodyValue"),
                                 E("callouts.bodyValueThreshold", under: true),
