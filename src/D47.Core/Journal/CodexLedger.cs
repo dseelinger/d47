@@ -179,7 +179,7 @@ public sealed record CodexLedger
     private static CodexLogEntry Entry(JournalEvent e, long id) => new(
         e.Timestamp,
         id,
-        e.Named("Name"),
+        CodexBodyName.Of(e.String("Name")) ?? e.Named("Name"),
         e.Named("Category"),
         e.Named("SubCategory"),
         RegionIdOf(e.String("Region")),

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Planet and gas giant codex entries are now named by what the body is, such as "High metal content world with an atmosphere" or "Class II gas giant", instead of "Non Terraformable" or "Standard gas giant". The codex pages, search and transcript use the new names.
+
 Erasing pilot data now deletes the Commander's stories and adventures from before the erase: past stories, the story under way and its chapters, and adventures finished, under way or waiting. Deleting a story under way releases its cores and restores the Backstory it replaced. An erase from before this version takes effect on the first start after it.
 
 The Galaxy map no longer shows arrivals from before a Commander erased their pilot data.

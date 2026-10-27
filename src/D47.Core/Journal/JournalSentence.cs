@@ -136,7 +136,7 @@ public static class JournalSentence
                 ? $"Signals found on {signals}{Signals(raw)}"
                 : "Signals found",
             "NavBeaconScan" => "Scanned a nav beacon",
-            "CodexEntry" => Named(raw, "Name") is { } codex
+            "CodexEntry" => (CodexBodyName.Of(raw.String("Name")) ?? Named(raw, "Name")) is { } codex
                 ? $"Codex entry: {codex}"
                 : "Codex entry recorded",
             "MultiSellExplorationData" => raw.Long("TotalEarnings") is { } earned
