@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace D47.Core.Diagnostics.Donation;
@@ -120,6 +120,8 @@ public static class JournalScrub
         ["CrewMemberRoleChange"] = [new("Crew", Scrub.Person)],
         ["KickCrewMember"] = [new("Crew", Scrub.Person)],
         ["CrewLaunch"] = [new("Crew", Scrub.Person)],
+        ["Embark"] = [new("Crew[].Name", Scrub.Person)],
+        ["Disembark"] = [new("Crew[].Name", Scrub.Person)],
         ["JoinACrew"] = [new("Captain", Scrub.Person)],
         ["QuitACrew"] = [new("Captain", Scrub.Person)],
         ["CrewHire"] = [new("Name", Scrub.Person)],
@@ -244,6 +246,8 @@ public static class JournalScrub
                 }
             }
 
+            KnownValues(root, names, isRoot: true);
+
             // One message rather than one field.
             return new ScrubbedLine(root.ToJsonString(Flat), bodies > 0 ? 1 : 0, dropped);
         }
@@ -253,6 +257,57 @@ public static class JournalScrub
             // nobody has checked, and the whole claim being made about the excerpt is that everything in it
             // was checked — so an unanticipated shape has to withhold rather than escape.
             return new ScrubbedLine(null, 0, 0);
+        }
+    }
+
+    /// <summary>
+    /// Replaces any string value equal to one already replaced, with the same stand-in. Substrings are
+    /// left alone.
+    /// </summary>
+    private static void KnownValues(JsonNode? node, Pseudonyms names, bool isRoot = false)
+    {
+        switch (node)
+        {
+            case JsonObject json:
+                foreach (var (key, value) in json.ToList())
+                {
+                    if (isRoot && key is "event" or "timestamp")
+                    {
+                        continue;
+                    }
+
+                    if (Text(value) is { } text)
+                    {
+                        if (!IsGameSymbol(text) && !names.IsStandIn(text) && names.Known(text, out var seen))
+                        {
+                            json[key] = JsonValue.Create(seen);
+                        }
+                    }
+                    else
+                    {
+                        KnownValues(value, names);
+                    }
+                }
+
+                break;
+
+            case JsonArray array:
+                for (var index = 0; index < array.Count; index++)
+                {
+                    if (Text(array[index]) is { } text)
+                    {
+                        if (!IsGameSymbol(text) && !names.IsStandIn(text) && names.Known(text, out var seen))
+                        {
+                            array[index] = JsonValue.Create(seen);
+                        }
+                    }
+                    else
+                    {
+                        KnownValues(array[index], names);
+                    }
+                }
+
+                break;
         }
     }
 

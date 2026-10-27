@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A donated journal no longer carries a crewmate's name on boarding or leaving a ship, and a player name that was replaced in one field is replaced in every other field that holds the same value.
+
 An Operation in a journal written by game 4.4.0, which has no mode-change line, is now recognised from the docked arrival at the Operations runner, so history and replay no longer count its location, missions and signals as ordinary play.
 
 Launching the Nomad from a Mk II Vessel Hangar is now read as leaving the ship in an SRV. Kills, scenes, story SRV objectives and the journal line ("Launched the Nomad") follow it; a launch the Commander does not fly changes nothing but the journal line.
