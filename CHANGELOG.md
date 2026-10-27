@@ -10,6 +10,8 @@
 
 The Galaxy map no longer shows arrivals from before a Commander erased their pilot data.
 
+Asked where you are, d47 now also says the class of the star you are at, or that it has not seen the class in the journal.
+
 A module or ship search now finds every station Spansh lists for it, whichever name the station's last report used. A Detailed Surface Scanner search near a system no longer stops at a station that has not reported since May, and "Long range detailed surface scanner" said aloud is understood. The Large Planetary Vehicle Hangar and Mk II Large Planetary Vehicle Hangar can be searched for, and a search for the Anaconda Mk II says no shipyard in the station index sells it.
 
 Erasing pilot data now also clears the Commander's fleet, carrier, construction sites, tech broker unlocks, Powerplay cycle merits, missions, BGS work and mining runs, both live and when d47 reads back through older journals.

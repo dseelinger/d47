@@ -69,6 +69,29 @@ public class TheJumpsLeftComeFromTheRouteFileTests
     private static string[] Fixture(params string[] lines) => [.. Commander, .. lines];
 
     [Fact]
+    public async Task TheCurrentStarsClassComesBeforeTheNextHopsClass()
+    {
+        var answer = await LocationAsync(Store(Fixture(ACrossingOnARoute)), Plotted);
+
+        var here = answer.IndexOf("The star here is class K.", StringComparison.Ordinal);
+        var next = answer.IndexOf("Next jump: Andceeth (class M)", StringComparison.Ordinal);
+
+        Assert.True(here >= 0, answer);
+        Assert.True(next > here, answer);
+    }
+
+    [Fact]
+    public async Task AnArrivalWithNoStartJumpSaysTheStarClassIsNotKnown()
+    {
+        var answer = await LocationAsync(
+            Store(Fixture("""{"timestamp":"3311-01-01T00:04:49Z","event":"FSDJump","StarSystem":"Eta Crucis"}""")),
+            new NavRoute());
+
+        Assert.Contains("The star class here has not been seen in the journal.", answer);
+        Assert.DoesNotContain("The star here is", answer);
+    }
+
+    [Fact]
     public async Task TheSystemJustReachedStillHasTheRestOfTheRouteAheadOfIt()
     {
         var answer = await LocationAsync(Store(Fixture(ACrossingOnARoute)), Plotted);

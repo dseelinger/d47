@@ -191,8 +191,9 @@ public static class JournalCapability
                     Name = "get_location",
                     AlwaysLoaded = true,
                     Description =
-                        "Report the current Commander's star system, body, docking state and what they are "
-                        + "doing — supercruise, hyperspace, landed, on foot — from the journal.",
+                        "Report the current Commander's star system, the class of its arrival star, body, docking "
+                        + "state and what they are doing — supercruise, hyperspace, landed, on foot — from "
+                        + "the journal.",
                     Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeLocation(gameState, plotted()))),
                 },
                 new ToolDefinition
@@ -905,6 +906,10 @@ public static class JournalCapability
         {
             report.Append($" Currently {Speak(location.Mode)}.");
         }
+
+        report.Append(location.StarClass is { } starClass
+            ? $" The star here is {StarClasses.Speak(starClass)}."
+            : " The star class here has not been seen in the journal.");
 
         AppendRoute(report, route, location.StarSystem);
 

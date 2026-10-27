@@ -90,7 +90,8 @@ public class JournalCapabilityTests
         Assert.False(result.IsError);
         // Arriving from a hyperspace jump drops you into supercruise, and Phase 7 now says so.
         Assert.Equal(
-            "Fixture is in Fixture Nebula Point, near Fixture Nebula Point A. Currently in supercruise.",
+            "Fixture is in Fixture Nebula Point, near Fixture Nebula Point A. Currently in supercruise. "
+            + "The star class here has not been seen in the journal.",
             result.Content);
     }
 
@@ -106,7 +107,7 @@ public class JournalCapabilityTests
         var registry = CapabilityRegistry.Build([JournalCapability.Create(gameState)]);
         var result = await registry.InvokeAsync("get_location", ToolArguments.Empty, TestContext.Current.CancellationToken);
 
-        Assert.Equal("Fixture is in Fixture Nebula Point, docked at Fixture Outpost.", result.Content);
+        Assert.Equal("Fixture is in Fixture Nebula Point, docked at Fixture Outpost. The star class here has not been seen in the journal.", result.Content);
     }
 
     private const string StoredModules =
