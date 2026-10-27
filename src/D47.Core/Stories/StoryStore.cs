@@ -256,6 +256,46 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// Deletes the Commander's stories picked at or before <paramref name="at"/>, and with them the Commander's voter and
+    /// forgotten beacon, which exist only beside a story. Returns the stories deleted.
+    /// </summary>
+    public IReadOnlyList<Story> RemovePickedBy(string? frontierId, DateTimeOffset at)
+    {
+        var commander = frontierId ?? AdventureStore.NoCommander;
+        List<Story> removed;
+
+        lock (_writeGate)
+        {
+            var existing = For(commander);
+
+            removed = [.. existing.Where(story => story.PickedAt <= at)];
+
+            if (removed.Count == 0)
+            {
+                return [];
+            }
+
+            lock (_gate)
+            {
+                _byCommander = new Dictionary<string, IReadOnlyList<Story>>(_byCommander, StringComparer.Ordinal)
+                {
+                    [commander] = [.. existing.Where(story => story.PickedAt > at)],
+                };
+
+                _voters = new Dictionary<string, string>(_voters, StringComparer.Ordinal);
+                _voters.Remove(commander);
+                _forgotten = new HashSet<string>(_forgotten, StringComparer.Ordinal);
+                _forgotten.Remove(commander);
+            }
+
+            Write();
+        }
+
+        Changed?.Invoke();
+        return removed;
+    }
+
     /// <summary>Called holding <see cref="_writeGate"/> and not <see cref="_gate"/>; only a holder of <see cref="_writeGate"/> replaces the fields it reads.</summary>
     private void Write()
     {

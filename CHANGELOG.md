@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Erasing pilot data now deletes the Commander's stories and adventures from before the erase: past stories, the story under way and its chapters, and adventures finished, under way or waiting. Deleting a story under way releases its cores and restores the Backstory it replaced. An erase from before this version takes effect on the first start after it.
+
 The Galaxy map no longer shows arrivals from before a Commander erased their pilot data.
 
 Asked where you are, d47 now also says the class of the star you are at, or that it has not seen the class in the journal.

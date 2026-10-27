@@ -3245,6 +3245,27 @@ public sealed class AppHost : IDisposable
         // After the startup catch-up, so each chapter moved keeps when its beats fired.
         storyDirector.ArchiveChapters();
 
+        // Raised by the history walk at start and by a live NewCommander on the tick; the bench's slots are left alone.
+        if (stores.StoryBench is null)
+        {
+            var erasing = new Lock();
+
+            stores.CommanderErases.Changed += (frontierId, erasedAt) => _ = Task.Run(() =>
+            {
+                try
+                {
+                    lock (erasing)
+                    {
+                        storyDirector.ForgetErased(frontierId, erasedAt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Could not delete the stories and adventures of an erased Commander");
+                }
+            });
+        }
+
         if (stores.StoryBench is { } storyBench)
         {
             storyBench.Director = storyDirector;

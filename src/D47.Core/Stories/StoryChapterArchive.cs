@@ -116,21 +116,11 @@ public sealed class StoryChapterArchive
                 return;
             }
 
-            var line = new Line
-            {
-                FrontierId = chapter.FrontierId,
-                StoryId = chapter.StoryId,
-                PickedAt = chapter.PickedAt,
-                Adventure = AdventureStore.ToJson(chapter.Adventure),
-                Fired = chapter.Fired,
-                FiredBy = chapter.FiredBy,
-            };
-
             try
             {
                 var lead = _danglingLine ? Environment.NewLine : string.Empty;
 
-                _files.AppendText(_path, lead + JsonSerializer.Serialize(line, Json) + Environment.NewLine);
+                _files.AppendText(_path, lead + ToText(chapter) + Environment.NewLine);
                 _danglingLine = false;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -139,6 +129,48 @@ public sealed class StoryChapterArchive
             }
         }
     }
+
+    /// <summary>Deletes every one of the Commander's chapters that <paramref name="removing"/> picks and writes the file again. Returns how many.</summary>
+    public int RemoveWhere(string? frontierId, Func<ArchivedChapter, bool> removing)
+    {
+        ArgumentNullException.ThrowIfNull(removing);
+
+        var commander = frontierId ?? AdventureStore.NoCommander;
+
+        lock (_gate)
+        {
+            var removed = _chapters.RemoveAll(chapter => string.Equals(chapter.FrontierId, commander, StringComparison.Ordinal) && removing(chapter));
+
+            if (removed == 0 || _files is null || _path is null)
+            {
+                return removed;
+            }
+
+            try
+            {
+                _files.WriteText(_path, string.Concat(_chapters.Select(chapter => ToText(chapter) + Environment.NewLine)));
+                _danglingLine = false;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger?.LogError(ex, "Could not write {Path}", _path);
+            }
+
+            return removed;
+        }
+    }
+
+    private static string ToText(ArchivedChapter chapter) => JsonSerializer.Serialize(
+        new Line
+        {
+            FrontierId = chapter.FrontierId,
+            StoryId = chapter.StoryId,
+            PickedAt = chapter.PickedAt,
+            Adventure = AdventureStore.ToJson(chapter.Adventure),
+            Fired = chapter.Fired,
+            FiredBy = chapter.FiredBy,
+        },
+        Json);
 
     private static List<ArchivedChapter> Read(IFileSystem files, string path, ILogger logger)
     {

@@ -693,6 +693,44 @@ public sealed class StoryDirector(
         return null;
     }
 
+    /// <summary>
+    /// Deletes what the Commander had before erasing their pilot data at <paramref name="erasedAt"/>: stories picked at or
+    /// before it, their chapters filed and archived, and adventures accepted or written at or before it. An archived
+    /// chapter with no run on record goes by its own time. Writes files,
+    /// so it never runs on the tick; running it again changes nothing.
+    /// </summary>
+    public void ForgetErased(string frontierId, DateTimeOffset erasedAt)
+    {
+        ArgumentNullException.ThrowIfNull(frontierId);
+
+        var stopped = stories.RemovePickedBy(frontierId, erasedAt);
+        var kept = stories.For(frontierId);
+
+        var adventures = book.Store.RemoveWhere(frontierId, adventure =>
+            (adventure.AcceptedAt ?? adventure.Written) is not { } at
+            || at <= erasedAt
+            || (adventure.StoryId is { } id && !kept.Any(story => string.Equals(story.Id, id, StringComparison.OrdinalIgnoreCase))));
+
+        var chapters = Archive.RemoveWhere(frontierId, chapter =>
+            (chapter.PickedAt ?? chapter.Adventure.AcceptedAt ?? chapter.Adventure.Written) is not { } at || at <= erasedAt);
+
+        if (stopped.FirstOrDefault(story => story.IsCurrent) is { } current
+            && catalog().Find(current.Id) is { } card
+            && string.Equals(Backstory(), card.InYourWords, StringComparison.Ordinal))
+        {
+            RestoreBackstory(current);
+        }
+
+        if (stopped.Count + adventures + chapters > 0)
+        {
+            logger.LogInformation(
+                "Erased pilot data deleted {Stories} stories, {Adventures} adventures and {Chapters} archived chapters",
+                stopped.Count,
+                adventures,
+                chapters);
+        }
+    }
+
     /// <summary>Begins a paused story's chapter again, or writes it again when it is no longer on file.</summary>
     public async Task<string?> ResumeAsync(string? frontierId, DateTimeOffset now, CancellationToken cancellationToken)
     {

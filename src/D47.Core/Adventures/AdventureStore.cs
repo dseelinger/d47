@@ -257,6 +257,39 @@ public sealed class AdventureStore(string initialPath, IFileSystem files, ILogge
         return true;
     }
 
+    /// <summary>Deletes every one of the Commander's adventures that <paramref name="removing"/> picks, in one write. Returns how many.</summary>
+    public int RemoveWhere(string? frontierId, Func<Adventure, bool> removing)
+    {
+        ArgumentNullException.ThrowIfNull(removing);
+
+        Poll();
+
+        var commander = frontierId ?? NoCommander;
+        int removed;
+
+        lock (_gate)
+        {
+            var existing = _byCommander.GetValueOrDefault(commander, []);
+            var kept = existing.Where(adventure => !removing(adventure)).ToList();
+
+            removed = existing.Count - kept.Count;
+
+            if (removed == 0)
+            {
+                return 0;
+            }
+
+            _byCommander = new Dictionary<string, IReadOnlyList<Adventure>>(_byCommander, StringComparer.Ordinal)
+            {
+                [commander] = kept,
+            };
+        }
+
+        Write();
+        Changed?.Invoke();
+        return removed;
+    }
+
     /// <summary>The adventure as this file writes it.</summary>
     internal static JsonElement ToJson(Adventure adventure) => JsonSerializer.SerializeToElement(ToRecord(adventure), Json);
 
