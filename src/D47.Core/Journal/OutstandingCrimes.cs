@@ -246,6 +246,7 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
     /// <summary>The text test, before any JSON is touched.</summary>
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Loadout\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"ShipyardSwap\"", StringComparison.Ordinal)
@@ -269,6 +270,14 @@ public sealed class OutstandingCrimes(IFileSystem fileSystem, ILogger logger)
                 if (journalEvent.Kind == "LoadGame" && journalEvent.Int("ShipID") is { } loaded)
                 {
                     reading.Ship = loaded;
+                }
+
+                return;
+
+            case "NewCommander":
+                if (journalEvent.String("FID") is { Length: > 0 } erased)
+                {
+                    _ = _books.Remove(erased);
                 }
 
                 return;

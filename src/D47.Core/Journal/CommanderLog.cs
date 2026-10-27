@@ -44,7 +44,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 {
     private static readonly string[] Events =
     [
-        "Commander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump", "CarrierJump", "ShipTargeted", "Interdicted",
+        "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump", "CarrierJump", "ShipTargeted", "Interdicted",
         "EscapeInterdiction", "Interdiction", "CrimeVictim", "Died", "PVPKill", "WingJoin", "WingAdd", "ReceiveText",
     ];
 
@@ -256,6 +256,19 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
                 if (journalEvent.StartsSession)
                 {
                     _session = journalEvent.Timestamp;
+                }
+
+                break;
+
+            case "NewCommander":
+                if (journalEvent.String("FID") is { Length: > 0 } erased)
+                {
+                    _ = _byCommander.Remove(erased);
+
+                    if (_lastTarget?.Fid == erased)
+                    {
+                        _lastTarget = null;
+                    }
                 }
 
                 break;

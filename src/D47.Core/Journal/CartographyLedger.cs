@@ -66,6 +66,9 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
 
     private readonly Dictionary<string, DateTimeOffset> _resets = new(StringComparer.Ordinal);
 
+    /// <summary>When each Commander last had pilot data erased, from <c>NewCommander</c>; not written to <c>path</c>.</summary>
+    private readonly Dictionary<string, DateTimeOffset> _erases = new(StringComparer.Ordinal);
+
     private string? _current;
 
     private bool _historyFolded;
@@ -202,6 +205,11 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
 
             var reset = _resets.TryGetValue(fid, out var resetAt) ? resetAt : DateTimeOffset.MinValue;
 
+            if (_erases.TryGetValue(fid, out var erasedAt) && erasedAt > reset)
+            {
+                reset = erasedAt;
+            }
+
             // At one timestamp a mapping folds before the sale or death that ends it.
             var timeline = book.Mappings.Values.Select(mapping => (mapping.At, Order: 0, Item: (object)mapping))
                 .Concat(book.Sales.Values.Select(sale => (sale.At, Order: 1, Item: (object)sale)))
@@ -308,6 +316,7 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
     /// <summary>The text test, before any JSON is touched.</summary>
     private static bool Relevant(string line) =>
         line.Contains("\"event\":\"Commander\"", StringComparison.Ordinal)
+        || line.Contains("\"event\":\"NewCommander\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"LoadGame\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"Died\"", StringComparison.Ordinal)
         || line.Contains("\"event\":\"SAAScanComplete\"", StringComparison.Ordinal)
@@ -327,6 +336,15 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
                 if (journalEvent.String("FID") is { Length: > 0 } fid)
                 {
                     commander = fid;
+                }
+
+                return;
+
+            case "NewCommander":
+                if (journalEvent.String("FID") is { Length: > 0 } erased
+                    && (!_erases.TryGetValue(erased, out var last) || journalEvent.Timestamp > last))
+                {
+                    _erases[erased] = journalEvent.Timestamp;
                 }
 
                 return;
