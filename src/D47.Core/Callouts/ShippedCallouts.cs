@@ -186,6 +186,7 @@ public static class ShippedCallouts
             .Add(new ProspectorCallout { Target = () => sources.MiningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new CoreAsteroidCallout())
             .Add(new MiningSummaryCallout())
+            .Add(new OperationSummaryCallout())
             .Add(new HoldFullCallout())
             .Add(new RingHotspotsCallout { Target = () => sources.MiningTargets.For(gameState.Active?.Identity.FrontierId) })
             .Add(new ChecklistCallout(sources.Checklists))

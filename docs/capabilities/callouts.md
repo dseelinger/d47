@@ -836,6 +836,22 @@ Mining run: 108 tonnes in 1 hour 11 minutes, about 91 an hour. 90 Platinum, 12 S
 
 A run that ends in a death, or refined nothing, says nothing.
 
+#### Operation run summary {#operation-summary}
+
+When an Operation run ends: what it was, whether it was finished, how long it took, what it paid,
+the kills and who flew it. A run is finished when your credits rose across it. d47 waits for the
+merc coins the game reports after the run, and speaks without them after sixty seconds:
+
+```text
+Mission_Fixture_Name finished in 30 minutes: 50,000 credits and 20 merc coins. 2 kills. Flown with Alpha and Bravo.
+Left Mission_Fixture_Name after 14 minutes, unfinished. 6 kills.
+```
+
+Parts that are missing are left out: with no name the line says "the Operation", and with no kills,
+no squad or no merc coins that part is not said. A run that ended with no credit figure is neither
+finished nor unfinished. At most three squad names are said. Nothing is said while d47 is catching
+up on older journals, and each run is said once.
+
 #### Hold full while mining {#hold-full}
 
 Once per mining run, when the hold has no free space. Limpets count toward the hold. With no run

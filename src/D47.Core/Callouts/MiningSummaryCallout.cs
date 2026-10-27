@@ -66,9 +66,9 @@ public sealed class MiningSummaryCallout : ICallout
 
     internal static string Tonnes(int count) => count == 1 ? "1 tonne" : $"{count} tonnes";
 
-    private static string Count(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+    internal static string Count(int count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
-    private static string Length(int minutes)
+    internal static string Length(int minutes)
     {
         var hours = minutes / 60;
         var rest = minutes % 60;
