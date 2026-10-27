@@ -71,7 +71,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
     private static (CodexPictureStore Store, MemoryFileSystem Files) Open(Release release, Func<bool>? allowed = null, ILogger? logger = null)
     {
         var files = new MemoryFileSystem();
-        return (new CodexPictureStore(files, Folder, allowed ?? (() => true), logger ?? NullLogger.Instance, release), files);
+        return (new CodexPictureStore(files, Folder, allowed ?? (() => true), logger ?? NullLogger.Instance, release, commander: () => "F1"), files);
     }
 
     [Fact]

@@ -56,7 +56,7 @@ public sealed class APressedCodexPictureEnlargesTests
             files.WriteBytes(Path.Combine(Placeholders, "organic-structures.jpg"), Png(family));
         }
 
-        var store = new CodexPictureStore(files, Folder, () => true, NullLogger.Instance, new HttpClientHandlerStub());
+        var store = new CodexPictureStore(files, Folder, () => true, NullLogger.Instance, new HttpClientHandlerStub(), commander: () => "F1");
         var pictures = new CodexPictureSet(store, () => true, files, Placeholders);
 
         var state = new CommanderGameState(new CommanderIdentity("F735466", "John Deparagon"));

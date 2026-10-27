@@ -20,6 +20,8 @@ public static class JournalCapability
 
     public const string CodexPicturesKey = "journal.codexPictures";
 
+    public const string ShareCodexPicturesKey = "journal.shareCodexPictures";
+
     public const string OpenNewCodexEntriesKey = "journal.openNewCodexEntries";
 
     public const string CodexPublishTokenKey = "journal.codexPublishToken";
@@ -167,6 +169,25 @@ public static class JournalCapability
                         Write = (s, v) => s with
                         {
                             Ui = s.Ui with { CodexPictures = v is not "false" },
+                        },
+                    },
+                },
+                new SettingRow
+                {
+                    Key = ShareCodexPicturesKey,
+                    Label = "Share my codex pictures with my other Commanders",
+                    Help =
+                        "Each Commander keeps their own codex pictures. Ticked, every Commander's pictures are one pool: "
+                        + "a codex page shows the active Commander's picture where there is one, and another Commander's where there is not.\n\n"
+                        + "Re-crop, Replace and Remove my picture act on the active Commander's picture only.",
+                    Kind = SettingKind.Toggle,
+                    DocsAnchor = "share-codex-pictures",
+                    Binding = new SettingBinding
+                    {
+                        Read = s => s.Ui.ShareCodexPictures ? "true" : "false",
+                        Write = (s, v) => s with
+                        {
+                            Ui = s.Ui with { ShareCodexPictures = v is "true" },
                         },
                     },
                 },

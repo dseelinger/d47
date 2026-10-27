@@ -672,9 +672,10 @@ public static class SettingsLayout
                             ]),
                         G(
                             "Codex",
-                            "Whether a new codex entry opens its page on the panel.",
+                            "Whether a new codex entry opens its page on the panel, and whose pictures it shows.",
                             [
                                 E(Capabilities.Builtin.JournalCapability.OpenNewCodexEntriesKey),
+                                E(Capabilities.Builtin.JournalCapability.ShareCodexPicturesKey),
                             ]),
                         G(
                             "Codex publishing",

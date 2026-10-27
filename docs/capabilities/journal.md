@@ -507,7 +507,7 @@ To make your own, say "take a picture" in game, then open the entry's page in th
 Ledgers, Codex, the region, the entry) and press **Choose a picture**. The captures are listed newest first,
 those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
 drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
-**Save** keeps a 768 by 768 picture, the capture it was cut from and the square, in `data\codex-pictures\local`;
+**Save** keeps a 768 by 768 picture, the capture it was cut from and the square, in `data\codex-pictures\local\<Frontier ID>`;
 **Cancel** keeps nothing.
 
 With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the kept
@@ -517,6 +517,18 @@ the picture and none of them. An entry in a region D47 cannot name has none of t
 
 **Codex pictures** in the settings turns it off. Nothing is fetched and a codex page shows only the
 pictures you saved yourself, even for stock pictures already on disk, which are kept.
+
+### Share codex pictures {#share-codex-pictures}
+
+Pictures you save are kept for the active Commander, in `data\codex-pictures\local\<Frontier ID>`, and a
+codex page shows only that Commander's. Pictures saved before this setting existed moved into the folder of the
+first Commander whose journal was read afterwards. With no Commander active, no picture of your own is shown
+and **Choose a picture** is not offered.
+
+**Share my codex pictures with my other Commanders** in the settings is off by default. Ticked, every
+Commander's pictures are one pool: a page shows the active Commander's picture where there is one and another
+Commander's where there is not. **Re-crop**, **Replace**, **Remove my picture** and **Use the stock picture**
+act on the active Commander's picture only. Stock pictures are shared either way.
 
 ### Open new codex entries {#open-new-codex-entries}
 

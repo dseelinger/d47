@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Codex pictures you save are now kept per Commander, and a codex page shows only the active Commander's. Pictures saved before this move to the first Commander whose journal is read. The setting **Share my codex pictures with my other Commanders** is off by default; ticked, every Commander's pictures are one pool.
+
 The panel now opens the page of a new codex entry as you log it, in the window and on the headset panel, unless a dialog or keyboard entry is open there. The setting is **Open new codex entries**, on by default.
 
 Directive 47 now says "Discovered" and the name when you log a new codex entry of any kind, such as "Discovered T Tauri Star." The setting is **New codex entries** in the callouts, on by default.

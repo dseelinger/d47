@@ -57,7 +57,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
 
         public Surface(bool token = true, Func<string?>? read = null)
         {
-            Store = new CodexPictureStore(Files, Folder, () => true, NullLogger.Instance, new Counting());
+            Store = new CodexPictureStore(Files, Folder, () => true, NullLogger.Instance, new Counting(), commander: () => "F1");
             Publisher = new CodexPicturePublisher(Store, read ?? (() => token ? "t" : null), () => token, NullLogger.Instance, GitHub);
             Pictures = new CodexPictureSet(Store, () => true, Files, @"C:\d47\placeholders", null, Publisher);
             Nav.Register(PanelTab.Commander, new NavCrumb("ledgers", "Ledgers"));

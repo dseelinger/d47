@@ -26,7 +26,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
     private const string Captures = @"C:\d47\data\captures";
 
-    private const string Local = @"C:\d47\data\codex-pictures\local";
+    private const string Local = @"C:\d47\data\codex-pictures\local\F1";
 
     private static readonly CodexPictureKey Key = new(101, 18);
 
@@ -52,7 +52,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         public Surface()
         {
-            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance);
+            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance, commander: () => "F1");
             Pictures = new CodexPictureSet(Store, () => false, Files, @"C:\d47\placeholders", Captures);
             Nav.Register(PanelTab.Commander, new NavCrumb("ledgers", "Ledgers"));
             Nav.Select(PanelTab.Commander);
@@ -203,7 +203,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Stock(Key);
 
         var stockOn = new CodexPictureSet(
-            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance), () => true, surface.Files, @"C:\d47\placeholders", Captures);
+            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
         var (window, page) = Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(page));
@@ -226,7 +226,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
         surface.Stock(Key);
         var stockOn = new CodexPictureSet(
-            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance), () => true, surface.Files, @"C:\d47\placeholders", Captures);
+            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
 
         var (window, page) = Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
         Press(Named(page, "CodexUseStock")!);

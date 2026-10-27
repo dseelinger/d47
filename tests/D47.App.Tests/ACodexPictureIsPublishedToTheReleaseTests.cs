@@ -242,7 +242,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
 
         public Surface(string? token = Token)
         {
-            Store = new CodexPictureStore(Files, Folder, () => true, Log, new NothingPublished());
+            Store = new CodexPictureStore(Files, Folder, () => true, Log, new NothingPublished(), commander: () => "F1");
             Publisher = new CodexPicturePublisher(Store, () => token, () => token is not null, Log, GitHub);
         }
 
@@ -273,11 +273,11 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
 
         public string Stock(string name) => Path.Combine(Folder, CodexPictureStore.StockFolder, name);
 
-        public string Local(string name) => Path.Combine(Folder, CodexPictureStore.LocalFolder, name);
+        public string Local(string name) => Path.Combine(Folder, CodexPictureStore.LocalFolder, "F1", name);
 
         public Dictionary<string, byte[]> Snapshot() =>
             Files.Enumerate(Path.Combine(Folder, CodexPictureStore.StockFolder), "*")
-                .Concat(Files.Enumerate(Path.Combine(Folder, CodexPictureStore.LocalFolder), "*"))
+                .Concat(Files.Enumerate(Path.Combine(Folder, CodexPictureStore.LocalFolder), "*", recursive: true))
                 .ToDictionary(path => path, path => Files.ReadBytes(path)!);
     }
 

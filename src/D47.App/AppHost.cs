@@ -3670,7 +3670,9 @@ public sealed class AppHost : IDisposable
             files,
             paths.CodexPictures,
             () => settings.Current.Ui.CodexPictures,
-            loggerFactory.CreateLogger<CodexPictureStore>());
+            loggerFactory.CreateLogger<CodexPictureStore>(),
+            commander: () => gameState.Active?.Identity.FrontierId,
+            shared: () => settings.Current.Ui.ShareCodexPictures);
         host.CodexPictureSet = new CodexPictureSet(
             host.CodexPictures,
             () => settings.Current.Ui.CodexPictures,

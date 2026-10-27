@@ -96,7 +96,7 @@ public class TheCodexEntryPageShowsOneEntryTests
             }
 
 
-            Store = new CodexPictureStore(Files, Folder, () => StockOn, NullLogger.Instance, Release);
+            Store = new CodexPictureStore(Files, Folder, () => StockOn, NullLogger.Instance, Release, commander: () => "F1");
             Pictures = new CodexPictureSet(Store, () => StockOn, Files, Placeholders);
         }
 

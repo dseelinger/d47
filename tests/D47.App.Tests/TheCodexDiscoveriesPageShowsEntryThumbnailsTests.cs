@@ -62,7 +62,7 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
     {
         private readonly List<CodexPictureRow> _rows = [];
 
-        public Surface() => Store = new CodexPictureStore(Files, Folder, () => StockOn, NullLogger.Instance, Release);
+        public Surface() => Store = new CodexPictureStore(Files, Folder, () => StockOn, NullLogger.Instance, Release, commander: () => "F1");
 
         public MemoryFileSystem Files { get; } = new();
 

@@ -131,7 +131,7 @@ public sealed class CodexPicturePublisher
 
     private async Task PublishAsync(CodexPictureKey key, string token)
     {
-        var picture = _store.Local(key) ?? throw new PublishFailure("Your picture could not be read.");
+        var picture = _store.Own(key) ?? throw new PublishFailure("Your picture could not be read.");
 
         if (picture.Length > CodexPictureIndex.MaxBytes)
         {

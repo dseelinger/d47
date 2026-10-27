@@ -232,7 +232,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         if (!own)
         {
-            Tile("CodexChoose", "Choose a picture", Choose);
+            if (store.CanSave)
+            {
+                Tile("CodexChoose", "Choose a picture", Choose);
+            }
         }
         else
         {

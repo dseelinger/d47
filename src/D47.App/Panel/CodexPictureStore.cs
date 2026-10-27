@@ -9,8 +9,8 @@ using Microsoft.Extensions.Logging;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Stock codex pictures fetched from the codex pictures repository's releases into <c>stock\</c>, and the
-/// Commander's own pictures listed from <c>local\</c>. Every fetch runs on the pool.
+/// Stock codex pictures fetched from the codex pictures repository's releases into <c>stock\</c>, and each
+/// Commander's own pictures kept in <c>local\&lt;Frontier ID&gt;\</c>. Every fetch runs on the pool.
 /// </summary>
 public sealed class CodexPictureStore
 {
@@ -21,20 +21,34 @@ public sealed class CodexPictureStore
     private readonly IFileSystem _files;
     private readonly string _folder;
     private readonly Func<bool> _allowed;
+    private readonly Func<string?> _commander;
+    private readonly Func<bool> _shared;
     private readonly ILogger _logger;
     private readonly HttpClient _http;
     private readonly Lock _gate = new();
     private readonly ConcurrentDictionary<CodexPictureKey, Task<bool>> _asked = new();
     private IReadOnlyList<CodexPictureRow>? _rows;
     private int _indexAsked;
+    private bool _adopted;
 
     /// <param name="folder"><c>AppPaths.CodexPictures</c>.</param>
     /// <param name="allowed">Read at each fetch and each read of a stock row, so turning the setting off stops both.</param>
-    public CodexPictureStore(IFileSystem files, string folder, Func<bool> allowed, ILogger logger, HttpMessageHandler? handler = null)
+    /// <param name="commander">The active Commander's Frontier ID; null when no journal has been read.</param>
+    /// <param name="shared">Whether every Commander's own pictures are one pool.</param>
+    public CodexPictureStore(
+        IFileSystem files,
+        string folder,
+        Func<bool> allowed,
+        ILogger logger,
+        HttpMessageHandler? handler = null,
+        Func<string?>? commander = null,
+        Func<bool>? shared = null)
     {
         _files = files;
         _folder = folder;
         _allowed = allowed;
+        _commander = commander ?? (() => null);
+        _shared = shared ?? (() => false);
         _logger = logger;
         _http = handler is null ? new HttpClient() : new HttpClient(handler);
         _http.Timeout = TimeSpan.FromSeconds(90);
@@ -69,20 +83,91 @@ public sealed class CodexPictureStore
         }
     }
 
-    /// <summary>The Commander's own pictures: the parseable names in <c>local\</c>.</summary>
+    /// <summary>Whether a Commander is active, so a picture of their own can be saved.</summary>
+    public bool CanSave => Own() is not null;
+
+    /// <summary>
+    /// The keys with a picture the codex pages show: the active Commander's, and with sharing on every other
+    /// Commander's. Empty while no Commander is active.
+    /// </summary>
     public IReadOnlySet<CodexPictureKey> LocalKeys()
     {
         var keys = new HashSet<CodexPictureKey>();
 
-        foreach (var path in _files.Enumerate(Path.Combine(_folder, LocalFolder), "*"))
+        if (Own() is not { } own)
         {
-            if (CodexPictureKey.TryParse(Path.GetFileName(path), out var key))
+            return keys;
+        }
+
+        foreach (var path in _files.Enumerate(Path.Combine(_folder, LocalFolder), "*", recursive: true))
+        {
+            if (CodexPictureKey.TryParse(Path.GetFileName(path), out var key) && (_shared() || IsIn(path, own)))
             {
                 keys.Add(key);
             }
         }
 
         return keys;
+    }
+
+    /// <summary>
+    /// The bytes of the picture to show for <paramref name="key"/>: the active Commander's, else with sharing on
+    /// another Commander's; null when there is none.
+    /// </summary>
+    public byte[]? Local(CodexPictureKey key)
+    {
+        if (Own(key) is { } mine)
+        {
+            return mine;
+        }
+
+        if (Own() is null || !_shared())
+        {
+            return null;
+        }
+
+        return _files.Enumerate(Path.Combine(_folder, LocalFolder), key.FileName, recursive: true)
+            .Select(_files.ReadBytes)
+            .FirstOrDefault(bytes => bytes is not null);
+    }
+
+    /// <summary>The bytes of the active Commander's own picture; null when there is none.</summary>
+    public byte[]? Own(CodexPictureKey key) => Own() is { } own ? _files.ReadBytes(Path.Combine(own, key.FileName)) : null;
+
+    /// <summary>The capture the active Commander's picture was cut from; null when it is not kept.</summary>
+    public byte[]? LocalSource(CodexPictureKey key) => Own() is { } own ? _files.ReadBytes(Path.Combine(own, key.SourceFileName)) : null;
+
+    /// <summary>Whether the capture the active Commander's picture was cut from is kept.</summary>
+    public bool HasLocalSource(CodexPictureKey key) => Own() is { } own && _files.Stat(Path.Combine(own, key.SourceFileName)) is not null;
+
+    /// <summary>The square the active Commander's picture was cut with; null when it is not kept.</summary>
+    public CropSquare? LocalCrop(CodexPictureKey key) =>
+        Own() is { } own ? CropSquare.Parse(_files.ReadText(Path.Combine(own, key.CropFileName))) : null;
+
+    /// <summary>Whether the active Commander has a picture of their own for <paramref name="key"/>.</summary>
+    public bool HasLocal(CodexPictureKey key) => Own() is { } own && _files.Stat(Path.Combine(own, key.FileName)) is not null;
+
+    /// <summary>Keeps the picture, its source and its square; the picture is written last, so it appears only when the rest is kept.</summary>
+    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop)
+    {
+        var folder = Own() ?? throw new InvalidOperationException("No Commander is active.");
+
+        _files.WriteBytes(Path.Combine(folder, key.SourceFileName), source);
+        _files.WriteText(Path.Combine(folder, key.CropFileName), crop.Write());
+        _files.WriteBytes(Path.Combine(folder, key.FileName), picture);
+    }
+
+    /// <summary>Deletes the active Commander's picture, its source and its square.</summary>
+    public void RemoveLocal(CodexPictureKey key)
+    {
+        if (Own() is not { } folder)
+        {
+            return;
+        }
+
+        _files.Delete(Path.Combine(folder, key.FileName));
+        _files.Delete(Path.Combine(folder, key.SourceFileName));
+        _files.Delete(Path.Combine(folder, key.CropFileName));
     }
 
     /// <summary>
@@ -112,50 +197,19 @@ public sealed class CodexPictureStore
     public byte[]? StockOnDisk(CodexPictureRow row) =>
         _allowed() && _files.ReadBytes(StockPath(row.Asset)) is { } bytes && CodexPictureIndex.Matches(row, bytes) ? bytes : null;
 
-    /// <summary>The bytes of the Commander's own picture; null when there is none.</summary>
-    public byte[]? Local(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.FileName));
-
-    /// <summary>The capture the Commander's picture was cut from; null when it is not kept.</summary>
-    public byte[]? LocalSource(CodexPictureKey key) => _files.ReadBytes(Path.Combine(_folder, LocalFolder, key.SourceFileName));
-
-    /// <summary>Whether the capture the Commander's picture was cut from is kept.</summary>
-    public bool HasLocalSource(CodexPictureKey key) => _files.Stat(Path.Combine(_folder, LocalFolder, key.SourceFileName)) is not null;
-
-    /// <summary>The square the Commander's picture was cut with; null when it is not kept.</summary>
-    public CropSquare? LocalCrop(CodexPictureKey key) => CropSquare.Parse(_files.ReadText(Path.Combine(_folder, LocalFolder, key.CropFileName)));
-
-    /// <summary>Whether the Commander has a picture of their own for <paramref name="key"/>.</summary>
-    public bool HasLocal(CodexPictureKey key) => LocalKeys().Contains(key);
-
-    /// <summary>Keeps the picture, its source and its square; the picture is written last, so it appears only when the rest is kept.</summary>
-    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop)
-    {
-        var folder = Path.Combine(_folder, LocalFolder);
-
-        _files.WriteBytes(Path.Combine(folder, key.SourceFileName), source);
-        _files.WriteText(Path.Combine(folder, key.CropFileName), crop.Write());
-        _files.WriteBytes(Path.Combine(folder, key.FileName), picture);
-    }
-
-    /// <summary>Deletes the Commander's picture, its source and its square.</summary>
-    public void RemoveLocal(CodexPictureKey key)
-    {
-        var folder = Path.Combine(_folder, LocalFolder);
-
-        _files.Delete(Path.Combine(folder, key.FileName));
-        _files.Delete(Path.Combine(folder, key.SourceFileName));
-        _files.Delete(Path.Combine(folder, key.CropFileName));
-    }
-
     /// <summary>
     /// Keeps a picture just published as <paramref name="row"/> and the index that lists it, then deletes the
-    /// Commander's picture of that key; its source and square stay.
+    /// active Commander's picture of that key; its source and square stay.
     /// </summary>
     public void Published(CodexPictureRow row, byte[] picture, string index, IReadOnlyList<CodexPictureRow> rows)
     {
         _files.WriteBytes(StockPath(row.Asset), picture);
         AcceptIndex(index, rows);
-        _files.Delete(Path.Combine(_folder, LocalFolder, row.Key.FileName));
+
+        if (Own() is { } own)
+        {
+            _files.Delete(Path.Combine(own, row.Key.FileName));
+        }
     }
 
     /// <summary>Keeps the index written without <paramref name="row"/> and deletes its picture from <c>stock\</c>.</summary>
@@ -177,6 +231,46 @@ public sealed class CodexPictureStore
 
     /// <summary>The fetch started for <paramref name="key"/>; true when the picture landed.</summary>
     public Task<bool> Fetched(CodexPictureKey key) => _asked.TryGetValue(key, out var task) ? task : Task.FromResult(false);
+
+    /// <summary>
+    /// The active Commander's folder, or null with none active. The first call with a Commander active moves the
+    /// pictures that sit directly in <c>local\</c> into it.
+    /// </summary>
+    private string? Own()
+    {
+        if (_commander() is not { Length: > 0 } id)
+        {
+            return null;
+        }
+
+        var root = Path.Combine(_folder, LocalFolder);
+        var own = Path.Combine(root, FolderName(id));
+
+        lock (_gate)
+        {
+            if (!_adopted)
+            {
+                foreach (var path in _files.Enumerate(root, "*"))
+                {
+                    if (char.IsAsciiDigit(Path.GetFileName(path)[0]) && _files.Stat(path) is not null)
+                    {
+                        _files.Copy(path, Path.Combine(own, Path.GetFileName(path)));
+                        _files.Delete(path);
+                    }
+                }
+
+                _adopted = true;
+            }
+        }
+
+        return own;
+    }
+
+    private static string FolderName(string id) =>
+        string.Concat(id.Select(c => Array.IndexOf(Path.GetInvalidFileNameChars(), c) >= 0 ? '_' : c));
+
+    private static bool IsIn(string path, string folder) =>
+        string.Equals(Path.GetDirectoryName(path), folder, StringComparison.OrdinalIgnoreCase);
 
     private string StockPath(string name) => Path.Combine(_folder, StockFolder, name);
 
