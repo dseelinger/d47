@@ -4036,7 +4036,11 @@ public sealed class AdventureGenerator(
                     }
                     else if (Closed(place.System, place.SystemAddress, facts))
                     {
-                        Refuse(index, PermitRefusal(where, place.System!));
+                        var move = await resolver.NearestOpenAsync(
+                            place.Kind, place.System!, previousSystem, facts.RadiusLightYears, facts.NeedsPad(ask.ThisShipOnly),
+                            (system, address) => Closed(system, address, facts), cancellationToken).ConfigureAwait(false);
+
+                        Refuse(index, PermitRefusal(where, place.System!, move is null ? null : $"Move objective {offset + index + 1} to {move}; rewrite its lines for that place."));
                     }
                     else if (hop is { } far && far > facts.RadiusLightYears
                              && !(closing && index == beats.Count - 1 && place.Kind == TriggerKind.Land && AdventureValidation.SameBody(place, destination!.Landing())))
@@ -4608,8 +4612,9 @@ public sealed class AdventureGenerator(
     private bool Closed(string? system, long? address, Facts facts) =>
         PermitSystemTable.ClosedTo(system, facts.Ranks, () => address is { } id && visited?.Find(state()?.Identity.FrontierId, id).State == VisitState.Visited);
 
-    private static string PermitRefusal(string where, string system) =>
-        StarterSystemTable.Contains(system)
-            ? $"{where} is in {system}, a starter system the Commander can no longer enter; use another."
-            : $"{where} is in {system}, which needs a permit the Commander may not hold; use a system without one.";
+    private static string PermitRefusal(string where, string system, string? move = null) =>
+        (StarterSystemTable.Contains(system)
+            ? $"{where} is in {system}, a starter system the Commander can no longer enter"
+            : $"{where} is in {system}, which needs a permit the Commander may not hold")
+        + (move is null ? (StarterSystemTable.Contains(system) ? "; use another." : "; use a system without one.") : ". " + move);
 }

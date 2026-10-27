@@ -110,8 +110,66 @@ public sealed class APermitSystemIsNeverAStopTests
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
         Assert.Contains(
-            "Objective 2 (The Memorial) is in HIP 97950, a starter system the Commander can no longer enter; use another.",
+            "Objective 2 (The Memorial) is in HIP 97950, a starter system the Commander can no longer enter. Move objective 2 to Maren Anchorage in Dyson's Hollow; rewrite its lines for that place.",
             provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task ARefusedDockIsMovedToAnOpenStationInReach()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(ToShinrarta),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Elsewhere, 2)));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy())
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains(
+            "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold. Move objective 2 to Maren Anchorage in Dyson's Hollow; rewrite its lines for that place.",
+            provider.Requests[2].Prompt.History[0].Text);
+        Assert.Contains(outcome.Draft!.Beats, beat => beat.Trigger.Station == "Maren Anchorage");
+    }
+
+    [Fact]
+    public async Task ARefusalKeepsItsTextWhenTheGalaxySearchIsDown()
+    {
+        var provider = new RoundScriptedLlmProvider(
+            RoundScriptedLlmProvider.Saying(Spine),
+            RoundScriptedLlmProvider.Saying(ToShinrarta),
+            RoundScriptedLlmProvider.Saying(Repairs.Replacing(Elsewhere, 2)));
+
+        var outcome = await AdventureGeneratorTests.Generator(provider, new AdventureGeneratorTests.Galaxy { WideStationsUnavailable = true })
+            .GenerateAsync(new AdventureAsk(Length: AdventureLength.Short), Now, CancellationToken.None);
+
+        Assert.True(outcome.Succeeded, outcome.Refusal);
+        Assert.Contains(
+            "Objective 2 (The Memorial) is in Shinrarta Dezhra, which needs a permit the Commander may not hold; use a system without one.",
+            provider.Requests[2].Prompt.History[0].Text);
+    }
+
+    [Fact]
+    public async Task ALandIsMovedToTheNearestOpenLandableBody()
+    {
+        var resolver = new AdventureResolver(new AdventureGeneratorTests.Galaxy());
+
+        var moved = await resolver.NearestOpenAsync(
+            TriggerKind.Land, "Shinrarta Dezhra", "Dyson's Hollow", 50, null,
+            (system, _) => system == "Shinrarta Dezhra", CancellationToken.None);
+
+        Assert.Equal("Ossen's Lantern 2 a in Ossen's Lantern", moved?.ToString());
+    }
+
+    [Fact]
+    public async Task APlaceWithNoOpenCandidateInReachIsNotMoved()
+    {
+        var resolver = new AdventureResolver(new AdventureGeneratorTests.Galaxy());
+
+        Assert.Null(await resolver.NearestOpenAsync(
+            TriggerKind.Land, "Shinrarta Dezhra", "Dyson's Hollow", 50, null, (_, _) => true, CancellationToken.None));
+        Assert.Null(await resolver.NearestOpenAsync(
+            TriggerKind.Arrive, "Shinrarta Dezhra", "Dyson's Hollow", 50, null, (_, _) => false, CancellationToken.None));
     }
 
     [Fact]

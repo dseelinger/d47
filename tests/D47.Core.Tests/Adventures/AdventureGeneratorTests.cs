@@ -481,9 +481,17 @@ public sealed class AdventureGeneratorTests
         /// <summary>How many station lookups for a named system report the search down before one answers.</summary>
         public int StationOutages { get; set; }
 
+        /// <summary>Whether every station search wider than a named system's reports the search down.</summary>
+        public bool WideStationsUnavailable { get; set; }
+
         public Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
         {
             StationQueries.Add(query);
+
+            if (query.MaxDistance > 1 && WideStationsUnavailable)
+            {
+                throw new GalaxyUnavailableException("The station search reported a server error.");
+            }
 
             if (query.MaxDistance <= 1 && StationOutages > 0)
             {

@@ -16,6 +16,12 @@ public sealed record Resolution(AdventureTrigger? Trigger, string? Refusal)
     public static Resolution Refused(string reason) => new(null, reason);
 }
 
+/// <summary>An open place d47 chose in place of a closed one: a system, with the station or body at it for a dock, land or scan objective.</summary>
+public sealed record Replacement(string System, string? Station, string? Body)
+{
+    public override string ToString() => (Station ?? Body) is { } place ? $"{place} in {System}" : System;
+}
+
 /// <summary>
 /// Turns the names a person or a model wrote into the ids the journal will match, through the galaxy
 /// service (Phase 47).
@@ -252,6 +258,127 @@ public sealed class AdventureResolver(IGalaxyService galaxy, SystemStandings? st
         catch (GalaxyUnavailableException ex)
         {
             return Resolution.Refused($"{where} could not be checked: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// The nearest place of <paramref name="kind"/> around <paramref name="refused"/> that <paramref name="closed"/> does not shut
+    /// and that is within <paramref name="reach"/> of <paramref name="previous"/>, or null. A galaxy failure gives null and is not retried.
+    /// </summary>
+    public async Task<Replacement?> NearestOpenAsync(
+        TriggerKind kind,
+        string refused,
+        string? previous,
+        double reach,
+        PadSize? needsPad,
+        Func<string?, long?, bool> closed,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var hops = new Dictionary<string, double?>(StringComparer.OrdinalIgnoreCase);
+
+            async Task<bool> UsableAsync(string system, long? address)
+            {
+                if (string.Equals(system, refused, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(system, previous, StringComparison.OrdinalIgnoreCase)
+                    || closed(system, address))
+                {
+                    return false;
+                }
+
+                if (previous is null)
+                {
+                    return true;
+                }
+
+                if (!hops.TryGetValue(system, out var hop))
+                {
+                    hop = await galaxy.DistanceAsync(previous, system, cancellationToken).ConfigureAwait(false);
+                    hops[system] = hop;
+                }
+
+                return hop is not { } far || far <= reach;
+            }
+
+            switch (kind)
+            {
+                case TriggerKind.Arrive:
+                {
+                    if (!GalaxyQuery.TryParse(
+                            refused,
+                            new Dictionary<string, string>(StringComparer.Ordinal) { ["distance"] = $"0-{reach.ToString("0", System.Globalization.CultureInfo.InvariantCulture)}" },
+                            size: GalaxyQuery.MaxSize,
+                            out var query,
+                            out _))
+                    {
+                        return null;
+                    }
+
+                    var found = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+                    foreach (var system in found.Systems)
+                    {
+                        if (await UsableAsync(system.Name, system.SystemAddress).ConfigureAwait(false))
+                        {
+                            return new Replacement(system.Name, null, null);
+                        }
+                    }
+
+                    return null;
+                }
+
+                case TriggerKind.Dock:
+                {
+                    var query = StationQuery.Near(refused, reach, 20) with
+                    {
+                        Size = 50,
+                        MinPad = needsPad is PadSize.Medium or PadSize.Large ? needsPad : null,
+                    };
+
+                    var found = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+                    foreach (var station in found.Stations)
+                    {
+                        if (station.IsFixed
+                            && station.MarketId is { } market
+                            && market != ClosedMarketId
+                            && (needsPad is not { } pad || station.Admits(pad))
+                            && await UsableAsync(station.SystemName, station.SystemAddress).ConfigureAwait(false)
+                            && !await ClosedByWarAsync(station, cancellationToken).ConfigureAwait(false))
+                        {
+                            return new Replacement(station.SystemName, station.Name, null);
+                        }
+                    }
+
+                    return null;
+                }
+
+                case TriggerKind.Land:
+                case TriggerKind.Scan:
+                {
+                    var found = await galaxy.FindBodiesAsync(BodyQuery.LandableNear(refused, reach, 20) with { Size = 50, Limit = 50 }, cancellationToken).ConfigureAwait(false);
+
+                    foreach (var body in found.Bodies)
+                    {
+                        if (body.IsLandable
+                            && body.BodyId is not null
+                            && await UsableAsync(body.SystemName, body.SystemAddress).ConfigureAwait(false))
+                        {
+                            return new Replacement(body.SystemName, null, body.Name);
+                        }
+                    }
+
+                    return null;
+                }
+
+                default:
+                    return null;
+            }
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return null;
         }
     }
 

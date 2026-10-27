@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story objective in a locked or starter system is now moved to the nearest open place. For an arrive, dock, land or scan objective, d47 looks for the nearest open system, station with a pad for your ship, or landable body within reach of the objective before it, and tells the story to move the objective there and rewrite its lines. When none is in reach, or the galaxy search is down, the story is asked to pick another place as before.
+
 Stories no longer send you to a starter system. A story objective in a system you start the game in, such as HIP 97950, is refused and the story is asked to use another; the refusal says it is a starter system you can no longer enter. The list of starter systems is read from journals, from the first system after a new Commander is created.
 
 Stories can now send you to a permit system you hold. A locked system is open to a story when your navy rank grants its permit (Federal Navy rank 4 for Sol, Imperial Navy rank 4 for Achenar), or when Elite's visited-systems list shows you have been there. Other locked systems are still left out, and a starter system never is open.
