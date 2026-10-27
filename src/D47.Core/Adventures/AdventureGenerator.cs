@@ -842,7 +842,7 @@ public sealed class AdventureGenerator(
             var last = index == beats.Count - 1 ? " (the last objective: its lines are the ending)" : string.Empty;
 
             text.AppendLine($"{offset + index + 1}. {beat.Title}{last} — {beat.Describe()}{(beat.Continues ? " (a further step of the objective above)" : string.Empty)}");
-            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Kind == TriggerKind.Uss ? beat.System : null)}");
+            text.AppendLine($"   Confirms: {TriggerConfirms.Of(beat.Kind, beat.Filter, story, beat.Written().System)}");
 
             if (!beat.Continues)
             {
@@ -2800,9 +2800,9 @@ public sealed class AdventureGenerator(
             "- \"mine\": the Commander mines and refines \"count\" tons of \"commodity\" (null for any).",
             "- \"onfoot\": the Commander steps out on foot onto a planet surface \"count\" times.",
             "- \"collect\": the Commander picks up \"count\" items on foot. \"filter\" is Item, Component or Consumable, or an item's name, or null for any.",
-            "- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any.",
-            "- \"map\": the Commander maps \"count\" bodies with the surface mapper.",
-            "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any.",
+            "- \"organic\": the Commander analyses \"count\" organic samples. \"filter\" is a genus such as Aleoida, or null for any. \"system\" is the system where the analyses must happen, or null for anywhere. A line may place them in a system only when the objective names it.",
+            "- \"map\": the Commander maps \"count\" bodies with the surface mapper. \"system\" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.",
+            "- \"signal\": the Commander surveys \"count\" bodies that show a signal. \"filter\" is the signal type: Thargoid, Biological, Geological, Human, Other, or a ring hotspot such as Platinum or Tritium; null for any. \"system\" is the system where the bodies must be, or null for anywhere. A line may place them in a system only when the objective names it.",
             "- \"wreck\": the Commander touches down at \"count\" crashed ships. \"filter\" is the wreck's type such as Type9; null means a crashed Thargoid ship.",
             "- \"codex\": the Commander logs \"count\" codex entries. \"filter\" is Biology, StellarBodies, Civilisations (shown in game as Xenological) or Guardian, or null for any. \"new\" is true for entries only, meaning ones the Commander has not logged in that region before; false or null for any entry.",
             "- \"newcodexpicture\": the Commander logs a codex entry that is new to them in its region, then saves their own picture for it from the D47 Codex page. Met once per picture.",
@@ -2859,7 +2859,7 @@ public sealed class AdventureGenerator(
 
         AppendConflicts(text, facts.Standings);
         text.AppendLine("No objective may need an ARX purchase: never ask for a paid paint job, decal, ship kit, suit or other ARX item, because the journal cannot show what the Commander owns from ARX.");
-        text.AppendLine("A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. None has a place of its own, so leave system, station and body null. When one must happen somewhere, put an arrive or dock objective there just before it.");
+        text.AppendLine("A counted kind counts only what happens after the objective before has fired, except engineer and those marked once, which are met once. Except uss, map, signal and organic, which may name a \"system\", none has a place of its own, so leave system, station and body null. When one of the others must happen somewhere, put an arrive or dock objective there just before it.");
 
         if (!candidates.Sites.IsEmpty)
         {
@@ -3296,7 +3296,7 @@ public sealed class AdventureGenerator(
             Filter = Filter,
             Organic = Organic,
             New = New,
-            System = Kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(System) ? System.Trim() : null,
+            System = Kind is TriggerKind.Uss or TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic && !string.IsNullOrWhiteSpace(System) ? System.Trim() : null,
             Engineer = Engineer,
             Stage = Stage,
             Rank = Kind == TriggerKind.PowerRank ? Rank : null,
@@ -3901,18 +3901,27 @@ public sealed class AdventureGenerator(
                 var counted = beat.Written();
                 var problems = AdventureValidation.CountedProblems(where, counted).ToList();
 
-                if (problems.Count == 0 && counted.Kind == TriggerKind.Uss && counted.System is { } ussSystem)
+                if (problems.Count == 0 && counted.System is { } countedSystem)
                 {
                     try
                     {
-                        if (await resolver.SystemAsync(ussSystem, cancellationToken).ConfigureAwait(false) is { } ussFound)
+                        if (await resolver.SystemAsync(countedSystem, cancellationToken).ConfigureAwait(false) is not { } found)
                         {
-                            counted = counted with { System = ussFound.Name, SystemAddress = ussFound.Address };
-                            previousSystem = ussFound.Name;
+                            problems.Add($"{where} names a system, \"{countedSystem}\", that the galaxy search does not know; name a real system, or leave \"system\" null for anywhere.");
+                        }
+                        else if (counted.Kind != TriggerKind.Uss && Closed(found.Name, found.Address, facts))
+                        {
+                            problems.Add(PermitRefusal(where, found.Name));
+                        }
+                        else if (counted.Kind != TriggerKind.Uss
+                                 && await SupplyShortfallAsync(counted, found.Address, cancellationToken).ConfigureAwait(false) is { } shortfall)
+                        {
+                            problems.Add($"{where} counts {counted.Count?.ToString(CultureInfo.InvariantCulture)} in {found.Name}, but {shortfall}; lower the count, name another system, or leave \"system\" null for anywhere.");
                         }
                         else
                         {
-                            problems.Add($"{where} names a system, \"{ussSystem}\", that the galaxy search does not know; name a real system, or leave \"system\" null for a drop anywhere.");
+                            counted = counted with { System = found.Name, SystemAddress = found.Address };
+                            previousSystem = found.Name;
                         }
                     }
                     catch (GalaxyUnavailableException ex)
@@ -4608,6 +4617,55 @@ public sealed class AdventureGenerator(
             return text.ToString();
         }
     }
+
+    /// <summary>Why a system cannot supply a map, signal or organic objective's count, or null when it can.</summary>
+    private async Task<string?> SupplyShortfallAsync(AdventureTrigger trigger, long address, CancellationToken cancellationToken)
+    {
+        if (galaxy() is not { } search)
+        {
+            return null;
+        }
+
+        var count = trigger.Count ?? 1;
+        int available;
+        string what;
+
+        if (trigger.Kind == TriggerKind.Organic)
+        {
+            var biology = await search.SystemBiologyAsync(address, cancellationToken).ConfigureAwait(false);
+            available = biology.Bodies.Sum(body => body.Species.Count(species => OrganicFilterMatches(trigger.Filter, species.Genus)));
+            what = "species with biology on record";
+        }
+        else
+        {
+            var bodies = await search.SystemBodiesAsync(address, cancellationToken).ConfigureAwait(false);
+
+            if (trigger.Kind == TriggerKind.Map)
+            {
+                available = bodies.Count(body => !IsStar(body));
+                what = "bodies that can be mapped";
+            }
+            else
+            {
+                available = bodies.Count(body =>
+                    body.Signals.Any(signal => SignalFilterMatches(trigger.Filter, signal.Kind))
+                    || body.Rings.Any(ring => ring.Hotspots.Any(hotspot => SignalFilterMatches(trigger.Filter, hotspot.Material))));
+                what = "bodies with that signal";
+            }
+        }
+
+        return available >= count ? null : $"it has {available.ToString(CultureInfo.InvariantCulture)} {what}";
+    }
+
+    private static bool IsStar(BodySummary body) =>
+        body.Subtype?.Contains("Star", StringComparison.OrdinalIgnoreCase) == true
+        || body.Subtype?.Contains("Black Hole", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static bool OrganicFilterMatches(string? filter, string genus) =>
+        string.IsNullOrWhiteSpace(filter)
+        || (JournalJson.Symbol(filter) is { } wanted && JournalJson.Symbol(genus) is { } found && (wanted == found || found.Split('_').Contains(wanted)));
+
+    private static bool SignalFilterMatches(string? filter, string kind) => OrganicFilterMatches(filter, kind);
 
     private bool Closed(string? system, long? address, Facts facts) =>
         PermitSystemTable.ClosedTo(system, facts.Ranks, () => address is { } id && visited?.Find(state()?.Identity.FrontierId, id).State == VisitState.Visited);

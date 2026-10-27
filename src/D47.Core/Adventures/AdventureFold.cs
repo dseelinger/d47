@@ -436,7 +436,8 @@ public static class AdventureFold
             TriggerKind.Organic =>
                 journalEvent.Kind is "ScanOrganic"
                 && string.Equals(raw.String("ScanType"), "Analyse", StringComparison.OrdinalIgnoreCase)
-                && SameType(trigger.Filter, raw.String("Genus")),
+                && SameType(trigger.Filter, raw.String("Genus"))
+                && AtBody(trigger, raw),
 
             TriggerKind.Map =>
                 journalEvent.Kind is "SAAScanComplete"
@@ -444,7 +445,8 @@ public static class AdventureFold
 
             TriggerKind.Signal =>
                 journalEvent.Kind is "SAASignalsFound"
-                && raw.Items("Signals").Any(signal => SameType(trigger.Filter, signal.String("Type"))),
+                && raw.Items("Signals").Any(signal => SameType(trigger.Filter, signal.String("Type")))
+                && AtBody(trigger, raw),
 
             TriggerKind.Wreck =>
                 journalEvent.Kind is "Touchdown"

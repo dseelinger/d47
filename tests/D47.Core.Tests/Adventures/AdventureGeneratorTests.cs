@@ -543,8 +543,16 @@ public sealed class AdventureGeneratorTests
         public Task<MissionStationScan> FindMissionStationsAsync(MissionStationQuery query, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) => throw new NotSupportedException();
+        /// <summary>The bodies <see cref="SystemBodiesAsync"/> reports for every system, or null to refuse the call.</summary>
+        public IReadOnlyList<BodySummary>? SystemBodies { get; init; }
+
+        /// <summary>The surveyed bodies <see cref="SystemBiologyAsync"/> reports for every system, or null to refuse the call.</summary>
+        public IReadOnlyList<SurveyedBody>? SystemBiology { get; init; }
+
+        public Task<IReadOnlyList<BodySummary>> SystemBodiesAsync(long systemAddress, CancellationToken cancellationToken) =>
+            SystemBodies is { } bodies ? Task.FromResult(bodies) : throw new NotSupportedException();
+
         public Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
+            SystemBiology is { } surveyed ? Task.FromResult(new SystemBiology(systemAddress, surveyed)) : throw new NotSupportedException();
     }
 }

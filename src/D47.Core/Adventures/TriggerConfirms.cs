@@ -85,6 +85,12 @@ internal static class TriggerConfirms
     internal static string Of(TriggerKind kind, string? filter, bool story = false, string? system = null) =>
         kind == TriggerKind.Uss && !string.IsNullOrWhiteSpace(system)
             ? $"the ship dropped into signal sources in {system.Trim()} — not who sent the signal or what was found there"
+            : kind == TriggerKind.Organic && !string.IsNullOrWhiteSpace(system)
+            ? $"organic samples were analysed in {system.Trim()} — not the species found or the sample's worth"
+            : kind == TriggerKind.Map && !string.IsNullOrWhiteSpace(system)
+            ? $"bodies in {system.Trim()} were mapped with the surface mapper — not what the maps showed"
+            : kind == TriggerKind.Signal && !string.IsNullOrWhiteSpace(system)
+            ? $"bodies in {system.Trim()} that show a signal were surveyed — not what makes the signal"
             : kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.GuardianSite, StringComparison.OrdinalIgnoreCase)
             ? "the ship came to the Guardian site on that body — not what is there or what it holds"
             : kind == TriggerKind.Site && string.Equals(filter, AdventureTrigger.TouristSite, StringComparison.OrdinalIgnoreCase)
