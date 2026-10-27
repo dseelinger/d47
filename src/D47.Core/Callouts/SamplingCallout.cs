@@ -81,8 +81,6 @@ public sealed class SamplingCallout : ICallout
             line += $" {OrganicSampling.Metres(gap)} from the last one.";
         }
 
-        return line + (genus.Remaining == 0
-            ? " Analyse when you are ready."
-            : $" {genus.Remaining} to go.");
+        return genus.Remaining == 0 ? line : line + $" {genus.Remaining} to go.";
     }
 }

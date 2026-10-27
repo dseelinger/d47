@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The callout for the third organic specimen no longer says "Analyse when you are ready", since Elite analyses it by itself a few seconds later. It now ends at the count and the distance from the last one.
+
 Asking about a system, such as "tell me about LTT 7786", now includes its main star: the class, the luminosity and whether you can scoop from it.
 
 Directive 47 now knows the star you are at after logging in or a carrier jump, from the scan Elite writes when you arrive, and says giant and supergiant stars in words, such as "class K orange giant".

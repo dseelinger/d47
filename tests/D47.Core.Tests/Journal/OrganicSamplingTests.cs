@@ -238,6 +238,22 @@ public class OrganicSamplingTests
     }
 
     [Fact]
+    public void TheThirdSampleDoesNotTellTheCommanderToAnalyse()
+    {
+        var state = Commander(
+            (Scan("Log"), At(0, 0)),
+            (Scan("Sample"), At(0, 0.005)),
+            (Scan("Sample"), At(0, 0.010)));
+
+        var said = Assert.Single(new SamplingCallout().Examine(Context(state, false, Scan("Sample"))));
+
+        Assert.Contains("3 of 3", said.Text, StringComparison.Ordinal);
+        Assert.Contains("from the last one", said.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Analyse", said.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("to go", said.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AnalyseIsAnnouncedAsTheRunFinishing()
     {
         var state = Commander(
