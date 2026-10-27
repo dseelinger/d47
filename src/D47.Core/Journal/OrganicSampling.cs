@@ -74,6 +74,17 @@ public sealed record GenusProgress(string Genus)
     public static int Required => 3;
 
     public int Remaining => Math.Max(0, Required - Taken);
+
+    /// <summary>
+    /// Metres still to go before <paramref name="here"/> is <paramref name="range"/> from every specimen
+    /// d47 has a position for; zero when it is. Null when no specimen has a position.
+    /// </summary>
+    public double? MetresToGo(int range, SurfaceFix here)
+    {
+        IReadOnlyList<SurfaceFix> points = Specimens.Count > 0 ? Specimens : LastAt is { } last ? [last] : [];
+
+        return points.Count == 0 ? null : Math.Max(0, points.Max(point => range - point.MetresTo(here)));
+    }
 }
 
 /// <summary>What has been sampled on one body, keyed the way Elite keys it.</summary>

@@ -901,7 +901,7 @@ on older journals. Switching this off silences this warning and nothing else.
 Each organic specimen as it lands, with the distance you covered to get it:
 
 ```text
-Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
+Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
 Stratum Paleas analysed. That run is complete.
 ```
 

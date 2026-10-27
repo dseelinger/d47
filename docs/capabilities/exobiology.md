@@ -245,7 +245,7 @@ row total covers an unstated number of specimens.
 Once you take the first specimen, Directive 47 tracks the run and speaks each one as it lands:
 
 ```text
-Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go.
+Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
 Stratum Paleas analysed. That run is complete. Worth 1.8 million. No first footfall bonus. 21.4 million unsold.
 ```
 
@@ -369,7 +369,9 @@ how to turn it on.
 #### `get_sampling_progress`
 
 How many specimens you have taken on this body, how far you have moved since the last one, and what
-is already finished here. For a genus with a known colony distance, also says how far is still to go.
+is already finished here. For a genus with a known colony distance, also says how far is still to go,
+measured from every specimen of the set. While a set is open on the body you are on, "how much further" and
+"how much farther" reach it without the model and answer in one short line per genus.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

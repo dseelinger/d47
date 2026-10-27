@@ -122,7 +122,18 @@ public static class ExobiologyCapability
                     + "is already finished here. For a genus with a known colony distance it also "
                     + "says how many metres are still to go, or that they are far enough.",
                 Parameters = [],
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(Sampling(commander(), status))),
+                Commands =
+                [
+                    new ToolCommandPhrase("how much further", new Dictionary<string, string>(StringComparer.Ordinal))
+                    {
+                        When = () => OpenSetHere(commander()),
+                    },
+                    new ToolCommandPhrase("how much farther", new Dictionary<string, string>(StringComparer.Ordinal))
+                    {
+                        When = () => OpenSetHere(commander()),
+                    },
+                ],
+                Handler = (_, _) => Task.FromResult(Sampling(commander(), status)),
             },
             new ToolDefinition
             {
@@ -406,18 +417,22 @@ public static class ExobiologyCapability
 
     // ----------------------------------------------------------- the sampling
 
-    private static string Sampling(CommanderGameState? state, Func<GameStatus>? status)
+    private static bool OpenSetHere(CommanderGameState? state) =>
+        state is { Location: { SystemAddress: { } system, BodyId: { } bodyId } }
+        && state.Sampling.On(system, bodyId)?.InProgress.Count > 0;
+
+    private static ToolResult Sampling(CommanderGameState? state, Func<GameStatus>? status)
     {
         if (state is null)
         {
-            return "No Elite Dangerous journal has been detected yet.";
+            return ToolResult.Ok("No Elite Dangerous journal has been detected yet.");
         }
 
         if (state.Sampling.MostRecent is not { } body)
         {
-            return
+            return ToolResult.Ok(
                 "You have not sampled anything I have seen. I track a run once you take the first "
-                + "specimen.";
+                + "specimen.");
         }
 
         var live = status?.Invoke();
@@ -427,6 +442,7 @@ public static class ExobiologyCapability
             : (SurfaceFix?)null;
 
         var report = new StringBuilder();
+        var brief = new List<string>();
 
         foreach (var genus in body.InProgress)
         {
@@ -452,7 +468,16 @@ public static class ExobiologyCapability
 
             if (colony is { } required)
             {
-                report.AppendLine($"  {genus.Genus} needs {required} metres between samples. {ToGo(required, moved)}".TrimEnd());
+                var toGo = here is { } fix ? genus.MetresToGo(required, fix) : null;
+
+                report.AppendLine($"  {genus.Genus} needs {required} metres between samples. {ToGo(toGo)}".TrimEnd());
+
+                if (toGo is { } left)
+                {
+                    var partial = genus.Specimens.Count != genus.Taken ? " That is from the specimens I have a position for." : "";
+
+                    brief.Add($"{genus.Species ?? genus.Genus}: {ToGo(left)}{partial}");
+                }
             }
             else if (state.Sampling.ClosestAccepted(genus.Genus) is { } closest)
             {
@@ -478,7 +503,9 @@ public static class ExobiologyCapability
             report.AppendLine("Nothing in progress on this body.");
         }
 
-        return report.ToString().TrimEnd();
+        var full = report.ToString().TrimEnd();
+
+        return brief.Count == 0 ? ToolResult.Ok(full) : ToolResult.Ok(full, string.Join(" ", brief.Take(3)));
     }
 
     // --------------------------------------------------------- the unsold data
@@ -670,11 +697,11 @@ public static class ExobiologyCapability
 
     private static string Number(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
 
-    private static string ToGo(int required, double? moved) =>
-        moved switch
+    private static string ToGo(double? left) =>
+        left switch
         {
             null => "",
-            { } metres when metres >= required => "You are far enough.",
-            { } metres => $"{Math.Ceiling(required - metres).ToString("0", CultureInfo.InvariantCulture)} m to go.",
+            <= 0 => "You are far enough.",
+            { } metres => $"{Math.Ceiling(metres).ToString("0", CultureInfo.InvariantCulture)} m to go.",
         };
 }

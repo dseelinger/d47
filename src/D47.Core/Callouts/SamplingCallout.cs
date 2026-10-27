@@ -1,4 +1,5 @@
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Callouts;
 
@@ -81,6 +82,13 @@ public sealed class SamplingCallout : ICallout
             line += $" {OrganicSampling.Metres(gap)} from the last one.";
         }
 
-        return genus.Remaining == 0 ? line : line + $" {genus.Remaining} to go.";
+        if (genus.Remaining == 0)
+        {
+            return line;
+        }
+
+        return ExobiologyCatalogue.ColonyDistance(genus.Genus) is { } range
+            ? line + $" {genus.Remaining} to go, {OrganicSampling.Metres(range)} from here."
+            : line + $" {genus.Remaining} to go.";
     }
 }

@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The organic sampling callout for the first and second specimen now says how far to go before the next one, such as "Aleoida Gravis, 1 of 3. 2 to go, 150 metres from here."
+
+Saying "how much further" or "how much farther" while a sampling set is open on the body you are on now answers by voice, without the model, with the metres still to go for each genus. The distance is measured from every specimen in the set, not only the last one, so driving back towards an earlier specimen is no longer reported as far enough.
+
 The callout for the third organic specimen no longer says "Analyse when you are ready", since Elite analyses it by itself a few seconds later. It now ends at the count and the distance from the last one.
 
 Asking about a system, such as "tell me about LTT 7786", now includes its main star: the class, the luminosity and whether you can scoop from it.

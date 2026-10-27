@@ -234,7 +234,7 @@ public class OrganicSamplingTests
 
         Assert.Contains("Stratum Paleas, 2 of 3", said.Text, StringComparison.Ordinal);
         Assert.Contains("from the last one", said.Text, StringComparison.Ordinal);
-        Assert.Contains("1 to go", said.Text, StringComparison.Ordinal);
+        Assert.Contains("1 to go, 500 metres from here", said.Text, StringComparison.Ordinal);
     }
 
     [Fact]
